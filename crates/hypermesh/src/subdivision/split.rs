@@ -3,8 +3,8 @@
 use super::{
     Aabb, ClipSide, ConvexPolygon, HypermeshResult, IntersectionSegment, PairwiseIntersectionType,
     PairwiseIntersectionsCacheEntry, Plane, PolygonFamilyProfile, Real, axis_mut, axis_ref,
-    cached_pairwise_intersections_by_polygon_with, clip_polygon, compare_real,
-    polygon_families_match_as_multisets, polygon_family_profile,
+    cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs, clip_polygon,
+    compare_real, polygon_families_match_as_multisets, polygon_family_profile,
     split_child_matches_parent_geometry,
 };
 #[cfg(test)]
@@ -250,10 +250,29 @@ fn cache_polygon_axis_values_result(
     });
 }
 
+#[cfg(test)]
 pub(super) fn cached_root_split_basis_with(
     cache: &RefCell<SplitCandidatesCache>,
     axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Rc<Vec<RootSplitPlane>>> {
+    cached_root_split_basis_with_certified_embedded_inputs(
+        cache,
+        axis_values_cache,
+        pairwise_cache,
+        &[],
+        bounds,
+        polygons,
+    )
+}
+
+pub(super) fn cached_root_split_basis_with_certified_embedded_inputs(
+    cache: &RefCell<SplitCandidatesCache>,
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    certified_embedded_inputs: &[bool],
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Rc<Vec<RootSplitPlane>>> {
@@ -262,15 +281,45 @@ pub(super) fn cached_root_split_basis_with(
     }
 
     let result = (|| {
-        let axis_values = cached_polygon_axis_values_with(axis_values_cache, polygons)?;
+        crate::trace_dispatch!("root-split-basis", "axis-values");
+        let axis_values =
+            cached_polygon_axis_values_with(axis_values_cache, polygons).map_err(|error| {
+                crate::trace_dispatch!("root-split-basis", "axis-values-failed");
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] root axis values failed: {error}");
+                }
+                error
+            })?;
+        crate::trace_dispatch!("root-split-basis", "intersection-segments");
         let intersection_segments =
-            split_intersection_segments_with_pairwise_cache(pairwise_cache, polygons)?;
-        root_split_basis_from_events(bounds, &axis_values, &intersection_segments).map(Rc::new)
+            split_intersection_segments_with_pairwise_cache_and_certified_embedded_inputs(
+                pairwise_cache,
+                polygons,
+                certified_embedded_inputs,
+            )
+            .map_err(|error| {
+                crate::trace_dispatch!("root-split-basis", "intersection-segments-failed");
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] root intersection segments failed: {error}");
+                }
+                error
+            })?;
+        crate::trace_dispatch!("root-split-basis", "event-basis");
+        root_split_basis_from_events(bounds, &axis_values, &intersection_segments)
+            .map(Rc::new)
+            .map_err(|error| {
+                crate::trace_dispatch!("root-split-basis", "event-basis-failed");
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] root event basis failed: {error}");
+                }
+                error
+            })
     })();
     cache.borrow_mut().root_basis = Some(result.clone());
     result
 }
 
+#[cfg(test)]
 pub(super) fn cached_ordered_subdivision_splits_with(
     axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     cache: &RefCell<SplitCandidatesCache>,
@@ -281,8 +330,38 @@ pub(super) fn cached_ordered_subdivision_splits_with(
     bounds: &Aabb,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
-    let root_basis =
-        cached_root_split_basis_with(cache, axis_values_cache, pairwise_cache, bounds, polygons)?;
+    cached_ordered_subdivision_splits_with_certified_embedded_inputs(
+        axis_values_cache,
+        cache,
+        fanout_count_cache,
+        partition_cache,
+        polygon_bounds_cache,
+        pairwise_cache,
+        &[],
+        bounds,
+        polygons,
+    )
+}
+
+pub(super) fn cached_ordered_subdivision_splits_with_certified_embedded_inputs(
+    axis_values_cache: &RefCell<Vec<PolygonAxisValuesCacheEntry>>,
+    cache: &RefCell<SplitCandidatesCache>,
+    fanout_count_cache: &RefCell<Vec<SplitAttemptChildFanoutCacheEntry>>,
+    partition_cache: &RefCell<Vec<SplitChildPartitionCacheEntry>>,
+    polygon_bounds_cache: &RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    certified_embedded_inputs: &[bool],
+    bounds: &Aabb,
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<Vec<RankedSplitAttempt>> {
+    let root_basis = cached_root_split_basis_with_certified_embedded_inputs(
+        cache,
+        axis_values_cache,
+        pairwise_cache,
+        certified_embedded_inputs,
+        bounds,
+        polygons,
+    )?;
     if let Some(existing) = cache
         .borrow()
         .entries
@@ -600,7 +679,13 @@ pub(super) fn ordered_subdivision_splits_with_partition_cache(
         partition_cache,
         polygon_bounds_cache,
         root_basis,
-    )?;
+    )
+    .map_err(|error| {
+        if cfg!(debug_assertions) {
+            eprintln!("[DEBUG] unique split attempts failed: {error}");
+        }
+        error
+    })?;
     let mut ranked_attempts = unique;
     ranked_attempts.sort_by(|left, right| {
         split_attempt_cheap_order_key(left).cmp(&split_attempt_cheap_order_key(right))
@@ -615,7 +700,13 @@ pub(super) fn ordered_subdivision_splits_with_partition_cache(
             polygon_bounds_cache,
             root_basis,
             &mut fanout_cache,
-        )?;
+        )
+        .map_err(|error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] split fanout key failed: {error}");
+            }
+            error
+        })?;
         fanout_ranked_attempts.push((attempt, fanout_key));
     }
     fanout_ranked_attempts
@@ -637,17 +728,25 @@ fn unique_subdivision_split_attempts_with_partition_cache(
 ) -> HypermeshResult<Vec<RankedSplitAttempt>> {
     let mut candidates = Vec::new();
     for split in root_basis {
-        if !split_value_is_strictly_inside_bounds(bounds, split.axis, &split.value)? {
-            continue;
+        match split_value_is_strictly_inside_bounds(bounds, split.axis, &split.value) {
+            Ok(true) => {}
+            Ok(false) | Err(crate::error::HypermeshError::UnknownClassification) => continue,
+            Err(error) => return Err(error),
         }
-        push_split_candidate_with_partition_cache(
+        match push_split_candidate_with_partition_cache(
             &mut candidates,
             polygons,
             split.axis,
             split.value.clone(),
             split.source,
             partition_cache,
-        )?;
+        ) {
+            Ok(()) => {}
+            Err(error) if is_backtrackable_split_error(&error) => {
+                crate::trace_dispatch!("ordered-splits", "candidate-skipped-uncertified");
+            }
+            Err(error) => return Err(error),
+        }
     }
 
     candidates.sort_by(|left, right| {
@@ -658,51 +757,63 @@ fn unique_subdivision_split_attempts_with_partition_cache(
     let mut unique = Vec::new();
     let mut seen_partitions = Vec::new();
     for candidate in candidates {
-        let unclipped_left_bounds = bounds.left_half(candidate.axis, candidate.value.clone());
-        let unclipped_right_bounds = bounds.right_half(candidate.axis, candidate.value.clone());
-        let split_partition = cached_split_child_partition_with(
-            partition_cache,
-            polygons,
-            candidate.axis,
-            &candidate.value,
-        )?;
-        let left_bounds = if split_partition.left_polys.is_empty() {
-            None
-        } else {
-            Some(cached_recursive_child_bounds_with(
-                polygon_bounds_cache,
+        let attempt = (|| {
+            let unclipped_left_bounds = bounds.left_half(candidate.axis, candidate.value.clone());
+            let unclipped_right_bounds = bounds.right_half(candidate.axis, candidate.value.clone());
+            let split_partition = cached_split_child_partition_with(
+                partition_cache,
                 polygons,
-                &split_partition.left_polys,
-                &unclipped_left_bounds,
-            )?)
+                candidate.axis,
+                &candidate.value,
+            )?;
+            let left_bounds = if split_partition.left_polys.is_empty() {
+                None
+            } else {
+                Some(cached_recursive_child_bounds_with(
+                    polygon_bounds_cache,
+                    polygons,
+                    &split_partition.left_polys,
+                    &unclipped_left_bounds,
+                )?)
+            };
+            let right_bounds = if split_partition.right_polys.is_empty() {
+                None
+            } else {
+                Some(cached_recursive_child_bounds_with(
+                    polygon_bounds_cache,
+                    polygons,
+                    &split_partition.right_polys,
+                    &unclipped_right_bounds,
+                )?)
+            };
+            if left_bounds.as_ref().is_some_and(|child_bounds| {
+                split_child_matches_parent_geometry(
+                    polygons,
+                    bounds,
+                    &split_partition.left_polys,
+                    child_bounds,
+                )
+            }) || right_bounds.as_ref().is_some_and(|child_bounds| {
+                split_child_matches_parent_geometry(
+                    polygons,
+                    bounds,
+                    &split_partition.right_polys,
+                    child_bounds,
+                )
+            }) {
+                return Ok(None);
+            }
+            Ok(Some((split_partition, left_bounds, right_bounds)))
+        })();
+        let (split_partition, left_bounds, right_bounds) = match attempt {
+            Ok(Some(attempt)) => attempt,
+            Ok(None) => continue,
+            Err(error) if is_backtrackable_split_error(&error) => {
+                crate::trace_dispatch!("ordered-splits", "rank-candidate-skipped-uncertified");
+                continue;
+            }
+            Err(error) => return Err(error),
         };
-        let right_bounds = if split_partition.right_polys.is_empty() {
-            None
-        } else {
-            Some(cached_recursive_child_bounds_with(
-                polygon_bounds_cache,
-                polygons,
-                &split_partition.right_polys,
-                &unclipped_right_bounds,
-            )?)
-        };
-        if left_bounds.as_ref().is_some_and(|child_bounds| {
-            split_child_matches_parent_geometry(
-                polygons,
-                bounds,
-                &split_partition.left_polys,
-                child_bounds,
-            )
-        }) || right_bounds.as_ref().is_some_and(|child_bounds| {
-            split_child_matches_parent_geometry(
-                polygons,
-                bounds,
-                &split_partition.right_polys,
-                child_bounds,
-            )
-        }) {
-            continue;
-        }
         if take_new_subdivision_child_partition(
             &mut seen_partitions,
             &split_partition.left_polys,
@@ -909,11 +1020,28 @@ pub(super) fn split_intersection_segments(
     Ok(segments)
 }
 
+#[cfg(test)]
 pub(super) fn split_intersection_segments_with_pairwise_cache(
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<Vec<IntersectionSegment>> {
-    let by_polygon = cached_pairwise_intersections_by_polygon_with(pairwise_cache, polygons)?;
+    split_intersection_segments_with_pairwise_cache_and_certified_embedded_inputs(
+        pairwise_cache,
+        polygons,
+        &[],
+    )
+}
+
+fn split_intersection_segments_with_pairwise_cache_and_certified_embedded_inputs(
+    pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
+    polygons: &[ConvexPolygon],
+    certified_embedded_inputs: &[bool],
+) -> HypermeshResult<Vec<IntersectionSegment>> {
+    let by_polygon = cached_pairwise_intersections_by_polygon_with_certified_embedded_inputs(
+        pairwise_cache,
+        polygons,
+        certified_embedded_inputs,
+    )?;
     let mut segments = Vec::new();
     for (polygon_idx, intersections) in by_polygon.iter().enumerate() {
         for intersection in intersections {
@@ -1088,7 +1216,7 @@ fn push_root_split_plane(
     source: SplitSource,
 ) -> HypermeshResult<()> {
     for existing in basis.iter_mut() {
-        if existing.axis == axis && compare_real(&existing.value, &value)?.is_eq() {
+        if existing.axis == axis && existing.value == value {
             if source < existing.source {
                 existing.source = source;
             }
@@ -1179,7 +1307,19 @@ pub(super) fn intersection_split_candidates_from_segments(
         for point in [&segment.v0, &segment.v1] {
             let value = axis_ref(point, axis);
             if compare_real(value, min)?.is_gt() && compare_real(value, max)?.is_lt() {
-                push_unique_ordered_axis_value(&mut values, value.clone())?;
+                match push_unique_ordered_axis_value(&mut values, value.clone()) {
+                    Ok(()) => {}
+                    Err(crate::error::HypermeshError::UnknownClassification) => {
+                        // Split-candidate order is only a search heuristic. Keep an
+                        // undecidable symbolic coordinate in encounter order rather
+                        // than turning an otherwise certified subdivision into an
+                        // exact-classification failure.
+                        if !values.iter().any(|existing| existing == value) {
+                            values.push(value.clone());
+                        }
+                    }
+                    Err(error) => return Err(error),
+                }
             }
         }
     }

@@ -1,6 +1,9 @@
 //! Public boolean operation entry points.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
+use hyperlattice::{
+    HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression,
+    intersect_three_planes,
+};
 use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
@@ -12,7 +15,10 @@ use crate::mesh::{
 use crate::output::{
     ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon, certify_output_polygon_closure,
 };
-use crate::polygon::{ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConvexPolygon};
+use crate::polygon::{
+    ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
+    InputTrianglePlanes,
+};
 use crate::predicate::PreparedProjectivePoint3;
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
@@ -156,7 +162,7 @@ pub fn boolean_operation(
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, config)?;
+    let computation = compute_boolean(meshes, operation, None, None, config)?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     let result = computation.into_result(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -176,7 +182,13 @@ pub fn boolean_operation_with_certified_convex_inputs(
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, Some(certified_convex_inputs), config)?;
+    let computation = compute_boolean(
+        meshes,
+        operation,
+        Some(certified_convex_inputs),
+        None,
+        config,
+    )?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     let result = computation.into_result(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -194,7 +206,7 @@ pub fn boolean_triangle_soup(
     config: EmberConfig,
 ) -> HypermeshResult<crate::output::TriangleSoup> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, config)?;
+    let computation = compute_boolean(meshes, operation, None, None, config)?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_triangle_soup(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -213,7 +225,41 @@ pub fn boolean_triangle_soup_with_certified_convex_inputs(
     config: EmberConfig,
 ) -> HypermeshResult<crate::output::TriangleSoup> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, Some(certified_convex_inputs), config)?;
+    let computation = compute_boolean(
+        meshes,
+        operation,
+        Some(certified_convex_inputs),
+        None,
+        config,
+    )?;
+    crate::trace_dispatch!("boolean-operation", "triangulate-output");
+    let soup = computation.into_triangle_soup(operation)?;
+    crate::trace_dispatch!("boolean-operation", "complete");
+    Ok(soup)
+}
+
+/// Performs a Boolean operation with exact convex-input facts and exact
+/// per-triangle plane certificates.
+///
+/// Each plane slice must align with the corresponding mesh's triangle slice.
+/// The supplied oriented support and boundary planes are used instead of
+/// reconstructing the same objects from transformed vertex coordinates,
+/// preserving affine-transform identities at the geometric-object boundary.
+pub fn boolean_triangle_soup_with_certified_convex_inputs_and_planes(
+    meshes: &[MeshRef<'_>],
+    operation: BooleanOp,
+    certified_convex_inputs: &[bool],
+    input_planes: &[&[InputTrianglePlanes]],
+    config: EmberConfig,
+) -> HypermeshResult<crate::output::TriangleSoup> {
+    crate::trace_dispatch!("boolean-operation", "start");
+    let computation = compute_boolean(
+        meshes,
+        operation,
+        Some(certified_convex_inputs),
+        Some(input_planes),
+        config,
+    )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_triangle_soup(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -224,6 +270,7 @@ fn compute_boolean(
     meshes: &[MeshRef<'_>],
     operation: BooleanOp,
     certified_convex_inputs: Option<&[bool]>,
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
     config: EmberConfig,
 ) -> HypermeshResult<BooleanComputation> {
     if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
@@ -232,49 +279,61 @@ fn compute_boolean(
     let certified_convex_inputs = certified_convex_inputs.unwrap_or(&[]);
     let use_two_convex_candidate = meshes.len() == 2 && certified_convex_inputs == [true, true];
     let mut soup = if use_two_convex_candidate {
-        build_polygon_soup_with_deferred_edges(meshes, certified_convex_inputs)?
+        build_polygon_soup_with_deferred_edges(meshes, certified_convex_inputs, input_planes)?
     } else if certified_convex_inputs.is_empty() {
         crate::mesh::build_polygon_soup(meshes)?
     } else {
-        build_polygon_soup_with_certified_convex_inputs(meshes, certified_convex_inputs)?
+        build_polygon_soup_with_certified_convex_inputs(
+            meshes,
+            certified_convex_inputs,
+            input_planes,
+        )?
     };
     let convex_candidate = if use_two_convex_candidate {
-        compute_two_convex_inputs_projectively(&soup.polygons, operation)
-            .ok()
-            .flatten()
+        match compute_two_convex_inputs_projectively(&soup.polygons, operation) {
+            Ok(candidate) => candidate,
+            Err(error) => {
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] projective convex candidate failed: {error}");
+                }
+                None
+            }
+        }
     } else {
         None
     };
-    let (classified, triangle_soup, input_edges_deferred) = if let Some(candidate) =
-        convex_candidate
-    {
-        (candidate.classified, Some(candidate.triangle_soup), true)
-    } else {
-        if use_two_convex_candidate {
-            soup =
-                build_polygon_soup_with_certified_convex_inputs(meshes, certified_convex_inputs)?;
-        }
-        let process_bounds = expanded_bounds(&soup.bounds);
-        let ref_point = outside_reference_point(&process_bounds);
-        let ref_wnv = vec![0; soup.num_meshes];
-        (
-            crate::subdivision::subdivide_boolean_with_certified_convex_inputs(
-                SubdivisionTask::new(
-                    std::mem::take(&mut soup.polygons),
-                    process_bounds,
-                    ref_point,
-                    ref_wnv,
-                ),
-                operation,
-                certified_convex_inputs,
-                SubdivisionConfig {
-                    max_depth: config.max_depth,
-                },
-            )?,
-            None,
-            false,
-        )
-    };
+    let (classified, triangle_soup, input_edges_deferred) =
+        if let Some(candidate) = convex_candidate {
+            (candidate.classified, Some(candidate.triangle_soup), true)
+        } else {
+            if use_two_convex_candidate {
+                soup = build_polygon_soup_with_certified_convex_inputs(
+                    meshes,
+                    certified_convex_inputs,
+                    input_planes,
+                )?;
+            }
+            let process_bounds = expanded_bounds(&soup.bounds);
+            let ref_point = outside_reference_point(&process_bounds);
+            let ref_wnv = vec![0; soup.num_meshes];
+            (
+                crate::subdivision::subdivide_boolean_with_certified_convex_inputs(
+                    SubdivisionTask::new(
+                        std::mem::take(&mut soup.polygons),
+                        process_bounds,
+                        ref_point,
+                        ref_wnv,
+                    ),
+                    operation,
+                    certified_convex_inputs,
+                    SubdivisionConfig {
+                        max_depth: config.max_depth,
+                    },
+                )?,
+                None,
+                false,
+            )
+        };
     Ok(BooleanComputation {
         soup,
         classified,
@@ -286,8 +345,10 @@ fn compute_boolean(
 #[derive(Clone)]
 struct ProjectiveCycle {
     points: Vec<HomogeneousPoint3>,
+    point_identities: Vec<ConstructionVertexIdentity>,
     edges: Vec<Plane>,
     edge_identities: Vec<ConstructionEdgeIdentity>,
+    support: Plane,
     source_plane: ConstructionPlaneIdentity,
     source_unchanged: bool,
 }
@@ -301,6 +362,7 @@ struct ProjectiveClip {
 #[derive(Default)]
 struct ProjectiveAffineCache {
     points: StorageHashMap<[usize; 4], ProjectiveAffineCacheEntry>,
+    identities: StorageHashMap<ConstructionVertexIdentity, Point3>,
 }
 
 struct ProjectiveAffineCacheEntry {
@@ -308,27 +370,27 @@ struct ProjectiveAffineCacheEntry {
     affine: Point3,
 }
 
-#[derive(Clone, Eq, Hash, PartialEq)]
-enum ProjectiveVertexIdentity {
-    SourceEdgePlane {
-        mesh: usize,
-        endpoints: [usize; 2],
-        plane: ConstructionPlaneIdentity,
-    },
-    PlaneTriple {
-        planes: [ConstructionPlaneIdentity; 3],
-    },
-}
-
 #[derive(Default)]
 struct ProjectivePointCache {
-    points: StorageHashMap<ProjectiveVertexIdentity, HomogeneousPoint3>,
+    points: StorageHashMap<ConstructionVertexIdentity, HomogeneousPoint3>,
+    canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
+    canonical_planes: StorageHashMap<ConstructionPlaneIdentity, ConstructionPlaneIdentity>,
+    approximate_points: StorageHashMap<[u64; 3], Vec<ConstructionVertexIdentity>>,
+    planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
+    source_edges: StorageHashMap<ConstructionEdgeIdentity, [Plane; 2]>,
+    source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
+    source_vertices: StorageHashMap<ConstructionVertexIdentity, [Plane; 3]>,
+    point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
+    canonical_edges: StorageHashMap<ConstructionEdgeIdentity, ConstructionEdgeIdentity>,
 }
 
 impl ConstructionEdgeIdentity {
-    fn intersection_identity(&self, plane: ConstructionPlaneIdentity) -> ProjectiveVertexIdentity {
+    fn intersection_identity(
+        &self,
+        plane: ConstructionPlaneIdentity,
+    ) -> ConstructionVertexIdentity {
         match self {
-            Self::Source { mesh, endpoints } => ProjectiveVertexIdentity::SourceEdgePlane {
+            Self::Source { mesh, endpoints } => ConstructionVertexIdentity::SourceEdgePlane {
                 mesh: *mesh,
                 endpoints: *endpoints,
                 plane,
@@ -336,10 +398,518 @@ impl ConstructionEdgeIdentity {
             Self::Split { planes: existing } => {
                 let mut planes = [existing[0], existing[1], plane];
                 planes.sort_unstable();
-                ProjectiveVertexIdentity::PlaneTriple { planes }
+                ConstructionVertexIdentity::PlaneTriple { planes }
             }
         }
     }
+}
+
+impl ProjectivePointCache {
+    fn canonical_plane_identity(
+        &self,
+        identity: ConstructionPlaneIdentity,
+    ) -> ConstructionPlaneIdentity {
+        self.canonical_planes
+            .get(&identity)
+            .copied()
+            .unwrap_or(identity)
+    }
+
+    fn edge_plane_intersection_identity(
+        &self,
+        edge: &ConstructionEdgeIdentity,
+        plane: ConstructionPlaneIdentity,
+    ) -> ConstructionVertexIdentity {
+        let plane = self.canonical_plane_identity(plane);
+        if let ConstructionEdgeIdentity::Source { .. } = edge
+            && let Some(supports) = self.source_edge_supports.get(edge)
+            && supports.len() >= 2
+        {
+            let mut planes = [supports[0], supports[1], plane];
+            planes.sort_unstable();
+            return ConstructionVertexIdentity::PlaneTriple { planes };
+        }
+        edge.intersection_identity(plane)
+    }
+
+    fn edge_definition_planes(&self, identity: &ConstructionEdgeIdentity) -> Option<[Plane; 2]> {
+        match identity {
+            ConstructionEdgeIdentity::Source { .. } => self.source_edges.get(identity).cloned(),
+            ConstructionEdgeIdentity::Split { planes } => Some([
+                self.planes.get(&planes[0])?.clone(),
+                self.planes.get(&planes[1])?.clone(),
+            ]),
+        }
+    }
+
+    fn canonical_edge_identity(
+        &mut self,
+        identity: &ConstructionEdgeIdentity,
+    ) -> ConstructionEdgeIdentity {
+        if let Some(canonical) = self.canonical_edges.get(identity) {
+            return canonical.clone();
+        }
+        let definition = self.edge_definition_planes(identity);
+        let canonical = definition.as_ref().and_then(|definition| {
+            let approximate = line_f64(definition)?;
+            self.canonical_edges
+                .values()
+                .find(|candidate| {
+                    let Some(candidate_definition) = self.edge_definition_planes(candidate) else {
+                        return false;
+                    };
+                    line_f64(&candidate_definition).is_some_and(|candidate| {
+                        candidate.iter().zip(approximate).all(|(left, right)| {
+                            let scale = left.abs().max(right.abs()).max(1.0);
+                            (left - right).abs() <= scale * 1.0e-9
+                        })
+                    }) && planes_certifiably_define_same_line(definition, &candidate_definition)
+                })
+                .cloned()
+        });
+        let canonical = canonical.unwrap_or_else(|| identity.clone());
+        self.canonical_edges
+            .insert(identity.clone(), canonical.clone());
+        canonical
+    }
+
+    fn record_incidence(
+        &mut self,
+        identity: &ConstructionVertexIdentity,
+        plane: ConstructionPlaneIdentity,
+    ) {
+        let plane = self.canonical_plane_identity(plane);
+        let incidences = self.point_incidences.entry(identity.clone()).or_default();
+        let inserted = if incidences.contains(&plane) {
+            false
+        } else {
+            incidences.push(plane);
+            true
+        };
+        if inserted && !matches!(identity, ConstructionVertexIdentity::Source { .. }) {
+            self.refresh_canonical_identity(identity);
+        }
+    }
+
+    fn canonical_vertex_identity(
+        &self,
+        identity: &ConstructionVertexIdentity,
+    ) -> ConstructionVertexIdentity {
+        let mut canonical = identity.clone();
+        while let Some(next) = self.canonical_identities.get(&canonical) {
+            if *next == canonical {
+                break;
+            }
+            canonical = next.clone();
+        }
+        canonical
+    }
+
+    fn refresh_canonical_identity(&mut self, identity: &ConstructionVertexIdentity) {
+        let Some(point) = self.points.get(identity).cloned() else {
+            return;
+        };
+        let exact_bucket_equivalent = projective_point_f64_key(&point)
+            .and_then(|key| self.approximate_points.get(&key))
+            .into_iter()
+            .flatten()
+            .find_map(|candidate_identity| {
+                let candidate = self
+                    .points
+                    .get(candidate_identity)
+                    .expect("approximate point identities are interned");
+                (candidate_identity != identity
+                    && self.identities_certifiably_equal(
+                        candidate_identity,
+                        candidate,
+                        identity,
+                        &point,
+                    ))
+                .then(|| self.canonical_vertex_identity(candidate_identity))
+            });
+        // The f64 projection only narrows the candidate set. Canonicalization
+        // still requires the exact incidence/construction-plane certificate.
+        let equivalent = exact_bucket_equivalent.or_else(|| {
+            let approximate = projective_point_f64(&point)?;
+            self.points
+                .iter()
+                .filter(|(candidate_identity, candidate)| {
+                    *candidate_identity != identity
+                        && projective_point_f64(candidate).is_some_and(|candidate| {
+                            candidate.iter().zip(approximate).all(|(left, right)| {
+                                let scale = left.abs().max(right.abs()).max(1.0);
+                                (left - right).abs() <= scale * 1.0e-9
+                            })
+                        })
+                })
+                .find_map(|(candidate_identity, candidate)| {
+                    self.identities_certifiably_equal(
+                        candidate_identity,
+                        candidate,
+                        identity,
+                        &point,
+                    )
+                    .then(|| self.canonical_vertex_identity(candidate_identity))
+                })
+        });
+        if let Some(canonical) = equivalent {
+            self.canonical_identities
+                .insert(identity.clone(), canonical);
+        }
+    }
+
+    fn record_definition_incidences(&mut self, identity: &ConstructionVertexIdentity) {
+        let planes = match identity {
+            ConstructionVertexIdentity::Source { .. } => return,
+            ConstructionVertexIdentity::SourceEdgePlane {
+                mesh,
+                endpoints,
+                plane,
+            } => {
+                let edge = ConstructionEdgeIdentity::Source {
+                    mesh: *mesh,
+                    endpoints: *endpoints,
+                };
+                let mut planes = self
+                    .source_edge_supports
+                    .get(&edge)
+                    .cloned()
+                    .unwrap_or_default();
+                planes.push(*plane);
+                planes
+            }
+            ConstructionVertexIdentity::PlaneTriple { planes } => planes.to_vec(),
+        };
+        for plane in planes {
+            self.record_incidence(identity, plane);
+        }
+    }
+
+    fn definition_planes(&self, identity: &ConstructionVertexIdentity) -> Option<[Plane; 3]> {
+        match identity {
+            ConstructionVertexIdentity::Source { .. } => {
+                self.source_vertices.get(identity).cloned()
+            }
+            ConstructionVertexIdentity::SourceEdgePlane {
+                mesh,
+                endpoints,
+                plane,
+            } => {
+                let edge = ConstructionEdgeIdentity::Source {
+                    mesh: *mesh,
+                    endpoints: *endpoints,
+                };
+                let [support, boundary] = self.source_edges.get(&edge)?;
+                Some([
+                    support.clone(),
+                    boundary.clone(),
+                    self.planes.get(plane)?.clone(),
+                ])
+            }
+            ConstructionVertexIdentity::PlaneTriple { planes } => Some([
+                self.planes.get(&planes[0])?.clone(),
+                self.planes.get(&planes[1])?.clone(),
+                self.planes.get(&planes[2])?.clone(),
+            ]),
+        }
+    }
+
+    fn identities_certifiably_equal(
+        &self,
+        left_identity: &ConstructionVertexIdentity,
+        left: &HomogeneousPoint3,
+        right_identity: &ConstructionVertexIdentity,
+        right: &HomogeneousPoint3,
+    ) -> bool {
+        let identity_on_triple =
+            |identity: &ConstructionVertexIdentity, triple: &ConstructionVertexIdentity| {
+                let ConstructionVertexIdentity::PlaneTriple { planes } = triple else {
+                    return false;
+                };
+                self.point_incidences
+                    .get(identity)
+                    .is_some_and(|incidences| planes.iter().all(|plane| incidences.contains(plane)))
+            };
+        if identity_on_triple(left_identity, right_identity)
+            || identity_on_triple(right_identity, left_identity)
+        {
+            return true;
+        }
+        let left_definition = self.definition_planes(left_identity);
+        let right_definition = self.definition_planes(right_identity);
+        if let (Some(left_definition), Some(right_definition)) =
+            (&left_definition, &right_definition)
+        {
+            let definitions_equal = right_definition.iter().all(|plane| {
+                let determinant = crate::intersection::four_plane_determinant(
+                    &left_definition[0],
+                    &left_definition[1],
+                    &left_definition[2],
+                    plane,
+                );
+                crate::predicate::classify_real(&determinant) == Ok(Classification::On)
+            }) && left_definition.iter().all(|plane| {
+                let determinant = crate::intersection::four_plane_determinant(
+                    &right_definition[0],
+                    &right_definition[1],
+                    &right_definition[2],
+                    plane,
+                );
+                crate::predicate::classify_real(&determinant) == Ok(Classification::On)
+            });
+            if definitions_equal {
+                return true;
+            }
+        }
+        let point_satisfies = |point: &HomogeneousPoint3, definition: &[Plane; 3]| {
+            definition.iter().all(|plane| {
+                crate::predicate::classify_real(&homogeneous_point_plane_expression(point, plane))
+                    == Ok(Classification::On)
+            })
+        };
+        match (left_definition.as_ref(), right_definition.as_ref()) {
+            (Some(definition), None) => point_satisfies(right, definition),
+            (None, Some(definition)) => point_satisfies(left, definition),
+            (None, None) => projective_points_certifiably_equal(left, right),
+            (Some(_), Some(_)) => projective_points_certifiably_equal(left, right),
+        }
+    }
+
+    fn intern(
+        &mut self,
+        identity: ConstructionVertexIdentity,
+        point: HomogeneousPoint3,
+    ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
+        self.record_definition_incidences(&identity);
+        if let Some(existing) = self.points.get(&identity) {
+            let canonical_identity = self
+                .canonical_identities
+                .get(&identity)
+                .cloned()
+                .unwrap_or_else(|| identity.clone());
+            return (existing.clone(), canonical_identity);
+        }
+        let approximate_key = projective_point_f64_key(&point);
+        let exact_bucket_equivalent = approximate_key
+            .and_then(|key| self.approximate_points.get(&key))
+            .into_iter()
+            .flatten()
+            .find_map(|existing_identity| {
+                let existing = self
+                    .points
+                    .get(existing_identity)
+                    .expect("approximate point identities are interned");
+                self.identities_certifiably_equal(existing_identity, existing, &identity, &point)
+                    .then(|| (existing.clone(), existing_identity.clone()))
+            });
+        // Algebraically identical projective constructions can round to nearby,
+        // rather than bit-identical, affine f64 values when they use different
+        // determinant formulas.  Approximation is only a candidate accelerator
+        // here: a point is canonicalized exclusively after the exact
+        // construction-plane certificate above succeeds.
+        let equivalent = exact_bucket_equivalent.or_else(|| {
+            let approximate = projective_point_f64(&point)?;
+            self.points
+                .iter()
+                .filter(|(_, existing)| {
+                    projective_point_f64(existing).is_some_and(|candidate| {
+                        candidate.iter().zip(approximate).all(|(left, right)| {
+                            let scale = left.abs().max(right.abs()).max(1.0);
+                            (left - right).abs() <= scale * 1.0e-9
+                        })
+                    })
+                })
+                .find_map(|(existing_identity, existing)| {
+                    self.identities_certifiably_equal(
+                        existing_identity,
+                        existing,
+                        &identity,
+                        &point,
+                    )
+                    .then(|| (existing.clone(), existing_identity.clone()))
+                })
+        });
+        let (canonical, canonical_identity) =
+            equivalent.unwrap_or_else(|| (point, identity.clone()));
+        let canonical_identity = self
+            .canonical_identities
+            .get(&canonical_identity)
+            .cloned()
+            .unwrap_or(canonical_identity);
+        self.points.insert(identity.clone(), canonical.clone());
+        self.canonical_identities
+            .insert(identity.clone(), canonical_identity.clone());
+        if let Some(key) = approximate_key {
+            self.approximate_points
+                .entry(key)
+                .or_default()
+                .push(identity);
+        }
+        (canonical, canonical_identity)
+    }
+}
+
+fn projective_point_f64(point: &HomogeneousPoint3) -> Option<[f64; 3]> {
+    let weight = point.w.to_f64_lossy()?;
+    if weight == 0.0 || !weight.is_finite() {
+        return None;
+    }
+    let coordinates = [&point.x, &point.y, &point.z].map(|coordinate| {
+        let value = coordinate.to_f64_lossy()? / weight;
+        value.is_finite().then_some(value)
+    });
+    let [Some(x), Some(y), Some(z)] = coordinates else {
+        return None;
+    };
+    Some([x, y, z])
+}
+
+fn affine_point_f64(point: &Point3) -> Option<[f64; 3]> {
+    let point = [
+        point.x.to_f64_lossy()?,
+        point.y.to_f64_lossy()?,
+        point.z.to_f64_lossy()?,
+    ];
+    point.into_iter().all(f64::is_finite).then_some(point)
+}
+
+fn projective_point_f64_key(point: &HomogeneousPoint3) -> Option<[u64; 3]> {
+    projective_point_f64(point).map(|point| point.map(f64::to_bits))
+}
+
+fn projective_point_plane_may_be_on(point: &HomogeneousPoint3, plane: &Plane) -> bool {
+    projective_point_f64(point).is_none_or(|point| affine_point_plane_may_be_on(point, plane))
+}
+
+fn affine_point_plane_may_be_on(point: [f64; 3], plane: &Plane) -> bool {
+    match plane_f64(plane) {
+        Some(plane) => {
+            let value = plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3];
+            let scale = point.into_iter().map(f64::abs).fold(1.0_f64, f64::max);
+            value.abs() <= scale * 1.0e-9
+        }
+        None => true,
+    }
+}
+
+fn projective_points_certifiably_equal(
+    left: &HomogeneousPoint3,
+    right: &HomogeneousPoint3,
+) -> bool {
+    let left = [&left.x, &left.y, &left.z, &left.w];
+    let right = [&right.x, &right.y, &right.z, &right.w];
+    for first in 0..left.len() {
+        for second in (first + 1)..left.len() {
+            let minor = Real::signed_product_sum(
+                [true, false],
+                [[left[first], right[second]], [left[second], right[first]]],
+            );
+            if crate::predicate::classify_real(&minor) != Ok(Classification::On) {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn line_f64(planes: &[Plane; 2]) -> Option<[f64; 6]> {
+    let coefficients = planes.each_ref().map(|plane| {
+        let values = [
+            plane.normal.x.to_f64_lossy()?,
+            plane.normal.y.to_f64_lossy()?,
+            plane.normal.z.to_f64_lossy()?,
+            plane.offset.to_f64_lossy()?,
+        ];
+        values.into_iter().all(f64::is_finite).then_some(values)
+    });
+    let [Some(first), Some(second)] = coefficients else {
+        return None;
+    };
+    let direction = [
+        first[1] * second[2] - first[2] * second[1],
+        first[2] * second[0] - first[0] * second[2],
+        first[0] * second[1] - first[1] * second[0],
+    ];
+    let moment = [
+        first[3] * second[0] - second[3] * first[0],
+        first[3] * second[1] - second[3] * first[1],
+        first[3] * second[2] - second[3] * first[2],
+    ];
+    let norm = direction
+        .iter()
+        .map(|value| value * value)
+        .sum::<f64>()
+        .sqrt();
+    if norm == 0.0 || !norm.is_finite() {
+        return None;
+    }
+    let orientation = if direction
+        .iter()
+        .max_by(|left, right| left.abs().total_cmp(&right.abs()))
+        .copied()?
+        .is_sign_negative()
+    {
+        -1.0
+    } else {
+        1.0
+    };
+    let scale = orientation / norm;
+    Some([
+        direction[0] * scale,
+        direction[1] * scale,
+        direction[2] * scale,
+        moment[0] * scale,
+        moment[1] * scale,
+        moment[2] * scale,
+    ])
+}
+
+fn planes_certifiably_define_same_line(left: &[Plane; 2], right: &[Plane; 2]) -> bool {
+    right
+        .iter()
+        .all(|plane| plane_in_span_of_two_planes(plane, left))
+        && left
+            .iter()
+            .all(|plane| plane_in_span_of_two_planes(plane, right))
+}
+
+fn plane_in_span_of_two_planes(plane: &Plane, span: &[Plane; 2]) -> bool {
+    let [first, second, third] = [
+        [
+            &span[0].normal.x,
+            &span[0].normal.y,
+            &span[0].normal.z,
+            &span[0].offset,
+        ],
+        [
+            &span[1].normal.x,
+            &span[1].normal.y,
+            &span[1].normal.z,
+            &span[1].offset,
+        ],
+        [
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ],
+    ];
+    [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]]
+        .into_iter()
+        .all(|[a, b, c]| {
+            let determinant = Real::signed_product_sum(
+                [true, true, true, false, false, false],
+                [
+                    [first[a], second[b], third[c]],
+                    [first[b], second[c], third[a]],
+                    [first[c], second[a], third[b]],
+                    [first[c], second[b], third[a]],
+                    [first[b], second[a], third[c]],
+                    [first[a], second[c], third[b]],
+                ],
+            );
+            crate::predicate::classify_real(&determinant) == Ok(Classification::On)
+        })
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -379,9 +949,23 @@ impl PointPlaneClassificationCache {
         plane: &Plane,
         plane_index: usize,
         plane_count: usize,
-    ) -> HypermeshResult<SourcePlaneRelation> {
+    ) -> HypermeshResult<(SourcePlaneRelation, Vec<usize>)> {
+        if certifiably_same_unoriented_plane(&polygon.support, plane) {
+            let on_source_vertices = polygon
+                .known_vertex_identities
+                .as_deref()
+                .into_iter()
+                .flatten()
+                .filter_map(|identity| match identity {
+                    ConstructionVertexIdentity::Source { vertex, .. } => Some(*vertex),
+                    _ => None,
+                })
+                .collect();
+            return Ok((SourcePlaneRelation::Inside, on_source_vertices));
+        }
         let mut has_negative = false;
         let mut has_positive = false;
+        let mut on_source_vertices = Vec::new();
         let edge_identities = polygon.known_edge_identities.as_deref();
         for (point_index, point) in polygon
             .known_vertices
@@ -395,17 +979,24 @@ impl PointPlaneClassificationCache {
             match self.classify(point, source_vertex, plane, plane_index, plane_count)? {
                 Classification::Negative => has_negative = true,
                 Classification::Positive => has_positive = true,
-                Classification::On => {}
+                Classification::On => {
+                    if let Some(source_vertex) = source_vertex {
+                        on_source_vertices.push(source_vertex);
+                    }
+                }
             }
             if has_positive && has_negative {
-                return Ok(SourcePlaneRelation::Crossing);
+                return Ok((SourcePlaneRelation::Crossing, on_source_vertices));
             }
         }
-        Ok(if has_positive {
-            SourcePlaneRelation::Outside
-        } else {
-            SourcePlaneRelation::Inside
-        })
+        Ok((
+            if has_positive {
+                SourcePlaneRelation::Outside
+            } else {
+                SourcePlaneRelation::Inside
+            },
+            on_source_vertices,
+        ))
     }
 
     fn classify(
@@ -515,33 +1106,86 @@ fn source_vertex_index(
 }
 
 impl ProjectiveCycle {
+    fn point_has_plane_incidence(
+        &self,
+        point_index: usize,
+        plane_identity: ConstructionPlaneIdentity,
+        plane: &Plane,
+    ) -> bool {
+        if self.source_plane == plane_identity
+            || certifiably_same_unoriented_plane(&self.support, plane)
+        {
+            return true;
+        }
+        if self.edge_identities.is_empty() {
+            return false;
+        }
+        let previous = if point_index == 0 {
+            self.edge_identities.len() - 1
+        } else {
+            point_index - 1
+        };
+        [previous, point_index].into_iter().any(|edge_index| {
+            matches!(
+                self.edge_identities.get(edge_index),
+                Some(ConstructionEdgeIdentity::Split { planes })
+                    if planes.contains(&plane_identity)
+            )
+        }) || (projective_point_plane_may_be_on(&self.points[point_index], plane)
+            && crate::intersection::four_plane_determinant(
+                &self.support,
+                &self.edges[previous],
+                &self.edges[point_index],
+                plane,
+            )
+            .definitely_zero())
+    }
+
     fn from_polygon(
         polygon: &ConvexPolygon,
         source_plane: ConstructionPlaneIdentity,
+        point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
         let source_points = polygon
             .known_vertices
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-        let points = source_points
-            .iter()
-            .map(|point| {
-                HomogeneousPoint3::new(
-                    point.x.clone(),
-                    point.y.clone(),
-                    point.z.clone(),
-                    Real::one(),
-                )
-            })
-            .collect::<Vec<_>>();
         let edge_identities = polygon
             .known_edge_identities
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?
             .to_vec();
-        if edge_identities.len() != points.len() {
+        if edge_identities.len() != source_points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
+        let point_identities = (0..source_points.len())
+            .map(|point_index| {
+                let vertex = source_vertex_index(&edge_identities, point_index)
+                    .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+                let mesh = match &edge_identities[point_index] {
+                    ConstructionEdgeIdentity::Source { mesh, .. } => *mesh,
+                    ConstructionEdgeIdentity::Split { .. } => {
+                        return Err(crate::error::HypermeshError::UnknownClassification);
+                    }
+                };
+                Ok(ConstructionVertexIdentity::Source { mesh, vertex })
+            })
+            .collect::<HypermeshResult<Vec<_>>>()?;
+        let (points, point_identities): (Vec<_>, Vec<_>) = source_points
+            .iter()
+            .zip(point_identities.iter().cloned())
+            .map(|(point, identity)| {
+                point_cache.intern(
+                    identity,
+                    HomogeneousPoint3::new(
+                        point.x.clone(),
+                        point.y.clone(),
+                        point.z.clone(),
+                        Real::one(),
+                    ),
+                )
+            })
+            .unzip();
         let edges = match polygon.edges.len() {
             len if len == points.len() => polygon.edges.as_ref().clone(),
             1 => vec![polygon.edges[0].clone(); points.len()],
@@ -549,8 +1193,10 @@ impl ProjectiveCycle {
         };
         Ok(Self {
             points,
+            point_identities,
             edges,
             edge_identities,
+            support: polygon.support.clone(),
             source_plane,
             source_unchanged: true,
         })
@@ -562,11 +1208,34 @@ impl ProjectiveCycle {
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
+        let plane_identity = point_cache.canonical_plane_identity(plane_identity);
         let evaluated = self
             .points
             .iter()
-            .map(|point| projective_plane_value(point, plane))
+            .enumerate()
+            .map(|(point_index, point)| {
+                if self.point_has_plane_incidence(point_index, plane_identity, plane) {
+                    Ok((Real::zero(), Classification::On))
+                } else {
+                    projective_plane_value(point, plane).inspect_err(|_error| {
+                        if cfg!(debug_assertions) {
+                            eprintln!(
+                                "[DEBUG] projective clip point failed: source={:?} target={:?} point={point_index} value={:?}",
+                                self.source_plane,
+                                plane_identity,
+                                hyperlattice::homogeneous_point_plane_expression(point, plane)
+                                    .to_f64_lossy(),
+                            );
+                        }
+                    })
+                }
+            })
             .collect::<HypermeshResult<Vec<_>>>()?;
+        for (point_index, (_, classification)) in evaluated.iter().enumerate() {
+            if *classification == Classification::On {
+                point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
+            }
+        }
         let has_negative = evaluated
             .iter()
             .any(|(_, classification)| classification.is_negative());
@@ -590,9 +1259,11 @@ impl ProjectiveCycle {
 
         let inverted = plane.inverted();
         let mut negative = Vec::with_capacity(self.points.len() + 1);
+        let mut negative_point_identities = Vec::with_capacity(self.points.len() + 1);
         let mut negative_edges = Vec::with_capacity(self.edges.len() + 1);
         let mut negative_edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
         let mut positive = Vec::with_capacity(self.points.len() + 1);
+        let mut positive_point_identities = Vec::with_capacity(self.points.len() + 1);
         let mut positive_edges = Vec::with_capacity(self.edges.len() + 1);
         let mut positive_edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
@@ -628,6 +1299,7 @@ impl ProjectiveCycle {
                 &split_identity,
                 false,
                 &mut negative,
+                &mut negative_point_identities,
                 &mut negative_edges,
                 &mut negative_edge_identities,
             );
@@ -640,32 +1312,39 @@ impl ProjectiveCycle {
                 &split_identity,
                 true,
                 &mut positive,
+                &mut positive_point_identities,
                 &mut positive_edges,
                 &mut positive_edge_identities,
             );
         }
         remove_closing_labeled_duplicate(
             &mut negative,
+            &mut negative_point_identities,
             &mut negative_edges,
             &mut negative_edge_identities,
         );
         remove_closing_labeled_duplicate(
             &mut positive,
+            &mut positive_point_identities,
             &mut positive_edges,
             &mut positive_edge_identities,
         );
         Ok(ProjectiveClip {
             negative: Self {
                 points: negative,
+                point_identities: negative_point_identities,
                 edges: negative_edges,
                 edge_identities: negative_edge_identities,
+                support: self.support.clone(),
                 source_plane: self.source_plane,
                 source_unchanged: false,
             },
             positive: Self {
                 points: positive,
+                point_identities: positive_point_identities,
                 edges: positive_edges,
                 edge_identities: positive_edge_identities,
+                support: self.support.clone(),
                 source_plane: self.source_plane,
                 source_unchanged: false,
             },
@@ -679,11 +1358,57 @@ impl ProjectiveCycle {
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
+        let plane_identity = point_cache.canonical_plane_identity(plane_identity);
         let evaluated = self
             .points
             .iter()
-            .map(|point| projective_plane_value(point, plane))
+            .enumerate()
+            .map(|(point_index, point)| {
+                if self.point_has_plane_incidence(point_index, plane_identity, plane) {
+                    Ok((Real::zero(), Classification::On))
+                } else {
+                    projective_plane_value(point, plane).inspect_err(|_error| {
+                        if cfg!(debug_assertions) {
+                            eprintln!(
+                                "[DEBUG] projective negative clip point failed: source={:?} target={:?} point={point_index} identity={:?} adjacent={:?} point_xyz={:?} plane={:?} exact={:?} value={:?}",
+                                self.source_plane,
+                                plane_identity,
+                                self.point_identities.get(point_index),
+                                [
+                                    self.edge_identities.get(if point_index == 0 { self.edge_identities.len() - 1 } else { point_index - 1 }),
+                                    self.edge_identities.get(point_index),
+                                ],
+                                [
+                                    point.x.to_f64_lossy(),
+                                    point.y.to_f64_lossy(),
+                                    point.z.to_f64_lossy(),
+                                    point.w.to_f64_lossy(),
+                                ],
+                                [
+                                    plane.normal.x.to_f64_lossy(),
+                                    plane.normal.y.to_f64_lossy(),
+                                    plane.normal.z.to_f64_lossy(),
+                                    plane.offset.to_f64_lossy(),
+                                ],
+                                [
+                                    plane.normal.x.exact_rational_ref().is_some(),
+                                    plane.normal.y.exact_rational_ref().is_some(),
+                                    plane.normal.z.exact_rational_ref().is_some(),
+                                    plane.offset.exact_rational_ref().is_some(),
+                                ],
+                                hyperlattice::homogeneous_point_plane_expression(point, plane)
+                                    .to_f64_lossy(),
+                            );
+                        }
+                    })
+                }
+            })
             .collect::<HypermeshResult<Vec<_>>>()?;
+        for (point_index, (_, classification)) in evaluated.iter().enumerate() {
+            if *classification == Classification::On {
+                point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
+            }
+        }
         let has_negative = evaluated
             .iter()
             .any(|(_, classification)| classification.is_negative());
@@ -697,6 +1422,7 @@ impl ProjectiveCycle {
             return Ok(Self::empty());
         }
         let mut points = Vec::with_capacity(self.points.len() + 1);
+        let mut point_identities = Vec::with_capacity(self.points.len() + 1);
         let mut edges = Vec::with_capacity(self.edges.len() + 1);
         let mut edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
@@ -732,15 +1458,23 @@ impl ProjectiveCycle {
                 &split_identity,
                 false,
                 &mut points,
+                &mut point_identities,
                 &mut edges,
                 &mut edge_identities,
             );
         }
-        remove_closing_labeled_duplicate(&mut points, &mut edges, &mut edge_identities);
+        remove_closing_labeled_duplicate(
+            &mut points,
+            &mut point_identities,
+            &mut edges,
+            &mut edge_identities,
+        );
         Ok(Self {
             points,
+            point_identities,
             edges,
             edge_identities,
+            support: self.support.clone(),
             source_plane: self.source_plane,
             source_unchanged: false,
         })
@@ -757,11 +1491,9 @@ impl ProjectiveCycle {
         next: &HomogeneousPoint3,
         next_value: &Real,
         point_cache: &mut ProjectivePointCache,
-    ) -> HomogeneousPoint3 {
-        let identity = self.edge_identities[edge_index].intersection_identity(plane_identity);
-        if let Some(point) = point_cache.points.get(&identity) {
-            return point.clone();
-        }
+    ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
+        let identity = point_cache
+            .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
         let point = projective_crossing_point(
             current,
             current_value,
@@ -769,8 +1501,7 @@ impl ProjectiveCycle {
             next,
             next_value,
         );
-        point_cache.points.insert(identity, point.clone());
-        point
+        point_cache.intern(identity, point)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -779,11 +1510,12 @@ impl ProjectiveCycle {
         index: usize,
         current_classification: Classification,
         next_classification: Classification,
-        intersection: Option<&HomogeneousPoint3>,
+        intersection: Option<&(HomogeneousPoint3, ConstructionVertexIdentity)>,
         split_edge: &Plane,
         split_identity: &ConstructionEdgeIdentity,
         positive: bool,
         points: &mut Vec<HomogeneousPoint3>,
+        point_identities: &mut Vec<ConstructionVertexIdentity>,
         edges: &mut Vec<Plane>,
         edge_identities: &mut Vec<ConstructionEdgeIdentity>,
     ) {
@@ -800,9 +1532,11 @@ impl ProjectiveCycle {
         if current_inside && next_inside {
             push_labeled_projective(
                 points,
+                point_identities,
                 edges,
                 edge_identities,
                 self.points[index].clone(),
+                self.point_identities[index].clone(),
                 self.edges[index].clone(),
                 self.edge_identities[index].clone(),
             );
@@ -810,27 +1544,37 @@ impl ProjectiveCycle {
             if current_classification == Classification::On {
                 push_labeled_projective(
                     points,
+                    point_identities,
                     edges,
                     edge_identities,
                     self.points[index].clone(),
+                    self.point_identities[index].clone(),
                     split_edge.clone(),
                     split_identity.clone(),
                 );
             } else {
                 push_labeled_projective(
                     points,
+                    point_identities,
                     edges,
                     edge_identities,
                     self.points[index].clone(),
+                    self.point_identities[index].clone(),
                     self.edges[index].clone(),
                     self.edge_identities[index].clone(),
                 );
                 push_labeled_projective(
                     points,
+                    point_identities,
                     edges,
                     edge_identities,
                     intersection
                         .expect("strict side transition has an intersection")
+                        .0
+                        .clone(),
+                    intersection
+                        .expect("strict side transition has an intersection")
+                        .1
                         .clone(),
                     split_edge.clone(),
                     split_identity.clone(),
@@ -839,10 +1583,16 @@ impl ProjectiveCycle {
         } else if next_inside && next_classification != Classification::On {
             push_labeled_projective(
                 points,
+                point_identities,
                 edges,
                 edge_identities,
                 intersection
                     .expect("strict side transition has an intersection")
+                    .0
+                    .clone(),
+                intersection
+                    .expect("strict side transition has an intersection")
+                    .1
                     .clone(),
                 self.edges[index].clone(),
                 self.edge_identities[index].clone(),
@@ -861,10 +1611,15 @@ impl ProjectiveCycle {
         let vertices = self
             .points
             .iter()
-            .map(|point| affine_cache.resolve(point))
+            .enumerate()
+            .map(|(point_index, point)| {
+                affine_cache.resolve(point, Some(self.point_identities[point_index].clone()))
+            })
             .collect::<HypermeshResult<Vec<_>>>()?;
+        let vertex_identities = self.point_identities.clone();
         Ok(source.with_known_vertex_cycle_and_edges(
             vertices,
+            vertex_identities,
             self.edges.clone(),
             self.edge_identities.clone(),
         ))
@@ -873,8 +1628,15 @@ impl ProjectiveCycle {
     fn empty() -> Self {
         Self {
             points: Vec::new(),
+            point_identities: Vec::new(),
             edges: Vec::new(),
             edge_identities: Vec::new(),
+            support: Plane::from_coefficients(
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+            ),
             source_plane: ConstructionPlaneIdentity {
                 mesh: usize::MAX,
                 plane: usize::MAX,
@@ -885,7 +1647,16 @@ impl ProjectiveCycle {
 }
 
 impl ProjectiveAffineCache {
-    fn resolve(&mut self, point: &HomogeneousPoint3) -> HypermeshResult<Point3> {
+    fn resolve(
+        &mut self,
+        point: &HomogeneousPoint3,
+        identity: Option<ConstructionVertexIdentity>,
+    ) -> HypermeshResult<Point3> {
+        if let Some(identity) = identity.as_ref()
+            && let Some(affine) = self.identities.get(identity)
+        {
+            return Ok(affine.clone());
+        }
         let coordinates = [
             point.x.exact_rational_ref(),
             point.y.exact_rational_ref(),
@@ -905,9 +1676,16 @@ impl ProjectiveAffineCache {
                     affine: affine.clone(),
                 },
             );
+            if let Some(identity) = identity {
+                self.identities.insert(identity, affine.clone());
+            }
             return Ok(affine);
         }
-        affine_projective_point(point)
+        let affine = affine_projective_point(point)?;
+        if let Some(identity) = identity {
+            self.identities.insert(identity, affine.clone());
+        }
+        Ok(affine)
     }
 }
 
@@ -940,8 +1718,14 @@ fn compute_two_convex_inputs_projectively(
         if mesh >= support_planes.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
+        let equivalent_plane = support_planes[mesh].iter().position(|existing| {
+            planes_may_be_same(existing, &polygon.support)
+                && certifiably_same_oriented_plane(existing, &polygon.support).unwrap_or(false)
+        });
         let storage_key = exact_plane_storage_key(&polygon.support);
-        let plane = if let Some(index) =
+        let plane = if let Some(index) = equivalent_plane {
+            index
+        } else if let Some(index) =
             storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied())
         {
             index
@@ -984,30 +1768,178 @@ fn compute_two_convex_inputs_projectively(
     }
     let support_planes_f64 =
         support_plane_f64_values.map(|planes| planes.into_iter().collect::<Option<Vec<_>>>());
-
+    let canonical_plane_identities = canonical_plane_identities(&support_planes);
+    let (projective_polygons, mut projective_polygon_support_planes) =
+        match collapse_certified_convex_faces(polygons, &polygon_support_planes, &support_planes) {
+            Ok(collapsed) => collapsed,
+            Err(crate::error::HypermeshError::UnknownClassification) => {
+                (polygons.to_vec(), polygon_support_planes)
+            }
+            Err(error) => return Err(error),
+        };
+    for identity in &mut projective_polygon_support_planes {
+        *identity = canonical_plane_identities[identity.mesh][identity.plane];
+    }
+    let polygons = projective_polygons.as_slice();
+    let polygon_support_planes = projective_polygon_support_planes;
     let mut classified = Vec::new();
     let mut point_plane_caches: [PointPlaneClassificationCache; 2] =
         std::array::from_fn(|_| PointPlaneClassificationCache::default());
     let mut affine_cache = ProjectiveAffineCache::default();
     let mut projective_point_cache = ProjectivePointCache::default();
+    for (mesh, planes) in support_planes.iter().enumerate() {
+        for (plane, value) in planes.iter().enumerate() {
+            let identity = ConstructionPlaneIdentity { mesh, plane };
+            let canonical = canonical_plane_identities[mesh][plane];
+            projective_point_cache
+                .planes
+                .entry(canonical)
+                .or_insert_with(|| (*value).clone());
+            projective_point_cache
+                .canonical_planes
+                .insert(identity, canonical);
+        }
+    }
+    let mut source_vertex_supports: StorageHashMap<
+        ConstructionVertexIdentity,
+        Vec<ConstructionPlaneIdentity>,
+    > = StorageHashMap::default();
+    let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, Point3> =
+        StorageHashMap::default();
+    for (polygon, support_identity) in polygons.iter().zip(&polygon_support_planes) {
+        if let Some(vertex_identities) = polygon.known_vertex_identities.as_ref() {
+            let retained_vertices = polygon.known_vertices.as_ref();
+            for (vertex_index, vertex_identity) in vertex_identities.iter().enumerate() {
+                if matches!(vertex_identity, ConstructionVertexIdentity::Source { .. }) {
+                    let supports = source_vertex_supports
+                        .entry(vertex_identity.clone())
+                        .or_default();
+                    if !supports.contains(support_identity) {
+                        supports.push(*support_identity);
+                    }
+                    let incidences = projective_point_cache
+                        .point_incidences
+                        .entry(vertex_identity.clone())
+                        .or_default();
+                    if !incidences.contains(support_identity) {
+                        incidences.push(*support_identity);
+                    }
+                    if let Some(point) =
+                        retained_vertices.and_then(|vertices| vertices.get(vertex_index))
+                    {
+                        source_vertex_points
+                            .entry(vertex_identity.clone())
+                            .or_insert_with(|| point.clone());
+                    }
+                }
+            }
+        }
+        let Some(edge_identities) = polygon.known_edge_identities.as_ref() else {
+            continue;
+        };
+        if edge_identities.len() != polygon.edges.len() {
+            continue;
+        }
+        let Some(support) = projective_point_cache.planes.get(support_identity).cloned() else {
+            continue;
+        };
+        for (edge_identity, edge_plane) in edge_identities.iter().zip(polygon.edges.iter()) {
+            if matches!(edge_identity, ConstructionEdgeIdentity::Source { .. }) {
+                projective_point_cache
+                    .source_edges
+                    .entry(edge_identity.clone())
+                    .or_insert_with(|| [support.clone(), edge_plane.clone()]);
+                let supports = projective_point_cache
+                    .source_edge_supports
+                    .entry(edge_identity.clone())
+                    .or_default();
+                if !supports.contains(support_identity) {
+                    supports.push(*support_identity);
+                }
+            }
+        }
+    }
+    for (identity, point) in &source_vertex_points {
+        let ConstructionVertexIdentity::Source { mesh, .. } = identity else {
+            continue;
+        };
+        let other = 1 - *mesh;
+        for (plane, value) in support_planes[other].iter().enumerate() {
+            if affine_point_f64(point)
+                .is_none_or(|point| affine_point_plane_may_be_on(point, value))
+                && classify_point(point, value) == Ok(Classification::On)
+            {
+                let plane_identity = canonical_plane_identities[other][plane];
+                let incidences = projective_point_cache
+                    .point_incidences
+                    .entry(identity.clone())
+                    .or_default();
+                if !incidences.contains(&plane_identity) {
+                    incidences.push(plane_identity);
+                }
+            }
+        }
+    }
+    for (identity, supports) in source_vertex_supports {
+        'definition: for first in 0..supports.len() {
+            for second in (first + 1)..supports.len() {
+                for third in (second + 1)..supports.len() {
+                    let planes = [
+                        projective_point_cache.planes[&supports[first]].clone(),
+                        projective_point_cache.planes[&supports[second]].clone(),
+                        projective_point_cache.planes[&supports[third]].clone(),
+                    ];
+                    let point = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+                    if crate::predicate::classify_real(&point.w)
+                        .is_ok_and(|classification| classification != Classification::On)
+                    {
+                        projective_point_cache
+                            .source_vertices
+                            .insert(identity, planes);
+                        break 'definition;
+                    }
+                }
+            }
+        }
+    }
     for (polygon, source_plane) in polygons.iter().zip(polygon_support_planes) {
         let host = usize::try_from(polygon.mesh_index)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
         let other = 1 - host;
         let emit_outside = projective_transition_is_emitted(host, false, operation);
-        let emit_inside = projective_transition_is_emitted(host, true, operation);
-        if !emit_outside && !emit_inside {
-            continue;
-        }
+        let default_emit_inside = projective_transition_is_emitted(host, true, operation);
         let mut candidate_planes = Vec::new();
         let mut excluded = false;
+        let mut has_cooriented_coincident_support = false;
         for (plane_index, &plane) in support_planes[other].iter().enumerate() {
-            match point_plane_caches[host].source_relation(
+            has_cooriented_coincident_support |= planes_may_be_same(&polygon.support, plane)
+                && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false);
+            let (relation, on_source_vertices) = point_plane_caches[host]
+                .source_relation(
                 polygon,
                 plane,
                 plane_index,
                 support_planes[other].len(),
-            )? {
+            )
+            .inspect_err(|_error| {
+                if cfg!(debug_assertions) {
+                    eprintln!(
+                        "[DEBUG] projective source relation failed: host={host} polygon={} other_plane={plane_index}",
+                        polygon.polygon_index,
+                    );
+                }
+            })?;
+            let plane_identity = canonical_plane_identities[other][plane_index];
+            for vertex in on_source_vertices {
+                let incidences = projective_point_cache
+                    .point_incidences
+                    .entry(ConstructionVertexIdentity::Source { mesh: host, vertex })
+                    .or_default();
+                if !incidences.contains(&plane_identity) {
+                    incidences.push(plane_identity);
+                }
+            }
+            match relation {
                 SourcePlaneRelation::Inside => {}
                 SourcePlaneRelation::Outside => {
                     excluded = true;
@@ -1015,6 +1947,18 @@ fn compute_two_convex_inputs_projectively(
                 }
                 SourcePlaneRelation::Crossing => candidate_planes.push(plane_index),
             }
+        }
+        let (emit_inside, inside_winding) = if has_cooriented_coincident_support {
+            match operation {
+                BooleanOp::Union => (host == 0, false),
+                BooleanOp::Intersection => (host == 0, true),
+                BooleanOp::Difference | BooleanOp::SymmetricDifference => (false, true),
+            }
+        } else {
+            (default_emit_inside, true)
+        };
+        if !emit_outside && !emit_inside {
+            continue;
         }
         if excluded {
             if emit_outside {
@@ -1024,11 +1968,20 @@ fn compute_two_convex_inputs_projectively(
         }
         if candidate_planes.is_empty() {
             if emit_inside {
-                push_source_transition(&mut classified, polygon, host, other, true)?;
+                push_source_transition(&mut classified, polygon, host, other, inside_winding)?;
             }
             continue;
         }
-        let source = ProjectiveCycle::from_polygon(polygon, source_plane)?;
+        let source =
+            ProjectiveCycle::from_polygon(polygon, source_plane, &mut projective_point_cache)
+                .inspect_err(|_error| {
+                    if cfg!(debug_assertions) {
+                        eprintln!(
+                            "[DEBUG] projective source cycle failed: host={host} polygon={}",
+                            polygon.polygon_index,
+                        );
+                    }
+                })?;
 
         let active_result = exact_inside_and_active_planes(
             polygon,
@@ -1038,7 +1991,15 @@ fn compute_two_convex_inputs_projectively(
             &candidate_planes,
             other,
             &mut projective_point_cache,
-        )?;
+        )
+        .inspect_err(|_error| {
+            if cfg!(debug_assertions) {
+                eprintln!(
+                    "[DEBUG] projective active planes failed: host={host} polygon={}",
+                    polygon.polygon_index,
+                );
+            }
+        })?;
         let Some((inside, active_planes)) = active_result else {
             if emit_outside {
                 push_projective_transition(
@@ -1063,7 +2024,7 @@ fn compute_two_convex_inputs_projectively(
                     &mut affine_cache,
                     host,
                     other,
-                    true,
+                    inside_winding,
                     operation,
                 )?;
             }
@@ -1074,10 +2035,7 @@ fn compute_two_convex_inputs_projectively(
         for plane_index in active_planes {
             let clipped = remainder.clip(
                 support_planes[other][plane_index],
-                ConstructionPlaneIdentity {
-                    mesh: other,
-                    plane: plane_index,
-                },
+                canonical_plane_identities[other][plane_index],
                 &mut projective_point_cache,
             )?;
             match clipped.side {
@@ -1121,9 +2079,27 @@ fn compute_two_convex_inputs_projectively(
                 &mut affine_cache,
                 host,
                 other,
-                true,
+                inside_winding,
                 operation,
             )?;
+        }
+    }
+    for fragment in &mut classified {
+        if let Some(vertex_identities) = fragment.polygon.known_vertex_identities.as_ref() {
+            fragment.polygon.known_vertex_identities = Some(std::sync::Arc::from(
+                vertex_identities
+                    .iter()
+                    .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
+                    .collect::<Vec<_>>(),
+            ));
+        }
+        if let Some(edge_identities) = fragment.polygon.known_edge_identities.as_ref() {
+            fragment.polygon.known_edge_identities = Some(std::sync::Arc::from(
+                edge_identities
+                    .iter()
+                    .map(|identity| projective_point_cache.canonical_edge_identity(identity))
+                    .collect::<Vec<_>>(),
+            ));
         }
     }
 
@@ -1150,7 +2126,7 @@ fn compute_two_convex_inputs_projectively(
             }
             crate::output::triangulate_preclassified_arrangement_construction_candidates(
                 &classified,
-                false,
+                true,
             )
             .and_then(certify_triangle_soup_closure)
         } else if operation == BooleanOp::Union {
@@ -1168,7 +2144,10 @@ fn compute_two_convex_inputs_projectively(
                 select_triangle_arrangement(&triangles, operation, support_planes.len())
             })
         }
-        .or_else(|_| {
+        .or_else(|error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] construction-candidate triangulation failed: {error}");
+            }
             crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
                 .and_then(|triangles| {
                     select_triangle_arrangement(&triangles, operation, support_planes.len())
@@ -1183,6 +2162,282 @@ fn compute_two_convex_inputs_projectively(
         classified,
         triangle_soup,
     }))
+}
+
+fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+    let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
+    let right_coefficients = [
+        &right.normal.x,
+        &right.normal.y,
+        &right.normal.z,
+        &right.offset,
+    ];
+    let mut unknown_minor = false;
+    for first in 0..left_coefficients.len() {
+        for second in (first + 1)..left_coefficients.len() {
+            let minor = Real::signed_product_sum(
+                [true, false],
+                [
+                    [left_coefficients[first], right_coefficients[second]],
+                    [left_coefficients[second], right_coefficients[first]],
+                ],
+            );
+            match crate::predicate::classify_real(&minor) {
+                Ok(Classification::On) => {}
+                Ok(Classification::Negative | Classification::Positive) => return Ok(false),
+                Err(crate::error::HypermeshError::UnknownClassification) => unknown_minor = true,
+                Err(error) => return Err(error),
+            }
+        }
+    }
+    if unknown_minor {
+        return Ok(false);
+    }
+    let orientation = Real::signed_product_sum(
+        [true, true, true],
+        [
+            [&left.normal.x, &right.normal.x],
+            [&left.normal.y, &right.normal.y],
+            [&left.normal.z, &right.normal.z],
+        ],
+    );
+    Ok(crate::predicate::classify_real(&orientation)? == Classification::Positive)
+}
+
+fn certifiably_same_unoriented_plane(left: &Plane, right: &Plane) -> bool {
+    certifiably_same_oriented_plane(left, right).unwrap_or(false)
+        || certifiably_same_oriented_plane(left, &right.inverted()).unwrap_or(false)
+}
+
+fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
+    let mut values = [
+        plane.normal.x.to_f64_lossy()?,
+        plane.normal.y.to_f64_lossy()?,
+        plane.normal.z.to_f64_lossy()?,
+        plane.offset.to_f64_lossy()?,
+    ];
+    if !values.into_iter().all(f64::is_finite) {
+        return None;
+    }
+    let norm = values[..3]
+        .iter()
+        .map(|value| value * value)
+        .sum::<f64>()
+        .sqrt();
+    if norm == 0.0 || !norm.is_finite() {
+        return None;
+    }
+    let orientation = if values[..3]
+        .iter()
+        .max_by(|left, right| left.abs().total_cmp(&right.abs()))
+        .copied()?
+        .is_sign_negative()
+    {
+        -1.0
+    } else {
+        1.0
+    };
+    for value in &mut values {
+        *value *= orientation / norm;
+    }
+    Some(values)
+}
+
+fn planes_may_be_same(left: &Plane, right: &Plane) -> bool {
+    match (plane_f64(left), plane_f64(right)) {
+        (Some(left), Some(right)) => left.iter().zip(right).all(|(left, right)| {
+            let scale = left.abs().max(right.abs()).max(1.0);
+            (left - right).abs() <= scale * 1.0e-9
+        }),
+        _ => true,
+    }
+}
+
+fn canonical_plane_identities(
+    support_planes: &[Vec<&Plane>; 2],
+) -> [Vec<ConstructionPlaneIdentity>; 2] {
+    let mut representatives = Vec::<(ConstructionPlaneIdentity, &Plane, Option<[f64; 4]>)>::new();
+    std::array::from_fn(|mesh| {
+        support_planes[mesh]
+            .iter()
+            .enumerate()
+            .map(|(plane, value)| {
+                let identity = ConstructionPlaneIdentity { mesh, plane };
+                let approximate = plane_f64(value);
+                let canonical = representatives
+                    .iter()
+                    .find_map(|(candidate, candidate_value, candidate_approximate)| {
+                        let approximate_match =
+                            match (candidate_approximate.as_ref(), approximate.as_ref()) {
+                                (Some(candidate), Some(value)) => {
+                                    candidate.iter().zip(value).all(|(left, right)| {
+                                        let scale = left.abs().max(right.abs()).max(1.0);
+                                        (left - right).abs() <= scale * 1.0e-9
+                                    })
+                                }
+                                _ => true,
+                            };
+                        (approximate_match
+                            && certifiably_same_unoriented_plane(candidate_value, value))
+                        .then_some(*candidate)
+                    })
+                    .unwrap_or(identity);
+                if canonical == identity {
+                    representatives.push((identity, value, approximate));
+                }
+                canonical
+            })
+            .collect()
+    })
+}
+
+fn collapse_certified_convex_faces(
+    polygons: &[ConvexPolygon],
+    polygon_support_planes: &[ConstructionPlaneIdentity],
+    support_planes: &[Vec<&Plane>; 2],
+) -> HypermeshResult<(Vec<ConvexPolygon>, Vec<ConstructionPlaneIdentity>)> {
+    let mut groups: std::collections::BTreeMap<ConstructionPlaneIdentity, Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for (polygon_index, &support) in polygon_support_planes.iter().enumerate() {
+        groups.entry(support).or_default().push(polygon_index);
+    }
+
+    let mut faces = Vec::with_capacity(groups.len());
+    let mut face_supports = Vec::with_capacity(groups.len());
+    for (support_identity, polygon_indices) in groups {
+        let mut edge_uses: StorageHashMap<ConstructionEdgeIdentity, usize> =
+            StorageHashMap::default();
+        let mut vertices: StorageHashMap<usize, Point3> = StorageHashMap::default();
+        for &polygon_index in &polygon_indices {
+            let polygon = &polygons[polygon_index];
+            let edge_identities = polygon
+                .known_edge_identities
+                .as_ref()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let vertex_identities = polygon
+                .known_vertex_identities
+                .as_ref()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let points = polygon
+                .known_vertices
+                .as_ref()
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            if edge_identities.len() != vertex_identities.len()
+                || points.len() != vertex_identities.len()
+            {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            }
+            for (vertex_index, identity) in vertex_identities.iter().enumerate() {
+                let ConstructionVertexIdentity::Source { mesh, vertex } = identity else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                if *mesh != support_identity.mesh {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+                vertices
+                    .entry(*vertex)
+                    .or_insert_with(|| points.get(vertex_index).expect("aligned vertex").clone());
+            }
+            for identity in edge_identities.iter() {
+                *edge_uses.entry(identity.clone()).or_default() += 1;
+            }
+        }
+
+        let mut outgoing: std::collections::BTreeMap<
+            usize,
+            (usize, Plane, ConstructionEdgeIdentity),
+        > = std::collections::BTreeMap::new();
+        for &polygon_index in &polygon_indices {
+            let polygon = &polygons[polygon_index];
+            let edge_identities = polygon
+                .known_edge_identities
+                .as_ref()
+                .expect("validated above");
+            let vertex_identities = polygon
+                .known_vertex_identities
+                .as_ref()
+                .expect("validated above");
+            let points = polygon.known_vertices.as_ref().expect("validated above");
+            let rebuilt_planes = (polygon.edges.len() != edge_identities.len()).then(|| {
+                InputTrianglePlanes::from_points(
+                    points.get(0).expect("source triangle"),
+                    points.get(1).expect("source triangle"),
+                    points.get(2).expect("source triangle"),
+                )
+            });
+            for edge_index in 0..edge_identities.len() {
+                let edge_identity = &edge_identities[edge_index];
+                if edge_uses.get(edge_identity).copied() != Some(1) {
+                    continue;
+                }
+                let ConstructionVertexIdentity::Source { vertex: start, .. } =
+                    &vertex_identities[edge_index]
+                else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                let ConstructionVertexIdentity::Source { vertex: end, .. } =
+                    &vertex_identities[(edge_index + 1) % vertex_identities.len()]
+                else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                let edge_plane = rebuilt_planes.as_ref().map_or_else(
+                    || polygon.edges[edge_index].clone(),
+                    |planes| planes.edges[edge_index].clone(),
+                );
+                if outgoing
+                    .insert(*start, (*end, edge_plane, edge_identity.clone()))
+                    .is_some()
+                {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            }
+        }
+        let Some(&start) = outgoing.keys().next() else {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        };
+        let mut face_vertices = Vec::with_capacity(outgoing.len());
+        let mut vertex_identities = Vec::with_capacity(outgoing.len());
+        let mut edge_planes = Vec::with_capacity(outgoing.len());
+        let mut edge_identities = Vec::with_capacity(outgoing.len());
+        let mut current = start;
+        while face_vertices.len() < outgoing.len() {
+            let Some((next, edge_plane, edge_identity)) = outgoing.get(&current) else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            face_vertices.push(
+                vertices
+                    .get(&current)
+                    .ok_or(crate::error::HypermeshError::UnknownClassification)?
+                    .clone(),
+            );
+            vertex_identities.push(ConstructionVertexIdentity::Source {
+                mesh: support_identity.mesh,
+                vertex: current,
+            });
+            edge_planes.push(edge_plane.clone());
+            edge_identities.push(edge_identity.clone());
+            current = *next;
+            if current == start {
+                break;
+            }
+        }
+        if current != start || face_vertices.len() != outgoing.len() {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let source = &polygons[polygon_indices[0]];
+        faces.push(ConvexPolygon::from_certified_convex_face(
+            support_planes[support_identity.mesh][support_identity.plane].clone(),
+            face_vertices,
+            vertex_identities,
+            edge_planes,
+            edge_identities,
+            source.mesh_index,
+            source.polygon_index,
+            source.delta_w.clone(),
+        ));
+        face_supports.push(support_identity);
+    }
+    Ok((faces, face_supports))
 }
 
 fn exact_plane_storage_key(plane: &Plane) -> Option<[usize; 4]> {
@@ -1235,12 +2490,28 @@ fn exact_inside_and_active_planes(
             &proposed_planes,
             support_plane_mesh,
             point_cache,
-        )?;
+        )
+        .inspect_err(|_error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] proposed projective clipping failed");
+            }
+        })?;
         if inside.points.len() < 3 {
             return Ok(None);
         }
-        if cycle_satisfies_planes(&inside, support_planes, candidate_planes)? {
-            let active = active_cycle_planes(&inside, proposed_planes, support_plane_mesh);
+        if cycle_satisfies_planes(
+            &inside,
+            support_planes,
+            candidate_planes,
+            support_plane_mesh,
+        )
+        .inspect_err(|_error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] proposed projective verification failed");
+            }
+        })? {
+            let active =
+                active_cycle_planes(&inside, proposed_planes, support_plane_mesh, point_cache);
             return Ok(Some((inside, active)));
         }
     }
@@ -1251,7 +2522,12 @@ fn exact_inside_and_active_planes(
         candidate_planes,
         support_plane_mesh,
         point_cache,
-    )?;
+    )
+    .inspect_err(|_error| {
+        if cfg!(debug_assertions) {
+            eprintln!("[DEBUG] full projective clipping failed");
+        }
+    })?;
     if inside.points.len() < 3 {
         return Ok(None);
     }
@@ -1259,6 +2535,7 @@ fn exact_inside_and_active_planes(
         &inside,
         candidate_planes.iter().copied(),
         support_plane_mesh,
+        point_cache,
     );
     Ok(Some((inside, active)))
 }
@@ -1291,14 +2568,15 @@ fn active_cycle_planes(
     inside: &ProjectiveCycle,
     plane_indices: impl IntoIterator<Item = usize>,
     support_plane_mesh: usize,
+    point_cache: &ProjectivePointCache,
 ) -> Vec<usize> {
     plane_indices
         .into_iter()
         .filter(|&plane_index| {
-            let identity = ConstructionPlaneIdentity {
+            let identity = point_cache.canonical_plane_identity(ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
                 plane: plane_index,
-            };
+            });
             inside.edge_identities.iter().any(|edge| {
                 matches!(
                     edge,
@@ -1314,10 +2592,22 @@ fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
+    support_plane_mesh: usize,
 ) -> HypermeshResult<bool> {
-    for point in &cycle.points {
+    for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
         for &plane_index in plane_indices {
+            let plane_identity = ConstructionPlaneIdentity {
+                mesh: support_plane_mesh,
+                plane: plane_index,
+            };
+            if cycle.point_has_plane_incidence(
+                point_index,
+                plane_identity,
+                support_planes[plane_index],
+            ) {
+                continue;
+            }
             if prepared
                 .classify(support_planes[plane_index])?
                 .is_positive()
@@ -1463,9 +2753,11 @@ fn projective_crossing_point(
 
 fn push_labeled_projective(
     points: &mut Vec<HomogeneousPoint3>,
+    point_identities: &mut Vec<ConstructionVertexIdentity>,
     edges: &mut Vec<Plane>,
     edge_identities: &mut Vec<ConstructionEdgeIdentity>,
     point: HomogeneousPoint3,
+    point_identity: ConstructionVertexIdentity,
     edge: Plane,
     edge_identity: ConstructionEdgeIdentity,
 ) {
@@ -1479,17 +2771,20 @@ fn push_labeled_projective(
         return;
     }
     points.push(point);
+    point_identities.push(point_identity);
     edges.push(edge);
     edge_identities.push(edge_identity);
 }
 
 fn remove_closing_labeled_duplicate(
     points: &mut Vec<HomogeneousPoint3>,
+    point_identities: &mut Vec<ConstructionVertexIdentity>,
     edges: &mut Vec<Plane>,
     edge_identities: &mut Vec<ConstructionEdgeIdentity>,
 ) {
     if points.len() > 1 && points.first() == points.last() {
         points.pop();
+        point_identities.pop();
         edges.pop();
         edge_identities.pop();
     }
@@ -1647,9 +2942,11 @@ mod tests {
         assert_eq!(polygon.edges.len(), 1);
         assert_eq!(polygon.vertex_count(), 3);
 
+        let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
             &polygon,
             ConstructionPlaneIdentity { mesh: 0, plane: 0 },
+            &mut point_cache,
         )
         .unwrap();
         assert_eq!(cycle.edges.len(), 3);
@@ -1664,7 +2961,7 @@ mod tests {
 
         assert!(matches!(
             cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
-            SourcePlaneRelation::Crossing
+            (SourcePlaneRelation::Crossing, _)
         ));
         assert_eq!(cache.points.len(), 2);
     }
@@ -1678,7 +2975,7 @@ mod tests {
 
         assert!(matches!(
             cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
-            SourcePlaneRelation::Crossing
+            (SourcePlaneRelation::Crossing, _)
         ));
         assert!(cache.points.is_empty());
         assert_eq!(
@@ -1698,5 +2995,18 @@ mod tests {
             2
         );
         assert_eq!(cache.source_plane_count, Some(1));
+    }
+
+    #[test]
+    fn canonical_plane_identities_unify_cross_mesh_geometric_planes() {
+        let bottom = Plane::axis_aligned(2, Real::zero());
+        let opposite_bottom = bottom.inverted();
+        let top = Plane::axis_aligned(2, Real::one());
+        let support_planes = [vec![&bottom, &top], vec![&opposite_bottom, &bottom]];
+
+        let identities = canonical_plane_identities(&support_planes);
+        assert_eq!(identities[0][0], identities[1][0]);
+        assert_eq!(identities[0][0], identities[1][1]);
+        assert_ne!(identities[0][0], identities[0][1]);
     }
 }

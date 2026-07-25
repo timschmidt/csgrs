@@ -26,6 +26,52 @@ pub(crate) enum ConstructionEdgeIdentity {
     },
 }
 
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub(crate) enum ConstructionVertexIdentity {
+    Source {
+        mesh: usize,
+        vertex: usize,
+    },
+    SourceEdgePlane {
+        mesh: usize,
+        endpoints: [usize; 2],
+        plane: ConstructionPlaneIdentity,
+    },
+    PlaneTriple {
+        planes: [ConstructionPlaneIdentity; 3],
+    },
+}
+
+/// Exact oriented support and boundary planes for one input triangle.
+///
+/// Mesh owners that retain affine-transform provenance can transform these
+/// geometric objects directly instead of reconstructing them from expanded
+/// transformed coordinates.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InputTrianglePlanes {
+    /// Oriented triangle support plane.
+    pub support: Plane,
+    /// Oriented edge planes in triangle winding order.
+    pub edges: [Plane; 3],
+}
+
+impl InputTrianglePlanes {
+    /// Constructs the support and three boundary planes from source points.
+    pub fn from_points(p0: &Point3, p1: &Point3, p2: &Point3) -> Self {
+        let support = Plane::from_points(p0, p1, p2);
+        let points = [p0, p1, p2];
+        let edges = std::array::from_fn(|i| {
+            edge_plane(
+                points[i],
+                points[(i + 1) % 3],
+                points[(i + 2) % 3],
+                &support,
+            )
+        });
+        Self { support, edges }
+    }
+}
+
 /// Approximate exact-coordinate bounds for fast spatial rejection.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ApproxBounds {
@@ -103,6 +149,7 @@ pub struct ConvexPolygon {
     /// Derived clipping and BSP polygons clear this cache when their edge
     /// cycle changes.
     pub(crate) known_vertices: Option<RetainedVertexCycle>,
+    pub(crate) known_vertex_identities: Option<Arc<[ConstructionVertexIdentity]>>,
     pub(crate) known_edge_identities: Option<Arc<[ConstructionEdgeIdentity]>>,
 }
 
@@ -133,6 +180,7 @@ impl ConvexPolygon {
             delta_w: Vec::new(),
             approx_bounds: None,
             known_vertices: None,
+            known_vertex_identities: None,
             known_edge_identities: None,
         }
     }
@@ -142,6 +190,12 @@ impl ConvexPolygon {
         self.known_vertices
             .as_ref()
             .map_or(self.edges.len(), |vertices| vertices.len())
+    }
+
+    pub(crate) fn has_retained_vertex(&self, point: &Point3) -> bool {
+        self.known_vertices
+            .as_ref()
+            .is_some_and(|vertices| vertices.iter().any(|vertex| vertex == point))
     }
 
     /// Returns true when this polygon has at least three vertices and a
@@ -194,6 +248,10 @@ impl ConvexPolygon {
                 vertices.iter().rev().cloned().collect::<Vec<_>>(),
             ))
         });
+        result.known_vertex_identities = self
+            .known_vertex_identities
+            .as_ref()
+            .map(|identities| Arc::from(identities.iter().rev().cloned().collect::<Vec<_>>()));
         result.known_edge_identities = self.known_edge_identities.as_ref().map(|identities| {
             let count = identities.len();
             Arc::from(
@@ -208,10 +266,12 @@ impl ConvexPolygon {
     pub(crate) fn with_known_vertex_cycle_and_edges(
         &self,
         vertices: Vec<Point3>,
+        vertex_identities: Vec<ConstructionVertexIdentity>,
         edges: Vec<Plane>,
         edge_identities: Vec<ConstructionEdgeIdentity>,
     ) -> Self {
         debug_assert_eq!(vertices.len(), edges.len());
+        debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
         let approx_bounds = (!vertices.is_empty()).then(|| {
             let points = vertices.iter().collect::<Vec<_>>();
@@ -221,6 +281,7 @@ impl ConvexPolygon {
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
         result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
+        result.known_vertex_identities = Some(Arc::from(vertex_identities));
         result.known_edge_identities = Some(Arc::from(edge_identities));
         result
     }
@@ -236,7 +297,38 @@ impl ConvexPolygon {
             ConstructionEdgeIdentity::Source { mesh, endpoints }
         });
         self.known_edge_identities = Some(Arc::new(identities));
+        self.known_vertex_identities =
+            Some(Arc::new(vertices.map(|vertex| {
+                ConstructionVertexIdentity::Source { mesh, vertex }
+            })));
         self
+    }
+
+    pub(crate) fn from_certified_convex_face(
+        support: Plane,
+        vertices: Vec<Point3>,
+        vertex_identities: Vec<ConstructionVertexIdentity>,
+        edges: Vec<Plane>,
+        edge_identities: Vec<ConstructionEdgeIdentity>,
+        mesh_index: isize,
+        polygon_index: isize,
+        delta_w: WindingNumberTransitionVector,
+    ) -> Self {
+        debug_assert_eq!(vertices.len(), vertex_identities.len());
+        debug_assert_eq!(vertices.len(), edges.len());
+        debug_assert_eq!(vertices.len(), edge_identities.len());
+        let points = vertices.iter().collect::<Vec<_>>();
+        Self {
+            support,
+            edges: Arc::new(edges),
+            mesh_index,
+            polygon_index,
+            delta_w,
+            approx_bounds: Some(bounds_for_points(&points)),
+            known_vertices: Some(RetainedVertexCycle::Owned(Arc::from(vertices))),
+            known_vertex_identities: Some(Arc::from(vertex_identities)),
+            known_edge_identities: Some(Arc::from(edge_identities)),
+        }
     }
 
     pub(crate) fn with_rebuilt_edge_planes(&self) -> HypermeshResult<Self> {
@@ -319,6 +411,32 @@ pub fn make_triangle(
             p1.clone(),
             p2.clone(),
         ]))),
+        known_vertex_identities: None,
+        known_edge_identities: None,
+    }
+}
+
+pub(crate) fn make_triangle_with_input_planes(
+    p0: &Point3,
+    p1: &Point3,
+    p2: &Point3,
+    planes: InputTrianglePlanes,
+    mesh_index: isize,
+    polygon_index: isize,
+) -> ConvexPolygon {
+    ConvexPolygon {
+        support: planes.support,
+        edges: Arc::new(Vec::from(planes.edges)),
+        mesh_index,
+        polygon_index,
+        delta_w: Vec::new(),
+        approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
+            p0.clone(),
+            p1.clone(),
+            p2.clone(),
+        ]))),
+        known_vertex_identities: None,
         known_edge_identities: None,
     }
 }
@@ -347,6 +465,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
             p1.clone(),
             p2.clone(),
         ]))),
+        known_vertex_identities: None,
         known_edge_identities: None,
     }
 }
@@ -374,6 +493,27 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
         // ordinary input polygons before entering BVH/subdivision code.
         approx_bounds: None,
         known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
+        known_vertex_identities: None,
+        known_edge_identities: None,
+    }
+}
+
+pub(crate) fn make_indexed_triangle_with_deferred_edges_and_input_planes(
+    positions: Arc<[Point3]>,
+    indices: [usize; 3],
+    planes: InputTrianglePlanes,
+    mesh_index: isize,
+    polygon_index: isize,
+) -> ConvexPolygon {
+    ConvexPolygon {
+        edges: Arc::new(Vec::from(planes.edges)),
+        support: planes.support,
+        mesh_index,
+        polygon_index,
+        delta_w: Vec::new(),
+        approx_bounds: None,
+        known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
+        known_vertex_identities: None,
         known_edge_identities: None,
     }
 }
@@ -413,6 +553,7 @@ pub fn make_quad(
             p2.clone(),
             p3.clone(),
         ]))),
+        known_vertex_identities: None,
         known_edge_identities: None,
     }
 }

@@ -161,6 +161,36 @@ fn cube_mesh(min: i32, max: i32) -> hypermesh::InputMesh {
     )
 }
 
+fn z_twisted_square_prism(epsilon: Real) -> hypermesh::InputMesh {
+    let mut positions = Vec::new();
+    for z in [0, 40] {
+        for (x, y) in [(-8, -8), (8, -8), (8, 8), (-8, 8)] {
+            positions.push(Point3::new(
+                r(x) - epsilon.clone() * r(y),
+                epsilon.clone() * r(x) + r(y),
+                r(z),
+            ));
+        }
+    }
+    hypermesh::InputMesh::new(
+        positions,
+        vec![
+            Triangle::new(4, 5, 6),
+            Triangle::new(4, 6, 7),
+            Triangle::new(0, 3, 2),
+            Triangle::new(0, 2, 1),
+            Triangle::new(1, 2, 6),
+            Triangle::new(1, 6, 5),
+            Triangle::new(0, 4, 7),
+            Triangle::new(0, 7, 3),
+            Triangle::new(3, 7, 6),
+            Triangle::new(3, 6, 2),
+            Triangle::new(0, 1, 5),
+            Triangle::new(0, 5, 4),
+        ],
+    )
+}
+
 fn assert_triangle_soup_within_bounds(
     soup: &hypermesh::TriangleSoup,
     min: i32,
@@ -1129,6 +1159,60 @@ fn immediate_operations_preserve_coincident_mesh_winding_evidence() {
             "{operation:?} coincident triangle soup"
         );
     }
+}
+
+#[test]
+fn certified_convex_booleans_own_cooriented_coplanar_overlaps_once() {
+    let left = z_twisted_square_prism(Real::zero());
+    let right = z_twisted_square_prism(q(1, 10_000));
+    let meshes = [left.as_ref(), right.as_ref()];
+
+    for operation in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let soup = boolean_triangle_soup_with_certified_convex_inputs(
+            &meshes,
+            operation,
+            &[true, true],
+            EmberConfig::default(),
+        )
+        .unwrap_or_else(|error| panic!("{operation:?}: {error}"));
+        assert!(
+            hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary(),
+            "{operation:?} left a coplanar-overlap boundary"
+        );
+        assert_eq!(soup.sources.len(), soup.triangles.len());
+        assert!(
+            !soup.triangles.is_empty(),
+            "{operation:?} unexpectedly produced an empty result"
+        );
+    }
+}
+
+#[test]
+fn convex_certification_accepts_a_box_and_rejects_disconnected_shells() {
+    let convex = cube_mesh(0, 2);
+    hypermesh::certify_convex_mesh(convex.as_ref()).unwrap();
+
+    let left = cube_mesh(0, 1);
+    let right = cube_mesh(3, 4);
+    let offset = left.positions.len();
+    let mut positions = left.positions;
+    positions.extend(right.positions);
+    let mut triangles = left.triangles;
+    triangles.extend(right.triangles.into_iter().map(|triangle| {
+        let [a, b, c] = triangle.indices();
+        Triangle::new(a + offset, b + offset, c + offset)
+    }));
+    let disconnected = hypermesh::InputMesh::new(positions, triangles);
+
+    assert_eq!(
+        hypermesh::certify_convex_mesh(disconnected.as_ref()),
+        Err(hypermesh::HypermeshError::NonConvexInput)
+    );
 }
 
 #[test]

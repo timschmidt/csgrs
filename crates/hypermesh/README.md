@@ -209,6 +209,19 @@ the desired result. Use `extract_output` when polygon loops are preferable.
 Paper-derived optimization experiments and their benchmark, trace, and test
 evidence are recorded in [PERFORMANCE.md](PERFORMANCE.md).
 
+The pinned competitive suite compares the same Boolean corpus with `boolmesh`
+and the pure-Rust Manifold port, then validates HyperMesh output through
+`tri-mesh`'s half-edge carrier. Its benchmark also runs all three Boolean
+operations on two 3,072-triangle closed meshes. Every competitor is additionally
+wired to the public-domain YeahRight corpus: the Boolean engines clip a
+deterministically subdivided 4,512-triangle hull, while all four libraries
+construct their native mesh carrier from that same hull:
+
+```bash
+cargo test --test competitive
+cargo bench --bench competitive
+```
+
 Run the crate checks from this directory:
 
 ```bash

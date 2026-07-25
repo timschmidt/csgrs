@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
-use crate::polygon::{ConstructionEdgeIdentity, ConvexPolygon};
+use crate::polygon::{ConstructionEdgeIdentity, ConstructionVertexIdentity, ConvexPolygon};
 use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
 use hyperlattice::{Rational, Real};
@@ -679,7 +679,14 @@ where
                     &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
                     prepared_rational_vertices.as_deref(),
                     filter_recovery_candidates,
-                )?
+                )
+                .inspect_err(|error| {
+                    if cfg!(debug_assertions) {
+                        eprintln!(
+                            "[DEBUG] construction edge split failed: polygon={polygon_index} edge={edge_index}: {error}"
+                        );
+                    }
+                })?
             } else if let Some(approximate_vertices) = &approximate_vertices {
                 split_segment_subedges_exact_precomputed_f64_scan(
                     &mut split_edge_cache,
@@ -733,6 +740,11 @@ where
                 match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
                     Ok(polygon_triangles) => triangles.extend(polygon_triangles),
                     Err(HypermeshError::UnknownClassification) => {
+                        if cfg!(debug_assertions) {
+                            eprintln!(
+                                "[DEBUG] weakly-convex triangulation fell back: polygon={polygon_index}"
+                            );
+                        }
                         for index in 1..(indexed.len() - 1) {
                             triangles.push([indexed[0], indexed[index], indexed[index + 1]]);
                         }
@@ -1136,6 +1148,7 @@ where
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let polygon = polygon.borrow();
         indexed_polygons.push(vec![0; polygon.vertex_count()]);
+        let vertex_identities = polygon.known_vertex_identities.as_deref();
         if let Some(points) = polygon.known_vertices.as_ref() {
             for (vertex_index, point) in points.iter().enumerate() {
                 positions.push((
@@ -1147,6 +1160,7 @@ where
                         y: point.y.clone(),
                         z: point.z.clone(),
                     },
+                    vertex_identities.and_then(|identities| identities.get(vertex_index).cloned()),
                 ));
                 flat_index += 1;
             }
@@ -1161,13 +1175,14 @@ where
                         y: point.y,
                         z: point.z,
                     },
+                    vertex_identities.and_then(|identities| identities.get(vertex_index).cloned()),
                 ));
                 flat_index += 1;
             }
         }
     }
 
-    if positions.iter().all(|(_, _, _, vertex)| {
+    if positions.iter().all(|(_, _, _, vertex, _)| {
         vertex.x.exact_rational_ref().is_some()
             && vertex.y.exact_rational_ref().is_some()
             && vertex.z.exact_rational_ref().is_some()
@@ -1181,7 +1196,7 @@ where
         #[allow(clippy::mutable_key_type)]
         let mut exact_vertices: HashMap<ExactOutputVertexKey, usize> =
             HashMap::with_capacity(positions.len());
-        for (polygon_index, vertex_index, _, vertex) in positions {
+        for (polygon_index, vertex_index, _, vertex, _) in positions {
             let storage_key = exact_output_vertex_storage_key(&vertex)
                 .expect("all output vertices were certified exact rational");
             let merged_index = if let Some(&index) = storage_vertices.get(&storage_key) {
@@ -1206,30 +1221,51 @@ where
         return Ok((vertices, indexed_polygons));
     }
 
-    positions.sort_by(|(_, _, _, left), (_, _, _, right)| {
-        compare_output_vertices_lexicographic(left, right)
-            .expect("exact output vertex ordering should compare")
-    });
-
-    let mut groups: Vec<(usize, OutputVertex, Vec<(usize, usize)>)> = Vec::new();
-    for (polygon_index, vertex_index, flat_index, vertex) in positions {
-        match groups.last_mut() {
-            Some((first_flat_index, existing, members)) if *existing == vertex => {
-                *first_flat_index = (*first_flat_index).min(flat_index);
-                members.push((polygon_index, vertex_index));
-            }
-            _ => groups.push((flat_index, vertex, vec![(polygon_index, vertex_index)])),
-        }
-    }
-    groups.sort_by_key(|(first_flat_index, _, _)| *first_flat_index);
-
-    let mut vertices = Vec::with_capacity(groups.len());
-    for (_, vertex, members) in groups {
-        let merged_index = vertices.len();
-        vertices.push(vertex);
-        for (polygon_index, vertex_index) in members {
+    // Non-rational exact coordinates need not be order-comparable: equality
+    // can be structurally certified even when the sign of `left - right`
+    // cannot.  Vertex canonicalization only needs equality, so use the lossy
+    // values as an acceleration bucket and confirm every merge structurally.
+    // This keeps approximation out of the geometric decision.
+    let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
+    let mut vertex_identities: Vec<Option<ConstructionVertexIdentity>> =
+        Vec::with_capacity(positions.len());
+    let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
+    let mut identities: HashMap<ConstructionVertexIdentity, usize> = HashMap::new();
+    for (polygon_index, vertex_index, _, vertex, identity) in positions {
+        if let Some(merged_index) = identity
+            .as_ref()
+            .and_then(|identity| identities.get(identity))
+            .copied()
+        {
             indexed_polygons[polygon_index][vertex_index] = merged_index;
+            continue;
         }
+        let key = OutputVertexBucket([
+            vertex.x.to_f64_lossy().map(f64::to_bits),
+            vertex.y.to_f64_lossy().map(f64::to_bits),
+            vertex.z.to_f64_lossy().map(f64::to_bits),
+        ]);
+        let candidates = buckets.entry(key).or_default();
+        let merged_index = if let Some(existing) = candidates.iter().copied().find(|&candidate| {
+            // Projective construction identities have already been
+            // canonicalized with exact plane-incidence certificates.
+            // Distinct retained identities therefore must not trigger a
+            // potentially undecidable transcendental coordinate equality.
+            (identity.is_none() || vertex_identities[candidate].is_none())
+                && vertices[candidate] == vertex
+        }) {
+            existing
+        } else {
+            let index = vertices.len();
+            vertices.push(vertex);
+            vertex_identities.push(identity.clone());
+            candidates.push(index);
+            index
+        };
+        if let Some(identity) = identity {
+            identities.insert(identity, merged_index);
+        }
+        indexed_polygons[polygon_index][vertex_index] = merged_index;
     }
 
     Ok((vertices, indexed_polygons))
@@ -1254,6 +1290,7 @@ fn exact_output_vertex_key(vertex: &OutputVertex) -> Option<ExactOutputVertexKey
     ]))
 }
 
+#[cfg(test)]
 fn compare_output_vertices_lexicographic(
     left: &OutputVertex,
     right: &OutputVertex,
@@ -1293,6 +1330,7 @@ where
         StorageHashMap::default();
     let mut plane_vertices: StorageHashMap<crate::polygon::ConstructionPlaneIdentity, Vec<usize>> =
         StorageHashMap::default();
+    let mut identified_vertices = Vec::new();
     let mut groups: Vec<ConstructionEdgeCandidateGroup> = Vec::new();
     let mut polygon_edges = Vec::with_capacity(polygons.len());
     for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
@@ -1301,9 +1339,22 @@ where
             .known_edge_identities
             .as_ref()
             .ok_or(HypermeshError::UnknownClassification)?;
+        let vertex_identities = polygon
+            .known_vertex_identities
+            .as_ref()
+            .ok_or(HypermeshError::UnknownClassification)?;
         if indexed.len() != identities.len() {
             return Err(HypermeshError::UnknownClassification);
         }
+        if indexed.len() != vertex_identities.len() {
+            return Err(HypermeshError::UnknownClassification);
+        }
+        identified_vertices.extend(
+            indexed
+                .iter()
+                .copied()
+                .zip(vertex_identities.iter().cloned()),
+        );
         let mut edge_groups = Vec::with_capacity(indexed.len());
         for (edge_index, identity) in identities.iter().enumerate() {
             let group_index = match group_indices.entry(identity.clone()) {
@@ -1336,6 +1387,18 @@ where
     }
     for (identity, &group_index) in &group_indices {
         if let ConstructionEdgeIdentity::Split { planes } = identity {
+            groups[group_index]
+                .collinear
+                .extend(identified_vertices.iter().filter_map(
+                    |(vertex, identity)| match identity {
+                        ConstructionVertexIdentity::PlaneTriple {
+                            planes: vertex_planes,
+                        } if planes.iter().all(|plane| vertex_planes.contains(plane)) => {
+                            Some(*vertex)
+                        }
+                        _ => None,
+                    },
+                ));
             for plane in planes {
                 if let Some(vertices) = plane_vertices.get(plane) {
                     groups[group_index].same_plane.extend(vertices);
@@ -1343,9 +1406,22 @@ where
             }
         }
     }
+    // Construction labels give the cheapest candidate set, but a retained
+    // source edge and a newly split edge can describe the same exact line
+    // without sharing a label. Include all arrangement vertices as recovery
+    // proposals; the inexpensive approximate segment filter narrows this set,
+    // and exact containment plus final closure certification remain mandatory.
+    let mut recovery_vertices = indexed_polygons
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<Vec<_>>();
+    recovery_vertices.sort_unstable();
+    recovery_vertices.dedup();
     for group in &mut groups {
         group.collinear.sort_unstable();
         group.collinear.dedup();
+        group.same_plane.extend(recovery_vertices.iter().copied());
         group.same_plane.sort_unstable();
         group.same_plane.dedup();
     }
@@ -1455,11 +1531,21 @@ fn split_segment_subedges_exact_candidates<'a>(
 ) -> HypermeshResult<&'a [[usize; 2]]> {
     let edge = sorted_edge(edge);
     if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
-        let axis = inexpensive_nonzero_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
+        let axis = inexpensive_nonzero_segment_axis(&vertices[edge[0]], &vertices[edge[1]])
+            .inspect_err(|error| {
+                if cfg!(debug_assertions) {
+                    eprintln!("[DEBUG] construction edge axis failed: {error}");
+                }
+            })?;
         let (min, max) = ordered_reals(
             vertex_axis(&vertices[edge[0]], axis),
             vertex_axis(&vertices[edge[1]], axis),
-        )?;
+        )
+        .inspect_err(|error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] construction edge endpoint order failed: {error}");
+            }
+        })?;
         let projection_filters = filter_recovery_candidates
             .then(|| {
                 let prepared = prepared_rational_vertices?;
@@ -1486,12 +1572,30 @@ fn split_segment_subedges_exact_candidates<'a>(
                 continue;
             }
             let coordinate = vertex_axis(&vertices[vertex_index], axis);
-            if !compare_real(coordinate, min)?.is_lt() && !compare_real(coordinate, max)?.is_gt() {
+            if compare_real(coordinate, min).is_ok_and(|order| !order.is_lt())
+                && compare_real(coordinate, max).is_ok_and(|order| !order.is_gt())
+            {
                 on_edge.push(vertex_index);
             }
         }
-        for &vertex_index in &candidates.same_plane {
+        for &vertex_index in candidates
+            .same_plane
+            .iter()
+            .take(if filter_recovery_candidates {
+                usize::MAX
+            } else {
+                0
+            })
+        {
             if vertex_index == edge[0] || vertex_index == edge[1] || on_edge.contains(&vertex_index)
+            {
+                continue;
+            }
+            if approximate_point_on_segment_candidate(
+                &vertices[vertex_index],
+                &vertices[edge[0]],
+                &vertices[edge[1]],
+            ) == Some(false)
             {
                 continue;
             }
@@ -1510,11 +1614,14 @@ fn split_segment_subedges_exact_candidates<'a>(
             }) {
                 continue;
             }
-            if point_on_segment_exact(
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            )? {
+            if matches!(
+                point_on_segment_exact(
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                ),
+                Ok(true)
+            ) {
                 on_edge.push(vertex_index);
             }
         }
@@ -1522,9 +1629,10 @@ fn split_segment_subedges_exact_candidates<'a>(
         on_edge.dedup();
         let mut chain = Vec::with_capacity(on_edge.len() + 2);
         chain.push(edge[0]);
-        chain.extend(sort_along_segment_on_axis(
-            &on_edge, edge[0], edge[1], vertices, axis,
-        )?);
+        if let Ok(ordered) = sort_along_segment_on_axis(&on_edge, edge[0], edge[1], vertices, axis)
+        {
+            chain.extend(ordered);
+        }
         chain.push(edge[1]);
         entry.insert(
             chain
@@ -1534,6 +1642,66 @@ fn split_segment_subedges_exact_candidates<'a>(
         );
     }
     Ok(cache.get(&edge).expect("candidate edge was just cached"))
+}
+
+fn approximate_point_on_segment_candidate(
+    point: &OutputVertex,
+    start: &OutputVertex,
+    end: &OutputVertex,
+) -> Option<bool> {
+    let point = [&point.x, &point.y, &point.z].map(Real::to_f64_lossy);
+    let start = [&start.x, &start.y, &start.z].map(Real::to_f64_lossy);
+    let end = [&end.x, &end.y, &end.z].map(Real::to_f64_lossy);
+    let (
+        [Some(px), Some(py), Some(pz)],
+        [Some(ax), Some(ay), Some(az)],
+        [Some(bx), Some(by), Some(bz)],
+    ) = (point, start, end)
+    else {
+        return None;
+    };
+    let point = [px, py, pz];
+    let start = [ax, ay, az];
+    let end = [bx, by, bz];
+    if point
+        .iter()
+        .chain(start.iter())
+        .chain(end.iter())
+        .any(|value| !value.is_finite())
+    {
+        return None;
+    }
+    let scale = point
+        .iter()
+        .chain(start.iter())
+        .chain(end.iter())
+        .fold(1.0_f64, |scale, value| scale.max(value.abs()));
+    let tolerance = scale * 1.0e-10;
+    if (0..3).any(|axis| {
+        point[axis] < start[axis].min(end[axis]) - tolerance
+            || point[axis] > start[axis].max(end[axis]) + tolerance
+    }) {
+        return Some(false);
+    }
+    let direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
+    let offset = [
+        point[0] - start[0],
+        point[1] - start[1],
+        point[2] - start[2],
+    ];
+    let cross = [
+        direction[1] * offset[2] - direction[2] * offset[1],
+        direction[2] * offset[0] - direction[0] * offset[2],
+        direction[0] * offset[1] - direction[1] * offset[0],
+    ];
+    let direction_scale = direction
+        .iter()
+        .fold(0.0_f64, |scale, value| scale.max(value.abs()));
+    Some(
+        cross
+            .iter()
+            .all(|component| component.abs() <= tolerance * direction_scale.max(1.0)),
+    )
 }
 
 fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
@@ -1605,13 +1773,19 @@ fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[
         (0..vertices.len()).collect::<Vec<_>>(),
     ];
     for (axis, axis_order) in order.iter_mut().enumerate() {
-        axis_order.sort_by(|left, right| {
-            compare_real(
-                vertex_axis(&vertices[*left], axis),
-                vertex_axis(&vertices[*right], axis),
-            )
-            .expect("exact vertex ordering should compare")
-        });
+        for index in 1..axis_order.len() {
+            let mut current = index;
+            while current > 0
+                && compare_real(
+                    vertex_axis(&vertices[axis_order[current]], axis),
+                    vertex_axis(&vertices[axis_order[current - 1]], axis),
+                )?
+                .is_lt()
+            {
+                axis_order.swap(current, current - 1);
+                current -= 1;
+            }
+        }
     }
     Ok(order)
 }
@@ -2254,7 +2428,7 @@ fn sort_along_segment_on_axis(
         vertex_axis(&vertices[end], axis),
     )?
     .is_lt();
-    let mut sorted = Vec::new();
+    let mut sorted: Vec<usize> = Vec::new();
 
     for index in indices {
         let mut insert_at = sorted.len();
@@ -2262,7 +2436,28 @@ fn sort_along_segment_on_axis(
             let order = compare_real(
                 vertex_axis(&vertices[*index], axis),
                 vertex_axis(&vertices[*existing], axis),
-            )?;
+            )
+            .inspect_err(|error| {
+                if cfg!(debug_assertions) {
+                    eprintln!(
+                        "[DEBUG] segment ordering failed: axis={axis} left={} right={} left-f64={:?} right-f64={:?} left-point={:?} right-point={:?}: {error}",
+                        *index,
+                        *existing,
+                        vertex_axis(&vertices[*index], axis).to_f64_lossy(),
+                        vertex_axis(&vertices[*existing], axis).to_f64_lossy(),
+                        [
+                            vertices[*index].x.to_f64_lossy(),
+                            vertices[*index].y.to_f64_lossy(),
+                            vertices[*index].z.to_f64_lossy(),
+                        ],
+                        [
+                            vertices[*existing].x.to_f64_lossy(),
+                            vertices[*existing].y.to_f64_lossy(),
+                            vertices[*existing].z.to_f64_lossy(),
+                        ],
+                    );
+                }
+            })?;
             if (ascending && order.is_lt()) || (!ascending && order.is_gt()) {
                 insert_at = position;
                 break;

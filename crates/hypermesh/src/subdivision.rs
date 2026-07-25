@@ -242,6 +242,7 @@ struct BspLeafCertificationCacheEntry {
 }
 
 struct SubdivisionRuntimeCaches {
+    certified_embedded_inputs: Vec<bool>,
     polygon_family_bounds: RefCell<Vec<PolygonFamilyBoundsCacheEntry>>,
     polygon_axis_values: RefCell<Vec<PolygonAxisValuesCacheEntry>>,
     split_candidates: RefCell<SplitCandidatesCache>,
@@ -261,6 +262,7 @@ struct SubdivisionRuntimeCaches {
 impl Default for SubdivisionRuntimeCaches {
     fn default() -> Self {
         Self {
+            certified_embedded_inputs: Vec::new(),
             polygon_family_bounds: RefCell::new(Vec::new()),
             polygon_axis_values: RefCell::new(Vec::new()),
             split_candidates: RefCell::new(SplitCandidatesCache::default()),
@@ -714,7 +716,10 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
-    let caches = SubdivisionRuntimeCaches::default();
+    let caches = SubdivisionRuntimeCaches {
+        certified_embedded_inputs: certified_convex_inputs.to_vec(),
+        ..SubdivisionRuntimeCaches::default()
+    };
     let indicator = crate::winding::make_indicator(operation, task.ref_wnv.len());
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
@@ -931,7 +936,22 @@ fn subdivide_into_inner_with(
         return Ok(());
     }
 
-    let can_split = can_split_bounds(&task.bounds)?;
+    crate::trace_dispatch!("subdivision", "can-split-bounds");
+    let can_split = match can_split_bounds(&task.bounds) {
+        Ok(can_split) => can_split,
+        Err(error) => {
+            crate::trace_dispatch!("subdivision", "can-split-bounds-unknown");
+            return Err(error);
+        }
+    };
+    crate::trace_dispatch!(
+        "subdivision",
+        if can_split {
+            "can-split-bounds-yes"
+        } else {
+            "can-split-bounds-no"
+        }
+    );
 
     if !can_split {
         if !root_leaf_attempted
@@ -967,23 +987,48 @@ fn subdivide_into_inner_with(
         return Ok(());
     }
 
-    cached_root_split_basis_with(
+    crate::trace_dispatch!("subdivision", "root-split-basis");
+    if let Err(error) = cached_root_split_basis_with_certified_embedded_inputs(
         &caches.split_candidates,
         &caches.polygon_axis_values,
         &caches.pairwise_intersections,
+        &caches.certified_embedded_inputs,
         &task.bounds,
         &task.polygons,
-    )?;
-    let split_candidates = cached_ordered_subdivision_splits_with(
+    ) {
+        crate::trace_dispatch!("subdivision", "root-split-basis-failed");
+        if cfg!(debug_assertions) {
+            eprintln!(
+                "[DEBUG] root split basis failed at depth {}: {error}",
+                task.depth
+            );
+        }
+        return Err(error);
+    }
+    crate::trace_dispatch!("subdivision", "ordered-splits");
+    let split_candidates = match cached_ordered_subdivision_splits_with_certified_embedded_inputs(
         &caches.polygon_axis_values,
         &caches.split_candidates,
         &caches.split_child_fanout_counts,
         &caches.split_child_partitions,
         &caches.polygon_family_bounds,
         &caches.pairwise_intersections,
+        &caches.certified_embedded_inputs,
         &task.bounds,
         &task.polygons,
-    )?;
+    ) {
+        Ok(split_candidates) => split_candidates,
+        Err(error) => {
+            crate::trace_dispatch!("subdivision", "ordered-splits-failed");
+            if cfg!(debug_assertions) {
+                eprintln!(
+                    "[DEBUG] ordered splits failed at depth {}: {error}",
+                    task.depth
+                );
+            }
+            return Err(error);
+        }
+    };
     crate::trace_dispatch!("subdivision", "split-search");
 
     if subdivision_depth_budget_reached(task.depth, config.max_depth) {
@@ -1038,7 +1083,15 @@ fn subdivide_into_inner_with(
         return Ok(());
     }
 
-    Err(best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification))
+    let error = best_failure.unwrap_or(crate::error::HypermeshError::UnknownClassification);
+    if cfg!(debug_assertions) {
+        eprintln!(
+            "[DEBUG] all subdivision attempts failed at depth {} with {} polygons: {error}",
+            task.depth,
+            task.polygons.len(),
+        );
+    }
+    Err(error)
 }
 
 fn split_attempt_strictly_reduces_polygon_family(
@@ -1232,7 +1285,18 @@ fn process_split_attempt_child(
     winding_reachability_cache: &RefCell<Vec<WindingReachabilityCacheEntry>>,
 ) -> HypermeshResult<()> {
     let (child_ref, child_ref_definitions, child_wnv) =
-        propagate_child_reference(task, &child_polygons, &child_bounds, caches)?;
+        propagate_child_reference(task, &child_polygons, &child_bounds, caches).map_err(
+            |error| {
+                if cfg!(debug_assertions) {
+                    eprintln!(
+                        "[DEBUG] child reference failed from depth {} for {} polygons: {error}",
+                        task.depth,
+                        child_polygons.len(),
+                    );
+                }
+                error
+            },
+        )?;
     let child_task = SubdivisionTask {
         polygons: child_polygons,
         bounds: child_bounds,
@@ -1247,22 +1311,32 @@ fn process_split_attempt_child(
     if subdivision_task_state_matches_for_cache(&child_task, task) {
         return Err(crate::error::HypermeshError::ReferencePropagationFailed);
     }
-    let child_output = if let Some(reused) = {
+    let reusable = (|| {
         let mut query_caches = caches.support_reference_query.borrow_mut();
         if let Some(reused) = reusable_child_subdivision_if_certified(
             &caches.child_subdivision,
             &child_task,
             &mut query_caches,
         )? {
-            Some(reused)
+            Ok(Some(reused))
         } else {
             reusable_child_subdivision_from_cached_trace_if_certified(
                 &caches.child_subdivision,
                 &child_task,
                 &mut query_caches,
-            )?
+            )
         }
-    } {
+    })()
+    .map_err(|error| {
+        if cfg!(debug_assertions) {
+            eprintln!(
+                "[DEBUG] reusable child query failed from depth {}: {error}",
+                task.depth,
+            );
+        }
+        error
+    })?;
+    let child_output = if let Some(reused) = reusable {
         reused
     } else {
         cached_child_subdivision_with(&caches.child_subdivision, &child_task, || {
@@ -2597,6 +2671,7 @@ fn certify_bsp_leaf_and_delta_w_with_host_intersections(
         delta_w: polygon.delta_w.clone(),
         approx_bounds: None,
         known_vertices: None,
+        known_vertex_identities: None,
         known_edge_identities: None,
     };
     let may_use_single_point = single_convex_interior_point
@@ -3093,24 +3168,45 @@ fn pairwise_intersections_by_polygon_with_certified_embedded_inputs(
             crate::trace_dispatch!("pairwise-intersection", "certified-embedded-input");
             continue;
         }
-        if polygons[global_i].mesh_index == polygons[global_j].mesh_index
-            && polygon_cycles_share_reversed_noncoplanar_triangle_edge(
+        let same_mesh = polygons[global_i].mesh_index == polygons[global_j].mesh_index;
+        let shares_manifold_edge = if same_mesh {
+            polygon_cycles_share_reversed_noncoplanar_triangle_edge(
                 &vertices[global_i],
                 &polygons[global_i].support,
                 &vertices[global_j],
                 &polygons[global_j].support,
             )?
-        {
+        } else {
+            false
+        };
+        if same_mesh && shares_manifold_edge {
             crate::trace_dispatch!("pairwise-intersection", "known-manifold-edge");
             continue;
         }
+        crate::trace_dispatch!(
+            "pairwise-intersection",
+            if same_mesh {
+                "same-mesh-polygon-test"
+            } else {
+                "cross-mesh-polygon-test"
+            }
+        );
         let intersection = intersect_polygons_with_vertices(
             &polygons[global_i],
             &vertices[global_i],
             &polygons[global_j],
             &vertices[global_j],
             global_j,
-        )?;
+        )
+        .inspect_err(|_error| {
+            crate::trace_dispatch!("pairwise-intersection", "polygon-test-failed");
+            if cfg!(debug_assertions) {
+                eprintln!(
+                    "[DEBUG] pairwise failure: left={global_i}/mesh{} right={global_j}/mesh{}",
+                    polygons[global_i].mesh_index, polygons[global_j].mesh_index,
+                );
+            }
+        })?;
         if matches!(
             intersection.kind,
             PairwiseIntersectionType::Segment | PairwiseIntersectionType::Overlap
@@ -3192,6 +3288,7 @@ fn reverse_pairwise_intersection(
     }
 }
 
+#[cfg(test)]
 fn cached_pairwise_intersections_by_polygon_with(
     cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
     polygons: &[ConvexPolygon],

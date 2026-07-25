@@ -61,6 +61,9 @@ pub enum HypermeshError {
         /// not cancel.
         unbalanced_edges: usize,
     },
+    /// A mesh presented for convex certification has a vertex outside one of
+    /// its outward-oriented supporting half-spaces.
+    NonConvexInput,
     /// A predicate or certified construction could not be decided through the
     /// strict exact-predicate routes without choosing a precision budget or an
     /// approximate fallback.
@@ -146,6 +149,7 @@ impl fmt::Display for HypermeshError {
                 f,
                 "input mesh {mesh_index} has {unbalanced_edges} directed edge imbalances"
             ),
+            Self::NonConvexInput => f.write_str("input mesh is not convex"),
             Self::UnknownClassification => f.write_str("could not certify scalar sign"),
             Self::ReferencePropagationFailed => {
                 f.write_str("could not construct a certified subdivision reference")

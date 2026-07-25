@@ -7,7 +7,11 @@ use hyperlattice::{Point3, Real};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, axis_ref, compare_real};
-use crate::polygon::{ConvexPolygon, make_indexed_triangle_with_deferred_edges, make_triangle};
+use crate::polygon::{
+    ConvexPolygon, InputTrianglePlanes, make_indexed_triangle_with_deferred_edges,
+    make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle,
+    make_triangle_with_input_planes,
+};
 
 /// Input triangle: three vertex indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -104,30 +108,61 @@ impl PolygonSoup {
 
 /// Validates borrowed mesh views and builds a combined polygon soup.
 pub fn build_polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, None, false)
+    build_polygon_soup_with_edge_mode(meshes, None, None, false)
+}
+
+/// Validates a closed PWN mesh and certifies that every vertex lies in every
+/// outward-oriented face half-space.
+///
+/// A successful result may be retained by mesh owners as a reusable convexity
+/// fact for subsequent Boolean operations.
+pub fn certify_convex_mesh(mesh: MeshRef<'_>) -> HypermeshResult<()> {
+    let soup = build_polygon_soup(&[mesh])?;
+    for polygon in &soup.polygons {
+        for point in mesh.positions {
+            if crate::predicate::classify_point(point, &polygon.support)?
+                == crate::geometry::Classification::Positive
+            {
+                return Err(HypermeshError::NonConvexInput);
+            }
+        }
+    }
+    Ok(())
 }
 
 pub(crate) fn build_polygon_soup_with_certified_convex_inputs(
     meshes: &[MeshRef<'_>],
     certified_convex_inputs: &[bool],
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
 ) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), false)
+    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), input_planes, false)
 }
 
 pub(crate) fn build_polygon_soup_with_deferred_edges(
     meshes: &[MeshRef<'_>],
     certified_convex_inputs: &[bool],
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
 ) -> HypermeshResult<PolygonSoup> {
-    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), true)
+    build_polygon_soup_with_edge_mode(meshes, Some(certified_convex_inputs), input_planes, true)
 }
 
 fn build_polygon_soup_with_edge_mode(
     meshes: &[MeshRef<'_>],
     certified_convex_inputs: Option<&[bool]>,
+    input_planes: Option<&[&[InputTrianglePlanes]]>,
     defer_edges: bool,
 ) -> HypermeshResult<PolygonSoup> {
     crate::trace_dispatch!("build-polygon-soup", "start");
     if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    if input_planes.is_some_and(|planes| {
+        planes.len() != meshes.len()
+            || planes
+                .iter()
+                .zip(meshes)
+                .any(|(planes, mesh)| planes.len() != mesh.triangles.len())
+    }) {
         return Err(HypermeshError::UnknownClassification);
     }
     validate_non_empty_mesh_views(meshes)?;
@@ -165,15 +200,35 @@ fn build_polygon_soup_with_edge_mode(
                     index: i2,
                     vertex_count: mesh.positions.len(),
                 })?;
-            let mut polygon = if let Some(positions) = &retained_positions {
-                make_indexed_triangle_with_deferred_edges(
+            let supplied_planes = input_planes
+                .and_then(|planes| planes.get(mesh_index))
+                .and_then(|planes| planes.get(triangle_index))
+                .cloned();
+            let mut polygon = match (retained_positions.as_ref(), supplied_planes) {
+                (Some(positions), Some(planes)) => {
+                    make_indexed_triangle_with_deferred_edges_and_input_planes(
+                        Arc::clone(positions),
+                        [i0, i1, i2],
+                        planes,
+                        mesh_index as isize,
+                        polygon_index,
+                    )
+                }
+                (Some(positions), None) => make_indexed_triangle_with_deferred_edges(
                     Arc::clone(positions),
                     [i0, i1, i2],
                     mesh_index as isize,
                     polygon_index,
-                )
-            } else {
-                make_triangle(p0, p1, p2, mesh_index as isize, polygon_index)
+                ),
+                (None, Some(planes)) => make_triangle_with_input_planes(
+                    p0,
+                    p1,
+                    p2,
+                    planes,
+                    mesh_index as isize,
+                    polygon_index,
+                ),
+                (None, None) => make_triangle(p0, p1, p2, mesh_index as isize, polygon_index),
             }
             .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
             if !polygon.support.is_valid() {
@@ -358,7 +413,7 @@ mod tests {
             positions.clone(),
             vec![Triangle::new(0, 1, 2), Triangle::new(0, 3, 1)],
         );
-        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true]).unwrap();
+        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true], None).unwrap();
 
         let (
             Some(RetainedVertexCycle::IndexedTriangle {

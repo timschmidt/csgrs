@@ -112,18 +112,22 @@ pub use intersection::{
     intersect_polygons,
 };
 pub use local_bsp::{BspLeaf, LocalBsp};
-pub use mesh::{InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, build_polygon_soup};
+pub use mesh::{
+    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, build_polygon_soup,
+    certify_convex_mesh,
+};
 pub use operations::{
     EmberConfig, boolean_difference, boolean_intersection, boolean_operation,
     boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
-    boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs, boolean_union,
+    boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
+    boolean_triangle_soup_with_certified_convex_inputs_and_planes, boolean_union,
 };
 pub use output::{
     BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureEvidence, TriangleSource,
     certify_output_polygon_closure, extract_output, triangle_soup_closure_evidence,
     triangle_soup_is_closed, triangulate_and_resolve_certified,
 };
-pub use polygon::{ApproxBounds, ConvexPolygon, make_quad, make_triangle};
+pub use polygon::{ApproxBounds, ConvexPolygon, InputTrianglePlanes, make_quad, make_triangle};
 pub use segment_trace::{
     TraceAxisSegmentResult, classify_leaf_polygon, trace_axis_segment, trace_segment,
 };
