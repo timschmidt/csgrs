@@ -4994,6 +4994,58 @@ all-target Clippy. The `bezier_region` AddressSanitizer replay completed 2,509
 executions at 10,241 coverage points and 37,743 feature edges without a finding;
 LeakSanitizer alone remained disabled under ptrace.
 
+### Lazy exact conic image fallback
+
+Implicit conic contact preparation built the real-coefficient algebraic image
+polynomial for every prepared parameter map. Constructing that fallback
+evaluates one resultant per source-polynomial sample, interpolates those exact
+`Real` values, certifies the resulting degree, and later isolates its roots.
+The primary `PreparedAlgebraicRootRationalMap` transform usually decides the
+same parameter directly, so most of this symbolic algebra was never read.
+
+The prepared candidate now retains an empty `OnceCell` for the fallback image
+polynomial. Only an uncertain primary transform constructs it, deriving the
+source polynomial from the already-retained algebraic parameter; its exact
+polynomial and isolated image roots remain cached for subsequent refinement.
+This changes neither representation nor acceptance: primary and fallback maps
+use the same exact numerator and denominator, and no finite projection is
+introduced.
+
+The focused regression isolates a quadratic algebraic parameter, applies an
+exact identity rational map, and verifies both that the mapped parameter is
+decided and that the fallback `OnceCell` remains empty. Existing conic/cubic
+contact and pathological pi-weight Boolean regressions continue to exercise the
+fallback and complete exactly. A new 100-iteration pi-weight conic/cubic
+benchmark moved from 259.630 to a five-run median of 234.401 microseconds per
+contact query (9.72%).
+
+On the identical three-cell exact-native Callgrind workload, instruction
+references fell from 229,883,683 to 162,196,807 (29.44%). Dispatch tracing
+retained the same 310 certified sign refinements while reducing exact `Real`
+rational constructions from 74,832 to 55,335, zero constructions from 20,816
+to 17,884, rational reductions from 1,820 to 352, and GCDs from 2,693 to 716.
+The gain therefore comes from deferred unused algebra rather than weaker
+predicate work.
+
+The ten-run median for the complete 67-cell workload fell from 861.1 to 790.5
+milliseconds (8.20%), with retained preparation falling from 802.5 to 733.2
+milliseconds (8.63%). Every run still prepared all 67 regions and decided all
+268 native Boolean operations with zero blockers, 2,763 carrier pairs, 3,248
+fragments, 134 point classifications, and checksum 6. The corresponding
+exact-polyline median was 17.96 milliseconds, so native exact curves remain
+about 44 times slower and `LineArc` removal remains performance-gated.
+
+Heaptrack allocation events fell from 11,563,420 to 10,928,391 (5.49%),
+temporary allocation events from 2,093,056 to 2,083,289 (0.47%), and peak heap
+from 35.97 to 35.69 MiB. The release pathological benchmark lost 3,336 bytes
+of text, 4,072 bytes of total loadable size, and 2,144 bytes on disk.
+
+Complete all-feature and no-default-feature library/integration suites passed,
+including the slow all-operation exact Boolean regression, as did strict
+all-target Clippy. The `bezier_region` AddressSanitizer replay completed 2,509
+executions at 10,312 coverage points and 39,522 feature edges without a finding;
+LeakSanitizer alone remained disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

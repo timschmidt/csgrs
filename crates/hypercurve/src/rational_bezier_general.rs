@@ -3485,7 +3485,7 @@ struct PreparedConicParameterCandidate2 {
     #[cfg(feature = "predicates")]
     denominator: Vec<Real>,
     #[cfg(feature = "predicates")]
-    image_polynomial: Option<BezierParameterPolynomial>,
+    image_polynomial: OnceCell<Option<BezierParameterPolynomial>>,
     #[cfg(feature = "predicates")]
     image_parameters: OnceCell<CurveResult<Classification<Vec<BezierParameter2>>>>,
 }
@@ -3713,7 +3713,17 @@ fn real_coefficient_rational_image_parameter(
         };
     }
 
-    let Some(image_polynomial) = &candidate.image_polynomial else {
+    let BezierParameter2::Algebraic(source_algebraic) = source_parameter else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    };
+    let Some(image_polynomial) = candidate.image_polynomial.get_or_init(|| {
+        rational_map_image_polynomial(
+            source_algebraic.polynomial().coefficients(),
+            &candidate.numerator,
+            &candidate.denominator,
+            policy,
+        )
+    }) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     };
     let image_parameters = match candidate
@@ -3961,8 +3971,6 @@ fn prepare_conic_parameter_candidate(
     }
     #[cfg(feature = "predicates")]
     {
-        let image_polynomial =
-            rational_map_image_polynomial(source_polynomial, &numerator, &denominator, policy);
         Ok(Classification::Decided(PreparedConicParameterCandidate2 {
             map: PreparedAlgebraicRootRationalMap::new(
                 source_polynomial,
@@ -3972,7 +3980,7 @@ fn prepare_conic_parameter_candidate(
             ),
             numerator,
             denominator,
-            image_polynomial,
+            image_polynomial: OnceCell::new(),
             image_parameters: OnceCell::new(),
         }))
     }
@@ -4748,6 +4756,54 @@ mod tests {
             .unwrap();
             assert_eq!(image, parameter);
         }
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn conic_parameter_primary_map_defers_fallback_image_polynomial() {
+        let policy = CurvePolicy::certified();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![-half, Real::zero(), Real::one()],
+            &policy,
+        )
+        .unwrap() else {
+            panic!("quadratic source polynomial was not certified");
+        };
+        let Classification::Decided(interval) =
+            crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap()
+        else {
+            panic!("unit interval was not certified");
+        };
+        let Classification::Decided(parameter) =
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial.clone(), interval, &policy)
+                .unwrap()
+        else {
+            panic!("positive quadratic root was not isolated");
+        };
+        let Classification::Decided(candidate) = prepare_conic_parameter_candidate(
+            polynomial.coefficients(),
+            &(vec![Real::zero(), Real::one()], vec![Real::one()]),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("identity conic parameter map was not prepared");
+        };
+
+        assert!(candidate.image_polynomial.get().is_none());
+        assert!(matches!(
+            conic_parameter_from_candidates(
+                std::slice::from_ref(&candidate),
+                &BezierParameter2::Algebraic(parameter),
+                &policy,
+            )
+            .unwrap(),
+            Classification::Decided(Some(_))
+        ));
+        assert!(
+            candidate.image_polynomial.get().is_none(),
+            "the primary exact map must not construct its unused fallback polynomial"
+        );
     }
 
     #[test]

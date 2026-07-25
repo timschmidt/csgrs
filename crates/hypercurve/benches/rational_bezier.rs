@@ -416,6 +416,42 @@ fn main() {
         elapsed / contact_iterations
     );
 
+    let pi_conic = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![Real::one(), Real::pi(), Real::one()],
+    )
+    .expect("benchmark pi-weight conic is valid");
+    let elevated_horizontal = RationalBezier2::try_new(
+        vec![
+            Point2::new(r(0), q(1, 2)),
+            Point2::new(q(1, 3), q(1, 2)),
+            Point2::new(q(2, 3), q(1, 2)),
+            Point2::new(r(1), q(1, 2)),
+        ],
+        vec![Real::one(); 4],
+    )
+    .expect("benchmark degree-elevated horizontal line is valid");
+    let pi_conic_contact_iterations = 100_u32;
+    let started = Instant::now();
+    let mut pi_conic_contact_count = 0_usize;
+    for _ in 0..pi_conic_contact_iterations {
+        let contacts = pi_conic
+            .intersection_contacts(&elevated_horizontal, &policy)
+            .expect("benchmark pi-weight conic contacts are exact");
+        pi_conic_contact_count = pi_conic_contact_count.wrapping_add(black_box(match contacts {
+            RationalBezierIntersectionContacts2::NoIntersection => 0,
+            RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
+            RationalBezierIntersectionContacts2::Overlap(_) => 1,
+            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
+            RationalBezierIntersectionContacts2::DegenerateResultant => 1,
+        }));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "rational_bezier_pi_conic_cubic_contacts: {pi_conic_contact_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={pi_conic_contact_count}",
+        elapsed / pi_conic_contact_iterations
+    );
+
     let derivative_iterations = 250_u32;
     let started = Instant::now();
     let mut derivative_count = 0_usize;
