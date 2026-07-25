@@ -1,4 +1,4 @@
-//! Retained exact intersections between top-level curve paths.
+//! Immediate exact intersections and Booleans between top-level curve paths.
 
 use std::cell::OnceCell;
 use std::rc::Rc;
@@ -131,6 +131,8 @@ pub struct CurvePathIntersectionResult2 {
 
 #[derive(Debug)]
 struct CurvePathIntersectionResultData {
+    authored_curve_pair_count: usize,
+    candidate_curve_pair_count: usize,
     contacts: Rc<[CurvePathIntersectionContact2]>,
     overlaps: Rc<[CurvePathIntersectionOverlap2]>,
     blockers: Rc<[CurvePathIntersectionBlocker2]>,
@@ -157,26 +159,24 @@ struct CurvePathIntersectionTopologyData {
     arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
 }
 
-/// Retained path-pair intersection whose curve-pair resultants are computed once.
+/// The four operation-aware exact Boolean selections for one path pair and side policy.
 #[derive(Clone, Debug)]
-pub struct RetainedCurvePathIntersection2 {
-    data: Rc<PreparedCurvePathIntersectionData>,
+pub struct CurvePathBooleanSelections2 {
+    topology: CurvePathIntersectionTopology2,
+    selections: Box<[CurvePathBooleanSelection2; 4]>,
 }
 
 #[derive(Debug)]
-struct PreparedCurvePathIntersectionData {
-    first: CurvePath2,
-    second: CurvePath2,
+struct CurvePathIntersectionContext<'a> {
+    first: &'a CurvePath2,
+    second: &'a CurvePath2,
     policy: CurvePolicy,
     authored_curve_pair_count: usize,
-    pairs: Vec<PreparedCurvePathPair>,
-    result: OnceCell<ExactCurveResult<CurvePathIntersectionResult2>>,
-    topology: OnceCell<ExactCurveResult<CurvePathIntersectionTopology2>>,
-    boolean_selections: [OnceCell<ExactCurveResult<CurvePathBooleanSelection2>>; 16],
+    pairs: Vec<CurvePathPair>,
 }
 
 #[derive(Debug)]
-struct PreparedCurvePathPair {
+struct CurvePathPair {
     first_curve_index: usize,
     second_curve_index: usize,
     prepared: RetainedCurveIntersection2,
@@ -197,198 +197,190 @@ fn curve_pair_bounds_decided_disjoint(
 }
 
 impl CurvePath2 {
-    /// Prepares every authored curve pair once for exact path topology.
-    pub fn retain_intersection(
+    /// Computes exact contacts, overlaps, and blockers against another path immediately.
+    pub fn intersect_path(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<RetainedCurvePathIntersection2> {
-        let authored_curve_pair_count = self.curves().len().saturating_mul(other.curves().len());
-        let candidate_capacity = self
+    ) -> ExactCurveResult<CurvePathIntersectionResult2> {
+        CurvePathIntersectionContext::try_new(self, other, policy)?.build_evidence()
+    }
+
+    /// Computes exact split topology against another path immediately.
+    pub fn intersection_topology(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurvePathIntersectionTopology2> {
+        CurvePathIntersectionContext::try_new(self, other, policy)?.build_topology()
+    }
+
+    /// Computes one operation-aware exact Boolean selection immediately.
+    pub fn boolean_selection(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurvePathBooleanSelection2> {
+        let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
+        let topology = context.build_topology()?;
+        let selection = context.build_boolean_selection(
+            &topology,
+            operation,
+            first_interior_side,
+            second_interior_side,
+        )?;
+        selection.region_view()?;
+        Ok(selection)
+    }
+
+    /// Computes all four operation-aware exact Boolean selections immediately,
+    /// sharing intersection and split topology within this call.
+    pub fn boolean_selections(
+        &self,
+        other: &Self,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurvePathBooleanSelections2> {
+        let context = CurvePathIntersectionContext::try_new(self, other, policy)?;
+        let topology = context.build_topology()?;
+        let mut selections = Vec::with_capacity(4);
+        for operation in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::Xor,
+        ] {
+            let selection = context.build_boolean_selection(
+                &topology,
+                operation,
+                first_interior_side,
+                second_interior_side,
+            )?;
+            selection.region_view()?;
+            selections.push(selection);
+        }
+        Ok(CurvePathBooleanSelections2 {
+            topology,
+            selections: selections
+                .try_into()
+                .expect("all four Boolean operations were appended"),
+        })
+    }
+
+    /// Computes one exact regularized Boolean region immediately.
+    pub fn boolean_region(
+        &self,
+        other: &Self,
+        operation: BooleanOp,
+        first_interior_side: CurveBoundaryInteriorSide2,
+        second_interior_side: CurveBoundaryInteriorSide2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveRegion2> {
+        self.boolean_selection(
+            other,
+            operation,
+            first_interior_side,
+            second_interior_side,
+            policy,
+        )?
+        .region_view()
+        .cloned()
+    }
+}
+
+impl CurvePathBooleanSelections2 {
+    /// Returns the shared exact intersection result.
+    pub fn result(&self) -> &CurvePathIntersectionResult2 {
+        self.topology.result()
+    }
+
+    /// Returns the shared exact split topology.
+    pub const fn topology(&self) -> &CurvePathIntersectionTopology2 {
+        &self.topology
+    }
+
+    /// Returns the exact selection for one Boolean operation.
+    pub fn selection(&self, operation: BooleanOp) -> &CurvePathBooleanSelection2 {
+        &self.selections[boolean_operation_index(operation)]
+    }
+
+    /// Returns the completed exact region for one Boolean operation.
+    pub fn region(&self, operation: BooleanOp) -> &CurveRegion2 {
+        self.selection(operation)
+            .region_view()
+            .expect("immediate Boolean batches retain only completed regions")
+    }
+
+    /// Returns the exact union selection.
+    pub const fn union(&self) -> &CurvePathBooleanSelection2 {
+        &self.selections[0]
+    }
+
+    /// Returns the exact intersection selection.
+    pub const fn intersection(&self) -> &CurvePathBooleanSelection2 {
+        &self.selections[1]
+    }
+
+    /// Returns the exact first-minus-second selection.
+    pub const fn difference(&self) -> &CurvePathBooleanSelection2 {
+        &self.selections[2]
+    }
+
+    /// Returns the exact symmetric-difference selection.
+    pub const fn xor(&self) -> &CurvePathBooleanSelection2 {
+        &self.selections[3]
+    }
+}
+
+impl<'a> CurvePathIntersectionContext<'a> {
+    fn try_new(
+        first_path: &'a CurvePath2,
+        second_path: &'a CurvePath2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        let authored_curve_pair_count = first_path
             .curves()
             .len()
-            .saturating_add(other.curves().len())
+            .saturating_mul(second_path.curves().len());
+        let candidate_capacity = first_path
+            .curves()
+            .len()
+            .saturating_add(second_path.curves().len())
             .min(authored_curve_pair_count);
         let mut pairs = Vec::with_capacity(candidate_capacity);
-        for (first_curve_index, first) in self.curves().iter().enumerate() {
-            for (second_curve_index, second) in other.curves().iter().enumerate() {
+        for (first_curve_index, first) in first_path.curves().iter().enumerate() {
+            for (second_curve_index, second) in second_path.curves().iter().enumerate() {
                 if authored_curve_pair_count > 1
                     && curve_pair_bounds_decided_disjoint(first, second, policy)
                 {
                     continue;
                 }
-                pairs.push(PreparedCurvePathPair {
+                pairs.push(CurvePathPair {
                     first_curve_index,
                     second_curve_index,
                     prepared: first.retain_intersection(second, policy)?,
                 });
             }
         }
-        Ok(RetainedCurvePathIntersection2 {
-            data: Rc::new(PreparedCurvePathIntersectionData {
-                first: self.clone(),
-                second: other.clone(),
-                policy: policy.clone(),
-                authored_curve_pair_count,
-                pairs,
-                result: OnceCell::new(),
-                topology: OnceCell::new(),
-                boolean_selections: std::array::from_fn(|_| OnceCell::new()),
-            }),
+        Ok(Self {
+            first: first_path,
+            second: second_path,
+            policy: policy.clone(),
+            authored_curve_pair_count,
+            pairs,
         })
     }
 
-    /// Computes one exact regularized Boolean region.
-    ///
-    /// Use [`Self::retain_intersection`] when several operations or side
-    /// policies will be evaluated for the same path pair.
-    pub fn boolean_region(
-        &self,
-        other: &Self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-        policy: &CurvePolicy,
-    ) -> ExactCurveResult<CurveRegion2> {
-        self.retain_intersection(other, policy)?.boolean_region(
-            operation,
-            first_interior_side,
-            second_interior_side,
-        )
-    }
-}
-
-impl RetainedCurvePathIntersection2 {
-    /// Returns the retained first path.
-    pub fn first(&self) -> &CurvePath2 {
-        &self.data.first
-    }
-
-    /// Returns the retained second path.
-    pub fn second(&self) -> &CurvePath2 {
-        &self.data.second
-    }
-
-    /// Returns the exact policy captured when the path pair was retained.
-    pub fn policy(&self) -> &CurvePolicy {
-        &self.data.policy
-    }
-
-    /// Returns the Cartesian authored curve-pair count before broad-phase filtering.
-    pub fn authored_curve_pair_count(&self) -> usize {
-        self.data.authored_curve_pair_count
-    }
-
-    /// Returns the curve-pair count retained after certified AABB filtering.
-    pub fn candidate_curve_pair_count(&self) -> usize {
-        self.data.pairs.len()
-    }
-
-    /// Returns whether the combined result has already been retained.
-    pub fn is_result_cached(&self) -> bool {
-        self.data.result.get().is_some()
-    }
-
-    /// Returns a clone-shared combined path-pair result.
-    pub fn result(&self) -> ExactCurveResult<CurvePathIntersectionResult2> {
-        self.result_view().cloned()
-    }
-
-    /// Borrows the combined path-pair result without copying its records.
-    pub fn result_view(&self) -> ExactCurveResult<&CurvePathIntersectionResult2> {
-        match self.data.result.get_or_init(|| self.build_evidence()) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    /// Returns whether aggregate split topology has already been retained.
-    pub fn is_topology_cached(&self) -> bool {
-        self.data.topology.get().is_some()
-    }
-
-    /// Returns clone-shared aggregate split topology.
-    pub fn topology(&self) -> ExactCurveResult<CurvePathIntersectionTopology2> {
-        self.topology_view().cloned()
-    }
-
-    /// Borrows aggregate split topology without copying fragments.
-    pub fn topology_view(&self) -> ExactCurveResult<&CurvePathIntersectionTopology2> {
-        match self.data.topology.get_or_init(|| self.build_topology()) {
-            Ok(topology) => Ok(topology),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    /// Returns whether this operation and side-policy selection is already retained.
-    pub fn is_boolean_selection_cached(
-        &self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-    ) -> bool {
-        self.data.boolean_selections
-            [boolean_selection_index(operation, first_interior_side, second_interior_side)]
-        .get()
-        .is_some()
-    }
-
-    /// Returns a clone-shared operation-aware curved Boolean selection.
-    pub fn boolean_selection(
-        &self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-    ) -> ExactCurveResult<CurvePathBooleanSelection2> {
-        self.boolean_selection_view(operation, first_interior_side, second_interior_side)
-            .cloned()
-    }
-
-    /// Borrows a retained operation-aware curved Boolean selection.
-    pub fn boolean_selection_view(
-        &self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-    ) -> ExactCurveResult<&CurvePathBooleanSelection2> {
-        let slot = &self.data.boolean_selections
-            [boolean_selection_index(operation, first_interior_side, second_interior_side)];
-        match slot.get_or_init(|| {
-            self.build_boolean_selection(operation, first_interior_side, second_interior_side)
-        }) {
-            Ok(selection) => Ok(selection),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    /// Returns a clone-shared exact regularized Boolean region.
-    pub fn boolean_region(
-        &self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-    ) -> ExactCurveResult<CurveRegion2> {
-        self.boolean_region_view(operation, first_interior_side, second_interior_side)
-            .cloned()
-    }
-
-    /// Borrows the cached exact regularized Boolean region.
-    pub fn boolean_region_view(
-        &self,
-        operation: BooleanOp,
-        first_interior_side: CurveBoundaryInteriorSide2,
-        second_interior_side: CurveBoundaryInteriorSide2,
-    ) -> ExactCurveResult<&CurveRegion2> {
-        self.boolean_selection_view(operation, first_interior_side, second_interior_side)?
-            .region_view()
-    }
-
     fn build_evidence(&self) -> ExactCurveResult<CurvePathIntersectionResult2> {
-        let pair_count = self.data.pairs.len();
+        let pair_count = self.pairs.len();
         let mut contacts = Vec::with_capacity(pair_count);
         let mut overlaps = Vec::with_capacity(pair_count);
         let mut blockers = Vec::with_capacity(pair_count);
-        for pair in &self.data.pairs {
+        for pair in &self.pairs {
             let result = pair.prepared.result_view()?;
             contacts.extend(result.contacts().iter().cloned().map(|contact| {
                 CurvePathIntersectionContact2 {
@@ -414,6 +406,8 @@ impl RetainedCurvePathIntersection2 {
         }
         Ok(CurvePathIntersectionResult2 {
             data: Rc::new(CurvePathIntersectionResultData {
+                authored_curve_pair_count: self.authored_curve_pair_count,
+                candidate_curve_pair_count: pair_count,
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
@@ -422,7 +416,7 @@ impl RetainedCurvePathIntersection2 {
     }
 
     fn build_topology(&self) -> ExactCurveResult<CurvePathIntersectionTopology2> {
-        let result = self.result_view()?.clone();
+        let result = self.build_evidence()?;
         if let Some(blocker) = result.blockers().first() {
             let reason = match blocker.blocker().kind() {
                 CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
@@ -433,12 +427,12 @@ impl RetainedCurvePathIntersection2 {
             };
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Arrangement,
-                self.data.first.curves()[blocker.first_curve_index].family(),
+                self.first.curves()[blocker.first_curve_index].family(),
                 reason,
             ));
         }
         let first = split_path(
-            &self.data.first,
+            self.first,
             result
                 .contacts()
                 .iter()
@@ -463,10 +457,10 @@ impl RetainedCurvePathIntersection2 {
                         ),
                     ]
                 })),
-            &self.data.policy,
+            &self.policy,
         )?;
         let second = split_path(
-            &self.data.second,
+            self.second,
             result
                 .contacts()
                 .iter()
@@ -491,7 +485,7 @@ impl RetainedCurvePathIntersection2 {
                         ),
                     ]
                 })),
-            &self.data.policy,
+            &self.policy,
         )?;
         Ok(CurvePathIntersectionTopology2 {
             data: Rc::new(CurvePathIntersectionTopologyData {
@@ -505,19 +499,19 @@ impl RetainedCurvePathIntersection2 {
 
     fn build_boolean_selection(
         &self,
+        topology: &CurvePathIntersectionTopology2,
         operation: BooleanOp,
         first_interior_side: CurveBoundaryInteriorSide2,
         second_interior_side: CurveBoundaryInteriorSide2,
     ) -> ExactCurveResult<CurvePathBooleanSelection2> {
-        let topology = self.topology_view()?;
         let overlap_resolutions = topology.result().resolve_overlap_ownership(
             operation,
             first_interior_side,
             second_interior_side,
         );
-        let path_bounds_disjoint = match (self.data.first.bounds(), self.data.second.bounds()) {
+        let path_bounds_disjoint = match (self.first.bounds(), self.second.bounds()) {
             (Ok(first), Ok(second)) => matches!(
-                first.overlaps(second, &self.data.policy),
+                first.overlaps(second, &self.policy),
                 Classification::Decided(false)
             ),
             _ => false,
@@ -537,9 +531,9 @@ impl RetainedCurvePathIntersection2 {
         let mut fragments = Vec::with_capacity(fragment_capacity);
         append_boolean_fragments(
             &mut fragments,
-            &self.data.first,
+            self.first,
             topology.first(),
-            &self.data.second,
+            self.second,
             topology.result(),
             CurvePathBooleanOperand2::First,
             operation,
@@ -548,14 +542,14 @@ impl RetainedCurvePathIntersection2 {
             &overlap_resolutions,
             path_bounds_disjoint,
             0,
-            &self.data.policy,
+            &self.policy,
         )?;
         let first_fragment_count = fragments.len();
         append_boolean_fragments(
             &mut fragments,
-            &self.data.second,
+            self.second,
             topology.second(),
-            &self.data.first,
+            self.first,
             topology.result(),
             CurvePathBooleanOperand2::Second,
             operation,
@@ -564,23 +558,23 @@ impl RetainedCurvePathIntersection2 {
             &overlap_resolutions,
             path_bounds_disjoint,
             first_source_count,
-            &self.data.policy,
+            &self.policy,
         )?;
         propagate_path_junction_topology_vertices(
             &mut fragments,
             0..first_fragment_count,
-            self.data.first.start() == self.data.first.end(),
+            self.first.start() == self.first.end(),
         );
         let fragment_count = fragments.len();
         propagate_path_junction_topology_vertices(
             &mut fragments,
             first_fragment_count..fragment_count,
-            self.data.second.start() == self.data.second.end(),
+            self.second.start() == self.second.end(),
         );
         Ok(CurvePathBooleanSelection2 {
             data: Rc::new(CurvePathBooleanSelectionData {
                 operation,
-                policy: self.data.policy.clone(),
+                policy: self.policy.clone(),
                 first_interior_side,
                 second_interior_side,
                 fragments: fragments.into(),
@@ -687,6 +681,16 @@ impl CurvePathIntersectionBlocker2 {
 }
 
 impl CurvePathIntersectionResult2 {
+    /// Returns the Cartesian authored curve-pair count before broad-phase filtering.
+    pub fn authored_curve_pair_count(&self) -> usize {
+        self.data.authored_curve_pair_count
+    }
+
+    /// Returns the curve-pair count kept by certified broad-phase filtering.
+    pub fn candidate_curve_pair_count(&self) -> usize {
+        self.data.candidate_curve_pair_count
+    }
+
     /// Returns contacts in deterministic authored curve-pair order.
     pub fn contacts(&self) -> &[CurvePathIntersectionContact2] {
         &self.data.contacts
@@ -1447,24 +1451,11 @@ fn selection_blocked_error_from_first(
     )
 }
 
-const fn boolean_selection_index(
-    operation: BooleanOp,
-    first_interior_side: CurveBoundaryInteriorSide2,
-    second_interior_side: CurveBoundaryInteriorSide2,
-) -> usize {
-    let operation = match operation {
+const fn boolean_operation_index(operation: BooleanOp) -> usize {
+    match operation {
         BooleanOp::Union => 0,
         BooleanOp::Intersection => 1,
         BooleanOp::Difference => 2,
         BooleanOp::Xor => 3,
-    };
-    let first = match first_interior_side {
-        CurveBoundaryInteriorSide2::Left => 0,
-        CurveBoundaryInteriorSide2::Right => 1,
-    };
-    let second = match second_interior_side {
-        CurveBoundaryInteriorSide2::Left => 0,
-        CurveBoundaryInteriorSide2::Right => 1,
-    };
-    operation * 4 + first * 2 + second
+    }
 }

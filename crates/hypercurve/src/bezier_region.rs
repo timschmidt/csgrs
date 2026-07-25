@@ -4473,14 +4473,7 @@ fn materialized_boundary_loop_is_simple(
             return Ok(Classification::Uncertain(blocker.reason()));
         }
     };
-    let prepared = match path.retain_intersection(&path, policy) {
-        Ok(prepared) => prepared,
-        Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
-        Err(ExactCurveError::Blocked(blocker)) => {
-            return Ok(Classification::Uncertain(blocker.reason()));
-        }
-    };
-    let evidence = match prepared.result_view() {
+    let evidence = match path.intersect_path(&path, policy) {
         Ok(evidence) => evidence,
         Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
         Err(ExactCurveError::Blocked(blocker)) => {

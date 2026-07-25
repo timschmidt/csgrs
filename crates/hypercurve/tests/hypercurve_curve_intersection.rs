@@ -283,10 +283,9 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
 
     let first_path = CurvePath2::try_new(vec![first]).unwrap();
     let second_path = CurvePath2::try_new(vec![second]).unwrap();
-    let path_prepared = first_path
-        .retain_intersection(&second_path, &CurvePolicy::certified())
+    let path_topology = first_path
+        .intersection_topology(&second_path, &CurvePolicy::certified())
         .unwrap();
-    let path_topology = path_prepared.topology_view().unwrap();
     assert_eq!(
         path_topology.first()[0].materializations()[0]
             .fragments()
@@ -328,10 +327,15 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
     ])
     .unwrap();
 
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
@@ -339,13 +343,7 @@ fn path_boolean_consumes_algebraic_line_image_overlap_boundary() {
         BezierParameter2::Algebraic(_)
     ));
 
-    let selection = prepared
-        .boolean_selection_view(
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-        )
-        .unwrap();
+    let selection = selections.union();
     assert_eq!(selection.overlap_resolutions().len(), 1);
     assert_eq!(selection.arrangement_graph_view().unwrap().len(), 7);
     let traversal = selection.traversal_view().unwrap();
@@ -393,10 +391,15 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
     ])
     .unwrap();
 
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
@@ -404,13 +407,7 @@ fn path_boolean_consumes_irrational_polynomial_graph_overlap() {
         BezierParameter2::Algebraic(_)
     ));
 
-    let selection = prepared
-        .boolean_selection_view(
-            BooleanOp::Union,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-        )
-        .unwrap();
+    let selection = selections.union();
     assert_eq!(selection.overlap_resolutions().len(), 1);
     assert_eq!(selection.traversal_view().unwrap().closed_count(), 1);
     let region = selection.region_view().unwrap();
@@ -617,10 +614,15 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
         .signed_area()
         .unwrap()
         .unwrap();
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
 
@@ -631,13 +633,7 @@ fn path_boolean_selection_resolves_partial_same_circle_arc_boundaries() {
         (BooleanOp::Xor, &first_area - &second_area),
     ];
     for (operation, expected_area) in cases {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} selection: {error:?}"));
+        let selection = selections.selection(operation);
         let traversal = selection
             .traversal_view()
             .unwrap_or_else(|error| panic!("{operation:?} traversal: {error:?}"));
@@ -699,8 +695,15 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
     let second_curve = source.subcurve(q(1, 4), Real::one()).unwrap();
     let first = closed_under_curve(first_curve, -5);
     let second = closed_under_curve(second_curve, -6);
-    let prepared = first.retain_intersection(&second, &policy).unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Right,
+            CurveBoundaryInteriorSide2::Right,
+            &policy,
+        )
+        .unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert_eq!(
@@ -718,13 +721,7 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Right,
-                CurveBoundaryInteriorSide2::Right,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} selection: {error:?}"));
+        let selection = selections.selection(operation);
         assert_eq!(selection.overlap_resolutions().len(), 1);
         assert!(selection.kept_fragment_count() > 0);
         let traversal = selection
@@ -740,29 +737,19 @@ fn path_boolean_consumes_partial_nonlinear_shared_boundary() {
 }
 
 #[test]
-fn path_pair_prepares_once_and_splits_each_authored_curve_once() {
+fn path_pair_immediate_topology_splits_each_authored_curve_once() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let clone = prepared.clone();
-
-    assert_eq!(prepared.authored_curve_pair_count(), 16);
-    assert_eq!(prepared.candidate_curve_pair_count(), 2);
-    assert!(!prepared.is_result_cached());
-    let evidence = prepared.result_view().unwrap();
-    assert!(prepared.is_result_cached());
-    assert!(clone.is_result_cached());
-    assert!(std::ptr::eq(evidence, clone.result_view().unwrap()));
+    let evidence = topology.result();
+    assert_eq!(evidence.authored_curve_pair_count(), 16);
+    assert_eq!(evidence.candidate_curve_pair_count(), 2);
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
     assert!(evidence.overlaps().is_empty());
 
-    assert!(!prepared.is_topology_cached());
-    let topology = prepared.topology_view().unwrap();
-    assert!(prepared.is_topology_cached());
-    assert!(clone.is_topology_cached());
     assert_eq!(topology.first().len(), 4);
     assert_eq!(topology.second().len(), 4);
     assert_eq!(
@@ -800,16 +787,8 @@ fn path_overlap_ownership_uses_exact_orientation_and_boolean_side_logic() {
     )])
     .unwrap();
     let policy = CurvePolicy::certified();
-    let same_evidence = first
-        .retain_intersection(&same, &policy)
-        .unwrap()
-        .result()
-        .unwrap();
-    let reversed_evidence = first
-        .retain_intersection(&reversed, &policy)
-        .unwrap()
-        .result()
-        .unwrap();
+    let same_evidence = first.intersect_path(&same, &policy).unwrap();
+    let reversed_evidence = first.intersect_path(&reversed, &policy).unwrap();
 
     let action = |evidence: &hypercurve::CurvePathIntersectionResult2, operation| {
         evidence.resolve_overlap_ownership(
@@ -899,10 +878,15 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
 fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
     let first = rectangle(0, 0, 2, 4);
     let second = rectangle(2, 1, 4, 3);
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     let overlap = evidence.overlaps()[0].overlap();
@@ -922,13 +906,7 @@ fn path_boolean_selection_resolves_partial_reversed_shared_line_boundaries() {
         (BooleanOp::Xor, 8_usize, r(12)),
     ];
     for (operation, expected_kept, expected_area) in cases {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap_or_else(|error| panic!("{operation:?} selection: {error:?}"));
+        let selection = selections.selection(operation);
         assert_eq!(selection.kept_fragment_count(), expected_kept);
         let region = selection
             .region_view()
@@ -942,7 +920,14 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
     let first = rectangle(0, 0, 2, 2);
     let second = rectangle(1, -1, 3, 1);
     let policy = CurvePolicy::certified();
-    let prepared = first.retain_intersection(&second, &policy).unwrap();
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        )
+        .unwrap();
     let cases = [
         (BooleanOp::Union, r(7), 8_usize),
         (BooleanOp::Intersection, r(1), 4_usize),
@@ -951,49 +936,22 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
     ];
 
     for (operation, expected_area, expected_kept) in cases {
-        assert!(!prepared.is_boolean_selection_cached(
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-        ));
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap();
-        assert!(prepared.is_boolean_selection_cached(
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-        ));
+        let selection = selections.selection(operation);
         assert_eq!(selection.kept_fragment_count(), expected_kept);
-        assert!(!selection.is_arrangement_cached());
+        assert!(selection.is_arrangement_cached());
         assert_eq!(
             selection.arrangement_graph_view().unwrap().len(),
             expected_kept
         );
         assert!(selection.is_arrangement_cached());
-        assert!(!selection.is_traversal_cached());
+        assert!(selection.is_traversal_cached());
         let traversal = selection.traversal_view().unwrap();
         assert!(selection.is_traversal_cached());
         assert!(traversal.chains().iter().all(|chain| chain.is_closed()));
-        assert!(!selection.is_region_cached());
-        let region = selection
-            .region_view()
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
         assert!(selection.is_region_cached());
-        assert!(std::ptr::eq(
-            region,
-            prepared
-                .boolean_region_view(
-                    operation,
-                    CurveBoundaryInteriorSide2::Left,
-                    CurveBoundaryInteriorSide2::Left,
-                )
-                .unwrap()
-        ));
+        let region = selections.region(operation);
+        assert!(selection.is_region_cached());
+        assert!(std::ptr::eq(region, selection.region_view().unwrap()));
         assert_eq!(region.signed_area().unwrap(), Some(expected_area));
     }
 
@@ -1013,8 +971,13 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
 fn path_boolean_selection_consumes_complete_shared_boundaries() {
     let first = rectangle(0, 0, 2, 2);
     let second = first.clone();
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
     let cases = [
         (BooleanOp::Union, 4_usize, r(4)),
@@ -1024,13 +987,7 @@ fn path_boolean_selection_consumes_complete_shared_boundaries() {
     ];
 
     for (operation, expected_kept, expected_area) in cases {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap();
+        let selection = selections.selection(operation);
         assert_eq!(selection.overlap_resolutions().len(), 4);
         assert_eq!(selection.kept_fragment_count(), expected_kept);
         let traversal = selection
@@ -1064,27 +1021,20 @@ fn path_boolean_selection_preserves_disjoint_exact_conic_boundaries() {
     };
     let first = circle(0);
     let second = circle(4);
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
-        .unwrap();
-
-    let union = prepared
-        .boolean_selection_view(
-            BooleanOp::Union,
+    let selections = first
+        .boolean_selections(
+            &second,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
         )
         .unwrap();
+
+    let union = selections.union();
     assert_eq!(union.kept_fragment_count(), 8);
     assert_eq!(union.region_view().unwrap().boundary_loops().len(), 2);
 
-    let intersection = prepared
-        .boolean_selection_view(
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-        )
-        .unwrap();
+    let intersection = selections.intersection();
     assert_eq!(intersection.kept_fragment_count(), 0);
     assert!(intersection.region_view().unwrap().is_empty());
 }
@@ -1105,26 +1055,25 @@ fn path_boolean_selection_traverses_overlapping_circles_with_exact_radical_split
     };
     let first = circle(0);
     let second = circle(1);
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
     assert!(evidence.contacts().iter().all(|contact| {
         contact.contact().first().local_parameter().is_exact()
             && contact.contact().second().local_parameter().is_exact()
     }));
-    prepared.topology_view().unwrap();
+    assert_eq!(selections.topology().result().contacts().len(), 2);
 
     for operation in [BooleanOp::Union, BooleanOp::Intersection] {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap();
+        let selection = selections.selection(operation);
         assert!(selection.kept_fragment_count() > 0);
         assert!(
             selection
@@ -1154,13 +1103,18 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     ])
     .unwrap();
     let second = rectangle(-3, 2, 3, 5);
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let selections = first
+        .boolean_selections(
+            &second,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &CurvePolicy::certified(),
+        )
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = selections.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
-    let topology = prepared.topology_view().unwrap();
+    let topology = selections.topology();
     assert!(
         topology
             .first()
@@ -1172,13 +1126,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     );
 
     for operation in [BooleanOp::Difference, BooleanOp::Xor] {
-        let selection = prepared
-            .boolean_selection_view(
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-            )
-            .unwrap();
+        let selection = selections.selection(operation);
         assert!(selection.fragments().iter().any(|fragment| {
             fragment.action() == CurvePathBooleanFragmentAction2::KeepReversed
                 && fragment.fragment().is_algebraic_endpoint_images()
@@ -1322,8 +1270,15 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             Curve2::from(LineSeg2::try_new(p(2, 4), p(-2, 4)).unwrap()),
         ])
         .unwrap();
-        let prepared = source.retain_intersection(&cutter, &policy).unwrap();
-        let evidence = prepared.result_view().unwrap();
+        let selections = source
+            .boolean_selections(
+                &cutter,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .unwrap();
+        let evidence = selections.result();
         assert!(
             evidence.is_complete(),
             "{family:?}: {:#?}",
@@ -1337,12 +1292,9 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ] {
-            let _region = prepared
-                .boolean_region(
-                    operation,
-                    CurveBoundaryInteriorSide2::Left,
-                    CurveBoundaryInteriorSide2::Left,
-                )
+            let _region = selections
+                .selection(operation)
+                .region_view()
                 .unwrap_or_else(|error| panic!("{family:?} {operation:?}: {error:?}"));
         }
     }

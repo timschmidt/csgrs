@@ -144,41 +144,16 @@ fn main() {
         elapsed / spline_split_iterations
     );
 
-    let prepared = first
-        .retain_intersection(&second, &policy)
-        .expect("benchmark path pair prepares exactly");
-    prepared
-        .result_view()
-        .expect("benchmark path evidence is complete");
     let replay_iterations = 20_000_u32;
+    let immediate_iterations = 2_000_u32;
     let started = Instant::now();
-    let mut replay_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let evidence = prepared
-            .result_view()
-            .expect("cached path evidence remains complete");
-        replay_checksum ^= black_box(
-            evidence.contacts().len() + evidence.overlaps().len() + evidence.blockers().len(),
-        );
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_path_cached_intersection_evidence: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={replay_checksum}",
-        elapsed / replay_iterations
-    );
-
-    let preparation_iterations = 2_000_u32;
-    let started = Instant::now();
-    let mut preparation_checksum = 0_usize;
-    for _ in 0..preparation_iterations {
-        let candidate = first
-            .retain_intersection(&second, &policy)
-            .expect("benchmark path pair prepares exactly");
-        let evidence = candidate
-            .result_view()
-            .expect("benchmark path evidence remains complete");
-        preparation_checksum ^= black_box(
-            candidate.candidate_curve_pair_count()
+    let mut evidence_checksum = 0_usize;
+    for _ in 0..immediate_iterations {
+        let evidence = first
+            .intersect_path(&second, &policy)
+            .expect("benchmark path evidence is complete");
+        evidence_checksum ^= black_box(
+            evidence.candidate_curve_pair_count()
                 + evidence.contacts().len()
                 + evidence.overlaps().len()
                 + evidence.blockers().len(),
@@ -186,22 +161,16 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_prepare_intersection_evidence: {preparation_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={preparation_checksum}",
-        elapsed / preparation_iterations
+        "curve_path_immediate_intersection_evidence: {immediate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={evidence_checksum}",
+        elapsed / immediate_iterations
     );
 
-    let topology = prepared
-        .topology_view()
-        .expect("benchmark path topology is complete");
-    topology
-        .arrangement_graph_view()
-        .expect("benchmark path arrangement assembles");
     let started = Instant::now();
     let mut topology_checksum = 0_usize;
-    for _ in 0..replay_iterations {
-        let topology = prepared
-            .topology_view()
-            .expect("cached path topology remains complete");
+    for _ in 0..immediate_iterations {
+        let topology = first
+            .intersection_topology(&second, &policy)
+            .expect("benchmark path topology is complete");
         topology_checksum ^= black_box(
             topology.first().len()
                 + topology.second().len()
@@ -210,20 +179,44 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_path_cached_intersection_topology: {replay_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={topology_checksum}",
-        elapsed / replay_iterations
+        "curve_path_immediate_intersection_topology: {immediate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={topology_checksum}",
+        elapsed / immediate_iterations
     );
 
     let partial_first = rectangle(0, 0, 2, 4);
     let partial_second = rectangle(2, 1, 4, 3);
-    let prepared_partial = partial_first
-        .retain_intersection(&partial_second, &policy)
-        .expect("partial-overlap path pair prepares exactly");
-    let partial_union = prepared_partial
-        .boolean_selection_view(
+    let boolean_iterations = 500_u32;
+    let started = Instant::now();
+    let mut boolean_checksum = 0_usize;
+    for _ in 0..boolean_iterations {
+        let selections = partial_first
+            .boolean_selections(
+                &partial_second,
+                CurveBoundaryInteriorSide2::Left,
+                CurveBoundaryInteriorSide2::Left,
+                &policy,
+            )
+            .expect("all immediate partial-overlap Booleans are exact");
+        boolean_checksum ^= black_box(
+            selections.union().kept_fragment_count()
+                + selections.intersection().kept_fragment_count()
+                + selections.difference().kept_fragment_count()
+                + selections.xor().kept_fragment_count(),
+        );
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_path_immediate_boolean_batch: {boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={boolean_checksum}",
+        elapsed / boolean_iterations
+    );
+
+    let partial_union = partial_first
+        .boolean_selection(
+            &partial_second,
             BooleanOp::Union,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
+            &policy,
         )
         .expect("partial-overlap union selection is exact");
     partial_union
@@ -262,14 +255,13 @@ fn main() {
         ),
     ])
     .expect("benchmark circular-segment path is connected");
-    let prepared_partial_arc = partial_arc_first
-        .retain_intersection(&partial_arc_second, &policy)
-        .expect("partial-arc path pair prepares exactly");
-    let partial_arc_union = prepared_partial_arc
-        .boolean_selection_view(
+    let partial_arc_union = partial_arc_first
+        .boolean_selection(
+            &partial_arc_second,
             BooleanOp::Union,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
+            &policy,
         )
         .expect("partial-arc union selection is exact");
     partial_arc_union
@@ -303,14 +295,13 @@ fn main() {
             .expect("benchmark cubic subcurve is exact"),
         -6,
     );
-    let prepared_nonlinear = nonlinear_first
-        .retain_intersection(&nonlinear_second, &policy)
-        .expect("partial nonlinear-overlap path pair prepares exactly");
-    let nonlinear_union = prepared_nonlinear
-        .boolean_selection_view(
+    let nonlinear_union = nonlinear_first
+        .boolean_selection(
+            &nonlinear_second,
             BooleanOp::Union,
             CurveBoundaryInteriorSide2::Right,
             CurveBoundaryInteriorSide2::Right,
+            &policy,
         )
         .expect("partial nonlinear-overlap union selection is exact");
     nonlinear_union
@@ -383,14 +374,13 @@ fn main() {
         CurvePath2::try_new(vec![first_circle]).expect("benchmark circle path is connected");
     let second_circle_path =
         CurvePath2::try_new(vec![second_circle]).expect("benchmark circle path is connected");
-    let prepared_circles = first_circle_path
-        .retain_intersection(&second_circle_path, &policy)
-        .expect("benchmark circle paths prepare exactly");
-    let circle_union = prepared_circles
-        .boolean_selection_view(
+    let circle_union = first_circle_path
+        .boolean_selection(
+            &second_circle_path,
             BooleanOp::Union,
             CurveBoundaryInteriorSide2::Left,
             CurveBoundaryInteriorSide2::Left,
+            &policy,
         )
         .expect("benchmark circle union is exact");
     circle_union

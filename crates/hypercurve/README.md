@@ -25,10 +25,10 @@ facts across clones. Exact line-image algebraic carriers are lowered once to a
 clone-shared native line region; nonlinear algebraic carriers filter exact source-curve
 incidence to their represented parameter ranges. Only non-line carriers lacking retained
 source-curve provenance remain explicit classification blockers.
-`CurvePath2::boolean_region` computes a one-shot union, intersection, difference, or
-XOR. `RetainedCurvePathIntersection2::boolean_region_view` caches and borrows each
-operation/side-policy result when the same path pair is queried repeatedly.
-`CurveRegion2::boolean_region` accepts those retained results directly, including
+`CurvePath2::boolean_region` computes an immediate union, intersection, difference, or
+XOR. `CurvePath2::boolean_selections` immediately completes all four exact regions for
+one side policy while sharing path-pair intersection and split topology within the call.
+`CurveRegion2::boolean_region` accepts those exact results directly, including
 nonlinear algebraic endpoint carriers, nested holes, and prior Boolean output.
 `CurveRegion2::boolean_regions` immediately computes all four regularized results
 while sharing cross-region carrier intersections, split topology, and fragment
@@ -226,10 +226,10 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   public parameter ranges from retained root-source ranges, and represented contacts
   expose both values. Complete evidence lazily retain contact-derived span
   splits and arrangements.
-- `RetainedCurvePathIntersection2` computes authored curve-pair facts once and lazily
-  retains aggregate contacts, overlaps, split topology, regularized Boolean selection,
-  arrangement traversal, and `CurveRegion2` output for each operation and declared
-  boundary-interior side. `CurvePath2::boolean_region` is the direct one-shot entry.
+- `CurvePath2::intersect_path` and `intersection_topology` are immediate exact
+  path-pair entries. `CurvePath2::boolean_selection` completes one regularized result;
+  `boolean_selections` returns all four completed operation selections while sharing
+  aggregate contacts, overlaps, split topology, and classification work within the call.
 - `CurveRegionBooleanResults2` contains the immediate union, intersection, difference,
   and XOR returned by `CurveRegion2::boolean_regions`. The batch shares exact
   carrier-pair evidence across all four operations and preserves algebraic fragment
@@ -367,8 +367,8 @@ and topology are shared across the four results only for the duration of the cal
 Degree-aligned shared-component replay elevates only the lower-degree homogeneous
 Bernstein control net and reuses retained elevations, so independently rebuilt exact
 degree elevations do not fall through to an unresolved resultant. Benchmarks track raw
-and retained spline decomposition, cached general-rational evaluation, path-pair
-retention/candidate filtering, and ordinary, retained, and mixed retained paths.
+and retained spline decomposition, cached general-rational evaluation, immediate
+path-pair candidate filtering, and ordinary, retained, and mixed retained paths.
 
 The complete reference-to-implementation audit, retained benchmark results, and
 rejected optimization experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
@@ -446,13 +446,13 @@ Implemented today:
   ranges for certified injective line-image and polynomial-graph overlaps, represented exact
   strict rational-Bezier overlap refinement with same/reversed ownership and retained source
   provenance, clone-shared path promotion, native-family topology materialization,
-  retained all-curve path-pair replay, aggregate path splitting, lazy arrangement assembly,
+  immediate all-curve path-pair replay, aggregate path splitting, arrangement assembly,
   operation-aware shared-span ownership from explicit boundary interior sides, exact
   representative-point classification, retained contact-vertex traversal, and
   union/intersection/difference/XOR region materialization for supported split topology,
   including exact algebraic-fragment reversal, endpoint-touching root-isolator
-  refinement, composable retained-region Booleans, nested-hole ownership, and cached
-  repeated region-pair operations; chained retained regions sharing one source
+  refinement, immediate batched region Booleans, nested-hole ownership, and shared
+  topology across each four-operation call; chained retained regions sharing one source
   parameterization clip full-component overlap evidence to their exact algebraic carrier
   intervals before ownership classification;
 - signed area, area moment, length interval, flattening, and zero-error primitive

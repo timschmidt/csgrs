@@ -188,10 +188,10 @@ pub use curve_intersection::{
 };
 pub use curve_path_intersection::{
     CurveBoundaryInteriorSide2, CurvePathBooleanFragment2, CurvePathBooleanFragmentAction2,
-    CurvePathBooleanOperand2, CurvePathBooleanSelection2, CurvePathIntersectionBlocker2,
-    CurvePathIntersectionContact2, CurvePathIntersectionOverlap2, CurvePathIntersectionResult2,
-    CurvePathIntersectionTopology2, CurvePathOverlapAction2, CurvePathOverlapResolution2,
-    CurvePathSplit2, RetainedCurvePathIntersection2,
+    CurvePathBooleanOperand2, CurvePathBooleanSelection2, CurvePathBooleanSelections2,
+    CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
+    CurvePathIntersectionResult2, CurvePathIntersectionTopology2, CurvePathOverlapAction2,
+    CurvePathOverlapResolution2, CurvePathSplit2,
 };
 pub use curve_region_boolean::{
     CurveRegionBooleanResults2, CurveRegionCarrierRef2, CurveRegionIntersectionBlocker2,
