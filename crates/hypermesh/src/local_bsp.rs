@@ -83,7 +83,14 @@ impl LocalBsp {
     /// Adds an intersection segment and splits affected leaves by its plane.
     pub fn add_segment(&mut self, segment: &IntersectionSegment) -> HypermeshResult<()> {
         if let Some(root) = self.root {
-            self.add_segment_recursive(root, &segment.v0, &segment.v1, &segment.split_plane)?;
+            let inverted = segment.split_plane.inverted();
+            self.add_segment_recursive(
+                root,
+                &segment.v0,
+                &segment.v1,
+                &segment.split_plane,
+                &inverted,
+            )?;
         }
         Ok(())
     }
@@ -103,7 +110,8 @@ impl LocalBsp {
     pub fn add_overlap_edges(&mut self, edges: &[Plane]) -> HypermeshResult<()> {
         if let Some(root) = self.root {
             for edge in edges {
-                self.add_plane_split_recursive(root, edge)?;
+                let inverted = edge.inverted();
+                self.add_plane_split_recursive(root, edge, &inverted)?;
             }
         }
         Ok(())
@@ -140,10 +148,11 @@ impl LocalBsp {
         v0: &Point3,
         v1: &Point3,
         split: &Plane,
+        split_inverted: &Plane,
     ) -> HypermeshResult<()> {
         let branch = match &self.nodes[node_index] {
             BspNode::Leaf(_) => {
-                self.split_leaf(node_index, split)?;
+                self.split_leaf(node_index, split, split_inverted)?;
                 return Ok(());
             }
             BspNode::Branch {
@@ -161,24 +170,29 @@ impl LocalBsp {
             return Ok(());
         }
         if c0.is_non_positive() && c1.is_non_positive() {
-            self.add_segment_recursive(negative, v0, v1, split)
+            self.add_segment_recursive(negative, v0, v1, split, split_inverted)
         } else if c0.is_non_negative() && c1.is_non_negative() {
-            self.add_segment_recursive(positive, v0, v1, split)
+            self.add_segment_recursive(positive, v0, v1, split, split_inverted)
         } else {
             let v_mid = intersect_three_planes(&self.support, split, &node_split)
                 .to_affine_point()
                 .map_err(|_| HypermeshError::PointAtInfinity)?;
             if c0 == Classification::Negative {
-                self.add_segment_recursive(negative, v0, &v_mid, split)?;
-                self.add_segment_recursive(positive, &v_mid, v1, split)
+                self.add_segment_recursive(negative, v0, &v_mid, split, split_inverted)?;
+                self.add_segment_recursive(positive, &v_mid, v1, split, split_inverted)
             } else {
-                self.add_segment_recursive(positive, v0, &v_mid, split)?;
-                self.add_segment_recursive(negative, &v_mid, v1, split)
+                self.add_segment_recursive(positive, v0, &v_mid, split, split_inverted)?;
+                self.add_segment_recursive(negative, &v_mid, v1, split, split_inverted)
             }
         }
     }
 
-    fn split_leaf(&mut self, node_index: usize, split: &Plane) -> HypermeshResult<()> {
+    fn split_leaf(
+        &mut self,
+        node_index: usize,
+        split: &Plane,
+        split_inverted: &Plane,
+    ) -> HypermeshResult<()> {
         let (old_edges, old_projective_interior_point, was_enabled) = match &self.nodes[node_index]
         {
             BspNode::Leaf(leaf) => (
@@ -215,7 +229,6 @@ impl LocalBsp {
             return Ok(());
         }
 
-        let split_inv = split.inverted();
         let mut negative_edges = Vec::with_capacity(n + 2);
         let mut positive_edges = Vec::with_capacity(n + 2);
 
@@ -234,7 +247,7 @@ impl LocalBsp {
                 }
                 (false, true) => {
                     positive_edges.push(seg_edge.clone());
-                    positive_edges.push(split_inv.clone());
+                    positive_edges.push(split_inverted.clone());
                     negative_edges.push(seg_edge);
                 }
                 (false, false) => positive_edges.push(seg_edge),
@@ -282,10 +295,11 @@ impl LocalBsp {
         &mut self,
         node_index: usize,
         split: &Plane,
+        split_inverted: &Plane,
     ) -> HypermeshResult<()> {
         let children = match &self.nodes[node_index] {
             BspNode::Leaf(_) => {
-                self.split_leaf(node_index, split)?;
+                self.split_leaf(node_index, split, split_inverted)?;
                 return Ok(());
             }
             BspNode::Branch {
@@ -293,15 +307,14 @@ impl LocalBsp {
                 negative,
                 positive,
             } => {
-                let split_inverted = split.inverted();
-                if split_plane.as_ref() == split || split_plane.as_ref() == &split_inverted {
+                if split_plane.as_ref() == split || split_plane.as_ref() == split_inverted {
                     return Ok(());
                 }
                 (*negative, *positive)
             }
         };
-        self.add_plane_split_recursive(children.0, split)?;
-        self.add_plane_split_recursive(children.1, split)
+        self.add_plane_split_recursive(children.0, split, split_inverted)?;
+        self.add_plane_split_recursive(children.1, split, split_inverted)
     }
 
     fn mark_overlapping_leaves(

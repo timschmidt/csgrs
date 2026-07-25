@@ -2051,7 +2051,7 @@ fn compute_two_convex_inputs_projectively(
     }))
 }
 
-fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
     let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
     let right_coefficients = [
         &right.normal.x,
@@ -2080,6 +2080,13 @@ fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResu
     if unknown_minor {
         return Ok(false);
     }
+    Ok(true)
+}
+
+fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
+    if !certifiably_proportional_plane(left, right)? {
+        return Ok(false);
+    }
     let orientation = Real::signed_product_sum(
         [true, true, true],
         [
@@ -2092,8 +2099,7 @@ fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResu
 }
 
 fn certifiably_same_unoriented_plane(left: &Plane, right: &Plane) -> bool {
-    certifiably_same_oriented_plane(left, right).unwrap_or(false)
-        || certifiably_same_oriented_plane(left, &right.inverted()).unwrap_or(false)
+    certifiably_proportional_plane(left, right).unwrap_or(false)
 }
 
 fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
@@ -2828,6 +2834,27 @@ mod tests {
     #[test]
     fn default_config_uses_finite_split_basis_without_a_depth_budget() {
         assert_eq!(EmberConfig::default().max_depth, usize::MAX);
+    }
+
+    #[test]
+    fn plane_equivalence_separates_proportionality_from_orientation() {
+        let plane =
+            Plane::from_coefficients(Real::from(2), Real::from(4), Real::from(6), Real::from(8));
+        let same =
+            Plane::from_coefficients(Real::from(3), Real::from(6), Real::from(9), Real::from(12));
+        let opposite = Plane::from_coefficients(
+            Real::from(-3),
+            Real::from(-6),
+            Real::from(-9),
+            Real::from(-12),
+        );
+        let distinct =
+            Plane::from_coefficients(Real::from(3), Real::from(6), Real::from(9), Real::from(13));
+
+        assert!(certifiably_same_oriented_plane(&plane, &same).unwrap());
+        assert!(!certifiably_same_oriented_plane(&plane, &opposite).unwrap());
+        assert!(certifiably_same_unoriented_plane(&plane, &opposite));
+        assert!(!certifiably_same_unoriented_plane(&plane, &distinct));
     }
 
     #[test]
