@@ -3560,16 +3560,24 @@ impl Rational {
     }
 
     fn product_term_denominator<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
-        let mut denominator = BigUint::one();
-        for factor in term {
+        let mut factors = term.into_iter();
+        let Some(first) = factors.next() else {
+            return BigUint::one();
+        };
+        let mut denominator = first.denominator.clone();
+        for factor in factors {
             denominator *= &factor.denominator;
         }
         denominator
     }
 
     fn product_term_magnitude<const FACTORS: usize>(term: [&Self; FACTORS]) -> BigUint {
-        let mut magnitude = BigUint::one();
-        for factor in term {
+        let mut factors = term.into_iter();
+        let Some(first) = factors.next() else {
+            return BigUint::one();
+        };
+        let mut magnitude = first.numerator.clone();
+        for factor in factors {
             magnitude *= &factor.numerator;
         }
         magnitude
