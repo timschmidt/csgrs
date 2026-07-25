@@ -25,8 +25,16 @@ jobs:
             args: "--all-features"
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out Hyperlattice
+        uses: actions/checkout@v6
+        with:
+          path: hyperlattice
+
+      - name: Check out Hyperreal sibling
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/hyperreal
+          path: hyperreal
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -35,15 +43,21 @@ jobs:
 
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: hyperlattice
 
       - name: Check formatting
         run: cargo fmt --check
+        working-directory: hyperlattice
 
       - name: Check build
         run: cargo check --all-targets ${{ matrix.backend.args }}
+        working-directory: hyperlattice
 
       - name: Run tests
         run: cargo test --all-targets ${{ matrix.backend.args }}
+        working-directory: hyperlattice
 
       - name: Run Clippy
         run: cargo clippy --all-targets ${{ matrix.backend.args }} -- -D warnings
+        working-directory: hyperlattice
