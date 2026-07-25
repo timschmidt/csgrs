@@ -2251,9 +2251,11 @@ fn collapse_certified_convex_faces(
     let mut faces = Vec::with_capacity(groups.len());
     let mut face_supports = Vec::with_capacity(groups.len());
     for (support_identity, polygon_indices) in groups {
+        let source_edge_count = polygon_indices.len().saturating_mul(3);
         let mut edge_uses: StorageHashMap<ConstructionEdgeIdentity, usize> =
-            StorageHashMap::default();
-        let mut vertices: StorageHashMap<usize, Point3> = StorageHashMap::default();
+            StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
+        let mut vertices: StorageHashMap<usize, Point3> =
+            StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
