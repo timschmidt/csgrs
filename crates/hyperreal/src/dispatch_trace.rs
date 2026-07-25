@@ -435,6 +435,7 @@ thread_local! {
     static RATIONAL_STATS: RefCell<RationalTraceStats> = RefCell::new(RationalTraceStats::default());
 }
 
+#[inline]
 fn is_recording() -> bool {
     RECORDING.with(Cell::get)
 }
@@ -468,10 +469,17 @@ pub fn with_recording<T>(f: impl FnOnce() -> T) -> T {
     f()
 }
 
+#[inline]
 pub fn record(layer: &'static str, operation: &'static str, path: &'static str) {
     if !is_recording() {
         return;
     }
+    record_active(layer, operation, path);
+}
+
+#[cold]
+#[inline(never)]
+fn record_active(layer: &'static str, operation: &'static str, path: &'static str) {
     let key = DispatchKey {
         layer,
         operation,
