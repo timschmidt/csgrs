@@ -2563,8 +2563,58 @@ enum UnitRootSearch {
     RepresentedRoot(Real),
 }
 
+type QuarticBernsteinBasis = [[Real; 5]; 5];
+
+fn quartic_power_to_bernstein_basis() -> QuarticBernsteinBasis {
+    let zero = Real::zero();
+    let one = Real::one();
+    let quarter = Real::new(HyperRational::fraction(1, 4).expect("four is nonzero"));
+    let half = Real::new(HyperRational::fraction(1, 2).expect("two is nonzero"));
+    let sixth = Real::new(HyperRational::fraction(1, 6).expect("six is nonzero"));
+    let three_quarters = Real::new(HyperRational::fraction(3, 4).expect("four is nonzero"));
+    [
+        [
+            one.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+        ],
+        [
+            one.clone(),
+            quarter.clone(),
+            zero.clone(),
+            zero.clone(),
+            zero.clone(),
+        ],
+        [one.clone(), half.clone(), sixth, zero.clone(), zero.clone()],
+        [one.clone(), three_quarters, half, quarter, zero.clone()],
+        [one.clone(), one.clone(), one.clone(), one.clone(), one],
+    ]
+}
+
+fn quartic_bernstein_basis_value(coefficients: &[Real], weights: &[Real; 5]) -> Real {
+    debug_assert_eq!(coefficients.len(), 5);
+    // Keep subdivision controls as rational coordinates in the original
+    // power-basis coefficient frame. Materializing a control through two
+    // retained three-lane forms bounds the approximation DAG depth even after
+    // many bisections; recursively averaging Real controls made each sign
+    // refinement revisit an increasingly deep midpoint tree.
+    let first = Real::active_linear_combination3_refs(
+        [&weights[0], &weights[1], &weights[2]],
+        [&coefficients[0], &coefficients[1], &coefficients[2]],
+    );
+    let zero = Real::zero();
+    let second = Real::active_linear_combination3_refs(
+        [&weights[3], &weights[4], &zero],
+        [&coefficients[3], &coefficients[4], &coefficients[0]],
+    );
+    &first + &second
+}
+
 fn quartic_bernstein_sign_variations(
-    controls: &[Real; 5],
+    coefficients: &[Real],
+    controls: &QuarticBernsteinBasis,
     start_sign: RealSign,
     end_sign: RealSign,
     policy: &CurvePolicy,
@@ -2574,7 +2624,10 @@ fn quartic_bernstein_sign_variations(
     let mut previous = start_sign;
     let mut variations = 0_usize;
     for control in &controls[1..4] {
-        let sign = real_sign(control, policy)?;
+        let sign = real_sign(
+            &quartic_bernstein_basis_value(coefficients, control),
+            policy,
+        )?;
         if sign != RealSign::Zero {
             variations += usize::from(previous != sign);
             previous = sign;
@@ -2583,23 +2636,36 @@ fn quartic_bernstein_sign_variations(
     Some(variations + usize::from(previous != end_sign))
 }
 
-fn subdivide_quartic_bernstein_half(controls: &[Real; 5]) -> CurveResult<([Real; 5], [Real; 5])> {
+fn midpoint_quartic_bernstein_basis(
+    first: &[Real; 5],
+    second: &[Real; 5],
+) -> CurveResult<[Real; 5]> {
+    let mut midpoint = std::array::from_fn(|_| Real::zero());
+    for index in 0..5 {
+        midpoint[index] = midpoint_real(&first[index], &second[index])?;
+    }
+    Ok(midpoint)
+}
+
+fn subdivide_quartic_bernstein_half(
+    controls: &QuarticBernsteinBasis,
+) -> CurveResult<(QuarticBernsteinBasis, QuarticBernsteinBasis)> {
     let first = [
-        midpoint_real(&controls[0], &controls[1])?,
-        midpoint_real(&controls[1], &controls[2])?,
-        midpoint_real(&controls[2], &controls[3])?,
-        midpoint_real(&controls[3], &controls[4])?,
+        midpoint_quartic_bernstein_basis(&controls[0], &controls[1])?,
+        midpoint_quartic_bernstein_basis(&controls[1], &controls[2])?,
+        midpoint_quartic_bernstein_basis(&controls[2], &controls[3])?,
+        midpoint_quartic_bernstein_basis(&controls[3], &controls[4])?,
     ];
     let second = [
-        midpoint_real(&first[0], &first[1])?,
-        midpoint_real(&first[1], &first[2])?,
-        midpoint_real(&first[2], &first[3])?,
+        midpoint_quartic_bernstein_basis(&first[0], &first[1])?,
+        midpoint_quartic_bernstein_basis(&first[1], &first[2])?,
+        midpoint_quartic_bernstein_basis(&first[2], &first[3])?,
     ];
     let third = [
-        midpoint_real(&second[0], &second[1])?,
-        midpoint_real(&second[1], &second[2])?,
+        midpoint_quartic_bernstein_basis(&second[0], &second[1])?,
+        midpoint_quartic_bernstein_basis(&second[1], &second[2])?,
     ];
-    let midpoint = midpoint_real(&third[0], &third[1])?;
+    let midpoint = midpoint_quartic_bernstein_basis(&third[0], &third[1])?;
     Ok((
         [
             controls[0].clone(),
@@ -2632,15 +2698,20 @@ fn exact_nonrational_quartic_unit_roots(
         return Ok(None);
     }
 
-    let controls: [Real; 5] = power_to_bernstein_coefficients(polynomial.coefficients(), 4)?
-        .try_into()
-        .expect("a quartic has five Bernstein controls");
-    let start_sign = match real_sign(&controls[0], policy) {
+    let coefficients = polynomial.coefficients();
+    let controls = quartic_power_to_bernstein_basis();
+    let start_sign = match real_sign(
+        &quartic_bernstein_basis_value(coefficients, &controls[0]),
+        policy,
+    ) {
         Some(RealSign::Positive) => RealSign::Positive,
         Some(RealSign::Negative) => RealSign::Negative,
         Some(RealSign::Zero) | None => return Ok(None),
     };
-    let end_sign = match real_sign(&controls[4], policy) {
+    let end_sign = match real_sign(
+        &quartic_bernstein_basis_value(coefficients, &controls[4]),
+        policy,
+    ) {
         Some(RealSign::Positive) => RealSign::Positive,
         Some(RealSign::Negative) => RealSign::Negative,
         Some(RealSign::Zero) | None => return Ok(None),
@@ -2668,11 +2739,16 @@ fn exact_nonrational_quartic_unit_roots(
     )) = pending.pop()
     {
         trace.maximum_depth = trace.maximum_depth.max(depth);
-        let variations =
-            match quartic_bernstein_sign_variations(&controls, start_sign, end_sign, policy) {
-                Some(variations) => variations,
-                None => return Ok(None),
-            };
+        let variations = match quartic_bernstein_sign_variations(
+            coefficients,
+            &controls,
+            start_sign,
+            end_sign,
+            policy,
+        ) {
+            Some(variations) => variations,
+            None => return Ok(None),
+        };
         trace.interval_root_counts += 1;
         if variations == 0 {
             continue;
@@ -2695,7 +2771,10 @@ fn exact_nonrational_quartic_unit_roots(
         }
         let midpoint = midpoint_real(&start, &end)?;
         let (left, right) = subdivide_quartic_bernstein_half(&controls)?;
-        let midpoint_sign = match real_sign(&left[4], policy) {
+        let midpoint_sign = match real_sign(
+            &quartic_bernstein_basis_value(coefficients, &left[4]),
+            policy,
+        ) {
             Some(RealSign::Positive) => RealSign::Positive,
             Some(RealSign::Negative) => RealSign::Negative,
             // A zero midpoint is a represented root. The existing Sturm path
@@ -3417,6 +3496,22 @@ mod conversion_tests {
 
     #[test]
     fn fixed_quartic_subdivision_matches_the_shared_bernstein_kernel() {
+        let coefficients = [
+            rational(-23, 17),
+            rational(29, 19),
+            rational(-31, 23),
+            rational(37, 29),
+            rational(-41, 31),
+        ];
+        let basis = quartic_power_to_bernstein_basis();
+        let controls: [Real; 5] = std::array::from_fn(|index| {
+            quartic_bernstein_basis_value(&coefficients, &basis[index])
+        });
+        assert_eq!(
+            controls.as_slice(),
+            power_to_bernstein_coefficients(&coefficients, 4).unwrap()
+        );
+
         let controls = [
             rational(-7, 3),
             rational(11, 5),
@@ -3425,7 +3520,15 @@ mod conversion_tests {
             rational(-19, 13),
         ];
         let expected = subdivide_scalar_bernstein_half(&controls).unwrap();
-        let (left, right) = subdivide_quartic_bernstein_half(&controls).unwrap();
+        let coefficients = bernstein_to_power_coefficients(controls.to_vec()).unwrap();
+        let basis = quartic_power_to_bernstein_basis();
+        let (left_basis, right_basis) = subdivide_quartic_bernstein_half(&basis).unwrap();
+        let left: [Real; 5] = std::array::from_fn(|index| {
+            quartic_bernstein_basis_value(&coefficients, &left_basis[index])
+        });
+        let right: [Real; 5] = std::array::from_fn(|index| {
+            quartic_bernstein_basis_value(&coefficients, &right_basis[index])
+        });
 
         assert_eq!(left.as_slice(), expected.0);
         assert_eq!(right.as_slice(), expected.1);
