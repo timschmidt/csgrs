@@ -279,6 +279,31 @@ pub(crate) struct PreparedProjectivePoint3<'a> {
     rational_filter_query: Option<PreparedRationalLinearForm4Query>,
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct PreparedRationalPlane4<'a> {
+    coefficients: [&'a Rational; 4],
+    filter: Option<PreparedRationalLinearForm4Filter>,
+}
+
+impl<'a> PreparedRationalPlane4<'a> {
+    pub(crate) fn new(plane: &'a Plane) -> Option<Self> {
+        let [Some(a), Some(b), Some(c), Some(d)] = [
+            &plane.normal.x,
+            &plane.normal.y,
+            &plane.normal.z,
+            &plane.offset,
+        ]
+        .map(Real::exact_rational_ref) else {
+            return None;
+        };
+        let coefficients = [a, b, c, d];
+        Some(Self {
+            coefficients,
+            filter: prepared_linear_form3_filter(plane, coefficients),
+        })
+    }
+}
+
 impl<'a> PreparedProjectivePoint3<'a> {
     pub(crate) fn new(point: &'a HomogeneousPoint3) -> Self {
         let exact_coordinates = match (
@@ -314,6 +339,22 @@ impl<'a> PreparedProjectivePoint3<'a> {
         crate::trace_dispatch!("classify-point", "projective-real-fallback");
         classify_real(&homogeneous_point_plane_expression(self.point, plane))
     }
+
+    pub(crate) fn classify_rational_plane(
+        &self,
+        plane: &PreparedRationalPlane4<'_>,
+    ) -> Option<Classification> {
+        let [x, y, z, weight] = self.exact_coordinates?;
+        let classification = classify_exact_rational_coordinates_with_filter(
+            plane.coefficients,
+            [x, y, z],
+            weight,
+            self.rational_filter_query.as_ref(),
+            plane.filter,
+        );
+        crate::trace_dispatch!("classify-point", "projective-exact-rational");
+        Some(classification)
+    }
 }
 
 fn classify_exact_rational_terms(
@@ -342,11 +383,26 @@ fn classify_exact_rational_coordinates(
     .map(Real::exact_rational_ref) else {
         return None;
     };
-    let filtered_sign =
-        prepared_linear_form3_filter(plane, [a, b, c, d]).and_then(|filter| match prepared_query {
-            Some(query) => filter.sign_prepared(query),
-            None => filter.sign_rational([x, y, z, homogeneous_weight]),
-        });
+    Some(classify_exact_rational_coordinates_with_filter(
+        [a, b, c, d],
+        [x, y, z],
+        homogeneous_weight,
+        prepared_query,
+        prepared_linear_form3_filter(plane, [a, b, c, d]),
+    ))
+}
+
+fn classify_exact_rational_coordinates_with_filter(
+    [a, b, c, d]: [&Rational; 4],
+    [x, y, z]: [&Rational; 3],
+    homogeneous_weight: &Rational,
+    prepared_query: Option<&PreparedRationalLinearForm4Query>,
+    filter: Option<PreparedRationalLinearForm4Filter>,
+) -> Classification {
+    let filtered_sign = filter.and_then(|filter| match prepared_query {
+        Some(query) => filter.sign_prepared(query),
+        None => filter.sign_rational([x, y, z, homogeneous_weight]),
+    });
     if let Some(sign) = filtered_sign {
         crate::trace_dispatch!(
             "classify-point",
@@ -356,23 +412,21 @@ fn classify_exact_rational_coordinates(
                 "projective-rational-floating-filter"
             }
         );
-        return Some(match sign {
+        return match sign {
             RealSign::Negative => Classification::Negative,
             RealSign::Zero => Classification::On,
             RealSign::Positive => Classification::Positive,
-        });
+        };
     }
 
-    Some(
-        match Rational::signed_product_sum_ordering(
-            [true; 4],
-            [[a, x], [b, y], [c, z], [d, homogeneous_weight]],
-        ) {
-            Ordering::Less => Classification::Negative,
-            Ordering::Equal => Classification::On,
-            Ordering::Greater => Classification::Positive,
-        },
-    )
+    match Rational::signed_product_sum_ordering(
+        [true; 4],
+        [[a, x], [b, y], [c, z], [d, homogeneous_weight]],
+    ) {
+        Ordering::Less => Classification::Negative,
+        Ordering::Equal => Classification::On,
+        Ordering::Greater => Classification::Positive,
+    }
 }
 
 /// Returns a certified ordering for two exact reals.
@@ -544,6 +598,15 @@ mod tests {
                 classify_projective_point(&point, plane)
             );
         }
+        for plane in &planes[..2] {
+            let prepared_plane =
+                PreparedRationalPlane4::new(plane).expect("integer plane is exactly rational");
+            assert_eq!(
+                prepared.classify_rational_plane(&prepared_plane),
+                Some(prepared.classify(plane).unwrap()),
+            );
+        }
+        assert!(PreparedRationalPlane4::new(&planes[2]).is_none());
     }
 
     #[test]

@@ -1,4 +1,7 @@
 mod common;
+#[path = "../competitive/support.rs"]
+#[allow(dead_code)]
+mod competitive_support;
 
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
@@ -31,6 +34,28 @@ fn trace_workload<T>(name: &str, workload: impl FnOnce() -> HypermeshResult<T>) 
 }
 
 fn main() {
+    let yeahright_case = competitive_support::yeahright_boolean_case();
+    let yeahright_inputs = competitive_support::prepare_yeahright(&yeahright_case);
+    hyperreal::dispatch_trace::reset();
+    let yeahright_output = hyperreal::dispatch_trace::with_recording(|| {
+        competitive_support::run_hypermesh_exact(
+            &yeahright_inputs.hypermesh,
+            competitive_support::Operation::Union,
+        )
+    });
+    let trace = hyperreal::dispatch_trace::take_trace();
+    println!(
+        "yeahright_hull_4512_box/Union: triangles={}, correlation={:?}",
+        yeahright_output.triangles.len(),
+        trace.correlation_summary(),
+    );
+    for summary in &trace.dispatch {
+        println!(
+            "  {}/{}/{}/{}",
+            summary.layer, summary.operation, summary.path, summary.count
+        );
+    }
+
     for (name, meshes) in [
         ("cubes", common::cube_pair()),
         ("nested_cubes", common::nested_cube_pair()),

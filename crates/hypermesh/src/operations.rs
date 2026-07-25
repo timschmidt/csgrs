@@ -19,7 +19,7 @@ use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
     InputTrianglePlanes,
 };
-use crate::predicate::PreparedProjectivePoint3;
+use crate::predicate::{PreparedProjectivePoint3, PreparedRationalPlane4};
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
 use crate::winding::{BooleanOp, WindingPair, make_indicator};
@@ -1103,6 +1103,7 @@ impl ProjectiveCycle {
             .iter()
             .any(|(_, classification)| classification.is_positive());
         if !has_positive {
+            crate::trace_dispatch!("projective-clip", "negative-only");
             return Ok(ProjectiveClip {
                 negative: self.clone(),
                 positive: Self::empty(),
@@ -1110,6 +1111,7 @@ impl ProjectiveCycle {
             });
         }
         if !has_negative {
+            crate::trace_dispatch!("projective-clip", "positive-only");
             return Ok(ProjectiveClip {
                 negative: Self::empty(),
                 positive: self.clone(),
@@ -1117,6 +1119,7 @@ impl ProjectiveCycle {
             });
         }
 
+        crate::trace_dispatch!("projective-clip", "split");
         let inverted = plane.inverted();
         let mut negative = Vec::with_capacity(self.points.len() + 1);
         let mut negative_point_identities = Vec::with_capacity(self.points.len() + 1);
@@ -1282,11 +1285,14 @@ impl ProjectiveCycle {
             .iter()
             .any(|(_, classification)| classification.is_positive());
         if !has_positive {
+            crate::trace_dispatch!("projective-clip-negative", "kept");
             return Ok(self.clone());
         }
         if !has_negative {
+            crate::trace_dispatch!("projective-clip-negative", "empty");
             return Ok(Self::empty());
         }
+        crate::trace_dispatch!("projective-clip-negative", "split");
         let mut points = Vec::with_capacity(self.points.len() + 1);
         let mut point_identities = Vec::with_capacity(self.points.len() + 1);
         let mut edges = Vec::with_capacity(self.edges.len() + 1);
@@ -2431,6 +2437,7 @@ fn exact_inside_and_active_planes(
     if let Some(proposed_planes) = support_planes_f64
         .and_then(|planes| propose_active_planes_f64(polygon, planes, candidate_planes))
     {
+        crate::trace_dispatch!("projective-active-planes", "proposed");
         let inside = clip_inside_cycle(
             source,
             support_planes,
@@ -2445,6 +2452,7 @@ fn exact_inside_and_active_planes(
             }
         })?;
         if inside.points.len() < 3 {
+            crate::trace_dispatch!("projective-active-planes", "proposed-empty");
             return Ok(None);
         }
         if cycle_satisfies_planes(
@@ -2459,12 +2467,15 @@ fn exact_inside_and_active_planes(
                 eprintln!("[DEBUG] proposed projective verification failed");
             }
         })? {
+            crate::trace_dispatch!("projective-active-planes", "proposed-certified");
             let active =
                 active_cycle_planes(&inside, proposed_planes, support_plane_mesh, point_cache);
             return Ok(Some((inside, active)));
         }
+        crate::trace_dispatch!("projective-active-planes", "proposed-rejected");
     }
 
+    crate::trace_dispatch!("projective-active-planes", "full");
     let inside = clip_inside_cycle(
         source,
         support_planes,
@@ -2479,8 +2490,10 @@ fn exact_inside_and_active_planes(
         }
     })?;
     if inside.points.len() < 3 {
+        crate::trace_dispatch!("projective-active-planes", "full-empty");
         return Ok(None);
     }
+    crate::trace_dispatch!("projective-active-planes", "full-retained");
     let active = active_cycle_planes(
         &inside,
         candidate_planes.iter().copied(),
@@ -2547,9 +2560,13 @@ fn cycle_satisfies_planes(
     plane_indices: &[usize],
     support_plane_mesh: usize,
 ) -> HypermeshResult<bool> {
+    let prepared_planes = plane_indices
+        .iter()
+        .map(|&plane_index| PreparedRationalPlane4::new(support_planes[plane_index]))
+        .collect::<Vec<_>>();
     for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
-        for &plane_index in plane_indices {
+        for (candidate_index, &plane_index) in plane_indices.iter().enumerate() {
             let plane_identity = ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
                 plane: plane_index,
@@ -2562,10 +2579,14 @@ fn cycle_satisfies_planes(
             ) {
                 continue;
             }
-            if prepared
-                .classify(support_planes[plane_index])?
-                .is_positive()
-            {
+            let classification = match &prepared_planes[candidate_index] {
+                Some(plane) => match prepared.classify_rational_plane(plane) {
+                    Some(classification) => classification,
+                    None => prepared.classify(support_planes[plane_index])?,
+                },
+                None => prepared.classify(support_planes[plane_index])?,
+            };
+            if classification.is_positive() {
                 return Ok(false);
             }
         }
