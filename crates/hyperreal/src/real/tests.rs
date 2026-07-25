@@ -27,6 +27,61 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_filter_never_disagrees_with_exact_sum() {
+        use std::cmp::Ordering;
+
+        fn next_rational(state: &mut u64) -> Rational {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            let numerator = i64::try_from(*state % 2001).unwrap() - 1000;
+            *state = state
+                .wrapping_mul(0x9e37_79b9_7f4a_7c15)
+                .wrapping_add(0xbf58_476d_1ce4_e5b9);
+            let denominator = *state % 97 + 1;
+            Rational::fraction(numerator, denominator).unwrap()
+        }
+
+        let mut state = 0x1234_5678_9abc_def0;
+        let mut certified = 0;
+        for _ in 0..4096 {
+            let coefficients: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
+            let point: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
+            let coefficient_reals = coefficients.clone().map(Real::new);
+            let filter = Real::prepare_rational_linear_form4_filter([
+                &coefficient_reals[0],
+                &coefficient_reals[1],
+                &coefficient_reals[2],
+                &coefficient_reals[3],
+            ])
+            .unwrap();
+            let query = Real::prepare_rational_linear_form4_query([
+                &point[0], &point[1], &point[2], &point[3],
+            ])
+            .unwrap();
+            let Some(actual) = filter.sign_prepared(&query) else {
+                continue;
+            };
+            certified += 1;
+            let expected = match Rational::signed_product_sum_ordering(
+                [true; 4],
+                [
+                    [&coefficients[0], &point[0]],
+                    [&coefficients[1], &point[1]],
+                    [&coefficients[2], &point[2]],
+                    [&coefficients[3], &point[3]],
+                ],
+            ) {
+                Ordering::Less => RealSign::Negative,
+                Ordering::Equal => RealSign::Zero,
+                Ordering::Greater => RealSign::Positive,
+            };
+            assert_eq!(actual, expected);
+        }
+        assert!(certified > 4000);
+    }
+
+    #[test]
     fn parse() {
         let counting: Real = "123456789".parse().unwrap();
         let answer = Real::new(Rational::new(123456789));

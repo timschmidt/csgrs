@@ -320,7 +320,7 @@ impl PreparedRationalLinearForm4Filter {
         &self,
         query: &PreparedRationalLinearForm4Query,
     ) -> Option<RealSign> {
-        Real::certified_linear_form4_sign_f64_with_errors(
+        Real::certified_rational_linear_form4_sign_f64(
             self.coefficients,
             self.coefficient_errors,
             query.values,
@@ -887,15 +887,28 @@ impl Real {
     }
 
     #[inline]
-    fn certified_linear_form4_sign_f64_with_errors(
+    fn certified_rational_linear_form4_sign_f64(
         coefficients: [f64; 4],
         coefficient_errors: [f64; 4],
         point: [f64; 4],
         point_errors: [f64; 4],
     ) -> Option<RealSign> {
+        debug_assert!(
+            coefficients
+                .iter()
+                .zip(coefficient_errors)
+                .all(|(value, error)| error == 0.0
+                    || error == value.abs() * (32.0 * f64::EPSILON))
+        );
+        debug_assert!(
+            point
+                .iter()
+                .zip(point_errors)
+                .all(|(value, error)| error == 0.0
+                    || error == value.abs() * (32.0 * f64::EPSILON))
+        );
         let mut products = [0.0; 4];
         let mut magnitude_sum = 0.0;
-        let mut conversion_error = 0.0;
         for index in 0..4 {
             products[index] = Self::normal_product_f64(
                 coefficients[index],
@@ -905,43 +918,21 @@ impl Real {
                 magnitude_sum,
                 products[index].abs(),
             )?;
-            let coefficient_and_error = Self::normal_add_f64(
-                coefficients[index].abs(),
-                coefficient_errors[index],
-            )?;
-            let point_contribution = Self::normal_product_f64(
-                coefficient_and_error,
-                point_errors[index],
-            )?;
-            let coefficient_contribution =
-                Self::normal_product_f64(
-                    point[index].abs(),
-                    coefficient_errors[index],
-                )?;
-            conversion_error = Self::normal_add_f64(
-                conversion_error,
-                Self::normal_add_f64(
-                    point_contribution,
-                    coefficient_contribution,
-                )?,
-            )?;
         }
         let mut value = 0.0;
         for product in products {
             value = Self::normal_add_f64(value, product)?;
         }
 
-        // Four rounded products and four accumulated additions fit within
-        // this deliberately conservative gamma-style bound.
-        const ERROR_FACTOR: f64 = 16.0 * f64::EPSILON;
-        let arithmetic_error = Self::normal_product_f64(
-            ERROR_FACTOR,
-            magnitude_sum,
-        )?;
-        let error_bound = Self::normal_add_f64(
-            arithmetic_error,
-            conversion_error,
-        )?;
+        // Each rational conversion is bounded by 32 eps. For one product,
+        // coefficient and point conversion therefore contribute at most
+        // (64 eps + 1024 eps^2) times its magnitude. Four rounded products,
+        // the magnitude accumulation, and the value accumulation remain below
+        // another 18 eps. A single 82-eps radius covers all of these errors
+        // while avoiding per-lane interval arithmetic in this hot filter.
+        const ERROR_FACTOR: f64 = 82.0 * f64::EPSILON;
+        let error_bound =
+            Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
         if value > error_bound {
             Some(RealSign::Positive)
         } else if -value > error_bound {
