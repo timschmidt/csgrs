@@ -833,12 +833,20 @@ impl Rational {
         result: &Self,
     ) -> bool {
         if let Some(cached) = owner.linear_cache.get() {
+            let primary_placeholder = cached.primary.kind.is_primary_placeholder();
+            // Avoid cloning the result and touching both Arc counters when
+            // every eligible write-once slot is already occupied.
+            if cached.secondary.get().is_some()
+                && (!primary_placeholder || cached.tertiary.get().is_some())
+            {
+                return false;
+            }
             let entry = CachedRationalLinearEntry {
                 other: Arc::downgrade(&other.0),
                 kind,
                 result: result.clone(),
             };
-            if cached.primary.kind.is_primary_placeholder() {
+            if primary_placeholder {
                 return cached
                     .secondary
                     .set(entry)
