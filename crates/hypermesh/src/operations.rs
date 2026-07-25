@@ -2051,6 +2051,26 @@ fn compute_two_convex_inputs_projectively(
     }))
 }
 
+fn exact_rational_product_sum_classification<const TERMS: usize, const FACTORS: usize>(
+    positive_terms: [bool; TERMS],
+    terms: [[&Real; FACTORS]; TERMS],
+) -> Option<Classification> {
+    let rational_terms = terms.map(|term| term.map(Real::exact_rational_ref));
+    if rational_terms.iter().flatten().any(Option::is_none) {
+        return None;
+    }
+    let rational_terms = rational_terms.map(|term| {
+        term.map(|factor| factor.expect("all product-sum factors were checked exact rational"))
+    });
+    Some(
+        match Rational::signed_product_sum_ordering(positive_terms, rational_terms) {
+            std::cmp::Ordering::Less => Classification::Negative,
+            std::cmp::Ordering::Equal => Classification::On,
+            std::cmp::Ordering::Greater => Classification::Positive,
+        },
+    )
+}
+
 fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResult<bool> {
     let left_coefficients = [&left.normal.x, &left.normal.y, &left.normal.z, &left.offset];
     let right_coefficients = [
@@ -2062,14 +2082,17 @@ fn certifiably_proportional_plane(left: &Plane, right: &Plane) -> HypermeshResul
     let mut unknown_minor = false;
     for first in 0..left_coefficients.len() {
         for second in (first + 1)..left_coefficients.len() {
-            let minor = Real::signed_product_sum(
-                [true, false],
-                [
-                    [left_coefficients[first], right_coefficients[second]],
-                    [left_coefficients[second], right_coefficients[first]],
-                ],
-            );
-            match crate::predicate::classify_real(&minor) {
+            let terms = [
+                [left_coefficients[first], right_coefficients[second]],
+                [left_coefficients[second], right_coefficients[first]],
+            ];
+            let classification = exact_rational_product_sum_classification([true, false], terms)
+                .map(Ok)
+                .unwrap_or_else(|| {
+                    let minor = Real::signed_product_sum([true, false], terms);
+                    crate::predicate::classify_real(&minor)
+                });
+            match classification {
                 Ok(Classification::On) => {}
                 Ok(Classification::Negative | Classification::Positive) => return Ok(false),
                 Err(crate::error::HypermeshError::UnknownClassification) => unknown_minor = true,
@@ -2087,15 +2110,18 @@ fn certifiably_same_oriented_plane(left: &Plane, right: &Plane) -> HypermeshResu
     if !certifiably_proportional_plane(left, right)? {
         return Ok(false);
     }
-    let orientation = Real::signed_product_sum(
-        [true, true, true],
-        [
-            [&left.normal.x, &right.normal.x],
-            [&left.normal.y, &right.normal.y],
-            [&left.normal.z, &right.normal.z],
-        ],
-    );
-    Ok(crate::predicate::classify_real(&orientation)? == Classification::Positive)
+    let terms = [
+        [&left.normal.x, &right.normal.x],
+        [&left.normal.y, &right.normal.y],
+        [&left.normal.z, &right.normal.z],
+    ];
+    let classification = exact_rational_product_sum_classification([true, true, true], terms)
+        .map(Ok)
+        .unwrap_or_else(|| {
+            let orientation = Real::signed_product_sum([true, true, true], terms);
+            crate::predicate::classify_real(&orientation)
+        });
+    Ok(classification? == Classification::Positive)
 }
 
 fn certifiably_same_unoriented_plane(left: &Plane, right: &Plane) -> bool {
@@ -2855,6 +2881,10 @@ mod tests {
         assert!(!certifiably_same_oriented_plane(&plane, &opposite).unwrap());
         assert!(certifiably_same_unoriented_plane(&plane, &opposite));
         assert!(!certifiably_same_unoriented_plane(&plane, &distinct));
+
+        let symbolic =
+            Plane::from_coefficients(Real::pi(), Real::one(), Real::zero(), Real::from(2));
+        assert!(certifiably_same_oriented_plane(&symbolic, &symbolic).unwrap());
     }
 
     #[test]
