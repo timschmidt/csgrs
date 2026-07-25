@@ -1718,18 +1718,13 @@ fn compute_two_convex_inputs_projectively(
         if mesh >= support_planes.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let equivalent_plane = support_planes[mesh].iter().position(|existing| {
-            planes_may_be_same(existing, &polygon.support)
-                && certifiably_same_oriented_plane(existing, &polygon.support).unwrap_or(false)
-        });
         let storage_key = exact_plane_storage_key(&polygon.support);
-        let plane = if let Some(index) = equivalent_plane {
-            index
-        } else if let Some(index) =
+        let exact_f64 = exact_plane_f64(&polygon.support);
+        let plane = if let Some(index) =
             storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied())
         {
             index
-        } else if let Some(values) = exact_plane_f64(&polygon.support) {
+        } else if let Some(values) = exact_f64 {
             let key = values.map(f64::to_bits);
             if let Some(index) = approximate_support_planes[mesh]
                 .get(&key)
@@ -1749,6 +1744,11 @@ fn compute_two_convex_inputs_projectively(
                     .push(index);
                 index
             }
+        } else if let Some(index) = support_planes[mesh].iter().position(|existing| {
+            planes_may_be_same(existing, &polygon.support)
+                && certifiably_same_oriented_plane(existing, &polygon.support).unwrap_or(false)
+        }) {
+            index
         } else if let Some(index) = support_planes[mesh]
             .iter()
             .position(|plane| *plane == &polygon.support)
