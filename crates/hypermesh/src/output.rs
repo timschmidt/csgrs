@@ -677,6 +677,7 @@ where
                     &vertices,
                     canonical,
                     &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
+                    &candidates.recovery_vertices,
                     prepared_rational_vertices.as_deref(),
                     filter_recovery_candidates,
                 )
@@ -1336,11 +1337,11 @@ fn compare_output_vertices_lexicographic(
 struct ConstructionEdgeCandidates {
     groups: Vec<ConstructionEdgeCandidateGroup>,
     polygon_edges: Vec<Vec<usize>>,
+    recovery_vertices: Vec<usize>,
 }
 
 struct ConstructionEdgeCandidateGroup {
     collinear: Vec<usize>,
-    same_plane: Vec<usize>,
 }
 
 fn build_construction_edge_candidates<P>(
@@ -1354,8 +1355,6 @@ where
         return Err(HypermeshError::UnknownClassification);
     }
     let mut group_indices: StorageHashMap<ConstructionEdgeIdentity, usize> =
-        StorageHashMap::default();
-    let mut plane_vertices: StorageHashMap<crate::polygon::ConstructionPlaneIdentity, Vec<usize>> =
         StorageHashMap::default();
     let mut identified_vertices = Vec::new();
     let mut groups: Vec<ConstructionEdgeCandidateGroup> = Vec::new();
@@ -1390,7 +1389,6 @@ where
                     let index = groups.len();
                     groups.push(ConstructionEdgeCandidateGroup {
                         collinear: Vec::new(),
-                        same_plane: Vec::new(),
                     });
                     entry.insert(index);
                     index
@@ -1400,14 +1398,6 @@ where
             groups[group_index]
                 .collinear
                 .push(indexed[(edge_index + 1) % indexed.len()]);
-            if let ConstructionEdgeIdentity::Split { planes } = identity {
-                for plane in planes {
-                    plane_vertices.entry(*plane).or_default().extend([
-                        indexed[edge_index],
-                        indexed[(edge_index + 1) % indexed.len()],
-                    ]);
-                }
-            }
             edge_groups.push(group_index);
         }
         polygon_edges.push(edge_groups);
@@ -1426,11 +1416,6 @@ where
                         _ => None,
                     },
                 ));
-            for plane in planes {
-                if let Some(vertices) = plane_vertices.get(plane) {
-                    groups[group_index].same_plane.extend(vertices);
-                }
-            }
         }
     }
     // Construction labels give the cheapest candidate set, but a retained
@@ -1448,13 +1433,11 @@ where
     for group in &mut groups {
         group.collinear.sort_unstable();
         group.collinear.dedup();
-        group.same_plane.extend(recovery_vertices.iter().copied());
-        group.same_plane.sort_unstable();
-        group.same_plane.dedup();
     }
     Ok(ConstructionEdgeCandidates {
         groups,
         polygon_edges,
+        recovery_vertices,
     })
 }
 
@@ -1553,6 +1536,7 @@ fn split_segment_subedges_exact_candidates<'a>(
     vertices: &[OutputVertex],
     edge: [usize; 2],
     candidates: &ConstructionEdgeCandidateGroup,
+    recovery_vertices: &[usize],
     prepared_rational_vertices: Option<&[Option<PreparedRationalPoint3Query>]>,
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a [[usize; 2]]> {
@@ -1605,8 +1589,7 @@ fn split_segment_subedges_exact_candidates<'a>(
                 on_edge.push(vertex_index);
             }
         }
-        for &vertex_index in candidates
-            .same_plane
+        for &vertex_index in recovery_vertices
             .iter()
             .take(if filter_recovery_candidates {
                 usize::MAX
