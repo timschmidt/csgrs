@@ -2,9 +2,9 @@ use hypercircuit::{
     AdapterKind, BundleEndpointId, BundleMemberId, BundlePortBinding, Circuit, CircuitEventCause,
     CircuitEventKind, CircuitEventPhase, CircuitEventRequest, CircuitEventTarget, CircuitId,
     CircuitLibrary, CircuitPort, LogicValue, Modport, ModportId, ModportMember, Net, NetId,
-    PortDirection, PortId, Real, SignalBundle, SignalBundleBindingError, SignalBundleEndpoint,
-    SignalBundleId, SignalBundleLibrary, SignalBundleValidationIssue, SubcircuitInstance,
-    SubcircuitInstanceId, TransientPolicy,
+    PortDirection, PortId, PortSignalType, Real, SignalBundle, SignalBundleBindingError,
+    SignalBundleEndpoint, SignalBundleId, SignalBundleLibrary, SignalBundleMember,
+    SignalBundleValidationIssue, SubcircuitInstance, SubcircuitInstanceId, TransientPolicy,
 };
 
 fn circuit(id: &str, vcc_direction: PortDirection) -> Circuit {
@@ -35,6 +35,63 @@ fn circuit(id: &str, vcc_direction: PortDirection) -> Circuit {
         direction: PortDirection::Ground,
         optional: false,
     })
+}
+
+#[test]
+fn typed_bundle_members_must_match_their_bound_circuit_ports() {
+    let board = circuit("typed-board", PortDirection::Input);
+    let circuits = CircuitLibrary {
+        root: board.id.clone(),
+        circuits: vec![board],
+    };
+    let typed = SignalBundle::new_typed(
+        SignalBundleId::new("Power").unwrap(),
+        vec![
+            SignalBundleMember::new(BundleMemberId::new("vcc").unwrap(), PortSignalType::Logic),
+            SignalBundleMember::new(BundleMemberId::new("gnd").unwrap(), PortSignalType::Real),
+        ],
+    )
+    .with_modport(Modport::new(
+        ModportId::new("sink").unwrap(),
+        vec![
+            ModportMember {
+                member: BundleMemberId::new("vcc").unwrap(),
+                direction: PortDirection::Input,
+            },
+            ModportMember {
+                member: BundleMemberId::new("gnd").unwrap(),
+                direction: PortDirection::Ground,
+            },
+        ],
+    ));
+    let report = SignalBundleLibrary::new()
+        .with_bundle(typed)
+        .with_endpoint(endpoint("typed-board", "power", "sink"))
+        .validate(&circuits);
+
+    assert!(report.issues.iter().any(|issue| matches!(
+        issue,
+        SignalBundleValidationIssue::EndpointPortSignalTypeMismatch {
+            member,
+            expected: PortSignalType::Logic,
+            actual: PortSignalType::Real,
+            ..
+        } if member.as_str() == "vcc"
+    )));
+
+    let invalid_width = SignalBundleLibrary::new().with_bundle(SignalBundle::new_typed(
+        SignalBundleId::new("Data").unwrap(),
+        vec![SignalBundleMember::new(
+            BundleMemberId::new("payload").unwrap(),
+            PortSignalType::Bus { width: Some(0) },
+        )],
+    ));
+    let report = invalid_width.validate(&circuits);
+    assert!(report.issues.iter().any(|issue| matches!(
+        issue,
+        SignalBundleValidationIssue::InvalidBundleMemberSignalType { member, .. }
+            if member.as_str() == "payload"
+    )));
 }
 
 fn power_bundle() -> SignalBundle {

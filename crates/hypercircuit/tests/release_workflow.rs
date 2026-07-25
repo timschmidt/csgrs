@@ -637,6 +637,7 @@ fn representative_board_spans_authoring_review_verification_and_release_outputs(
             hypercircuit::SemanticMigrationStep::PhaseTuningGroups,
             hypercircuit::SemanticMigrationStep::DifferentialPairNeckdown,
             hypercircuit::SemanticMigrationStep::MixedSignalWorkflow,
+            hypercircuit::SemanticMigrationStep::NativeInterfaceParity,
         ]
     );
     assert_eq!(

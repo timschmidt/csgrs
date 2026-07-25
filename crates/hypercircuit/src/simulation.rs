@@ -645,6 +645,7 @@ impl Display for TransientStepError {
 impl std::error::Error for TransientStepError {}
 
 /// Run-level timestep strategy over the exact companion-step kernel.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum TransientAdaptation {
     /// Advance with the authored timestep, truncating only the final step.
@@ -663,6 +664,7 @@ pub enum TransientAdaptation {
 }
 
 /// Bounded exact transient time-series policy.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct TransientRunPolicy {
     /// Exact first simulation time.
@@ -708,6 +710,13 @@ impl Default for TransientRunPolicy {
                 growth_factor: Real::from(2),
             },
         }
+    }
+}
+
+impl TransientRunPolicy {
+    /// Validates exact time bounds, step bounds, and adaptation controls.
+    pub fn validate(&self) -> Result<(), TransientRunError> {
+        validate_run_policy(self)
     }
 }
 

@@ -9,10 +9,10 @@ use hypercircuit::{
     KiCadSchematicExportOptions, KiCadSchematicImportReport, LengthTuningRule, MnaUnknown,
     MosfetNewtonPolicy, MosfetNewtonStatus, NetClassRule, NetHandle, NetId, PartDefinition,
     PartInstance, PartSymbolUnit, PcbStackup, PhaseTuningGroupRule, PhaseTuningStatus,
-    PlacementRule, PortDirection, RailKind, Real, Route, RoutingProblemReport, SchematicPinSide,
-    SchematicPoint, SchematicSvgOptions, SourceWaveform, SourceWaveformPoint, Symbol, SymbolPin,
-    SymbolUnitPlacement, TransientAdaptation, TransientPolicy, TransientRunPolicy,
-    TransientRunStatus, Via, ViaMaskIntent, ViaStyleRule, Zone, parts, pin,
+    PlacementRule, PortDirection, PortSignalType, RailKind, Real, Route, RoutingProblemReport,
+    SchematicPinSide, SchematicPoint, SchematicSvgOptions, SourceWaveform, SourceWaveformPoint,
+    Symbol, SymbolPin, SymbolUnitPlacement, TransientAdaptation, TransientPolicy,
+    TransientRunPolicy, TransientRunStatus, Via, ViaMaskIntent, ViaStyleRule, Zone, parts, pin,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -741,7 +741,13 @@ fn typed_buses_slices_and_ports_preserve_order_and_scope() {
         .bus_slice("MIDDLE", &data, 1, 2, BusSliceOrder::Reverse)
         .unwrap();
     let input = design
-        .port("DATA_IN", &d0, PortDirection::Input, false)
+        .typed_port(
+            "DATA_IN",
+            &d0,
+            PortDirection::Input,
+            false,
+            PortSignalType::Bus { width: Some(4) },
+        )
         .unwrap();
     assert_eq!(
         data.members()
@@ -759,6 +765,12 @@ fn typed_buses_slices_and_ports_preserve_order_and_scope() {
         vec!["D2", "D1"]
     );
     assert_eq!(input.net().id(), d0.id());
+    assert_eq!(
+        design
+            .circuit()
+            .port_signal_type(&hypercircuit::PortId::new("DATA_IN").unwrap()),
+        PortSignalType::Bus { width: Some(4) }
+    );
     assert!(matches!(
         design.bus("DATA", [&d0]),
         Err(DesignBuildError::DuplicateBus(bus)) if bus == "DATA"

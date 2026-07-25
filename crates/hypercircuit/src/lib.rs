@@ -194,7 +194,7 @@ pub use interchange::{
 };
 pub use interface::{
     BundlePortBinding, Modport, ModportMember, SignalBundle, SignalBundleBindingError,
-    SignalBundleEndpoint, SignalBundleLibrary, SignalBundleValidationIssue,
+    SignalBundleEndpoint, SignalBundleLibrary, SignalBundleMember, SignalBundleValidationIssue,
     SignalBundleValidationReport,
 };
 #[cfg(feature = "layout")]
@@ -270,10 +270,10 @@ pub use mna::{LinearMnaSystem, LinearSolveReport, LinearStamp, MnaUnknown, Resid
 pub use model::{
     Bus, BusSlice, BusSliceOrder, Circuit, CircuitCertificationReport, CircuitInstance,
     CircuitModuleParameter, CircuitModuleParameterOverride, CircuitModuleParameterTarget,
-    CircuitParameter, CircuitPort, CircuitState, CircuitValidationIssue, CircuitValidationReport,
-    DeviceModel, DeviceModelKind, DevicePin, MnaProblem, MosfetPolarity, Net, PinBinding,
-    PinElectricalKind, PortDirection, RailIntent, RailKind, SourceStimulus, SourceWaveform,
-    SourceWaveformPoint, TransientPolicy,
+    CircuitParameter, CircuitPort, CircuitPortType, CircuitState, CircuitValidationIssue,
+    CircuitValidationReport, DeviceModel, DeviceModelKind, DevicePin, MnaProblem, MosfetPolarity,
+    Net, PinBinding, PinElectricalKind, PortDirection, PortSignalType, RailIntent, RailKind,
+    SourceStimulus, SourceWaveform, SourceWaveformPoint, TransientPolicy,
 };
 pub use mosfet::{
     MosfetLinearizationEvidence, MosfetNewtonIteration, MosfetNewtonPolicy, MosfetNewtonSolveError,
@@ -287,15 +287,16 @@ pub use nonlinear::{
     PiecewiseLinearSolveError, PiecewiseLinearSolveReport, ShockleyDiode, SwitchState,
     solve_piecewise_linear, solve_shockley_diode_newton,
 };
+#[cfg(feature = "interchange")]
+pub use package::{
+    CIRCUIT_LIBRARY_ARTIFACT_SCHEMA, CIRCUIT_LIBRARY_ARTIFACT_VERSION, CircuitLibraryArtifact,
+    CircuitPackageStore, PART_LIBRARY_ARTIFACT_SCHEMA, PART_LIBRARY_ARTIFACT_VERSION,
+    PartLibraryArtifact, PortablePartDefinition, PublishedCircuitLibrary, PublishedPartLibrary,
+};
 pub use package::{
     CIRCUIT_PACKAGE_LOCK_SCHEMA, CIRCUIT_PACKAGE_LOCK_VERSION, CircuitPackageCatalog,
     CircuitPackageExport, CircuitPackageExportKind, CircuitPackageLock, CircuitPackageRelease,
     LockedCircuitPackage, PackageDigest, PackageRequirement, PackageResolutionError, PackageSource,
-};
-#[cfg(feature = "interchange")]
-pub use package::{
-    CircuitPackageStore, PART_LIBRARY_ARTIFACT_SCHEMA, PART_LIBRARY_ARTIFACT_VERSION,
-    PartLibraryArtifact, PortablePartDefinition, PublishedPartLibrary,
 };
 #[cfg(feature = "layout")]
 pub use placement::{
@@ -333,12 +334,15 @@ pub use routing::{
     RoutingSolution, RoutingSolutionOmission, RoutingTerminal,
 };
 pub use schematic::{
-    SchematicBookSvgReport, SchematicEndpoint, SchematicGraphic, SchematicGraphicFill,
-    SchematicLabel, SchematicLayout, SchematicPinPlacement, SchematicPinSide, SchematicPoint,
-    SchematicPortPlacement, SchematicSheet, SchematicSheetLink, SchematicSheetPort,
+    SchematicBlockPlacement, SchematicBlockSize, SchematicBookSvgReport, SchematicCanvasSettings,
+    SchematicConnectionStyle, SchematicEndpoint, SchematicGraphic, SchematicGraphicFill,
+    SchematicLabel, SchematicLayout, SchematicPaperOrientation, SchematicPinPlacement,
+    SchematicPinSide, SchematicPoint, SchematicPortPlacement, SchematicPresentation,
+    SchematicPresentationIssue, SchematicSheet, SchematicSheetLink, SchematicSheetPort,
     SchematicSheetSvgReport, SchematicSvgError, SchematicSvgOptions, SchematicSvgProjection,
     SchematicSvgReport, SchematicSymbol, SchematicSymbolDefinition, SchematicSymbolUnit,
-    SchematicValidationIssue, SchematicValidationReport, SchematicWire,
+    SchematicValidationIssue, SchematicValidationReport, SchematicWire, SchematicWireMetadata,
+    SchematicWireStyle,
 };
 pub use schematic_auto::{
     SchematicAutoLayoutError, SchematicAutoLayoutPolicy, SchematicAutoLayoutReport,

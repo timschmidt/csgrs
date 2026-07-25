@@ -21,8 +21,8 @@ use sha2::{Digest, Sha256};
 use crate::CircuitPackageName;
 #[cfg(feature = "interchange")]
 use crate::{
-    AdapterKind, Circuit, CircuitId, DeviceModel, LandPattern, PartRef, SchematicLayout,
-    SchematicSymbolDefinition, TransientPolicy,
+    AdapterKind, Circuit, CircuitId, CircuitLibrary, DeviceModel, LandPattern, PartRef,
+    SchematicLayout, SchematicSymbolDefinition, SignalBundleLibrary, TransientPolicy,
 };
 
 /// Stable JSON lockfile schema identity.
@@ -35,6 +35,12 @@ pub const PART_LIBRARY_ARTIFACT_SCHEMA: &str = "hypercircuit.part-library";
 /// Current portable part-library artifact schema version.
 #[cfg(feature = "interchange")]
 pub const PART_LIBRARY_ARTIFACT_VERSION: u32 = 1;
+/// Stable portable reusable-circuit artifact schema identity.
+#[cfg(feature = "interchange")]
+pub const CIRCUIT_LIBRARY_ARTIFACT_SCHEMA: &str = "hypercircuit.circuit-library";
+/// Current portable reusable-circuit artifact schema version.
+#[cfg(feature = "interchange")]
+pub const CIRCUIT_LIBRARY_ARTIFACT_VERSION: u32 = 1;
 
 /// Reproducible origin of one circuit-library package artifact.
 #[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
@@ -468,10 +474,164 @@ impl PartLibraryArtifact {
     }
 }
 
+/// Versioned package artifact containing a reusable circuit hierarchy and
+/// its nominal signal-bundle contracts.
+#[cfg(feature = "interchange")]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CircuitLibraryArtifact {
+    /// Stable schema discriminator.
+    pub schema: String,
+    /// Exact schema revision.
+    pub schema_version: u32,
+    /// Package identity.
+    pub package: CircuitPackageName,
+    /// Exact package release version.
+    pub version: Version,
+    /// Direct package requirements retained in release metadata.
+    pub dependencies: Vec<PackageRequirement>,
+    /// Reusable circuit definitions and designated root export.
+    pub library: CircuitLibrary,
+    /// Nominal typed bundle definitions and circuit endpoint declarations.
+    pub signal_bundles: SignalBundleLibrary,
+}
+
+#[cfg(feature = "interchange")]
+impl CircuitLibraryArtifact {
+    /// Creates and validates one portable reusable-circuit artifact.
+    pub fn new(
+        package: CircuitPackageName,
+        version: Version,
+        library: CircuitLibrary,
+        signal_bundles: SignalBundleLibrary,
+    ) -> Result<Self, PackageResolutionError> {
+        let artifact = Self {
+            schema: CIRCUIT_LIBRARY_ARTIFACT_SCHEMA.into(),
+            schema_version: CIRCUIT_LIBRARY_ARTIFACT_VERSION,
+            package,
+            version,
+            dependencies: Vec::new(),
+            library,
+            signal_bundles,
+        };
+        artifact.validate()?;
+        Ok(artifact)
+    }
+
+    /// Replaces direct dependency requirements and revalidates the artifact.
+    pub fn with_dependencies(
+        mut self,
+        dependencies: Vec<PackageRequirement>,
+    ) -> Result<Self, PackageResolutionError> {
+        self.dependencies = dependencies;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Validates schema, dependency identities, hierarchy, and bundle endpoints.
+    pub fn validate(&self) -> Result<(), PackageResolutionError> {
+        if self.schema != CIRCUIT_LIBRARY_ARTIFACT_SCHEMA
+            || self.schema_version != CIRCUIT_LIBRARY_ARTIFACT_VERSION
+        {
+            return Err(PackageResolutionError::UnsupportedArtifactSchema);
+        }
+        let hierarchy = self.library.validate();
+        if !hierarchy.is_valid() {
+            return Err(PackageResolutionError::InvalidArtifact(format!(
+                "circuit library has {} validation issue(s)",
+                hierarchy.issues.len()
+            )));
+        }
+        let bundles = self.signal_bundles.validate(&self.library);
+        if !bundles.is_valid() {
+            return Err(PackageResolutionError::InvalidArtifact(format!(
+                "signal bundle library has {} validation issue(s)",
+                bundles.issues.len()
+            )));
+        }
+        let mut dependency_names = BTreeSet::new();
+        for dependency in &self.dependencies {
+            if dependency.name == self.package || !dependency_names.insert(dependency.name.clone())
+            {
+                return Err(PackageResolutionError::InvalidArtifact(format!(
+                    "invalid or duplicate dependency {}",
+                    dependency.name.as_str()
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    /// Returns deterministic compact JSON bytes used for hashing and storage.
+    pub fn canonical_bytes(&self) -> Result<Vec<u8>, PackageResolutionError> {
+        self.validate()?;
+        serde_json::to_vec(self)
+            .map_err(|error| PackageResolutionError::ArtifactJson(error.to_string()))
+    }
+
+    /// Returns human-readable JSON with the same semantic content.
+    pub fn to_json_pretty(&self) -> Result<String, PackageResolutionError> {
+        self.validate()?;
+        serde_json::to_string_pretty(self)
+            .map_err(|error| PackageResolutionError::ArtifactJson(error.to_string()))
+    }
+
+    /// Parses and validates one portable reusable-circuit artifact.
+    pub fn from_json(input: &str) -> Result<Self, PackageResolutionError> {
+        let artifact: Self = serde_json::from_str(input)
+            .map_err(|error| PackageResolutionError::ArtifactJson(error.to_string()))?;
+        artifact.validate()?;
+        Ok(artifact)
+    }
+
+    /// Computes the canonical SHA-256 content identity.
+    pub fn digest(&self) -> Result<PackageDigest, PackageResolutionError> {
+        Ok(PackageDigest {
+            algorithm: "sha256".into(),
+            value: format!("{:x}", Sha256::digest(self.canonical_bytes()?)),
+        })
+    }
+
+    /// Produces resolver catalog metadata for each reusable circuit definition.
+    pub fn release(
+        &self,
+        source: PackageSource,
+    ) -> Result<CircuitPackageRelease, PackageResolutionError> {
+        Ok(CircuitPackageRelease {
+            name: self.package.clone(),
+            version: self.version.clone(),
+            source,
+            digest: self.digest()?,
+            exports: self
+                .library
+                .circuits
+                .iter()
+                .map(|circuit| CircuitPackageExport {
+                    kind: CircuitPackageExportKind::Circuit,
+                    name: circuit.id.as_str().into(),
+                })
+                .collect(),
+            dependencies: self.dependencies.clone(),
+        })
+    }
+}
+
 /// Result of publishing an immutable artifact into a local store.
 #[cfg(feature = "interchange")]
 #[derive(Clone, Debug, PartialEq)]
 pub struct PublishedPartLibrary {
+    /// Resolver metadata for the stored artifact.
+    pub release: CircuitPackageRelease,
+    /// Exact content-addressed file.
+    pub path: PathBuf,
+    /// `true` when this call created the file; `false` for an identical hit.
+    pub created: bool,
+}
+
+/// Result of publishing an immutable reusable-circuit artifact.
+#[cfg(feature = "interchange")]
+#[derive(Clone, Debug, PartialEq)]
+pub struct PublishedCircuitLibrary {
     /// Resolver metadata for the stored artifact.
     pub release: CircuitPackageRelease,
     /// Exact content-addressed file.
@@ -540,6 +700,48 @@ impl CircuitPackageStore {
         })
     }
 
+    /// Publishes an immutable reusable-circuit artifact or confirms an
+    /// identical content-addressed hit.
+    pub fn publish_circuit_library(
+        &self,
+        artifact: &CircuitLibraryArtifact,
+        source: PackageSource,
+    ) -> Result<PublishedCircuitLibrary, PackageResolutionError> {
+        let release = artifact.release(source)?;
+        let bytes = artifact.canonical_bytes()?;
+        let path = self.artifact_path(&release.name, &release.version, &release.digest)?;
+        let Some(parent) = path.parent() else {
+            return Err(PackageResolutionError::ArtifactIo(
+                "artifact path has no parent".into(),
+            ));
+        };
+        fs::create_dir_all(parent)
+            .map_err(|error| PackageResolutionError::ArtifactIo(error.to_string()))?;
+        let created = match OpenOptions::new().write(true).create_new(true).open(&path) {
+            Ok(mut file) => {
+                if let Err(error) = file.write_all(&bytes).and_then(|()| file.sync_all()) {
+                    let _ = fs::remove_file(&path);
+                    return Err(PackageResolutionError::ArtifactIo(error.to_string()));
+                }
+                true
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                let existing = fs::read(&path)
+                    .map_err(|read| PackageResolutionError::ArtifactIo(read.to_string()))?;
+                if existing != bytes {
+                    return Err(PackageResolutionError::ArtifactDigestCollision);
+                }
+                false
+            }
+            Err(error) => return Err(PackageResolutionError::ArtifactIo(error.to_string())),
+        };
+        Ok(PublishedCircuitLibrary {
+            release,
+            path,
+            created,
+        })
+    }
+
     /// Loads and verifies the exact artifact selected by a lock coordinate.
     pub fn load(
         &self,
@@ -567,6 +769,70 @@ impl CircuitPackageStore {
             return Err(PackageResolutionError::ArtifactCoordinateMismatch);
         }
         Ok(artifact)
+    }
+
+    /// Loads and verifies a reusable-circuit artifact selected by a lock coordinate.
+    pub fn load_circuit_library(
+        &self,
+        locked: &LockedCircuitPackage,
+    ) -> Result<CircuitLibraryArtifact, PackageResolutionError> {
+        let path = self.artifact_path(&locked.name, &locked.version, &locked.digest)?;
+        let bytes = fs::read(path)
+            .map_err(|error| PackageResolutionError::ArtifactIo(error.to_string()))?;
+        let actual = PackageDigest {
+            algorithm: "sha256".into(),
+            value: format!("{:x}", Sha256::digest(&bytes)),
+        };
+        if actual != locked.digest {
+            return Err(PackageResolutionError::DigestMismatch(locked.name.clone()));
+        }
+        let artifact: CircuitLibraryArtifact = serde_json::from_slice(&bytes)
+            .map_err(|error| PackageResolutionError::ArtifactJson(error.to_string()))?;
+        artifact.validate()?;
+        if artifact.canonical_bytes()? != bytes {
+            return Err(PackageResolutionError::InvalidArtifact(
+                "stored artifact is not in canonical encoding".into(),
+            ));
+        }
+        if artifact.package != locked.name || artifact.version != locked.version {
+            return Err(PackageResolutionError::ArtifactCoordinateMismatch);
+        }
+        Ok(artifact)
+    }
+
+    /// Loads every reusable-circuit package in deterministic lock order.
+    pub fn load_circuit_lock(
+        &self,
+        lock: &CircuitPackageLock,
+    ) -> Result<Vec<CircuitLibraryArtifact>, PackageResolutionError> {
+        if lock.schema != CIRCUIT_PACKAGE_LOCK_SCHEMA
+            || lock.schema_version != CIRCUIT_PACKAGE_LOCK_VERSION
+        {
+            return Err(PackageResolutionError::UnsupportedLockfileSchema);
+        }
+        let mut names = BTreeSet::new();
+        for package in &lock.packages {
+            if !names.insert(package.name.clone()) {
+                return Err(PackageResolutionError::DuplicateLockedPackage(
+                    package.name.clone(),
+                ));
+            }
+        }
+        lock.packages
+            .iter()
+            .map(|package| self.load_circuit_library(package))
+            .collect()
+    }
+
+    /// Verifies resolver coordinates and dependencies before loading reusable
+    /// circuit artifacts.
+    pub fn load_verified_circuit_lock(
+        &self,
+        catalog: &CircuitPackageCatalog,
+        lock: &CircuitPackageLock,
+    ) -> Result<Vec<CircuitLibraryArtifact>, PackageResolutionError> {
+        catalog.verify_lock(lock)?;
+        self.load_circuit_lock(lock)
     }
 
     /// Loads every package in deterministic lock order after schema checks.

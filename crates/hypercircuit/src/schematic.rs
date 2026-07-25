@@ -8,7 +8,7 @@ use hyperreal::{Real, RealSign};
 use crate::{
     Circuit, CircuitInstanceId, DeviceModelId, NetId, PinRef, PortId, SchematicLabelId,
     SchematicSheetId, SchematicSheetLinkId, SchematicSheetPortId, SchematicSymbolDefinitionId,
-    SchematicSymbolId, SchematicWireId,
+    SchematicSymbolId, SchematicWireId, SubcircuitInstanceId,
 };
 
 /// Exact point in schematic drawing coordinates.
@@ -315,6 +315,264 @@ pub struct SchematicLayout {
     /// Direct parent/child boundary connections.
     #[cfg_attr(feature = "interchange", serde(default))]
     pub sheet_links: Vec<SchematicSheetLink>,
+}
+
+/// Preferred presentation style for newly authored schematic connections.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum SchematicConnectionStyle {
+    /// Smooth cubic connection rendering.
+    Bezier,
+    /// Axis-aligned segments.
+    #[default]
+    Orthogonal,
+    /// Direct straight segment.
+    Straight,
+}
+
+/// Page orientation retained for review and downstream projections.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum SchematicPaperOrientation {
+    /// Taller than wide.
+    #[default]
+    Portrait,
+    /// Wider than tall.
+    Landscape,
+}
+
+/// Design-level schematic canvas intent independent of GUI window state.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SchematicCanvasSettings {
+    /// Preferred connection geometry.
+    pub connection_style: SchematicConnectionStyle,
+    /// Optional exact drawing-grid spacing.
+    pub grid_spacing: Option<Real>,
+    /// Whether authored placements snap to the drawing grid.
+    pub snap_to_grid: bool,
+    /// Whether review projections should display the drawing grid.
+    pub show_grid: bool,
+    /// Optional caller-defined paper-size label.
+    pub paper_size: Option<String>,
+    /// Paper orientation.
+    pub paper_orientation: SchematicPaperOrientation,
+}
+
+/// Retained line style for one schematic wire.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum SchematicWireStyle {
+    /// Continuous stroke.
+    #[default]
+    Solid,
+    /// Dashed stroke.
+    Dashed,
+    /// Dotted stroke.
+    Dotted,
+}
+
+/// Authored presentation and observability intent for one logical wire.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct SchematicWireMetadata {
+    /// Existing wire whose presentation is described.
+    pub wire: SchematicWireId,
+    /// Optional displayed connection name.
+    pub name: Option<String>,
+    /// Optional caller-defined color value.
+    pub color: Option<String>,
+    /// Optional exact positive stroke width.
+    pub width: Option<Real>,
+    /// Stroke style.
+    pub style: SchematicWireStyle,
+    /// Whether simulation should retain/log this connection.
+    pub logging: bool,
+    /// Whether authored waypoints must be preserved as a manual route.
+    pub manual_route: bool,
+    /// Whether review projections should display the authored name.
+    pub show_name: bool,
+}
+
+/// Exact nominal size of one hierarchical schematic block.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct SchematicBlockSize {
+    /// Exact horizontal extent.
+    pub width: Real,
+    /// Exact vertical extent.
+    pub height: Real,
+}
+
+/// Presentation of one retained reusable subcircuit instance as a canvas block.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct SchematicBlockPlacement {
+    /// Existing subcircuit instance.
+    pub instance: SubcircuitInstanceId,
+    /// Exact block center in drawing coordinates.
+    pub position: SchematicPoint,
+    /// Optional exact nominal block size.
+    pub size: Option<SchematicBlockSize>,
+    /// Optional caller-defined icon handle.
+    pub icon: Option<String>,
+    /// Optional caller-defined color value.
+    pub color: Option<String>,
+    /// Whether the block uses a masked/configurable presentation.
+    pub mask: bool,
+    /// Optional alternate symbol handle.
+    pub symbol: Option<String>,
+    /// Whether editors should present configuration modally.
+    pub modal: bool,
+    /// Whether review projections should display boundary-port names.
+    pub show_port_names: bool,
+}
+
+/// Schematic presentation intent layered over authoritative connectivity.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SchematicPresentation {
+    /// Design-level canvas settings.
+    pub canvas: SchematicCanvasSettings,
+    /// Sparse per-wire presentation records.
+    pub wires: Vec<SchematicWireMetadata>,
+    /// Sparse hierarchical subcircuit block placements.
+    #[cfg_attr(feature = "interchange", serde(default))]
+    pub blocks: Vec<SchematicBlockPlacement>,
+}
+
+/// Invalid schematic presentation metadata.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum SchematicPresentationIssue {
+    /// Grid spacing was nonpositive or indeterminate.
+    InvalidGridSpacing,
+    /// Paper size was present but blank.
+    InvalidPaperSize,
+    /// Two metadata records target one wire.
+    DuplicateWireMetadata(SchematicWireId),
+    /// Metadata targets no retained schematic wire.
+    UnknownWire(SchematicWireId),
+    /// A displayed wire name was present but blank.
+    InvalidWireName(SchematicWireId),
+    /// A wire color was present but blank.
+    InvalidWireColor(SchematicWireId),
+    /// A wire width was nonpositive or indeterminate.
+    InvalidWireWidth(SchematicWireId),
+    /// Two block placements target one subcircuit instance.
+    DuplicateBlockPlacement(SubcircuitInstanceId),
+    /// A block placement targets no retained subcircuit instance.
+    UnknownBlock(SubcircuitInstanceId),
+    /// A block's optional size was nonpositive or indeterminate.
+    InvalidBlockSize(SubcircuitInstanceId),
+    /// A block's optional icon, color, or symbol handle was blank.
+    InvalidBlockMetadata(SubcircuitInstanceId),
+}
+
+impl SchematicPresentation {
+    /// Validates presentation records against an optional logical schematic.
+    pub fn validate(
+        &self,
+        circuit: &Circuit,
+        schematic: Option<&SchematicLayout>,
+    ) -> Vec<SchematicPresentationIssue> {
+        let mut issues = Vec::new();
+        if self
+            .canvas
+            .grid_spacing
+            .as_ref()
+            .is_some_and(|spacing| spacing.structural_facts().sign != Some(RealSign::Positive))
+        {
+            issues.push(SchematicPresentationIssue::InvalidGridSpacing);
+        }
+        if self
+            .canvas
+            .paper_size
+            .as_ref()
+            .is_some_and(|size| size.trim().is_empty())
+        {
+            issues.push(SchematicPresentationIssue::InvalidPaperSize);
+        }
+        let known_wires = schematic
+            .into_iter()
+            .flat_map(|layout| layout.wires.iter().map(|wire| wire.id.clone()))
+            .collect::<BTreeSet<_>>();
+        let mut described = BTreeSet::new();
+        for metadata in &self.wires {
+            if !described.insert(metadata.wire.clone()) {
+                issues.push(SchematicPresentationIssue::DuplicateWireMetadata(
+                    metadata.wire.clone(),
+                ));
+            }
+            if !known_wires.contains(&metadata.wire) {
+                issues.push(SchematicPresentationIssue::UnknownWire(
+                    metadata.wire.clone(),
+                ));
+            }
+            if metadata
+                .name
+                .as_ref()
+                .is_some_and(|name| name.trim().is_empty())
+            {
+                issues.push(SchematicPresentationIssue::InvalidWireName(
+                    metadata.wire.clone(),
+                ));
+            }
+            if metadata
+                .color
+                .as_ref()
+                .is_some_and(|color| color.trim().is_empty())
+            {
+                issues.push(SchematicPresentationIssue::InvalidWireColor(
+                    metadata.wire.clone(),
+                ));
+            }
+            if metadata
+                .width
+                .as_ref()
+                .is_some_and(|width| width.structural_facts().sign != Some(RealSign::Positive))
+            {
+                issues.push(SchematicPresentationIssue::InvalidWireWidth(
+                    metadata.wire.clone(),
+                ));
+            }
+        }
+        let known_blocks = circuit
+            .subcircuits
+            .iter()
+            .map(|instance| instance.id.clone())
+            .collect::<BTreeSet<_>>();
+        let mut placed = BTreeSet::new();
+        for block in &self.blocks {
+            if !placed.insert(block.instance.clone()) {
+                issues.push(SchematicPresentationIssue::DuplicateBlockPlacement(
+                    block.instance.clone(),
+                ));
+            }
+            if !known_blocks.contains(&block.instance) {
+                issues.push(SchematicPresentationIssue::UnknownBlock(
+                    block.instance.clone(),
+                ));
+            }
+            if block.size.as_ref().is_some_and(|size| {
+                size.width.structural_facts().sign != Some(RealSign::Positive)
+                    || size.height.structural_facts().sign != Some(RealSign::Positive)
+            }) {
+                issues.push(SchematicPresentationIssue::InvalidBlockSize(
+                    block.instance.clone(),
+                ));
+            }
+            if [&block.icon, &block.color, &block.symbol]
+                .into_iter()
+                .flatten()
+                .any(|value| value.trim().is_empty())
+            {
+                issues.push(SchematicPresentationIssue::InvalidBlockMetadata(
+                    block.instance.clone(),
+                ));
+            }
+        }
+        issues
+    }
 }
 
 /// Structural or electrical inconsistency in a schematic view.

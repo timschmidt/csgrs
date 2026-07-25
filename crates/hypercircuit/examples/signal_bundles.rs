@@ -1,8 +1,9 @@
 use hypercircuit::{
     AdapterKind, BundleEndpointId, BundleMemberId, BundlePortBinding, Circuit, CircuitId,
-    CircuitLibrary, CircuitPort, Modport, ModportId, ModportMember, Net, NetId, PortDirection,
-    PortId, SignalBundle, SignalBundleEndpoint, SignalBundleId, SignalBundleLibrary,
-    SubcircuitInstance, SubcircuitInstanceId, TransientPolicy,
+    CircuitLibrary, CircuitPort, CircuitPortType, Modport, ModportId, ModportMember, Net, NetId,
+    PortDirection, PortId, PortSignalType, SignalBundle, SignalBundleEndpoint, SignalBundleId,
+    SignalBundleLibrary, SignalBundleMember, SubcircuitInstance, SubcircuitInstanceId,
+    TransientPolicy,
 };
 
 fn module(id: &str, direction: PortDirection) -> Circuit {
@@ -21,6 +22,10 @@ fn module(id: &str, direction: PortDirection) -> Circuit {
         net: signal,
         direction,
         optional: false,
+    })
+    .with_port_type(CircuitPortType {
+        port: PortId::new("signal").unwrap(),
+        signal_type: PortSignalType::Logic,
     })
 }
 
@@ -45,9 +50,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             direction: PortDirection::Output,
         }],
     );
-    let stream = SignalBundle::new(
+    let stream = SignalBundle::new_typed(
         SignalBundleId::new("Stream").unwrap(),
-        vec![BundleMemberId::new("signal").unwrap()],
+        vec![SignalBundleMember::new(
+            BundleMemberId::new("signal").unwrap(),
+            PortSignalType::Logic,
+        )],
     )
     .with_modport(producer.dual(ModportId::new("consumer").unwrap()))
     .with_modport(producer);

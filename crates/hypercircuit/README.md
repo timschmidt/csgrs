@@ -11,7 +11,9 @@ The ownership boundary is intentional: `hyperpath` supplies exact routing/path
 carriers, `csgrs` materializes profiles and solids, and `hyperdrc` verifies
 constraints and release readiness. Circuit and PCB semantics do not belong in
 the geometry engine. See the [capability matrix](CAPABILITY_MATRIX.md) for the
-tscircuit/via-rs equivalence ledger and remaining acceptance gates.
+tscircuit/via-rs equivalence ledger and remaining acceptance gates. The
+[SimCore native-domain parity matrix](docs/simcore-native-parity.md) separately
+tracks the structural workflow concepts that map directly to HyperCircuit.
 
 With `geometry`, `LegacyCsgrsElectronicsImport` can still read the versioned
 JSON handoffs captured before csgrs's package/electrical marker removal. The
@@ -163,16 +165,19 @@ reference/value/transform data separate from the reusable definition. See
 
 ## Signal bundles and modports
 
-`SignalBundleLibrary` adds nominal, ordered signal bundles and reusable
+`SignalBundleLibrary` adds nominal, ordered, typed signal bundles and reusable
 directional `Modport` views without introducing a second connectivity model.
-A view assigns a `PortDirection` to every named member; `Modport::dual`
+`PortSignalType` and `SignalBundleMember` retain continuous-real, logic, and
+optionally width-constrained packed-bus shapes. A view assigns a
+`PortDirection` to every named member; `Modport::dual`
 derives the conjugate endpoint by flipping input/output and power direction
 while retaining symmetric bidirectional, passive, and ground roles.
 
 `SignalBundleEndpoint` binds a circuit module's selected view to its existing
 `CircuitPort` records. Validation rejects incomplete views, unknown or
-duplicated members and ports, and direction mismatches. Once two endpoints are
-shown to have the same nominal bundle and dual member directions,
+duplicated members and ports, invalid bus widths, and direction/type
+mismatches. Once two endpoints are shown to have the same nominal bundle,
+matching member types, and dual member directions,
 `SignalBundleLibrary::bind_subcircuit` lowers the connection into ordinary
 `SubcircuitPortBinding` records. Existing hierarchy validation, ERC, scope
 maps, and deterministic flattening therefore remain the semantic engine. See
@@ -214,10 +219,13 @@ analog samples and decisions with event lifecycle evidence, application
 results, final logic/switch states, and a deterministic run fingerprint. Its
 `certification` projection produces circuit-level release evidence.
 
-With `interchange`, semantic schema version 27 round-trips signal-bundle
-contracts and preordered authored event traces. Migration from older documents
-adds empty contracts and traces, and boundary validation checks event addresses,
-bundle members, payload text, and trace ordering. See
+With `interchange`, semantic schema version 28 round-trips the full reusable
+circuit hierarchy, typed ports and bundle contracts, exact transient-run
+configuration, hierarchical block/wire presentation, and preordered authored
+event traces. Version-27 migration promotes legacy string-only bundle members
+to continuous-real members. Boundary validation checks hierarchy references,
+event addresses, bundle members, payload text, trace ordering, and
+presentation targets. See
 [`examples/mixed_signal_session.rs`](examples/mixed_signal_session.rs).
 
 The runtime deliberately borrows SimCore's useful discrete-event ideas—an
@@ -232,7 +240,9 @@ With `interchange`, `Design::export_part` and `Design::import_part` move that
 same retained definition through a `PortablePartDefinition`; they do not copy
 it into a package-specific circuit model. `PartLibraryArtifact` binds named
 definitions, exact semver, and dependency requirements into versioned canonical
-JSON. `CircuitPackageStore` publishes immutable SHA-256-addressed files,
+JSON. `CircuitLibraryArtifact` does the same for a complete reusable
+`CircuitLibrary` and its typed bundle contracts. `CircuitPackageStore`
+publishes immutable SHA-256-addressed files,
 recognizes identical cache hits, loads only exact lock coordinates, replays
 artifact validation after parsing, and rejects digest or package/version
 disagreement. The catalog can therefore resolve and verify a lock before a

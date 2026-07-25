@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize};
 use crate::{
     BoardContour, BoardContourSegment, Circuit, CircuitEventAgenda, CircuitEventRequest,
     CircuitLibrary, DesignRevision, PcbLayout, PcbRouteSegment, SchematicLayout,
-    SignalBundleLibrary,
+    SchematicPresentation, SignalBundleLibrary, TransientRunPolicy,
 };
 
 /// Stable schema family emitted by this crate.
 pub const SEMANTIC_SCHEMA: &str = "org.hypercircuit.semantic";
 
 /// Latest schema version understood by this crate.
-pub const SEMANTIC_SCHEMA_VERSION: u32 = 27;
+pub const SEMANTIC_SCHEMA_VERSION: u32 = 28;
 
 /// Oldest schema revision upgraded by the built-in additive migrations.
 pub const SEMANTIC_SCHEMA_MIN_MIGRATABLE_VERSION: u32 = 8;
@@ -63,6 +63,9 @@ pub enum SemanticMigrationStep {
     DifferentialPairNeckdown,
     /// Version 27 added signal-bundle contracts and exact authored event traces.
     MixedSignalWorkflow,
+    /// Version 28 added typed ports/bundle members, full hierarchy retention,
+    /// simulation-run configuration, and schematic presentation metadata.
+    NativeInterfaceParity,
 }
 
 /// Evidence describing an automatic semantic JSON upgrade.
@@ -93,14 +96,23 @@ pub struct SemanticDocument {
     pub design_revision: DesignRevision,
     /// Authoritative circuit graph and simulation intent.
     pub circuit: Circuit,
+    /// Reusable child-circuit definitions reachable from the root circuit.
+    #[serde(default)]
+    pub circuit_definitions: Vec<Circuit>,
     /// Optional nominal signal-bundle and directional modport contracts.
     #[serde(default)]
     pub signal_bundles: SignalBundleLibrary,
     /// Preordered exact authored circuit-event trace.
     #[serde(default)]
     pub event_trace: Vec<CircuitEventRequest>,
+    /// Optional exact design-level transient run configuration.
+    #[serde(default)]
+    pub transient_run: Option<TransientRunPolicy>,
     /// Optional circuit-bound schematic presentation.
     pub schematic: Option<SchematicLayout>,
+    /// Canvas and per-wire presentation intent layered over the schematic.
+    #[serde(default)]
+    pub schematic_presentation: SchematicPresentation,
     /// Optional circuit-bound PCB intent.
     pub pcb: Option<PcbLayout>,
 }
@@ -114,6 +126,8 @@ pub enum SemanticInterchangeError {
     UnsupportedSchema { schema: String, version: u32 },
     /// The retained circuit graph failed structural validation.
     InvalidCircuit { issue_count: usize },
+    /// The retained reusable circuit hierarchy failed cross-definition validation.
+    InvalidCircuitLibrary { issue_count: usize },
     /// Schematic endpoints or nets disagree with the retained circuit.
     InvalidSchematic { issue_count: usize },
     /// PCB identities, references, or structural intent are inconsistent.
@@ -122,6 +136,10 @@ pub enum SemanticInterchangeError {
     InvalidSignalBundles { issue_count: usize },
     /// Authored event trace ordering, payload, or addresses are inconsistent.
     InvalidEventTrace { issue_count: usize },
+    /// Exact transient-run bounds or adaptation controls are invalid.
+    InvalidTransientRun,
+    /// Canvas or per-wire presentation metadata is invalid.
+    InvalidSchematicPresentation { issue_count: usize },
 }
 
 impl Display for SemanticInterchangeError {
@@ -137,6 +155,10 @@ impl Display for SemanticInterchangeError {
                     "semantic circuit has {issue_count} validation issue(s)"
                 )
             }
+            Self::InvalidCircuitLibrary { issue_count } => write!(
+                formatter,
+                "semantic circuit hierarchy has {issue_count} validation issue(s)"
+            ),
             Self::InvalidSchematic { issue_count } => write!(
                 formatter,
                 "semantic schematic has {issue_count} validation issue(s)"
@@ -155,6 +177,13 @@ impl Display for SemanticInterchangeError {
                 formatter,
                 "semantic event trace has {issue_count} validation issue(s)"
             ),
+            Self::InvalidTransientRun => {
+                formatter.write_str("semantic transient run configuration is invalid")
+            }
+            Self::InvalidSchematicPresentation { issue_count } => write!(
+                formatter,
+                "semantic schematic presentation has {issue_count} validation issue(s)"
+            ),
         }
     }
 }
@@ -172,9 +201,12 @@ impl SemanticDocument {
             version: SEMANTIC_SCHEMA_VERSION,
             design_revision: DesignRevision::default(),
             circuit,
+            circuit_definitions: Vec::new(),
             signal_bundles: SignalBundleLibrary::default(),
             event_trace: Vec::new(),
+            transient_run: None,
             schematic,
+            schematic_presentation: SchematicPresentation::default(),
             pcb: None,
         };
         document.validate()?;
@@ -194,6 +226,64 @@ impl SemanticDocument {
         signal_bundles: SignalBundleLibrary,
     ) -> Result<Self, SemanticInterchangeError> {
         self.signal_bundles = signal_bundles;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Replaces the retained root and reusable child-circuit definitions.
+    pub fn with_circuit_library(
+        mut self,
+        library: CircuitLibrary,
+    ) -> Result<Self, SemanticInterchangeError> {
+        let report = library.validate();
+        if !report.is_valid() {
+            return Err(SemanticInterchangeError::InvalidCircuitLibrary {
+                issue_count: report.issues.len(),
+            });
+        }
+        let root = library
+            .circuits
+            .iter()
+            .find(|circuit| circuit.id == library.root)
+            .expect("validated circuit library contains its root")
+            .clone();
+        self.circuit = root;
+        self.circuit_definitions = library
+            .circuits
+            .into_iter()
+            .filter(|circuit| circuit.id != library.root)
+            .collect();
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Returns the complete retained hierarchy as a reusable circuit library.
+    pub fn circuit_library(&self) -> CircuitLibrary {
+        let mut circuits = Vec::with_capacity(1 + self.circuit_definitions.len());
+        circuits.push(self.circuit.clone());
+        circuits.extend(self.circuit_definitions.clone());
+        CircuitLibrary {
+            root: self.circuit.id.clone(),
+            circuits,
+        }
+    }
+
+    /// Attaches an exact bounded transient-run configuration.
+    pub fn with_transient_run(
+        mut self,
+        transient_run: TransientRunPolicy,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.transient_run = Some(transient_run);
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches canvas and per-wire presentation intent.
+    pub fn with_schematic_presentation(
+        mut self,
+        presentation: SchematicPresentation,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.schematic_presentation = presentation;
         self.validate()?;
         Ok(self)
     }
@@ -307,6 +397,10 @@ impl SemanticDocument {
         if version < 27 {
             steps.push(SemanticMigrationStep::MixedSignalWorkflow);
         }
+        if version < 28 {
+            migrate_typed_bundle_members(&mut value)?;
+            steps.push(SemanticMigrationStep::NativeInterfaceParity);
+        }
         value["version"] = serde_json::Value::from(SEMANTIC_SCHEMA_VERSION);
         let document = serde_json::from_value::<Self>(value)
             .map_err(|error| SemanticInterchangeError::Json(error.to_string()))?;
@@ -342,10 +436,13 @@ impl SemanticDocument {
                 issue_count: circuit.issues.len(),
             });
         }
-        let library = CircuitLibrary {
-            root: self.circuit.id.clone(),
-            circuits: vec![self.circuit.clone()],
-        };
+        let library = self.circuit_library();
+        let hierarchy = library.validate();
+        if !hierarchy.is_valid() {
+            return Err(SemanticInterchangeError::InvalidCircuitLibrary {
+                issue_count: hierarchy.issues.len(),
+            });
+        }
         let bundle_report = self.signal_bundles.validate(&library);
         if !bundle_report.is_valid() {
             return Err(SemanticInterchangeError::InvalidSignalBundles {
@@ -359,6 +456,7 @@ impl SemanticDocument {
                 event
                     .validate_against(&self.circuit, Some(&self.signal_bundles))
                     .len()
+                    + event.validate_hierarchy(&library).len()
             })
             .sum::<usize>();
         if let Some(first) = self.event_trace.first() {
@@ -375,6 +473,13 @@ impl SemanticDocument {
                 issue_count: event_issue_count,
             });
         }
+        if self
+            .transient_run
+            .as_ref()
+            .is_some_and(|policy| policy.validate().is_err())
+        {
+            return Err(SemanticInterchangeError::InvalidTransientRun);
+        }
         if let Some(schematic) = &self.schematic {
             let report = schematic.validate(&self.circuit);
             if !report.is_valid() {
@@ -382,6 +487,14 @@ impl SemanticDocument {
                     issue_count: report.issues.len(),
                 });
             }
+        }
+        let presentation_issues = self
+            .schematic_presentation
+            .validate(&self.circuit, self.schematic.as_ref());
+        if !presentation_issues.is_empty() {
+            return Err(SemanticInterchangeError::InvalidSchematicPresentation {
+                issue_count: presentation_issues.len(),
+            });
         }
         if let Some(pcb) = &self.pcb {
             let report = pcb.validate(&self.circuit);
@@ -393,6 +506,37 @@ impl SemanticDocument {
         }
         Ok(())
     }
+}
+
+fn migrate_typed_bundle_members(
+    value: &mut serde_json::Value,
+) -> Result<(), SemanticInterchangeError> {
+    let Some(bundles) = value
+        .get_mut("signal_bundles")
+        .and_then(|library| library.get_mut("bundles"))
+        .and_then(serde_json::Value::as_array_mut)
+    else {
+        return Ok(());
+    };
+    for bundle in bundles {
+        let members = bundle
+            .get_mut("members")
+            .and_then(serde_json::Value::as_array_mut)
+            .ok_or_else(|| {
+                SemanticInterchangeError::Json(
+                    "legacy signal bundle members must be an array".into(),
+                )
+            })?;
+        for member in members {
+            if let Some(id) = member.as_str() {
+                *member = serde_json::json!({
+                    "id": id,
+                    "signal_type": "Real",
+                });
+            }
+        }
+    }
+    Ok(())
 }
 
 fn migrate_reusable_schematic_symbols(

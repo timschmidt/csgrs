@@ -16,21 +16,22 @@ use hyperreal::Real;
 use crate::{
     AdapterKind, BoardId, BoardOutline, BoardSide, Bus, BusId, BusSlice, BusSliceId, BusSliceOrder,
     Circuit, CircuitError, CircuitId, CircuitInstance, CircuitInstanceId, CircuitParameter,
-    CircuitPort, CircuitValidationIssue, CircuitValidationReport, ComponentId, CopperZone,
-    CopperZoneConnection, CopperZoneFill, CopperZoneIslandPolicy, CopperZoneStitchingPolicy,
-    DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, DifferentialPair, DifferentialPairId,
-    DrillShape, KeepoutId, KeepoutScope, LandPattern, LandPatternBody, LandPatternGraphic,
-    LandPatternId, LandPatternPad, LayoutValidationIssue, LayoutValidationReport,
-    LengthTuningPattern, LengthTuningPatternId, LengthTuningSide, Net, NetClass, NetClassId, NetId,
-    PadId, PadPinMap, PadShape, PartRef, PcbKeepout, PcbLayout, PcbPlacement, PcbRoute,
-    PcbRouteSegment, PcbStackup, PcbVia, PhaseTuningGroup, PhaseTuningGroupId, PinElectricalKind,
-    PinRef, PlacementConstraint, PlacementConstraintId, PlacementConstraintKind, Plating,
-    PortDirection, PortId, RailIntent, RailKind, RouteId, SchematicEndpoint, SchematicGraphic,
-    SchematicGraphicFill, SchematicLayout, SchematicPinPlacement, SchematicPinSide, SchematicPoint,
-    SchematicSymbol, SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId,
-    SchematicSymbolUnit, SchematicValidationIssue, SchematicValidationReport, SchematicWire,
-    SchematicWireId, SourceStimulus, SourceWaveform, TransientPolicy, ViaId, ViaMaskIntent,
-    ViaStyle, ViaStyleId, ViaStyleSpan, ZoneId,
+    CircuitPort, CircuitPortType, CircuitValidationIssue, CircuitValidationReport, ComponentId,
+    CopperZone, CopperZoneConnection, CopperZoneFill, CopperZoneIslandPolicy,
+    CopperZoneStitchingPolicy, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin,
+    DifferentialPair, DifferentialPairId, DrillShape, KeepoutId, KeepoutScope, LandPattern,
+    LandPatternBody, LandPatternGraphic, LandPatternId, LandPatternPad, LayoutValidationIssue,
+    LayoutValidationReport, LengthTuningPattern, LengthTuningPatternId, LengthTuningSide, Net,
+    NetClass, NetClassId, NetId, PadId, PadPinMap, PadShape, PartRef, PcbKeepout, PcbLayout,
+    PcbPlacement, PcbRoute, PcbRouteSegment, PcbStackup, PcbVia, PhaseTuningGroup,
+    PhaseTuningGroupId, PinElectricalKind, PinRef, PlacementConstraint, PlacementConstraintId,
+    PlacementConstraintKind, Plating, PortDirection, PortId, PortSignalType, RailIntent, RailKind,
+    RouteId, SchematicEndpoint, SchematicGraphic, SchematicGraphicFill, SchematicLayout,
+    SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
+    SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
+    SchematicValidationIssue, SchematicValidationReport, SchematicWire, SchematicWireId,
+    SourceStimulus, SourceWaveform, TransientPolicy, ViaId, ViaMaskIntent, ViaStyle, ViaStyleId,
+    ViaStyleSpan, ZoneId,
 };
 #[cfg(feature = "interchange")]
 use crate::{PackageResolutionError, PortablePartDefinition};
@@ -2720,6 +2721,19 @@ impl Design {
         direction: PortDirection,
         optional: bool,
     ) -> Result<PortHandle, DesignBuildError> {
+        self.typed_port(name, net, direction, optional, PortSignalType::Real)
+    }
+
+    /// Declares a typed hierarchical circuit boundary over an existing net.
+    #[track_caller]
+    pub fn typed_port(
+        &mut self,
+        name: impl Into<String>,
+        net: &NetHandle,
+        direction: PortDirection,
+        optional: bool,
+        signal_type: PortSignalType,
+    ) -> Result<PortHandle, DesignBuildError> {
         if net.owner != self.owner {
             return Err(DesignBuildError::ForeignHandle);
         }
@@ -2743,6 +2757,12 @@ impl Design {
             direction,
             optional,
         });
+        if signal_type != PortSignalType::Real {
+            self.circuit.port_types.push(CircuitPortType {
+                port: id.clone(),
+                signal_type,
+            });
+        }
         self.source_map.push(
             AuthoringTarget::Port(id.clone()),
             AuthoringAction::Declare,

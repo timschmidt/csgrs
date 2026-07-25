@@ -9,7 +9,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
     BundleEndpointId, BundleMemberId, Circuit, CircuitId, CircuitLibrary, ModportId, NetId,
-    PortDirection, PortId, SignalBundleId, SubcircuitInstanceId, SubcircuitPortBinding,
+    PortDirection, PortId, PortSignalType, SignalBundleId, SubcircuitInstanceId,
+    SubcircuitPortBinding,
 };
 
 /// One member's electrical direction in a modport view.
@@ -62,21 +63,50 @@ impl Modport {
     }
 }
 
-/// Nominal ordered group of named signals and its allowed directional views.
+/// One named, typed member of a nominal signal bundle.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct SignalBundleMember {
+    /// Stable member identity within the bundle.
+    pub id: BundleMemberId,
+    /// Logical value shape carried by the member.
+    pub signal_type: PortSignalType,
+}
+
+impl SignalBundleMember {
+    /// Creates a typed bundle member.
+    pub fn new(id: BundleMemberId, signal_type: PortSignalType) -> Self {
+        Self { id, signal_type }
+    }
+}
+
+/// Nominal ordered group of named, typed signals and its directional views.
 #[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignalBundle {
     /// Stable nominal bundle identity.
     pub id: SignalBundleId,
-    /// Ordered structural member names.
-    pub members: Vec<BundleMemberId>,
+    /// Ordered typed structural members.
+    pub members: Vec<SignalBundleMember>,
     /// Reusable directional views of those members.
     pub modports: Vec<Modport>,
 }
 
 impl SignalBundle {
-    /// Creates a bundle definition without directional views.
+    /// Creates a continuous-real bundle definition without directional views.
     pub fn new(id: SignalBundleId, members: Vec<BundleMemberId>) -> Self {
+        Self {
+            id,
+            members: members
+                .into_iter()
+                .map(|id| SignalBundleMember::new(id, PortSignalType::Real))
+                .collect(),
+            modports: Vec::new(),
+        }
+    }
+
+    /// Creates a typed bundle definition without directional views.
+    pub fn new_typed(id: SignalBundleId, members: Vec<SignalBundleMember>) -> Self {
         Self {
             id,
             members,
@@ -150,6 +180,11 @@ pub enum SignalBundleValidationIssue {
     EmptyBundle(SignalBundleId),
     /// A nominal bundle declares one member more than once.
     DuplicateBundleMember {
+        bundle: SignalBundleId,
+        member: BundleMemberId,
+    },
+    /// A packed bundle member has an explicit zero width.
+    InvalidBundleMemberSignalType {
         bundle: SignalBundleId,
         member: BundleMemberId,
     },
@@ -237,6 +272,15 @@ pub enum SignalBundleValidationIssue {
         expected: PortDirection,
         actual: PortDirection,
     },
+    /// A retained port's logical type disagrees with its bundle member.
+    EndpointPortSignalTypeMismatch {
+        circuit: CircuitId,
+        endpoint: BundleEndpointId,
+        member: BundleMemberId,
+        port: PortId,
+        expected: PortSignalType,
+        actual: PortSignalType,
+    },
 }
 
 /// Deterministic validation result for bundle contracts and endpoints.
@@ -296,10 +340,16 @@ impl SignalBundleLibrary {
             }
             let mut members = BTreeSet::new();
             for member in &bundle.members {
-                if !members.insert(member.clone()) {
+                if !members.insert(member.id.clone()) {
                     issues.push(SignalBundleValidationIssue::DuplicateBundleMember {
                         bundle: bundle.id.clone(),
-                        member: member.clone(),
+                        member: member.id.clone(),
+                    });
+                }
+                if !member.signal_type.is_valid() {
+                    issues.push(SignalBundleValidationIssue::InvalidBundleMemberSignalType {
+                        bundle: bundle.id.clone(),
+                        member: member.id.clone(),
                     });
                 }
             }
@@ -445,6 +495,7 @@ impl SignalBundleLibrary {
         let parent_circuit = &circuits.circuits[parent_index];
         let mut generated = Vec::with_capacity(bundle.members.len());
         for member in &bundle.members {
+            let member = &member.id;
             let parent_direction = parent_view
                 .direction(member)
                 .expect("validated modport must cover every member");
@@ -526,7 +577,11 @@ fn validate_endpoint(
     modport: &Modport,
     issues: &mut Vec<SignalBundleValidationIssue>,
 ) {
-    let members = bundle.members.iter().cloned().collect::<BTreeSet<_>>();
+    let members = bundle
+        .members
+        .iter()
+        .map(|member| member.id.clone())
+        .collect::<BTreeSet<_>>();
     let mut bound_members = BTreeSet::new();
     let mut bound_ports = BTreeSet::new();
     for binding in &endpoint.ports {
@@ -574,6 +629,25 @@ fn validate_endpoint(
                 expected,
                 actual: port.direction,
             });
+        }
+        if let Some(member) = bundle
+            .members
+            .iter()
+            .find(|member| member.id == binding.member)
+        {
+            let actual = circuit.port_signal_type(&port.id);
+            if actual != member.signal_type {
+                issues.push(
+                    SignalBundleValidationIssue::EndpointPortSignalTypeMismatch {
+                        circuit: endpoint.circuit.clone(),
+                        endpoint: endpoint.id.clone(),
+                        member: binding.member.clone(),
+                        port: binding.port.clone(),
+                        expected: member.signal_type.clone(),
+                        actual,
+                    },
+                );
+            }
         }
     }
     for member in members.difference(&bound_members) {
