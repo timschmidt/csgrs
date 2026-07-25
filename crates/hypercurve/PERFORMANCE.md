@@ -5134,6 +5134,40 @@ library/integration suites passed, including the full 268-operation blocker
 sentinel and the new fallback regressions, as did strict all-target Clippy in
 both feature configurations.
 
+### Shared nonrational quotient-ring source inverse
+
+The numerator and denominator multiplication matrices for an algebraic
+rational image reduce in the same quotient ring. Every column reduction
+formerly divided by the unchanged source leading coefficient independently,
+and the two matrices repeated that work again. For a symbolic leading
+coefficient each division constructs a fresh exact reciprocal expression.
+The paired construction now creates that reciprocal once and borrows it for
+both matrices and every column. Exact-rational leaders retain the direct
+division path, whose structural quotient simplifications are cheaper.
+
+The regression scales `x² - pi` by the nonrational factor `pi`, maps both
+defining polynomials through `y = x / (x + 1)`, and verifies exact coefficient
+equality of the two quotient-ring images. This exercises the shared symbolic
+inverse while proving that a nonzero source scale neither changes the image
+polynomial nor introduces a projection.
+
+On the identical three-cell exact-native Callgrind workload, instruction
+references fell from 122,760,480 to 121,965,154 (0.65%). Heaptrack allocation
+events fell from 173,956 to 171,683 (1.31%), and temporary events from 19,534
+to 19,069 (2.38%). Dispatch tracing reduced generic exact reciprocal
+construction from 124 to 114 events. The complete nine-run 67-cell workload
+had a 427.8 millisecond median, including 376.4 milliseconds of retained
+preparation, and continued to decide all 268 exact Boolean operations with
+zero blockers. Its matched exact-polyline median was 18.03 milliseconds, so
+the native exact-curve gap is now about 23.7x and `LineArc` removal remains
+performance-gated.
+
+The release pathological executable contains 4,697,361 bytes of text,
+4,957,801 total loadable bytes, and 6,235,664 bytes on disk. Complete
+all-feature and no-default-feature suites passed, including the full
+268-operation blocker regression and the new nonrational-scale regression, as
+did strict all-target Clippy in both feature configurations.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -3703,8 +3703,15 @@ fn quotient_ring_rational_map_image_polynomial(
     {
         return None;
     }
-    let numerator_matrix = quotient_multiplication_matrix(source, numerator)?;
-    let denominator_matrix = quotient_multiplication_matrix(source, denominator)?;
+    let leading = source.last()?;
+    let inverse_leading = (!leading.structural_facts().exact_rational)
+        .then(|| leading.inverse_ref())
+        .transpose()
+        .ok()?;
+    let numerator_matrix =
+        quotient_multiplication_matrix(source, numerator, inverse_leading.as_ref())?;
+    let denominator_matrix =
+        quotient_multiplication_matrix(source, denominator, inverse_leading.as_ref())?;
     // The determinant of multiplication by n(x) - y*d(x) in R[x]/(source)
     // is its exact norm, hence the required resultant up to one nonzero scale.
     // Subset expansion visits each partial column set once and keeps the matrix
@@ -3749,7 +3756,11 @@ fn quotient_ring_rational_map_image_polynomial(
 }
 
 #[cfg(feature = "predicates")]
-fn quotient_multiplication_matrix(source: &[Real], relation: &[Real]) -> Option<Vec<Real>> {
+fn quotient_multiplication_matrix(
+    source: &[Real],
+    relation: &[Real],
+    inverse_leading: Option<&Real>,
+) -> Option<Vec<Real>> {
     let degree = source.len().checked_sub(1)?;
     let leading = source.last()?;
     let mut matrix = vec![Real::zero(); degree.checked_mul(degree)?];
@@ -3759,7 +3770,11 @@ fn quotient_multiplication_matrix(source: &[Real], relation: &[Real]) -> Option<
         while remainder.len() > degree {
             let coefficient = remainder.pop()?;
             let shift = remainder.len().checked_sub(degree)?;
-            let factor = (coefficient / leading).ok()?;
+            let factor = if let Some(inverse) = inverse_leading {
+                coefficient * inverse
+            } else {
+                (coefficient / leading).ok()?
+            };
             for (index, source_coefficient) in source[..degree].iter().enumerate() {
                 remainder[shift + index] -= &factor * source_coefficient;
             }
@@ -5013,6 +5028,38 @@ mod tests {
         for (coefficient, expected) in coefficients.iter().zip(expected) {
             assert_eq!(
                 compare_reals(coefficient, &expected, &policy),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn quotient_ring_rational_image_reuses_nonrational_source_scale() {
+        let policy = CurvePolicy::certified();
+        let pi = Real::pi();
+        let numerator = [Real::zero(), Real::one()];
+        let denominator = [Real::one(), Real::one()];
+        let monic = quotient_ring_rational_map_image_polynomial(
+            &[-pi.clone(), Real::zero(), Real::one()],
+            &numerator,
+            &denominator,
+            &policy,
+        )
+        .expect("the monic quotient-ring image must remain exact");
+        let pi_squared = &pi * &pi;
+        let scaled = quotient_ring_rational_map_image_polynomial(
+            &[-pi_squared, Real::zero(), pi],
+            &numerator,
+            &denominator,
+            &policy,
+        )
+        .expect("a nonrational source scale must remain exact");
+
+        assert_eq!(scaled.len(), monic.len());
+        for (scaled, monic) in scaled.iter().zip(monic) {
+            assert_eq!(
+                compare_reals(scaled, &monic, &policy),
                 Some(Ordering::Equal)
             );
         }
