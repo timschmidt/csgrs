@@ -3930,7 +3930,7 @@ mod tests {
     }
 
     #[test]
-    fn atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+    fn atan2_shared_cancellation_resolves_positive_y_below_refinement_floor() {
         let tiny = Real::new(
             Rational::from_bigint_fraction(
                 num::BigInt::from(1_u8),
@@ -3939,7 +3939,7 @@ mod tests {
             .unwrap(),
         );
         let y = (Real::pi() + tiny.clone()) - Real::pi();
-        assert_eq!(y.structural_facts().sign, None);
+        assert_eq!(y.structural_facts().sign, Some(RealSign::Positive));
 
         let got = y.atan2(Real::one());
         let expected = tiny.atan2(Real::one());
@@ -4023,7 +4023,7 @@ mod tests {
     }
 
     #[test]
-    fn computable_atan2_unresolved_positive_y_does_not_collapse_to_axis() {
+    fn computable_atan2_shared_cancellation_resolves_positive_y() {
         use crate::Computable;
         use num::Zero;
 
@@ -4035,7 +4035,7 @@ mod tests {
         let y = Computable::pi()
             .add(Computable::rational(tiny.clone()))
             .add(Computable::pi().negate());
-        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+        assert_eq!(y.sign(), num::bigint::Sign::Plus);
 
         let got = y.atan2(Computable::one()).approx(-2600);
         let expected = Computable::rational(tiny)
@@ -4046,7 +4046,7 @@ mod tests {
     }
 
     #[test]
-    fn computable_atan2_unresolved_negative_y_on_negative_x_keeps_lower_branch() {
+    fn computable_atan2_shared_cancellation_resolves_negative_y() {
         use crate::Computable;
 
         let tiny = Rational::from_bigint_fraction(
@@ -4057,7 +4057,7 @@ mod tests {
         let y = Computable::pi()
             .add(Computable::rational(tiny.clone()).negate())
             .add(Computable::pi().negate());
-        assert_eq!(y.sign(), num::bigint::Sign::NoSign);
+        assert_eq!(y.sign(), num::bigint::Sign::Minus);
 
         let got = y.atan2(Computable::one().negate()).approx(-2600);
         let expected = Computable::rational(tiny)

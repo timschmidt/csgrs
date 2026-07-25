@@ -321,6 +321,27 @@ impl AtomicFacts {
         }
     }
 
+    fn set_bound_if_unresolved(&self, value: BoundCache) {
+        let encoded = Self::encode_bound(value);
+        let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
+        loop {
+            let tag = current & 0b11;
+            if tag != Self::TAG_INVALID && tag != Self::TAG_UNKNOWN {
+                return;
+            }
+            let updated = (current & Self::EXACT_SIGN_MASK) | encoded;
+            match self.0.compare_exchange_weak(
+                current,
+                updated,
+                std::sync::atomic::Ordering::Relaxed,
+                std::sync::atomic::Ordering::Relaxed,
+            ) {
+                Ok(_) => return,
+                Err(observed) => current = observed,
+            }
+        }
+    }
+
     fn encode_exact_sign(value: ExactSignCache) -> u64 {
         let encoded = match value {
             ExactSignCache::Invalid => 0,

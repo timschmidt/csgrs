@@ -195,13 +195,13 @@ impl Computable {
         }
         let approximation_bound = Self::bound_from_approx(p, &value);
         if approximation_bound != BoundInfo::Unknown {
-            // A separated approximation is a stronger certificate than a
-            // previously cached conservative Unknown result. Publish that
-            // upgrade beside the approximation so structural queries do not
-            // need to rediscover it by walking the expression graph.
+            // A separated approximation is a stronger certificate than an
+            // absent or conservative Unknown result. Never replace an existing
+            // structural certificate: it may carry an exact MSD that the
+            // approximation error band cannot recover.
             self.internal
                 .facts
-                .set_bound(BoundCache::Valid(approximation_bound));
+                .set_bound_if_unresolved(BoundCache::Valid(approximation_bound));
         }
         if let Some(constant) = self.shared_constant_kind() {
             Self::store_shared_constant_cache_value(constant, p, value);
@@ -234,12 +234,13 @@ impl Computable {
     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
         // Approximation values with magnitude <= 1 are within the allowed error
         // band, so they cannot certify sign or nonzero status.
-        if appr.abs() <= BigInt::one() {
+        let magnitude_bits = appr.magnitude().bits();
+        if magnitude_bits <= 1 {
             BoundInfo::Unknown
         } else {
             BoundInfo::with_sign_msd(
                 appr.sign(),
-                Some(prec + appr.magnitude().bits() as Precision - 1),
+                Some(prec + magnitude_bits as Precision - 1),
                 false,
             )
         }

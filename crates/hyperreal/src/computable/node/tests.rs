@@ -1547,6 +1547,27 @@ mod tests {
     }
 
     #[test]
+    fn add_cancels_structurally_shared_term_across_nested_sum() {
+        let tiny = Computable::rational(
+            Rational::from_bigint_fraction(
+                BigInt::one(),
+                BigUint::one() << 5000_usize,
+            )
+            .unwrap(),
+        );
+        let pi = Computable::pi();
+
+        for reduced in [
+            pi.clone().add(tiny.clone()).add(pi.clone().negate()),
+            pi.clone().negate().add(tiny.clone().add(pi.clone())),
+            tiny.clone().add(pi.clone()).add(pi.negate()),
+        ] {
+            assert!(Computable::internal_structural_eq(&reduced, &tiny));
+            assert_eq!(reduced.exact_sign(), Some(Sign::Plus));
+        }
+    }
+
+    #[test]
     fn scale_up() {
         let ten: BigInt = "10".parse().unwrap();
         let three: BigInt = "3".parse().unwrap();
@@ -1556,6 +1577,50 @@ mod tests {
         let forty: BigInt = "40".parse().unwrap();
         let b = scale(ten.clone(), 2);
         assert_eq!(forty, b);
+    }
+
+    #[test]
+    fn approximation_bounds_preserve_the_unit_error_boundary() {
+        for value in [-1, 0, 1] {
+            assert_eq!(
+                Computable::bound_from_approx(-37, &BigInt::from(value)),
+                BoundInfo::Unknown
+            );
+        }
+
+        assert_eq!(
+            Computable::bound_from_approx(-37, &BigInt::from(-2)),
+            BoundInfo::NonZero {
+                sign: Some(Sign::Minus),
+                msd: Some(-36),
+                exact_msd: false,
+            }
+        );
+        assert_eq!(
+            Computable::bound_from_approx(-37, &BigInt::from(2)),
+            BoundInfo::NonZero {
+                sign: Some(Sign::Plus),
+                msd: Some(-36),
+                exact_msd: false,
+            }
+        );
+    }
+
+    #[test]
+    fn approximation_cache_does_not_weaken_exact_structural_bound() {
+        let value = Computable::pi();
+        let exact_bound = value.internal.facts.bound();
+
+        value.store_cache_value(&None, -4, BigInt::from(50));
+
+        assert_eq!(value.internal.facts.bound(), exact_bound);
+        assert!(matches!(
+            exact_bound,
+            BoundCache::Valid(BoundInfo::NonZero {
+                exact_msd: true,
+                ..
+            })
+        ));
     }
 
     #[test]

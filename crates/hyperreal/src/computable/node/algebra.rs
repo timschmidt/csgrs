@@ -426,6 +426,31 @@ impl Computable {
     /// Add some other number to this number.
     #[allow(clippy::should_implement_trait)]
     pub fn add(self, other: Computable) -> Computable {
+        if let Approximation::Add(left, right) = &self.internal.approximation
+            && let Approximation::Negate(cancelled) = &other.internal.approximation
+        {
+            if Self::internal_structural_eq(left, cancelled) {
+                crate::trace_dispatch!("computable", "add", "nested-left-cancellation");
+                return right.clone();
+            }
+            if Self::internal_structural_eq(right, cancelled) {
+                crate::trace_dispatch!("computable", "add", "nested-right-cancellation");
+                return left.clone();
+            }
+        }
+        if let Approximation::Negate(cancelled) = &self.internal.approximation
+            && let Approximation::Add(left, right) = &other.internal.approximation
+        {
+            if Self::internal_structural_eq(cancelled, left) {
+                crate::trace_dispatch!("computable", "add", "nested-left-cancellation");
+                return right.clone();
+            }
+            if Self::internal_structural_eq(cancelled, right) {
+                crate::trace_dispatch!("computable", "add", "nested-right-cancellation");
+                return left.clone();
+            }
+        }
+
         let left_exact = self.exact_rational();
         let right_exact = other.exact_rational();
 
