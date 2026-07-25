@@ -599,9 +599,15 @@ the exact-aware land-clearance bounding box when curved profile intersection
 is uncertifiable; each such projection is counted in fabrication evidence.
 
 Geometry materialization always retains individual source/net-tagged copper
-features. A per-layer boolean image is present only when csgrs certifies the
-union; otherwise `LayerImage::blocker` records the exact uncertainty, so an
-unresolved topology decision never silently becomes fabrication geometry.
+features. By default, a per-layer boolean image is present only when csgrs
+certifies the union; otherwise `LayerImage::blocker` records the exact
+uncertainty, so an unresolved topology decision never silently becomes
+fabrication geometry. DRC-only consumers can set
+`MaterializationOptions::aggregate_layer_images` to false and avoid CAM-only
+unions while retaining every individual pad, route, via, drill, and process
+feature. `PcbMaterializationReport::layer_images_aggregated` makes that choice
+auditable, and fabrication rejects a feature-only report rather than emitting
+an incomplete package.
 Each feature also carries a `MaterializedCopperIdentity` naming its semantic
 pad/instance/pin, route, via, zone, or placed-artwork owner. DRC and
 manufacturing adapters therefore do not recover circuit identity by parsing a
@@ -741,7 +747,10 @@ cargo run --features drc --example curved_fabrication
 `KiCadImportReport::from_str` and `from_path` reconstruct editable circuit nets,
 generic footprint interfaces, pad mappings, placements, exact route segments,
 including certified circular arcs, vias, zones and mixed line/arc board
-contours from the supported PCB subset. Common centered, axis-aligned KiCad
+contours from the supported PCB subset. The importer accepts both legacy
+numeric net codes and KiCad 10 direct-name net references, project net-settings
+schema 5, footprint-owned transformed `Edge.Cuts`, and zones authored across
+multiple copper layers. Common centered, axis-aligned KiCad
 oval drills round-trip as exact routed-slot centerlines; shapes outside that
 native representation are never dropped silently and receive typed projection
 evidence. The board writer now emits KiCad's
@@ -774,7 +783,14 @@ selects an explicit projection policy. Generated ids and unsupported
 graphics/shapes are returned as `KiCadImportOmission` values. Regression
 fixtures perform export/import/edit/re-export/re-import cycles without losing
 the edited exact route width, physical stackup, or supported custom-rule
-policy. Flat native schematic files independently round-trip circuit-bound
+policy. Six pinned Easyduino boards additionally require source hashes,
+complete semantic counts, fresh-import/native-document parity, and native
+HyperDRC execution. Each has a runnable `easyduino_*` native example; the
+explicit `easyduino_full_pipeline` benchmark retains slow exact zone pouring,
+CAM aggregation, fabrication, CAM audit, and assembly audit. It times completed
+releases and typed exact-geometry termination separately instead of treating an
+uncertifiable boolean as approximate geometry. Flat native
+schematic files independently round-trip circuit-bound
 generic symbols, ports, labels and segmented wires through
 `KiCadSchematicImportReport`; symbol coordinate edits are reconstructed without
 changing circuit topology. See `examples/kicad_stackup_rules.rs` and

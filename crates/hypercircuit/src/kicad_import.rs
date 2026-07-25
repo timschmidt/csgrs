@@ -315,6 +315,18 @@ impl Importer {
                 });
             }
         }
+        let mut named_nets = BTreeSet::new();
+        collect_named_net_references(&self.root, &mut named_nets);
+        for name in named_nets {
+            let id =
+                NetId::new(name).map_err(|error| KiCadImportError::Parse(error.to_string()))?;
+            if !circuit.nets.iter().any(|net| net.id == id) {
+                circuit.nets.push(Net {
+                    id,
+                    is_ground: false,
+                });
+            }
+        }
 
         let stackup = self.parse_layers()?;
         let outline = self.parse_outline()?;
@@ -495,7 +507,7 @@ impl Importer {
             .ok_or_else(|| {
                 KiCadImportError::Parse("project net_settings has no schema version".into())
             })?;
-        if !(3..=4).contains(&version) {
+        if !(3..=5).contains(&version) {
             return Err(KiCadImportError::Parse(format!(
                 "unsupported KiCad project net-settings version {version}"
             )));
@@ -856,43 +868,79 @@ impl Importer {
         let primitives = self.root.children().to_vec();
         let mut edges = Vec::new();
         for (index, primitive) in primitives.iter().enumerate() {
-            let on_edge = primitive
-                .named_child("layer")
-                .and_then(|layer| layer.atom_at(1))
-                == Some("Edge.Cuts");
-            if !on_edge {
+            self.parse_outline_primitive(
+                primitive,
+                &format!("outline[{index}]"),
+                None,
+                &mut edges,
+            )?;
+        }
+
+        // KiCad permits board-defining Edge.Cuts graphics inside a footprint.
+        // Development-module footprints commonly use this to carry the exact
+        // module perimeter. Retain those primitives in board coordinates
+        // using the same exact placement transform as pad materialization.
+        let footprints = self
+            .root
+            .named_children("footprint")
+            .cloned()
+            .collect::<Vec<_>>();
+        for (footprint_index, footprint) in footprints.iter().enumerate() {
+            let outline_primitives = footprint
+                .children()
+                .iter()
+                .enumerate()
+                .filter(|(_, primitive)| {
+                    primitive
+                        .named_child("layer")
+                        .and_then(|layer| layer.atom_at(1))
+                        == Some("Edge.Cuts")
+                })
+                .collect::<Vec<_>>();
+            if outline_primitives.is_empty() {
                 continue;
             }
-            match primitive.list_name() {
-                Some("gr_line") => {
-                    let start =
-                        self.point_child(primitive, "start", &format!("outline[{index}].start"))?;
-                    let end =
-                        self.point_child(primitive, "end", &format!("outline[{index}].end"))?;
-                    edges.push(BoardContourSegment::Line(LinePathSegment::new(start, end)));
-                }
-                Some("gr_arc") => {
-                    let start =
-                        self.point_child(primitive, "start", &format!("outline[{index}].start"))?;
-                    let mid =
-                        self.point_child(primitive, "mid", &format!("outline[{index}].mid"))?;
-                    let end =
-                        self.point_child(primitive, "end", &format!("outline[{index}].end"))?;
-                    let Some(arc) = exact_arc_through(start, mid, end) else {
-                        self.omissions
-                            .push(KiCadImportOmission::UnsupportedEdgePrimitive {
-                                primitive: "gr_arc-invalid".into(),
-                            });
-                        continue;
-                    };
-                    edges.push(BoardContourSegment::CircularArc(arc));
-                }
-                _ => {
-                    self.omissions
-                        .push(KiCadImportOmission::UnsupportedEdgePrimitive {
-                            primitive: primitive.list_name().unwrap_or("unknown").into(),
-                        });
-                }
+            let position = self.point_child(
+                footprint,
+                "at",
+                &format!("footprint[{footprint_index}].outline_transform.at"),
+            )?;
+            let rotation_degrees = footprint
+                .named_child("at")
+                .and_then(|at| at.atom_at(3))
+                .map(|token| {
+                    self.number_token(
+                        token,
+                        &format!("footprint[{footprint_index}].outline_transform.rotation"),
+                    )
+                })
+                .transpose()?
+                .unwrap_or_else(Real::zero);
+            let side = if footprint
+                .named_child("layer")
+                .and_then(|layer| layer.atom_at(1))
+                .is_some_and(|layer| layer.starts_with("B."))
+            {
+                BoardSide::Back
+            } else {
+                BoardSide::Front
+            };
+            let placement = PcbPlacement {
+                instance: CircuitInstanceId::new("outline-transform")
+                    .expect("static outline transform id is valid"),
+                land_pattern: LandPatternId::new("outline-transform")
+                    .expect("static outline transform id is valid"),
+                position,
+                rotation_degrees,
+                side,
+            };
+            for (primitive_index, primitive) in outline_primitives {
+                self.parse_outline_primitive(
+                    primitive,
+                    &format!("footprint[{footprint_index}].outline[{primitive_index}]"),
+                    Some(&placement),
+                    &mut edges,
+                )?;
             }
         }
         let mut contours = stitch_board_contours(edges);
@@ -909,6 +957,60 @@ impl Importer {
             exterior,
             cutouts: contours,
         })
+    }
+
+    fn parse_outline_primitive(
+        &mut self,
+        primitive: &sexp::Sexp,
+        field: &str,
+        placement: Option<&PcbPlacement>,
+        edges: &mut Vec<BoardContourSegment>,
+    ) -> Result<(), KiCadImportError> {
+        let on_edge = primitive
+            .named_child("layer")
+            .and_then(|layer| layer.atom_at(1))
+            == Some("Edge.Cuts");
+        if !on_edge {
+            return Ok(());
+        }
+        let transform = |point: Point2| {
+            placement.map_or_else(
+                || point.clone(),
+                |placement| placement.transform_point(&point),
+            )
+        };
+        match primitive.list_name() {
+            Some("gr_line" | "fp_line") => {
+                let start =
+                    transform(self.point_child(primitive, "start", &format!("{field}.start"))?);
+                let end = transform(self.point_child(primitive, "end", &format!("{field}.end"))?);
+                edges.push(BoardContourSegment::Line(LinePathSegment::new(start, end)));
+            }
+            Some("gr_arc" | "fp_arc") => {
+                let start =
+                    transform(self.point_child(primitive, "start", &format!("{field}.start"))?);
+                let mid = transform(self.point_child(primitive, "mid", &format!("{field}.mid"))?);
+                let end = transform(self.point_child(primitive, "end", &format!("{field}.end"))?);
+                let Some(arc) = exact_arc_through(start, mid, end) else {
+                    self.omissions
+                        .push(KiCadImportOmission::UnsupportedEdgePrimitive {
+                            primitive: format!(
+                                "{}-invalid",
+                                primitive.list_name().unwrap_or("arc")
+                            ),
+                        });
+                    return Ok(());
+                };
+                edges.push(BoardContourSegment::CircularArc(arc));
+            }
+            _ => {
+                self.omissions
+                    .push(KiCadImportOmission::UnsupportedEdgePrimitive {
+                        primitive: primitive.list_name().unwrap_or("unknown").into(),
+                    });
+            }
+        }
+        Ok(())
     }
 
     fn parse_routes(&mut self, layout: &mut PcbLayout) -> Result<(), KiCadImportError> {
@@ -1035,7 +1137,14 @@ impl Importer {
                 });
                 continue;
             };
-            let layer = self.layer_for(node)?;
+            let layers = if node.named_child("layer").is_some() {
+                vec![self.layer_for(node)?]
+            } else {
+                self.expand_layers(&atoms_after_name(node.named_child("layers")))?
+            };
+            if layers.is_empty() {
+                return Err(KiCadImportError::UnknownCopperLayer("missing".into()));
+            }
             for polygon in node.named_children("polygon") {
                 let Some(points) = polygon.named_child("pts") else {
                     continue;
@@ -1050,25 +1159,27 @@ impl Importer {
                 if boundary.len() < 3 {
                     continue;
                 }
-                let zone_id = ZoneId::new(format!("kicad-zone-{index}-{imported}"))
-                    .expect("generated zone id is nonempty");
-                self.omissions
-                    .push(KiCadImportOmission::ZonePolicyDefaulted {
-                        zone: zone_id.as_str().into(),
+                for layer in &layers {
+                    let zone_id = ZoneId::new(format!("kicad-zone-{index}-{imported}"))
+                        .expect("generated zone id is nonempty");
+                    self.omissions
+                        .push(KiCadImportOmission::ZonePolicyDefaulted {
+                            zone: zone_id.as_str().into(),
+                        });
+                    layout.zones.push(CopperZone {
+                        id: zone_id,
+                        net: net.clone(),
+                        layer: *layer,
+                        boundary: boundary.clone(),
+                        clearance: Real::zero(),
+                        fill: crate::CopperZoneFill::Solid,
+                        connection: crate::CopperZoneConnection::Solid,
+                        islands: crate::CopperZoneIslandPolicy::retain_all(),
+                        stitching: None,
+                        priority: 0,
                     });
-                layout.zones.push(CopperZone {
-                    id: zone_id,
-                    net: net.clone(),
-                    layer,
-                    boundary,
-                    clearance: Real::zero(),
-                    fill: crate::CopperZoneFill::Solid,
-                    connection: crate::CopperZoneConnection::Solid,
-                    islands: crate::CopperZoneIslandPolicy::retain_all(),
-                    stitching: None,
-                    priority: 0,
-                });
-                imported += 1;
+                    imported += 1;
+                }
             }
         }
         if imported > 0 {
@@ -1343,7 +1454,8 @@ impl Importer {
         net.i32_at(1)
             .and_then(|code| self.nets.get(&code).cloned())
             .or_else(|| {
-                net.atom_at(2)
+                let name_index = usize::from(net.i32_at(1).is_some()) + 1;
+                net.atom_at(name_index)
                     .filter(|name| !name.is_empty())
                     .and_then(|name| NetId::new(name).ok())
             })
@@ -1530,6 +1642,18 @@ fn atoms_after_name(node: Option<&sexp::Sexp>) -> Vec<String> {
         .flat_map(|node| node.children().iter().skip(1))
         .filter_map(|atom| atom.as_atom().map(str::to_owned))
         .collect()
+}
+
+fn collect_named_net_references(node: &sexp::Sexp, names: &mut BTreeSet<String>) {
+    if node.list_name() == Some("net") {
+        let name_index = usize::from(node.i32_at(1).is_some()) + 1;
+        if let Some(name) = node.atom_at(name_index).filter(|name| !name.is_empty()) {
+            names.insert(name.to_owned());
+        }
+    }
+    for child in node.children() {
+        collect_named_net_references(child, names);
+    }
 }
 
 fn parse_generated_net_condition(condition: &str) -> Option<Vec<String>> {

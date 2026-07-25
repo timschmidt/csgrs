@@ -562,6 +562,8 @@ pub struct FabricationPackage {
 /// Failure that prevents a non-lossy manufacturing package from being emitted.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum FabricationPackageError {
+    /// Materialization intentionally skipped CAM-oriented layer aggregation.
+    LayerImagesNotAggregated,
     /// A layer image has an unresolved exact boolean.
     BlockedCopperLayer { layer: u16, blocker: String },
     /// A mask, paste, or legend image has an unresolved exact boolean.
@@ -584,6 +586,9 @@ pub enum FabricationPackageError {
 impl Display for FabricationPackageError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::LayerImagesNotAggregated => {
+                formatter.write_str("materialization did not aggregate fabrication layer images")
+            }
             Self::BlockedCopperLayer { layer, .. } => {
                 write!(formatter, "copper layer {layer} has an unresolved union")
             }
@@ -632,6 +637,9 @@ impl FabricationPackage {
         materialized: &PcbMaterializationReport,
         options: FabricationExportOptions,
     ) -> Result<Self, FabricationPackageError> {
+        if !materialized.layer_images_aggregated {
+            return Err(FabricationPackageError::LayerImagesNotAggregated);
+        }
         let mut files = Vec::new();
         let millimeter_factor = options.source_length_unit.millimeter_factor();
         let conductor_layers = layout

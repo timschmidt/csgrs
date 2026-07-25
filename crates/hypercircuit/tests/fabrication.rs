@@ -5,12 +5,12 @@ use hypercircuit::{
     CircuitInstanceId, ComponentId, CopperFeatureKind, DeviceModel, DeviceModelId, DeviceModelKind,
     DevicePin, DrillHit, DrillShape, FabricationExportOptions, FabricationFileKind,
     FabricationIntegrityIssue, FabricationLengthUnit, FabricationManifest, FabricationPackage,
-    LandPattern, LandPatternGraphic, LandPatternGraphicId, LandPatternGraphicPrimitive,
-    LandPatternId, LandPatternPad, LayerRole, MaterializationOptions, Net, NetId, PadId, PadPinMap,
-    PadShape, PcbDesignRules, PcbLayout, PcbPlacement, PcbStackup, PcbVia, PinBinding,
-    PinElectricalKind, PinRef, Plating, ProcessLayerRole, ProcessMaterializationOmission,
-    ProductionTextPolicy, Real, StackupLayer, StackupLayerKind, TransientPolicy, ViaId,
-    ZoneMaterializationEvidence,
+    FabricationPackageError, LandPattern, LandPatternGraphic, LandPatternGraphicId,
+    LandPatternGraphicPrimitive, LandPatternId, LandPatternPad, LayerRole, MaterializationOptions,
+    Net, NetId, PadId, PadPinMap, PadShape, PcbDesignRules, PcbLayout, PcbPlacement, PcbStackup,
+    PcbVia, PinBinding, PinElectricalKind, PinRef, Plating, ProcessLayerRole,
+    ProcessMaterializationOmission, ProductionTextPolicy, Real, StackupLayer, StackupLayerKind,
+    TransientPolicy, ViaId, ZoneMaterializationEvidence,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -126,6 +126,20 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
             pruned_unconnected_islands: 1,
             pruned_below_area_islands: 0,
         });
+    let feature_only = layout
+        .materialize(
+            &circuit,
+            MaterializationOptions {
+                aggregate_layer_images: false,
+                ..MaterializationOptions::default()
+            },
+        )
+        .unwrap();
+    assert!(!feature_only.layer_images_aggregated);
+    assert!(matches!(
+        FabricationPackage::from_materialization(&layout, &feature_only),
+        Err(FabricationPackageError::LayerImagesNotAggregated)
+    ));
     let package = FabricationPackage::from_materialization(&layout, &materialized).unwrap();
     assert_eq!(package.represented_copper_features, 2);
     assert_eq!(package.represented_process_features, 1);

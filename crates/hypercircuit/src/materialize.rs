@@ -33,6 +33,12 @@ use crate::{
 pub struct MaterializationOptions {
     /// Segment count used for circles and rounded pad display geometry.
     pub circular_segments: usize,
+    /// Build boolean-unioned copper and process-layer images.
+    ///
+    /// DRC consumers that inspect source-addressable features can disable this
+    /// expensive CAM-only aggregation while retaining every individual exact
+    /// pad, route, via, drill, and process feature.
+    pub aggregate_layer_images: bool,
     /// Default exact expansion applied to pad solder-mask openings when the pad delegates policy.
     pub default_solder_mask_margin: Real,
     /// Default exact expansion/reduction applied to SMD paste apertures when delegated by the pad.
@@ -49,6 +55,7 @@ impl Default for MaterializationOptions {
     fn default() -> Self {
         Self {
             circular_segments: 64,
+            aggregate_layer_images: true,
             default_solder_mask_margin: Real::zero(),
             default_paste_margin: Real::zero(),
             production_text: None,
@@ -313,6 +320,12 @@ pub struct DrillHit {
 pub struct PcbMaterializationReport {
     /// Substrate region after applying authored cutouts.
     pub substrate: Profile,
+    /// Whether CAM-oriented copper and process layer images were aggregated.
+    ///
+    /// Individual exact source features remain complete when this is false,
+    /// but fabrication consumers must reject the report as intentionally
+    /// incomplete.
+    pub layer_images_aggregated: bool,
     /// Individually addressable copper features with source and net identity.
     pub copper_features: Vec<MaterializedCopperFeature>,
     /// Per-layer union images suitable for Gerber or 3D lowering.
@@ -862,8 +875,16 @@ impl PcbLayout {
             zone_realizations.push(evidence);
         }
 
-        let copper_layers = union_layer_images(&copper_features);
-        let process_layers = union_process_images(&process_features);
+        let copper_layers = if options.aggregate_layer_images {
+            union_layer_images(&copper_features)
+        } else {
+            Vec::new()
+        };
+        let process_layers = if options.aggregate_layer_images {
+            union_process_images(&process_features)
+        } else {
+            Vec::new()
+        };
         if process_features.iter().any(|feature| {
             matches!(
                 feature.role,
@@ -874,6 +895,7 @@ impl PcbLayout {
         }
         Ok(PcbMaterializationReport {
             substrate,
+            layer_images_aggregated: options.aggregate_layer_images,
             copper_features,
             copper_layers,
             process_features,
@@ -1933,13 +1955,17 @@ fn materialize_placements(
                     .solder_mask_margin
                     .as_ref()
                     .unwrap_or(&options.default_solder_mask_margin);
-                let mask = local_profile
-                    .try_offset(mask_margin.clone())
-                    .map_err(|error| {
-                        GeometryMaterializationError::Boolean(format!(
-                            "{source} solder-mask offset: {error}"
-                        ))
-                    })?;
+                let mask = if mask_margin.definitely_zero() {
+                    local_profile.clone()
+                } else {
+                    local_profile
+                        .try_offset(mask_margin.clone())
+                        .map_err(|error| {
+                            GeometryMaterializationError::Boolean(format!(
+                                "{source} solder-mask offset: {error}"
+                            ))
+                        })?
+                };
                 if !mask.is_empty() {
                     process_features.push(MaterializedProcessFeature {
                         source: format!("mask:{source}"),
@@ -1953,14 +1979,17 @@ fn materialize_placements(
                         .paste_margin
                         .as_ref()
                         .unwrap_or(&options.default_paste_margin);
-                    let paste =
+                    let paste = if paste_margin.definitely_zero() {
+                        local_profile.clone()
+                    } else {
                         local_profile
                             .try_offset(paste_margin.clone())
                             .map_err(|error| {
                                 GeometryMaterializationError::Boolean(format!(
                                     "{source} paste offset: {error}"
                                 ))
-                            })?;
+                            })?
+                    };
                     if !paste.is_empty() {
                         process_features.push(MaterializedProcessFeature {
                             source: format!("paste:{source}"),

@@ -86,6 +86,11 @@ name = "routing"
 harness = false
 required-features = ["layout"]
 
+[[bench]]
+name = "easyduino_full_pipeline"
+harness = false
+required-features = ["drc", "interchange"]
+
 [[example]]
 name = "declarative_board"
 required-features = ["layout"]
@@ -109,6 +114,34 @@ required-features = ["layout"]
 [[example]]
 name = "kicad_roundtrip"
 required-features = ["layout"]
+
+[[example]]
+name = "easyduino_fixture_generator"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_nano"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_uno"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_esp32"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_esp32s3"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_rp2040"
+required-features = ["drc", "interchange"]
+
+[[example]]
+name = "easyduino_stm32f103"
+required-features = ["drc", "interchange"]
 
 [[example]]
 name = "kicad_stackup_rules"

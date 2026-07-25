@@ -1,0 +1,124 @@
+repository = "https://github.com/Hanqaqa/Easyduino"
+commit = "53b14b66d64f25c55f88971c1c1b51656126bd30"
+license = "CERN-OHL-P-2.0"
+license_sha256 = "b01f00ae213578d3da2a93297048dd40a26d6732a8707c7e4a0a93b0f4dc2805"
+
+[[boards]]
+slug = "nano"
+title = "Atmega328p Arduino Nano"
+upstream_path = "Atmega328p Arduino Nano/Easyduino_Atmega_Nano"
+pcb_sha256 = "6290643f4b90c6e3e4dbd3845574b58d32b3f81c0b959761c05a9c743bbf524b"
+project_sha256 = "6fe3995a2a02b35dbd380d28d6919a117fd09368701626f0c43c67b40e56eb2a"
+native_sha256 = "4f80a86c1700b7ec646a04d80ffd02dc06c4cced0a02eee2d82c67818ec20a73"
+nets = 62
+instances = 31
+land_patterns = 26
+pads = 177
+placements = 31
+routes = 332
+vias = 57
+zones = 3
+stackup_layers = 9
+net_classes = 1
+fast_drc_findings = 226
+fast_drc_handoff_omissions = 31
+
+[[boards]]
+slug = "uno"
+title = "Atmega328p Arduino Uno"
+upstream_path = "Atmega328p Arduino Uno/Easyduino_Atmega"
+pcb_sha256 = "00453acb569f3eaa2ff7f57912174b7157a63293b1732710c9a5a6d9a7a7447c"
+project_sha256 = "a20a87515c624440f9e739d55850ae96bf51e74faf94047114f4efc1ffd5a80c"
+native_sha256 = "b10d228a3205f64f30a4209c5cd1242a6e52056ac78005020393751fbb5fe779"
+nets = 55
+instances = 38
+land_patterns = 31
+pads = 171
+placements = 38
+routes = 391
+vias = 106
+zones = 9
+stackup_layers = 9
+net_classes = 1
+fast_drc_findings = 159
+fast_drc_handoff_omissions = 38
+
+[[boards]]
+slug = "esp32"
+title = "ESP32"
+upstream_path = "ESP32/Easyduino_ESP32"
+pcb_sha256 = "0811a1785e2af5af88ef49d3d3a7c471ae4ce83e799044d3fd4a75d29ba5dd4b"
+project_sha256 = "8af02ab1a7707657748343f294a90c754f9671031a04888577279bc89c925fd5"
+native_sha256 = "cc9260742281ec3d511cfdbceaa7936852d793a4c4336f9305a7e488e9eb3111"
+nets = 73
+instances = 29
+land_patterns = 24
+pads = 191
+placements = 29
+routes = 372
+vias = 64
+zones = 6
+stackup_layers = 9
+net_classes = 1
+fast_drc_findings = 168
+fast_drc_handoff_omissions = 29
+
+[[boards]]
+slug = "esp32s3"
+title = "ESP32S3"
+upstream_path = "ESP32S3/Easyduino_ESP32S3"
+pcb_sha256 = "897bee3658a91bbe3d079006e63197107f481b5c0ea2d0a9dd059bc00b7154d2"
+project_sha256 = "4c746c34bd8f0b9e44248ae36d8cda5b909d2b3ac2bc2ad70b313c7ce6ddd218"
+native_sha256 = "1f0f7f2b24063565007557b751277bcfbf732571cd8a47d0d8ab43d40118bd20"
+nets = 77
+instances = 35
+land_patterns = 24
+pads = 196
+placements = 35
+routes = 703
+vias = 137
+zones = 5
+stackup_layers = 9
+net_classes = 1
+fast_drc_findings = 181
+fast_drc_handoff_omissions = 35
+
+[[boards]]
+slug = "rp2040"
+title = "Raspberry Pi Pico 2040"
+upstream_path = "Raspberry Pi Pico 2040/Easyduino_RP2040"
+pcb_sha256 = "4ba9fb2abba7436b0161ea9983a46d65a550076866b96fe549934ccbbb871338"
+project_sha256 = "9fdfdebd930f28aff9c8a9af2cae4a2a3349cc11dec2473991162da3736c12e2"
+native_sha256 = "d26c62dbbc1a71b3c879ecfc86853df1df99be7b0ce2d51f6025e5b6be769749"
+nets = 61
+instances = 65
+land_patterns = 35
+pads = 178
+placements = 65
+routes = 570
+vias = 88
+zones = 8
+stackup_layers = 9
+net_classes = 12
+fast_drc_findings = 337
+fast_drc_handoff_omissions = 65
+
+[[boards]]
+slug = "stm32f103"
+title = "STM32F103 Bluepill"
+upstream_path = "STM32F103 Bluepill/Easyduino_STM32F103"
+pcb_sha256 = "2086b529d4e108aeda2e86b49574ea7de758d968d147bb94f01fa10932ec8ba5"
+project_sha256 = "2daac5a8652190cd7c8f3d38d579413d15a8565792f73d7a37901255797c9fff"
+native_sha256 = "641fd1e2306b6d34633a41b290cf76eabbcef03fea1f3136329334e1884de0a7"
+nets = 49
+instances = 30
+land_patterns = 26
+pads = 141
+placements = 30
+routes = 484
+vias = 75
+zones = 6
+stackup_layers = 9
+net_classes = 1
+fast_drc_findings = 387
+fast_drc_handoff_omissions = 30
