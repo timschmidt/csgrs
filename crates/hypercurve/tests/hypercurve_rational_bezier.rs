@@ -6,7 +6,7 @@ use hypercurve::{
     CurveOperation2, CurvePolicy, ExactCurveError, LineSeg2, ParamRange, Point2, QuadraticBezier2,
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
 };
 use hyperreal::Rational;
 use num::{BigInt, BigUint};
@@ -226,50 +226,27 @@ fn degree_40_rational_monotonicity_does_not_depend_on_u64_binomials() {
 }
 
 #[test]
-fn rational_axis_monotonicity_preserves_typed_sign_blocker() {
+fn shared_cancellation_resolves_rational_weight_monotonicity_blocker() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();
 
-    let error = curve
-        .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
-        .unwrap_err();
-    assert_eq!(error.operation(), CurveOperation2::Classification);
-    assert_eq!(error.family(), CurveFamily2::RationalBezier);
-    assert!(matches!(
-        error,
-        ExactCurveError::Blocked(blocker)
-            if blocker.reason() == UncertaintyReason::RealSign
-    ));
+    assert!(
+        curve
+            .axis_is_monotone(Axis2::X, &CurvePolicy::certified())
+            .unwrap()
+    );
 }
 
 #[test]
-fn rational_evaluation_and_bounds_preserve_typed_sign_blockers() {
+fn shared_cancellation_resolves_rational_evaluation_and_bounds_blockers() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();
     let policy = CurvePolicy::certified();
 
-    for error in [
-        curve.point_at(&r(0), &policy).unwrap_err(),
-        curve.derivative_at(&r(0), &policy).unwrap_err(),
-        curve.derivatives_at(&r(0), 3, &policy).unwrap_err(),
-    ] {
-        assert_eq!(error.operation(), CurveOperation2::Evaluation);
-        assert_eq!(error.family(), CurveFamily2::RationalBezier);
-        assert!(matches!(
-            error,
-            ExactCurveError::Blocked(blocker)
-                if blocker.reason() == UncertaintyReason::RealSign
-        ));
-    }
-
-    let error = curve.certified_bounds(&policy).unwrap_err();
-    assert_eq!(error.operation(), CurveOperation2::Classification);
-    assert_eq!(error.family(), CurveFamily2::RationalBezier);
-    assert!(matches!(
-        error,
-        ExactCurveError::Blocked(blocker)
-            if blocker.reason() == UncertaintyReason::RealSign
-    ));
+    assert_eq!(curve.point_at(&r(0), &policy).unwrap(), p(0, 0));
+    assert!(curve.derivative_at(&r(0), &policy).is_ok());
+    assert!(curve.derivatives_at(&r(0), 3, &policy).is_ok());
+    assert!(curve.certified_bounds(&policy).is_ok());
 }
 
 #[test]
@@ -611,20 +588,16 @@ fn implicit_conic_route_does_not_certify_a_tangent_root_as_transverse() {
 }
 
 #[test]
-fn rational_contacts_preserve_a_typed_sign_blocker_after_bound_fallthrough() {
+fn shared_cancellation_resolves_disjoint_rational_contact_blocker() {
     let first = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![unresolved_positive(), r(1)])
         .unwrap();
     let second = RationalBezier2::try_new(vec![p(3, 0), p(4, 1)], vec![r(1), r(1)]).unwrap();
 
-    let error = first
-        .intersection_contacts(&second, &CurvePolicy::certified())
-        .unwrap_err();
-    assert_eq!(error.operation(), CurveOperation2::Intersection);
-    assert_eq!(error.family(), CurveFamily2::RationalBezier);
     assert!(matches!(
-        error,
-        ExactCurveError::Blocked(blocker)
-            if blocker.reason() == UncertaintyReason::RealSign
+        first
+            .intersection_contacts(&second, &CurvePolicy::certified())
+            .unwrap(),
+        RationalBezierIntersectionContacts2::NoIntersection
     ));
 }
 

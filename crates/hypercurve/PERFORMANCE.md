@@ -4815,6 +4815,44 @@ and 4,630 feature edges; `region_boolean` completed 2,706 executions at 5,989
 coverage points and 19,320 feature edges. Neither found an error;
 LeakSanitizer alone remained disabled under ptrace.
 
+### Exact bound caching and shared cancellation
+
+Hyperreal approximation-bound publication now derives the magnitude bit length
+without allocating a temporary absolute-value bigint. The concurrent cache
+upgrade only replaces absent or unknown bounds, so an approximation cannot
+weaken an exact structural MSD certificate already published by another
+analysis.
+
+The same audit found a supportable `RealSign` blocker in rational Bézier
+weights shaped as `(pi + epsilon) - pi`, where `epsilon` was smaller than the
+sign-refinement floor. Exact nested-addition cancellation now recognizes the
+shared or structurally equivalent term and returns `epsilon` directly.
+Rational Bézier monotonicity, evaluation, derivative, bounds, and disjoint
+contact queries that previously preserved this blocker now complete with exact
+curve evidence. `BLOCKER_REGRESSIONS.md` names the focused Hyperreal sign and
+atan2 tests and all three downstream Hypercurve blocker-resolution tests.
+
+On the identical three-cell exact native Boolean workload, instruction
+references fell from 266,961,560 to 261,496,219 (2.05%). The matched ten-run
+median for the complete 67-cell workload fell from 965.8 to 949.3
+milliseconds (1.7%), and preparation fell from 912.3 to 895.6 milliseconds
+(1.8%). Heaptrack allocation events fell from 14,668,175 to 13,458,420
+(8.25%); peak heap remained 36.00 MiB.
+
+The final current-build native run prepared all 67 regions and decided all 268
+union, intersection, difference, and XOR operations with zero blockers. It
+retained 3,248 exact native curve fragments from 2,883 candidate pairs,
+performed 134 exact point classifications, and produced checksum 6. The
+family-flattened exact-polyline lane remains a comparison only and is never
+substituted for a native curve result.
+
+All-feature Hyperreal and Hypercurve library/integration suites and strict
+all-target Clippy passed. The `computable_approximation` AddressSanitizer
+replay completed 2,509 executions without a finding; the downstream
+`region_boolean` replay completed 2,717 executions at 5,987 coverage points
+and 19,309 feature edges without a finding. LeakSanitizer alone remained
+disabled under ptrace.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
