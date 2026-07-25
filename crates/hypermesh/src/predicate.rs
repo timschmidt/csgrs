@@ -16,6 +16,7 @@ const INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY: usize = 16;
 const EMPTY_LINEAR_FORM_FILTER_SLOT: u16 = u16::MAX;
 
 struct CachedLinearForm3Filter {
+    fingerprint: u64,
     owners: [Rational; 4],
     filter: Option<PreparedRationalLinearForm4Filter>,
 }
@@ -39,14 +40,14 @@ impl Default for LinearForm3FilterCache {
 
 impl LinearForm3FilterCache {
     #[inline]
-    fn slot_for(key: [usize; 4], slot_capacity: usize) -> usize {
+    fn fingerprint(key: [usize; 4]) -> u64 {
         let mut mixed = 4_u64.wrapping_mul(0x517c_c1b7_2722_0a95);
         for word in key {
             mixed = mixed.rotate_left(19).wrapping_add(word as u64);
         }
         mixed = (mixed ^ (mixed >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
         mixed = (mixed ^ (mixed >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
-        (mixed ^ (mixed >> 31)) as usize & (slot_capacity - 1)
+        mixed ^ (mixed >> 31)
     }
 
     #[inline]
@@ -60,14 +61,15 @@ impl LinearForm3FilterCache {
 
     #[inline]
     fn find(&self, key: [usize; 4]) -> Option<Option<PreparedRationalLinearForm4Filter>> {
-        let mut slot = Self::slot_for(key, self.slots.len());
+        let fingerprint = Self::fingerprint(key);
+        let mut slot = fingerprint as usize & (self.slots.len() - 1);
         loop {
             let entry_index = self.slots[slot];
             if entry_index == EMPTY_LINEAR_FORM_FILTER_SLOT {
                 return None;
             }
             let entry = &self.entries[usize::from(entry_index)];
-            if Self::entry_matches(entry, key) {
+            if entry.fingerprint == fingerprint && Self::entry_matches(entry, key) {
                 return Some(entry.filter);
             }
             slot = (slot + 1) & (self.slots.len() - 1);
@@ -79,11 +81,7 @@ impl LinearForm3FilterCache {
         debug_assert!(new_capacity > self.slots.len());
         self.slots = vec![EMPTY_LINEAR_FORM_FILTER_SLOT; new_capacity];
         for (entry_index, entry) in self.entries.iter().enumerate() {
-            let key = entry
-                .owners
-                .each_ref()
-                .map(|owner| owner.storage_identity());
-            let mut slot = Self::slot_for(key, new_capacity);
+            let mut slot = entry.fingerprint as usize & (new_capacity - 1);
             while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
                 slot = (slot + 1) & (new_capacity - 1);
             }
@@ -92,7 +90,7 @@ impl LinearForm3FilterCache {
     }
 
     #[inline]
-    fn insert(&mut self, key: [usize; 4], entry: CachedLinearForm3Filter) {
+    fn insert(&mut self, entry: CachedLinearForm3Filter) {
         if self.entries.len() >= LINEAR_FORM_FILTER_CACHE_CAPACITY {
             self.entries.clear();
             self.slots.fill(EMPTY_LINEAR_FORM_FILTER_SLOT);
@@ -100,7 +98,7 @@ impl LinearForm3FilterCache {
         if self.entries.len() >= self.slots.len() / 2 {
             self.grow_slots();
         }
-        let mut slot = Self::slot_for(key, self.slots.len());
+        let mut slot = entry.fingerprint as usize & (self.slots.len() - 1);
         while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
             slot = (slot + 1) & (self.slots.len() - 1);
         }
@@ -131,13 +129,11 @@ fn prepared_linear_form3_filter(
             &plane.normal.z,
             &plane.offset,
         ]);
-        cache.insert(
-            key,
-            CachedLinearForm3Filter {
-                owners: coefficients.map(Clone::clone),
-                filter,
-            },
-        );
+        cache.insert(CachedLinearForm3Filter {
+            fingerprint: LinearForm3FilterCache::fingerprint(key),
+            owners: coefficients.map(Clone::clone),
+            filter,
+        });
         filter
     })
 }
@@ -428,7 +424,8 @@ mod tests {
             .find_map(|value| {
                 let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
                 let key = owners.each_ref().map(|owner| owner.storage_identity());
-                let slot = LinearForm3FilterCache::slot_for(key, LINEAR_FORM_FILTER_SLOT_CAPACITY);
+                let slot = LinearForm3FilterCache::fingerprint(key) as usize
+                    & (LINEAR_FORM_FILTER_SLOT_CAPACITY - 1);
                 if let Some(first) = first_by_slot.remove(&slot) {
                     Some((first, (key, owners)))
                 } else {
@@ -440,20 +437,16 @@ mod tests {
 
         let (first_key, first_owners) = first;
         let (second_key, second_owners) = second;
-        cache.insert(
-            first_key,
-            CachedLinearForm3Filter {
-                owners: first_owners,
-                filter: None,
-            },
-        );
-        cache.insert(
-            second_key,
-            CachedLinearForm3Filter {
-                owners: second_owners,
-                filter: None,
-            },
-        );
+        cache.insert(CachedLinearForm3Filter {
+            fingerprint: LinearForm3FilterCache::fingerprint(first_key),
+            owners: first_owners,
+            filter: None,
+        });
+        cache.insert(CachedLinearForm3Filter {
+            fingerprint: LinearForm3FilterCache::fingerprint(second_key),
+            owners: second_owners,
+            filter: None,
+        });
 
         assert!(matches!(cache.find(first_key), Some(None)));
         assert!(matches!(cache.find(second_key), Some(None)));
@@ -463,13 +456,11 @@ mod tests {
         for value in 30_000_i64..30_512 {
             let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
             let key = owners.each_ref().map(|owner| owner.storage_identity());
-            cache.insert(
-                key,
-                CachedLinearForm3Filter {
-                    owners,
-                    filter: None,
-                },
-            );
+            cache.insert(CachedLinearForm3Filter {
+                fingerprint: LinearForm3FilterCache::fingerprint(key),
+                owners,
+                filter: None,
+            });
             grown_keys.push(key);
         }
         assert!(cache.slots.len() > INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY);
