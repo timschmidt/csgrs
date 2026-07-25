@@ -3669,10 +3669,73 @@ pub(crate) fn polynomial_roots_in_unit_interval(
     c2: Real,
     policy: &CurvePolicy,
 ) -> Classification<Vec<Real>> {
+    let start_is_root = c0.definitely_zero();
+    let end_value = &(&c0 + &c1) + &c2;
+    let end_is_root = end_value.definitely_zero();
+    polynomial_roots_in_unit_interval_with_endpoint_flags(
+        c0,
+        c1,
+        c2,
+        start_is_root,
+        end_is_root,
+        policy,
+    )
+}
+
+pub(crate) fn polynomial_roots_in_unit_interval_with_endpoints(
+    c0: Real,
+    c1: Real,
+    c2: Real,
+    start_value: &Real,
+    end_value: &Real,
+    policy: &CurvePolicy,
+) -> Classification<Vec<Real>> {
+    polynomial_roots_in_unit_interval_with_endpoint_flags(
+        c0,
+        c1,
+        c2,
+        start_value.definitely_zero(),
+        end_value.definitely_zero(),
+        policy,
+    )
+}
+
+fn polynomial_roots_in_unit_interval_with_endpoint_flags(
+    c0: Real,
+    c1: Real,
+    c2: Real,
+    start_is_root: bool,
+    end_is_root: bool,
+    policy: &CurvePolicy,
+) -> Classification<Vec<Real>> {
     match is_zero(&c2, policy) {
         Some(true) => return linear_roots_in_unit_interval(c0, c1, policy),
         Some(false) => {}
         None => return Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+
+    // Extract exact endpoint roots before the quadratic formula. A root at
+    // either boundary is represented directly by zero or one; constructing it
+    // as `(-c1 +/- sqrt(discriminant)) / (2*c2)` can instead create a deeply
+    // cancellative computable expression even when the power-basis endpoint
+    // evaluation already reduces structurally to zero.
+    match (start_is_root, end_is_root) {
+        (true, true) => {
+            return Classification::Decided(vec![Real::zero(), Real::one()]);
+        }
+        (true, false) => {
+            let Ok(other_root) = (Real::zero() - &c1) / &c2 else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            return retain_unit_roots(vec![Real::zero(), other_root], policy);
+        }
+        (false, true) => {
+            let Ok(other_root) = &c0 / &c2 else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            return retain_unit_roots(vec![Real::one(), other_root], policy);
+        }
+        (false, false) => {}
     }
 
     let four = Real::from(4_i8);

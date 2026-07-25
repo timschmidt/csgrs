@@ -13,7 +13,7 @@ use std::cmp::Ordering;
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
-use crate::bezier_topology::polynomial_roots_in_unit_interval;
+use crate::bezier_topology::polynomial_roots_in_unit_interval_with_endpoints;
 use crate::classify::{
     classify_oriented_line, compare_reals, is_zero, orient2d_real_expr, real_sign,
 };
@@ -357,7 +357,14 @@ impl RationalQuadraticBezier2 {
         let c0 = weighted_distances[0].clone();
         let c1 = &two * &(&weighted_distances[1] - &weighted_distances[0]);
         let c2 = &weighted_distances[0] - &(&two * &weighted_distances[1]) + &weighted_distances[2];
-        let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
+        let roots = match polynomial_roots_in_unit_interval_with_endpoints(
+            c0,
+            c1,
+            c2,
+            &weighted_distances[0],
+            &weighted_distances[2],
+            policy,
+        ) {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => {
                 if self.weights_known_same_nonzero_sign(policy) == Some(true) {
@@ -496,11 +503,12 @@ impl RationalQuadraticBezier2 {
             &weight_products.2 * &(coordinate(self.end(), axis) - coordinate(self.control(), axis));
         let c0 = a.clone();
         let c1 = &b - &(Real::from(2_i8) * &a);
-        let c2 = &a - &b + c;
-        let roots = match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let c2 = &a - &b + &c;
+        let roots =
+            match polynomial_roots_in_unit_interval_with_endpoints(c0, c1, c2, &a, &c, policy) {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
 
         let mut retained_roots = Vec::new();
         for root in roots {
@@ -907,7 +915,7 @@ impl RationalQuadraticBezier2 {
     }
 
     fn weighted_coordinate_power_basis(&self, axis: Axis2) -> (Real, Real, Real) {
-        quadratic_bernstein_to_power([
+        quadratic_bernstein_to_power(&[
             coordinate(self.start(), axis) * &self.start_weight,
             coordinate(self.control(), axis) * &self.control_weight,
             coordinate(self.end(), axis) * &self.end_weight,
@@ -923,7 +931,7 @@ impl RationalQuadraticBezier2 {
     }
 
     fn weight_power_basis(&self) -> (Real, Real, Real) {
-        quadratic_bernstein_to_power([
+        quadratic_bernstein_to_power(&[
             self.start_weight.clone(),
             self.control_weight.clone(),
             self.end_weight.clone(),
@@ -1091,7 +1099,7 @@ fn coordinate(point: &Point2, axis: Axis2) -> &Real {
     }
 }
 
-fn quadratic_bernstein_to_power(values: [Real; 3]) -> (Real, Real, Real) {
+fn quadratic_bernstein_to_power(values: &[Real; 3]) -> (Real, Real, Real) {
     let two = Real::from(2_i8);
     let c0 = values[0].clone();
     let c1 = &two * &(&values[1] - &values[0]);
@@ -1172,8 +1180,9 @@ fn rational_axis_point_root_set(
     {
         return Classification::Decided(RationalPointRootSet::All);
     }
-    let (c0, c1, c2) = quadratic_bernstein_to_power(values);
-    polynomial_roots_in_unit_interval(c0, c1, c2, policy).map(RationalPointRootSet::Roots)
+    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    polynomial_roots_in_unit_interval_with_endpoints(c0, c1, c2, &values[0], &values[2], policy)
+        .map(RationalPointRootSet::Roots)
 }
 
 fn rational_point_parameters_from_root_sets(
@@ -2806,8 +2815,10 @@ fn matching_weight_axis_difference_root_set(
     // outside the current scalar proof surface fall back to conservative
     // subdivision regions; see the Bernstein and de Casteljau curve model, and
     // exact-computation discipline.
-    let (c0, c1, c2) = quadratic_bernstein_to_power(values);
-    match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
+    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    match polynomial_roots_in_unit_interval_with_endpoints(
+        c0, c1, c2, &values[0], &values[2], policy,
+    ) {
         Classification::Decided(roots) => {
             Classification::Decided(Some(RationalPointRootSet::Roots(roots)))
         }
@@ -2829,8 +2840,10 @@ fn matching_weight_axis_difference_root_cover(
         return Classification::Decided(Some(RationalQuadraticRootCover::All));
     }
 
-    let (c0, c1, c2) = quadratic_bernstein_to_power(values.clone());
-    match polynomial_roots_in_unit_interval(c0, c1, c2, policy) {
+    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    match polynomial_roots_in_unit_interval_with_endpoints(
+        c0, c1, c2, &values[0], &values[2], policy,
+    ) {
         Classification::Decided(exact) => {
             return Classification::Decided(Some(RationalQuadraticRootCover::Isolated {
                 exact,

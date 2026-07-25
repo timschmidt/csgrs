@@ -89,6 +89,28 @@ fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative
 }
 
 #[test]
+fn rational_quadratic_monotone_root_retains_exact_transcendental_endpoint() {
+    // The x coordinate has a horizontal tangent at t=1. Building that root
+    // through the generic quadratic formula leaves a cancellative expression
+    // involving pi, so endpoint extraction must retain the exact parameter
+    // before radical construction.
+    let curve = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        Point2::new(q(24, 5), q(7, 5)),
+        Point2::new(q(24, 5), q(32, 5)),
+        r(1),
+        Real::pi(),
+        r(1),
+    )
+    .unwrap();
+
+    assert_eq!(
+        decided(curve.axis_monotone_parameters(Axis2::X, &CurvePolicy::certified())),
+        vec![Real::one()]
+    );
+}
+
+#[test]
 fn general_rational_derivative_is_exact_and_reuses_power_basis() {
     let curve = RationalBezier2::try_new(vec![p(0, 0), p(4, 0)], vec![r(1), r(3)]).unwrap();
     let clone = curve.clone();

@@ -181,11 +181,11 @@ fn full_pathological_native_workload_decides_all_268_exact_booleans() {
         );
 
         for operation in operations {
-            let _exact_region = prepared.boolean_region_view(operation).unwrap_or_else(|error| {
-                panic!(
-                    "pathological cell {cell_index} {operation:?} remained blocked: {error}"
-                )
-            });
+            let _exact_region = prepared
+                .boolean_region_view(operation)
+                .unwrap_or_else(|error| {
+                    panic!("pathological cell {cell_index} {operation:?} remained blocked: {error}")
+                });
             decided += 1;
         }
     }

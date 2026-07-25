@@ -5046,6 +5046,43 @@ all-target Clippy. The `bezier_region` AddressSanitizer replay completed 2,509
 executions at 10,312 coverage points and 39,522 feature edges without a finding;
 LeakSanitizer alone remained disabled under ptrace.
 
+### Exact Bernstein endpoint roots avoid radical cancellation
+
+The pi-weight rational quadratic in the pathological fixture has a transformed
+axis derivative whose endpoint Bernstein value is exactly zero. The generic
+power-basis quadratic solver nevertheless constructed that endpoint through
+the quadratic formula. Comparing the resulting radical expression with one
+could not prove equality even after refinement to precision -4096, so certified
+bounds discarded the monotone split and retained a much wider control hull.
+
+Quadratic Bernstein callers now pass their retained endpoint values into the
+shared root solver. Structurally zero endpoints are emitted directly as exact
+zero or one parameters, and the other root is recovered by Vieta's formula
+before the generic radical path is considered. Line contacts, point incidence,
+matching-weight graph roots, and rational-quadratic monotonicity all use the
+same endpoint-preserving path. No approximate parameter is introduced.
+
+The focused pi-weight regression failed with `Ordering` before the change and
+now returns the exact monotone parameter `[1]`. The complete 268-operation
+regression continues to pass, and its debug runtime fell from 9.05 to 6.26
+seconds. Dispatch tracing on the three-cell workload removed every unresolved
+sign refinement: 303 sign queries remain, with 224 decided at precision zero
+and 79 at the first -16 step. Previously 310 queries included two comparisons
+that exhausted -512 and then retried the same expression through -4096.
+
+On the identical three-cell exact-native Callgrind workload, instruction
+references fell from 162,196,807 to 147,498,172 (9.06%). Exact endpoint bounds
+also reduced the complete 67-cell workload from 2,763 to 603 carrier pairs
+(78.2%) while retaining 3,248 fragments, 134 point classifications, all 268
+exact Boolean results, zero blockers, and checksum 6.
+
+The final five-run complete-workload median fell from 790.5 to 574.3
+milliseconds (27.4%), with retained preparation falling from 733.2 to 519.4
+milliseconds (29.2%). The matched exact-polyline median was 17.06 milliseconds,
+narrowing the native exact-curve gap from roughly 44x to 34x; `LineArc` removal
+therefore remains performance-gated. The release pathological executable now
+contains 4,683,825 bytes of text and 4,945,497 total loadable bytes.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
