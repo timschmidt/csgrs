@@ -1,8 +1,10 @@
 #[cfg(feature = "interchange")]
 use hypercircuit::{
-    BoardOutline, CircuitPackageExportKind, CircuitPackageLock, CircuitPackageStore, Design,
-    DeviceModelKind, Footprint, PartDefinition, PartInstance, PartLibraryArtifact, PartSymbolUnit,
-    PcbStackup, Real, SchematicPinSide, SchematicPoint, SymbolPin, SymbolUnitPlacement, pin,
+    AdapterKind, BoardOutline, Circuit, CircuitId, CircuitLibrary, CircuitLibraryArtifact,
+    CircuitPackageExportKind, CircuitPackageLock, CircuitPackageStore, Design, DeviceModelKind,
+    Footprint, PartDefinition, PartInstance, PartLibraryArtifact, PartSymbolUnit, PcbStackup, Real,
+    SchematicPinSide, SchematicPoint, SignalBundleLibrary, SymbolPin, SymbolUnitPlacement,
+    TransientPolicy, pin,
 };
 use hypercircuit::{
     CircuitPackageCatalog, CircuitPackageName, CircuitPackageRelease, PackageDigest,
@@ -238,5 +240,57 @@ fn portable_part_library_publishes_locks_loads_and_instantiates_without_duplicat
         store.load(&lock.packages[0]),
         Err(PackageResolutionError::DigestMismatch(name("passives")))
     );
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(feature = "interchange")]
+#[test]
+fn reusable_circuit_library_artifact_round_trips_through_resolution_and_store() {
+    let root_circuit = Circuit::new(
+        CircuitId::new("control-loop").unwrap(),
+        TransientPolicy::Static,
+        AdapterKind::Dc,
+    );
+    let artifact = CircuitLibraryArtifact::new(
+        name("control"),
+        Version::parse("2.1.0").unwrap(),
+        CircuitLibrary {
+            root: root_circuit.id.clone(),
+            circuits: vec![root_circuit],
+        },
+        SignalBundleLibrary::new(),
+    )
+    .unwrap();
+    assert_eq!(
+        CircuitLibraryArtifact::from_json(&artifact.to_json_pretty().unwrap()).unwrap(),
+        artifact
+    );
+
+    let unique = format!(
+        "hypercircuit-circuit-package-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    );
+    let root = std::env::temp_dir().join(unique);
+    let store = CircuitPackageStore::new(&root);
+    let published = store
+        .publish_circuit_library(
+            &artifact,
+            PackageSource::Registry("registry.example".into()),
+        )
+        .unwrap();
+    assert_eq!(
+        published.release.exports[0].kind,
+        CircuitPackageExportKind::Circuit
+    );
+    let catalog = CircuitPackageCatalog {
+        releases: vec![published.release],
+    };
+    let lock = catalog.resolve(&[requirement("control", "^2")]).unwrap();
+    let loaded = store.load_verified_circuit_lock(&catalog, &lock).unwrap();
+    assert_eq!(loaded, vec![artifact]);
     std::fs::remove_dir_all(root).unwrap();
 }

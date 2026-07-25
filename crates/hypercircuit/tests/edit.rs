@@ -2,8 +2,8 @@
 
 use hypercircuit::{
     AdapterKind, BoardId, BoardOutline, BoardSide, BranchId, Bus, BusId, BusSlice, BusSliceId,
-    BusSliceOrder, Circuit, CircuitId, CircuitInstance, CircuitInstanceId, CircuitModuleParameter,
-    CircuitModuleParameterOverride, CircuitModuleParameterTarget, CircuitParameter, CircuitPort,
+    BusSliceOrder, Circuit, CircuitId, CircuitInstance, CircuitInstanceId, CircuitLibrary,
+    CircuitModuleParameter, CircuitModuleParameterTarget, CircuitParameter, CircuitPort,
     ComponentId, CopperZone, DESIGN_HISTORY_VERSION, DesignEdit, DesignEditBatch, DesignEditError,
     DesignEditId, DesignHistory, DesignHistoryAction, DesignHistoryError, DesignRevision,
     DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, EditAddress, EditTarget, KeepoutId,
@@ -1478,7 +1478,35 @@ fn remaining_circuit_collections_edit_atomically_and_reversibly() {
         pins: Vec::new(),
         parameters: Vec::new(),
     });
-    let original = SemanticDocument::new(circuit, None).unwrap();
+    let child_definition = |id: &str| {
+        let input = NetId::new("input").unwrap();
+        Circuit::new(
+            CircuitId::new(id).unwrap(),
+            TransientPolicy::Static,
+            AdapterKind::Dc,
+        )
+        .with_net(Net {
+            id: input.clone(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: PortId::new("input").unwrap(),
+            net: input,
+            direction: PortDirection::Input,
+            optional: false,
+        })
+    };
+    let original = SemanticDocument::new(circuit.clone(), None)
+        .unwrap()
+        .with_circuit_library(CircuitLibrary {
+            root: circuit.id.clone(),
+            circuits: vec![
+                circuit,
+                child_definition("filter-v1"),
+                child_definition("filter-v2"),
+            ],
+        })
+        .unwrap();
     let rail = RailIntent {
         net: signal.clone(),
         nominal_voltage: Some(Real::one()),
@@ -1508,7 +1536,6 @@ fn remaining_circuit_collections_edit_atomically_and_reversibly() {
         }],
         parameter_overrides: Vec::new(),
     };
-
     let mut history = DesignHistory::new(original.clone()).unwrap();
     history
         .commit(DesignEditBatch {
@@ -1560,11 +1587,7 @@ fn remaining_circuit_collections_edit_atomically_and_reversibly() {
                     subcircuit: subcircuit.id.clone(),
                     circuit: CircuitId::new("filter-v2").unwrap(),
                     ports: subcircuit.ports.clone(),
-                    parameter_overrides: vec![CircuitModuleParameterOverride {
-                        parameter: "cutoff".into(),
-                        value: Real::from(2),
-                        source: "editor".into(),
-                    }],
+                    parameter_overrides: Vec::new(),
                 },
                 DesignEdit::SetCircuitPolicy {
                     transient_policy: TransientPolicy::GearBdf { order: 2 },

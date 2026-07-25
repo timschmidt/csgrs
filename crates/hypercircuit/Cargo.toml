@@ -11,6 +11,7 @@ categories = ["science", "simulation", "mathematics"]
 
 [features]
 default = []
+behavior-async = []
 dispatch-trace = ["hyperreal/dispatch-trace"]
 layout = [
     "dep:hypercurve",
@@ -74,6 +75,10 @@ required-features = ["drc", "interchange"]
 
 [[bench]]
 name = "mna"
+harness = false
+
+[[bench]]
+name = "event_agenda"
 harness = false
 
 [[bench]]

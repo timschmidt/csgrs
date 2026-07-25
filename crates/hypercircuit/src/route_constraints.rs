@@ -8,7 +8,9 @@
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-use hypercurve::{Classification, CurvePolicy, RegionPointLocation};
+#[cfg(feature = "geometry")]
+use hypercurve::RegionPointLocation;
+use hypercurve::{Classification, CurvePolicy};
 use hyperlattice::Point2;
 use hyperlimit::{
     RingPointLocation, SegmentIntersection, classify_point_ring_even_odd,

@@ -1,16 +1,20 @@
 #![cfg(feature = "interchange")]
 
 use hypercircuit::{
-    AdapterKind, BoardId, BoardOutline, Circuit, CircuitId, CircuitInstance, CircuitInstanceId,
-    ComponentId, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, DifferentialPair,
-    DifferentialPairId, DifferentialPairNeckdown, LandPattern, LandPatternId, LandPatternPad, Net,
-    NetId, PadId, PadShape, PcbDesignRules, PcbLayout, PcbStackup, PinBinding, PinElectricalKind,
-    PinRef, Plating, Real, SEMANTIC_SCHEMA_VERSION, SchematicEndpoint, SchematicLayout,
-    SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
+    AdapterKind, BoardId, BoardOutline, BundleMemberId, Circuit, CircuitEventCause,
+    CircuitEventKind, CircuitEventPhase, CircuitEventRequest, CircuitEventTarget, CircuitId,
+    CircuitInstance, CircuitInstanceId, CircuitLibrary, ComponentId, DeviceModel, DeviceModelId,
+    DeviceModelKind, DevicePin, DifferentialPair, DifferentialPairId, DifferentialPairNeckdown,
+    LandPattern, LandPatternId, LandPatternPad, Net, NetId, PadId, PadShape, PcbDesignRules,
+    PcbLayout, PcbStackup, PinBinding, PinElectricalKind, PinRef, Plating, Real,
+    SEMANTIC_SCHEMA_VERSION, SchematicBlockPlacement, SchematicBlockSize, SchematicCanvasSettings,
+    SchematicConnectionStyle, SchematicEndpoint, SchematicLayout, SchematicPinPlacement,
+    SchematicPinSide, SchematicPoint, SchematicPresentation, SchematicSymbol,
     SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
-    SchematicWire, SchematicWireId, SemanticDocument, SemanticInterchangeError,
-    SemanticMigrationStep, SourceStimulus, SourceWaveform, StackupLayer, StackupLayerKind,
-    TransientPolicy,
+    SchematicWire, SchematicWireId, SchematicWireMetadata, SchematicWireStyle, SemanticDocument,
+    SemanticInterchangeError, SemanticMigrationStep, SignalBundle, SignalBundleId,
+    SignalBundleLibrary, SourceStimulus, SourceWaveform, StackupLayer, StackupLayerKind,
+    SubcircuitInstance, SubcircuitInstanceId, TransientPolicy, TransientRunPolicy,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -87,6 +91,28 @@ fn fixture() -> SemanticDocument {
 }
 
 #[test]
+fn exact_authored_event_trace_round_trips_and_validates() {
+    let document = fixture()
+        .with_event_trace(vec![CircuitEventRequest {
+            time: Real::one(),
+            phase: CircuitEventPhase::Stimulus,
+            source: Some(CircuitEventTarget::External("testbench".into())),
+            target: CircuitEventTarget::Circuit(CircuitId::new("json-round-trip").unwrap()),
+            kind: CircuitEventKind::Behavioral {
+                kind: "start".into(),
+                fields: Default::default(),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "interchange-test".into(),
+            },
+        }])
+        .unwrap();
+    let restored = SemanticDocument::from_json(&document.to_json_pretty().unwrap()).unwrap();
+    assert_eq!(restored.event_trace, document.event_trace);
+    assert_eq!(restored.version, SEMANTIC_SCHEMA_VERSION);
+}
+
+#[test]
 fn versioned_semantic_json_round_trips_exact_values() {
     let document = fixture();
     let json = document.to_json_pretty().unwrap();
@@ -94,6 +120,158 @@ fn versioned_semantic_json_round_trips_exact_values() {
     let decoded = SemanticDocument::from_json(&json).unwrap();
     assert_eq!(decoded, document);
     assert_eq!(decoded.pcb.unwrap().id.as_str(), "main-board");
+}
+
+#[test]
+fn native_hierarchy_simulation_and_wire_presentation_round_trip_together() {
+    let mut document = fixture();
+    let child = Circuit::new(
+        CircuitId::new("reusable-child").unwrap(),
+        TransientPolicy::Static,
+        AdapterKind::Dc,
+    );
+    document.circuit = document.circuit.with_subcircuit(SubcircuitInstance {
+        id: SubcircuitInstanceId::new("child").unwrap(),
+        circuit: child.id.clone(),
+        ports: Vec::new(),
+        parameter_overrides: Vec::new(),
+    });
+    let library = CircuitLibrary {
+        root: document.circuit.id.clone(),
+        circuits: vec![document.circuit.clone(), child],
+    };
+    let presentation = SchematicPresentation {
+        canvas: SchematicCanvasSettings {
+            connection_style: SchematicConnectionStyle::Orthogonal,
+            grid_spacing: Some(Real::from(10)),
+            snap_to_grid: true,
+            show_grid: true,
+            paper_size: Some("A3".into()),
+            ..SchematicCanvasSettings::default()
+        },
+        wires: vec![SchematicWireMetadata {
+            wire: SchematicWireId::new("w1").unwrap(),
+            name: Some("command".into()),
+            color: Some("#3366ff".into()),
+            width: Some(Real::one()),
+            style: SchematicWireStyle::Dashed,
+            logging: true,
+            manual_route: true,
+            show_name: true,
+        }],
+        blocks: vec![SchematicBlockPlacement {
+            instance: SubcircuitInstanceId::new("child").unwrap(),
+            position: SchematicPoint::new(Real::from(20), Real::from(30)),
+            size: Some(SchematicBlockSize {
+                width: Real::from(12),
+                height: Real::from(8),
+            }),
+            icon: Some("control".into()),
+            color: Some("#445566".into()),
+            mask: true,
+            symbol: Some("controller".into()),
+            modal: true,
+            show_port_names: true,
+        }],
+    };
+    let document = document
+        .with_circuit_library(library)
+        .unwrap()
+        .with_event_trace(vec![CircuitEventRequest {
+            time: Real::zero(),
+            phase: CircuitEventPhase::Stimulus,
+            source: None,
+            target: CircuitEventTarget::Hierarchy(vec![
+                SubcircuitInstanceId::new("child").unwrap(),
+            ]),
+            kind: CircuitEventKind::Behavioral {
+                kind: "initialize".into(),
+                fields: Default::default(),
+            },
+            cause: CircuitEventCause::Authored {
+                provenance: "native-parity".into(),
+            },
+        }])
+        .unwrap()
+        .with_transient_run(TransientRunPolicy::default())
+        .unwrap()
+        .with_schematic_presentation(presentation)
+        .unwrap();
+    let restored = SemanticDocument::from_json(&document.to_json_pretty().unwrap()).unwrap();
+
+    assert_eq!(restored, document);
+    assert_eq!(restored.circuit_library().circuits.len(), 2);
+    assert!(restored.transient_run.is_some());
+    assert!(restored.schematic_presentation.wires[0].logging);
+    assert!(restored.schematic_presentation.blocks[0].show_port_names);
+}
+
+#[test]
+fn invalid_canvas_and_wire_presentation_is_rejected_at_interchange_boundary() {
+    let presentation = SchematicPresentation {
+        canvas: SchematicCanvasSettings {
+            grid_spacing: Some(Real::zero()),
+            ..SchematicCanvasSettings::default()
+        },
+        wires: vec![SchematicWireMetadata {
+            wire: SchematicWireId::new("absent").unwrap(),
+            name: Some(String::new()),
+            color: None,
+            width: Some(Real::zero()),
+            style: SchematicWireStyle::Solid,
+            logging: false,
+            manual_route: false,
+            show_name: false,
+        }],
+        blocks: vec![SchematicBlockPlacement {
+            instance: SubcircuitInstanceId::new("absent").unwrap(),
+            position: SchematicPoint::new(Real::zero(), Real::zero()),
+            size: Some(SchematicBlockSize {
+                width: Real::zero(),
+                height: Real::one(),
+            }),
+            icon: Some(String::new()),
+            color: None,
+            mask: false,
+            symbol: None,
+            modal: false,
+            show_port_names: false,
+        }],
+    };
+    assert!(matches!(
+        fixture().with_schematic_presentation(presentation),
+        Err(SemanticInterchangeError::InvalidSchematicPresentation { issue_count: 7 })
+    ));
+}
+
+#[test]
+fn version_twenty_seven_promotes_legacy_bundle_member_names_to_real_types() {
+    let document = fixture()
+        .with_signal_bundles(SignalBundleLibrary::new().with_bundle(SignalBundle::new(
+            SignalBundleId::new("Status").unwrap(),
+            vec![BundleMemberId::new("ready").unwrap()],
+        )))
+        .unwrap();
+    let mut value = serde_json::to_value(&document).unwrap();
+    value["version"] = serde_json::Value::from(27);
+    value["signal_bundles"]["bundles"][0]["members"] = serde_json::json!(["ready"]);
+    value.as_object_mut().unwrap().remove("circuit_definitions");
+    value.as_object_mut().unwrap().remove("transient_run");
+    value
+        .as_object_mut()
+        .unwrap()
+        .remove("schematic_presentation");
+
+    let (migrated, report) =
+        SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
+    assert_eq!(
+        report.steps,
+        vec![SemanticMigrationStep::NativeInterfaceParity]
+    );
+    assert_eq!(
+        migrated.signal_bundles.bundles[0].members[0].signal_type,
+        hypercircuit::PortSignalType::Real
+    );
 }
 
 #[test]
@@ -158,6 +336,8 @@ fn version_eight_json_migrates_through_each_additive_schema_boundary() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+            SemanticMigrationStep::NativeInterfaceParity,
         ]
     );
     assert_eq!(migrated, document);
@@ -221,6 +401,8 @@ fn version_twenty_three_defaults_new_differential_impedance_intent() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+            SemanticMigrationStep::NativeInterfaceParity,
         ]
     );
     let pair = &migrated.pcb.unwrap().rules.differential_pairs[0];
@@ -245,6 +427,8 @@ fn version_twenty_four_defaults_new_phase_tuning_groups() {
         vec![
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+            SemanticMigrationStep::NativeInterfaceParity,
         ]
     );
     assert!(migrated.pcb.unwrap().rules.phase_tuning_groups.is_empty());
@@ -292,7 +476,11 @@ fn version_twenty_five_defaults_new_differential_pair_neckdown() {
         SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
     assert_eq!(
         report.steps,
-        vec![SemanticMigrationStep::DifferentialPairNeckdown]
+        vec![
+            SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+            SemanticMigrationStep::NativeInterfaceParity,
+        ]
     );
     assert!(
         migrated.pcb.unwrap().rules.differential_pairs[0]
@@ -393,6 +581,8 @@ fn version_nineteen_promotes_embedded_symbol_geometry_into_a_library() {
             SemanticMigrationStep::DifferentialPairImpedance,
             SemanticMigrationStep::PhaseTuningGroups,
             SemanticMigrationStep::DifferentialPairNeckdown,
+            SemanticMigrationStep::MixedSignalWorkflow,
+            SemanticMigrationStep::NativeInterfaceParity,
         ]
     );
     let schematic = migrated.schematic.unwrap();

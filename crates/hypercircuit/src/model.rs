@@ -10,7 +10,7 @@
 //! The crate README collects the supporting SPICE, MNA, and exact-computation
 //! references.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use hyperreal::{Real, RealSign};
 
@@ -129,6 +129,64 @@ pub enum PortDirection {
     PowerOutput,
     /// Reference or ground terminal.
     Ground,
+}
+
+impl PortDirection {
+    /// Returns the direction presented by the opposite endpoint of a connection.
+    ///
+    /// Signal and power producers/consumers exchange direction. Symmetric
+    /// electrical roles remain unchanged.
+    pub const fn dual(self) -> Self {
+        match self {
+            Self::Input => Self::Output,
+            Self::Output => Self::Input,
+            Self::PowerInput => Self::PowerOutput,
+            Self::PowerOutput => Self::PowerInput,
+            Self::Bidirectional => Self::Bidirectional,
+            Self::Passive => Self::Passive,
+            Self::Ground => Self::Ground,
+        }
+    }
+
+    /// True when `other` can occupy the opposite face of this direction.
+    pub fn is_dual_to(self, other: Self) -> bool {
+        self.dual() == other
+    }
+}
+
+/// Logical value shape carried through a circuit boundary.
+///
+/// Electrical nets remain the authoritative topology. This type records
+/// whether a boundary is interpreted as a continuous real signal, a digital
+/// logic signal, or a packed bus without coupling every simulator to one
+/// runtime representation.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+pub enum PortSignalType {
+    /// Continuous scalar signal.
+    #[default]
+    Real,
+    /// Digital scalar signal.
+    Logic,
+    /// Packed signal collection. `None` retains an intentionally open width.
+    Bus { width: Option<u32> },
+}
+
+impl PortSignalType {
+    /// True when this signal shape has a usable logical width.
+    pub const fn is_valid(&self) -> bool {
+        !matches!(self, Self::Bus { width: Some(0) })
+    }
+}
+
+/// Explicit logical type declaration for one circuit boundary port.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CircuitPortType {
+    /// Existing boundary port.
+    pub port: PortId,
+    /// Logical signal shape exposed by that port.
+    pub signal_type: PortSignalType,
 }
 
 /// Named circuit-boundary port tied to one retained net.
@@ -501,6 +559,18 @@ pub enum CircuitValidationIssue {
     DuplicatePort(PortId),
     /// A boundary port references a net absent from the circuit.
     UnknownPortNet { port: PortId, net: NetId },
+    /// A port-type declaration references no boundary port.
+    UnknownPortTypeDeclaration(PortId),
+    /// A boundary port has more than one type declaration.
+    DuplicatePortTypeDeclaration(PortId),
+    /// A packed-bus declaration has an explicit zero width.
+    InvalidPortSignalType(PortId),
+    /// Two boundary ports exposing one net declare incompatible logical types.
+    IncompatiblePortSignalTypes {
+        net: NetId,
+        first: PortSignalType,
+        second: PortSignalType,
+    },
     /// Two device models share one stable id.
     DuplicateDeviceModel(DeviceModelId),
     /// A MOSFET's D/G/S roles are duplicated or absent from its model pins.
@@ -643,6 +713,12 @@ pub struct Circuit {
     pub rails: Vec<RailIntent>,
     /// Named boundary ports for hierarchical composition.
     pub ports: Vec<CircuitPort>,
+    /// Explicit non-default logical types for boundary ports.
+    ///
+    /// Undeclared ports are continuous [`PortSignalType::Real`] signals,
+    /// preserving the meaning of designs authored before typed interfaces.
+    #[cfg_attr(feature = "interchange", serde(default))]
+    pub port_types: Vec<CircuitPortType>,
     /// Exact public parameters for reusable circuit instantiation.
     #[cfg_attr(feature = "interchange", serde(default))]
     pub module_parameters: Vec<CircuitModuleParameter>,
@@ -677,6 +753,7 @@ impl Circuit {
             bus_slices: Vec::new(),
             rails: Vec::new(),
             ports: Vec::new(),
+            port_types: Vec::new(),
             module_parameters: Vec::new(),
             device_models: Vec::new(),
             instances: Vec::new(),
@@ -716,6 +793,24 @@ impl Circuit {
     pub fn with_port(mut self, port: CircuitPort) -> Self {
         self.ports.push(port);
         self
+    }
+
+    /// Declares the logical signal type of one boundary port.
+    pub fn with_port_type(mut self, port_type: CircuitPortType) -> Self {
+        self.port_types.push(port_type);
+        self
+    }
+
+    /// Returns one boundary port's logical type.
+    ///
+    /// Continuous real is the compatibility default for ports with no
+    /// explicit declaration.
+    pub fn port_signal_type(&self, port: &PortId) -> PortSignalType {
+        self.port_types
+            .iter()
+            .find(|candidate| &candidate.port == port)
+            .map(|candidate| candidate.signal_type.clone())
+            .unwrap_or_default()
     }
 
     /// Declares one exact, unit-checked reusable-module parameter.
@@ -880,6 +975,41 @@ impl Circuit {
                     port: port.id.clone(),
                     net: port.net.clone(),
                 });
+            }
+        }
+        let mut typed_ports = BTreeSet::new();
+        for declaration in &self.port_types {
+            if !port_ids.contains(&declaration.port) {
+                issues.push(CircuitValidationIssue::UnknownPortTypeDeclaration(
+                    declaration.port.clone(),
+                ));
+            }
+            if !typed_ports.insert(declaration.port.clone()) {
+                issues.push(CircuitValidationIssue::DuplicatePortTypeDeclaration(
+                    declaration.port.clone(),
+                ));
+            }
+            if !declaration.signal_type.is_valid() {
+                issues.push(CircuitValidationIssue::InvalidPortSignalType(
+                    declaration.port.clone(),
+                ));
+            }
+        }
+        let mut net_types = BTreeMap::<NetId, PortSignalType>::new();
+        for port in &self.ports {
+            let signal_type = self.port_signal_type(&port.id);
+            match net_types.get(&port.net) {
+                Some(first) if first != &signal_type => {
+                    issues.push(CircuitValidationIssue::IncompatiblePortSignalTypes {
+                        net: port.net.clone(),
+                        first: first.clone(),
+                        second: signal_type,
+                    });
+                }
+                Some(_) => {}
+                None => {
+                    net_types.insert(port.net.clone(), signal_type);
+                }
             }
         }
 

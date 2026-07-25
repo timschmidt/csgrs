@@ -2,10 +2,11 @@ use hypercircuit::{
     AdapterKind, Bus, BusId, BusSlice, BusSliceId, BusSliceOrder, Circuit, CircuitId,
     CircuitInstance, CircuitInstanceId, CircuitLibrary, CircuitLibraryValidationIssue,
     CircuitModuleParameter, CircuitModuleParameterOverride, CircuitModuleParameterTarget,
-    CircuitParameter, CircuitPort, CircuitValidationIssue, ComponentId, DeviceModel, DeviceModelId,
-    DeviceModelKind, DevicePin, LinearStamp, Net, NetId, PinBinding, PinElectricalKind, PinRef,
-    PortDirection, PortId, RailIntent, RailKind, Real, SourceStimulus, SourceWaveform,
-    SubcircuitInstance, SubcircuitInstanceId, SubcircuitPortBinding, TransientPolicy,
+    CircuitParameter, CircuitPort, CircuitPortType, CircuitValidationIssue, ComponentId,
+    DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, LinearStamp, Net, NetId, PinBinding,
+    PinElectricalKind, PinRef, PortDirection, PortId, PortSignalType, RailIntent, RailKind, Real,
+    SourceStimulus, SourceWaveform, SubcircuitInstance, SubcircuitInstanceId,
+    SubcircuitPortBinding, TransientPolicy,
 };
 
 fn empty(id: &str) -> Circuit {
@@ -14,6 +15,123 @@ fn empty(id: &str) -> Circuit {
         TransientPolicy::Static,
         AdapterKind::Dc,
     )
+}
+
+#[test]
+fn typed_hierarchy_rejects_incompatible_signal_shapes_on_one_parent_net() {
+    let shared = NetId::new("shared").unwrap();
+    let root_port = PortId::new("shared").unwrap();
+    let child_port = PortId::new("data").unwrap();
+    let child_net = NetId::new("data").unwrap();
+    let child = empty("typed-child")
+        .with_net(Net {
+            id: child_net.clone(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: child_port.clone(),
+            net: child_net,
+            direction: PortDirection::Input,
+            optional: false,
+        })
+        .with_port_type(CircuitPortType {
+            port: child_port.clone(),
+            signal_type: PortSignalType::Bus { width: Some(8) },
+        });
+    let root = empty("typed-root")
+        .with_net(Net {
+            id: shared.clone(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: root_port.clone(),
+            net: shared.clone(),
+            direction: PortDirection::Input,
+            optional: false,
+        })
+        .with_port_type(CircuitPortType {
+            port: root_port,
+            signal_type: PortSignalType::Logic,
+        })
+        .with_subcircuit(SubcircuitInstance {
+            id: SubcircuitInstanceId::new("u1").unwrap(),
+            circuit: child.id.clone(),
+            ports: vec![SubcircuitPortBinding {
+                port: child_port,
+                net: shared,
+            }],
+            parameter_overrides: Vec::new(),
+        });
+    let report = CircuitLibrary {
+        root: root.id.clone(),
+        circuits: vec![root, child],
+    }
+    .validate();
+
+    assert!(report.issues.iter().any(|issue| matches!(
+        issue,
+        CircuitLibraryValidationIssue::PortSignalTypeMismatch {
+            expected: PortSignalType::Logic,
+            actual: PortSignalType::Bus { width: Some(8) },
+            ..
+        }
+    )));
+}
+
+#[test]
+fn one_net_cannot_expose_incompatible_boundary_signal_types() {
+    let shared = NetId::new("shared").unwrap();
+    let logic = PortId::new("logic").unwrap();
+    let circuit = empty("mixed-boundary")
+        .with_net(Net {
+            id: shared.clone(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: logic.clone(),
+            net: shared.clone(),
+            direction: PortDirection::Input,
+            optional: false,
+        })
+        .with_port_type(CircuitPortType {
+            port: logic,
+            signal_type: PortSignalType::Logic,
+        })
+        .with_port(CircuitPort {
+            id: PortId::new("analog").unwrap(),
+            net: shared,
+            direction: PortDirection::Output,
+            optional: false,
+        });
+
+    assert!(circuit.validate().issues.iter().any(|issue| matches!(
+        issue,
+        CircuitValidationIssue::IncompatiblePortSignalTypes {
+            first: PortSignalType::Logic,
+            second: PortSignalType::Real,
+            ..
+        }
+    )));
+
+    let invalid_width = empty("zero-width")
+        .with_net(Net {
+            id: NetId::new("data").unwrap(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: PortId::new("data").unwrap(),
+            net: NetId::new("data").unwrap(),
+            direction: PortDirection::Input,
+            optional: false,
+        })
+        .with_port_type(CircuitPortType {
+            port: PortId::new("data").unwrap(),
+            signal_type: PortSignalType::Bus { width: Some(0) },
+        });
+    assert!(invalid_width.validate().issues.iter().any(|issue| matches!(
+        issue,
+        CircuitValidationIssue::InvalidPortSignalType(port) if port.as_str() == "data"
+    )));
 }
 
 fn resistor_module() -> Circuit {

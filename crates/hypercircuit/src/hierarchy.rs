@@ -35,6 +35,7 @@ pub struct SubcircuitInstance {
 }
 
 /// Library of reusable circuit definitions with one designated root.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CircuitLibrary {
     /// Circuit definition to elaborate as the design root.
@@ -123,6 +124,14 @@ pub enum CircuitLibraryValidationIssue {
         parent_unit: String,
         child_unit: String,
     },
+    /// A child port and the other typed boundaries on its parent net disagree.
+    PortSignalTypeMismatch {
+        parent: CircuitId,
+        instance: SubcircuitInstanceId,
+        port: PortId,
+        expected: crate::PortSignalType,
+        actual: crate::PortSignalType,
+    },
     /// Circuit definitions contain a recursive instantiation cycle.
     RecursiveCycle(Vec<CircuitId>),
 }
@@ -195,6 +204,12 @@ impl CircuitLibrary {
         }
 
         for parent in &self.circuits {
+            let mut parent_net_types = BTreeMap::new();
+            for port in &parent.ports {
+                parent_net_types
+                    .entry(port.net.clone())
+                    .or_insert_with(|| parent.port_signal_type(&port.id));
+            }
             for instance in &parent.subcircuits {
                 let Some(child) = definitions.get(&instance.circuit).copied() else {
                     issues.push(CircuitLibraryValidationIssue::UnknownChildCircuit {
@@ -228,6 +243,22 @@ impl CircuitLibrary {
                             instance: instance.id.clone(),
                             child_net: port.net.clone(),
                         });
+                    }
+                    let child_type = child.port_signal_type(&port.id);
+                    match parent_net_types.get(&binding.net) {
+                        Some(expected) if expected != &child_type => {
+                            issues.push(CircuitLibraryValidationIssue::PortSignalTypeMismatch {
+                                parent: parent.id.clone(),
+                                instance: instance.id.clone(),
+                                port: binding.port.clone(),
+                                expected: expected.clone(),
+                                actual: child_type,
+                            });
+                        }
+                        Some(_) => {}
+                        None => {
+                            parent_net_types.insert(binding.net.clone(), child_type);
+                        }
                     }
                 }
                 let bound = instance

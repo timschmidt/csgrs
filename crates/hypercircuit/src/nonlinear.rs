@@ -48,6 +48,7 @@ pub enum EventPolicy {
 }
 
 /// Switch state exposed to the solver policy.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SwitchState {
     /// Switch is open.

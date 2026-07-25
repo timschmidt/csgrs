@@ -6,11 +6,17 @@ use std::fmt::{Display, Formatter};
 
 use hyperreal::{Real, RealSign};
 
+#[cfg(feature = "behavior-async")]
+use crate::AsyncBehaviorRuntime;
 use crate::{
-    BranchId, Circuit, CircuitInstance, ComponentId, DeviceModel, DeviceModelKind,
-    DiodeNewtonPolicy, DiodeNewtonSolveError, DiodeNewtonSolveReport, DiodeNewtonStatus,
-    LinearMnaSystem, LinearSolveReport, LinearStamp, MnaUnknown, NetId, SourceWaveform,
-    TransientPolicy, solve_shockley_diode_newton,
+    BehaviorError, BehaviorRuntime, BranchId, Circuit, CircuitCertificationReport, CircuitEvent,
+    CircuitEventAgenda, CircuitEventAgendaError, CircuitEventCounters, CircuitEventKind,
+    CircuitEventLifecycleRecord, CircuitEventReplayReport, CircuitEventTarget, CircuitInstance,
+    CircuitSimulationFingerprint, ComponentId, DeviceModel, DeviceModelKind, DiodeNewtonPolicy,
+    DiodeNewtonSolveError, DiodeNewtonSolveReport, DiodeNewtonStatus, ExactBreakpointError,
+    ExactBreakpointProvider, ExactBreakpointSchedule, LinearMnaSystem, LinearSolveReport,
+    LinearStamp, LogicValue, MnaUnknown, NetId, SourceWaveform, SwitchState, TransientPolicy,
+    earliest_exact_breakpoint_after, solve_shockley_diode_newton,
 };
 
 /// Device instance that could not be lowered into the requested linear model.
@@ -639,6 +645,7 @@ impl Display for TransientStepError {
 impl std::error::Error for TransientStepError {}
 
 /// Run-level timestep strategy over the exact companion-step kernel.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum TransientAdaptation {
     /// Advance with the authored timestep, truncating only the final step.
@@ -657,6 +664,7 @@ pub enum TransientAdaptation {
 }
 
 /// Bounded exact transient time-series policy.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub struct TransientRunPolicy {
     /// Exact first simulation time.
@@ -702,6 +710,13 @@ impl Default for TransientRunPolicy {
                 growth_factor: Real::from(2),
             },
         }
+    }
+}
+
+impl TransientRunPolicy {
+    /// Validates exact time bounds, step bounds, and adaptation controls.
+    pub fn validate(&self) -> Result<(), TransientRunError> {
+        validate_run_policy(self)
     }
 }
 
@@ -828,6 +843,665 @@ impl TransientRunReport {
     }
 }
 
+/// Execution state of an incremental transient session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TransientSessionStatus {
+    /// More analog time or pending events remain.
+    Running,
+    /// Exact requested stop time was reached.
+    Complete,
+    /// A bounded transient policy stopped further progress.
+    Bounded(TransientRunStatus),
+}
+
+/// Effect of delivering one typed circuit event.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CircuitEventApplication {
+    /// An independent-source waveform was replaced by an exact constant value.
+    SourceOverride { component: ComponentId, value: Real },
+    /// A switch state was retained for a behavioral or future topology adapter.
+    SwitchState {
+        component: ComponentId,
+        state: SwitchState,
+    },
+    /// A digital value was retained at its stable target.
+    LogicState {
+        target: CircuitEventTarget,
+        value: LogicValue,
+    },
+    /// Event was delivered and retained but has no built-in electrical effect.
+    Observed,
+    /// Payload and target combination could not be applied.
+    Unsupported { detail: String },
+}
+
+/// Result of one incremental session action.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TransientSessionStep {
+    /// Accepted analog endpoint, absent for an event-only delta action.
+    pub sample: Option<TransientSample>,
+    /// Events delivered at the resulting exact session time.
+    pub events: Vec<CircuitEvent>,
+    /// Typed application result corresponding to each delivered event.
+    pub applications: Vec<CircuitEventApplication>,
+    /// Session status after the action.
+    pub status: TransientSessionStatus,
+}
+
+/// Failure to create or advance an incremental session.
+#[derive(Clone, Debug, PartialEq)]
+pub enum TransientSessionError {
+    /// Session policy or agenda clock is invalid.
+    InvalidPolicy,
+    /// Requested stepping limit precedes the current session time or exceeds its stop time.
+    InvalidTargetTime,
+    /// Exact transient execution failed.
+    Run(TransientRunError),
+    /// Pending event time cannot be compared with session time.
+    IndeterminateEventTime,
+    /// Exact agenda clock advancement failed.
+    Agenda(CircuitEventAgendaError),
+    /// A runtime-only behavioral callback failed.
+    Behavior(BehaviorError),
+    /// Same-time callback activity exceeded the explicit delta-cycle bound.
+    DeltaCycleLimit,
+}
+
+impl Display for TransientSessionError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidPolicy => formatter.write_str("invalid transient session policy"),
+            Self::InvalidTargetTime => formatter.write_str("invalid transient session target time"),
+            Self::Run(error) => Display::fmt(error, formatter),
+            Self::IndeterminateEventTime => {
+                formatter.write_str("session event time is indeterminate")
+            }
+            Self::Agenda(error) => Display::fmt(error, formatter),
+            Self::Behavior(error) => Display::fmt(error, formatter),
+            Self::DeltaCycleLimit => formatter.write_str("session same-time delta-cycle limit"),
+        }
+    }
+}
+
+impl std::error::Error for TransientSessionError {}
+
+impl From<BehaviorError> for TransientSessionError {
+    fn from(value: BehaviorError) -> Self {
+        Self::Behavior(value)
+    }
+}
+
+impl From<CircuitEventAgendaError> for TransientSessionError {
+    fn from(value: CircuitEventAgendaError) -> Self {
+        Self::Agenda(value)
+    }
+}
+
+/// Complete deterministic evidence accumulated by a transient session.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TransientSessionAuditReport {
+    /// Ordinary analog transient evidence.
+    pub transient: TransientRunReport,
+    /// Full event lifecycle, including cancellation and rescheduling.
+    pub event_lifecycle: Vec<CircuitEventLifecycleRecord>,
+    /// Aggregate agenda counters.
+    pub event_counters: CircuitEventCounters,
+    /// Independent replay of event lifecycle evidence.
+    pub event_replay: CircuitEventReplayReport,
+    /// Additional retained exact breakpoint schedules used by the session.
+    pub breakpoint_schedules: Vec<ExactBreakpointSchedule>,
+    /// Events delivered in deterministic execution order.
+    pub delivered_events: Vec<CircuitEvent>,
+    /// Built-in application result for each delivered event.
+    pub applications: Vec<CircuitEventApplication>,
+    /// Last retained logic value at each typed target.
+    pub logic_states: BTreeMap<CircuitEventTarget, LogicValue>,
+    /// Last retained switch state by component.
+    pub switch_states: BTreeMap<ComponentId, SwitchState>,
+    /// Fingerprint covering analog decisions and retained event evidence.
+    pub fingerprint: CircuitSimulationFingerprint,
+}
+
+impl TransientSessionAuditReport {
+    /// Projects deterministic mixed-signal run evidence into the crate's
+    /// circuit-level certification carrier.
+    pub fn certification(&self) -> CircuitCertificationReport {
+        let unsupported = self
+            .applications
+            .iter()
+            .filter(|application| {
+                matches!(application, CircuitEventApplication::Unsupported { .. })
+            })
+            .count();
+        let complete = self.transient.status == TransientRunStatus::Complete
+            && unsupported == 0
+            && self.event_replay.is_valid();
+        CircuitCertificationReport {
+            status: if complete {
+                "certified".into()
+            } else {
+                "blocked".into()
+            },
+            evidence: vec![
+                format!("mixed-signal-fingerprint:{}", self.fingerprint.value),
+                format!("accepted-analog-steps:{}", self.transient.samples.len()),
+                format!("delivered-circuit-events:{}", self.event_counters.delivered),
+                format!("event-replay-issues:{}", self.event_replay.issues.len()),
+                format!("unsupported-event-applications:{unsupported}"),
+            ],
+        }
+    }
+}
+
+/// Stateful façade over the pure exact transient kernels.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TransientSession {
+    circuit: Circuit,
+    policy: TransientRunPolicy,
+    initial_history: TransientHistory,
+    history: TransientHistory,
+    time: Real,
+    next_timestep: Real,
+    agenda: CircuitEventAgenda,
+    breakpoint_schedules: Vec<ExactBreakpointSchedule>,
+    samples: Vec<TransientSample>,
+    decisions: Vec<TransientStepDecision>,
+    delivered_events: Vec<CircuitEvent>,
+    applications: Vec<CircuitEventApplication>,
+    logic_states: BTreeMap<CircuitEventTarget, LogicValue>,
+    switch_states: BTreeMap<ComponentId, SwitchState>,
+    status: TransientSessionStatus,
+}
+
+impl TransientSession {
+    /// Creates a session without changing the retained source circuit.
+    pub fn new(
+        circuit: &Circuit,
+        policy: TransientRunPolicy,
+        initial_history: TransientHistory,
+        agenda: CircuitEventAgenda,
+    ) -> Result<Self, TransientSessionError> {
+        validate_run_policy(&policy).map_err(|_| TransientSessionError::InvalidPolicy)?;
+        if agenda.time().partial_cmp(&policy.start_time) != Some(Ordering::Equal) {
+            return Err(TransientSessionError::InvalidPolicy);
+        }
+        Ok(Self {
+            circuit: circuit.clone(),
+            time: policy.start_time.clone(),
+            next_timestep: policy.initial_timestep.clone(),
+            policy,
+            initial_history: initial_history.clone(),
+            history: initial_history,
+            agenda,
+            breakpoint_schedules: Vec::new(),
+            samples: Vec::new(),
+            decisions: Vec::new(),
+            delivered_events: Vec::new(),
+            applications: Vec::new(),
+            logic_states: BTreeMap::new(),
+            switch_states: BTreeMap::new(),
+            status: TransientSessionStatus::Running,
+        })
+    }
+
+    /// Returns the exact current session time.
+    pub fn time(&self) -> &Real {
+        &self.time
+    }
+
+    /// Returns the mutable event agenda for scoped authoring adapters.
+    pub fn agenda_mut(&mut self) -> &mut CircuitEventAgenda {
+        &mut self.agenda
+    }
+
+    /// Adds a retained exact breakpoint schedule for an external trace,
+    /// topology device, protection device, or coupled-domain adapter.
+    pub fn add_breakpoint_schedule(&mut self, schedule: ExactBreakpointSchedule) {
+        self.breakpoint_schedules.push(schedule);
+    }
+
+    /// Returns the current session status.
+    pub fn status(&self) -> TransientSessionStatus {
+        self.status
+    }
+
+    /// Advances by one event-only delta action or one accepted analog endpoint.
+    pub fn step(&mut self) -> Result<TransientSessionStep, TransientSessionError> {
+        self.step_to_limit(self.policy.stop_time.clone())
+    }
+
+    /// Advances one action and dispatches every resulting event to registered
+    /// component-scoped callbacks. Causally emitted same-time events are
+    /// drained in phase/sequence order within the same bounded delta cycle.
+    pub fn step_with_runtime(
+        &mut self,
+        runtime: &mut BehaviorRuntime,
+        maximum_delta_events: usize,
+    ) -> Result<TransientSessionStep, TransientSessionError> {
+        if maximum_delta_events == 0 {
+            return Err(TransientSessionError::DeltaCycleLimit);
+        }
+        let mut result = self.step_to_limit_with_delivery(self.policy.stop_time.clone(), 1)?;
+        let mut dispatch_index = 0;
+        loop {
+            while dispatch_index < result.events.len() {
+                if dispatch_index >= maximum_delta_events {
+                    return Err(TransientSessionError::DeltaCycleLimit);
+                }
+                runtime.dispatch_if_registered(&result.events[dispatch_index], &mut self.agenda)?;
+                dispatch_index += 1;
+            }
+            let (events, applications) = self.deliver_current_events_limit(1)?;
+            if events.is_empty() {
+                break;
+            }
+            result.events.extend(events);
+            result.applications.extend(applications);
+        }
+        result.status = self.status;
+        Ok(result)
+    }
+
+    /// Advances one action through the optional cooperative asynchronous
+    /// behavior adapter, draining causally emitted same-time events.
+    #[cfg(feature = "behavior-async")]
+    pub fn step_with_async_runtime(
+        &mut self,
+        runtime: &mut AsyncBehaviorRuntime,
+        maximum_delta_events: usize,
+    ) -> Result<TransientSessionStep, TransientSessionError> {
+        if maximum_delta_events == 0 {
+            return Err(TransientSessionError::DeltaCycleLimit);
+        }
+        let mut result = self.step_to_limit_with_delivery(self.policy.stop_time.clone(), 1)?;
+        let mut dispatch_index = 0;
+        loop {
+            while dispatch_index < result.events.len() {
+                if dispatch_index >= maximum_delta_events {
+                    return Err(TransientSessionError::DeltaCycleLimit);
+                }
+                runtime.dispatch(&result.events[dispatch_index], &mut self.agenda)?;
+                dispatch_index += 1;
+            }
+            let (events, applications) = self.deliver_current_events_limit(1)?;
+            if events.is_empty() {
+                break;
+            }
+            result.events.extend(events);
+            result.applications.extend(applications);
+        }
+        result.status = self.status;
+        Ok(result)
+    }
+
+    /// Performs at most `count` incremental actions.
+    pub fn steps(
+        &mut self,
+        count: usize,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        let mut output = Vec::new();
+        for _ in 0..count {
+            if self.status != TransientSessionStatus::Running {
+                break;
+            }
+            output.push(self.step()?);
+        }
+        Ok(output)
+    }
+
+    /// Advances through all events and analog endpoints up to an exact time.
+    pub fn step_until(
+        &mut self,
+        target: Real,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        if !matches!(
+            self.time.partial_cmp(&target),
+            Some(Ordering::Less | Ordering::Equal)
+        ) || !matches!(
+            target.partial_cmp(&self.policy.stop_time),
+            Some(Ordering::Less | Ordering::Equal)
+        ) {
+            return Err(TransientSessionError::InvalidTargetTime);
+        }
+        let mut output = Vec::new();
+        while self.status == TransientSessionStatus::Running {
+            match self.time.partial_cmp(&target) {
+                Some(Ordering::Less) => output.push(self.step_to_limit(target.clone())?),
+                Some(Ordering::Equal) => {
+                    let Some(next) = self.agenda.peek() else {
+                        break;
+                    };
+                    match next.time.partial_cmp(&self.time) {
+                        Some(Ordering::Equal) => output.push(self.step_to_limit(target.clone())?),
+                        Some(Ordering::Greater) => break,
+                        Some(Ordering::Less) | None => {
+                            return Err(TransientSessionError::IndeterminateEventTime);
+                        }
+                    }
+                }
+                Some(Ordering::Greater) | None => {
+                    return Err(TransientSessionError::InvalidTargetTime);
+                }
+            }
+        }
+        Ok(output)
+    }
+
+    /// Advances by an exact nonnegative duration.
+    pub fn step_for(
+        &mut self,
+        duration: Real,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        let target = self.time.clone() + duration;
+        self.step_until(target)
+    }
+
+    /// Advances only until the pending event agenda becomes empty.
+    pub fn run_until_quiescent(
+        &mut self,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        let mut output = Vec::new();
+        while !self.agenda.pending().is_empty() && self.status == TransientSessionStatus::Running {
+            output.push(self.step()?);
+        }
+        Ok(output)
+    }
+
+    /// Advances with callbacks until the pending event agenda becomes empty.
+    pub fn run_until_quiescent_with_runtime(
+        &mut self,
+        runtime: &mut BehaviorRuntime,
+        maximum_delta_events_per_step: usize,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        let mut output = Vec::new();
+        while !self.agenda.pending().is_empty() && self.status == TransientSessionStatus::Running {
+            output.push(self.step_with_runtime(runtime, maximum_delta_events_per_step)?);
+        }
+        Ok(output)
+    }
+
+    /// Advances with the optional cooperative async adapter until quiescent.
+    #[cfg(feature = "behavior-async")]
+    pub fn run_until_quiescent_with_async_runtime(
+        &mut self,
+        runtime: &mut AsyncBehaviorRuntime,
+        maximum_delta_events_per_step: usize,
+    ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
+        let mut output = Vec::new();
+        while !self.agenda.pending().is_empty() && self.status == TransientSessionStatus::Running {
+            output.push(self.step_with_async_runtime(runtime, maximum_delta_events_per_step)?);
+        }
+        Ok(output)
+    }
+
+    /// Produces the accumulated ordinary transient report.
+    pub fn report(&self) -> TransientRunReport {
+        TransientRunReport {
+            status: match self.status {
+                TransientSessionStatus::Complete => TransientRunStatus::Complete,
+                TransientSessionStatus::Bounded(status) => status,
+                TransientSessionStatus::Running => TransientRunStatus::AcceptedStepLimit,
+            },
+            initial_history: self.initial_history.clone(),
+            samples: self.samples.clone(),
+            decisions: self.decisions.clone(),
+            final_history: self.history.clone(),
+        }
+    }
+
+    /// Produces a complete replay and audit report for analog and event execution.
+    pub fn audit_report(&self) -> TransientSessionAuditReport {
+        let transient = self.report();
+        let agenda_fingerprint = self.agenda.fingerprint();
+        let event_replay = self.agenda.verify_lifecycle();
+        let canonical = format!(
+            "transient={transient:?};agenda={};breakpoints={:?};events={:?};applications={:?};logic={:?};switches={:?}",
+            agenda_fingerprint.value,
+            self.breakpoint_schedules,
+            self.delivered_events,
+            self.applications,
+            self.logic_states,
+            self.switch_states,
+        );
+        TransientSessionAuditReport {
+            transient,
+            event_lifecycle: self.agenda.lifecycle().to_vec(),
+            event_counters: self.agenda.counters().clone(),
+            event_replay,
+            breakpoint_schedules: self.breakpoint_schedules.clone(),
+            delivered_events: self.delivered_events.clone(),
+            applications: self.applications.clone(),
+            logic_states: self.logic_states.clone(),
+            switch_states: self.switch_states.clone(),
+            fingerprint: CircuitSimulationFingerprint {
+                algorithm: "hypercircuit-session-fnv1a64-pair-v1".into(),
+                value: crate::event_simulation::stable_fingerprint(canonical.as_bytes()),
+            },
+        }
+    }
+
+    /// Returns every event delivered by the session.
+    pub fn delivered_events(&self) -> &[CircuitEvent] {
+        &self.delivered_events
+    }
+
+    /// Returns every event application result.
+    pub fn applications(&self) -> &[CircuitEventApplication] {
+        &self.applications
+    }
+
+    fn step_to_limit(
+        &mut self,
+        limit: Real,
+    ) -> Result<TransientSessionStep, TransientSessionError> {
+        self.step_to_limit_with_delivery(limit, usize::MAX)
+    }
+
+    fn step_to_limit_with_delivery(
+        &mut self,
+        limit: Real,
+        event_limit: usize,
+    ) -> Result<TransientSessionStep, TransientSessionError> {
+        let (events, applications) = self.deliver_current_events_limit(event_limit)?;
+        if !events.is_empty() {
+            return Ok(TransientSessionStep {
+                sample: None,
+                events,
+                applications,
+                status: self.status,
+            });
+        }
+        if self.time.partial_cmp(&limit) == Some(Ordering::Equal) {
+            if self.time.partial_cmp(&self.policy.stop_time) == Some(Ordering::Equal) {
+                self.status = TransientSessionStatus::Complete;
+            }
+            return Ok(TransientSessionStep {
+                sample: None,
+                events: Vec::new(),
+                applications: Vec::new(),
+                status: self.status,
+            });
+        }
+        if self.samples.len() >= self.policy.maximum_accepted_steps {
+            self.status = TransientSessionStatus::Bounded(TransientRunStatus::AcceptedStepLimit);
+            return Ok(TransientSessionStep {
+                sample: None,
+                events: Vec::new(),
+                applications: Vec::new(),
+                status: self.status,
+            });
+        }
+        let rejected = self
+            .decisions
+            .iter()
+            .filter(|decision| decision.kind == TransientStepDecisionKind::Rejected)
+            .count();
+        if rejected >= self.policy.maximum_rejected_steps {
+            self.status = TransientSessionStatus::Bounded(TransientRunStatus::RejectedStepLimit);
+            return Ok(TransientSessionStep {
+                sample: None,
+                events: Vec::new(),
+                applications: Vec::new(),
+                status: self.status,
+            });
+        }
+
+        let mut step_policy = self.policy.clone();
+        step_policy.start_time = self.time.clone();
+        step_policy.stop_time = limit;
+        step_policy.initial_timestep = self.next_timestep.clone();
+        step_policy.maximum_accepted_steps = 1;
+        step_policy.maximum_rejected_steps = self.policy.maximum_rejected_steps - rejected;
+        let mut providers =
+            Vec::<&dyn ExactBreakpointProvider>::with_capacity(self.breakpoint_schedules.len() + 1);
+        providers.push(&self.agenda);
+        providers.extend(
+            self.breakpoint_schedules
+                .iter()
+                .map(|schedule| schedule as &dyn ExactBreakpointProvider),
+        );
+        let report = self
+            .circuit
+            .transient_run_with_breakpoints(&step_policy, self.history.clone(), &providers)
+            .map_err(TransientSessionError::Run)?;
+        let decision_offset = self.decisions.len();
+        self.decisions
+            .extend(
+                report
+                    .decisions
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, mut decision)| {
+                        decision.attempt = decision_offset + index;
+                        decision
+                    }),
+            );
+        let Some(sample) = report.samples.into_iter().next() else {
+            self.status = TransientSessionStatus::Bounded(report.status);
+            return Ok(TransientSessionStep {
+                sample: None,
+                events: Vec::new(),
+                applications: Vec::new(),
+                status: self.status,
+            });
+        };
+        self.agenda.advance_time(sample.time.clone())?;
+        self.time = sample.time.clone();
+        self.next_timestep =
+            next_session_timestep(&self.policy, &sample.timestep, self.decisions.last())?;
+        self.history = report.final_history;
+        self.samples.push(sample.clone());
+        if self.time.partial_cmp(&self.policy.stop_time) == Some(Ordering::Equal) {
+            self.status = TransientSessionStatus::Complete;
+        }
+        let (events, applications) = self.deliver_current_events_limit(event_limit)?;
+        Ok(TransientSessionStep {
+            sample: Some(sample),
+            events,
+            applications,
+            status: self.status,
+        })
+    }
+
+    fn deliver_current_events_limit(
+        &mut self,
+        maximum: usize,
+    ) -> Result<(Vec<CircuitEvent>, Vec<CircuitEventApplication>), TransientSessionError> {
+        let mut events = Vec::new();
+        let mut applications = Vec::new();
+        while events.len() < maximum {
+            let Some(next) = self.agenda.peek() else {
+                break;
+            };
+            match next.time.partial_cmp(&self.time) {
+                Some(Ordering::Equal) => {}
+                Some(Ordering::Greater) => break,
+                Some(Ordering::Less) | None => {
+                    return Err(TransientSessionError::IndeterminateEventTime);
+                }
+            }
+            let Some(event) = self.agenda.deliver_next() else {
+                break;
+            };
+            let application = self.apply_event(&event);
+            self.delivered_events.push(event.clone());
+            self.applications.push(application.clone());
+            events.push(event);
+            applications.push(application);
+        }
+        Ok((events, applications))
+    }
+
+    fn apply_event(&mut self, event: &CircuitEvent) -> CircuitEventApplication {
+        match (&event.target, &event.kind) {
+            (
+                CircuitEventTarget::Component(component),
+                CircuitEventKind::SourceOverride { value },
+            ) => {
+                let Some(stimulus) = self
+                    .circuit
+                    .source_stimuli
+                    .iter_mut()
+                    .find(|stimulus| stimulus.component == *component)
+                else {
+                    return CircuitEventApplication::Unsupported {
+                        detail: format!(
+                            "component {} has no retained source stimulus",
+                            component.as_str()
+                        ),
+                    };
+                };
+                stimulus.waveform = SourceWaveform::Constant(value.clone());
+                CircuitEventApplication::SourceOverride {
+                    component: component.clone(),
+                    value: value.clone(),
+                }
+            }
+            (
+                CircuitEventTarget::Component(component),
+                CircuitEventKind::SwitchTransition { state },
+            ) => {
+                self.switch_states.insert(component.clone(), *state);
+                CircuitEventApplication::SwitchState {
+                    component: component.clone(),
+                    state: *state,
+                }
+            }
+            (target, CircuitEventKind::DigitalTransition { value }) => {
+                self.logic_states.insert(target.clone(), *value);
+                CircuitEventApplication::LogicState {
+                    target: target.clone(),
+                    value: *value,
+                }
+            }
+            (
+                CircuitEventTarget::Component(component),
+                CircuitEventKind::TraceSample { value, .. },
+            ) => {
+                let Some(stimulus) = self
+                    .circuit
+                    .source_stimuli
+                    .iter_mut()
+                    .find(|stimulus| stimulus.component == *component)
+                else {
+                    return CircuitEventApplication::Unsupported {
+                        detail: format!(
+                            "component {} has no retained source stimulus",
+                            component.as_str()
+                        ),
+                    };
+                };
+                stimulus.waveform = SourceWaveform::Constant(value.clone());
+                CircuitEventApplication::SourceOverride {
+                    component: component.clone(),
+                    value: value.clone(),
+                }
+            }
+            _ => CircuitEventApplication::Observed,
+        }
+    }
+}
+
 /// Compact convergence evidence for one accepted mixed diode endpoint.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DiodeTransientStepEvidence {
@@ -894,6 +1568,8 @@ pub enum DiodeTransientRunError {
         /// Exact waveform failure.
         error: SourceWaveformEvaluationError,
     },
+    /// An external exact-breakpoint provider failed its ordering contract.
+    Breakpoint(ExactBreakpointError),
 }
 
 impl Display for DiodeTransientRunError {
@@ -912,6 +1588,7 @@ impl Display for DiodeTransientRunError {
                 "source {} breakpoint evaluation failed: {error}",
                 component.as_str()
             ),
+            Self::Breakpoint(error) => Display::fmt(error, formatter),
         }
     }
 }
@@ -936,6 +1613,8 @@ pub enum TransientRunError {
         /// Exact waveform failure.
         error: SourceWaveformEvaluationError,
     },
+    /// An external exact-breakpoint provider failed its ordering contract.
+    Breakpoint(ExactBreakpointError),
 }
 
 impl Display for TransientRunError {
@@ -954,6 +1633,7 @@ impl Display for TransientRunError {
                 "source {} breakpoint evaluation failed: {error}",
                 component.as_str()
             ),
+            Self::Breakpoint(error) => Display::fmt(error, formatter),
         }
     }
 }
@@ -1241,6 +1921,25 @@ impl Circuit {
         initial_history: TransientHistory,
         initial_voltages: BTreeMap<NetId, Real>,
     ) -> Result<DiodeTransientRunReport, DiodeTransientRunError> {
+        self.diode_transient_run_with_breakpoints(
+            policy,
+            newton,
+            initial_history,
+            initial_voltages,
+            &[],
+        )
+    }
+
+    /// Runs a bounded mixed diode time series while honoring generalized exact
+    /// breakpoint providers for events, switches, protection, and trace input.
+    pub fn diode_transient_run_with_breakpoints(
+        &self,
+        policy: &TransientRunPolicy,
+        newton: &DiodeNewtonPolicy,
+        initial_history: TransientHistory,
+        initial_voltages: BTreeMap<NetId, Real>,
+        breakpoint_providers: &[&dyn ExactBreakpointProvider],
+    ) -> Result<DiodeTransientRunReport, DiodeTransientRunError> {
         validate_run_policy(policy).map_err(|_| DiodeTransientRunError::InvalidPolicy)?;
         if !matches!(policy.adaptation, TransientAdaptation::Fixed) {
             return Err(DiodeTransientRunError::UnsupportedAdaptation);
@@ -1264,13 +1963,16 @@ impl Circuit {
             let proposed = exact_min(&policy.initial_timestep, &remaining)
                 .ok_or(DiodeTransientRunError::IndeterminateTime)?;
             let timestep = self
-                .source_event_limited_timestep(&time, &proposed)
-                .map_err(
-                    |(component, error)| DiodeTransientRunError::SourceBreakpoint {
-                        component,
-                        error,
-                    },
-                )?;
+                .event_limited_timestep(&time, &proposed, breakpoint_providers)
+                .map_err(|error| match error {
+                    TransientRunError::SourceBreakpoint { component, error } => {
+                        DiodeTransientRunError::SourceBreakpoint { component, error }
+                    }
+                    TransientRunError::Breakpoint(error) => {
+                        DiodeTransientRunError::Breakpoint(error)
+                    }
+                    _ => DiodeTransientRunError::IndeterminateTime,
+                })?;
             let endpoint = time.clone() + timestep.clone();
             let step = self
                 .diode_transient_step_at(
@@ -1332,6 +2034,17 @@ impl Circuit {
         policy: &TransientRunPolicy,
         initial_history: TransientHistory,
     ) -> Result<TransientRunReport, TransientRunError> {
+        self.transient_run_with_breakpoints(policy, initial_history, &[])
+    }
+
+    /// Runs a bounded exact transient time series while honoring additional
+    /// exact breakpoint providers such as a scheduled circuit-event agenda.
+    pub fn transient_run_with_breakpoints(
+        &self,
+        policy: &TransientRunPolicy,
+        initial_history: TransientHistory,
+        breakpoint_providers: &[&dyn ExactBreakpointProvider],
+    ) -> Result<TransientRunReport, TransientRunError> {
         validate_run_policy(policy)?;
         let mut time = policy.start_time.clone();
         let mut timestep = policy.initial_timestep.clone();
@@ -1351,12 +2064,7 @@ impl Circuit {
             let remaining = policy.stop_time.clone() - time.clone();
             let proposed = exact_min(&timestep, &remaining)
                 .ok_or(TransientRunError::IndeterminateErrorEstimate)?;
-            let attempted = self
-                .source_event_limited_timestep(&time, &proposed)
-                .map_err(|(component, error)| TransientRunError::SourceBreakpoint {
-                    component,
-                    error,
-                })?;
+            let attempted = self.event_limited_timestep(&time, &proposed, breakpoint_providers)?;
             let attempt = decisions.len();
             match &policy.adaptation {
                 TransientAdaptation::Fixed => {
@@ -1575,6 +2283,36 @@ impl Circuit {
         }
         Ok(endpoint - time.clone())
     }
+
+    fn event_limited_timestep(
+        &self,
+        time: &Real,
+        proposed: &Real,
+        providers: &[&dyn ExactBreakpointProvider],
+    ) -> Result<Real, TransientRunError> {
+        let source_limited =
+            self.source_event_limited_timestep(time, proposed)
+                .map_err(|(component, error)| TransientRunError::SourceBreakpoint {
+                    component,
+                    error,
+                })?;
+        let mut endpoint = time.clone() + source_limited;
+        if let Some(breakpoint) = earliest_exact_breakpoint_after(time, providers)
+            .map_err(TransientRunError::Breakpoint)?
+        {
+            match breakpoint.partial_cmp(&endpoint) {
+                Some(Ordering::Less) => endpoint = breakpoint,
+                Some(Ordering::Equal | Ordering::Greater) => {}
+                None => {
+                    return Err(TransientRunError::Breakpoint(ExactBreakpointError {
+                        provider: "combined-breakpoint-set".into(),
+                        detail: "breakpoint cannot be ordered against proposed endpoint".into(),
+                    }));
+                }
+            }
+        }
+        Ok(endpoint - time.clone())
+    }
 }
 
 fn terminal_voltage(
@@ -1761,6 +2499,33 @@ fn exact_min(first: &Real, second: &Real) -> Option<Real> {
     match first.partial_cmp(second)? {
         Ordering::Less | Ordering::Equal => Some(first.clone()),
         Ordering::Greater => Some(second.clone()),
+    }
+}
+
+fn next_session_timestep(
+    policy: &TransientRunPolicy,
+    accepted: &Real,
+    decision: Option<&TransientStepDecision>,
+) -> Result<Real, TransientSessionError> {
+    let TransientAdaptation::StepDoubling { growth_factor, .. } = &policy.adaptation else {
+        return Ok(accepted.clone());
+    };
+    let Some(ratio) = decision.and_then(|decision| decision.maximum_error_ratio.as_ref()) else {
+        return Ok(accepted.clone());
+    };
+    let quarter = (Real::one() / Real::from(4))
+        .map_err(|_| TransientSessionError::Run(TransientRunError::InvalidPolicy))?;
+    match ratio.partial_cmp(&quarter) {
+        Some(Ordering::Less | Ordering::Equal) => {
+            let grown = accepted.clone() * growth_factor.clone();
+            exact_min(&grown, &policy.maximum_timestep).ok_or(TransientSessionError::Run(
+                TransientRunError::IndeterminateErrorEstimate,
+            ))
+        }
+        Some(Ordering::Greater) => Ok(accepted.clone()),
+        None => Err(TransientSessionError::Run(
+            TransientRunError::IndeterminateErrorEstimate,
+        )),
     }
 }
 
