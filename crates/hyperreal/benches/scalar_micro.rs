@@ -586,6 +586,10 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division.",
             },
             BenchDoc {
+                name: "reduce_fixed_512_coprime_cold",
+                description: "Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD.",
+            },
+            BenchDoc {
                 name: "exact_remainder_large_knuth",
                 description: "Computes a wide rational fractional remainder through the traced normalized Knuth backend.",
             },
@@ -1928,6 +1932,20 @@ fn bench_rational_algorithm_dispatch_speed(c: &mut Criterion) {
                     &large_knuth_common * 3_u8,
                 )
             },
+            |(numerator, denominator)| {
+                black_box(
+                    Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap(),
+                )
+            },
+            BatchSize::SmallInput,
+        )
+    });
+
+    let fixed_512_left = benchmark_magnitude(512, 0x243f_6a88_85a3_08d3);
+    let fixed_512_right = benchmark_magnitude(512, 0xa409_3822_299f_31d0);
+    group.bench_function("reduce_fixed_512_coprime_cold", |b| {
+        b.iter_batched(
+            || (fixed_512_left.clone(), fixed_512_right.clone()),
             |(numerator, denominator)| {
                 black_box(
                     Rational::from_bigint_fraction(BigInt::from(numerator), denominator).unwrap(),

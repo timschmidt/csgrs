@@ -1196,8 +1196,12 @@ impl Rational {
                         );
                     return BigUint::one() << common_shift;
                 }
-                if let Some(divisor) = Self::gcd_fixed_256(left, right) {
+                if let Some(divisor) = Self::gcd_fixed::<4>(left, right) {
                     crate::trace_dispatch!("rational_algorithm", "gcd", "binary-fixed-256");
+                    return divisor;
+                }
+                if let Some(divisor) = Self::gcd_fixed::<8>(left, right) {
+                    crate::trace_dispatch!("rational_algorithm", "gcd", "binary-fixed-512");
                     return divisor;
                 }
                 crate::trace_dispatch!("rational_algorithm", "gcd", "backend-binary");
@@ -1274,10 +1278,12 @@ impl Rational {
         }
     }
 
-    fn gcd_fixed_256(left: &BigUint, right: &BigUint) -> Option<BigUint> {
-        const WORDS: usize = 4;
+    /// Run binary GCD in a bounded stack buffer, falling through when either
+    /// operand exceeds the selected limb tier.
+    fn gcd_fixed<const WORDS: usize>(left: &BigUint, right: &BigUint) -> Option<BigUint> {
+        debug_assert!(WORDS >= 2);
         let fixed = |value: &BigUint| {
-            if value.bits() > 256 {
+            if value.bits() > u64::try_from(WORDS).expect("word count fits u64") * 64 {
                 return None;
             }
             let mut words = [0_u64; WORDS];
@@ -1318,7 +1324,9 @@ impl Rational {
         loop {
             let right_shift = trailing_zeros(&right);
             shift_right(&mut right, right_shift);
-            if left[2..] == [0, 0] && right[2..] == [0, 0] {
+            if left[2..].iter().all(|word| *word == 0)
+                && right[2..].iter().all(|word| *word == 0)
+            {
                 let left = u128::from(left[0]) | u128::from(left[1]) << 64;
                 let right = u128::from(right[0]) | u128::from(right[1]) << 64;
                 return Some(BigUint::from(Self::gcd_word(left, right)) << common_shift);
@@ -1356,12 +1364,11 @@ impl Rational {
                 };
             }
         }
-        let mut digits = [0_u32; WORDS * 2];
-        for (index, word) in left.into_iter().enumerate() {
-            digits[index * 2] = word as u32;
-            digits[index * 2 + 1] = (word >> 32) as u32;
-        }
-        Some(BigUint::from_slice(&digits))
+        let digits = left
+            .into_iter()
+            .flat_map(|word| [word as u32, (word >> 32) as u32])
+            .collect();
+        Some(BigUint::new(digits))
     }
 
     fn gcd_word(left: u128, right: u128) -> u128 {

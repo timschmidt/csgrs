@@ -352,6 +352,7 @@ Cold backend algorithm families and retained rational fact dispatch selected fro
 | `rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold` | 186.58 ns | 177.77 ns - 203.78 ns | Reduces a fresh wide fraction by a single-limb exact divisor. |
 | `rational_algorithm_dispatch_speed/reduce_backend_knuth_cold` | 456.99 ns | 421.67 ns - 526.13 ns | Reduces a fresh wide fraction through normalized Knuth basecase division. |
 | `rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold` | 105.608 us | 105.035 us - 106.261 us | Reduces a fresh 129-limb numerator by a 65-limb exact divisor through normalized Knuth division. |
+| `rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold` | 5.000 us | 4.988 us - 5.016 us | Reduces fresh balanced 512-bit operands through the fixed-limb rational-operation GCD. |
 | `rational_algorithm_dispatch_speed/exact_remainder_large_knuth` | 5.156 us | 5.124 us - 5.195 us | Computes a wide rational fractional remainder through the traced normalized Knuth backend. |
 | `rational_algorithm_dispatch_speed/division_trivial_small_quotient` | 60.58 ns | 59.92 ns - 61.28 ns | Exercises the backend's zero-quotient magnitude division exit on wide operands. |
 | `rational_algorithm_dispatch_speed/gcd_selected_128_bits` | 458.71 ns | 458.05 ns - 459.41 ns | Runs selected magnitude GCD on an ascending balanced two-limb pair. |

@@ -947,7 +947,7 @@ mod tests {
     }
 
     #[test]
-    fn fixed_256_gcd_matches_biguint_reference() {
+    fn fixed_512_gcd_matches_biguint_reference() {
         let mut state = [
             0x243f_6a88_85a3_08d3_u64,
             0x1319_8a2e_0370_7344_u64,
@@ -980,14 +980,27 @@ mod tests {
             let left = BigUint::from_slice(&left_words) << common_shift;
             let right = BigUint::from_slice(&right_words) << common_shift;
             assert_eq!(
-                Rational::gcd_fixed_256(&left, &right),
+                Rational::gcd_fixed::<4>(&left, &right),
                 Some(num::Integer::gcd(&left, &right))
             );
         }
+        for bits in [257_usize, 384, 511, 512] {
+            let left = (BigUint::one() << (bits - 1))
+                + (BigUint::one() << (bits / 2))
+                + BigUint::from(15_u8);
+            let right = (BigUint::one() << (bits - 2))
+                + (BigUint::one() << (bits / 3))
+                + BigUint::from(21_u8);
+            assert_eq!(
+                Rational::gcd_fixed::<8>(&left, &right),
+                Some(num::Integer::gcd(&left, &right)),
+                "failed for {bits}-bit fixed GCD operands"
+            );
+        }
         assert_eq!(
-            Rational::gcd_fixed_256(
-                &((BigUint::one() << 256_usize) + BigUint::one()),
-                &((BigUint::one() << 255_usize) + BigUint::one()),
+            Rational::gcd_fixed::<8>(
+                &((BigUint::one() << 512_usize) + BigUint::one()),
+                &((BigUint::one() << 511_usize) + BigUint::one()),
             ),
             None
         );
@@ -1080,6 +1093,8 @@ mod tests {
         let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
         let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
         let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
+        let backend_left = ((BigUint::one() << 600_usize) + BigUint::from(13_u8)) * 15_u8;
+        let backend_right = ((BigUint::one() << 599_usize) + BigUint::from(11_u8)) * 21_u8;
         assert_eq!(
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right),
             num::Integer::gcd(&fixed_left, &fixed_right)
@@ -1087,6 +1102,10 @@ mod tests {
         assert_eq!(
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other),
             num::Integer::gcd(&wide, &other)
+        );
+        assert_eq!(
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&backend_left, &backend_right),
+            num::Integer::gcd(&backend_left, &backend_right)
         );
     }
 
@@ -1099,6 +1118,8 @@ mod tests {
         let other = ((BigUint::one() << 259_usize) + BigUint::from(7_u8)) * 21_u8;
         let fixed_left = ((BigUint::one() << 190_usize) + BigUint::from(13_u8)) * 15_u8;
         let fixed_right = ((BigUint::one() << 189_usize) + BigUint::from(11_u8)) * 21_u8;
+        let backend_left = ((BigUint::one() << 600_usize) + BigUint::from(13_u8)) * 15_u8;
+        let backend_right = ((BigUint::one() << 599_usize) + BigUint::from(11_u8)) * 21_u8;
 
         crate::dispatch_trace::reset();
         crate::dispatch_trace::with_recording(|| {
@@ -1109,6 +1130,7 @@ mod tests {
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&word, &wide);
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&fixed_left, &fixed_right);
             Rational::gcd_magnitudes_with_mixed_width_fast_path(&wide, &other);
+            Rational::gcd_magnitudes_with_mixed_width_fast_path(&backend_left, &backend_right);
         });
         let trace = crate::dispatch_trace::take_trace();
         for path in [
@@ -1118,6 +1140,7 @@ mod tests {
             "equal-wide",
             "euclidean-wide-word",
             "binary-fixed-256",
+            "binary-fixed-512",
             "backend-binary",
         ] {
             assert_eq!(trace.path_count("rational_algorithm", "gcd", path), 1);

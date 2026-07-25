@@ -1834,6 +1834,45 @@ and 19,200 feature edges, while the downstream `region_boolean` replay
 completed 2,704 executions at 5,984 coverage points and 19,292 feature edges.
 Neither found an error; LeakSanitizer alone remained disabled under ptrace.
 
+### Fixed-limb rational-operation GCD
+
+After shared-node equality stopped dominating the three-cell profile, 1,107
+balanced arbitrary-precision rational reductions drove 196,954 iterations
+through `num_bigint`'s allocating binary shift/subtract loop. Right shift alone
+accounted for 25,556,768 instructions (9.34% of the complete workload), with
+another 11,234,924 in subtraction.
+
+The existing allocation-free four-limb binary reducer is now const-generic and
+adds an eight-limb tier. Rational-operation GCDs at or below 512 bits use the
+smallest matching stack buffer; larger operands retain the existing backend
+fallback. The focused balanced 512-bit cold-reduction median fell from
+6.396 microseconds to 5.000 microseconds (21.8%). A deterministic regression
+cross-checks the fixed reducer against `BigUint` at 257, 384, 511, and 512 bits
+and preserves explicit fallback coverage above the tier.
+
+On the same three-cell Callgrind workload, instruction references fell from
+273,691,629 to 266,961,560 (2.46%). The complete 67-cell native Boolean
+ten-run median fell from 1.0095 seconds to 965.8 milliseconds (4.33%);
+preparation fell from 949.8 to 912.3 milliseconds (3.95%) and union from
+26.75 to 24.40 milliseconds (8.80%). Every run retained 2,883 candidate
+pairs, 3,248 fragments, 134 point classifications, all 268 operations decided,
+no blockers, and checksum 6.
+
+Heaptrack retained the same 36.00 MiB peak heap and 96.81 MiB
+recorder-inclusive peak RSS. Allocation events rose 0.36%, from 14,614,979 to
+14,668,175, while postprocessed temporary allocations fell by 67 to 3,743,028.
+The release benchmark gained 6,080 bytes of text (0.13%) and 4,096 bytes of
+total loadable size.
+
+Validation passed for Hyperreal's all-feature tests, warning-denied all-target
+Clippy, and fuzz-target build; all-feature suites in Hyperlattice, Hyperlimit,
+Hypersolve, and Hypercurve; strict Hypercurve and UI Clippy; all 37 UI tests;
+and the release WASM demo build. AddressSanitizer completed 2,509
+`rational_arithmetic` executions at 1,830 coverage points and 4,630 feature
+edges. The downstream `region_boolean` replay completed 2,706 executions at
+5,989 coverage points and 19,320 feature edges. Neither found an error;
+LeakSanitizer alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
