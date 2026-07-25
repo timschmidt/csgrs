@@ -2649,6 +2649,24 @@ mod tests {
     }
 
     #[test]
+    fn borrowed_exact_rational_preserves_lazy_storage_until_numeric_observation() {
+        let lazy =
+            Rational::from_parts_raw_unreduced(num::bigint::Sign::Plus, 6_u8.into(), 4_u8.into());
+        assert!(lazy.is_internally_unreduced());
+        let lazy_identity = lazy.storage_identity();
+        let value = Real::new(lazy);
+
+        let borrowed = value.exact_rational_ref().unwrap();
+        assert_eq!(borrowed.storage_identity(), lazy_identity);
+        assert_eq!(borrowed, &Rational::fraction(3, 2).unwrap());
+
+        let owned = value.exact_rational().unwrap();
+        assert_ne!(owned.storage_identity(), lazy_identity);
+        assert_eq!(owned.numerator(), &3_u8.into());
+        assert_eq!(owned.denominator(), &2_u8.into());
+    }
+
+    #[test]
     fn dense_self_dot_reuses_exact_result_after_observation() {
         let values = [
             Real::new(Rational::fraction(456_789_012_345_671_i64, 1_u64 << 50).unwrap()),

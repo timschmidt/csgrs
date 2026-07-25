@@ -64,10 +64,17 @@ impl Real {
     /// linear combinations without cloning every scalar. It deliberately
     /// exposes only the already-public exact-rational shape; symbolic and
     /// computable values still go through their normal arithmetic paths.
+    ///
+    /// The borrowed value may retain a lazy internally unreduced ratio. Its
+    /// public numeric operations still observe the canonical exact value.
     #[inline]
     pub fn exact_rational_ref(&self) -> Option<&Rational> {
         match self.class {
-            One => Some(self.rational.canonicalized_ref()),
+            // Lazy internal coordinates are still exact `Rational` values.
+            // Borrow their shared node directly so shape-only queries and
+            // storage-identity caches do not force a GCD. Public Rational
+            // operations canonicalize only when their numeric kernel needs it.
+            One => Some(&self.rational),
             _ => None,
         }
     }
