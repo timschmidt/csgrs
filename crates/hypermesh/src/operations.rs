@@ -728,12 +728,15 @@ fn affine_point_f64(point: &Point3) -> Option<[f64; 3]> {
     point.into_iter().all(f64::is_finite).then_some(point)
 }
 
-fn projective_point_plane_may_be_on(point: &HomogeneousPoint3, plane: &Plane) -> bool {
-    projective_point_f64(point).is_none_or(|point| affine_point_plane_may_be_on(point, plane))
+fn projective_point_normalized_plane_may_be_on(
+    point: &HomogeneousPoint3,
+    plane: Option<[f64; 4]>,
+) -> bool {
+    projective_point_f64(point).is_none_or(|point| normalized_point_plane_may_be_on(point, plane))
 }
 
-fn affine_point_plane_may_be_on(point: [f64; 3], plane: &Plane) -> bool {
-    match plane_f64(plane) {
+fn normalized_point_plane_may_be_on(point: [f64; 3], plane: Option<[f64; 4]>) -> bool {
+    match plane {
         Some(plane) => {
             let value = plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3];
             let scale = point.into_iter().map(f64::abs).fold(1.0_f64, f64::max);
@@ -962,6 +965,7 @@ impl ProjectiveCycle {
         point_index: usize,
         plane_identity: ConstructionPlaneIdentity,
         plane: &Plane,
+        plane_f64: Option<[f64; 4]>,
     ) -> bool {
         if self.source_plane == plane_identity
             || certifiably_same_unoriented_plane(&self.support, plane)
@@ -982,7 +986,7 @@ impl ProjectiveCycle {
                 Some(ConstructionEdgeIdentity::Split { planes })
                     if planes.contains(&plane_identity)
             )
-        }) || (projective_point_plane_may_be_on(&self.points[point_index], plane)
+        }) || (projective_point_normalized_plane_may_be_on(&self.points[point_index], plane_f64)
             && crate::intersection::four_plane_determinant(
                 &self.support,
                 &self.edges[previous],
@@ -1056,6 +1060,7 @@ impl ProjectiveCycle {
     fn clip(
         &self,
         plane: &Plane,
+        plane_f64: Option<[f64; 4]>,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
@@ -1065,7 +1070,12 @@ impl ProjectiveCycle {
             .iter()
             .enumerate()
             .map(|(point_index, point)| {
-                if self.point_has_plane_incidence(point_index, plane_identity, plane) {
+                if self.point_has_plane_incidence(
+                    point_index,
+                    plane_identity,
+                    plane,
+                    plane_f64,
+                ) {
                     Ok((Real::zero(), Classification::On))
                 } else {
                     projective_plane_value(point, plane).inspect_err(|_error| {
@@ -1206,6 +1216,7 @@ impl ProjectiveCycle {
     fn clip_negative(
         &self,
         plane: &Plane,
+        plane_f64: Option<[f64; 4]>,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
@@ -1215,7 +1226,12 @@ impl ProjectiveCycle {
             .iter()
             .enumerate()
             .map(|(point_index, point)| {
-                if self.point_has_plane_incidence(point_index, plane_identity, plane) {
+                if self.point_has_plane_incidence(
+                    point_index,
+                    plane_identity,
+                    plane,
+                    plane_f64,
+                ) {
                     Ok((Real::zero(), Classification::On))
                 } else {
                     projective_plane_value(point, plane).inspect_err(|_error| {
@@ -1567,6 +1583,8 @@ fn compute_two_convex_inputs_projectively(
     let mut non_exact_support_planes: [Vec<usize>; 2] = std::array::from_fn(|_| Vec::new());
     let mut support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
         std::array::from_fn(|_| Vec::new());
+    let mut normalized_support_plane_f64_values: [Vec<Option<[f64; 4]>>; 2] =
+        std::array::from_fn(|_| Vec::new());
     let mut polygon_support_planes = Vec::with_capacity(polygons.len());
     for polygon in polygons {
         let mesh = usize::try_from(polygon.mesh_index)
@@ -1594,6 +1612,7 @@ fn compute_two_convex_inputs_projectively(
                 let index = support_planes[mesh].len();
                 support_planes[mesh].push(&polygon.support);
                 support_plane_f64_values[mesh].push(Some(values));
+                normalized_support_plane_f64_values[mesh].push(normalize_plane_f64(values));
                 approximate_support_planes[mesh]
                     .entry(key)
                     .or_default()
@@ -1614,6 +1633,7 @@ fn compute_two_convex_inputs_projectively(
             let index = support_planes[mesh].len();
             support_planes[mesh].push(&polygon.support);
             support_plane_f64_values[mesh].push(None);
+            normalized_support_plane_f64_values[mesh].push(plane_f64(&polygon.support));
             non_exact_support_planes[mesh].push(index);
             index
         };
@@ -1624,7 +1644,8 @@ fn compute_two_convex_inputs_projectively(
     }
     let support_planes_f64 =
         support_plane_f64_values.map(|planes| planes.into_iter().collect::<Option<Vec<_>>>());
-    let canonical_plane_identities = canonical_plane_identities(&support_planes);
+    let canonical_plane_identities =
+        canonical_plane_identities(&support_planes, &normalized_support_plane_f64_values);
     let (projective_polygons, mut projective_polygon_support_planes) =
         match collapse_certified_convex_faces(polygons, &polygon_support_planes, &support_planes) {
             Ok(collapsed) => collapsed,
@@ -1721,9 +1742,12 @@ fn compute_two_convex_inputs_projectively(
         };
         let other = 1 - *mesh;
         for (plane, value) in support_planes[other].iter().enumerate() {
-            if affine_point_f64(point)
-                .is_none_or(|point| affine_point_plane_may_be_on(point, value))
-                && classify_point(point, value) == Ok(Classification::On)
+            if affine_point_f64(point).is_none_or(|point| {
+                normalized_point_plane_may_be_on(
+                    point,
+                    normalized_support_plane_f64_values[other][plane],
+                )
+            }) && classify_point(point, value) == Ok(Classification::On)
             {
                 let plane_identity = canonical_plane_identities[other][plane];
                 let incidences = projective_point_cache
@@ -1768,8 +1792,11 @@ fn compute_two_convex_inputs_projectively(
         let mut excluded = false;
         let mut has_cooriented_coincident_support = false;
         for (plane_index, &plane) in support_planes[other].iter().enumerate() {
-            has_cooriented_coincident_support |= planes_may_be_same(&polygon.support, plane)
-                && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false);
+            has_cooriented_coincident_support |=
+                normalized_planes_may_be_same(
+                    normalized_support_plane_f64_values[source_plane.mesh][source_plane.plane],
+                    normalized_support_plane_f64_values[other][plane_index],
+                ) && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false);
             let (relation, on_source_vertices) = point_plane_caches[host]
                 .source_relation(
                 polygon,
@@ -1844,6 +1871,7 @@ fn compute_two_convex_inputs_projectively(
             &source,
             &support_planes[other],
             support_planes_f64[other].as_deref(),
+            &normalized_support_plane_f64_values[other],
             &candidate_planes,
             other,
             &mut projective_point_cache,
@@ -1891,6 +1919,7 @@ fn compute_two_convex_inputs_projectively(
         for plane_index in active_planes {
             let clipped = remainder.clip(
                 support_planes[other][plane_index],
+                normalized_support_plane_f64_values[other][plane_index],
                 canonical_plane_identities[other][plane_index],
                 &mut projective_point_cache,
             )?;
@@ -2129,12 +2158,15 @@ fn certifiably_same_unoriented_plane(left: &Plane, right: &Plane) -> bool {
 }
 
 fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
-    let mut values = [
+    normalize_plane_f64([
         plane.normal.x.to_f64_lossy()?,
         plane.normal.y.to_f64_lossy()?,
         plane.normal.z.to_f64_lossy()?,
         plane.offset.to_f64_lossy()?,
-    ];
+    ])
+}
+
+fn normalize_plane_f64(mut values: [f64; 4]) -> Option<[f64; 4]> {
     if !values.into_iter().all(f64::is_finite) {
         return None;
     }
@@ -2163,7 +2195,11 @@ fn plane_f64(plane: &Plane) -> Option<[f64; 4]> {
 }
 
 fn planes_may_be_same(left: &Plane, right: &Plane) -> bool {
-    match (plane_f64(left), plane_f64(right)) {
+    normalized_planes_may_be_same(plane_f64(left), plane_f64(right))
+}
+
+fn normalized_planes_may_be_same(left: Option<[f64; 4]>, right: Option<[f64; 4]>) -> bool {
+    match (left, right) {
         (Some(left), Some(right)) => left.iter().zip(right).all(|(left, right)| {
             let scale = left.abs().max(right.abs()).max(1.0);
             (left - right).abs() <= scale * 1.0e-9
@@ -2174,6 +2210,7 @@ fn planes_may_be_same(left: &Plane, right: &Plane) -> bool {
 
 fn canonical_plane_identities(
     support_planes: &[Vec<&Plane>; 2],
+    normalized_support_plane_f64_values: &[Vec<Option<[f64; 4]>>; 2],
 ) -> [Vec<ConstructionPlaneIdentity>; 2] {
     let mut representatives = Vec::<(ConstructionPlaneIdentity, &Plane, Option<[f64; 4]>)>::new();
     std::array::from_fn(|mesh| {
@@ -2182,20 +2219,12 @@ fn canonical_plane_identities(
             .enumerate()
             .map(|(plane, value)| {
                 let identity = ConstructionPlaneIdentity { mesh, plane };
-                let approximate = plane_f64(value);
+                let approximate = normalized_support_plane_f64_values[mesh][plane];
                 let canonical = representatives
                     .iter()
                     .find_map(|(candidate, candidate_value, candidate_approximate)| {
                         let approximate_match =
-                            match (candidate_approximate.as_ref(), approximate.as_ref()) {
-                                (Some(candidate), Some(value)) => {
-                                    candidate.iter().zip(value).all(|(left, right)| {
-                                        let scale = left.abs().max(right.abs()).max(1.0);
-                                        (left - right).abs() <= scale * 1.0e-9
-                                    })
-                                }
-                                _ => true,
-                            };
+                            normalized_planes_may_be_same(*candidate_approximate, approximate);
                         (approximate_match
                             && certifiably_same_unoriented_plane(candidate_value, value))
                         .then_some(*candidate)
@@ -2396,6 +2425,7 @@ fn exact_inside_and_active_planes(
     source: &ProjectiveCycle,
     support_planes: &[&Plane],
     support_planes_f64: Option<&[[f64; 4]]>,
+    normalized_support_planes_f64: &[Option<[f64; 4]>],
     candidate_planes: &[usize],
     support_plane_mesh: usize,
     point_cache: &mut ProjectivePointCache,
@@ -2406,6 +2436,7 @@ fn exact_inside_and_active_planes(
         let inside = clip_inside_cycle(
             source,
             support_planes,
+            normalized_support_planes_f64,
             &proposed_planes,
             support_plane_mesh,
             point_cache,
@@ -2421,6 +2452,7 @@ fn exact_inside_and_active_planes(
         if cycle_satisfies_planes(
             &inside,
             support_planes,
+            normalized_support_planes_f64,
             candidate_planes,
             support_plane_mesh,
         )
@@ -2438,6 +2470,7 @@ fn exact_inside_and_active_planes(
     let inside = clip_inside_cycle(
         source,
         support_planes,
+        normalized_support_planes_f64,
         candidate_planes,
         support_plane_mesh,
         point_cache,
@@ -2462,6 +2495,7 @@ fn exact_inside_and_active_planes(
 fn clip_inside_cycle(
     source: &ProjectiveCycle,
     support_planes: &[&Plane],
+    normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
     support_plane_mesh: usize,
     point_cache: &mut ProjectivePointCache,
@@ -2470,6 +2504,7 @@ fn clip_inside_cycle(
     for &plane_index in plane_indices {
         inside = inside.clip_negative(
             support_planes[plane_index],
+            normalized_support_planes_f64[plane_index],
             ConstructionPlaneIdentity {
                 mesh: support_plane_mesh,
                 plane: plane_index,
@@ -2510,6 +2545,7 @@ fn active_cycle_planes(
 fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
     support_planes: &[&Plane],
+    normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
     support_plane_mesh: usize,
 ) -> HypermeshResult<bool> {
@@ -2524,6 +2560,7 @@ fn cycle_satisfies_planes(
                 point_index,
                 plane_identity,
                 support_planes[plane_index],
+                normalized_support_planes_f64[plane_index],
             ) {
                 continue;
             }
@@ -2961,11 +2998,23 @@ mod tests {
         let opposite_bottom = bottom.inverted();
         let top = Plane::axis_aligned(2, Real::one());
         let support_planes = [vec![&bottom, &top], vec![&opposite_bottom, &bottom]];
+        let normalized = support_planes
+            .each_ref()
+            .map(|planes| planes.iter().map(|plane| plane_f64(plane)).collect());
 
-        let identities = canonical_plane_identities(&support_planes);
+        let identities = canonical_plane_identities(&support_planes, &normalized);
         assert_eq!(identities[0][0], identities[1][0]);
         assert_eq!(identities[0][0], identities[1][1]);
         assert_ne!(identities[0][0], identities[0][1]);
+    }
+
+    #[test]
+    fn cached_exact_plane_normalization_matches_direct_conversion() {
+        let plane =
+            Plane::from_coefficients(Real::from(3), Real::from(-4), Real::from(12), Real::from(7));
+        let raw = exact_plane_f64(&plane).unwrap();
+
+        assert_eq!(normalize_plane_f64(raw), plane_f64(&plane));
     }
 
     #[test]
