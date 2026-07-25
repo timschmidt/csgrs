@@ -74,6 +74,7 @@ Ordering and absolute-comparison shortcuts.
 | --- | ---: | ---: | --- |
 | `computable_compare/compare_to_opposite_sign` | not run | not run | Compares values with known opposite signs. |
 | `computable_compare/compare_to_exact_msd_gap` | not run | not run | Compares values with a large exact magnitude gap. |
+| `computable_compare/compare_to_clone_shared_composite` | 3.630 ns | 3.604 ns - 3.658 ns | Compares two handles that share one composite expression node. |
 | `computable_compare/compare_absolute_exact_rational` | not run | not run | Compares absolute values of exact rationals. |
 | `computable_compare/compare_absolute_exact_rational_same_numerator` | not run | not run | Compares exact rational magnitudes with matching numerators. |
 | `computable_compare/compare_absolute_dominant_add` | not run | not run | Compares a dominant term against the same term plus a tiny addend. |

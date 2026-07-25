@@ -106,6 +106,10 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Compares values with a large exact magnitude gap.",
             },
             BenchDoc {
+                name: "compare_to_clone_shared_composite",
+                description: "Compares two handles that share one composite expression node.",
+            },
+            BenchDoc {
                 name: "compare_absolute_exact_rational",
                 description: "Compares absolute values of exact rationals.",
             },
@@ -808,6 +812,14 @@ fn bench_computable_compare(c: &mut Criterion) {
         )));
     group.bench_function("compare_to_exact_msd_gap", |b| {
         b.iter(|| black_box(huge.try_compare_to(&base)))
+    });
+
+    let composite = Computable::pi()
+        .multiply(Computable::e())
+        .add(Computable::rational(Rational::fraction(7, 13).unwrap()));
+    let shared_composite = composite.clone();
+    group.bench_function("compare_to_clone_shared_composite", |b| {
+        b.iter(|| black_box(composite.try_compare_to(&shared_composite)))
     });
 
     let left = Computable::rational(Rational::fraction(-7, 8).unwrap());

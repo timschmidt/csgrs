@@ -9,6 +9,10 @@ impl Computable {
     }
 
     pub(crate) fn internal_structural_eq(left: &Self, right: &Self) -> bool {
+        if Arc::ptr_eq(&left.internal, &right.internal) {
+            return true;
+        }
+
         fn compare_nodes(left: &Approximation, right: &Approximation) -> bool {
             match (left, right) {
                 (Approximation::One, Approximation::One) => true,

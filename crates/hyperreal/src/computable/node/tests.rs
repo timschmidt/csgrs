@@ -468,6 +468,17 @@ mod tests {
     }
 
     #[test]
+    fn compare_to_accepts_clone_shared_composite_expression() {
+        let expression = Computable::pi()
+            .multiply(Computable::e())
+            .add(Computable::rational(Rational::fraction(7, 13).unwrap()));
+        let shared = expression.clone();
+
+        assert!(Arc::ptr_eq(&expression.internal, &shared.internal));
+        assert_eq!(expression.try_compare_to(&shared), Some(Ordering::Equal));
+    }
+
+    #[test]
     fn compare_absolute_uses_exact_shortcuts() {
         let zero = Computable::rational(Rational::zero());
         let tiny = Computable::rational(Rational::fraction(1, 1024).unwrap());

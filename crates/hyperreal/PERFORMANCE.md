@@ -1792,6 +1792,48 @@ the requested budget after 2,706 executions at 5,985 coverage points and
 19,266 feature edges. Neither found an error; LeakSanitizer alone remained
 disabled under ptrace.
 
+### Clone-shared expression identity
+
+`Computable::internal_structural_eq` previously descended through both
+expression graphs even when the two `Computable` handles shared the same
+immutable `Arc<Node>`. This is common in exact geometry: retained source
+coordinates are cloned across candidate, fragment, and result evidence, then
+compared again during topology assembly. Every recursive child comparison
+repeated the same avoidable descent.
+
+Structural equality now accepts shared node identity before inspecting either
+expression variant. Independently constructed equal graphs retain the existing
+recursive comparison, so no numeric or symbolic equivalence rule changed. A
+named composite-expression regression covers the shared-node case, and the
+`computable_compare/compare_to_clone_shared_composite` benchmark retains the
+workload. Its Criterion median fell from 12.848 ns to 3.630 ns, a 71.8%
+reduction (3.54x).
+
+On Hypercurve's three-cell all-family workload, which includes the first
+transcendental rational-quadratic weights, same-source Callgrind instruction
+references fell from 326,746,257 to 273,691,629 (16.24%). On the complete
+67-cell, 100.5 MiB workload, matched ten-run native Boolean medians fell from
+1.6343 seconds to 1.0095 seconds (38.2%). Preparation fell from 1.0640 seconds
+to 949.8 milliseconds (10.7%), while the union phase fell from 539.3 to 26.75
+milliseconds (95.0%, or 20.2x). Every run retained 2,883 candidate pairs,
+3,248 fragments, 134 point classifications, 268 decided operations, no
+blockers, and checksum 6.
+
+The shortcut allocates and retains nothing. Heaptrack remained at 14,614,979
+allocation events, 36.00 MiB peak heap, and 96.82 MiB recorder-inclusive peak
+RSS for the complete workload. The release benchmark gained 160 bytes of text
+(4,663,333 to 4,663,493 bytes); its total loadable size remained unchanged
+because the linked layout displaced the same amount of zero-filled storage.
+
+Validation passed across Hyperreal's complete all-target suite and fuzz-target
+build, plus all-feature test suites in Hyperlattice, Hyperlimit, Hypersolve,
+and Hypercurve. Hypercurve's strict all-target Clippy, all 37 UI tests, UI
+Clippy, and release `wasm32-unknown-unknown` build also passed. AddressSanitizer
+completed 2,509 `computable_approximation` executions at 5,271 coverage points
+and 19,200 feature edges, while the downstream `region_boolean` replay
+completed 2,704 executions at 5,984 coverage points and 19,292 feature edges.
+Neither found an error; LeakSanitizer alone remained disabled under ptrace.
+
 ### Architecture and measurement triggers
 
 - Shewchuk expansion stages become applicable only if predicate traces in `hyperlimit` or
