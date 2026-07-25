@@ -308,9 +308,19 @@ impl Computable {
         let mut p = start;
         loop {
             let appr = self.approx(p);
+            #[cfg(feature = "dispatch-trace")]
+            crate::dispatch_trace::record_sign_refinement_precision(
+                "sign_until_attempt_precision",
+                p,
+            );
             if appr.abs() > BigInt::one() {
                 let sign = appr.sign();
                 self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
+                #[cfg(feature = "dispatch-trace")]
+                crate::dispatch_trace::record_sign_refinement_precision(
+                    "sign_until_decision_precision",
+                    p,
+                );
                 return Some(public_sign(sign));
             }
 
@@ -335,6 +345,11 @@ impl Computable {
             crate::trace_dispatch!("computable", "sign_until", "exact-rational-zero");
             Some(RealSign::Zero)
         } else {
+            #[cfg(feature = "dispatch-trace")]
+            crate::dispatch_trace::record_sign_refinement_precision(
+                "sign_until_unresolved_precision",
+                p,
+            );
             crate::trace_dispatch!("computable", "sign_until", "unknown");
             None
         }

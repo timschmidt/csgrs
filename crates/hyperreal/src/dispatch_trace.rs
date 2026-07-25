@@ -482,6 +482,21 @@ pub fn record(layer: &'static str, operation: &'static str, path: &'static str) 
     });
 }
 
+pub(crate) fn record_sign_refinement_precision(operation: &'static str, precision: i32) {
+    let bucket = match precision {
+        0.. => "p>=0",
+        -32..=-1 => "-32<=p<0",
+        -64..=-33 => "-64<=p<-32",
+        -128..=-65 => "-128<=p<-64",
+        -256..=-129 => "-256<=p<-128",
+        -512..=-257 => "-512<=p<-256",
+        -1024..=-513 => "-1024<=p<-512",
+        -2048..=-1025 => "-2048<=p<-1024",
+        _ => "p<-2048",
+    };
+    record("computable", operation, bucket);
+}
+
 fn update_peak(stats: &mut RationalTraceStats, value: &BigUint) {
     stats.peak_operand_bits = stats.peak_operand_bits.max(value.bits());
 }
@@ -648,6 +663,30 @@ mod tests {
                 && entry.count == 2
         }));
         assert!(snapshot().is_empty());
+    }
+
+    #[test]
+    fn sign_refinement_trace_records_attempt_and_decision_precision_buckets() {
+        reset();
+        with_recording(|| {
+            record_sign_refinement_precision("sign_until_attempt_precision", 0);
+            record_sign_refinement_precision("sign_until_attempt_precision", -16);
+            record_sign_refinement_precision("sign_until_decision_precision", -16);
+        });
+
+        let snapshot = take_trace();
+        assert_eq!(
+            snapshot.path_count("computable", "sign_until_attempt_precision", "p>=0"),
+            1
+        );
+        assert_eq!(
+            snapshot.path_count("computable", "sign_until_attempt_precision", "-32<=p<0"),
+            1
+        );
+        assert_eq!(
+            snapshot.path_count("computable", "sign_until_decision_precision", "-32<=p<0"),
+            1
+        );
     }
 
     #[test]
