@@ -300,6 +300,7 @@ impl Rational {
         }
     }
 
+    #[inline]
     pub(crate) fn to_f64_lossy(&self) -> Option<f64> {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().to_f64_lossy();
