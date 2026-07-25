@@ -16,7 +16,17 @@ const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
 
 pub(crate) const ARRANGEMENT_CLASSIFICATION: i8 = 2;
 
-type SplitEdgeCache = StorageHashMap<[usize; 2], Vec<[usize; 2]>>;
+type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
+
+struct SplitEdgeChain(Vec<usize>);
+
+impl SplitEdgeChain {
+    fn subedges(&self) -> impl DoubleEndedIterator<Item = [usize; 2]> + '_ {
+        self.0
+            .windows(2)
+            .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
+    }
+}
 
 /// Polygon plus its boolean output classification.
 #[derive(Clone, Debug, PartialEq)]
@@ -671,7 +681,7 @@ where
                 continue;
             }
             let canonical = sorted_edge([start, end]);
-            let subedges = if let Some(candidates) = &construction_candidates {
+            let chain = if let Some(candidates) = &construction_candidates {
                 split_segment_subedges_exact_candidates(
                     &mut split_edge_cache,
                     &vertices,
@@ -706,9 +716,9 @@ where
                 )?
             };
             if start == canonical[0] {
-                boundary.extend(subedges.iter().map(|edge| edge[0]));
+                boundary.extend(chain.subedges().map(|edge| edge[0]));
             } else {
-                boundary.extend(subedges.iter().rev().map(|edge| edge[1]));
+                boundary.extend(chain.subedges().rev().map(|edge| edge[1]));
             }
         }
         boundary.dedup();
@@ -1462,12 +1472,14 @@ fn polygon_edge_counts(
             }
             let canonical_edge = sorted_edge([start, end]);
             let follows_canonical_edge = start == canonical_edge[0];
-            for &canonical_subedge in split_segment_subedges_exact(
+            for canonical_subedge in split_segment_subedges_exact(
                 &mut split_edge_cache,
                 vertices,
                 axis_order,
                 canonical_edge,
-            )? {
+            )?
+            .subedges()
+            {
                 let subedge = if follows_canonical_edge {
                     canonical_subedge
                 } else {
@@ -1492,7 +1504,7 @@ fn split_segment_subedges_exact<'a>(
     vertices: &[OutputVertex],
     axis_order: &[Vec<usize>; 3],
     edge: [usize; 2],
-) -> HypermeshResult<&'a [[usize; 2]]> {
+) -> HypermeshResult<&'a SplitEdgeChain> {
     let edge = sorted_edge(edge);
     if let std::collections::hash_map::Entry::Vacant(e) = cache.entry(edge) {
         let axis = dominant_segment_axis(&vertices[edge[0]], &vertices[edge[1]])?;
@@ -1522,11 +1534,7 @@ fn split_segment_subedges_exact<'a>(
         chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
         chain.push(edge[1]);
 
-        let subedges = chain
-            .windows(2)
-            .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
-            .collect();
-        e.insert(subedges);
+        e.insert(SplitEdgeChain(chain));
     }
     Ok(cache.get(&edge).expect("cached edge was just inserted"))
 }
@@ -1539,7 +1547,7 @@ fn split_segment_subedges_exact_candidates<'a>(
     recovery_vertices: &[usize],
     prepared_rational_vertices: Option<&[Option<PreparedRationalPoint3Query>]>,
     filter_recovery_candidates: bool,
-) -> HypermeshResult<&'a [[usize; 2]]> {
+) -> HypermeshResult<&'a SplitEdgeChain> {
     let edge = sorted_edge(edge);
     if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
         let axis = inexpensive_nonzero_segment_axis(&vertices[edge[0]], &vertices[edge[1]])
@@ -1644,12 +1652,7 @@ fn split_segment_subedges_exact_candidates<'a>(
             chain.extend(ordered);
         }
         chain.push(edge[1]);
-        entry.insert(
-            chain
-                .windows(2)
-                .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
-                .collect(),
-        );
+        entry.insert(SplitEdgeChain(chain));
     }
     Ok(cache.get(&edge).expect("candidate edge was just cached"))
 }
@@ -1741,7 +1744,7 @@ fn split_segment_subedges_exact_precomputed_f64_scan<'a>(
     vertices: &[OutputVertex],
     approximate_vertices: &[[f64; 3]],
     edge: [usize; 2],
-) -> HypermeshResult<&'a [[usize; 2]]> {
+) -> HypermeshResult<&'a SplitEdgeChain> {
     let edge = sorted_edge(edge);
     if let std::collections::hash_map::Entry::Vacant(entry) = cache.entry(edge) {
         let start = approximate_vertices[edge[0]];
@@ -1766,12 +1769,7 @@ fn split_segment_subedges_exact_precomputed_f64_scan<'a>(
         chain.push(edge[0]);
         chain.extend(sort_along_segment(&on_edge, edge[0], edge[1], vertices)?);
         chain.push(edge[1]);
-        entry.insert(
-            chain
-                .windows(2)
-                .filter_map(|pair| (pair[0] != pair[1]).then_some([pair[0], pair[1]]))
-                .collect(),
-        );
+        entry.insert(SplitEdgeChain(chain));
     }
     Ok(cache.get(&edge).expect("scanned edge was just cached"))
 }
@@ -2981,9 +2979,12 @@ mod tests {
 
         let forward = split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [0, 1])
             .unwrap()
-            .to_vec();
-        let reversed =
-            split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [1, 0]).unwrap();
+            .subedges()
+            .collect::<Vec<_>>();
+        let reversed = split_segment_subedges_exact(&mut cache, &vertices, &axis_order, [1, 0])
+            .unwrap()
+            .subedges()
+            .collect::<Vec<_>>();
 
         assert_eq!(forward, vec![[0, 3], [3, 1]]);
         assert_eq!(reversed, forward);
