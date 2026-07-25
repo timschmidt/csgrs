@@ -2002,25 +2002,34 @@ fn compute_two_convex_inputs_projectively(
             {
                 return Ok(None);
             }
-            crate::output::triangulate_preclassified_arrangement_construction_candidates(
-                &classified,
-                true,
-            )
-            .and_then(certify_triangle_soup_closure)
+            let triangulate = |recover| {
+                crate::output::triangulate_preclassified_arrangement_construction_candidates(
+                    &classified,
+                    recover,
+                )
+                .and_then(certify_triangle_soup_closure)
+            };
+            triangulate(false).or_else(|_| triangulate(true))
         } else if operation == BooleanOp::Union {
-            crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
-                &classified,
-                true,
-            )
-            .and_then(certify_triangle_soup_closure)
+            let triangulate = |recover| {
+                crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
+                    &classified,
+                    recover,
+                )
+                .and_then(certify_triangle_soup_closure)
+            };
+            triangulate(false).or_else(|_| triangulate(true))
         } else {
-            crate::output::triangulate_classified_arrangement_construction_candidates(
-                &classified,
-                true,
-            )
-            .and_then(|triangles| {
-                select_triangle_arrangement(&triangles, operation, support_planes.len())
-            })
+            let triangulate = |recover| {
+                crate::output::triangulate_classified_arrangement_construction_candidates(
+                    &classified,
+                    recover,
+                )
+                .and_then(|triangles| {
+                    select_triangle_arrangement(&triangles, operation, support_planes.len())
+                })
+            };
+            triangulate(false).or_else(|_| triangulate(true))
         }
         .or_else(|error| {
             if cfg!(debug_assertions) {
