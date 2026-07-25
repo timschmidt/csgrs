@@ -11,9 +11,7 @@ The ownership boundary is intentional: `hyperpath` supplies exact routing/path
 carriers, `csgrs` materializes profiles and solids, and `hyperdrc` verifies
 constraints and release readiness. Circuit and PCB semantics do not belong in
 the geometry engine. See the [capability matrix](CAPABILITY_MATRIX.md) for the
-tscircuit/via-rs equivalence ledger and remaining acceptance gates. The
-[SimCore native-domain parity matrix](docs/simcore-native-parity.md) separately
-tracks the structural workflow concepts that map directly to HyperCircuit.
+tscircuit/via-rs equivalence ledger and remaining acceptance gates.
 
 With `geometry`, `LegacyCsgrsElectronicsImport` can still read the versioned
 JSON handoffs captured before csgrs's package/electrical marker removal. The
