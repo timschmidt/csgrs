@@ -374,6 +374,34 @@ impl PreparedInsphere3dFilter {
 }
 
 impl Real {
+    /// Try to decide the exact sign of a 3x3 rational determinant with
+    /// word-sized arithmetic.
+    ///
+    /// Each row is independently converted to homogeneous `i128`
+    /// coordinates. Since all three homogeneous weights are positive, the
+    /// sign of the integer coordinate determinant is the sign of the original
+    /// rational determinant. Values that do not fit return `None` for the
+    /// arbitrary-precision fallback.
+    #[inline]
+    #[doc(hidden)]
+    pub fn exact_rational_det3_word_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+    ) -> Option<RealSign> {
+        let [ax, ay, az, _] = Self::exact_rational_homogeneous_point3_i128(a)?;
+        let [bx, by, bz, _] = Self::exact_rational_homogeneous_point3_i128(b)?;
+        let [cx, cy, cz, _] = Self::exact_rational_homogeneous_point3_i128(c)?;
+        let determinant =
+            Self::checked_det3_i128([[ax, ay, az], [bx, by, bz], [cx, cy, cz]])?;
+        crate::trace_dispatch!("real", "det3_sign", "exact-rational-word");
+        Some(match determinant.cmp(&0) {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        })
+    }
+
     /// Prepare an exact word-sized affine 2D determinant filter.
     ///
     /// This compiles the fixed points into the homogeneous line through them.

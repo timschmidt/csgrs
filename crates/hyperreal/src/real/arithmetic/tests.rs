@@ -1206,6 +1206,47 @@ mod tests {
     }
 
     #[test]
+    fn exact_rational_det3_word_sign_matches_randomized_rationals() {
+        let mut state = 0x8b8b_8b8b_35e2_91f3_u64;
+        let zero = [Real::zero(), Real::zero(), Real::zero()];
+        for _ in 0..10_000 {
+            let mut values = Vec::with_capacity(9);
+            for _ in 0..9 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                let numerator = i64::try_from(state % 101).unwrap() - 50;
+                let denominator = (state.rotate_left(19) % 23) + 1;
+                values.push(Real::new(
+                    Rational::fraction(numerator, denominator).unwrap(),
+                ));
+            }
+            let a = [&values[0], &values[1], &values[2]];
+            let b = [&values[3], &values[4], &values[5]];
+            let c = [&values[6], &values[7], &values[8]];
+            assert_eq!(
+                Real::exact_rational_det3_word_sign(a, b, c),
+                Some(exact_affine_det3_sign(
+                    a,
+                    b,
+                    c,
+                    [&zero[0], &zero[1], &zero[2]],
+                )),
+                "values={values:?}",
+            );
+        }
+
+        assert_eq!(
+            Real::exact_rational_det3_word_sign(
+                [&Real::pi(), &zero[1], &zero[2]],
+                [&zero[0], &zero[1], &zero[2]],
+                [&zero[0], &zero[1], &zero[2]],
+            ),
+            None,
+        );
+    }
+
+    #[test]
     fn prepared_affine_det3_exact_word_filter_matches_randomized_rationals() {
         let mut state = 0xa54f_f53a_5f1d_36f1_u64;
         for _ in 0..10_000 {
