@@ -3,7 +3,7 @@
 use std::cell::OnceCell;
 use std::rc::Rc;
 
-use crate::curve_intersection::split_curve_spans;
+use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierParameter2, BezierSplitFragment2, BezierSplitMaterialization2, BooleanOp,
@@ -11,7 +11,7 @@ use crate::{
     CurveGeometry2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2,
     CurvePolicy, CurveRegion2, CurveResult, ExactCurveError, ExactCurveResult,
-    RationalBezierOverlapOrientation2, RetainedCurveIntersection2, UncertaintyReason,
+    RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Filled side of an oriented closed curve path.
@@ -179,7 +179,7 @@ struct CurvePathIntersectionContext<'a> {
 struct CurvePathPair {
     first_curve_index: usize,
     second_curve_index: usize,
-    prepared: RetainedCurveIntersection2,
+    context: CurveIntersectionContext,
 }
 
 fn curve_pair_bounds_decided_disjoint(
@@ -362,7 +362,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 pairs.push(CurvePathPair {
                     first_curve_index,
                     second_curve_index,
-                    prepared: first.retain_intersection(second, policy)?,
+                    context: CurveIntersectionContext::try_new(first, second, policy)?,
                 });
             }
         }
@@ -381,7 +381,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
         let mut overlaps = Vec::with_capacity(pair_count);
         let mut blockers = Vec::with_capacity(pair_count);
         for pair in &self.pairs {
-            let result = pair.prepared.result_view()?;
+            let result = pair.context.result_view()?;
             contacts.extend(result.contacts().iter().cloned().map(|contact| {
                 CurvePathIntersectionContact2 {
                     first_curve_index: pair.first_curve_index,

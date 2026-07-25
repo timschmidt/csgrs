@@ -184,7 +184,7 @@ pub use curve::{
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
     CurveIntersectionPairBlockerKind2, CurveIntersectionParameter2, CurveIntersectionResult2,
-    CurveIntersectionTopology2, RetainedCurveIntersection2,
+    CurveIntersectionTopology2,
 };
 pub use curve_path_intersection::{
     CurveBoundaryInteriorSide2, CurvePathBooleanFragment2, CurvePathBooleanFragmentAction2,

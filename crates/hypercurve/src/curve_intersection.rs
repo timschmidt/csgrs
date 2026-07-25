@@ -89,31 +89,30 @@ struct CurveIntersectionTopologyData {
 
 #[derive(Debug)]
 struct CurveIntersectionResultData {
+    span_pair_count: usize,
     contacts: Rc<[CurveIntersectionContact2]>,
     overlaps: Rc<[CurveIntersectionOverlap2]>,
     blockers: Rc<[CurveIntersectionPairBlocker2]>,
 }
 
-/// Clone-shared retained intersection facts for two top-level curves.
-#[derive(Clone, Debug)]
-pub struct RetainedCurveIntersection2 {
-    data: Rc<PreparedCurveIntersectionData>,
+#[derive(Debug)]
+pub(crate) struct CurveIntersectionContext {
+    data: CurveIntersectionContextData,
 }
 
 #[derive(Debug)]
-struct PreparedCurveIntersectionData {
+struct CurveIntersectionContextData {
     first: Curve2,
     second: Curve2,
     policy: CurvePolicy,
     span_pair_count: usize,
-    dispatch: PreparedCurveIntersectionDispatch,
+    dispatch: CurveIntersectionDispatch,
     result: OnceCell<ExactCurveResult<CurveIntersectionResult2>>,
-    topology: OnceCell<ExactCurveResult<CurveIntersectionTopology2>>,
 }
 
 #[derive(Debug)]
-enum PreparedCurveIntersectionDispatch {
-    SpanPairs(Vec<PreparedCurveSpanPair>),
+enum CurveIntersectionDispatch {
+    SpanPairs(Vec<CurveSpanPair>),
     CertifiedEndpointContact(CurveIntersectionContact2),
     NativeLine(LineLineIntersection),
     NativeLineArc {
@@ -130,15 +129,15 @@ enum NativeArcIntersectionDispatch {
 }
 
 #[derive(Debug)]
-struct PreparedCurveSpanPair {
+struct CurveSpanPair {
     first_span_index: usize,
     second_span_index: usize,
-    state: PreparedCurveSpanPairState,
+    state: CurveSpanPairState,
 }
 
 #[derive(Debug)]
-enum PreparedCurveSpanPairState {
-    Prepared(RetainedRationalBezierIntersection2),
+enum CurveSpanPairState {
+    Rational(RetainedRationalBezierIntersection2),
     RetainedLineageOverlap {
         first_range: ParamRange,
         second_range: ParamRange,
@@ -147,13 +146,13 @@ enum PreparedCurveSpanPairState {
     Blocked(UncertaintyReason),
 }
 
-fn prepare_span_pairs(
+fn build_span_pairs(
     first_curve: &Curve2,
     second_curve: &Curve2,
     first_evaluators: &[RationalBezier2],
     second_evaluators: &[RationalBezier2],
     policy: &CurvePolicy,
-) -> ExactCurveResult<Vec<PreparedCurveSpanPair>> {
+) -> ExactCurveResult<Vec<CurveSpanPair>> {
     let first_fragments = first_curve.native_bezier_fragments()?;
     let second_fragments = second_curve.native_bezier_fragments()?;
     let shares_injective_lineage = first_curve.shares_certified_parameter_lineage(second_curve);
@@ -181,19 +180,19 @@ fn prepare_span_pairs(
             let retained_overlap = match retained_overlap {
                 Classification::Decided(overlap) => overlap,
                 Classification::Uncertain(reason) => {
-                    pairs.push(PreparedCurveSpanPair {
+                    pairs.push(CurveSpanPair {
                         first_span_index,
                         second_span_index,
-                        state: PreparedCurveSpanPairState::Blocked(reason),
+                        state: CurveSpanPairState::Blocked(reason),
                     });
                     continue;
                 }
             };
             if let Some(overlap) = retained_overlap {
-                pairs.push(PreparedCurveSpanPair {
+                pairs.push(CurveSpanPair {
                     first_span_index,
                     second_span_index,
-                    state: PreparedCurveSpanPairState::RetainedLineageOverlap {
+                    state: CurveSpanPairState::RetainedLineageOverlap {
                         first_range: overlap.first,
                         second_range: overlap.second,
                         orientation: if overlap.same_orientation {
@@ -206,9 +205,9 @@ fn prepare_span_pairs(
                 continue;
             }
             let state = match first.retain_intersection(second, policy) {
-                Ok(prepared) => PreparedCurveSpanPairState::Prepared(prepared),
+                Ok(intersection) => CurveSpanPairState::Rational(intersection),
                 Err(ExactCurveError::Blocked(blocker)) => {
-                    PreparedCurveSpanPairState::Blocked(blocker.reason())
+                    CurveSpanPairState::Blocked(blocker.reason())
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => {
                     return Err(ExactCurveError::invalid(
@@ -218,7 +217,7 @@ fn prepare_span_pairs(
                     ));
                 }
             };
-            pairs.push(PreparedCurveSpanPair {
+            pairs.push(CurveSpanPair {
                 first_span_index,
                 second_span_index,
                 state,
@@ -321,6 +320,7 @@ fn build_native_line_evidence(
     second: &Curve2,
     relation: &LineLineIntersection,
     policy: &CurvePolicy,
+    span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let first_fragment = &first.native_bezier_fragments()?[0];
     let second_fragment = &second.native_bezier_fragments()?[0];
@@ -418,6 +418,7 @@ fn build_native_line_evidence(
     };
     Ok(CurveIntersectionResult2 {
         data: Rc::new(CurveIntersectionResultData {
+            span_pair_count,
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Rc::from([]),
@@ -431,6 +432,7 @@ fn build_native_line_arc_evidence(
     order: LineArcOrder,
     relation: &LineArcIntersection,
     policy: &CurvePolicy,
+    span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let mut contacts = Vec::new();
     match relation {
@@ -462,6 +464,7 @@ fn build_native_line_arc_evidence(
     }
     Ok(CurveIntersectionResult2 {
         data: Rc::new(CurveIntersectionResultData {
+            span_pair_count,
             contacts: contacts.into(),
             overlaps: Rc::from([]),
             blockers: Rc::from([]),
@@ -615,6 +618,7 @@ fn build_native_arc_evidence(
     second: &Curve2,
     points: &[Point2],
     policy: &CurvePolicy,
+    span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
         (first.geometry(), second.geometry())
@@ -674,6 +678,7 @@ fn build_native_arc_evidence(
     }
     Ok(CurveIntersectionResult2 {
         data: Rc::new(CurveIntersectionResultData {
+            span_pair_count,
             contacts: contacts.into(),
             overlaps: Rc::from([]),
             blockers: Rc::from([]),
@@ -685,6 +690,7 @@ fn build_native_coincident_arc_evidence(
     first: &Curve2,
     second: &Curve2,
     policy: &CurvePolicy,
+    span_pair_count: usize,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let (CurveGeometry2::CircularArc(first_arc), CurveGeometry2::CircularArc(second_arc)) =
         (first.geometry(), second.geometry())
@@ -834,6 +840,7 @@ fn build_native_coincident_arc_evidence(
 
     Ok(CurveIntersectionResult2 {
         data: Rc::new(CurveIntersectionResultData {
+            span_pair_count,
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Rc::from([]),
@@ -1017,62 +1024,79 @@ fn native_arc_parameter_error(curve: &Curve2, cause: CurveError) -> ExactCurveEr
 }
 
 impl Curve2 {
-    /// Prepares all promoted span pairs and retains their exact resultant facts.
-    pub fn retain_intersection(
+    /// Computes exact contact, overlap, and blocker evidence against another curve immediately.
+    pub fn intersect_curve(
         &self,
         other: &Self,
         policy: &CurvePolicy,
-    ) -> ExactCurveResult<RetainedCurveIntersection2> {
-        let (span_pair_count, dispatch) = match native_line_intersection(self, other, policy)? {
-            Some(relation) => (1, PreparedCurveIntersectionDispatch::NativeLine(relation)),
+    ) -> ExactCurveResult<CurveIntersectionResult2> {
+        CurveIntersectionContext::try_new(self, other, policy)?.result()
+    }
+
+    /// Computes exact split topology against another curve immediately.
+    pub fn intersection_topology(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<CurveIntersectionTopology2> {
+        CurveIntersectionContext::try_new(self, other, policy)?.topology()
+    }
+}
+
+impl CurveIntersectionContext {
+    pub(crate) fn try_new(
+        first: &Curve2,
+        second: &Curve2,
+        policy: &CurvePolicy,
+    ) -> ExactCurveResult<Self> {
+        let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
+            Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
             None => {
-                if let Some((order, relation)) = native_line_arc_intersection(self, other, policy)?
+                if let Some((order, relation)) =
+                    native_line_arc_intersection(first, second, policy)?
                 {
-                    let span_pair_count = self.native_bezier_fragments()?.len()
-                        * other.native_bezier_fragments()?.len();
+                    let span_pair_count = first.native_bezier_fragments()?.len()
+                        * second.native_bezier_fragments()?.len();
                     (
                         span_pair_count,
-                        PreparedCurveIntersectionDispatch::NativeLineArc { order, relation },
+                        CurveIntersectionDispatch::NativeLineArc { order, relation },
                     )
                 } else {
-                    match native_arc_intersection(self, other, policy)? {
+                    match native_arc_intersection(first, second, policy)? {
                         Some(native) => {
-                            let span_pair_count = self.native_bezier_fragments()?.len()
-                                * other.native_bezier_fragments()?.len();
+                            let span_pair_count = first.native_bezier_fragments()?.len()
+                                * second.native_bezier_fragments()?.len();
                             let dispatch = match native {
                                 NativeArcIntersectionDispatch::Points(points) => {
-                                    PreparedCurveIntersectionDispatch::NativeArcPoints(points)
+                                    CurveIntersectionDispatch::NativeArcPoints(points)
                                 }
                                 NativeArcIntersectionDispatch::Coincident => {
-                                    PreparedCurveIntersectionDispatch::NativeCoincidentArcs
+                                    CurveIntersectionDispatch::NativeCoincidentArcs
                                 }
                             };
                             (span_pair_count, dispatch)
                         }
                         None => {
                             if let Some(contact) =
-                                certified_singleton_aabb_endpoint_contact(self, other, policy)?
+                                certified_singleton_aabb_endpoint_contact(first, second, policy)?
                             {
                                 (
                                     1,
-                                    PreparedCurveIntersectionDispatch::CertifiedEndpointContact(
-                                        contact,
-                                    ),
+                                    CurveIntersectionDispatch::CertifiedEndpointContact(contact),
                                 )
                             } else {
-                                let first_evaluators = self.rational_evaluators()?;
-                                let second_evaluators = other.rational_evaluators()?;
+                                let first_evaluators = first.rational_evaluators()?;
+                                let second_evaluators = second.rational_evaluators()?;
                                 let span_pair_count =
                                     first_evaluators.len() * second_evaluators.len();
-                                let dispatch = PreparedCurveIntersectionDispatch::SpanPairs(
-                                    prepare_span_pairs(
-                                        self,
-                                        other,
+                                let dispatch =
+                                    CurveIntersectionDispatch::SpanPairs(build_span_pairs(
+                                        first,
+                                        second,
                                         first_evaluators,
                                         second_evaluators,
                                         policy,
-                                    )?,
-                                );
+                                    )?);
                                 (span_pair_count, dispatch)
                             }
                         }
@@ -1080,124 +1104,81 @@ impl Curve2 {
                 }
             }
         };
-        Ok(RetainedCurveIntersection2 {
-            data: Rc::new(PreparedCurveIntersectionData {
-                first: self.clone(),
-                second: other.clone(),
+        Ok(Self {
+            data: CurveIntersectionContextData {
+                first: first.clone(),
+                second: second.clone(),
                 policy: policy.clone(),
                 span_pair_count,
                 dispatch,
                 result: OnceCell::new(),
-                topology: OnceCell::new(),
-            }),
+            },
         })
     }
-}
 
-impl RetainedCurveIntersection2 {
-    /// Returns the retained first operand.
-    pub fn first(&self) -> &Curve2 {
-        &self.data.first
-    }
-
-    /// Returns the retained second operand.
-    pub fn second(&self) -> &Curve2 {
-        &self.data.second
-    }
-
-    /// Returns the exact policy captured when this pair was retained.
-    pub fn policy(&self) -> &CurvePolicy {
-        &self.data.policy
-    }
-
-    /// Returns the number of promoted span pairs considered by dispatch.
-    pub fn span_pair_count(&self) -> usize {
-        self.data.span_pair_count
-    }
-
-    /// Returns whether complete contact replay has already been retained.
-    pub fn is_result_cached(&self) -> bool {
-        self.data.result.get().is_some()
-    }
-
-    /// Returns a clone-shared retained result.
-    pub fn result(&self) -> ExactCurveResult<CurveIntersectionResult2> {
+    pub(crate) fn result(&self) -> ExactCurveResult<CurveIntersectionResult2> {
         self.result_view().cloned()
     }
 
-    /// Borrows the retained result without copying contacts or blockers.
-    pub fn result_view(&self) -> ExactCurveResult<&CurveIntersectionResult2> {
+    pub(crate) fn result_view(&self) -> ExactCurveResult<&CurveIntersectionResult2> {
         match self.data.result.get_or_init(|| self.build_evidence()) {
             Ok(result) => Ok(result),
             Err(error) => Err(error.clone()),
         }
     }
 
-    /// Returns whether contact-derived split topology has already been retained.
-    pub fn is_topology_cached(&self) -> bool {
-        self.data.topology.get().is_some()
-    }
-
-    /// Returns clone-shared split topology for a complete contact result.
-    pub fn topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {
-        self.topology_view().cloned()
-    }
-
-    /// Borrows contact-derived split topology without copying fragments.
-    pub fn topology_view(&self) -> ExactCurveResult<&CurveIntersectionTopology2> {
-        match self.data.topology.get_or_init(|| self.build_topology()) {
-            Ok(topology) => Ok(topology),
-            Err(error) => Err(error.clone()),
-        }
+    pub(crate) fn topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {
+        self.build_topology()
     }
 
     fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
-        if let PreparedCurveIntersectionDispatch::CertifiedEndpointContact(contact) =
-            &self.data.dispatch
-        {
+        if let CurveIntersectionDispatch::CertifiedEndpointContact(contact) = &self.data.dispatch {
             return Ok(CurveIntersectionResult2 {
                 data: Rc::new(CurveIntersectionResultData {
+                    span_pair_count: self.data.span_pair_count,
                     contacts: Rc::from([contact.clone()]),
                     overlaps: Rc::from([]),
                     blockers: Rc::from([]),
                 }),
             });
         }
-        if let PreparedCurveIntersectionDispatch::NativeLine(relation) = &self.data.dispatch {
+        if let CurveIntersectionDispatch::NativeLine(relation) = &self.data.dispatch {
             return build_native_line_evidence(
                 &self.data.first,
                 &self.data.second,
                 relation,
                 &self.data.policy,
+                self.data.span_pair_count,
             );
         }
-        if let PreparedCurveIntersectionDispatch::NativeLineArc { order, relation } =
-            &self.data.dispatch
-        {
+        if let CurveIntersectionDispatch::NativeLineArc { order, relation } = &self.data.dispatch {
             return build_native_line_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 *order,
                 relation,
                 &self.data.policy,
+                self.data.span_pair_count,
             );
         }
-        if let PreparedCurveIntersectionDispatch::NativeArcPoints(points) = &self.data.dispatch {
+        if let CurveIntersectionDispatch::NativeArcPoints(points) = &self.data.dispatch {
             return build_native_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 points,
                 &self.data.policy,
+                self.data.span_pair_count,
             );
         }
         if matches!(
             self.data.dispatch,
-            PreparedCurveIntersectionDispatch::NativeCoincidentArcs
+            CurveIntersectionDispatch::NativeCoincidentArcs
         ) {
             return build_native_coincident_arc_evidence(
                 &self.data.first,
                 &self.data.second,
                 &self.data.policy,
+                self.data.span_pair_count,
             );
         }
         let first_fragments = self.data.first.native_bezier_fragments()?;
@@ -1205,7 +1186,7 @@ impl RetainedCurveIntersection2 {
         let mut contacts = Vec::new();
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
-        let PreparedCurveIntersectionDispatch::SpanPairs(pairs) = &self.data.dispatch else {
+        let CurveIntersectionDispatch::SpanPairs(pairs) = &self.data.dispatch else {
             unreachable!("native dispatch returned before generic span replay")
         };
         for pair in pairs {
@@ -1213,7 +1194,7 @@ impl RetainedCurveIntersection2 {
             let second_span_range = second_fragments[pair.second_span_index]
                 .span_range()
                 .clone();
-            if let PreparedCurveSpanPairState::RetainedLineageOverlap {
+            if let CurveSpanPairState::RetainedLineageOverlap {
                 first_range,
                 second_range,
                 orientation,
@@ -1235,7 +1216,7 @@ impl RetainedCurveIntersection2 {
                 continue;
             }
             let span_contacts = match &pair.state {
-                PreparedCurveSpanPairState::Blocked(reason) => {
+                CurveSpanPairState::Blocked(reason) => {
                     blockers.push(CurveIntersectionPairBlocker2 {
                         first_span_index: pair.first_span_index,
                         second_span_index: pair.second_span_index,
@@ -1243,7 +1224,7 @@ impl RetainedCurveIntersection2 {
                     });
                     continue;
                 }
-                PreparedCurveSpanPairState::Prepared(prepared) => match prepared.try_contacts() {
+                CurveSpanPairState::Rational(intersection) => match intersection.try_contacts() {
                     Ok(contacts) => contacts,
                     Err(ExactCurveError::Blocked(blocker)) => {
                         blockers.push(CurveIntersectionPairBlocker2 {
@@ -1261,7 +1242,7 @@ impl RetainedCurveIntersection2 {
                         ));
                     }
                 },
-                PreparedCurveSpanPairState::RetainedLineageOverlap { .. } => {
+                CurveSpanPairState::RetainedLineageOverlap { .. } => {
                     unreachable!("retained lineage overlap returned before contact replay")
                 }
             };
@@ -1317,6 +1298,7 @@ impl RetainedCurveIntersection2 {
         }
         Ok(CurveIntersectionResult2 {
             data: Rc::new(CurveIntersectionResultData {
+                span_pair_count: self.data.span_pair_count,
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
@@ -1488,6 +1470,11 @@ impl CurveIntersectionOverlap2 {
 }
 
 impl CurveIntersectionResult2 {
+    /// Returns the number of promoted span pairs considered by exact dispatch.
+    pub fn span_pair_count(&self) -> usize {
+        self.data.span_pair_count
+    }
+
     /// Returns all certified contacts in deterministic promoted-span order.
     pub fn contacts(&self) -> &[CurveIntersectionContact2] {
         &self.data.contacts

@@ -5168,6 +5168,42 @@ all-feature and no-default-feature suites passed, including the full
 268-operation blocker regression and the new nonrational-scale regression, as
 did strict all-target Clippy in both feature configurations.
 
+### Immediate top-level curve intersections
+
+The public top-level curve workflow no longer exposes a prepared pair handle.
+`Curve2::intersect_curve` immediately returns complete contact, overlap, and
+blocker evidence, while `Curve2::intersection_topology` returns that evidence
+with its exact split topology. `span_pair_count` moved onto the evidence result.
+Path and region Boolean batches retain a private curve-pair context only for
+the duration of one call, so their evidence passes still share expensive
+native or resultant replay without exposing a long-lived cache API.
+
+The private context no longer needs the prepared handle's outer `Rc` allocation
+or its unused cached-topology slot. Clone-shared result and arrangement data
+remain unchanged. Exact line, line/arc, coincident-arc, endpoint, retained
+lineage, and general rational dispatch all feed the same immediate result
+constructors, with no projection or predicate weakening.
+
+The immediate curve/path regressions cover every native dispatch, partial
+nonlinear and algebraic overlap splitting, spline-knot deduplication, operand
+order, and the complete four-operation path matrix. The pathological blocker
+sentinel still decides all 268 native exact Boolean operations with zero
+blockers.
+
+On the identical three-cell Callgrind workload, instruction references fell
+from 97,554,466 after the immediate path-Boolean conversion to 96,661,943
+(0.91%). Heaptrack allocation events fell from 130,794 to 130,767, exactly one
+removed context allocation for each of the 27 candidate carrier pairs;
+temporary allocations remained 11,973. A five-run complete 67-cell release
+workload had a 271.2 millisecond native exact-Boolean median and a 16.83
+millisecond exact-polyline median while preserving 603 candidate pairs, 3,248
+fragments, 134 point classifications, checksum 6, and all 268 exact results.
+The release pathological executable contains 4,752,425 bytes of text,
+5,011,041 total loadable bytes, and 6,282,984 bytes on disk.
+Complete all-feature and no-default-feature validation passed, including the
+slow all-mode algebraic blocker regression, as did strict all-target Clippy in
+both feature configurations.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

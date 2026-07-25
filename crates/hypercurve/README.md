@@ -219,13 +219,13 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   line/arc topology.
 - `Curve2`, `CurveView2`, `CurvePath2`, and `CurvePathView2` are the primary
   mixed-family curve and connected-path types.
-- `RetainedCurveIntersection2` dispatches top-level curve pairs through retained
-  native spans, uses exact circle predicates before generic rational resultants,
+- `Curve2::intersect_curve` and `intersection_topology` immediately dispatch top-level
+  curve pairs through native spans, using exact circle predicates before generic rational resultants,
   deduplicates spline-knot contacts, and evidence exact source/span/parameter provenance
   plus unresolved pair evidence. Trimmed and reversed curves distinguish their current
   public parameter ranges from retained root-source ranges, and represented contacts
-  expose both values. Complete evidence lazily retain contact-derived span
-  splits and arrangements.
+  expose both values. The topology entry returns complete evidence with contact-derived
+  span splits and a clone-shared arrangement result.
 - `CurvePath2::intersect_path` and `intersection_topology` are immediate exact
   path-pair entries. `CurvePath2::boolean_selection` completes one regularized result;
   `boolean_selections` returns all four completed operation selections while sharing

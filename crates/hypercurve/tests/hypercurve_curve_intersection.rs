@@ -39,7 +39,7 @@ fn assert_real_close(left: &Real, right: &Real, tolerance: f64) {
 }
 
 #[test]
-fn top_level_rational_intersection_retains_sources_and_shared_evidence() {
+fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     let first = Curve2::new(CurveGeometry2::RationalBezier(
         RationalBezier2::try_new(
             vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
@@ -55,16 +55,11 @@ fn top_level_rational_intersection_retains_sources_and_shared_evidence() {
         .unwrap(),
     ));
 
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let clone = prepared.clone();
-    assert_eq!(prepared.span_pair_count(), 1);
-    assert!(!prepared.is_result_cached());
-    let evidence = prepared.result_view().unwrap();
-    assert!(prepared.is_result_cached());
-    assert!(clone.is_result_cached());
-    assert!(std::ptr::eq(evidence, clone.result_view().unwrap()));
+    let evidence = topology.result();
+    assert_eq!(evidence.span_pair_count(), 1);
     assert!(evidence.is_complete());
     assert!(!evidence.is_disjoint());
     assert_eq!(evidence.contacts().len(), 1);
@@ -77,9 +72,6 @@ fn top_level_rational_intersection_retains_sources_and_shared_evidence() {
         RationalBezierIntersectionPointEvidence2::Exact(point)
             if point == &Point2::new(q(1, 2), q(1, 4))
     ));
-    assert!(!prepared.is_topology_cached());
-    let topology = prepared.topology_view().unwrap();
-    assert!(prepared.is_topology_cached());
     assert_eq!(topology.first().len(), 1);
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.first()[0].fragments().len(), 2);
@@ -109,9 +101,7 @@ fn top_level_intersection_retains_implicit_conic_transversality() {
     );
 
     let result = conic
-        .retain_intersection(&cubic_line, &CurvePolicy::certified())
-        .unwrap()
-        .result()
+        .intersect_curve(&cubic_line, &CurvePolicy::certified())
         .unwrap();
     assert_eq!(result.contacts().len(), 1);
     assert!(result.contacts()[0].is_certified_transverse());
@@ -128,17 +118,16 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     .unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
 
-    let prepared = spline
-        .retain_intersection(&line, &CurvePolicy::certified())
+    let topology = spline
+        .intersection_topology(&line, &CurvePolicy::certified())
         .unwrap();
-    assert_eq!(prepared.span_pair_count(), 2);
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
+    assert_eq!(evidence.span_pair_count(), 2);
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
     let contact = &evidence.contacts()[0];
     assert_eq!(contact.first().exact_curve_parameter(), Some(r(1)));
     assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
@@ -148,10 +137,10 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
 fn top_level_shared_component_retains_certified_overlap() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let second = first.clone();
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
 
     assert!(evidence.is_complete());
     assert!(!evidence.is_disjoint());
@@ -162,7 +151,6 @@ fn top_level_shared_component_retains_certified_overlap() {
         evidence.overlaps()[0].orientation(),
         RationalBezierOverlapOrientation2::Same
     );
-    let topology = prepared.topology().unwrap();
     let graph = topology.arrangement_graph().unwrap();
     assert_eq!(graph.len(), 2);
     let traversal = decided(
@@ -186,9 +174,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
     let second = Curve2::from(independent);
 
     let evidence = first
-        .retain_intersection(&second, &CurvePolicy::certified())
-        .unwrap()
-        .result()
+        .intersect_curve(&second, &CurvePolicy::certified())
         .unwrap();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
@@ -224,8 +210,8 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     let first = Curve2::new(CurveGeometry2::RationalBezier(first_curve));
     let second = Curve2::new(CurveGeometry2::RationalBezier(second_curve));
 
-    let prepared = first.retain_intersection(&second, &policy).unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let topology = first.intersection_topology(&second, &policy).unwrap();
+    let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert!(evidence.contacts().is_empty());
     assert_eq!(evidence.overlaps().len(), 1);
@@ -237,7 +223,6 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     assert_eq!(overlap.second_range().start(), &Real::zero());
     assert_eq!(overlap.second_range().end(), &q(2, 3));
 
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
     let graph = topology.arrangement_graph_view().unwrap();
@@ -261,10 +246,10 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
             .unwrap(),
     ));
 
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
@@ -272,7 +257,6 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
         BezierParameter2::Algebraic(_)
     ));
 
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert!(matches!(
         topology.first()[0].fragments()[1],
@@ -428,25 +412,22 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     let first = source.subcurve(Real::zero(), q(3, 4)).unwrap();
     let second = source.subcurve(q(1, 4), Real::one()).unwrap();
 
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert_eq!(evidence.overlaps()[0].first_range().start(), &q(1, 3));
     assert_eq!(evidence.overlaps()[0].first_range().end(), &Real::one());
     assert_eq!(evidence.overlaps()[0].second_range().start(), &Real::zero());
     assert_eq!(evidence.overlaps()[0].second_range().end(), &q(2, 3));
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
 
     let reversed = second.reversed().unwrap();
     let reversed_evidence = first
-        .retain_intersection(&reversed, &CurvePolicy::certified())
-        .unwrap()
-        .result()
+        .intersect_curve(&reversed, &CurvePolicy::certified())
         .unwrap();
     assert!(reversed_evidence.is_complete());
     assert_eq!(reversed_evidence.overlaps().len(), 1);
@@ -465,9 +446,7 @@ fn top_level_disjoint_curves_produce_a_complete_empty_evidence() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(0, 2), p(1, 2)).unwrap());
     let evidence = first
-        .retain_intersection(&second, &CurvePolicy::certified())
-        .unwrap()
-        .result()
+        .intersect_curve(&second, &CurvePolicy::certified())
         .unwrap();
 
     assert!(evidence.is_complete());
@@ -482,11 +461,11 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let second =
         Curve2::from(CircularArc2::try_from_center(p(3, 0), p(13, 0), p(8, 0), true).unwrap());
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    assert_eq!(prepared.span_pair_count(), 4);
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
+    assert_eq!(evidence.span_pair_count(), 4);
 
     assert!(evidence.is_complete());
     assert_eq!(evidence.contacts().len(), 1);
@@ -497,7 +476,7 @@ fn top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters(
         contact.point(),
         RationalBezierIntersectionPointEvidence2::Exact(point) if point == &p(4, 3)
     ));
-    prepared.topology_view().unwrap();
+    assert_eq!(topology.result().contacts().len(), 1);
 }
 
 #[test]
@@ -507,9 +486,9 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         Curve2::from(CircularArc2::try_from_center(p(5, 0), p(-5, 0), p(0, 0), false).unwrap());
     let policy = CurvePolicy::certified();
 
-    let line_then_arc = line.retain_intersection(&arc, &policy).unwrap();
-    assert_eq!(line_then_arc.span_pair_count(), 2);
-    let evidence = line_then_arc.result_view().unwrap();
+    let topology = line.intersection_topology(&arc, &policy).unwrap();
+    let evidence = topology.result();
+    assert_eq!(evidence.span_pair_count(), 2);
     assert!(evidence.is_complete());
     assert_eq!(evidence.contacts().len(), 1);
     assert_eq!(
@@ -521,13 +500,11 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
         evidence.contacts()[0].point(),
         RationalBezierIntersectionPointEvidence2::Exact(point) if point == &p(4, 3)
     ));
-    let topology = line_then_arc.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
     assert_eq!(topology.second()[1].fragments().len(), 1);
 
-    let arc_then_line = arc.retain_intersection(&line, &policy).unwrap();
-    let reversed_evidence = arc_then_line.result_view().unwrap();
+    let reversed_evidence = arc.intersect_curve(&line, &policy).unwrap();
     assert_eq!(reversed_evidence.contacts().len(), 1);
     assert!(
         reversed_evidence.contacts()[0]
@@ -550,8 +527,8 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     let second =
         Curve2::from(CircularArc2::try_from_center(p(4, 3), p(0, 5), p(0, 0), false).unwrap());
     let policy = CurvePolicy::certified();
-    let prepared = first.retain_intersection(&second, &policy).unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let topology = first.intersection_topology(&second, &policy).unwrap();
+    let evidence = topology.result();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
@@ -566,18 +543,13 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
         RationalBezierOverlapOrientation2::Same
     );
 
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.first()[1].fragments().len(), 1);
     assert_eq!(topology.second()[0].fragments().len(), 1);
 
     let reversed =
         Curve2::from(CircularArc2::try_from_center(p(0, 5), p(4, 3), p(0, 0), true).unwrap());
-    let reversed_evidence = first
-        .retain_intersection(&reversed, &policy)
-        .unwrap()
-        .result()
-        .unwrap();
+    let reversed_evidence = first.intersect_curve(&reversed, &policy).unwrap();
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(reversed_overlap.second_range().start(), &Real::one());
@@ -837,10 +809,10 @@ fn path_overlap_ownership_uses_exact_orientation_and_boolean_side_logic() {
 fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     let first = Curve2::from(LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap());
     let second = Curve2::from(LineSeg2::try_new(p(2, 0), p(6, 0)).unwrap());
-    let prepared = first
-        .retain_intersection(&second, &CurvePolicy::certified())
+    let topology = first
+        .intersection_topology(&second, &CurvePolicy::certified())
         .unwrap();
-    let evidence = prepared.result_view().unwrap();
+    let evidence = topology.result();
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 2);
@@ -855,15 +827,12 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
         RationalBezierOverlapOrientation2::Same
     );
 
-    let topology = prepared.topology_view().unwrap();
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
 
     let reversed = Curve2::from(LineSeg2::try_new(p(6, 0), p(2, 0)).unwrap());
     let reversed_evidence = first
-        .retain_intersection(&reversed, &CurvePolicy::certified())
-        .unwrap()
-        .result()
+        .intersect_curve(&reversed, &CurvePolicy::certified())
         .unwrap();
     let reversed_overlap = &reversed_evidence.overlaps()[0];
     assert_eq!(reversed_overlap.second_range().start(), &r(1));

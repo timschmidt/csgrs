@@ -333,20 +333,17 @@ fn main() {
     let started = Instant::now();
     let mut lineage_checksum = 0_usize;
     for _ in 0..lineage_iterations {
-        let prepared = lineage_first
-            .retain_intersection(&lineage_second, &policy)
-            .expect("retained-lineage pair prepares exactly");
         lineage_checksum ^= black_box(
-            prepared
-                .result_view()
-                .expect("retained-lineage evidence is exact")
+            lineage_first
+                .intersect_curve(&lineage_second, &policy)
+                .expect("lineage evidence is exact")
                 .overlaps()
                 .len(),
         );
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_pair_retained_lineage_partial_nonlinear_overlap: {lineage_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={lineage_checksum}",
+        "curve_pair_immediate_lineage_partial_nonlinear_overlap: {lineage_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={lineage_checksum}",
         elapsed / lineage_iterations
     );
 
@@ -356,13 +353,10 @@ fn main() {
     let started = Instant::now();
     let mut native_checksum = 0_usize;
     for _ in 0..native_iterations {
-        let prepared = first_circle
-            .retain_intersection(&second_circle, &policy)
-            .expect("native circle pair prepares exactly");
-        let evidence = prepared
-            .result_view()
+        let evidence = first_circle
+            .intersect_curve(&second_circle, &policy)
             .expect("native circle evidence is complete");
-        native_checksum ^= black_box(evidence.contacts().len() + prepared.span_pair_count());
+        native_checksum ^= black_box(evidence.contacts().len() + evidence.span_pair_count());
     }
     let elapsed = started.elapsed();
     println!(

@@ -6,6 +6,7 @@ use std::rc::Rc;
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
+use crate::curve_intersection::CurveIntersectionContext;
 use crate::{
     BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
@@ -13,7 +14,7 @@ use crate::{
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2,
     CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError, ExactCurveResult,
     FillRule, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, RetainedCurveIntersection2, UncertaintyReason,
+    RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -111,7 +112,7 @@ struct RegionCarrier {
 struct RegionCarrierPair {
     first_carrier_index: usize,
     second_carrier_index: usize,
-    prepared: RetainedCurveIntersection2,
+    context: CurveIntersectionContext,
 }
 
 #[derive(Clone, Debug)]
@@ -454,7 +455,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 pairs.push(RegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index,
-                    prepared: first_curve.retain_intersection(second_curve, policy)?,
+                    context: CurveIntersectionContext::try_new(first_curve, second_curve, policy)?,
                 });
             }
         }
@@ -477,7 +478,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
         for pair in &self.data.pairs {
-            let result = pair.prepared.result_view()?;
+            let result = pair.context.result_view()?;
             let first = self.carrier_ref(pair.first_carrier_index);
             let second = self.carrier_ref(pair.second_carrier_index);
             blockers.extend(result.blockers().iter().cloned().map(|blocker| {
@@ -606,7 +607,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         reclassification_vertices.resize(next_topology_vertex, false);
         let mut overlaps = Vec::new();
         for pair in &self.data.pairs {
-            let result = pair.prepared.result_view()?;
+            let result = pair.context.result_view()?;
             if let Some(blocker) = result.blockers().first() {
                 let reason = match blocker.kind() {
                     crate::CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
