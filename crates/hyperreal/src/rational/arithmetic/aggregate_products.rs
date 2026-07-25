@@ -3427,24 +3427,26 @@ impl Rational {
         )
     }
 
-    fn dot_products_dyadic_words<const N: usize>(
-        left: [&Self; N],
-        right: [&Self; N],
-        signs: [Sign; N],
-        denominator_shifts: [u64; N],
+    fn signed_product_sum_dyadic_word_totals<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+        denominator_shifts: [u64; TERMS],
         max_shift: u64,
-    ) -> Option<Self> {
+    ) -> Option<(u128, u128)> {
         let mut positive = 0_u128;
         let mut negative = 0_u128;
-        for i in 0..N {
+        for i in 0..TERMS {
             let sign = signs[i];
             if sign == NoSign {
                 continue;
             }
-            let magnitude = left[i]
-                .numerator
-                .to_u128()?
-                .checked_mul(right[i].numerator.to_u128()?)?;
+            let mut magnitude = 1_u128;
+            for factor in terms[i] {
+                magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
+            }
             let scale_shift = u32::try_from(max_shift - denominator_shifts[i]).ok()?;
             let magnitude = Self::checked_word_shift_left(magnitude, scale_shift)?;
             match sign {
@@ -3453,7 +3455,24 @@ impl Rational {
                 NoSign => {}
             }
         }
+        Some((positive, negative))
+    }
 
+    fn signed_product_sum_dyadic_words_with_plan<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+        denominator_shifts: [u64; TERMS],
+        max_shift: u64,
+    ) -> Option<Self> {
+        let (positive, negative) = Self::signed_product_sum_dyadic_word_totals(
+            terms,
+            signs,
+            denominator_shifts,
+            max_shift,
+        )?;
         let (sign, mut magnitude) = match positive.cmp(&negative) {
             Ordering::Greater => (Plus, positive - negative),
             Ordering::Less => (Minus, negative - positive),
@@ -3478,6 +3497,22 @@ impl Rational {
             BigUint::from(magnitude),
             denominator,
         ))
+    }
+
+    fn dot_products_dyadic_words<const N: usize>(
+        left: [&Self; N],
+        right: [&Self; N],
+        signs: [Sign; N],
+        denominator_shifts: [u64; N],
+        max_shift: u64,
+    ) -> Option<Self> {
+        let terms = std::array::from_fn(|i| [left[i], right[i]]);
+        Self::signed_product_sum_dyadic_words_with_plan(
+            terms,
+            signs,
+            denominator_shifts,
+            max_shift,
+        )
     }
 
     fn dot_products_equal_denominator<const N: usize>(
@@ -4642,12 +4677,24 @@ impl Rational {
         let prefer_wide_dyadic = dyadic_plan
             .as_ref()
             .is_some_and(|plan| plan.prefer_wide);
-        if !prefer_wide_dyadic
-            && let Some(word) =
-                Self::signed_product_sum_words(terms, signs)
-        {
-            crate::trace_dispatch!("rational", "product_sum", "word-sized");
-            return word;
+        if !prefer_wide_dyadic {
+            if let Some(plan) = dyadic_plan.as_ref()
+                && let Some(word) = Self::signed_product_sum_dyadic_words_with_plan(
+                    terms,
+                    signs,
+                    plan.denominator_shifts,
+                    plan.max_shift,
+                )
+            {
+                crate::trace_dispatch!("rational", "product_sum", "dyadic-word-accumulator");
+                return word;
+            }
+            if dyadic_plan.is_none()
+                && let Some(word) = Self::signed_product_sum_words(terms, signs)
+            {
+                crate::trace_dispatch!("rational", "product_sum", "word-sized");
+                return word;
+            }
         }
         if nonzero_count == 1 {
             for i in 0..TERMS {
@@ -4775,12 +4822,30 @@ impl Rational {
         let prefer_wide_dyadic = dyadic_plan
             .as_ref()
             .is_some_and(|plan| plan.prefer_wide);
-        if !prefer_wide_dyadic
-            && let Some((positive, negative, _)) =
-                Self::signed_product_sum_word_totals(terms, signs)
-        {
-            crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
-            return positive.cmp(&negative);
+        if !prefer_wide_dyadic {
+            if let Some(plan) = dyadic_plan.as_ref()
+                && let Some((positive, negative)) =
+                    Self::signed_product_sum_dyadic_word_totals(
+                        terms,
+                        signs,
+                        plan.denominator_shifts,
+                        plan.max_shift,
+                    )
+            {
+                crate::trace_dispatch!(
+                    "rational",
+                    "product_sum_ordering",
+                    "dyadic-word-accumulator"
+                );
+                return positive.cmp(&negative);
+            }
+            if dyadic_plan.is_none()
+                && let Some((positive, negative, _)) =
+                    Self::signed_product_sum_word_totals(terms, signs)
+            {
+                crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
+                return positive.cmp(&negative);
+            }
         }
 
         if let Some(plan) = dyadic_plan {

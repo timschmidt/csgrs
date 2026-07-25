@@ -3214,6 +3214,31 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_dyadic_word_accumulator_materializes_a_wide_denominator() {
+        let tiny = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 130_usize,
+        )
+        .unwrap();
+        let one = Rational::one();
+        let terms = [[&tiny, &one], [&tiny, &one]];
+        let sum = Rational::signed_product_sum([true, true], terms);
+
+        assert_eq!(
+            sum,
+            Rational::from_bigint_fraction(
+                BigInt::one(),
+                BigUint::one() << 129_usize,
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            Rational::signed_product_sum_ordering([true, true], terms),
+            Ordering::Greater,
+        );
+    }
+
+    #[test]
     fn signed_product_sum_falls_back_when_dyadic_alignment_exceeds_a_word() {
         let wide_word = Rational::from_bigint(BigInt::from(1_u8) << 100_usize);
         let one = Rational::one();
