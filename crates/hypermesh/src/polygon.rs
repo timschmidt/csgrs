@@ -333,6 +333,28 @@ impl ConvexPolygon {
         result
     }
 
+    pub(crate) fn with_known_vertex_cycle_and_identities(
+        &self,
+        vertices: Vec<Point3>,
+        vertex_identities: Vec<ConstructionVertexIdentity>,
+    ) -> Self {
+        let edge_identities = self
+            .known_edge_identities()
+            .expect("known vertex identities have an aligned edge cycle");
+        debug_assert_eq!(vertices.len(), vertex_identities.len());
+        debug_assert_eq!(vertices.len(), edge_identities.len());
+        let approx_bounds =
+            (!vertices.is_empty()).then(|| bounds_for_owned_points(vertices.as_slice()));
+        let mut result = self.clone();
+        result.approx_bounds = approx_bounds;
+        result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
+        result.known_identities = Some(RetainedIdentityCycles::Owned {
+            vertices: Arc::from(vertex_identities),
+            edges: Arc::from(edge_identities),
+        });
+        result
+    }
+
     pub(crate) fn with_source_triangle_edge_identities(
         mut self,
         mesh: usize,
@@ -603,7 +625,7 @@ pub fn make_quad(
     }
 }
 
-fn edge_plane(a: &Point3, b: &Point3, opposite: &Point3, support: &Plane) -> Plane {
+pub(crate) fn edge_plane(a: &Point3, b: &Point3, opposite: &Point3, support: &Plane) -> Plane {
     let mut plane = oriented_edge_plane(a, b, support);
     if matches!(
         crate::geometry::classify_point(opposite, &plane),

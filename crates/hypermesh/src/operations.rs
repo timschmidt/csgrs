@@ -17,7 +17,7 @@ use crate::output::{
 };
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
-    InputTrianglePlanes,
+    InputTrianglePlanes, edge_plane,
 };
 use crate::predicate::{PreparedProjectivePoint3, PreparedRationalPlane4};
 use crate::storage_hash::StorageHashMap;
@@ -2000,17 +2000,9 @@ fn compute_two_convex_inputs_projectively(
                     affine_cache.resolve(point, Some(identity.clone()))
                 })
                 .collect::<HypermeshResult<Vec<_>>>()?;
-            let edge_identities = fragment
+            fragment.polygon = fragment
                 .polygon
-                .known_edge_identities()
-                .ok_or(crate::error::HypermeshError::UnknownClassification)?
-                .to_vec();
-            fragment.polygon = fragment.polygon.with_known_vertex_cycle_and_edges(
-                vertices,
-                canonical_identities,
-                fragment.polygon.edges.as_ref().clone(),
-                edge_identities,
-            );
+                .with_known_vertex_cycle_and_identities(vertices, canonical_identities);
         }
     }
 
@@ -2257,6 +2249,20 @@ fn collapse_certified_convex_faces(
     let mut faces = Vec::with_capacity(groups.len());
     let mut face_supports = Vec::with_capacity(groups.len());
     for (support_identity, polygon_indices) in groups {
+        if let [polygon_index] = polygon_indices.as_slice() {
+            let source = &polygons[*polygon_index];
+            let mesh_index = usize::try_from(source.mesh_index)
+                .ok()
+                .filter(|&mesh| mesh < support_planes.len())
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let mut face = source.clone();
+            face.support = support_planes[support_identity.mesh][support_identity.plane].clone();
+            face.delta_w = vec![0; support_planes.len()];
+            face.delta_w[mesh_index] = 1;
+            faces.push(face);
+            face_supports.push(support_identity);
+            continue;
+        }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
         let mut edge_uses: StorageHashMap<ConstructionEdgeIdentity, usize> =
             StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
@@ -2304,13 +2310,6 @@ fn collapse_certified_convex_faces(
             let edge_identities = polygon.known_edge_identities().expect("validated above");
             let vertex_identities = polygon.known_vertex_identities().expect("validated above");
             let points = polygon.known_vertices.as_ref().expect("validated above");
-            let rebuilt_planes = (polygon.edges.len() != edge_identities.len()).then(|| {
-                InputTrianglePlanes::from_points(
-                    points.get(0).expect("source triangle"),
-                    points.get(1).expect("source triangle"),
-                    points.get(2).expect("source triangle"),
-                )
-            });
             for edge_index in 0..edge_identities.len() {
                 let edge_identity = &edge_identities[edge_index];
                 if edge_uses.get(edge_identity).copied() != Some(1) {
@@ -2326,10 +2325,18 @@ fn collapse_certified_convex_faces(
                 else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
-                let edge_plane = rebuilt_planes.as_ref().map_or_else(
-                    || polygon.edges[edge_index].clone(),
-                    |planes| planes.edges[edge_index].clone(),
-                );
+                let edge_plane = if polygon.edges.len() == edge_identities.len() {
+                    polygon.edges[edge_index].clone()
+                } else if points.len() == 3 {
+                    edge_plane(
+                        points.get(edge_index).expect("source triangle"),
+                        points.get((edge_index + 1) % 3).expect("source triangle"),
+                        points.get((edge_index + 2) % 3).expect("source triangle"),
+                        &polygon.support,
+                    )
+                } else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
                 if outgoing
                     .insert(*start, (*end, edge_plane, edge_identity.clone()))
                     .is_some()
@@ -2965,6 +2972,30 @@ mod tests {
         .unwrap();
         assert_eq!(cycle.edges.len(), 3);
         assert!(cycle.edges.iter().all(|edge| edge == &polygon.support));
+    }
+
+    #[test]
+    fn singleton_certified_face_preserves_deferred_edges() {
+        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )
+        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let support_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
+        let polygons = [polygon];
+        let supports = [vec![&polygons[0].support], Vec::new()];
+
+        let (faces, face_supports) =
+            collapse_certified_convex_faces(&polygons, &[support_identity], &supports).unwrap();
+
+        assert_eq!(faces.len(), 1);
+        assert!(faces[0].edges.is_empty());
+        assert_eq!(faces[0].vertex_count(), 3);
+        assert_eq!(faces[0].delta_w, vec![1, 0]);
+        assert_eq!(face_supports, vec![support_identity]);
     }
 
     #[test]
