@@ -1,6 +1,7 @@
 //! Convex polygon representation backed by hyperreal planes.
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
+use hyperreal::RealSign;
 use std::sync::Arc;
 
 use crate::error::HypermeshResult;
@@ -595,25 +596,37 @@ fn exact_axis_aligned_triangle_support(
     // without materializing any coordinate differences or plane scale.
     let u = (axis + 1) % 3;
     let v = (axis + 2) % 3;
-    let [Some(p0u), Some(p1u), Some(p2u)] = points.map(|point| point[u].exact_rational_ref())
-    else {
-        return None;
+    let orientation = match Real::certified_affine_det2_sign(
+        [points[0][u], points[0][v]],
+        [points[1][u], points[1][v]],
+        [points[2][u], points[2][v]],
+    ) {
+        Some(RealSign::Negative) => std::cmp::Ordering::Less,
+        Some(RealSign::Positive) => std::cmp::Ordering::Greater,
+        Some(RealSign::Zero) | None => {
+            let [Some(p0u), Some(p1u), Some(p2u)] =
+                points.map(|point| point[u].exact_rational_ref())
+            else {
+                return None;
+            };
+            let [Some(p0v), Some(p1v), Some(p2v)] =
+                points.map(|point| point[v].exact_rational_ref())
+            else {
+                return None;
+            };
+            Rational::signed_product_sum_ordering(
+                [true, true, true, false, false, false],
+                [
+                    [p0u, p1v],
+                    [p1u, p2v],
+                    [p2u, p0v],
+                    [p0u, p2v],
+                    [p1u, p0v],
+                    [p2u, p1v],
+                ],
+            )
+        }
     };
-    let [Some(p0v), Some(p1v), Some(p2v)] = points.map(|point| point[v].exact_rational_ref())
-    else {
-        return None;
-    };
-    let orientation = Rational::signed_product_sum_ordering(
-        [true, true, true, false, false, false],
-        [
-            [p0u, p1v],
-            [p1u, p2v],
-            [p2u, p0v],
-            [p0u, p2v],
-            [p1u, p0v],
-            [p2u, p1v],
-        ],
-    );
     match orientation {
         std::cmp::Ordering::Less => {
             Some(Plane::axis_aligned(axis, points[0][axis].clone()).inverted())
