@@ -2081,6 +2081,10 @@ fn same_contact_point(
             RationalBezierIntersectionPointEvidence2::Algebraic(first),
             RationalBezierIntersectionPointEvidence2::Algebraic(second),
         ) => {
+            let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
+            else {
+                return false;
+            };
             let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
                 first.x().and_then(|image| image.representation()),
                 first.y().and_then(|image| image.representation()),
@@ -2102,6 +2106,9 @@ fn same_contact_point(
             RationalBezierIntersectionPointEvidence2::Algebraic(algebraic),
             RationalBezierIntersectionPointEvidence2::Exact(exact),
         ) => {
+            let Some(algebraic) = algebraic.resolved(policy) else {
+                return false;
+            };
             let (Some(x), Some(y)) = (
                 algebraic.x().and_then(|image| image.representation()),
                 algebraic.y().and_then(|image| image.representation()),

@@ -5405,6 +5405,55 @@ the 268-decision pathological Boolean workload, strict all-target Clippy, and
 10,000 nightly libFuzzer algebraic-image runs under AddressSanitizer also
 completed without an exactness or safety failure.
 
+### Deferred implicit-conic contact coordinates
+
+Implicit-conic replay already proves an exact pair of source parameters maps to
+the same contact point. It formerly evaluated both algebraic coordinate images
+immediately even though region Boolean topology only observes those coordinates
+when it must deduplicate a contact vertex. Algebraic contacts now retain the
+exact rational-Bezier source and algebraic parameter behind the existing
+`RationalBezierIntersectionPointEvidence2::Algebraic` surface. The parameter
+remains immediately available; x and y images are materialized once, through a
+clone-shared cache, only if topology comparison requests them. Exact-parameter
+contacts retain their previous eager path.
+
+The one-cell pathological Boolean sentinel retained identical work: four
+decided operations, nine candidate pairs, 48 fragments, two point
+classifications, no blockers, and checksum 6. Callgrind measured 28,520,330
+instructions before and 28,089,032 after, a reduction of 431,298 instructions
+(1.51%). Heaptrack recorded 37,793 versus 36,802 allocations (2.62% fewer) and
+2,942 versus 2,723 postprocessed temporary allocations (7.44% fewer). Peak RSS
+fell from 11.63 to 11.47 MiB. Peak heap rose from 985.42 to 993.77 KiB and
+reported retained memory rose from 210.97 to 213.02 KiB; these costs are
+recorded rather than hidden by the allocation-count improvement.
+
+Fifteen CPU-pinned, alternating executions of the complete 67-cell native
+Boolean lane measured medians of 582.504 milliseconds before and 574.434
+milliseconds after, a 1.39% reduction. Every execution completed 268 decided
+operations over 603 candidate pairs and 3,248 fragments with no blocker and
+checksum 6.
+
+A same-compiler symbolized pathological executable changed as follows:
+
+| Release artifact component | Eager coordinates | Deferred coordinates | Change |
+| --- | ---: | ---: | ---: |
+| Text | 4,866,059 bytes | 4,866,715 bytes | 656 bytes larger |
+| Total loadable | 5,125,731 bytes | 5,129,827 bytes | 4,096 bytes larger |
+| Debug file size | 124,856,728 bytes | 124,906,632 bytes | 49,904 bytes larger |
+
+The workspace call-graph utility regenerated all source, test, benchmark,
+example, and fuzz nodes for `hypercurve`, `hyperlattice`, `hyperlimit`,
+`hyperreal`, and `hypersolve`. SCC-condensed depth stayed 4 for
+`CurveRegion2::boolean_regions`, 9 for
+`RationalBezier2::implicit_conic_intersection_contacts`, and 6 for the
+contact-comparison helper; every reachable SCC remained a single node.
+
+The final source passed the complete all-feature/all-target test run, strict
+all-target Clippy, warning-denied rustdoc, the no-default-feature library/test
+matrix, and `cargo bench --workspace --all-features`. The benchmark command
+executed every benchmark target, including every immediate API lane and the
+complete comparative target; no representative subset was substituted.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two
@@ -5412,13 +5461,15 @@ ordered gates. The first gate covers every immediately affected public API:
 exact-result and failure-boundary regressions, executed release benchmarks,
 Callgrind instructions, Heaptrack allocations, loadable and file size, and
 static callgraph depth. A failure at this tier is reverted before broader
-validation. A passing candidate must then run correctness and representative
-executed performance tests for all workspace hyper crates:
+validation. A passing candidate must then run correctness and the complete
+executed benchmark suite, including every benchmark target, for all workspace
+hyper crates:
 `hyperbrep`, `hypercircuit`, `hypercurve`, `hyperdrc`, `hyperevolution`,
 `hypergraphics`, `hyperlattice`, `hyperlimit`, `hypermesh`, `hyperpack`,
 `hyperparts`, `hyperpath`, `hyperphysics`, `hyperreal`, `hypersdf`,
-`hypersolve`, `hypertri`, and `hypervoxel`. Relevant sanitizer fuzzers remain
-the final cross-stack correctness tier.
+`hypersolve`, `hypertri`, and `hypervoxel`. A representative subset cannot
+substitute for this all-benchmark gate. Relevant sanitizer fuzzers remain the
+final cross-stack correctness tier.
 
 The second tier is executable through
 `scripts/prepared-removal-all-hyper-gate.sh`. It refuses to start without a

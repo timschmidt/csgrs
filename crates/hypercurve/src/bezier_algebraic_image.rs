@@ -27,8 +27,9 @@ use hypersolve::{
 use crate::classify::compare_reals;
 use crate::{
     BezierAlgebraicParameter2, CubicBezier2, CurvePolicy, CurveResult, QuadraticBezier2,
-    RationalQuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2,
 };
+use std::cell::OnceCell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -47,7 +48,8 @@ pub enum BezierAlgebraicImageStatus {
     /// package.
     YImageFailed,
     /// The exact rational-coordinate expressions and their certified
-    /// Real-coefficient source root were retained without forcing them into
+    /// Real-coefficient source root, or an equivalent exact curve/parameter
+    /// source, were retained without forcing coordinate representations into
     /// the rational-coefficient algebraic-number package.
     RetainedRationalExpression,
 }
@@ -240,6 +242,7 @@ struct RationalBezierAlgebraicPointImageData {
     x: Option<BezierAlgebraicRationalCoordinateImage>,
     y: Option<BezierAlgebraicRationalCoordinateImage>,
     retained_expression: Option<RetainedRationalPointExpression>,
+    parametric_source: Option<RetainedRationalPointParametricSource>,
     message: Option<String>,
 }
 
@@ -249,6 +252,19 @@ struct RetainedRationalPointExpression {
     x_numerator: Vec<Real>,
     y_numerator: Vec<Real>,
     denominator: Vec<Real>,
+}
+
+#[derive(Debug)]
+struct RetainedRationalPointParametricSource {
+    curve: RationalBezier2,
+    parameter: BezierAlgebraicParameter2,
+    resolved: OnceCell<Option<RationalBezierAlgebraicPointImage2>>,
+}
+
+impl PartialEq for RetainedRationalPointParametricSource {
+    fn eq(&self, other: &Self) -> bool {
+        self.curve == other.curve && self.parameter == other.parameter
+    }
 }
 
 impl PartialEq for RationalBezierAlgebraicPointImage2 {
@@ -273,9 +289,48 @@ impl RationalBezierAlgebraicPointImage2 {
                 x,
                 y,
                 retained_expression,
+                parametric_source: None,
                 message,
             }),
         }
+    }
+
+    pub(crate) fn from_parametric_source(
+        curve: RationalBezier2,
+        parameter: BezierAlgebraicParameter2,
+        policy: &CurvePolicy,
+    ) -> Self {
+        Self {
+            data: Rc::new(RationalBezierAlgebraicPointImageData {
+                status: BezierAlgebraicImageStatus::RetainedRationalExpression,
+                parameter: parameter_representation(&parameter, policy),
+                x: None,
+                y: None,
+                retained_expression: None,
+                parametric_source: Some(RetainedRationalPointParametricSource {
+                    curve,
+                    parameter,
+                    resolved: OnceCell::new(),
+                }),
+                message: None,
+            }),
+        }
+    }
+
+    #[inline(never)]
+    pub(crate) fn resolved(&self, policy: &CurvePolicy) -> Option<&Self> {
+        let Some(source) = &self.data.parametric_source else {
+            return Some(self);
+        };
+        source
+            .resolved
+            .get_or_init(|| {
+                source
+                    .curve
+                    .point_at_algebraic_parameter(&source.parameter, policy)
+                    .ok()
+            })
+            .as_ref()
     }
 
     /// Returns the final construction status.
@@ -305,6 +360,12 @@ impl RationalBezierAlgebraicPointImage2 {
             .retained_expression
             .as_ref()
             .map(|expression| &expression.parameter)
+            .or_else(|| {
+                self.data
+                    .parametric_source
+                    .as_ref()
+                    .map(|source| &source.parameter)
+            })
     }
 
     /// Returns the exact x numerator, y numerator, and shared denominator for

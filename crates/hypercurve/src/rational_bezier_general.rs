@@ -154,7 +154,10 @@ pub enum RationalBezierIntersectionCandidates2 {
 pub enum RationalBezierIntersectionPointEvidence2 {
     /// The contact point is represented directly by [`Real`] coordinates.
     Exact(Point2),
-    /// The contact point is retained as exact algebraic coordinate images.
+    /// The contact point is retained as exact algebraic point evidence.
+    ///
+    /// A retained rational-expression status may defer coordinate images
+    /// while preserving the exact source curve and parameter.
     Algebraic(RationalBezierAlgebraicPointImage2),
 }
 
@@ -1965,14 +1968,34 @@ impl RationalBezier2 {
             )?;
             match mapped {
                 Classification::Decided(Some(conic_parameter)) => {
-                    let point = match exact_contact_point_evidence(other, parameter, policy)? {
-                        Some(point) => Some(point),
-                        None => exact_contact_point_evidence(self, &conic_parameter, policy)?,
-                    };
-                    let Some(point) = point else {
-                        return Ok(Some(Classification::Uncertain(
-                            UncertaintyReason::Predicate,
-                        )));
+                    let point = match parameter {
+                        BezierParameter2::Exact(_) => {
+                            match exact_contact_point_evidence(other, parameter, policy)? {
+                                Some(point) => point,
+                                None => {
+                                    let Some(point) = exact_contact_point_evidence(
+                                        self,
+                                        &conic_parameter,
+                                        policy,
+                                    )?
+                                    else {
+                                        return Ok(Some(Classification::Uncertain(
+                                            UncertaintyReason::Predicate,
+                                        )));
+                                    };
+                                    point
+                                }
+                            }
+                        }
+                        BezierParameter2::Algebraic(parameter) => {
+                            RationalBezierIntersectionPointEvidence2::Algebraic(
+                                RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                    other.clone(),
+                                    parameter.clone(),
+                                    policy,
+                                ),
+                            )
+                        }
                     };
                     contacts.push(RationalBezierIntersectionContact2 {
                         first_parameter: conic_parameter,
@@ -6240,9 +6263,11 @@ mod tests {
         )
         .unwrap();
 
-        let RationalBezierIntersectionContacts2::Contacts(contacts) = conic
-            .intersection_contacts(&line, &CurvePolicy::certified())
-            .unwrap()
+        let policy = CurvePolicy::certified();
+        let Some(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(contacts))) =
+            conic
+                .implicit_conic_intersection_contacts(&line, &policy)
+                .unwrap()
         else {
             panic!("parabola and horizontal line did not produce their algebraic contact");
         };
@@ -6255,7 +6280,7 @@ mod tests {
         assert!(
             source_parameter
                 .cached_rational_bezier_point_image(&line)
-                .is_some()
+                .is_none()
         );
         let BezierParameter2::Algebraic(conic_parameter) = contact.first_parameter() else {
             panic!("parabola contact parameter should remain algebraic");
@@ -6265,6 +6290,29 @@ mod tests {
                 .cached_rational_bezier_point_image(&conic)
                 .is_none()
         );
+        let RationalBezierIntersectionPointEvidence2::Algebraic(point_image) = contact.point()
+        else {
+            panic!("implicit-conic contact did not retain algebraic point evidence");
+        };
+        assert_eq!(
+            point_image.status(),
+            crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+        );
+        assert!(point_image.x().is_none());
+        assert!(point_image.y().is_none());
+        assert_eq!(point_image.retained_parameter(), Some(source_parameter));
+        assert!(point_image.parameter().is_valid());
+        let unresolved_clone = point_image.clone();
+        let resolved = point_image
+            .resolved(&policy)
+            .expect("retained exact point source must resolve");
+        assert_eq!(
+            resolved.status(),
+            crate::BezierAlgebraicImageStatus::Transformed
+        );
+        assert!(resolved.x().is_some());
+        assert!(resolved.y().is_some());
+        assert_eq!(point_image, &unresolved_clone);
     }
 
     #[test]
