@@ -1129,22 +1129,24 @@ impl PointPlaneClassificationCache {
         plane: &Plane,
         plane_index: usize,
         plane_count: usize,
-    ) -> HypermeshResult<(SourcePlaneRelation, Vec<usize>)> {
+        on_source_vertices: &mut Vec<usize>,
+    ) -> HypermeshResult<SourcePlaneRelation> {
+        on_source_vertices.clear();
         if certifiably_same_unoriented_plane(&polygon.support, plane) {
-            let on_source_vertices = polygon
-                .known_vertex_identities()
-                .into_iter()
-                .flatten()
-                .filter_map(|identity| match identity {
-                    ConstructionVertexIdentity::Source { vertex, .. } => Some(vertex),
-                    _ => None,
-                })
-                .collect();
-            return Ok((SourcePlaneRelation::Inside, on_source_vertices));
+            on_source_vertices.extend(
+                polygon
+                    .known_vertex_identities()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|identity| match identity {
+                        ConstructionVertexIdentity::Source { vertex, .. } => Some(vertex),
+                        _ => None,
+                    }),
+            );
+            return Ok(SourcePlaneRelation::Inside);
         }
         let mut has_negative = false;
         let mut has_positive = false;
-        let mut on_source_vertices = Vec::new();
         let edge_identities = polygon.known_edge_identities();
         for (point_index, point) in polygon
             .known_vertices
@@ -1165,17 +1167,14 @@ impl PointPlaneClassificationCache {
                 }
             }
             if has_positive && has_negative {
-                return Ok((SourcePlaneRelation::Crossing, on_source_vertices));
+                return Ok(SourcePlaneRelation::Crossing);
             }
         }
-        Ok((
-            if has_positive {
-                SourcePlaneRelation::Outside
-            } else {
-                SourcePlaneRelation::Inside
-            },
-            on_source_vertices,
-        ))
+        Ok(if has_positive {
+            SourcePlaneRelation::Outside
+        } else {
+            SourcePlaneRelation::Inside
+        })
     }
 
     fn classify(
@@ -2260,6 +2259,7 @@ fn compute_two_convex_inputs_projectively(
     }
     let mut prepared_verification_planes = Vec::new();
     let mut candidate_planes = Vec::new();
+    let mut on_source_vertices = Vec::new();
     let mut active_plane_proposal_scratch = ActivePlaneProposalScratch::default();
     for (polygon, source_plane) in polygons.iter().zip(polygon_support_planes) {
         let host = usize::try_from(polygon.mesh_index)
@@ -2281,12 +2281,13 @@ fn compute_two_convex_inputs_projectively(
             {
                 has_cooriented_coincident_support = true;
             }
-            let (relation, on_source_vertices) = point_plane_caches[host]
+            let relation = point_plane_caches[host]
                 .source_relation(
                 polygon,
                 plane,
                 plane_index,
                 support_planes[other].len(),
+                &mut on_source_vertices,
             )
             .inspect_err(|_error| {
                 if cfg!(debug_assertions) {
@@ -2301,7 +2302,7 @@ fn compute_two_convex_inputs_projectively(
                     mesh: other,
                     plane: plane_index,
                 });
-            for vertex in on_source_vertices {
+            for &vertex in &on_source_vertices {
                 let incidences = projective_point_cache
                     .point_incidences
                     .entry(ConstructionVertexIdentity::Source { mesh: host, vertex })
@@ -4361,10 +4362,13 @@ mod tests {
         let polygon = crate::polygon::make_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
+        let mut on_source_vertices = Vec::new();
 
         assert!(matches!(
-            cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
-            (SourcePlaneRelation::Crossing, _)
+            cache
+                .source_relation(&polygon, &plane, 0, 1, &mut on_source_vertices)
+                .unwrap(),
+            SourcePlaneRelation::Crossing
         ));
         assert_eq!(cache.points.len(), 2);
     }
@@ -4375,10 +4379,13 @@ mod tests {
             .with_source_triangle_edge_identities(0, [7, 9, 11]);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
+        let mut on_source_vertices = Vec::new();
 
         assert!(matches!(
-            cache.source_relation(&polygon, &plane, 0, 1).unwrap(),
-            (SourcePlaneRelation::Crossing, _)
+            cache
+                .source_relation(&polygon, &plane, 0, 1, &mut on_source_vertices)
+                .unwrap(),
+            SourcePlaneRelation::Crossing
         ));
         assert!(cache.points.is_empty());
         assert_eq!(
