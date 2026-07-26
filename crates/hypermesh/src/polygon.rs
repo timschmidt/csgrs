@@ -544,7 +544,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
 pub(crate) fn make_indexed_triangle_with_deferred_edges(
     positions: Arc<[Point3]>,
     indices: [usize; 3],
-    axis_hint: Option<(usize, Option<RealSign>)>,
+    support_hint: Option<Plane>,
     mesh_index: isize,
     polygon_index: isize,
 ) -> ConvexPolygon {
@@ -552,11 +552,7 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     let p0 = &positions[i0];
     let p1 = &positions[i1];
     let p2 = &positions[i2];
-    let support = axis_hint
-        .and_then(|(axis, orientation)| {
-            exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)
-        })
-        .unwrap_or_else(|| Plane::from_points(p0, p1, p2));
+    let support = support_hint.unwrap_or_else(|| Plane::from_points(p0, p1, p2));
     ConvexPolygon {
         edges: Arc::new(Vec::new()),
         support,
@@ -573,7 +569,7 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     }
 }
 
-fn exact_axis_aligned_triangle_support(
+pub(crate) fn exact_axis_aligned_triangle_support(
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
