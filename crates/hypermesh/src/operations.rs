@@ -2033,11 +2033,12 @@ fn compute_two_convex_inputs_projectively(
         let mut excluded = false;
         let mut has_cooriented_coincident_support = false;
         for (plane_index, &plane) in support_planes[other].iter().enumerate() {
-            has_cooriented_coincident_support |=
-                normalized_planes_may_be_same(
-                    normalized_support_plane_f64_values[source_plane.mesh][source_plane.plane],
-                    normalized_support_plane_f64_values[other][plane_index],
-                ) && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false);
+            if !has_cooriented_coincident_support
+                && source_plane == canonical_plane_identities[other][plane_index]
+                && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false)
+            {
+                has_cooriented_coincident_support = true;
+            }
             let (relation, on_source_vertices) = point_plane_caches[host]
                 .source_relation(
                 polygon,
