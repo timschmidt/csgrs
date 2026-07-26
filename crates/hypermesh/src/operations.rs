@@ -1157,49 +1157,47 @@ impl ProjectiveCycle {
             .known_vertices
             .as_ref()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-        let edge_identities = polygon
+        let source_edge_identities = polygon
             .known_edge_identities()
-            .ok_or(crate::error::HypermeshError::UnknownClassification)?
-            .to_vec();
-        let approximate_points = source_points.iter().map(affine_point_f64).collect();
-        if edge_identities.len() != source_points.len() {
+            .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+        if source_edge_identities.len() != source_points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let point_identities = (0..source_points.len())
-            .map(|point_index| {
-                let vertex = source_vertex_index(&edge_identities, point_index)
-                    .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-                let mesh = match &edge_identities[point_index] {
-                    ConstructionEdgeIdentity::Source { mesh, .. } => *mesh,
-                    ConstructionEdgeIdentity::Split { .. } => {
-                        return Err(crate::error::HypermeshError::UnknownClassification);
-                    }
-                };
-                Ok(ConstructionVertexIdentity::Source { mesh, vertex })
-            })
-            .collect::<HypermeshResult<Vec<_>>>()?;
-        let (points, point_identities): (Vec<_>, Vec<_>) = source_points
-            .iter()
-            .zip(point_identities.iter().cloned())
-            .map(|(point, identity)| {
-                let (point, _, identity) =
-                    point_cache.intern_with_approximation_by(identity, || {
-                        HomogeneousPoint3::new(
-                            point.x.clone(),
-                            point.y.clone(),
-                            point.z.clone(),
-                            Real::one(),
-                        )
-                    });
-                (point, identity)
-            })
-            .unzip();
-        let edges = match polygon.edges.len() {
-            len if len == points.len() => polygon.edges.as_ref().clone(),
-            0 => vec![polygon.support.clone(); points.len()],
-            1 => vec![polygon.edges[0].clone(); points.len()],
+        let capacity = source_points.len();
+        let mut points = Vec::with_capacity(capacity);
+        let mut approximate_points = Vec::with_capacity(capacity);
+        let mut point_identities = Vec::with_capacity(capacity);
+        for (point_index, point) in source_points.iter().enumerate() {
+            approximate_points.push(affine_point_f64(point));
+            let vertex = source_vertex_index(source_edge_identities, point_index)
+                .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+            let mesh = match &source_edge_identities[point_index] {
+                ConstructionEdgeIdentity::Source { mesh, .. } => *mesh,
+                ConstructionEdgeIdentity::Split { .. } => {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+            };
+            let identity = ConstructionVertexIdentity::Source { mesh, vertex };
+            let (point, _, identity) = point_cache.intern_with_approximation_by(identity, || {
+                HomogeneousPoint3::new(
+                    point.x.clone(),
+                    point.y.clone(),
+                    point.z.clone(),
+                    Real::one(),
+                )
+            });
+            points.push(point);
+            point_identities.push(identity);
+        }
+        let mut edges = Vec::with_capacity(capacity);
+        match polygon.edges.len() {
+            len if len == points.len() => edges.extend(polygon.edges.iter().cloned()),
+            0 => edges.resize(points.len(), polygon.support.clone()),
+            1 => edges.resize(points.len(), polygon.edges[0].clone()),
             _ => return Err(crate::error::HypermeshError::UnknownClassification),
-        };
+        }
+        let mut edge_identities = Vec::with_capacity(capacity);
+        edge_identities.extend(source_edge_identities.iter().cloned());
         Ok(Self {
             points,
             approximate_points,
@@ -1935,7 +1933,7 @@ fn compute_two_convex_inputs_projectively(
                 .insert(identity, canonical);
         }
     }
-    let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, Point3> =
+    let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, &Point3> =
         StorageHashMap::default();
     for (polygon, support_identity) in polygons.iter().zip(&polygon_support_planes) {
         if let Some(vertex_identities) = polygon.known_vertex_identities() {
@@ -1954,7 +1952,7 @@ fn compute_two_convex_inputs_projectively(
                     {
                         source_vertex_points
                             .entry(vertex_identity.clone())
-                            .or_insert_with(|| point.clone());
+                            .or_insert(point);
                     }
                 }
             }
