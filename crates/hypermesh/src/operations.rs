@@ -851,13 +851,39 @@ impl ProjectivePointCache {
         Option<[f64; 3]>,
         ConstructionVertexIdentity,
     ) {
+        self.intern_with_optional_approximation_by(identity, None, make_point)
+    }
+
+    fn intern_with_known_approximation_by(
+        &mut self,
+        identity: ConstructionVertexIdentity,
+        approximate: Option<[f64; 3]>,
+        make_point: impl FnOnce() -> HomogeneousPoint3,
+    ) -> (
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    ) {
+        self.intern_with_optional_approximation_by(identity, Some(approximate), make_point)
+    }
+
+    fn intern_with_optional_approximation_by(
+        &mut self,
+        identity: ConstructionVertexIdentity,
+        known_approximate: Option<Option<[f64; 3]>>,
+        make_point: impl FnOnce() -> HomogeneousPoint3,
+    ) -> (
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    ) {
         self.record_definition_incidences(&identity);
         if let Some(existing) = self.points.get(&identity) {
             let approximate = self.point_approximations.get(&identity).copied().flatten();
             return (existing.clone(), approximate, identity);
         }
         let point = make_point();
-        let approximate = projective_point_f64(&point);
+        let approximate = known_approximate.unwrap_or_else(|| projective_point_f64(&point));
         self.points.insert(identity.clone(), point.clone());
         self.point_approximations
             .insert(identity.clone(), approximate);
@@ -1168,7 +1194,7 @@ impl ProjectiveCycle {
         let mut approximate_points = Vec::with_capacity(capacity);
         let mut point_identities = Vec::with_capacity(capacity);
         for (point_index, point) in source_points.iter().enumerate() {
-            approximate_points.push(affine_point_f64(point));
+            let approximate = affine_point_f64(point);
             let vertex = source_vertex_index(source_edge_identities, point_index)
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
             let mesh = match &source_edge_identities[point_index] {
@@ -1178,15 +1204,17 @@ impl ProjectiveCycle {
                 }
             };
             let identity = ConstructionVertexIdentity::Source { mesh, vertex };
-            let (point, _, identity) = point_cache.intern_with_approximation_by(identity, || {
-                HomogeneousPoint3::new(
-                    point.x.clone(),
-                    point.y.clone(),
-                    point.z.clone(),
-                    Real::one(),
-                )
-            });
+            let (point, approximate, identity) =
+                point_cache.intern_with_known_approximation_by(identity, approximate, || {
+                    HomogeneousPoint3::new(
+                        point.x.clone(),
+                        point.y.clone(),
+                        point.z.clone(),
+                        Real::one(),
+                    )
+                });
             points.push(point);
+            approximate_points.push(approximate);
             point_identities.push(identity);
         }
         let mut edges = Vec::with_capacity(capacity);
