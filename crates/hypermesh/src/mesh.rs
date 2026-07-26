@@ -172,7 +172,13 @@ fn build_polygon_soup_with_edge_mode(
     let bounds = bounds_for_positions(meshes.iter().flat_map(|mesh| mesh.positions.iter()))?;
     crate::trace_dispatch!("build-polygon-soup", "bounds-computed");
 
-    let mut polygons = Vec::new();
+    let polygon_capacity = meshes
+        .iter()
+        .try_fold(0usize, |total, mesh| {
+            total.checked_add(mesh.triangles.len())
+        })
+        .ok_or(HypermeshError::UnknownClassification)?;
+    let mut polygons = Vec::with_capacity(polygon_capacity);
     let mut polygon_index = 0isize;
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let input_is_certified_convex =
