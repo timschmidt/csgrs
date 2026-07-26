@@ -23,7 +23,7 @@ HYPERCURVE_COMPARE_ITERS=1 HYPERCURVE_COMPARE_SAMPLES=1 \
 | Workload | Implementations | Shared work |
 | --- | --- | --- |
 | Rectangle union | `hypercurve`, `cavalier_contours`, `i_overlay`, `geo` | Allocate a Boolean result from the same two four-vertex rings using even-odd fill semantics. |
-| 64-, 256-, and 1024-vertex star intersection | `hypercurve` region, direct-contour, provenance-loop, and prepared variants; `cavalier_contours`; `i_overlay`; `geo` | Allocate an intersection result from the same two line-only rings at three scaling tiers. |
+| 64-, 256-, and 1024-vertex star intersection | `hypercurve` region, direct-contour, and provenance-loop variants; `cavalier_contours`; `i_overlay`; `geo` | Allocate an intersection result from the same two line-only rings at three scaling tiers. |
 | Inward capsule offset | `hypercurve`, `cavalier_contours` | Offset the same closed two-line/two-semicircle bulge contour by five units. |
 | Open cubic Bézier offset | `hypercurve` certified parallel, `hypercurve` source-chord fallback, `curvo` heuristic | Offset the same cubic by `0.1`; the two tolerance-driven lanes use `0.05`. Labels preserve their different guarantees. |
 | Rational cubic NURBS evaluation | `hypercurve`, `curvo` | Evaluate the same degree, homogeneous controls, weights, knots, and three cycling parameters. |

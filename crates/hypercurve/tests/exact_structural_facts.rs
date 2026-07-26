@@ -75,11 +75,9 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
     .unwrap();
     let curve = CurveString2::try_new(vec![line, arc]).unwrap();
 
-    let prepared = curve.query(&policy());
-    let facts = prepared.facts();
+    let facts = hypercurve::CurveString2::structural_facts(&curve, &policy());
 
-    assert_eq!(prepared.segment_count(), 2);
-    assert_eq!(prepared.segment_kind_counts(), facts.segment_kinds);
+    assert_eq!(curve.segments().len(), 2);
     assert_eq!(facts.segment_kinds.lines, 1);
     assert_eq!(facts.segment_kinds.arcs, 1);
     assert_eq!(facts.segment_kinds.total(), 2);
@@ -94,7 +92,7 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
 }
 
 #[test]
-fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
+fn region_facts_preserve_all_line_exact_grid_shape() {
     let contour = Contour2::from_bulge_vertices_with_fill_rule(
         &[
             vertex(0, 0, 0),
@@ -106,10 +104,9 @@ fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
     )
     .unwrap();
     let region = hypercurve::LineArcRegion2::from_material_contours(vec![contour]);
-    let prepared = region.query(&policy());
-    let facts = prepared.facts();
+    let facts = hypercurve::LineArcRegion2::structural_facts(&region, &policy());
 
-    assert_eq!(prepared.material_segment_count(), 4);
+    assert_eq!(region.material_contours()[0].segments().len(), 4);
     assert_eq!(facts.material_contour_count, 1);
     assert_eq!(facts.hole_contour_count, 0);
     assert_eq!(facts.segment_kinds.lines, 4);
@@ -120,7 +117,7 @@ fn prepared_region_facts_preserve_all_line_exact_grid_shape() {
     assert!(facts.has_decided_region_box);
 
     assert_eq!(
-        prepared.classify_point(&p(1, 1), &policy()),
+        region.classify_point(&p(1, 1), &policy()),
         Classification::Decided(hypercurve::RegionPointLocation::Inside)
     );
 }

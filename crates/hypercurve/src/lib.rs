@@ -55,7 +55,6 @@ mod point;
 mod policy;
 mod polynomial_spline;
 mod prepared;
-mod prepared_boolean;
 mod rational_bezier;
 mod rational_bezier_general;
 mod reconstruct;
@@ -234,7 +233,6 @@ pub use policy::{CurvePolicy, NumericMode, Tolerance};
 pub use polynomial_spline::{
     PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
 };
-pub use prepared::{ContourQuery2, CurveStringQuery2, RegionQuery2};
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
     RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,

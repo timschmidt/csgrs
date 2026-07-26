@@ -160,47 +160,6 @@ fn bench_sparse_curve_self_contacts(segment_count: i32, iterations: u32) -> Curv
     Ok(())
 }
 
-fn bench_prepared_sparse_curve_self_contacts(
-    segment_count: i32,
-    iterations: u32,
-) -> CurveResult<()> {
-    let mut segments = Vec::with_capacity(segment_count as usize);
-    let mut previous = p(0, 0);
-    for index in 1..=segment_count {
-        let next_y = if index % 2 == 0 { 0 } else { 1 };
-        let next = p(index * 3, next_y);
-        segments.push(line_segment(previous, next.clone()));
-        previous = next;
-    }
-
-    let curve = CurveString2::try_new(segments)?;
-    let policy = CurvePolicy::certified();
-    let prepared = curve.query(&policy);
-    let started = Instant::now();
-    let mut decided_false_count = 0_usize;
-
-    for _ in 0..iterations {
-        match prepared.has_self_contacts(&policy)? {
-            Classification::Decided(false) => {
-                decided_false_count += black_box(1);
-            }
-            Classification::Decided(true) => {
-                panic!("prepared sparse benchmark curve unexpectedly self-contacted");
-            }
-            Classification::Uncertain(reason) => {
-                panic!("prepared sparse benchmark curve became uncertain: {reason:?}");
-            }
-        }
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_sparse_curve_self_contacts_{segment_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), decided_false={decided_false_count}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) -> CurveResult<()> {
     let mut segments = Vec::with_capacity(segment_count as usize);
     let mut previous = p(0, 0);
@@ -233,43 +192,6 @@ fn bench_sparse_curve_string_intersections(segment_count: i32, iterations: u32) 
     Ok(())
 }
 
-fn bench_prepared_sparse_curve_string_intersections(
-    segment_count: i32,
-    iterations: u32,
-) -> CurveResult<()> {
-    let mut segments = Vec::with_capacity(segment_count as usize);
-    let mut previous = p(0, 0);
-    for index in 1..=segment_count {
-        let next_y = if index % 2 == 0 { 0 } else { 1 };
-        let next = p(index * 3, next_y);
-        segments.push(line_segment(previous, next.clone()));
-        previous = next;
-    }
-
-    let curve = CurveString2::try_new(segments)?;
-    let cutter = CurveString2::try_new(vec![line_segment(p(241, -2), p(241, 3))])?;
-    let policy = CurvePolicy::certified();
-    let prepared_curve = curve.query(&policy);
-    let prepared_cutter = cutter.query(&policy);
-    let started = Instant::now();
-    let mut total_events = 0_usize;
-
-    for _ in 0..iterations {
-        let events = prepared_curve.intersect_query(&prepared_cutter, &policy)?;
-        if events.len() != 1 {
-            panic!("prepared sparse curve-string benchmark expected one segment-pair event");
-        }
-        total_events += black_box(events.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_sparse_curve_string_intersections_{segment_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total events={total_events}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn bench_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResult<()> {
     let mut contours = Vec::with_capacity(contour_count as usize);
     for index in 0..contour_count {
@@ -293,38 +215,6 @@ fn bench_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResul
     let elapsed = started.elapsed();
     println!(
         "sparse_region_events_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total pairs={total_pairs}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_prepared_sparse_region_events(contour_count: i32, iterations: u32) -> CurveResult<()> {
-    let mut contours = Vec::with_capacity(contour_count as usize);
-    for index in 0..contour_count {
-        let x = index * 10;
-        contours.push(rectangle(x, 0, x + 4, 4));
-    }
-    let region = LineArcRegion2::from_material_contours(contours);
-    let cutter = LineArcRegion2::from_material_contours(vec![rectangle(12, -1, 18, 5)]);
-    let policy = CurvePolicy::certified();
-    let prepared_region = region.query(&policy);
-    let prepared_cutter = cutter.query(&policy);
-    let started = Instant::now();
-    let mut total_pairs = 0_usize;
-    let mut total_events = 0_usize;
-
-    for _ in 0..iterations {
-        let events = prepared_region.intersect_query(&prepared_cutter, &policy)?;
-        if events.len() != 1 {
-            panic!("prepared sparse region benchmark expected one contour-pair event set");
-        }
-        total_pairs += black_box(events.len());
-        total_events += black_box(events.event_count());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_sparse_region_events_{contour_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), total pairs={total_pairs}, total events={total_events}",
         elapsed / iterations
     );
     Ok(())
@@ -360,11 +250,8 @@ fn main() -> CurveResult<()> {
         100_000,
     )?;
     bench_sparse_curve_self_contacts(160, 1_000)?;
-    bench_prepared_sparse_curve_self_contacts(160, 1_000)?;
     bench_sparse_curve_string_intersections(160, 10_000)?;
-    bench_prepared_sparse_curve_string_intersections(160, 10_000)?;
     bench_sparse_region_events(120, 1_000)?;
-    bench_prepared_sparse_region_events(120, 1_000)?;
 
     Ok(())
 }

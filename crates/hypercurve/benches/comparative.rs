@@ -16,7 +16,7 @@ use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierFlatteningOptions, BezierParallelVerificationOptions, BooleanOp, BulgeVertex2,
     Classification, Contour2, CubicBezier2, Curve2, CurvePolicy, CurveString2, FillRule,
-    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, RegionQuery2, Segment2,
+    LineArcRegion2, LineSeg2, NurbsCurve2, Point2, Real, Segment2,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -261,59 +261,6 @@ fn hypercurve_boundary_loop_result_size(
     result.loops().iter().map(|boundary| boundary.len()).sum()
 }
 
-fn hypercurve_prepared_boolean_result_size(
-    first: &RegionQuery2<'_>,
-    second: &RegionQuery2<'_>,
-    operation: CommonBooleanOp,
-    policy: &CurvePolicy,
-) -> usize {
-    let operation = operation.hypercurve();
-    let result = first
-        .boolean_region(second, operation, FillRule::EvenOdd, policy)
-        .expect("prepared hypercurve boolean benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("prepared hypercurve boolean benchmark became uncertain");
-    };
-    result
-        .material_contours()
-        .iter()
-        .chain(result.hole_contours())
-        .map(Contour2::len)
-        .sum()
-}
-
-fn hypercurve_prepared_boundary_contour_result_size(
-    first: &RegionQuery2<'_>,
-    second: &RegionQuery2<'_>,
-    operation: CommonBooleanOp,
-    policy: &CurvePolicy,
-) -> usize {
-    let operation = operation.hypercurve();
-    let result = first
-        .boolean_boundary_contours(second, operation, FillRule::EvenOdd, policy)
-        .expect("prepared hypercurve boundary-contour benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("prepared hypercurve boundary-contour benchmark became uncertain");
-    };
-    result.iter().map(Contour2::len).sum()
-}
-
-fn hypercurve_prepared_boundary_loop_result_size(
-    first: &RegionQuery2<'_>,
-    second: &RegionQuery2<'_>,
-    operation: CommonBooleanOp,
-    policy: &CurvePolicy,
-) -> usize {
-    let operation = operation.hypercurve();
-    let result = first
-        .boolean_boundary_loops(second, operation, policy)
-        .expect("prepared hypercurve boundary-loop benchmark completes");
-    let Classification::Decided(result) = result else {
-        panic!("prepared hypercurve boundary-loop benchmark became uncertain");
-    };
-    result.loops().iter().map(|boundary| boundary.len()).sum()
-}
-
 fn cavalier_boolean_result_size(
     first: &Polyline<f64>,
     second: &Polyline<f64>,
@@ -394,8 +341,6 @@ fn benchmark_boolean_case(
     let geo_first = geo_polygon(&first_points);
     let geo_second = geo_polygon(&second_points);
     let policy = CurvePolicy::certified();
-    let prepared_first = hypercurve_first.query(&policy);
-    let prepared_second = hypercurve_second.query(&policy);
 
     let hypercurve_result_size =
         hypercurve_boolean_result_size(&hypercurve_first, &hypercurve_second, operation, &policy);
@@ -418,33 +363,6 @@ fn benchmark_boolean_case(
             hypercurve_boundary_loop_result_size(
                 &hypercurve_first,
                 &hypercurve_second,
-                operation,
-                &policy,
-            ),
-        ),
-        (
-            "prepared region",
-            hypercurve_prepared_boolean_result_size(
-                &prepared_first,
-                &prepared_second,
-                operation,
-                &policy,
-            ),
-        ),
-        (
-            "prepared boundary contours",
-            hypercurve_prepared_boundary_contour_result_size(
-                &prepared_first,
-                &prepared_second,
-                operation,
-                &policy,
-            ),
-        ),
-        (
-            "prepared boundary loops",
-            hypercurve_prepared_boundary_loop_result_size(
-                &prepared_first,
-                &prepared_second,
                 operation,
                 &policy,
             ),
@@ -491,30 +409,6 @@ fn benchmark_boolean_case(
         hypercurve_boundary_loop_result_size(
             black_box(&hypercurve_first),
             black_box(&hypercurve_second),
-            operation,
-            &policy,
-        )
-    });
-    runner.measure(name, "hypercurve_prepared", || {
-        hypercurve_prepared_boolean_result_size(
-            black_box(&prepared_first),
-            black_box(&prepared_second),
-            operation,
-            &policy,
-        )
-    });
-    runner.measure(name, "hypercurve_prepared_contours", || {
-        hypercurve_prepared_boundary_contour_result_size(
-            black_box(&prepared_first),
-            black_box(&prepared_second),
-            operation,
-            &policy,
-        )
-    });
-    runner.measure(name, "hypercurve_prepared_loops", || {
-        hypercurve_prepared_boundary_loop_result_size(
-            black_box(&prepared_first),
-            black_box(&prepared_second),
             operation,
             &policy,
         )

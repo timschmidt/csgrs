@@ -608,6 +608,27 @@ impl Contour2 {
         )
     }
 
+    /// Classifies a batch of points through one immediate exact contour pass.
+    ///
+    /// Conservative bounds, winding order, and prepared predicate facts are
+    /// built once for the batch and remain internal to this call.
+    pub fn classify_points(
+        &self,
+        points: &[Point2],
+        policy: &CurvePolicy,
+    ) -> Vec<Classification<ContourPointLocation>> {
+        let index = crate::prepared::ContourQuery2::from_contour(self, policy);
+        points
+            .iter()
+            .map(|point| index.classify_point(point, policy))
+            .collect()
+    }
+
+    /// Returns conservative structural facts for this contour immediately.
+    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::CurveStringFacts {
+        crate::prepared::contour_facts(self, policy)
+    }
+
     /// Returns true when the point lies on any segment of the contour.
     ///
     /// Segment boxes are used only to skip decided misses. A box hit or

@@ -10,20 +10,14 @@
 use std::cmp::Ordering;
 
 use crate::bbox::{
-    Aabb2, aabb_decided_misses_point, aabb_decided_strictly_right_of_point, aabbs_decided_disjoint,
-    decided_segment_aabb,
+    Aabb2, aabb_decided_misses_point, aabb_decided_strictly_right_of_point, decided_segment_aabb,
 };
-use crate::curve_string::{CurveStringXOverlapCandidates, curve_string_x_overlap_schedule};
 use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
-use crate::region_events::RegionIntersectionWorkload;
 use crate::{
-    BooleanBoundaryLoopSet, BooleanOp, CircularArc2, CircularArc2Facts, Classification, Contour2,
-    ContourIntersectionSet, ContourPointLocation, CurvePolicy, CurveResult, CurveString2,
-    CurveStringIntersection, FillRule, LineArcRegion2, LineSeg2, LineSeg2Facts, LineSide, Point2,
-    RegionContourIntersection, RegionContourKey, RegionContourRole, RegionIntersectionSet,
-    RegionPointLocation, RegionSide, RegionView2, Segment2, SegmentIntersection, SegmentKind,
-    SegmentKindCounts, UncertaintyReason,
+    CircularArc2, CircularArc2Facts, Classification, Contour2, ContourPointLocation, CurvePolicy,
+    CurveString2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, RegionPointLocation,
+    RegionView2, Segment2, UncertaintyReason,
 };
 
 /// Retained point-line classifier for a fixed [`LineSeg2`].
@@ -243,40 +237,6 @@ impl<'a> PreparedSegment2<'a> {
         }
     }
 
-    /// Returns whether this handle prepares a line segment.
-    pub const fn is_line(&self) -> bool {
-        matches!(self, Self::Line(_))
-    }
-
-    /// Returns whether this handle prepares a circular arc.
-    pub const fn is_arc(&self) -> bool {
-        matches!(self, Self::Arc(_))
-    }
-
-    /// Returns the primitive family query by this segment handle.
-    pub const fn segment_kind(&self) -> SegmentKind {
-        match self {
-            Self::Line(_) => SegmentKind::Line,
-            Self::Arc(_) => SegmentKind::Arc,
-        }
-    }
-
-    /// Returns the exact start point of the query source segment.
-    pub fn start(&self) -> &Point2 {
-        match self {
-            Self::Line(line) => line.line_segment().start(),
-            Self::Arc(arc) => arc.circular_arc().start(),
-        }
-    }
-
-    /// Returns the exact end point of the query source segment.
-    pub fn end(&self) -> &Point2 {
-        match self {
-            Self::Line(line) => line.line_segment().end(),
-            Self::Arc(arc) => arc.circular_arc().end(),
-        }
-    }
-
     /// Classifies whether a point lies on this finite query segment.
     pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
         match self {
@@ -293,215 +253,41 @@ impl<'a> PreparedSegment2<'a> {
             Self::Arc(arc) => arc.contains_point(point, policy),
         }
     }
-
-    /// Intersects two query native segment handles.
-    ///
-    /// This is the query segment-pair batch boundary used by query curve
-    /// strings and contours. It deliberately returns the same
-    /// [`SegmentIntersection`] shape as [`Segment2::intersect_segment`]: cached
-    /// line and arc facts can select faster exact kernels, but finite segment
-    /// topology and uncertainty remain represented by `hypercurve`'s public
-    /// intersection enums. This follows the exactness model's EGC separation between carried
-    /// object facts and certified predicate decisions.
-    pub(crate) fn intersect_prepared_segment(
-        &self,
-        other: &PreparedSegment2<'a>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<SegmentIntersection> {
-        match (self, other) {
-            (Self::Line(first), Self::Line(second)) => first
-                .line_segment()
-                .intersect_line(second.line_segment(), policy)
-                .map(SegmentIntersection::LineLine),
-            (Self::Line(line), Self::Arc(arc)) => Ok(SegmentIntersection::LineArc {
-                order: crate::LineArcOrder::LineThenArc,
-                result: line
-                    .line_segment()
-                    .intersect_arc(arc.circular_arc(), policy)?,
-            }),
-            (Self::Arc(arc), Self::Line(line)) => Ok(SegmentIntersection::LineArc {
-                order: crate::LineArcOrder::ArcThenLine,
-                result: line
-                    .line_segment()
-                    .intersect_arc(arc.circular_arc(), policy)?,
-            }),
-            (Self::Arc(first), Self::Arc(second)) => first
-                .circular_arc()
-                .intersect_arc(second.circular_arc(), policy)
-                .map(SegmentIntersection::ArcArc),
-        }
-    }
 }
 
-/// A borrowed curve string with cached segment and whole-string bounding boxes.
-///
-/// Retained curve strings avoid rebuilding broad-phase boxes for repeated
-/// topology queries. The cache never decides a contact on its own: it skips only
-/// decided disjoint boxes and keeps exact line/arc intersections authoritative.
-/// This mirrors the candidate-pruning role described by sweep-line scheduling,
-/// using an adaptive conservative x-interval sweep for sufficiently large,
-/// sampled-sparse batches and the flat scan for small or dense workloads.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveStringQuery2<'a> {
-    curve: &'a CurveString2,
-    prepared_segments: Vec<PreparedSegment2<'a>>,
-    segment_boxes: Vec<Option<Aabb2>>,
-    curve_box: Option<Aabb2>,
-    facts: CurveStringFacts,
+pub(crate) fn curve_string_facts(curve: &CurveString2, policy: &CurvePolicy) -> CurveStringFacts {
+    let segment_boxes = decided_segment_boxes(curve.segments(), policy);
+    let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+    crate::facts::curve_string_facts(
+        curve,
+        segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
+        curve_box.is_some(),
+    )
 }
 
-impl<'a> CurveStringQuery2<'a> {
-    /// Builds a borrowed query for a curve string.
-    pub fn from_curve_string(curve: &'a CurveString2, policy: &CurvePolicy) -> Self {
-        // Structural-dispatch note: this query construction pass already visits every
-        // segment. The cached boxes feed the adaptive x-interval sweep directly;
-        // richer facts such as all-line, all-axis-aligned, or monotone parameter
-        // ranges can still support future narrow-phase dispatch.
-        let segment_boxes = decided_segment_boxes(curve.segments(), policy);
-        let curve_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
-        let facts = crate::facts::curve_string_facts(
-            curve,
-            segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
-            curve_box.is_some(),
-        );
-        let prepared_segments = prepared_segments(curve.segments());
+pub(crate) fn contour_facts(contour: &Contour2, policy: &CurvePolicy) -> CurveStringFacts {
+    let segment_boxes = decided_segment_boxes(contour.segments(), policy);
+    let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
+    crate::facts::contour_facts(
+        contour,
+        segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
+        contour_box.is_some(),
+    )
+}
 
-        Self {
-            curve,
-            prepared_segments,
-            segment_boxes,
-            curve_box,
-            facts,
-        }
-    }
-
-    /// Returns the borrowed source curve string.
-    pub const fn curve_string(&self) -> &'a CurveString2 {
-        self.curve
-    }
-
-    /// Returns the cached whole-curve box when every segment box was decided.
-    pub const fn curve_box(&self) -> Option<&Aabb2> {
-        self.curve_box.as_ref()
-    }
-
-    /// Returns cached segment boxes in source segment order.
-    pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
-        &self.segment_boxes
-    }
-
-    /// Returns the number of query source segments.
-    pub fn segment_count(&self) -> usize {
-        self.prepared_segments.len()
-    }
-
-    /// Returns primitive-family counts for query source segments.
-    pub fn segment_kind_counts(&self) -> SegmentKindCounts {
-        segment_kind_counts(&self.prepared_segments)
-    }
-
-    /// Returns the number of segment boxes that were decided during query construction.
-    pub fn decided_segment_box_count(&self) -> usize {
-        self.segment_boxes
-            .iter()
-            .filter(|bbox| bbox.is_some())
-            .count()
-    }
-
-    /// Returns the number of source segments whose query construction could not retain
-    /// a decided broad-phase box.
-    pub fn undecided_segment_box_count(&self) -> usize {
-        self.segment_boxes.len() - self.decided_segment_box_count()
-    }
-
-    /// Returns conservative structural facts collected while preparing.
-    ///
-    /// Structural-dispatch note: these facts are the intended home for future
-    /// all-line, axis-aligned, common-scale, and symbolic-family routing of
-    /// repeated curve-string intersection workloads. They do not certify
-    /// topology; exact predicates and explicit uncertainty still do that.
-    pub const fn facts(&self) -> &CurveStringFacts {
-        &self.facts
-    }
-
-    /// Collects all nonempty segment-pair intersections against another
-    /// query curve string.
-    pub fn intersect_query(
-        &self,
-        other: &CurveStringQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Vec<CurveStringIntersection>> {
-        intersect_prepared_segment_pairs_with_cached_aabbs(
-            &self.prepared_segments,
-            &other.prepared_segments,
-            self.segment_boxes(),
-            other.segment_boxes(),
-            policy,
-        )
-    }
-
-    /// Collects all nonempty segment-pair intersections against an ordinary
-    /// borrowed curve string.
-    pub fn intersect_curve_string(
-        &self,
-        other: &CurveString2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Vec<CurveStringIntersection>> {
-        let other = CurveStringQuery2::from_curve_string(other, policy);
-        self.intersect_query(&other, policy)
-    }
-
-    /// Trims the query source curve between point intersections with two query cutters.
-    ///
-    /// The cached broad-phase boxes in all three query views are reused for
-    /// intersection collection; exact split validation and materialization still
-    /// delegate to the source [`CurveString2`] trim pipeline.
-    pub fn trim_between_query_intersections(
-        &self,
-        start_cutter: &CurveStringQuery2<'_>,
-        end_cutter: &CurveStringQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<CurveString2>> {
-        let start_events = self.intersect_query(start_cutter, policy)?;
-        let end_events = self.intersect_query(end_cutter, policy)?;
-        self.curve
-            .trim_between_curve_intersection_events(start_events, end_events, policy)
-    }
-
-    /// Retains portions of this query open curve string inside a query region.
-    ///
-    /// The region's query contour boxes are reused for boundary-hit
-    /// collection and its query point classifier is reused for retained
-    /// interval representatives. Exact segment intersections and native
-    /// interval materialization remain delegated to the ordinary curve-string
-    /// trim pipeline.
-    pub fn trim_inside_region_query(
-        &self,
-        region: &RegionQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<CurveString2>>> {
-        self.curve.trim_inside_region_query(region, policy)
-    }
-
-    /// Retains portions of this query open curve string inside an ordinary region.
-    pub fn trim_inside_region(
-        &self,
-        region: &LineArcRegion2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<CurveString2>>> {
-        let region = RegionQuery2::from_region(region, policy);
-        self.trim_inside_region_query(&region, policy)
-    }
-
-    /// Classifies whether this query open curve string self-contacts.
-    pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
-            self.curve.segments(),
-            &self.segment_boxes,
-            false,
-            policy,
-        )
-    }
+pub(crate) fn region_view_facts(region: &RegionView2<'_>, policy: &CurvePolicy) -> RegionFacts {
+    let contour_boxes = region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours().iter())
+        .map(|contour| {
+            let segment_boxes = decided_segment_boxes(contour.segments(), policy);
+            union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy)
+        })
+        .collect::<Vec<_>>();
+    let has_decided_region_box =
+        union_all_decided_boxes(contour_boxes.iter().map(Option::as_ref), policy).is_some();
+    crate::facts::region_view_facts(region, has_decided_region_box)
 }
 
 /// A borrowed contour with cached contour and segment bounding boxes.
@@ -513,7 +299,7 @@ impl<'a> CurveStringQuery2<'a> {
 /// balanced x-interval maximum witnesses so repeated sparse intersections do
 /// not rebuild the same immutable broad-phase index.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ContourQuery2<'a> {
+pub(crate) struct ContourQuery2<'a> {
     contour: &'a Contour2,
     prepared_segments: Vec<PreparedSegment2<'a>>,
     segment_boxes: Vec<Option<Aabb2>>,
@@ -521,7 +307,6 @@ pub struct ContourQuery2<'a> {
     winding_segment_indices_by_max_x: Option<Vec<usize>>,
     line_winding_index: Option<PreparedLineWindingIndex>,
     contour_box: Option<Aabb2>,
-    facts: CurveStringFacts,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -561,11 +346,6 @@ impl<'a> ContourQuery2<'a> {
             policy,
         );
         let contour_box = union_all_decided_boxes(segment_boxes.iter().map(Option::as_ref), policy);
-        let facts = crate::facts::contour_facts(
-            contour,
-            segment_boxes.iter().filter(|bbox| bbox.is_some()).count(),
-            contour_box.is_some(),
-        );
         let prepared_segments = prepared_segments(contour.segments());
 
         Self {
@@ -576,7 +356,6 @@ impl<'a> ContourQuery2<'a> {
             winding_segment_indices_by_max_x,
             line_winding_index,
             contour_box,
-            facts,
         }
     }
 
@@ -588,98 +367,6 @@ impl<'a> ContourQuery2<'a> {
     /// Returns the cached whole-contour box when every segment box was decided.
     pub const fn contour_box(&self) -> Option<&Aabb2> {
         self.contour_box.as_ref()
-    }
-
-    /// Returns cached segment boxes in source segment order.
-    pub fn segment_boxes(&self) -> &[Option<Aabb2>] {
-        &self.segment_boxes
-    }
-
-    /// Returns the number of query source segments.
-    pub fn segment_count(&self) -> usize {
-        self.prepared_segments.len()
-    }
-
-    /// Returns primitive-family counts for query source segments.
-    pub fn segment_kind_counts(&self) -> SegmentKindCounts {
-        segment_kind_counts(&self.prepared_segments)
-    }
-
-    /// Returns the number of segment boxes that were decided during query construction.
-    pub fn decided_segment_box_count(&self) -> usize {
-        self.segment_boxes
-            .iter()
-            .filter(|bbox| bbox.is_some())
-            .count()
-    }
-
-    /// Returns the number of source segments whose query construction could not retain
-    /// a decided broad-phase box.
-    pub fn undecided_segment_box_count(&self) -> usize {
-        self.segment_boxes.len() - self.decided_segment_box_count()
-    }
-
-    /// Returns query per-segment predicate handles in source segment order.
-    pub(crate) fn prepared_segments(&self) -> &[PreparedSegment2<'a>] {
-        &self.prepared_segments
-    }
-
-    /// Returns conservative structural facts collected while preparing.
-    ///
-    /// These facts are advisory scheduling metadata in the exactness model's object layer:
-    /// Boolean and containment code can select specialized exact paths from
-    /// them, but they are not a geometric decision by themselves.
-    pub const fn facts(&self) -> &CurveStringFacts {
-        &self.facts
-    }
-
-    /// Intersects two query contours using compact exact-line or cached general bounds.
-    pub fn intersect_query(
-        &self,
-        other: &ContourQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourIntersectionSet> {
-        if let (Some(first), Some(second)) = (
-            self.contour.exact_dyadic_line_aabbs(policy),
-            other.contour.exact_dyadic_line_aabbs(policy),
-        ) {
-            return crate::events::intersect_contours_with_exact_dyadic_line_aabbs(
-                self.contour,
-                other.contour,
-                &first,
-                &second,
-                policy,
-            );
-        }
-        crate::events::intersect_contours_with_cached_aabbs(
-            self.contour,
-            other.contour,
-            self.contour_box(),
-            other.contour_box(),
-            &self.segment_boxes,
-            &other.segment_boxes,
-            other.segment_x_index.as_ref(),
-            policy,
-        )
-    }
-
-    /// Intersects this query contour against an ordinary borrowed contour.
-    pub fn intersect_contour(
-        &self,
-        other: &Contour2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<ContourIntersectionSet> {
-        let other = ContourQuery2::from_contour(other, policy);
-        self.intersect_query(&other, policy)
-    }
-
-    /// Collects self-intersection events using this contour's cached boxes.
-    pub fn intersect_self(&self, policy: &CurvePolicy) -> CurveResult<ContourIntersectionSet> {
-        crate::events::intersect_contour_self_with_cached_aabbs(
-            self.contour,
-            &self.segment_boxes,
-            policy,
-        )
     }
 
     /// Classifies a point against this query contour.
@@ -748,32 +435,6 @@ impl<'a> ContourQuery2<'a> {
             ContourPointLocation::Outside
         })
     }
-
-    /// Returns true when the point lies on this query contour boundary.
-    pub fn point_on_boundary(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
-        prepared_point_on_contour_boundary(self, point, policy)
-    }
-
-    /// Computes the winding number for a point not on this query boundary.
-    pub fn winding_number(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
-        crate::contour::contour_winding_number_with_cached_aabbs(
-            self.contour,
-            point,
-            self.contour_box(),
-            &self.segment_boxes,
-            policy,
-        )
-    }
-
-    /// Classifies whether this query closed contour self-contacts.
-    pub fn has_self_contacts(&self, policy: &CurvePolicy) -> CurveResult<Classification<bool>> {
-        crate::self_intersect::segments_have_self_contacts_with_cached_aabbs(
-            self.contour.segments(),
-            &self.segment_boxes,
-            true,
-            policy,
-        )
-    }
 }
 
 /// A borrowed region view with cached contour and region bounding boxes.
@@ -785,27 +446,25 @@ impl<'a> ContourQuery2<'a> {
 /// query view with the same policy family used for later queries so arc
 /// extrema and coordinate ordering are interpreted consistently.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionQuery2<'a> {
-    material_contours: Vec<&'a Contour2>,
-    hole_contours: Vec<&'a Contour2>,
+pub(crate) struct RegionQuery2<'a> {
     material_prepared_contours: Vec<ContourQuery2<'a>>,
     hole_prepared_contours: Vec<ContourQuery2<'a>>,
     region_box: Option<Aabb2>,
-    facts: RegionFacts,
 }
 
 impl<'a> RegionQuery2<'a> {
-    /// Builds a query view from an owned region.
-    pub fn from_region(region: &'a LineArcRegion2, policy: &CurvePolicy) -> Self {
-        Self::from_region_view(&region.as_view(), policy)
-    }
-
     /// Builds a query view from a borrowed region view.
     pub fn from_region_view(region: &RegionView2<'a>, policy: &CurvePolicy) -> Self {
-        let material_contours = region.material_contours().to_vec();
-        let hole_contours = region.hole_contours().to_vec();
-        let material_prepared_contours = prepared_contours(&material_contours, policy);
-        let hole_prepared_contours = prepared_contours(&hole_contours, policy);
+        let material_prepared_contours: Vec<_> = region
+            .material_contours()
+            .iter()
+            .map(|contour| ContourQuery2::from_contour(contour, policy))
+            .collect();
+        let hole_prepared_contours: Vec<_> = region
+            .hole_contours()
+            .iter()
+            .map(|contour| ContourQuery2::from_contour(contour, policy))
+            .collect();
         let region_box = union_all_decided_boxes(
             material_prepared_contours
                 .iter()
@@ -813,151 +472,11 @@ impl<'a> RegionQuery2<'a> {
                 .map(ContourQuery2::contour_box),
             policy,
         );
-        let facts = crate::facts::region_view_facts(region, region_box.is_some());
-
         Self {
-            material_contours,
-            hole_contours,
             material_prepared_contours,
             hole_prepared_contours,
             region_box,
-            facts,
         }
-    }
-
-    /// Returns the cached whole-region box when every contour box was decided.
-    pub const fn region_box(&self) -> Option<&Aabb2> {
-        self.region_box.as_ref()
-    }
-
-    /// Returns material contours in the query view.
-    pub fn material_contours(&self) -> &[&'a Contour2] {
-        &self.material_contours
-    }
-
-    /// Returns hole contours in the query view.
-    pub fn hole_contours(&self) -> &[&'a Contour2] {
-        &self.hole_contours
-    }
-
-    /// Reconstructs a borrowed ordinary region view over the same contours.
-    ///
-    /// The returned view is cheap and keeps the same contour lifetimes. It is
-    /// useful when an algorithm still needs the canonical `RegionView2` shape
-    /// for splitting or cloning, while query classifiers supply repeated
-    /// point and event queries.
-    pub fn as_region_view(&self) -> RegionView2<'a> {
-        RegionView2::from_contours(
-            self.material_contours.iter().copied(),
-            self.hole_contours.iter().copied(),
-        )
-    }
-
-    /// Returns query material contours in region-bin order.
-    pub(crate) fn prepared_material_contours(&self) -> &[ContourQuery2<'a>] {
-        &self.material_prepared_contours
-    }
-
-    /// Returns query hole contours in region-bin order.
-    pub(crate) fn prepared_hole_contours(&self) -> &[ContourQuery2<'a>] {
-        &self.hole_prepared_contours
-    }
-
-    /// Returns the number of query material and hole contours.
-    pub fn contour_count(&self) -> usize {
-        self.material_prepared_contours.len() + self.hole_prepared_contours.len()
-    }
-
-    /// Returns the number of query material source segments.
-    pub fn material_segment_count(&self) -> usize {
-        self.material_prepared_contours
-            .iter()
-            .map(ContourQuery2::segment_count)
-            .sum()
-    }
-
-    /// Returns primitive-family counts for query material source segments.
-    pub fn material_segment_kind_counts(&self) -> SegmentKindCounts {
-        prepared_contour_kind_counts(&self.material_prepared_contours)
-    }
-
-    /// Returns the number of query hole source segments.
-    pub fn hole_segment_count(&self) -> usize {
-        self.hole_prepared_contours
-            .iter()
-            .map(ContourQuery2::segment_count)
-            .sum()
-    }
-
-    /// Returns primitive-family counts for query hole source segments.
-    pub fn hole_segment_kind_counts(&self) -> SegmentKindCounts {
-        prepared_contour_kind_counts(&self.hole_prepared_contours)
-    }
-
-    /// Returns the number of query material and hole source segments.
-    pub fn segment_count(&self) -> usize {
-        self.material_segment_count() + self.hole_segment_count()
-    }
-
-    /// Returns primitive-family counts for all query source segments.
-    pub fn segment_kind_counts(&self) -> SegmentKindCounts {
-        let mut counts = self.material_segment_kind_counts();
-        let hole_counts = self.hole_segment_kind_counts();
-        counts.lines += hole_counts.lines;
-        counts.arcs += hole_counts.arcs;
-        counts
-    }
-
-    /// Returns the number of material contour segment boxes decided during query construction.
-    pub fn decided_material_segment_box_count(&self) -> usize {
-        self.material_prepared_contours
-            .iter()
-            .map(ContourQuery2::decided_segment_box_count)
-            .sum()
-    }
-
-    /// Returns the number of hole contour segment boxes decided during query construction.
-    pub fn decided_hole_segment_box_count(&self) -> usize {
-        self.hole_prepared_contours
-            .iter()
-            .map(ContourQuery2::decided_segment_box_count)
-            .sum()
-    }
-
-    /// Returns the number of retained contour segment boxes decided during query construction.
-    pub fn decided_segment_box_count(&self) -> usize {
-        self.decided_material_segment_box_count() + self.decided_hole_segment_box_count()
-    }
-
-    /// Returns the number of material source contour segments whose boxes stayed undecided.
-    pub fn undecided_material_segment_box_count(&self) -> usize {
-        self.material_prepared_contours
-            .iter()
-            .map(ContourQuery2::undecided_segment_box_count)
-            .sum()
-    }
-
-    /// Returns the number of hole source contour segments whose boxes stayed undecided.
-    pub fn undecided_hole_segment_box_count(&self) -> usize {
-        self.hole_prepared_contours
-            .iter()
-            .map(ContourQuery2::undecided_segment_box_count)
-            .sum()
-    }
-
-    /// Returns the number of source contour segments whose boxes stayed undecided.
-    pub fn undecided_segment_box_count(&self) -> usize {
-        self.undecided_material_segment_box_count() + self.undecided_hole_segment_box_count()
-    }
-
-    /// Returns conservative structural facts collected while preparing.
-    ///
-    /// Structural-dispatch note: this is where future region-level convexity,
-    /// contour orientation certainty, all-line/all-arc partitioning, common
-    /// scales, and symbolic dependencies should be shared with Boolean and
-    /// containment algorithms without leaking scalar representation details.
-    pub const fn facts(&self) -> &RegionFacts {
-        &self.facts
     }
 
     /// Classifies a point against this query region view.
@@ -1025,31 +544,6 @@ impl<'a> RegionQuery2<'a> {
         }
     }
 
-    pub(crate) fn single_material_winding_assuming_off_boundary(
-        &self,
-        point: &Point2,
-        policy: &CurvePolicy,
-    ) -> Classification<i32> {
-        if self.material_prepared_contours.len() != 1 || !self.hole_prepared_contours.is_empty() {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        }
-        if self
-            .region_box
-            .as_ref()
-            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-        {
-            return Classification::Decided(0);
-        }
-        let contour = &self.material_prepared_contours[0];
-        if contour
-            .contour_box()
-            .is_some_and(|bbox| aabb_decided_misses_point(bbox, point, policy))
-        {
-            return Classification::Decided(0);
-        }
-        prepared_contour_winding_number_unchecked(contour, point, policy)
-    }
-
     /// Returns signed containment depth for a non-boundary point.
     ///
     /// This follows the same signed material-minus-hole convention as
@@ -1081,303 +575,6 @@ impl<'a> RegionQuery2<'a> {
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         }
     }
-
-    /// Collects normalized topology events against another query region.
-    ///
-    /// This reuses cached contour and segment boxes for the candidate phase and
-    /// then delegates candidate pairs to the same exact line/arc intersection
-    /// normalization as [`RegionView2::intersect_region`]. The cache changes the
-    /// amount of repeated broad-phase work, not the topology contract.
-    pub fn intersect_query(
-        &self,
-        other: &RegionQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet> {
-        let mut pairs = Vec::new();
-        let mut workload = RegionIntersectionWorkload::default();
-
-        collect_prepared_role_pairs(
-            &mut pairs,
-            &mut workload,
-            &self.material_prepared_contours,
-            RegionContourRole::Material,
-            &other.material_prepared_contours,
-            RegionContourRole::Material,
-            policy,
-        )?;
-        collect_prepared_role_pairs(
-            &mut pairs,
-            &mut workload,
-            &self.material_prepared_contours,
-            RegionContourRole::Material,
-            &other.hole_prepared_contours,
-            RegionContourRole::Hole,
-            policy,
-        )?;
-        collect_prepared_role_pairs(
-            &mut pairs,
-            &mut workload,
-            &self.hole_prepared_contours,
-            RegionContourRole::Hole,
-            &other.material_prepared_contours,
-            RegionContourRole::Material,
-            policy,
-        )?;
-        collect_prepared_role_pairs(
-            &mut pairs,
-            &mut workload,
-            &self.hole_prepared_contours,
-            RegionContourRole::Hole,
-            &other.hole_prepared_contours,
-            RegionContourRole::Hole,
-            policy,
-        )?;
-
-        RegionIntersectionSet::from_parts(
-            pairs,
-            Some(self.contour_count()),
-            Some(other.contour_count()),
-            workload.candidate_pair_count,
-            workload.skipped_aabb_pair_count,
-            workload.tested_pair_count,
-        )
-    }
-
-    /// Collects normalized topology events against an ordinary region view.
-    pub fn intersect_region(
-        &self,
-        other: &RegionView2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet> {
-        let other = RegionQuery2::from_region_view(other, policy);
-        self.intersect_query(&other, policy)
-    }
-
-    /// Computes closed boolean boundary loops against another query region.
-    ///
-    /// This query path runs the same split, classify, and boundary-chain
-    /// traversal as [`RegionView2::boolean_boundary_loops`], but reuses cached
-    /// region/contour boxes during event collection and fragment midpoint
-    /// classification. Cached boxes only prune decided misses, so boundary and
-    /// overlap uncertainty is preserved.
-    pub fn boolean_boundary_loops(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
-        crate::prepared_boolean::boolean_boundary_loops_between_prepared(self, other, op, policy)
-    }
-
-    /// Computes closed boolean boundary loops against an ordinary region view.
-    ///
-    /// This is a mixed query/unquery convenience path: the left operand's
-    /// cache is reused, the right operand is query for this call, and the
-    /// query-query traversal described in
-    /// [`RegionQuery2::boolean_boundary_loops`] remains authoritative.
-    /// The transient right-side cache follows the same candidate-pruning role
-    /// as sweep-line scheduling broad-phase intersection-event setup, while
-    /// the final boundary traversal still follows the polygon-clipping and
-    /// split/classify/assemble model described above.
-    pub fn boolean_boundary_loops_against_region(
-        &self,
-        other: &RegionView2<'_>,
-        op: BooleanOp,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
-        let other = RegionQuery2::from_region_view(other, policy);
-        self.boolean_boundary_loops(&other, op, policy)
-    }
-
-    /// Computes checked boolean boundary contours against another query
-    /// region.
-    ///
-    /// This extends [`RegionQuery2::boolean_boundary_loops`] through the
-    /// same checked-contour conversion and regularized contact fast paths used
-    /// by [`RegionView2::boolean_boundary_contours`]. The query parts remain
-    /// candidate filters only: the degenerate-intersection clipping model degenerate
-    /// clipping cases still surface as explicit boundary handling rather than
-    /// as tolerance-based inside/outside choices.
-    pub fn boolean_boundary_contours(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2>>> {
-        crate::prepared_boolean::boolean_boundary_contours_between_prepared(
-            self, other, op, fill_rule, policy,
-        )
-    }
-
-    /// Computes checked boolean boundary contours against an ordinary region
-    /// view.
-    ///
-    /// This prepares the right operand only for the duration of the call and
-    /// then uses [`RegionQuery2::boolean_boundary_contours`]. Keeping the
-    /// wrapper explicit makes one-query/many-unquery workloads ergonomic
-    /// without weakening the degenerate clipping behavior described by the degenerate-intersection clipping model for boundary contacts.
-    pub fn boolean_boundary_contours_against_region(
-        &self,
-        other: &RegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2>>> {
-        let other = RegionQuery2::from_region_view(other, policy);
-        self.boolean_boundary_contours(&other, op, fill_rule, policy)
-    }
-
-    /// Computes a role-assigned boolean region against another query region.
-    ///
-    /// This is the query analogue of [`RegionView2::boolean_region`]. It
-    /// reuses cached event and point-classification broad phases before
-    /// returning to the ordinary contour-nesting pass for final material/hole
-    /// assignment, preserving the fill-state semantics already used
-    /// by the non-query region pipeline.
-    pub fn boolean_region(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<LineArcRegion2>> {
-        crate::prepared_boolean::boolean_region_between_prepared(self, other, op, fill_rule, policy)
-    }
-
-    /// Computes a role-assigned boolean region against an ordinary region view.
-    ///
-    /// The right operand is query transiently, after which the same query
-    /// boolean-region path assigns resolved contours to material and hole bins.
-    /// The nesting step remains the boundary-first winding boundary-first point
-    /// classification used by [`RegionView2::boolean_region`].
-    pub fn boolean_region_against_region(
-        &self,
-        other: &RegionView2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<LineArcRegion2>> {
-        let other = RegionQuery2::from_region_view(other, policy);
-        self.boolean_region(&other, op, fill_rule, policy)
-    }
-}
-
-impl CurveString2 {
-    /// Borrows this curve string through a retained repeated-query index.
-    pub fn query(&self, policy: &CurvePolicy) -> CurveStringQuery2<'_> {
-        CurveStringQuery2::from_curve_string(self, policy)
-    }
-}
-
-impl Contour2 {
-    /// Borrows this contour through a retained repeated-query index.
-    pub fn query(&self, policy: &CurvePolicy) -> ContourQuery2<'_> {
-        ContourQuery2::from_contour(self, policy)
-    }
-}
-
-impl LineArcRegion2 {
-    /// Borrows this region through a retained repeated-query index.
-    pub fn query(&self, policy: &CurvePolicy) -> RegionQuery2<'_> {
-        RegionQuery2::from_region(self, policy)
-    }
-}
-
-impl<'a> RegionView2<'a> {
-    /// Borrows this region view through a retained repeated-query index.
-    pub fn query(&self, policy: &CurvePolicy) -> RegionQuery2<'a> {
-        RegionQuery2::from_region_view(self, policy)
-    }
-
-    /// Collects normalized topology events against a query right operand.
-    ///
-    /// This preserves operand order for callers that have already query the
-    /// second region. The left view is query transiently, then the query
-    /// event collector uses cached broad-phase boxes before exact intersection
-    /// normalization.
-    pub fn intersect_query(
-        &self,
-        other: &RegionQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<RegionIntersectionSet> {
-        let this = RegionQuery2::from_region_view(self, policy);
-        this.intersect_query(other, policy)
-    }
-
-    /// Computes closed boolean boundary loops against a query right operand.
-    ///
-    /// Use this when the right operand is reused across many ordinary region
-    /// views, especially for non-commutative operations such as difference. The
-    /// transient left cache only prunes decided misses; polygon-clipping style
-    /// boundary traversal and fragment selection remain
-    /// unchanged from [`RegionView2::boolean_boundary_loops`].
-    pub fn boolean_boundary_loops_against_query(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<BooleanBoundaryLoopSet>> {
-        let this = RegionQuery2::from_region_view(self, policy);
-        this.boolean_boundary_loops(other, op, policy)
-    }
-
-    /// Computes checked boolean boundary contours against a query right
-    /// operand.
-    ///
-    /// The operation order is `self op other`; the query right operand is not
-    /// swapped to the left. Degenerate shared-boundary cases keep the same
-    /// explicit degenerate-intersection clipping style uncertainty/regularization behavior
-    /// as the ordinary checked-contour API.
-    pub fn boolean_boundary_contours_against_query(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<Contour2>>> {
-        let this = RegionQuery2::from_region_view(self, policy);
-        this.boolean_boundary_contours(other, op, fill_rule, policy)
-    }
-
-    /// Computes a role-assigned boolean region against a query right
-    /// operand.
-    ///
-    /// Non-overlap line output reuses its certified Boolean direction for role
-    /// assignment; overlap or unsupported primitive cases retain the exact
-    /// nesting-classifier fallback.
-    pub fn boolean_region_against_query(
-        &self,
-        other: &RegionQuery2<'_>,
-        op: BooleanOp,
-        fill_rule: FillRule,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<LineArcRegion2>> {
-        let this = RegionQuery2::from_region_view(self, policy);
-        this.boolean_region(other, op, fill_rule, policy)
-    }
-}
-
-fn prepared_contours<'a>(
-    contours: &[&'a Contour2],
-    policy: &CurvePolicy,
-) -> Vec<ContourQuery2<'a>>
-where
-{
-    contours
-        .iter()
-        .map(|contour| ContourQuery2::from_contour(contour, policy))
-        .collect()
-}
-
-fn prepared_contour_kind_counts(contours: &[ContourQuery2<'_>]) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for contour in contours {
-        let contour_counts = segment_kind_counts(contour.prepared_segments());
-        counts.lines += contour_counts.lines;
-        counts.arcs += contour_counts.arcs;
-    }
-    counts
 }
 
 fn decided_segment_boxes(segments: &[crate::Segment2], policy: &CurvePolicy) -> Vec<Option<Aabb2>> {
@@ -1829,63 +1026,6 @@ fn accumulate_indexed_line_winding(
     Classification::Decided(winding)
 }
 
-fn segment_kind_counts(segments: &[PreparedSegment2<'_>]) -> SegmentKindCounts {
-    let mut counts = SegmentKindCounts::default();
-    for segment in segments {
-        if segment.is_line() {
-            counts.lines += 1;
-        } else if segment.is_arc() {
-            counts.arcs += 1;
-        }
-    }
-    counts
-}
-
-fn intersect_prepared_segment_pairs_with_cached_aabbs(
-    first_prepared_segments: &[PreparedSegment2<'_>],
-    second_prepared_segments: &[PreparedSegment2<'_>],
-    first_segment_boxes: &[Option<Aabb2>],
-    second_segment_boxes: &[Option<Aabb2>],
-    policy: &CurvePolicy,
-) -> CurveResult<Vec<CurveStringIntersection>> {
-    let mut intersections = Vec::new();
-    let x_overlap_schedule =
-        curve_string_x_overlap_schedule(first_segment_boxes, second_segment_boxes);
-
-    for (a_segment_index, a_segment) in first_prepared_segments.iter().enumerate() {
-        for b_segment_index in x_overlap_schedule.as_ref().map_or_else(
-            || CurveStringXOverlapCandidates::All(0..second_prepared_segments.len()),
-            |schedule| schedule.candidates_for(a_segment_index),
-        ) {
-            let b_segment = &second_prepared_segments[b_segment_index];
-            if let (Some(Some(a_box)), Some(Some(b_box))) = (
-                first_segment_boxes.get(a_segment_index),
-                second_segment_boxes.get(b_segment_index),
-            ) && aabbs_decided_disjoint(a_box, b_box, policy)
-            {
-                continue;
-            }
-
-            let relation = a_segment.intersect_prepared_segment(b_segment, policy)?;
-            if !relation.is_none() {
-                intersections.push(CurveStringIntersection {
-                    a_segment_index,
-                    b_segment_index,
-                    a_segment_kind: a_segment.segment_kind(),
-                    b_segment_kind: b_segment.segment_kind(),
-                    a_segment_start_point: a_segment.start().clone(),
-                    a_segment_end_point: a_segment.end().clone(),
-                    b_segment_start_point: b_segment.start().clone(),
-                    b_segment_end_point: b_segment.end().clone(),
-                    relation,
-                });
-            }
-        }
-    }
-
-    Ok(intersections)
-}
-
 #[cfg(feature = "predicates")]
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x().clone(), point.y().clone())
@@ -1995,41 +1135,4 @@ fn accumulate_depth_assuming_off_boundary(
     }
 
     Classification::Decided(())
-}
-
-fn collect_prepared_role_pairs(
-    pairs: &mut Vec<RegionContourIntersection>,
-    workload: &mut RegionIntersectionWorkload,
-    first_contours: &[ContourQuery2<'_>],
-    first_role: RegionContourRole,
-    second_contours: &[ContourQuery2<'_>],
-    second_role: RegionContourRole,
-    policy: &CurvePolicy,
-) -> CurveResult<()> {
-    for (first_index, first_contour) in first_contours.iter().enumerate() {
-        for (second_index, second_contour) in second_contours.iter().enumerate() {
-            workload.candidate_pair_count += 1;
-            if let (Some(first_box), Some(second_box)) =
-                (first_contour.contour_box(), second_contour.contour_box())
-                && aabbs_decided_disjoint(first_box, second_box, policy)
-            {
-                workload.skipped_aabb_pair_count += 1;
-                continue;
-            }
-
-            workload.tested_pair_count += 1;
-            let intersections = first_contour.intersect_query(second_contour, policy)?;
-            if intersections.is_empty() {
-                continue;
-            }
-
-            pairs.push(RegionContourIntersection {
-                first: RegionContourKey::new(RegionSide::First, first_role, first_index),
-                second: RegionContourKey::new(RegionSide::Second, second_role, second_index),
-                intersections,
-            });
-        }
-    }
-
-    Ok(())
 }

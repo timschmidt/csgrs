@@ -525,7 +525,6 @@ pub(crate) fn boolean_boundary_loops_between(
         None,
         policy,
         BooleanBoundaryOutputKind::Loops,
-        None,
     )? {
         Classification::Decided(output) => Ok(Classification::Decided(
             output
@@ -551,7 +550,6 @@ pub(crate) fn boolean_boundary_contours_between(
         None,
         policy,
         BooleanBoundaryOutputKind::Contours,
-        None,
     )? {
         Classification::Decided(output) => Ok(Classification::Decided(
             output
@@ -614,7 +612,6 @@ fn boolean_region_between_impl(
         Some(&boundary_events),
         policy,
         BooleanBoundaryOutputKind::Contours,
-        None,
     )? {
         Classification::Decided(result) => result,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -728,7 +725,6 @@ pub(crate) fn boolean_boundary_between(
     known_boundary_events: Option<&RegionIntersectionSet>,
     policy: &CurvePolicy,
     output_kind: BooleanBoundaryOutputKind,
-    prepared: Option<(&crate::RegionQuery2<'_>, &crate::RegionQuery2<'_>)>,
 ) -> CurveResult<Classification<BooleanBoundaryOutput>> {
     if same_region_view(first, second) {
         return Ok(Classification::Decided(
@@ -768,10 +764,7 @@ pub(crate) fn boolean_boundary_between(
         Some(boundary_events) => boundary_events,
         None => {
             owned_boundary_events = if output_kind == BooleanBoundaryOutputKind::Loops {
-                match prepared {
-                    Some((first, second)) => first.intersect_query(second, policy)?,
-                    None => first.intersect_region(second, policy)?,
-                }
+                first.intersect_region(second, policy)?
             } else {
                 crate::region_events::intersect_region_views_point_only(first, second, policy)?
             };
@@ -875,19 +868,15 @@ pub(crate) fn boolean_boundary_between(
                     policy,
                     &endpoint_contacts,
                     &crossing_windings,
-                    |source_side, sample| match (prepared, source_side) {
-                        (Some((_, second_prepared)), RegionSide::First) => second_prepared
-                            .single_material_winding_assuming_off_boundary(sample, policy),
-                        (Some((first_prepared, _)), RegionSide::Second) => first_prepared
-                            .single_material_winding_assuming_off_boundary(sample, policy),
-                        (None, RegionSide::First) => {
+                    |source_side, sample| match source_side {
+                        RegionSide::First => {
                             crate::contour::line_contour_winding_assuming_off_boundary(
                                 second.material_contours()[0],
                                 sample,
                                 policy,
                             )
                         }
-                        (None, RegionSide::Second) => {
+                        RegionSide::Second => {
                             crate::contour::line_contour_winding_assuming_off_boundary(
                                 first.material_contours()[0],
                                 sample,
@@ -1003,20 +992,15 @@ pub(crate) fn boolean_boundary_between(
                 policy,
                 endpoint_contacts,
                 crossing_windings,
-                |source_side, sample| match (prepared, source_side) {
-                    (Some((_, second_prepared)), RegionSide::First) => second_prepared
-                        .single_material_winding_assuming_off_boundary(sample, policy),
-                    (Some((first_prepared, _)), RegionSide::Second) => {
-                        first_prepared.single_material_winding_assuming_off_boundary(sample, policy)
-                    }
-                    (None, RegionSide::First) => {
+                |source_side, sample| match source_side {
+                    RegionSide::First => {
                         crate::contour::line_contour_winding_assuming_off_boundary(
                             second.material_contours()[0],
                             sample,
                             policy,
                         )
                     }
-                    (None, RegionSide::Second) => {
+                    RegionSide::Second => {
                         crate::contour::line_contour_winding_assuming_off_boundary(
                             first.material_contours()[0],
                             sample,
@@ -1033,16 +1017,8 @@ pub(crate) fn boolean_boundary_between(
             // General fragment classification queries the same immutable
             // operands repeatedly. Retain boxes and prepared predicates only
             // when the once-visiting crossing proof above is unavailable.
-            let first_transient;
-            let second_transient;
-            let (first_prepared, second_prepared) = match prepared {
-                Some(prepared) => prepared,
-                None => {
-                    first_transient = crate::RegionQuery2::from_region_view(first, policy);
-                    second_transient = crate::RegionQuery2::from_region_view(second, policy);
-                    (&first_transient, &second_transient)
-                }
-            };
+            let first_prepared = crate::prepared::RegionQuery2::from_region_view(first, policy);
+            let second_prepared = crate::prepared::RegionQuery2::from_region_view(second, policy);
             fragments.classify_for_boolean_with_contacts_and_point_classifier(
                 first,
                 second,

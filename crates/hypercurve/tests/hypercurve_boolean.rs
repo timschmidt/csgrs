@@ -56,8 +56,6 @@ fn assert_exact_boolean_matrix(
     samples: &[(hypercurve::Point2, bool, bool)],
 ) {
     let policy = policy();
-    let prepared_first = first.query(&policy);
-    let prepared_second = second.query(&policy);
 
     for op in [
         BooleanOp::Union,
@@ -71,14 +69,6 @@ fn assert_exact_boolean_matrix(
         let Classification::Decided(direct_region) = direct else {
             panic!("direct {op:?} was not decided");
         };
-        let prepared = prepared_first
-            .boolean_region(&prepared_second, op, FillRule::NonZero, &policy)
-            .unwrap();
-        let Classification::Decided(prepared_region) = prepared else {
-            panic!("prepared {op:?} was not decided");
-        };
-
-        assert_eq!(prepared_region, direct_region, "prepared {op:?}");
         for (point, first_inside, second_inside) in samples {
             let expected = if boolean_truth(op, *first_inside, *second_inside) {
                 RegionPointLocation::Inside
@@ -89,11 +79,6 @@ fn assert_exact_boolean_matrix(
                 direct_region.classify_point(point, &policy),
                 Classification::Decided(expected),
                 "direct {op:?} at {point:?}"
-            );
-            assert_eq!(
-                prepared_region.classify_point(point, &policy),
-                Classification::Decided(expected),
-                "prepared {op:?} at {point:?}"
             );
         }
     }

@@ -61,26 +61,27 @@ fn bench_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
+fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
     let contour = rectangle(0, 0, 10, 10);
-    let point = p(100, 100);
+    let points = vec![p(100, 100); 64];
     let policy = CurvePolicy::certified();
-    let prepared = contour.query(&policy);
     let started = Instant::now();
     let mut outside_count = 0_usize;
 
     for _ in 0..iterations {
-        match prepared.classify_point(&point, &policy) {
-            Classification::Decided(ContourPointLocation::Outside) => {
-                outside_count += black_box(1);
+        for result in Contour2::classify_points(&contour, black_box(&points), &policy) {
+            match result {
+                Classification::Decided(ContourPointLocation::Outside) => {
+                    outside_count += black_box(1);
+                }
+                other => panic!("batched contour bbox miss expected outside, got {other:?}"),
             }
-            other => panic!("prepared contour bbox miss benchmark expected outside, got {other:?}"),
         }
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_contour_bbox_miss_classify: {iterations} iterations in {elapsed:?} ({:?}/iter), outside={outside_count}",
+        "batched_contour_bbox_miss_classify_64: {iterations} batches in {elapsed:?} ({:?}/batch), outside={outside_count}",
         elapsed / iterations
     );
     Ok(())
@@ -110,26 +111,35 @@ fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_sparse_region_outside(iterations: u32) -> CurveResult<()> {
+fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
-    let point = p(5_000, 5_000);
+    let points = (0..64)
+        .map(|index| {
+            if index % 2 == 0 {
+                p(5_000, 5_000)
+            } else {
+                p(612, 2)
+            }
+        })
+        .collect::<Vec<_>>();
     let policy = CurvePolicy::certified();
-    let prepared = region.query(&policy);
     let started = Instant::now();
-    let mut outside_count = 0_usize;
+    let mut decided_count = 0_usize;
 
     for _ in 0..iterations {
-        match prepared.classify_point(&point, &policy) {
-            Classification::Decided(RegionPointLocation::Outside) => {
-                outside_count += black_box(1);
+        for result in LineArcRegion2::classify_points(&region, black_box(&points), &policy) {
+            match result {
+                Classification::Decided(
+                    RegionPointLocation::Inside | RegionPointLocation::Outside,
+                ) => decided_count += black_box(1),
+                other => panic!("batched sparse region benchmark became non-decided: {other:?}"),
             }
-            other => panic!("prepared sparse outside benchmark expected outside, got {other:?}"),
         }
     }
 
     let elapsed = started.elapsed();
     println!(
-        "prepared_sparse_region_outside_classify: {iterations} iterations in {elapsed:?} ({:?}/iter), outside={outside_count}",
+        "batched_sparse_region_classify_64: {iterations} batches in {elapsed:?} ({:?}/batch), decided={decided_count}",
         elapsed / iterations
     );
     Ok(())
@@ -182,38 +192,12 @@ fn bench_sparse_region_filled_area(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
-    let region = sparse_region(120);
-    let point = p(612, 2);
-    let policy = CurvePolicy::certified();
-    let prepared = region.query(&policy);
-    let started = Instant::now();
-    let mut inside_count = 0_usize;
-
-    for _ in 0..iterations {
-        match prepared.classify_point(&point, &policy) {
-            Classification::Decided(RegionPointLocation::Inside) => {
-                inside_count += black_box(1);
-            }
-            other => panic!("prepared sparse single-hit benchmark expected inside, got {other:?}"),
-        }
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_sparse_region_single_hit_classify: {iterations} iterations in {elapsed:?} ({:?}/iter), inside={inside_count}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn main() -> CurveResult<()> {
     bench_contour_bbox_miss(100_000)?;
-    bench_prepared_contour_bbox_miss(100_000)?;
+    bench_batched_contour_bbox_miss(10_000)?;
     bench_sparse_region_outside(10_000)?;
-    bench_prepared_sparse_region_outside(10_000)?;
     bench_sparse_region_single_hit(10_000)?;
-    bench_prepared_sparse_region_single_hit(10_000)?;
+    bench_batched_sparse_region(1_000)?;
     bench_sparse_region_filled_area(10_000)?;
     Ok(())
 }

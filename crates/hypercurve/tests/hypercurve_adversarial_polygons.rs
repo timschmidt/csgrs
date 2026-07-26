@@ -120,8 +120,6 @@ fn exercise_offsets(contour: &Contour2, distance: i32) {
 
 fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
     let policy = policy();
-    let prepared_a = a.query(&policy);
-    let prepared_b = b.query(&policy);
 
     for op in [
         BooleanOp::Union,
@@ -132,13 +130,6 @@ fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
         let boundary = a
             .boolean_boundary_contours(b, op, FillRule::NonZero, &policy)
             .unwrap();
-        assert_eq!(
-            prepared_a
-                .boolean_boundary_contours(&prepared_b, op, FillRule::NonZero, &policy)
-                .unwrap(),
-            boundary,
-            "prepared clipping path must match ordinary clipping for {op:?}"
-        );
         if let Classification::Decided(contours) = &boundary {
             for contour in contours {
                 assert_contour_finite(contour);
@@ -146,13 +137,6 @@ fn exercise_clipping(a: &LineArcRegion2, b: &LineArcRegion2) {
         }
 
         let region = a.boolean_region(b, op, FillRule::NonZero, &policy).unwrap();
-        assert_eq!(
-            prepared_a
-                .boolean_region(&prepared_b, op, FillRule::NonZero, &policy)
-                .unwrap(),
-            region,
-            "prepared boolean-region path must match ordinary clipping for {op:?}"
-        );
         if let Classification::Decided(region) = &region {
             assert_region_finite(region);
         }
@@ -280,7 +264,7 @@ proptest! {
     }
 
     #[test]
-    fn adversarial_regions_with_holes_match_prepared_clipping(
+    fn adversarial_regions_with_holes_support_clipping(
         kind in 0_u8..4,
         width in 16_i32..96,
         height in 16_i32..96,

@@ -100,6 +100,20 @@ impl LineArcRegion2 {
         self.as_view().classify_point(point, policy)
     }
 
+    /// Classifies a batch of points while building exact query indexes once.
+    pub fn classify_points(
+        &self,
+        points: &[Point2],
+        policy: &CurvePolicy,
+    ) -> Vec<Classification<RegionPointLocation>> {
+        self.as_view().classify_points(points, policy)
+    }
+
+    /// Returns conservative structural facts for this region immediately.
+    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::RegionFacts {
+        self.as_view().structural_facts(policy)
+    }
+
     /// Returns signed containment depth for non-boundary points.
     pub fn signed_depth(&self, point: &Point2, policy: &CurvePolicy) -> Classification<i32> {
         self.as_view().signed_depth(point, policy)
@@ -205,6 +219,27 @@ impl<'a> RegionView2<'a> {
         } else {
             RegionPointLocation::Outside
         })
+    }
+
+    /// Classifies a batch of points through one immediate exact region pass.
+    ///
+    /// Region, contour, segment, winding, and predicate indexes are temporary
+    /// implementation details shared by every point in this call.
+    pub fn classify_points(
+        &self,
+        points: &[Point2],
+        policy: &CurvePolicy,
+    ) -> Vec<Classification<RegionPointLocation>> {
+        let index = crate::prepared::RegionQuery2::from_region_view(self, policy);
+        points
+            .iter()
+            .map(|point| index.classify_point(point, policy))
+            .collect()
+    }
+
+    /// Returns conservative structural facts for this borrowed region immediately.
+    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::RegionFacts {
+        crate::prepared::region_view_facts(self, policy)
     }
 
     /// Returns signed containment depth for non-boundary points.

@@ -160,9 +160,8 @@ fn main() {
         Ok(result)
     });
 
-    let prepared = first.query(&policy);
-    trace("prepared_region_containment", || {
-        Ok(prepared.classify_point(&p(1, 1), &policy))
+    trace("batched_region_containment", || {
+        Ok(first.classify_points(&[p(1, 1)], &policy))
     });
 
     #[cfg(feature = "triangulation")]

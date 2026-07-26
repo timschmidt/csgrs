@@ -58,8 +58,6 @@ fuzz_target!(|data: &[u8]| {
     let policy = CurvePolicy::certified();
     let first_view = first.as_view();
     let second_view = second.as_view();
-    let first_prepared = first.query(&policy);
-    let second_prepared = second.query(&policy);
     let query = Point2::new(r(data[8] as i32 - 128), r(data[9] as i32 - 128));
     let first_location = first_view.classify_point(&query, &policy);
     let second_location = second_view.classify_point(&query, &policy);
@@ -71,10 +69,6 @@ fuzz_target!(|data: &[u8]| {
         BooleanOp::Xor,
     ] {
         let direct = first_view.boolean_region(&second_view, op, FillRule::EvenOdd, &policy);
-        let prepared =
-            first_prepared.boolean_region(&second_prepared, op, FillRule::EvenOdd, &policy);
-        assert_eq!(direct, prepared);
-
         if let (
             Ok(Classification::Decided(result)),
             Classification::Decided(first_location),
@@ -93,8 +87,6 @@ fuzz_target!(|data: &[u8]| {
         }
     }
 
-    assert_eq!(
-        first_location,
-        first_prepared.classify_point(&query, &policy),
-    );
+    let batched = hypercurve::LineArcRegion2::classify_points(&first, &[query], &policy);
+    assert_eq!(batched, vec![first_location]);
 });

@@ -118,27 +118,6 @@ fn bench_direct(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     );
 }
 
-fn bench_prepared(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
-    let first = zigzag(segment_count, 0);
-    let second = zigzag_with_remote_tail(segment_count, 100);
-    let first = first.query(policy);
-    let second = second.query(policy);
-    let started = Instant::now();
-    let mut checksum = 0_usize;
-    for _ in 0..iterations {
-        let result = black_box(&first)
-            .intersect_query(black_box(&second), black_box(policy))
-            .expect("separated prepared paths should be decidable");
-        assert!(result.is_empty());
-        checksum = checksum.wrapping_add(black_box(result.len()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "curve_string_x_sparse_prepared_{segment_count}: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
-        elapsed / iterations
-    );
-}
-
 fn bench_x_dense(segment_count: usize, iterations: u32, policy: &CurvePolicy) {
     let first = vertically_dense_zigzag(segment_count, 0);
     let second = vertically_dense_zigzag_with_remote_tail(segment_count, 10_000);
@@ -175,29 +154,12 @@ fn bench_sparse_contours(rung_count: usize, iterations: u32, policy: &CurvePolic
         "contour_interval_sparse_{rung_count}_rungs: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
-
-    let first = first.query(policy);
-    let second = second.query(policy);
-    let started = Instant::now();
-    for _ in 0..iterations {
-        let intersections = black_box(&first)
-            .intersect_query(black_box(&second), black_box(policy))
-            .expect("separated prepared contours should be decidable");
-        assert!(intersections.is_empty());
-        checksum += black_box(intersections.len());
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "contour_interval_sparse_prepared_{rung_count}_rungs: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
-        elapsed / iterations
-    );
 }
 
 fn main() {
     let policy = CurvePolicy::certified();
     for (segment_count, iterations) in [(32, 100), (64, 50), (128, 20), (512, 3)] {
         bench_direct(segment_count, iterations, &policy);
-        bench_prepared(segment_count, iterations, &policy);
         bench_x_dense(segment_count, iterations, &policy);
     }
     for (segment_count, iterations) in [(64, 100), (128, 50), (512, 10)] {

@@ -13,8 +13,8 @@ use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveError, CurvePolicy,
     CurveResult, LineArcIntersection, LineArcOrder, LineArcRegion2, LineLineIntersection, LineSeg2,
-    LineSide, ParamRange, Point2, RegionPointLocation, RegionQuery2, Segment2, SegmentIntersection,
-    SegmentKind, UncertaintyReason,
+    LineSide, ParamRange, Point2, RegionPointLocation, Segment2, SegmentIntersection, SegmentKind,
+    UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -459,8 +459,35 @@ impl CurveString2 {
         end_cutter: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<CurveString2>> {
-        let start_events = self.intersect_curve_string(start_cutter, policy)?;
-        let end_events = self.intersect_curve_string(end_cutter, policy)?;
+        let source_boxes = self
+            .segments
+            .iter()
+            .map(|segment| decided_segment_aabb(segment, policy))
+            .collect::<Vec<_>>();
+        let start_boxes = start_cutter
+            .segments
+            .iter()
+            .map(|segment| decided_segment_aabb(segment, policy))
+            .collect::<Vec<_>>();
+        let end_boxes = end_cutter
+            .segments
+            .iter()
+            .map(|segment| decided_segment_aabb(segment, policy))
+            .collect::<Vec<_>>();
+        let start_events = intersect_curve_strings_with_cached_aabbs(
+            self,
+            start_cutter,
+            &source_boxes,
+            &start_boxes,
+            policy,
+        )?;
+        let end_events = intersect_curve_strings_with_cached_aabbs(
+            self,
+            end_cutter,
+            &source_boxes,
+            &end_boxes,
+            policy,
+        )?;
         self.trim_between_curve_intersection_events(start_events, end_events, policy)
     }
 
@@ -479,14 +506,6 @@ impl CurveString2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Vec<CurveString2>>> {
         trim_curve_string_inside_region(self, region, policy)
-    }
-
-    pub(crate) fn trim_inside_region_query(
-        &self,
-        region: &RegionQuery2<'_>,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Vec<CurveString2>>> {
-        trim_curve_string_inside_prepared_region(self, region, policy)
     }
 
     /// Chamfers one interior native-segment vertex by exact segment parameters.
@@ -1038,6 +1057,15 @@ impl CurveString2 {
         intersect_curve_strings_with_cached_aabbs(self, other, &self_boxes, &other_boxes, policy)
     }
 
+    /// Returns conservative structural facts for this curve string immediately.
+    ///
+    /// The fact pass visits the segments once and does not expose its temporary
+    /// broad-phase storage. Exact predicates remain authoritative for later
+    /// topology operations.
+    pub fn structural_facts(&self, policy: &CurvePolicy) -> crate::CurveStringFacts {
+        crate::prepared::curve_string_facts(self, policy)
+    }
+
     fn endpoint(&self, endpoint: CurveStringEndpoint2) -> CurveResult<&Point2> {
         match endpoint {
             CurveStringEndpoint2::Start => self.start().ok_or(CurveError::EmptyCurveString),
@@ -1190,26 +1218,6 @@ fn trim_curve_string_inside_region(
     })
 }
 
-fn trim_curve_string_inside_prepared_region(
-    curve_string: &CurveString2,
-    region: &RegionQuery2<'_>,
-    policy: &CurvePolicy,
-) -> CurveResult<Classification<Vec<CurveString2>>> {
-    let mut boundary_hits = Vec::new();
-    if let Some(blocker) = collect_prepared_region_trim_boundary_hits(
-        curve_string,
-        region,
-        policy,
-        &mut boundary_hits,
-    )? {
-        return Ok(Classification::Uncertain(blocker));
-    }
-
-    trim_curve_string_inside_region_with_hits(curve_string, boundary_hits, policy, |point| {
-        region.classify_point(point, policy)
-    })
-}
-
 fn trim_curve_string_inside_region_with_hits(
     curve_string: &CurveString2,
     boundary_hits: Vec<RegionTrimHit2>,
@@ -1321,42 +1329,6 @@ fn collect_region_trim_boundary_hits(
     Ok(None)
 }
 
-fn collect_prepared_region_trim_boundary_hits(
-    curve_string: &CurveString2,
-    region: &RegionQuery2<'_>,
-    policy: &CurvePolicy,
-    hits: &mut Vec<RegionTrimHit2>,
-) -> CurveResult<Option<UncertaintyReason>> {
-    let source_segment_boxes: Vec<_> = curve_string
-        .segments()
-        .iter()
-        .map(|segment| decided_segment_aabb(segment, policy))
-        .collect();
-    for contour in region.prepared_material_contours() {
-        if let Some(blocker) = collect_prepared_region_trim_contour_hits(
-            curve_string,
-            &source_segment_boxes,
-            contour,
-            policy,
-            hits,
-        )? {
-            return Ok(Some(blocker));
-        }
-    }
-    for contour in region.prepared_hole_contours() {
-        if let Some(blocker) = collect_prepared_region_trim_contour_hits(
-            curve_string,
-            &source_segment_boxes,
-            contour,
-            policy,
-            hits,
-        )? {
-            return Ok(Some(blocker));
-        }
-    }
-    Ok(None)
-}
-
 fn collect_region_trim_contour_hits(
     curve_string: &CurveString2,
     source_segment_boxes: &[Option<crate::Aabb2>],
@@ -1375,40 +1347,6 @@ fn collect_region_trim_contour_hits(
             if let (Some(Some(source_box)), Some(Some(region_box))) = (
                 source_segment_boxes.get(source_segment_index),
                 region_segment_boxes.get(region_segment_index),
-            ) && aabbs_decided_disjoint(source_box, region_box, policy)
-            {
-                continue;
-            }
-
-            let relation = source_segment.intersect_segment(region_segment, policy)?;
-            if let Some(blocker) = append_region_trim_hits_from_relation(
-                hits,
-                source_segment_index,
-                source_segment,
-                relation,
-                policy,
-            )? {
-                return Ok(Some(blocker));
-            }
-        }
-    }
-    Ok(None)
-}
-
-fn collect_prepared_region_trim_contour_hits(
-    curve_string: &CurveString2,
-    source_segment_boxes: &[Option<crate::Aabb2>],
-    contour: &crate::ContourQuery2<'_>,
-    policy: &CurvePolicy,
-    hits: &mut Vec<RegionTrimHit2>,
-) -> CurveResult<Option<UncertaintyReason>> {
-    for (source_segment_index, source_segment) in curve_string.segments().iter().enumerate() {
-        for (region_segment_index, region_segment) in
-            contour.contour().segments().iter().enumerate()
-        {
-            if let (Some(Some(source_box)), Some(Some(region_box))) = (
-                source_segment_boxes.get(source_segment_index),
-                contour.segment_boxes().get(region_segment_index),
             ) && aabbs_decided_disjoint(source_box, region_box, policy)
             {
                 continue;

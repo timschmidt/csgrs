@@ -163,38 +163,6 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![line_segment(0, 0, 10, 0)])?;
-    let start_cutter = CurveString2::try_new(vec![line_segment(2, -1, 2, 1)])?;
-    let end_cutter = CurveString2::try_new(vec![line_segment(8, -1, 8, 1)])?;
-    let policy = CurvePolicy::certified();
-    let prepared_curve = curve.query(&policy);
-    let prepared_start = start_cutter.query(&policy);
-    let prepared_end = end_cutter.query(&policy);
-    let started = Instant::now();
-    let mut total_segments = 0_usize;
-
-    for _ in 0..iterations {
-        let result = prepared_curve.trim_between_query_intersections(
-            &prepared_start,
-            &prepared_end,
-            &policy,
-        )?;
-        let trimmed = expect_decided(
-            result,
-            "prepared curve-intersection trim benchmark should materialize",
-        );
-        total_segments += black_box(trimmed.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_curve_string_curve_intersection_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total segments={total_segments}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
     let region =
@@ -212,30 +180,6 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_prepared_region_trim(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
-    let region =
-        LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)]);
-    let policy = CurvePolicy::certified();
-    let prepared_curve = curve.query(&policy);
-    let prepared_region = region.query(&policy);
-    let started = Instant::now();
-    let mut total_outputs = 0_usize;
-
-    for _ in 0..iterations {
-        let result = prepared_curve.trim_inside_region_query(&prepared_region, &policy)?;
-        let trimmed = expect_decided(result, "prepared region trim benchmark became uncertain");
-        total_outputs += black_box(trimmed.len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
         elapsed / iterations
     );
     Ok(())
@@ -762,46 +706,13 @@ fn bench_contour_signed_area_cache(iterations: u32) -> CurveResult<()> {
     Ok(())
 }
 
-fn bench_prepared_region_boolean(iterations: u32) -> CurveResult<()> {
-    let first = LineArcRegion2::from_material_contours(vec![rectangle(0, 0, 4, 4)]);
-    let second = LineArcRegion2::from_material_contours(vec![rectangle(2, -1, 6, 3)]);
-    let policy = CurvePolicy::certified();
-    let prepared_first = first.query(&policy);
-    let prepared_second = second.query(&policy);
-    let started = Instant::now();
-    let mut total_boundary_contours = 0_usize;
-
-    for _ in 0..iterations {
-        let Classification::Decided(result) = prepared_first.boolean_region(
-            &prepared_second,
-            BooleanOp::Union,
-            FillRule::NonZero,
-            &policy,
-        )?
-        else {
-            panic!("prepared region boolean benchmark became uncertain");
-        };
-        total_boundary_contours +=
-            black_box(result.material_contours().len() + result.hole_contours().len());
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "prepared_region_boolean: {iterations} iterations in {elapsed:?} ({:?}/iter), total boundary contours={total_boundary_contours}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
 fn main() -> CurveResult<()> {
     let iterations = 10_000;
     bench_parameter_trim(iterations)?;
     bench_parameter_arc_trim(iterations)?;
     bench_point_arc_trim(iterations)?;
     bench_curve_intersection_trim(iterations)?;
-    bench_prepared_curve_intersection_trim(iterations)?;
     bench_region_trim(iterations)?;
-    bench_prepared_region_trim(iterations)?;
     bench_line_chamfer(iterations)?;
     bench_arc_chamfer(iterations)?;
     bench_line_fillet(iterations)?;
@@ -819,6 +730,5 @@ fn main() -> CurveResult<()> {
     bench_contour_line_merge_evidence(1_000)?;
     bench_contour_signed_area_cache(100_000)?;
     bench_region_boolean(1_000)?;
-    bench_prepared_region_boolean(1_000)?;
     Ok(())
 }

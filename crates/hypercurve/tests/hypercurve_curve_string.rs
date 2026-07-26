@@ -1,7 +1,7 @@
 use hypercurve::{
     BulgeVertex2, CircularArc2, Classification, Contour2, CurveError, CurvePolicy, CurveString2,
-    CurveStringEndpoint2, CurveStringTrimPoint2, LineArcIntersection, LineArcOrder, LineArcRegion2,
-    LineSeg2, Point2, Real, Segment2, SegmentIntersection, SegmentKindCounts, UncertaintyReason,
+    CurveStringEndpoint2, CurveStringTrimPoint2, LineArcRegion2, LineSeg2, Point2, Real, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -44,20 +44,6 @@ fn policy() -> CurvePolicy {
     CurvePolicy::certified()
 }
 
-fn sparse_zigzag(segment_count: i32) -> CurveString2 {
-    let mut segments = Vec::with_capacity(segment_count as usize);
-    let mut previous = p(0, 0);
-    for index in 1..=segment_count {
-        let next_y = if index % 2 == 0 { 0 } else { 1 };
-        let next = p(index * 3, next_y);
-        segments.push(Segment2::Line(
-            LineSeg2::try_new(previous, next.clone()).unwrap(),
-        ));
-        previous = next;
-    }
-    CurveString2::try_new(segments).unwrap()
-}
-
 #[test]
 fn curve_string_and_contour_reject_forged_zero_length_segments() {
     let zero = Segment2::Line(LineSeg2::new_unchecked(p(0, 0), p(0, 0)));
@@ -95,28 +81,22 @@ fn curve_string_endpoint_connection_classifies_exactly() {
     );
 }
 #[test]
-fn prepared_curve_string_evidence_cached_segment_box_counts() {
+fn curve_string_structural_facts_include_segment_box_counts() {
     let curve = CurveString2::try_new(vec![
         line_segment(0, 0, 2, 0),
         line_segment(2, 0, 2, 3),
         line_segment(2, 3, 5, 3),
     ])
     .unwrap();
-    let prepared = curve.query(&policy());
+    let facts = hypercurve::CurveString2::structural_facts(&curve, &policy());
 
-    assert_eq!(prepared.segment_count(), 3);
-    assert_eq!(prepared.segment_count(), prepared.segment_boxes().len());
-    assert_eq!(
-        prepared.segment_kind_counts(),
-        SegmentKindCounts { lines: 3, arcs: 0 }
-    );
-    assert_eq!(prepared.decided_segment_box_count(), 3);
-    assert_eq!(prepared.undecided_segment_box_count(), 0);
-    assert!(prepared.curve_box().is_some());
+    assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 3, arcs: 0 });
+    assert_eq!(facts.decided_segment_box_count, 3);
+    assert!(facts.has_decided_curve_box);
 }
 
 #[test]
-fn prepared_contour_evidence_cached_segment_box_counts() {
+fn contour_structural_facts_include_segment_box_counts() {
     let contour = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(p(0, 0), s(0)),
         BulgeVertex2::new(p(4, 0), s(0)),
@@ -124,17 +104,11 @@ fn prepared_contour_evidence_cached_segment_box_counts() {
         BulgeVertex2::new(p(0, 3), s(0)),
     ])
     .unwrap();
-    let prepared = contour.query(&policy());
+    let facts = hypercurve::Contour2::structural_facts(&contour, &policy());
 
-    assert_eq!(prepared.segment_count(), 4);
-    assert_eq!(prepared.segment_count(), prepared.segment_boxes().len());
-    assert_eq!(
-        prepared.segment_kind_counts(),
-        SegmentKindCounts { lines: 4, arcs: 0 }
-    );
-    assert_eq!(prepared.decided_segment_box_count(), 4);
-    assert_eq!(prepared.undecided_segment_box_count(), 0);
-    assert!(prepared.contour_box().is_some());
+    assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 4, arcs: 0 });
+    assert_eq!(facts.decided_segment_box_count, 4);
+    assert!(facts.has_decided_curve_box);
 }
 
 #[test]
@@ -1009,84 +983,5 @@ fn curve_string_trim_inside_region_evidence_boundary_overlap_blocker() {
     assert_eq!(
         curve.trim_inside_region(&region, &policy()).unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
-    );
-}
-
-#[test]
-fn prepared_curve_string_intersections_match_plain_sparse_scan() {
-    let curve = sparse_zigzag(80);
-    let cutter = CurveString2::try_new(vec![line_segment(121, -2, 121, 3)]).unwrap();
-    let policy = policy();
-    let prepared_curve = curve.query(&policy);
-    let prepared_cutter = cutter.query(&policy);
-
-    assert_eq!(prepared_curve.curve_string(), &curve);
-    assert!(prepared_curve.curve_box().is_some());
-    assert_eq!(prepared_curve.segment_boxes().len(), curve.segments().len());
-
-    let plain_events = curve.intersect_curve_string(&cutter, &policy).unwrap();
-    let prepared_events = prepared_curve
-        .intersect_query(&prepared_cutter, &policy)
-        .unwrap();
-    let mixed_events = prepared_curve
-        .intersect_curve_string(&cutter, &policy)
-        .unwrap();
-
-    assert_eq!(prepared_events, plain_events);
-    assert_eq!(mixed_events, plain_events);
-    assert_eq!(prepared_events.len(), 1);
-}
-#[test]
-fn prepared_curve_string_intersections_preserve_line_arc_hits() {
-    let line_curve = CurveString2::try_new(vec![line_segment(1, -2, 1, 2)]).unwrap();
-    let arc_curve = CurveString2::try_new(vec![Segment2::Arc(
-        CircularArc2::from_bulge(p(0, 0), p(2, 0), s(1)).unwrap(),
-    )])
-    .unwrap();
-    let policy = policy();
-    let prepared_line = line_curve.query(&policy);
-    let prepared_arc = arc_curve.query(&policy);
-
-    let plain_events = line_curve
-        .intersect_curve_string(&arc_curve, &policy)
-        .unwrap();
-    let prepared_events = prepared_line
-        .intersect_query(&prepared_arc, &policy)
-        .unwrap();
-
-    assert_eq!(prepared_events, plain_events);
-    assert_eq!(prepared_events.len(), 1);
-    let SegmentIntersection::LineArc {
-        order,
-        result: LineArcIntersection::Point(hit),
-    } = &prepared_events[0].relation
-    else {
-        panic!("expected prepared line-arc point event");
-    };
-    assert_eq!(*order, LineArcOrder::LineThenArc);
-    assert_eq!(hit.point, p(1, -1));
-}
-
-#[test]
-fn prepared_curve_string_intersections_skip_decided_disjoint_boxes() {
-    let first = CurveString2::from_bulge_vertices(&[
-        BulgeVertex2::new(p(0, 0), s(0)),
-        BulgeVertex2::new(p(2, 0), s(0)),
-    ])
-    .unwrap();
-    let second = CurveString2::from_bulge_vertices(&[
-        BulgeVertex2::new(p(10, 10), s(0)),
-        BulgeVertex2::new(p(12, 10), s(0)),
-    ])
-    .unwrap();
-    let policy = policy();
-    let prepared_first = first.query(&policy);
-    let prepared_second = second.query(&policy);
-
-    assert!(
-        prepared_first
-            .intersect_query(&prepared_second, &policy)
-            .unwrap()
-            .is_empty()
     );
 }

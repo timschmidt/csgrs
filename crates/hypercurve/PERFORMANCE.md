@@ -27,7 +27,7 @@ no exact-dispatch requirement.
 | Polynomial/rational Bezier algebra, splitting, arrangement, and retained evidence | the `hypercurve_bezier_*` tests and `hypercurve_rational_bezier` | the `bezier_*` benches and `rational_bezier` | quadratic evaluation and region Boolean |
 | B-spline, polynomial spline, and NURBS construction/evaluation | `hypercurve_bspline`, `hypercurve_polynomial_spline`, `hypercurve_nurbs`, `hypercurve_nurbs_interpolation` | `bspline`, `rational_bezier`, `api_surface` | global NURBS interpolation |
 | Editing, offsets, fitting, and reconstruction | `hypercurve_contour`, `hypercurve_offset`, `hypercurve_bezier_fit_offset`, `hypercurve_reconstruct` | `editing`, `offset`, `reconstruction` | checked curve-string offset |
-| Contours, regions, Boolean topology, and prepared queries | `hypercurve_boolean`, `hypercurve_region*`, `hypercurve_curve_region_boolean` | `containment`, `bezier_region` | region Boolean and prepared containment |
+| Contours, regions, Boolean topology, and batched point queries | `hypercurve_boolean`, `hypercurve_region*`, `hypercurve_curve_region_boolean` | `containment`, `bezier_region` | region Boolean and batched containment |
 | Pathological retained-region memory, transforms, intersections, and all Boolean operations | benchmark fixture smoke paths plus the ordinary family/Boolean suites | `pathological_regions`; feature-gated pathological lanes in `comparative` | every curve family and `Real` representation class across calibrated 100 MiB, 500 MiB, and 1 GiB native inputs |
 | Finite projection, retained import, and triangulation boundary | `hypercurve_region`, `hypercurve_triangulation` | `api_surface` | not applicable to the finite-only adapter work; exact reconstruction/topology is traced by the rows above |
 
@@ -35,7 +35,7 @@ The `dispatch-trace` feature enables the shared `hyperreal`/`hyperlimit`
 exact-computation trace recorder. The `dispatch_trace` benchmark exercises
 public line and arc intersections, polynomial Bezier evaluation, curve-string
 offsetting, exact similarity transforms, global NURBS interpolation, region
-Boolean construction, and prepared region containment. Each workload is
+Boolean construction, and batched region containment. Each workload is
 isolated in its own recording window and fails if it produces no dispatch or
 rational-reducer evidence.
 
@@ -103,7 +103,7 @@ runs without changing the benchmark workload.
 | Foster, Hormann, and Popa, degenerate polygon clipping | The key lesson is to classify and label degenerate intersections explicitly instead of perturbing them. Curve arrangements retain contact multiplicity, tangent/crossing status, overlap ranges, vertex identities, and operation-aware ownership before traversal. |
 | Greiner and Hormann, arbitrary polygon clipping | Intersection insertion followed by entry/exit traversal is reflected in split/classify/traverse Boolean structure. Hypercurve extends the carrier and evidence model for curves and exact degeneracies rather than copying a floating-point polygon-only traversal. |
 | Hobby, finite-precision segment output | Finite output can create or erase incidences, so certified flattening, SVG import/export, and reconstruction stay explicit boundaries with evidence. Snap rounding is not silently applied inside exact topology. |
-| Hormann and Agathos, point in polygon | Boundary classification precedes winding decisions, and contours expose both nonzero and even-odd fill rules. Conservative boxes and prepared views accelerate repeated classification without changing the winding result. |
+| Hormann and Agathos, point in polygon | Boundary classification precedes winding decisions, and contours expose both nonzero and even-odd fill rules. Conservative boxes and internal batch indexes accelerate repeated classification without changing the winding result. |
 | Kasa, algebraic circle fitting | The fit is fast but is a multi-sample algebraic approximation with known bias. It was rejected for deterministic streaming reconstruction, where `reconstruct` instead uses the exact three-point circumcircle/Menger witness and records the finite source provenance. |
 | Martinez, Rueda, and Feito, polygon Boolean operations | The sweep overlay provides the asymptotic design and explicit event classification used to motivate the retained large-batch x scheduler. The current curved-region events still retain contour/curve candidates and provenance; replacing them with the paper's polygon-only status structure would be a new carrier architecture and would not preserve curved overlap evidence by construction. |
 | Menger, metric geometry | Three-point Menger curvature/circumcircle geometry is used by polyline-to-line/arc reconstruction. It gives the deterministic local witness needed by the streaming reconstruction policy. |
@@ -114,8 +114,8 @@ runs without changing the benchmark workload.
 | Tiller and Hanson, profile offsets | Exact line/arc joins, caps, and primitive profile offsets are implemented in `offset`. Free-form Bézier offset fitting remains staged behind exact hazard analysis because trimming and singular joins need separate certificates. |
 | Raph Levien, parallel Béziers and path simplification | Endpoint-tangent cubic fitting with positive arm solving through the exact midpoint is tried before subdivision. It is only a candidate: exact parallel verification controls acceptance, while a deterministic Blend2D lane remains the completion fallback. |
 | Blend2D, simplification and offsetting | Exact same-parameter cubic-to-two-quadratic reduction and the quadratic endpoint-normal construction provide deterministic candidates and radial diagnostics. Hypercurve does not treat Blend2D's radial heuristic as a Hausdorff proof; its independent verifier certifies every emitted span. |
-| Vatti, generic polygon clipping | Scanbeam clipping demonstrates a general event/ownership formulation that handles holes and complex polygons. Hypercurve's region pipeline keeps those roles explicit, and its retained x scheduler supplies the compatible broad-phase benefit. A second polygon-only scanbeam carrier would duplicate rather than optimize the prepared curved-arrangement representation. |
-| Yap, exact geometric computation | The exact-object discipline is the crate-wide rule: structural filters may accelerate a decision, but a topology branch needs certified evidence. Homogeneous carriers, algebraic parameter intervals, retained blockers, and evidence-bearing prepared objects preserve the information needed for replay. |
+| Vatti, generic polygon clipping | Scanbeam clipping demonstrates a general event/ownership formulation that handles holes and complex polygons. Hypercurve's region pipeline keeps those roles explicit, and its retained x scheduler supplies the compatible broad-phase benefit. A second polygon-only scanbeam carrier would duplicate rather than optimize the curved-arrangement representation. |
+| Yap, exact geometric computation | The exact-object discipline is the crate-wide rule: structural filters may accelerate a decision, but a topology branch needs certified evidence. Homogeneous carriers, algebraic parameter intervals, retained blockers, and internally retained construction evidence preserve the information needed for replay. |
 
 ## Certified Bézier offset completion and baseline
 
@@ -250,17 +250,18 @@ same checksum.
 | Workload | Flat scan median | Adaptive sweep median | Change |
 | --- | ---: | ---: | ---: |
 | 64 x 66 segments, direct | 970.400 us | 107.487 us | 88.9% faster |
-| 64 x 66 segments, prepared | 911.943 us | 72.506 us | 92.0% faster |
+| 64 x 66 segments, prepared (historical, API retired) | 911.943 us | 72.506 us | 92.0% faster |
 | 128 x 130 segments, direct | 3.841 ms | 212.683 us | 94.5% faster |
-| 128 x 130 segments, prepared | 3.797 ms | 142.745 us | 96.2% faster |
+| 128 x 130 segments, prepared (historical, API retired) | 3.797 ms | 142.745 us | 96.2% faster |
 | 512 x 514 segments, direct | 69.282 ms | 1.001 ms | 98.6% faster |
-| 512 x 514 segments, prepared | 68.029 ms | 632.556 us | 99.1% faster |
+| 512 x 514 segments, prepared (historical, API retired) | 68.029 ms | 632.556 us | 99.1% faster |
 
 The adversarial x-dense/global-overlap sentinel selected the flat scan. Its
 64-, 128-, and 512-segment medians stayed within 1.3% of baseline; the largest
 movement was a 1.1% slowdown and is below the retention threshold. A 64-by-65
-equal-x endpoint-contact regression exercises the active sweep and proves that
-direct and prepared queries retain the same event and source indices.
+equal-x endpoint-contact regression exercised the active sweep and proved that
+the immediate and now-retired retained-query lanes produced the same event and
+source indices.
 
 ## Retained exact AABB separation short-circuit
 
@@ -5325,6 +5326,46 @@ all-target Clippy, formatting, and warning-denied rustdoc passed. Regenerated
 nightly-rustdoc API coverage and the five-crate static call graph contain no
 `CurveRegionQuery2` item or call edge. The no-default matrix also exposed and
 fixed a feature-gated `Ordering` import left by the preceding exact conic replay.
+
+### Immediate native query surface
+
+The remaining public `CurveStringQuery2`, `ContourQuery2`, and `RegionQuery2`
+handles duplicated immediate intersections, trimming, Boolean operations, and
+point classification while making cache lifetime a caller concern. They are no
+longer exported. Conservative boxes, winding indexes, and prepared predicates
+remain internal implementation details. Immediate `structural_facts` methods
+return scheduling evidence directly, while `Contour2::classify_points` and
+`LineArcRegion2::classify_points` reuse one internal index across an explicit
+point batch. `hyperbrep` follows the same model through
+`BrepPlanarFaceRegion::classify_uv_points`.
+
+The removal deleted 1,060 net production lines from `hypercurve` and 90 from
+`hyperbrep`; tests, fuzzers, benchmarks, and documentation were migrated away
+from retained public handles. A same-compiler build of commit `64933fd` and the
+new source measured the default-feature pathological benchmark executable:
+
+| Release artifact component | `64933fd` | Immediate-only surface | Change |
+| --- | ---: | ---: | ---: |
+| Text | 4,877,637 bytes | 4,870,301 bytes | 7,336 bytes smaller (0.150%) |
+| Total loadable | 5,138,013 bytes | 5,133,925 bytes | 4,088 bytes smaller (0.080%) |
+| File size | 6,441,104 bytes | 6,427,312 bytes | 13,792 bytes smaller (0.214%) |
+
+The release containment sentinel classified 64 decided contour misses in
+8.207 microseconds per batch (128 nanoseconds per point), versus 461
+nanoseconds for scalar immediate calls, a 72.2% per-point reduction. A mixed
+64-point sparse-region batch measured 1.215 milliseconds (18.99 microseconds
+per point), versus a 45.56-microsecond scalar average for its alternating
+outside and single-hit points, a 58.3% reduction. These are complete-call
+measurements including internal index construction and output allocation; they
+do not claim the lifecycle semantics of the retired already-built handle.
+
+The first replacement routed one-shot region trimming through a transient
+retained index and regressed the release sentinel from 14.1 to 29.4
+microseconds, so that experiment was reverted. The final immediate region trim
+measured 14.056 microseconds versus 14.138 at `64933fd`. Reusing source boxes
+inside immediate two-cutter curve trimming was retained: that lane improved
+from 5.333 to 5.051 microseconds (5.3%) without changing exact intersection or
+materialization behavior.
 
 ## Optimization boundary
 

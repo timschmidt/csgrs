@@ -13234,7 +13234,7 @@ fn contour_nesting_depths_impl(
         .map(|_| OnceCell::<Vec<Option<Aabb2>>>::new())
         .collect::<Vec<_>>();
     let prepared_contours = (0..contours.len())
-        .map(|_| OnceCell::<crate::ContourQuery2<'_>>::new())
+        .map(|_| OnceCell::<crate::prepared::ContourQuery2<'_>>::new())
         .collect::<Vec<_>>();
     let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
 
@@ -13378,8 +13378,9 @@ fn contour_nesting_depths_impl(
                 {
                     continue;
                 }
-                let prepared = prepared_contours[container_index]
-                    .get_or_init(|| crate::ContourQuery2::from_contour(container, policy));
+                let prepared = prepared_contours[container_index].get_or_init(|| {
+                    crate::prepared::ContourQuery2::from_contour(container, policy)
+                });
                 match prepared.classify_point_assuming_off_boundary(&sample, policy) {
                     Classification::Decided(ContourPointLocation::Inside) => {
                         containing_contour_indices.push(container_index);

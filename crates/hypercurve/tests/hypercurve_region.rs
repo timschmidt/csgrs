@@ -5976,87 +5976,48 @@ proptest! {
 }
 
 #[test]
-fn prepared_region_classifier_matches_owned_region() {
+fn batched_region_classifier_matches_scalar_classification() {
     let region = LineArcRegion2::new(
         vec![rectangle(0, 0, 10, 10), rectangle(4, 4, 6, 6)],
         vec![rectangle(2, 2, 8, 8)],
     );
     let policy = policy();
-    let prepared = region.query(&policy);
-
-    assert!(prepared.region_box().is_some());
-    assert_eq!(prepared.material_contours().len(), 2);
-    assert_eq!(prepared.hole_contours().len(), 1);
-    assert_eq!(prepared.contour_count(), 3);
-    assert_eq!(prepared.material_segment_count(), 8);
+    let facts = hypercurve::LineArcRegion2::structural_facts(&region, &policy);
+    assert!(facts.has_decided_region_box);
+    assert_eq!(facts.material_contour_count, 2);
+    assert_eq!(facts.hole_contour_count, 1);
     assert_eq!(
-        prepared.material_segment_kind_counts(),
-        SegmentKindCounts { lines: 8, arcs: 0 }
-    );
-    assert_eq!(prepared.hole_segment_count(), 4);
-    assert_eq!(
-        prepared.hole_segment_kind_counts(),
-        SegmentKindCounts { lines: 4, arcs: 0 }
-    );
-    assert_eq!(prepared.segment_count(), 12);
-    assert_eq!(
-        prepared.segment_kind_counts(),
+        facts.segment_kinds,
         SegmentKindCounts { lines: 12, arcs: 0 }
     );
+    let points = [p(1, 1), p(3, 3), p(5, 5), p(11, 1), p(100, 100)];
+    let batched = hypercurve::LineArcRegion2::classify_points(&region, &points, &policy);
     assert_eq!(
-        prepared.segment_count(),
-        prepared.material_segment_count() + prepared.hole_segment_count()
+        batched,
+        points
+            .iter()
+            .map(|point| region.classify_point(point, &policy))
+            .collect::<Vec<_>>()
     );
-    assert_eq!(prepared.decided_material_segment_box_count(), 8);
-    assert_eq!(prepared.decided_hole_segment_box_count(), 4);
-    assert_eq!(prepared.decided_segment_box_count(), 12);
-    assert_eq!(
-        prepared.decided_segment_box_count(),
-        prepared.decided_material_segment_box_count() + prepared.decided_hole_segment_box_count()
-    );
-    assert_eq!(prepared.undecided_material_segment_box_count(), 0);
-    assert_eq!(prepared.undecided_hole_segment_box_count(), 0);
-    assert_eq!(prepared.undecided_segment_box_count(), 0);
-    assert_eq!(
-        prepared.undecided_segment_box_count(),
-        prepared.undecided_material_segment_box_count()
-            + prepared.undecided_hole_segment_box_count()
-    );
-
-    for point in [p(1, 1), p(3, 3), p(5, 5), p(11, 1), p(100, 100)] {
-        assert_eq!(
-            prepared.classify_point(&point, &policy),
-            region.classify_point(&point, &policy)
-        );
-        assert_eq!(
-            prepared.signed_depth(&point, &policy),
-            region.signed_depth(&point, &policy)
-        );
-    }
 }
 
 #[test]
-fn prepared_region_view_preserves_boundary_hits() {
+fn batched_region_view_preserves_boundary_hits() {
     let material = [rectangle(0, 0, 4, 4), rectangle(20, 20, 24, 24)];
     let holes: [Contour2; 0] = [];
     let view = RegionView2::new(&material, &holes);
     let policy = policy();
-    let prepared = view.query(&policy);
-
-    assert_eq!(
-        prepared.classify_point(&p(20, 22), &policy),
-        Classification::Decided(RegionPointLocation::Boundary)
+    let batched = hypercurve::RegionView2::classify_points(
+        &view,
+        &[p(20, 22), p(21, 21), p(100, 100)],
+        &policy,
     );
     assert_eq!(
-        prepared.classify_point(&p(21, 21), &policy),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
-    assert_eq!(
-        prepared.classify_point(&p(100, 100), &policy),
-        Classification::Decided(RegionPointLocation::Outside)
-    );
-    assert_eq!(
-        prepared.signed_depth(&p(100, 100), &policy),
-        Classification::Decided(0)
+        batched,
+        vec![
+            Classification::Decided(RegionPointLocation::Boundary),
+            Classification::Decided(RegionPointLocation::Inside),
+            Classification::Decided(RegionPointLocation::Outside),
+        ]
     );
 }

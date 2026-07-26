@@ -402,37 +402,24 @@ fn rectangle_classifies_inside_outside_and_boundary() {
 }
 
 #[test]
-fn prepared_contour_classification_matches_plain_contour() {
+fn batched_contour_classification_matches_scalar_classification() {
     let contour = rectangle();
     let policy = policy();
-    let prepared = contour.query(&policy);
-
-    assert_eq!(prepared.contour(), &contour);
-    assert!(prepared.contour_box().is_some());
-    assert_eq!(prepared.segment_boxes().len(), contour.segments().len());
+    let points = [p(1, 1), p(-1, 1), p(4, 2), p(0, 0), p(9, 2)];
+    let facts = hypercurve::Contour2::structural_facts(&contour, &policy);
+    assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 4, arcs: 0 });
+    let batched = hypercurve::Contour2::classify_points(&contour, &points, &policy);
     assert_eq!(
-        prepared.segment_kind_counts(),
-        SegmentKindCounts { lines: 4, arcs: 0 }
+        batched,
+        points
+            .iter()
+            .map(|point| contour.classify_point(point, &policy))
+            .collect::<Vec<_>>()
     );
-
-    for point in [p(1, 1), p(-1, 1), p(4, 2), p(0, 0), p(9, 2)] {
-        assert_eq!(
-            prepared.point_on_boundary(&point, &policy),
-            contour.point_on_boundary(&point, &policy)
-        );
-        assert_eq!(
-            prepared.winding_number(&point, &policy),
-            contour.winding_number(&point, &policy)
-        );
-        assert_eq!(
-            prepared.classify_point(&point, &policy),
-            contour.classify_point(&point, &policy)
-        );
-    }
 }
 
 #[test]
-fn prepared_line_winding_index_matches_plain_half_open_vertex_cases() {
+fn batched_line_contour_classification_preserves_half_open_vertex_cases() {
     let contour = Contour2::from_bulge_vertices(&[
         vertex(0, 2, 0),
         vertex(1, 1, 0),
@@ -445,9 +432,7 @@ fn prepared_line_winding_index_matches_plain_half_open_vertex_cases() {
     ])
     .unwrap();
     let policy = policy();
-    let prepared = contour.query(&policy);
-
-    for point in [
+    let points = [
         p(0, 0),
         p(0, 1),
         p(0, 2),
@@ -457,16 +442,15 @@ fn prepared_line_winding_index_matches_plain_half_open_vertex_cases() {
         p(3, 1),
         p(3, 2),
         p(0, -2),
-    ] {
-        assert_eq!(
-            prepared.winding_number(&point, &policy),
-            contour.winding_number(&point, &policy)
-        );
-        assert_eq!(
-            prepared.classify_point(&point, &policy),
-            contour.classify_point(&point, &policy)
-        );
-    }
+    ];
+    let batched = hypercurve::Contour2::classify_points(&contour, &points, &policy);
+    assert_eq!(
+        batched,
+        points
+            .iter()
+            .map(|point| contour.classify_point(point, &policy))
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -563,17 +547,6 @@ fn even_odd_fill_uses_winding_parity() {
     );
     assert_eq!(
         twice.classify_point(&p(1, 0), &policy()),
-        Classification::Decided(ContourPointLocation::Outside)
-    );
-
-    let policy = policy();
-    let prepared = twice.query(&policy);
-    assert_eq!(
-        prepared.winding_number(&p(1, 0), &policy),
-        Classification::Decided(2)
-    );
-    assert_eq!(
-        prepared.classify_point(&p(1, 0), &policy),
         Classification::Decided(ContourPointLocation::Outside)
     );
 }

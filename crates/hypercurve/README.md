@@ -210,7 +210,7 @@ the next fail; eager exact algebra can also expand before broad-phase filters el
 obvious misses.
 
 `hypercurve` stages the work. Native curve objects keep exact control structure,
-query handles and boxes reduce candidate sets, low-degree exact cases are promoted
+internal indexes and boxes reduce candidate sets, low-degree exact cases are promoted
 when available, and unresolved tangent, overlap, root-isolation, trimming, or topology
 cases remain explicit uncertainty instead of being hidden behind display polylines.
 
@@ -274,8 +274,9 @@ cases remain explicit uncertainty instead of being hidden behind display polylin
   top-level curve family and connected path without changing its family or source;
   top-level splitting and subcurve extraction dispatch through the same exact native
   and spline algorithms.
-- `Aabb2`, line/arc/curve-string/contour/region query handles, and segment/region fact
-  types preserve repeated-query structure.
+- `Aabb2` and segment/region fact types expose conservative structure without
+  requiring callers to manage cache handles. Contours and regions provide
+  immediate batch point classification when index reuse is useful.
 - Boolean, event, fragment, split, and boundary-loop types describe staged region
   boolean assembly.
 - `ExactCurveError`, `ExactCurveBlocker`, `CurveFamily2`, and `CurveSource2` provide
@@ -327,12 +328,14 @@ isolation results, or explicit uncertainty.
 
 `hypercurve` avoids numerical explosion by keeping curve objects native and using
 structure before generic algebra. Bounding boxes, segment kind, endpoint equality,
-monotone spans, material/hole role, query handles, low-degree dispatch, dyadic
+monotone spans, material/hole role, internal indexes, low-degree dispatch, dyadic
 candidate promotion, and source metadata all reduce the number of exact predicates and
 root checks.
 
-Curve-string, contour, and region query handles cache conservative boxes and predicate
-handles for repeated containment, self-contact, event, and Boolean-boundary queries.
+Immediate curve-string, contour, and region operations construct or reuse conservative
+boxes and predicate indexes internally. `Contour2::classify_points` and
+`LineArcRegion2::classify_points` amortize that setup across a caller-provided batch;
+`structural_facts` exposes scheduling evidence without exposing the cache carrier.
 Retained mixed-family path pairs use clone-shared exact curve bounds as a conservative
 broad phase: only certified AABB misses are removed, and authored versus retained
 candidate-pair counts remain observable. When two candidate boxes intersect at one
@@ -442,7 +445,7 @@ Implemented today:
   bounded finite document export. Unsupported paint and viewport behavior
   remains a typed `SvgError` instead of silently changing topology;
 - intersection surfaces for line/line, line/arc, arc/arc, Bezier contact cases, curve
-  strings, contours, regions, and repeated-query handles, including top-level
+  strings, contours, and regions, including top-level
   native line/line, line/arc, and arc/arc dispatch with exact contact provenance
   and retained blockers, certified same/reversed full-image overlap orientation
   plus partial collinear and same-circle arc overlap ranges, algebraic parameter

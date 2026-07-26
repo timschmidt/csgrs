@@ -1419,7 +1419,8 @@ fn region_fragment_count(fragments: &RegionFragmentSet) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Contour2, LineArcRegion2, LineSeg2, RegionQuery2};
+    use crate::prepared::RegionQuery2;
+    use crate::{Contour2, LineArcRegion2, LineSeg2};
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -1470,8 +1471,8 @@ mod tests {
             &policy,
         )
         .unwrap();
-        let first_prepared = RegionQuery2::from_region(&first, &policy);
-        let second_prepared = RegionQuery2::from_region(&second, &policy);
+        let first_prepared = RegionQuery2::from_region_view(&first_view, &policy);
+        let second_prepared = RegionQuery2::from_region_view(&second_view, &policy);
 
         let expected = fragments
             .classify_for_boolean_with_contacts_and_point_classifier(
@@ -1502,10 +1503,20 @@ mod tests {
                 |source_side, sample| {
                     winding_queries += 1;
                     match source_side {
-                        RegionSide::First => second_prepared
-                            .single_material_winding_assuming_off_boundary(sample, &policy),
-                        RegionSide::Second => first_prepared
-                            .single_material_winding_assuming_off_boundary(sample, &policy),
+                        RegionSide::First => {
+                            crate::contour::line_contour_winding_assuming_off_boundary(
+                                second_view.material_contours()[0],
+                                sample,
+                                &policy,
+                            )
+                        }
+                        RegionSide::Second => {
+                            crate::contour::line_contour_winding_assuming_off_boundary(
+                                first_view.material_contours()[0],
+                                sample,
+                                &policy,
+                            )
+                        }
                     }
                 },
             )
