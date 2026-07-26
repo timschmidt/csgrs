@@ -2110,8 +2110,10 @@ fn compute_two_convex_inputs_projectively(
                     }
                 })?;
 
-        let active_result = exact_inside_and_active_planes(
-            &source,
+        let clipped_result = exact_inside_and_outside_cycles(
+            source,
+            polygon,
+            source_plane,
             &support_planes[other],
             support_planes_f64[other].as_deref(),
             &normalized_support_plane_f64_values[other],
@@ -2130,8 +2132,13 @@ fn compute_two_convex_inputs_projectively(
                 );
             }
         })?;
-        let Some((inside, active_planes, outside_cycles)) = active_result else {
+        let Some((inside, outside_cycles)) = clipped_result else {
             if emit_outside {
+                let source = ProjectiveCycle::from_polygon(
+                    polygon,
+                    source_plane,
+                    &mut projective_point_cache,
+                )?;
                 push_projective_transition(
                     &mut classified,
                     source,
@@ -2145,7 +2152,9 @@ fn compute_two_convex_inputs_projectively(
             }
             continue;
         };
-        if let Some(outside_cycles) = outside_cycles {
+        if emit_outside {
+            let outside_cycles =
+                outside_cycles.expect("outside cycles are retained when outside is emitted");
             for outside in outside_cycles {
                 push_projective_transition(
                     &mut classified,
@@ -2172,72 +2181,10 @@ fn compute_two_convex_inputs_projectively(
             }
             continue;
         }
-        if !emit_outside {
-            if emit_inside {
-                push_projective_transition(
-                    &mut classified,
-                    inside,
-                    polygon,
-                    &mut affine_cache,
-                    host,
-                    other,
-                    inside_winding,
-                    operation,
-                )?;
-            }
-            continue;
-        }
-        let mut remainder = Some(source);
-        let mut has_inside = true;
-        for plane_index in active_planes {
-            let clipped = remainder
-                .take()
-                .expect("retained inside cycle is available")
-                .clip(
-                    support_planes[other][plane_index],
-                    normalized_support_plane_f64_values[other][plane_index],
-                    canonical_plane_identities[other][plane_index],
-                    &mut projective_point_cache,
-                )?;
-            match clipped.side {
-                ProjectiveClipSide::Negative => {
-                    remainder = Some(clipped.negative);
-                }
-                ProjectiveClipSide::Positive => {
-                    push_projective_transition(
-                        &mut classified,
-                        clipped.positive,
-                        polygon,
-                        &mut affine_cache,
-                        host,
-                        other,
-                        false,
-                        operation,
-                    )?;
-                    has_inside = false;
-                    break;
-                }
-                ProjectiveClipSide::Both => {
-                    push_projective_transition(
-                        &mut classified,
-                        clipped.positive,
-                        polygon,
-                        &mut affine_cache,
-                        host,
-                        other,
-                        false,
-                        operation,
-                    )?;
-                    remainder = Some(clipped.negative);
-                }
-            }
-        }
-        if has_inside && emit_inside {
+        if emit_inside {
             push_projective_transition(
                 &mut classified,
-                remainder
-                    .take()
-                    .expect("retained inside cycle is available"),
+                inside,
                 polygon,
                 &mut affine_cache,
                 host,
@@ -2915,8 +2862,10 @@ fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
     Some([a, b, c, d])
 }
 
-fn exact_inside_and_active_planes<'a>(
-    source: &ProjectiveCycle,
+fn exact_inside_and_outside_cycles<'a>(
+    source: ProjectiveCycle,
+    source_polygon: &ConvexPolygon,
+    source_plane: ConstructionPlaneIdentity,
     support_planes: &[&'a Plane],
     support_planes_f64: Option<&[[f64; 4]]>,
     normalized_support_planes_f64: &[Option<[f64; 4]>],
@@ -2926,10 +2875,13 @@ fn exact_inside_and_active_planes<'a>(
     prepared_verification_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
     active_plane_proposal_scratch: &mut ActivePlaneProposalScratch,
     point_cache: &mut ProjectivePointCache,
-) -> HypermeshResult<Option<(ProjectiveCycle, Vec<usize>, Option<Vec<ProjectiveCycle>>)>> {
+) -> HypermeshResult<Option<(ProjectiveCycle, Option<Vec<ProjectiveCycle>>)>> {
+    let mut source = Some(source);
     if let Some(proposed_planes) = support_planes_f64.and_then(|planes| {
         propose_active_planes_f64(
-            source,
+            source
+                .as_ref()
+                .expect("projective source is available for proposal"),
             planes,
             candidate_planes,
             active_plane_proposal_scratch,
@@ -2937,7 +2889,9 @@ fn exact_inside_and_active_planes<'a>(
     }) {
         crate::trace_dispatch!("projective-active-planes", "proposed");
         let (inside, outside) = clip_inside_cycle_for_output(
-            source,
+            source
+                .take()
+                .expect("projective source is available for proposal"),
             support_planes,
             normalized_support_planes_f64,
             proposed_planes,
@@ -2969,25 +2923,21 @@ fn exact_inside_and_active_planes<'a>(
             }
         })? {
             crate::trace_dispatch!("projective-active-planes", "proposed-certified");
-            let active = outside.as_ref().map_or_else(
-                || {
-                    active_cycle_planes(
-                        &inside,
-                        proposed_planes.iter().copied(),
-                        support_plane_mesh,
-                        point_cache,
-                    )
-                },
-                |_| Vec::new(),
-            );
-            return Ok(Some((inside, active, outside)));
+            return Ok(Some((inside, outside)));
         }
         crate::trace_dispatch!("projective-active-planes", "proposed-rejected");
+        source = Some(ProjectiveCycle::from_polygon(
+            source_polygon,
+            source_plane,
+            point_cache,
+        )?);
     }
 
     crate::trace_dispatch!("projective-active-planes", "full");
     let (inside, outside) = clip_inside_cycle_for_output(
-        source,
+        source
+            .take()
+            .expect("projective source is available for full clipping"),
         support_planes,
         normalized_support_planes_f64,
         candidate_planes,
@@ -3005,22 +2955,11 @@ fn exact_inside_and_active_planes<'a>(
         return Ok(None);
     }
     crate::trace_dispatch!("projective-active-planes", "full-retained");
-    let active = outside.as_ref().map_or_else(
-        || {
-            active_cycle_planes(
-                &inside,
-                candidate_planes.iter().copied(),
-                support_plane_mesh,
-                point_cache,
-            )
-        },
-        |_| Vec::new(),
-    );
-    Ok(Some((inside, active, outside)))
+    Ok(Some((inside, outside)))
 }
 
 fn clip_inside_cycle_for_output(
-    source: &ProjectiveCycle,
+    source: ProjectiveCycle,
     support_planes: &[&Plane],
     normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
@@ -3054,14 +2993,14 @@ fn clip_inside_cycle_for_output(
 }
 
 fn clip_inside_cycle(
-    source: &ProjectiveCycle,
+    source: ProjectiveCycle,
     support_planes: &[&Plane],
     normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
     support_plane_mesh: usize,
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<ProjectiveCycle> {
-    let mut inside = source.clone();
+    let mut inside = source;
     for &plane_index in plane_indices {
         inside = inside.clip_negative(
             support_planes[plane_index],
@@ -3080,14 +3019,14 @@ fn clip_inside_cycle(
 }
 
 fn partition_inside_cycle(
-    source: &ProjectiveCycle,
+    source: ProjectiveCycle,
     support_planes: &[&Plane],
     normalized_support_planes_f64: &[Option<[f64; 4]>],
     plane_indices: &[usize],
     support_plane_mesh: usize,
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<(ProjectiveCycle, Vec<ProjectiveCycle>)> {
-    let mut inside = source.clone();
+    let mut inside = source;
     let mut outside = Vec::new();
     for &plane_index in plane_indices {
         let clipped = inside.clip(
@@ -3115,30 +3054,6 @@ fn partition_inside_cycle(
         }
     }
     Ok((inside, outside))
-}
-
-fn active_cycle_planes(
-    inside: &ProjectiveCycle,
-    plane_indices: impl IntoIterator<Item = usize>,
-    support_plane_mesh: usize,
-    point_cache: &ProjectivePointCache,
-) -> Vec<usize> {
-    plane_indices
-        .into_iter()
-        .filter(|&plane_index| {
-            let identity = point_cache.canonical_plane_identity(ConstructionPlaneIdentity {
-                mesh: support_plane_mesh,
-                plane: plane_index,
-            });
-            inside.edge_identities.iter().any(|edge| {
-                matches!(
-                    edge,
-                    ConstructionEdgeIdentity::Split { planes }
-                        if planes.contains(&identity)
-                )
-            })
-        })
-        .collect()
 }
 
 fn cycle_satisfies_planes<'a>(
