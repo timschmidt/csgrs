@@ -2104,6 +2104,58 @@ mod tests {
     }
 
     #[test]
+    fn mean3_refs_matches_expanded_exact_arithmetic() {
+        let schedules = [
+            [
+                Rational::fraction(1, 8).unwrap(),
+                Rational::fraction(-5, 16).unwrap(),
+                Rational::fraction(9, 32).unwrap(),
+            ],
+            [
+                Rational::fraction(2, 15).unwrap(),
+                Rational::fraction(-7, 15).unwrap(),
+                Rational::fraction(11, 15).unwrap(),
+            ],
+            [
+                Rational::fraction(5, 12).unwrap(),
+                Rational::fraction(-7, 18).unwrap(),
+                Rational::fraction(13, 35).unwrap(),
+            ],
+            [
+                Rational::zero(),
+                Rational::zero(),
+                Rational::zero(),
+            ],
+            [
+                Rational::zero(),
+                Rational::fraction(-11, 21).unwrap(),
+                Rational::fraction(17, 26).unwrap(),
+            ],
+            [
+                Rational::from_parts_raw(
+                    Plus,
+                    (BigUint::one() << 193_usize) + BigUint::from(17_u8),
+                    (BigUint::one() << 211_usize) + BigUint::from(39_u8),
+                ),
+                Rational::from_parts_raw(
+                    Minus,
+                    (BigUint::one() << 181_usize) + BigUint::from(29_u8),
+                    (BigUint::one() << 207_usize) + BigUint::from(51_u8),
+                ),
+                Rational::fraction(23, 35).unwrap(),
+            ],
+        ];
+
+        for values in schedules {
+            let expected = Rational::mean_refs(&values.iter().collect::<Vec<_>>()).unwrap();
+            assert_eq!(
+                Rational::mean3_refs([&values[0], &values[1], &values[2]]),
+                expected
+            );
+        }
+    }
+
+    #[test]
     fn three_divided_by_six() {
         let three = Rational::new(3);
         let six = Rational::new(6);

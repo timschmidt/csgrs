@@ -3779,6 +3779,72 @@ impl Rational {
         Some(Self::sum_refs_with_denominator_factor(values, &count))
     }
 
+    /// Return the exact arithmetic mean of three borrowed rationals.
+    ///
+    /// The fixed-size schedule avoids constructing a potentially expensive
+    /// pairwise LCM before the final reduction. This is useful for geometric
+    /// centroids whose projective coordinates often carry large, related
+    /// denominators.
+    pub fn mean3_refs(values: [&Self; 3]) -> Self {
+        let values = values.map(Self::canonicalized_ref);
+        let mut live_count = 0_usize;
+        let mut shared_denominator = None::<&BigUint>;
+        let mut equal_denominator = true;
+        for value in values {
+            if value.sign == NoSign {
+                continue;
+            }
+            live_count += 1;
+            match shared_denominator {
+                None => shared_denominator = Some(&value.denominator),
+                Some(shared) if shared == &value.denominator => {}
+                Some(_) => equal_denominator = false,
+            }
+        }
+        if live_count == 0 {
+            crate::trace_dispatch!("rational", "mean3", "all-zero");
+            return Self::zero();
+        }
+        if equal_denominator {
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for value in values {
+                match value.sign {
+                    Plus => positive += &value.numerator,
+                    Minus => negative += &value.numerator,
+                    NoSign => {}
+                }
+            }
+            let denominator = shared_denominator
+                .expect("nonzero three-value mean has a shared denominator")
+                * BigUint::from(3_u8);
+            crate::trace_dispatch!("rational", "mean3", "equal-denominator");
+            return Self::from_signed_magnitude_difference(positive, negative, denominator);
+        }
+
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for index in 0..3 {
+            let value = values[index];
+            if value.sign == NoSign {
+                continue;
+            }
+            let mut magnitude = value.numerator.clone();
+            magnitude *= &values[(index + 1) % 3].denominator;
+            magnitude *= &values[(index + 2) % 3].denominator;
+            match value.sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => {}
+            }
+        }
+        let denominator01 = &values[0].denominator * &values[1].denominator;
+        let mut denominator = &denominator01 * &values[2].denominator;
+        denominator *= BigUint::from(3_u8);
+        crate::trace_dispatch!("rational", "mean3", "direct-product-denominator");
+        Self::from_signed_magnitude_difference(positive, negative, denominator)
+    }
+
     fn sum_refs_with_denominator_factor(values: &[&Self], factor: &BigUint) -> Self {
         let mut live_count = 0_usize;
         let mut common_dyadic_shift = Some(0_u64);

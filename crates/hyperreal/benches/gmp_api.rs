@@ -517,6 +517,24 @@ fn bench_rational_api(c: &mut Criterion) {
             black_box(sum / 4)
         })
     });
+    let mean3_h = [rational(2, 31), rational(3, 37), rational(5, 41)];
+    let mean3_g = [
+        gmp_rational(2, 31),
+        gmp_rational(3, 37),
+        gmp_rational(5, 41),
+    ];
+    group.bench_function(BenchmarkId::new("hyperreal", "mean3_refs"), |b| {
+        b.iter(|| {
+            black_box(Rational::mean3_refs([
+                black_box(&mean3_h[0]),
+                black_box(&mean3_h[1]),
+                black_box(&mean3_h[2]),
+            ]))
+        })
+    });
+    group.bench_function(BenchmarkId::new("gmp", "mean3_refs"), |b| {
+        b.iter(|| black_box((mean3_g[0].clone() + &mean3_g[1] + &mean3_g[2]) / 3))
+    });
 
     group.finish();
 }
