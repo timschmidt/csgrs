@@ -769,12 +769,26 @@ impl ProjectivePointCache {
         for (index, (identity, _, _)) in entries.iter().enumerate() {
             let representative = representatives[index];
             let canonical_identity = entries[representative].0.clone();
-            let canonical_point = entries[representative].1.clone();
-            self.canonical_identities
-                .insert(identity.clone(), canonical_identity);
-            self.points.insert(identity.clone(), canonical_point);
+            if *identity != canonical_identity {
+                self.canonical_identities
+                    .insert(identity.clone(), canonical_identity);
+            }
             self.point_incidences
                 .insert(identity.clone(), class_incidences[representative].clone());
+        }
+        for (identity, point, _) in entries {
+            self.points.insert(identity, point);
+        }
+        for (identity, canonical_identity) in &self.canonical_identities {
+            if identity == canonical_identity {
+                continue;
+            }
+            let canonical_point = self
+                .points
+                .get(canonical_identity)
+                .expect("canonical projective point is available")
+                .clone();
+            self.points.insert(identity.clone(), canonical_point);
         }
     }
 
