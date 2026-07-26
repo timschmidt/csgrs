@@ -2554,6 +2554,11 @@ fn collapse_certified_convex_faces(
     polygon_support_planes: &[ConstructionPlaneIdentity],
     support_planes: &[Vec<&Plane>; 2],
 ) -> HypermeshResult<(Vec<ConvexPolygon>, Vec<ConstructionPlaneIdentity>)> {
+    // Counting source-vertex uses pays off for small subdivision patches. On
+    // large coplanar groups the few provable corners do not amortize a second
+    // sort, so those groups retain the ordinary exact collinearity scan.
+    const MAX_SINGLE_USE_CERTIFICATE_TRIANGLES: usize = 16;
+
     let mut groups: std::collections::BTreeMap<ConstructionPlaneIdentity, Vec<usize>> =
         std::collections::BTreeMap::new();
     for (polygon_index, &support) in polygon_support_planes.iter().enumerate() {
@@ -2616,6 +2621,38 @@ fn collapse_certified_convex_faces(
         }
 
         source_edges.sort_unstable();
+        let mut single_use_vertices = Vec::new();
+        if polygon_indices.len() <= MAX_SINGLE_USE_CERTIFICATE_TRIANGLES {
+            let mut source_vertices = Vec::with_capacity(source_edge_count);
+            for &polygon_index in &polygon_indices {
+                for identity in polygons[polygon_index]
+                    .known_vertex_identities()
+                    .expect("validated above")
+                {
+                    let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
+                        unreachable!("validated source vertex identity");
+                    };
+                    source_vertices.push(*vertex);
+                }
+            }
+            source_vertices.sort_unstable();
+            let mut vertex_index = 0;
+            while vertex_index < source_vertices.len() {
+                let mut next = vertex_index + 1;
+                while next < source_vertices.len()
+                    && source_vertices[next] == source_vertices[vertex_index]
+                {
+                    next += 1;
+                }
+                // Its sole incident source triangle contains both boundary
+                // neighbors. The supported input model excludes degenerate
+                // source triangles, so this vertex is certifiably a corner.
+                if next == vertex_index + 1 {
+                    single_use_vertices.push(source_vertices[vertex_index]);
+                }
+                vertex_index = next;
+            }
+        }
         let mut boundary_edges = Vec::new();
         let mut edge_index = 0;
         while edge_index < source_edges.len() {
@@ -2708,6 +2745,17 @@ fn collapse_certified_convex_faces(
             .into_iter()
             .collect::<Option<Vec<_>>>()
             .unwrap_or_default();
+        let certified_noncollinear_vertices = (!single_use_vertices.is_empty()).then(|| {
+            vertex_identities
+                .iter()
+                .map(|identity| {
+                    let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
+                        unreachable!("validated source vertex identity");
+                    };
+                    single_use_vertices.binary_search(vertex).is_ok()
+                })
+                .collect::<Vec<_>>()
+        });
         collapse_certified_collinear_face_vertices(
             support_identity.mesh,
             support_planes[support_identity.mesh][support_identity.plane],
@@ -2715,6 +2763,7 @@ fn collapse_certified_convex_faces(
             &mut vertex_identities,
             &mut edge_planes,
             &mut edge_identities,
+            certified_noncollinear_vertices.as_deref(),
         )?;
         let source = &polygons[polygon_indices[0]];
         let mesh_index = usize::try_from(source.mesh_index)
@@ -2745,11 +2794,13 @@ fn collapse_certified_collinear_face_vertices(
     vertex_identities: &mut Vec<ConstructionVertexIdentity>,
     edges: &mut Vec<Plane>,
     edge_identities: &mut Vec<ConstructionEdgeIdentity>,
+    certified_noncollinear_vertices: Option<&[bool]>,
 ) -> HypermeshResult<()> {
     let len = vertices.len();
     if vertex_identities.len() != len
         || (!edges.is_empty() && edges.len() != len)
         || edge_identities.len() != len
+        || certified_noncollinear_vertices.is_some_and(|certified| certified.len() != len)
     {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
@@ -2760,6 +2811,9 @@ fn collapse_certified_collinear_face_vertices(
     if len > 3 {
         let retained = (0..len)
             .filter(|&index| {
+                if certified_noncollinear_vertices.is_some_and(|certified| certified[index]) {
+                    return true;
+                }
                 !support.points_are_collinear_on_support(
                     &vertices[(index + len - 1) % len],
                     &vertices[index],
@@ -3650,6 +3704,7 @@ mod tests {
             &mut vertex_identities,
             &mut edges,
             &mut edge_identities,
+            None,
         )
         .unwrap();
 
@@ -3697,6 +3752,7 @@ mod tests {
             &mut vertex_identities,
             &mut edges,
             &mut edge_identities,
+            None,
         )
         .unwrap();
 
@@ -3726,6 +3782,7 @@ mod tests {
             &mut vertex_identities,
             &mut edges,
             &mut edge_identities,
+            None,
         )
         .unwrap();
 
