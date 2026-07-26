@@ -2,10 +2,11 @@ use hyperlattice::{Point3, Real};
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::clip::{ClipSide, clip_polygon};
 use hypermesh::{
-    BooleanOp, Classification, EmberConfig, HypermeshError, MeshRef, Plane, SubdivisionConfig,
-    SubdivisionTask, Triangle, boolean_operation, boolean_operation_with_certified_convex_inputs,
-    boolean_symmetric_difference, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs, build_polygon_soup,
+    BooleanOp, Classification, EmberConfig, HypermeshError, InputTrianglePlanes, MeshRef, Plane,
+    SubdivisionConfig, SubdivisionTask, Triangle, boolean_operation,
+    boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
+    boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
+    boolean_triangle_soup_with_certified_convex_inputs_and_planes, build_polygon_soup,
     certify_output_polygon_closure, classify_leaf_polygon, classify_point, classify_polygon_output,
     intersect_polygons, make_indicator, make_quad, make_triangle, process_leaf_into, subdivide,
     trace_axis_segment, trace_segment, triangulate_and_resolve_certified,
@@ -1136,6 +1137,65 @@ fn certified_convex_immediate_paths_match_general_volume_and_direct_output() {
             immediate_soup.sources.len(),
             immediate_soup.triangles.len(),
             "{operation:?} immediate source provenance"
+        );
+    }
+}
+
+#[test]
+fn certified_convex_supplied_planes_match_reconstructed_planes() {
+    let left = cube_mesh(0, 2);
+    let right = cube_mesh(1, 3);
+    let meshes = [left.as_ref(), right.as_ref()];
+    let input_planes = [&left, &right].map(|mesh| {
+        mesh.triangles
+            .iter()
+            .map(|triangle| {
+                let [a, b, c] = triangle.indices();
+                InputTrianglePlanes::from_points(
+                    &mesh.positions[a],
+                    &mesh.positions[b],
+                    &mesh.positions[c],
+                )
+            })
+            .collect::<Vec<_>>()
+    });
+    let input_plane_refs = [&input_planes[0][..], &input_planes[1][..]];
+
+    for operation in [
+        BooleanOp::Union,
+        BooleanOp::Intersection,
+        BooleanOp::Difference,
+        BooleanOp::SymmetricDifference,
+    ] {
+        let reconstructed = boolean_triangle_soup_with_certified_convex_inputs(
+            &meshes,
+            operation,
+            &[true, true],
+            EmberConfig::default(),
+        )
+        .unwrap();
+        let supplied = boolean_triangle_soup_with_certified_convex_inputs_and_planes(
+            &meshes,
+            operation,
+            &[true, true],
+            &input_plane_refs,
+            EmberConfig::default(),
+        )
+        .unwrap();
+
+        assert!(
+            hypermesh::triangle_soup_closure_evidence(&supplied).has_no_boundary(),
+            "{operation:?} supplied-plane closure"
+        );
+        assert_eq!(
+            triangle_soup_volume_numerator(&supplied),
+            triangle_soup_volume_numerator(&reconstructed),
+            "{operation:?} supplied-plane exact volume"
+        );
+        assert_eq!(
+            supplied.sources.len(),
+            supplied.triangles.len(),
+            "{operation:?} supplied-plane source provenance"
         );
     }
 }

@@ -2425,6 +2425,14 @@ fn collapse_certified_convex_faces(
         if current != start || face_vertices.len() != outgoing.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
+        collapse_certified_collinear_face_vertices(
+            support_identity.mesh,
+            support_planes[support_identity.mesh][support_identity.plane],
+            &mut face_vertices,
+            &mut vertex_identities,
+            &mut edge_planes,
+            &mut edge_identities,
+        )?;
         let source = &polygons[polygon_indices[0]];
         let mesh_index = usize::try_from(source.mesh_index)
             .ok()
@@ -2445,6 +2453,86 @@ fn collapse_certified_convex_faces(
         face_supports.push(support_identity);
     }
     Ok((faces, face_supports))
+}
+
+fn collapse_certified_collinear_face_vertices(
+    mesh: usize,
+    support: &Plane,
+    vertices: &mut Vec<Point3>,
+    vertex_identities: &mut Vec<ConstructionVertexIdentity>,
+    edges: &mut Vec<Plane>,
+    edge_identities: &mut Vec<ConstructionEdgeIdentity>,
+) -> HypermeshResult<()> {
+    let mut removed_any = false;
+    loop {
+        let len = vertices.len();
+        if len <= 3 {
+            break;
+        }
+        let retained = (0..len)
+            .filter(|&index| {
+                Plane::points_are_nondegenerate(
+                    &vertices[(index + len - 1) % len],
+                    &vertices[index],
+                    &vertices[(index + 1) % len],
+                )
+            })
+            .collect::<Vec<_>>();
+        if retained.len() == len {
+            break;
+        }
+        if retained.len() < 3 {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        *vertices = retained
+            .iter()
+            .map(|&index| vertices[index].clone())
+            .collect();
+        *vertex_identities = retained
+            .iter()
+            .map(|&index| vertex_identities[index].clone())
+            .collect();
+        removed_any = true;
+    }
+    if !removed_any {
+        return Ok(());
+    }
+
+    edges.clear();
+    edge_identities.clear();
+    edges.reserve(vertices.len());
+    edge_identities.reserve(vertices.len());
+    for index in 0..vertices.len() {
+        let next = (index + 1) % vertices.len();
+        let after_next = (index + 2) % vertices.len();
+        edges.push(edge_plane(
+            &vertices[index],
+            &vertices[next],
+            &vertices[after_next],
+            support,
+        ));
+        let ConstructionVertexIdentity::Source {
+            mesh: start_mesh,
+            vertex: start,
+        } = vertex_identities[index]
+        else {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        };
+        let ConstructionVertexIdentity::Source {
+            mesh: end_mesh,
+            vertex: end,
+        } = vertex_identities[next]
+        else {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        };
+        if start_mesh != mesh || end_mesh != mesh {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let mut endpoints = [start, end];
+        endpoints.sort_unstable();
+        edge_identities.push(ConstructionEdgeIdentity::Source { mesh, endpoints });
+    }
+    Ok(())
 }
 
 fn exact_plane_storage_key(plane: &Plane) -> Option<[usize; 4]> {
@@ -3107,6 +3195,95 @@ mod tests {
         assert_eq!(faces[0].vertex_count(), 3);
         assert_eq!(faces[0].delta_w, vec![1, 0]);
         assert_eq!(face_supports, vec![support_identity]);
+    }
+
+    #[test]
+    fn certified_collinear_face_vertices_collapse_to_composite_source_edges() {
+        let support = Plane::axis_aligned(2, Real::zero());
+        let mut vertices = vec![
+            p(0, 0, 0),
+            p(1, 0, 0),
+            p(2, 0, 0),
+            p(2, 1, 0),
+            p(2, 2, 0),
+            p(1, 2, 0),
+            p(0, 2, 0),
+            p(0, 1, 0),
+        ];
+        let mut vertex_identities = (0..vertices.len())
+            .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+            .collect::<Vec<_>>();
+        let mut edges = (0..vertices.len())
+            .map(|index| Plane::axis_aligned(index % 3, Real::from(index as i64)))
+            .collect::<Vec<_>>();
+        let mut edge_identities = (0..vertices.len())
+            .map(|start| ConstructionEdgeIdentity::Source {
+                mesh: 0,
+                endpoints: [start, (start + 1) % vertices.len()],
+            })
+            .collect::<Vec<_>>();
+
+        collapse_certified_collinear_face_vertices(
+            0,
+            &support,
+            &mut vertices,
+            &mut vertex_identities,
+            &mut edges,
+            &mut edge_identities,
+        )
+        .unwrap();
+
+        assert_eq!(
+            vertices,
+            vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)]
+        );
+        assert_eq!(
+            vertex_identities,
+            [0, 2, 4, 6].map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+        );
+        assert_eq!(edges.len(), 4);
+        assert_eq!(
+            edge_identities,
+            [[0, 2], [2, 4], [4, 6], [0, 6]]
+                .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 0, endpoints } })
+        );
+    }
+
+    #[test]
+    fn certified_nondegenerate_face_preserves_supplied_boundaries() {
+        let support = Plane::axis_aligned(2, Real::zero());
+        let mut vertices = vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
+        let mut vertex_identities = (0..vertices.len())
+            .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+            .collect::<Vec<_>>();
+        let mut edges = (0..vertices.len())
+            .map(|index| Plane::axis_aligned(index % 3, Real::from(index as i64 + 7)))
+            .collect::<Vec<_>>();
+        let mut edge_identities = (0..vertices.len())
+            .map(|start| ConstructionEdgeIdentity::Source {
+                mesh: 0,
+                endpoints: [start, (start + 1) % vertices.len()],
+            })
+            .collect::<Vec<_>>();
+        let expected_vertices = vertices.clone();
+        let expected_vertex_identities = vertex_identities.clone();
+        let expected_edges = edges.clone();
+        let expected_edge_identities = edge_identities.clone();
+
+        collapse_certified_collinear_face_vertices(
+            0,
+            &support,
+            &mut vertices,
+            &mut vertex_identities,
+            &mut edges,
+            &mut edge_identities,
+        )
+        .unwrap();
+
+        assert_eq!(vertices, expected_vertices);
+        assert_eq!(vertex_identities, expected_vertex_identities);
+        assert_eq!(edges, expected_edges);
+        assert_eq!(edge_identities, expected_edge_identities);
     }
 
     #[test]
