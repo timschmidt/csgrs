@@ -3028,11 +3028,20 @@ fn collapse_certified_convex_faces(
             .ok()
             .filter(|&mesh| mesh < support_planes.len())
             .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+        // Every retained input polygon for a source mesh indexes the same
+        // position arena. The source identities validated above can therefore
+        // retain that arena instead of cloning the merged face's points.
+        let indexed_positions = source
+            .known_vertices
+            .as_ref()
+            .and_then(|vertices| vertices.source_positions())
+            .cloned();
         let mut delta_w = vec![0; support_planes.len()];
         delta_w[mesh_index] = 1;
         faces.push(ConvexPolygon::from_certified_convex_face(
             support_planes[support_identity.mesh][support_identity.plane].clone(),
             face_vertices,
+            indexed_positions,
             vertex_identities,
             edge_planes,
             edge_identities,

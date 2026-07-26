@@ -89,6 +89,10 @@ pub(crate) enum RetainedVertexCycle {
         positions: Arc<[Point3]>,
         indices: [usize; 3],
     },
+    SourceIndexed {
+        positions: Arc<[Point3]>,
+        identities: Arc<[ConstructionVertexIdentity]>,
+    },
 }
 
 impl RetainedVertexCycle {
@@ -96,6 +100,7 @@ impl RetainedVertexCycle {
         match self {
             Self::Owned(vertices) => vertices.len(),
             Self::IndexedTriangle { .. } => 3,
+            Self::SourceIndexed { identities, .. } => identities.len(),
         }
     }
 
@@ -103,6 +108,25 @@ impl RetainedVertexCycle {
         match self {
             Self::Owned(vertices) => vertices.get(index),
             Self::IndexedTriangle { positions, indices } => positions.get(*indices.get(index)?),
+            Self::SourceIndexed {
+                positions,
+                identities,
+            } => {
+                let ConstructionVertexIdentity::Source { vertex, .. } = identities.get(index)?
+                else {
+                    return None;
+                };
+                positions.get(*vertex)
+            }
+        }
+    }
+
+    pub(crate) fn source_positions(&self) -> Option<&Arc<[Point3]>> {
+        match self {
+            Self::IndexedTriangle { positions, .. } | Self::SourceIndexed { positions, .. } => {
+                Some(positions)
+            }
+            Self::Owned(_) => None,
         }
     }
 
@@ -497,6 +521,7 @@ impl ConvexPolygon {
     pub(crate) fn from_certified_convex_face(
         support: Plane,
         vertices: Vec<Point3>,
+        indexed_positions: Option<Arc<[Point3]>>,
         vertex_identities: Vec<ConstructionVertexIdentity>,
         edges: Vec<Plane>,
         edge_identities: Vec<ConstructionEdgeIdentity>,
@@ -507,6 +532,25 @@ impl ConvexPolygon {
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert!(edges.is_empty() || vertices.len() == edges.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
+        debug_assert!(indexed_positions.as_ref().is_none_or(|positions| {
+            vertices
+                .iter()
+                .zip(&vertex_identities)
+                .all(|(point, identity)| {
+                    let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
+                        return false;
+                    };
+                    positions.get(*vertex) == Some(point)
+                })
+        }));
+        let vertex_identities = Arc::from(vertex_identities);
+        let known_vertices = match indexed_positions {
+            Some(positions) => RetainedVertexCycle::SourceIndexed {
+                positions,
+                identities: Arc::clone(&vertex_identities),
+            },
+            None => RetainedVertexCycle::Owned(Arc::from(vertices)),
+        };
         Self {
             support,
             edges: Arc::new(edges),
@@ -518,9 +562,9 @@ impl ConvexPolygon {
             // planes. A failed candidate rebuilds ordinary input polygons
             // before any BVH or subdivision query.
             approx_bounds: None,
-            known_vertices: Some(RetainedVertexCycle::Owned(Arc::from(vertices))),
+            known_vertices: Some(known_vertices),
             known_identities: Some(RetainedIdentityCycles::Owned {
-                vertices: Arc::from(vertex_identities),
+                vertices: vertex_identities,
                 edges: Arc::from(edge_identities),
             }),
         }
@@ -951,6 +995,49 @@ mod tests {
             [[2, 9], [2, 5], [5, 9]]
                 .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 3, endpoints } })
         );
+    }
+
+    #[test]
+    fn certified_source_face_reuses_position_and_identity_arenas() {
+        let positions: Arc<[Point3]> = Arc::new([
+            point(0, 0, 0),
+            point(1, 0, 0),
+            point(1, 1, 0),
+            point(0, 1, 0),
+        ]);
+        let indices = [0, 1, 2, 3];
+        let vertex_identities = indices
+            .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+            .to_vec();
+        let edge_identities = [[0, 1], [1, 2], [2, 3], [0, 3]]
+            .map(|endpoints| ConstructionEdgeIdentity::Source { mesh: 0, endpoints })
+            .to_vec();
+        let polygon = ConvexPolygon::from_certified_convex_face(
+            Plane::axis_aligned(2, Real::zero()),
+            indices.map(|index| positions[index].clone()).to_vec(),
+            Some(Arc::clone(&positions)),
+            vertex_identities,
+            Vec::new(),
+            edge_identities,
+            0,
+            0,
+            vec![1],
+        );
+
+        let Some(RetainedVertexCycle::SourceIndexed {
+            positions: retained_positions,
+            identities: vertex_positions,
+        }) = &polygon.known_vertices
+        else {
+            panic!("certified source face should retain indexed positions");
+        };
+        let Some(RetainedIdentityCycles::Owned { vertices, edges: _ }) = &polygon.known_identities
+        else {
+            panic!("certified source face should retain expanded identities");
+        };
+        assert!(Arc::ptr_eq(retained_positions, &positions));
+        assert!(Arc::ptr_eq(vertex_positions, vertices));
+        assert_eq!(polygon.vertices().unwrap(), positions.as_ref());
     }
 
     #[test]
