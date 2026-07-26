@@ -13,7 +13,6 @@ use crate::polygon::{
     make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle,
     make_triangle_with_input_planes,
 };
-use crate::storage_hash::StorageHashMap;
 
 /// Input triangle: three vertex indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -229,8 +228,7 @@ fn build_polygon_soup_with_edge_mode(
             } else {
                 (None, false)
             };
-        let mut axis_support_planes: StorageHashMap<(usize, u64, bool), Plane> =
-            StorageHashMap::default();
+        let mut axis_support_planes: Vec<((usize, u64, bool), Plane)> = Vec::with_capacity(6);
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -304,12 +302,15 @@ fn build_polygon_soup_with_edge_mode(
                                 }
                             };
                             let key = (axis, exact_coordinate?, orientation_positive);
-                            if let Some(support) = axis_support_planes.get(&key) {
+                            if let Some((_, support)) = axis_support_planes
+                                .iter()
+                                .find(|(candidate, _)| *candidate == key)
+                            {
                                 return Some(support.clone());
                             }
                             let support =
                                 exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
-                            axis_support_planes.insert(key, support.clone());
+                            axis_support_planes.push((key, support.clone()));
                             Some(support)
                         });
                     make_indexed_triangle_with_deferred_edges(
