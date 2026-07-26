@@ -1854,6 +1854,7 @@ fn compute_two_convex_inputs_projectively(
             }
         }
     }
+    let mut prepared_verification_planes = Vec::new();
     for (polygon, source_plane) in polygons.iter().zip(polygon_support_planes) {
         let host = usize::try_from(polygon.mesh_index)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
@@ -1947,6 +1948,7 @@ fn compute_two_convex_inputs_projectively(
             &candidate_planes,
             other,
             emit_outside,
+            &mut prepared_verification_planes,
             &mut projective_point_cache,
         )
         .inspect_err(|_error| {
@@ -2682,15 +2684,16 @@ fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
     Some([a, b, c, d])
 }
 
-fn exact_inside_and_active_planes(
+fn exact_inside_and_active_planes<'a>(
     polygon: &ConvexPolygon,
     source: &ProjectiveCycle,
-    support_planes: &[&Plane],
+    support_planes: &[&'a Plane],
     support_planes_f64: Option<&[[f64; 4]]>,
     normalized_support_planes_f64: &[Option<[f64; 4]>],
     candidate_planes: &[usize],
     support_plane_mesh: usize,
     retain_outside: bool,
+    prepared_verification_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<Option<(ProjectiveCycle, Vec<usize>, Option<Vec<ProjectiveCycle>>)>> {
     if let Some(proposed_planes) = support_planes_f64
@@ -2721,6 +2724,7 @@ fn exact_inside_and_active_planes(
             candidate_planes,
             &proposed_planes,
             support_plane_mesh,
+            prepared_verification_planes,
             point_cache,
         )
         .inspect_err(|_error| {
@@ -2894,27 +2898,30 @@ fn active_cycle_planes(
         .collect()
 }
 
-fn cycle_satisfies_planes(
+fn cycle_satisfies_planes<'a>(
     cycle: &ProjectiveCycle,
-    support_planes: &[&Plane],
+    support_planes: &[&'a Plane],
     plane_indices: &[usize],
     excluded_planes: &[usize],
     support_plane_mesh: usize,
+    prepared_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
     point_cache: &ProjectivePointCache,
 ) -> HypermeshResult<bool> {
-    let prepared_planes = plane_indices
-        .iter()
-        .filter(|plane_index| !excluded_planes.contains(plane_index))
-        .map(|&plane_index| {
-            (
-                plane_index,
-                PreparedRationalPlane4::new(support_planes[plane_index]),
-            )
-        })
-        .collect::<Vec<_>>();
+    prepared_planes.clear();
+    prepared_planes.extend(
+        plane_indices
+            .iter()
+            .filter(|plane_index| !excluded_planes.contains(plane_index))
+            .map(|&plane_index| {
+                (
+                    plane_index,
+                    PreparedRationalPlane4::new(support_planes[plane_index]),
+                )
+            }),
+    );
     for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
-        for (plane_index, prepared_plane) in &prepared_planes {
+        for (plane_index, prepared_plane) in prepared_planes.iter() {
             let classification = match prepared_plane {
                 Some(plane) => match prepared.classify_rational_plane_filter(plane) {
                     Some(classification) => classification,
@@ -3589,9 +3596,18 @@ mod tests {
             point_cache.record_incidence(identity, ConstructionPlaneIdentity { mesh: 0, plane: 0 });
         }
 
+        let mut prepared_planes = Vec::new();
         assert!(
-            cycle_satisfies_planes(&cycle, &[&polygon.support], &[0], &[], 0, &point_cache)
-                .unwrap()
+            cycle_satisfies_planes(
+                &cycle,
+                &[&polygon.support],
+                &[0],
+                &[],
+                0,
+                &mut prepared_planes,
+                &point_cache,
+            )
+            .unwrap()
         );
     }
 
