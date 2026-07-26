@@ -2776,17 +2776,65 @@ fn collapse_certified_convex_faces(
     // large coplanar groups the few provable corners do not amortize a second
     // sort, so those groups retain the ordinary exact collinearity scan.
     const MAX_SINGLE_USE_CERTIFICATE_TRIANGLES: usize = 16;
-
-    let mut groups: std::collections::BTreeMap<ConstructionPlaneIdentity, Vec<usize>> =
-        std::collections::BTreeMap::new();
-    for (polygon_index, &support) in polygon_support_planes.iter().enumerate() {
-        groups.entry(support).or_default().push(polygon_index);
+    if polygon_support_planes.len() != polygons.len() {
+        return Err(crate::error::HypermeshError::UnknownClassification);
     }
 
-    let mut faces = Vec::with_capacity(groups.len());
-    let mut face_supports = Vec::with_capacity(groups.len());
-    for (support_identity, polygon_indices) in groups {
-        if let [polygon_index] = polygon_indices.as_slice() {
+    let first_mesh_planes = support_planes[0].len();
+    let group_count = first_mesh_planes
+        .checked_add(support_planes[1].len())
+        .ok_or(crate::error::HypermeshError::UnknownClassification)?;
+    // Support identities are dense indices. Stable counting partitioning
+    // preserves source order within each face while avoiding one tree node
+    // and one growable index vector per distinct support plane.
+    let mut group_offsets = vec![0usize; group_count + 1];
+    for &support in polygon_support_planes {
+        if support.mesh >= support_planes.len()
+            || support.plane >= support_planes[support.mesh].len()
+        {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let group = support.mesh * first_mesh_planes + support.plane;
+        group_offsets[group + 1] += 1;
+    }
+    for group in 0..group_count {
+        group_offsets[group + 1] += group_offsets[group];
+    }
+    let mut grouped_polygon_indices = vec![0usize; polygons.len()];
+    // Fill each partition backward so its cumulative end becomes its start.
+    // Reverse source traversal keeps indices in their original order and lets
+    // the offset buffer double as the insertion cursors.
+    for (polygon_index, &support) in polygon_support_planes.iter().enumerate().rev() {
+        let group = support.mesh * first_mesh_planes + support.plane;
+        group_offsets[group + 1] -= 1;
+        grouped_polygon_indices[group_offsets[group + 1]] = polygon_index;
+    }
+
+    let mut faces = Vec::with_capacity(group_count);
+    let mut face_supports = Vec::with_capacity(group_count);
+    for group in 0..group_count {
+        let start = group_offsets[group + 1];
+        let end = if group + 1 == group_count {
+            grouped_polygon_indices.len()
+        } else {
+            group_offsets[group + 2]
+        };
+        let polygon_indices = &grouped_polygon_indices[start..end];
+        if polygon_indices.is_empty() {
+            continue;
+        }
+        let support_identity = if group < first_mesh_planes {
+            ConstructionPlaneIdentity {
+                mesh: 0,
+                plane: group,
+            }
+        } else {
+            ConstructionPlaneIdentity {
+                mesh: 1,
+                plane: group - first_mesh_planes,
+            }
+        };
+        if let [polygon_index] = polygon_indices {
             let source = &polygons[*polygon_index];
             let mesh_index = usize::try_from(source.mesh_index)
                 .ok()
@@ -2802,7 +2850,7 @@ fn collapse_certified_convex_faces(
         }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
         let mut source_edges = SourceEdgeKeys::with_capacity(source_edge_count);
-        for &polygon_index in &polygon_indices {
+        for &polygon_index in polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
                 .known_edge_identities()
@@ -2841,7 +2889,7 @@ fn collapse_certified_convex_faces(
         let mut single_use_vertices = Vec::new();
         if polygon_indices.len() <= MAX_SINGLE_USE_CERTIFICATE_TRIANGLES {
             let mut source_vertices = Vec::with_capacity(source_edge_count);
-            for &polygon_index in &polygon_indices {
+            for &polygon_index in polygon_indices {
                 for identity in polygons[polygon_index]
                     .known_vertex_identities()
                     .expect("validated above")
@@ -2872,7 +2920,7 @@ fn collapse_certified_convex_faces(
         }
         let boundary_edges = source_edges.into_unique();
         let mut outgoing = Vec::with_capacity(boundary_edges.len());
-        for &polygon_index in &polygon_indices {
+        for &polygon_index in polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon.known_edge_identities().expect("validated above");
             let vertex_identities = polygon.known_vertex_identities().expect("validated above");
@@ -3955,6 +4003,38 @@ mod tests {
         assert_eq!(faces[0].vertex_count(), 3);
         assert_eq!(faces[0].delta_w, vec![1, 0]);
         assert_eq!(face_supports, vec![support_identity]);
+    }
+
+    #[test]
+    fn certified_face_grouping_rejects_unaligned_or_out_of_range_supports() {
+        let polygon = crate::polygon::make_triangle_with_deferred_edges(
+            &p(0, 0, 0),
+            &p(1, 0, 0),
+            &p(0, 1, 0),
+            0,
+            0,
+        )
+        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let polygons = [polygon];
+        let supports = [vec![&polygons[0].support], Vec::new()];
+
+        assert!(collapse_certified_convex_faces(&polygons, &[], &supports).is_err());
+        assert!(
+            collapse_certified_convex_faces(
+                &polygons,
+                &[ConstructionPlaneIdentity { mesh: 0, plane: 1 }],
+                &supports,
+            )
+            .is_err()
+        );
+        assert!(
+            collapse_certified_convex_faces(
+                &polygons,
+                &[ConstructionPlaneIdentity { mesh: 2, plane: 0 }],
+                &supports,
+            )
+            .is_err()
+        );
     }
 
     #[test]
