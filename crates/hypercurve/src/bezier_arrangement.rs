@@ -376,6 +376,11 @@ impl BezierArrangementGraph2 {
         policy: &CurvePolicy,
     ) -> Classification<BezierArrangementTraversal2> {
         let defer_tangent_order_evidence = !certified_successors.is_empty();
+        let complete_topology_vertices = defer_tangent_order_evidence
+            && self.fragments.iter().all(|fragment| {
+                fragment.start_topology_vertex().is_some()
+                    && fragment.end_topology_vertex().is_some()
+            });
         let initial_endpoint_scope = if defer_tangent_order_evidence {
             RetainedEndpointScope::Connectivity
         } else {
@@ -385,22 +390,27 @@ impl BezierArrangementGraph2 {
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "retained-endpoint-scope",
-            if defer_tangent_order_evidence {
-                "connectivity-first"
+            if complete_topology_vertices {
+                "topology-connectivity-first"
+            } else if defer_tangent_order_evidence {
+                "coordinate-connectivity-first"
             } else {
                 "tangent-order-immediate"
             },
         );
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
-            let endpoints_for_fragment =
+            let endpoints_for_fragment = if complete_topology_vertices {
+                retained_topology_endpoint_data(fragment)
+            } else {
                 match retained_endpoint_data(fragment, initial_endpoint_scope, policy) {
                     Some(Classification::Decided(endpoints)) => endpoints,
                     Some(Classification::Uncertain(reason)) => {
                         return Classification::Uncertain(reason);
                     }
                     None => return Classification::Uncertain(UncertaintyReason::Boundary),
-                };
+                }
+            };
             endpoints.push(endpoints_for_fragment);
         }
 
@@ -1016,6 +1026,23 @@ fn materialized_endpoint_data(
         BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoint_data(policy)),
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
         | BezierSplitFragment2::Unresolved { .. } => None,
+    }
+}
+
+fn retained_topology_endpoint_data(
+    arrangement_fragment: &BezierArrangementFragment2,
+) -> RetainedEndpointData {
+    RetainedEndpointData {
+        start: None,
+        end: None,
+        start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+        end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+        start_tangent: None,
+        end_tangent: None,
+        start_second_derivative: None,
+        start_third_derivative: None,
+        start_derivative_source: None,
+        end_derivative_source: None,
     }
 }
 
@@ -1805,6 +1832,47 @@ mod endpoint_adjacency_tests {
             graph.traverse_retained_with_certified_successors(&[None], &policy),
             Classification::Decided(_)
         ));
+    }
+
+    #[test]
+    fn complete_topology_traversal_defers_unused_endpoint_coordinates() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let fragment = |source_curve_index: usize,
+                        start_vertex: usize,
+                        end_vertex: usize,
+                        start: Point2,
+                        end: Point2| {
+            BezierArrangementFragment2::new(
+                source_curve_index,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                        start.clone(),
+                        start,
+                        end,
+                    )),
+                },
+            )
+            .with_topology_vertices(Some(start_vertex), Some(end_vertex))
+        };
+        let first = fragment(0, 0, 1, point2(0, 0), point2(1, 0));
+        let second = fragment(1, 1, 2, point2(100, 0), point2(101, 0));
+        let policy = CurvePolicy::certified();
+        let first_endpoints = retained_topology_endpoint_data(&first);
+
+        assert!(first_endpoints.start.is_none());
+        assert!(first_endpoints.end.is_none());
+
+        let graph =
+            BezierArrangementGraph2::new(vec![first, second]).expect("valid topology-only graph");
+        let Classification::Decided(traversal) =
+            graph.traverse_retained_with_certified_successors(&[Some(1), None], &policy)
+        else {
+            panic!("certified topology-only traversal should be decided");
+        };
+        assert_eq!(traversal.chains()[0].fragment_indices(), [0, 1]);
     }
 }
 

@@ -5725,6 +5725,71 @@ disabled for the managed ptrace environment.
 
 No prepared API or implementation carrier is removed by this change.
 
+### Topology-only retained Boolean connectivity
+
+The connectivity-first traversal still cloned exact endpoint coordinates for
+materialized fragments. Those coordinates are necessary when a graph mixes
+topology-keyed and unkeyed endpoints, because exact coordinates provide the
+fallback join. Region Boolean output graphs are stronger: every start and end
+already carries a topology vertex from the shared classified split topology.
+When that graph-wide invariant holds, endpoint equality is decided entirely by
+vertex identity.
+
+Certified traversal now detects complete topology coverage once and constructs
+endpoint records containing only the two topology vertices. Mixed or unkeyed
+graphs keep the previous exact-coordinate connectivity path, and incomplete
+successor evidence still rebuilds full first-, second-, and third-derivative
+tangent evidence. A regression deliberately gives two joined topology
+fragments different endpoint coordinates and proves that authoritative
+topology connects them without observing either coordinate. Existing mixed-key
+and tangent-rebuild regressions continue to cover both fallbacks.
+
+The matched one-cell workload retained four exact decisions, nine candidate
+pairs, 48 fragments, two point classifications, zero blockers, and checksum 6.
+Its trace used `topology-connectivity-first` four times and never rebuilt
+tangent order. Rational reductions and GCDs stayed at 54 and 156; temporaries
+fell from 14,252 to 13,577, a 4.74% reduction.
+
+| Inclusive instruction scope | Coordinate connectivity | Topology only | Change |
+| --- | ---: | ---: | ---: |
+| Whole one-cell workload | 22,284,706 | 21,550,160 | 734,546 fewer (3.30%) |
+| `CurveRegion2::boolean_regions` | 12,989,614 | 12,256,949 | 732,665 fewer (5.64%) |
+| Shared Boolean result construction | 2,565,842 | 1,832,951 | 732,891 fewer (28.56%) |
+| One result-region build | 1,264,692 | 531,005 | 733,687 fewer (58.01%) |
+| Retained arrangement traversal | 962,607 | 262,699 | 699,908 fewer (72.71%) |
+
+Heaptrack recorded 28,215 versus 27,599 allocations, 616 fewer (2.18%).
+Postprocessed temporary allocations stayed at 1,663. Peak heap fell from
+881.22 to 873.91 KiB, while reported retained memory stayed at 155.82 KiB and
+peak RSS including Heaptrack overhead rose from 11.14 to 11.26 MiB. The
+same-compiler stripped pathological executable grew from 5,135,944 to
+5,140,448 bytes, a recorded 4,504-byte (0.088%) tradeoff.
+
+The unfiltered optimized `cargo bench --workspace --all-features` command again
+executed every benchmark target and lane. The affected release API target
+completed at 15.987 microseconds per immediate union and 96.865 microseconds
+per immediate four-operation batch with exact checksums unchanged. The complete
+67-cell pathological lane decided all 268 exact Booleans over 603 candidate
+pairs and 3,248 fragments with zero blockers and checksum 6 in 433.937
+milliseconds, versus 440.582 milliseconds at the preceding checkpoint. Every
+competitor and 64-, 256-, and 1,024-vertex comparative lane ran; no
+representative subset was substituted.
+
+The workspace call-graph utility regenerated all source, test, benchmark,
+example, and fuzz targets across the five hyper crates: 42,010 nodes and 71,225
+edges. Public SCC-condensed counts/depths stayed 68/depth 4 for
+`CurveRegion2::boolean_regions` and 75/depth 7 for result construction. The
+private retained traversal grew from 230 to 236 reachable singleton SCCs while
+remaining depth 11; every reachable SCC remains a single node.
+
+The final source passed all-feature/all-target tests, the no-default-feature
+library/test matrix, strict all-target Clippy, warning-denied rustdoc, and the
+full optimized benchmark command. AddressSanitizer completed 10,000
+region-Boolean and 10,000 algebraic-image runs without a target failure. Leak
+detection alone remained disabled for the managed ptrace environment.
+
+No prepared API or implementation carrier is removed by this change.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two
