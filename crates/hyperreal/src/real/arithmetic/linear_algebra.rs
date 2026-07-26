@@ -914,7 +914,7 @@ impl Real {
         }
     }
 
-    #[inline]
+    #[inline(never)]
     fn certified_rational_linear_form4_sign_f64(
         coefficients: [f64; 4],
         coefficient_errors: [f64; 4],
@@ -941,12 +941,28 @@ impl Real {
             coefficients[2] * point[2],
             coefficients[3] * point[3],
         ];
+        const MIN_NORMAL_MAGNITUDE_BITS: u64 =
+            f64::MIN_POSITIVE.to_bits();
+        const INFINITY_MAGNITUDE_BITS: u64 = f64::INFINITY.to_bits();
+        const NORMAL_MAGNITUDE_RANGE: u64 =
+            INFINITY_MAGNITUDE_BITS - MIN_NORMAL_MAGNITUDE_BITS;
+        // Prepared lanes are normal or exact zero. Unsigned subtraction turns
+        // the normal finite magnitude interval into one range comparison; only
+        // a zero result needs the slow operand check to distinguish exact zero
+        // from multiplication underflow.
         for index in 0..4 {
             let product = products[index];
-            if !Self::normal_or_zero_f64(product)
-                || (product == 0.0
-                    && coefficients[index] != 0.0
-                    && point[index] != 0.0)
+            let magnitude_bits =
+                product.to_bits() & i64::MAX as u64;
+            if magnitude_bits
+                .wrapping_sub(MIN_NORMAL_MAGNITUDE_BITS)
+                < NORMAL_MAGNITUDE_RANGE
+            {
+                continue;
+            }
+            if magnitude_bits != 0
+                || (coefficients[index].to_bits() << 1 != 0
+                    && point[index].to_bits() << 1 != 0)
             {
                 return None;
             }
@@ -955,9 +971,6 @@ impl Real {
             + products[1].abs()
             + products[2].abs()
             + products[3].abs();
-        if !Self::normal_or_zero_f64(magnitude_sum) {
-            return None;
-        }
         let value =
             ((products[0] + products[1]) + products[2]) + products[3];
         if !value.is_finite() {
@@ -973,8 +986,15 @@ impl Real {
         // If an intermediate signed sum underflows, this bound either remains
         // normal and dominates the lost subnormal value or is itself rejected.
         const ERROR_FACTOR: f64 = 82.0 * f64::EPSILON;
-        let error_bound =
-            Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
+        let error_bound = ERROR_FACTOR * magnitude_sum;
+        let error_magnitude_bits =
+            error_bound.to_bits() & i64::MAX as u64;
+        if error_magnitude_bits
+            .wrapping_sub(MIN_NORMAL_MAGNITUDE_BITS)
+            >= NORMAL_MAGNITUDE_RANGE
+        {
+            return None;
+        }
         if value > error_bound {
             Some(RealSign::Positive)
         } else if -value > error_bound {
