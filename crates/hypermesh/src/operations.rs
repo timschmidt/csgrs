@@ -3125,6 +3125,19 @@ fn unique_sorted_runs<T: Eq>(values: &[T]) -> impl Iterator<Item = &T> {
     })
 }
 
+#[inline]
+fn retain_indices<T>(values: &mut Vec<T>, retained: &[usize]) {
+    let mut source_index = 0;
+    let mut retained_index = 0;
+    values.retain(|_| {
+        let keep = retained.get(retained_index) == Some(&source_index);
+        source_index += 1;
+        retained_index += usize::from(keep);
+        keep
+    });
+    debug_assert_eq!(retained_index, retained.len());
+}
+
 fn collapse_certified_collinear_face_vertices(
     mesh: usize,
     support: &Plane,
@@ -3165,16 +3178,8 @@ fn collapse_certified_collinear_face_vertices(
         if retained.len() == len {
             return Ok(());
         }
-        if retained.len() != len {
-            *vertices = retained
-                .iter()
-                .map(|&index| vertices[index].clone())
-                .collect();
-            *vertex_identities = retained
-                .iter()
-                .map(|&index| vertex_identities[index].clone())
-                .collect();
-        }
+        retain_indices(vertices, &retained);
+        retain_indices(vertex_identities, &retained);
     }
 
     edges.clear();
