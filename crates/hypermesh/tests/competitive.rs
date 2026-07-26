@@ -3,10 +3,11 @@ mod support;
 
 use hypermesh::{Plane, Point3, triangle_soup_closure_evidence};
 use support::{
-    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_TRIANGLES, assert_close, assert_summary, corpus,
-    large_boolean_case, prepare, prepare_yeahright, raw_from_hypermesh, run_boolmesh,
+    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_BASE_TRIANGLES, YEAHRIGHT_STRESS_SUBDIVISIONS,
+    YEAHRIGHT_TRIANGLES, assert_close, assert_summary, corpus, large_boolean_case, prepare,
+    prepare_yeahright, prepare_yeahright_with_subdivisions, raw_from_hypermesh, run_boolmesh,
     run_hypermesh, run_hypermesh_exact, run_manifold, summarize, validate_with_tri_mesh,
-    yeahright_boolean_case,
+    yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
 };
 
 #[test]
@@ -217,6 +218,40 @@ fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
             summary.finite,
             "HyperMesh {} output is non-finite",
             operation.name()
+        );
+    }
+}
+
+#[test]
+#[ignore = "manual 18k/72k-triangle memory-pressure stress"]
+fn larger_yeahright_fixtures_expose_memory_pressure() {
+    let cases = YEAHRIGHT_STRESS_SUBDIVISIONS.map(yeahright_boolean_case_with_subdivisions);
+    let prepared = cases
+        .iter()
+        .zip(YEAHRIGHT_STRESS_SUBDIVISIONS)
+        .map(|(case, subdivisions)| prepare_yeahright_with_subdivisions(case, subdivisions))
+        .collect::<Vec<_>>();
+
+    for ((case, inputs), subdivisions) in cases
+        .iter()
+        .zip(&prepared)
+        .zip(YEAHRIGHT_STRESS_SUBDIVISIONS)
+    {
+        let triangle_count = YEAHRIGHT_BASE_TRIANGLES * subdivisions * subdivisions;
+        assert_eq!(case.left.triangles.len(), triangle_count);
+        let summary = summarize(&case.left);
+        assert!(summary.closed, "{} is open", case.name);
+        assert!(summary.finite, "{} is non-finite", case.name);
+        assert!(summary.nondegenerate, "{} is degenerate", case.name);
+        assert_eq!(inputs.hypermesh[0].triangles.len(), triangle_count);
+        assert!(inputs.boolmesh[0].is_manifold());
+        assert_eq!(inputs.manifold[0].num_tri(), triangle_count);
+
+        let exact = run_hypermesh_exact(&inputs.hypermesh, Operation::Union);
+        assert!(
+            triangle_soup_closure_evidence(&exact).has_no_boundary(),
+            "{} exact union has a boundary",
+            case.name
         );
     }
 }

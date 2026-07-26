@@ -20,6 +20,7 @@ pub const YEAHRIGHT_BASE_TRIANGLES: usize = 1_128;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_TRIANGLES: usize =
     YEAHRIGHT_BASE_TRIANGLES * YEAHRIGHT_SUBDIVISIONS * YEAHRIGHT_SUBDIVISIONS;
+pub const YEAHRIGHT_STRESS_SUBDIVISIONS: [usize; 2] = [4, 8];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Operation {
@@ -209,13 +210,34 @@ pub fn large_boolean_case() -> Case {
 }
 
 pub fn yeahright_boolean_case() -> MeshPair {
+    yeahright_boolean_case_with_subdivisions(YEAHRIGHT_SUBDIVISIONS)
+}
+
+pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair {
+    assert!(subdivisions.is_power_of_two());
+    assert!(subdivisions >= YEAHRIGHT_SUBDIVISIONS);
     let base = parse_triangle_obj(include_str!("data/yeahright_boolean_hull.obj"));
     assert_eq!(base.positions.len(), 566);
     assert_eq!(base.triangles.len(), YEAHRIGHT_BASE_TRIANGLES);
-    let left = subdivide(&base, YEAHRIGHT_SUBDIVISIONS);
-    assert_eq!(left.triangles.len(), YEAHRIGHT_TRIANGLES);
+    // Keep the pinned 4,512-triangle corpus byte-for-byte stable, then grow
+    // stress fixtures by splitting shared indexed edges. Re-running the
+    // barycentric/quantized importer at larger divisions can assign adjacent
+    // source faces incompatible boundary rows and manufacture open fixtures.
+    let mut left = subdivide(&base, YEAHRIGHT_SUBDIVISIONS);
+    for _ in YEAHRIGHT_SUBDIVISIONS.ilog2()..subdivisions.ilog2() {
+        left = subdivide_raw_midpoints(&left);
+    }
+    assert_eq!(
+        left.triangles.len(),
+        YEAHRIGHT_BASE_TRIANGLES * subdivisions * subdivisions
+    );
     MeshPair {
-        name: "yeahright_hull_4512_box",
+        name: match subdivisions {
+            2 => "yeahright_hull_4512_box",
+            4 => "yeahright_hull_18048_box",
+            8 => "yeahright_hull_72192_box",
+            _ => "yeahright_hull_subdivided_box",
+        },
         left,
         right: box_mesh([-20.0, -14.0, -20.0], [0.0, 26.0, 20.0]),
     }
@@ -234,9 +256,20 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> PreparedInputs {
 }
 
 pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
+    prepare_yeahright_with_subdivisions(case, YEAHRIGHT_SUBDIVISIONS)
+}
+
+pub fn prepare_yeahright_with_subdivisions(case: &MeshPair, subdivisions: usize) -> PreparedInputs {
+    assert!(subdivisions.is_power_of_two());
     let base = parse_triangle_obj(include_str!("data/yeahright_boolean_hull.obj"));
-    let exact_hull = subdivide_hypermesh_midpoints(&base);
-    assert_eq!(exact_hull.triangles.len(), YEAHRIGHT_TRIANGLES);
+    let mut exact_hull = to_hypermesh(&base);
+    for _ in 0..subdivisions.ilog2() {
+        exact_hull = subdivide_hypermesh_midpoints(&exact_hull);
+    }
+    assert_eq!(
+        exact_hull.triangles.len(),
+        YEAHRIGHT_BASE_TRIANGLES * subdivisions * subdivisions
+    );
     PreparedInputs {
         hypermesh: [exact_hull, to_hypermesh(&case.right)],
         boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
@@ -656,16 +689,42 @@ fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {
     }
 }
 
-fn subdivide_hypermesh_midpoints(mesh: &RawMesh) -> InputMesh {
-    let mut positions = mesh
-        .positions
-        .iter()
-        .map(|point| Point3::new(real(point[0]), real(point[1]), real(point[2])))
-        .collect::<Vec<_>>();
+fn subdivide_raw_midpoints(mesh: &RawMesh) -> RawMesh {
+    let mut positions = mesh.positions.clone();
     let mut edge_midpoints = BTreeMap::<[usize; 2], usize>::new();
     let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
 
     for &[a, b, c] in &mesh.triangles {
+        let mut midpoint = |left: usize, right: usize| {
+            let mut edge = [left, right];
+            edge.sort_unstable();
+            *edge_midpoints.entry(edge).or_insert_with(|| {
+                let left = positions[left];
+                let right = positions[right];
+                let index = positions.len();
+                positions.push(std::array::from_fn(|axis| (left[axis] + right[axis]) * 0.5));
+                index
+            })
+        };
+        let ab = midpoint(a, b);
+        let bc = midpoint(b, c);
+        let ac = midpoint(a, c);
+        triangles.extend([[a, ab, ac], [ab, bc, ac], [ac, bc, c], [ab, b, bc]]);
+    }
+
+    RawMesh {
+        positions,
+        triangles,
+    }
+}
+
+fn subdivide_hypermesh_midpoints(mesh: &InputMesh) -> InputMesh {
+    let mut positions = mesh.positions.clone();
+    let mut edge_midpoints = BTreeMap::<[usize; 2], usize>::new();
+    let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
+
+    for triangle in &mesh.triangles {
+        let [a, b, c] = triangle.indices();
         let mut midpoint = |left: usize, right: usize| {
             let mut edge = [left, right];
             edge.sort_unstable();

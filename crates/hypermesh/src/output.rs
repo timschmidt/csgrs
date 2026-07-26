@@ -6,7 +6,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real};
 use crate::mesh::{OutputVertex, PolygonSoup};
-use crate::polygon::{ConstructionEdgeIdentity, ConstructionVertexIdentity, ConvexPolygon};
+use crate::polygon::{
+    ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
+};
 use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
 use hyperlattice::{Rational, Real};
@@ -1460,7 +1462,6 @@ where
     }
     let mut group_indices: StorageHashMap<ConstructionEdgeIdentity, usize> =
         StorageHashMap::default();
-    let mut identified_vertices = Vec::new();
     let mut groups: Vec<ConstructionEdgeCandidateGroup> = Vec::new();
     let mut polygon_edges = Vec::with_capacity(polygons.len());
     for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
@@ -1477,7 +1478,6 @@ where
         if indexed.len() != vertex_identities.len() {
             return Err(HypermeshError::UnknownClassification);
         }
-        identified_vertices.extend(indexed.iter().copied().zip(vertex_identities));
         let mut edge_groups = Vec::with_capacity(indexed.len());
         for (edge_index, identity) in identities.iter().enumerate() {
             let group_index = match group_indices.entry(identity.clone()) {
@@ -1499,20 +1499,40 @@ where
         }
         polygon_edges.push(edge_groups);
     }
+    let mut split_group_indices: StorageHashMap<[ConstructionPlaneIdentity; 2], usize> =
+        StorageHashMap::default();
     for (identity, &group_index) in &group_indices {
         if let ConstructionEdgeIdentity::Split { planes } = identity {
-            groups[group_index]
-                .collinear
-                .extend(identified_vertices.iter().filter_map(
-                    |(vertex, identity)| match *identity {
-                        ConstructionVertexIdentity::PlaneTriple {
-                            planes: vertex_planes,
-                        } if planes.iter().all(|plane| vertex_planes.contains(plane)) => {
-                            Some(*vertex)
-                        }
-                        _ => None,
-                    },
-                ));
+            let mut planes = *planes;
+            planes.sort_unstable();
+            split_group_indices.insert(planes, group_index);
+        }
+    }
+    if !split_group_indices.is_empty() {
+        for (polygon, indexed) in polygons.iter().zip(indexed_polygons) {
+            let vertex_identities = polygon
+                .borrow()
+                .known_vertex_identities()
+                .ok_or(HypermeshError::UnknownClassification)?;
+            for (&vertex, identity) in indexed.iter().zip(vertex_identities) {
+                let ConstructionVertexIdentity::PlaneTriple { mut planes } = *identity else {
+                    continue;
+                };
+                planes.sort_unstable();
+                let pairs = [
+                    [planes[0], planes[1]],
+                    [planes[0], planes[2]],
+                    [planes[1], planes[2]],
+                ];
+                for (pair_index, pair) in pairs.into_iter().enumerate() {
+                    if pair_index > 0 && pairs[..pair_index].contains(&pair) {
+                        continue;
+                    }
+                    if let Some(&group_index) = split_group_indices.get(&pair) {
+                        groups[group_index].collinear.push(vertex);
+                    }
+                }
+            }
         }
     }
     // Construction labels give the cheapest candidate set, but a retained
@@ -3144,6 +3164,55 @@ mod tests {
         assert_eq!(forward, vec![[0, 3], [3, 1]]);
         assert_eq!(reversed, forward);
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn construction_edge_candidates_index_incident_plane_triples_order_independently() {
+        let plane = |mesh, plane| ConstructionPlaneIdentity { mesh, plane };
+        let a = plane(0, 0);
+        let b = plane(0, 1);
+        let c = plane(1, 0);
+        let source_edge = |endpoints| ConstructionEdgeIdentity::Source { mesh: 0, endpoints };
+        let first = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let first = first.with_known_vertex_cycle_and_edges(
+            first.vertices().unwrap(),
+            vec![
+                ConstructionVertexIdentity::PlaneTriple { planes: [a, b, c] },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 1 },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 2 },
+            ],
+            first.edges.as_ref().clone(),
+            vec![
+                ConstructionEdgeIdentity::Split { planes: [b, a] },
+                source_edge([1, 2]),
+                source_edge([0, 2]),
+            ],
+        );
+        let second = make_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 0, 1);
+        let second = second.with_known_vertex_cycle_and_edges(
+            second.vertices().unwrap(),
+            vec![
+                ConstructionVertexIdentity::PlaneTriple { planes: [c, b, a] },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 4 },
+                ConstructionVertexIdentity::Source { mesh: 0, vertex: 5 },
+            ],
+            second.edges.as_ref().clone(),
+            vec![
+                source_edge([3, 4]),
+                source_edge([4, 5]),
+                source_edge([3, 5]),
+            ],
+        );
+
+        let candidates = build_construction_edge_candidates(
+            &[first, second],
+            &[vec![0, 1, 2], vec![3, 4, 5]],
+            6,
+        )
+        .unwrap();
+        let split_group = candidates.polygon_edges[0][0];
+
+        assert_eq!(candidates.groups[split_group].collinear, vec![0, 1, 3]);
     }
 
     #[test]

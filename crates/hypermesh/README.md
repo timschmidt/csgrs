@@ -222,6 +222,14 @@ cargo test --test competitive
 cargo bench --bench competitive
 ```
 
+The regular suite keeps the 4,512-triangle YeahRight fixture. Run the ignored
+memory-pressure stress periodically to instantiate and union the 18,048- and
+72,192-triangle variants while retaining all competitor carriers together:
+
+```bash
+cargo test --release --test competitive larger_yeahright_fixtures_expose_memory_pressure -- --ignored --nocapture
+```
+
 Run the crate checks from this directory:
 
 ```bash

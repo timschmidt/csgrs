@@ -10,6 +10,51 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-07-26: index split-edge incidence candidates
+
+Status: **kept**
+
+The certified construction-aware output path associated every split edge with
+all projective vertices incident to its two defining planes. It previously
+implemented that exact identity join by scanning every retained vertex once
+per split edge, making candidate construction O(split edges * vertices) and
+retaining an additional complete `(vertex, identity)` list.
+
+Candidate construction now indexes split groups by their unordered pair of
+canonical construction-plane identities. Each plane-triple vertex visits its
+three unordered plane pairs once, producing the same order-independent,
+incidence-consistent candidate sets in O(split edges + vertices). Final sorting
+and deduplication are unchanged. This is retained exact construction identity;
+no approximate value selects a candidate or commits topology, and coincidence
+classes still reach output resolution atomically.
+
+A two-second `perf` profile of the 4,512-triangle YeahRight union attributed
+2.25% self time to the old full-scan `Vec<usize>::extend` specialization. After
+indexing, that symbol was below the profile's 0.05% reporting threshold.
+Five deterministic single-execution counter runs measured:
+
+| Version | Instructions | Branches |
+| --- | ---: | ---: |
+| Full scan | 404,855,354 | 71,506,553 |
+| Plane-pair index | 403,118,176 | 70,848,636 |
+| Change | -0.43% | -0.92% |
+
+The corresponding 10-sample Criterion interval moved from
+14.920--15.315 ms to 15.021--17.104 ms with `p = 0.38`; wall-clock performance
+was therefore neutral at that sample size rather than a claimed improvement.
+The former full-scan hotspot, lower deterministic work, and lower asymptotic
+memory/time cost justify retaining the change.
+
+The competitive fixture support now also constructs closed 18,048- and
+72,192-triangle YeahRight variants by refining shared indexed edges. An ignored
+release stress test retains both raw fixture families and all Hypermesh,
+boolmesh, and manifold-rust carriers concurrently, then runs and closure-checks
+both exact Hypermesh unions. The measured run completed in 0.47 seconds with
+248,532 KiB peak RSS. Its first execution exposed that generic independently
+quantized barycentric refinement manufactured boundary edges at these scales;
+the stress generator now grows the pinned closed 4,512-triangle topology by
+shared-edge midpoint refinement instead.
+
 ## 2026-07-20: direct interleaved GPU approximation
 
 Status: **kept**
