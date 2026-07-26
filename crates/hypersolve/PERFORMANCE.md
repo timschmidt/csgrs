@@ -426,6 +426,28 @@ The requested AddressSanitizer region-Boolean replay completed with libFuzzer
 reporting 2,515 executions at 5,893 coverage points and 19,142 feature edges
 with no finding; LeakSanitizer remained disabled under ptrace.
 
+#### Retention gate
+
+A July 2026 experiment replaced
+`PreparedAlgebraicRootRationalImage` with an immediate two-numerator transform
+that preserved shared denominator evaluation, lazy source-polynomial reuse,
+complete coordinate reports, and the first-coordinate short circuit. The best
+return-by-value form increased the complete algebraic-parameter benchmark from
+9,570,229,121 to 9,586,812,181 Callgrind instructions (0.17%); report-pair
+assembly alone executed 7,880,394 `memcpy` instructions. An output-slot form
+instead reached 9,598,735,012 instructions and increased the loadable artifact
+by 4,092 bytes. Both forms were reverted, so the prepared carrier remains part
+of the measured performance contract.
+
+Prepared-surface removal in Hyperreal, Hyperlattice, Hyperlimit, or Hypersolve
+uses a two-tier acceptance gate. The candidate must first beat or equal every
+immediately affected public API on exact-result regressions, executed release
+benchmarks, deterministic instructions, allocations, binary size, and
+callgraph depth. Only a candidate that clears that tier proceeds to correctness
+and representative executed performance tests for every `hyper*` crate in the
+workspace, followed by relevant sanitizer-backed fuzz targets. Compile-only
+bench checks do not satisfy the performance tier.
+
 ### Prepared rational maps across source roots
 
 Several represented roots of one polynomial can be transported through the
