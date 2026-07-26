@@ -2866,14 +2866,19 @@ fn propose_active_planes_f64(
             ])
         })
         .collect::<Option<Vec<_>>>()?;
+    let mut crossed_planes = Vec::new();
     for &plane_index in candidate_planes {
-        cycle = clip_f64_cycle(&cycle, planes[plane_index]);
+        let (clipped, crossed) = clip_f64_cycle(&cycle, planes[plane_index]);
+        cycle = clipped;
         if cycle.len() < 3 {
             return Some(Vec::new());
         }
+        if crossed {
+            crossed_planes.push(plane_index);
+        }
     }
     let mut active = Vec::new();
-    for &plane_index in candidate_planes {
+    for plane_index in crossed_planes {
         let plane = planes[plane_index];
         let points_on_plane = cycle
             .iter()
@@ -2894,8 +2899,9 @@ fn propose_active_planes_f64(
     Some(active)
 }
 
-fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> Vec<[f64; 3]> {
+fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> (Vec<[f64; 3]>, bool) {
     let mut clipped = Vec::with_capacity(points.len() + 1);
+    let mut crossed = false;
     for index in 0..points.len() {
         let next = (index + 1) % points.len();
         let current_value = f64_plane_value(points[index], plane);
@@ -2904,13 +2910,17 @@ fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> Vec<[f64; 3]> {
         let next_inside = next_value <= 0.0;
         match (current_inside, next_inside) {
             (true, true) => clipped.push(points[next]),
-            (true, false) => clipped.push(f64_segment_plane_intersection(
-                points[index],
-                points[next],
-                current_value,
-                next_value,
-            )),
+            (true, false) => {
+                crossed = true;
+                clipped.push(f64_segment_plane_intersection(
+                    points[index],
+                    points[next],
+                    current_value,
+                    next_value,
+                ));
+            }
             (false, true) => {
+                crossed = true;
                 clipped.push(f64_segment_plane_intersection(
                     points[index],
                     points[next],
@@ -2922,7 +2932,7 @@ fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> Vec<[f64; 3]> {
             (false, false) => {}
         }
     }
-    clipped
+    (clipped, crossed)
 }
 
 fn f64_segment_plane_intersection(
