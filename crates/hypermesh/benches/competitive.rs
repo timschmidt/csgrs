@@ -7,8 +7,8 @@ use std::{hint::black_box, time::Duration};
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use support::{
     Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
-    run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold, to_three_d_asset,
-    validate_with_tri_mesh, yeahright_boolean_case,
+    run_hypermesh_polygon, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
+    to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case,
 };
 
 fn competitive(c: &mut Criterion) {
@@ -89,6 +89,28 @@ fn competitive(c: &mut Criterion) {
         );
     }
     yeahright_boolean_group.finish();
+
+    let mut yeahright_immediate_group = c.benchmark_group("competitive_yeahright_immediate_api");
+    yeahright_immediate_group.sample_size(10);
+    yeahright_immediate_group.warm_up_time(Duration::from_secs(1));
+    yeahright_immediate_group.measurement_time(Duration::from_secs(5));
+    for operation in Operation::ALL {
+        yeahright_immediate_group.bench_function(
+            BenchmarkId::new("polygon", operation.name()),
+            |benchmark| {
+                benchmark.iter(|| {
+                    run_hypermesh_polygon(black_box(&yeahright_inputs.hypermesh), operation)
+                });
+            },
+        );
+        yeahright_immediate_group.bench_function(
+            BenchmarkId::new("triangle_soup", operation.name()),
+            |benchmark| {
+                benchmark.iter(|| run_hypermesh(black_box(&yeahright_inputs.hypermesh), operation));
+            },
+        );
+    }
+    yeahright_immediate_group.finish();
 
     let fixture = &cases[0].left;
     let mut import_group = c.benchmark_group("competitive_mesh_import/box_12");

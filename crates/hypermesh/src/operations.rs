@@ -42,12 +42,16 @@ struct ConvexCandidate {
 
 impl BooleanComputation {
     fn into_result(self, operation: BooleanOp) -> HypermeshResult<BooleanResult> {
-        let result = self.into_selected_result(operation)?;
-        certify_output_polygon_closure(&result)?;
+        let has_certified_triangle_arrangement = self.triangle_soup.is_some();
+        let (result, finalization_preserved_polygon_count) =
+            self.into_selected_result(operation)?;
+        if !has_certified_triangle_arrangement || !finalization_preserved_polygon_count {
+            certify_output_polygon_closure(&result)?;
+        }
         Ok(result)
     }
 
-    fn into_selected_result(self, operation: BooleanOp) -> HypermeshResult<BooleanResult> {
+    fn into_selected_result(self, operation: BooleanOp) -> HypermeshResult<(BooleanResult, bool)> {
         let indicator = make_indicator(operation, self.soup.num_meshes);
         let mut selected = Vec::with_capacity(self.classified.len());
         for mut polygon in self.classified {
@@ -61,13 +65,20 @@ impl BooleanComputation {
             );
             if classification != 0 {
                 polygon.classification = classification;
-                if self.input_edges_deferred {
+                if self.input_edges_deferred && polygon.polygon.edges.is_empty() {
                     polygon.polygon = polygon.polygon.with_rebuilt_edge_planes()?;
                 }
                 selected.push(polygon);
             }
         }
-        Ok(BooleanResult::from_classified(self.soup, selected))
+        let selected_count = selected.len();
+        let result = BooleanResult::from_classified(self.soup, selected);
+        // The projective candidate's triangle arrangement is an exact closure
+        // certificate for these same oriented polygons. Finalization can only
+        // invalidate that correspondence by merging duplicates; rebuilding a
+        // deferred boundary plane leaves the vertex cycle unchanged.
+        let finalization_preserved_polygon_count = result.output().polygons.len() == selected_count;
+        Ok((result, finalization_preserved_polygon_count))
     }
 
     fn into_triangle_soup(
@@ -77,7 +88,7 @@ impl BooleanComputation {
         if let Some(soup) = self.triangle_soup {
             return Ok(soup);
         }
-        let result = self.into_selected_result(operation)?;
+        let (result, _) = self.into_selected_result(operation)?;
         crate::output::triangulate_and_resolve_polygon_certified(&result)
     }
 }
@@ -166,7 +177,7 @@ pub fn boolean_operation(
     config: EmberConfig,
 ) -> HypermeshResult<BooleanResult> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, None, config)?;
+    let computation = compute_boolean(meshes, operation, None, None, config, true)?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     let result = computation.into_result(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -192,6 +203,7 @@ pub fn boolean_operation_with_certified_convex_inputs(
         Some(certified_convex_inputs),
         None,
         config,
+        true,
     )?;
     crate::trace_dispatch!("boolean-operation", "certify-output-closure");
     let result = computation.into_result(operation)?;
@@ -210,7 +222,7 @@ pub fn boolean_triangle_soup(
     config: EmberConfig,
 ) -> HypermeshResult<crate::output::TriangleSoup> {
     crate::trace_dispatch!("boolean-operation", "start");
-    let computation = compute_boolean(meshes, operation, None, None, config)?;
+    let computation = compute_boolean(meshes, operation, None, None, config, false)?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_triangle_soup(operation)?;
     crate::trace_dispatch!("boolean-operation", "complete");
@@ -235,6 +247,7 @@ pub fn boolean_triangle_soup_with_certified_convex_inputs(
         Some(certified_convex_inputs),
         None,
         config,
+        false,
     )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_triangle_soup(operation)?;
@@ -263,6 +276,7 @@ pub fn boolean_triangle_soup_with_certified_convex_inputs_and_planes(
         Some(certified_convex_inputs),
         Some(input_planes),
         config,
+        false,
     )?;
     crate::trace_dispatch!("boolean-operation", "triangulate-output");
     let soup = computation.into_triangle_soup(operation)?;
@@ -276,6 +290,7 @@ fn compute_boolean(
     certified_convex_inputs: Option<&[bool]>,
     input_planes: Option<&[&[InputTrianglePlanes]]>,
     config: EmberConfig,
+    retain_winding: bool,
 ) -> HypermeshResult<BooleanComputation> {
     if certified_convex_inputs.is_some_and(|certified| certified.len() != meshes.len()) {
         return Err(crate::error::HypermeshError::UnknownClassification);
@@ -294,7 +309,11 @@ fn compute_boolean(
         )?
     };
     let convex_candidate = if use_two_convex_candidate {
-        match compute_two_convex_inputs_projectively(&soup.polygons, operation) {
+        match compute_two_convex_inputs_projectively(
+            &soup.polygons,
+            operation,
+            retain_winding || operation == BooleanOp::SymmetricDifference,
+        ) {
             Ok(candidate) => candidate,
             Err(error) => {
                 if cfg!(debug_assertions) {
@@ -2043,6 +2062,7 @@ fn affine_projective_point(point: &HomogeneousPoint3) -> HypermeshResult<Point3>
 fn compute_two_convex_inputs_projectively(
     polygons: &[ConvexPolygon],
     operation: BooleanOp,
+    retain_winding: bool,
 ) -> HypermeshResult<Option<ConvexCandidate>> {
     let mut support_planes: [Vec<&Plane>; 2] = std::array::from_fn(|_| Vec::new());
     let mut storage_support_planes: [StorageHashMap<[usize; 4], usize>; 2] =
@@ -2334,13 +2354,29 @@ fn compute_two_convex_inputs_projectively(
         }
         if excluded {
             if emit_outside {
-                push_source_transition(&mut classified, polygon, host, other, false)?;
+                push_source_transition(
+                    &mut classified,
+                    polygon,
+                    host,
+                    other,
+                    false,
+                    operation,
+                    retain_winding,
+                )?;
             }
             continue;
         }
         if candidate_planes.is_empty() {
             if emit_inside {
-                push_source_transition(&mut classified, polygon, host, other, inside_winding)?;
+                push_source_transition(
+                    &mut classified,
+                    polygon,
+                    host,
+                    other,
+                    inside_winding,
+                    operation,
+                    retain_winding,
+                )?;
             }
             continue;
         }
@@ -2394,6 +2430,7 @@ fn compute_two_convex_inputs_projectively(
                     other,
                     false,
                     operation,
+                    retain_winding,
                 )?;
             }
             continue;
@@ -2412,6 +2449,7 @@ fn compute_two_convex_inputs_projectively(
                     other,
                     false,
                     operation,
+                    retain_winding,
                 )?;
             }
             if emit_inside {
@@ -2425,6 +2463,7 @@ fn compute_two_convex_inputs_projectively(
                     other,
                     inside_winding,
                     operation,
+                    retain_winding,
                 )?;
             }
             continue;
@@ -2440,6 +2479,7 @@ fn compute_two_convex_inputs_projectively(
                 other,
                 inside_winding,
                 operation,
+                retain_winding,
             )?;
         }
     }
@@ -2498,7 +2538,7 @@ fn compute_two_convex_inputs_projectively(
     }
 
     let triangle_soup = {
-        if operation != BooleanOp::SymmetricDifference {
+        if retain_winding && operation != BooleanOp::SymmetricDifference {
             let indicator = make_indicator(operation, support_planes.len());
             for fragment in &mut classified {
                 let winding = fragment
@@ -2512,10 +2552,17 @@ fn compute_two_convex_inputs_projectively(
             }
         }
         let triangulate_fallback = || {
-            crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
-                .and_then(|triangles| {
-                    select_triangle_arrangement(&triangles, operation, support_planes.len())
-                })
+            if retain_winding {
+                crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
+                    .and_then(|triangles| {
+                        select_triangle_arrangement(&triangles, operation, support_planes.len())
+                    })
+            } else {
+                crate::output::triangulate_preclassified_arrangement_precomputed_f64_scan(
+                    &classified,
+                )
+                .and_then(certify_triangle_soup_closure)
+            }
         };
         let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
             if classified
@@ -3722,17 +3769,24 @@ fn push_projective_transition(
     other: usize,
     inside_other: bool,
     operation: BooleanOp,
+    retain_winding: bool,
 ) -> HypermeshResult<()> {
     if cycle.boundary.len() < 3 {
         return Ok(());
     }
-    let winding = projective_transition_winding(host, other, inside_other);
     if !projective_transition_is_emitted(host, inside_other, operation) {
         return Ok(());
     }
     let polygon = cycle.materialize(source, affine_cache, point_cache)?;
-    let mut fragment = ClassifiedPolygon::new(polygon, ARRANGEMENT_CLASSIFICATION);
-    fragment.winding = Some(winding);
+    let classification = if retain_winding {
+        ARRANGEMENT_CLASSIFICATION
+    } else {
+        projective_transition_classification(host, other, inside_other, operation)
+    };
+    let mut fragment = ClassifiedPolygon::new(polygon, classification);
+    if retain_winding {
+        fragment.winding = Some(projective_transition_winding(host, other, inside_other));
+    }
     fragment.is_bsp_fragment = true;
     classified.push(fragment);
     Ok(())
@@ -3744,12 +3798,21 @@ fn push_source_transition(
     host: usize,
     other: usize,
     inside_other: bool,
+    operation: BooleanOp,
+    retain_winding: bool,
 ) -> HypermeshResult<()> {
     if source.vertex_count() < 3 {
         return Ok(());
     }
-    let mut fragment = ClassifiedPolygon::new(source.clone(), ARRANGEMENT_CLASSIFICATION);
-    fragment.winding = Some(projective_transition_winding(host, other, inside_other));
+    let classification = if retain_winding {
+        ARRANGEMENT_CLASSIFICATION
+    } else {
+        projective_transition_classification(host, other, inside_other, operation)
+    };
+    let mut fragment = ClassifiedPolygon::new(source.clone(), classification);
+    if retain_winding {
+        fragment.winding = Some(projective_transition_winding(host, other, inside_other));
+    }
     fragment.is_bsp_fragment = true;
     classified.push(fragment);
     Ok(())
@@ -3761,6 +3824,29 @@ fn projective_transition_winding(host: usize, other: usize, inside_other: bool) 
     let mut w_back = w_front.clone();
     w_back[host] = 1;
     WindingPair { w_front, w_back }
+}
+
+fn projective_transition_classification(
+    host: usize,
+    other: usize,
+    inside_other: bool,
+    operation: BooleanOp,
+) -> i8 {
+    let mut front = [0; 2];
+    front[other] = i32::from(inside_other);
+    let mut back = front;
+    back[host] = 1;
+    let is_inside = |winding: [i32; 2]| match operation {
+        BooleanOp::Union => winding != [0, 0],
+        BooleanOp::Intersection => winding[0] != 0 && winding[1] != 0,
+        BooleanOp::Difference => winding[0] != 0 && winding[1] == 0,
+        BooleanOp::SymmetricDifference => (winding[0] != 0) != (winding[1] != 0),
+    };
+    match (is_inside(front), is_inside(back)) {
+        (false, true) => 1,
+        (true, false) => -1,
+        _ => 0,
+    }
 }
 
 fn projective_transition_is_emitted(host: usize, inside_other: bool, operation: BooleanOp) -> bool {
@@ -3837,6 +3923,33 @@ mod tests {
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn direct_projective_classification_matches_winding_evidence() {
+        for operation in [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::SymmetricDifference,
+        ] {
+            let indicator = make_indicator(operation, 2);
+            for host in 0..2 {
+                let other = 1 - host;
+                for inside_other in [false, true] {
+                    let winding = projective_transition_winding(host, other, inside_other);
+                    let expected = crate::winding::classify_polygon_output(
+                        &winding.w_front,
+                        &winding.w_back,
+                        &indicator,
+                    );
+                    assert_eq!(
+                        projective_transition_classification(host, other, inside_other, operation,),
+                        expected,
+                    );
+                }
+            }
+        }
     }
 
     #[test]

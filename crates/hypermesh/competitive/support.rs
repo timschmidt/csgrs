@@ -2,7 +2,8 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
-    BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, TriangleSoup,
+    BooleanOp, BooleanResult, EmberConfig, InputMesh, Point3, Real, Triangle, TriangleSoup,
+    boolean_operation_with_certified_convex_inputs,
     boolean_triangle_soup_with_certified_convex_inputs,
 };
 use manifold_rust::{
@@ -289,6 +290,16 @@ pub fn run_hypermesh_exact(inputs: &[InputMesh; 2], operation: Operation) -> Tri
         EmberConfig::default(),
     )
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
+}
+
+pub fn run_hypermesh_polygon(inputs: &[InputMesh; 2], operation: Operation) -> BooleanResult {
+    boolean_operation_with_certified_convex_inputs(
+        &[inputs[0].as_ref(), inputs[1].as_ref()],
+        operation.hypermesh(),
+        &[true, true],
+        EmberConfig::default(),
+    )
+    .unwrap_or_else(|error| panic!("hypermesh polygon {} failed: {error}", operation.name()))
 }
 
 pub fn run_boolmesh(inputs: &[BoolmeshManifold; 2], operation: Operation) -> RawMesh {

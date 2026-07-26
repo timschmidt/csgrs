@@ -120,8 +120,17 @@ struct ClassifiedOutputBucket {
     indices: Vec<usize>,
 }
 
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+struct ClassifiedOutputBucketFingerprint {
+    classification: i8,
+    edge_count: usize,
+    support: Option<[u64; 4]>,
+    edge_profile: u64,
+}
+
 struct PlaneProfileInterner {
     planes: Vec<Plane>,
+    approximate: StorageHashMap<[u64; 4], Vec<usize>>,
 }
 
 pub(crate) fn merge_unique_classified_polygons(
@@ -172,6 +181,8 @@ impl BooleanResult {
         let mut classifications = Vec::with_capacity(classified.len());
         let mut winding_pairs: Vec<Option<WindingPair>> = Vec::with_capacity(classified.len());
         let mut buckets: Vec<ClassifiedOutputBucket> = Vec::new();
+        let mut bucket_fingerprints: StorageHashMap<ClassifiedOutputBucketFingerprint, Vec<usize>> =
+            StorageHashMap::default();
         let mut plane_interner = PlaneProfileInterner::new();
 
         for classified_polygon in classified {
@@ -183,8 +194,17 @@ impl BooleanResult {
                 classified_polygon.polygon
             };
             let edge_profile = plane_interner.edge_profile(&polygon.edges);
+            let bucket_fingerprint = ClassifiedOutputBucketFingerprint {
+                classification,
+                edge_count: polygon.edges.len(),
+                support: plane_f64_fingerprint(&polygon.support),
+                edge_profile: edge_profile_fingerprint(&edge_profile),
+            };
             if let Some(existing_index) = find_matching_output_polygon_index(
                 &buckets,
+                bucket_fingerprints
+                    .get(&bucket_fingerprint)
+                    .map(Vec::as_slice),
                 &output.polygons,
                 classification,
                 &edge_profile,
@@ -201,14 +221,22 @@ impl BooleanResult {
             classifications.push(classification);
             winding_pairs.push(winding);
             let new_index = output.polygons.len() - 1;
-            if let Some(bucket) = buckets.iter_mut().find(|bucket| {
-                bucket.classification == classification
-                    && bucket.edge_count == edge_count
-                    && bucket.support == support
-                    && bucket.edge_profile == edge_profile
-            }) {
-                bucket.indices.push(new_index);
+            if let Some(bucket_index) =
+                bucket_fingerprints
+                    .get(&bucket_fingerprint)
+                    .and_then(|candidate_buckets| {
+                        candidate_buckets.iter().copied().find(|&bucket_index| {
+                            let bucket = &buckets[bucket_index];
+                            bucket.classification == classification
+                                && bucket.edge_count == edge_count
+                                && bucket.support == support
+                                && bucket.edge_profile == edge_profile
+                        })
+                    })
+            {
+                buckets[bucket_index].indices.push(new_index);
             } else {
+                let bucket_index = buckets.len();
                 buckets.push(ClassifiedOutputBucket {
                     classification,
                     support,
@@ -216,6 +244,10 @@ impl BooleanResult {
                     edge_profile,
                     indices: vec![new_index],
                 });
+                bucket_fingerprints
+                    .entry(bucket_fingerprint)
+                    .or_default()
+                    .push(bucket_index);
             }
         }
 
@@ -360,27 +392,35 @@ fn find_matching_classified_polygon_index(
 
 fn find_matching_output_polygon_index(
     buckets: &[ClassifiedOutputBucket],
+    candidate_buckets: Option<&[usize]>,
     polygons: &[ConvexPolygon],
     classification: i8,
     edge_profile: &[usize],
     candidate: &ConvexPolygon,
 ) -> Option<usize> {
-    let bucket = buckets.iter().find(|bucket| {
-        bucket.classification == classification
+    candidate_buckets?.iter().copied().find_map(|bucket_index| {
+        let bucket = &buckets[bucket_index];
+        (bucket.classification == classification
             && bucket.edge_count == candidate.edges.len()
             && bucket.support == candidate.support
-            && bucket.edge_profile == edge_profile
-    })?;
-    bucket
-        .indices
-        .iter()
-        .copied()
-        .find(|index| polygons_match_output_geometry(&polygons[*index], candidate))
+            && bucket.edge_profile == edge_profile)
+            .then(|| {
+                bucket
+                    .indices
+                    .iter()
+                    .copied()
+                    .find(|index| polygons_match_output_geometry(&polygons[*index], candidate))
+            })
+            .flatten()
+    })
 }
 
 impl PlaneProfileInterner {
     fn new() -> Self {
-        Self { planes: Vec::new() }
+        Self {
+            planes: Vec::new(),
+            approximate: StorageHashMap::default(),
+        }
     }
 
     fn edge_profile(&mut self, edges: &[Plane]) -> Vec<usize> {
@@ -393,6 +433,20 @@ impl PlaneProfileInterner {
     }
 
     fn plane_id(&mut self, plane: &Plane) -> usize {
+        if let Some(key) = plane_f64_fingerprint(plane) {
+            if let Some(index) = self.approximate.get(&key).and_then(|candidates| {
+                candidates
+                    .iter()
+                    .copied()
+                    .find(|&index| self.planes[index] == *plane)
+            }) {
+                return index;
+            }
+            let index = self.planes.len();
+            self.planes.push(plane.clone());
+            self.approximate.entry(key).or_default().push(index);
+            return index;
+        }
         if let Some(index) = self.planes.iter().position(|existing| existing == plane) {
             return index;
         }
@@ -400,6 +454,44 @@ impl PlaneProfileInterner {
         self.planes.push(plane.clone());
         index
     }
+}
+
+fn plane_f64_fingerprint(plane: &Plane) -> Option<[u64; 4]> {
+    let coordinates = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ];
+    if coordinates
+        .iter()
+        .any(|coordinate| coordinate.exact_rational_ref().is_none())
+    {
+        return None;
+    }
+    let [Some(a), Some(b), Some(c), Some(d)] = coordinates.map(Real::to_f64_lossy) else {
+        return None;
+    };
+    [a, b, c, d].into_iter().all(f64::is_finite).then(|| {
+        [a, b, c, d].map(|value| {
+            if value == 0.0 {
+                0.0_f64.to_bits()
+            } else {
+                value.to_bits()
+            }
+        })
+    })
+}
+
+fn edge_profile_fingerprint(profile: &[usize]) -> u64 {
+    profile
+        .iter()
+        .fold(profile.len() as u64, |fingerprint, &id| {
+            fingerprint
+                .rotate_left(17)
+                .wrapping_mul(0x9e37_79b9_7f4a_7c15)
+                .wrapping_add(id as u64)
+        })
 }
 
 fn edge_cycles_match_up_to_rotation(
@@ -863,26 +955,38 @@ pub(crate) fn triangulate_preclassified_arrangement_construction_candidates(
     classified: &[ClassifiedPolygon],
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<TriangleSoup> {
-    triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+    triangulate_preclassified_arrangement_with_strategy(
         classified,
+        false,
+        true,
         filter_recovery_candidates,
         false,
     )
+}
+
+pub(crate) fn triangulate_preclassified_arrangement_precomputed_f64_scan(
+    classified: &[ClassifiedPolygon],
+) -> HypermeshResult<TriangleSoup> {
+    triangulate_preclassified_arrangement_with_strategy(classified, true, false, false, false)
 }
 
 pub(crate) fn triangulate_selected_preclassified_arrangement_construction_candidates(
     classified: &[ClassifiedPolygon],
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<TriangleSoup> {
-    triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+    triangulate_preclassified_arrangement_with_strategy(
         classified,
+        false,
+        true,
         filter_recovery_candidates,
         true,
     )
 }
 
-fn triangulate_preclassified_arrangement_construction_candidates_with_recovery(
+fn triangulate_preclassified_arrangement_with_strategy(
     classified: &[ClassifiedPolygon],
+    prefer_precomputed_f64_scan: bool,
+    prefer_construction_candidates: bool,
     filter_recovery_candidates: bool,
     retain_unselected_recovery: bool,
 ) -> HypermeshResult<TriangleSoup> {
@@ -905,8 +1009,8 @@ fn triangulate_preclassified_arrangement_construction_candidates_with_recovery(
         &polygons,
         &orientations,
         None,
-        false,
-        true,
+        prefer_precomputed_f64_scan,
+        prefer_construction_candidates,
         filter_recovery_candidates,
     )?;
     for (triangle, source) in soup.triangles.iter_mut().zip(&soup.sources) {
@@ -1939,12 +2043,35 @@ fn split_segment_subedges_exact_precomputed_f64_scan<'a>(
 }
 
 fn sorted_vertex_indices_by_axis(vertices: &[OutputVertex]) -> HypermeshResult<[Vec<usize>; 3]> {
+    const COMPARISON_SORT_MIN_VERTICES: usize = 32;
     let mut order = [
         (0..vertices.len()).collect::<Vec<_>>(),
         (0..vertices.len()).collect::<Vec<_>>(),
         (0..vertices.len()).collect::<Vec<_>>(),
     ];
     for (axis, axis_order) in order.iter_mut().enumerate() {
+        if axis_order.len() >= COMPARISON_SORT_MIN_VERTICES {
+            let mut error = None;
+            axis_order.sort_unstable_by(|&left, &right| {
+                if error.is_some() {
+                    return std::cmp::Ordering::Equal;
+                }
+                match compare_real(
+                    vertex_axis(&vertices[left], axis),
+                    vertex_axis(&vertices[right], axis),
+                ) {
+                    Ok(ordering) => ordering,
+                    Err(sort_error) => {
+                        error = Some(sort_error);
+                        std::cmp::Ordering::Equal
+                    }
+                }
+            });
+            if let Some(error) = error {
+                return Err(error);
+            }
+            continue;
+        }
         for index in 1..axis_order.len() {
             let mut current = index;
             while current > 0
@@ -2810,6 +2937,49 @@ mod tests {
             triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
             sources: vec![TriangleSource::default(); 4],
         }
+    }
+
+    #[test]
+    fn large_axis_orders_remain_exactly_monotone() {
+        let vertices = (0..64)
+            .rev()
+            .map(|index| ov(index, 63 - index, index % 7))
+            .collect::<Vec<_>>();
+        let orders = sorted_vertex_indices_by_axis(&vertices).unwrap();
+
+        for (axis, order) in orders.iter().enumerate() {
+            assert!(order.windows(2).all(|pair| {
+                compare_real(
+                    vertex_axis(&vertices[pair[0]], axis),
+                    vertex_axis(&vertices[pair[1]], axis),
+                )
+                .is_ok_and(|ordering| ordering.is_le())
+            }));
+        }
+    }
+
+    #[test]
+    fn plane_profile_fingerprint_collisions_remain_exactly_disambiguated() {
+        let plane = |coefficient: &str| {
+            Plane::from_coefficients(
+                coefficient.parse::<Real>().unwrap(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+            )
+        };
+        let first = plane("9007199254740992");
+        let equal = plane("9007199254740992");
+        let rounded_collision = plane("9007199254740993");
+        assert_eq!(
+            plane_f64_fingerprint(&first),
+            plane_f64_fingerprint(&rounded_collision),
+        );
+
+        let mut interner = PlaneProfileInterner::new();
+        let first_id = interner.plane_id(&first);
+        assert_eq!(interner.plane_id(&equal), first_id);
+        assert_ne!(interner.plane_id(&rounded_collision), first_id);
     }
 
     #[test]

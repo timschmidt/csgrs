@@ -1,13 +1,13 @@
 #[path = "../competitive/support.rs"]
 mod support;
 
-use hypermesh::{Plane, Point3, triangle_soup_closure_evidence};
+use hypermesh::{Plane, Point3, triangle_soup_closure_evidence, triangulate_and_resolve_certified};
 use support::{
     LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_BASE_TRIANGLES, YEAHRIGHT_STRESS_SUBDIVISIONS,
     YEAHRIGHT_TRIANGLES, assert_close, assert_summary, corpus, large_boolean_case, prepare,
     prepare_yeahright, prepare_yeahright_with_subdivisions, raw_from_hypermesh, run_boolmesh,
-    run_hypermesh, run_hypermesh_exact, run_manifold, summarize, validate_with_tri_mesh,
-    yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
+    run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon, run_manifold, summarize,
+    validate_with_tri_mesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
 };
 
 #[test]
@@ -218,6 +218,54 @@ fn yeahright_exact_hypermesh_outputs_remain_boundaryless_for_every_operation() {
             summary.finite,
             "HyperMesh {} output is non-finite",
             operation.name()
+        );
+    }
+}
+
+#[test]
+fn yeahright_polygon_and_triangle_immediate_apis_remain_consistent() {
+    let case = yeahright_boolean_case();
+    let prepared = prepare_yeahright(&case);
+    for operation in Operation::ALL {
+        let polygon_result = run_hypermesh_polygon(&prepared.hypermesh, operation);
+        let polygon_soup = triangulate_and_resolve_certified(&polygon_result)
+            .expect("YeahRight polygon output must triangulate exactly");
+        let direct_soup = run_hypermesh_exact(&prepared.hypermesh, operation);
+        assert!(
+            triangle_soup_closure_evidence(&polygon_soup).has_no_boundary(),
+            "HyperMesh polygon {} output has a boundary",
+            operation.name(),
+        );
+        let degenerate_triangles = polygon_soup
+            .triangles
+            .iter()
+            .filter(|triangle| {
+                let [a, b, c] = triangle.map(|index| {
+                    let vertex = &polygon_soup.vertices[index];
+                    Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                });
+                !Plane::points_are_nondegenerate(&a, &b, &c)
+            })
+            .count();
+        assert_eq!(
+            degenerate_triangles,
+            0,
+            "HyperMesh polygon {} output contains exact degenerate triangles",
+            operation.name(),
+        );
+        let polygon_summary = summarize(&raw_from_hypermesh(&polygon_soup));
+        let direct_summary = summarize(&raw_from_hypermesh(&direct_soup));
+        assert!(polygon_summary.closed);
+        assert!(polygon_summary.finite);
+        assert_close(
+            polygon_summary.volume,
+            direct_summary.volume,
+            &format!("HyperMesh immediate {} volume", operation.name()),
+        );
+        assert_close(
+            polygon_summary.surface_area,
+            direct_summary.surface_area,
+            &format!("HyperMesh immediate {} area", operation.name()),
         );
     }
 }
