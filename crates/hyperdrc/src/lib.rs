@@ -115,8 +115,9 @@ pub use report::{
 };
 pub use scalar::Scalar;
 pub use test_intent::{
-    NativeTestAccess, NativeTestCoverageMethod, NativeTestRequirement,
-    native_testpoint_coverage_readiness,
+    NativeTestAccess, NativeTestCoverageEvaluation, NativeTestCoverageMethod,
+    NativeTestCoverageRecord, NativeTestCoverageReport, NativeTestCoverageStatus,
+    NativeTestRequirement, native_testpoint_coverage, native_testpoint_coverage_readiness,
 };
 
 use csgrs::sketch::Profile;
