@@ -611,11 +611,12 @@ impl ProjectivePointCache {
         }
     }
 
-    fn definition_planes(&self, identity: &ConstructionVertexIdentity) -> Option<[Plane; 3]> {
+    fn definition_planes(&self, identity: &ConstructionVertexIdentity) -> Option<[&Plane; 3]> {
         match identity {
-            ConstructionVertexIdentity::Source { .. } => {
-                self.source_vertices.get(identity).cloned()
-            }
+            ConstructionVertexIdentity::Source { .. } => self
+                .source_vertices
+                .get(identity)
+                .map(|planes| [&planes[0], &planes[1], &planes[2]]),
             ConstructionVertexIdentity::SourceEdgePlane {
                 mesh,
                 endpoints,
@@ -626,16 +627,12 @@ impl ProjectivePointCache {
                     endpoints: *endpoints,
                 };
                 let [support, boundary] = self.source_edges.get(&edge)?;
-                Some([
-                    support.clone(),
-                    boundary.clone(),
-                    self.planes.get(plane)?.clone(),
-                ])
+                Some([support, boundary, self.planes.get(plane)?])
             }
             ConstructionVertexIdentity::PlaneTriple { planes } => Some([
-                self.planes.get(&planes[0])?.clone(),
-                self.planes.get(&planes[1])?.clone(),
-                self.planes.get(&planes[2])?.clone(),
+                self.planes.get(&planes[0])?,
+                self.planes.get(&planes[1])?,
+                self.planes.get(&planes[2])?,
             ]),
         }
     }
@@ -669,17 +666,17 @@ impl ProjectivePointCache {
         {
             let definitions_equal = right_definition.iter().all(|plane| {
                 let determinant = crate::intersection::four_plane_determinant(
-                    &left_definition[0],
-                    &left_definition[1],
-                    &left_definition[2],
+                    left_definition[0],
+                    left_definition[1],
+                    left_definition[2],
                     plane,
                 );
                 crate::predicate::classify_real(&determinant) == Ok(Classification::On)
             }) && left_definition.iter().all(|plane| {
                 let determinant = crate::intersection::four_plane_determinant(
-                    &right_definition[0],
-                    &right_definition[1],
-                    &right_definition[2],
+                    right_definition[0],
+                    right_definition[1],
+                    right_definition[2],
                     plane,
                 );
                 crate::predicate::classify_real(&determinant) == Ok(Classification::On)
@@ -688,9 +685,9 @@ impl ProjectivePointCache {
                 return true;
             }
         }
-        let point_satisfies = |point: &HomogeneousPoint3, definition: &[Plane; 3]| {
+        let point_satisfies = |point: &HomogeneousPoint3, definition: &[&Plane; 3]| {
             definition.iter().all(|plane| {
-                crate::predicate::classify_real(&homogeneous_point_plane_expression(point, plane))
+                crate::predicate::classify_real(&homogeneous_point_plane_expression(point, *plane))
                     == Ok(Classification::On)
             })
         };
@@ -1690,7 +1687,7 @@ impl ProjectiveCycle {
             .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
         let point = point_cache
             .definition_planes(&identity)
-            .and_then(|planes| positive_weight_plane_intersection(&planes))
+            .and_then(positive_weight_plane_intersection)
             .unwrap_or_else(|| {
                 let current_value = homogeneous_point_plane_expression(current, plane);
                 let next_value = homogeneous_point_plane_expression(next, plane);
@@ -3219,8 +3216,8 @@ fn f64_plane_value(point: [f64; 3], plane: [f64; 4]) -> f64 {
     plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3]
 }
 
-fn positive_weight_plane_intersection(planes: &[Plane; 3]) -> Option<HomogeneousPoint3> {
-    let point = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
+fn positive_weight_plane_intersection(planes: [&Plane; 3]) -> Option<HomogeneousPoint3> {
+    let point = intersect_three_planes(planes[0], planes[1], planes[2]);
     let weight = point.w.exact_rational_ref()?;
     if weight.is_positive() {
         Some(point)
@@ -3849,7 +3846,7 @@ mod tests {
             Plane::axis_aligned(2, Real::from(3)),
         ];
 
-        let point = positive_weight_plane_intersection(&planes).unwrap();
+        let point = positive_weight_plane_intersection(planes.each_ref()).unwrap();
         assert!(
             point
                 .w
@@ -3885,7 +3882,7 @@ mod tests {
             }
             for index in order {
                 let definition = cache.definition_planes(&identities[index]).unwrap();
-                let point = positive_weight_plane_intersection(&definition).unwrap();
+                let point = positive_weight_plane_intersection(definition).unwrap();
                 let (_, interned) = cache.intern(identities[index].clone(), point);
                 assert_eq!(interned, identities[index]);
             }
