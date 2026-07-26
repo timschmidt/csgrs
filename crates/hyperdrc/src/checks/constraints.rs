@@ -233,7 +233,7 @@ fn stackup_metadata_violation(message: &str) -> Violation {
 
 #[derive(Clone, Debug, Default)]
 struct FabricationCapability {
-    label: &'static str,
+    label: String,
     min_finished_thickness: Option<Scalar>,
     preferred_min_finished_thickness: Option<Scalar>,
     preferred_max_finished_thickness: Option<Scalar>,
@@ -528,7 +528,10 @@ fn resolved_fabrication_capability(stackup: &StackupConfig) -> Option<Fabricatio
 
     if capability.is_none() && has_custom_capability(&stackup.fabrication_capability) {
         capability = Some(FabricationCapability {
-            label: "custom",
+            label: stackup
+                .fabricator_profile
+                .clone()
+                .unwrap_or_else(|| "custom".into()),
             ..FabricationCapability::default()
         });
     }
@@ -631,7 +634,7 @@ fn builtin_fabrication_capability(profile: &str) -> Option<FabricationCapability
             $(, material: [$min_dk:literal, $max_dk:literal, $max_df:literal, $min_tg:literal])?
         ) => {
             FabricationCapability {
-                label: $label,
+                label: $label.into(),
                 min_finished_thickness: Some(exact!($min_thickness)),
                 preferred_min_finished_thickness: Some(exact!($preferred_min_thickness)),
                 preferred_max_finished_thickness: Some(exact!($preferred_max_thickness)),

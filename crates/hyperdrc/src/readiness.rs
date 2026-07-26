@@ -132,6 +132,24 @@ impl CheckCoverage {
             })
             .count()
     }
+
+    /// Number of outcomes that must block certification.
+    ///
+    /// Uncertainty is always blocking. A skipped check is blocking only when
+    /// the adapter failed to explain the policy decision.
+    pub fn blocking_count(&self) -> usize {
+        self.checks
+            .iter()
+            .filter(|record| {
+                record.status == CheckExecutionStatus::Uncertain
+                    || (record.status == CheckExecutionStatus::Skipped
+                        && record
+                            .reason
+                            .as_deref()
+                            .is_none_or(|reason| reason.trim().is_empty()))
+            })
+            .count()
+    }
 }
 
 /// Deterministic plan over registered checks.
