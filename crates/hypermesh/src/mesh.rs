@@ -223,7 +223,7 @@ fn build_polygon_soup_with_edge_mode(
             } else {
                 (None, false)
             };
-        let mut axis_support_planes: StorageHashMap<(usize, usize, bool), Plane> =
+        let mut axis_support_planes: StorageHashMap<(usize, u64, bool), Plane> =
             StorageHashMap::default();
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
@@ -278,33 +278,34 @@ fn build_polygon_soup_with_edge_mode(
                         } else {
                             None
                         };
-                        Some((axis, orientation))
+                        let exact_coordinate =
+                            approximate_positions_are_exact_dyadic.then(|| p0[axis].to_bits());
+                        Some((axis, orientation, exact_coordinate))
                     });
-                    let support_hint = axis_hint.and_then(|(axis, orientation)| {
-                        let orientation_positive = match orientation {
-                            Some(RealSign::Negative) => false,
-                            Some(RealSign::Positive) => true,
-                            Some(RealSign::Zero) | None => {
-                                return exact_axis_aligned_triangle_support(
-                                    p0,
-                                    p1,
-                                    p2,
-                                    axis,
-                                    orientation,
-                                );
+                    let support_hint =
+                        axis_hint.and_then(|(axis, orientation, exact_coordinate)| {
+                            let orientation_positive = match orientation {
+                                Some(RealSign::Negative) => false,
+                                Some(RealSign::Positive) => true,
+                                Some(RealSign::Zero) | None => {
+                                    return exact_axis_aligned_triangle_support(
+                                        p0,
+                                        p1,
+                                        p2,
+                                        axis,
+                                        orientation,
+                                    );
+                                }
+                            };
+                            let key = (axis, exact_coordinate?, orientation_positive);
+                            if let Some(support) = axis_support_planes.get(&key) {
+                                return Some(support.clone());
                             }
-                        };
-                        let coordinate_identity =
-                            axis_ref(p0, axis).exact_rational_ref()?.storage_identity();
-                        let key = (axis, coordinate_identity, orientation_positive);
-                        if let Some(support) = axis_support_planes.get(&key) {
-                            return Some(support.clone());
-                        }
-                        let support =
-                            exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
-                        axis_support_planes.insert(key, support.clone());
-                        Some(support)
-                    });
+                            let support =
+                                exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)?;
+                            axis_support_planes.insert(key, support.clone());
+                            Some(support)
+                        });
                     make_indexed_triangle_with_deferred_edges(
                         Arc::clone(positions),
                         [i0, i1, i2],
