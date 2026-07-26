@@ -2048,6 +2048,12 @@ fn compute_two_convex_inputs_projectively(
                 );
             }
         }
+        let triangulate_fallback = || {
+            crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
+                .and_then(|triangles| {
+                    select_triangle_arrangement(&triangles, operation, support_planes.len())
+                })
+        };
         let soup = if matches!(operation, BooleanOp::Difference | BooleanOp::Intersection) {
             if classified
                 .iter()
@@ -2062,7 +2068,9 @@ fn compute_two_convex_inputs_projectively(
                 )
                 .and_then(certify_triangle_soup_closure)
             };
-            triangulate(false).or_else(|_| triangulate(true))
+            triangulate(false)
+                .or_else(|_| triangulate_fallback())
+                .or_else(|_| triangulate(true))
         } else if operation == BooleanOp::Union {
             let triangulate = |recover| {
                 crate::output::triangulate_selected_preclassified_arrangement_construction_candidates(
@@ -2071,7 +2079,9 @@ fn compute_two_convex_inputs_projectively(
                 )
                 .and_then(certify_triangle_soup_closure)
             };
-            triangulate(false).or_else(|_| triangulate(true))
+            triangulate(false)
+                .or_else(|_| triangulate_fallback())
+                .or_else(|_| triangulate(true))
         } else {
             let triangulate = |recover| {
                 crate::output::triangulate_classified_arrangement_construction_candidates(
@@ -2079,19 +2089,17 @@ fn compute_two_convex_inputs_projectively(
                     recover,
                 )
                 .and_then(|triangles| {
-                    select_triangle_arrangement(&triangles, operation, support_planes.len())
-                })
+                        select_triangle_arrangement(&triangles, operation, support_planes.len())
+                    })
             };
-            triangulate(false).or_else(|_| triangulate(true))
+            triangulate(false)
+                .or_else(|_| triangulate_fallback())
+                .or_else(|_| triangulate(true))
         }
-        .or_else(|error| {
+        .inspect_err(|error| {
             if cfg!(debug_assertions) {
-                eprintln!("[DEBUG] construction-candidate triangulation failed: {error}");
+                eprintln!("[DEBUG] projective triangulation failed: {error}");
             }
-            crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
-                .and_then(|triangles| {
-                    select_triangle_arrangement(&triangles, operation, support_planes.len())
-                })
         });
         match soup {
             Ok(soup) => soup,
