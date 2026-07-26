@@ -2081,6 +2081,25 @@ fn same_contact_point(
             RationalBezierIntersectionPointEvidence2::Algebraic(first),
             RationalBezierIntersectionPointEvidence2::Algebraic(second),
         ) => {
+            // A decided same-sign rational Bezier control hull contains the
+            // entire affine curve image, so disjoint source hulls prove that
+            // these retained point images cannot represent the same contact.
+            if let (
+                Some(Classification::Decided(first_bounds)),
+                Some(Classification::Decided(second_bounds)),
+            ) = (
+                first.parametric_source_bounds(policy),
+                second.parametric_source_bounds(policy),
+            ) && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "contact-point-equality",
+                    "source-bounds-disjoint",
+                );
+                return false;
+            }
             let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
             else {
                 return false;
@@ -2171,6 +2190,52 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
 #[cfg(test)]
 mod certified_successor_tests {
     use super::*;
+    use crate::{
+        BezierAlgebraicParameter2, Point2, RationalBezier2, RationalBezierAlgebraicPointImage2,
+        Real,
+    };
+
+    fn decided<T>(classification: Classification<T>) -> T {
+        match classification {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                panic!("classification unexpectedly uncertain: {reason:?}")
+            }
+        }
+    }
+
+    fn sqrt_half_parameter(policy: &CurvePolicy) -> BezierAlgebraicParameter2 {
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![(-1).into(), 0.into(), 2.into()],
+                policy,
+            )
+            .expect("valid parameter polynomial"),
+        );
+        let interval = decided(
+            crate::BezierParameterInterval::try_new(
+                (Real::one() / Real::from(2_i8)).expect("nonzero denominator"),
+                Real::one(),
+                policy,
+            )
+            .expect("valid parameter interval"),
+        );
+        decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)
+                .expect("isolated parameter"),
+        )
+    }
+
+    fn rational_line(start_x: i32, end_x: i32) -> RationalBezier2 {
+        RationalBezier2::try_new(
+            vec![
+                Point2::from_values(start_x, 0),
+                Point2::from_values(end_x, 0),
+            ],
+            vec![Real::one(); 2],
+        )
+        .expect("valid rational line")
+    }
 
     fn direction(
         carrier_index: usize,
@@ -2262,6 +2327,79 @@ mod certified_successor_tests {
                 false,
             ),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn contact_point_bounds_reject_disjoint_lazy_sources() {
+        let policy = CurvePolicy::certified();
+        let parameter = sqrt_half_parameter(&policy);
+        let first_curve = rational_line(0, 1);
+        let second_curve = rational_line(2, 3);
+        let first = RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                first_curve.clone(),
+                parameter.clone(),
+                &policy,
+            ),
+        );
+        let second = RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                second_curve.clone(),
+                parameter.clone(),
+                &policy,
+            ),
+        );
+
+        assert!(
+            parameter
+                .cached_rational_bezier_point_image(&first_curve)
+                .is_none()
+        );
+        assert!(
+            parameter
+                .cached_rational_bezier_point_image(&second_curve)
+                .is_none()
+        );
+        assert!(!same_contact_point(&first, &second, &policy));
+        assert!(
+            parameter
+                .cached_rational_bezier_point_image(&first_curve)
+                .is_none()
+        );
+        assert!(
+            parameter
+                .cached_rational_bezier_point_image(&second_curve)
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn contact_point_bounds_preserve_overlapping_exact_comparison() {
+        let policy = CurvePolicy::certified();
+        let parameter = sqrt_half_parameter(&policy);
+        let curve = rational_line(0, 1);
+        let first = RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                curve.clone(),
+                parameter.clone(),
+                &policy,
+            ),
+        );
+        let second = RationalBezierIntersectionPointEvidence2::Algebraic(
+            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                curve.clone(),
+                parameter.clone(),
+                &policy,
+            ),
+        );
+
+        assert!(same_contact_point(&first, &second, &policy));
+        #[cfg(feature = "predicates")]
+        assert!(
+            parameter
+                .cached_rational_bezier_point_image(&curve)
+                .is_some()
         );
     }
 

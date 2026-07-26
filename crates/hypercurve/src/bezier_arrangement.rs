@@ -1111,6 +1111,17 @@ fn retained_endpoint_side_data(
     if let Some(image) = image {
         let derivative_source =
             retained_algebraic_derivative_source(source_curve, image.parameter());
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "retained-endpoint-image",
+            match (image.is_lazy_first_order(), topology_vertex.is_some()) {
+                (true, true) => "lazy-topology-deferred",
+                (true, false) => "lazy-unkeyed-resolved",
+                (false, true) => "eager-topology-resolved",
+                (false, false) => "eager-unkeyed-resolved",
+            },
+        );
         if topology_vertex.is_some() && image.is_lazy_first_order() && derivative_source.is_some() {
             return Classification::Decided(Some(RetainedEndpointSideData {
                 point: None,

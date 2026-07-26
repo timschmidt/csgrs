@@ -26,8 +26,8 @@ use hypersolve::{
 
 use crate::classify::compare_reals;
 use crate::{
-    BezierAlgebraicParameter2, CubicBezier2, CurvePolicy, CurveResult, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2,
+    Aabb2, BezierAlgebraicParameter2, Classification, CubicBezier2, CurvePolicy, CurveResult,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
 };
 use std::cell::OnceCell;
 use std::cmp::Ordering;
@@ -331,6 +331,16 @@ impl RationalBezierAlgebraicPointImage2 {
                     .ok()
             })
             .as_ref()
+    }
+
+    pub(crate) fn parametric_source_bounds(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Option<Classification<Aabb2>> {
+        self.data
+            .parametric_source
+            .as_ref()
+            .map(|source| source.curve.certified_bounds_classified(policy))
     }
 
     /// Returns the final construction status.

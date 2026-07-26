@@ -5512,6 +5512,75 @@ No prepared API or carrier is removed by this change. It uses the existing
 prepared algebraic-image proof to avoid redundant fallback work, so any future
 prepared-surface removal remains subject to the complete gate below.
 
+### Certified contact-source separation
+
+Region Boolean topology deduplicates algebraic contact vertices by comparing
+their exact affine coordinate images. Deferred implicit-conic contacts retain
+the source rational Bezier and isolated source parameter, but the comparison
+formerly resolved both coordinate images before proving that contacts from
+widely separated source curves were unequal. Contact comparison now asks each
+lazy point image for its source curve's certified bounds first. When both
+rational Bezier weight sequences have a decided common sign, their exact
+control hulls enclose the full affine images. Decided disjoint hulls therefore
+prove point inequality without constructing either coordinate image. Overlap,
+an uncertain weight sign, or nonparametric evidence falls through to the
+existing exact represented-root comparison unchanged.
+
+Regressions exercise both proof outcomes. Disjoint lazy sources remain
+unresolved after comparison, while overlapping sources still resolve their
+coordinate evidence and compare equal. The one-cell dispatch trace recorded 12
+`source-bounds-disjoint` decisions and 40
+`lazy-topology-deferred` endpoint images. It retained four decided operations,
+nine candidate pairs, 48 fragments, two point classifications, no blockers,
+and checksum 6. Rational temporaries fell from 16,267 to 15,701 (3.48%) and
+GCDs from 186 to 156 (16.1%).
+
+Callgrind over the matched one-cell exact Boolean workload fell from 24,958,182
+to 23,457,930 instructions, a reduction of 1,500,252 instructions (6.01%).
+Heaptrack changed as follows:
+
+| Heap metric | Coordinate comparison | Source-hull rejection | Change |
+| --- | ---: | ---: | ---: |
+| Allocation events | 31,702 | 29,305 | 2,397 fewer (7.56%) |
+| Postprocessed temporary allocations | 2,083 | 1,711 | 372 fewer (17.86%) |
+| Peak heap | 960.37 KiB | 918.80 KiB | 41.57 KiB lower |
+| Peak RSS | 11.48 MiB | 11.25 MiB | 0.23 MiB lower |
+| Reported retained memory | 179.62 KiB | 169.54 KiB | 10.08 KiB lower |
+
+The complete 67-cell release Boolean lane completed all 268 decisions over 603
+candidate pairs and 3,248 fragments with zero blockers and checksum 6 in
+450.579 milliseconds. The preceding checkpoint's final unpinned complete run
+measured 464.411 milliseconds, so the observed reduction was 2.98%.
+
+The exact prefilter adds code in exchange for removing substantially more
+dynamic algebraic work. A same-compiler stripped pathological executable
+changed as follows:
+
+| Release artifact component | Coordinate comparison | Source-hull rejection | Change |
+| --- | ---: | ---: | ---: |
+| Text | 4,866,859 bytes | 4,877,009 bytes | 10,150 bytes larger |
+| Total loadable | 5,129,827 bytes | 5,138,025 bytes | 8,198 bytes larger (0.160%) |
+| Stripped file size | 5,129,360 bytes | 5,139,792 bytes | 10,432 bytes larger (0.203%) |
+
+The workspace call-graph utility regenerated source, tests, benchmarks,
+examples, and fuzz targets for `hypercurve`, `hyperlattice`, `hyperlimit`,
+`hyperreal`, and `hypersolve`: 41,996 nodes and 71,186 edges. SCC-condensed
+reachable counts/depths were 68/depth 4 for
+`CurveRegion2::boolean_regions`, 224/depth 9 for implicit-conic contacts, and
+60/depth 6 for contact comparison. Every reachable SCC remained a single node;
+the Boolean and contact-comparison depths are unchanged.
+
+The final source passed all-feature/all-target tests, the no-default-feature
+library/test matrix, strict all-target Clippy, warning-denied rustdoc, and
+`cargo bench --workspace --all-features`. That optimized command executed
+every benchmark target, including every immediate API and comparative lane; no
+representative subset was used. AddressSanitizer completed 10,000 region
+Boolean runs and 10,000 algebraic-image runs without a target failure. Leak
+detection alone was disabled because LeakSanitizer cannot run under the
+managed ptrace environment.
+
+No prepared API or implementation carrier is removed by this change.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two
