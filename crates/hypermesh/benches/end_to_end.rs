@@ -40,6 +40,7 @@ fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
 
 fn bench_end_to_end(c: &mut Criterion) {
     let cubes = common::cube_pair();
+    let subdivided_cubes = common::subdivided_cube_pair(4);
     let nested_cubes = common::nested_cube_pair();
     let octahedra = common::octahedron_pair();
 
@@ -47,6 +48,15 @@ fn bench_end_to_end(c: &mut Criterion) {
         b.iter(|| {
             build_polygon_soup(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
                 .expect("benchmark mesh is valid")
+        })
+    });
+    c.bench_function("build_polygon_soup/subdivided_cube_pair_3072_each", |b| {
+        b.iter(|| {
+            build_polygon_soup(black_box(&[
+                subdivided_cubes[0].as_ref(),
+                subdivided_cubes[1].as_ref(),
+            ]))
+            .expect("benchmark mesh is valid")
         })
     });
 

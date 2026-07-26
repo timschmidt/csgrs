@@ -13,6 +13,7 @@ use crate::polygon::{
     make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle,
     make_triangle_with_input_planes,
 };
+use crate::storage_hash::StorageHashMap;
 
 /// Input triangle: three vertex indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -236,9 +237,9 @@ fn build_polygon_soup_with_edge_mode(
         let mut adjacent_support_planes =
             (!predominantly_axis_aligned && retained_positions.is_some() && input_planes.is_none())
                 .then(|| {
-                    HashMap::<[usize; 2], (usize, usize, usize)>::with_capacity(
-                        mesh.triangles.len().saturating_mul(3),
-                    )
+                    let mut adjacent = StorageHashMap::default();
+                    adjacent.reserve(mesh.triangles.len().saturating_mul(3));
+                    adjacent
                 });
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
@@ -408,7 +409,7 @@ fn adjacent_coplanar_support_hint(
     positions: &[Point3],
     triangle: [usize; 3],
     polygons: &[ConvexPolygon],
-    adjacent: &HashMap<[usize; 2], (usize, usize, usize)>,
+    adjacent: &StorageHashMap<[usize; 2], (usize, usize, usize)>,
 ) -> Option<Plane> {
     let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
         return None;
@@ -486,14 +487,14 @@ fn classify_indexed_edge_balance(mesh: &MeshRef<'_>) -> EdgeBalance {
         canonical_indices.push(canonical);
     }
 
-    let mut edge_uses = HashMap::<(usize, usize), [usize; 2]>::new();
+    let mut edge_uses: StorageHashMap<[usize; 2], [usize; 2]> = StorageHashMap::default();
     for triangle in mesh.triangles {
         let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
         for [start, end] in [[a, b], [b, c], [c, a]] {
             let (key, direction) = if start < end {
-                ((start, end), 0)
+                ([start, end], 0)
             } else {
-                ((end, start), 1)
+                ([end, start], 1)
             };
             edge_uses.entry(key).or_default()[direction] += 1;
         }
