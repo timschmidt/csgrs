@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Real};
+use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
 
 use crate::error::HypermeshResult;
 pub use crate::predicate::{
@@ -66,6 +66,41 @@ impl Plane {
             .any(|[ua, vb, ub, va]| {
                 !Real::diff_of_products(&u[ua], &v[vb], &u[ub], &v[va]).definitely_zero()
             })
+    }
+
+    pub(crate) fn points_are_collinear_on_support(
+        &self,
+        a: &Point3,
+        b: &Point3,
+        c: &Point3,
+    ) -> bool {
+        let normal = [&self.normal.x, &self.normal.y, &self.normal.z];
+        let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
+        for (axis, coefficient) in normal.into_iter().enumerate() {
+            let Some(component) = coefficient.exact_rational_ref() else {
+                continue;
+            };
+            if component.is_zero() {
+                continue;
+            }
+            let u = (axis + 1) % 3;
+            let v = (axis + 2) % 3;
+            let [Some(au), Some(bu), Some(cu)] =
+                coordinates.map(|point| point[u].exact_rational_ref())
+            else {
+                break;
+            };
+            let [Some(av), Some(bv), Some(cv)] =
+                coordinates.map(|point| point[v].exact_rational_ref())
+            else {
+                break;
+            };
+            return Rational::signed_product_sum_ordering(
+                [true, true, true, false, false, false],
+                [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
+            ) == std::cmp::Ordering::Equal;
+        }
+        !Self::points_are_nondegenerate(a, b, c)
     }
 
     /// Returns this plane with all coefficients negated.

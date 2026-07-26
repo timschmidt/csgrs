@@ -6,7 +6,7 @@ use std::sync::Arc;
 use hyperlattice::{Point3, Real, RealSign};
 
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Plane, axis_ref, compare_real};
+use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
 use crate::polygon::{
     ConvexPolygon, InputTrianglePlanes, exact_axis_aligned_triangle_support,
     make_indexed_triangle_with_deferred_edges,
@@ -229,6 +229,13 @@ fn build_polygon_soup_with_edge_mode(
                 (None, false)
             };
         let mut axis_support_planes: Vec<((usize, u64, bool), Plane)> = Vec::with_capacity(6);
+        let mut adjacent_support_planes =
+            (!predominantly_axis_aligned && retained_positions.is_some() && input_planes.is_none())
+                .then(|| {
+                    HashMap::<[usize; 2], (usize, usize, usize)>::with_capacity(
+                        mesh.triangles.len().saturating_mul(3),
+                    )
+                });
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -286,7 +293,7 @@ fn build_polygon_soup_with_edge_mode(
                             approximate_positions_are_exact_dyadic.then(|| p0[axis].to_bits());
                         Some((axis, orientation, exact_coordinate))
                     });
-                    let support_hint =
+                    let axis_support_hint =
                         axis_hint.and_then(|(axis, orientation, exact_coordinate)| {
                             let orientation_positive = match orientation {
                                 Some(RealSign::Negative) => false,
@@ -313,6 +320,16 @@ fn build_polygon_soup_with_edge_mode(
                             axis_support_planes.push((key, support.clone()));
                             Some(support)
                         });
+                    let support_hint = axis_support_hint.or_else(|| {
+                        adjacent_support_planes.as_ref().and_then(|adjacent| {
+                            adjacent_coplanar_support_hint(
+                                mesh.positions,
+                                [i0, i1, i2],
+                                &polygons,
+                                adjacent,
+                            )
+                        })
+                    });
                     make_indexed_triangle_with_deferred_edges(
                         Arc::clone(positions),
                         [i0, i1, i2],
@@ -342,7 +359,15 @@ fn build_polygon_soup_with_edge_mode(
                 polygon.delta_w = vec![0; meshes.len()];
                 polygon.delta_w[mesh_index] = 1;
             }
+            let stored_polygon = polygons.len();
             polygons.push(polygon);
+            if let Some(adjacent) = adjacent_support_planes.as_mut() {
+                for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
+                    let mut key = [start, end];
+                    key.sort_unstable();
+                    adjacent.entry(key).or_insert((start, end, stored_polygon));
+                }
+            }
             polygon_index += 1;
         }
         if !input_is_certified_convex {
@@ -368,6 +393,44 @@ fn build_polygon_soup_with_edge_mode(
         bounds,
         num_meshes: meshes.len(),
     })
+}
+
+fn adjacent_coplanar_support_hint(
+    positions: &[Point3],
+    triangle: [usize; 3],
+    polygons: &[ConvexPolygon],
+    adjacent: &HashMap<[usize; 2], (usize, usize, usize)>,
+) -> Option<Plane> {
+    let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
+        return None;
+    };
+    let points = [p0, p1, p2];
+    for edge in 0..3 {
+        let start = triangle[edge];
+        let end = triangle[(edge + 1) % 3];
+        let mut key = [start, end];
+        key.sort_unstable();
+        let Some(&(stored_start, stored_end, polygon_index)) = adjacent.get(&key) else {
+            continue;
+        };
+        let Some(candidate) = polygons.get(polygon_index).map(|polygon| &polygon.support) else {
+            continue;
+        };
+        if !matches!(
+            classify_point(points[(edge + 2) % 3], candidate),
+            Ok(Classification::On)
+        ) || candidate.points_are_collinear_on_support(points[0], points[1], points[2])
+        {
+            continue;
+        }
+        if stored_start == end && stored_end == start {
+            return Some(candidate.clone());
+        }
+        if stored_start == start && stored_end == end {
+            return Some(candidate.inverted());
+        }
+    }
+    None
 }
 
 fn approximate_triangle_axis(positions: &[Point3], indices: [usize; 3]) -> Option<usize> {
@@ -600,6 +663,24 @@ mod tests {
         assert_eq!(*first_indices, [0, 1, 2]);
         assert_eq!(*second_indices, [0, 3, 1]);
         assert_eq!(soup.polygons[0].vertices().unwrap(), positions[..3]);
+    }
+
+    #[test]
+    fn deferred_certified_triangles_reuse_adjacent_coplanar_support() {
+        let positions = vec![
+            Point3::new(Real::from(0), Real::from(0), Real::from(0)),
+            Point3::new(Real::from(4), Real::from(0), Real::from(4)),
+            Point3::new(Real::from(0), Real::from(4), Real::from(8)),
+            Point3::new(Real::from(0), Real::from(-2), Real::from(-4)),
+        ];
+        let mesh = InputMesh::new(
+            positions,
+            vec![Triangle::new(0, 1, 2), Triangle::new(1, 0, 3)],
+        );
+
+        let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true], None).unwrap();
+
+        assert_eq!(soup.polygons[0].support, soup.polygons[1].support);
     }
 
     #[test]

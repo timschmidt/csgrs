@@ -7,7 +7,9 @@ use hyperlattice::{
 use hyperreal::PreparedRationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
-use crate::geometry::{Aabb, Classification, Plane, axis_mut, axis_ref, classify_point};
+use crate::geometry::{
+    Aabb, Classification, Plane, axis_mut, axis_ref, classify_point, classify_projective_point,
+};
 use crate::mesh::{
     MeshRef, build_polygon_soup_with_certified_convex_inputs,
     build_polygon_soup_with_deferred_edges,
@@ -1064,7 +1066,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let evaluated = self
+        let classifications = self
             .points
             .iter()
             .enumerate()
@@ -1075,9 +1077,9 @@ impl ProjectiveCycle {
                     plane,
                     plane_f64,
                 ) {
-                    Ok((Real::zero(), Classification::On))
+                    Ok(Classification::On)
                 } else {
-                    projective_plane_value(point, plane).inspect_err(|_error| {
+                    classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective clip point failed: source={:?} target={:?} point={point_index} value={:?}",
@@ -1091,17 +1093,17 @@ impl ProjectiveCycle {
                 }
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
-        for (point_index, (_, classification)) in evaluated.iter().enumerate() {
+        for (point_index, classification) in classifications.iter().enumerate() {
             if *classification == Classification::On {
                 point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
             }
         }
-        let has_negative = evaluated
+        let has_negative = classifications
             .iter()
-            .any(|(_, classification)| classification.is_negative());
-        let has_positive = evaluated
+            .any(|classification| classification.is_negative());
+        let has_positive = classifications
             .iter()
-            .any(|(_, classification)| classification.is_positive());
+            .any(|classification| classification.is_positive());
         if !has_positive {
             crate::trace_dispatch!("projective-clip", "negative-only");
             return Ok(ProjectiveClip {
@@ -1136,20 +1138,22 @@ impl ProjectiveCycle {
         };
         for index in 0..self.points.len() {
             let next = (index + 1) % self.points.len();
-            let current_classification = evaluated[index].1;
-            let next_classification = evaluated[next].1;
+            let current_classification = classifications[index];
+            let next_classification = classifications[next];
             let crossing = (current_classification.is_negative()
                 && next_classification.is_positive())
                 || (current_classification.is_positive() && next_classification.is_negative());
             let intersection = crossing.then(|| {
+                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
+                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
                 self.cached_crossing_point(
                     index,
                     plane_identity,
                     &self.points[index],
-                    &evaluated[index].0,
+                    &current_value,
                     current_classification,
                     &self.points[next],
-                    &evaluated[next].0,
+                    &next_value,
                     point_cache,
                 )
             });
@@ -1223,7 +1227,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let evaluated = self
+        let classifications = self
             .points
             .iter()
             .enumerate()
@@ -1234,9 +1238,9 @@ impl ProjectiveCycle {
                     plane,
                     plane_f64,
                 ) {
-                    Ok((Real::zero(), Classification::On))
+                    Ok(Classification::On)
                 } else {
-                    projective_plane_value(point, plane).inspect_err(|_error| {
+                    classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective negative clip point failed: source={:?} target={:?} point={point_index} identity={:?} adjacent={:?} point_xyz={:?} plane={:?} exact={:?} value={:?}",
@@ -1273,17 +1277,17 @@ impl ProjectiveCycle {
                 }
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
-        for (point_index, (_, classification)) in evaluated.iter().enumerate() {
+        for (point_index, classification) in classifications.iter().enumerate() {
             if *classification == Classification::On {
                 point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
             }
         }
-        let has_negative = evaluated
+        let has_negative = classifications
             .iter()
-            .any(|(_, classification)| classification.is_negative());
-        let has_positive = evaluated
+            .any(|classification| classification.is_negative());
+        let has_positive = classifications
             .iter()
-            .any(|(_, classification)| classification.is_positive());
+            .any(|classification| classification.is_positive());
         if !has_positive {
             crate::trace_dispatch!("projective-clip-negative", "kept");
             return Ok(self.clone());
@@ -1304,20 +1308,22 @@ impl ProjectiveCycle {
         };
         for index in 0..self.points.len() {
             let next = (index + 1) % self.points.len();
-            let current_classification = evaluated[index].1;
-            let next_classification = evaluated[next].1;
+            let current_classification = classifications[index];
+            let next_classification = classifications[next];
             let crossing = (current_classification.is_negative()
                 && next_classification.is_positive())
                 || (current_classification.is_positive() && next_classification.is_negative());
             let intersection = crossing.then(|| {
+                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
+                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
                 self.cached_crossing_point(
                     index,
                     plane_identity,
                     &self.points[index],
-                    &evaluated[index].0,
+                    &current_value,
                     current_classification,
                     &self.points[next],
-                    &evaluated[next].0,
+                    &next_value,
                     point_cache,
                 )
             });
@@ -2475,11 +2481,10 @@ fn collapse_certified_collinear_face_vertices(
     if len > 3 {
         let retained = (0..len)
             .filter(|&index| {
-                !certifiably_collinear_on_support(
+                !support.points_are_collinear_on_support(
                     &vertices[(index + len - 1) % len],
                     &vertices[index],
                     &vertices[(index + 1) % len],
-                    support,
                 )
             })
             .collect::<Vec<_>>();
@@ -2540,34 +2545,6 @@ fn collapse_certified_collinear_face_vertices(
         edge_identities.push(ConstructionEdgeIdentity::Source { mesh, endpoints });
     }
     Ok(())
-}
-
-fn certifiably_collinear_on_support(a: &Point3, b: &Point3, c: &Point3, support: &Plane) -> bool {
-    let normal = [&support.normal.x, &support.normal.y, &support.normal.z];
-    let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
-    for (axis, coefficient) in normal.into_iter().enumerate() {
-        let Some(component) = coefficient.exact_rational_ref() else {
-            continue;
-        };
-        if component.is_zero() {
-            continue;
-        }
-        let u = (axis + 1) % 3;
-        let v = (axis + 2) % 3;
-        let [Some(au), Some(bu), Some(cu)] = coordinates.map(|point| point[u].exact_rational_ref())
-        else {
-            break;
-        };
-        let [Some(av), Some(bv), Some(cv)] = coordinates.map(|point| point[v].exact_rational_ref())
-        else {
-            break;
-        };
-        return Rational::signed_product_sum_ordering(
-            [true, true, true, false, false, false],
-            [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
-        ) == std::cmp::Ordering::Equal;
-    }
-    !Plane::points_are_nondegenerate(a, b, c)
 }
 
 fn exact_plane_storage_key(plane: &Plane) -> Option<[usize; 4]> {
@@ -2926,15 +2903,6 @@ fn f64_plane_value(point: [f64; 3], plane: [f64; 4]) -> f64 {
         point[0],
         plane[1].mul_add(point[1], plane[2].mul_add(point[2], plane[3])),
     )
-}
-
-fn projective_plane_value(
-    point: &HomogeneousPoint3,
-    plane: &Plane,
-) -> HypermeshResult<(Real, Classification)> {
-    let value = homogeneous_point_plane_expression(point, plane);
-    let classification = crate::predicate::classify_real(&value)?;
-    Ok((value, classification))
 }
 
 fn positive_weight_plane_intersection(planes: &[Plane; 3]) -> Option<HomogeneousPoint3> {
@@ -3359,18 +3327,8 @@ mod tests {
     fn exact_support_projection_certifies_collinear_face_vertices() {
         let support = Plane::from_points(&p(0, 0, 0), &p(1, 0, 1), &p(0, 1, 1));
 
-        assert!(certifiably_collinear_on_support(
-            &p(0, 0, 0),
-            &p(1, 1, 2),
-            &p(2, 2, 4),
-            &support,
-        ));
-        assert!(!certifiably_collinear_on_support(
-            &p(0, 0, 0),
-            &p(1, 0, 1),
-            &p(0, 1, 1),
-            &support,
-        ));
+        assert!(support.points_are_collinear_on_support(&p(0, 0, 0), &p(1, 1, 2), &p(2, 2, 4),));
+        assert!(!support.points_are_collinear_on_support(&p(0, 0, 0), &p(1, 0, 1), &p(0, 1, 1),));
     }
 
     #[test]
