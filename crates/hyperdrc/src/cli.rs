@@ -351,8 +351,26 @@ pub enum Check {
     StackupReadiness,
     /// Variant `NetConstraintReadiness`.
     NetConstraintReadiness,
+    /// Native authoring keepout intent against retained copper.
+    AuthoredKeepoutReadiness,
+    /// Native routed-slot intent against cutter capability.
+    AuthoredRoutedSlotReadiness,
+    /// Native component envelope coverage and collision readiness.
+    AuthoredComponentReadiness,
+    /// Native functional-role placement and endpoint readiness.
+    AuthoredFunctionalRoleReadiness,
     /// Variant `WaiverGovernance`.
     WaiverGovernance,
+}
+
+impl Check {
+    /// Stable kebab-case identifier shared by reports, policies, and manifests.
+    pub fn slug(self) -> String {
+        self.to_possible_value()
+            .expect("every HyperDRC check has a clap value")
+            .get_name()
+            .to_owned()
+    }
 }
 
 pub const DEFAULT_CHECKS: &[Check] = &[
@@ -511,6 +529,10 @@ pub const DEFAULT_CHECKS: &[Check] = &[
     Check::ProductionArtifactReadiness,
     Check::StackupReadiness,
     Check::NetConstraintReadiness,
+    Check::AuthoredKeepoutReadiness,
+    Check::AuthoredRoutedSlotReadiness,
+    Check::AuthoredComponentReadiness,
+    Check::AuthoredFunctionalRoleReadiness,
     Check::WaiverGovernance,
 ];
 

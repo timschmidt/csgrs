@@ -14,6 +14,7 @@ use crate::gerber_metadata::{
     GerberUnits, parse_gerber_metadata_report,
 };
 use crate::io::{self, SourceRecord};
+use crate::readiness::{CheckCoverage, CheckRunDisposition, ReadinessRunner};
 use crate::report::{Diagnostic, Report, Severity, Violation, report_summary, report_to_geojson};
 use crate::{LayerMetadata, PcbSketch};
 use crate::{
@@ -328,7 +329,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                 cli.checks.clone()
             })
         })?;
-        let violations = run_checks(
+        let (violations, coverage) = run_checks(
             &checks,
             &config,
             &rules,
@@ -383,6 +384,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                     &conversion_outputs,
                     &package_inputs,
                 ),
+                coverage,
                 violation_count: violations.len(),
                 waived_count: waived.len(),
                 waived_violations: waived,
@@ -701,7 +703,7 @@ fn run_checks(
     excellon_drill_grid: SourceGridFacts,
     ipc356_points: &[ipc356::Ipc356Point],
     package_inputs: &PackageInputs,
-) -> Result<Vec<Violation>> {
+) -> Result<(Vec<Violation>, CheckCoverage)> {
     let mut violations = Vec::new();
     let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbSketch)>>>::new();
 
@@ -714,8 +716,9 @@ fn run_checks(
         })
     };
 
-    for check in selected_checks {
-        let check_name = check_slug(*check);
+    let runner = ReadinessRunner::new(selected_checks.iter().copied());
+    let coverage = runner.run(&mut violations, |check, violations| {
+        let check_name = check.slug();
         let check_started = std::time::Instant::now();
         let before_count = violations.len();
         eprintln!("hyperdrc: starting check {check_name}");
@@ -759,7 +762,7 @@ fn run_checks(
                     }
                 }
                 Check::BoardEdgeClearance => run_board_edge_clearance(
-                    &mut violations,
+                    violations,
                     rules,
                     kicad_copper_layers,
                     cli,
@@ -767,7 +770,7 @@ fn run_checks(
                     boards,
                 ),
                 Check::BoardOutlineCutoutClearance => run_board_outline_cutout_clearance(
-                    &mut violations,
+                    violations,
                     rules,
                     kicad_copper_layers,
                     cli,
@@ -1060,7 +1063,7 @@ fn run_checks(
                         let paste = &layers[paste_index];
                         let name = layer_name(paste);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("checking aperture spacing on {name}"),
@@ -1259,7 +1262,7 @@ fn run_checks(
                         let silk = &layers[silk_index];
                         let name = layer_name(silk);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("opening silk layer {name}"),
@@ -1280,7 +1283,7 @@ fn run_checks(
                         let silk = &layers[silk_index];
                         let name = layer_name(silk);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("checking text height on silk layer {name}"),
@@ -1304,7 +1307,7 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         let name = layer_name(copper);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("opening copper layer {name}"),
@@ -1322,7 +1325,7 @@ fn run_checks(
                         for (layer_name, copper) in copper_layers {
                             let name = format!("{}:{layer_name}", board.source);
                             progress_check_item(
-                                check_name,
+                                &check_name,
                                 item_index,
                                 item_count,
                                 &format!("opening copper layer {name}"),
@@ -1516,7 +1519,7 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         let name = layer_name(mask);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("opening mask layer {name}"),
@@ -1547,7 +1550,7 @@ fn run_checks(
                         let mask = &layers[*mask_index];
                         let name = layer_name(mask);
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             item_count,
                             &format!("checking opening spacing on {name}"),
@@ -1620,7 +1623,7 @@ fn run_checks(
                 Check::DrillCopperClearance | Check::DrillToCopperClearance => {
                     for (item_index, board) in boards.iter().enumerate() {
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             boards.len(),
                             &format!("checking {}", board.source),
@@ -2621,7 +2624,7 @@ fn run_checks(
                 Check::NetSpacing | Check::DifferentNetSpacing => {
                     for (item_index, board) in boards.iter().enumerate() {
                         progress_check_item(
-                            check_name,
+                            &check_name,
                             item_index,
                             boards.len(),
                             &format!("checking {}", board.source),
@@ -2729,6 +2732,14 @@ fn run_checks(
                         kicad_copper_layers,
                     ));
                 }
+                Check::AuthoredKeepoutReadiness
+                | Check::AuthoredRoutedSlotReadiness
+                | Check::AuthoredComponentReadiness
+                | Check::AuthoredFunctionalRoleReadiness => {
+                    // File-oriented inputs do not contain HyperCircuit's
+                    // retained native authoring carriers. Coverage below
+                    // records these checks as explicitly not applicable.
+                }
                 Check::WaiverGovernance => {
                     // Waiver metadata must be audited after normal findings are
                     // waived, otherwise a waiver file could suppress warnings
@@ -2757,175 +2768,22 @@ fn run_checks(
                 return Err(error);
             }
         }
-    }
-
-    Ok(violations)
-}
-
-fn check_slug(check: Check) -> &'static str {
-    match check {
-        Check::MaskIslandKeepout => "mask-island-keepout",
-        Check::CopperOverlap => "copper-overlap",
-        Check::BoardEdgeClearance => "board-edge-clearance",
-        Check::BoardOutlineCutoutClearance => "board-outline-cutout-clearance",
-        Check::BoardOutlineSanity => "board-outline-sanity",
-        Check::BoardOutlineFragments => "board-outline-fragments",
-        Check::BoardOutlineSelfIntersectionReadiness => "board-outline-self-intersection-readiness",
-        Check::BoardOutlineNotchReadiness => "board-outline-notch-readiness",
-        Check::BoardOutlineDuplicateReadiness => "board-outline-duplicate-readiness",
-        Check::BoardOutlineNestingReadiness => "board-outline-nesting-readiness",
-        Check::PasteOverhang => "paste-overhang",
-        Check::PasteApertureCoverage => "paste-aperture-coverage",
-        Check::PasteApertureRatio => "paste-aperture-ratio",
-        Check::ThermalPadPasteWindowpaneReadiness => "thermal-pad-paste-windowpane-readiness",
-        Check::StencilAreaRatioReadiness => "stencil-area-ratio-readiness",
-        Check::PasteApertureAspectRatioReadiness => "paste-aperture-aspect-ratio-readiness",
-        Check::TombstonePasteImbalanceReadiness => "tombstone-paste-imbalance-readiness",
-        Check::PasteViaExposureReadiness => "paste-via-exposure-readiness",
-        Check::MinimumPasteAperture => "minimum-paste-aperture",
-        Check::PasteApertureSpacing => "paste-aperture-spacing",
-        Check::PasteMaskAlignment => "paste-mask-alignment",
-        Check::ExposedCopper => "exposed-copper",
-        Check::SolderMaskOpeningCoverage => "solder-mask-opening-coverage",
-        Check::SolderMaskOpeningRatioReadiness => "solder-mask-opening-ratio-readiness",
-        Check::SolderMaskAnnularRingReadiness => "solder-mask-annular-ring-readiness",
-        Check::SolderMaskExpansion => "solder-mask-expansion",
-        Check::SolderMaskOverlapClearance => "solder-mask-overlap-clearance",
-        Check::SolderMaskBoardEdgeClearance => "solder-mask-board-edge-clearance",
-        Check::SilkscreenOverlap => "silkscreen-overlap",
-        Check::SilkscreenClearance => "silkscreen-clearance",
-        Check::SilkscreenBoardEdgeClearance => "silkscreen-board-edge-clearance",
-        Check::SilkscreenMinWidth => "silkscreen-min-width",
-        Check::SilkscreenTextHeightReadiness => "silkscreen-text-height-readiness",
-        Check::MinCopperNeck => "min-copper-neck",
-        Check::AcidTrap => "acid-trap",
-        Check::AcidTrapTraceJunction => "acid-trap-trace-junction",
-        Check::LayerSanity => "layer-sanity",
-        Check::CopperBalance => "copper-balance",
-        Check::LocalCopperDensityReadiness => "local-copper-density-readiness",
-        Check::MechanicalLayerGeometry => "mechanical-layer-geometry",
-        Check::SolderMaskSliver => "solder-mask-sliver",
-        Check::MinimumMaskOpening => "minimum-mask-opening",
-        Check::SolderMaskOpeningSpacing => "solder-mask-opening-spacing",
-        Check::AnnularRing => "annular-ring",
-        Check::AnnularRingTolerance => "annular-ring-tolerance",
-        Check::PlatingIntent => "plating-intent",
-        Check::RoutedSlotReadiness => "routed-slot-readiness",
-        Check::CastellationIntent => "castellation-intent",
-        Check::CastellationHoleReadiness => "castellation-hole-readiness",
-        Check::ViaInPadReadiness => "via-in-pad-readiness",
-        Check::DrillCopperClearance => "drill-copper-clearance",
-        Check::DrillToCopperClearance => "drill-to-copper-clearance",
-        Check::BoardOutlineDrillClearance => "board-outline-drill-clearance",
-        Check::DrillSpacing => "drill-spacing",
-        Check::DrillAspectRatio => "drill-aspect-ratio",
-        Check::DrillTableConsistency => "drill-table-consistency",
-        Check::CopperWidthReadiness => "copper-width-readiness",
-        Check::CopperNetIntent => "copper-net-intent",
-        Check::TeardropReadiness => "teardrop-readiness",
-        Check::ThermalReliefReadiness => "thermal-relief-readiness",
-        Check::PlaneClearanceReadiness => "plane-clearance-readiness",
-        Check::BoardEdgeExposure => "board-edge-exposure",
-        Check::HighSpeedEdgeReadiness => "high-speed-edge-readiness",
-        Check::EdgeCopperPullbackReadiness => "edge-copper-pullback-readiness",
-        Check::HighVoltageEdgeReadiness => "high-voltage-edge-readiness",
-        Check::ControlledImpedanceReadiness => "controlled-impedance-readiness",
-        Check::DifferentialPairReadiness => "differential-pair-readiness",
-        Check::DifferentialPairSpacingReadiness => "differential-pair-spacing-readiness",
-        Check::DifferentialPairWidthReadiness => "differential-pair-width-readiness",
-        Check::DifferentialPairNeckdownReadiness => "differential-pair-neckdown-readiness",
-        Check::DifferentialPairSkewReadiness => "differential-pair-skew-readiness",
-        Check::DifferentialPairToPairSpacingReadiness => {
-            "differential-pair-to-pair-spacing-readiness"
+        if matches!(
+            check,
+            Check::AuthoredKeepoutReadiness
+                | Check::AuthoredRoutedSlotReadiness
+                | Check::AuthoredComponentReadiness
+                | Check::AuthoredFunctionalRoleReadiness
+        ) {
+            Ok(CheckRunDisposition::NotApplicable(
+                "file-oriented inputs contain no retained native authoring intent".into(),
+            ))
+        } else {
+            Ok(CheckRunDisposition::Executed)
         }
-        Check::DifferentialPairViaProximityReadiness => "differential-pair-via-proximity-readiness",
-        Check::DifferentialPairViaReturnReadiness => "differential-pair-via-return-readiness",
-        Check::DifferentialPairViaSymmetryReadiness => "differential-pair-via-symmetry-readiness",
-        Check::DifferentialPairReturnReadiness => "differential-pair-return-readiness",
-        Check::ReferencePlaneReadiness => "reference-plane-readiness",
-        Check::ReferencePlaneVoidReadiness => "reference-plane-void-readiness",
-        Check::SplitPlaneCrossingReadiness => "split-plane-crossing-readiness",
-        Check::ReturnPathProximityReadiness => "return-path-proximity-readiness",
-        Check::OrphanedZoneReadiness => "orphaned-zone-readiness",
-        Check::SameNetIslandReadiness => "same-net-island-readiness",
-        Check::SameNetDrillBreakReadiness => "same-net-drill-break-readiness",
-        Check::DifferentNetShortReadiness => "different-net-short-readiness",
-        Check::ReturnPathReadiness => "return-path-readiness",
-        Check::HighCurrentReadiness => "high-current-readiness",
-        Check::PowerViaArrayReadiness => "power-via-array-readiness",
-        Check::PowerViaReturnReadiness => "power-via-return-readiness",
-        Check::ThermalViaReadiness => "thermal-via-readiness",
-        Check::ThermalViaDistributionReadiness => "thermal-via-distribution-readiness",
-        Check::PowerPlaneReadiness => "power-plane-readiness",
-        Check::HighCurrentNeckReadiness => "high-current-neck-readiness",
-        Check::PowerPadEntryReadiness => "power-pad-entry-readiness",
-        Check::VoltageClearanceReadiness => "voltage-clearance-readiness",
-        Check::ProtectiveEarthSpacingReadiness => "protective-earth-spacing-readiness",
-        Check::SurgeProtectionKeepoutReadiness => "surge-protection-keepout-readiness",
-        Check::SensitiveNetSpacingReadiness => "sensitive-net-spacing-readiness",
-        Check::SensitiveReturnReadiness => "sensitive-return-readiness",
-        Check::MixedSignalPartitionReadiness => "mixed-signal-partition-readiness",
-        Check::RfKeepoutReadiness => "rf-keepout-readiness",
-        Check::AntennaCopperKeepoutReadiness => "antenna-copper-keepout-readiness",
-        Check::RfViaFenceReadiness => "rf-via-fence-readiness",
-        Check::ChassisStitchingReadiness => "chassis-stitching-readiness",
-        Check::EdgeStitchingReadiness => "edge-stitching-readiness",
-        Check::GoldFingerReadiness => "gold-finger-readiness",
-        Check::GoldFingerEdgeReadiness => "gold-finger-edge-readiness",
-        Check::GoldFingerSpacingReadiness => "gold-finger-spacing-readiness",
-        Check::GoldFingerDrillKeepoutReadiness => "gold-finger-drill-keepout-readiness",
-        Check::ComponentEdgeClearanceReadiness => "component-edge-clearance-readiness",
-        Check::ComponentHoleClearanceReadiness => "component-hole-clearance-readiness",
-        Check::ComponentSpacingReadiness => "component-spacing-readiness",
-        Check::ConnectorReworkClearanceReadiness => "connector-rework-clearance-readiness",
-        Check::PadPairAsymmetryReadiness => "pad-pair-asymmetry-readiness",
-        Check::ConnectorReturnPathReadiness => "connector-return-path-readiness",
-        Check::DecouplingProximityReadiness => "decoupling-proximity-readiness",
-        Check::EsdProtectionReadiness => "esd-protection-readiness",
-        Check::EsdReturnPathReadiness => "esd-return-path-readiness",
-        Check::SwitchNodeKeepoutReadiness => "switch-node-keepout-readiness",
-        Check::InductorCopperKeepoutReadiness => "inductor-copper-keepout-readiness",
-        Check::TestpointCoverageReadiness => "testpoint-coverage-readiness",
-        Check::TestpointAccessibilityReadiness => "testpoint-accessibility-readiness",
-        Check::TestpointCopperClearanceReadiness => "testpoint-copper-clearance-readiness",
-        Check::ToolingHoleReadiness => "tooling-hole-readiness",
-        Check::MouseBiteReadiness => "mouse-bite-readiness",
-        Check::FiducialReadiness => "fiducial-readiness",
-        Check::LocalFiducialReadiness => "local-fiducial-readiness",
-        Check::FiducialKeepoutReadiness => "fiducial-keepout-readiness",
-        Check::DensePadEscapeReadiness => "dense-pad-escape-readiness",
-        Check::DensePadViaSpacingReadiness => "dense-pad-via-spacing-readiness",
-        Check::DensePadMaskBridgeReadiness => "dense-pad-mask-bridge-readiness",
-        Check::SelectiveWaveSolderKeepoutReadiness => "selective-wave-solder-keepout-readiness",
-        Check::PressFitKeepoutReadiness => "press-fit-keepout-readiness",
-        Check::ConformalCoatingKeepoutReadiness => "conformal-coating-keepout-readiness",
-        Check::ThermalPadViaReadiness => "thermal-pad-via-readiness",
-        Check::ThermalCopperAreaReadiness => "thermal-copper-area-readiness",
-        Check::HotComponentSpacingReadiness => "hot-component-spacing-readiness",
-        Check::ThermalMechanicalKeepoutReadiness => "thermal-mechanical-keepout-readiness",
-        Check::MountingHoleGroundingReadiness => "mounting-hole-grounding-readiness",
-        Check::MountingHoleCopperKeepoutReadiness => "mounting-hole-copper-keepout-readiness",
-        Check::MountingHoleEdgeClearanceReadiness => "mounting-hole-edge-clearance-readiness",
-        Check::MountingHolePlatingIntentReadiness => "mounting-hole-plating-intent-readiness",
-        Check::MountingHoleDistributionReadiness => "mounting-hole-distribution-readiness",
-        Check::MountingHoleSpacingReadiness => "mounting-hole-spacing-readiness",
-        Check::PanelFeatureOutlineReadiness => "panel-feature-outline-readiness",
-        Check::EdgePlatingIntentReadiness => "edge-plating-intent-readiness",
-        Check::CastellationPitchReadiness => "castellation-pitch-readiness",
-        Check::NetSpacing => "net-spacing",
-        Check::DifferentNetSpacing => "different-net-spacing",
-        Check::RegistrationTolerance => "registration-tolerance",
-        Check::LayerRegistrationTolerance => "layer-registration-tolerance",
-        Check::PanelizationClearance => "panelization-clearance",
-        Check::Ipc356Coverage => "ipc356-coverage",
-        Check::Ipc356DrillDiameter => "ipc356-drill-diameter",
-        Check::ExcellonReadiness => "excellon-readiness",
-        Check::FileManifestReadiness => "file-manifest-readiness",
-        Check::ProductionArtifactReadiness => "production-artifact-readiness",
-        Check::StackupReadiness => "stackup-readiness",
-        Check::NetConstraintReadiness => "net-constraint-readiness",
-        Check::WaiverGovernance => "waiver-governance",
-    }
+    })?;
+
+    Ok((violations, coverage))
 }
 
 fn waiver_governance_selected(checks: &[Check]) -> bool {

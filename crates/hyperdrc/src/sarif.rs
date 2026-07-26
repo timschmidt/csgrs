@@ -192,6 +192,7 @@ mod tests {
                 Option::<&str>::None,
             )],
             diagnostics: Vec::new(),
+            coverage: Default::default(),
             violation_count: violations.len(),
             waived_count: 1,
             waived_violations: Vec::new(),

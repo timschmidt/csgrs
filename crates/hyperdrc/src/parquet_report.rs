@@ -90,6 +90,7 @@ mod tests {
                 code: "gerber::example".to_string(),
                 message: "example".to_string(),
             }],
+            coverage: Default::default(),
             violation_count: active.len(),
             waived_count: waived.len(),
             waived_violations: waived,

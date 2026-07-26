@@ -107,6 +107,7 @@ mod tests {
             files: vec!["top,silk.gbr".to_string()],
             inputs: Vec::new(),
             diagnostics: Vec::new(),
+            coverage: Default::default(),
             violation_count: violations.len(),
             waived_count: 0,
             waived_violations: Vec::new(),

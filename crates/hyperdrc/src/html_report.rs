@@ -373,6 +373,7 @@ mod tests {
             files: vec!["board.gbr".to_string()],
             inputs: Vec::new(),
             diagnostics: Vec::new(),
+            coverage: Default::default(),
             violation_count: violations.len(),
             waived_count: waived.len(),
             waived_violations: waived,

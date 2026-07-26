@@ -56,6 +56,7 @@ pub mod arrow_report;
 pub mod assembly_policy;
 pub mod authoring_intent;
 pub mod baseline;
+pub mod capability;
 pub mod checks;
 #[doc(hidden)]
 pub mod cli;
@@ -88,6 +89,7 @@ pub mod parquet_report;
 pub mod pdf_overlay;
 #[doc(hidden)]
 pub mod process_lifecycle;
+pub mod readiness;
 pub mod report;
 pub mod sarif;
 pub mod scalar;
@@ -97,10 +99,18 @@ pub mod svg_overlay;
 pub mod waiver;
 
 pub use app::{RunOutcome, run, run_cli};
+pub use capability::{
+    CapabilityProfile, CapabilityProfileClass, DrillCapability, ImagingCapability,
+    PanelAssemblyCapability, hdi_profile, mainstream_profile, opinionated_prototype_profile,
+};
 pub use cli::{Check, Cli, OutputFormat};
+pub use readiness::{
+    CheckCoverage, CheckExecutionRecord, CheckExecutionStatus, CheckRunDisposition,
+    ReadinessContext, ReadinessRunner, default_checks,
+};
 pub use report::{
-    Diagnostic, FindingSourcePosition, FindingSourceSpan, FindingSubject, Report, ReportSummary,
-    Severity, Violation,
+    Diagnostic, EvidenceContext, FindingSourcePosition, FindingSourceSpan, FindingSubject, Report,
+    ReportSummary, Severity, Violation,
 };
 pub use scalar::Scalar;
 

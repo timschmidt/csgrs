@@ -104,6 +104,7 @@ mod tests {
                 code: "parser::sample".to_string(),
                 message: "sample parser warning".to_string(),
             }],
+            coverage: Default::default(),
             violation_count: violations.len(),
             waived_count: waived.len(),
             waived_violations: waived,

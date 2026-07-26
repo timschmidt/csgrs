@@ -5,7 +5,7 @@
 //! easier to scan while keeping electrical/manufacturing policy fields together.
 
 use crate::Scalar;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Default)]
 #[serde(default)]
@@ -45,7 +45,7 @@ pub struct StackupConfig {
     pub layers: Vec<StackupLayerConfig>,
 }
 
-#[derive(Clone, Debug, Deserialize, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default, PartialEq)]
 #[serde(default)]
 /// Public data model for `FabricationCapabilityConfig`.
 pub struct FabricationCapabilityConfig {
