@@ -671,6 +671,7 @@ where
     } else {
         0
     });
+    let mut boundary = Vec::new();
 
     for (polygon_index, ((polygon, indexed), orientation)) in polygons
         .iter()
@@ -685,7 +686,8 @@ where
         if indexed.len() < 3 {
             continue;
         }
-        let mut boundary = Vec::with_capacity(indexed.len());
+        boundary.clear();
+        boundary.reserve(indexed.len());
         for edge_index in 0..indexed.len() {
             let start = indexed[edge_index];
             let end = indexed[(edge_index + 1) % indexed.len()];
