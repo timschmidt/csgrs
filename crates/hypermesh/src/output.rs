@@ -20,6 +20,12 @@ type SplitEdgeCache = StorageHashMap<[usize; 2], SplitEdgeChain>;
 
 struct SplitEdgeChain(Vec<usize>);
 
+#[derive(Clone, Copy)]
+struct ApproximateOutputVertex {
+    coordinates: [f64; 3],
+    scale: f64,
+}
+
 impl SplitEdgeChain {
     fn subedges(&self) -> impl DoubleEndedIterator<Item = [usize; 2]> + '_ {
         self.0
@@ -640,7 +646,7 @@ where
         vertices
             .iter()
             .map(output_vertex_f64)
-            .collect::<Vec<Option<[f64; 3]>>>()
+            .collect::<Vec<Option<ApproximateOutputVertex>>>()
     });
     let construction_candidates = prefer_construction_candidates
         .then(|| build_construction_edge_candidates(polygons, &indexed_polygons))
@@ -1595,7 +1601,7 @@ fn split_segment_subedges_exact_candidates<'a>(
     edge: [usize; 2],
     candidates: &ConstructionEdgeCandidateGroup,
     recovery_vertices: &[usize],
-    recovery_approximate_vertices: Option<&[Option<[f64; 3]>]>,
+    recovery_approximate_vertices: Option<&[Option<ApproximateOutputVertex>]>,
     prepared_rational_vertices: Option<&[Option<PreparedRationalPoint3Query>]>,
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a SplitEdgeChain> {
@@ -1661,11 +1667,11 @@ fn split_segment_subedges_exact_candidates<'a>(
                 continue;
             }
             let approximate_candidate = recovery_approximate_vertices.and_then(|vertices| {
-                approximate_point_on_segment_candidate(
+                Some(approximate_point_on_segment_candidate(
                     vertices[vertex_index]?,
                     vertices[edge[0]]?,
                     vertices[edge[1]]?,
-                )
+                ))
             });
             if approximate_candidate == Some(false) {
                 continue;
@@ -1710,38 +1716,36 @@ fn split_segment_subedges_exact_candidates<'a>(
     Ok(cache.get(&edge).expect("candidate edge was just cached"))
 }
 
-fn output_vertex_f64(vertex: &OutputVertex) -> Option<[f64; 3]> {
+fn output_vertex_f64(vertex: &OutputVertex) -> Option<ApproximateOutputVertex> {
     let [Some(x), Some(y), Some(z)] = [&vertex.x, &vertex.y, &vertex.z].map(Real::to_f64_lossy)
     else {
         return None;
     };
-    Some([x, y, z])
+    let coordinates = [x, y, z];
+    if coordinates.iter().any(|coordinate| !coordinate.is_finite()) {
+        return None;
+    }
+    let scale = coordinates
+        .iter()
+        .fold(1.0_f64, |scale, coordinate| scale.max(coordinate.abs()));
+    Some(ApproximateOutputVertex { coordinates, scale })
 }
 
 fn approximate_point_on_segment_candidate(
-    point: [f64; 3],
-    start: [f64; 3],
-    end: [f64; 3],
-) -> Option<bool> {
-    if point
-        .iter()
-        .chain(start.iter())
-        .chain(end.iter())
-        .any(|value| !value.is_finite())
-    {
-        return None;
-    }
-    let scale = point
-        .iter()
-        .chain(start.iter())
-        .chain(end.iter())
-        .fold(1.0_f64, |scale, value| scale.max(value.abs()));
+    point: ApproximateOutputVertex,
+    start: ApproximateOutputVertex,
+    end: ApproximateOutputVertex,
+) -> bool {
+    let scale = point.scale.max(start.scale).max(end.scale);
+    let point = point.coordinates;
+    let start = start.coordinates;
+    let end = end.coordinates;
     let tolerance = scale * 1.0e-10;
     if (0..3).any(|axis| {
         point[axis] < start[axis].min(end[axis]) - tolerance
             || point[axis] > start[axis].max(end[axis]) + tolerance
     }) {
-        return Some(false);
+        return false;
     }
     let direction = [end[0] - start[0], end[1] - start[1], end[2] - start[2]];
     let offset = [
@@ -1757,11 +1761,9 @@ fn approximate_point_on_segment_candidate(
     let direction_scale = direction
         .iter()
         .fold(0.0_f64, |scale, value| scale.max(value.abs()));
-    Some(
-        cross
-            .iter()
-            .all(|component| component.abs() <= tolerance * direction_scale.max(1.0)),
-    )
+    cross
+        .iter()
+        .all(|component| component.abs() <= tolerance * direction_scale.max(1.0))
 }
 
 fn exact_output_vertices_f64(vertices: &[OutputVertex]) -> Option<Vec<[f64; 3]>> {
