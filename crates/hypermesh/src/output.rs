@@ -1474,12 +1474,7 @@ where
         if indexed.len() != vertex_identities.len() {
             return Err(HypermeshError::UnknownClassification);
         }
-        identified_vertices.extend(
-            indexed
-                .iter()
-                .copied()
-                .zip(vertex_identities.iter().cloned()),
-        );
+        identified_vertices.extend(indexed.iter().copied().zip(vertex_identities));
         let mut edge_groups = Vec::with_capacity(indexed.len());
         for (edge_index, identity) in identities.iter().enumerate() {
             let group_index = match group_indices.entry(identity.clone()) {
@@ -1506,7 +1501,7 @@ where
             groups[group_index]
                 .collinear
                 .extend(identified_vertices.iter().filter_map(
-                    |(vertex, identity)| match identity {
+                    |(vertex, identity)| match *identity {
                         ConstructionVertexIdentity::PlaneTriple {
                             planes: vertex_planes,
                         } if planes.iter().all(|plane| vertex_planes.contains(plane)) => {
