@@ -2023,13 +2023,15 @@ fn compute_two_convex_inputs_projectively(
         }
     }
     let mut prepared_verification_planes = Vec::new();
+    let mut candidate_planes = Vec::new();
+    let mut active_plane_proposal_scratch = ActivePlaneProposalScratch::default();
     for (polygon, source_plane) in polygons.iter().zip(polygon_support_planes) {
         let host = usize::try_from(polygon.mesh_index)
             .map_err(|_| crate::error::HypermeshError::UnknownClassification)?;
         let other = 1 - host;
         let emit_outside = projective_transition_is_emitted(host, false, operation);
         let default_emit_inside = projective_transition_is_emitted(host, true, operation);
-        let mut candidate_planes = Vec::new();
+        candidate_planes.clear();
         let mut excluded = false;
         let mut has_cooriented_coincident_support = false;
         for (plane_index, &plane) in support_planes[other].iter().enumerate() {
@@ -2117,6 +2119,7 @@ fn compute_two_convex_inputs_projectively(
             other,
             emit_outside,
             &mut prepared_verification_planes,
+            &mut active_plane_proposal_scratch,
             &mut projective_point_cache,
         )
         .inspect_err(|_error| {
@@ -2921,17 +2924,23 @@ fn exact_inside_and_active_planes<'a>(
     support_plane_mesh: usize,
     retain_outside: bool,
     prepared_verification_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
+    active_plane_proposal_scratch: &mut ActivePlaneProposalScratch,
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<Option<(ProjectiveCycle, Vec<usize>, Option<Vec<ProjectiveCycle>>)>> {
-    if let Some(proposed_planes) = support_planes_f64
-        .and_then(|planes| propose_active_planes_f64(source, planes, candidate_planes))
-    {
+    if let Some(proposed_planes) = support_planes_f64.and_then(|planes| {
+        propose_active_planes_f64(
+            source,
+            planes,
+            candidate_planes,
+            active_plane_proposal_scratch,
+        )
+    }) {
         crate::trace_dispatch!("projective-active-planes", "proposed");
         let (inside, outside) = clip_inside_cycle_for_output(
             source,
             support_planes,
             normalized_support_planes_f64,
-            &proposed_planes,
+            proposed_planes,
             support_plane_mesh,
             retain_outside,
             point_cache,
@@ -2949,7 +2958,7 @@ fn exact_inside_and_active_planes<'a>(
             &inside,
             support_planes,
             candidate_planes,
-            &proposed_planes,
+            proposed_planes,
             support_plane_mesh,
             prepared_verification_planes,
             point_cache,
@@ -2961,7 +2970,14 @@ fn exact_inside_and_active_planes<'a>(
         })? {
             crate::trace_dispatch!("projective-active-planes", "proposed-certified");
             let active = outside.as_ref().map_or_else(
-                || active_cycle_planes(&inside, proposed_planes, support_plane_mesh, point_cache),
+                || {
+                    active_cycle_planes(
+                        &inside,
+                        proposed_planes.iter().copied(),
+                        support_plane_mesh,
+                        point_cache,
+                    )
+                },
                 |_| Vec::new(),
             );
             return Ok(Some((inside, active, outside)));
@@ -3177,32 +3193,41 @@ fn cycle_satisfies_planes<'a>(
     Ok(true)
 }
 
-fn propose_active_planes_f64(
+#[derive(Default)]
+struct ActivePlaneProposalScratch {
+    cycle: Vec<[f64; 3]>,
+    clipped: Vec<[f64; 3]>,
+    crossed_planes: Vec<usize>,
+    active: Vec<usize>,
+}
+
+fn propose_active_planes_f64<'a>(
     source: &ProjectiveCycle,
     planes: &[[f64; 4]],
     candidate_planes: &[usize],
-) -> Option<Vec<usize>> {
-    let mut cycle = source
-        .approximate_points
-        .iter()
-        .copied()
-        .collect::<Option<Vec<_>>>()?;
-    let mut clipped = Vec::new();
-    let mut crossed_planes = Vec::new();
+    scratch: &'a mut ActivePlaneProposalScratch,
+) -> Option<&'a [usize]> {
+    scratch.cycle.clear();
+    for point in &source.approximate_points {
+        scratch.cycle.push((*point)?);
+    }
+    scratch.crossed_planes.clear();
+    scratch.active.clear();
     for &plane_index in candidate_planes {
-        let crossed = clip_f64_cycle_into(&cycle, planes[plane_index], &mut clipped);
-        std::mem::swap(&mut cycle, &mut clipped);
-        if cycle.len() < 3 {
-            return Some(Vec::new());
+        let crossed =
+            clip_f64_cycle_into(&scratch.cycle, planes[plane_index], &mut scratch.clipped);
+        std::mem::swap(&mut scratch.cycle, &mut scratch.clipped);
+        if scratch.cycle.len() < 3 {
+            return Some(&scratch.active);
         }
         if crossed {
-            crossed_planes.push(plane_index);
+            scratch.crossed_planes.push(plane_index);
         }
     }
-    let mut active = Vec::new();
-    for plane_index in crossed_planes {
+    for &plane_index in &scratch.crossed_planes {
         let plane = planes[plane_index];
-        let points_on_plane = cycle
+        let points_on_plane = scratch
+            .cycle
             .iter()
             .filter(|point| {
                 let value = f64_plane_value(**point, plane);
@@ -3215,10 +3240,10 @@ fn propose_active_planes_f64(
             .take(2)
             .count();
         if points_on_plane == 2 {
-            active.push(plane_index);
+            scratch.active.push(plane_index);
         }
     }
-    Some(active)
+    Some(&scratch.active)
 }
 
 fn clip_f64_cycle_into(points: &[[f64; 3]], plane: [f64; 4], clipped: &mut Vec<[f64; 3]>) -> bool {
