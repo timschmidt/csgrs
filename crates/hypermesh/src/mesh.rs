@@ -419,8 +419,7 @@ fn adjacent_coplanar_support_hint(
         if !matches!(
             classify_point(points[(edge + 2) % 3], candidate),
             Ok(Classification::On)
-        ) || candidate.points_are_collinear_on_support(points[0], points[1], points[2])
-        {
+        ) {
             continue;
         }
         if stored_start == end && stored_end == start {
