@@ -301,6 +301,36 @@ fn run_fast_hyperdrc(slug: &str) {
     );
 }
 
+#[test]
+fn nano_full_fidelity_exact_aggregate_has_no_layer_blockers() {
+    let board = spec("nano");
+    let document = native(&board);
+    let mut layout = document.pcb.as_ref().unwrap().clone();
+    let placement = layout.resolve_placement_constraints(&document.circuit);
+    assert!(placement.is_satisfied());
+    layout.placements = placement.placements;
+    let materialized = layout
+        .materialize(&document.circuit, MaterializationOptions::default())
+        .expect("full-fidelity Nano materialization must complete");
+    assert!(materialized.layer_images_aggregated);
+    assert!(
+        materialized
+            .copper_layers
+            .iter()
+            .all(|layer| layer.blocker.is_none()),
+        "exact copper aggregate retained a blocker: {:#?}",
+        materialized.copper_layers
+    );
+    assert!(
+        materialized
+            .process_layers
+            .iter()
+            .all(|layer| layer.blocker.is_none()),
+        "exact process aggregate retained a blocker: {:#?}",
+        materialized.process_layers
+    );
+}
+
 macro_rules! easyduino_hyperdrc_test {
     ($name:ident, $slug:literal) => {
         #[test]

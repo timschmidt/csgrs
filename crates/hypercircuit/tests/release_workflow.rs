@@ -541,7 +541,11 @@ fn representative_board_spans_authoring_review_verification_and_release_outputs(
         component.kind == hyperdrc::authoring_intent::AuthoredComponentEnvelopeKind::Courtyard
     }));
     let readiness = drc.run_readiness(&DrcReadinessPolicy::default());
-    assert!(readiness.is_release_clean());
+    assert!(
+        readiness.is_release_clean(),
+        "readiness violations: {:#?}",
+        readiness.violations
+    );
 
     let fabrication = FabricationPackage::from_materialization(&layout, &materialized).unwrap();
     assert_eq!(fabrication.represented_process_features, 8);
@@ -920,9 +924,11 @@ fn package_body_is_an_explicit_fallback_when_no_courtyard_exists() {
     assert!(drc.authored_components.iter().all(|component| {
         component.kind == hyperdrc::authoring_intent::AuthoredComponentEnvelopeKind::Body
     }));
+    let readiness = drc.run_readiness(&DrcReadinessPolicy::default());
     assert!(
-        drc.run_readiness(&DrcReadinessPolicy::default())
-            .is_release_clean()
+        readiness.is_release_clean(),
+        "readiness violations: {:#?}",
+        readiness.violations
     );
 
     layout.land_patterns[0].body = None;
