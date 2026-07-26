@@ -36,9 +36,11 @@ classifications within the call. Certified loop-junction vertex identity prevent
 independently represented algebraic endpoint images from being reclassified.
 
 `CurveRegion2` is the sole general owned region carrier. Native line/circular-arc
-topology is retained internally as a specialized accelerator; borrowed native
-contour views and query handles serve repeated classification and Boolean queries
-without copying contours. `Contour2` owns a closed line/arc boundary, while
+topology is retained internally as a specialized accelerator. Its public
+classification and signed-depth surface is immediate; clone-shared bounds,
+evaluators, and native conversion stay behind the region instead of escaping in
+a retained query facade. Borrowed native contour views remain available without
+copying contours. `Contour2` owns a closed line/arc boundary, while
 `CurveString2` owns an open or closed ordered line/arc path.
 
 `Curve2` is the immutable shared carrier for lines, circular arcs, quadratic and

@@ -5301,6 +5301,31 @@ the current host. This is the deliberate exactness/performance boundary until
 a replacement accelerator carries independently validated conservative image
 bounds.
 
+### Immediate unified-region classification
+
+`CurveRegion2` no longer exposes `CurveRegionQuery2`. The facade only borrowed
+the authoritative region, populated caches already owned clone-shared by that
+region, and conditionally constructed a native `RegionQuery2`. Immediate
+classification already selected the cached line-image region directly. Immediate
+signed depth now follows the same route after populating the region-owned caches,
+instead of allocating segment boxes, sweep indexes, winding indexes, and prepared
+predicate handles for a transient query object on every call.
+
+The retained `curve_region_immediate_native_signed_depth` benchmark guards this
+one-shot path. On the current host, 2,000 exact classifications of a point inside
+an exact native rectangle measured 1.219 microseconds per call. Replaying the
+removed facade's native-query construction schedule over the same source,
+point, policy, and checksum measured 10.542 microseconds per call, so the
+immediate path is 88.4% faster. Higher-order and signed-loop paths still reuse
+the same native-bound and rational-evaluator caches; no projection, finite
+predicate, or topology contract changed.
+
+The complete all-feature and no-default-feature library/test matrices, strict
+all-target Clippy, formatting, and warning-denied rustdoc passed. Regenerated
+nightly-rustdoc API coverage and the five-crate static call graph contain no
+`CurveRegionQuery2` item or call edge. The no-default matrix also exposed and
+fixed a feature-gated `Ordering` import left by the preceding exact conic replay.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

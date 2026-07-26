@@ -624,12 +624,10 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
         "nested explicit material must not be reinterpreted as an even-odd hole"
     );
 
-    let prepared = promoted.query(&policy).unwrap();
-    assert!(prepared.uses_native_fast_path());
-    assert_eq!(
-        prepared.classify_point(&p(5, 5), &policy).unwrap(),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
+    assert!(matches!(
+        promoted.native_contours_fast_path(&policy).unwrap(),
+        Classification::Decided(_)
+    ));
 }
 
 #[test]
@@ -661,12 +659,10 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
         "a transformed nested material island must retain its explicit role"
     );
 
-    let prepared = transformed.query(&policy).unwrap();
-    assert!(prepared.uses_native_fast_path());
-    assert_eq!(
-        prepared.classify_point(&p(15, 11), &policy).unwrap(),
-        Classification::Decided(RegionPointLocation::Inside)
-    );
+    assert!(matches!(
+        transformed.native_contours_fast_path(&policy).unwrap(),
+        Classification::Decided(_)
+    ));
 }
 
 #[test]
@@ -690,7 +686,10 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
 
     let rotated = region.transform_similarity(&quarter_turn, &policy).unwrap();
 
-    assert!(rotated.query(&policy).unwrap().uses_native_fast_path());
+    assert!(matches!(
+        rotated.native_contours_fast_path(&policy).unwrap(),
+        Classification::Decided(_)
+    ));
     assert_eq!(
         rotated.classify_point(&p(15, 4), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -753,12 +752,10 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
             transformed.classify_point(&p(10, 5), &policy).unwrap(),
             Classification::Decided(expected)
         );
-        let prepared = transformed.query(&policy).unwrap();
-        assert!(prepared.uses_native_fast_path());
-        assert_eq!(
-            prepared.classify_point(&p(10, 5), &policy).unwrap(),
-            Classification::Decided(expected)
-        );
+        assert!(matches!(
+            transformed.native_contours_fast_path(&policy).unwrap(),
+            Classification::Decided(_)
+        ));
     }
 }
 
@@ -831,17 +828,6 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
                 Real::zero()
             })
         );
-        let prepared = region.query(&policy).unwrap();
-        assert!(!prepared.uses_native_fast_path());
-        assert_eq!(
-            prepared.classify_point(&p(0, 2), &policy).unwrap(),
-            Classification::Decided(expected)
-        );
-        assert_eq!(
-            prepared.signed_depth(&p(0, 2), &policy).unwrap(),
-            Classification::Decided(expected_depth)
-        );
-
         let transformed = region
             .transform_affine(
                 &Real::one(),
@@ -911,13 +897,6 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         region.signed_depth(&p(0, 5), &policy).unwrap(),
         Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
     );
-    let prepared = region.query(&policy).unwrap();
-    assert!(prepared.uses_native_fast_path());
-    assert_eq!(
-        prepared.signed_depth(&p(3, 3), &policy).unwrap(),
-        Classification::Decided(2)
-    );
-
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
     let nested = decided(
         CurveRegion2::try_from_native_boundary_contours(boundaries.clone(), &policy).unwrap(),
@@ -948,8 +927,10 @@ fn authored_line_arc_paths_retain_the_native_offset_engine() {
     )
     .unwrap();
 
-    let prepared = region.query(&policy).unwrap();
-    assert!(prepared.uses_native_fast_path());
+    assert!(matches!(
+        region.native_contours_fast_path(&policy).unwrap(),
+        Classification::Decided(_)
+    ));
     let expanded = decided(region.offset(Real::from(2), &policy).unwrap());
     let bounds = decided(expanded.bounds(&policy).unwrap());
     assert_eq!(bounds.min_x(), &Real::from(-7));
@@ -978,7 +959,10 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         region.classify_point(&p(5, 5), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
     );
-    assert!(region.query(&policy).unwrap().uses_native_fast_path());
+    assert!(matches!(
+        region.native_contours_fast_path(&policy).unwrap(),
+        Classification::Decided(_)
+    ));
 }
 #[test]
 fn unified_region_chamfer_and_fillet_dispatch_through_native_fast_path() {
@@ -1032,7 +1016,10 @@ fn unified_region_chamfer_and_fillet_edit_materialized_higher_order_loops() {
         &[FillRule::NonZero],
     )
     .unwrap();
-    assert!(!region.query(&policy).unwrap().uses_native_fast_path());
+    assert!(matches!(
+        region.native_contours_fast_path(&policy).unwrap(),
+        Classification::Uncertain(_)
+    ));
 
     let chamfered = decided(
         region

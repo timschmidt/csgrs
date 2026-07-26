@@ -38,7 +38,7 @@ use crate::{
     CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2,
     LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
     RationalQuadraticBezier2, RegionArrangement2, RegionArrangementEvidence2, RegionPointLocation,
-    RegionQuery2, Segment2, UncertaintyReason,
+    Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -144,18 +144,6 @@ impl Default for CurveRegion2 {
         let _ = region.line_image_region.set(Some(LineArcRegion2::empty()));
         region
     }
-}
-
-/// Borrowed repeated-query facade for a [`CurveRegion2`].
-///
-/// Certified native line/arc regions reuse [`RegionQuery2`], including
-/// its segment boxes and line winding index. Other retained curves precompute
-/// the clone-shared native bounds and algebraic evaluators owned by
-/// [`CurveRegion2`] and continue through its exact curved classifier.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionQuery2<'a> {
-    region: &'a CurveRegion2,
-    native_fast_path: Option<RegionQuery2<'a>>,
 }
 
 /// Borrowed native line/arc contour acceleration view for a [`CurveRegion2`].
@@ -611,52 +599,6 @@ impl CurveRegionCertifiedParallelOffsetResult2 {
     /// Consumes the result into geometry and evidence.
     pub fn into_parts(self) -> (CurveRegion2, CurveRegionCertifiedParallelOffsetEvidence2) {
         (self.region, self.evidence)
-    }
-}
-
-impl<'a> CurveRegionQuery2<'a> {
-    /// Returns the authoritative retained curved region.
-    pub const fn region(&self) -> &'a CurveRegion2 {
-        self.region
-    }
-
-    /// Returns true when classification uses the retained line/arc region path.
-    pub const fn uses_native_fast_path(&self) -> bool {
-        self.native_fast_path.is_some()
-    }
-
-    /// Returns the retained native fast path when one was certified.
-    pub const fn native_fast_path(&self) -> Option<&RegionQuery2<'a>> {
-        self.native_fast_path.as_ref()
-    }
-
-    /// Classifies a point through the strongest retained exact path available.
-    pub fn classify_point(
-        &self,
-        point: &Point2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<RegionPointLocation>> {
-        match &self.native_fast_path {
-            Some(prepared) => Ok(prepared.classify_point(point, policy)),
-            None => self.region.classify_point(point, policy),
-        }
-    }
-
-    /// Returns signed material-minus-hole containment depth for a non-boundary point.
-    ///
-    /// The retained native carrier supplies this directly when available.
-    /// Higher-order regions reuse the exact per-loop caches populated during
-    /// query construction. As with [`LineArcRegion2::signed_depth`], a boundary point is
-    /// reported as `Uncertain(Boundary)`.
-    pub fn signed_depth(
-        &self,
-        point: &Point2,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<i32>> {
-        match &self.native_fast_path {
-            Some(prepared) => Ok(prepared.signed_depth(point, policy)),
-            None => self.region.signed_depth_after_preparation(point, policy),
-        }
     }
 }
 
@@ -3051,13 +2993,8 @@ impl CurveRegion2 {
         self.signed_area_cache.get().is_some()
     }
 
-    /// Builds a borrowed query for repeated exact point classification.
-    ///
-    /// Query construction eagerly retains native loop bounds and algebraic source
-    /// evaluators. When all authoritative topology is already available as a
-    /// native line/arc [`LineArcRegion2`], it additionally builds that carrier's
-    /// retained winding and broad-phase indexes.
-    pub fn query(&self, policy: &CurvePolicy) -> CurveResult<CurveRegionQuery2<'_>> {
+    /// Populates clone-shared data used by immediate exact point classification.
+    fn prepare_classification_caches(&self, policy: &CurvePolicy) -> CurveResult<()> {
         let _ = self.native_boundary_loops();
         let _ = self.native_boundary_bounds(policy);
         let _ = self.retained_rational_evaluators()?;
@@ -3086,18 +3023,7 @@ impl CurveRegion2 {
                 }
             }
         }
-        let native_fast_path = (!self.signed_loop_composition)
-            .then(|| {
-                self.line_image_region
-                    .get()
-                    .and_then(Option::as_ref)
-                    .map(|region| region.query(policy))
-            })
-            .flatten();
-        Ok(CurveRegionQuery2 {
-            region: self,
-            native_fast_path,
-        })
+        Ok(())
     }
 
     /// Returns the certified internal line/arc accelerator when this region has one.
@@ -3105,7 +3031,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
-        let _ = self.query(policy)?;
+        self.prepare_classification_caches(policy)?;
         Ok(
             match self.line_image_region.get().and_then(Option::as_ref) {
                 Some(region) => Classification::Decided(region),
@@ -3442,7 +3368,7 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             }
         };
-        self.query(policy)
+        self.prepare_classification_caches(policy)
             .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
         let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -3944,7 +3870,7 @@ impl CurveRegion2 {
                 CurveError::InvalidCurveRange,
             ));
         }
-        self.query(policy)
+        self.prepare_classification_caches(policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?;
         let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4185,7 +4111,13 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<i32>> {
-        self.query(policy)?.signed_depth(point, policy)
+        self.prepare_classification_caches(policy)?;
+        if !self.signed_loop_composition
+            && let Some(Some(region)) = self.line_image_region.get()
+        {
+            return Ok(region.signed_depth(point, policy));
+        }
+        self.signed_depth_after_preparation(point, policy)
     }
 
     fn signed_depth_after_preparation(
@@ -6591,18 +6523,16 @@ mod tests {
             &[FillRule::NonZero, FillRule::NonZero],
         )
         .unwrap();
-        let query = region.query(&policy).unwrap();
-        assert!(!query.uses_native_fast_path());
         assert_eq!(
-            query.classify_point(&p(-2, 0), &policy),
+            region.classify_point(&p(-2, 0), &policy),
             Ok(Classification::Decided(RegionPointLocation::Inside))
         );
         assert_eq!(
-            query.classify_point(&p(2, 0), &policy),
+            region.classify_point(&p(2, 0), &policy),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
         assert_eq!(
-            query.signed_depth(&p(2, 0), &policy),
+            region.signed_depth(&p(2, 0), &policy),
             Ok(Classification::Decided(0))
         );
     }

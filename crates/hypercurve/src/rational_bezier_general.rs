@@ -1,7 +1,6 @@
 //! Exact rational Bezier curves of arbitrary positive degree.
 
 use std::cell::{OnceCell, RefCell};
-#[cfg(feature = "predicates")]
 use std::cmp::Ordering;
 use std::rc::Rc;
 
@@ -3798,14 +3797,12 @@ impl RationalBezier2 {
         if let (Some(first), Some(second)) = (
             self.data.lineage.root.circular_conic.get(),
             other.data.lineage.root.circular_conic.get(),
-        ) {
-            if first == second
-                || (is_zero(&first.center.distance_squared(&second.center), policy) == Some(true)
-                    && is_zero(&(&first.radius_squared - &second.radius_squared), policy)
-                        == Some(true))
-            {
-                return Classification::Decided(true);
-            }
+        ) && (first == second
+            || (is_zero(&first.center.distance_squared(&second.center), policy) == Some(true)
+                && is_zero(&(&first.radius_squared - &second.radius_squared), policy)
+                    == Some(true)))
+        {
+            return Classification::Decided(true);
         }
         let first = match self.implicit_quadratic_conic(policy) {
             Classification::Decided(Some(coefficients)) => coefficients,
@@ -4250,9 +4247,9 @@ fn quadratic_conic_homogeneous_point_parameters(
     let middle = homogeneous_control_vector(&controls[1]);
     let last = homogeneous_control_vector(&controls[2]);
     let coordinates = [
-        dot3(&homogeneous_point, &cross3(&middle, &last)),
-        dot3(&homogeneous_point, &cross3(&last, &first)),
-        dot3(&homogeneous_point, &cross3(&first, &middle)),
+        dot3(homogeneous_point, &cross3(&middle, &last)),
+        dot3(homogeneous_point, &cross3(&last, &first)),
+        dot3(homogeneous_point, &cross3(&first, &middle)),
     ];
 
     // The caller has already certified the shared implicit conic. In the

@@ -6,9 +6,9 @@ use hypercurve::{
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Curve2, CurveError, CurvePath2, CurvePolicy, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveResult, LineSeg2, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    BulgeVertex2, Classification, Contour2, Curve2, CurveError, CurvePath2, CurvePolicy,
+    CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2, LineSeg2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -21,6 +21,16 @@ fn q(numerator: i32, denominator: i32) -> Real {
 
 fn p(x: i32, y: i32) -> Point2 {
     Point2::new(r(x), r(y))
+}
+
+fn rectangle(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
+    Contour2::from_bulge_vertices(&[
+        BulgeVertex2::new(p(xmin, ymin), Real::zero()),
+        BulgeVertex2::new(p(xmax, ymin), Real::zero()),
+        BulgeVertex2::new(p(xmax, ymax), Real::zero()),
+        BulgeVertex2::new(p(xmin, ymax), Real::zero()),
+    ])
+    .unwrap()
 }
 
 fn decided<T>(classification: Classification<T>) -> T {
@@ -288,6 +298,23 @@ fn main() -> CurveResult<()> {
     let elapsed = started.elapsed();
     println!(
         "curve_region_cached_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={curved_classification_checksum}",
+        elapsed / classification_iterations
+    );
+
+    let native_region = LineArcRegion2::from_material_contours(vec![rectangle(-4, -4, 4, 4)]);
+    let immediate_region = CurveRegion2::try_from_line_arc_region(&native_region, &policy).unwrap();
+    let depth_point = p(1, 1);
+    decided(immediate_region.signed_depth(&depth_point, &policy)?);
+    let started = Instant::now();
+    let mut depth_checksum = 0_i32;
+    for _ in 0..classification_iterations {
+        depth_checksum = depth_checksum.wrapping_add(decided(
+            immediate_region.signed_depth(black_box(&depth_point), black_box(&policy))?,
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_immediate_native_signed_depth: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={depth_checksum}",
         elapsed / classification_iterations
     );
 
