@@ -968,9 +968,7 @@ impl ProjectiveCycle {
         plane: &Plane,
         plane_f64: Option<[f64; 4]>,
     ) -> bool {
-        if self.source_plane == plane_identity
-            || certifiably_same_unoriented_plane(&self.support, plane)
-        {
+        if self.source_plane == plane_identity {
             return true;
         }
         if self.edge_identities.is_empty() {
@@ -2250,31 +2248,32 @@ fn canonical_plane_identities(
     support_planes: &[Vec<&Plane>; 2],
     normalized_support_plane_f64_values: &[Vec<Option<[f64; 4]>>; 2],
 ) -> [Vec<ConstructionPlaneIdentity>; 2] {
-    let mut representatives = Vec::<(ConstructionPlaneIdentity, &Plane, Option<[f64; 4]>)>::new();
-    std::array::from_fn(|mesh| {
-        support_planes[mesh]
-            .iter()
-            .enumerate()
-            .map(|(plane, value)| {
-                let identity = ConstructionPlaneIdentity { mesh, plane };
-                let approximate = normalized_support_plane_f64_values[mesh][plane];
-                let canonical = representatives
-                    .iter()
-                    .find_map(|(candidate, candidate_value, candidate_approximate)| {
-                        let approximate_match =
-                            normalized_planes_may_be_same(*candidate_approximate, approximate);
-                        (approximate_match
-                            && certifiably_same_unoriented_plane(candidate_value, value))
-                        .then_some(*candidate)
-                    })
-                    .unwrap_or(identity);
-                if canonical == identity {
-                    representatives.push((identity, value, approximate));
-                }
-                canonical
-            })
-            .collect()
-    })
+    let first = (0..support_planes[0].len())
+        .map(|plane| ConstructionPlaneIdentity { mesh: 0, plane })
+        .collect();
+    let second = support_planes[1]
+        .iter()
+        .enumerate()
+        .map(|(plane, value)| {
+            let approximate = normalized_support_plane_f64_values[1][plane];
+            support_planes[0]
+                .iter()
+                .enumerate()
+                .find_map(|(candidate, candidate_value)| {
+                    let approximate_match = normalized_planes_may_be_same(
+                        normalized_support_plane_f64_values[0][candidate],
+                        approximate,
+                    );
+                    (approximate_match && certifiably_same_unoriented_plane(candidate_value, value))
+                        .then_some(ConstructionPlaneIdentity {
+                            mesh: 0,
+                            plane: candidate,
+                        })
+                })
+                .unwrap_or(ConstructionPlaneIdentity { mesh: 1, plane })
+        })
+        .collect();
+    [first, second]
 }
 
 fn collapse_certified_convex_faces(
