@@ -347,7 +347,7 @@ fn compute_boolean(
 #[derive(Clone)]
 struct ProjectiveCycle {
     boundary: Vec<ProjectiveBoundaryEntry>,
-    support: Plane,
+    support_index: usize,
     source_plane: ConstructionPlaneIdentity,
     source_unchanged: bool,
 }
@@ -360,7 +360,9 @@ struct ProjectiveBoundaryEntry {
     point_index: usize,
     preparation: ProjectivePointPreparation,
     point_identity: ConstructionVertexIdentity,
-    edge: Plane,
+    // Exact edge planes are single-owned by the computation arena. Moving an
+    // index with its identity preserves the complete oriented incidence record.
+    edge_index: usize,
     edge_identity: ConstructionEdgeIdentity,
 }
 
@@ -368,6 +370,12 @@ struct ProjectiveBoundaryEntry {
 struct ProjectivePointPreparation {
     approximate: Option<[f64; 3]>,
     rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+}
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct ProjectiveBoundaryPlaneIdentity {
+    support: ConstructionPlaneIdentity,
+    edge: ConstructionEdgeIdentity,
 }
 
 struct ProjectiveClip {
@@ -392,7 +400,7 @@ impl ProjectiveBoundary {
         point_index: usize,
         preparation: ProjectivePointPreparation,
         point_identity: ConstructionVertexIdentity,
-        edge: Plane,
+        edge_index: usize,
         edge_identity: ConstructionEdgeIdentity,
         point_cache: &ProjectivePointCache,
     ) {
@@ -414,7 +422,7 @@ impl ProjectiveBoundary {
                 .entries
                 .last_mut()
                 .expect("nonempty boundary has a last entry");
-            last.edge = edge;
+            last.edge_index = edge_index;
             last.edge_identity = edge_identity;
             return;
         }
@@ -422,14 +430,14 @@ impl ProjectiveBoundary {
             point_index,
             preparation,
             point_identity,
-            edge,
+            edge_index,
             edge_identity,
         });
     }
 
     fn into_cycle(
         mut self,
-        support: Plane,
+        support_index: usize,
         source_plane: ConstructionPlaneIdentity,
         point_cache: &ProjectivePointCache,
     ) -> ProjectiveCycle {
@@ -446,7 +454,7 @@ impl ProjectiveBoundary {
         }
         ProjectiveCycle {
             boundary: self.entries,
-            support,
+            support_index,
             source_plane,
             source_unchanged: false,
         }
@@ -466,15 +474,18 @@ struct ProjectiveAffineCacheEntry {
 
 #[derive(Default)]
 struct ProjectivePointCache {
-    // Cycles retain stable indices instead of cloning 192-byte exact points.
-    // Identity remapping can therefore update a complete coincidence class to
-    // one stored point without cloning its coordinates into every cache entry.
+    // Cycles retain stable indices instead of cloning 192-byte exact points
+    // and planes. Identity remapping can therefore update a complete
+    // coincidence class atomically, while split cycles share exact geometry.
     point_storage: Vec<HomogeneousPoint3>,
+    plane_storage: Vec<Plane>,
     points: StorageHashMap<ConstructionVertexIdentity, CachedProjectivePoint>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: [Vec<ConstructionPlaneIdentity>; 2],
-    planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
-    source_edges: StorageHashMap<ConstructionEdgeIdentity, [Plane; 2]>,
+    planes: StorageHashMap<ConstructionPlaneIdentity, usize>,
+    source_edges: StorageHashMap<ConstructionEdgeIdentity, [usize; 2]>,
+    boundary_planes: StorageHashMap<ProjectiveBoundaryPlaneIdentity, Vec<usize>>,
+    inverted_planes: StorageHashMap<ConstructionPlaneIdentity, usize>,
     source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
     source_vertices: StorageHashMap<ConstructionVertexIdentity, [ConstructionPlaneIdentity; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
@@ -547,6 +558,65 @@ impl ProjectivePointCache {
         self.point_storage
             .get(index)
             .expect("projective point index is retained for the computation")
+    }
+
+    fn plane(&self, index: usize) -> &Plane {
+        self.plane_storage
+            .get(index)
+            .expect("projective plane index is retained for the computation")
+    }
+
+    fn support_plane_index(&mut self, identity: ConstructionPlaneIdentity, plane: &Plane) -> usize {
+        let identity = self.canonical_plane_identity(identity);
+        if let Some(&index) = self.planes.get(&identity) {
+            return index;
+        }
+        let index = self.plane_storage.len();
+        self.plane_storage.push(plane.clone());
+        self.planes.insert(identity, index);
+        index
+    }
+
+    fn boundary_plane_index(
+        &mut self,
+        support: ConstructionPlaneIdentity,
+        edge: &ConstructionEdgeIdentity,
+        plane: &Plane,
+    ) -> usize {
+        let identity = ProjectiveBoundaryPlaneIdentity {
+            support: self.canonical_plane_identity(support),
+            edge: edge.clone(),
+        };
+        if let Some(indices) = self.boundary_planes.get(&identity) {
+            for &index in indices {
+                if self.plane(index) == plane {
+                    return index;
+                }
+            }
+        }
+        let index = self.plane_storage.len();
+        self.plane_storage.push(plane.clone());
+        self.boundary_planes
+            .entry(identity)
+            .or_default()
+            .push(index);
+        index
+    }
+
+    fn inverted_plane_index(&mut self, identity: ConstructionPlaneIdentity) -> usize {
+        let identity = self.canonical_plane_identity(identity);
+        if let Some(&index) = self.inverted_planes.get(&identity) {
+            return index;
+        }
+        let plane = self
+            .planes
+            .get(&identity)
+            .map(|&index| self.plane(index).inverted())
+            .expect("canonical support plane is retained for projective clipping");
+        let index = self.plane_storage.len();
+        self.plane_storage.push(plane);
+        self.inverted_planes.insert(identity, index);
+        index
     }
 
     fn canonical_plane_identity(
@@ -651,9 +721,9 @@ impl ProjectivePointCache {
             ConstructionVertexIdentity::Source { .. } => {
                 let planes = self.source_vertices.get(identity)?;
                 Some([
-                    self.planes.get(&planes[0])?,
-                    self.planes.get(&planes[1])?,
-                    self.planes.get(&planes[2])?,
+                    self.plane(*self.planes.get(&planes[0])?),
+                    self.plane(*self.planes.get(&planes[1])?),
+                    self.plane(*self.planes.get(&planes[2])?),
                 ])
             }
             ConstructionVertexIdentity::SourceEdgePlane {
@@ -666,12 +736,16 @@ impl ProjectivePointCache {
                     endpoints: *endpoints,
                 };
                 let [support, boundary] = self.source_edges.get(&edge)?;
-                Some([support, boundary, self.planes.get(plane)?])
+                Some([
+                    self.plane(*support),
+                    self.plane(*boundary),
+                    self.plane(*self.planes.get(plane)?),
+                ])
             }
             ConstructionVertexIdentity::PlaneTriple { planes } => Some([
-                self.planes.get(&planes[0])?,
-                self.planes.get(&planes[1])?,
-                self.planes.get(&planes[2])?,
+                self.plane(*self.planes.get(&planes[0])?),
+                self.plane(*self.planes.get(&planes[1])?),
+                self.plane(*self.planes.get(&planes[2])?),
             ]),
         }
     }
@@ -1174,6 +1248,7 @@ impl ProjectiveCycle {
         plane_identity: ConstructionPlaneIdentity,
         plane: &Plane,
         plane_f64: Option<[f64; 4]>,
+        point_cache: &ProjectivePointCache,
     ) -> bool {
         if self.source_plane == plane_identity {
             return true;
@@ -1197,9 +1272,9 @@ impl ProjectiveCycle {
             .approximate
             .is_none_or(|point| normalized_point_plane_may_be_on(point, plane_f64))
             && crate::intersection::four_plane_determinant(
-                &self.support,
-                &self.boundary[previous].edge,
-                &self.boundary[point_index].edge,
+                point_cache.plane(self.support_index),
+                point_cache.plane(self.boundary[previous].edge_index),
+                point_cache.plane(self.boundary[point_index].edge_index),
                 plane,
             )
             .definitely_zero())
@@ -1224,6 +1299,8 @@ impl ProjectiveCycle {
             len if len == source_points.len() || len <= 1 => {}
             _ => return Err(crate::error::HypermeshError::UnknownClassification),
         }
+        let source_plane = point_cache.canonical_plane_identity(source_plane);
+        let support_index = point_cache.support_plane_index(source_plane, &polygon.support);
         let mut boundary = Vec::with_capacity(source_points.len());
         for (point_index, point) in source_points.iter().enumerate() {
             let approximate = affine_point_f64(point);
@@ -1246,10 +1323,12 @@ impl ProjectiveCycle {
                     )
                 });
             let edge = match polygon.edges.len() {
-                0 => polygon.support.clone(),
-                1 => polygon.edges[0].clone(),
-                _ => polygon.edges[point_index].clone(),
+                0 => &polygon.support,
+                1 => &polygon.edges[0],
+                _ => &polygon.edges[point_index],
             };
+            let edge_identity = source_edge_identities[point_index].clone();
+            let edge_index = point_cache.boundary_plane_index(source_plane, &edge_identity, edge);
             boundary.push(ProjectiveBoundaryEntry {
                 point_index: projective_point_index,
                 preparation: ProjectivePointPreparation {
@@ -1259,13 +1338,13 @@ impl ProjectiveCycle {
                     rational_filter_query: None,
                 },
                 point_identity: identity,
-                edge,
-                edge_identity: source_edge_identities[point_index].clone(),
+                edge_index,
+                edge_identity,
             });
         }
         Ok(Self {
             boundary,
-            support: polygon.support.clone(),
+            support_index,
             source_plane,
             source_unchanged: true,
         })
@@ -1336,6 +1415,7 @@ impl ProjectiveCycle {
                     plane_identity,
                     plane,
                     plane_f64,
+                    point_cache,
                 ) {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
@@ -1398,7 +1478,8 @@ impl ProjectiveCycle {
         }
 
         crate::trace_dispatch!("projective-clip", "split");
-        let inverted = plane.inverted();
+        let clipping_plane_index = point_cache.support_plane_index(plane_identity, plane);
+        let inverted_plane_index = point_cache.inverted_plane_index(plane_identity);
         let intersections =
             self.crossing_points(&classifications, plane, plane_identity, point_cache);
         let mut negative = ProjectiveBoundary::with_capacity(self.boundary.len() + 1);
@@ -1410,7 +1491,7 @@ impl ProjectiveCycle {
         };
         let Self {
             boundary,
-            support,
+            support_index,
             source_plane,
             ..
         } = self;
@@ -1420,7 +1501,7 @@ impl ProjectiveCycle {
                 point_index: point,
                 preparation: point_preparation,
                 point_identity,
-                edge,
+                edge_index,
                 edge_identity,
             } = entry;
             let next = (index + 1) % classifications.len();
@@ -1432,7 +1513,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1451,7 +1532,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge.clone(),
+                        edge_index,
                         edge_identity.clone(),
                         point_cache,
                     );
@@ -1459,7 +1540,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity.clone(),
-                        plane.clone(),
+                        clipping_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1467,7 +1548,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1477,7 +1558,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity.clone(),
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1485,7 +1566,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        inverted.clone(),
+                        inverted_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1495,7 +1576,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity.clone(),
-                        edge.clone(),
+                        edge_index,
                         edge_identity.clone(),
                         point_cache,
                     );
@@ -1503,7 +1584,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1513,7 +1594,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity.clone(),
-                        plane.clone(),
+                        clipping_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1521,7 +1602,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1540,7 +1621,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity.clone(),
-                        edge.clone(),
+                        edge_index,
                         edge_identity.clone(),
                         point_cache,
                     );
@@ -1548,7 +1629,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1556,7 +1637,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity,
-                        inverted.clone(),
+                        inverted_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1566,7 +1647,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1575,8 +1656,8 @@ impl ProjectiveCycle {
         }
         debug_assert!(intersections.next().is_none());
         Ok(ProjectiveClip {
-            negative: negative.into_cycle(support.clone(), source_plane, point_cache),
-            positive: positive.into_cycle(support, source_plane, point_cache),
+            negative: negative.into_cycle(support_index, source_plane, point_cache),
+            positive: positive.into_cycle(support_index, source_plane, point_cache),
             side: ProjectiveClipSide::Both,
         })
     }
@@ -1601,6 +1682,7 @@ impl ProjectiveCycle {
                     plane_identity,
                     plane,
                     plane_f64,
+                    point_cache,
                 ) {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
@@ -1674,6 +1756,7 @@ impl ProjectiveCycle {
             return Ok(Self::empty());
         }
         crate::trace_dispatch!("projective-clip-negative", "split");
+        let clipping_plane_index = point_cache.support_plane_index(plane_identity, plane);
         let intersections =
             self.crossing_points(&classifications, plane, plane_identity, point_cache);
         let mut negative = ProjectiveBoundary::with_capacity(self.boundary.len() + 1);
@@ -1684,7 +1767,7 @@ impl ProjectiveCycle {
         };
         let Self {
             boundary,
-            support,
+            support_index,
             source_plane,
             ..
         } = self;
@@ -1694,7 +1777,7 @@ impl ProjectiveCycle {
                 point_index: point,
                 preparation: point_preparation,
                 point_identity,
-                edge,
+                edge_index,
                 edge_identity,
             } = entry;
             let next = (index + 1) % classifications.len();
@@ -1709,7 +1792,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1728,7 +1811,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1736,7 +1819,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity,
-                        plane.clone(),
+                        clipping_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1746,7 +1829,7 @@ impl ProjectiveCycle {
                         point,
                         point_preparation,
                         point_identity,
-                        plane.clone(),
+                        clipping_plane_index,
                         split_identity.clone(),
                         point_cache,
                     );
@@ -1765,7 +1848,7 @@ impl ProjectiveCycle {
                         intersection,
                         intersection_preparation,
                         intersection_identity,
-                        edge,
+                        edge_index,
                         edge_identity,
                         point_cache,
                     );
@@ -1774,7 +1857,7 @@ impl ProjectiveCycle {
             }
         }
         debug_assert!(intersections.next().is_none());
-        Ok(negative.into_cycle(support, source_plane, point_cache))
+        Ok(negative.into_cycle(support_index, source_plane, point_cache))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1836,7 +1919,7 @@ impl ProjectiveCycle {
                 Some(&entry.point_identity),
             )?);
             point_identities.push(entry.point_identity);
-            edges.push(entry.edge);
+            edges.push(point_cache.plane(entry.edge_index).clone());
             edge_identities.push(entry.edge_identity);
         }
         Ok(source.with_known_vertex_cycle_and_edges(
@@ -1850,12 +1933,7 @@ impl ProjectiveCycle {
     fn empty() -> Self {
         Self {
             boundary: Vec::new(),
-            support: Plane::from_coefficients(
-                Real::zero(),
-                Real::zero(),
-                Real::zero(),
-                Real::zero(),
-            ),
+            support_index: usize::MAX,
             source_plane: ConstructionPlaneIdentity {
                 mesh: usize::MAX,
                 plane: usize::MAX,
@@ -2019,10 +2097,7 @@ fn compute_two_convex_inputs_projectively(
         for (plane, value) in planes.iter().enumerate() {
             let identity = ConstructionPlaneIdentity { mesh, plane };
             let canonical = projective_point_cache.canonical_plane_identity(identity);
-            projective_point_cache
-                .planes
-                .entry(canonical)
-                .or_insert_with(|| (*value).clone());
+            projective_point_cache.support_plane_index(canonical, value);
         }
     }
     let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, &Point3> =
@@ -2055,15 +2130,20 @@ fn compute_two_convex_inputs_projectively(
         if edge_identities.len() != polygon.edges.len() {
             continue;
         }
-        let Some(support) = projective_point_cache.planes.get(support_identity).cloned() else {
+        let Some(&support) = projective_point_cache.planes.get(support_identity) else {
             continue;
         };
         for (edge_identity, edge_plane) in edge_identities.iter().zip(polygon.edges.iter()) {
             if matches!(edge_identity, ConstructionEdgeIdentity::Source { .. }) {
+                let boundary = projective_point_cache.boundary_plane_index(
+                    *support_identity,
+                    edge_identity,
+                    edge_plane,
+                );
                 projective_point_cache
                     .source_edges
                     .entry(edge_identity.clone())
-                    .or_insert_with(|| [support.clone(), edge_plane.clone()]);
+                    .or_insert([support, boundary]);
                 let supports = projective_point_cache
                     .source_edge_supports
                     .entry(edge_identity.clone())
@@ -2076,6 +2156,7 @@ fn compute_two_convex_inputs_projectively(
     }
     {
         let ProjectivePointCache {
+            plane_storage,
             planes,
             source_vertices,
             point_incidences,
@@ -2089,9 +2170,9 @@ fn compute_two_convex_inputs_projectively(
                 for second in (first + 1)..supports.len() {
                     for third in (second + 1)..supports.len() {
                         let definition = [
-                            &planes[&supports[first]],
-                            &planes[&supports[second]],
-                            &planes[&supports[third]],
+                            &plane_storage[planes[&supports[first]]],
+                            &plane_storage[planes[&supports[second]]],
+                            &plane_storage[planes[&supports[third]]],
                         ];
                         if plane_normals_are_independent(definition)? {
                             source_vertices.insert(
@@ -3692,7 +3773,7 @@ mod tests {
             cycle
                 .boundary
                 .iter()
-                .all(|entry| entry.edge == polygon.support)
+                .all(|entry| point_cache.plane(entry.edge_index) == &polygon.support)
         );
     }
 
@@ -3783,7 +3864,7 @@ mod tests {
                 .zip(&split.negative.boundary)
                 .all(|(negative, split)| {
                     negative.point_identity == split.point_identity
-                        && negative.edge == split.edge
+                        && negative.edge_index == split.edge_index
                         && negative.edge_identity == split.edge_identity
                 })
         );
@@ -4152,7 +4233,7 @@ mod tests {
         let resolve = |order: [usize; 2]| {
             let mut cache = ProjectivePointCache::default();
             for (identity, plane) in plane_ids.into_iter().zip(planes.iter().cloned()) {
-                cache.planes.insert(identity, plane);
+                cache.support_plane_index(identity, &plane);
             }
             for index in order {
                 let definition = cache.definition_planes(&identities[index]).unwrap();
