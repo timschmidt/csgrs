@@ -1256,14 +1256,21 @@ impl ProjectiveCycle {
             source_plane,
             ..
         } = self;
-        for (index, ((((point, point_identity), edge), edge_identity), intersection)) in points
-            .into_iter()
-            .zip(point_identities)
-            .zip(edges)
-            .zip(edge_identities)
-            .zip(intersections)
-            .enumerate()
-        {
+        let mut point_identities = point_identities.into_iter();
+        let mut edges = edges.into_iter();
+        let mut edge_identities = edge_identities.into_iter();
+        let mut intersections = intersections.into_iter();
+        for (index, point) in points.into_iter().enumerate() {
+            let point_identity = point_identities
+                .next()
+                .expect("projective point identity is available");
+            let edge = edges.next().expect("projective edge is available");
+            let edge_identity = edge_identities
+                .next()
+                .expect("projective edge identity is available");
+            let intersection = intersections
+                .next()
+                .expect("projective crossing slot is available");
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
@@ -1434,15 +1441,21 @@ impl ProjectiveCycle {
             source_plane,
             ..
         } = self;
-        for (index, ((((point, point_identity), edge), edge_identity), intersection)) in
-            source_points
-                .into_iter()
-                .zip(source_point_identities)
-                .zip(source_edges)
-                .zip(source_edge_identities)
-                .zip(intersections)
-                .enumerate()
-        {
+        let mut source_point_identities = source_point_identities.into_iter();
+        let mut source_edges = source_edges.into_iter();
+        let mut source_edge_identities = source_edge_identities.into_iter();
+        let mut intersections = intersections.into_iter();
+        for (index, point) in source_points.into_iter().enumerate() {
+            let point_identity = source_point_identities
+                .next()
+                .expect("projective point identity is available");
+            let edge = source_edges.next().expect("projective edge is available");
+            let edge_identity = source_edge_identities
+                .next()
+                .expect("projective edge identity is available");
+            let intersection = intersections
+                .next()
+                .expect("projective crossing slot is available");
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
