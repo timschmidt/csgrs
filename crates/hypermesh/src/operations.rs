@@ -2857,19 +2857,24 @@ fn cycle_satisfies_planes(
 ) -> HypermeshResult<bool> {
     let prepared_planes = plane_indices
         .iter()
-        .map(|&plane_index| PreparedRationalPlane4::new(support_planes[plane_index]))
+        .map(|&plane_index| {
+            (
+                plane_index,
+                PreparedRationalPlane4::new(support_planes[plane_index]),
+            )
+        })
         .collect::<Vec<_>>();
     for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
-        for (candidate_index, &plane_index) in plane_indices.iter().enumerate() {
-            let classification = match &prepared_planes[candidate_index] {
+        for (plane_index, prepared_plane) in &prepared_planes {
+            let classification = match prepared_plane {
                 Some(plane) => match prepared.classify_rational_plane_filter(plane) {
                     Some(classification) => classification,
                     None if point_cache.has_incidence(
                         &cycle.point_identities[point_index],
                         ConstructionPlaneIdentity {
                             mesh: support_plane_mesh,
-                            plane: plane_index,
+                            plane: *plane_index,
                         },
                     ) =>
                     {
@@ -2877,10 +2882,10 @@ fn cycle_satisfies_planes(
                     }
                     None => match prepared.classify_rational_plane_exact(plane) {
                         Some(classification) => classification,
-                        None => prepared.classify(support_planes[plane_index])?,
+                        None => prepared.classify(support_planes[*plane_index])?,
                     },
                 },
-                None => prepared.classify(support_planes[plane_index])?,
+                None => prepared.classify(support_planes[*plane_index])?,
             };
             if classification.is_positive() {
                 return Ok(false);
