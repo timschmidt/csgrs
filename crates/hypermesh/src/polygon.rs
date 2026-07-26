@@ -1,6 +1,6 @@
 //! Convex polygon representation backed by hyperreal planes.
 
-use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
+use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, intersect_three_planes};
 use std::sync::Arc;
 
 use crate::error::HypermeshResult;
@@ -543,6 +543,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
 pub(crate) fn make_indexed_triangle_with_deferred_edges(
     positions: Arc<[Point3]>,
     indices: [usize; 3],
+    axis_hint: Option<usize>,
     mesh_index: isize,
     polygon_index: isize,
 ) -> ConvexPolygon {
@@ -550,7 +551,9 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     let p0 = &positions[i0];
     let p1 = &positions[i1];
     let p2 = &positions[i2];
-    let support = Plane::from_points(p0, p1, p2);
+    let support = axis_hint
+        .and_then(|axis| exact_axis_aligned_triangle_support(p0, p1, p2, axis))
+        .unwrap_or_else(|| Plane::from_points(p0, p1, p2));
     ConvexPolygon {
         edges: Arc::new(Vec::new()),
         support,
@@ -564,6 +567,59 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
         approx_bounds: None,
         known_vertices: Some(RetainedVertexCycle::IndexedTriangle { positions, indices }),
         known_identities: None,
+    }
+}
+
+fn exact_axis_aligned_triangle_support(
+    p0: &Point3,
+    p1: &Point3,
+    p2: &Point3,
+    axis: usize,
+) -> Option<Plane> {
+    let points = [
+        [&p0.x, &p0.y, &p0.z],
+        [&p1.x, &p1.y, &p1.z],
+        [&p2.x, &p2.y, &p2.z],
+    ];
+    let [Some(value), Some(second), Some(third)] =
+        points.map(|point| point.get(axis)?.exact_rational_ref())
+    else {
+        return None;
+    };
+    if value != second || value != third {
+        return None;
+    }
+    // For a triangle in an axis plane, the cyclic complementary-coordinate
+    // determinant is exactly the corresponding component of its cross
+    // product. Its sign therefore supplies the original support orientation
+    // without materializing any coordinate differences or plane scale.
+    let u = (axis + 1) % 3;
+    let v = (axis + 2) % 3;
+    let [Some(p0u), Some(p1u), Some(p2u)] = points.map(|point| point[u].exact_rational_ref())
+    else {
+        return None;
+    };
+    let [Some(p0v), Some(p1v), Some(p2v)] = points.map(|point| point[v].exact_rational_ref())
+    else {
+        return None;
+    };
+    let orientation = Rational::signed_product_sum_ordering(
+        [true, true, true, false, false, false],
+        [
+            [p0u, p1v],
+            [p1u, p2v],
+            [p2u, p0v],
+            [p0u, p2v],
+            [p1u, p0v],
+            [p2u, p1v],
+        ],
+    );
+    match orientation {
+        std::cmp::Ordering::Less => {
+            Some(Plane::axis_aligned(axis, points[0][axis].clone()).inverted())
+        }
+        std::cmp::Ordering::Equal => None,
+        std::cmp::Ordering::Greater => Some(Plane::axis_aligned(axis, points[0][axis].clone())),
     }
 }
 
@@ -708,4 +764,54 @@ fn max_real<'a>(mut values: impl Iterator<Item = &'a Real>) -> Real {
             current
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i64, y: i64, z: i64) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn exact_axis_aligned_triangle_support_preserves_every_normal_orientation() {
+        for (axis, points, expected) in [
+            (
+                0,
+                [point(2, 0, 0), point(2, 1, 0), point(2, 0, 1)],
+                Plane::axis_aligned(0, Real::from(2)),
+            ),
+            (
+                1,
+                [point(0, 2, 0), point(0, 2, 1), point(1, 2, 0)],
+                Plane::axis_aligned(1, Real::from(2)),
+            ),
+            (
+                2,
+                [point(0, 0, 2), point(1, 0, 2), point(0, 1, 2)],
+                Plane::axis_aligned(2, Real::from(2)),
+            ),
+        ] {
+            assert_eq!(
+                exact_axis_aligned_triangle_support(&points[0], &points[1], &points[2], axis),
+                Some(expected.clone())
+            );
+            assert_eq!(
+                exact_axis_aligned_triangle_support(&points[0], &points[2], &points[1], axis),
+                Some(expected.inverted())
+            );
+        }
+
+        let non_axis = [point(0, 0, 0), point(1, 0, 0), point(0, 1, 1)];
+        assert_eq!(
+            exact_axis_aligned_triangle_support(&non_axis[0], &non_axis[1], &non_axis[2], 0),
+            None
+        );
+        let degenerate = [point(0, 0, 0), point(0, 0, 1), point(0, 0, 2)];
+        assert_eq!(
+            exact_axis_aligned_triangle_support(&degenerate[0], &degenerate[1], &degenerate[2], 0),
+            None
+        );
+    }
 }

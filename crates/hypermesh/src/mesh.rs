@@ -177,6 +177,30 @@ fn build_polygon_soup_with_edge_mode(
             certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
         let retained_positions = (defer_edges && input_is_certified_convex)
             .then(|| Arc::<[Point3]>::from(mesh.positions));
+        // Bound the admission scan before retaining an approximate position
+        // cache. A missed axis face only skips the fast path, and every hint
+        // is revalidated exactly when its support plane is constructed.
+        let sample_count = mesh.triangles.len().min(64);
+        let predominantly_axis_aligned = retained_positions.is_some()
+            && (0..sample_count).all(|sample| {
+                let triangle_index = sample * mesh.triangles.len() / sample_count;
+                approximate_triangle_axis(mesh.positions, mesh.triangles[triangle_index].indices())
+                    .is_some()
+            });
+        let approximate_positions = predominantly_axis_aligned
+            .then(|| {
+                mesh.positions
+                    .iter()
+                    .map(|point| {
+                        Some([
+                            point.x.to_f64_lossy()?,
+                            point.y.to_f64_lossy()?,
+                            point.z.to_f64_lossy()?,
+                        ])
+                    })
+                    .collect::<Option<Vec<_>>>()
+            })
+            .flatten();
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -214,12 +238,19 @@ fn build_polygon_soup_with_edge_mode(
                         polygon_index,
                     )
                 }
-                (Some(positions), None) => make_indexed_triangle_with_deferred_edges(
-                    Arc::clone(positions),
-                    [i0, i1, i2],
-                    mesh_index as isize,
-                    polygon_index,
-                ),
+                (Some(positions), None) => {
+                    let axis_hint = approximate_positions.as_ref().and_then(|points| {
+                        let [p0, p1, p2] = [points[i0], points[i1], points[i2]];
+                        (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])
+                    });
+                    make_indexed_triangle_with_deferred_edges(
+                        Arc::clone(positions),
+                        [i0, i1, i2],
+                        axis_hint,
+                        mesh_index as isize,
+                        polygon_index,
+                    )
+                }
                 (None, Some(planes)) => make_triangle_with_input_planes(
                     p0,
                     p1,
@@ -267,6 +298,24 @@ fn build_polygon_soup_with_edge_mode(
         bounds,
         num_meshes: meshes.len(),
     })
+}
+
+fn approximate_triangle_axis(positions: &[Point3], indices: [usize; 3]) -> Option<usize> {
+    let points = indices.map(|index| positions.get(index));
+    let [Some(p0), Some(p1), Some(p2)] = points else {
+        return None;
+    };
+    let points = [p0, p1, p2].map(|point| {
+        Some([
+            point.x.to_f64_lossy()?,
+            point.y.to_f64_lossy()?,
+            point.z.to_f64_lossy()?,
+        ])
+    });
+    let [Some(p0), Some(p1), Some(p2)] = points else {
+        return None;
+    };
+    (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
