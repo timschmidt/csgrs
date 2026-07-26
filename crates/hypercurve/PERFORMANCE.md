@@ -5420,6 +5420,16 @@ executed performance tests for all workspace hyper crates:
 `hypersolve`, `hypertri`, and `hypervoxel`. Relevant sanitizer fuzzers remain
 the final cross-stack correctness tier.
 
+The second tier is executable through
+`scripts/prepared-removal-all-hyper-gate.sh`. It refuses to start without a
+nonempty first-tier evidence report, records the exact source state of all 18
+repositories, runs all-feature/all-target correctness tests, and executes one
+complete all-feature workspace benchmark suite per crate, including every
+benchmark target. Its logs are review evidence:
+successful benchmark processes do not by themselves establish that timings
+passed, so every candidate-versus-baseline result must still be accepted
+explicitly before removal.
+
 The attempted immediate replacement for Hypersolve's shared-denominator
 rational-image carrier stopped at the first gate. Although denominator and
 source-polynomial reuse and x-before-y short circuiting were preserved, the
