@@ -357,7 +357,7 @@ struct ProjectiveBoundaryEntry {
     // Clipping moves this complete incidence record atomically. Keeping the
     // point and outgoing edge evidence together also makes length skew between
     // parallel identity arrays unrepresentable.
-    point: HomogeneousPoint3,
+    point_index: usize,
     preparation: ProjectivePointPreparation,
     point_identity: ConstructionVertexIdentity,
     edge: Plane,
@@ -389,11 +389,12 @@ impl ProjectiveBoundary {
 
     fn push(
         &mut self,
-        point: HomogeneousPoint3,
+        point_index: usize,
         preparation: ProjectivePointPreparation,
         point_identity: ConstructionVertexIdentity,
         edge: Plane,
         edge_identity: ConstructionEdgeIdentity,
+        point_cache: &ProjectivePointCache,
     ) {
         // Approximation inequality is only a rejection filter: equal exact
         // points have the same retained finite view. Deduplication still
@@ -404,7 +405,11 @@ impl ProjectiveBoundary {
             .and_then(|last| last.preparation.approximate)
             .zip(preparation.approximate)
             .is_some_and(|(last, current)| last != current);
-        if !approximations_differ && self.entries.last().is_some_and(|last| last.point == point) {
+        if !approximations_differ
+            && self.entries.last().is_some_and(|last| {
+                point_cache.point(last.point_index) == point_cache.point(point_index)
+            })
+        {
             let last = self
                 .entries
                 .last_mut()
@@ -414,7 +419,7 @@ impl ProjectiveBoundary {
             return;
         }
         self.entries.push(ProjectiveBoundaryEntry {
-            point,
+            point_index,
             preparation,
             point_identity,
             edge,
@@ -426,13 +431,16 @@ impl ProjectiveBoundary {
         mut self,
         support: Plane,
         source_plane: ConstructionPlaneIdentity,
+        point_cache: &ProjectivePointCache,
     ) -> ProjectiveCycle {
         if self.entries.len() > 1
             && self
                 .entries
                 .first()
                 .zip(self.entries.last())
-                .is_some_and(|(first, last)| first.point == last.point)
+                .is_some_and(|(first, last)| {
+                    point_cache.point(first.point_index) == point_cache.point(last.point_index)
+                })
         {
             self.entries.pop();
         }
@@ -458,6 +466,10 @@ struct ProjectiveAffineCacheEntry {
 
 #[derive(Default)]
 struct ProjectivePointCache {
+    // Cycles retain stable indices instead of cloning 192-byte exact points.
+    // Identity remapping can therefore update a complete coincidence class to
+    // one stored point without cloning its coordinates into every cache entry.
+    point_storage: Vec<HomogeneousPoint3>,
     points: StorageHashMap<ConstructionVertexIdentity, CachedProjectivePoint>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: [Vec<ConstructionPlaneIdentity>; 2],
@@ -469,7 +481,7 @@ struct ProjectivePointCache {
 }
 
 struct CachedProjectivePoint {
-    point: HomogeneousPoint3,
+    point_index: usize,
     approximate: Option<[f64; 3]>,
 }
 
@@ -531,6 +543,12 @@ impl ConstructionEdgeIdentity {
 }
 
 impl ProjectivePointCache {
+    fn point(&self, index: usize) -> &HomogeneousPoint3 {
+        self.point_storage
+            .get(index)
+            .expect("projective point index is retained for the computation")
+    }
+
     fn canonical_plane_identity(
         &self,
         identity: ConstructionPlaneIdentity,
@@ -724,7 +742,7 @@ impl ProjectivePointCache {
         let mut entries = self
             .points
             .drain()
-            .map(|(identity, cached)| (identity, cached.point, cached.approximate))
+            .map(|(identity, cached)| (identity, cached.point_index, cached.approximate))
             .collect::<Vec<_>>();
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
@@ -764,9 +782,9 @@ impl ProjectivePointCache {
                     (left - right).abs() <= scale * 1.0e-9
                 }) && self.identities_certifiably_equal(
                     &entries[left_index].0,
-                    &entries[left_index].1,
+                    self.point(entries[left_index].1),
                     &entries[right_index].0,
-                    &entries[right_index].1,
+                    self.point(entries[right_index].1),
                 ) {
                     sets.merge(left_index, right_index);
                 }
@@ -777,9 +795,9 @@ impl ProjectivePointCache {
                 if (entries[left].2.is_none() || entries[right].2.is_none())
                     && self.identities_certifiably_equal(
                         &entries[left].0,
-                        &entries[left].1,
+                        self.point(entries[left].1),
                         &entries[right].0,
-                        &entries[right].1,
+                        self.point(entries[right].1),
                     )
                 {
                     sets.merge(left, right);
@@ -827,26 +845,25 @@ impl ProjectivePointCache {
                     .insert(identity.clone(), class_incidences[representative].clone());
             }
         }
-        for (identity, point, _) in entries {
+        for (identity, point_index, _) in entries {
             self.points.insert(
                 identity,
                 CachedProjectivePoint {
-                    point,
+                    point_index,
                     approximate: None,
                 },
             );
         }
         for (identity, canonical_identity) in &self.canonical_identities {
-            let canonical_point = self
+            let canonical_point_index = self
                 .points
                 .get(canonical_identity)
                 .expect("canonical projective point is available")
-                .point
-                .clone();
+                .point_index;
             self.points.insert(
                 identity.clone(),
                 CachedProjectivePoint {
-                    point: canonical_point,
+                    point_index: canonical_point_index,
                     approximate: None,
                 },
             );
@@ -857,11 +874,7 @@ impl ProjectivePointCache {
         &mut self,
         identity: ConstructionVertexIdentity,
         point: HomogeneousPoint3,
-    ) -> (
-        HomogeneousPoint3,
-        Option<[f64; 3]>,
-        ConstructionVertexIdentity,
-    ) {
+    ) -> (usize, Option<[f64; 3]>, ConstructionVertexIdentity) {
         self.intern_with_approximation_by(identity, || point)
     }
 
@@ -869,11 +882,7 @@ impl ProjectivePointCache {
         &mut self,
         identity: ConstructionVertexIdentity,
         make_point: impl FnOnce() -> HomogeneousPoint3,
-    ) -> (
-        HomogeneousPoint3,
-        Option<[f64; 3]>,
-        ConstructionVertexIdentity,
-    ) {
+    ) -> (usize, Option<[f64; 3]>, ConstructionVertexIdentity) {
         self.intern_with_optional_approximation_by(identity, None, make_point)
     }
 
@@ -882,11 +891,7 @@ impl ProjectivePointCache {
         identity: ConstructionVertexIdentity,
         approximate: Option<[f64; 3]>,
         make_point: impl FnOnce() -> HomogeneousPoint3,
-    ) -> (
-        HomogeneousPoint3,
-        Option<[f64; 3]>,
-        ConstructionVertexIdentity,
-    ) {
+    ) -> (usize, Option<[f64; 3]>, ConstructionVertexIdentity) {
         self.intern_with_optional_approximation_by(identity, Some(approximate), make_point)
     }
 
@@ -895,25 +900,23 @@ impl ProjectivePointCache {
         identity: ConstructionVertexIdentity,
         known_approximate: Option<Option<[f64; 3]>>,
         make_point: impl FnOnce() -> HomogeneousPoint3,
-    ) -> (
-        HomogeneousPoint3,
-        Option<[f64; 3]>,
-        ConstructionVertexIdentity,
-    ) {
+    ) -> (usize, Option<[f64; 3]>, ConstructionVertexIdentity) {
         self.record_definition_incidences(&identity);
         if let Some(existing) = self.points.get(&identity) {
-            return (existing.point.clone(), existing.approximate, identity);
+            return (existing.point_index, existing.approximate, identity);
         }
         let point = make_point();
         let approximate = known_approximate.unwrap_or_else(|| projective_point_f64(&point));
+        let point_index = self.point_storage.len();
+        self.point_storage.push(point);
         self.points.insert(
             identity.clone(),
             CachedProjectivePoint {
-                point: point.clone(),
+                point_index,
                 approximate,
             },
         );
-        (point, approximate, identity)
+        (point_index, approximate, identity)
     }
 }
 
@@ -1233,8 +1236,8 @@ impl ProjectiveCycle {
                 }
             };
             let identity = ConstructionVertexIdentity::Source { mesh, vertex };
-            let (point, approximate, identity) =
-                point_cache.intern_with_known_approximation_by(identity, approximate, || {
+            let (projective_point_index, approximate, identity) = point_cache
+                .intern_with_known_approximation_by(identity, approximate, || {
                     HomogeneousPoint3::new(
                         point.x.clone(),
                         point.y.clone(),
@@ -1248,7 +1251,7 @@ impl ProjectiveCycle {
                 _ => polygon.edges[point_index].clone(),
             };
             boundary.push(ProjectiveBoundaryEntry {
-                point,
+                point_index: projective_point_index,
                 preparation: ProjectivePointPreparation {
                     approximate,
                     // Retain prepared queries only for constructed crossings that
@@ -1276,7 +1279,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> Vec<(
         usize,
-        HomogeneousPoint3,
+        usize,
         ProjectivePointPreparation,
         ConstructionVertexIdentity,
     )> {
@@ -1292,14 +1295,13 @@ impl ProjectiveCycle {
                 let (point, approximate_point, identity) = self.cached_crossing_point(
                     index,
                     plane_identity,
-                    &self.boundary[index].point,
                     current_classification,
-                    &self.boundary[next].point,
+                    next,
                     plane,
                     point_cache,
                 );
                 let rational_filter_query =
-                    PreparedProjectivePoint3::new(&point).rational_filter_query();
+                    PreparedProjectivePoint3::new(point_cache.point(point)).rational_filter_query();
                 crossings.push((
                     index,
                     point,
@@ -1328,6 +1330,7 @@ impl ProjectiveCycle {
             .iter()
             .enumerate()
             .map(|(point_index, entry)| {
+                let point = point_cache.point(entry.point_index);
                 if self.point_has_plane_incidence(
                     point_index,
                     plane_identity,
@@ -1337,7 +1340,7 @@ impl ProjectiveCycle {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
                     let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-                        &entry.point,
+                        point,
                         entry.preparation.rational_filter_query,
                     );
                     match prepared
@@ -1348,14 +1351,14 @@ impl ProjectiveCycle {
                         None => prepared.classify(plane),
                     }
                 } else {
-                    classify_projective_point(&entry.point, plane).inspect_err(|_error| {
+                    classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective clip point failed: source={:?} target={:?} point={point_index} value={:?}",
                                 self.source_plane,
                                 plane_identity,
                                 hyperlattice::homogeneous_point_plane_expression(
-                                    &entry.point,
+                                    point,
                                     plane,
                                 )
                                     .to_f64_lossy(),
@@ -1414,7 +1417,7 @@ impl ProjectiveCycle {
         let mut intersections = intersections.into_iter();
         for (index, entry) in boundary.into_iter().enumerate() {
             let ProjectiveBoundaryEntry {
-                point,
+                point_index: point,
                 preparation: point_preparation,
                 point_identity,
                 edge,
@@ -1431,6 +1434,7 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::Negative, Classification::Positive) => {
@@ -1449,13 +1453,15 @@ impl ProjectiveCycle {
                         point_identity,
                         edge.clone(),
                         edge_identity.clone(),
+                        point_cache,
                     );
                     negative.push(
-                        intersection.clone(),
+                        intersection,
                         intersection_preparation,
                         intersection_identity.clone(),
                         plane.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                     positive.push(
                         intersection,
@@ -1463,15 +1469,17 @@ impl ProjectiveCycle {
                         intersection_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::On, Classification::Negative) => {
                     negative.push(
-                        point.clone(),
+                        point,
                         point_preparation,
                         point_identity.clone(),
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                     positive.push(
                         point,
@@ -1479,15 +1487,17 @@ impl ProjectiveCycle {
                         point_identity,
                         inverted.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                 }
                 (Classification::On, Classification::On) => {
                     negative.push(
-                        point.clone(),
+                        point,
                         point_preparation,
                         point_identity.clone(),
                         edge.clone(),
                         edge_identity.clone(),
+                        point_cache,
                     );
                     positive.push(
                         point,
@@ -1495,15 +1505,17 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::On, Classification::Positive) => {
                     negative.push(
-                        point.clone(),
+                        point,
                         point_preparation,
                         point_identity.clone(),
                         plane.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                     positive.push(
                         point,
@@ -1511,6 +1523,7 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::Positive, Classification::Negative) => {
@@ -1524,11 +1537,12 @@ impl ProjectiveCycle {
                         .expect("strict side transition has an intersection");
                     debug_assert_eq!(crossing_index, index);
                     negative.push(
-                        intersection.clone(),
+                        intersection,
                         intersection_preparation,
                         intersection_identity.clone(),
                         edge.clone(),
                         edge_identity.clone(),
+                        point_cache,
                     );
                     positive.push(
                         point,
@@ -1536,6 +1550,7 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                     positive.push(
                         intersection,
@@ -1543,6 +1558,7 @@ impl ProjectiveCycle {
                         intersection_identity,
                         inverted.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                 }
                 (Classification::Positive, Classification::On | Classification::Positive) => {
@@ -1552,14 +1568,15 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
             }
         }
         debug_assert!(intersections.next().is_none());
         Ok(ProjectiveClip {
-            negative: negative.into_cycle(support.clone(), source_plane),
-            positive: positive.into_cycle(support, source_plane),
+            negative: negative.into_cycle(support.clone(), source_plane, point_cache),
+            positive: positive.into_cycle(support, source_plane, point_cache),
             side: ProjectiveClipSide::Both,
         })
     }
@@ -1578,6 +1595,7 @@ impl ProjectiveCycle {
             .iter()
             .enumerate()
             .map(|(point_index, entry)| {
+                let point = point_cache.point(entry.point_index);
                 if self.point_has_plane_incidence(
                     point_index,
                     plane_identity,
@@ -1587,7 +1605,7 @@ impl ProjectiveCycle {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
                     let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-                        &entry.point,
+                        point,
                         entry.preparation.rational_filter_query,
                     );
                     match prepared
@@ -1598,7 +1616,7 @@ impl ProjectiveCycle {
                         None => prepared.classify(plane),
                     }
                 } else {
-                    classify_projective_point(&entry.point, plane).inspect_err(|_error| {
+                    classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective negative clip point failed: source={:?} target={:?} point={point_index} identity={:?} adjacent={:?} point_xyz={:?} plane={:?} exact={:?} value={:?}",
@@ -1610,10 +1628,10 @@ impl ProjectiveCycle {
                                     self.boundary.get(point_index).map(|entry| &entry.edge_identity),
                                 ],
                                 [
-                                    entry.point.x.to_f64_lossy(),
-                                    entry.point.y.to_f64_lossy(),
-                                    entry.point.z.to_f64_lossy(),
-                                    entry.point.w.to_f64_lossy(),
+                                    point.x.to_f64_lossy(),
+                                    point.y.to_f64_lossy(),
+                                    point.z.to_f64_lossy(),
+                                    point.w.to_f64_lossy(),
                                 ],
                                 [
                                     plane.normal.x.to_f64_lossy(),
@@ -1627,7 +1645,7 @@ impl ProjectiveCycle {
                                     plane.normal.z.exact_rational_ref().is_some(),
                                     plane.offset.exact_rational_ref().is_some(),
                                 ],
-                                hyperlattice::homogeneous_point_plane_expression(&entry.point, plane)
+                                hyperlattice::homogeneous_point_plane_expression(point, plane)
                                     .to_f64_lossy(),
                             );
                         }
@@ -1673,7 +1691,7 @@ impl ProjectiveCycle {
         let mut intersections = intersections.into_iter();
         for (index, entry) in boundary.into_iter().enumerate() {
             let ProjectiveBoundaryEntry {
-                point,
+                point_index: point,
                 preparation: point_preparation,
                 point_identity,
                 edge,
@@ -1693,6 +1711,7 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::Negative, Classification::Positive) => {
@@ -1711,6 +1730,7 @@ impl ProjectiveCycle {
                         point_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                     negative.push(
                         intersection,
@@ -1718,6 +1738,7 @@ impl ProjectiveCycle {
                         intersection_identity,
                         plane.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                 }
                 (Classification::On, Classification::Positive) => {
@@ -1727,6 +1748,7 @@ impl ProjectiveCycle {
                         point_identity,
                         plane.clone(),
                         split_identity.clone(),
+                        point_cache,
                     );
                 }
                 (Classification::Positive, Classification::Negative) => {
@@ -1745,13 +1767,14 @@ impl ProjectiveCycle {
                         intersection_identity,
                         edge,
                         edge_identity,
+                        point_cache,
                     );
                 }
                 (Classification::Positive, Classification::On | Classification::Positive) => {}
             }
         }
         debug_assert!(intersections.next().is_none());
-        Ok(negative.into_cycle(support, source_plane))
+        Ok(negative.into_cycle(support, source_plane, point_cache))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1759,16 +1782,11 @@ impl ProjectiveCycle {
         &self,
         edge_index: usize,
         plane_identity: ConstructionPlaneIdentity,
-        current: &HomogeneousPoint3,
         current_classification: Classification,
-        next: &HomogeneousPoint3,
+        next_index: usize,
         plane: &Plane,
         point_cache: &mut ProjectivePointCache,
-    ) -> (
-        HomogeneousPoint3,
-        Option<[f64; 3]>,
-        ConstructionVertexIdentity,
-    ) {
+    ) -> (usize, Option<[f64; 3]>, ConstructionVertexIdentity) {
         let identity = point_cache.edge_plane_intersection_identity(
             &self.boundary[edge_index].edge_identity,
             plane_identity,
@@ -1776,22 +1794,26 @@ impl ProjectiveCycle {
         if point_cache.points.len() >= PROJECTIVE_CROSSING_CACHE_MIN_POINTS
             && let Some(existing) = point_cache.points.get(&identity)
         {
-            return (existing.point.clone(), existing.approximate, identity);
+            return (existing.point_index, existing.approximate, identity);
         }
-        let point = point_cache
+        let point = if let Some(point) = point_cache
             .definition_planes(&identity)
             .and_then(positive_weight_plane_intersection)
-            .unwrap_or_else(|| {
-                let current_value = homogeneous_point_plane_expression(current, plane);
-                let next_value = homogeneous_point_plane_expression(next, plane);
-                projective_crossing_point(
-                    current,
-                    &current_value,
-                    current_classification,
-                    next,
-                    &next_value,
-                )
-            });
+        {
+            point
+        } else {
+            let current = point_cache.point(self.boundary[edge_index].point_index);
+            let next = point_cache.point(self.boundary[next_index].point_index);
+            let current_value = homogeneous_point_plane_expression(current, plane);
+            let next_value = homogeneous_point_plane_expression(next, plane);
+            projective_crossing_point(
+                current,
+                &current_value,
+                current_classification,
+                next,
+                &next_value,
+            )
+        };
         point_cache.intern_with_approximation(identity, point)
     }
 
@@ -1799,6 +1821,7 @@ impl ProjectiveCycle {
         self,
         source: &ConvexPolygon,
         affine_cache: &mut ProjectiveAffineCache,
+        point_cache: &ProjectivePointCache,
     ) -> HypermeshResult<ConvexPolygon> {
         if self.source_unchanged {
             return Ok(source.clone());
@@ -1808,7 +1831,10 @@ impl ProjectiveCycle {
         let mut edges = Vec::with_capacity(self.boundary.len());
         let mut edge_identities = Vec::with_capacity(self.boundary.len());
         for entry in self.boundary {
-            vertices.push(affine_cache.resolve(&entry.point, Some(&entry.point_identity))?);
+            vertices.push(affine_cache.resolve(
+                point_cache.point(entry.point_index),
+                Some(&entry.point_identity),
+            )?);
             point_identities.push(entry.point_identity);
             edges.push(entry.edge);
             edge_identities.push(entry.edge_identity);
@@ -2235,6 +2261,7 @@ fn compute_two_convex_inputs_projectively(
                     source,
                     polygon,
                     &mut affine_cache,
+                    &projective_point_cache,
                     host,
                     other,
                     false,
@@ -2252,6 +2279,7 @@ fn compute_two_convex_inputs_projectively(
                     outside,
                     polygon,
                     &mut affine_cache,
+                    &projective_point_cache,
                     host,
                     other,
                     false,
@@ -2264,6 +2292,7 @@ fn compute_two_convex_inputs_projectively(
                     inside,
                     polygon,
                     &mut affine_cache,
+                    &projective_point_cache,
                     host,
                     other,
                     inside_winding,
@@ -2278,6 +2307,7 @@ fn compute_two_convex_inputs_projectively(
                 inside,
                 polygon,
                 &mut affine_cache,
+                &projective_point_cache,
                 host,
                 other,
                 inside_winding,
@@ -2326,7 +2356,10 @@ fn compute_two_convex_inputs_projectively(
                         let Some(point) = projective_point_cache.points.get(identity) else {
                             return Ok(original);
                         };
-                        affine_cache.resolve(&point.point, Some(identity))
+                        affine_cache.resolve(
+                            projective_point_cache.point(point.point_index),
+                            Some(identity),
+                        )
                     })
                     .collect::<HypermeshResult<Vec<_>>>()?;
                 fragment.polygon = fragment
@@ -3256,7 +3289,7 @@ fn cycle_satisfies_planes<'a>(
     }
     for entry in &cycle.boundary {
         let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-            &entry.point,
+            point_cache.point(entry.point_index),
             entry.preparation.rational_filter_query,
         );
         for (plane_index, prepared_plane) in prepared_planes.iter() {
@@ -3450,6 +3483,7 @@ fn push_projective_transition(
     cycle: ProjectiveCycle,
     source: &ConvexPolygon,
     affine_cache: &mut ProjectiveAffineCache,
+    point_cache: &ProjectivePointCache,
     host: usize,
     other: usize,
     inside_other: bool,
@@ -3462,7 +3496,7 @@ fn push_projective_transition(
     if !projective_transition_is_emitted(host, inside_other, operation) {
         return Ok(());
     }
-    let polygon = cycle.materialize(source, affine_cache)?;
+    let polygon = cycle.materialize(source, affine_cache, point_cache)?;
     let mut fragment = ClassifiedPolygon::new(polygon, ARRANGEMENT_CLASSIFICATION);
     fragment.winding = Some(winding);
     fragment.is_bsp_fragment = true;
@@ -3695,7 +3729,12 @@ mod tests {
             cycle
                 .boundary
                 .iter()
-                .map(|entry| entry.point.to_affine_point().unwrap())
+                .map(|entry| {
+                    point_cache
+                        .point(entry.point_index)
+                        .to_affine_point()
+                        .unwrap()
+                })
                 .collect::<Vec<_>>()
         };
 
@@ -4127,7 +4166,11 @@ mod tests {
             let canonical = identities
                 .each_ref()
                 .map(|identity| cache.canonical_vertex_identity(identity));
+            let canonical_point_indices = identities
+                .each_ref()
+                .map(|identity| cache.points[identity].point_index);
             assert_eq!(cache.canonical_identities.len(), 1);
+            assert_eq!(canonical_point_indices[0], canonical_point_indices[1]);
             for identity in &identities {
                 if *identity == canonical[0] {
                     assert!(!cache.canonical_identities.contains_key(identity));
