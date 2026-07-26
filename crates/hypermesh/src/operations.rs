@@ -3160,26 +3160,45 @@ fn collapse_certified_collinear_face_vertices(
     }
     let rebuild_edge_planes = !edges.is_empty();
     if len > 3 {
-        let retained = (0..len)
-            .filter(|&index| {
-                if certified_noncollinear_vertices.is_some_and(|certified| certified[index]) {
-                    return true;
-                }
-                !support.points_are_collinear_on_support(
+        // Keep ordinary merged-face cycles allocation-free without imposing a
+        // size limit on exact inputs.
+        const STACK_RETAINED_VERTICES: usize = 32;
+        let mut retained_stack = [0; STACK_RETAINED_VERTICES];
+        let mut retained_heap = Vec::new();
+        let mut retained_len = 0;
+        for index in 0..len {
+            let keep = certified_noncollinear_vertices.is_some_and(|certified| certified[index])
+                || !support.points_are_collinear_on_support(
                     &vertices[(index + len - 1) % len],
                     &vertices[index],
                     &vertices[(index + 1) % len],
-                )
-            })
-            .collect::<Vec<_>>();
+                );
+            if keep {
+                if retained_len < retained_stack.len() {
+                    retained_stack[retained_len] = index;
+                } else {
+                    if retained_heap.is_empty() {
+                        retained_heap = Vec::with_capacity(len);
+                        retained_heap.extend_from_slice(&retained_stack);
+                    }
+                    retained_heap.push(index);
+                }
+                retained_len += 1;
+            }
+        }
+        let retained = if retained_len <= retained_stack.len() {
+            &retained_stack[..retained_len]
+        } else {
+            &retained_heap
+        };
         if retained.len() < 3 {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
         if retained.len() == len {
             return Ok(());
         }
-        retain_indices(vertices, &retained);
-        retain_indices(vertex_identities, &retained);
+        retain_indices(vertices, retained);
+        retain_indices(vertex_identities, retained);
     }
 
     edges.clear();
@@ -4174,6 +4193,52 @@ mod tests {
             [[0, 2], [2, 4], [4, 6], [0, 6]]
                 .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 0, endpoints } })
         );
+    }
+
+    #[test]
+    fn certified_collinear_face_compaction_falls_back_beyond_stack_capacity() {
+        let support = Plane::axis_aligned(2, Real::zero());
+        let expected_vertices = (0..40)
+            .map(|index| {
+                let x = 2 * index;
+                p(x, x * x, 0)
+            })
+            .collect::<Vec<_>>();
+        let mut vertices = expected_vertices.clone();
+        vertices.insert(1, p(1, 2, 0));
+        let mut vertex_identities = (0..vertices.len())
+            .map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex })
+            .collect::<Vec<_>>();
+        let mut edges = Vec::new();
+        let mut edge_identities = (0..vertices.len())
+            .map(|start| ConstructionEdgeIdentity::Source {
+                mesh: 0,
+                endpoints: [start, (start + 1) % vertices.len()],
+            })
+            .collect::<Vec<_>>();
+
+        collapse_certified_collinear_face_vertices(
+            0,
+            &support,
+            &mut vertices,
+            &mut vertex_identities,
+            &mut edges,
+            &mut edge_identities,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(vertices, expected_vertices);
+        assert_eq!(vertex_identities.len(), 40);
+        assert_eq!(
+            vertex_identities[0],
+            ConstructionVertexIdentity::Source { mesh: 0, vertex: 0 }
+        );
+        assert_eq!(
+            vertex_identities[1],
+            ConstructionVertexIdentity::Source { mesh: 0, vertex: 2 }
+        );
+        assert_eq!(edge_identities.len(), 40);
     }
 
     #[test]
