@@ -743,13 +743,18 @@ where
         }
         let triangle_start = triangles.len();
         if boundary.len() > indexed.len() {
-            let center = append_output_polygon_centroid(&mut vertices, &indexed)?;
-            for index in 0..boundary.len() {
-                triangles.push([
-                    center,
-                    boundary[index],
-                    boundary[(index + 1) % boundary.len()],
-                ]);
+            if append_split_boundary_fan_from_unsplit_corner(&indexed, &boundary, &mut triangles) {
+                crate::trace_dispatch!("output-triangulation", "split-boundary-corner-fan");
+            } else {
+                crate::trace_dispatch!("output-triangulation", "split-boundary-centroid");
+                let center = append_output_polygon_centroid(&mut vertices, &indexed)?;
+                for index in 0..boundary.len() {
+                    triangles.push([
+                        center,
+                        boundary[index],
+                        boundary[(index + 1) % boundary.len()],
+                    ]);
+                }
             }
         } else {
             let appended_construction = if construction_candidates.is_some() {
@@ -937,6 +942,35 @@ fn triangulate_classified_arrangement_with_strategy(
         soup,
         windings: triangle_windings,
     })
+}
+
+fn append_split_boundary_fan_from_unsplit_corner(
+    indexed: &[usize],
+    boundary: &[usize],
+    triangles: &mut Vec<[usize; 3]>,
+) -> bool {
+    let Some((anchor_position, &anchor)) =
+        boundary.iter().enumerate().find(|(position, vertex)| {
+            indexed.contains(vertex)
+                && indexed.contains(&boundary[(position + boundary.len() - 1) % boundary.len()])
+                && indexed.contains(&boundary[(position + 1) % boundary.len()])
+        })
+    else {
+        return false;
+    };
+
+    // Both boundary edges incident to the anchor are original unsplit edges.
+    // Every inserted vertex is therefore on a non-incident edge, so this fan
+    // preserves every split boundary subedge without producing a collinear
+    // triangle at the anchor.
+    for offset in 1..(boundary.len() - 1) {
+        triangles.push([
+            anchor,
+            boundary[(anchor_position + offset) % boundary.len()],
+            boundary[(anchor_position + offset + 1) % boundary.len()],
+        ]);
+    }
+    true
 }
 
 fn append_output_polygon_centroid(
@@ -3025,7 +3059,7 @@ mod tests {
     }
 
     #[test]
-    fn expanded_boundary_fan_uses_source_polygon_centroid() {
+    fn expanded_boundary_uses_unsplit_opposite_corner_fan() {
         let polygons = vec![
             make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
             make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, -1, 0), 0, 1),
@@ -3043,11 +3077,34 @@ mod tests {
         .unwrap();
         let two_thirds = Real::from(Rational::fraction(2, 3).unwrap());
 
-        assert!(soup.vertices.contains(&OutputVertex {
+        assert_eq!(soup.vertices.len(), 6);
+        assert_eq!(soup.triangles.len(), 4);
+        assert!(!soup.vertices.contains(&OutputVertex {
             x: two_thirds.clone(),
             y: two_thirds,
             z: Real::zero(),
         }));
+    }
+
+    #[test]
+    fn split_boundary_corner_fan_requires_both_incident_edges_unsplit() {
+        let indexed = [0, 1, 2];
+        let mut triangles = Vec::new();
+
+        assert!(append_split_boundary_fan_from_unsplit_corner(
+            &indexed,
+            &[0, 3, 1, 2],
+            &mut triangles,
+        ));
+        assert_eq!(triangles, vec![[2, 0, 3], [2, 3, 1]]);
+
+        triangles.clear();
+        assert!(!append_split_boundary_fan_from_unsplit_corner(
+            &indexed,
+            &[0, 3, 1, 4, 2, 5],
+            &mut triangles,
+        ));
+        assert!(triangles.is_empty());
     }
 
     #[test]
