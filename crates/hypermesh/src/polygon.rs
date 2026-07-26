@@ -395,7 +395,11 @@ impl ConvexPolygon {
             mesh_index,
             polygon_index,
             delta_w,
-            approx_bounds: Some(bounds_for_owned_points(vertices.as_slice())),
+            // Certified convex faces are consumed only by the projective
+            // two-input candidate, which classifies directly against support
+            // planes. A failed candidate rebuilds ordinary input polygons
+            // before any BVH or subdivision query.
+            approx_bounds: None,
             known_vertices: Some(RetainedVertexCycle::Owned(Arc::from(vertices))),
             known_identities: Some(RetainedIdentityCycles::Owned {
                 vertices: Arc::from(vertex_identities),

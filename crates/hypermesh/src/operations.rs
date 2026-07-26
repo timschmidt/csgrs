@@ -3714,6 +3714,8 @@ mod tests {
             reverse.known_vertex_identities(),
             Some(expected_vertices.as_slice())
         );
+        assert!(forward.approx_bounds.is_none());
+        assert!(reverse.approx_bounds.is_none());
         assert_eq!(
             forward.known_edge_identities(),
             reverse.known_edge_identities()
