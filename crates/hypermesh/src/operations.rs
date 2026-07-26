@@ -3192,18 +3192,26 @@ fn cycle_satisfies_planes<'a>(
     prepared_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
     point_cache: &ProjectivePointCache,
 ) -> HypermeshResult<bool> {
+    debug_assert!(plane_indices.is_sorted());
+    debug_assert!(excluded_planes.is_sorted());
     prepared_planes.clear();
-    prepared_planes.extend(
-        plane_indices
-            .iter()
-            .filter(|plane_index| !excluded_planes.contains(plane_index))
-            .map(|&plane_index| {
-                (
-                    plane_index,
-                    PreparedRationalPlane4::new(support_planes[plane_index]),
-                )
-            }),
-    );
+    let mut excluded_index = 0;
+    for &plane_index in plane_indices {
+        while excluded_planes
+            .get(excluded_index)
+            .is_some_and(|&excluded| excluded < plane_index)
+        {
+            excluded_index += 1;
+        }
+        if excluded_planes.get(excluded_index) == Some(&plane_index) {
+            excluded_index += 1;
+            continue;
+        }
+        prepared_planes.push((
+            plane_index,
+            PreparedRationalPlane4::new(support_planes[plane_index]),
+        ));
+    }
     for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
         for (plane_index, prepared_plane) in prepared_planes.iter() {
