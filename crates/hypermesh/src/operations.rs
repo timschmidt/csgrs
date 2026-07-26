@@ -479,6 +479,27 @@ impl ProjectivePointCache {
         }
     }
 
+    fn has_incidence(
+        &self,
+        identity: &ConstructionVertexIdentity,
+        plane: ConstructionPlaneIdentity,
+    ) -> bool {
+        let plane = self.canonical_plane_identity(plane);
+        if self
+            .point_incidences
+            .get(identity)
+            .is_some_and(|incidences| incidences.contains(&plane))
+        {
+            return true;
+        }
+        let canonical = self.canonical_vertex_identity(identity);
+        canonical != *identity
+            && self
+                .point_incidences
+                .get(&canonical)
+                .is_some_and(|incidences| incidences.contains(&plane))
+    }
+
     fn canonical_vertex_identity(
         &self,
         identity: &ConstructionVertexIdentity,
@@ -2649,13 +2670,18 @@ fn exact_inside_and_active_planes(
             .copied()
             .filter(|plane| !proposed_planes.contains(plane))
             .collect::<Vec<_>>();
-        if cycle_satisfies_planes(&inside, support_planes, &verification_planes).inspect_err(
-            |_error| {
-                if cfg!(debug_assertions) {
-                    eprintln!("[DEBUG] proposed projective verification failed");
-                }
-            },
-        )? {
+        if cycle_satisfies_planes(
+            &inside,
+            support_planes,
+            &verification_planes,
+            support_plane_mesh,
+            point_cache,
+        )
+        .inspect_err(|_error| {
+            if cfg!(debug_assertions) {
+                eprintln!("[DEBUG] proposed projective verification failed");
+            }
+        })? {
             crate::trace_dispatch!("projective-active-planes", "proposed-certified");
             let active = outside.as_ref().map_or_else(
                 || active_cycle_planes(&inside, proposed_planes, support_plane_mesh, point_cache),
@@ -2826,18 +2852,33 @@ fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
+    support_plane_mesh: usize,
+    point_cache: &ProjectivePointCache,
 ) -> HypermeshResult<bool> {
     let prepared_planes = plane_indices
         .iter()
         .map(|&plane_index| PreparedRationalPlane4::new(support_planes[plane_index]))
         .collect::<Vec<_>>();
-    for point in &cycle.points {
+    for (point_index, point) in cycle.points.iter().enumerate() {
         let prepared = PreparedProjectivePoint3::new(point);
         for (candidate_index, &plane_index) in plane_indices.iter().enumerate() {
             let classification = match &prepared_planes[candidate_index] {
-                Some(plane) => match prepared.classify_rational_plane(plane) {
+                Some(plane) => match prepared.classify_rational_plane_filter(plane) {
                     Some(classification) => classification,
-                    None => prepared.classify(support_planes[plane_index])?,
+                    None if point_cache.has_incidence(
+                        &cycle.point_identities[point_index],
+                        ConstructionPlaneIdentity {
+                            mesh: support_plane_mesh,
+                            plane: plane_index,
+                        },
+                    ) =>
+                    {
+                        Classification::On
+                    }
+                    None => match prepared.classify_rational_plane_exact(plane) {
+                        Some(classification) => classification,
+                        None => prepared.classify(support_planes[plane_index])?,
+                    },
                 },
                 None => prepared.classify(support_planes[plane_index])?,
             };
@@ -3388,7 +3429,7 @@ mod tests {
     }
 
     #[test]
-    fn projective_cycle_verification_accepts_exact_plane_incidences() {
+    fn projective_cycle_verification_reuses_exact_plane_incidences() {
         let polygon = crate::polygon::make_triangle_with_deferred_edges(
             &p(0, 0, 0),
             &p(1, 0, 0),
@@ -3397,14 +3438,20 @@ mod tests {
             0,
         )
         .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
             &polygon,
             ConstructionPlaneIdentity { mesh: 0, plane: 0 },
-            &mut ProjectivePointCache::default(),
+            &mut point_cache,
         )
         .unwrap();
+        for identity in &cycle.point_identities {
+            point_cache.record_incidence(identity, ConstructionPlaneIdentity { mesh: 0, plane: 0 });
+        }
 
-        assert!(cycle_satisfies_planes(&cycle, &[&polygon.support], &[0]).unwrap());
+        assert!(
+            cycle_satisfies_planes(&cycle, &[&polygon.support], &[0], 0, &point_cache).unwrap()
+        );
     }
 
     #[test]

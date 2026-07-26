@@ -340,20 +340,48 @@ impl<'a> PreparedProjectivePoint3<'a> {
         classify_real(&homogeneous_point_plane_expression(self.point, plane))
     }
 
-    pub(crate) fn classify_rational_plane(
+    pub(crate) fn classify_rational_plane_filter(
         &self,
         plane: &PreparedRationalPlane4<'_>,
     ) -> Option<Classification> {
         let [x, y, z, weight] = self.exact_coordinates?;
-        let classification = classify_exact_rational_coordinates_with_filter(
-            plane.coefficients,
-            [x, y, z],
-            weight,
-            self.rational_filter_query.as_ref(),
-            plane.filter,
+        let sign = plane
+            .filter
+            .and_then(|filter| match &self.rational_filter_query {
+                Some(query) => filter.sign_prepared(query),
+                None => filter.sign_rational([x, y, z, weight]),
+            })?;
+        crate::trace_dispatch!("classify-point", "projective-rational-floating-filter");
+        crate::trace_dispatch!("classify-point", "projective-exact-rational");
+        Some(match sign {
+            RealSign::Negative => Classification::Negative,
+            RealSign::Zero => Classification::On,
+            RealSign::Positive => Classification::Positive,
+        })
+    }
+
+    pub(crate) fn classify_rational_plane_exact(
+        &self,
+        plane: &PreparedRationalPlane4<'_>,
+    ) -> Option<Classification> {
+        let [x, y, z, weight] = self.exact_coordinates?;
+        let [a, b, c, d] = plane.coefficients;
+        let ordering =
+            Rational::signed_product_sum_ordering([true; 4], [[a, x], [b, y], [c, z], [d, weight]]);
+        crate::trace_dispatch!(
+            "classify-point",
+            match ordering {
+                Ordering::Less => "projective-rational-exact-fallback-negative",
+                Ordering::Equal => "projective-rational-exact-fallback-on",
+                Ordering::Greater => "projective-rational-exact-fallback-positive",
+            }
         );
         crate::trace_dispatch!("classify-point", "projective-exact-rational");
-        Some(classification)
+        Some(match ordering {
+            Ordering::Less => Classification::Negative,
+            Ordering::Equal => Classification::On,
+            Ordering::Greater => Classification::Positive,
+        })
     }
 }
 
@@ -602,7 +630,9 @@ mod tests {
             let prepared_plane =
                 PreparedRationalPlane4::new(plane).expect("integer plane is exactly rational");
             assert_eq!(
-                prepared.classify_rational_plane(&prepared_plane),
+                prepared
+                    .classify_rational_plane_filter(&prepared_plane)
+                    .or_else(|| prepared.classify_rational_plane_exact(&prepared_plane)),
                 Some(prepared.classify(plane).unwrap()),
             );
         }
