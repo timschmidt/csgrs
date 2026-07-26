@@ -347,6 +347,7 @@ fn compute_boolean(
 #[derive(Clone)]
 struct ProjectiveCycle {
     points: Vec<HomogeneousPoint3>,
+    approximate_points: Vec<Option<[f64; 3]>>,
     point_identities: Vec<ConstructionVertexIdentity>,
     edges: Vec<Plane>,
     edge_identities: Vec<ConstructionEdgeIdentity>,
@@ -363,6 +364,7 @@ struct ProjectiveClip {
 
 struct ProjectiveBoundary {
     points: Vec<HomogeneousPoint3>,
+    approximate_points: Vec<Option<[f64; 3]>>,
     point_identities: Vec<ConstructionVertexIdentity>,
     edges: Vec<Plane>,
     edge_identities: Vec<ConstructionEdgeIdentity>,
@@ -372,6 +374,7 @@ impl ProjectiveBoundary {
     fn with_capacity(capacity: usize) -> Self {
         Self {
             points: Vec::with_capacity(capacity),
+            approximate_points: Vec::with_capacity(capacity),
             point_identities: Vec::with_capacity(capacity),
             edges: Vec::with_capacity(capacity),
             edge_identities: Vec::with_capacity(capacity),
@@ -381,6 +384,7 @@ impl ProjectiveBoundary {
     fn push(
         &mut self,
         point: HomogeneousPoint3,
+        approximate_point: Option<[f64; 3]>,
         point_identity: ConstructionVertexIdentity,
         edge: Plane,
         edge_identity: ConstructionEdgeIdentity,
@@ -395,6 +399,7 @@ impl ProjectiveBoundary {
             return;
         }
         self.points.push(point);
+        self.approximate_points.push(approximate_point);
         self.point_identities.push(point_identity);
         self.edges.push(edge);
         self.edge_identities.push(edge_identity);
@@ -407,12 +412,14 @@ impl ProjectiveBoundary {
     ) -> ProjectiveCycle {
         if self.points.len() > 1 && self.points.first() == self.points.last() {
             self.points.pop();
+            self.approximate_points.pop();
             self.point_identities.pop();
             self.edges.pop();
             self.edge_identities.pop();
         }
         ProjectiveCycle {
             points: self.points,
+            approximate_points: self.approximate_points,
             point_identities: self.point_identities,
             edges: self.edges,
             edge_identities: self.edge_identities,
@@ -830,13 +837,6 @@ fn affine_point_f64(point: &Point3) -> Option<[f64; 3]> {
     point.into_iter().all(f64::is_finite).then_some(point)
 }
 
-fn projective_point_normalized_plane_may_be_on(
-    point: &HomogeneousPoint3,
-    plane: Option<[f64; 4]>,
-) -> bool {
-    projective_point_f64(point).is_none_or(|point| normalized_point_plane_may_be_on(point, plane))
-}
-
 fn normalized_point_plane_may_be_on(point: [f64; 3], plane: Option<[f64; 4]>) -> bool {
     match plane {
         Some(plane) => {
@@ -1085,7 +1085,8 @@ impl ProjectiveCycle {
                 Some(ConstructionEdgeIdentity::Split { planes })
                     if planes.contains(&plane_identity)
             )
-        }) || (projective_point_normalized_plane_may_be_on(&self.points[point_index], plane_f64)
+        }) || (self.approximate_points[point_index]
+            .is_none_or(|point| normalized_point_plane_may_be_on(point, plane_f64))
             && crate::intersection::four_plane_determinant(
                 &self.support,
                 &self.edges[previous],
@@ -1108,6 +1109,7 @@ impl ProjectiveCycle {
             .known_edge_identities()
             .ok_or(crate::error::HypermeshError::UnknownClassification)?
             .to_vec();
+        let approximate_points = source_points.iter().map(affine_point_f64).collect();
         if edge_identities.len() != source_points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
@@ -1147,6 +1149,7 @@ impl ProjectiveCycle {
         };
         Ok(Self {
             points,
+            approximate_points,
             point_identities,
             edges,
             edge_identities,
@@ -1162,7 +1165,12 @@ impl ProjectiveCycle {
         plane: &Plane,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
-    ) -> Vec<(usize, HomogeneousPoint3, ConstructionVertexIdentity)> {
+    ) -> Vec<(
+        usize,
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    )> {
         let mut crossings = Vec::with_capacity(2);
         for index in 0..self.points.len() {
             let next = (index + 1) % self.points.len();
@@ -1184,7 +1192,8 @@ impl ProjectiveCycle {
                     &next_value,
                     point_cache,
                 );
-                crossings.push((index, point, identity));
+                let approximate_point = projective_point_f64(&point);
+                crossings.push((index, point, approximate_point, identity));
             }
         }
         crossings
@@ -1266,6 +1275,7 @@ impl ProjectiveCycle {
         };
         let Self {
             points,
+            approximate_points,
             point_identities,
             edges,
             edge_identities,
@@ -1273,11 +1283,15 @@ impl ProjectiveCycle {
             source_plane,
             ..
         } = self;
+        let mut approximate_points = approximate_points.into_iter();
         let mut point_identities = point_identities.into_iter();
         let mut edges = edges.into_iter();
         let mut edge_identities = edge_identities.into_iter();
         let mut intersections = intersections.into_iter();
         for (index, point) in points.into_iter().enumerate() {
+            let approximate_point = approximate_points
+                .next()
+                .expect("projective point approximation is available");
             let point_identity = point_identities
                 .next()
                 .expect("projective point identity is available");
@@ -1290,26 +1304,57 @@ impl ProjectiveCycle {
             let next_classification = classifications[next];
             match (current_classification, next_classification) {
                 (Classification::Negative, Classification::Negative | Classification::On) => {
-                    negative.push(point, point_identity, edge, edge_identity);
+                    negative.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::Negative, Classification::Positive) => {
-                    let (crossing_index, intersection, intersection_identity) = intersections
+                    let (
+                        crossing_index,
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                    ) = intersections
                         .next()
                         .expect("strict side transition has an intersection");
                     debug_assert_eq!(crossing_index, index);
-                    negative.push(point, point_identity, edge.clone(), edge_identity.clone());
+                    negative.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge.clone(),
+                        edge_identity.clone(),
+                    );
                     negative.push(
                         intersection.clone(),
+                        intersection_approximate,
                         intersection_identity.clone(),
                         plane.clone(),
                         split_identity.clone(),
                     );
-                    positive.push(intersection, intersection_identity, edge, edge_identity);
+                    positive.push(
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::On, Classification::Negative) => {
-                    negative.push(point.clone(), point_identity.clone(), edge, edge_identity);
+                    negative.push(
+                        point.clone(),
+                        approximate_point,
+                        point_identity.clone(),
+                        edge,
+                        edge_identity,
+                    );
                     positive.push(
                         point,
+                        approximate_point,
                         point_identity,
                         inverted.clone(),
                         split_identity.clone(),
@@ -1318,42 +1363,75 @@ impl ProjectiveCycle {
                 (Classification::On, Classification::On) => {
                     negative.push(
                         point.clone(),
+                        approximate_point,
                         point_identity.clone(),
                         edge.clone(),
                         edge_identity.clone(),
                     );
-                    positive.push(point, point_identity, edge, edge_identity);
+                    positive.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::On, Classification::Positive) => {
                     negative.push(
                         point.clone(),
+                        approximate_point,
                         point_identity.clone(),
                         plane.clone(),
                         split_identity.clone(),
                     );
-                    positive.push(point, point_identity, edge, edge_identity);
+                    positive.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::Positive, Classification::Negative) => {
-                    let (crossing_index, intersection, intersection_identity) = intersections
+                    let (
+                        crossing_index,
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                    ) = intersections
                         .next()
                         .expect("strict side transition has an intersection");
                     debug_assert_eq!(crossing_index, index);
                     negative.push(
                         intersection.clone(),
+                        intersection_approximate,
                         intersection_identity.clone(),
                         edge.clone(),
                         edge_identity.clone(),
                     );
-                    positive.push(point, point_identity, edge, edge_identity);
+                    positive.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                     positive.push(
                         intersection,
+                        intersection_approximate,
                         intersection_identity,
                         inverted.clone(),
                         split_identity.clone(),
                     );
                 }
                 (Classification::Positive, Classification::On | Classification::Positive) => {
-                    positive.push(point, point_identity, edge, edge_identity);
+                    positive.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
             }
         }
@@ -1453,6 +1531,7 @@ impl ProjectiveCycle {
         };
         let Self {
             points: source_points,
+            approximate_points: source_approximate_points,
             point_identities: source_point_identities,
             edges: source_edges,
             edge_identities: source_edge_identities,
@@ -1460,11 +1539,15 @@ impl ProjectiveCycle {
             source_plane,
             ..
         } = self;
+        let mut source_approximate_points = source_approximate_points.into_iter();
         let mut source_point_identities = source_point_identities.into_iter();
         let mut source_edges = source_edges.into_iter();
         let mut source_edge_identities = source_edge_identities.into_iter();
         let mut intersections = intersections.into_iter();
         for (index, point) in source_points.into_iter().enumerate() {
+            let approximate_point = source_approximate_points
+                .next()
+                .expect("projective point approximation is available");
             let point_identity = source_point_identities
                 .next()
                 .expect("projective point identity is available");
@@ -1480,30 +1563,65 @@ impl ProjectiveCycle {
                     Classification::Negative | Classification::On,
                     Classification::Negative | Classification::On,
                 ) => {
-                    negative.push(point, point_identity, edge, edge_identity);
+                    negative.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::Negative, Classification::Positive) => {
-                    let (crossing_index, intersection, intersection_identity) = intersections
+                    let (
+                        crossing_index,
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                    ) = intersections
                         .next()
                         .expect("strict side transition has an intersection");
                     debug_assert_eq!(crossing_index, index);
-                    negative.push(point, point_identity, edge, edge_identity);
+                    negative.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        edge,
+                        edge_identity,
+                    );
                     negative.push(
                         intersection,
+                        intersection_approximate,
                         intersection_identity,
                         plane.clone(),
                         split_identity.clone(),
                     );
                 }
                 (Classification::On, Classification::Positive) => {
-                    negative.push(point, point_identity, plane.clone(), split_identity.clone());
+                    negative.push(
+                        point,
+                        approximate_point,
+                        point_identity,
+                        plane.clone(),
+                        split_identity.clone(),
+                    );
                 }
                 (Classification::Positive, Classification::Negative) => {
-                    let (crossing_index, intersection, intersection_identity) = intersections
+                    let (
+                        crossing_index,
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                    ) = intersections
                         .next()
                         .expect("strict side transition has an intersection");
                     debug_assert_eq!(crossing_index, index);
-                    negative.push(intersection, intersection_identity, edge, edge_identity);
+                    negative.push(
+                        intersection,
+                        intersection_approximate,
+                        intersection_identity,
+                        edge,
+                        edge_identity,
+                    );
                 }
                 (Classification::Positive, Classification::On | Classification::Positive) => {}
             }
@@ -1574,6 +1692,7 @@ impl ProjectiveCycle {
     fn empty() -> Self {
         Self {
             points: Vec::new(),
+            approximate_points: Vec::new(),
             point_identities: Vec::new(),
             edges: Vec::new(),
             edge_identities: Vec::new(),
@@ -1940,7 +2059,6 @@ fn compute_two_convex_inputs_projectively(
                 })?;
 
         let active_result = exact_inside_and_active_planes(
-            polygon,
             &source,
             &support_planes[other],
             support_planes_f64[other].as_deref(),
@@ -2685,7 +2803,6 @@ fn exact_plane_f64(plane: &Plane) -> Option<[f64; 4]> {
 }
 
 fn exact_inside_and_active_planes<'a>(
-    polygon: &ConvexPolygon,
     source: &ProjectiveCycle,
     support_planes: &[&'a Plane],
     support_planes_f64: Option<&[[f64; 4]]>,
@@ -2697,7 +2814,7 @@ fn exact_inside_and_active_planes<'a>(
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<Option<(ProjectiveCycle, Vec<usize>, Option<Vec<ProjectiveCycle>>)>> {
     if let Some(proposed_planes) = support_planes_f64
-        .and_then(|planes| propose_active_planes_f64(polygon, planes, candidate_planes))
+        .and_then(|planes| propose_active_planes_f64(source, planes, candidate_planes))
     {
         crate::trace_dispatch!("projective-active-planes", "proposed");
         let (inside, outside) = clip_inside_cycle_for_output(
@@ -2951,21 +3068,14 @@ fn cycle_satisfies_planes<'a>(
 }
 
 fn propose_active_planes_f64(
-    polygon: &ConvexPolygon,
+    source: &ProjectiveCycle,
     planes: &[[f64; 4]],
     candidate_planes: &[usize],
 ) -> Option<Vec<usize>> {
-    let mut cycle = polygon
-        .known_vertices
-        .as_ref()?
+    let mut cycle = source
+        .approximate_points
         .iter()
-        .map(|point| {
-            Some([
-                point.x.to_f64_lossy()?,
-                point.y.to_f64_lossy()?,
-                point.z.to_f64_lossy()?,
-            ])
-        })
+        .copied()
         .collect::<Option<Vec<_>>>()?;
     let mut clipped = Vec::new();
     let mut crossed_planes = Vec::new();
