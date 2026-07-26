@@ -98,7 +98,10 @@ pub mod waiver;
 
 pub use app::{RunOutcome, run, run_cli};
 pub use cli::{Check, Cli, OutputFormat};
-pub use report::{Diagnostic, Report, ReportSummary, Severity, Violation};
+pub use report::{
+    Diagnostic, FindingSourcePosition, FindingSourceSpan, FindingSubject, Report, ReportSummary,
+    Severity, Violation,
+};
 pub use scalar::Scalar;
 
 use csgrs::sketch::Profile;

@@ -9,8 +9,254 @@
 use crate::checks::intersection_for_check;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperKind};
-use crate::report::{Severity, Violation};
+use crate::report::{FindingSubject, Severity, Violation};
 use crate::{PcbSketch, PcbSketchExt, Scalar};
+
+/// Refined electrical kind supplied by a native authoring system.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AuthoredNetKind {
+    /// Unrefined electrical node.
+    Generic,
+    /// Supply rail with a source contract.
+    PowerSupply,
+    /// Ground or return net.
+    Ground,
+    /// Routed digital signal.
+    DigitalSignal,
+    /// Routed analog signal.
+    AnalogSignal,
+    /// One differential-pair member.
+    DifferentialPairMember,
+    /// Versioned authoring extension.
+    Extension {
+        /// Extension namespace.
+        namespace: String,
+        /// Stable kind name.
+        name: String,
+        /// Extension catalog version.
+        version: String,
+    },
+}
+
+/// Native authored net semantics available to role-aware DRC checks.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AuthoredNetIntent {
+    /// Stable logical net identity.
+    pub net: String,
+    /// Refined electrical kind.
+    pub kind: AuthoredNetKind,
+    /// Optional exact nominal voltage in volts.
+    pub nominal_voltage: Option<Scalar>,
+    /// Semantic source subject for diagnostics.
+    pub subject: FindingSubject,
+}
+
+/// Curated functional role supplied by a native authoring system.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum AuthoredFunctionalRoleKind {
+    /// Passive or active low-pass filter block.
+    LowpassFilter,
+    /// Passive or active high-pass filter block.
+    HighpassFilter,
+    /// Passive or active band-pass filter block.
+    BandpassFilter,
+    /// Conducted-emissions filter block.
+    EmiFilter,
+    /// Buck regulator block.
+    BuckRegulator,
+    /// Linear regulator block.
+    LdoRegulator,
+    /// Resistive voltage-divider block.
+    VoltageDivider,
+    /// Crystal oscillator block.
+    CrystalOscillator,
+    /// Operational-amplifier stage.
+    OpAmpStage,
+    /// Supply-pin decoupling capacitor.
+    DecouplingCapacitor,
+    /// Rail bulk-energy capacitor.
+    BulkCapacitor,
+    /// Kelvin-aware current-sense resistor.
+    CurrentSenseResistor,
+    /// Pull-up resistor.
+    PullupResistor,
+    /// Pull-down resistor.
+    PulldownResistor,
+    /// Transmission-line termination resistor.
+    TerminationResistor,
+    /// Versioned authoring extension.
+    Extension {
+        /// Extension namespace.
+        namespace: String,
+        /// Stable role name.
+        name: String,
+        /// Extension catalog version.
+        version: String,
+    },
+}
+
+/// One physical endpoint participating in an authored function contract.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AuthoredRoleEndpoint {
+    /// Contract-local endpoint name.
+    pub name: String,
+    /// Optional logical net identity.
+    pub net: Option<String>,
+    /// Exact board-space anchors for pads, vias, pins, or component origins.
+    pub locations: Vec<[Scalar; 2]>,
+    /// Optional narrower semantic subject.
+    pub subject: Option<FindingSubject>,
+}
+
+/// Native authored function contract and physical placement evidence.
+#[derive(Clone, Debug, PartialEq)]
+pub struct AuthoredFunctionalRole {
+    /// Component or subcircuit implementing the role.
+    pub subject: FindingSubject,
+    /// Curated or extension role.
+    pub role: AuthoredFunctionalRoleKind,
+    /// Named physical/electrical endpoints.
+    pub endpoints: Vec<AuthoredRoleEndpoint>,
+    /// Optional exact maximum endpoint separation in millimeters.
+    pub maximum_distance: Option<Scalar>,
+}
+
+/// Run physical checks that depend on authoritative native functional intent.
+///
+/// Imported Gerber/KiCad designs can continue using name-based heuristic checks;
+/// this path treats missing or violated native contract evidence as a
+/// source-addressable release error.
+pub fn authored_functional_role_readiness(roles: &[AuthoredFunctionalRole]) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    for role in roles {
+        let required: &[(&str, &str)] = match role.role {
+            AuthoredFunctionalRoleKind::DecouplingCapacitor => {
+                &[("supply", "target"), ("reference", "target")]
+            }
+            AuthoredFunctionalRoleKind::CurrentSenseResistor => &[
+                ("sense-positive", "line-input"),
+                ("sense-negative", "line-output"),
+            ],
+            AuthoredFunctionalRoleKind::TerminationResistor => &[("component", "target")],
+            _ => &[],
+        };
+        for (left_name, right_name) in required {
+            let left = endpoint(role, left_name);
+            let right = endpoint(role, right_name);
+            let mut subjects = vec![role.subject.clone()];
+            subjects.extend(
+                left.into_iter()
+                    .chain(right)
+                    .filter_map(|endpoint| endpoint.subject.clone()),
+            );
+            let Some(left) = left else {
+                violations.push(missing_role_endpoint(role, left_name, subjects));
+                continue;
+            };
+            let Some(right) = right else {
+                violations.push(missing_role_endpoint(role, right_name, subjects));
+                continue;
+            };
+            if left.locations.is_empty() || right.locations.is_empty() {
+                violations.push(
+                    Violation::new(
+                        "authored-functional-role-readiness",
+                        Severity::Error,
+                        vec!["authoring-intent".into()],
+                        None,
+                        Vec::new(),
+                        Vec::new(),
+                        Some(format!(
+                            "authored {:?} role {} has no physical location evidence for {} or {}",
+                            role.role, role.subject.id, left_name, right_name
+                        )),
+                    )
+                    .with_subjects(subjects),
+                );
+                continue;
+            }
+            let Some(maximum) = &role.maximum_distance else {
+                violations.push(
+                    Violation::new(
+                        "authored-functional-role-readiness",
+                        Severity::Error,
+                        vec!["authoring-intent".into()],
+                        None,
+                        Vec::new(),
+                        Vec::new(),
+                        Some(format!(
+                            "authored {:?} role {} has no maximum physical separation",
+                            role.role, role.subject.id
+                        )),
+                    )
+                    .with_subjects(subjects),
+                );
+                continue;
+            };
+            if maximum <= &Scalar::zero()
+                || !locations_within(&left.locations, &right.locations, maximum)
+            {
+                let locations = left
+                    .locations
+                    .iter()
+                    .chain(&right.locations)
+                    .filter_map(|point| Some([point[0].to_f64_lossy()?, point[1].to_f64_lossy()?]))
+                    .collect();
+                violations.push(
+                    Violation::new(
+                        "authored-functional-role-readiness",
+                        Severity::Error,
+                        vec!["authoring-intent".into()],
+                        None,
+                        Vec::new(),
+                        locations,
+                        Some(format!(
+                            "authored {:?} role {} endpoints {} and {} exceed maximum separation {maximum:#.6}",
+                            role.role, role.subject.id, left_name, right_name
+                        )),
+                    )
+                    .with_subjects(subjects),
+                );
+            }
+        }
+    }
+    violations
+}
+
+fn endpoint<'a>(role: &'a AuthoredFunctionalRole, name: &str) -> Option<&'a AuthoredRoleEndpoint> {
+    role.endpoints.iter().find(|endpoint| endpoint.name == name)
+}
+
+fn missing_role_endpoint(
+    role: &AuthoredFunctionalRole,
+    endpoint: &str,
+    subjects: Vec<FindingSubject>,
+) -> Violation {
+    Violation::new(
+        "authored-functional-role-readiness",
+        Severity::Error,
+        vec!["authoring-intent".into()],
+        None,
+        Vec::new(),
+        Vec::new(),
+        Some(format!(
+            "authored {:?} role {} is missing required endpoint {endpoint}",
+            role.role, role.subject.id
+        )),
+    )
+    .with_subjects(subjects)
+}
+
+fn locations_within(left: &[[Scalar; 2]], right: &[[Scalar; 2]], maximum: &Scalar) -> bool {
+    let maximum_squared = maximum * maximum;
+    left.iter().any(|left| {
+        right.iter().any(|right| {
+            let dx = &left[0] - &right[0];
+            let dy = &left[1] - &right[1];
+            &dx * &dx + &dy * &dy <= maximum_squared
+        })
+    })
+}
 
 /// Feature family excluded by an authored PCB keepout.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -320,6 +566,64 @@ mod tests {
             Profile::rectangle(Scalar::from(2), Scalar::from(2)),
             Some(LayerMetadata { name: name.into() }),
         )
+    }
+
+    fn subject(kind: &str, id: &str) -> FindingSubject {
+        FindingSubject {
+            kind: kind.into(),
+            id: id.into(),
+            source: None,
+        }
+    }
+
+    fn endpoint_at(name: &str, x: &str, y: &str) -> AuthoredRoleEndpoint {
+        AuthoredRoleEndpoint {
+            name: name.into(),
+            net: None,
+            locations: vec![[scalar(x), scalar(y)]],
+            subject: Some(subject("pin", name)),
+        }
+    }
+
+    #[test]
+    fn authoritative_decoupling_role_checks_target_and_return_distance() {
+        let compliant = AuthoredFunctionalRole {
+            subject: subject("instance", "C1"),
+            role: AuthoredFunctionalRoleKind::DecouplingCapacitor,
+            endpoints: vec![
+                endpoint_at("supply", "0", "0"),
+                endpoint_at("target", "0.4", "0"),
+                endpoint_at("reference", "0", "0.1"),
+            ],
+            maximum_distance: Some(scalar("0.5")),
+        };
+        assert!(authored_functional_role_readiness(std::slice::from_ref(&compliant)).is_empty());
+
+        let mut distant = compliant;
+        distant.endpoints[0].locations[0][0] = scalar("2");
+        let findings = authored_functional_role_readiness(&[distant]);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].severity, Severity::Error);
+        assert_eq!(findings[0].subjects[0].id, "C1");
+        assert_eq!(findings[0].check, "authored-functional-role-readiness");
+    }
+
+    #[test]
+    fn incomplete_authoritative_role_is_a_structured_error() {
+        let role = AuthoredFunctionalRole {
+            subject: subject("instance", "RSENSE"),
+            role: AuthoredFunctionalRoleKind::CurrentSenseResistor,
+            endpoints: vec![endpoint_at("line-input", "0", "0")],
+            maximum_distance: Some(scalar("0.2")),
+        };
+        let findings = authored_functional_role_readiness(&[role]);
+
+        assert_eq!(findings.len(), 2);
+        assert!(
+            findings
+                .iter()
+                .all(|finding| finding.subjects[0].id == "RSENSE")
+        );
     }
 
     #[test]

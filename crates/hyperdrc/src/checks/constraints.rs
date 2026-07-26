@@ -744,6 +744,7 @@ pub fn net_constraint_readiness(
             .collect::<Vec<_>>();
         violations.extend(net_width_constraints(net_classes, &features));
         violations.extend(net_layer_and_via_constraints(net_classes, &features));
+        violations.extend(net_via_geometry_constraints(net_classes, board, &features));
         violations.extend(net_clearance_constraints(net_classes, &features));
         violations.extend(net_reference_plane_constraints(net_classes, &features));
         violations.extend(net_impedance_constraints(net_classes, stackup, &features));
@@ -754,6 +755,69 @@ pub fn net_constraint_readiness(
         ));
         violations.extend(net_differential_pair_constraints(net_classes, &features));
         violations.extend(net_length_constraints(net_classes, &features));
+    }
+    violations
+}
+
+fn net_via_geometry_constraints(
+    net_classes: &[NetClassConfig],
+    board: &BoardModel,
+    features: &[&CopperFeature],
+) -> Vec<Violation> {
+    let mut violations = Vec::new();
+    for drill in board.drills.iter().filter(|drill| drill.plated) {
+        let Some(net) = drill.net.as_deref() else {
+            continue;
+        };
+        let Some(via) = features.iter().copied().find(|feature| {
+            feature.kind == CopperKind::Via
+                && feature.net.as_deref() == Some(net)
+                && feature.location == drill.location
+        }) else {
+            continue;
+        };
+        let land_diameter = minimum_bounding_dimension(&via.sketch);
+        for class_index in matching_class_indexes_for_feature(net_classes, via) {
+            let class = &net_classes[class_index];
+            let style = class
+                .preferred_via_style
+                .as_deref()
+                .map(|style| format!(" via style {style}"))
+                .unwrap_or_default();
+            if let Some(preferred) = class.preferred_via_land_diameter.as_ref()
+                && &land_diameter != preferred
+            {
+                violations.push(Violation::new(
+                    "net-via-policy-readiness",
+                    Severity::Warning,
+                    vec![via.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![via.location_f64_compatibility_required()],
+                    Some(format!(
+                        "net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}",
+                        class_name(class),
+                    )),
+                ));
+            }
+            if let Some(preferred) = class.preferred_via_drill_diameter.as_ref()
+                && &drill.diameter != preferred
+            {
+                violations.push(Violation::new(
+                    "net-via-policy-readiness",
+                    Severity::Warning,
+                    vec![via.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![drill.location_f64_compatibility_required()],
+                    Some(format!(
+                        "net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}",
+                        class_name(class),
+                        drill.diameter,
+                    )),
+                ));
+            }
+        }
     }
     violations
 }
@@ -2457,7 +2521,7 @@ mod tests {
         StackupConfig, StackupLayerConfig, StackupLayerKind, SurfaceFinish,
     };
     use crate::geometry::{circle_polygon, line_polygon, polygons_to_profile, rect_polygon};
-    use crate::kicad::{BoardModel, CopperFeature, CopperKind};
+    use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 
     use super::{
         NET_IMPEDANCE_TARGET_READINESS_CHECK, net_constraint_readiness, stackup_readiness,
@@ -3676,6 +3740,50 @@ mod tests {
         ]);
 
         assert!(net_constraint_readiness(&classes, None, &[board], &[]).is_empty());
+    }
+
+    #[test]
+    fn net_constraint_readiness_checks_preferred_via_geometry_and_names_style() {
+        let classes = vec![NetClassConfig {
+            name: "power".to_string(),
+            nets: vec!["VBUS".to_string()],
+            preferred_via_land_diameter: Some(crate::scalar::scalar("0.8")),
+            preferred_via_drill_diameter: Some(crate::scalar::scalar("0.3")),
+            preferred_via_style: Some("power-through".to_string()),
+            ..NetClassConfig::default()
+        }];
+        let mut board = board_with_features(vec![feature(
+            "F.Cu",
+            "VBUS",
+            CopperKind::Via,
+            [1.0, 2.0],
+            0.6,
+            0.6,
+        )]);
+        board.drills.push(DrillFeature {
+            location: [
+                crate::geometry::exact_real(1.0),
+                crate::geometry::exact_real(2.0),
+            ],
+            diameter: crate::scalar::scalar("0.2"),
+            net: Some("VBUS".to_string()),
+            plated: true,
+        });
+
+        let violations = net_constraint_readiness(&classes, None, &[board], &[]);
+        assert_eq!(
+            violations
+                .iter()
+                .filter(|violation| violation.check == "net-via-policy-readiness")
+                .count(),
+            2
+        );
+        assert!(violations.iter().all(|violation| {
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("power-through"))
+        }));
     }
 
     fn board_with_features(copper: Vec<CopperFeature>) -> BoardModel {

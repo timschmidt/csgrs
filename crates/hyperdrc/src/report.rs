@@ -106,10 +106,47 @@ pub struct Violation {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     /// Field `locations`.
     pub locations: Vec<[f64; 2]>,
+    /// Structured semantic objects and source ranges involved in the finding.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub subjects: Vec<FindingSubject>,
     /// Optional human-readable finding details.
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Field `message`.
     pub message: Option<String>,
+}
+
+/// One exact source position supplied by a native authoring system.
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
+pub struct FindingSourcePosition {
+    /// Zero-based byte offset.
+    pub byte: u64,
+    /// One-based source line.
+    pub line: u32,
+    /// One-based source column.
+    pub column: u32,
+}
+
+/// Half-open source range supplied by a native authoring system.
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
+pub struct FindingSourceSpan {
+    /// File path, URI, or registry locator.
+    pub uri: String,
+    /// Inclusive start.
+    pub start: FindingSourcePosition,
+    /// Exclusive end.
+    pub end: FindingSourcePosition,
+}
+
+/// Structured semantic subject attached to one finding.
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
+pub struct FindingSubject {
+    /// Stable subject family, such as `net`, `instance`, `pin`, or `role`.
+    pub kind: String,
+    /// Stable identity within that family.
+    pub id: String,
+    /// Optional source-language range.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<FindingSourceSpan>,
 }
 
 /// Polygon geometry serialized with a violation.
@@ -173,7 +210,7 @@ impl Violation {
     ) -> Self {
         let check = check.into();
         let total_area = polygons.iter().map(|polygon| polygon.area).sum();
-        let id = violation_id(&check, &layers, island_index, &polygons, &locations);
+        let id = violation_id(&check, &layers, island_index, &polygons, &locations, &[]);
 
         Self {
             id,
@@ -184,8 +221,23 @@ impl Violation {
             total_area,
             polygons,
             locations,
+            subjects: Vec::new(),
             message,
         }
+    }
+
+    /// Attaches structured semantic subjects and includes them in the stable id.
+    pub fn with_subjects(mut self, subjects: Vec<FindingSubject>) -> Self {
+        self.subjects = subjects;
+        self.id = violation_id(
+            &self.check,
+            &self.layers,
+            self.island_index,
+            &self.polygons,
+            &self.locations,
+            &self.subjects,
+        );
+        self
     }
 }
 
@@ -240,6 +292,7 @@ fn feature_properties(violation: &Violation) -> Value {
         "island_index": violation.island_index,
         "total_area": violation.total_area,
         "message": violation.message,
+        "subjects": violation.subjects,
     })
 }
 
@@ -256,6 +309,7 @@ fn violation_id(
     island_index: Option<usize>,
     polygons: &[ViolationPolygon],
     locations: &[[f64; 2]],
+    subjects: &[FindingSubject],
 ) -> String {
     let mut hasher = DefaultHasher::new();
     check.hash(&mut hasher);
@@ -277,6 +331,7 @@ fn violation_id(
     for location in locations {
         quantize_point(*location).hash(&mut hasher);
     }
+    subjects.hash(&mut hasher);
 
     format!("{:016x}", hasher.finish())
 }
@@ -291,7 +346,10 @@ fn quantize(value: f64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{Report, Severity, Violation, ViolationPolygon, report_summary, report_to_geojson};
+    use super::{
+        FindingSubject, Report, Severity, Violation, ViolationPolygon, report_summary,
+        report_to_geojson,
+    };
 
     #[test]
     fn violation_ids_are_stable_for_identical_input() {
@@ -368,5 +426,49 @@ mod tests {
             Vec::new(),
             Some("sample".to_string()),
         )
+    }
+
+    #[test]
+    fn structured_subjects_participate_in_stable_finding_identity() {
+        let base = Violation::new(
+            "semantic-check",
+            Severity::Error,
+            vec!["F.Cu".into()],
+            None,
+            Vec::new(),
+            vec![[1.0, 2.0]],
+            None,
+        );
+        let left = Violation::new(
+            "semantic-check",
+            Severity::Error,
+            vec!["F.Cu".into()],
+            None,
+            Vec::new(),
+            vec![[1.0, 2.0]],
+            None,
+        )
+        .with_subjects(vec![FindingSubject {
+            kind: "instance".into(),
+            id: "C1".into(),
+            source: None,
+        }]);
+        let right = Violation::new(
+            "semantic-check",
+            Severity::Error,
+            vec!["F.Cu".into()],
+            None,
+            Vec::new(),
+            vec![[1.0, 2.0]],
+            None,
+        )
+        .with_subjects(vec![FindingSubject {
+            kind: "instance".into(),
+            id: "C2".into(),
+            source: None,
+        }]);
+
+        assert_ne!(base.id, left.id);
+        assert_ne!(left.id, right.id);
     }
 }

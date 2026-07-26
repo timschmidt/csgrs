@@ -233,6 +233,14 @@ pub struct NetClassConfig {
     pub max_pair_skew: Option<Scalar>,
     /// Field `max_via_count`.
     pub max_via_count: Option<usize>,
+    /// Preferred copper land diameter for vias used by this class.
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_via_land_diameter: Option<Scalar>,
+    /// Preferred finished drill diameter for vias used by this class.
+    #[serde(default, deserialize_with = "crate::scalar::deserialize_optional")]
+    pub preferred_via_drill_diameter: Option<Scalar>,
+    /// Source-authored name of the preferred via construction.
+    pub preferred_via_style: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Default)]

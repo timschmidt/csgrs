@@ -206,6 +206,9 @@ fn report_precedence_conflicts(
     conflict!(max_length);
     conflict!(max_pair_skew);
     conflict!(max_via_count);
+    conflict!(preferred_via_land_diameter);
+    conflict!(preferred_via_drill_diameter);
+    conflict!(preferred_via_style);
 
     count
 }
@@ -262,6 +265,18 @@ fn inherit_unset_constraints(child: &mut NetClassConfig, parent: &NetClassConfig
         .clone()
         .or_else(|| parent.max_pair_skew.clone());
     child.max_via_count = child.max_via_count.or(parent.max_via_count);
+    child.preferred_via_land_diameter = child
+        .preferred_via_land_diameter
+        .clone()
+        .or_else(|| parent.preferred_via_land_diameter.clone());
+    child.preferred_via_drill_diameter = child
+        .preferred_via_drill_diameter
+        .clone()
+        .or_else(|| parent.preferred_via_drill_diameter.clone());
+    child.preferred_via_style = child
+        .preferred_via_style
+        .clone()
+        .or_else(|| parent.preferred_via_style.clone());
 }
 
 fn precedence_conflict_violation(
