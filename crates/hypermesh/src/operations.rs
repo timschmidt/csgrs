@@ -1225,16 +1225,13 @@ impl ProjectiveCycle {
                 && next_classification.is_positive())
                 || (current_classification.is_positive() && next_classification.is_negative());
             if crossing {
-                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
-                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
                 let (point, approximate_point, identity) = self.cached_crossing_point(
                     index,
                     plane_identity,
                     &self.points[index],
-                    &current_value,
                     current_classification,
                     &self.points[next],
-                    &next_value,
+                    plane,
                     point_cache,
                 );
                 crossings.push((index, point, approximate_point, identity));
@@ -1680,10 +1677,9 @@ impl ProjectiveCycle {
         edge_index: usize,
         plane_identity: ConstructionPlaneIdentity,
         current: &HomogeneousPoint3,
-        current_value: &Real,
         current_classification: Classification,
         next: &HomogeneousPoint3,
-        next_value: &Real,
+        plane: &Plane,
         point_cache: &mut ProjectivePointCache,
     ) -> (
         HomogeneousPoint3,
@@ -1696,12 +1692,14 @@ impl ProjectiveCycle {
             .definition_planes(&identity)
             .and_then(|planes| positive_weight_plane_intersection(&planes))
             .unwrap_or_else(|| {
+                let current_value = homogeneous_point_plane_expression(current, plane);
+                let next_value = homogeneous_point_plane_expression(next, plane);
                 projective_crossing_point(
                     current,
-                    current_value,
+                    &current_value,
                     current_classification,
                     next,
-                    next_value,
+                    &next_value,
                 )
             });
         point_cache.intern_with_approximation(identity, point)
