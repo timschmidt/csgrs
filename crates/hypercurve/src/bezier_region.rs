@@ -115,6 +115,7 @@ pub struct CurveRegion2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
     certified_loop_roles: Option<Rc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Rc<[FillRule]>>,
+    signed_loop_composition: bool,
     filled_side_is_left: Rc<OnceCell<CurveResult<Classification<Rc<[bool]>>>>>,
     native_boundary_loops: Rc<OnceCell<Option<Rc<[BezierBoundaryLoop2]>>>>,
     native_boundary_bounds: Rc<OnceCell<Rc<[Aabb2]>>>,
@@ -129,6 +130,7 @@ impl Default for CurveRegion2 {
             boundary_loops: Vec::new(),
             certified_loop_roles: Some(Rc::from(Vec::new())),
             certified_loop_fill_rules: Some(Rc::from(Vec::new())),
+            signed_loop_composition: false,
             filled_side_is_left: Rc::new(OnceCell::new()),
             native_boundary_loops: Rc::new(OnceCell::new()),
             native_boundary_bounds: Rc::new(OnceCell::new()),
@@ -665,6 +667,7 @@ impl std::fmt::Debug for CurveRegion2 {
             .field("boundary_loops", &self.boundary_loops)
             .field("certified_loop_roles", &self.certified_loop_roles)
             .field("certified_loop_fill_rules", &self.certified_loop_fill_rules)
+            .field("signed_loop_composition", &self.signed_loop_composition)
             .finish()
     }
 }
@@ -674,6 +677,7 @@ impl PartialEq for CurveRegion2 {
         self.boundary_loops == other.boundary_loops
             && self.certified_loop_roles == other.certified_loop_roles
             && self.certified_loop_fill_rules == other.certified_loop_fill_rules
+            && self.signed_loop_composition == other.signed_loop_composition
     }
 }
 
@@ -2211,6 +2215,24 @@ impl CurveRegion2 {
         )
     }
 
+    /// Constructs an exact signed composition from independently authored loops.
+    ///
+    /// Unlike a regularized region, material and hole operands may cross or
+    /// overlap. Point queries therefore accumulate each loop's certified signed
+    /// contribution directly instead of using a native region accelerator that
+    /// assumes disjoint material/hole topology. Native contours remain retained
+    /// for exact manufacturing output.
+    pub fn try_from_signed_boundary_paths_with_loop_semantics(
+        paths: &[CurvePath2],
+        roles: &[CurveRegionLoopRole],
+        fill_rules: &[FillRule],
+    ) -> ExactCurveResult<Self> {
+        let mut region =
+            Self::try_from_boundary_paths_with_loop_semantics(paths, roles, fill_rules)?;
+        region.signed_loop_composition = true;
+        Ok(region)
+    }
+
     /// Constructs a curved region with explicit loop roles, fill rules, and
     /// authored interior sides.
     ///
@@ -2402,6 +2424,7 @@ impl CurveRegion2 {
         let mut transformed = Self::new(loops).map_err(affine_region_error)?;
         transformed.certified_loop_roles = self.certified_loop_roles.clone();
         transformed.certified_loop_fill_rules = self.certified_loop_fill_rules.clone();
+        transformed.signed_loop_composition = self.signed_loop_composition;
         let sides = match self
             .filled_side_is_left(policy)
             .map_err(affine_region_error)?
@@ -2444,6 +2467,7 @@ impl CurveRegion2 {
             boundary_loops,
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
+            signed_loop_composition: false,
             filled_side_is_left: Rc::new(OnceCell::new()),
             native_boundary_loops: Rc::new(OnceCell::new()),
             native_boundary_bounds: Rc::new(OnceCell::new()),
@@ -3062,11 +3086,14 @@ impl CurveRegion2 {
                 }
             }
         }
-        let native_fast_path = self
-            .line_image_region
-            .get()
-            .and_then(Option::as_ref)
-            .map(|region| region.query(policy));
+        let native_fast_path = (!self.signed_loop_composition)
+            .then(|| {
+                self.line_image_region
+                    .get()
+                    .and_then(Option::as_ref)
+                    .map(|region| region.query(policy))
+            })
+            .flatten();
         Ok(CurveRegionQuery2 {
             region: self,
             native_fast_path,
@@ -4023,20 +4050,15 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RegionPointLocation>> {
-        if let Some(Some(region)) = self.line_image_region.get() {
+        if !self.signed_loop_composition
+            && let Some(Some(region)) = self.line_image_region.get()
+        {
             return Ok(region.classify_point(point, policy));
         }
         if self.line_image_region.get().is_none() && self.certified_loop_roles.is_some() {
             match self.certified_line_image_region(policy)? {
                 Classification::Decided(region) => {
                     let _ = self.line_image_region.set(Some(region));
-                    return Ok(self
-                        .line_image_region
-                        .get()
-                        .expect("certified line-image region was retained")
-                        .as_ref()
-                        .expect("certified line-image cache contains a region")
-                        .classify_point(point, policy));
                 }
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
                     let _ = self.line_image_region.set(None);
@@ -4736,11 +4758,18 @@ fn transform_region_subcurve(
 ) -> ExactCurveResult<BezierSubcurve2> {
     let point = |point: &Point2| affine_region_point(point, m00, m01, m10, m11, tx, ty);
     match curve {
-        BezierSubcurve2::Quadratic(curve) => Ok(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            point(curve.start()),
-            point(curve.control()),
-            point(curve.end()),
-        ))),
+        BezierSubcurve2::Quadratic(curve) => {
+            let start = point(curve.start());
+            let control = point(curve.control());
+            let end = point(curve.end());
+            let transformed = if curve.retained_exact_line_image().is_some() {
+                QuadraticBezier2::with_retained_exact_line_image(start, control, end)
+                    .map_err(affine_region_error)?
+            } else {
+                QuadraticBezier2::new(start, control, end)
+            };
+            Ok(BezierSubcurve2::Quadratic(transformed))
+        }
         BezierSubcurve2::Cubic(curve) => Ok(BezierSubcurve2::Cubic(CubicBezier2::new(
             point(curve.start()),
             point(curve.control1()),
@@ -5662,36 +5691,46 @@ fn classify_point_with_retained_ray(
                             return Ok(Classification::Uncertain(reason));
                         }
                     }
-                    let ahead = match contact.parameter() {
-                        BezierParameter2::Exact(parameter) => {
-                            if let Some(order) = control_hull_order {
-                                Classification::Decided(order)
-                            } else {
-                                let contact_point =
-                                    match subcurve_point_at(curve, parameter.clone(), policy) {
-                                        Classification::Decided(point) => point,
-                                        Classification::Uncertain(reason) => {
-                                            return Ok(Classification::Uncertain(reason));
-                                        }
-                                    };
-                                let projection = (contact_point.x() - point.x()) * direction_x
-                                    + (contact_point.y() - point.y()) * direction_y;
-                                compare_reals(&projection, &Real::zero(), policy)
-                                    .map(Classification::Decided)
-                                    .unwrap_or(Classification::Uncertain(
-                                        UncertaintyReason::RealSign,
-                                    ))
+                    let ahead = if let Some(line_parameter) = contact.supporting_line_parameter() {
+                        compare_reals(line_parameter, &Real::zero(), policy)
+                            .map(Classification::Decided)
+                            .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
+                    } else {
+                        match contact.parameter() {
+                            BezierParameter2::Exact(parameter) => {
+                                if let Some(order) = control_hull_order {
+                                    Classification::Decided(order)
+                                } else {
+                                    let contact_point =
+                                        match subcurve_point_at(curve, parameter.clone(), policy) {
+                                            Classification::Decided(point) => point,
+                                            Classification::Uncertain(reason) => {
+                                                return Ok(Classification::Uncertain(reason));
+                                            }
+                                        };
+                                    let delta_x = contact_point.x() - point.x();
+                                    let delta_y = contact_point.y() - point.y();
+                                    let projection = Real::dot2_refs(
+                                        [&delta_x, &delta_y],
+                                        [direction_x, direction_y],
+                                    );
+                                    compare_reals(&projection, &Real::zero(), policy)
+                                        .map(Classification::Decided)
+                                        .unwrap_or(Classification::Uncertain(
+                                            UncertaintyReason::RealSign,
+                                        ))
+                                }
                             }
-                        }
-                        BezierParameter2::Algebraic(parameter) => {
-                            algebraic_contact_order_along_ray(
-                                curve,
-                                parameter,
-                                point,
-                                direction_x,
-                                direction_y,
-                                policy,
-                            )?
+                            BezierParameter2::Algebraic(parameter) => {
+                                algebraic_contact_order_along_ray(
+                                    curve,
+                                    parameter,
+                                    point,
+                                    direction_x,
+                                    direction_y,
+                                    policy,
+                                )?
+                            }
                         }
                     };
                     match ahead {
@@ -5748,6 +5787,20 @@ fn retained_parameter_contains(
 }
 
 fn rationalize_retained_subcurve(curve: &BezierSubcurve2) -> CurveResult<RationalBezier2> {
+    let exact_line_image = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.retained_exact_line_image().cloned(),
+        _ => None,
+    };
+    let implicit_quadratic_conic = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.retained_implicit_quadratic_conic().cloned()
+        }
+        _ => None,
+    };
+    let circular_conic = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => curve.retained_circular_conic().cloned(),
+        _ => None,
+    };
     let (control_points, weights) = match curve {
         BezierSubcurve2::Quadratic(curve) => (
             curve.control_points().into_iter().cloned().collect(),
@@ -5763,7 +5816,18 @@ fn rationalize_retained_subcurve(curve: &BezierSubcurve2) -> CurveResult<Rationa
         ),
         BezierSubcurve2::Rational(curve) => return Ok(curve.clone()),
     };
-    RationalBezier2::try_new(control_points, weights)
+    match (exact_line_image, implicit_quadratic_conic) {
+        (Some(line), _) => {
+            RationalBezier2::try_new_with_exact_line_image(control_points, weights, line)
+        }
+        (None, Some(conic)) => RationalBezier2::try_new_with_implicit_quadratic_conic(
+            control_points,
+            weights,
+            conic,
+            circular_conic,
+        ),
+        (None, None) => RationalBezier2::try_new(control_points, weights),
+    }
 }
 
 fn native_loop_bounds(
@@ -5813,9 +5877,7 @@ fn classify_point_with_ray(
             policy,
         ) {
             Classification::Decided(relation) => relation,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         match relation {
             BezierLineContactRelation::ControlHullDisjoint { .. }
@@ -5833,36 +5895,49 @@ fn classify_point_with_ray(
                             return Ok(Classification::Uncertain(reason));
                         }
                     }
-                    let ahead = match contact.parameter() {
-                        BezierParameter2::Exact(parameter) => {
-                            if let Some(order) = control_hull_order {
-                                Classification::Decided(order)
-                            } else {
-                                let contact_point =
-                                    match subcurve_point_at(fragment, parameter.clone(), policy) {
+                    let ahead = if let Some(line_parameter) = contact.supporting_line_parameter() {
+                        compare_reals(line_parameter, &Real::zero(), policy)
+                            .map(Classification::Decided)
+                            .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
+                    } else {
+                        match contact.parameter() {
+                            BezierParameter2::Exact(parameter) => {
+                                if let Some(order) = control_hull_order {
+                                    Classification::Decided(order)
+                                } else {
+                                    let contact_point = match subcurve_point_at(
+                                        fragment,
+                                        parameter.clone(),
+                                        policy,
+                                    ) {
                                         Classification::Decided(point) => point,
                                         Classification::Uncertain(reason) => {
                                             return Ok(Classification::Uncertain(reason));
                                         }
                                     };
-                                let projection = (contact_point.x() - point.x()) * direction_x
-                                    + (contact_point.y() - point.y()) * direction_y;
-                                compare_reals(&projection, &Real::zero(), policy)
-                                    .map(Classification::Decided)
-                                    .unwrap_or(Classification::Uncertain(
-                                        UncertaintyReason::RealSign,
-                                    ))
+                                    let delta_x = contact_point.x() - point.x();
+                                    let delta_y = contact_point.y() - point.y();
+                                    let projection = Real::dot2_refs(
+                                        [&delta_x, &delta_y],
+                                        [direction_x, direction_y],
+                                    );
+                                    compare_reals(&projection, &Real::zero(), policy)
+                                        .map(Classification::Decided)
+                                        .unwrap_or(Classification::Uncertain(
+                                            UncertaintyReason::RealSign,
+                                        ))
+                                }
                             }
-                        }
-                        BezierParameter2::Algebraic(parameter) => {
-                            algebraic_contact_order_along_ray(
-                                fragment,
-                                parameter,
-                                point,
-                                direction_x,
-                                direction_y,
-                                policy,
-                            )?
+                            BezierParameter2::Algebraic(parameter) => {
+                                algebraic_contact_order_along_ray(
+                                    fragment,
+                                    parameter,
+                                    point,
+                                    direction_x,
+                                    direction_y,
+                                    policy,
+                                )?
+                            }
                         }
                     };
                     match ahead {
@@ -6487,5 +6562,48 @@ mod tests {
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
         assert!(region.line_image_region.get().is_none());
+    }
+
+    #[test]
+    fn explicit_signed_loops_classify_without_regularized_native_fast_path() {
+        fn rectangle(min_x: i32, max_x: i32) -> CurvePath2 {
+            let corners = [p(min_x, -3), p(max_x, -3), p(max_x, 3), p(min_x, 3)];
+            CurvePath2::try_new(
+                (0..4)
+                    .map(|index| {
+                        Curve2::from(
+                            LineSeg2::try_new(
+                                corners[index].clone(),
+                                corners[(index + 1) % 4].clone(),
+                            )
+                            .unwrap(),
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap()
+        }
+
+        let policy = CurvePolicy::certified();
+        let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            &[rectangle(-3, 3), rectangle(1, 7)],
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+            &[FillRule::NonZero, FillRule::NonZero],
+        )
+        .unwrap();
+        let query = region.query(&policy).unwrap();
+        assert!(!query.uses_native_fast_path());
+        assert_eq!(
+            query.classify_point(&p(-2, 0), &policy),
+            Ok(Classification::Decided(RegionPointLocation::Inside))
+        );
+        assert_eq!(
+            query.classify_point(&p(2, 0), &policy),
+            Ok(Classification::Decided(RegionPointLocation::Outside))
+        );
+        assert_eq!(
+            query.signed_depth(&p(2, 0), &policy),
+            Ok(Classification::Decided(0))
+        );
     }
 }

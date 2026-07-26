@@ -355,6 +355,15 @@ impl QuadraticBezier2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
+        if let Some(line) = self.retained_exact_line_image() {
+            return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
+                CertifiedBezierLineImage2 {
+                    line: line.clone(),
+                    control_point_count: 3,
+                    fit_certificate: BezierFitCertificate::proven_exact(0, 3, None, None, policy),
+                },
+            )));
+        }
         fit_control_polygon_line_image(&self.control_points(), policy)
     }
 }
@@ -409,6 +418,21 @@ impl RationalBezier2 {
         &self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<BezierLineImageFitRelation>> {
+        if let Some(line) = self.retained_exact_line_image() {
+            return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
+                CertifiedBezierLineImage2 {
+                    line: line.clone(),
+                    control_point_count: self.control_points().len(),
+                    fit_certificate: BezierFitCertificate::proven_exact(
+                        0,
+                        self.control_points().len(),
+                        None,
+                        None,
+                        policy,
+                    ),
+                },
+            )));
+        }
         let weights = self.weights().iter().collect::<Vec<_>>();
         match weights_known_same_nonzero_sign(&weights, policy) {
             Some(true) => {

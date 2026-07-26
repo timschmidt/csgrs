@@ -35,10 +35,17 @@ enum RetiredFailure {
     RationalResultantDegreeDropSampling,
     DegreeElevatedLineImageOverlap,
     ConicEndpointRootIsolation,
+    TransformedDegreeElevatedLineImage,
+    CircularConicSharedComponent,
+    ReversedProjectiveConicOverlap,
+    CircularLineEndpointReplay,
+    DistinctCircularConicContacts,
+    SignedCompoundCircularSubtraction,
+    ThermalSpokeCircularSubtraction,
 }
 
 impl RetiredFailure {
-    const ALL: [Self; 13] = [
+    const ALL: [Self; 20] = [
         Self::AlgebraicPolylineContacts,
         Self::MixedFamilyRealSign,
         Self::RealCoefficientConicParameterImage,
@@ -52,6 +59,13 @@ impl RetiredFailure {
         Self::RationalResultantDegreeDropSampling,
         Self::DegreeElevatedLineImageOverlap,
         Self::ConicEndpointRootIsolation,
+        Self::TransformedDegreeElevatedLineImage,
+        Self::CircularConicSharedComponent,
+        Self::ReversedProjectiveConicOverlap,
+        Self::CircularLineEndpointReplay,
+        Self::DistinctCircularConicContacts,
+        Self::SignedCompoundCircularSubtraction,
+        Self::ThermalSpokeCircularSubtraction,
     ];
 }
 
@@ -753,6 +767,240 @@ fn retired_conic_endpoint_root_isolation_case() -> RetiredFailureCase {
     }
 }
 
+fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
+    let points = [point(5, 0), point(0, 5), point(-5, 0), point(0, -5)];
+    let center = point(0, 0);
+    let mut curves = (0..4)
+        .map(|offset| {
+            let index = (start_quarter + offset) % 4;
+            Curve2::from(
+                CircularArc2::try_from_center(
+                    points[index].clone(),
+                    points[(index + 1) % 4].clone(),
+                    center.clone(),
+                    false,
+                )
+                .unwrap(),
+            )
+        })
+        .collect::<Vec<_>>();
+    if reversed {
+        curves = CurvePath2::try_new(curves)
+            .unwrap()
+            .reversed()
+            .unwrap()
+            .curves()
+            .to_vec();
+    }
+    let path = CurvePath2::try_new(curves).unwrap();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[if reversed {
+            CurveBoundaryInteriorSide2::Right
+        } else {
+            CurveBoundaryInteriorSide2::Left
+        }],
+    )
+    .unwrap()
+}
+
+fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
+    let top_left = point(-11, 1);
+    let top_right = point(0, 1);
+    let bottom_right = point(0, -1);
+    let bottom_left = point(-11, -1);
+    let capsule = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(top_left.clone(), top_right.clone()).unwrap()),
+        Curve2::from(
+            CircularArc2::try_from_center(top_right, bottom_right.clone(), point(0, 0), true)
+                .unwrap(),
+        ),
+        Curve2::from(LineSeg2::try_new(bottom_right, bottom_left.clone()).unwrap()),
+        Curve2::from(
+            CircularArc2::try_from_center(bottom_left, top_left, point(-11, 0), true).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let via_points = [point(2, 0), point(0, -2), point(-2, 0), point(0, 2)];
+    let via = CurvePath2::try_new(
+        (0..4)
+            .map(|index| {
+                Curve2::from(
+                    CircularArc2::try_from_center(
+                        via_points[index].clone(),
+                        via_points[(index + 1) % 4].clone(),
+                        point(0, 0),
+                        true,
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect(),
+    )
+    .unwrap();
+    let first = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        &[capsule, via],
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
+        &[FillRule::NonZero, FillRule::NonZero],
+    )
+    .unwrap();
+    RetiredFailureCase {
+        failure: RetiredFailure::SignedCompoundCircularSubtraction,
+        first,
+        second: exact_circle_region(0, true)
+            .transform_affine(
+                &fraction(1, 5),
+                &Real::zero(),
+                &Real::zero(),
+                &fraction(1, 5),
+                &Real::zero(),
+                &Real::zero(),
+                &CurvePolicy::certified(),
+            )
+            .unwrap(),
+    }
+}
+
+fn retired_thermal_spoke_circular_subtraction_case() -> RetiredFailureCase {
+    let horizontal = generated_region(&GeneratedRegion {
+        origin_x: -10,
+        origin_y: -1,
+        width: 20,
+        height: 2,
+        lower_family: 0,
+        upper_family: 0,
+        curvature: 1,
+        weight_numerator: 1,
+        weight_denominator: 1,
+    });
+    let vertical = generated_region(&GeneratedRegion {
+        origin_x: -1,
+        origin_y: -10,
+        width: 2,
+        height: 20,
+        lower_family: 0,
+        upper_family: 0,
+        curvature: 1,
+        weight_numerator: 1,
+        weight_denominator: 1,
+    });
+    let first = horizontal
+        .boolean_region(&vertical, BooleanOp::Union, &CurvePolicy::certified())
+        .unwrap();
+    RetiredFailureCase {
+        failure: RetiredFailure::ThermalSpokeCircularSubtraction,
+        first,
+        second: exact_circle_region(0, true)
+            .transform_affine(
+                &fraction(1, 5),
+                &Real::zero(),
+                &Real::zero(),
+                &fraction(1, 5),
+                &Real::zero(),
+                &Real::zero(),
+                &CurvePolicy::certified(),
+            )
+            .unwrap(),
+    }
+}
+
+fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
+    let corners = [point(0, 0), point(8, 0), point(8, 6), point(0, 6)];
+    let curves = (0..4)
+        .map(|index| {
+            Curve2::from(QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(corners[index].clone(), corners[(index + 1) % 4].clone())
+                    .unwrap(),
+            ))
+        })
+        .collect();
+    let source =
+        CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()]).unwrap();
+    let policy = CurvePolicy::certified();
+    let transformed = source
+        .transform_affine(
+            &Real::zero(),
+            &-Real::one(),
+            &Real::one(),
+            &Real::zero(),
+            &integer(7),
+            &integer(1),
+            &policy,
+        )
+        .unwrap();
+    RetiredFailureCase {
+        failure: RetiredFailure::TransformedDegreeElevatedLineImage,
+        first: transformed,
+        second: generated_region(&GeneratedRegion {
+            origin_x: 0,
+            origin_y: 3,
+            width: 10,
+            height: 6,
+            lower_family: 1,
+            upper_family: 0,
+            curvature: 1,
+            weight_numerator: 1,
+            weight_denominator: 1,
+        }),
+    }
+}
+
+fn retired_circular_shared_component_case() -> RetiredFailureCase {
+    RetiredFailureCase {
+        failure: RetiredFailure::CircularConicSharedComponent,
+        first: exact_circle_region(0, false),
+        second: exact_circle_region(1, false),
+    }
+}
+
+fn retired_reversed_projective_conic_case() -> RetiredFailureCase {
+    RetiredFailureCase {
+        failure: RetiredFailure::ReversedProjectiveConicOverlap,
+        first: exact_circle_region(0, false),
+        second: exact_circle_region(0, true),
+    }
+}
+
+fn retired_circular_line_endpoint_case() -> RetiredFailureCase {
+    RetiredFailureCase {
+        failure: RetiredFailure::CircularLineEndpointReplay,
+        first: exact_circle_region(0, false),
+        second: generated_region(&GeneratedRegion {
+            origin_x: -5,
+            origin_y: 0,
+            width: 5,
+            height: 6,
+            lower_family: 0,
+            upper_family: 0,
+            curvature: 1,
+            weight_numerator: 1,
+            weight_denominator: 1,
+        }),
+    }
+}
+
+fn retired_distinct_circular_conic_contacts_case() -> RetiredFailureCase {
+    let policy = CurvePolicy::certified();
+    let translated = exact_circle_region(1, false)
+        .transform_affine(
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &integer(4),
+            &Real::zero(),
+            &policy,
+        )
+        .unwrap();
+    RetiredFailureCase {
+        failure: RetiredFailure::DistinctCircularConicContacts,
+        first: exact_circle_region(0, false),
+        second: translated,
+    }
+}
+
 #[test]
 fn conic_endpoint_root_isolation_completes() {
     let case = retired_conic_endpoint_root_isolation_case();
@@ -780,6 +1028,13 @@ fn retired_failure_corpus() -> Vec<RetiredFailureCase> {
         retired_resultant_degree_drop_case(),
         retired_degree_elevated_line_overlap_case(),
         retired_conic_endpoint_root_isolation_case(),
+        retired_transformed_degree_elevated_line_case(),
+        retired_circular_shared_component_case(),
+        retired_reversed_projective_conic_case(),
+        retired_circular_line_endpoint_case(),
+        retired_distinct_circular_conic_contacts_case(),
+        retired_signed_compound_circular_subtraction_case(),
+        retired_thermal_spoke_circular_subtraction_case(),
     ]
 }
 

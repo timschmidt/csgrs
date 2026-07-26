@@ -430,7 +430,9 @@ impl BezierArrangementGraph2 {
                     policy,
                 ) {
                     Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
                 }
             }
         }
@@ -446,7 +448,9 @@ impl BezierArrangementGraph2 {
                     policy,
                 ) {
                     Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
                 }
             }
         }

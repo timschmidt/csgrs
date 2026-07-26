@@ -9,6 +9,7 @@
 //! treatment in the Bernstein and de Casteljau curve model.
 
 use std::cmp::Ordering;
+use std::rc::Rc;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
@@ -22,7 +23,7 @@ use crate::{
     Aabb2, Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
     BezierLineContactRelation, BezierLineRelation, BezierMonotoneGraphOrder, BezierMonotoneSpan,
     Classification, CubicBezier2, CurveError, CurvePolicy, LineSeg2, LineSide, Point2,
-    QuadraticBezier2, UncertaintyReason,
+    QuadraticBezier2, RationalBezier2, UncertaintyReason,
 };
 
 /// Coarse conic family represented by a rational quadratic Bezier segment.
@@ -46,6 +47,14 @@ pub struct RationalQuadraticBezier2 {
     control_weight: Real,
     end_weight: Real,
     common_weight_sign: Option<RealSign>,
+    implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
+    circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct RationalQuadraticCircle2 {
+    pub(crate) center: Point2,
+    pub(crate) radius_squared: Real,
 }
 
 impl PartialEq for RationalQuadraticBezier2 {
@@ -89,6 +98,67 @@ impl RationalQuadraticBezier2 {
         end_weight: Real,
         retained_common_weight_sign: Option<RealSign>,
     ) -> Result<Self, CurveError> {
+        Self::try_new_with_common_weight_sign_and_implicit_conic(
+            start,
+            control,
+            end,
+            start_weight,
+            control_weight,
+            end_weight,
+            retained_common_weight_sign,
+            None,
+            None,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn try_new_with_circular_conic(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+        start_weight: Real,
+        control_weight: Real,
+        end_weight: Real,
+        center: Point2,
+        radius_squared: Real,
+    ) -> Result<Self, CurveError> {
+        let two = Real::from(2_i8);
+        let implicit_quadratic_conic = Rc::new([
+            Real::one(),
+            Real::zero(),
+            Real::one(),
+            -(&two * center.x()),
+            -(&two * center.y()),
+            center.x() * center.x() + center.y() * center.y() - &radius_squared,
+        ]);
+        Self::try_new_with_common_weight_sign_and_implicit_conic(
+            start,
+            control,
+            end,
+            start_weight,
+            control_weight,
+            end_weight,
+            None,
+            Some(implicit_quadratic_conic),
+            Some(Rc::new(RationalQuadraticCircle2 {
+                center,
+                radius_squared,
+            })),
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn try_new_with_common_weight_sign_and_implicit_conic(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+        start_weight: Real,
+        control_weight: Real,
+        end_weight: Real,
+        retained_common_weight_sign: Option<RealSign>,
+        implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
+        circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+    ) -> Result<Self, CurveError> {
         if [
             start_weight.zero_status(),
             control_weight.zero_status(),
@@ -116,7 +186,27 @@ impl RationalQuadraticBezier2 {
             control_weight,
             end_weight,
             common_weight_sign: classified_common_weight_sign.or(retained_common_weight_sign),
+            implicit_quadratic_conic,
+            circular_conic,
         })
+    }
+
+    pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Rc<[Real; 6]>> {
+        self.implicit_quadratic_conic.as_ref()
+    }
+
+    pub(crate) fn retained_circular_conic(&self) -> Option<&Rc<RationalQuadraticCircle2>> {
+        self.circular_conic.as_ref()
+    }
+
+    pub(crate) fn with_retained_conic_provenance(
+        mut self,
+        implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
+        circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+    ) -> Self {
+        self.implicit_quadratic_conic = implicit_quadratic_conic;
+        self.circular_conic = circular_conic;
+        self
     }
 
     /// Constructs the common conic form with endpoint weights equal to one.
@@ -441,6 +531,21 @@ impl RationalQuadraticBezier2 {
             Some(true) => {}
             Some(false) => return Classification::Uncertain(UncertaintyReason::Boundary),
             None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+        if let (Some(implicit_conic), Some(circular_conic)) = (
+            self.retained_implicit_quadratic_conic(),
+            self.retained_circular_conic(),
+        ) {
+            let promoted = RationalBezier2::try_new_with_implicit_quadratic_conic(
+                self.control_points().into_iter().cloned().collect(),
+                self.weights().into_iter().cloned().collect(),
+                implicit_conic.clone(),
+                Some(circular_conic.clone()),
+            );
+            return match promoted {
+                Ok(promoted) => promoted.relation_to_line_with_contacts(line, policy),
+                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            };
         }
         let weighted_distances = self.weighted_line_distances(line);
         if weighted_distances

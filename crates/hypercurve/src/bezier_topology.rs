@@ -267,6 +267,7 @@ pub struct BezierLineContact {
     parameter: BezierParameter2,
     kind: BezierLineContactKind,
     crossing_direction: Option<BezierLineCrossingDirection>,
+    supporting_line_parameter: Option<Real>,
 }
 
 /// Complete supporting-line relation with exact root contact classification.
@@ -296,6 +297,7 @@ impl BezierLineContact {
                 parameter,
                 kind,
                 crossing_direction: None,
+                supporting_line_parameter: None,
             }),
             Ok(Classification::Uncertain(_)) | Err(_) => Err(CurveError::Topology(
                 "Bezier line contact parameter must have a certified unit interval".into(),
@@ -322,7 +324,11 @@ impl BezierLineContact {
         self.crossing_direction
     }
 
-    fn with_crossing_direction(
+    pub(crate) const fn supporting_line_parameter(&self) -> Option<&Real> {
+        self.supporting_line_parameter.as_ref()
+    }
+
+    pub(crate) fn with_crossing_direction(
         parameter: BezierParameter2,
         kind: BezierLineContactKind,
         crossing_direction: Option<BezierLineCrossingDirection>,
@@ -334,6 +340,17 @@ impl BezierLineContact {
         }
         let mut contact = Self::new(parameter, kind)?;
         contact.crossing_direction = crossing_direction;
+        Ok(contact)
+    }
+
+    pub(crate) fn with_crossing_direction_and_line_parameter(
+        parameter: BezierParameter2,
+        kind: BezierLineContactKind,
+        crossing_direction: Option<BezierLineCrossingDirection>,
+        supporting_line_parameter: Real,
+    ) -> CurveResult<Self> {
+        let mut contact = Self::with_crossing_direction(parameter, kind, crossing_direction)?;
+        contact.supporting_line_parameter = Some(supporting_line_parameter);
         Ok(contact)
     }
 }
@@ -474,6 +491,81 @@ impl QuadraticBezier2 {
         line: &LineSeg2,
         policy: &CurvePolicy,
     ) -> Classification<BezierLineContactRelation> {
+        if let Some(image) = self.retained_exact_line_image() {
+            let (image_dx, image_dy) = image.delta();
+            let (line_dx, line_dy) = line.delta();
+            let denominator = Real::signed_product_sum(
+                [true, false],
+                [[&image_dx, &line_dy], [&image_dy, &line_dx]],
+            );
+            match real_sign(&denominator, policy) {
+                Some(RealSign::Zero) => {
+                    return match classify_oriented_line(
+                        line.start(),
+                        line.end(),
+                        image.start(),
+                        policy,
+                    ) {
+                        Classification::Decided(LineSide::On) => {
+                            Classification::Decided(BezierLineContactRelation::OnSupportingLine)
+                        }
+                        Classification::Decided(side) => Classification::Decided(
+                            BezierLineContactRelation::ControlHullDisjoint { side },
+                        ),
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    };
+                }
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+            let (from_image_x, from_image_y) = line.start().delta_from(image.start());
+            let source_numerator = Real::signed_product_sum(
+                [true, false],
+                [[&from_image_x, &line_dy], [&from_image_y, &line_dx]],
+            );
+            let Ok(source_parameter) = source_numerator / &denominator else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            match in_closed_unit_interval(&source_parameter, policy) {
+                Some(false) => {
+                    return Classification::Decided(BezierLineContactRelation::NoContact);
+                }
+                Some(true) => {}
+                None => return Classification::Uncertain(UncertaintyReason::Ordering),
+            }
+            let line_numerator = Real::signed_product_sum(
+                [true, false],
+                [[&from_image_x, &image_dy], [&from_image_y, &image_dx]],
+            );
+            let Ok(line_parameter) = line_numerator / denominator else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let crossing_direction = match real_sign(
+                &Real::signed_product_sum(
+                    [true, false],
+                    [[&line_dx, &image_dy], [&line_dy, &image_dx]],
+                ),
+                policy,
+            ) {
+                Some(RealSign::Positive) => Some(BezierLineCrossingDirection::NegativeToPositive),
+                Some(RealSign::Negative) => Some(BezierLineCrossingDirection::PositiveToNegative),
+                Some(RealSign::Zero) | None => {
+                    return Classification::Uncertain(UncertaintyReason::RealSign);
+                }
+            };
+            let contact = match BezierLineContact::with_crossing_direction_and_line_parameter(
+                BezierParameter2::Exact(source_parameter),
+                BezierLineContactKind::Crossing,
+                crossing_direction,
+                line_parameter,
+            ) {
+                Ok(contact) => contact,
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+            };
+            return Classification::Decided(BezierLineContactRelation::Contacts {
+                contacts: vec![contact],
+            });
+        }
         relation_to_line_with_contacts(self.control_points().as_slice(), line, policy)
     }
 

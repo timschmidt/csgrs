@@ -321,13 +321,15 @@ fn rational_minor_arc_span(
         center.y() + &start.1 + &tangent_half * &start.0,
     );
     let end_weight = Real::one() + &tangent_half * &tangent_half;
-    RationalQuadraticBezier2::try_new(
+    RationalQuadraticBezier2::try_new_with_circular_conic(
         endpoints[0].clone(),
         control,
         endpoints[1].clone(),
         Real::one(),
         Real::one(),
         end_weight,
+        center.clone(),
+        radius_squared.clone(),
     )
     .map_err(|cause| arc_error(CurveOperation2::BezierDecomposition, cause))
 }

@@ -394,11 +394,27 @@ impl Curve2 {
             CurveGeometry2::Line(curve) => CurveGeometry2::Line(curve.reversed()),
             CurveGeometry2::CircularArc(curve) => CurveGeometry2::CircularArc(curve.reversed()),
             CurveGeometry2::QuadraticBezier(curve) => {
-                CurveGeometry2::QuadraticBezier(QuadraticBezier2::new(
-                    curve.end().clone(),
-                    curve.control().clone(),
-                    curve.start().clone(),
-                ))
+                let reversed = if curve.retained_exact_line_image().is_some() {
+                    QuadraticBezier2::with_retained_exact_line_image(
+                        curve.end().clone(),
+                        curve.control().clone(),
+                        curve.start().clone(),
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Reversal,
+                            CurveFamily2::QuadraticBezier,
+                            cause,
+                        )
+                    })?
+                } else {
+                    QuadraticBezier2::new(
+                        curve.end().clone(),
+                        curve.control().clone(),
+                        curve.start().clone(),
+                    )
+                };
+                CurveGeometry2::QuadraticBezier(reversed)
             }
             CurveGeometry2::CubicBezier(curve) => CurveGeometry2::CubicBezier(CubicBezier2::new(
                 curve.end().clone(),
@@ -408,13 +424,16 @@ impl Curve2 {
             )),
             CurveGeometry2::RationalQuadraticBezier(curve) => {
                 CurveGeometry2::RationalQuadraticBezier(
-                    RationalQuadraticBezier2::try_new(
+                    RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
                         curve.end().clone(),
                         curve.control().clone(),
                         curve.start().clone(),
                         curve.end_weight().clone(),
                         curve.control_weight().clone(),
                         curve.start_weight().clone(),
+                        curve.common_nonzero_weight_sign(&CurvePolicy::certified()),
+                        curve.retained_implicit_quadratic_conic().cloned(),
+                        curve.retained_circular_conic().cloned(),
                     )
                     .map_err(|cause| {
                         ExactCurveError::invalid(
@@ -459,11 +478,17 @@ impl Curve2 {
                 let points = curve
                     .control_points()
                     .map(|point| transform.transform_point(point));
-                CurveGeometry2::QuadraticBezier(QuadraticBezier2::new(
-                    points[0].clone(),
-                    points[1].clone(),
-                    points[2].clone(),
-                ))
+                let transformed = if curve.retained_exact_line_image().is_some() {
+                    QuadraticBezier2::with_retained_exact_line_image(
+                        points[0].clone(),
+                        points[1].clone(),
+                        points[2].clone(),
+                    )
+                    .map_err(|cause| self.transform_error(cause))?
+                } else {
+                    QuadraticBezier2::new(points[0].clone(), points[1].clone(), points[2].clone())
+                };
+                CurveGeometry2::QuadraticBezier(transformed)
             }
             CurveGeometry2::CubicBezier(curve) => {
                 let points = curve
@@ -1992,6 +2017,20 @@ fn rationalize_subcurve(
     curve: &BezierSubcurve2,
     family: CurveFamily2,
 ) -> ExactCurveResult<RationalBezier2> {
+    let exact_line_image = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.retained_exact_line_image().cloned(),
+        _ => None,
+    };
+    let implicit_quadratic_conic = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            curve.retained_implicit_quadratic_conic().cloned()
+        }
+        _ => None,
+    };
+    let circular_conic = match curve {
+        BezierSubcurve2::RationalQuadratic(curve) => curve.retained_circular_conic().cloned(),
+        _ => None,
+    };
     let (control_points, weights) = match curve {
         BezierSubcurve2::Quadratic(curve) => (
             curve.control_points().into_iter().cloned().collect(),
@@ -2007,8 +2046,19 @@ fn rationalize_subcurve(
         ),
         BezierSubcurve2::Rational(curve) => return Ok(curve.clone()),
     };
-    RationalBezier2::try_new(control_points, weights)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::NativeTopology, family, cause))
+    match (exact_line_image, implicit_quadratic_conic) {
+        (Some(line), _) => {
+            RationalBezier2::try_new_with_exact_line_image(control_points, weights, line)
+        }
+        (None, Some(conic)) => RationalBezier2::try_new_with_implicit_quadratic_conic(
+            control_points,
+            weights,
+            conic,
+            circular_conic,
+        ),
+        (None, None) => RationalBezier2::try_new(control_points, weights),
+    }
+    .map_err(|cause| ExactCurveError::invalid(CurveOperation2::NativeTopology, family, cause))
 }
 
 fn promote_native_bezier_fragments(curve: &Curve2) -> ExactCurveResult<Vec<NativeBezierFragment2>> {
@@ -2023,15 +2073,8 @@ fn promote_native_bezier_fragments(curve: &Curve2) -> ExactCurveResult<Vec<Nativ
     match curve.geometry() {
         CurveGeometry2::Line(line) => {
             let (start, end) = unit();
-            let midpoint = line.point_at(
-                (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator"),
-            );
             Ok(vec![native(
-                BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                    line.start().clone(),
-                    midpoint,
-                    line.end().clone(),
-                )),
+                BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line.clone())),
                 start,
                 end,
             )])

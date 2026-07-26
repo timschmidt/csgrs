@@ -290,11 +290,23 @@ impl BezierSubcurve2 {
     /// Returns the same exact image with traversal direction reversed.
     pub fn reversed(&self) -> Self {
         match self {
-            Self::Quadratic(curve) => Self::Quadratic(QuadraticBezier2::new(
-                curve.end().clone(),
-                curve.control().clone(),
-                curve.start().clone(),
-            )),
+            Self::Quadratic(curve) => {
+                let reversed = if curve.retained_exact_line_image().is_some() {
+                    QuadraticBezier2::with_retained_exact_line_image(
+                        curve.end().clone(),
+                        curve.control().clone(),
+                        curve.start().clone(),
+                    )
+                    .expect("a retained exact line has distinct endpoints")
+                } else {
+                    QuadraticBezier2::new(
+                        curve.end().clone(),
+                        curve.control().clone(),
+                        curve.start().clone(),
+                    )
+                };
+                Self::Quadratic(reversed)
+            }
             Self::Cubic(curve) => Self::Cubic(CubicBezier2::new(
                 curve.end().clone(),
                 curve.control2().clone(),
@@ -302,7 +314,7 @@ impl BezierSubcurve2 {
                 curve.start().clone(),
             )),
             Self::RationalQuadratic(curve) => Self::RationalQuadratic(
-                RationalQuadraticBezier2::try_new_with_common_weight_sign(
+                RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
                     curve.end().clone(),
                     curve.control().clone(),
                     curve.start().clone(),
@@ -310,6 +322,8 @@ impl BezierSubcurve2 {
                     curve.control_weight().clone(),
                     curve.start_weight().clone(),
                     curve.common_nonzero_weight_sign(&CurvePolicy::certified()),
+                    curve.retained_implicit_quadratic_conic().cloned(),
+                    curve.retained_circular_conic().cloned(),
                 )
                 .expect("reversing a valid rational quadratic remains valid"),
             ),
@@ -673,6 +687,23 @@ impl QuadraticBezier2 {
             .control()
             .lerp_with_weights(self.end(), &one_minus_t, &t);
         let p012 = p01.lerp_with_weights(&p12, &one_minus_t, &t);
+        if self.retained_exact_line_image().is_some() {
+            let retained = (
+                QuadraticBezier2::with_retained_exact_line_image(
+                    self.start().clone(),
+                    p01.clone(),
+                    p012.clone(),
+                ),
+                QuadraticBezier2::with_retained_exact_line_image(
+                    p012.clone(),
+                    p12.clone(),
+                    self.end().clone(),
+                ),
+            );
+            if let (Ok(left), Ok(right)) = retained {
+                return (left, right);
+            }
+        }
         (
             QuadraticBezier2::new(self.start().clone(), p01, p012.clone()),
             QuadraticBezier2::new(p012, p12, self.end().clone()),
@@ -859,9 +890,16 @@ impl RationalQuadraticBezier2 {
             .rev()
             .map(|level| level[level.len() - 1].clone())
             .collect::<Vec<_>>();
+        let implicit_quadratic_conic = self.retained_implicit_quadratic_conic().cloned();
+        let circular_conic = self.retained_circular_conic().cloned();
         Ok((
-            rational_from_homogeneous(&left, policy, retained_common_weight_sign)?,
-            rational_from_homogeneous(&right, policy, retained_common_weight_sign)?,
+            rational_from_homogeneous(&left, policy, retained_common_weight_sign)?
+                .with_retained_conic_provenance(
+                    implicit_quadratic_conic.clone(),
+                    circular_conic.clone(),
+                ),
+            rational_from_homogeneous(&right, policy, retained_common_weight_sign)?
+                .with_retained_conic_provenance(implicit_quadratic_conic, circular_conic),
         ))
     }
 }

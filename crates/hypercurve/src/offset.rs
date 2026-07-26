@@ -43,10 +43,10 @@ impl LineSeg2 {
     /// trim self-intersections, and rebuild topology. See profile-offset construction, for the line/arc
     /// primitive plus trim-and-join framing used by many CAD offset pipelines.
     pub fn offset_left(&self, distance: Real) -> CurveResult<Self> {
-        let length = self.length_squared().sqrt()?;
         let (dx, dy) = self.delta();
-        let normal_x = ((-dy) / &length)?;
-        let normal_y = (dx / &length)?;
+        let (unit_x, unit_y) = unit_direction_for_delta(&dx, &dy)?;
+        let normal_x = -unit_y;
+        let normal_y = unit_x;
         let offset_x = &normal_x * &distance;
         let offset_y = &normal_y * &distance;
 
@@ -898,7 +898,7 @@ fn outline_segments_for_cap(
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     match cap {
-        OffsetCap::Round => outline_segments_with_round_caps(offsets, policy),
+        OffsetCap::Round => outline_segments_with_round_caps(offsets, distance, policy),
         OffsetCap::Butt => outline_segments_with_butt_caps(offsets),
         OffsetCap::Square => outline_segments_with_square_caps(source, offsets, distance),
     }
@@ -906,6 +906,7 @@ fn outline_segments_for_cap(
 
 fn outline_segments_with_round_caps(
     offsets: OutlineOffsets,
+    distance: Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Vec<Segment2>>> {
     let OutlineOffsets {
@@ -918,15 +919,22 @@ fn outline_segments_with_round_caps(
         right_start,
         right_end,
     } = offsets;
+    let radius_squared = &distance * &distance;
 
     let mut segments = Vec::with_capacity(left.len() + right.len() + 2);
     segments.extend(left.into_segments());
-    match round_cap_arc(&left_end, &right_end, &end_center, policy)? {
+    match round_cap_arc(&left_end, &right_end, &end_center, &radius_squared, policy)? {
         Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     segments.extend(reversed_segments(right.into_segments()));
-    match round_cap_arc(&right_start, &left_start, &start_center, policy)? {
+    match round_cap_arc(
+        &right_start,
+        &left_start,
+        &start_center,
+        &radius_squared,
+        policy,
+    )? {
         Classification::Decided(cap) => segments.push(Segment2::Arc(cap)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
@@ -1156,8 +1164,27 @@ fn unit_tangent_at_segment_end(segment: &Segment2) -> CurveResult<(Real, Real)> 
 }
 
 fn unit_tangent_for_line(line: &LineSeg2) -> CurveResult<(Real, Real)> {
-    let length = line.length_squared().sqrt()?;
     let (dx, dy) = line.delta();
+    unit_direction_for_delta(&dx, &dy)
+}
+
+fn unit_direction_for_delta(dx: &Real, dy: &Real) -> CurveResult<(Real, Real)> {
+    let policy = CurvePolicy::certified();
+    let dx_sign = real_sign(dx, &policy);
+    let dy_sign = real_sign(dy, &policy);
+    if is_zero(&(dx * dx - dy * dy), &policy) == Some(true)
+        && matches!(dx_sign, Some(RealSign::Positive | RealSign::Negative))
+        && matches!(dy_sign, Some(RealSign::Positive | RealSign::Negative))
+    {
+        let diagonal = (Real::from(2_i8).sqrt()? / Real::from(2_i8))?;
+        let signed = |sign| match sign {
+            Some(RealSign::Negative) => -diagonal.clone(),
+            Some(RealSign::Positive) => diagonal.clone(),
+            _ => unreachable!("nonzero diagonal component signs were certified"),
+        };
+        return Ok((signed(dx_sign), signed(dy_sign)));
+    }
+    let length = Real::dot2_refs([dx, dy], [dx, dy]).sqrt()?;
     Ok(((dx / &length)?, (dy / &length)?))
 }
 
@@ -1393,6 +1420,7 @@ fn round_cap_arc(
     from: &Point2,
     to: &Point2,
     center: &Point2,
+    radius_squared: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<CircularArc2>> {
     match is_zero(&from.distance_squared(to), policy) {
@@ -1402,7 +1430,16 @@ fn round_cap_arc(
                 Classification::Decided(clockwise) => clockwise,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            Ok(round_join_arc(from, to, center, clockwise))
+            Ok(Classification::Decided(
+                CircularArc2::new_with_certified_radius(
+                    from.clone(),
+                    to.clone(),
+                    center.clone(),
+                    radius_squared.clone(),
+                    clockwise,
+                    None,
+                ),
+            ))
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }

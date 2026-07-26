@@ -11,7 +11,7 @@ use hyperreal::{Real, ZeroKnowledge as ZeroStatus};
 use std::cmp::Ordering;
 
 use crate::classify::{compare_reals, is_zero};
-use crate::{Aabb2, Classification, CurvePolicy, CurveResult, Point2, UncertaintyReason};
+use crate::{Aabb2, Classification, CurvePolicy, CurveResult, LineSeg2, Point2, UncertaintyReason};
 
 /// An endpoint of a parametric Bezier segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -74,11 +74,12 @@ impl EndpointTangent2 {
 /// de Casteljau subdivision. De Casteljau's algorithm preserves affine
 /// structure and is the standard numerically stable geometric construction for
 /// Bezier curves using de Casteljau subdivision.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct QuadraticBezier2 {
     start: Point2,
     control: Point2,
     end: Point2,
+    exact_line_image: Option<LineSeg2>,
 }
 
 impl QuadraticBezier2 {
@@ -88,6 +89,70 @@ impl QuadraticBezier2 {
             start,
             control,
             end,
+            exact_line_image: None,
+        }
+    }
+
+    /// Promotes an exact line segment to its degree-two Bernstein form.
+    pub fn from_line_segment(line: LineSeg2) -> Self {
+        let half = (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
+        let control = line.point_at(half);
+        Self {
+            start: line.start().clone(),
+            control,
+            end: line.end().clone(),
+            exact_line_image: Some(line),
+        }
+    }
+
+    pub(crate) fn with_retained_exact_line_image(
+        start: Point2,
+        control: Point2,
+        end: Point2,
+    ) -> CurveResult<Self> {
+        let line = LineSeg2::try_new(start.clone(), end.clone())?;
+        Ok(Self {
+            start,
+            control,
+            end,
+            exact_line_image: Some(line),
+        })
+    }
+
+    pub(crate) const fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
+        self.exact_line_image.as_ref()
+    }
+
+    /// Applies an exact planar affine transform while retaining a certified
+    /// degree-elevated line image when one is present.
+    #[allow(clippy::too_many_arguments)]
+    pub fn transform_affine(
+        &self,
+        m00: &Real,
+        m01: &Real,
+        m10: &Real,
+        m11: &Real,
+        tx: &Real,
+        ty: &Real,
+    ) -> Self {
+        let point = |point: &Point2| {
+            Point2::new(
+                m00 * point.x() + m01 * point.y() + tx,
+                m10 * point.x() + m11 * point.y() + ty,
+            )
+        };
+        let start = point(&self.start);
+        let control = point(&self.control);
+        let end = point(&self.end);
+        let exact_line_image = self
+            .exact_line_image
+            .as_ref()
+            .and_then(|_| LineSeg2::try_new(start.clone(), end.clone()).ok());
+        Self {
+            start,
+            control,
+            end,
+            exact_line_image,
         }
     }
 
@@ -236,6 +301,12 @@ impl QuadraticBezier2 {
     /// Returns conservative structural facts for exact predicate scheduling.
     pub fn structural_facts(&self) -> crate::Bezier2Facts {
         crate::facts::quadratic_bezier_facts(self)
+    }
+}
+
+impl PartialEq for QuadraticBezier2 {
+    fn eq(&self, other: &Self) -> bool {
+        self.start == other.start && self.control == other.control && self.end == other.end
     }
 }
 

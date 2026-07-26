@@ -875,8 +875,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let location = match propagated {
                     Some(location) => location,
                     None => {
-                        point_classification_count += 1;
-                        self.fragment_location(carrier_index, &split.fragment)?
+                        let (start, end) = fragment_range(&split.fragment);
+                        let shared = overlaps.iter().any(|overlap| {
+                            let range = if overlap.first_carrier_index == carrier_index {
+                                Some(&overlap.first_range)
+                            } else if overlap.second_carrier_index == carrier_index {
+                                Some(&overlap.second_range)
+                            } else {
+                                None
+                            };
+                            range.is_some_and(|range| {
+                                range_contains_fragment(range, start, end, &self.data.policy)
+                                    .unwrap_or(false)
+                            })
+                        });
+                        if shared {
+                            RegionPointLocation::Boundary
+                        } else {
+                            point_classification_count += 1;
+                            self.fragment_location(carrier_index, &split.fragment)?
+                        }
                     }
                 };
                 previous = Some((
@@ -1075,21 +1093,28 @@ impl<'a> CurveRegionBooleanContext<'a> {
         );
         let primary = graph
             .traverse_retained_with_certified_successors(&certified_successors, &self.data.policy);
-        // XOR can retain both result-side boundaries at the same contact. If
-        // the established smallest-turn walk collides at a four-valent XOR
-        // vertex, retry with filled-face half-edge pairing.
+        // Coincident or multi-valent retained boundaries can make the
+        // smallest-turn walk ambiguous even when result-side evidence is
+        // complete. Retry with the same certified successor set interpreted
+        // as filled-left face half-edges for every operation.
         let traversal = match primary {
             Classification::Decided(traversal) => traversal,
-            Classification::Uncertain(_) if operation == BooleanOp::Xor => {
+            Classification::Uncertain(_) => {
                 match graph.traverse_retained_filled_left_faces_with_certified_successors(
                     &certified_successors,
                     &self.data.policy,
                 ) {
                     Classification::Decided(traversal) => traversal,
-                    Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
+                    Classification::Uncertain(_) => {
+                        match graph.traverse_retained_with_tangent_order(&self.data.policy) {
+                            Classification::Decided(traversal) => traversal,
+                            Classification::Uncertain(reason) => {
+                                return Err(self.blocked(0, reason));
+                            }
+                        }
+                    }
                 }
             }
-            Classification::Uncertain(reason) => return Err(self.blocked(0, reason)),
         };
         let mut region =
             match CurveRegion2::from_certified_retained_arrangement_traversal(&graph, &traversal) {

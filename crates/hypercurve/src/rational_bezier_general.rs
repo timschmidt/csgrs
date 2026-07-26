@@ -26,7 +26,10 @@ use crate::bezier_algebraic_image::{
     rational_derivative_images_from_power_basis, rational_point_image_from_power_basis,
 };
 use crate::bezier_parameter::{BezierParameterRefinement2, bernstein_to_power_coefficients};
-use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
+use crate::bezier_topology::{
+    exact_line_contact_relation_from_bernstein_distances,
+    polynomial_roots_in_unit_interval_with_endpoints,
+};
 use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2d_real_expr,
     real_sign,
@@ -34,11 +37,12 @@ use crate::classify::{
 use crate::intersect::oriented_param_range_overlap;
 use crate::{
     Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineImageFitRelation, BezierParameter2, BezierParameterPolynomial, BezierParameterRange2,
-    BezierSplitMaterialization2, Classification, CurveDerivative2, CurveError, CurveFamily2,
-    CurveOperation2, CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2,
-    LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
+    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
+    BezierParameterPolynomial, BezierParameterRange2, BezierSplitMaterialization2, Classification,
+    CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy, CurveResult,
+    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalQuadraticBezier2, UncertaintyReason,
 };
 
 /// Exact planar rational Bezier curve with an arbitrary positive degree.
@@ -55,6 +59,7 @@ pub struct RationalBezier2 {
 struct RationalBezierData {
     control_points: Vec<Point2>,
     weights: Vec<Real>,
+    exact_line_image: Option<LineSeg2>,
     lineage: RationalBezierLineage,
     homogeneous_controls: OnceCell<Vec<HomogeneousPoint2>>,
     homogeneous_power_basis: OnceCell<RationalParametricCurve2>,
@@ -75,6 +80,7 @@ struct RationalBezierLineage {
 struct RationalBezierLineageRoot {
     image_is_injective: OnceCell<bool>,
     implicit_quadratic_conic: OnceCell<Rc<[Real; 6]>>,
+    circular_conic: OnceCell<Rc<crate::rational_bezier::RationalQuadraticCircle2>>,
     quadratic_conic_parameter_frame: OnceCell<Rc<[HomogeneousPoint2; 3]>>,
 }
 
@@ -490,10 +496,56 @@ impl RationalBezier2 {
         )
     }
 
+    pub(crate) fn try_new_with_exact_line_image(
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        exact_line_image: LineSeg2,
+    ) -> CurveResult<Self> {
+        Self::try_new_with_lineage_and_exact_line_image(
+            control_points,
+            weights,
+            RationalBezierLineage {
+                root: Rc::new(RationalBezierLineageRoot::default()),
+                range: ParamRange::new(Real::zero(), Real::one()),
+            },
+            Some(exact_line_image),
+        )
+    }
+
+    pub(crate) fn try_new_with_implicit_quadratic_conic(
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        implicit_quadratic_conic: Rc<[Real; 6]>,
+        circular_conic: Option<Rc<crate::rational_bezier::RationalQuadraticCircle2>>,
+    ) -> CurveResult<Self> {
+        let root = Rc::new(RationalBezierLineageRoot::default());
+        let _ = root.implicit_quadratic_conic.set(implicit_quadratic_conic);
+        if let Some(circular_conic) = circular_conic {
+            let _ = root.circular_conic.set(circular_conic);
+        }
+        Self::try_new_with_lineage(
+            control_points,
+            weights,
+            RationalBezierLineage {
+                root,
+                range: ParamRange::new(Real::zero(), Real::one()),
+            },
+        )
+    }
+
     fn try_new_with_lineage(
         control_points: Vec<Point2>,
         weights: Vec<Real>,
         lineage: RationalBezierLineage,
+    ) -> CurveResult<Self> {
+        Self::try_new_with_lineage_and_exact_line_image(control_points, weights, lineage, None)
+    }
+
+    fn try_new_with_lineage_and_exact_line_image(
+        control_points: Vec<Point2>,
+        weights: Vec<Real>,
+        lineage: RationalBezierLineage,
+        exact_line_image: Option<LineSeg2>,
     ) -> CurveResult<Self> {
         if control_points.len() < 2 || control_points.len() != weights.len() {
             return Err(CurveError::InvalidRationalBezier);
@@ -508,6 +560,7 @@ impl RationalBezier2 {
             data: Rc::new(RationalBezierData {
                 control_points,
                 weights,
+                exact_line_image,
                 lineage,
                 homogeneous_controls: OnceCell::new(),
                 homogeneous_power_basis: OnceCell::new(),
@@ -528,6 +581,22 @@ impl RationalBezier2 {
     /// Returns exact affine controls in Bernstein order.
     pub fn control_points(&self) -> &[Point2] {
         &self.data.control_points
+    }
+
+    pub(crate) fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
+        self.data.exact_line_image.as_ref()
+    }
+
+    fn exact_linear_parameterization_line(&self) -> Option<LineSeg2> {
+        if let Some(line) = self.retained_exact_line_image() {
+            return Some(line.clone());
+        }
+        if self.degree() != 2 || self.weights().iter().any(|weight| weight != &Real::one()) {
+            return None;
+        }
+        let half = (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
+        let line = LineSeg2::try_new(self.start().clone(), self.end().clone()).ok()?;
+        (self.control_points()[1] == line.point_at(half)).then_some(line)
     }
 
     /// Returns exact homogeneous weights in Bernstein order.
@@ -1104,11 +1173,142 @@ impl RationalBezier2 {
         if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
             return Classification::Uncertain(reason);
         }
+        if self.degree() == 2
+            && let Some(circle) = self.data.lineage.root.circular_conic.get()
+        {
+            let (line_dx, line_dy) = line.delta();
+            let (from_center_x, from_center_y) = line.start().delta_from(&circle.center);
+            let quadratic = Real::dot2_refs([&line_dx, &line_dy], [&line_dx, &line_dy]);
+            let half_linear =
+                Real::dot2_refs([&from_center_x, &from_center_y], [&line_dx, &line_dy]);
+            let one = Real::one();
+            let constant = Real::signed_product_sum(
+                [true, true, false],
+                [
+                    [&from_center_x, &from_center_x],
+                    [&from_center_y, &from_center_y],
+                    [&circle.radius_squared, &one],
+                ],
+            );
+            let discriminant = Real::signed_product_sum(
+                [true, false],
+                [[&half_linear, &half_linear], [&quadratic, &constant]],
+            );
+            let (line_parameters, kind) = match real_sign(&discriminant, policy) {
+                Some(RealSign::Negative) => {
+                    return Classification::Decided(BezierLineContactRelation::NoContact);
+                }
+                Some(RealSign::Zero) => {
+                    let Ok(parameter) = (-half_linear) / &quadratic else {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    };
+                    (vec![parameter], BezierLineContactKind::Tangent)
+                }
+                Some(RealSign::Positive) => {
+                    let Ok(root) = discriminant.sqrt() else {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    };
+                    let negative_half_linear = -half_linear;
+                    let Ok(first) = (&negative_half_linear - &root) / &quadratic else {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    };
+                    let Ok(second) = (negative_half_linear + root) / quadratic else {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    };
+                    (vec![first, second], BezierLineContactKind::Crossing)
+                }
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            };
+            let mut contacts = Vec::with_capacity(line_parameters.len());
+            for line_parameter in line_parameters {
+                let point = Point2::new(
+                    line.start().x() + &line_dx * &line_parameter,
+                    line.start().y() + &line_dy * &line_parameter,
+                );
+                let parameters = match quadratic_conic_point_parameters(&point, self, policy) {
+                    Classification::Decided(Some(parameters)) => parameters,
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Classification::Uncertain(reason);
+                    }
+                };
+                for parameter in parameters {
+                    let crossing_direction = if kind == BezierLineContactKind::Crossing {
+                        let BezierParameter2::Exact(exact) = &parameter else {
+                            return Classification::Uncertain(UncertaintyReason::Unsupported);
+                        };
+                        let Classification::Decided(derivative) =
+                            self.derivative_at_classified(exact, policy)
+                        else {
+                            return Classification::Uncertain(UncertaintyReason::RealSign);
+                        };
+                        let signed_derivative = Real::signed_product_sum(
+                            [true, false],
+                            [[&line_dx, derivative.dy()], [&line_dy, derivative.dx()]],
+                        );
+                        match real_sign(&signed_derivative, policy) {
+                            Some(RealSign::Positive) => {
+                                Some(BezierLineCrossingDirection::NegativeToPositive)
+                            }
+                            Some(RealSign::Negative) => {
+                                Some(BezierLineCrossingDirection::PositiveToNegative)
+                            }
+                            Some(RealSign::Zero) | None => {
+                                return Classification::Uncertain(UncertaintyReason::RealSign);
+                            }
+                        }
+                    } else {
+                        None
+                    };
+                    let Ok(contact) =
+                        crate::BezierLineContact::with_crossing_direction_and_line_parameter(
+                            parameter,
+                            kind,
+                            crossing_direction,
+                            line_parameter.clone(),
+                        )
+                    else {
+                        return Classification::Uncertain(UncertaintyReason::Ordering);
+                    };
+                    contacts.push(contact);
+                }
+            }
+            if contacts.len() == 2 {
+                match contacts[0]
+                    .parameter()
+                    .cmp_by_interval(contacts[1].parameter(), policy)
+                {
+                    Ok(Classification::Decided(Ordering::Greater)) => contacts.swap(0, 1),
+                    Ok(Classification::Decided(_)) => {}
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Ordering),
+                }
+            }
+            return Classification::Decided(if contacts.is_empty() {
+                BezierLineContactRelation::NoContact
+            } else {
+                BezierLineContactRelation::Contacts { contacts }
+            });
+        }
         let weighted_distances = self
             .control_points()
             .iter()
+            .enumerate()
             .zip(self.weights())
-            .map(|(point, weight)| orient2d_real_expr(line.start(), line.end(), point) * weight)
+            .map(|((index, point), weight)| {
+                if (index == 0 || index + 1 == self.control_points().len())
+                    && (point == line.start()
+                        || point == line.end()
+                        || is_zero(&point.distance_squared(line.start()), policy) == Some(true)
+                        || is_zero(&point.distance_squared(line.end()), policy) == Some(true))
+                {
+                    Real::zero()
+                } else {
+                    orient2d_real_expr(line.start(), line.end(), point) * weight
+                }
+            })
             .collect::<Vec<_>>();
         let sides = self
             .control_points()
@@ -1284,6 +1484,64 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<RationalBezierIntersectionContext>> {
+        if self == other {
+            let overlap = RationalBezierIntersectionOverlap2 {
+                first_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+                second_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+                orientation: RationalBezierOverlapOrientation2::Same,
+            };
+            let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
+            let candidates = intersection_candidates_from_contacts(&contacts);
+            let contact_cache = OnceCell::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates,
+                    contacts: contact_cache,
+                },
+            }));
+        }
+        if self
+            .control_points()
+            .iter()
+            .rev()
+            .eq(other.control_points().iter())
+            && self.weights().iter().rev().eq(other.weights().iter())
+        {
+            let overlap = RationalBezierIntersectionOverlap2 {
+                first_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+                second_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(Real::zero()),
+                    BezierParameter2::Exact(Real::one()),
+                ),
+                orientation: RationalBezierOverlapOrientation2::Reversed,
+            };
+            let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
+            let candidates = intersection_candidates_from_contacts(&contacts);
+            let contact_cache = OnceCell::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates,
+                    contacts: contact_cache,
+                },
+            }));
+        }
         if self.certified_bounds_are_disjoint(other, policy) {
             let contacts = OnceCell::new();
             let _ = contacts.set(Ok(Classification::Decided(
@@ -1296,6 +1554,46 @@ impl RationalBezier2 {
                     policy: policy.clone(),
                     candidates: RationalBezierIntersectionCandidates2::NoIntersection,
                     contacts,
+                },
+            }));
+        }
+        if let Some(contacts) = self.circular_conic_intersection_contacts(other, policy)? {
+            let contacts = match contacts {
+                Classification::Decided(contacts) => contacts,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let candidates = intersection_candidates_from_contacts(&contacts);
+            let contact_cache = OnceCell::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates,
+                    contacts: contact_cache,
+                },
+            }));
+        }
+        if let Some(contacts) = self.retained_linear_image_contacts(other, policy)? {
+            let contacts = match contacts {
+                Classification::Decided(contacts) => contacts,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let candidates = intersection_candidates_from_contacts(&contacts);
+            let contact_cache = OnceCell::new();
+            let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+            return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                data: RationalBezierIntersectionContextData {
+                    first: self.clone(),
+                    second: other.clone(),
+                    policy: policy.clone(),
+                    candidates,
+                    contacts: contact_cache,
                 },
             }));
         }
@@ -1373,7 +1671,37 @@ impl RationalBezier2 {
                 },
             }));
         }
-
+        if matches!(
+            self.shares_implicit_quadratic_conic(other, policy),
+            Classification::Decided(true)
+        ) {
+            match self.replay_intersection_candidate_set(
+                other,
+                &RationalBezierIntersectionCandidates2::DegenerateResultant,
+                policy,
+            )? {
+                Classification::Decided(
+                    RationalBezierIntersectionContacts2::DegenerateResultant,
+                ) => {}
+                Classification::Decided(contacts) => {
+                    let candidates = intersection_candidates_from_contacts(&contacts);
+                    let contact_cache = OnceCell::new();
+                    let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
+                    return Ok(Classification::Decided(RationalBezierIntersectionContext {
+                        data: RationalBezierIntersectionContextData {
+                            first: self.clone(),
+                            second: other.clone(),
+                            policy: policy.clone(),
+                            candidates,
+                            contacts: contact_cache,
+                        },
+                    }));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
         let special =
             if let Some(contacts) = self.implicit_conic_intersection_contacts(other, policy)? {
                 Some(contacts)
@@ -1413,6 +1741,41 @@ impl RationalBezier2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+
+    fn retained_linear_image_contacts(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
+        let (Some(first), Some(second)) = (
+            self.exact_linear_parameterization_line(),
+            other.exact_linear_parameterization_line(),
+        ) else {
+            return Ok(None);
+        };
+        Ok(Some(match first.intersect_line(&second, policy)? {
+            crate::LineLineIntersection::None => {
+                Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)
+            }
+            crate::LineLineIntersection::Point {
+                point,
+                a_param,
+                b_param,
+                kind,
+            } => {
+                Classification::Decided(RationalBezierIntersectionContacts2::Contacts(Rc::from([
+                    RationalBezierIntersectionContact2 {
+                        first_parameter: BezierParameter2::Exact(a_param),
+                        second_parameter: BezierParameter2::Exact(b_param),
+                        point: RationalBezierIntersectionPointEvidence2::Exact(point),
+                        certified_transverse: kind == crate::IntersectionKind::Crossing,
+                    },
+                ])))
+            }
+            crate::LineLineIntersection::Overlap { .. } => return Ok(None),
+            crate::LineLineIntersection::Uncertain { reason } => Classification::Uncertain(reason),
+        }))
     }
 
     /// Replays all resultant projections into exact paired contacts.
@@ -1615,6 +1978,231 @@ impl RationalBezier2 {
         ) {
             return Ok(None);
         }
+        if self.degree() == 2
+            && let Some(circle) = self.data.lineage.root.circular_conic.get()
+        {
+            let (line_dx, line_dy) = line.line().delta();
+            let (from_center_x, from_center_y) = line.line().start().delta_from(&circle.center);
+            let one = Real::one();
+            let start_residual = Real::signed_product_sum(
+                [true, true, false],
+                [
+                    [&from_center_x, &from_center_x],
+                    [&from_center_y, &from_center_y],
+                    [&circle.radius_squared, &one],
+                ],
+            );
+            let (end_from_center_x, end_from_center_y) =
+                line.line().end().delta_from(&circle.center);
+            let end_residual = Real::signed_product_sum(
+                [true, true, false],
+                [
+                    [&end_from_center_x, &end_from_center_x],
+                    [&end_from_center_y, &end_from_center_y],
+                    [&circle.radius_squared, &one],
+                ],
+            );
+            let matches_curve_endpoint = |point: &Point2| {
+                [self.start(), self.end()].into_iter().any(|endpoint| {
+                    point == endpoint
+                        || is_zero(&point.distance_squared(endpoint), policy) == Some(true)
+                })
+            };
+            let point_on_curve = |point: &Point2| {
+                matches_curve_endpoint(point)
+                    || matches!(
+                        self.point_incidence_classified(point, policy),
+                        Ok(Classification::Decided(
+                            RationalBezierPointIncidence2::Parameters(parameters)
+                        )) if !parameters.is_empty()
+                    )
+            };
+            let start_matches_curve_endpoint = point_on_curve(line.line().start());
+            let end_matches_curve_endpoint = point_on_curve(line.line().end());
+            let start_value =
+                if start_matches_curve_endpoint || is_zero(&start_residual, policy) == Some(true) {
+                    Real::zero()
+                } else {
+                    start_residual.clone()
+                };
+            let end_value =
+                if end_matches_curve_endpoint || is_zero(&end_residual, policy) == Some(true) {
+                    Real::zero()
+                } else {
+                    end_residual
+                };
+            for (point, line_parameter, radius_x, radius_y, residual, at_start) in [
+                (
+                    line.line().start(),
+                    Real::zero(),
+                    &from_center_x,
+                    &from_center_y,
+                    &start_value,
+                    true,
+                ),
+                (
+                    line.line().end(),
+                    Real::one(),
+                    &end_from_center_x,
+                    &end_from_center_y,
+                    &end_value,
+                    false,
+                ),
+            ] {
+                let radial_direction = Real::dot2_refs([radius_x, radius_y], [&line_dx, &line_dy]);
+                let inward_parameter_direction = if at_start {
+                    radial_direction.clone()
+                } else {
+                    -radial_direction.clone()
+                };
+                let certified_orthogonal = is_zero(&radial_direction, policy) == Some(true)
+                    || (is_zero(&(radius_x - radius_y), policy) == Some(true)
+                        && is_zero(&(&line_dx + &line_dy), policy) == Some(true))
+                    || (is_zero(&(radius_x + radius_y), policy) == Some(true)
+                        && is_zero(&(&line_dx - &line_dy), policy) == Some(true))
+                    || (is_zero(radius_x, policy) == Some(true)
+                        && is_zero(&line_dy, policy) == Some(true))
+                    || (is_zero(radius_y, policy) == Some(true)
+                        && is_zero(&line_dx, policy) == Some(true));
+                let direction_moves_outside = matches!(
+                    real_sign(&inward_parameter_direction, policy),
+                    Some(RealSign::Positive)
+                );
+                let mut curve_parameters =
+                    [(self.start(), Real::zero()), (self.end(), one.clone())]
+                        .into_iter()
+                        .filter_map(|(endpoint, parameter)| {
+                            (point == endpoint
+                                || is_zero(&point.distance_squared(endpoint), policy) == Some(true))
+                            .then_some(BezierParameter2::Exact(parameter))
+                        })
+                        .collect::<Vec<_>>();
+                if curve_parameters.is_empty()
+                    && let Classification::Decided(RationalBezierPointIncidence2::Parameters(
+                        parameters,
+                    )) = self.point_incidence_classified(point, policy)?
+                {
+                    curve_parameters = parameters;
+                }
+                if curve_parameters.is_empty()
+                    && let Classification::Decided(Some(parameters)) =
+                        quadratic_conic_point_parameters(point, self, policy)
+                {
+                    for parameter in parameters {
+                        let BezierParameter2::Exact(exact) = &parameter else {
+                            continue;
+                        };
+                        if matches!(
+                            self.point_at_classified(exact, policy),
+                            Classification::Decided(image)
+                                if is_zero(&image.distance_squared(point), policy) == Some(true)
+                        ) {
+                            curve_parameters.push(parameter);
+                        }
+                    }
+                }
+                let point_is_on_full_circle = is_zero(residual, policy) == Some(true);
+                if (point_is_on_full_circle || !curve_parameters.is_empty())
+                    && (certified_orthogonal || direction_moves_outside)
+                {
+                    if let [curve_parameter] = curve_parameters.as_slice() {
+                        return Ok(Some(Classification::Decided(
+                            RationalBezierIntersectionContacts2::Contacts(Rc::from([
+                                RationalBezierIntersectionContact2 {
+                                    first_parameter: curve_parameter.clone(),
+                                    second_parameter: BezierParameter2::Exact(line_parameter),
+                                    point: RationalBezierIntersectionPointEvidence2::Exact(
+                                        point.clone(),
+                                    ),
+                                    certified_transverse: direction_moves_outside,
+                                },
+                            ])),
+                        )));
+                    }
+                    if point_is_on_full_circle && certified_orthogonal {
+                        let hull = Aabb2::from_points(self.control_points(), policy);
+                        if matches!(
+                            hull,
+                            Classification::Decided(bounds)
+                                if matches!(
+                                    bounds.contains_point(point, policy),
+                                    Classification::Decided(false)
+                                )
+                        ) {
+                            return Ok(Some(Classification::Decided(
+                                RationalBezierIntersectionContacts2::NoIntersection,
+                            )));
+                        }
+                    }
+                }
+            }
+            let half_linear =
+                Real::dot2_refs([&from_center_x, &from_center_y], [&line_dx, &line_dy]);
+            let quadratic = Real::dot2_refs([&line_dx, &line_dy], [&line_dx, &line_dy]);
+            let roots = polynomial_roots_in_unit_interval_with_endpoints(
+                start_value.clone(),
+                Real::from(2_i8) * half_linear,
+                quadratic,
+                &start_value,
+                &end_value,
+                policy,
+            );
+            if let Classification::Decided(roots) = roots {
+                let mut replayed = Vec::with_capacity(roots.len());
+                for line_parameter in roots {
+                    let point = Point2::new(
+                        line.line().start().x() + &line_dx * &line_parameter,
+                        line.line().start().y() + &line_dy * &line_parameter,
+                    );
+                    let endpoint_parameters =
+                        [(self.start(), Real::zero()), (self.end(), one.clone())]
+                            .into_iter()
+                            .filter_map(|(endpoint, parameter)| {
+                                (point == *endpoint
+                                    || is_zero(&point.distance_squared(endpoint), policy)
+                                        == Some(true))
+                                .then_some(BezierParameter2::Exact(parameter))
+                            })
+                            .collect::<Vec<_>>();
+                    let curve_parameters = if endpoint_parameters.is_empty() {
+                        match quadratic_conic_point_parameters(&point, self, policy) {
+                            Classification::Decided(Some(parameters)) => parameters,
+                            Classification::Decided(None) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Some(Classification::Uncertain(reason)));
+                            }
+                        }
+                    } else {
+                        endpoint_parameters
+                    };
+                    let (radius_x, radius_y) = point.delta_from(&circle.center);
+                    let certified_transverse = match is_zero(
+                        &Real::dot2_refs([&radius_x, &radius_y], [&line_dx, &line_dy]),
+                        policy,
+                    ) {
+                        Some(value) => !value,
+                        None => {
+                            return Ok(Some(Classification::Uncertain(
+                                UncertaintyReason::RealSign,
+                            )));
+                        }
+                    };
+                    for curve_parameter in curve_parameters {
+                        replayed.push(RationalBezierIntersectionContact2 {
+                            first_parameter: curve_parameter,
+                            second_parameter: BezierParameter2::Exact(line_parameter.clone()),
+                            point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                            certified_transverse,
+                        });
+                    }
+                }
+                return Ok(Some(Classification::Decided(if replayed.is_empty() {
+                    RationalBezierIntersectionContacts2::NoIntersection
+                } else {
+                    RationalBezierIntersectionContacts2::Contacts(replayed.into())
+                })));
+            }
+        }
         let supporting_contacts = match self.relation_to_line_with_contacts(line.line(), policy) {
             Classification::Decided(relation) => relation,
             Classification::Uncertain(reason) => {
@@ -1699,15 +2287,30 @@ impl RationalBezier2 {
                     return Ok(Some(Classification::Uncertain(reason)));
                 }
             };
-            let other_parameter = match unique_point_incidence_parameter(other, &point, policy) {
-                Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => {
-                    return Ok(Some(Classification::Uncertain(
-                        UncertaintyReason::Predicate,
-                    )));
+            let other_parameter = if other.exact_linear_parameterization_line().is_some() {
+                let coordinate = match parameter_graph.axis {
+                    Axis2::X => point.x(),
+                    Axis2::Y => point.y(),
+                };
+                let mapped = ((coordinate - &parameter_graph.origin) / &parameter_graph.scale)?;
+                match in_closed_unit_interval(&mapped, policy) {
+                    Some(true) => BezierParameter2::Exact(mapped),
+                    Some(false) => continue,
+                    None => {
+                        return Ok(Some(Classification::Uncertain(UncertaintyReason::Ordering)));
+                    }
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Some(Classification::Uncertain(reason)));
+            } else {
+                match unique_point_incidence_parameter(other, &point, policy) {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => {
+                        return Ok(Some(Classification::Uncertain(
+                            UncertaintyReason::Predicate,
+                        )));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
                 }
             };
             replayed.push(RationalBezierIntersectionContact2 {
@@ -1721,6 +2324,111 @@ impl RationalBezier2 {
             RationalBezierIntersectionContacts2::NoIntersection
         } else {
             RationalBezierIntersectionContacts2::Contacts(replayed.into())
+        })))
+    }
+
+    fn circular_conic_intersection_contacts(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
+        if self.degree() != 2 || other.degree() != 2 {
+            return Ok(None);
+        }
+        let (Some(first), Some(second)) = (
+            self.data.lineage.root.circular_conic.get(),
+            other.data.lineage.root.circular_conic.get(),
+        ) else {
+            return Ok(None);
+        };
+        let (center_dx, center_dy) = second.center.delta_from(&first.center);
+        let center_distance_squared =
+            Real::dot2_refs([&center_dx, &center_dy], [&center_dx, &center_dy]);
+        match is_zero(&center_distance_squared, policy) {
+            Some(true) => return Ok(None),
+            Some(false) => {}
+            None => {
+                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
+            }
+        }
+        let along_numerator =
+            &first.radius_squared - &second.radius_squared + &center_distance_squared;
+        let along_denominator = Real::from(2_i8) * &center_distance_squared;
+        let along = match along_numerator / &along_denominator {
+            Ok(along) => along,
+            Err(_) => {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Unsupported,
+                )));
+            }
+        };
+        let base = Point2::new(
+            first.center.x() + &center_dx * &along,
+            first.center.y() + &center_dy * &along,
+        );
+        let height_squared = &first.radius_squared - &along * &along * &center_distance_squared;
+        let (points, certified_transverse) = match real_sign(&height_squared, policy) {
+            Some(RealSign::Negative) => {
+                return Ok(Some(Classification::Decided(
+                    RationalBezierIntersectionContacts2::NoIntersection,
+                )));
+            }
+            Some(RealSign::Zero) => (vec![base], false),
+            Some(RealSign::Positive) => {
+                let offset_scale =
+                    match (height_squared / &center_distance_squared).and_then(Real::sqrt) {
+                        Ok(scale) => scale,
+                        Err(_) => {
+                            return Ok(Some(Classification::Uncertain(
+                                UncertaintyReason::Unsupported,
+                            )));
+                        }
+                    };
+                let offset_x = &center_dy * &offset_scale;
+                let offset_y = &center_dx * &offset_scale;
+                (
+                    vec![
+                        Point2::new(base.x() - &offset_x, base.y() + &offset_y),
+                        Point2::new(base.x() + offset_x, base.y() - offset_y),
+                    ],
+                    true,
+                )
+            }
+            None => {
+                return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
+            }
+        };
+        let mut contacts = Vec::with_capacity(points.len());
+        for point in points {
+            let first_parameters = match quadratic_conic_point_parameters(&point, self, policy) {
+                Classification::Decided(Some(parameters)) => parameters,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            let second_parameters = match quadratic_conic_point_parameters(&point, other, policy) {
+                Classification::Decided(Some(parameters)) => parameters,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+            for first_parameter in &first_parameters {
+                for second_parameter in &second_parameters {
+                    contacts.push(RationalBezierIntersectionContact2 {
+                        first_parameter: first_parameter.clone(),
+                        second_parameter: second_parameter.clone(),
+                        point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
+                        certified_transverse,
+                    });
+                }
+            }
+        }
+        Ok(Some(Classification::Decided(if contacts.is_empty() {
+            RationalBezierIntersectionContacts2::NoIntersection
+        } else {
+            RationalBezierIntersectionContacts2::Contacts(contacts.into())
         })))
     }
 
@@ -2621,12 +3329,6 @@ impl RationalBezier2 {
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
-        if matches!(
-            self.shares_implicit_quadratic_conic(other, policy),
-            Classification::Decided(true)
-        ) {
-            return self.partial_image_overlap(other, policy);
-        }
         match self.same_projective_control_net_degree_aligned(other, false, policy) {
             Classification::Decided(true) => {
                 return Classification::Decided(RationalBezierSharedComponentReplay::Overlap(
@@ -3093,6 +3795,18 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> Classification<bool> {
+        if let (Some(first), Some(second)) = (
+            self.data.lineage.root.circular_conic.get(),
+            other.data.lineage.root.circular_conic.get(),
+        ) {
+            if first == second
+                || (is_zero(&first.center.distance_squared(&second.center), policy) == Some(true)
+                    && is_zero(&(&first.radius_squared - &second.radius_squared), policy)
+                        == Some(true))
+            {
+                return Classification::Decided(true);
+            }
+        }
         let first = match self.implicit_quadratic_conic(policy) {
             Classification::Decided(Some(coefficients)) => coefficients,
             Classification::Decided(None) => return Classification::Decided(false),
@@ -3103,6 +3817,9 @@ impl RationalBezier2 {
             Classification::Decided(None) => return Classification::Decided(false),
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
+        if first == second {
+            return Classification::Decided(true);
+        }
         let mut uncertain = false;
         for first_index in 0..first.len() {
             for second_index in first_index + 1..first.len() {
@@ -3256,6 +3973,33 @@ impl RationalBezier2 {
         axis: Axis2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<Option<PolynomialGraph2>>> {
+        if let Some(line) = self.exact_linear_parameterization_line() {
+            let (axis_start, axis_end, dependent_start, dependent_end) = match axis {
+                Axis2::X => (
+                    line.start().x(),
+                    line.end().x(),
+                    line.start().y(),
+                    line.end().y(),
+                ),
+                Axis2::Y => (
+                    line.start().y(),
+                    line.end().y(),
+                    line.start().x(),
+                    line.end().x(),
+                ),
+            };
+            let scale = axis_end - axis_start;
+            return Ok(match is_zero(&scale, policy) {
+                Some(false) => Classification::Decided(Some(PolynomialGraph2 {
+                    axis,
+                    origin: axis_start.clone(),
+                    scale,
+                    dependent: vec![dependent_start.clone(), dependent_end - dependent_start],
+                })),
+                Some(true) => Classification::Decided(None),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            });
+        }
         let basis = self.homogeneous_power_basis()?;
         if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
@@ -3481,7 +4225,26 @@ fn shared_conic_endpoint_parameters(
             + &source_controls[1].weight * &source_coefficients[1]
             + &source_controls[2].weight * &source_coefficients[2],
     ];
+    quadratic_conic_homogeneous_point_parameters(&homogeneous_point, target, policy)
+}
 
+fn quadratic_conic_point_parameters(
+    point: &Point2,
+    target: &RationalBezier2,
+    policy: &CurvePolicy,
+) -> Classification<Option<Vec<BezierParameter2>>> {
+    quadratic_conic_homogeneous_point_parameters(
+        &[point.x().clone(), point.y().clone(), Real::one()],
+        target,
+        policy,
+    )
+}
+
+fn quadratic_conic_homogeneous_point_parameters(
+    homogeneous_point: &[Real; 3],
+    target: &RationalBezier2,
+    policy: &CurvePolicy,
+) -> Classification<Option<Vec<BezierParameter2>>> {
     let controls = quadratic_conic_parameter_frame(target);
     let first = homogeneous_control_vector(&controls[0]);
     let middle = homogeneous_control_vector(&controls[1]);
@@ -4609,6 +5372,12 @@ fn unique_point_incidence_parameter(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Classification<Option<BezierParameter2>> {
+    if point == curve.start() {
+        return Classification::Decided(Some(BezierParameter2::Exact(Real::zero())));
+    }
+    if point == curve.end() {
+        return Classification::Decided(Some(BezierParameter2::Exact(Real::one())));
+    }
     match curve.point_incidence_classified(point, policy) {
         Err(CurveError::Real(_)) => Classification::Uncertain(UncertaintyReason::RealSign),
         Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),

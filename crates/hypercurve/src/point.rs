@@ -260,7 +260,7 @@ impl Point2 {
                 [[&dx, &dx], [&dy, &dy]],
             );
         }
-        &dx * &dx + &dy * &dy
+        Real::signed_product_sum([true; 2], [[&dx, &dx], [&dy, &dy]])
     }
 
     pub(crate) fn cross_product(&self, other: &Self) -> Real {
