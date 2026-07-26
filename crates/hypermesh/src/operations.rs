@@ -2545,7 +2545,7 @@ fn collapse_certified_convex_faces(
             continue;
         }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
-        let mut source_edges = Vec::with_capacity(source_edge_count);
+        let mut source_edges = SourceEdgeKeys::with_capacity(source_edge_count);
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
@@ -2582,7 +2582,6 @@ fn collapse_certified_convex_faces(
             }
         }
 
-        source_edges.sort_unstable();
         let mut single_use_vertices = Vec::new();
         if polygon_indices.len() <= MAX_SINGLE_USE_CERTIFICATE_TRIANGLES {
             let mut source_vertices = Vec::with_capacity(source_edge_count);
@@ -2615,18 +2614,7 @@ fn collapse_certified_convex_faces(
                 vertex_index = next;
             }
         }
-        let mut boundary_edges = Vec::new();
-        let mut edge_index = 0;
-        while edge_index < source_edges.len() {
-            let mut next = edge_index + 1;
-            while next < source_edges.len() && source_edges[next] == source_edges[edge_index] {
-                next += 1;
-            }
-            if next == edge_index + 1 {
-                boundary_edges.push(source_edges[edge_index]);
-            }
-            edge_index = next;
-        }
+        let boundary_edges = source_edges.into_unique();
         let mut outgoing = Vec::with_capacity(boundary_edges.len());
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
@@ -2747,6 +2735,77 @@ fn collapse_certified_convex_faces(
         face_supports.push(support_identity);
     }
     Ok((faces, face_supports))
+}
+
+enum SourceEdgeKeys {
+    Packed(Vec<u64>),
+    Wide(Vec<[usize; 2]>),
+}
+
+impl SourceEdgeKeys {
+    const PACKED_SORT_MIN_EDGES: usize = 128;
+
+    fn with_capacity(capacity: usize) -> Self {
+        if capacity >= Self::PACKED_SORT_MIN_EDGES {
+            Self::Packed(Vec::with_capacity(capacity))
+        } else {
+            Self::Wide(Vec::with_capacity(capacity))
+        }
+    }
+
+    fn push(&mut self, edge: [usize; 2]) {
+        if let Self::Packed(packed) = self {
+            if let [Ok(start), Ok(end)] = edge.map(u32::try_from) {
+                packed.push((u64::from(start) << 32) | u64::from(end));
+                return;
+            }
+            let mut wide = Vec::with_capacity(packed.capacity());
+            wide.extend(
+                packed
+                    .drain(..)
+                    .map(|edge| [(edge >> 32) as usize, (edge as u32) as usize]),
+            );
+            wide.push(edge);
+            *self = Self::Wide(wide);
+            return;
+        }
+        let Self::Wide(wide) = self else {
+            unreachable!("packed edge path returns above");
+        };
+        wide.push(edge);
+    }
+
+    fn into_unique(self) -> Vec<[usize; 2]> {
+        match self {
+            Self::Packed(mut edges) => {
+                edges.sort_unstable();
+                unique_sorted_runs(&edges)
+                    .map(|&edge| [(edge >> 32) as usize, (edge as u32) as usize])
+                    .collect()
+            }
+            Self::Wide(mut edges) => {
+                edges.sort_unstable();
+                unique_sorted_runs(&edges).copied().collect()
+            }
+        }
+    }
+}
+
+fn unique_sorted_runs<T: Eq>(values: &[T]) -> impl Iterator<Item = &T> {
+    let mut index = 0;
+    std::iter::from_fn(move || {
+        while index < values.len() {
+            let current = index;
+            index += 1;
+            while index < values.len() && values[index] == values[current] {
+                index += 1;
+            }
+            if index == current + 1 {
+                return Some(&values[current]);
+            }
+        }
+        None
+    })
 }
 
 fn collapse_certified_collinear_face_vertices(
@@ -3401,6 +3460,30 @@ mod tests {
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn source_edge_keys_preserve_unique_runs_across_packed_and_wide_storage() {
+        let edges = [[1, 2], [4, 5], [2, 3], [1, 2], [4, 5], [4, 5]];
+        let collect = |capacity| {
+            let mut keys = SourceEdgeKeys::with_capacity(capacity);
+            for edge in edges {
+                keys.push(edge);
+            }
+            keys.into_unique()
+        };
+
+        assert_eq!(collect(edges.len()), vec![[2, 3]]);
+        assert_eq!(collect(SourceEdgeKeys::PACKED_SORT_MIN_EDGES), vec![[2, 3]]);
+
+        if usize::BITS > u32::BITS {
+            let oversized = usize::try_from(u64::from(u32::MAX) + 1).unwrap();
+            let mut fallback = SourceEdgeKeys::with_capacity(SourceEdgeKeys::PACKED_SORT_MIN_EDGES);
+            fallback.push([1, 2]);
+            fallback.push([oversized, oversized + 1]);
+            fallback.push([1, 2]);
+            assert_eq!(fallback.into_unique(), vec![[oversized, oversized + 1]]);
+        }
     }
 
     #[test]
