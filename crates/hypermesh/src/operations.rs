@@ -3742,14 +3742,30 @@ fn projective_crossing_point(
         } else {
             (next, next_value, current, current_value)
         };
+    let exact_dyadic = [
+        positive_value,
+        negative_value,
+        &negative.x,
+        &negative.y,
+        &negative.z,
+        &negative.w,
+        &positive.x,
+        &positive.y,
+        &positive.z,
+        &positive.w,
+    ]
+    .into_iter()
+    .all(|value| value.exact_rational_ref().is_some_and(Rational::is_dyadic));
     let coordinate = |negative_coordinate: &Real, positive_coordinate: &Real| {
-        Real::signed_product_sum(
-            [true, false],
-            [
-                [positive_value, negative_coordinate],
-                [negative_value, positive_coordinate],
-            ],
-        )
+        let terms = [
+            [positive_value, negative_coordinate],
+            [negative_value, positive_coordinate],
+        ];
+        if exact_dyadic {
+            Real::exact_rational_signed_product_sum_known_dyadic([true, false], terms)
+        } else {
+            Real::signed_product_sum([true, false], terms)
+        }
     };
     HomogeneousPoint3::new(
         coordinate(&negative.x, &positive.x),
@@ -3950,6 +3966,50 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn projective_crossing_dyadic_batch_matches_general_exact_coordinates() {
+        let rational = |numerator, denominator| {
+            Real::from(Rational::fraction(numerator, denominator).unwrap())
+        };
+        let current = HomogeneousPoint3::new(
+            rational(1, 2),
+            rational(3, 4),
+            rational(-5, 8),
+            rational(1, 1),
+        );
+        let next = HomogeneousPoint3::new(
+            rational(7, 8),
+            rational(-9, 16),
+            rational(11, 32),
+            rational(3, 2),
+        );
+        let current_value = rational(-5, 4);
+        let next_value = rational(7, 8);
+        let actual = projective_crossing_point(
+            &current,
+            &current_value,
+            Classification::Negative,
+            &next,
+            &next_value,
+        );
+        let expected = current
+            .coordinates()
+            .into_iter()
+            .zip(next.coordinates())
+            .map(|(negative, positive)| {
+                Real::signed_product_sum(
+                    [true, false],
+                    [[&next_value, negative], [&current_value, positive]],
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            actual.coordinates(),
+            [&expected[0], &expected[1], &expected[2], &expected[3]],
+        );
     }
 
     #[test]
