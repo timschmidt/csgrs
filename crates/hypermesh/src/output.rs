@@ -649,7 +649,7 @@ where
             .collect::<Vec<Option<ApproximateOutputVertex>>>()
     });
     let construction_candidates = prefer_construction_candidates
-        .then(|| build_construction_edge_candidates(polygons, &indexed_polygons))
+        .then(|| build_construction_edge_candidates(polygons, &indexed_polygons, vertices.len()))
         .transpose()?;
     let approximate_vertices = prefer_precomputed_f64_scan
         .then(|| exact_output_vertices_f64(&vertices))
@@ -1448,6 +1448,7 @@ struct ConstructionEdgeCandidateGroup {
 fn build_construction_edge_candidates<P>(
     polygons: &[P],
     indexed_polygons: &[Vec<usize>],
+    vertex_count: usize,
 ) -> HypermeshResult<ConstructionEdgeCandidates>
 where
     P: Borrow<ConvexPolygon>,
@@ -1517,13 +1518,9 @@ where
     // without sharing a label. Include all arrangement vertices as recovery
     // proposals; the inexpensive approximate segment filter narrows this set,
     // and exact containment plus final closure certification remain mandatory.
-    let mut recovery_vertices = indexed_polygons
-        .iter()
-        .flatten()
-        .copied()
-        .collect::<Vec<_>>();
-    recovery_vertices.sort_unstable();
-    recovery_vertices.dedup();
+    // Vertex merging constructs a compact pool from these polygon positions,
+    // so its complete index set is exactly this contiguous range.
+    let recovery_vertices = (0..vertex_count).collect();
     for group in &mut groups {
         group.collinear.sort_unstable();
         group.collinear.dedup();
