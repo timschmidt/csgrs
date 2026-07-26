@@ -1956,9 +1956,11 @@ fn compute_two_convex_inputs_projectively(
                 .planes
                 .entry(canonical)
                 .or_insert_with(|| (*value).clone());
-            projective_point_cache
-                .canonical_planes
-                .insert(identity, canonical);
+            if identity != canonical {
+                projective_point_cache
+                    .canonical_planes
+                    .insert(identity, canonical);
+            }
         }
     }
     let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, &Point3> =
