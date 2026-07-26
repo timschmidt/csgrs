@@ -544,7 +544,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
 pub(crate) fn make_indexed_triangle_with_deferred_edges(
     positions: Arc<[Point3]>,
     indices: [usize; 3],
-    axis_hint: Option<usize>,
+    axis_hint: Option<(usize, Option<RealSign>)>,
     mesh_index: isize,
     polygon_index: isize,
 ) -> ConvexPolygon {
@@ -553,7 +553,9 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     let p1 = &positions[i1];
     let p2 = &positions[i2];
     let support = axis_hint
-        .and_then(|axis| exact_axis_aligned_triangle_support(p0, p1, p2, axis))
+        .and_then(|(axis, orientation)| {
+            exact_axis_aligned_triangle_support(p0, p1, p2, axis, orientation)
+        })
         .unwrap_or_else(|| Plane::from_points(p0, p1, p2));
     ConvexPolygon {
         edges: Arc::new(Vec::new()),
@@ -576,6 +578,7 @@ fn exact_axis_aligned_triangle_support(
     p1: &Point3,
     p2: &Point3,
     axis: usize,
+    orientation_hint: Option<RealSign>,
 ) -> Option<Plane> {
     let points = [
         [&p0.x, &p0.y, &p0.z],
@@ -596,11 +599,13 @@ fn exact_axis_aligned_triangle_support(
     // without materializing any coordinate differences or plane scale.
     let u = (axis + 1) % 3;
     let v = (axis + 2) % 3;
-    let orientation = match Real::certified_affine_det2_sign(
-        [points[0][u], points[0][v]],
-        [points[1][u], points[1][v]],
-        [points[2][u], points[2][v]],
-    ) {
+    let orientation = match orientation_hint.or_else(|| {
+        Real::certified_affine_det2_sign(
+            [points[0][u], points[0][v]],
+            [points[1][u], points[1][v]],
+            [points[2][u], points[2][v]],
+        )
+    }) {
         Some(RealSign::Negative) => std::cmp::Ordering::Less,
         Some(RealSign::Positive) => std::cmp::Ordering::Greater,
         Some(RealSign::Zero) | None => {
@@ -807,23 +812,29 @@ mod tests {
             ),
         ] {
             assert_eq!(
-                exact_axis_aligned_triangle_support(&points[0], &points[1], &points[2], axis),
+                exact_axis_aligned_triangle_support(&points[0], &points[1], &points[2], axis, None),
                 Some(expected.clone())
             );
             assert_eq!(
-                exact_axis_aligned_triangle_support(&points[0], &points[2], &points[1], axis),
+                exact_axis_aligned_triangle_support(&points[0], &points[2], &points[1], axis, None),
                 Some(expected.inverted())
             );
         }
 
         let non_axis = [point(0, 0, 0), point(1, 0, 0), point(0, 1, 1)];
         assert_eq!(
-            exact_axis_aligned_triangle_support(&non_axis[0], &non_axis[1], &non_axis[2], 0),
+            exact_axis_aligned_triangle_support(&non_axis[0], &non_axis[1], &non_axis[2], 0, None),
             None
         );
         let degenerate = [point(0, 0, 0), point(0, 0, 1), point(0, 0, 2)];
         assert_eq!(
-            exact_axis_aligned_triangle_support(&degenerate[0], &degenerate[1], &degenerate[2], 0),
+            exact_axis_aligned_triangle_support(
+                &degenerate[0],
+                &degenerate[1],
+                &degenerate[2],
+                0,
+                None,
+            ),
             None
         );
     }

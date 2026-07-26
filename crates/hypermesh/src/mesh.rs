@@ -187,20 +187,40 @@ fn build_polygon_soup_with_edge_mode(
                 approximate_triangle_axis(mesh.positions, mesh.triangles[triangle_index].indices())
                     .is_some()
             });
-        let approximate_positions = predominantly_axis_aligned
-            .then(|| {
-                mesh.positions
+        let (approximate_positions, approximate_positions_are_exact_dyadic) =
+            if predominantly_axis_aligned {
+                let exact_dyadic = mesh
+                    .positions
                     .iter()
                     .map(|point| {
-                        Some([
-                            point.x.to_f64_lossy()?,
-                            point.y.to_f64_lossy()?,
-                            point.z.to_f64_lossy()?,
-                        ])
+                        let coordinates = [&point.x, &point.y, &point.z];
+                        let [Some(x), Some(y), Some(z)] =
+                            coordinates.map(Real::to_f64_exact_dyadic)
+                        else {
+                            return None;
+                        };
+                        Some([x, y, z])
                     })
-                    .collect::<Option<Vec<_>>>()
-            })
-            .flatten();
+                    .collect::<Option<Vec<_>>>();
+                match exact_dyadic {
+                    Some(positions) => (Some(positions), true),
+                    None => (
+                        mesh.positions
+                            .iter()
+                            .map(|point| {
+                                Some([
+                                    point.x.to_f64_lossy()?,
+                                    point.y.to_f64_lossy()?,
+                                    point.z.to_f64_lossy()?,
+                                ])
+                            })
+                            .collect::<Option<Vec<_>>>(),
+                        false,
+                    ),
+                }
+            } else {
+                (None, false)
+            };
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
             let p0 = mesh
@@ -241,7 +261,20 @@ fn build_polygon_soup_with_edge_mode(
                 (Some(positions), None) => {
                     let axis_hint = approximate_positions.as_ref().and_then(|points| {
                         let [p0, p1, p2] = [points[i0], points[i1], points[i2]];
-                        (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])
+                        let axis =
+                            (0..3).find(|&axis| p0[axis] == p1[axis] && p0[axis] == p2[axis])?;
+                        let orientation = if approximate_positions_are_exact_dyadic {
+                            let u = (axis + 1) % 3;
+                            let v = (axis + 2) % 3;
+                            Real::certified_affine_det2_sign_exact_dyadic_f64(
+                                [p0[u], p0[v]],
+                                [p1[u], p1[v]],
+                                [p2[u], p2[v]],
+                            )
+                        } else {
+                            None
+                        };
+                        Some((axis, orientation))
                     });
                     make_indexed_triangle_with_deferred_edges(
                         Arc::clone(positions),
