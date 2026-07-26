@@ -1038,24 +1038,17 @@ fn append_exact_corner_boundary_triangles(
         triangles.push([a, b, c]);
         return Ok(Some(()));
     }
-    let mut corners = Vec::with_capacity(boundary.len());
-    for index in 0..boundary.len() {
-        let turn = [
-            boundary[(index + boundary.len() - 1) % boundary.len()],
-            boundary[index],
-            boundary[(index + 1) % boundary.len()],
-        ];
-        if output_triangle_is_nondegenerate(turn, vertices, &polygon.support)? {
-            corners.push(boundary[index]);
+    let triangle_start = triangles.len();
+    // A fan covers a weakly convex cycle exactly. Collinear wedges have zero
+    // area and can be omitted, so certify only the triangles that the fan
+    // would emit instead of classifying every boundary turn first.
+    for index in 1..boundary.len() - 1 {
+        let triangle = [boundary[0], boundary[index], boundary[index + 1]];
+        if output_triangle_is_nondegenerate(triangle, vertices, &polygon.support)? {
+            triangles.push(triangle);
         }
     }
-    if corners.len() < 3 {
-        return Ok(None);
-    }
-    for index in 1..corners.len() - 1 {
-        triangles.push([corners[0], corners[index], corners[index + 1]]);
-    }
-    Ok(Some(()))
+    Ok((triangles.len() > triangle_start).then_some(()))
 }
 
 fn triangulate_weakly_convex_boundary(
@@ -2775,6 +2768,32 @@ mod tests {
             Some(())
         );
         assert_eq!(triangles, vec![[0, 2, 3]]);
+    }
+
+    #[test]
+    fn exact_corner_fan_preserves_collinear_vertices_opposite_the_anchor() {
+        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let vertices = vec![
+            ov(0, 0, 0),
+            ov(2, 0, 0),
+            ov(2, 2, 0),
+            ov(1, 2, 0),
+            ov(0, 2, 0),
+        ];
+        let mut triangles = Vec::new();
+
+        assert_eq!(
+            append_exact_corner_boundary_triangles(
+                &polygon,
+                &[0, 1, 2, 3, 4],
+                &[0, 1, 2, 3, 4],
+                &vertices,
+                &mut triangles,
+            )
+            .unwrap(),
+            Some(())
+        );
+        assert_eq!(triangles, vec![[0, 1, 2], [0, 2, 3], [0, 3, 4]]);
     }
 
     #[test]
