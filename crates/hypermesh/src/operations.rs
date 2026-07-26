@@ -1834,12 +1834,11 @@ fn compute_two_convex_inputs_projectively(
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
         let storage_key = exact_plane_storage_key(&polygon.support);
-        let exact_f64 = exact_plane_f64(&polygon.support);
-        let plane = if let Some(index) =
-            storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied())
-        {
+        let stored_plane =
+            storage_key.and_then(|key| storage_support_planes[mesh].get(&key).copied());
+        let plane = if let Some(index) = stored_plane {
             index
-        } else if let Some(values) = exact_f64 {
+        } else if let Some(values) = exact_plane_f64(&polygon.support) {
             let key = values.map(f64::to_bits);
             if let Some(index) = approximate_support_planes[mesh]
                 .get(&key)
@@ -1878,7 +1877,9 @@ fn compute_two_convex_inputs_projectively(
             non_exact_support_planes[mesh].push(index);
             index
         };
-        if let Some(key) = storage_key {
+        if let Some(key) = storage_key
+            && stored_plane.is_none()
+        {
             storage_support_planes[mesh].insert(key, plane);
         }
         polygon_support_planes.push(ConstructionPlaneIdentity { mesh, plane });
