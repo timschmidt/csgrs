@@ -96,6 +96,7 @@ pub mod scalar;
 pub mod sexp;
 pub mod sqlite_report;
 pub mod svg_overlay;
+pub mod test_intent;
 pub mod waiver;
 
 pub use app::{RunOutcome, run, run_cli};
@@ -113,6 +114,10 @@ pub use report::{
     ReportSummary, Severity, Violation,
 };
 pub use scalar::Scalar;
+pub use test_intent::{
+    NativeTestAccess, NativeTestCoverageMethod, NativeTestRequirement,
+    native_testpoint_coverage_readiness,
+};
 
 use csgrs::sketch::Profile;
 use csgrs::{csg::CSG, io::gerber::FromGerber};
