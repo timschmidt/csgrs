@@ -175,7 +175,7 @@ pub struct ConvexPolygon {
     /// Winding transition vector.
     pub delta_w: WindingNumberTransitionVector,
     /// Optional approximate bounds.
-    pub approx_bounds: Option<ApproxBounds>,
+    pub approx_bounds: Option<Box<ApproxBounds>>,
     /// Exact vertices retained when supplied directly by the input owner.
     ///
     /// Derived clipping and BSP polygons clear this cache when their edge
@@ -322,7 +322,7 @@ impl ConvexPolygon {
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
         let approx_bounds =
-            (!vertices.is_empty()).then(|| bounds_for_owned_points(vertices.as_slice()));
+            (!vertices.is_empty()).then(|| Box::new(bounds_for_owned_points(vertices.as_slice())));
         let mut result = self.clone();
         result.edges = Arc::new(edges);
         result.approx_bounds = approx_bounds;
@@ -345,7 +345,7 @@ impl ConvexPolygon {
         debug_assert_eq!(vertices.len(), vertex_identities.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
         let approx_bounds =
-            (!vertices.is_empty()).then(|| bounds_for_owned_points(vertices.as_slice()));
+            (!vertices.is_empty()).then(|| Box::new(bounds_for_owned_points(vertices.as_slice())));
         let mut result = self.clone();
         result.approx_bounds = approx_bounds;
         result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
@@ -482,7 +482,7 @@ pub fn make_triangle(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
@@ -506,7 +506,7 @@ pub(crate) fn make_triangle_with_input_planes(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
@@ -535,7 +535,7 @@ pub(crate) fn make_triangle_with_deferred_edges(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(bounds_for_points(&[p0, p1, p2])),
+        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2]))),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),
@@ -690,7 +690,7 @@ pub fn make_quad(
         mesh_index,
         polygon_index,
         delta_w: Vec::new(),
-        approx_bounds: Some(bounds_for_points(&[p0, p1, p2, p3])),
+        approx_bounds: Some(Box::new(bounds_for_points(&[p0, p1, p2, p3]))),
         known_vertices: Some(RetainedVertexCycle::Owned(Arc::new([
             p0.clone(),
             p1.clone(),

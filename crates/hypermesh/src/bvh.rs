@@ -583,7 +583,7 @@ fn axis_mut(point: &mut Point3, axis: usize) -> &mut crate::Real {
 
 fn polygon_bounds(polygon: &ConvexPolygon) -> HypermeshResult<ApproxBounds> {
     if let Some(bounds) = &polygon.approx_bounds {
-        return Ok(bounds.clone());
+        return Ok(bounds.as_ref().clone());
     }
 
     let vertices = polygon.vertices()?;
