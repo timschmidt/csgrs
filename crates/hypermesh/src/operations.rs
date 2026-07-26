@@ -19,7 +19,7 @@ use crate::output::{
 };
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
-    InputTrianglePlanes, edge_plane,
+    InputTrianglePlanes, KnownEdgeIdentityCycle, edge_plane,
 };
 use crate::predicate::{PreparedProjectivePoint3, PreparedRationalPlane4};
 use crate::storage_hash::StorageHashMap;
@@ -472,6 +472,40 @@ struct ProjectiveAffineCacheEntry {
     affine: Point3,
 }
 
+type SourceEdgeKey = [usize; 3];
+
+struct ProjectiveSourceEdge {
+    definition_planes: [usize; 2],
+    supports: [ConstructionPlaneIdentity; 2],
+    support_count: u8,
+}
+
+impl ProjectiveSourceEdge {
+    fn new(definition_planes: [usize; 2], support: ConstructionPlaneIdentity) -> Self {
+        Self {
+            definition_planes,
+            supports: [support; 2],
+            support_count: 1,
+        }
+    }
+
+    fn supports(&self) -> &[ConstructionPlaneIdentity] {
+        &self.supports[..usize::from(self.support_count)]
+    }
+
+    fn insert_support(&mut self, support: ConstructionPlaneIdentity) -> bool {
+        if self.supports().contains(&support) {
+            return true;
+        }
+        if self.support_count == 2 {
+            return false;
+        }
+        self.supports[usize::from(self.support_count)] = support;
+        self.support_count += 1;
+        true
+    }
+}
+
 #[derive(Default)]
 struct ProjectivePointCache {
     // Cycles retain stable indices instead of cloning 192-byte exact points
@@ -483,10 +517,9 @@ struct ProjectivePointCache {
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: [Vec<ConstructionPlaneIdentity>; 2],
     planes: StorageHashMap<ConstructionPlaneIdentity, usize>,
-    source_edges: StorageHashMap<ConstructionEdgeIdentity, [usize; 2]>,
+    source_edges: StorageHashMap<SourceEdgeKey, ProjectiveSourceEdge>,
     boundary_planes: StorageHashMap<ProjectiveBoundaryPlaneIdentity, Vec<usize>>,
     inverted_planes: StorageHashMap<ConstructionPlaneIdentity, usize>,
-    source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
     source_vertices: StorageHashMap<ConstructionVertexIdentity, [ConstructionPlaneIdentity; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
 }
@@ -554,6 +587,13 @@ impl ConstructionEdgeIdentity {
 }
 
 impl ProjectivePointCache {
+    fn source_edge_key(edge: &ConstructionEdgeIdentity) -> Option<SourceEdgeKey> {
+        let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge else {
+            return None;
+        };
+        Some([*mesh, endpoints[0], endpoints[1]])
+    }
+
     fn point(&self, index: usize) -> &HomogeneousPoint3 {
         self.point_storage
             .get(index)
@@ -635,10 +675,11 @@ impl ProjectivePointCache {
         plane: ConstructionPlaneIdentity,
     ) -> ConstructionVertexIdentity {
         let plane = self.canonical_plane_identity(plane);
-        if let ConstructionEdgeIdentity::Source { .. } = edge
-            && let Some(supports) = self.source_edge_supports.get(edge)
-            && supports.len() >= 2
+        if let Some(key) = Self::source_edge_key(edge)
+            && let Some(source_edge) = self.source_edges.get(&key)
+            && source_edge.support_count >= 2
         {
+            let supports = source_edge.supports();
             let mut planes = [supports[0], supports[1], plane];
             planes.sort_unstable();
             return ConstructionVertexIdentity::PlaneTriple { planes };
@@ -690,29 +731,30 @@ impl ProjectivePointCache {
     }
 
     fn record_definition_incidences(&mut self, identity: &ConstructionVertexIdentity) {
-        let planes = match identity {
-            ConstructionVertexIdentity::Source { .. } => return,
+        match identity {
+            ConstructionVertexIdentity::Source { .. } => {}
             ConstructionVertexIdentity::SourceEdgePlane {
                 mesh,
                 endpoints,
                 plane,
             } => {
-                let edge = ConstructionEdgeIdentity::Source {
-                    mesh: *mesh,
-                    endpoints: *endpoints,
-                };
-                let mut planes = self
-                    .source_edge_supports
-                    .get(&edge)
-                    .cloned()
-                    .unwrap_or_default();
-                planes.push(*plane);
-                planes
+                let key = [*mesh, endpoints[0], endpoints[1]];
+                let supports = self
+                    .source_edges
+                    .get(&key)
+                    .map(|source_edge| (source_edge.supports, source_edge.support_count));
+                if let Some((supports, support_count)) = supports {
+                    for support in &supports[..usize::from(support_count)] {
+                        self.record_incidence(identity, *support);
+                    }
+                }
+                self.record_incidence(identity, *plane);
             }
-            ConstructionVertexIdentity::PlaneTriple { planes } => planes.to_vec(),
-        };
-        for plane in planes {
-            self.record_incidence(identity, plane);
+            ConstructionVertexIdentity::PlaneTriple { planes } => {
+                for plane in planes {
+                    self.record_incidence(identity, *plane);
+                }
+            }
         }
     }
 
@@ -731,14 +773,13 @@ impl ProjectivePointCache {
                 endpoints,
                 plane,
             } => {
-                let edge = ConstructionEdgeIdentity::Source {
-                    mesh: *mesh,
-                    endpoints: *endpoints,
-                };
-                let [support, boundary] = self.source_edges.get(&edge)?;
+                let source_edge = self
+                    .source_edges
+                    .get(&[*mesh, endpoints[0], endpoints[1]])?;
+                let [support, boundary] = source_edge.definition_planes;
                 Some([
-                    self.plane(*support),
-                    self.plane(*boundary),
+                    self.plane(support),
+                    self.plane(boundary),
                     self.plane(*self.planes.get(plane)?),
                 ])
             }
@@ -1093,7 +1134,7 @@ impl PointPlaneClassificationCache {
                 .into_iter()
                 .flatten()
                 .filter_map(|identity| match identity {
-                    ConstructionVertexIdentity::Source { vertex, .. } => Some(*vertex),
+                    ConstructionVertexIdentity::Source { vertex, .. } => Some(vertex),
                     _ => None,
                 })
                 .collect();
@@ -1206,7 +1247,7 @@ impl PointPlaneClassificationCache {
 }
 
 fn source_vertex_index(
-    edge_identities: &[ConstructionEdgeIdentity],
+    edge_identities: KnownEdgeIdentityCycle<'_>,
     point_index: usize,
 ) -> Option<usize> {
     let current = edge_identities.get(point_index)?;
@@ -1225,7 +1266,7 @@ fn source_vertex_index(
             mesh: previous_mesh,
             endpoints: previous_endpoints,
         },
-    ) = (current, previous)
+    ) = (&current, &previous)
     else {
         return None;
     };
@@ -1306,7 +1347,10 @@ impl ProjectiveCycle {
             let approximate = affine_point_f64(point);
             let vertex = source_vertex_index(source_edge_identities, point_index)
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-            let mesh = match &source_edge_identities[point_index] {
+            let edge_identity = source_edge_identities
+                .get(point_index)
+                .expect("source edge identity indices are aligned");
+            let mesh = match &edge_identity {
                 ConstructionEdgeIdentity::Source { mesh, .. } => *mesh,
                 ConstructionEdgeIdentity::Split { .. } => {
                     return Err(crate::error::HypermeshError::UnknownClassification);
@@ -1327,7 +1371,6 @@ impl ProjectiveCycle {
                 1 => &polygon.edges[0],
                 _ => &polygon.edges[point_index],
             };
-            let edge_identity = source_edge_identities[point_index].clone();
             let edge_index = point_cache.boundary_plane_index(source_plane, &edge_identity, edge);
             boundary.push(ProjectiveBoundaryEntry {
                 point_index: projective_point_index,
@@ -2135,21 +2178,22 @@ fn compute_two_convex_inputs_projectively(
         };
         for (edge_identity, edge_plane) in edge_identities.iter().zip(polygon.edges.iter()) {
             if matches!(edge_identity, ConstructionEdgeIdentity::Source { .. }) {
-                let boundary = projective_point_cache.boundary_plane_index(
-                    *support_identity,
-                    edge_identity,
-                    edge_plane,
-                );
-                projective_point_cache
-                    .source_edges
-                    .entry(edge_identity.clone())
-                    .or_insert([support, boundary]);
-                let supports = projective_point_cache
-                    .source_edge_supports
-                    .entry(edge_identity.clone())
-                    .or_default();
-                if !supports.contains(support_identity) {
-                    supports.push(*support_identity);
+                let key = ProjectivePointCache::source_edge_key(&edge_identity)
+                    .expect("source edge identity was matched above");
+                if let Some(source_edge) = projective_point_cache.source_edges.get_mut(&key) {
+                    if !source_edge.insert_support(*support_identity) {
+                        return Err(crate::error::HypermeshError::UnknownClassification);
+                    }
+                } else {
+                    let boundary = projective_point_cache.boundary_plane_index(
+                        *support_identity,
+                        &edge_identity,
+                        edge_plane,
+                    );
+                    projective_point_cache.source_edges.insert(
+                        key,
+                        ProjectiveSourceEdge::new([support, boundary], *support_identity),
+                    );
                 }
             }
         }
@@ -2413,14 +2457,14 @@ fn compute_two_convex_inputs_projectively(
                     && !vertex_identities.iter().any(|identity| {
                         projective_point_cache
                             .canonical_identities
-                            .contains_key(identity)
+                            .contains_key(&identity)
                     })
                 {
                     continue;
                 }
                 let canonical_identities = vertex_identities
                     .iter()
-                    .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
+                    .map(|identity| projective_point_cache.canonical_vertex_identity(&identity))
                     .collect::<Vec<_>>();
                 let original_vertices = fragment
                     .polygon
@@ -2779,7 +2823,7 @@ fn collapse_certified_convex_faces(
                 let ConstructionVertexIdentity::Source { mesh, .. } = identity else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
-                if *mesh != support_identity.mesh {
+                if mesh != support_identity.mesh {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
             }
@@ -2787,10 +2831,10 @@ fn collapse_certified_convex_faces(
                 let ConstructionEdgeIdentity::Source { mesh, endpoints } = identity else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
-                if *mesh != support_identity.mesh {
+                if mesh != support_identity.mesh {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
-                source_edges.push(*endpoints);
+                source_edges.push(endpoints);
             }
         }
 
@@ -2805,7 +2849,7 @@ fn collapse_certified_convex_faces(
                     let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
                         unreachable!("validated source vertex identity");
                     };
-                    source_vertices.push(*vertex);
+                    source_vertices.push(vertex);
                 }
             }
             source_vertices.sort_unstable();
@@ -2834,8 +2878,10 @@ fn collapse_certified_convex_faces(
             let vertex_identities = polygon.known_vertex_identities().expect("validated above");
             let points = polygon.known_vertices.as_ref().expect("validated above");
             for edge_index in 0..edge_identities.len() {
-                let edge_identity = &edge_identities[edge_index];
-                let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge_identity else {
+                let edge_identity = edge_identities
+                    .get(edge_index)
+                    .expect("validated edge identity index");
+                let ConstructionEdgeIdentity::Source { mesh, endpoints } = &edge_identity else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
                 if *mesh != support_identity.mesh {
@@ -2844,13 +2890,15 @@ fn collapse_certified_convex_faces(
                 if boundary_edges.binary_search(endpoints).is_err() {
                     continue;
                 }
-                let ConstructionVertexIdentity::Source { vertex: start, .. } =
-                    &vertex_identities[edge_index]
+                let ConstructionVertexIdentity::Source { vertex: start, .. } = vertex_identities
+                    .get(edge_index)
+                    .expect("validated vertex identity index")
                 else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
-                let ConstructionVertexIdentity::Source { vertex: end, .. } =
-                    &vertex_identities[(edge_index + 1) % vertex_identities.len()]
+                let ConstructionVertexIdentity::Source { vertex: end, .. } = vertex_identities
+                    .get((edge_index + 1) % vertex_identities.len())
+                    .expect("validated vertex identity index")
                 else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
@@ -2862,11 +2910,11 @@ fn collapse_certified_convex_faces(
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
                 outgoing.push((
-                    *start,
-                    *end,
+                    start,
+                    end,
                     points.get(edge_index).expect("aligned vertex").clone(),
                     edge_plane,
-                    edge_identity.clone(),
+                    edge_identity,
                 ));
             }
         }
@@ -3687,6 +3735,21 @@ mod tests {
     }
 
     #[test]
+    fn projective_source_edge_supports_are_unique_and_bounded() {
+        let first = ConstructionPlaneIdentity { mesh: 0, plane: 4 };
+        let second = ConstructionPlaneIdentity { mesh: 0, plane: 7 };
+        let third = ConstructionPlaneIdentity { mesh: 0, plane: 9 };
+        let mut source_edge = ProjectiveSourceEdge::new([2, 3], first);
+
+        assert_eq!(source_edge.supports(), &[first]);
+        assert!(source_edge.insert_support(first));
+        assert!(source_edge.insert_support(second));
+        assert_eq!(source_edge.supports(), &[first, second]);
+        assert!(!source_edge.insert_support(third));
+        assert_eq!(source_edge.supports(), &[first, second]);
+    }
+
+    #[test]
     fn source_edge_keys_preserve_unique_runs_across_packed_and_wide_storage() {
         let edges = [[1, 2], [4, 5], [2, 3], [1, 2], [4, 5], [4, 5]];
         let collect = |capacity| {
@@ -3936,12 +3999,20 @@ mod tests {
         let expected_vertices =
             [0, 1, 2, 3].map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex });
         assert_eq!(
-            forward.known_vertex_identities(),
-            Some(expected_vertices.as_slice())
+            forward
+                .known_vertex_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            expected_vertices
         );
         assert_eq!(
-            reverse.known_vertex_identities(),
-            Some(expected_vertices.as_slice())
+            reverse
+                .known_vertex_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            expected_vertices
         );
         assert!(forward.approx_bounds.is_none());
         assert!(reverse.approx_bounds.is_none());

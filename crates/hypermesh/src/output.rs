@@ -1293,7 +1293,7 @@ where
                         y: point.y.clone(),
                         z: point.z.clone(),
                     },
-                    vertex_identities.and_then(|identities| identities.get(vertex_index).cloned()),
+                    vertex_identities.and_then(|identities| identities.get(vertex_index)),
                 ));
                 flat_index += 1;
             }
@@ -1308,7 +1308,7 @@ where
                         y: point.y,
                         z: point.z,
                     },
-                    vertex_identities.and_then(|identities| identities.get(vertex_index).cloned()),
+                    vertex_identities.and_then(|identities| identities.get(vertex_index)),
                 ));
                 flat_index += 1;
             }
@@ -1515,7 +1515,7 @@ where
                 .known_vertex_identities()
                 .ok_or(HypermeshError::UnknownClassification)?;
             for (&vertex, identity) in indexed.iter().zip(vertex_identities) {
-                let ConstructionVertexIdentity::PlaneTriple { mut planes } = *identity else {
+                let ConstructionVertexIdentity::PlaneTriple { mut planes } = identity else {
                     continue;
                 };
                 planes.sort_unstable();

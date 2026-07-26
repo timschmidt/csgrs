@@ -119,33 +119,165 @@ impl RetainedVertexCycle {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct SourceTriangleIdentityCycles {
-    vertices: [ConstructionVertexIdentity; 3],
-    edges: [ConstructionEdgeIdentity; 3],
-}
-
-#[derive(Clone, Debug)]
 pub(crate) enum RetainedIdentityCycles {
-    SourceTriangle(Arc<SourceTriangleIdentityCycles>),
+    SourceTriangle {
+        mesh: usize,
+        vertices: [usize; 3],
+    },
     Owned {
         vertices: Arc<[ConstructionVertexIdentity]>,
         edges: Arc<[ConstructionEdgeIdentity]>,
     },
 }
 
-impl RetainedIdentityCycles {
-    fn vertices(&self) -> &[ConstructionVertexIdentity] {
-        match self {
-            Self::SourceTriangle(identities) => &identities.vertices,
-            Self::Owned { vertices, .. } => vertices,
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct KnownVertexIdentityCycle<'a>(&'a RetainedIdentityCycles);
+
+impl<'a> KnownVertexIdentityCycle<'a> {
+    pub(crate) fn len(self) -> usize {
+        match self.0 {
+            RetainedIdentityCycles::SourceTriangle { .. } => 3,
+            RetainedIdentityCycles::Owned { vertices, .. } => vertices.len(),
         }
     }
 
-    fn edges(&self) -> &[ConstructionEdgeIdentity] {
-        match self {
-            Self::SourceTriangle(identities) => &identities.edges,
-            Self::Owned { edges, .. } => edges,
+    pub(crate) fn get(self, index: usize) -> Option<ConstructionVertexIdentity> {
+        match self.0 {
+            RetainedIdentityCycles::SourceTriangle { mesh, vertices } => {
+                Some(ConstructionVertexIdentity::Source {
+                    mesh: *mesh,
+                    vertex: *vertices.get(index)?,
+                })
+            }
+            RetainedIdentityCycles::Owned { vertices, .. } => vertices.get(index).cloned(),
         }
+    }
+
+    pub(crate) fn iter(self) -> KnownVertexIdentityIter<'a> {
+        KnownVertexIdentityIter {
+            cycle: self,
+            indices: 0..self.len(),
+        }
+    }
+}
+
+pub(crate) struct KnownVertexIdentityIter<'a> {
+    cycle: KnownVertexIdentityCycle<'a>,
+    indices: std::ops::Range<usize>,
+}
+
+impl Iterator for KnownVertexIdentityIter<'_> {
+    type Item = ConstructionVertexIdentity;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.cycle.get(self.indices.next()?)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.indices.size_hint()
+    }
+}
+
+impl DoubleEndedIterator for KnownVertexIdentityIter<'_> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.cycle.get(self.indices.next_back()?)
+    }
+}
+
+impl ExactSizeIterator for KnownVertexIdentityIter<'_> {}
+
+impl<'a> IntoIterator for KnownVertexIdentityCycle<'a> {
+    type Item = ConstructionVertexIdentity;
+    type IntoIter = KnownVertexIdentityIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct KnownEdgeIdentityCycle<'a>(&'a RetainedIdentityCycles);
+
+impl<'a> KnownEdgeIdentityCycle<'a> {
+    pub(crate) fn len(self) -> usize {
+        match self.0 {
+            RetainedIdentityCycles::SourceTriangle { .. } => 3,
+            RetainedIdentityCycles::Owned { edges, .. } => edges.len(),
+        }
+    }
+
+    pub(crate) fn get(self, index: usize) -> Option<ConstructionEdgeIdentity> {
+        match self.0 {
+            RetainedIdentityCycles::SourceTriangle { mesh, vertices } => {
+                let mut endpoints = [
+                    *vertices.get(index)?,
+                    vertices[(index + 1) % vertices.len()],
+                ];
+                endpoints.sort_unstable();
+                Some(ConstructionEdgeIdentity::Source {
+                    mesh: *mesh,
+                    endpoints,
+                })
+            }
+            RetainedIdentityCycles::Owned { edges, .. } => edges.get(index).cloned(),
+        }
+    }
+
+    pub(crate) fn iter(self) -> KnownEdgeIdentityIter<'a> {
+        KnownEdgeIdentityIter {
+            cycle: self,
+            indices: 0..self.len(),
+        }
+    }
+}
+
+pub(crate) struct KnownEdgeIdentityIter<'a> {
+    cycle: KnownEdgeIdentityCycle<'a>,
+    indices: std::ops::Range<usize>,
+}
+
+impl Iterator for KnownEdgeIdentityIter<'_> {
+    type Item = ConstructionEdgeIdentity;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.cycle.get(self.indices.next()?)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.indices.size_hint()
+    }
+}
+
+impl DoubleEndedIterator for KnownEdgeIdentityIter<'_> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.cycle.get(self.indices.next_back()?)
+    }
+}
+
+impl ExactSizeIterator for KnownEdgeIdentityIter<'_> {}
+
+impl<'a> IntoIterator for KnownEdgeIdentityCycle<'a> {
+    type Item = ConstructionEdgeIdentity;
+    type IntoIter = KnownEdgeIdentityIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl PartialEq for KnownEdgeIdentityCycle<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.len() == other.len() && self.iter().eq(other.iter())
+    }
+}
+
+impl RetainedIdentityCycles {
+    fn vertices(&self) -> KnownVertexIdentityCycle<'_> {
+        KnownVertexIdentityCycle(self)
+    }
+
+    fn edges(&self) -> KnownEdgeIdentityCycle<'_> {
+        KnownEdgeIdentityCycle(self)
     }
 }
 
@@ -228,13 +360,13 @@ impl ConvexPolygon {
             .is_some_and(|vertices| vertices.iter().any(|vertex| vertex == point))
     }
 
-    pub(crate) fn known_vertex_identities(&self) -> Option<&[ConstructionVertexIdentity]> {
+    pub(crate) fn known_vertex_identities(&self) -> Option<KnownVertexIdentityCycle<'_>> {
         self.known_identities
             .as_ref()
             .map(RetainedIdentityCycles::vertices)
     }
 
-    pub(crate) fn known_edge_identities(&self) -> Option<&[ConstructionEdgeIdentity]> {
+    pub(crate) fn known_edge_identities(&self) -> Option<KnownEdgeIdentityCycle<'_>> {
         self.known_identities
             .as_ref()
             .map(RetainedIdentityCycles::edges)
@@ -291,19 +423,16 @@ impl ConvexPolygon {
             ))
         });
         result.known_identities = self.known_identities.as_ref().map(|identities| {
-            let vertices = Arc::from(
-                identities
-                    .vertices()
-                    .iter()
-                    .rev()
-                    .cloned()
-                    .collect::<Vec<_>>(),
-            );
+            let vertices = Arc::from(identities.vertices().iter().rev().collect::<Vec<_>>());
             let edges = identities.edges();
             let count = edges.len();
             let edges = Arc::from(
                 (0..count)
-                    .map(|index| edges[(count + count - 2 - index) % count].clone())
+                    .map(|index| {
+                        edges
+                            .get((count + count - 2 - index) % count)
+                            .expect("known edge identity indices are retained")
+                    })
                     .collect::<Vec<_>>(),
             );
             RetainedIdentityCycles::Owned { vertices, edges }
@@ -351,7 +480,7 @@ impl ConvexPolygon {
         result.known_vertices = Some(RetainedVertexCycle::Owned(Arc::from(vertices)));
         result.known_identities = Some(RetainedIdentityCycles::Owned {
             vertices: Arc::from(vertex_identities),
-            edges: Arc::from(edge_identities),
+            edges: Arc::from(edge_identities.iter().collect::<Vec<_>>()),
         });
         result
     }
@@ -361,18 +490,7 @@ impl ConvexPolygon {
         mesh: usize,
         vertices: [usize; 3],
     ) -> Self {
-        let edges = std::array::from_fn(|index| {
-            let mut endpoints = [vertices[index], vertices[(index + 1) % 3]];
-            endpoints.sort_unstable();
-            ConstructionEdgeIdentity::Source { mesh, endpoints }
-        });
-        self.known_identities = Some(RetainedIdentityCycles::SourceTriangle(Arc::new(
-            SourceTriangleIdentityCycles {
-                vertices: vertices
-                    .map(|vertex| ConstructionVertexIdentity::Source { mesh, vertex }),
-                edges,
-            },
-        )));
+        self.known_identities = Some(RetainedIdentityCycles::SourceTriangle { mesh, vertices });
         self
     }
 
@@ -808,6 +926,31 @@ mod tests {
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn source_triangle_identities_expand_from_compact_descriptor() {
+        let polygon = make_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
+            .with_source_triangle_edge_identities(3, [9, 2, 5]);
+
+        assert!(std::mem::size_of::<RetainedIdentityCycles>() <= 5 * std::mem::size_of::<usize>());
+        assert_eq!(
+            polygon
+                .known_vertex_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            [9, 2, 5].map(|vertex| ConstructionVertexIdentity::Source { mesh: 3, vertex })
+        );
+        assert_eq!(
+            polygon
+                .known_edge_identities()
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            [[2, 9], [2, 5], [5, 9]]
+                .map(|endpoints| { ConstructionEdgeIdentity::Source { mesh: 3, endpoints } })
+        );
     }
 
     #[test]
