@@ -516,9 +516,8 @@ impl ProjectivePointCache {
         &self,
         identity: ConstructionPlaneIdentity,
     ) -> ConstructionPlaneIdentity {
-        self.canonical_planes
-            .get(identity.mesh)
-            .and_then(|planes| planes.get(identity.plane))
+        self.canonical_planes[identity.mesh]
+            .get(identity.plane)
             .copied()
             .unwrap_or(identity)
     }
@@ -577,14 +576,10 @@ impl ProjectivePointCache {
         &self,
         identity: &ConstructionVertexIdentity,
     ) -> ConstructionVertexIdentity {
-        let mut canonical = identity.clone();
-        while let Some(next) = self.canonical_identities.get(&canonical) {
-            if *next == canonical {
-                break;
-            }
-            canonical = next.clone();
-        }
-        canonical
+        self.canonical_identities
+            .get(identity)
+            .cloned()
+            .unwrap_or_else(|| identity.clone())
     }
 
     fn record_definition_incidences(&mut self, identity: &ConstructionVertexIdentity) {
