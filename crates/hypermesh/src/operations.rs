@@ -2902,10 +2902,18 @@ fn propose_active_planes_f64(
 fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> (Vec<[f64; 3]>, bool) {
     let mut clipped = Vec::with_capacity(points.len() + 1);
     let mut crossed = false;
+    let Some(first) = points.first() else {
+        return (clipped, crossed);
+    };
+    let first_value = f64_plane_value(*first, plane);
+    let mut current_value = first_value;
     for index in 0..points.len() {
         let next = (index + 1) % points.len();
-        let current_value = f64_plane_value(points[index], plane);
-        let next_value = f64_plane_value(points[next], plane);
+        let next_value = if next == 0 {
+            first_value
+        } else {
+            f64_plane_value(points[next], plane)
+        };
         let current_inside = current_value <= 0.0;
         let next_inside = next_value <= 0.0;
         match (current_inside, next_inside) {
@@ -2931,6 +2939,7 @@ fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> (Vec<[f64; 3]>, bool)
             }
             (false, false) => {}
         }
+        current_value = next_value;
     }
     (clipped, crossed)
 }
