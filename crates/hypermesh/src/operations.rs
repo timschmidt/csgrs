@@ -2852,7 +2852,13 @@ fn collapse_certified_convex_faces(
             continue;
         }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
-        let mut source_edges = SourceEdgeKeys::with_capacity(source_edge_count);
+        let source_vertex_count = polygons[polygon_indices[0]]
+            .known_vertices
+            .as_ref()
+            .and_then(|vertices| vertices.source_positions())
+            .map_or(0, |positions| positions.len());
+        let mut source_edges =
+            SourceEdgeOccurrences::with_capacity(source_edge_count, source_vertex_count);
         for &polygon_index in polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
@@ -2865,7 +2871,8 @@ fn collapse_certified_convex_faces(
                 .known_vertices
                 .as_ref()
                 .ok_or(crate::error::HypermeshError::UnknownClassification)?;
-            if edge_identities.len() != vertex_identities.len()
+            if edge_identities.len() != 3
+                || edge_identities.len() != vertex_identities.len()
                 || points.len() != vertex_identities.len()
             {
                 return Err(crate::error::HypermeshError::UnknownClassification);
@@ -2921,53 +2928,44 @@ fn collapse_certified_convex_faces(
                 vertex_index = next;
             }
         }
-        let boundary_edges = source_edges.into_unique();
+        let boundary_edges = source_edges.into_unique_occurrences();
         let mut outgoing = Vec::with_capacity(boundary_edges.len());
-        for &polygon_index in polygon_indices {
+        for occurrence in boundary_edges {
+            let (group_polygon_index, edge_index) = (occurrence / 3, occurrence % 3);
+            let polygon_index = polygon_indices[group_polygon_index];
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon.known_edge_identities().expect("validated above");
             let vertex_identities = polygon.known_vertex_identities().expect("validated above");
             let points = polygon.known_vertices.as_ref().expect("validated above");
-            for edge_index in 0..edge_identities.len() {
-                let edge_identity = edge_identities
-                    .get(edge_index)
-                    .expect("validated edge identity index");
-                let ConstructionEdgeIdentity::Source { mesh, endpoints } = &edge_identity else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                if *mesh != support_identity.mesh {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
-                if boundary_edges.binary_search(endpoints).is_err() {
-                    continue;
-                }
-                let ConstructionVertexIdentity::Source { vertex: start, .. } = vertex_identities
-                    .get(edge_index)
-                    .expect("validated vertex identity index")
-                else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                let ConstructionVertexIdentity::Source { vertex: end, .. } = vertex_identities
-                    .get((edge_index + 1) % vertex_identities.len())
-                    .expect("validated vertex identity index")
-                else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                let edge_plane = if polygon.edges.len() == edge_identities.len() {
-                    Some(&polygon.edges[edge_index])
-                } else if polygon.vertex_count() == 3 {
-                    None
-                } else {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                };
-                outgoing.push((
-                    start,
-                    end,
-                    points.get(edge_index).expect("aligned vertex"),
-                    edge_plane,
-                    edge_identity,
-                ));
-            }
+            let edge_identity = edge_identities
+                .get(edge_index)
+                .expect("validated edge identity index");
+            let ConstructionVertexIdentity::Source { vertex: start, .. } = vertex_identities
+                .get(edge_index)
+                .expect("validated vertex identity index")
+            else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            let ConstructionVertexIdentity::Source { vertex: end, .. } = vertex_identities
+                .get((edge_index + 1) % vertex_identities.len())
+                .expect("validated vertex identity index")
+            else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            let edge_plane = if polygon.edges.len() == edge_identities.len() {
+                Some(&polygon.edges[edge_index])
+            } else if polygon.vertex_count() == 3 {
+                None
+            } else {
+                return Err(crate::error::HypermeshError::UnknownClassification);
+            };
+            outgoing.push((
+                start,
+                end,
+                points.get(edge_index).expect("aligned vertex"),
+                edge_plane,
+                edge_identity,
+            ));
         }
         outgoing.sort_unstable_by_key(|entry| entry.0);
         if outgoing.windows(2).any(|pair| pair[0].0 == pair[1].0) {
@@ -3057,67 +3055,90 @@ fn collapse_certified_convex_faces(
     Ok((faces, face_supports))
 }
 
-enum SourceEdgeKeys {
-    Packed(Vec<u64>),
-    Wide(Vec<[usize; 2]>),
+enum SourceEdgeOccurrences {
+    Packed {
+        endpoint_bits: u32,
+        occurrence_bits: u32,
+        edges: Vec<u64>,
+    },
+    Wide(Vec<([usize; 2], usize)>),
 }
 
-impl SourceEdgeKeys {
+impl SourceEdgeOccurrences {
     const PACKED_SORT_MIN_EDGES: usize = 128;
 
-    fn with_capacity(capacity: usize) -> Self {
-        if capacity >= Self::PACKED_SORT_MIN_EDGES {
-            Self::Packed(Vec::with_capacity(capacity))
+    fn with_capacity(capacity: usize, vertex_count: usize) -> Self {
+        let endpoint_bits = usize::BITS - vertex_count.saturating_sub(1).leading_zeros();
+        let occurrence_bits = usize::BITS - capacity.saturating_sub(1).leading_zeros();
+        if vertex_count > 0
+            && capacity >= Self::PACKED_SORT_MIN_EDGES
+            && occurrence_bits < u64::BITS
+            && endpoint_bits
+                .saturating_mul(2)
+                .saturating_add(occurrence_bits)
+                <= u64::BITS
+        {
+            Self::Packed {
+                endpoint_bits,
+                occurrence_bits,
+                edges: Vec::with_capacity(capacity),
+            }
         } else {
             Self::Wide(Vec::with_capacity(capacity))
         }
     }
 
     fn push(&mut self, edge: [usize; 2]) {
-        if let Self::Packed(packed) = self {
-            if let [Ok(start), Ok(end)] = edge.map(u32::try_from) {
-                packed.push((u64::from(start) << 32) | u64::from(end));
-                return;
-            }
-            let mut wide = Vec::with_capacity(packed.capacity());
-            wide.extend(
-                packed
-                    .drain(..)
-                    .map(|edge| [(edge >> 32) as usize, (edge as u32) as usize]),
-            );
-            wide.push(edge);
-            *self = Self::Wide(wide);
+        if let Self::Packed {
+            endpoint_bits,
+            occurrence_bits,
+            edges,
+        } = self
+        {
+            let occurrence = edges.len() as u64;
+            let key = ((edge[0] as u64) << *endpoint_bits) | edge[1] as u64;
+            edges.push((key << *occurrence_bits) | occurrence);
             return;
         }
         let Self::Wide(wide) = self else {
             unreachable!("packed edge path returns above");
         };
-        wide.push(edge);
+        wide.push((edge, wide.len()));
     }
 
-    fn into_unique(self) -> Vec<[usize; 2]> {
+    fn into_unique_occurrences(self) -> Vec<usize> {
         match self {
-            Self::Packed(mut edges) => {
+            Self::Packed {
+                endpoint_bits: _,
+                occurrence_bits,
+                mut edges,
+            } => {
                 edges.sort_unstable();
-                unique_sorted_runs(&edges)
-                    .map(|&edge| [(edge >> 32) as usize, (edge as u32) as usize])
+                let occurrence_mask = (1_u64 << occurrence_bits) - 1;
+                unique_sorted_runs_by_key(&edges, |edge| edge >> occurrence_bits)
+                    .map(|&edge| (edge & occurrence_mask) as usize)
                     .collect()
             }
             Self::Wide(mut edges) => {
-                edges.sort_unstable();
-                unique_sorted_runs(&edges).copied().collect()
+                edges.sort_unstable_by_key(|entry| entry.0);
+                unique_sorted_runs_by_key(&edges, |entry| entry.0)
+                    .map(|entry| entry.1)
+                    .collect()
             }
         }
     }
 }
 
-fn unique_sorted_runs<T: Eq>(values: &[T]) -> impl Iterator<Item = &T> {
+fn unique_sorted_runs_by_key<T, K: Eq>(
+    values: &[T],
+    key: impl Fn(&T) -> K,
+) -> impl Iterator<Item = &T> {
     let mut index = 0;
     std::iter::from_fn(move || {
         while index < values.len() {
             let current = index;
             index += 1;
-            while index < values.len() && values[index] == values[current] {
+            while index < values.len() && key(&values[index]) == key(&values[current]) {
                 index += 1;
             }
             if index == current + 1 {
@@ -3834,26 +3855,32 @@ mod tests {
     }
 
     #[test]
-    fn source_edge_keys_preserve_unique_runs_across_packed_and_wide_storage() {
+    fn source_edge_occurrences_preserve_unique_runs_across_packed_and_wide_storage() {
         let edges = [[1, 2], [4, 5], [2, 3], [1, 2], [4, 5], [4, 5]];
         let collect = |capacity| {
-            let mut keys = SourceEdgeKeys::with_capacity(capacity);
+            let mut keys = SourceEdgeOccurrences::with_capacity(capacity, 6);
             for edge in edges {
                 keys.push(edge);
             }
-            keys.into_unique()
+            keys.into_unique_occurrences()
         };
 
-        assert_eq!(collect(edges.len()), vec![[2, 3]]);
-        assert_eq!(collect(SourceEdgeKeys::PACKED_SORT_MIN_EDGES), vec![[2, 3]]);
+        assert_eq!(collect(edges.len()), vec![2]);
+        assert_eq!(
+            collect(SourceEdgeOccurrences::PACKED_SORT_MIN_EDGES),
+            vec![2]
+        );
 
         if usize::BITS > u32::BITS {
             let oversized = usize::try_from(u64::from(u32::MAX) + 1).unwrap();
-            let mut fallback = SourceEdgeKeys::with_capacity(SourceEdgeKeys::PACKED_SORT_MIN_EDGES);
+            let mut fallback = SourceEdgeOccurrences::with_capacity(
+                SourceEdgeOccurrences::PACKED_SORT_MIN_EDGES,
+                oversized + 2,
+            );
             fallback.push([1, 2]);
             fallback.push([oversized, oversized + 1]);
             fallback.push([1, 2]);
-            assert_eq!(fallback.into_unique(), vec![[oversized, oversized + 1]]);
+            assert_eq!(fallback.into_unique_occurrences(), vec![1]);
         }
     }
 
