@@ -20,6 +20,7 @@ pub struct MainApp {
     operation: DemoOperation,
     show_cube_a: bool,
     show_cube_b: bool,
+    show_boolean_result: bool,
     show_wireframe: bool,
     offset_quarters: i32,
     spin: f32,
@@ -46,6 +47,7 @@ impl MainApp {
             operation: DemoOperation::Union,
             show_cube_a: true,
             show_cube_b: true,
+            show_boolean_result: true,
             show_wireframe: true,
             offset_quarters: 4,
             spin: 0.0,
@@ -96,12 +98,13 @@ impl MainApp {
     }
 
     fn camera(&self) -> ExactCamera {
-        let mut camera = ExactCamera::default();
-        camera.yaw = Real::try_from(self.spin as f64).unwrap_or_else(|_| Real::zero());
-        camera.pitch = Real::try_from(-0.65_f64).expect("finite camera pitch");
-        camera.zoom = Real::from(6);
-        camera.target = point(real_ratio(1, 2), Real::zero(), Real::zero());
-        camera
+        ExactCamera {
+            yaw: Real::try_from(self.spin as f64).unwrap_or_else(|_| Real::zero()),
+            pitch: Real::try_from(-0.65_f64).expect("finite camera pitch"),
+            zoom: Real::from(6),
+            target: point(real_ratio(1, 2), Real::zero(), Real::zero()),
+            ..ExactCamera::default()
+        }
     }
 }
 
@@ -153,6 +156,7 @@ impl eframe::App for MainApp {
                 ui.heading("Display");
                 ui.checkbox(&mut self.show_cube_a, "Cube A");
                 ui.checkbox(&mut self.show_cube_b, "Cube B");
+                ui.checkbox(&mut self.show_boolean_result, "Boolean result");
                 ui.checkbox(&mut self.show_wireframe, "Wireframe");
 
                 ui.separator();
@@ -186,9 +190,12 @@ impl eframe::App for MainApp {
                         .expect("finite egui viewport"),
                 )
                 .ok();
-            let show_cube_a = self.show_cube_a;
-            let show_cube_b = self.show_cube_b;
-            let show_wireframe = self.show_wireframe;
+            let visibility = RenderVisibility {
+                show_cube_a: self.show_cube_a,
+                show_cube_b: self.show_cube_b,
+                show_boolean_result: self.show_boolean_result,
+                show_wireframe: self.show_wireframe,
+            };
             let resources = Arc::clone(&self.render_resources);
             painter.add(egui::PaintCallback {
                 rect,
@@ -200,9 +207,7 @@ impl eframe::App for MainApp {
                         &resources,
                         &render_frame,
                         projection.as_ref(),
-                        show_cube_a,
-                        show_cube_b,
-                        show_wireframe,
+                        visibility,
                     ) {
                         log::warn!("hypergraphics render failed: {error}");
                     }
@@ -312,6 +317,32 @@ struct RenderResources {
 
 const RESULT_FACE_ALPHA: f32 = 0.92;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct RenderVisibility {
+    show_cube_a: bool,
+    show_cube_b: bool,
+    show_boolean_result: bool,
+    show_wireframe: bool,
+}
+
+impl RenderVisibility {
+    const fn show_cube_a_wire(self) -> bool {
+        self.show_cube_a && self.show_wireframe
+    }
+
+    const fn show_cube_b_wire(self) -> bool {
+        self.show_cube_b && self.show_wireframe
+    }
+
+    const fn show_boolean_result_wire(self) -> bool {
+        self.show_boolean_result && self.show_wireframe
+    }
+
+    const fn has_translucent_faces(self) -> bool {
+        self.show_cube_a || self.show_cube_b || self.show_boolean_result
+    }
+}
+
 impl RenderResources {
     unsafe fn new(gl: &eframe::glow::Context) -> hypergraphics::Result<Self> {
         unsafe {
@@ -357,33 +388,37 @@ impl RenderResources {
         &self,
         gl: &eframe::glow::Context,
         projection: &hypergraphics::Projection64,
-        show_cube_a: bool,
-        show_cube_b: bool,
-        show_wireframe: bool,
+        visibility: RenderVisibility,
     ) -> hypergraphics::Result<()> {
         unsafe {
             self.program.bind(gl, projection)?;
             draw_mesh(gl, &self.program, &self.grid, 1.0)?;
             draw_mesh(gl, &self.program, &self.axes, 1.0)?;
-            if show_cube_a || show_cube_b {
+            if visibility.has_translucent_faces() {
                 gl.enable(eframe::glow::BLEND);
                 gl.blend_func(eframe::glow::SRC_ALPHA, eframe::glow::ONE_MINUS_SRC_ALPHA);
             }
-            if show_cube_a {
+            if visibility.show_cube_a {
                 draw_mesh(gl, &self.program, &self.input_a_faces, 0.24)?;
+            }
+            if visibility.show_cube_a_wire() {
                 draw_mesh(gl, &self.program, &self.input_a_wire, 1.0)?;
             }
-            if show_cube_b {
+            if visibility.show_cube_b {
                 draw_mesh(gl, &self.program, &self.input_b_faces, 0.24)?;
+            }
+            if visibility.show_cube_b_wire() {
                 draw_mesh(gl, &self.program, &self.input_b_wire, 1.0)?;
             }
-            draw_depth_prepassed_mesh(
-                gl,
-                &self.program,
-                &self.result_faces,
-                RESULT_FACE_ALPHA,
-            )?;
-            if show_wireframe {
+            if visibility.show_boolean_result {
+                draw_depth_prepassed_mesh(
+                    gl,
+                    &self.program,
+                    &self.result_faces,
+                    RESULT_FACE_ALPHA,
+                )?;
+            }
+            if visibility.show_boolean_result_wire() {
                 draw_mesh(gl, &self.program, &self.result_wire, 1.0)?;
             }
         }
@@ -397,9 +432,7 @@ fn render_hypergraphics(
     resources: &Arc<Mutex<Option<RenderResources>>>,
     frame: &RenderFrame,
     projection: Option<&Projection64>,
-    show_cube_a: bool,
-    show_cube_b: bool,
-    show_wireframe: bool,
+    visibility: RenderVisibility,
 ) -> hypergraphics::Result<()> {
     let Some(projection) = projection else {
         return Ok(());
@@ -417,7 +450,7 @@ fn render_hypergraphics(
         gl.enable(eframe::glow::POLYGON_OFFSET_FILL);
         gl.polygon_offset(1.0, 1.0);
         resources.upload(gl, frame)?;
-        resources.draw(gl, projection, show_cube_a, show_cube_b, show_wireframe)?;
+        resources.draw(gl, projection, visibility)?;
         gl.disable(eframe::glow::POLYGON_OFFSET_FILL);
         gl.disable(eframe::glow::DEPTH_TEST);
         gl.disable(eframe::glow::BLEND);
@@ -675,20 +708,14 @@ fn flat_shaded_color(base: Color3, [a, b, c]: [&Point3; 3]) -> Color3 {
         ab[2] * ac[0] - ab[0] * ac[2],
         ab[0] * ac[1] - ab[1] * ac[0],
     ];
-    let length =
-        (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
+    let length = (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
     if !length.is_finite() || length <= f64::EPSILON {
         return base;
     }
-    let diffuse = ((normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2]) / length)
-        .max(0.0);
+    let diffuse =
+        ((normal[0] * LIGHT[0] + normal[1] * LIGHT[1] + normal[2] * LIGHT[2]) / length).max(0.0);
     let intensity = (AMBIENT + DIFFUSE * diffuse) as f32;
-    Color3::new(
-        base.r * intensity,
-        base.g * intensity,
-        base.b * intensity,
-    )
-    .unwrap_or(base)
+    Color3::new(base.r * intensity, base.g * intensity, base.b * intensity).unwrap_or(base)
 }
 
 fn triangle_soup_wire(soup: &TriangleSoup, color: Color3) -> ExactMesh {
@@ -741,6 +768,44 @@ fn real_ratio(numerator: i32, denominator: i32) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn display_visibility_gates_each_wireframe_and_the_boolean_result() {
+        let visible = RenderVisibility {
+            show_cube_a: true,
+            show_cube_b: true,
+            show_boolean_result: true,
+            show_wireframe: true,
+        };
+        assert!(visible.show_cube_a_wire());
+        assert!(visible.show_cube_b_wire());
+        assert!(visible.show_boolean_result_wire());
+        assert!(visible.has_translucent_faces());
+
+        let faces_only = RenderVisibility {
+            show_wireframe: false,
+            ..visible
+        };
+        assert!(!faces_only.show_cube_a_wire());
+        assert!(!faces_only.show_cube_b_wire());
+        assert!(!faces_only.show_boolean_result_wire());
+
+        let inputs_only = RenderVisibility {
+            show_boolean_result: false,
+            ..visible
+        };
+        assert!(inputs_only.show_cube_a_wire());
+        assert!(inputs_only.show_cube_b_wire());
+        assert!(!inputs_only.show_boolean_result_wire());
+
+        let hidden = RenderVisibility {
+            show_cube_a: false,
+            show_cube_b: false,
+            show_boolean_result: false,
+            show_wireframe: true,
+        };
+        assert!(!hidden.has_translucent_faces());
+    }
 
     #[test]
     fn demo_primitives_are_exact_cubes() {
@@ -856,7 +921,11 @@ mod tests {
             .iter()
             .zip(faces.vertices().chunks_exact(3))
         {
-            assert!(rendered.iter().all(|vertex| vertex.color == rendered[0].color));
+            assert!(
+                rendered
+                    .iter()
+                    .all(|vertex| vertex.color == rendered[0].color)
+            );
             let vertices = triangle.map(|index| &result.vertices[index]);
             let plane = [
                 vertices.iter().all(|vertex| vertex.x == r(-1)),
