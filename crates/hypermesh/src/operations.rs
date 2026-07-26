@@ -346,14 +346,22 @@ fn compute_boolean(
 
 #[derive(Clone)]
 struct ProjectiveCycle {
-    points: Vec<HomogeneousPoint3>,
-    point_preparations: Vec<ProjectivePointPreparation>,
-    point_identities: Vec<ConstructionVertexIdentity>,
-    edges: Vec<Plane>,
-    edge_identities: Vec<ConstructionEdgeIdentity>,
+    boundary: Vec<ProjectiveBoundaryEntry>,
     support: Plane,
     source_plane: ConstructionPlaneIdentity,
     source_unchanged: bool,
+}
+
+#[derive(Clone)]
+struct ProjectiveBoundaryEntry {
+    // Clipping moves this complete incidence record atomically. Keeping the
+    // point and outgoing edge evidence together also makes length skew between
+    // parallel identity arrays unrepresentable.
+    point: HomogeneousPoint3,
+    preparation: ProjectivePointPreparation,
+    point_identity: ConstructionVertexIdentity,
+    edge: Plane,
+    edge_identity: ConstructionEdgeIdentity,
 }
 
 #[derive(Clone, Copy)]
@@ -369,21 +377,13 @@ struct ProjectiveClip {
 }
 
 struct ProjectiveBoundary {
-    points: Vec<HomogeneousPoint3>,
-    point_preparations: Vec<ProjectivePointPreparation>,
-    point_identities: Vec<ConstructionVertexIdentity>,
-    edges: Vec<Plane>,
-    edge_identities: Vec<ConstructionEdgeIdentity>,
+    entries: Vec<ProjectiveBoundaryEntry>,
 }
 
 impl ProjectiveBoundary {
     fn with_capacity(capacity: usize) -> Self {
         Self {
-            points: Vec::with_capacity(capacity),
-            point_preparations: Vec::with_capacity(capacity),
-            point_identities: Vec::with_capacity(capacity),
-            edges: Vec::with_capacity(capacity),
-            edge_identities: Vec::with_capacity(capacity),
+            entries: Vec::with_capacity(capacity),
         }
     }
 
@@ -399,25 +399,27 @@ impl ProjectiveBoundary {
         // points have the same retained finite view. Deduplication still
         // requires exact homogeneous equality below.
         let approximations_differ = self
-            .point_preparations
+            .entries
             .last()
-            .and_then(|last| last.approximate)
+            .and_then(|last| last.preparation.approximate)
             .zip(preparation.approximate)
             .is_some_and(|(last, current)| last != current);
-        if !approximations_differ && self.points.last() == Some(&point) {
-            if let Some(last_edge) = self.edges.last_mut() {
-                *last_edge = edge;
-            }
-            if let Some(last_identity) = self.edge_identities.last_mut() {
-                *last_identity = edge_identity;
-            }
+        if !approximations_differ && self.entries.last().is_some_and(|last| last.point == point) {
+            let last = self
+                .entries
+                .last_mut()
+                .expect("nonempty boundary has a last entry");
+            last.edge = edge;
+            last.edge_identity = edge_identity;
             return;
         }
-        self.points.push(point);
-        self.point_preparations.push(preparation);
-        self.point_identities.push(point_identity);
-        self.edges.push(edge);
-        self.edge_identities.push(edge_identity);
+        self.entries.push(ProjectiveBoundaryEntry {
+            point,
+            preparation,
+            point_identity,
+            edge,
+            edge_identity,
+        });
     }
 
     fn into_cycle(
@@ -425,19 +427,17 @@ impl ProjectiveBoundary {
         support: Plane,
         source_plane: ConstructionPlaneIdentity,
     ) -> ProjectiveCycle {
-        if self.points.len() > 1 && self.points.first() == self.points.last() {
-            self.points.pop();
-            self.point_preparations.pop();
-            self.point_identities.pop();
-            self.edges.pop();
-            self.edge_identities.pop();
+        if self.entries.len() > 1
+            && self
+                .entries
+                .first()
+                .zip(self.entries.last())
+                .is_some_and(|(first, last)| first.point == last.point)
+        {
+            self.entries.pop();
         }
         ProjectiveCycle {
-            points: self.points,
-            point_preparations: self.point_preparations,
-            point_identities: self.point_identities,
-            edges: self.edges,
-            edge_identities: self.edge_identities,
+            boundary: self.entries,
             support,
             source_plane,
             source_unchanged: false,
@@ -1175,27 +1175,28 @@ impl ProjectiveCycle {
         if self.source_plane == plane_identity {
             return true;
         }
-        if self.edge_identities.is_empty() {
+        if self.boundary.is_empty() {
             return false;
         }
         let previous = if point_index == 0 {
-            self.edge_identities.len() - 1
+            self.boundary.len() - 1
         } else {
             point_index - 1
         };
         [previous, point_index].into_iter().any(|edge_index| {
             matches!(
-                self.edge_identities.get(edge_index),
+                self.boundary.get(edge_index).map(|entry| &entry.edge_identity),
                 Some(ConstructionEdgeIdentity::Split { planes })
                     if planes.contains(&plane_identity)
             )
-        }) || (self.point_preparations[point_index]
+        }) || (self.boundary[point_index]
+            .preparation
             .approximate
             .is_none_or(|point| normalized_point_plane_may_be_on(point, plane_f64))
             && crate::intersection::four_plane_determinant(
                 &self.support,
-                &self.edges[previous],
-                &self.edges[point_index],
+                &self.boundary[previous].edge,
+                &self.boundary[point_index].edge,
                 plane,
             )
             .definitely_zero())
@@ -1216,10 +1217,11 @@ impl ProjectiveCycle {
         if source_edge_identities.len() != source_points.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let capacity = source_points.len();
-        let mut points = Vec::with_capacity(capacity);
-        let mut point_preparations = Vec::with_capacity(capacity);
-        let mut point_identities = Vec::with_capacity(capacity);
+        match polygon.edges.len() {
+            len if len == source_points.len() || len <= 1 => {}
+            _ => return Err(crate::error::HypermeshError::UnknownClassification),
+        }
+        let mut boundary = Vec::with_capacity(source_points.len());
         for (point_index, point) in source_points.iter().enumerate() {
             let approximate = affine_point_f64(point);
             let vertex = source_vertex_index(source_edge_identities, point_index)
@@ -1240,30 +1242,26 @@ impl ProjectiveCycle {
                         Real::one(),
                     )
                 });
-            points.push(point);
-            point_preparations.push(ProjectivePointPreparation {
-                approximate,
-                // Retain prepared queries only for constructed crossings that
-                // survive into later clips; source vertices use the one-shot path.
-                rational_filter_query: None,
+            let edge = match polygon.edges.len() {
+                0 => polygon.support.clone(),
+                1 => polygon.edges[0].clone(),
+                _ => polygon.edges[point_index].clone(),
+            };
+            boundary.push(ProjectiveBoundaryEntry {
+                point,
+                preparation: ProjectivePointPreparation {
+                    approximate,
+                    // Retain prepared queries only for constructed crossings that
+                    // survive into later clips; source vertices use the one-shot path.
+                    rational_filter_query: None,
+                },
+                point_identity: identity,
+                edge,
+                edge_identity: source_edge_identities[point_index].clone(),
             });
-            point_identities.push(identity);
         }
-        let mut edges = Vec::with_capacity(capacity);
-        match polygon.edges.len() {
-            len if len == points.len() => edges.extend(polygon.edges.iter().cloned()),
-            0 => edges.resize(points.len(), polygon.support.clone()),
-            1 => edges.resize(points.len(), polygon.edges[0].clone()),
-            _ => return Err(crate::error::HypermeshError::UnknownClassification),
-        }
-        let mut edge_identities = Vec::with_capacity(capacity);
-        edge_identities.extend(source_edge_identities.iter().cloned());
         Ok(Self {
-            points,
-            point_preparations,
-            point_identities,
-            edges,
-            edge_identities,
+            boundary,
             support: polygon.support.clone(),
             source_plane,
             source_unchanged: true,
@@ -1283,8 +1281,8 @@ impl ProjectiveCycle {
         ConstructionVertexIdentity,
     )> {
         let mut crossings = Vec::with_capacity(2);
-        for index in 0..self.points.len() {
-            let next = (index + 1) % self.points.len();
+        for index in 0..self.boundary.len() {
+            let next = (index + 1) % self.boundary.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
             let crossing = (current_classification.is_negative()
@@ -1294,9 +1292,9 @@ impl ProjectiveCycle {
                 let (point, approximate_point, identity) = self.cached_crossing_point(
                     index,
                     plane_identity,
-                    &self.points[index],
+                    &self.boundary[index].point,
                     current_classification,
-                    &self.points[next],
+                    &self.boundary[next].point,
                     plane,
                     point_cache,
                 );
@@ -1326,10 +1324,10 @@ impl ProjectiveCycle {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
         let prepared_plane = PreparedRationalPlane4::new(plane);
         let classifications = self
-            .points
+            .boundary
             .iter()
             .enumerate()
-            .map(|(point_index, point)| {
+            .map(|(point_index, entry)| {
                 if self.point_has_plane_incidence(
                     point_index,
                     plane_identity,
@@ -1339,8 +1337,8 @@ impl ProjectiveCycle {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
                     let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-                        point,
-                        self.point_preparations[point_index].rational_filter_query,
+                        &entry.point,
+                        entry.preparation.rational_filter_query,
                     );
                     match prepared
                         .classify_rational_plane_filter(plane_filter)
@@ -1350,13 +1348,16 @@ impl ProjectiveCycle {
                         None => prepared.classify(plane),
                     }
                 } else {
-                    classify_projective_point(point, plane).inspect_err(|_error| {
+                    classify_projective_point(&entry.point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective clip point failed: source={:?} target={:?} point={point_index} value={:?}",
                                 self.source_plane,
                                 plane_identity,
-                                hyperlattice::homogeneous_point_plane_expression(point, plane)
+                                hyperlattice::homogeneous_point_plane_expression(
+                                    &entry.point,
+                                    plane,
+                                )
                                     .to_f64_lossy(),
                             );
                         }
@@ -1366,7 +1367,8 @@ impl ProjectiveCycle {
             .collect::<HypermeshResult<Vec<_>>>()?;
         for (point_index, classification) in classifications.iter().enumerate() {
             if *classification == Classification::On {
-                point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
+                point_cache
+                    .record_incidence(&self.boundary[point_index].point_identity, plane_identity);
             }
         }
         let has_negative = classifications
@@ -1396,39 +1398,28 @@ impl ProjectiveCycle {
         let inverted = plane.inverted();
         let intersections =
             self.crossing_points(&classifications, plane, plane_identity, point_cache);
-        let mut negative = ProjectiveBoundary::with_capacity(self.points.len() + 1);
-        let mut positive = ProjectiveBoundary::with_capacity(self.points.len() + 1);
+        let mut negative = ProjectiveBoundary::with_capacity(self.boundary.len() + 1);
+        let mut positive = ProjectiveBoundary::with_capacity(self.boundary.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
         split_planes.sort_unstable();
         let split_identity = ConstructionEdgeIdentity::Split {
             planes: split_planes,
         };
         let Self {
-            points,
-            point_preparations,
-            point_identities,
-            edges,
-            edge_identities,
+            boundary,
             support,
             source_plane,
             ..
         } = self;
-        let mut point_preparations = point_preparations.into_iter();
-        let mut point_identities = point_identities.into_iter();
-        let mut edges = edges.into_iter();
-        let mut edge_identities = edge_identities.into_iter();
         let mut intersections = intersections.into_iter();
-        for (index, point) in points.into_iter().enumerate() {
-            let point_preparation = point_preparations
-                .next()
-                .expect("projective point preparation is available");
-            let point_identity = point_identities
-                .next()
-                .expect("projective point identity is available");
-            let edge = edges.next().expect("projective edge is available");
-            let edge_identity = edge_identities
-                .next()
-                .expect("projective edge identity is available");
+        for (index, entry) in boundary.into_iter().enumerate() {
+            let ProjectiveBoundaryEntry {
+                point,
+                preparation: point_preparation,
+                point_identity,
+                edge,
+                edge_identity,
+            } = entry;
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
@@ -1583,10 +1574,10 @@ impl ProjectiveCycle {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
         let prepared_plane = PreparedRationalPlane4::new(plane);
         let classifications = self
-            .points
+            .boundary
             .iter()
             .enumerate()
-            .map(|(point_index, point)| {
+            .map(|(point_index, entry)| {
                 if self.point_has_plane_incidence(
                     point_index,
                     plane_identity,
@@ -1596,8 +1587,8 @@ impl ProjectiveCycle {
                     Ok(Classification::On)
                 } else if let Some(plane_filter) = &prepared_plane {
                     let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-                        point,
-                        self.point_preparations[point_index].rational_filter_query,
+                        &entry.point,
+                        entry.preparation.rational_filter_query,
                     );
                     match prepared
                         .classify_rational_plane_filter(plane_filter)
@@ -1607,22 +1598,22 @@ impl ProjectiveCycle {
                         None => prepared.classify(plane),
                     }
                 } else {
-                    classify_projective_point(point, plane).inspect_err(|_error| {
+                    classify_projective_point(&entry.point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
                             eprintln!(
                                 "[DEBUG] projective negative clip point failed: source={:?} target={:?} point={point_index} identity={:?} adjacent={:?} point_xyz={:?} plane={:?} exact={:?} value={:?}",
                                 self.source_plane,
                                 plane_identity,
-                                self.point_identities.get(point_index),
+                                self.boundary.get(point_index).map(|entry| &entry.point_identity),
                                 [
-                                    self.edge_identities.get(if point_index == 0 { self.edge_identities.len() - 1 } else { point_index - 1 }),
-                                    self.edge_identities.get(point_index),
+                                    self.boundary.get(if point_index == 0 { self.boundary.len() - 1 } else { point_index - 1 }).map(|entry| &entry.edge_identity),
+                                    self.boundary.get(point_index).map(|entry| &entry.edge_identity),
                                 ],
                                 [
-                                    point.x.to_f64_lossy(),
-                                    point.y.to_f64_lossy(),
-                                    point.z.to_f64_lossy(),
-                                    point.w.to_f64_lossy(),
+                                    entry.point.x.to_f64_lossy(),
+                                    entry.point.y.to_f64_lossy(),
+                                    entry.point.z.to_f64_lossy(),
+                                    entry.point.w.to_f64_lossy(),
                                 ],
                                 [
                                     plane.normal.x.to_f64_lossy(),
@@ -1636,7 +1627,7 @@ impl ProjectiveCycle {
                                     plane.normal.z.exact_rational_ref().is_some(),
                                     plane.offset.exact_rational_ref().is_some(),
                                 ],
-                                hyperlattice::homogeneous_point_plane_expression(point, plane)
+                                hyperlattice::homogeneous_point_plane_expression(&entry.point, plane)
                                     .to_f64_lossy(),
                             );
                         }
@@ -1646,7 +1637,8 @@ impl ProjectiveCycle {
             .collect::<HypermeshResult<Vec<_>>>()?;
         for (point_index, classification) in classifications.iter().enumerate() {
             if *classification == Classification::On {
-                point_cache.record_incidence(&self.point_identities[point_index], plane_identity);
+                point_cache
+                    .record_incidence(&self.boundary[point_index].point_identity, plane_identity);
             }
         }
         let has_negative = classifications
@@ -1666,38 +1658,27 @@ impl ProjectiveCycle {
         crate::trace_dispatch!("projective-clip-negative", "split");
         let intersections =
             self.crossing_points(&classifications, plane, plane_identity, point_cache);
-        let mut negative = ProjectiveBoundary::with_capacity(self.points.len() + 1);
+        let mut negative = ProjectiveBoundary::with_capacity(self.boundary.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
         split_planes.sort_unstable();
         let split_identity = ConstructionEdgeIdentity::Split {
             planes: split_planes,
         };
         let Self {
-            points: source_points,
-            point_preparations: source_point_preparations,
-            point_identities: source_point_identities,
-            edges: source_edges,
-            edge_identities: source_edge_identities,
+            boundary,
             support,
             source_plane,
             ..
         } = self;
-        let mut source_point_preparations = source_point_preparations.into_iter();
-        let mut source_point_identities = source_point_identities.into_iter();
-        let mut source_edges = source_edges.into_iter();
-        let mut source_edge_identities = source_edge_identities.into_iter();
         let mut intersections = intersections.into_iter();
-        for (index, point) in source_points.into_iter().enumerate() {
-            let point_preparation = source_point_preparations
-                .next()
-                .expect("projective point preparation is available");
-            let point_identity = source_point_identities
-                .next()
-                .expect("projective point identity is available");
-            let edge = source_edges.next().expect("projective edge is available");
-            let edge_identity = source_edge_identities
-                .next()
-                .expect("projective edge identity is available");
+        for (index, entry) in boundary.into_iter().enumerate() {
+            let ProjectiveBoundaryEntry {
+                point,
+                preparation: point_preparation,
+                point_identity,
+                edge,
+                edge_identity,
+            } = entry;
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
@@ -1788,8 +1769,10 @@ impl ProjectiveCycle {
         Option<[f64; 3]>,
         ConstructionVertexIdentity,
     ) {
-        let identity = point_cache
-            .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
+        let identity = point_cache.edge_plane_intersection_identity(
+            &self.boundary[edge_index].edge_identity,
+            plane_identity,
+        );
         if point_cache.points.len() >= PROJECTIVE_CROSSING_CACHE_MIN_POINTS
             && let Some(existing) = point_cache.points.get(&identity)
         {
@@ -1820,20 +1803,16 @@ impl ProjectiveCycle {
         if self.source_unchanged {
             return Ok(source.clone());
         }
-        let vertices = self
-            .points
-            .iter()
-            .enumerate()
-            .map(|(point_index, point)| {
-                affine_cache.resolve(point, Some(&self.point_identities[point_index]))
-            })
-            .collect::<HypermeshResult<Vec<_>>>()?;
-        let Self {
-            point_identities,
-            edges,
-            edge_identities,
-            ..
-        } = self;
+        let mut vertices = Vec::with_capacity(self.boundary.len());
+        let mut point_identities = Vec::with_capacity(self.boundary.len());
+        let mut edges = Vec::with_capacity(self.boundary.len());
+        let mut edge_identities = Vec::with_capacity(self.boundary.len());
+        for entry in self.boundary {
+            vertices.push(affine_cache.resolve(&entry.point, Some(&entry.point_identity))?);
+            point_identities.push(entry.point_identity);
+            edges.push(entry.edge);
+            edge_identities.push(entry.edge_identity);
+        }
         Ok(source.with_known_vertex_cycle_and_edges(
             vertices,
             point_identities,
@@ -1844,11 +1823,7 @@ impl ProjectiveCycle {
 
     fn empty() -> Self {
         Self {
-            points: Vec::new(),
-            point_preparations: Vec::new(),
-            point_identities: Vec::new(),
-            edges: Vec::new(),
-            edge_identities: Vec::new(),
+            boundary: Vec::new(),
             support: Plane::from_coefficients(
                 Real::zero(),
                 Real::zero(),
@@ -3098,7 +3073,7 @@ fn exact_inside_and_outside_cycles<'a>(
                 eprintln!("[DEBUG] proposed projective clipping failed");
             }
         })?;
-        if inside.points.len() < 3 {
+        if inside.boundary.len() < 3 {
             crate::trace_dispatch!("projective-active-planes", "proposed-empty");
             return Ok(None);
         }
@@ -3144,7 +3119,7 @@ fn exact_inside_and_outside_cycles<'a>(
             eprintln!("[DEBUG] full projective clipping failed");
         }
     })?;
-    if inside.points.len() < 3 {
+    if inside.boundary.len() < 3 {
         crate::trace_dispatch!("projective-active-planes", "full-empty");
         return Ok(None);
     }
@@ -3205,7 +3180,7 @@ fn clip_inside_cycle(
             },
             point_cache,
         )?;
-        if inside.points.len() < 3 {
+        if inside.boundary.len() < 3 {
             return Ok(ProjectiveCycle::empty());
         }
     }
@@ -3243,7 +3218,7 @@ fn partition_inside_cycle(
                 inside = clipped.negative;
             }
         }
-        if inside.points.len() < 3 {
+        if inside.boundary.len() < 3 {
             return Ok((ProjectiveCycle::empty(), outside));
         }
     }
@@ -3279,17 +3254,17 @@ fn cycle_satisfies_planes<'a>(
             PreparedRationalPlane4::new(support_planes[plane_index]),
         ));
     }
-    for (point_index, point) in cycle.points.iter().enumerate() {
+    for entry in &cycle.boundary {
         let prepared = PreparedProjectivePoint3::with_rational_filter_query(
-            point,
-            cycle.point_preparations[point_index].rational_filter_query,
+            &entry.point,
+            entry.preparation.rational_filter_query,
         );
         for (plane_index, prepared_plane) in prepared_planes.iter() {
             let classification = match prepared_plane {
                 Some(plane) => match prepared.classify_rational_plane_filter(plane) {
                     Some(classification) => classification,
                     None if point_cache.has_incidence(
-                        &cycle.point_identities[point_index],
+                        &entry.point_identity,
                         ConstructionPlaneIdentity {
                             mesh: support_plane_mesh,
                             plane: *plane_index,
@@ -3328,8 +3303,8 @@ fn propose_active_planes_f64<'a>(
     scratch: &'a mut ActivePlaneProposalScratch,
 ) -> Option<&'a [usize]> {
     scratch.cycle.clear();
-    for preparation in &source.point_preparations {
-        scratch.cycle.push(preparation.approximate?);
+    for entry in &source.boundary {
+        scratch.cycle.push(entry.preparation.approximate?);
     }
     scratch.crossed_planes.clear();
     scratch.active.clear();
@@ -3480,7 +3455,7 @@ fn push_projective_transition(
     inside_other: bool,
     operation: BooleanOp,
 ) -> HypermeshResult<()> {
-    if cycle.points.len() < 3 {
+    if cycle.boundary.len() < 3 {
         return Ok(());
     }
     let winding = projective_transition_winding(host, other, inside_other);
@@ -3678,8 +3653,13 @@ mod tests {
             &mut point_cache,
         )
         .unwrap();
-        assert_eq!(cycle.edges.len(), 3);
-        assert!(cycle.edges.iter().all(|edge| edge == &polygon.support));
+        assert_eq!(cycle.boundary.len(), 3);
+        assert!(
+            cycle
+                .boundary
+                .iter()
+                .all(|entry| entry.edge == polygon.support)
+        );
     }
 
     #[test]
@@ -3713,9 +3693,9 @@ mod tests {
             .unwrap();
         let affine = |cycle: &ProjectiveCycle| {
             cycle
-                .points
+                .boundary
                 .iter()
-                .map(|point| point.to_affine_point().unwrap())
+                .map(|entry| entry.point.to_affine_point().unwrap())
                 .collect::<Vec<_>>()
         };
 
@@ -3729,40 +3709,44 @@ mod tests {
             vec![p(1, 0, 0), p(2, 0, 1), p(0, 2, 0)]
         );
         assert_eq!(
-            split.negative.point_identities[1],
-            split.positive.point_identities[0]
+            split.negative.boundary[1].point_identity,
+            split.positive.boundary[0].point_identity
         );
         assert!(
-            split.negative.point_preparations[1]
+            split.negative.boundary[1]
+                .preparation
                 .rational_filter_query
                 .is_some()
         );
         assert!(
-            split.positive.point_preparations[0]
+            split.positive.boundary[0]
+                .preparation
                 .rational_filter_query
                 .is_some()
         );
         assert_eq!(
-            split.negative.point_identities[2],
-            split.positive.point_identities[2]
+            split.negative.boundary[2].point_identity,
+            split.positive.boundary[2].point_identity
         );
         assert_eq!(
-            split.negative.edge_identities[0],
-            split.positive.edge_identities[0]
+            split.negative.boundary[0].edge_identity,
+            split.positive.boundary[0].edge_identity
         );
         assert_eq!(
-            split.negative.edge_identities[1],
-            split.positive.edge_identities[2]
+            split.negative.boundary[1].edge_identity,
+            split.positive.boundary[2].edge_identity
         );
-        assert_eq!(negative_only.points, split.negative.points);
-        assert_eq!(
-            negative_only.point_identities,
-            split.negative.point_identities
-        );
-        assert_eq!(negative_only.edges, split.negative.edges);
-        assert_eq!(
-            negative_only.edge_identities,
-            split.negative.edge_identities
+        assert_eq!(affine(&negative_only), affine(&split.negative));
+        assert!(
+            negative_only
+                .boundary
+                .iter()
+                .zip(&split.negative.boundary)
+                .all(|(negative, split)| {
+                    negative.point_identity == split.point_identity
+                        && negative.edge == split.edge
+                        && negative.edge_identity == split.edge_identity
+                })
         );
     }
 
@@ -3998,8 +3982,11 @@ mod tests {
             &mut point_cache,
         )
         .unwrap();
-        for identity in &cycle.point_identities {
-            point_cache.record_incidence(identity, ConstructionPlaneIdentity { mesh: 0, plane: 0 });
+        for entry in &cycle.boundary {
+            point_cache.record_incidence(
+                &entry.point_identity,
+                ConstructionPlaneIdentity { mesh: 0, plane: 0 },
+            );
         }
 
         let mut prepared_planes = Vec::new();
