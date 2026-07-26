@@ -340,6 +340,7 @@ impl<'a> PreparedProjectivePoint3<'a> {
         classify_real(&homogeneous_point_plane_expression(self.point, plane))
     }
 
+    #[inline]
     pub(crate) fn classify_rational_plane_filter(
         &self,
         plane: &PreparedRationalPlane4<'_>,
