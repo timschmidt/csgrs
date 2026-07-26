@@ -444,6 +444,7 @@ struct ProjectiveAffineCacheEntry {
 #[derive(Default)]
 struct ProjectivePointCache {
     points: StorageHashMap<ConstructionVertexIdentity, HomogeneousPoint3>,
+    point_approximations: StorageHashMap<ConstructionVertexIdentity, Option<[f64; 3]>>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: StorageHashMap<ConstructionPlaneIdentity, ConstructionPlaneIdentity>,
     planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
@@ -702,14 +703,16 @@ impl ProjectivePointCache {
     }
 
     fn resolve_vertex_coincidences(&mut self) {
+        let point_approximations = &self.point_approximations;
         let mut entries = self
             .points
             .drain()
             .map(|(identity, point)| {
-                let approximate = projective_point_f64(&point);
+                let approximate = point_approximations.get(&identity).copied().flatten();
                 (identity, point, approximate)
             })
             .collect::<Vec<_>>();
+        self.point_approximations.clear();
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
         let mut sets = AtomicDisjointSets::new(entries.len());
@@ -804,12 +807,29 @@ impl ProjectivePointCache {
         identity: ConstructionVertexIdentity,
         point: HomogeneousPoint3,
     ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
+        let (point, _, identity) = self.intern_with_approximation(identity, point);
+        (point, identity)
+    }
+
+    fn intern_with_approximation(
+        &mut self,
+        identity: ConstructionVertexIdentity,
+        point: HomogeneousPoint3,
+    ) -> (
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    ) {
         self.record_definition_incidences(&identity);
         if let Some(existing) = self.points.get(&identity) {
-            return (existing.clone(), identity);
+            let approximate = self.point_approximations.get(&identity).copied().flatten();
+            return (existing.clone(), approximate, identity);
         }
+        let approximate = projective_point_f64(&point);
         self.points.insert(identity.clone(), point.clone());
-        (point, identity)
+        self.point_approximations
+            .insert(identity.clone(), approximate);
+        (point, approximate, identity)
     }
 }
 
@@ -1182,7 +1202,7 @@ impl ProjectiveCycle {
             if crossing {
                 let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
                 let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
-                let (point, identity) = self.cached_crossing_point(
+                let (point, approximate_point, identity) = self.cached_crossing_point(
                     index,
                     plane_identity,
                     &self.points[index],
@@ -1192,7 +1212,6 @@ impl ProjectiveCycle {
                     &next_value,
                     point_cache,
                 );
-                let approximate_point = projective_point_f64(&point);
                 crossings.push((index, point, approximate_point, identity));
             }
         }
@@ -1641,7 +1660,11 @@ impl ProjectiveCycle {
         next: &HomogeneousPoint3,
         next_value: &Real,
         point_cache: &mut ProjectivePointCache,
-    ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
+    ) -> (
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    ) {
         let identity = point_cache
             .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
         let point = point_cache
@@ -1656,7 +1679,7 @@ impl ProjectiveCycle {
                     next_value,
                 )
             });
-        point_cache.intern(identity, point)
+        point_cache.intern_with_approximation(identity, point)
     }
 
     fn materialize(
