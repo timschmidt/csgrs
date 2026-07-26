@@ -2577,10 +2577,7 @@ fn collapse_certified_convex_faces(
             continue;
         }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
-        let mut edge_uses: StorageHashMap<[usize; 2], usize> =
-            StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
-        let mut vertices: StorageHashMap<usize, Point3> =
-            StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
+        let mut source_edges = Vec::with_capacity(source_edge_count);
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon
@@ -2598,16 +2595,13 @@ fn collapse_certified_convex_faces(
             {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             }
-            for (vertex_index, identity) in vertex_identities.iter().enumerate() {
-                let ConstructionVertexIdentity::Source { mesh, vertex } = identity else {
+            for identity in vertex_identities {
+                let ConstructionVertexIdentity::Source { mesh, .. } = identity else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
                 if *mesh != support_identity.mesh {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
-                vertices
-                    .entry(*vertex)
-                    .or_insert_with(|| points.get(vertex_index).expect("aligned vertex").clone());
             }
             for identity in edge_identities.iter() {
                 let ConstructionEdgeIdentity::Source { mesh, endpoints } = identity else {
@@ -2616,18 +2610,29 @@ fn collapse_certified_convex_faces(
                 if *mesh != support_identity.mesh {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
-                *edge_uses.entry(*endpoints).or_default() += 1;
+                source_edges.push(*endpoints);
             }
         }
 
-        let boundary_edge_count = edge_uses.values().filter(|&&uses| uses == 1).count();
-        let mut outgoing: StorageHashMap<usize, (usize, Option<Plane>, ConstructionEdgeIdentity)> =
-            StorageHashMap::with_capacity_and_hasher(boundary_edge_count, Default::default());
-        let mut canonical_start = None::<usize>;
+        source_edges.sort_unstable();
+        let mut boundary_edges = Vec::new();
+        let mut edge_index = 0;
+        while edge_index < source_edges.len() {
+            let mut next = edge_index + 1;
+            while next < source_edges.len() && source_edges[next] == source_edges[edge_index] {
+                next += 1;
+            }
+            if next == edge_index + 1 {
+                boundary_edges.push(source_edges[edge_index]);
+            }
+            edge_index = next;
+        }
+        let mut outgoing = Vec::with_capacity(boundary_edges.len());
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon.known_edge_identities().expect("validated above");
             let vertex_identities = polygon.known_vertex_identities().expect("validated above");
+            let points = polygon.known_vertices.as_ref().expect("validated above");
             for edge_index in 0..edge_identities.len() {
                 let edge_identity = &edge_identities[edge_index];
                 let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge_identity else {
@@ -2636,7 +2641,7 @@ fn collapse_certified_convex_faces(
                 if *mesh != support_identity.mesh {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
-                if edge_uses.get(endpoints).copied() != Some(1) {
+                if boundary_edges.binary_search(endpoints).is_err() {
                     continue;
                 }
                 let ConstructionVertexIdentity::Source { vertex: start, .. } =
@@ -2656,33 +2661,34 @@ fn collapse_certified_convex_faces(
                 } else {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
-                if outgoing
-                    .insert(*start, (*end, edge_plane, edge_identity.clone()))
-                    .is_some()
-                {
-                    return Err(crate::error::HypermeshError::UnknownClassification);
-                }
-                canonical_start = Some(canonical_start.map_or(*start, |first| first.min(*start)));
+                outgoing.push((
+                    *start,
+                    *end,
+                    points.get(edge_index).expect("aligned vertex").clone(),
+                    edge_plane,
+                    edge_identity.clone(),
+                ));
             }
         }
-        let Some(start) = canonical_start else {
+        outgoing.sort_unstable_by_key(|entry| entry.0);
+        if outgoing.windows(2).any(|pair| pair[0].0 == pair[1].0) {
+            return Err(crate::error::HypermeshError::UnknownClassification);
+        }
+        let Some(mut current) = outgoing.first().map(|entry| entry.0) else {
             return Err(crate::error::HypermeshError::UnknownClassification);
         };
+        let start = current;
         let mut face_vertices = Vec::with_capacity(outgoing.len());
         let mut vertex_identities = Vec::with_capacity(outgoing.len());
         let mut optional_edge_planes = Vec::with_capacity(outgoing.len());
         let mut edge_identities = Vec::with_capacity(outgoing.len());
-        let mut current = start;
         while face_vertices.len() < outgoing.len() {
-            let Some((next, edge_plane, edge_identity)) = outgoing.get(&current) else {
+            let Ok(outgoing_index) = outgoing.binary_search_by_key(&current, |entry| entry.0)
+            else {
                 return Err(crate::error::HypermeshError::UnknownClassification);
             };
-            face_vertices.push(
-                vertices
-                    .get(&current)
-                    .ok_or(crate::error::HypermeshError::UnknownClassification)?
-                    .clone(),
-            );
+            let (_, next, point, edge_plane, edge_identity) = &outgoing[outgoing_index];
+            face_vertices.push(point.clone());
             vertex_identities.push(ConstructionVertexIdentity::Source {
                 mesh: support_identity.mesh,
                 vertex: current,
