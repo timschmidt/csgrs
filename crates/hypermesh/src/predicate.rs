@@ -306,6 +306,17 @@ impl<'a> PreparedRationalPlane4<'a> {
 
 impl<'a> PreparedProjectivePoint3<'a> {
     pub(crate) fn new(point: &'a HomogeneousPoint3) -> Self {
+        let mut prepared = Self::with_rational_filter_query(point, None);
+        prepared.rational_filter_query = prepared
+            .exact_coordinates
+            .and_then(Real::prepare_rational_linear_form4_query);
+        prepared
+    }
+
+    pub(crate) fn with_rational_filter_query(
+        point: &'a HomogeneousPoint3,
+        rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+    ) -> Self {
         let exact_coordinates = match (
             point.x.exact_rational_ref(),
             point.y.exact_rational_ref(),
@@ -315,13 +326,15 @@ impl<'a> PreparedProjectivePoint3<'a> {
             (Some(x), Some(y), Some(z), Some(w)) => Some([x, y, z, w]),
             _ => None,
         };
-        let rational_filter_query =
-            exact_coordinates.and_then(Real::prepare_rational_linear_form4_query);
         Self {
             point,
             exact_coordinates,
             rational_filter_query,
         }
+    }
+
+    pub(crate) fn rational_filter_query(&self) -> Option<PreparedRationalLinearForm4Query> {
+        self.rational_filter_query
     }
 
     pub(crate) fn classify(&self, plane: &Plane) -> HypermeshResult<Classification> {
