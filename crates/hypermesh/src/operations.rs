@@ -361,6 +361,68 @@ struct ProjectiveClip {
     side: ProjectiveClipSide,
 }
 
+struct ProjectiveBoundary {
+    points: Vec<HomogeneousPoint3>,
+    point_identities: Vec<ConstructionVertexIdentity>,
+    edges: Vec<Plane>,
+    edge_identities: Vec<ConstructionEdgeIdentity>,
+}
+
+impl ProjectiveBoundary {
+    fn with_capacity(capacity: usize) -> Self {
+        Self {
+            points: Vec::with_capacity(capacity),
+            point_identities: Vec::with_capacity(capacity),
+            edges: Vec::with_capacity(capacity),
+            edge_identities: Vec::with_capacity(capacity),
+        }
+    }
+
+    fn push(
+        &mut self,
+        point: HomogeneousPoint3,
+        point_identity: ConstructionVertexIdentity,
+        edge: Plane,
+        edge_identity: ConstructionEdgeIdentity,
+    ) {
+        if self.points.last() == Some(&point) {
+            if let Some(last_edge) = self.edges.last_mut() {
+                *last_edge = edge;
+            }
+            if let Some(last_identity) = self.edge_identities.last_mut() {
+                *last_identity = edge_identity;
+            }
+            return;
+        }
+        self.points.push(point);
+        self.point_identities.push(point_identity);
+        self.edges.push(edge);
+        self.edge_identities.push(edge_identity);
+    }
+
+    fn into_cycle(
+        mut self,
+        support: Plane,
+        source_plane: ConstructionPlaneIdentity,
+    ) -> ProjectiveCycle {
+        if self.points.len() > 1 && self.points.first() == self.points.last() {
+            self.points.pop();
+            self.point_identities.pop();
+            self.edges.pop();
+            self.edge_identities.pop();
+        }
+        ProjectiveCycle {
+            points: self.points,
+            point_identities: self.point_identities,
+            edges: self.edges,
+            edge_identities: self.edge_identities,
+            support,
+            source_plane,
+            source_unchanged: false,
+        }
+    }
+}
+
 #[derive(Default)]
 struct ProjectiveAffineCache {
     points: StorageHashMap<[usize; 4], ProjectiveAffineCacheEntry>,
@@ -1077,8 +1139,42 @@ impl ProjectiveCycle {
         })
     }
 
-    fn clip(
+    fn crossing_points(
         &self,
+        classifications: &[Classification],
+        plane: &Plane,
+        plane_identity: ConstructionPlaneIdentity,
+        point_cache: &mut ProjectivePointCache,
+    ) -> Vec<Option<(HomogeneousPoint3, ConstructionVertexIdentity)>> {
+        (0..self.points.len())
+            .map(|index| {
+                let next = (index + 1) % self.points.len();
+                let current_classification = classifications[index];
+                let next_classification = classifications[next];
+                let crossing = (current_classification.is_negative()
+                    && next_classification.is_positive())
+                    || (current_classification.is_positive() && next_classification.is_negative());
+                crossing.then(|| {
+                    let current_value =
+                        homogeneous_point_plane_expression(&self.points[index], plane);
+                    let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
+                    self.cached_crossing_point(
+                        index,
+                        plane_identity,
+                        &self.points[index],
+                        &current_value,
+                        current_classification,
+                        &self.points[next],
+                        &next_value,
+                        point_cache,
+                    )
+                })
+            })
+            .collect()
+    }
+
+    fn clip(
+        self,
         plane: &Plane,
         plane_f64: Option<[f64; 4]>,
         plane_identity: ConstructionPlaneIdentity,
@@ -1126,7 +1222,7 @@ impl ProjectiveCycle {
         if !has_positive {
             crate::trace_dispatch!("projective-clip", "negative-only");
             return Ok(ProjectiveClip {
-                negative: self.clone(),
+                negative: self,
                 positive: Self::empty(),
                 side: ProjectiveClipSide::Negative,
             });
@@ -1135,111 +1231,116 @@ impl ProjectiveCycle {
             crate::trace_dispatch!("projective-clip", "positive-only");
             return Ok(ProjectiveClip {
                 negative: Self::empty(),
-                positive: self.clone(),
+                positive: self,
                 side: ProjectiveClipSide::Positive,
             });
         }
 
         crate::trace_dispatch!("projective-clip", "split");
         let inverted = plane.inverted();
-        let mut negative = Vec::with_capacity(self.points.len() + 1);
-        let mut negative_point_identities = Vec::with_capacity(self.points.len() + 1);
-        let mut negative_edges = Vec::with_capacity(self.edges.len() + 1);
-        let mut negative_edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
-        let mut positive = Vec::with_capacity(self.points.len() + 1);
-        let mut positive_point_identities = Vec::with_capacity(self.points.len() + 1);
-        let mut positive_edges = Vec::with_capacity(self.edges.len() + 1);
-        let mut positive_edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
+        let intersections =
+            self.crossing_points(&classifications, plane, plane_identity, point_cache);
+        let mut negative = ProjectiveBoundary::with_capacity(self.points.len() + 1);
+        let mut positive = ProjectiveBoundary::with_capacity(self.points.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
         split_planes.sort_unstable();
         let split_identity = ConstructionEdgeIdentity::Split {
             planes: split_planes,
         };
-        for index in 0..self.points.len() {
-            let next = (index + 1) % self.points.len();
+        let Self {
+            points,
+            point_identities,
+            edges,
+            edge_identities,
+            support,
+            source_plane,
+            ..
+        } = self;
+        for (index, ((((point, point_identity), edge), edge_identity), intersection)) in points
+            .into_iter()
+            .zip(point_identities)
+            .zip(edges)
+            .zip(edge_identities)
+            .zip(intersections)
+            .enumerate()
+        {
+            let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
-            let crossing = (current_classification.is_negative()
-                && next_classification.is_positive())
-                || (current_classification.is_positive() && next_classification.is_negative());
-            let intersection = crossing.then(|| {
-                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
-                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
-                self.cached_crossing_point(
-                    index,
-                    plane_identity,
-                    &self.points[index],
-                    &current_value,
-                    current_classification,
-                    &self.points[next],
-                    &next_value,
-                    point_cache,
-                )
-            });
-            self.append_clipped_transition(
-                index,
-                current_classification,
-                next_classification,
-                intersection.as_ref(),
-                plane,
-                &split_identity,
-                false,
-                &mut negative,
-                &mut negative_point_identities,
-                &mut negative_edges,
-                &mut negative_edge_identities,
-            );
-            self.append_clipped_transition(
-                index,
-                current_classification,
-                next_classification,
-                intersection.as_ref(),
-                &inverted,
-                &split_identity,
-                true,
-                &mut positive,
-                &mut positive_point_identities,
-                &mut positive_edges,
-                &mut positive_edge_identities,
-            );
+            match (current_classification, next_classification) {
+                (Classification::Negative, Classification::Negative | Classification::On) => {
+                    negative.push(point, point_identity, edge, edge_identity);
+                }
+                (Classification::Negative, Classification::Positive) => {
+                    let (intersection, intersection_identity) =
+                        intersection.expect("strict side transition has an intersection");
+                    negative.push(point, point_identity, edge.clone(), edge_identity.clone());
+                    negative.push(
+                        intersection.clone(),
+                        intersection_identity.clone(),
+                        plane.clone(),
+                        split_identity.clone(),
+                    );
+                    positive.push(intersection, intersection_identity, edge, edge_identity);
+                }
+                (Classification::On, Classification::Negative) => {
+                    negative.push(point.clone(), point_identity.clone(), edge, edge_identity);
+                    positive.push(
+                        point,
+                        point_identity,
+                        inverted.clone(),
+                        split_identity.clone(),
+                    );
+                }
+                (Classification::On, Classification::On) => {
+                    negative.push(
+                        point.clone(),
+                        point_identity.clone(),
+                        edge.clone(),
+                        edge_identity.clone(),
+                    );
+                    positive.push(point, point_identity, edge, edge_identity);
+                }
+                (Classification::On, Classification::Positive) => {
+                    negative.push(
+                        point.clone(),
+                        point_identity.clone(),
+                        plane.clone(),
+                        split_identity.clone(),
+                    );
+                    positive.push(point, point_identity, edge, edge_identity);
+                }
+                (Classification::Positive, Classification::Negative) => {
+                    let (intersection, intersection_identity) =
+                        intersection.expect("strict side transition has an intersection");
+                    negative.push(
+                        intersection.clone(),
+                        intersection_identity.clone(),
+                        edge.clone(),
+                        edge_identity.clone(),
+                    );
+                    positive.push(point, point_identity, edge, edge_identity);
+                    positive.push(
+                        intersection,
+                        intersection_identity,
+                        inverted.clone(),
+                        split_identity.clone(),
+                    );
+                }
+                (Classification::Positive, Classification::On | Classification::Positive) => {
+                    positive.push(point, point_identity, edge, edge_identity);
+                }
+            }
         }
-        remove_closing_labeled_duplicate(
-            &mut negative,
-            &mut negative_point_identities,
-            &mut negative_edges,
-            &mut negative_edge_identities,
-        );
-        remove_closing_labeled_duplicate(
-            &mut positive,
-            &mut positive_point_identities,
-            &mut positive_edges,
-            &mut positive_edge_identities,
-        );
         Ok(ProjectiveClip {
-            negative: Self {
-                points: negative,
-                point_identities: negative_point_identities,
-                edges: negative_edges,
-                edge_identities: negative_edge_identities,
-                support: self.support.clone(),
-                source_plane: self.source_plane,
-                source_unchanged: false,
-            },
-            positive: Self {
-                points: positive,
-                point_identities: positive_point_identities,
-                edges: positive_edges,
-                edge_identities: positive_edge_identities,
-                support: self.support.clone(),
-                source_plane: self.source_plane,
-                source_unchanged: false,
-            },
+            negative: negative.into_cycle(support.clone(), source_plane),
+            positive: positive.into_cycle(support, source_plane),
             side: ProjectiveClipSide::Both,
         })
     }
 
     fn clip_negative(
-        &self,
+        self,
         plane: &Plane,
         plane_f64: Option<[f64; 4]>,
         plane_identity: ConstructionPlaneIdentity,
@@ -1309,72 +1410,72 @@ impl ProjectiveCycle {
             .any(|classification| classification.is_positive());
         if !has_positive {
             crate::trace_dispatch!("projective-clip-negative", "kept");
-            return Ok(self.clone());
+            return Ok(self);
         }
         if !has_negative {
             crate::trace_dispatch!("projective-clip-negative", "empty");
             return Ok(Self::empty());
         }
         crate::trace_dispatch!("projective-clip-negative", "split");
-        let mut points = Vec::with_capacity(self.points.len() + 1);
-        let mut point_identities = Vec::with_capacity(self.points.len() + 1);
-        let mut edges = Vec::with_capacity(self.edges.len() + 1);
-        let mut edge_identities = Vec::with_capacity(self.edge_identities.len() + 1);
+        let intersections =
+            self.crossing_points(&classifications, plane, plane_identity, point_cache);
+        let mut negative = ProjectiveBoundary::with_capacity(self.points.len() + 1);
         let mut split_planes = [self.source_plane, plane_identity];
         split_planes.sort_unstable();
         let split_identity = ConstructionEdgeIdentity::Split {
             planes: split_planes,
         };
-        for index in 0..self.points.len() {
-            let next = (index + 1) % self.points.len();
+        let Self {
+            points: source_points,
+            point_identities: source_point_identities,
+            edges: source_edges,
+            edge_identities: source_edge_identities,
+            support,
+            source_plane,
+            ..
+        } = self;
+        for (index, ((((point, point_identity), edge), edge_identity), intersection)) in
+            source_points
+                .into_iter()
+                .zip(source_point_identities)
+                .zip(source_edges)
+                .zip(source_edge_identities)
+                .zip(intersections)
+                .enumerate()
+        {
+            let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
-            let crossing = (current_classification.is_negative()
-                && next_classification.is_positive())
-                || (current_classification.is_positive() && next_classification.is_negative());
-            let intersection = crossing.then(|| {
-                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
-                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
-                self.cached_crossing_point(
-                    index,
-                    plane_identity,
-                    &self.points[index],
-                    &current_value,
-                    current_classification,
-                    &self.points[next],
-                    &next_value,
-                    point_cache,
-                )
-            });
-            self.append_clipped_transition(
-                index,
-                current_classification,
-                next_classification,
-                intersection.as_ref(),
-                plane,
-                &split_identity,
-                false,
-                &mut points,
-                &mut point_identities,
-                &mut edges,
-                &mut edge_identities,
-            );
+            match (current_classification, next_classification) {
+                (
+                    Classification::Negative | Classification::On,
+                    Classification::Negative | Classification::On,
+                ) => {
+                    negative.push(point, point_identity, edge, edge_identity);
+                }
+                (Classification::Negative, Classification::Positive) => {
+                    let (intersection, intersection_identity) =
+                        intersection.expect("strict side transition has an intersection");
+                    negative.push(point, point_identity, edge, edge_identity);
+                    negative.push(
+                        intersection,
+                        intersection_identity,
+                        plane.clone(),
+                        split_identity.clone(),
+                    );
+                }
+                (Classification::On, Classification::Positive) => {
+                    negative.push(point, point_identity, plane.clone(), split_identity.clone());
+                }
+                (Classification::Positive, Classification::Negative) => {
+                    let (intersection, intersection_identity) =
+                        intersection.expect("strict side transition has an intersection");
+                    negative.push(intersection, intersection_identity, edge, edge_identity);
+                }
+                (Classification::Positive, Classification::On | Classification::Positive) => {}
+            }
         }
-        remove_closing_labeled_duplicate(
-            &mut points,
-            &mut point_identities,
-            &mut edges,
-            &mut edge_identities,
-        );
-        Ok(Self {
-            points,
-            point_identities,
-            edges,
-            edge_identities,
-            support: self.support.clone(),
-            source_plane: self.source_plane,
-            source_unchanged: false,
-        })
+        Ok(negative.into_cycle(support, source_plane))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1404,102 +1505,6 @@ impl ProjectiveCycle {
                 )
             });
         point_cache.intern(identity, point)
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn append_clipped_transition(
-        &self,
-        index: usize,
-        current_classification: Classification,
-        next_classification: Classification,
-        intersection: Option<&(HomogeneousPoint3, ConstructionVertexIdentity)>,
-        split_edge: &Plane,
-        split_identity: &ConstructionEdgeIdentity,
-        positive: bool,
-        points: &mut Vec<HomogeneousPoint3>,
-        point_identities: &mut Vec<ConstructionVertexIdentity>,
-        edges: &mut Vec<Plane>,
-        edge_identities: &mut Vec<ConstructionEdgeIdentity>,
-    ) {
-        let current_inside = if positive {
-            current_classification.is_non_negative()
-        } else {
-            current_classification.is_non_positive()
-        };
-        let next_inside = if positive {
-            next_classification.is_non_negative()
-        } else {
-            next_classification.is_non_positive()
-        };
-        if current_inside && next_inside {
-            push_labeled_projective(
-                points,
-                point_identities,
-                edges,
-                edge_identities,
-                self.points[index].clone(),
-                self.point_identities[index].clone(),
-                self.edges[index].clone(),
-                self.edge_identities[index].clone(),
-            );
-        } else if current_inside {
-            if current_classification == Classification::On {
-                push_labeled_projective(
-                    points,
-                    point_identities,
-                    edges,
-                    edge_identities,
-                    self.points[index].clone(),
-                    self.point_identities[index].clone(),
-                    split_edge.clone(),
-                    split_identity.clone(),
-                );
-            } else {
-                push_labeled_projective(
-                    points,
-                    point_identities,
-                    edges,
-                    edge_identities,
-                    self.points[index].clone(),
-                    self.point_identities[index].clone(),
-                    self.edges[index].clone(),
-                    self.edge_identities[index].clone(),
-                );
-                push_labeled_projective(
-                    points,
-                    point_identities,
-                    edges,
-                    edge_identities,
-                    intersection
-                        .expect("strict side transition has an intersection")
-                        .0
-                        .clone(),
-                    intersection
-                        .expect("strict side transition has an intersection")
-                        .1
-                        .clone(),
-                    split_edge.clone(),
-                    split_identity.clone(),
-                );
-            }
-        } else if next_inside && next_classification != Classification::On {
-            push_labeled_projective(
-                points,
-                point_identities,
-                edges,
-                edge_identities,
-                intersection
-                    .expect("strict side transition has an intersection")
-                    .0
-                    .clone(),
-                intersection
-                    .expect("strict side transition has an intersection")
-                    .1
-                    .clone(),
-                self.edges[index].clone(),
-                self.edge_identities[index].clone(),
-            );
-        }
     }
 
     fn materialize(
@@ -1970,18 +1975,21 @@ fn compute_two_convex_inputs_projectively(
             }
             continue;
         }
-        let mut remainder = source;
+        let mut remainder = Some(source);
         let mut has_inside = true;
         for plane_index in active_planes {
-            let clipped = remainder.clip(
-                support_planes[other][plane_index],
-                normalized_support_plane_f64_values[other][plane_index],
-                canonical_plane_identities[other][plane_index],
-                &mut projective_point_cache,
-            )?;
+            let clipped = remainder
+                .take()
+                .expect("retained inside cycle is available")
+                .clip(
+                    support_planes[other][plane_index],
+                    normalized_support_plane_f64_values[other][plane_index],
+                    canonical_plane_identities[other][plane_index],
+                    &mut projective_point_cache,
+                )?;
             match clipped.side {
                 ProjectiveClipSide::Negative => {
-                    remainder = clipped.negative;
+                    remainder = Some(clipped.negative);
                 }
                 ProjectiveClipSide::Positive => {
                     push_projective_transition(
@@ -2008,14 +2016,16 @@ fn compute_two_convex_inputs_projectively(
                         false,
                         operation,
                     )?;
-                    remainder = clipped.negative;
+                    remainder = Some(clipped.negative);
                 }
             }
         }
         if has_inside && emit_inside {
             push_projective_transition(
                 &mut classified,
-                &remainder,
+                remainder
+                    .as_ref()
+                    .expect("retained inside cycle is available"),
                 polygon,
                 &mut affine_cache,
                 host,
@@ -3049,45 +3059,6 @@ fn projective_crossing_point(
     )
 }
 
-fn push_labeled_projective(
-    points: &mut Vec<HomogeneousPoint3>,
-    point_identities: &mut Vec<ConstructionVertexIdentity>,
-    edges: &mut Vec<Plane>,
-    edge_identities: &mut Vec<ConstructionEdgeIdentity>,
-    point: HomogeneousPoint3,
-    point_identity: ConstructionVertexIdentity,
-    edge: Plane,
-    edge_identity: ConstructionEdgeIdentity,
-) {
-    if points.last() == Some(&point) {
-        if let Some(last_edge) = edges.last_mut() {
-            *last_edge = edge;
-        }
-        if let Some(last_identity) = edge_identities.last_mut() {
-            *last_identity = edge_identity;
-        }
-        return;
-    }
-    points.push(point);
-    point_identities.push(point_identity);
-    edges.push(edge);
-    edge_identities.push(edge_identity);
-}
-
-fn remove_closing_labeled_duplicate(
-    points: &mut Vec<HomogeneousPoint3>,
-    point_identities: &mut Vec<ConstructionVertexIdentity>,
-    edges: &mut Vec<Plane>,
-    edge_identities: &mut Vec<ConstructionEdgeIdentity>,
-) {
-    if points.len() > 1 && points.first() == points.last() {
-        points.pop();
-        point_identities.pop();
-        edges.pop();
-        edge_identities.pop();
-    }
-}
-
 fn push_projective_transition(
     classified: &mut Vec<ClassifiedPolygon>,
     cycle: &ProjectiveCycle,
@@ -3274,6 +3245,80 @@ mod tests {
         .unwrap();
         assert_eq!(cycle.edges.len(), 3);
         assert!(cycle.edges.iter().all(|edge| edge == &polygon.support));
+    }
+
+    #[test]
+    fn consuming_projective_split_preserves_shared_boundary_identities() {
+        let polygon = crate::polygon::make_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
+            .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let mut point_cache = ProjectivePointCache::default();
+        let cycle = ProjectiveCycle::from_polygon(
+            &polygon,
+            ConstructionPlaneIdentity { mesh: 0, plane: 0 },
+            &mut point_cache,
+        )
+        .unwrap();
+        let plane = Plane::axis_aligned(2, Real::zero());
+        let negative_only = cycle
+            .clone()
+            .clip_negative(
+                &plane,
+                None,
+                ConstructionPlaneIdentity { mesh: 1, plane: 0 },
+                &mut point_cache,
+            )
+            .unwrap();
+        let split = cycle
+            .clip(
+                &plane,
+                None,
+                ConstructionPlaneIdentity { mesh: 1, plane: 0 },
+                &mut point_cache,
+            )
+            .unwrap();
+        let affine = |cycle: &ProjectiveCycle| {
+            cycle
+                .points
+                .iter()
+                .map(|point| point.to_affine_point().unwrap())
+                .collect::<Vec<_>>()
+        };
+
+        assert!(matches!(split.side, ProjectiveClipSide::Both));
+        assert_eq!(
+            affine(&split.negative),
+            vec![p(0, 0, -1), p(1, 0, 0), p(0, 2, 0)]
+        );
+        assert_eq!(
+            affine(&split.positive),
+            vec![p(1, 0, 0), p(2, 0, 1), p(0, 2, 0)]
+        );
+        assert_eq!(
+            split.negative.point_identities[1],
+            split.positive.point_identities[0]
+        );
+        assert_eq!(
+            split.negative.point_identities[2],
+            split.positive.point_identities[2]
+        );
+        assert_eq!(
+            split.negative.edge_identities[0],
+            split.positive.edge_identities[0]
+        );
+        assert_eq!(
+            split.negative.edge_identities[1],
+            split.positive.edge_identities[2]
+        );
+        assert_eq!(negative_only.points, split.negative.points);
+        assert_eq!(
+            negative_only.point_identities,
+            split.negative.point_identities
+        );
+        assert_eq!(negative_only.edges, split.negative.edges);
+        assert_eq!(
+            negative_only.edge_identities,
+            split.negative.edge_identities
+        );
     }
 
     #[test]
