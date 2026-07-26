@@ -73,6 +73,7 @@ pub use thermal::*;
 
 use crate::report::{Severity, Violation};
 use crate::{PcbGeometryUncertainty, PcbSketch, Scalar};
+use hyperreal::RealSign;
 
 pub(crate) fn offset_for_check(
     sketch: &PcbSketch,
@@ -80,6 +81,9 @@ pub(crate) fn offset_for_check(
     requested_check: &str,
     layers: Vec<String>,
 ) -> Result<PcbSketch, Box<Violation>> {
+    if distance.refine_sign_until(-128) == Some(RealSign::Zero) {
+        return Ok(sketch.clone());
+    }
     sketch.offset(distance).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,

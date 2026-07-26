@@ -2172,7 +2172,15 @@ fn native_sketch_bounds_scalar(sketch: &crate::PcbSketch) -> Option<ScalarBounds
         });
     }
     let mut bounds = None;
-    let region = sketch.native_contours();
+    let region = match sketch
+        .region_geometry()
+        .native_contours_fast_path(&hypercurve::CurvePolicy::certified())
+    {
+        Ok(hypercurve::Classification::Decided(region)) => region,
+        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => {
+            return Some(certified_sketch_bounds_scalar(sketch));
+        }
+    };
     for contour in region
         .material_contours()
         .iter()
@@ -2312,8 +2320,14 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
 }
 
 fn maximum_exterior_edge_length(sketch: &crate::PcbSketch) -> Scalar {
-    sketch
-        .native_contours()
+    let region = match sketch
+        .region_geometry()
+        .native_contours_fast_path(&hypercurve::CurvePolicy::certified())
+    {
+        Ok(hypercurve::Classification::Decided(region)) => region,
+        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return Scalar::zero(),
+    };
+    region
         .material_contours()
         .iter()
         .flat_map(|contour| contour.segments())

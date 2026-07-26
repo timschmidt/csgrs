@@ -18,7 +18,9 @@ use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_rea
 
 use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
 use crate::checks::spatial::LayerPolygonSpatialIndex;
-use crate::checks::{difference_for_check, intersection_for_check, offset_for_check};
+use crate::checks::{
+    difference_for_check, intersection_for_check, offset_for_check, union_for_check,
+};
 use crate::geometry::{
     RuleGeometryProvenance, SourceGridFacts, multipolygon_area_scalar,
     multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar, polygon_to_profile,
@@ -3811,7 +3813,21 @@ fn indexed_difference(
             .into_iter()
             .map(|index| cover_polygons[index].clone())
             .collect::<Vec<_>>();
-        let cover_sketch = polygons_to_profile(cover_candidates, Some(metadata(cover_name)));
+        let mut cover_candidates = cover_candidates.into_iter();
+        let Some(first_cover) = cover_candidates.next() else {
+            remainder_polygons.push(subject_polygon);
+            continue;
+        };
+        let mut cover_sketch = polygon_to_profile(first_cover, Some(metadata(cover_name)));
+        for candidate in cover_candidates {
+            let candidate = polygon_to_profile(candidate, Some(metadata(cover_name)));
+            cover_sketch = union_for_check(
+                &cover_sketch,
+                &candidate,
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            )?;
+        }
         let cover_sketch = match mode {
             IndexedDifferenceMode::CoverAsIs => cover_sketch,
             IndexedDifferenceMode::CoverOffset(ref distance) => offset_for_check(
@@ -4483,6 +4499,27 @@ pub(crate) mod tests {
         );
 
         assert_eq!(violations.len(), 1);
+    }
+
+    #[test]
+    fn paste_overhang_regularizes_overlapping_exact_cover_candidates() {
+        let copper = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(0.5, 0.0, 1.5, 1.0)],
+        );
+        let paste = sketch("paste", vec![square(0.25, 0.2, 1.25, 0.8)]);
+
+        assert!(
+            paste_overhang(
+                "paste",
+                &paste,
+                "top",
+                &copper,
+                &crate::scalar::scalar("0.0"),
+                &crate::scalar::scalar("1.0e-9"),
+            )
+            .is_empty()
+        );
     }
 
     #[test]

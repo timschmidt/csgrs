@@ -624,10 +624,7 @@ fn test_record_code(line: &str) -> Option<Ipc356RecordCode> {
 }
 
 fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
-    let net = slice(line, 3, 17)?
-        .trim()
-        .trim_start_matches('/')
-        .to_string();
+    let net = decode_net_token(slice(line, 3, 17)?.trim().trim_start_matches('/'));
     let reference = nonempty(slice(line, 20, 26)?.trim());
     let pin = nonempty(slice(line, 27, 31)?.trim());
     let x_marker = line.find('X')?;
@@ -656,7 +653,7 @@ fn parse_fixed_record(line: &str) -> Option<Ipc356Point> {
 
 fn parse_loose_record(line: &str) -> Option<Ipc356Point> {
     let parts = line.split_whitespace().collect::<Vec<_>>();
-    let net = parts.get(1)?.trim_start_matches('/').to_string();
+    let net = decode_net_token(parts.get(1)?.trim_start_matches('/'));
     let coordinate_text = parts
         .iter()
         .find(|part| part.starts_with('X') && part.contains('Y'))?;
@@ -682,6 +679,24 @@ fn parse_loose_record(line: &str) -> Option<Ipc356Point> {
         feature_type: metadata.feature_type,
         soldermask: metadata.soldermask,
     })
+}
+
+fn decode_net_token(token: &str) -> String {
+    const ESCAPE_PREFIX: &str = "HYPERHEX_";
+    let Some(hex) = token.strip_prefix(ESCAPE_PREFIX) else {
+        return token.to_owned();
+    };
+    if hex.len() % 2 != 0 || !hex.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return token.to_owned();
+    }
+    let bytes = (0..hex.len())
+        .step_by(2)
+        .map(|index| u8::from_str_radix(&hex[index..index + 2], 16))
+        .collect::<Result<Vec<_>, _>>();
+    bytes
+        .ok()
+        .and_then(|bytes| String::from_utf8(bytes).ok())
+        .unwrap_or_else(|| token.to_owned())
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -858,6 +873,13 @@ mod tests {
             [crate::scalar::scalar("1.0"), crate::scalar::scalar("2.0")]
         );
         assert_eq!(points[0].diameter, Some(crate::scalar::scalar("0.06")));
+    }
+
+    #[test]
+    fn decodes_lossless_hypercircuit_net_tokens() {
+        let points = parse_ipc356("327 /HYPERHEX_2f5854414c31 U1 1 X010000Y020000D000600\n");
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].net, "/XTAL1");
     }
 
     #[test]
