@@ -1278,6 +1278,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
+        let prepared_plane = PreparedRationalPlane4::new(plane);
         let classifications = self
             .points
             .iter()
@@ -1290,6 +1291,15 @@ impl ProjectiveCycle {
                     plane_f64,
                 ) {
                     Ok(Classification::On)
+                } else if let Some(plane_filter) = &prepared_plane {
+                    let prepared = PreparedProjectivePoint3::new(point);
+                    match prepared
+                        .classify_rational_plane_filter(plane_filter)
+                        .or_else(|| prepared.classify_rational_plane_exact(plane_filter))
+                    {
+                        Some(classification) => Ok(classification),
+                        None => prepared.classify(plane),
+                    }
                 } else {
                     classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
@@ -1522,6 +1532,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
+        let prepared_plane = PreparedRationalPlane4::new(plane);
         let classifications = self
             .points
             .iter()
@@ -1534,6 +1545,15 @@ impl ProjectiveCycle {
                     plane_f64,
                 ) {
                     Ok(Classification::On)
+                } else if let Some(plane_filter) = &prepared_plane {
+                    let prepared = PreparedProjectivePoint3::new(point);
+                    match prepared
+                        .classify_rational_plane_filter(plane_filter)
+                        .or_else(|| prepared.classify_rational_plane_exact(plane_filter))
+                    {
+                        Some(classification) => Ok(classification),
+                        None => prepared.classify(plane),
+                    }
                 } else {
                     classify_projective_point(point, plane).inspect_err(|_error| {
                         if cfg!(debug_assertions) {
