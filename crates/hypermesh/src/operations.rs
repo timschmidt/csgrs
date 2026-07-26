@@ -826,19 +826,22 @@ impl ProjectivePointCache {
         }
     }
 
-    fn intern(
-        &mut self,
-        identity: ConstructionVertexIdentity,
-        point: HomogeneousPoint3,
-    ) -> (HomogeneousPoint3, ConstructionVertexIdentity) {
-        let (point, _, identity) = self.intern_with_approximation(identity, point);
-        (point, identity)
-    }
-
     fn intern_with_approximation(
         &mut self,
         identity: ConstructionVertexIdentity,
         point: HomogeneousPoint3,
+    ) -> (
+        HomogeneousPoint3,
+        Option<[f64; 3]>,
+        ConstructionVertexIdentity,
+    ) {
+        self.intern_with_approximation_by(identity, || point)
+    }
+
+    fn intern_with_approximation_by(
+        &mut self,
+        identity: ConstructionVertexIdentity,
+        make_point: impl FnOnce() -> HomogeneousPoint3,
     ) -> (
         HomogeneousPoint3,
         Option<[f64; 3]>,
@@ -849,6 +852,7 @@ impl ProjectivePointCache {
             let approximate = self.point_approximations.get(&identity).copied().flatten();
             return (existing.clone(), approximate, identity);
         }
+        let point = make_point();
         let approximate = projective_point_f64(&point);
         self.points.insert(identity.clone(), point.clone());
         self.point_approximations
@@ -1174,15 +1178,16 @@ impl ProjectiveCycle {
             .iter()
             .zip(point_identities.iter().cloned())
             .map(|(point, identity)| {
-                point_cache.intern(
-                    identity,
-                    HomogeneousPoint3::new(
-                        point.x.clone(),
-                        point.y.clone(),
-                        point.z.clone(),
-                        Real::one(),
-                    ),
-                )
+                let (point, _, identity) =
+                    point_cache.intern_with_approximation_by(identity, || {
+                        HomogeneousPoint3::new(
+                            point.x.clone(),
+                            point.y.clone(),
+                            point.z.clone(),
+                            Real::one(),
+                        )
+                    });
+                (point, identity)
             })
             .unzip();
         let edges = match polygon.edges.len() {
@@ -3895,7 +3900,8 @@ mod tests {
             for index in order {
                 let definition = cache.definition_planes(&identities[index]).unwrap();
                 let point = positive_weight_plane_intersection(definition).unwrap();
-                let (_, interned) = cache.intern(identities[index].clone(), point);
+                let (_, _, interned) =
+                    cache.intern_with_approximation_by(identities[index].clone(), || point);
                 assert_eq!(interned, identities[index]);
             }
 
