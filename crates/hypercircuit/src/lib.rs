@@ -18,6 +18,8 @@ pub mod authoring;
 #[cfg(feature = "layout")]
 pub mod autoroute;
 pub mod behavior;
+#[cfg(feature = "layout")]
+pub mod coordinates;
 pub mod coupling;
 #[cfg(feature = "drc")]
 pub mod drc;
@@ -64,6 +66,8 @@ pub mod preview;
 pub mod project;
 #[cfg(feature = "interchange")]
 pub mod project_manifest;
+#[cfg(feature = "interchange")]
+pub mod release_artifact;
 #[cfg(feature = "layout")]
 pub mod route_constraints;
 #[cfg(feature = "layout")]
@@ -124,6 +128,11 @@ pub use behavior::{AsyncBehaviorRuntime, AsyncBehaviorStatus, AsyncCircuitBehavi
 pub use behavior::{
     BehaviorContext, BehaviorError, BehaviorQueue, BehaviorRuntime, CircuitEventHandler,
     SelectiveEventMailbox,
+};
+#[cfg(feature = "layout")]
+pub use coordinates::{
+    AxisDirection, CoordinateFrame2, CoordinateTransformError, Handedness, LengthUnit,
+    PanelToBoardTransform, RigidTransform2, RotationConvention, ViewConvention,
 };
 pub use coupling::{
     CoupledResidualBlock, ElectromechanicalPort, ElectrothermalRcReport, PhysicalElectricalPort,
@@ -327,6 +336,11 @@ pub use project_manifest::{
     HYPERCIRCUIT_PROJECT_SCHEMA, HYPERCIRCUIT_PROJECT_VERSION, ProjectDesignProvider,
     ProjectManifest, ProjectManifestError, ProjectMetadata, ProjectPcbMaterial,
     ProjectProviderKind,
+};
+#[cfg(feature = "interchange")]
+pub use release_artifact::{
+    ArtifactCatalog, ArtifactCatalogError, PortableArtifactPath, ReleaseArtifactDescriptor,
+    ReleaseArtifactRole,
 };
 #[cfg(feature = "layout")]
 pub use route_constraints::{

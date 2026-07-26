@@ -39,6 +39,8 @@ pub enum ReleaseBlocker {
     DrcHandoffOmissions(usize),
     /// HyperDRC reported this many release-blocking errors.
     DrcErrors(usize),
+    /// HyperDRC could not certify this many required checks.
+    DrcCoverage(usize),
     /// Fabrication files or their manifest failed integrity checks.
     FabricationIntegrity(usize),
     /// Production geometry still has details requiring review.
@@ -100,6 +102,10 @@ impl ReleasePreparationReport {
             .count();
         if drc_errors != 0 {
             blockers.push(ReleaseBlocker::DrcErrors(drc_errors));
+        }
+        let drc_coverage = self.drc.coverage.blocking_count();
+        if drc_coverage != 0 {
+            blockers.push(ReleaseBlocker::DrcCoverage(drc_coverage));
         }
         if !self.fabrication_integrity.is_empty() {
             blockers.push(ReleaseBlocker::FabricationIntegrity(

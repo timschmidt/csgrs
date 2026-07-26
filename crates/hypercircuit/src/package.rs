@@ -84,6 +84,20 @@ impl PackageDigest {
         }
         Ok(result)
     }
+
+    /// Computes the canonical lowercase SHA-256 digest of exact bytes.
+    #[cfg(feature = "interchange")]
+    pub fn sha256(bytes: &[u8]) -> Self {
+        Self {
+            algorithm: "sha256".into(),
+            value: format!("{:x}", Sha256::digest(bytes)),
+        }
+    }
+
+    /// Returns the unambiguous `algorithm:value` display form.
+    pub fn canonical_text(&self) -> String {
+        format!("{}:{}", self.algorithm.to_ascii_lowercase(), self.value)
+    }
 }
 
 /// Public semantic artifact exposed by a package.
