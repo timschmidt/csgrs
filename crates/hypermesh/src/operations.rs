@@ -1515,7 +1515,7 @@ impl ProjectiveCycle {
             .iter()
             .enumerate()
             .map(|(point_index, point)| {
-                affine_cache.resolve(point, Some(self.point_identities[point_index].clone()))
+                affine_cache.resolve(point, Some(&self.point_identities[point_index]))
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
         let vertex_identities = self.point_identities.clone();
@@ -1552,9 +1552,9 @@ impl ProjectiveAffineCache {
     fn resolve(
         &mut self,
         point: &HomogeneousPoint3,
-        identity: Option<ConstructionVertexIdentity>,
+        identity: Option<&ConstructionVertexIdentity>,
     ) -> HypermeshResult<Point3> {
-        if let Some(identity) = identity.as_ref()
+        if let Some(identity) = identity
             && let Some(affine) = self.identities.get(identity)
         {
             return Ok(affine.clone());
@@ -1579,13 +1579,13 @@ impl ProjectiveAffineCache {
                 },
             );
             if let Some(identity) = identity {
-                self.identities.insert(identity, affine.clone());
+                self.identities.insert(identity.clone(), affine.clone());
             }
             return Ok(affine);
         }
         let affine = affine_projective_point(point)?;
         if let Some(identity) = identity {
-            self.identities.insert(identity, affine.clone());
+            self.identities.insert(identity.clone(), affine.clone());
         }
         Ok(affine)
     }
@@ -2048,7 +2048,7 @@ fn compute_two_convex_inputs_projectively(
                     let Some(point) = projective_point_cache.points.get(identity) else {
                         return Ok(original);
                     };
-                    affine_cache.resolve(point, Some(identity.clone()))
+                    affine_cache.resolve(point, Some(identity))
                 })
                 .collect::<HypermeshResult<Vec<_>>>()?;
             fragment.polygon = fragment
