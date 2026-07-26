@@ -944,6 +944,11 @@ fn transform_curve_with_matrix(
     curve: &Curve2,
     mat: &Matrix4,
 ) -> hypercurve::ExactCurveResult<Vec<Curve2>> {
+    if let Some(transform) = planar_similarity_from_matrix(mat) {
+        return curve
+            .transform_similarity(&transform)
+            .map(|curve| vec![curve]);
+    }
     let invalid = |cause| hypercurve::ExactCurveError::Invalid {
         operation: hypercurve::CurveOperation2::Transformation,
         family: curve.family(),
@@ -961,26 +966,18 @@ fn transform_curve_with_matrix(
             )
             .map_err(invalid)?,
         )],
-        CurveGeometry2::CircularArc(_) => {
-            if let Some(transform) = planar_similarity_from_matrix(mat) {
-                return curve
-                    .transform_similarity(&transform)
-                    .map(|curve| vec![curve]);
-            }
-            curve
-                .native_bezier_fragments()?
-                .iter()
-                .map(|fragment| {
-                    transform_bezier_subcurve_with_matrix(fragment.curve(), mat)
-                        .map(Curve2::from)
-                })
-                .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?
+        CurveGeometry2::CircularArc(_) => curve
+            .native_bezier_fragments()?
+            .iter()
+            .map(|fragment| {
+                transform_bezier_subcurve_with_matrix(fragment.curve(), mat).map(Curve2::from)
+            })
+            .collect::<hypercurve::ExactCurveResult<Vec<_>>>()?,
+        CurveGeometry2::QuadraticBezier(curve) => {
+            vec![Curve2::from(curve.transform_affine(
+                &mat[0][0], &mat[0][1], &mat[1][0], &mat[1][1], &mat[0][3], &mat[1][3],
+            ))]
         },
-        CurveGeometry2::QuadraticBezier(curve) => vec![Curve2::from(QuadraticBezier2::new(
-            transformed_point(curve.start(), mat, &invalid)?,
-            transformed_point(curve.control(), mat, &invalid)?,
-            transformed_point(curve.end(), mat, &invalid)?,
-        ))],
         CurveGeometry2::CubicBezier(curve) => vec![Curve2::from(CubicBezier2::new(
             transformed_point(curve.start(), mat, &invalid)?,
             transformed_point(curve.control1(), mat, &invalid)?,
