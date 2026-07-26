@@ -1525,7 +1525,7 @@ impl ProjectiveCycle {
     }
 
     fn materialize(
-        &self,
+        self,
         source: &ConvexPolygon,
         affine_cache: &mut ProjectiveAffineCache,
     ) -> HypermeshResult<ConvexPolygon> {
@@ -1540,12 +1540,17 @@ impl ProjectiveCycle {
                 affine_cache.resolve(point, Some(&self.point_identities[point_index]))
             })
             .collect::<HypermeshResult<Vec<_>>>()?;
-        let vertex_identities = self.point_identities.clone();
+        let Self {
+            point_identities,
+            edges,
+            edge_identities,
+            ..
+        } = self;
         Ok(source.with_known_vertex_cycle_and_edges(
             vertices,
-            vertex_identities,
-            self.edges.clone(),
-            self.edge_identities.clone(),
+            point_identities,
+            edges,
+            edge_identities,
         ))
     }
 
@@ -1939,7 +1944,7 @@ fn compute_two_convex_inputs_projectively(
             if emit_outside {
                 push_projective_transition(
                     &mut classified,
-                    &source,
+                    source,
                     polygon,
                     &mut affine_cache,
                     host,
@@ -1954,7 +1959,7 @@ fn compute_two_convex_inputs_projectively(
             for outside in outside_cycles {
                 push_projective_transition(
                     &mut classified,
-                    &outside,
+                    outside,
                     polygon,
                     &mut affine_cache,
                     host,
@@ -1966,7 +1971,7 @@ fn compute_two_convex_inputs_projectively(
             if emit_inside {
                 push_projective_transition(
                     &mut classified,
-                    &inside,
+                    inside,
                     polygon,
                     &mut affine_cache,
                     host,
@@ -1981,7 +1986,7 @@ fn compute_two_convex_inputs_projectively(
             if emit_inside {
                 push_projective_transition(
                     &mut classified,
-                    &inside,
+                    inside,
                     polygon,
                     &mut affine_cache,
                     host,
@@ -2011,7 +2016,7 @@ fn compute_two_convex_inputs_projectively(
                 ProjectiveClipSide::Positive => {
                     push_projective_transition(
                         &mut classified,
-                        &clipped.positive,
+                        clipped.positive,
                         polygon,
                         &mut affine_cache,
                         host,
@@ -2025,7 +2030,7 @@ fn compute_two_convex_inputs_projectively(
                 ProjectiveClipSide::Both => {
                     push_projective_transition(
                         &mut classified,
-                        &clipped.positive,
+                        clipped.positive,
                         polygon,
                         &mut affine_cache,
                         host,
@@ -2041,7 +2046,7 @@ fn compute_two_convex_inputs_projectively(
             push_projective_transition(
                 &mut classified,
                 remainder
-                    .as_ref()
+                    .take()
                     .expect("retained inside cycle is available"),
                 polygon,
                 &mut affine_cache,
@@ -3080,7 +3085,7 @@ fn projective_crossing_point(
 
 fn push_projective_transition(
     classified: &mut Vec<ClassifiedPolygon>,
-    cycle: &ProjectiveCycle,
+    cycle: ProjectiveCycle,
     source: &ConvexPolygon,
     affine_cache: &mut ProjectiveAffineCache,
     host: usize,
