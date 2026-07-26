@@ -2936,10 +2936,11 @@ fn propose_active_planes_f64(
             ])
         })
         .collect::<Option<Vec<_>>>()?;
+    let mut clipped = Vec::new();
     let mut crossed_planes = Vec::new();
     for &plane_index in candidate_planes {
-        let (clipped, crossed) = clip_f64_cycle(&cycle, planes[plane_index]);
-        cycle = clipped;
+        let crossed = clip_f64_cycle_into(&cycle, planes[plane_index], &mut clipped);
+        std::mem::swap(&mut cycle, &mut clipped);
         if cycle.len() < 3 {
             return Some(Vec::new());
         }
@@ -2969,11 +2970,12 @@ fn propose_active_planes_f64(
     Some(active)
 }
 
-fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> (Vec<[f64; 3]>, bool) {
-    let mut clipped = Vec::with_capacity(points.len() + 1);
+fn clip_f64_cycle_into(points: &[[f64; 3]], plane: [f64; 4], clipped: &mut Vec<[f64; 3]>) -> bool {
+    clipped.clear();
+    clipped.reserve(points.len() + 1);
     let mut crossed = false;
     let Some(first) = points.first() else {
-        return (clipped, crossed);
+        return crossed;
     };
     let first_value = f64_plane_value(*first, plane);
     let mut current_value = first_value;
@@ -3011,7 +3013,7 @@ fn clip_f64_cycle(points: &[[f64; 3]], plane: [f64; 4]) -> (Vec<[f64; 3]>, bool)
         }
         current_value = next_value;
     }
-    (clipped, crossed)
+    crossed
 }
 
 fn f64_segment_plane_intersection(
