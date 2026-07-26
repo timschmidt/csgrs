@@ -130,6 +130,9 @@ impl Plane {
             else {
                 break;
             };
+            if (au == bu && bu == cu) || (av == bv && bv == cv) {
+                return true;
+            }
             return Rational::signed_product_sum_ordering(
                 [true, true, true, false, false, false],
                 [[au, bv], [bu, cv], [cu, av], [au, cv], [bu, av], [cu, bv]],
