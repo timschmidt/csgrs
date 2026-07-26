@@ -1935,10 +1935,6 @@ fn compute_two_convex_inputs_projectively(
                 .insert(identity, canonical);
         }
     }
-    let mut source_vertex_supports: StorageHashMap<
-        ConstructionVertexIdentity,
-        Vec<ConstructionPlaneIdentity>,
-    > = StorageHashMap::default();
     let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, Point3> =
         StorageHashMap::default();
     for (polygon, support_identity) in polygons.iter().zip(&polygon_support_planes) {
@@ -1946,12 +1942,6 @@ fn compute_two_convex_inputs_projectively(
             let retained_vertices = polygon.known_vertices.as_ref();
             for (vertex_index, vertex_identity) in vertex_identities.iter().enumerate() {
                 if matches!(vertex_identity, ConstructionVertexIdentity::Source { .. }) {
-                    let supports = source_vertex_supports
-                        .entry(vertex_identity.clone())
-                        .or_default();
-                    if !supports.contains(support_identity) {
-                        supports.push(*support_identity);
-                    }
                     let incidences = projective_point_cache
                         .point_incidences
                         .entry(vertex_identity.clone())
@@ -1994,6 +1984,37 @@ fn compute_two_convex_inputs_projectively(
             }
         }
     }
+    {
+        let ProjectivePointCache {
+            planes,
+            source_vertices,
+            point_incidences,
+            ..
+        } = &mut projective_point_cache;
+        for (identity, supports) in point_incidences.iter() {
+            if !matches!(identity, ConstructionVertexIdentity::Source { .. }) {
+                continue;
+            }
+            'definition: for first in 0..supports.len() {
+                for second in (first + 1)..supports.len() {
+                    for third in (second + 1)..supports.len() {
+                        let definition = [
+                            &planes[&supports[first]],
+                            &planes[&supports[second]],
+                            &planes[&supports[third]],
+                        ];
+                        if plane_normals_are_independent(definition)? {
+                            source_vertices.insert(
+                                identity.clone(),
+                                [supports[first], supports[second], supports[third]],
+                            );
+                            break 'definition;
+                        }
+                    }
+                }
+            }
+        }
+    }
     for (identity, point) in &source_vertex_points {
         let ConstructionVertexIdentity::Source { mesh, .. } = identity else {
             continue;
@@ -2015,26 +2036,6 @@ fn compute_two_convex_inputs_projectively(
                     .or_default();
                 if !incidences.contains(&plane_identity) {
                     incidences.push(plane_identity);
-                }
-            }
-        }
-    }
-    for (identity, supports) in source_vertex_supports {
-        'definition: for first in 0..supports.len() {
-            for second in (first + 1)..supports.len() {
-                for third in (second + 1)..supports.len() {
-                    let planes = [
-                        &projective_point_cache.planes[&supports[first]],
-                        &projective_point_cache.planes[&supports[second]],
-                        &projective_point_cache.planes[&supports[third]],
-                    ];
-                    if plane_normals_are_independent(planes)? {
-                        projective_point_cache.source_vertices.insert(
-                            identity,
-                            [supports[first], supports[second], supports[third]],
-                        );
-                        break 'definition;
-                    }
                 }
             }
         }
