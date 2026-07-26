@@ -520,7 +520,7 @@ impl ConvexPolygon {
 
     pub(crate) fn from_certified_convex_face(
         support: Plane,
-        vertices: Vec<Point3>,
+        vertices: &[&Point3],
         indexed_positions: Option<Arc<[Point3]>>,
         vertex_identities: Vec<ConstructionVertexIdentity>,
         edges: Vec<Plane>,
@@ -540,7 +540,7 @@ impl ConvexPolygon {
                     let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
                         return false;
                     };
-                    positions.get(*vertex) == Some(point)
+                    positions.get(*vertex) == Some(*point)
                 })
         }));
         let vertex_identities = Arc::from(vertex_identities);
@@ -549,7 +549,12 @@ impl ConvexPolygon {
                 positions,
                 identities: Arc::clone(&vertex_identities),
             },
-            None => RetainedVertexCycle::Owned(Arc::from(vertices)),
+            None => RetainedVertexCycle::Owned(Arc::from(
+                vertices
+                    .iter()
+                    .map(|point| (*point).clone())
+                    .collect::<Vec<_>>(),
+            )),
         };
         Self {
             support,
@@ -1014,7 +1019,7 @@ mod tests {
             .to_vec();
         let polygon = ConvexPolygon::from_certified_convex_face(
             Plane::axis_aligned(2, Real::zero()),
-            indices.map(|index| positions[index].clone()).to_vec(),
+            &indices.map(|index| &positions[index]),
             Some(Arc::clone(&positions)),
             vertex_identities,
             Vec::new(),

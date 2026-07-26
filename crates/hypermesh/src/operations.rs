@@ -1,5 +1,7 @@
 //! Public boolean operation entry points.
 
+use std::borrow::Borrow;
+
 use hyperlattice::{
     HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression,
     intersect_three_planes,
@@ -2984,7 +2986,7 @@ fn collapse_certified_convex_faces(
                 return Err(crate::error::HypermeshError::UnknownClassification);
             };
             let (_, next, point, edge_plane, edge_identity) = &outgoing[outgoing_index];
-            face_vertices.push((*point).clone());
+            face_vertices.push(*point);
             vertex_identities.push(ConstructionVertexIdentity::Source {
                 mesh: support_identity.mesh,
                 vertex: current,
@@ -3040,7 +3042,7 @@ fn collapse_certified_convex_faces(
         delta_w[mesh_index] = 1;
         faces.push(ConvexPolygon::from_certified_convex_face(
             support_planes[support_identity.mesh][support_identity.plane].clone(),
-            face_vertices,
+            &face_vertices,
             indexed_positions,
             vertex_identities,
             edge_planes,
@@ -3138,10 +3140,10 @@ fn retain_indices<T>(values: &mut Vec<T>, retained: &[usize]) {
     debug_assert_eq!(retained_index, retained.len());
 }
 
-fn collapse_certified_collinear_face_vertices(
+fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
     mesh: usize,
     support: &Plane,
-    vertices: &mut Vec<Point3>,
+    vertices: &mut Vec<P>,
     vertex_identities: &mut Vec<ConstructionVertexIdentity>,
     edges: &mut Vec<Plane>,
     edge_identities: &mut Vec<ConstructionEdgeIdentity>,
@@ -3169,9 +3171,9 @@ fn collapse_certified_collinear_face_vertices(
         for index in 0..len {
             let keep = certified_noncollinear_vertices.is_some_and(|certified| certified[index])
                 || !support.points_are_collinear_on_support(
-                    &vertices[(index + len - 1) % len],
-                    &vertices[index],
-                    &vertices[(index + 1) % len],
+                    vertices[(index + len - 1) % len].borrow(),
+                    vertices[index].borrow(),
+                    vertices[(index + 1) % len].borrow(),
                 );
             if keep {
                 if retained_len < retained_stack.len() {
@@ -3212,9 +3214,9 @@ fn collapse_certified_collinear_face_vertices(
         if rebuild_edge_planes {
             let after_next = (index + 2) % vertices.len();
             edges.push(edge_plane(
-                &vertices[index],
-                &vertices[next],
-                &vertices[after_next],
+                vertices[index].borrow(),
+                vertices[next].borrow(),
+                vertices[after_next].borrow(),
                 support,
             ));
         }
