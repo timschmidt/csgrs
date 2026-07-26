@@ -998,6 +998,13 @@ fn append_exact_corner_boundary_triangles(
     if indexed != boundary {
         return Ok(None);
     }
+    if let &[a, b, c] = boundary {
+        if output_triangle_is_nondegenerate([a, b, c], vertices, &polygon.support)? {
+            triangles.push([a, b, c]);
+            return Ok(Some(()));
+        }
+        return Ok(None);
+    }
     let mut corners = Vec::with_capacity(boundary.len());
     for index in 0..boundary.len() {
         let turn = [
