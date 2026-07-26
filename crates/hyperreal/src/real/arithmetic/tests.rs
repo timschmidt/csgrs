@@ -724,6 +724,50 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_filter_rejects_unsafe_f64_ranges() {
+        let no_errors = [0.0; 4];
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [1.0, 2.0, 3.0, 4.0],
+                no_errors,
+                [1.0; 4],
+                no_errors,
+            ),
+            Some(RealSign::Positive),
+        );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [f64::MAX, 0.0, 0.0, 0.0],
+                no_errors,
+                [2.0, 0.0, 0.0, 0.0],
+                no_errors,
+            ),
+            None,
+        );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [f64::MIN_POSITIVE, 0.0, 0.0, 0.0],
+                no_errors,
+                [0.5, 0.0, 0.0, 0.0],
+                no_errors,
+            ),
+            None,
+        );
+
+        let twice_minimum = 2.0 * f64::MIN_POSITIVE;
+        let adjacent = f64::from_bits(twice_minimum.to_bits() - 1);
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign_f64(
+                [twice_minimum, -adjacent, 0.0, 0.0],
+                no_errors,
+                [1.0; 4],
+                no_errors,
+            ),
+            None,
+        );
+    }
+
+    #[test]
     fn prepared_rational_line2_filter_preserves_exact_signs() {
         let zero = Rational::zero();
         let third = Rational::fraction(1, 3).unwrap();

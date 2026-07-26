@@ -935,21 +935,33 @@ impl Real {
                 .all(|(value, error)| error == 0.0
                     || error == value.abs() * (32.0 * f64::EPSILON))
         );
-        let mut products = [0.0; 4];
-        let mut magnitude_sum = 0.0;
+        let products = [
+            coefficients[0] * point[0],
+            coefficients[1] * point[1],
+            coefficients[2] * point[2],
+            coefficients[3] * point[3],
+        ];
         for index in 0..4 {
-            products[index] = Self::normal_product_f64(
-                coefficients[index],
-                point[index],
-            )?;
-            magnitude_sum = Self::normal_add_f64(
-                magnitude_sum,
-                products[index].abs(),
-            )?;
+            let product = products[index];
+            if !Self::normal_or_zero_f64(product)
+                || (product == 0.0
+                    && coefficients[index] != 0.0
+                    && point[index] != 0.0)
+            {
+                return None;
+            }
         }
-        let mut value = 0.0;
-        for product in products {
-            value = Self::normal_add_f64(value, product)?;
+        let magnitude_sum = products[0].abs()
+            + products[1].abs()
+            + products[2].abs()
+            + products[3].abs();
+        if !Self::normal_or_zero_f64(magnitude_sum) {
+            return None;
+        }
+        let value =
+            ((products[0] + products[1]) + products[2]) + products[3];
+        if !value.is_finite() {
+            return None;
         }
 
         // Each rational conversion is bounded by 32 eps. For one product,
@@ -958,6 +970,8 @@ impl Real {
         // the magnitude accumulation, and the value accumulation remain below
         // another 18 eps. A single 82-eps radius covers all of these errors
         // while avoiding per-lane interval arithmetic in this hot filter.
+        // If an intermediate signed sum underflows, this bound either remains
+        // normal and dominates the lost subnormal value or is itself rejected.
         const ERROR_FACTOR: f64 = 82.0 * f64::EPSILON;
         let error_bound =
             Self::normal_product_f64(ERROR_FACTOR, magnitude_sum)?;
