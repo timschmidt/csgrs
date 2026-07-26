@@ -1031,11 +1031,12 @@ fn append_exact_corner_boundary_triangles(
         return Ok(None);
     }
     if let &[a, b, c] = boundary {
-        if output_triangle_is_nondegenerate([a, b, c], vertices, &polygon.support)? {
-            triangles.push([a, b, c]);
-            return Ok(Some(()));
-        }
-        return Ok(None);
+        // Construction candidates exist only for retained, certified vertex
+        // cycles. An unchanged three-vertex boundary is therefore the
+        // certified source polygon itself; merging or splitting would have
+        // made `indexed` and `boundary` differ above.
+        triangles.push([a, b, c]);
+        return Ok(Some(()));
     }
     let mut corners = Vec::with_capacity(boundary.len());
     for index in 0..boundary.len() {
