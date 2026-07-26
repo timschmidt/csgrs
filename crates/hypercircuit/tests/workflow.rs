@@ -8,6 +8,12 @@ use hypercircuit::{
     PortDirection, Real, ReleaseBlocker, ReleasePreparationOptions, Route, Via, ViaMaskIntent,
     parts, pin,
 };
+#[cfg(feature = "interchange")]
+use hypercircuit::{
+    CircuitInstanceId, DesignIntent, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
+    FunctionalRoleAssignment, FunctionalRoleTarget, NetId, NetIntent, NetKind, NetScope, PinRef,
+    SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition, SourceSpan,
+};
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
 use hyperphysics::{
@@ -377,6 +383,121 @@ fn checked_fluent_design_prepares_cohesive_release_evidence() {
     assert!(report.assembly_round_trip.is_release_clean());
     assert_eq!(report.assembly.pick_and_place.len(), 2);
     assert!(report.is_release_clean(), "{:?}", report.release_blockers());
+}
+
+#[cfg(feature = "interchange")]
+#[test]
+fn semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff() {
+    let checked = fluent_release_design();
+    let circuit_id = checked.circuit.id.clone();
+    let net = NetId::new("VCC").unwrap();
+    let target = SemanticTarget::Net {
+        circuit: circuit_id.clone(),
+        net: net.clone(),
+    };
+    let source = SourceSpan::new(
+        "board.copper",
+        SourcePosition::new(10, 2, 5),
+        SourcePosition::new(24, 2, 19),
+    );
+    let role_source = SourceSpan::new(
+        "board.copper",
+        SourcePosition::new(30, 4, 1),
+        SourcePosition::new(54, 4, 25),
+    );
+    let resistor = CircuitInstanceId::new("R1").unwrap();
+    let intent = DesignIntent {
+        origins: vec![
+            SemanticOrigin {
+                target,
+                span: source.clone(),
+                label: Some("power VCC".into()),
+            },
+            SemanticOrigin {
+                target: SemanticTarget::Instance {
+                    circuit: circuit_id.clone(),
+                    instance: resistor.clone(),
+                },
+                span: role_source.clone(),
+                label: Some("@termination".into()),
+            },
+        ],
+        nets: vec![NetIntent {
+            circuit: circuit_id.clone(),
+            net,
+            kind: NetKind::PowerSupply,
+            scope: NetScope::Local,
+            net_class: None,
+            nominal_value: None,
+        }],
+        roles: vec![FunctionalRoleAssignment {
+            target: FunctionalRoleTarget::Instance {
+                circuit: circuit_id.clone(),
+                instance: resistor.clone(),
+            },
+            role: FunctionalRole::TerminationResistor,
+            bindings: vec![FunctionalBinding {
+                name: "component".into(),
+                target: FunctionalBindingTarget::Pin {
+                    circuit: circuit_id,
+                    instance: resistor,
+                    pin: PinRef::new("1").unwrap(),
+                },
+            }],
+            parameters: Default::default(),
+        }],
+        ..DesignIntent::default()
+    };
+    let document = SemanticDocument::new(checked.circuit, Some(checked.schematic))
+        .unwrap()
+        .with_pcb(checked.layout)
+        .unwrap()
+        .with_design_intent(intent)
+        .unwrap();
+
+    let report = document
+        .prepare_release(ReleasePreparationOptions::default())
+        .unwrap();
+
+    let authored = report
+        .drc_handoff
+        .authored_nets
+        .iter()
+        .find(|authored| authored.net == "VCC")
+        .expect("ordinary semantic release must carry authored net intent");
+    assert_eq!(
+        authored.kind,
+        hyperdrc::authoring_intent::AuthoredNetKind::PowerSupply
+    );
+    let handed_off_source = authored
+        .subject
+        .source
+        .as_ref()
+        .expect("ordinary semantic release must carry the source span");
+    assert_eq!(handed_off_source.uri, source.uri);
+    assert_eq!(handed_off_source.start.byte, source.start.byte);
+    assert_eq!(handed_off_source.end.byte, source.end.byte);
+    let role_finding = report
+        .drc
+        .violations
+        .iter()
+        .find(|violation| violation.check == "authored-functional-role-readiness")
+        .expect("intentionally incomplete authored role must fail ordinary release DRC");
+    assert!(role_finding.subjects.iter().any(|subject| {
+        subject.source.as_ref().is_some_and(|span| {
+            span.uri == role_source.uri && span.start.byte == role_source.start.byte
+        })
+    }));
+    assert!(report.drc.coverage.checks.iter().any(|record| {
+        record.check == "authored-functional-role-readiness"
+            && record.status == hyperdrc::CheckExecutionStatus::Failed
+    }));
+    assert_eq!(report.drc.capability_profile_id, "generic-prototype");
+    assert!(report.drc.capability_profile_digest.starts_with("sha256:"));
+    assert!(report.drc.coverage.checks.iter().all(|record| {
+        record.policy_digest.as_deref() == Some(report.drc.capability_profile_digest.as_str())
+    }));
+    assert!(role_finding.evidence_id.starts_with("sha256:"));
 }
 
 #[test]

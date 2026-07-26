@@ -26,8 +26,10 @@ use hyperdrc::constraint_policy::{
 };
 use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use hyperdrc::{
-    FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, PcbSketch, Severity,
-    Violation,
+    CapabilityProfile, Check, CheckCoverage, CheckRunDisposition, EvidenceContext,
+    FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, PcbSketch,
+    ReadinessContext, ReadinessRunner, Severity, Violation, default_checks,
+    opinionated_prototype_profile,
 };
 use hyperphysics::{
     MaterialPropertyGraph, MaterialPropertyKind, PropertyResolutionStatus, PropertyValue,
@@ -246,6 +248,8 @@ pub enum ImpedanceTargetPolicy {
 /// Thresholds for direct native-authoring readiness checks.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DrcReadinessPolicy {
+    /// Named, versioned manufacturing capability used by authoritative checks.
+    pub capability_profile: CapabilityProfile,
     /// Minimum routed-slot cutter width.
     pub minimum_route_width: Real,
     /// Minimum keepout/copper intersection area emitted in reports.
@@ -274,20 +278,38 @@ pub struct DrcReadinessPolicy {
 
 impl Default for DrcReadinessPolicy {
     fn default() -> Self {
+        let capability_profile = opinionated_prototype_profile();
         Self {
-            minimum_route_width: (Real::one() / Real::from(5)).expect("nonzero exact denominator"),
+            minimum_route_width: capability_profile
+                .drilling
+                .minimum_routed_slot
+                .clone()
+                .expect("built-in prototype profile has a routed-slot limit"),
             minimum_keepout_report_area: Real::zero(),
             minimum_component_report_area: Real::zero(),
             minimum_mask_opening: Real::zero(),
-            minimum_mask_spacing: Real::zero(),
+            minimum_mask_spacing: capability_profile
+                .imaging
+                .minimum_mask_dam
+                .clone()
+                .expect("built-in prototype profile has a mask-dam limit"),
             maximum_mask_expansion: (Real::one() / Real::from(5))
                 .expect("nonzero exact denominator"),
             paste_overhang_tolerance: Real::zero(),
-            minimum_silkscreen_width: Real::zero(),
-            process_board_edge_clearance: Real::zero(),
+            minimum_silkscreen_width: capability_profile
+                .imaging
+                .minimum_legend_width
+                .clone()
+                .expect("built-in prototype profile has a legend-width limit"),
+            process_board_edge_clearance: capability_profile
+                .imaging
+                .minimum_copper_to_edge
+                .clone()
+                .expect("built-in prototype profile has an edge-clearance limit"),
             minimum_process_report_area: Real::zero(),
             selected_layers: Vec::new(),
             impedance_target_policy: ImpedanceTargetPolicy::ReleaseBlocking,
+            capability_profile,
         }
     }
 }
@@ -297,6 +319,14 @@ impl Default for DrcReadinessPolicy {
 pub struct HyperDrcReadinessReport {
     /// Source-addressable active findings from stackup, net and authoring checks.
     pub violations: Vec<Violation>,
+    /// Explicit disposition for every check in HyperDRC's default registry.
+    pub coverage: CheckCoverage,
+    /// Selected manufacturing capability identity.
+    pub capability_profile_id: String,
+    /// Selected manufacturing capability revision.
+    pub capability_profile_revision: String,
+    /// Digest of the exact canonical capability bytes.
+    pub capability_profile_digest: String,
     /// Target-impedance disposition applied to the returned findings.
     pub impedance_target_policy: ImpedanceTargetPolicy,
     /// Number of HyperDRC target-impedance warnings promoted to release errors.
@@ -610,7 +640,32 @@ impl HyperDrcHandoff {
         circuit: &Circuit,
         intent: &DesignIntent,
     ) -> Self {
-        let mut handoff = Self::from_materialization(layout, materialized);
+        Self::from_materialization_with_context(
+            layout,
+            materialized,
+            circuit,
+            &PcbMaterialPropertyLibrary::default(),
+            Some(intent),
+        )
+    }
+
+    /// Converts materialized geometry while preserving material evidence and
+    /// optional language-neutral authored intent in one lossless handoff.
+    ///
+    /// This is the preferred release-path constructor. Supplying no intent is
+    /// valid for designs authored directly against the core circuit API.
+    pub fn from_materialization_with_context(
+        layout: &PcbLayout,
+        materialized: &PcbMaterializationReport,
+        circuit: &Circuit,
+        materials: &PcbMaterialPropertyLibrary,
+        intent: Option<&DesignIntent>,
+    ) -> Self {
+        let mut handoff =
+            Self::from_materialization_with_materials(layout, materialized, materials);
+        let Some(intent) = intent else {
+            return handoff;
+        };
         handoff.authored_nets = intent
             .nets
             .iter()
@@ -645,13 +700,192 @@ impl HyperDrcHandoff {
     /// Runs HyperDRC's native stackup/net-class and authored-intent checks.
     pub fn run_readiness(&self, policy: &DrcReadinessPolicy) -> HyperDrcReadinessReport {
         let boards = std::slice::from_ref(&self.board);
-        let mut violations = stackup_readiness(Some(&self.stackup), boards);
-        violations.extend(net_constraint_readiness(
-            &self.net_classes,
-            Some(&self.stackup),
-            boards,
-            &policy.selected_layers,
-        ));
+        let profile = &policy.capability_profile;
+        let profile_digest = profile
+            .digest()
+            .expect("validated capability profiles are infallibly serializable");
+        let mut stackup = self.stackup.clone();
+        stackup.fabricator_profile = Some(profile.id.clone());
+        stackup.fabrication_capability = profile.stackup.clone();
+        let minimum_route_width = profile
+            .drilling
+            .minimum_routed_slot
+            .as_ref()
+            .unwrap_or(&policy.minimum_route_width);
+        let minimum_mask_spacing = profile
+            .imaging
+            .minimum_mask_dam
+            .as_ref()
+            .unwrap_or(&policy.minimum_mask_spacing);
+        let minimum_silkscreen_width = profile
+            .imaging
+            .minimum_legend_width
+            .as_ref()
+            .unwrap_or(&policy.minimum_silkscreen_width);
+        let process_board_edge_clearance = profile
+            .imaging
+            .minimum_copper_to_edge
+            .as_ref()
+            .unwrap_or(&policy.process_board_edge_clearance);
+        let mut violations = Vec::new();
+        let runner =
+            ReadinessRunner::new(default_checks().iter().copied()).with_context(ReadinessContext {
+                policy_digest: Some(profile_digest.clone()),
+                ..ReadinessContext::default()
+            });
+        let coverage = runner
+            .run(&mut violations, |check, violations| {
+                match check {
+                    Check::StackupReadiness => {
+                        violations.extend(stackup_readiness(Some(&stackup), boards));
+                    }
+                    Check::NetConstraintReadiness => {
+                        violations.extend(net_constraint_readiness(
+                            &self.net_classes,
+                            Some(&stackup),
+                            boards,
+                            &policy.selected_layers,
+                        ));
+                    }
+                    Check::AuthoredKeepoutReadiness => {
+                        violations.extend(authored_keepout_readiness(
+                            &self.board,
+                            &self.authored_keepouts,
+                            &policy.minimum_keepout_report_area,
+                        ));
+                    }
+                    Check::AuthoredRoutedSlotReadiness => {
+                        violations.extend(authored_routed_slot_readiness(
+                            &self.authored_slots,
+                            minimum_route_width,
+                        ));
+                    }
+                    Check::AuthoredComponentReadiness => {
+                        violations.extend(authored_component_readiness(
+                            &self.expected_component_sources,
+                            &self.authored_components,
+                            &self.authored_keepouts,
+                            &policy.minimum_component_report_area,
+                        ));
+                    }
+                    Check::AuthoredFunctionalRoleReadiness => {
+                        violations.extend(authored_functional_role_readiness(&self.authored_roles));
+                    }
+                    Check::MinimumMaskOpening => {
+                        for process in self.mask_layers() {
+                            violations.extend(minimum_mask_opening(
+                                &process.name,
+                                &process.sketch,
+                                &policy.minimum_mask_opening,
+                                &policy.minimum_process_report_area,
+                            ));
+                        }
+                    }
+                    Check::SolderMaskOpeningSpacing => {
+                        for process in self.mask_layers() {
+                            violations.extend(solder_mask_opening_spacing(
+                                &process.name,
+                                &process.sketch,
+                                minimum_mask_spacing,
+                                &policy.minimum_process_report_area,
+                            ));
+                        }
+                    }
+                    Check::SolderMaskBoardEdgeClearance => {
+                        if let Some(board_outline) = &self.board.board_outline {
+                            for process in self.mask_layers() {
+                                violations.extend(solder_mask_board_edge_clearance(
+                                    &process.name,
+                                    &process.sketch,
+                                    "board-outline",
+                                    board_outline,
+                                    process_board_edge_clearance,
+                                    &policy.minimum_process_report_area,
+                                ));
+                            }
+                        }
+                    }
+                    Check::SolderMaskExpansion => {
+                        for process in self.mask_layers() {
+                            if let Some(copper) = self.surface_copper(process.role) {
+                                violations.extend(solder_mask_expansion(
+                                    &copper.name,
+                                    &copper.sketch,
+                                    &process.name,
+                                    &process.sketch,
+                                    &policy.maximum_mask_expansion,
+                                    &policy.minimum_process_report_area,
+                                ));
+                            }
+                        }
+                    }
+                    Check::PasteOverhang => {
+                        for process in self.paste_layers() {
+                            if let Some(copper) = self.surface_copper(process.role) {
+                                violations.extend(paste_overhang(
+                                    &process.name,
+                                    &process.sketch,
+                                    &copper.name,
+                                    &copper.sketch,
+                                    &policy.paste_overhang_tolerance,
+                                    &policy.minimum_process_report_area,
+                                ));
+                            }
+                        }
+                    }
+                    Check::SilkscreenBoardEdgeClearance => {
+                        if let Some(board_outline) = &self.board.board_outline {
+                            for process in self.silkscreen_layers() {
+                                violations.extend(silkscreen_board_edge_clearance(
+                                    &process.name,
+                                    &process.sketch,
+                                    "board-outline",
+                                    board_outline,
+                                    process_board_edge_clearance,
+                                    &policy.minimum_process_report_area,
+                                ));
+                            }
+                        }
+                    }
+                    Check::SilkscreenMinWidth => {
+                        for process in self.silkscreen_layers() {
+                            violations.extend(silkscreen_min_width(
+                                &process.name,
+                                &process.sketch,
+                                minimum_silkscreen_width,
+                                &policy.minimum_process_report_area,
+                            ));
+                        }
+                    }
+                    Check::SilkscreenOverlap => {
+                        for process in self.silkscreen_layers() {
+                            if let Some(mask) = self.side_process_layer(process.role, true) {
+                                violations.extend(silkscreen_overlap(
+                                    &process.name,
+                                    &process.sketch,
+                                    &mask.name,
+                                    &mask.sketch,
+                                    &policy.minimum_process_report_area,
+                                ));
+                            }
+                        }
+                    }
+                    _ => {
+                        return Ok::<_, std::convert::Infallible>(CheckRunDisposition::Skipped(
+                            "native handoff does not yet implement this registered check".into(),
+                        ));
+                    }
+                }
+                Ok(CheckRunDisposition::Executed)
+            })
+            .expect("native readiness check adapter is infallible");
+        let evidence_context = EvidenceContext {
+            release_digest: None,
+            policy_digest: Some(profile_digest.clone()),
+        };
+        for violation in &mut violations {
+            violation.bind_evidence_context(&evidence_context);
+        }
         let mut promoted_impedance_findings = 0;
         if policy.impedance_target_policy == ImpedanceTargetPolicy::ReleaseBlocking {
             for violation in &mut violations {
@@ -663,104 +897,42 @@ impl HyperDrcHandoff {
                 }
             }
         }
-        violations.extend(authored_keepout_readiness(
-            &self.board,
-            &self.authored_keepouts,
-            &policy.minimum_keepout_report_area,
-        ));
-        violations.extend(authored_routed_slot_readiness(
-            &self.authored_slots,
-            &policy.minimum_route_width,
-        ));
-        violations.extend(authored_component_readiness(
-            &self.expected_component_sources,
-            &self.authored_components,
-            &self.authored_keepouts,
-            &policy.minimum_component_report_area,
-        ));
-        violations.extend(authored_functional_role_readiness(&self.authored_roles));
-        for process in &self.process_layers {
-            match process.role {
-                ProcessLayerRole::FrontSolderMask | ProcessLayerRole::BackSolderMask => {
-                    violations.extend(minimum_mask_opening(
-                        &process.name,
-                        &process.sketch,
-                        &policy.minimum_mask_opening,
-                        &policy.minimum_process_report_area,
-                    ));
-                    violations.extend(solder_mask_opening_spacing(
-                        &process.name,
-                        &process.sketch,
-                        &policy.minimum_mask_spacing,
-                        &policy.minimum_process_report_area,
-                    ));
-                    if let Some(board_outline) = &self.board.board_outline {
-                        violations.extend(solder_mask_board_edge_clearance(
-                            &process.name,
-                            &process.sketch,
-                            "board-outline",
-                            board_outline,
-                            &policy.process_board_edge_clearance,
-                            &policy.minimum_process_report_area,
-                        ));
-                    }
-                    if let Some(copper) = self.surface_copper(process.role) {
-                        violations.extend(solder_mask_expansion(
-                            &copper.name,
-                            &copper.sketch,
-                            &process.name,
-                            &process.sketch,
-                            &policy.maximum_mask_expansion,
-                            &policy.minimum_process_report_area,
-                        ));
-                    }
-                }
-                ProcessLayerRole::FrontPaste | ProcessLayerRole::BackPaste => {
-                    if let Some(copper) = self.surface_copper(process.role) {
-                        violations.extend(paste_overhang(
-                            &process.name,
-                            &process.sketch,
-                            &copper.name,
-                            &copper.sketch,
-                            &policy.paste_overhang_tolerance,
-                            &policy.minimum_process_report_area,
-                        ));
-                    }
-                }
-                ProcessLayerRole::FrontSilkscreen | ProcessLayerRole::BackSilkscreen => {
-                    if let Some(board_outline) = &self.board.board_outline {
-                        violations.extend(silkscreen_board_edge_clearance(
-                            &process.name,
-                            &process.sketch,
-                            "board-outline",
-                            board_outline,
-                            &policy.process_board_edge_clearance,
-                            &policy.minimum_process_report_area,
-                        ));
-                    }
-                    violations.extend(silkscreen_min_width(
-                        &process.name,
-                        &process.sketch,
-                        &policy.minimum_silkscreen_width,
-                        &policy.minimum_process_report_area,
-                    ));
-                    if let Some(mask) = self.side_process_layer(process.role, true) {
-                        violations.extend(silkscreen_overlap(
-                            &process.name,
-                            &process.sketch,
-                            &mask.name,
-                            &mask.sketch,
-                            &policy.minimum_process_report_area,
-                        ));
-                    }
-                }
-            }
-        }
         HyperDrcReadinessReport {
             violations,
+            coverage,
+            capability_profile_id: profile.id.clone(),
+            capability_profile_revision: profile.revision.clone(),
+            capability_profile_digest: profile_digest,
             impedance_target_policy: policy.impedance_target_policy,
             promoted_impedance_findings,
         }
+    }
+
+    fn mask_layers(&self) -> impl Iterator<Item = &DrcProcessLayer> {
+        self.process_layers.iter().filter(|process| {
+            matches!(
+                process.role,
+                ProcessLayerRole::FrontSolderMask | ProcessLayerRole::BackSolderMask
+            )
+        })
+    }
+
+    fn paste_layers(&self) -> impl Iterator<Item = &DrcProcessLayer> {
+        self.process_layers.iter().filter(|process| {
+            matches!(
+                process.role,
+                ProcessLayerRole::FrontPaste | ProcessLayerRole::BackPaste
+            )
+        })
+    }
+
+    fn silkscreen_layers(&self) -> impl Iterator<Item = &DrcProcessLayer> {
+        self.process_layers.iter().filter(|process| {
+            matches!(
+                process.role,
+                ProcessLayerRole::FrontSilkscreen | ProcessLayerRole::BackSilkscreen
+            )
+        })
     }
 
     fn surface_copper(&self, role: ProcessLayerRole) -> Option<&DrcCopperLayerImage> {

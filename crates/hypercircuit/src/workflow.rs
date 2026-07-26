@@ -10,7 +10,7 @@ use hyperdrc::Severity;
 #[cfg(feature = "interchange")]
 use crate::SemanticDocument;
 use crate::{
-    AssemblyOutputs, AssemblyRoundTripReport, CheckedDesign, CheckedProject, Circuit,
+    AssemblyOutputs, AssemblyRoundTripReport, CheckedDesign, CheckedProject, Circuit, DesignIntent,
     DrcReadinessPolicy, ErcReport, FabricationCamRoundTripReport, FabricationExportOptions,
     FabricationIntegrityIssue, FabricationPackage, FabricationPackageError,
     GeometryMaterializationError, HyperDrcHandoff, HyperDrcReadinessReport, MaterializationOptions,
@@ -192,7 +192,7 @@ impl CheckedDesign {
         &self,
         options: ReleasePreparationOptions,
     ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
-        prepare_release(&self.circuit, &self.layout, options)
+        prepare_release(&self.circuit, &self.layout, None, options)
     }
 }
 
@@ -206,7 +206,7 @@ impl CheckedProject {
         &self,
         options: ReleasePreparationOptions,
     ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
-        prepare_release(&self.composed.circuit, &self.composed.layout, options)
+        prepare_release(&self.composed.circuit, &self.composed.layout, None, options)
     }
 }
 
@@ -225,13 +225,14 @@ impl SemanticDocument {
             .pcb
             .as_ref()
             .ok_or(ReleasePreparationError::MissingPcb)?;
-        prepare_release(&self.circuit, layout, options)
+        prepare_release(&self.circuit, layout, Some(&self.design_intent), options)
     }
 }
 
 fn prepare_release(
     circuit: &Circuit,
     layout: &PcbLayout,
+    design_intent: Option<&DesignIntent>,
     options: ReleasePreparationOptions,
 ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
     let placement = layout.resolve_placement_constraints(circuit);
@@ -243,10 +244,12 @@ fn prepare_release(
     resolved_layout.placements.clone_from(&placement.placements);
     let erc = circuit.electrical_rule_check();
     let materialization = resolved_layout.materialize(circuit, options.materialization)?;
-    let drc_handoff = HyperDrcHandoff::from_materialization_with_materials(
+    let drc_handoff = HyperDrcHandoff::from_materialization_with_context(
         &resolved_layout,
         &materialization,
+        circuit,
         &options.pcb_materials,
+        design_intent,
     );
     let drc = drc_handoff.run_readiness(&options.drc);
     let fabrication = FabricationPackage::from_materialization_with_options(
