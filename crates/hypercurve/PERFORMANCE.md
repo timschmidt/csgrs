@@ -5405,6 +5405,34 @@ the 268-decision pathological Boolean workload, strict all-target Clippy, and
 10,000 nightly libFuzzer algebraic-image runs under AddressSanitizer also
 completed without an exactness or safety failure.
 
+### Cross-stack prepared-removal gate
+
+Prepared implementation surfaces below Hypercurve are removed only after two
+ordered gates. The first gate covers every immediately affected public API:
+exact-result and failure-boundary regressions, executed release benchmarks,
+Callgrind instructions, Heaptrack allocations, loadable and file size, and
+static callgraph depth. A failure at this tier is reverted before broader
+validation. A passing candidate must then run correctness and representative
+executed performance tests for all workspace hyper crates:
+`hyperbrep`, `hypercircuit`, `hypercurve`, `hyperdrc`, `hyperevolution`,
+`hypergraphics`, `hyperlattice`, `hyperlimit`, `hypermesh`, `hyperpack`,
+`hyperparts`, `hyperpath`, `hyperphysics`, `hyperreal`, `hypersdf`,
+`hypersolve`, `hypertri`, and `hypervoxel`. Relevant sanitizer fuzzers remain
+the final cross-stack correctness tier.
+
+The attempted immediate replacement for Hypersolve's shared-denominator
+rational-image carrier stopped at the first gate. Although denominator and
+source-polynomial reuse and x-before-y short circuiting were preserved, the
+best pair-return form raised the complete algebraic-parameter Callgrind count
+from 9,570,229,121 to 9,586,812,181 instructions (0.17%); moving the two large
+evidence reports accounted for 7,880,394 `memcpy` instructions. An output-slot
+variant reached 9,598,735,012 instructions and added 4,092 loadable bytes.
+Both were reverted. A separate local experiment replacing the conic chart's
+small absence vector saved 18 allocations but was instruction-neutral and
+added 712 text bytes plus one 4 KiB loadable page, so it was also reverted.
+These rejected results prevent API simplification from silently weakening the
+current performance envelope.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
