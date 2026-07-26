@@ -9,10 +9,12 @@ use hypercircuit::{
     KiCadSchematicExportOptions, KiCadSchematicImportReport, LengthTuningRule, MnaUnknown,
     MosfetNewtonPolicy, MosfetNewtonStatus, NetClassRule, NetHandle, NetId, PartDefinition,
     PartInstance, PartSymbolUnit, PcbStackup, PhaseTuningGroupRule, PhaseTuningStatus,
-    PlacementRule, PortDirection, PortSignalType, RailKind, Real, Route, RoutingProblemReport,
-    SchematicPinSide, SchematicPoint, SchematicSvgOptions, SourceWaveform, SourceWaveformPoint,
-    Symbol, SymbolPin, SymbolUnitPlacement, TransientAdaptation, TransientPolicy,
-    TransientRunPolicy, TransientRunStatus, Via, ViaMaskIntent, ViaStyleRule, Zone, parts, pin,
+    PlacementAnchor, PlacementConstraint, PlacementConstraintId, PlacementConstraintKind,
+    PlacementResolutionIssue, PlacementRule, PortDirection, PortSignalType, RailKind, Real, Route,
+    RoutingProblemReport, SchematicPinSide, SchematicPoint, SchematicSvgOptions, SourceWaveform,
+    SourceWaveformPoint, Symbol, SymbolPin, SymbolUnitPlacement, TransientAdaptation,
+    TransientPolicy, TransientRunPolicy, TransientRunStatus, Via, ViaMaskIntent, ViaStyleRule,
+    Zone, parts, pin,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -1082,6 +1084,24 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
         ))
         .unwrap();
     design
+        .constrain(PlacementRule::pin_within_distance(
+            "pin-proximity",
+            &first.pin("1").unwrap(),
+            &second.pin("1").unwrap(),
+            Real::one(),
+        ))
+        .unwrap();
+    design
+        .constrain(PlacementRule::pad_within_distance(
+            "pad-proximity",
+            &first,
+            "1",
+            &second,
+            "1",
+            Real::one(),
+        ))
+        .unwrap();
+    design
         .constrain(PlacementRule::allowed_rotations(
             "r1-rotation",
             &first,
@@ -1097,7 +1117,7 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
         .unwrap();
     assert!(fixed.belongs_to(&design));
     assert_eq!(fixed.id().as_str(), "r1-fixed");
-    assert_eq!(design.layout().placement_constraints.len(), 7);
+    assert_eq!(design.layout().placement_constraints.len(), 9);
     let resolved = design
         .layout()
         .resolve_placement_constraints(design.circuit());
@@ -1108,6 +1128,32 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
             .iter()
             .all(|placement| placement.position == point(2, 2))
     );
+
+    let mut physically_unsatisfied = design.layout().clone();
+    physically_unsatisfied
+        .placement_constraints
+        .push(PlacementConstraint {
+            id: PlacementConstraintId::new("cross-pin-proximity").unwrap(),
+            kind: PlacementConstraintKind::WithinDistance {
+                subject: PlacementAnchor::Pin {
+                    instance: first.id().clone(),
+                    pin: first.pin("1").unwrap().pin().clone(),
+                },
+                anchor: PlacementAnchor::Pin {
+                    instance: second.id().clone(),
+                    pin: second.pin("2").unwrap().pin().clone(),
+                },
+                maximum: Real::one(),
+            },
+        });
+    assert!(matches!(
+        physically_unsatisfied
+            .resolve_placement_constraints(design.circuit())
+            .issues
+            .as_slice(),
+        [PlacementResolutionIssue::OutsideDistance(constraint)]
+            if constraint.as_str() == "cross-pin-proximity"
+    ));
 
     assert!(matches!(
         design.constrain(PlacementRule::within(
@@ -1133,7 +1179,7 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
         Err(DesignBuildError::InvalidPlacementConstraint(constraint))
             if constraint == "second-driver"
     ));
-    assert_eq!(design.layout().placement_constraints.len(), 7);
+    assert_eq!(design.layout().placement_constraints.len(), 9);
 
     let mut other = Design::new(
         "fluent-placement-rules",

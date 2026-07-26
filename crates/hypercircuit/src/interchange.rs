@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     BoardContour, BoardContourSegment, Circuit, CircuitEventAgenda, CircuitEventRequest,
-    CircuitLibrary, DesignRevision, PcbLayout, PcbRouteSegment, SchematicLayout,
+    CircuitLibrary, DesignIntent, DesignRevision, PcbLayout, PcbRouteSegment, SchematicLayout,
     SchematicPresentation, SignalBundleLibrary, TransientRunPolicy,
 };
 
@@ -17,7 +17,7 @@ use crate::{
 pub const SEMANTIC_SCHEMA: &str = "org.hypercircuit.semantic";
 
 /// Latest schema version understood by this crate.
-pub const SEMANTIC_SCHEMA_VERSION: u32 = 28;
+pub const SEMANTIC_SCHEMA_VERSION: u32 = 29;
 
 /// Oldest schema revision upgraded by the built-in additive migrations.
 pub const SEMANTIC_SCHEMA_MIN_MIGRATABLE_VERSION: u32 = 8;
@@ -66,6 +66,9 @@ pub enum SemanticMigrationStep {
     /// Version 28 added typed ports/bundle members, full hierarchy retention,
     /// simulation-run configuration, and schematic presentation metadata.
     NativeInterfaceParity,
+    /// Version 29 retained language-neutral source spans, net semantics,
+    /// functional roles, typed values, and concrete part-resolution evidence.
+    AuthoredDesignIntent,
 }
 
 /// Evidence describing an automatic semantic JSON upgrade.
@@ -102,6 +105,9 @@ pub struct SemanticDocument {
     /// Optional nominal signal-bundle and directional modport contracts.
     #[serde(default)]
     pub signal_bundles: SignalBundleLibrary,
+    /// Language-neutral authored semantics preserved across front-end lowering.
+    #[serde(default)]
+    pub design_intent: DesignIntent,
     /// Preordered exact authored circuit-event trace.
     #[serde(default)]
     pub event_trace: Vec<CircuitEventRequest>,
@@ -134,6 +140,8 @@ pub enum SemanticInterchangeError {
     InvalidPcb { issue_count: usize },
     /// Signal-bundle definitions or endpoint mappings are inconsistent.
     InvalidSignalBundles { issue_count: usize },
+    /// Authored source/net/role/part intent is invalid or stale.
+    InvalidDesignIntent { issue_count: usize },
     /// Authored event trace ordering, payload, or addresses are inconsistent.
     InvalidEventTrace { issue_count: usize },
     /// Exact transient-run bounds or adaptation controls are invalid.
@@ -173,6 +181,10 @@ impl Display for SemanticInterchangeError {
                 formatter,
                 "semantic signal bundles have {issue_count} validation issue(s)"
             ),
+            Self::InvalidDesignIntent { issue_count } => write!(
+                formatter,
+                "semantic authored intent has {issue_count} validation issue(s)"
+            ),
             Self::InvalidEventTrace { issue_count } => write!(
                 formatter,
                 "semantic event trace has {issue_count} validation issue(s)"
@@ -203,6 +215,7 @@ impl SemanticDocument {
             circuit,
             circuit_definitions: Vec::new(),
             signal_bundles: SignalBundleLibrary::default(),
+            design_intent: DesignIntent::default(),
             event_trace: Vec::new(),
             transient_run: None,
             schematic,
@@ -226,6 +239,16 @@ impl SemanticDocument {
         signal_bundles: SignalBundleLibrary,
     ) -> Result<Self, SemanticInterchangeError> {
         self.signal_bundles = signal_bundles;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches language-neutral source, net, role, and part-resolution intent.
+    pub fn with_design_intent(
+        mut self,
+        design_intent: DesignIntent,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.design_intent = design_intent;
         self.validate()?;
         Ok(self)
     }
@@ -401,6 +424,9 @@ impl SemanticDocument {
             migrate_typed_bundle_members(&mut value)?;
             steps.push(SemanticMigrationStep::NativeInterfaceParity);
         }
+        if version < 29 {
+            steps.push(SemanticMigrationStep::AuthoredDesignIntent);
+        }
         value["version"] = serde_json::Value::from(SEMANTIC_SCHEMA_VERSION);
         let document = serde_json::from_value::<Self>(value)
             .map_err(|error| SemanticInterchangeError::Json(error.to_string()))?;
@@ -447,6 +473,12 @@ impl SemanticDocument {
         if !bundle_report.is_valid() {
             return Err(SemanticInterchangeError::InvalidSignalBundles {
                 issue_count: bundle_report.issues.len(),
+            });
+        }
+        let intent_report = self.design_intent.validate(&library);
+        if !intent_report.is_valid() {
+            return Err(SemanticInterchangeError::InvalidDesignIntent {
+                issue_count: intent_report.issues.len(),
             });
         }
         let mut event_issue_count = self

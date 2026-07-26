@@ -40,7 +40,7 @@ vias = 106
 zones = 9
 stackup_layers = 9
 net_classes = 1
-fast_drc_findings = 168
+fast_drc_findings = 172
 fast_drc_handoff_omissions = 38
 
 [[boards]]
@@ -60,7 +60,7 @@ vias = 64
 zones = 6
 stackup_layers = 9
 net_classes = 1
-fast_drc_findings = 166
+fast_drc_findings = 170
 fast_drc_handoff_omissions = 29
 
 [[boards]]
@@ -80,7 +80,7 @@ vias = 137
 zones = 5
 stackup_layers = 9
 net_classes = 1
-fast_drc_findings = 179
+fast_drc_findings = 453
 fast_drc_handoff_omissions = 35
 
 [[boards]]
@@ -120,5 +120,5 @@ vias = 75
 zones = 6
 stackup_layers = 9
 net_classes = 1
-fast_drc_findings = 380
+fast_drc_findings = 384
 fast_drc_handoff_omissions = 30

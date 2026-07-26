@@ -3,10 +3,11 @@ use hypercircuit::{
     CircuitInstance, CircuitInstanceId, CircuitLibrary, CircuitLibraryValidationIssue,
     CircuitModuleParameter, CircuitModuleParameterOverride, CircuitModuleParameterTarget,
     CircuitParameter, CircuitPort, CircuitPortType, CircuitValidationIssue, ComponentId,
-    DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, LinearStamp, Net, NetId, PinBinding,
-    PinElectricalKind, PinRef, PortDirection, PortId, PortSignalType, RailIntent, RailKind, Real,
-    SourceStimulus, SourceWaveform, SubcircuitInstance, SubcircuitInstanceId,
-    SubcircuitPortBinding, TransientPolicy,
+    DesignIntent, DeviceModel, DeviceModelId, DeviceModelKind, DevicePin, IntentHierarchyError,
+    LinearStamp, Net, NetId, NetIntent, NetKind, NetScope, PinBinding, PinElectricalKind, PinRef,
+    PortDirection, PortId, PortSignalType, RailIntent, RailKind, Real, SourceStimulus,
+    SourceWaveform, SubcircuitInstance, SubcircuitInstanceId, SubcircuitPortBinding,
+    TransientPolicy,
 };
 
 fn empty(id: &str) -> Circuit {
@@ -287,6 +288,117 @@ fn hierarchy_validation_rejects_missing_ports_and_recursive_definitions() {
             .iter()
             .any(|issue| matches!(issue, CircuitLibraryValidationIssue::RecursiveCycle(_)))
     );
+}
+
+#[test]
+fn authored_globals_join_same_named_nets_without_boundary_ports() {
+    let child_global = NetId::new("local-ground-name").unwrap();
+    let child = empty("global-child").with_net(Net {
+        id: child_global.clone(),
+        is_ground: false,
+    });
+    let root_global = NetId::new("GND").unwrap();
+    let root = empty("global-root")
+        .with_net(Net {
+            id: root_global.clone(),
+            is_ground: true,
+        })
+        .with_subcircuit(SubcircuitInstance {
+            id: SubcircuitInstanceId::new("a").unwrap(),
+            circuit: child.id.clone(),
+            ports: Vec::new(),
+            parameter_overrides: Vec::new(),
+        })
+        .with_subcircuit(SubcircuitInstance {
+            id: SubcircuitInstanceId::new("b").unwrap(),
+            circuit: child.id.clone(),
+            ports: Vec::new(),
+            parameter_overrides: Vec::new(),
+        });
+    let library = CircuitLibrary {
+        root: root.id.clone(),
+        circuits: vec![root, child],
+    };
+    let intent = DesignIntent {
+        nets: vec![
+            NetIntent {
+                circuit: CircuitId::new("global-root").unwrap(),
+                net: root_global.clone(),
+                kind: NetKind::Ground,
+                scope: NetScope::Global("GND".into()),
+                net_class: None,
+                nominal_value: None,
+            },
+            NetIntent {
+                circuit: CircuitId::new("global-child").unwrap(),
+                net: child_global.clone(),
+                kind: NetKind::Ground,
+                scope: NetScope::Global("GND".into()),
+                net_class: None,
+                nominal_value: None,
+            },
+        ],
+        ..DesignIntent::default()
+    };
+
+    let report = library.flatten_with_intent(&intent).unwrap();
+    assert_eq!(report.circuit.nets.len(), 1);
+    assert_eq!(report.scopes.len(), 2);
+    assert_eq!(report.scopes[0].nets[&child_global], root_global);
+    assert_eq!(report.scopes[1].nets[&child_global], root_global);
+}
+
+#[test]
+fn global_child_port_cannot_bind_to_a_local_parent_net() {
+    let child_net = NetId::new("supply").unwrap();
+    let child_port = PortId::new("supply").unwrap();
+    let child = empty("global-port-child")
+        .with_net(Net {
+            id: child_net.clone(),
+            is_ground: false,
+        })
+        .with_port(CircuitPort {
+            id: child_port.clone(),
+            net: child_net.clone(),
+            direction: PortDirection::PowerInput,
+            optional: false,
+        });
+    let local = NetId::new("local").unwrap();
+    let root = empty("global-port-root")
+        .with_net(Net {
+            id: local.clone(),
+            is_ground: false,
+        })
+        .with_subcircuit(SubcircuitInstance {
+            id: SubcircuitInstanceId::new("load").unwrap(),
+            circuit: child.id.clone(),
+            ports: vec![SubcircuitPortBinding {
+                port: child_port,
+                net: local,
+            }],
+            parameter_overrides: Vec::new(),
+        });
+    let library = CircuitLibrary {
+        root: root.id.clone(),
+        circuits: vec![root, child],
+    };
+    let intent = DesignIntent {
+        nets: vec![NetIntent {
+            circuit: CircuitId::new("global-port-child").unwrap(),
+            net: child_net,
+            kind: NetKind::PowerSupply,
+            scope: NetScope::Global("VCC".into()),
+            net_class: None,
+            nominal_value: None,
+        }],
+        ..DesignIntent::default()
+    };
+
+    assert!(matches!(
+        library.flatten_with_intent(&intent),
+        Err(IntentHierarchyError::ConflictingGlobalPortBinding { global, .. })
+            if global == "VCC"
+    ));
 }
 
 #[test]

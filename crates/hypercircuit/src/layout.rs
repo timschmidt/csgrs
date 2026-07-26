@@ -1377,6 +1377,34 @@ impl PcbPlacement {
 
 /// Exact relational or regional component-placement intent.
 #[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PlacementAnchor {
+    /// The retained footprint origin of one placed instance.
+    Instance(CircuitInstanceId),
+    /// The centroid of every physical pad mapped to one logical pin.
+    Pin {
+        instance: CircuitInstanceId,
+        pin: PinRef,
+    },
+    /// The transformed center of one named physical pad.
+    Pad {
+        instance: CircuitInstanceId,
+        pad: PadId,
+    },
+}
+
+impl PlacementAnchor {
+    pub(crate) fn instance(&self) -> &CircuitInstanceId {
+        match self {
+            Self::Instance(instance) | Self::Pin { instance, .. } | Self::Pad { instance, .. } => {
+                instance
+            }
+        }
+    }
+}
+
+/// Exact relational or regional component-placement intent.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, PartialEq)]
 pub enum PlacementConstraintKind {
     /// Pin one instance origin to an exact board coordinate.
@@ -1403,6 +1431,12 @@ pub enum PlacementConstraintKind {
         min: Point2,
         #[cfg_attr(feature = "interchange", serde(with = "crate::interchange::point"))]
         max: Point2,
+    },
+    /// Require two physical placement anchors to be no farther apart than `maximum`.
+    WithinDistance {
+        subject: PlacementAnchor,
+        anchor: PlacementAnchor,
+        maximum: Real,
     },
     /// Restrict one instance to an authored set of exact rotations.
     AllowedRotations {
@@ -1439,6 +1473,8 @@ pub enum PlacementResolutionIssue {
     MisalignedY(PlacementConstraintId),
     /// Resolved origin is outside the required region.
     OutsideRegion(PlacementConstraintId),
+    /// Resolved physical anchors are farther apart than the authored maximum.
+    OutsideDistance(PlacementConstraintId),
     /// Resolved rotation is absent from the allowed set.
     DisallowedRotation(PlacementConstraintId),
     /// Resolved physical side is absent from the allowed set.
@@ -2742,6 +2778,9 @@ impl PcbLayout {
                 PlacementConstraintKind::AlignX { instances }
                 | PlacementConstraintKind::AlignY { instances } => instances.iter().collect(),
                 PlacementConstraintKind::Within { instance, .. } => vec![instance],
+                PlacementConstraintKind::WithinDistance {
+                    subject, anchor, ..
+                } => vec![subject.instance(), anchor.instance()],
                 PlacementConstraintKind::AllowedRotations { instance, .. }
                 | PlacementConstraintKind::AllowedSides { instance, .. } => vec![instance],
             };
@@ -2776,6 +2815,15 @@ impl PcbLayout {
                 | PlacementConstraintKind::AlignY { instances } => instances.len() < 2,
                 PlacementConstraintKind::Within { min, max, .. } => {
                     !(min.x <= max.x && min.y <= max.y)
+                }
+                PlacementConstraintKind::WithinDistance {
+                    subject,
+                    anchor,
+                    maximum,
+                } => {
+                    !is_strictly_positive(maximum)
+                        || !placement_anchor_exists(self, circuit, subject)
+                        || !placement_anchor_exists(self, circuit, anchor)
                 }
                 PlacementConstraintKind::AllowedRotations {
                     rotations_degrees, ..
@@ -3361,6 +3409,24 @@ impl PcbLayout {
                         ));
                     }
                 }
+                PlacementConstraintKind::WithinDistance {
+                    subject,
+                    anchor,
+                    maximum,
+                } => {
+                    let within = placement_anchor_point(self, &placements, subject)
+                        .zip(placement_anchor_point(self, &placements, anchor))
+                        .is_some_and(|(subject, anchor)| {
+                            let dx = subject.x - anchor.x;
+                            let dy = subject.y - anchor.y;
+                            dx.clone() * dx + dy.clone() * dy <= maximum.clone() * maximum.clone()
+                        });
+                    if !within {
+                        issues.push(PlacementResolutionIssue::OutsideDistance(
+                            constraint.id.clone(),
+                        ));
+                    }
+                }
                 PlacementConstraintKind::AllowedRotations {
                     instance,
                     rotations_degrees,
@@ -3390,6 +3456,93 @@ impl PcbLayout {
             }
         }
         PlacementResolutionReport { placements, issues }
+    }
+}
+
+fn placement_anchor_exists(
+    layout: &PcbLayout,
+    circuit: &Circuit,
+    anchor: &PlacementAnchor,
+) -> bool {
+    let Some(placement) = layout
+        .placements
+        .iter()
+        .find(|placement| placement.instance == *anchor.instance())
+    else {
+        return false;
+    };
+    let Some(pattern) = layout
+        .land_patterns
+        .iter()
+        .find(|pattern| pattern.id == placement.land_pattern)
+    else {
+        return false;
+    };
+    match anchor {
+        PlacementAnchor::Instance(_) => true,
+        PlacementAnchor::Pin { instance, pin } => {
+            circuit
+                .instances
+                .iter()
+                .find(|candidate| candidate.id == *instance)
+                .is_some_and(|instance| instance.pins.iter().any(|binding| binding.pin == *pin))
+                && pattern.pin_map.iter().any(|mapping| mapping.pin == *pin)
+        }
+        PlacementAnchor::Pad { pad, .. } => {
+            pattern.pads.iter().any(|candidate| candidate.id == *pad)
+        }
+    }
+}
+
+pub(crate) fn placement_anchor_point(
+    layout: &PcbLayout,
+    placements: &[PcbPlacement],
+    anchor: &PlacementAnchor,
+) -> Option<Point2> {
+    let placement = placements
+        .iter()
+        .find(|placement| placement.instance == *anchor.instance())?;
+    match anchor {
+        PlacementAnchor::Instance(_) => Some(placement.position.clone()),
+        PlacementAnchor::Pin { pin, .. } => {
+            let pattern = layout
+                .land_patterns
+                .iter()
+                .find(|pattern| pattern.id == placement.land_pattern)?;
+            let points = pattern
+                .pin_map
+                .iter()
+                .filter(|mapping| mapping.pin == *pin)
+                .filter_map(|mapping| {
+                    pattern
+                        .pads
+                        .iter()
+                        .find(|pad| pad.id == mapping.pad)
+                        .map(|pad| placement.transform_point(&pad.center))
+                })
+                .collect::<Vec<_>>();
+            let count = points.len();
+            (!points.is_empty()).then(|| {
+                let (x, y) = points
+                    .into_iter()
+                    .fold((Real::zero(), Real::zero()), |(x, y), point| {
+                        (x + point.x, y + point.y)
+                    });
+                let count = Real::from(count as u64);
+                Point2::new(
+                    (x / count.clone()).expect("a pin centroid has at least one pad"),
+                    (y / count).expect("a pin centroid has at least one pad"),
+                )
+            })
+        }
+        PlacementAnchor::Pad { pad, .. } => {
+            let pattern = layout
+                .land_patterns
+                .iter()
+                .find(|pattern| pattern.id == placement.land_pattern)?;
+            let pad = pattern.pads.iter().find(|candidate| candidate.id == *pad)?;
+            Some(placement.transform_point(&pad.center))
+        }
     }
 }
 

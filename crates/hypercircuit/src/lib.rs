@@ -30,6 +30,7 @@ pub mod event_simulation;
 pub mod fabrication;
 pub mod hierarchy;
 pub mod identity;
+pub mod intent;
 #[cfg(feature = "interchange")]
 pub mod interchange;
 pub mod interface;
@@ -144,8 +145,8 @@ pub use edit::{
     ReversibleDesignEdit,
 };
 pub use erc::{
-    ConfiguredErcReport, ErcEndpoint, ErcFinding, ErcIssue, ErcReport, ErcRuleDeck, ErcRuleId,
-    ErcSeverity,
+    ConfiguredErcReport, CopperTraceErcIssue, CopperTraceErcReport, ErcEndpoint, ErcFinding,
+    ErcIssue, ErcReport, ErcRuleDeck, ErcRuleId, ErcSeverity, RoleNetKind, SupplySource,
 };
 pub use error::{CircuitError, CircuitResult};
 pub use event_simulation::{
@@ -172,8 +173,8 @@ pub use fabrication::{
 };
 pub use hierarchy::{
     CircuitFlatteningReport, CircuitLibrary, CircuitLibraryValidationIssue,
-    CircuitLibraryValidationReport, FlattenedCircuitScope, HierarchyError, SubcircuitInstance,
-    SubcircuitPortBinding,
+    CircuitLibraryValidationReport, FlattenedCircuitScope, HierarchyError, IntentHierarchyError,
+    SubcircuitInstance, SubcircuitPortBinding,
 };
 pub use hyperreal::Real;
 pub use identity::{
@@ -186,6 +187,13 @@ pub use identity::{
     SchematicSheetId, SchematicSheetLinkId, SchematicSheetPortId, SchematicSymbolDefinitionId,
     SchematicSymbolId, SchematicWireId, SignalBundleId, SubcircuitInstanceId, ViaId, ViaStyleId,
     ZoneId,
+};
+pub use intent::{
+    DesignIntent, DesignIntentIssue, DesignIntentValidationReport, DimensionedValue,
+    FunctionalBinding, FunctionalBindingTarget, FunctionalRole, FunctionalRoleAssignment,
+    FunctionalRoleTarget, NetIntent, NetKind, NetScope, PartClass, PartSelectionIntent,
+    QuantityDimension, ResolvedPartEvidence, SemanticOrigin, SemanticTarget, SourcePosition,
+    SourceSpan,
 };
 #[cfg(feature = "interchange")]
 pub use interchange::{
@@ -230,7 +238,7 @@ pub use layout::{
     LayoutValidationReport, LengthTuningPattern, LengthTuningSide, NetClass,
     NetClassResolutionError, PadPinMap, PadShape, Pcb3dModelFormat, Pcb3dModelReference,
     Pcb3dModelTransform, PcbDesignRules, PcbKeepout, PcbLayout, PcbPlacement, PcbRoute,
-    PcbRouteSegment, PcbStackup, PcbVia, PhaseTuningGroup, PlacementConstraint,
+    PcbRouteSegment, PcbStackup, PcbVia, PhaseTuningGroup, PlacementAnchor, PlacementConstraint,
     PlacementConstraintKind, PlacementResolutionIssue, PlacementResolutionReport, Plating,
     ResolvedNetClass, RouteConstraintRegion, RouteDirection, RouteRuleRegion, RoutingNetAliases,
     StackupLayer, StackupLayerKind, ViaMaskDisposition, ViaMaskIntent, ViaStyle, ViaStyleSpan,

@@ -24,10 +24,10 @@ use crate::{
     LayoutValidationReport, LengthTuningPattern, LengthTuningPatternId, LengthTuningSide, Net,
     NetClass, NetClassId, NetId, PadId, PadPinMap, PadShape, PartRef, PcbKeepout, PcbLayout,
     PcbPlacement, PcbRoute, PcbRouteSegment, PcbStackup, PcbVia, PhaseTuningGroup,
-    PhaseTuningGroupId, PinElectricalKind, PinRef, PlacementConstraint, PlacementConstraintId,
-    PlacementConstraintKind, Plating, PortDirection, PortId, PortSignalType, RailIntent, RailKind,
-    RouteId, SchematicEndpoint, SchematicGraphic, SchematicGraphicFill, SchematicLayout,
-    SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
+    PhaseTuningGroupId, PinElectricalKind, PinRef, PlacementAnchor, PlacementConstraint,
+    PlacementConstraintId, PlacementConstraintKind, Plating, PortDirection, PortId, PortSignalType,
+    RailIntent, RailKind, RouteId, SchematicEndpoint, SchematicGraphic, SchematicGraphicFill,
+    SchematicLayout, SchematicPinPlacement, SchematicPinSide, SchematicPoint, SchematicSymbol,
     SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
     SchematicValidationIssue, SchematicValidationReport, SchematicWire, SchematicWireId,
     SourceStimulus, SourceWaveform, TransientPolicy, ViaId, ViaMaskIntent, ViaStyle, ViaStyleId,
@@ -1284,6 +1284,18 @@ enum PlacementRuleKind {
         min: Point2,
         max: Point2,
     },
+    PinWithinDistance {
+        subject: PinHandle,
+        anchor: PinHandle,
+        maximum: Real,
+    },
+    PadWithinDistance {
+        subject_instance: InstanceHandle,
+        subject_pad: String,
+        anchor_instance: InstanceHandle,
+        anchor_pad: String,
+        maximum: Real,
+    },
     AllowedRotations {
         instance: InstanceHandle,
         rotations_degrees: Vec<Real>,
@@ -1379,6 +1391,48 @@ impl PlacementRule {
                 instance: instance.clone(),
                 min,
                 max,
+            },
+            source: SourceLocation::caller(),
+        }
+    }
+
+    /// Requires the physical centroids of two logical pins to be within an exact distance.
+    #[track_caller]
+    pub fn pin_within_distance(
+        id: impl Into<String>,
+        subject: &PinHandle,
+        anchor: &PinHandle,
+        maximum: Real,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            kind: PlacementRuleKind::PinWithinDistance {
+                subject: subject.clone(),
+                anchor: anchor.clone(),
+                maximum,
+            },
+            source: SourceLocation::caller(),
+        }
+    }
+
+    /// Requires two named physical pad centers to be within an exact distance.
+    #[track_caller]
+    pub fn pad_within_distance(
+        id: impl Into<String>,
+        subject_instance: &InstanceHandle,
+        subject_pad: impl Into<String>,
+        anchor_instance: &InstanceHandle,
+        anchor_pad: impl Into<String>,
+        maximum: Real,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            kind: PlacementRuleKind::PadWithinDistance {
+                subject_instance: subject_instance.clone(),
+                subject_pad: subject_pad.into(),
+                anchor_instance: anchor_instance.clone(),
+                anchor_pad: anchor_pad.into(),
+                maximum,
             },
             source: SourceLocation::caller(),
         }
@@ -4039,6 +4093,51 @@ impl Design {
                     instance: self.checked_placement_instance(&instance)?,
                     min,
                     max,
+                },
+                None,
+            ),
+            PlacementRuleKind::PinWithinDistance {
+                subject,
+                anchor,
+                maximum,
+            } => {
+                if subject.owner != self.owner || anchor.owner != self.owner {
+                    return Err(DesignBuildError::ForeignHandle);
+                }
+                (
+                    PlacementConstraintKind::WithinDistance {
+                        subject: PlacementAnchor::Pin {
+                            instance: subject.instance,
+                            pin: subject.pin,
+                        },
+                        anchor: PlacementAnchor::Pin {
+                            instance: anchor.instance,
+                            pin: anchor.pin,
+                        },
+                        maximum,
+                    },
+                    None,
+                )
+            }
+            PlacementRuleKind::PadWithinDistance {
+                subject_instance,
+                subject_pad,
+                anchor_instance,
+                anchor_pad,
+                maximum,
+            } => (
+                PlacementConstraintKind::WithinDistance {
+                    subject: PlacementAnchor::Pad {
+                        instance: self.checked_placement_instance(&subject_instance)?,
+                        pad: PadId::new(subject_pad)
+                            .map_err(|_| DesignBuildError::InvalidIdentifier)?,
+                    },
+                    anchor: PlacementAnchor::Pad {
+                        instance: self.checked_placement_instance(&anchor_instance)?,
+                        pad: PadId::new(anchor_pad)
+                            .map_err(|_| DesignBuildError::InvalidIdentifier)?,
+                    },
+                    maximum,
                 },
                 None,
             ),

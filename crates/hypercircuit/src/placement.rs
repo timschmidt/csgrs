@@ -548,6 +548,7 @@ impl PcbLayout {
                 PlacementConstraintKind::AlignX { .. }
                 | PlacementConstraintKind::AlignY { .. }
                 | PlacementConstraintKind::Within { .. }
+                | PlacementConstraintKind::WithinDistance { .. }
                 | PlacementConstraintKind::AllowedRotations { .. }
                 | PlacementConstraintKind::AllowedSides { .. } => {}
             }
@@ -932,6 +933,31 @@ fn candidate_allowed(
                     && candidate.position.x <= max.x
                     && min.y <= candidate.position.y
                     && candidate.position.y <= max.y
+            }
+            PlacementConstraintKind::WithinDistance {
+                subject,
+                anchor,
+                maximum,
+            } if subject.instance() == instance || anchor.instance() == instance => {
+                let mut placements = layout.placements.clone();
+                for placement in &mut placements {
+                    if placement.instance == candidate.instance {
+                        placement.clone_from(candidate);
+                    } else if let Some(position) = positions.get(&placement.instance) {
+                        placement.position.clone_from(position);
+                    }
+                }
+                crate::layout::placement_anchor_point(layout, &placements, subject)
+                    .zip(crate::layout::placement_anchor_point(
+                        layout,
+                        &placements,
+                        anchor,
+                    ))
+                    .is_some_and(|(subject, anchor)| {
+                        let dx = subject.x - anchor.x;
+                        let dy = subject.y - anchor.y;
+                        dx.clone() * dx + dy.clone() * dy <= maximum.clone() * maximum.clone()
+                    })
             }
             PlacementConstraintKind::AlignX { instances } if instances.contains(instance) => {
                 alignment_target(instances, instance, positions, |point| &point.x)

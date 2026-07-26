@@ -5,8 +5,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::{
     BranchId, Bus, BusId, BusSliceId, Circuit, CircuitId, CircuitInstanceId,
     CircuitModuleParameterOverride, CircuitModuleParameterTarget, CircuitParameter,
-    CircuitValidationIssue, ComponentId, DeviceModelId, LinearStamp, Net, NetId, PinBinding,
-    PortId, SubcircuitInstanceId,
+    CircuitValidationIssue, ComponentId, DesignIntent, DeviceModelId, LinearStamp, Net, NetId,
+    NetScope, PinBinding, PortId, SubcircuitInstanceId,
 };
 
 /// Binding from one child-circuit boundary port to a net in its parent scope.
@@ -158,6 +158,49 @@ pub enum HierarchyError {
     /// Namespaced elaboration unexpectedly produced an invalid flat circuit.
     InvalidFlattenedCircuit(Vec<CircuitValidationIssue>),
 }
+
+/// Failure to elaborate hierarchy while applying retained authored net scope.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum IntentHierarchyError {
+    /// Ordinary hierarchy validation or flattening failed.
+    Hierarchy(HierarchyError),
+    /// Authored design intent is invalid or stale.
+    InvalidIntent(crate::DesignIntentValidationReport),
+    /// A global child net was explicitly bound to a different/local parent net.
+    ConflictingGlobalPortBinding {
+        parent: CircuitId,
+        instance: SubcircuitInstanceId,
+        port: PortId,
+        global: String,
+    },
+}
+
+impl std::fmt::Display for IntentHierarchyError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Hierarchy(error) => error.fmt(formatter),
+            Self::InvalidIntent(report) => write!(
+                formatter,
+                "authored design intent has {} validation issue(s)",
+                report.issues.len()
+            ),
+            Self::ConflictingGlobalPortBinding {
+                parent,
+                instance,
+                port,
+                global,
+            } => write!(
+                formatter,
+                "circuit {} child {} port {} binds global net {global} to a different parent scope",
+                parent.as_str(),
+                instance.as_str(),
+                port.as_str()
+            ),
+        }
+    }
+}
+
+impl std::error::Error for IntentHierarchyError {}
 
 impl std::fmt::Display for HierarchyError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -351,9 +394,40 @@ impl CircuitLibrary {
 
     /// Elaborates hierarchy and retains local-to-flat maps for every child scope.
     pub fn flatten_with_scopes(&self) -> Result<CircuitFlatteningReport, HierarchyError> {
+        self.flatten_with_scopes_internal(None)
+            .map_err(|error| match error {
+                IntentHierarchyError::Hierarchy(error) => error,
+                _ => unreachable!("ordinary hierarchy flattening supplies no authored intent"),
+            })
+    }
+
+    /// Elaborates hierarchy while joining nets declared with one global key.
+    ///
+    /// Ordinary local nets retain the existing path-qualified behavior. Global
+    /// declarations are canonicalized before child expansion so nested scopes
+    /// connect without synthetic source-language ports.
+    pub fn flatten_with_intent(
+        &self,
+        intent: &DesignIntent,
+    ) -> Result<CircuitFlatteningReport, IntentHierarchyError> {
+        self.flatten_with_scopes_internal(Some(intent))
+    }
+
+    fn flatten_with_scopes_internal(
+        &self,
+        intent: Option<&DesignIntent>,
+    ) -> Result<CircuitFlatteningReport, IntentHierarchyError> {
         let validation = self.validate();
         if !validation.is_valid() {
-            return Err(HierarchyError::InvalidLibrary(validation));
+            return Err(IntentHierarchyError::Hierarchy(
+                HierarchyError::InvalidLibrary(validation),
+            ));
+        }
+        if let Some(intent) = intent {
+            let report = intent.validate(self);
+            if !report.is_valid() {
+                return Err(IntentHierarchyError::InvalidIntent(report));
+            }
         }
         let definitions = self
             .circuits
@@ -367,11 +441,75 @@ impl CircuitLibrary {
         let mut flattened = instantiated_root.clone();
         flattened.module_parameters.clear();
         flattened.subcircuits.clear();
-        let root_net_map = instantiated_root
+        let mut root_net_map = instantiated_root
             .nets
             .iter()
             .map(|net| (net.id.clone(), net.id.clone()))
             .collect::<BTreeMap<_, _>>();
+        let global_declarations = intent.map_or_else(BTreeMap::new, |intent| {
+            intent
+                .nets
+                .iter()
+                .filter_map(|net| match &net.scope {
+                    NetScope::Local => None,
+                    NetScope::Global(key) => {
+                        Some(((net.circuit.clone(), net.net.clone()), key.clone()))
+                    }
+                })
+                .collect::<BTreeMap<_, _>>()
+        });
+        let mut global_nets = BTreeMap::<String, NetId>::new();
+        for net in &instantiated_root.nets {
+            if let Some(key) =
+                global_declarations.get(&(instantiated_root.id.clone(), net.id.clone()))
+            {
+                global_nets.insert(key.clone(), net.id.clone());
+            }
+        }
+        if let Some(intent) = intent {
+            for net_intent in &intent.nets {
+                let NetScope::Global(key) = &net_intent.scope else {
+                    continue;
+                };
+                if global_nets.contains_key(key) {
+                    continue;
+                }
+                let mut id = NetId::new(key.clone())
+                    .expect("validated nonempty global name is a valid net identity");
+                if flattened.nets.iter().any(|net| net.id == id) {
+                    id = NetId::new(format!("@global/{key}"))
+                        .expect("prefixed global identity is nonempty");
+                }
+                let is_ground = intent.nets.iter().any(|candidate| {
+                    candidate.scope == NetScope::Global(key.clone())
+                        && definitions
+                            .get(&candidate.circuit)
+                            .and_then(|circuit| {
+                                circuit.nets.iter().find(|net| net.id == candidate.net)
+                            })
+                            .is_some_and(|net| net.is_ground)
+                });
+                flattened.nets.push(Net {
+                    id: id.clone(),
+                    is_ground,
+                });
+                global_nets.insert(key.clone(), id);
+            }
+        }
+        for net in &instantiated_root.nets {
+            if let Some(key) =
+                global_declarations.get(&(instantiated_root.id.clone(), net.id.clone()))
+            {
+                root_net_map.insert(
+                    net.id.clone(),
+                    global_nets
+                        .get(key)
+                        .expect("root global was canonicalized")
+                        .clone(),
+                );
+            }
+        }
+        validate_global_port_bindings(self, &definitions, &global_declarations)?;
         let mut scopes = Vec::new();
         expand_children(
             &instantiated_root,
@@ -379,6 +517,8 @@ impl CircuitLibrary {
             &[],
             &root_net_map,
             &definitions,
+            &global_declarations,
+            &global_nets,
             &mut flattened,
             &mut scopes,
         );
@@ -389,7 +529,9 @@ impl CircuitLibrary {
                 scopes,
             })
         } else {
-            Err(HierarchyError::InvalidFlattenedCircuit(report.issues))
+            Err(IntentHierarchyError::Hierarchy(
+                HierarchyError::InvalidFlattenedCircuit(report.issues),
+            ))
         }
     }
 }
@@ -427,12 +569,15 @@ fn find_cycles(
     finished.insert(id.clone());
 }
 
+#[allow(clippy::too_many_arguments)]
 fn expand_children(
     parent: &Circuit,
     parent_path: &str,
     parent_segments: &[SubcircuitInstanceId],
     parent_net_map: &BTreeMap<NetId, NetId>,
     definitions: &BTreeMap<CircuitId, &Circuit>,
+    global_declarations: &BTreeMap<(CircuitId, NetId), String>,
+    global_nets: &BTreeMap<String, NetId>,
     output: &mut Circuit,
     scopes: &mut Vec<FlattenedCircuitScope>,
 ) {
@@ -469,12 +614,18 @@ fn expand_children(
             if child_net_map.contains_key(&net.id) {
                 continue;
             }
-            let id = namespaced_net(&path, &net.id);
+            let id = global_declarations
+                .get(&(child.id.clone(), net.id.clone()))
+                .and_then(|key| global_nets.get(key))
+                .cloned()
+                .unwrap_or_else(|| namespaced_net(&path, &net.id));
             child_net_map.insert(net.id.clone(), id.clone());
-            output.nets.push(Net {
-                id,
-                is_ground: net.is_ground,
-            });
+            if !output.nets.iter().any(|existing| existing.id == id) {
+                output.nets.push(Net {
+                    id,
+                    is_ground: net.is_ground,
+                });
+            }
         }
 
         let bus_map = child
@@ -580,10 +731,45 @@ fn expand_children(
             &path_segments,
             &child_net_map,
             definitions,
+            global_declarations,
+            global_nets,
             output,
             scopes,
         );
     }
+}
+
+fn validate_global_port_bindings(
+    library: &CircuitLibrary,
+    definitions: &BTreeMap<CircuitId, &Circuit>,
+    globals: &BTreeMap<(CircuitId, NetId), String>,
+) -> Result<(), IntentHierarchyError> {
+    for parent in &library.circuits {
+        for instance in &parent.subcircuits {
+            let child = definitions
+                .get(&instance.circuit)
+                .expect("ordinary hierarchy validation resolved child");
+            for binding in &instance.ports {
+                let port = child
+                    .ports
+                    .iter()
+                    .find(|port| port.id == binding.port)
+                    .expect("ordinary hierarchy validation resolved child port");
+                let Some(global) = globals.get(&(child.id.clone(), port.net.clone())) else {
+                    continue;
+                };
+                if globals.get(&(parent.id.clone(), binding.net.clone())) != Some(global) {
+                    return Err(IntentHierarchyError::ConflictingGlobalPortBinding {
+                        parent: parent.id.clone(),
+                        instance: instance.id.clone(),
+                        port: binding.port.clone(),
+                        global: global.clone(),
+                    });
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 fn instantiate_parameters(

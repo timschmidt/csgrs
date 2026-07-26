@@ -3,20 +3,22 @@
 use hypercircuit::{
     AdapterKind, AssemblyOutputs, AssemblyPartOverride, AssemblyVariant, AssemblyVariantId,
     BoardId, BoardOutline, BoardSide, Circuit, CircuitId, CircuitInstance, CircuitInstanceId,
-    CircuitParameter, ComponentId, CopperZone, DeviceModel, DeviceModelId, DeviceModelKind,
-    DevicePin, DifferentialPair, DrcReadinessPolicy, FabricationPackage, KeepoutId, KeepoutScope,
-    KiCadExportOmission, KiCadExportOptions, KiCadImportOptions, KiCadImportReport, LandPattern,
-    LandPatternBody, LandPatternGraphic, LandPatternGraphicId, LandPatternGraphicPrimitive,
-    LandPatternId, LandPatternPad, LayerRole, MaterializationOptions, Net, NetClass, NetClassId,
-    NetId, PadId, PadPinMap, PadShape, PartRef, PcbDesignRules, PcbKeepout, PcbLayout,
-    PcbPlacement, PcbRoute, PcbStackup, PcbSvgOptions, PcbVia, PinBinding, PinElectricalKind,
-    PinRef, PlacementConstraint, PlacementConstraintId, PlacementConstraintKind,
-    PlacementResolutionIssue, Plating, Real, RouteId, RoutingProblemReport, RoutingSolution,
-    SchematicEndpoint, SchematicLabel, SchematicLabelId, SchematicLayout, SchematicPinPlacement,
-    SchematicPinSide, SchematicPoint, SchematicSvgOptions, SchematicSymbol,
-    SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
-    SchematicWire, SchematicWireId, SemanticDocument, StackupLayer, StackupLayerKind,
-    TransientPolicy, ViaId, ZoneId,
+    CircuitParameter, ComponentId, CopperZone, DesignIntent, DeviceModel, DeviceModelId,
+    DeviceModelKind, DevicePin, DifferentialPair, DimensionedValue, DrcReadinessPolicy,
+    FabricationPackage, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
+    FunctionalRoleAssignment, FunctionalRoleTarget, KeepoutId, KeepoutScope, KiCadExportOmission,
+    KiCadExportOptions, KiCadImportOptions, KiCadImportReport, LandPattern, LandPatternBody,
+    LandPatternGraphic, LandPatternGraphicId, LandPatternGraphicPrimitive, LandPatternId,
+    LandPatternPad, LayerRole, MaterializationOptions, Net, NetClass, NetClassId, NetId, PadId,
+    PadPinMap, PadShape, PartRef, PcbDesignRules, PcbKeepout, PcbLayout, PcbPlacement, PcbRoute,
+    PcbStackup, PcbSvgOptions, PcbVia, PinBinding, PinElectricalKind, PinRef, PlacementConstraint,
+    PlacementConstraintId, PlacementConstraintKind, PlacementResolutionIssue, Plating,
+    QuantityDimension, Real, RouteId, RoutingProblemReport, RoutingSolution, SchematicEndpoint,
+    SchematicLabel, SchematicLabelId, SchematicLayout, SchematicPinPlacement, SchematicPinSide,
+    SchematicPoint, SchematicSvgOptions, SchematicSymbol, SchematicSymbolDefinition,
+    SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit, SchematicWire,
+    SchematicWireId, SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition, SourceSpan,
+    StackupLayer, StackupLayerKind, TransientPolicy, ViaId, ZoneId,
 };
 use hyperlattice::Point2;
 use hyperpath::{LinePathSegment, SpecctraRoute, TraceLayer};
@@ -642,6 +644,7 @@ fn representative_board_spans_authoring_review_verification_and_release_outputs(
             hypercircuit::SemanticMigrationStep::DifferentialPairNeckdown,
             hypercircuit::SemanticMigrationStep::MixedSignalWorkflow,
             hypercircuit::SemanticMigrationStep::NativeInterfaceParity,
+            hypercircuit::SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     assert_eq!(
@@ -942,5 +945,86 @@ fn package_body_is_an_explicit_fallback_when_no_courtyard_exists() {
         !missing
             .run_readiness(&DrcReadinessPolicy::default())
             .is_release_clean()
+    );
+}
+
+#[test]
+fn authored_role_handoff_preserves_physical_endpoints_and_source_subjects() {
+    let (circuit, _, layout) = release_fixture();
+    let materialized = layout
+        .materialize(&circuit, MaterializationOptions::default())
+        .unwrap();
+    let role_target = SemanticTarget::Instance {
+        circuit: circuit.id.clone(),
+        instance: CircuitInstanceId::new("R1").unwrap(),
+    };
+    let intent = DesignIntent {
+        origins: vec![SemanticOrigin {
+            target: role_target,
+            span: SourceSpan::new(
+                "fixtures/termination.copper",
+                SourcePosition::new(20, 2, 1),
+                SourcePosition::new(39, 2, 20),
+            ),
+            label: Some("@termination".into()),
+        }],
+        roles: vec![FunctionalRoleAssignment {
+            target: FunctionalRoleTarget::Instance {
+                circuit: circuit.id.clone(),
+                instance: CircuitInstanceId::new("R1").unwrap(),
+            },
+            role: FunctionalRole::TerminationResistor,
+            bindings: vec![
+                FunctionalBinding {
+                    name: "component".into(),
+                    target: FunctionalBindingTarget::Pin {
+                        circuit: circuit.id.clone(),
+                        instance: CircuitInstanceId::new("R1").unwrap(),
+                        pin: PinRef::new("+").unwrap(),
+                    },
+                },
+                FunctionalBinding {
+                    name: "target".into(),
+                    target: FunctionalBindingTarget::Net {
+                        circuit: circuit.id.clone(),
+                        net: NetId::new("OUT").unwrap(),
+                    },
+                },
+            ],
+            parameters: std::collections::BTreeMap::from([(
+                "maximum-distance".into(),
+                DimensionedValue::new(Real::one(), QuantityDimension::Length, "mm"),
+            )]),
+        }],
+        ..DesignIntent::default()
+    };
+    let handoff = hypercircuit::HyperDrcHandoff::from_materialization_with_intent(
+        &layout,
+        &materialized,
+        &circuit,
+        &intent,
+    );
+
+    assert_eq!(handoff.authored_roles.len(), 1);
+    assert_eq!(
+        handoff.authored_roles[0]
+            .subject
+            .source
+            .as_ref()
+            .map(|span| span.uri.as_str()),
+        Some("fixtures/termination.copper")
+    );
+    assert!(
+        handoff.authored_roles[0]
+            .endpoints
+            .iter()
+            .all(|endpoint| !endpoint.locations.is_empty())
+    );
+    assert!(
+        handoff
+            .run_readiness(&DrcReadinessPolicy::default())
+            .violations
+            .iter()
+            .all(|violation| violation.check != "authored-functional-role-readiness")
     );
 }

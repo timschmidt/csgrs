@@ -1071,8 +1071,13 @@ fn materialize_zone(
         positive_profiles.push(profile);
         positive_profiles.append(&mut positive_additions);
         let mut negative_profiles = thermal_gap_profiles;
-        for _ in 0..positive_profiles.len() {
-            negative_profiles.extend(hard_negative_profiles.iter().cloned());
+        for positive in &positive_profiles {
+            negative_profiles.extend(
+                hard_negative_profiles
+                    .iter()
+                    .filter(|negative| profiles_may_intersect(positive, negative))
+                    .cloned(),
+            );
         }
         zone_compound(
             &source,
@@ -1434,6 +1439,12 @@ fn zone_center_extent(points: &[Point2]) -> Result<(Point2, Real), GeometryMater
     );
     let extent = (max_x - min_x) + (max_y - min_y);
     Ok((center, extent))
+}
+
+fn profiles_may_intersect(left: &Profile, right: &Profile) -> bool {
+    left.try_intersection(right)
+        .map(|intersection| !intersection.is_empty())
+        .unwrap_or(true)
 }
 
 fn zone_offset(
@@ -2101,7 +2112,7 @@ fn subtract_drill_exact(
     cutter: &Profile,
 ) -> Result<Profile, String> {
     match profile.try_difference(cutter) {
-        Ok(realized) => return Ok(realized),
+        Ok(realized) => Ok(realized),
         Err(whole_error) if matches!(drill.shape, DrillShape::Round { .. }) => {
             let sectors = exact_round_drill_sectors(drill).map_err(|sector_error| {
                 format!("whole cutter: {whole_error:?}; exact sector construction: {sector_error}")
@@ -3460,6 +3471,24 @@ mod tests {
         .expect("a dominant exact cut must survive overlapping positive operands");
         let half = (Real::one() / Real::from(2_u8)).unwrap();
         assert_eq!(hard_cut.contains_xy(Real::from(2), half), Some(false));
+    }
+
+    #[test]
+    fn disjoint_additive_compound_does_not_invent_coincident_holes() {
+        let circle = Profile::circle(Real::from(3), 64).translate(
+            Real::from(15),
+            Real::from(3),
+            Real::zero(),
+        );
+        let rectangle = Profile::rectangle(Real::from(26), Real::from(6)).translate(
+            Real::from(15),
+            Real::from(15),
+            Real::zero(),
+        );
+        let union = exact_compound_composition(&[circle, rectangle], &[]).unwrap();
+        let profiles = union.region_profiles();
+        assert_eq!(profiles.len(), 2);
+        assert!(profiles.iter().all(|profile| profile.holes().is_empty()));
     }
 
     #[test]

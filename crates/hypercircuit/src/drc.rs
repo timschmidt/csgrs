@@ -9,8 +9,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use hypercurve::Point2 as CurvePoint2;
 use hyperdrc::authoring_intent::{
     AuthoredComponentEnvelope, AuthoredComponentEnvelopeKind, AuthoredComponentSide,
-    AuthoredKeepout, AuthoredKeepoutScope, AuthoredRoutedSlot, authored_component_readiness,
-    authored_keepout_readiness, authored_routed_slot_readiness,
+    AuthoredFunctionalRole, AuthoredFunctionalRoleKind, AuthoredKeepout, AuthoredKeepoutScope,
+    AuthoredNetIntent, AuthoredNetKind, AuthoredRoleEndpoint, AuthoredRoutedSlot,
+    authored_component_readiness, authored_functional_role_readiness, authored_keepout_readiness,
+    authored_routed_slot_readiness,
 };
 use hyperdrc::checks::{
     NET_IMPEDANCE_TARGET_READINESS_CHECK, minimum_mask_opening, net_constraint_readiness,
@@ -23,7 +25,10 @@ use hyperdrc::constraint_policy::{
     StackupLayerKind as DrcStackupLayerKind,
 };
 use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
-use hyperdrc::{LayerMetadata, PcbSketch, Severity, Violation};
+use hyperdrc::{
+    FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, PcbSketch, Severity,
+    Violation,
+};
 use hyperphysics::{
     MaterialPropertyGraph, MaterialPropertyKind, PropertyResolutionStatus, PropertyValue,
     SourceSpec,
@@ -31,8 +36,11 @@ use hyperphysics::{
 use hyperreal::RealSign;
 
 use crate::{
-    BoardSide, DrillShape, KeepoutScope, LandPatternGraphicPrimitive, LayerRole, PcbLayout,
-    PcbMaterializationReport, Plating, ProcessLayerRole, Real, StackupLayerKind,
+    BoardSide, Circuit, CircuitId, DesignIntent, DrillShape, FunctionalBindingTarget,
+    FunctionalRole, FunctionalRoleAssignment, FunctionalRoleTarget, KeepoutScope,
+    LandPatternGraphicPrimitive, LayerRole, MaterializedCopperIdentity, NetKind, PcbLayout,
+    PcbMaterializationReport, Plating, ProcessLayerRole, QuantityDimension, Real, SemanticTarget,
+    SourceSpan, StackupLayerKind,
 };
 
 /// HyperPhysics custom-property key for a dimensionless relative permittivity.
@@ -218,6 +226,10 @@ pub struct HyperDrcHandoff {
     pub expected_component_sources: Vec<String>,
     /// Side-aware placed courtyard/body envelopes.
     pub authored_components: Vec<AuthoredComponentEnvelope>,
+    /// Refined electrical net semantics supplied by native authoring.
+    pub authored_nets: Vec<AuthoredNetIntent>,
+    /// Authoritative component/subcircuit functional roles and physical endpoints.
+    pub authored_roles: Vec<AuthoredFunctionalRole>,
     /// Retained conversion limitations.
     pub omissions: Vec<DrcHandoffOmission>,
 }
@@ -496,22 +508,40 @@ impl HyperDrcHandoff {
             .expect("validated layout has resolvable net classes");
         let mut net_classes = resolved_net_classes
             .iter()
-            .map(|class| NetClassConfig {
-                name: class.id.as_str().to_owned(),
-                nets: class
-                    .nets
-                    .iter()
-                    .map(|net| net.as_str().to_owned())
-                    .collect(),
-                min_width: class.min_trace_width.clone(),
-                min_clearance: class.min_clearance.clone(),
-                max_via_count: class.max_via_count,
-                max_length: class.max_length.clone(),
-                requires_reference_plane: Some(class.requires_reference_plane),
-                requires_impedance_control: Some(class.target_impedance_ohms.is_some()),
-                target_impedance_ohms: class.target_impedance_ohms.clone(),
-                impedance_tolerance_ohms: class.impedance_tolerance_ohms.clone(),
-                ..NetClassConfig::default()
+            .map(|class| {
+                let style = class
+                    .preferred_via_style
+                    .as_ref()
+                    .and_then(|id| layout.rules.via_styles.iter().find(|style| style.id == *id));
+                NetClassConfig {
+                    name: class.id.as_str().to_owned(),
+                    nets: class
+                        .nets
+                        .iter()
+                        .map(|net| net.as_str().to_owned())
+                        .collect(),
+                    min_width: class.min_trace_width.clone(),
+                    min_clearance: class.min_clearance.clone(),
+                    max_via_count: class.max_via_count,
+                    preferred_via_land_diameter: class
+                        .preferred_via_land_diameter
+                        .clone()
+                        .or_else(|| style.map(|style| style.land_diameter.clone())),
+                    preferred_via_drill_diameter: class
+                        .preferred_via_drill_diameter
+                        .clone()
+                        .or_else(|| style.map(|style| style.drill_diameter.clone())),
+                    preferred_via_style: class
+                        .preferred_via_style
+                        .as_ref()
+                        .map(|style| style.as_str().to_owned()),
+                    max_length: class.max_length.clone(),
+                    requires_reference_plane: Some(class.requires_reference_plane),
+                    requires_impedance_control: Some(class.target_impedance_ohms.is_some()),
+                    target_impedance_ohms: class.target_impedance_ohms.clone(),
+                    impedance_tolerance_ohms: class.impedance_tolerance_ohms.clone(),
+                    ..NetClassConfig::default()
+                }
             })
             .collect::<Vec<_>>();
         for pair in &layout.rules.differential_pairs {
@@ -563,8 +593,53 @@ impl HyperDrcHandoff {
             authored_slots,
             expected_component_sources,
             authored_components,
+            authored_nets: Vec::new(),
+            authored_roles: Vec::new(),
             omissions,
         }
+    }
+
+    /// Converts a flat native design and attaches source-addressable authored
+    /// net kinds and functional-role placement evidence.
+    ///
+    /// Hierarchical callers should first use `CircuitLibrary::flatten_with_intent`
+    /// and compose layout identities against the returned scope maps.
+    pub fn from_materialization_with_intent(
+        layout: &PcbLayout,
+        materialized: &PcbMaterializationReport,
+        circuit: &Circuit,
+        intent: &DesignIntent,
+    ) -> Self {
+        let mut handoff = Self::from_materialization(layout, materialized);
+        handoff.authored_nets = intent
+            .nets
+            .iter()
+            .filter(|net| net.circuit == circuit.id)
+            .map(|net| AuthoredNetIntent {
+                net: net.net.as_str().to_owned(),
+                kind: authored_net_kind(&net.kind),
+                nominal_voltage: net.nominal_value.as_ref().and_then(|value| {
+                    (value.dimension == QuantityDimension::Voltage).then(|| value.value.clone())
+                }),
+                subject: finding_subject(
+                    "net",
+                    net.net.as_str(),
+                    intent,
+                    &SemanticTarget::Net {
+                        circuit: net.circuit.clone(),
+                        net: net.net.clone(),
+                    },
+                ),
+            })
+            .collect();
+        handoff.authored_roles = intent
+            .roles
+            .iter()
+            .filter_map(|assignment| {
+                authored_functional_role(circuit, materialized, intent, assignment)
+            })
+            .collect();
+        handoff
     }
 
     /// Runs HyperDRC's native stackup/net-class and authored-intent checks.
@@ -603,6 +678,7 @@ impl HyperDrcHandoff {
             &self.authored_keepouts,
             &policy.minimum_component_report_area,
         ));
+        violations.extend(authored_functional_role_readiness(&self.authored_roles));
         for process in &self.process_layers {
             match process.role {
                 ProcessLayerRole::FrontSolderMask | ProcessLayerRole::BackSolderMask => {
@@ -721,6 +797,288 @@ impl HyperDrcHandoff {
         self.process_layers
             .iter()
             .find(|layer| layer.role == wanted)
+    }
+}
+
+fn authored_net_kind(kind: &NetKind) -> AuthoredNetKind {
+    match kind {
+        NetKind::Generic => AuthoredNetKind::Generic,
+        NetKind::PowerSupply => AuthoredNetKind::PowerSupply,
+        NetKind::Ground => AuthoredNetKind::Ground,
+        NetKind::DigitalSignal => AuthoredNetKind::DigitalSignal,
+        NetKind::AnalogSignal => AuthoredNetKind::AnalogSignal,
+        NetKind::DifferentialPairMember => AuthoredNetKind::DifferentialPairMember,
+        NetKind::Extension {
+            namespace,
+            name,
+            version,
+        } => AuthoredNetKind::Extension {
+            namespace: namespace.clone(),
+            name: name.clone(),
+            version: version.clone(),
+        },
+    }
+}
+
+fn authored_functional_role(
+    circuit: &Circuit,
+    materialized: &PcbMaterializationReport,
+    intent: &DesignIntent,
+    assignment: &FunctionalRoleAssignment,
+) -> Option<AuthoredFunctionalRole> {
+    if role_target_circuit(&assignment.target) != &circuit.id {
+        return None;
+    }
+    let target = role_semantic_target(&assignment.target);
+    let subject = finding_subject(
+        "functional-role",
+        &role_subject_id(&assignment.target),
+        intent,
+        &target,
+    );
+    let endpoints = assignment
+        .bindings
+        .iter()
+        .map(|binding| {
+            let semantic_target = binding_semantic_target(&binding.target);
+            AuthoredRoleEndpoint {
+                name: canonical_role_binding(&binding.name).into(),
+                net: match &binding.target {
+                    FunctionalBindingTarget::Net { net, .. } => Some(net.as_str().to_owned()),
+                    FunctionalBindingTarget::Pin {
+                        circuit: target_circuit,
+                        instance,
+                        pin,
+                    } => circuit_instance_pin_net(target_circuit, instance, pin, circuit),
+                },
+                locations: role_binding_locations(
+                    circuit,
+                    materialized,
+                    assignment,
+                    &binding.target,
+                ),
+                subject: Some(finding_subject(
+                    match &binding.target {
+                        FunctionalBindingTarget::Net { .. } => "net",
+                        FunctionalBindingTarget::Pin { .. } => "pin",
+                    },
+                    &binding_subject_id(&binding.target),
+                    intent,
+                    &semantic_target,
+                )),
+            }
+        })
+        .collect();
+    let maximum_distance = assignment
+        .parameters
+        .iter()
+        .find(|(name, value)| {
+            matches!(
+                name.as_str(),
+                "maximum-distance" | "spacing" | "maximum_distance"
+            ) && value.dimension == QuantityDimension::Length
+        })
+        .map(|(_, value)| value.value.clone());
+    Some(AuthoredFunctionalRole {
+        subject,
+        role: match &assignment.role {
+            FunctionalRole::LowpassFilter => AuthoredFunctionalRoleKind::LowpassFilter,
+            FunctionalRole::HighpassFilter => AuthoredFunctionalRoleKind::HighpassFilter,
+            FunctionalRole::BandpassFilter => AuthoredFunctionalRoleKind::BandpassFilter,
+            FunctionalRole::EmiFilter => AuthoredFunctionalRoleKind::EmiFilter,
+            FunctionalRole::BuckRegulator => AuthoredFunctionalRoleKind::BuckRegulator,
+            FunctionalRole::LdoRegulator => AuthoredFunctionalRoleKind::LdoRegulator,
+            FunctionalRole::VoltageDivider => AuthoredFunctionalRoleKind::VoltageDivider,
+            FunctionalRole::CrystalOscillator => AuthoredFunctionalRoleKind::CrystalOscillator,
+            FunctionalRole::OpAmpStage => AuthoredFunctionalRoleKind::OpAmpStage,
+            FunctionalRole::DecouplingCapacitor => AuthoredFunctionalRoleKind::DecouplingCapacitor,
+            FunctionalRole::BulkCapacitor => AuthoredFunctionalRoleKind::BulkCapacitor,
+            FunctionalRole::CurrentSenseResistor => {
+                AuthoredFunctionalRoleKind::CurrentSenseResistor
+            }
+            FunctionalRole::PullupResistor => AuthoredFunctionalRoleKind::PullupResistor,
+            FunctionalRole::PulldownResistor => AuthoredFunctionalRoleKind::PulldownResistor,
+            FunctionalRole::TerminationResistor => AuthoredFunctionalRoleKind::TerminationResistor,
+            FunctionalRole::Extension {
+                namespace,
+                name,
+                version,
+            } => AuthoredFunctionalRoleKind::Extension {
+                namespace: namespace.clone(),
+                name: name.clone(),
+                version: version.clone(),
+            },
+        },
+        endpoints,
+        maximum_distance,
+    })
+}
+
+fn role_binding_locations(
+    circuit: &Circuit,
+    materialized: &PcbMaterializationReport,
+    assignment: &FunctionalRoleAssignment,
+    target: &FunctionalBindingTarget,
+) -> Vec<[Real; 2]> {
+    let role_instance = match &assignment.target {
+        FunctionalRoleTarget::Instance { instance, .. } => Some(instance),
+        _ => None,
+    };
+    materialized
+        .copper_features
+        .iter()
+        .filter(|feature| match target {
+            FunctionalBindingTarget::Net {
+                circuit: target_circuit,
+                net,
+            } => {
+                target_circuit == &circuit.id
+                    && feature.net.as_ref() == Some(net)
+                    && role_instance.is_none_or(|role_instance| {
+                        matches!(
+                            &feature.identity,
+                            MaterializedCopperIdentity::Pad { instance, .. }
+                                if instance == role_instance
+                        )
+                    })
+            }
+            FunctionalBindingTarget::Pin {
+                circuit: target_circuit,
+                instance: target_instance,
+                pin,
+            } => {
+                target_circuit == &circuit.id
+                    && matches!(
+                        &feature.identity,
+                        MaterializedCopperIdentity::Pad {
+                            instance,
+                            pin: Some(feature_pin),
+                            ..
+                        } if instance == target_instance && feature_pin == pin
+                    )
+            }
+        })
+        .map(|feature| [feature.anchor.x.clone(), feature.anchor.y.clone()])
+        .collect()
+}
+
+fn circuit_instance_pin_net(
+    target_circuit: &CircuitId,
+    instance: &crate::CircuitInstanceId,
+    pin: &crate::PinRef,
+    circuit: &Circuit,
+) -> Option<String> {
+    (target_circuit == &circuit.id)
+        .then(|| {
+            circuit
+                .instances
+                .iter()
+                .find(|candidate| candidate.id == *instance)?
+                .pins
+                .iter()
+                .find(|binding| binding.pin == *pin)
+                .map(|binding| binding.net.as_str().to_owned())
+        })
+        .flatten()
+}
+
+fn role_target_circuit(target: &FunctionalRoleTarget) -> &CircuitId {
+    match target {
+        FunctionalRoleTarget::Circuit(circuit)
+        | FunctionalRoleTarget::Instance { circuit, .. }
+        | FunctionalRoleTarget::Subcircuit { circuit, .. } => circuit,
+    }
+}
+
+fn role_subject_id(target: &FunctionalRoleTarget) -> String {
+    match target {
+        FunctionalRoleTarget::Circuit(circuit) => circuit.as_str().to_owned(),
+        FunctionalRoleTarget::Instance { instance, .. } => instance.as_str().to_owned(),
+        FunctionalRoleTarget::Subcircuit { instance, .. } => instance.as_str().to_owned(),
+    }
+}
+
+fn role_semantic_target(target: &FunctionalRoleTarget) -> SemanticTarget {
+    match target {
+        FunctionalRoleTarget::Circuit(circuit) => SemanticTarget::Circuit(circuit.clone()),
+        FunctionalRoleTarget::Instance { circuit, instance } => SemanticTarget::Instance {
+            circuit: circuit.clone(),
+            instance: instance.clone(),
+        },
+        FunctionalRoleTarget::Subcircuit { circuit, instance } => SemanticTarget::Subcircuit {
+            circuit: circuit.clone(),
+            instance: instance.clone(),
+        },
+    }
+}
+
+fn binding_subject_id(target: &FunctionalBindingTarget) -> String {
+    match target {
+        FunctionalBindingTarget::Net { net, .. } => net.as_str().to_owned(),
+        FunctionalBindingTarget::Pin { instance, pin, .. } => {
+            format!("{}:{}", instance.as_str(), pin.as_str())
+        }
+    }
+}
+
+fn binding_semantic_target(target: &FunctionalBindingTarget) -> SemanticTarget {
+    match target {
+        FunctionalBindingTarget::Net { circuit, net } => SemanticTarget::Net {
+            circuit: circuit.clone(),
+            net: net.clone(),
+        },
+        FunctionalBindingTarget::Pin {
+            circuit,
+            instance,
+            pin,
+        } => SemanticTarget::Pin {
+            circuit: circuit.clone(),
+            instance: instance.clone(),
+            pin: pin.clone(),
+        },
+    }
+}
+
+fn canonical_role_binding(name: &str) -> &str {
+    match name {
+        "gnd" | "ground" | "ref" => "reference",
+        "of" => "target",
+        "in" | "vin" | "sig_in" | "line" => "input",
+        "out" | "vout" | "sig_out" | "load" => "output",
+        other => other,
+    }
+}
+
+fn finding_subject(
+    kind: &str,
+    id: &str,
+    intent: &DesignIntent,
+    target: &SemanticTarget,
+) -> FindingSubject {
+    FindingSubject {
+        kind: kind.into(),
+        id: id.into(),
+        source: intent
+            .origins
+            .iter()
+            .find(|origin| &origin.target == target)
+            .map(|origin| finding_source_span(&origin.span)),
+    }
+}
+
+fn finding_source_span(span: &SourceSpan) -> FindingSourceSpan {
+    FindingSourceSpan {
+        uri: span.uri.clone(),
+        start: FindingSourcePosition {
+            byte: span.start.byte,
+            line: span.start.line,
+            column: span.start.column,
+        },
+        end: FindingSourcePosition {
+            byte: span.end.byte,
+            line: span.end.line,
+            column: span.end.column,
+        },
     }
 }
 
@@ -1288,6 +1646,8 @@ mod tests {
             authored_slots: Vec::new(),
             expected_component_sources: Vec::new(),
             authored_components: Vec::new(),
+            authored_nets: Vec::new(),
+            authored_roles: Vec::new(),
             omissions,
         };
         let report = handoff.run_readiness(&DrcReadinessPolicy::default());

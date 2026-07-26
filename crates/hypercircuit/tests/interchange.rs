@@ -3,18 +3,21 @@
 use hypercircuit::{
     AdapterKind, BoardId, BoardOutline, BundleMemberId, Circuit, CircuitEventCause,
     CircuitEventKind, CircuitEventPhase, CircuitEventRequest, CircuitEventTarget, CircuitId,
-    CircuitInstance, CircuitInstanceId, CircuitLibrary, ComponentId, DeviceModel, DeviceModelId,
-    DeviceModelKind, DevicePin, DifferentialPair, DifferentialPairId, DifferentialPairNeckdown,
-    LandPattern, LandPatternId, LandPatternPad, Net, NetId, PadId, PadShape, PcbDesignRules,
-    PcbLayout, PcbStackup, PinBinding, PinElectricalKind, PinRef, Plating, Real,
+    CircuitInstance, CircuitInstanceId, CircuitLibrary, ComponentId, DesignIntent, DeviceModel,
+    DeviceModelId, DeviceModelKind, DevicePin, DifferentialPair, DifferentialPairId,
+    DifferentialPairNeckdown, DimensionedValue, FunctionalBinding, FunctionalBindingTarget,
+    FunctionalRole, FunctionalRoleAssignment, FunctionalRoleTarget, LandPattern, LandPatternId,
+    LandPatternPad, Net, NetId, NetIntent, NetKind, NetScope, PadId, PadShape, PcbDesignRules,
+    PcbLayout, PcbStackup, PinBinding, PinElectricalKind, PinRef, Plating, QuantityDimension, Real,
     SEMANTIC_SCHEMA_VERSION, SchematicBlockPlacement, SchematicBlockSize, SchematicCanvasSettings,
     SchematicConnectionStyle, SchematicEndpoint, SchematicLayout, SchematicPinPlacement,
     SchematicPinSide, SchematicPoint, SchematicPresentation, SchematicSymbol,
     SchematicSymbolDefinition, SchematicSymbolDefinitionId, SchematicSymbolId, SchematicSymbolUnit,
     SchematicWire, SchematicWireId, SchematicWireMetadata, SchematicWireStyle, SemanticDocument,
-    SemanticInterchangeError, SemanticMigrationStep, SignalBundle, SignalBundleId,
-    SignalBundleLibrary, SourceStimulus, SourceWaveform, StackupLayer, StackupLayerKind,
-    SubcircuitInstance, SubcircuitInstanceId, TransientPolicy, TransientRunPolicy,
+    SemanticInterchangeError, SemanticMigrationStep, SemanticOrigin, SemanticTarget, SignalBundle,
+    SignalBundleId, SignalBundleLibrary, SourcePosition, SourceSpan, SourceStimulus,
+    SourceWaveform, StackupLayer, StackupLayerKind, SubcircuitInstance, SubcircuitInstanceId,
+    TransientPolicy, TransientRunPolicy,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -120,6 +123,68 @@ fn versioned_semantic_json_round_trips_exact_values() {
     let decoded = SemanticDocument::from_json(&json).unwrap();
     assert_eq!(decoded, document);
     assert_eq!(decoded.pcb.unwrap().id.as_str(), "main-board");
+}
+
+#[test]
+fn authored_coppertrace_intent_round_trips_with_source_ranges_and_contracts() {
+    let circuit = CircuitId::new("json-round-trip").unwrap();
+    let net = NetId::new("signal").unwrap();
+    let document = fixture()
+        .with_design_intent(DesignIntent {
+            origins: vec![SemanticOrigin {
+                target: SemanticTarget::Net {
+                    circuit: circuit.clone(),
+                    net: net.clone(),
+                },
+                span: SourceSpan::new(
+                    "filter.trace",
+                    SourcePosition::new(4, 1, 5),
+                    SourcePosition::new(21, 1, 22),
+                ),
+                label: Some("net declaration".into()),
+            }],
+            nets: vec![NetIntent {
+                circuit: circuit.clone(),
+                net: net.clone(),
+                kind: NetKind::AnalogSignal,
+                scope: NetScope::Local,
+                net_class: None,
+                nominal_value: None,
+            }],
+            roles: vec![FunctionalRoleAssignment {
+                target: FunctionalRoleTarget::Circuit(circuit.clone()),
+                role: FunctionalRole::LowpassFilter,
+                bindings: vec![FunctionalBinding {
+                    name: "output".into(),
+                    target: FunctionalBindingTarget::Net { circuit, net },
+                }],
+                parameters: std::collections::BTreeMap::from([(
+                    "cutoff".into(),
+                    DimensionedValue::new(Real::from(1000), QuantityDimension::Frequency, "Hz"),
+                )]),
+            }],
+            resolved_parts: Vec::new(),
+        })
+        .unwrap();
+
+    let restored = SemanticDocument::from_json(&document.to_json_pretty().unwrap()).unwrap();
+    assert_eq!(restored.design_intent, document.design_intent);
+}
+
+#[test]
+fn version_twenty_eight_defaults_authored_design_intent() {
+    let document = fixture();
+    let mut value = serde_json::to_value(&document).unwrap();
+    value["version"] = serde_json::Value::from(28);
+    value.as_object_mut().unwrap().remove("design_intent");
+
+    let (migrated, report) =
+        SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
+    assert_eq!(
+        report.steps,
+        vec![SemanticMigrationStep::AuthoredDesignIntent]
+    );
+    assert_eq!(migrated, document);
 }
 
 #[test]
@@ -261,12 +326,16 @@ fn version_twenty_seven_promotes_legacy_bundle_member_names_to_real_types() {
         .as_object_mut()
         .unwrap()
         .remove("schematic_presentation");
+    value.as_object_mut().unwrap().remove("design_intent");
 
     let (migrated, report) =
         SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
     assert_eq!(
         report.steps,
-        vec![SemanticMigrationStep::NativeInterfaceParity]
+        vec![
+            SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
+        ]
     );
     assert_eq!(
         migrated.signal_bundles.bundles[0].members[0].signal_type,
@@ -300,6 +369,7 @@ fn version_eight_json_migrates_through_each_additive_schema_boundary() {
         .as_object_mut()
         .unwrap()
         .remove("module_parameters");
+    value.as_object_mut().unwrap().remove("design_intent");
     let rules = value["pcb"]["rules"].as_object_mut().unwrap();
     rules.remove("route_constraint_regions");
     rules.remove("route_rule_regions");
@@ -338,6 +408,7 @@ fn version_eight_json_migrates_through_each_additive_schema_boundary() {
             SemanticMigrationStep::DifferentialPairNeckdown,
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     assert_eq!(migrated, document);
@@ -403,6 +474,7 @@ fn version_twenty_three_defaults_new_differential_impedance_intent() {
             SemanticMigrationStep::DifferentialPairNeckdown,
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     let pair = &migrated.pcb.unwrap().rules.differential_pairs[0];
@@ -429,6 +501,7 @@ fn version_twenty_four_defaults_new_phase_tuning_groups() {
             SemanticMigrationStep::DifferentialPairNeckdown,
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     assert!(migrated.pcb.unwrap().rules.phase_tuning_groups.is_empty());
@@ -480,6 +553,7 @@ fn version_twenty_five_defaults_new_differential_pair_neckdown() {
             SemanticMigrationStep::DifferentialPairNeckdown,
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     assert!(
@@ -583,6 +657,7 @@ fn version_nineteen_promotes_embedded_symbol_geometry_into_a_library() {
             SemanticMigrationStep::DifferentialPairNeckdown,
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
+            SemanticMigrationStep::AuthoredDesignIntent,
         ]
     );
     let schematic = migrated.schematic.unwrap();
