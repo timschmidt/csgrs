@@ -5454,6 +5454,64 @@ matrix, and `cargo bench --workspace --all-features`. The benchmark command
 executed every benchmark target, including every immediate API lane and the
 complete comparative target; no representative subset was substituted.
 
+### Algebraic conic primary-absence short circuit
+
+The implicit-conic replay maps each exact source parameter through a primary
+conic chart before considering two equivalent fallback charts. For an
+algebraic source parameter, the prepared rational-image route returns
+`Decided(None)` only after proving that the chart image is disjoint from the
+target parameter interval. The fallback charts represent the same nonsingular
+conic parameter and therefore cannot recover an in-range value. Replay now
+accepts that exact negative result immediately. An exact source parameter keeps
+the old fallback behavior because its direct quotient-ring image also uses
+`None` when the primary chart has a pole.
+
+The one-cell pathological Boolean sentinel retained the same four decisions,
+nine candidate pairs, 48 fragments, two point classifications, zero blockers,
+and checksum 6. Callgrind fell from 28,089,644 to 24,958,182 instructions, a
+reduction of 3,131,462 instructions (11.15%). Fifteen CPU-pinned alternating
+runs of the complete 67-cell native Boolean lane measured medians of 546.624
+milliseconds before and 467.197 milliseconds after, a 14.53% reduction. Every
+run completed all 268 decisions over 603 candidate pairs and 3,248 fragments
+with zero blockers and checksum 6. The final unpinned release all-benchmark run
+completed the same lane in 464.411 milliseconds.
+
+Heaptrack over matched one-cell executables changed as follows:
+
+| Heap metric | Fallback charts after exact absence | Short circuit | Change |
+| --- | ---: | ---: | ---: |
+| Allocation events | 36,801 | 31,702 | 5,099 fewer (13.86%) |
+| Postprocessed temporary allocations | 2,722 | 2,083 | 639 fewer (23.48%) |
+| Peak heap | 993.77 KiB | 960.37 KiB | 33.40 KiB lower |
+| Peak RSS | 11.45 MiB | 11.48 MiB | 0.03 MiB higher |
+| Reported retained memory | 213.02 KiB | 179.62 KiB | 33.40 KiB lower |
+
+A same-compiler symbolized pathological executable retained the same
+5,129,827-byte total loadable size. Text grew by 144 bytes, BSS fell by 144
+bytes, and the debug file grew by 2,616 bytes; the matched stripped file grew by
+144 bytes. The workspace call-graph utility regenerated all source, test,
+benchmark, example, and fuzz nodes across `hypercurve`, `hyperlattice`,
+`hyperlimit`, `hyperreal`, and `hypersolve`. Its graph contains 41,973 nodes
+and 71,153 edges. SCC-condensed reachable counts and depths were unchanged:
+68/depth 4 for `CurveRegion2::boolean_regions`, 224/depth 9 for implicit-conic
+contacts, 155/depth 8 for conic parameter recovery, and 48/depth 6 for contact
+comparison; each reachable SCC remained a single node.
+
+The final source passed the complete all-feature/all-target workspace test run,
+the no-default-feature library/test matrix, strict all-target Clippy,
+warning-denied rustdoc, and `cargo bench --workspace --all-features`. That
+benchmark command executed every benchmark target, including all immediate API
+and comparative lanes. AddressSanitizer fuzzing completed 10,000
+algebraic-image runs and 10,000 region-Boolean runs. The heavier Bézier-region
+fuzzer completed 10,381 target executions across fresh processes; its first
+process stopped only at libFuzzer's cumulative 2 GiB RSS guard after 9,381
+successful inputs, and the emitted input replayed alone in 38 milliseconds
+without reproducing a target OOM.
+
+No prepared API or carrier is removed by this change. It uses the existing
+prepared algebraic-image proof to avoid redundant fallback work, so any future
+prepared-surface removal remains subject to the complete gate below.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two

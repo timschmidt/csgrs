@@ -4570,6 +4570,15 @@ fn conic_parameter_from_curve_parameter(
         Classification::Decided(Some(parameter)) => {
             return Ok(Classification::Decided(Some(parameter)));
         }
+        // For an algebraic source, the prepared image route reports `None`
+        // only after proving the primary image is disjoint from the target
+        // interval. Every nonsingular conic chart represents the same
+        // parameter, so rebuilding the two fallback charts cannot recover an
+        // in-range value. Exact-source evaluation also uses `None` for a
+        // chart pole and must retain the fallback search below.
+        Classification::Decided(None) if curve_parameter.as_exact().is_none() => {
+            return Ok(Classification::Decided(None));
+        }
         Classification::Decided(None) => true,
         Classification::Uncertain(_) => false,
     };
