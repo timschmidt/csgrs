@@ -2996,10 +2996,7 @@ fn f64_segment_plane_intersection(
 }
 
 fn f64_plane_value(point: [f64; 3], plane: [f64; 4]) -> f64 {
-    plane[0].mul_add(
-        point[0],
-        plane[1].mul_add(point[1], plane[2].mul_add(point[2], plane[3])),
-    )
+    plane[0] * point[0] + plane[1] * point[1] + plane[2] * point[2] + plane[3]
 }
 
 fn positive_weight_plane_intersection(planes: &[Plane; 3]) -> Option<HomogeneousPoint3> {
