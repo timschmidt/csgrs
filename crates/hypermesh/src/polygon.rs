@@ -719,65 +719,81 @@ fn oriented_edge_plane(a: &Point3, b: &Point3, support: &Plane) -> Plane {
 }
 
 fn bounds_for_points(points: &[&Point3]) -> ApproxBounds {
-    let min = Point3::new(
-        min_real(points.iter().map(|point| &point.x)),
-        min_real(points.iter().map(|point| &point.y)),
-        min_real(points.iter().map(|point| &point.z)),
-    );
-    let max = Point3::new(
-        max_real(points.iter().map(|point| &point.x)),
-        max_real(points.iter().map(|point| &point.y)),
-        max_real(points.iter().map(|point| &point.z)),
-    );
+    let (min_x, max_x) = min_max_real(points.iter().map(|point| &point.x));
+    let (min_y, max_y) = min_max_real(points.iter().map(|point| &point.y));
+    let (min_z, max_z) = min_max_real(points.iter().map(|point| &point.z));
+    let min = Point3::new(min_x, min_y, min_z);
+    let max = Point3::new(max_x, max_y, max_z);
     ApproxBounds::new(min, max)
 }
 
 fn bounds_for_owned_points(points: &[Point3]) -> ApproxBounds {
-    let min = Point3::new(
-        min_real(points.iter().map(|point| &point.x)),
-        min_real(points.iter().map(|point| &point.y)),
-        min_real(points.iter().map(|point| &point.z)),
-    );
-    let max = Point3::new(
-        max_real(points.iter().map(|point| &point.x)),
-        max_real(points.iter().map(|point| &point.y)),
-        max_real(points.iter().map(|point| &point.z)),
-    );
+    let (min_x, max_x) = min_max_real(points.iter().map(|point| &point.x));
+    let (min_y, max_y) = min_max_real(points.iter().map(|point| &point.y));
+    let (min_z, max_z) = min_max_real(points.iter().map(|point| &point.z));
+    let min = Point3::new(min_x, min_y, min_z);
+    let max = Point3::new(max_x, max_y, max_z);
     ApproxBounds::new(min, max)
 }
 
-fn min_real<'a>(mut values: impl Iterator<Item = &'a Real>) -> Real {
+fn min_max_real<'a>(mut values: impl Iterator<Item = &'a Real>) -> (Real, Real) {
     let first = values
         .next()
         .expect("bounds need at least one point")
         .clone();
-    values.fold(first, |current, value| {
-        if matches!(
-            crate::geometry::compare_real(value, &current),
-            Ok(std::cmp::Ordering::Less)
-        ) {
-            value.clone()
-        } else {
-            current
+    let Some(second) = values.next() else {
+        return (first.clone(), first);
+    };
+    let (mut min, mut max) = match crate::geometry::compare_real(second, &first) {
+        Ok(std::cmp::Ordering::Less) => (second.clone(), first),
+        Ok(std::cmp::Ordering::Greater) => (first, second.clone()),
+        Ok(std::cmp::Ordering::Equal) | Err(_) => (first.clone(), first),
+    };
+    while let Some(left) = values.next() {
+        let Some(right) = values.next() else {
+            update_min_max(left, &mut min, &mut max);
+            break;
+        };
+        match crate::geometry::compare_real(right, left) {
+            Ok(std::cmp::Ordering::Less) => {
+                update_min(right, &mut min);
+                update_max(left, &mut max);
+            }
+            Ok(std::cmp::Ordering::Greater) => {
+                update_min(left, &mut min);
+                update_max(right, &mut max);
+            }
+            Ok(std::cmp::Ordering::Equal) => update_min_max(left, &mut min, &mut max),
+            Err(_) => {
+                update_min_max(left, &mut min, &mut max);
+                update_min_max(right, &mut min, &mut max);
+            }
         }
-    })
+    }
+    (min, max)
 }
 
-fn max_real<'a>(mut values: impl Iterator<Item = &'a Real>) -> Real {
-    let first = values
-        .next()
-        .expect("bounds need at least one point")
-        .clone();
-    values.fold(first, |current, value| {
-        if matches!(
-            crate::geometry::compare_real(value, &current),
-            Ok(std::cmp::Ordering::Greater)
-        ) {
-            value.clone()
-        } else {
-            current
-        }
-    })
+fn update_min(value: &Real, min: &mut Real) {
+    if matches!(
+        crate::geometry::compare_real(value, min),
+        Ok(std::cmp::Ordering::Less)
+    ) {
+        *min = value.clone();
+    }
+}
+
+fn update_max(value: &Real, max: &mut Real) {
+    if matches!(
+        crate::geometry::compare_real(value, max),
+        Ok(std::cmp::Ordering::Greater)
+    ) {
+        *max = value.clone();
+    }
+}
+
+fn update_min_max(value: &Real, min: &mut Real, max: &mut Real) {
+    update_min(value, min);
+    update_max(value, max);
 }
 
 #[cfg(test)]
@@ -786,6 +802,29 @@ mod tests {
 
     fn point(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn pairwise_bounds_preserve_exact_extrema_for_odd_even_and_equal_coordinates() {
+        for points in [
+            vec![
+                point(3, -2, 7),
+                point(-4, 9, 7),
+                point(3, 1, -5),
+                point(8, 9, 2),
+            ],
+            vec![
+                point(3, -2, 7),
+                point(-4, 9, 7),
+                point(3, 1, -5),
+                point(8, 9, 2),
+                point(0, -2, 4),
+            ],
+        ] {
+            let bounds = bounds_for_owned_points(&points);
+            assert_eq!(bounds.min, point(-4, -2, -5));
+            assert_eq!(bounds.max, point(8, 9, 7));
+        }
     }
 
     #[test]
