@@ -541,6 +541,19 @@ versus 521.68 milliseconds before the ownership change. The same-compiler
 pathological executable grew by 60 text bytes, shed 64 BSS bytes and four
 total loadable bytes, and was 400 bytes smaller on disk.
 
+The certification benchmark now includes the maximum supported degree-12
+public immediate rational-image transform with a cubic numerator and quadratic
+denominator. The retained subset representation measured 1.741--1.763
+milliseconds in the confirming run. Two lower-allocation representations were
+rejected at the immediate performance gate. A single flat arena improved the
+large case by about 9%, but raised the one-cell downstream exact Boolean
+workload by 94,593 Callgrind instructions (0.33%) and added 7,064 text bytes.
+A cardinality-layered arena retained a large-case improvement and removed 96
+downstream allocations, but added 11,415 instructions to the affected
+resultant kernel, 4,761 instructions end to end, and 7,276 text bytes. Both
+production changes were reverted; the benchmark remains to stop future
+large-input gains from hiding an immediate-API or downstream regression.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

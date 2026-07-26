@@ -4614,6 +4614,18 @@ fn certification(c: &mut Criterion) {
         polynomial_coefficients: vec![r(-3), Real::zero(), Real::one()],
         ..sqrt_two.clone()
     };
+    let degree_twelve = AlgebraicRootRepresentation {
+        constraint_index: 2,
+        polynomial_coefficients: {
+            let mut coefficients = vec![Real::zero(); 13];
+            coefficients[0] = r(-64);
+            coefficients[12] = Real::one();
+            coefficients
+        },
+        ..sqrt_two.clone()
+    };
+    let degree_twelve_cubic_numerator = [Real::zero(), Real::one(), Real::zero(), Real::one()];
+    let degree_twelve_quadratic_denominator = [r(2), Real::one(), Real::one()];
     c.bench_function("compare_algebraic_root_representations", |b| {
         b.iter(|| {
             compare_algebraic_root_representations(
@@ -4758,6 +4770,19 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
+    c.bench_function(
+        "transform_algebraic_root_rational_image_degree_12_cubic",
+        |b| {
+            b.iter(|| {
+                transform_algebraic_root_rational_image(
+                    &degree_twelve,
+                    &degree_twelve_cubic_numerator,
+                    &degree_twelve_quadratic_denominator,
+                    hyperlimit::PredicatePolicy,
+                )
+            })
+        },
+    );
     c.bench_function("transform_algebraic_roots_binary", |b| {
         b.iter(|| {
             transform_algebraic_roots_binary(
