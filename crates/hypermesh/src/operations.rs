@@ -2951,7 +2951,7 @@ fn collapse_certified_convex_faces(
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 };
                 let edge_plane = if polygon.edges.len() == edge_identities.len() {
-                    Some(polygon.edges[edge_index].clone())
+                    Some(&polygon.edges[edge_index])
                 } else if polygon.vertex_count() == 3 {
                     None
                 } else {
@@ -2960,7 +2960,7 @@ fn collapse_certified_convex_faces(
                 outgoing.push((
                     start,
                     end,
-                    points.get(edge_index).expect("aligned vertex").clone(),
+                    points.get(edge_index).expect("aligned vertex"),
                     edge_plane,
                     edge_identity,
                 ));
@@ -2984,12 +2984,12 @@ fn collapse_certified_convex_faces(
                 return Err(crate::error::HypermeshError::UnknownClassification);
             };
             let (_, next, point, edge_plane, edge_identity) = &outgoing[outgoing_index];
-            face_vertices.push(point.clone());
+            face_vertices.push((*point).clone());
             vertex_identities.push(ConstructionVertexIdentity::Source {
                 mesh: support_identity.mesh,
                 vertex: current,
             });
-            optional_edge_planes.push(edge_plane.clone());
+            optional_edge_planes.push(edge_plane.cloned());
             edge_identities.push(edge_identity.clone());
             current = *next;
             if current == start {
