@@ -454,6 +454,8 @@ struct ProjectivePointCache {
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
 }
 
+const PROJECTIVE_CROSSING_CACHE_MIN_POINTS: usize = 128;
+
 struct AtomicDisjointSets {
     parents: Vec<usize>,
 }
@@ -1685,6 +1687,16 @@ impl ProjectiveCycle {
     ) {
         let identity = point_cache
             .edge_plane_intersection_identity(&self.edge_identities[edge_index], plane_identity);
+        if point_cache.points.len() >= PROJECTIVE_CROSSING_CACHE_MIN_POINTS
+            && let Some(existing) = point_cache.points.get(&identity)
+        {
+            let approximate = point_cache
+                .point_approximations
+                .get(&identity)
+                .copied()
+                .flatten();
+            return (existing.clone(), approximate, identity);
+        }
         let point = point_cache
             .definition_planes(&identity)
             .and_then(positive_weight_plane_intersection)
