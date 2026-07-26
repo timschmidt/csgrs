@@ -6,8 +6,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
 use hypercircuit::{
-    AssemblyOutputs, KiCadExportOptions, PcbSvgOptions, ProjectDesignProvider, ProjectManifest,
-    ProjectProviderKind, ReleasePreparationOptions, SemanticDocument,
+    AssemblyOutputs, KiCadExportOptions, ManufacturingReleaseBundle,
+    ManufacturingReleaseDifference, ManufacturingReleaseOptions, PcbSvgOptions,
+    ProjectDesignProvider, ProjectManifest, ProjectProviderKind, ReleasePreparationOptions,
+    SemanticDocument,
 };
 
 const PROJECT_MANIFEST_NAME: &str = "hypercircuit.toml";
@@ -27,7 +29,11 @@ USAGE:
     hypercircuit bom [design-name] [--out bom.csv]
     hypercircuit export-kicad <design.json | design-name> <board.kicad_pcb>
     hypercircuit export-svg <design.json | design-name> <board.svg>
-    hypercircuit release <design.json | design-name> <output-directory>
+    hypercircuit release build <design.json | design-name> <output-directory>
+    hypercircuit release verify <release-directory>
+    hypercircuit release compare <release-a> <release-b>
+    hypercircuit release inspect <release-directory>
+    hypercircuit release <design.json | design-name> <output-directory>  # legacy alias
     hypercircuit --help
     hypercircuit --version
 
@@ -95,11 +101,60 @@ fn run(arguments: Vec<String>) -> Result<bool, String> {
                 Path::new(&arguments[2]),
             )
         }
-        "release" => {
-            expect_arity(&arguments, 3)?;
+        "release" => release_command(&arguments),
+        other => Err(format!("unknown command `{other}`\n\n{USAGE}")),
+    }
+}
+
+fn release_command(arguments: &[String]) -> Result<bool, String> {
+    match arguments.get(1).map(String::as_str) {
+        Some("build") => {
+            expect_arity(arguments, 4)?;
+            release(&load_design(Some(&arguments[2]))?, Path::new(&arguments[3]))
+        }
+        Some("verify") => {
+            expect_arity(arguments, 3)?;
+            let bundle = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+                .map_err(|error| format!("release verification failed: {error}"))?;
+            println!(
+                "verified {} ({})",
+                bundle.manifest.core_digest.canonical_text(),
+                if bundle.manifest.core.release_clean {
+                    "release clean"
+                } else {
+                    "release blockers retained"
+                }
+            );
+            Ok(bundle.manifest.core.release_clean)
+        }
+        Some("inspect") => {
+            expect_arity(arguments, 3)?;
+            let bundle = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+                .map_err(|error| format!("release inspection failed: {error}"))?;
+            println!("{}", bundle.manifest_json_pretty());
+            Ok(true)
+        }
+        Some("compare") => {
+            expect_arity(arguments, 4)?;
+            let left = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+                .map_err(|error| format!("cannot read first release: {error}"))?;
+            let right = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[3]))
+                .map_err(|error| format!("cannot read second release: {error}"))?;
+            match left.compare(&right) {
+                ManufacturingReleaseDifference::Identical => println!("identical release cores"),
+                ManufacturingReleaseDifference::MetadataOnly => {
+                    println!("metadata-only release change")
+                }
+                ManufacturingReleaseDifference::ArtifactOrSemantic => {
+                    println!("artifact or semantic release change")
+                }
+            }
+            Ok(true)
+        }
+        _ => {
+            expect_arity(arguments, 3)?;
             release(&load_design(Some(&arguments[1]))?, Path::new(&arguments[2]))
         }
-        other => Err(format!("unknown command `{other}`\n\n{USAGE}")),
     }
 }
 
@@ -373,52 +428,24 @@ fn export_svg(document: &SemanticDocument, output: &Path) -> Result<bool, String
 }
 
 fn release(loaded: &LoadedDesign, output: &Path) -> Result<bool, String> {
-    let report = loaded
+    let options = ManufacturingReleaseOptions::for_document(&loaded.document);
+    let bundle = loaded
         .document
-        .prepare_release(loaded.release_options.clone())
-        .map_err(|error| format!("cannot construct release evidence: {error}"))?;
-    fs::create_dir_all(output)
-        .map_err(|error| format!("cannot create {}: {error}", output.display()))?;
-
-    for file in &report.fabrication.files {
-        let relative = safe_file_name(&file.name)?;
-        write_file(&output.join(relative), &file.bytes)?;
-    }
-    write_file(
-        &output.join("bom.csv"),
-        report.assembly.bom_csv().as_bytes(),
-    )?;
-    write_file(
-        &output.join("pick-and-place.csv"),
-        report.assembly.pick_and_place_csv().as_bytes(),
-    )?;
-    write_file(
-        &output.join("dnp.csv"),
-        report.assembly.dnp_csv().as_bytes(),
-    )?;
-
-    let blockers = report.release_blockers();
+        .build_manufacturing_release(options, loaded.release_options.clone())
+        .map_err(|error| format!("cannot construct manufacturing release: {error}"))?;
+    bundle
+        .write_directory(output)
+        .map_err(|error| format!("cannot write manufacturing release: {error}"))?;
     println!(
-        "wrote {} fabrication and 3 assembly file(s) to {}; {} release blocker(s)",
-        report.fabrication.files.len(),
+        "wrote {} verified release file(s) to {}; {} release blocker(s)",
+        bundle.files.len(),
         output.display(),
-        blockers.len()
+        bundle.manifest.core.release_blockers.len()
     );
-    for blocker in &blockers {
-        println!("blocker: {blocker:?}");
+    for blocker in &bundle.manifest.core.release_blockers {
+        println!("blocker: {blocker}");
     }
-    Ok(blockers.is_empty())
-}
-
-fn safe_file_name(name: &str) -> Result<PathBuf, String> {
-    let path = Path::new(name);
-    if path.components().count() == 1 && path.file_name().is_some() {
-        Ok(path.to_owned())
-    } else {
-        Err(format!(
-            "fabrication package proposed unsafe filename `{name}`"
-        ))
-    }
+    Ok(bundle.manifest.core.release_clean)
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), String> {

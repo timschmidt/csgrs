@@ -278,11 +278,20 @@ command = ["cat", "design.json"]
         &[Path::new("release"), Path::new("main"), &release_directory],
     );
     assert_success(&release);
-    assert!(release_directory.join("bom.csv").is_file());
-    assert!(release_directory.join("pick-and-place.csv").is_file());
-    assert!(release_directory.join("dnp.csv").is_file());
+    assert!(release_directory.join("assembly/bom.csv").is_file());
     assert!(
-        fs::read_dir(&release_directory)
+        release_directory
+            .join("assembly/pick-and-place.csv")
+            .is_file()
+    );
+    assert!(release_directory.join("assembly/dnp.csv").is_file());
+    assert!(
+        release_directory
+            .join("manufacturing-release.json")
+            .is_file()
+    );
+    assert!(
+        fs::read_dir(release_directory.join("fabrication"))
             .unwrap()
             .filter_map(Result::ok)
             .any(|entry| entry
@@ -290,6 +299,37 @@ command = ["cat", "design.json"]
                 .to_string_lossy()
                 .ends_with("-manifest.json"))
     );
+    let verify = invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("verify"),
+            &release_directory,
+        ],
+    );
+    assert_success(&verify);
+    assert!(String::from_utf8_lossy(&verify.stdout).contains("verified sha256:"));
+    let compare = invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("compare"),
+            &release_directory,
+            &release_directory,
+        ],
+    );
+    assert_success(&compare);
+    assert!(String::from_utf8_lossy(&compare.stdout).contains("identical release cores"));
+    let inspect = invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("inspect"),
+            &release_directory,
+        ],
+    );
+    assert_success(&inspect);
+    assert!(String::from_utf8_lossy(&inspect.stdout).contains("hypercircuit.manufacturing-release"));
 
     fs::remove_dir_all(directory).unwrap();
 }
@@ -348,7 +388,7 @@ condition = "1 MHz nominal"
     );
     assert_success(&release);
     assert!(String::from_utf8_lossy(&release.stdout).contains("0 release blocker(s)"));
-    assert!(release_directory.join("bom.csv").is_file());
+    assert!(release_directory.join("assembly/bom.csv").is_file());
 
     let mut mismatched = controlled_impedance_project_fixture();
     mismatched.pcb.as_mut().unwrap().routes[0].width = (Real::from(8) / Real::from(100)).unwrap();

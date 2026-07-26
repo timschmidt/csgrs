@@ -11,8 +11,9 @@ use hypercircuit::{
 #[cfg(feature = "interchange")]
 use hypercircuit::{
     CircuitInstanceId, DesignIntent, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
-    FunctionalRoleAssignment, FunctionalRoleTarget, NetId, NetIntent, NetKind, NetScope, PinRef,
-    SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition, SourceSpan,
+    FunctionalRoleAssignment, FunctionalRoleTarget, ManufacturingReleaseOptions, NetId, NetIntent,
+    NetKind, NetScope, PinRef, SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition,
+    SourceSpan,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -498,6 +499,39 @@ fn semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff() 
         record.policy_digest.as_deref() == Some(report.drc.capability_profile_digest.as_str())
     }));
     assert!(role_finding.evidence_id.starts_with("sha256:"));
+}
+
+#[cfg(feature = "interchange")]
+#[test]
+fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() {
+    let checked = fluent_release_design();
+    let document = SemanticDocument::new(checked.circuit, Some(checked.schematic))
+        .unwrap()
+        .with_pcb(checked.layout)
+        .unwrap();
+    let options = ManufacturingReleaseOptions::for_document(&document);
+
+    let left = document
+        .build_manufacturing_release(options.clone(), ReleasePreparationOptions::default())
+        .unwrap();
+    let right = document
+        .build_manufacturing_release(options, ReleasePreparationOptions::default())
+        .unwrap();
+
+    left.verify().unwrap();
+    assert!(left.manifest.signatures.is_empty());
+    assert_eq!(left.manifest.core_digest, right.manifest.core_digest);
+    assert_eq!(left.files, right.files);
+    assert!(left.files.contains_key("manufacturing-release.json"));
+    assert!(left.files.contains_key("evidence/hyperdrc.json"));
+
+    let mut corrupted = left.clone();
+    corrupted
+        .files
+        .get_mut("assembly/bom.csv")
+        .unwrap()
+        .push(b'!');
+    assert!(corrupted.verify().is_err());
 }
 
 #[test]

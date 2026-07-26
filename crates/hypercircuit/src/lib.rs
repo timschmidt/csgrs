@@ -51,6 +51,8 @@ pub mod layout_module;
 pub mod lceda;
 #[cfg(feature = "geometry")]
 pub mod legacy_csgrs;
+#[cfg(all(feature = "drc", feature = "interchange"))]
+pub mod manufacturing_release;
 #[cfg(feature = "geometry")]
 pub mod materialize;
 pub mod mna;
@@ -270,6 +272,13 @@ pub use legacy_csgrs::{
     LEGACY_CSGRS_ELECTRONICS_REMOVAL_VERSION, LEGACY_CSGRS_ELECTRONICS_SCHEMA,
     LEGACY_CSGRS_ELECTRONICS_VERSION, LegacyCsgrsElectronicsImport,
     LegacyCsgrsElectronicsImportError, LegacyCsgrsElectronicsOmission, LegacyCsgrsTerminalClaim,
+};
+#[cfg(all(feature = "drc", feature = "interchange"))]
+pub use manufacturing_release::{
+    MANUFACTURING_RELEASE_MANIFEST_PATH, MANUFACTURING_RELEASE_SCHEMA,
+    MANUFACTURING_RELEASE_VERSION, ManufacturingReleaseBundle, ManufacturingReleaseCore,
+    ManufacturingReleaseDifference, ManufacturingReleaseError, ManufacturingReleaseManifest,
+    ManufacturingReleaseOptions, OptionalEvidenceStatus, SignatureEnvelope,
 };
 #[cfg(feature = "geometry")]
 pub use materialize::{
