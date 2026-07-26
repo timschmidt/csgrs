@@ -2468,9 +2468,10 @@ fn collapse_certified_collinear_face_vertices(
     {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
-    if len <= 3 && !edges.is_empty() {
+    if len <= 3 {
         return Ok(());
     }
+    let rebuild_edge_planes = !edges.is_empty();
     if len > 3 {
         let retained = (0..len)
             .filter(|&index| {
@@ -2485,7 +2486,7 @@ fn collapse_certified_collinear_face_vertices(
         if retained.len() < 3 {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        if retained.len() == len && !edges.is_empty() {
+        if retained.len() == len {
             return Ok(());
         }
         if retained.len() != len {
@@ -2502,17 +2503,21 @@ fn collapse_certified_collinear_face_vertices(
 
     edges.clear();
     edge_identities.clear();
-    edges.reserve(vertices.len());
+    if rebuild_edge_planes {
+        edges.reserve(vertices.len());
+    }
     edge_identities.reserve(vertices.len());
     for index in 0..vertices.len() {
         let next = (index + 1) % vertices.len();
-        let after_next = (index + 2) % vertices.len();
-        edges.push(edge_plane(
-            &vertices[index],
-            &vertices[next],
-            &vertices[after_next],
-            support,
-        ));
+        if rebuild_edge_planes {
+            let after_next = (index + 2) % vertices.len();
+            edges.push(edge_plane(
+                &vertices[index],
+                &vertices[next],
+                &vertices[after_next],
+                support,
+            ));
+        }
         let ConstructionVertexIdentity::Source {
             mesh: start_mesh,
             vertex: start,
@@ -3324,7 +3329,7 @@ mod tests {
     }
 
     #[test]
-    fn certified_face_rebuilds_deferred_boundaries_after_validation() {
+    fn certified_face_preserves_deferred_boundaries_after_validation() {
         let support = Plane::axis_aligned(2, Real::zero());
         let mut vertices = vec![p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
         let mut vertex_identities = (0..vertices.len())
@@ -3346,7 +3351,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(edges.len(), vertices.len());
+        assert!(edges.is_empty());
         assert_eq!(edge_identities, expected_edge_identities);
     }
 

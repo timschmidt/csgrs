@@ -387,7 +387,7 @@ impl ConvexPolygon {
         delta_w: WindingNumberTransitionVector,
     ) -> Self {
         debug_assert_eq!(vertices.len(), vertex_identities.len());
-        debug_assert_eq!(vertices.len(), edges.len());
+        debug_assert!(edges.is_empty() || vertices.len() == edges.len());
         debug_assert_eq!(vertices.len(), edge_identities.len());
         Self {
             support,
