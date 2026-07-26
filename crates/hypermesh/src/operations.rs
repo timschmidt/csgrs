@@ -458,8 +458,7 @@ struct ProjectiveAffineCacheEntry {
 
 #[derive(Default)]
 struct ProjectivePointCache {
-    points: StorageHashMap<ConstructionVertexIdentity, HomogeneousPoint3>,
-    point_approximations: StorageHashMap<ConstructionVertexIdentity, Option<[f64; 3]>>,
+    points: StorageHashMap<ConstructionVertexIdentity, CachedProjectivePoint>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
     canonical_planes: [Vec<ConstructionPlaneIdentity>; 2],
     planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
@@ -467,6 +466,11 @@ struct ProjectivePointCache {
     source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
     source_vertices: StorageHashMap<ConstructionVertexIdentity, [ConstructionPlaneIdentity; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
+}
+
+struct CachedProjectivePoint {
+    point: HomogeneousPoint3,
+    approximate: Option<[f64; 3]>,
 }
 
 const PROJECTIVE_CROSSING_CACHE_MIN_POINTS: usize = 128;
@@ -717,16 +721,11 @@ impl ProjectivePointCache {
     }
 
     fn resolve_vertex_coincidences(&mut self) {
-        let point_approximations = &self.point_approximations;
         let mut entries = self
             .points
             .drain()
-            .map(|(identity, point)| {
-                let approximate = point_approximations.get(&identity).copied().flatten();
-                (identity, point, approximate)
-            })
+            .map(|(identity, cached)| (identity, cached.point, cached.approximate))
             .collect::<Vec<_>>();
-        self.point_approximations.clear();
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
         let mut sets = AtomicDisjointSets::new(entries.len());
@@ -829,15 +828,28 @@ impl ProjectivePointCache {
             }
         }
         for (identity, point, _) in entries {
-            self.points.insert(identity, point);
+            self.points.insert(
+                identity,
+                CachedProjectivePoint {
+                    point,
+                    approximate: None,
+                },
+            );
         }
         for (identity, canonical_identity) in &self.canonical_identities {
             let canonical_point = self
                 .points
                 .get(canonical_identity)
                 .expect("canonical projective point is available")
+                .point
                 .clone();
-            self.points.insert(identity.clone(), canonical_point);
+            self.points.insert(
+                identity.clone(),
+                CachedProjectivePoint {
+                    point: canonical_point,
+                    approximate: None,
+                },
+            );
         }
     }
 
@@ -890,14 +902,17 @@ impl ProjectivePointCache {
     ) {
         self.record_definition_incidences(&identity);
         if let Some(existing) = self.points.get(&identity) {
-            let approximate = self.point_approximations.get(&identity).copied().flatten();
-            return (existing.clone(), approximate, identity);
+            return (existing.point.clone(), existing.approximate, identity);
         }
         let point = make_point();
         let approximate = known_approximate.unwrap_or_else(|| projective_point_f64(&point));
-        self.points.insert(identity.clone(), point.clone());
-        self.point_approximations
-            .insert(identity.clone(), approximate);
+        self.points.insert(
+            identity.clone(),
+            CachedProjectivePoint {
+                point: point.clone(),
+                approximate,
+            },
+        );
         (point, approximate, identity)
     }
 }
@@ -1778,12 +1793,7 @@ impl ProjectiveCycle {
         if point_cache.points.len() >= PROJECTIVE_CROSSING_CACHE_MIN_POINTS
             && let Some(existing) = point_cache.points.get(&identity)
         {
-            let approximate = point_cache
-                .point_approximations
-                .get(&identity)
-                .copied()
-                .flatten();
-            return (existing.clone(), approximate, identity);
+            return (existing.point.clone(), existing.approximate, identity);
         }
         let point = point_cache
             .definition_planes(&identity)
@@ -2341,7 +2351,7 @@ fn compute_two_convex_inputs_projectively(
                         let Some(point) = projective_point_cache.points.get(identity) else {
                             return Ok(original);
                         };
-                        affine_cache.resolve(point, Some(identity))
+                        affine_cache.resolve(&point.point, Some(identity))
                     })
                     .collect::<HypermeshResult<Vec<_>>>()?;
                 fragment.polygon = fragment
