@@ -1750,8 +1750,9 @@ fn compute_two_convex_inputs_projectively(
             continue;
         };
         let other = 1 - *mesh;
+        let approximate_point = affine_point_f64(point);
         for (plane, value) in support_planes[other].iter().enumerate() {
-            if affine_point_f64(point).is_none_or(|point| {
+            if approximate_point.is_none_or(|point| {
                 normalized_point_plane_may_be_on(
                     point,
                     normalized_support_plane_f64_values[other][plane],
@@ -1774,17 +1775,14 @@ fn compute_two_convex_inputs_projectively(
             for second in (first + 1)..supports.len() {
                 for third in (second + 1)..supports.len() {
                     let planes = [
-                        projective_point_cache.planes[&supports[first]].clone(),
-                        projective_point_cache.planes[&supports[second]].clone(),
-                        projective_point_cache.planes[&supports[third]].clone(),
+                        &projective_point_cache.planes[&supports[first]],
+                        &projective_point_cache.planes[&supports[second]],
+                        &projective_point_cache.planes[&supports[third]],
                     ];
-                    let point = intersect_three_planes(&planes[0], &planes[1], &planes[2]);
-                    if crate::predicate::classify_real(&point.w)
-                        .is_ok_and(|classification| classification != Classification::On)
-                    {
+                    if plane_normals_are_independent(planes)? {
                         projective_point_cache
                             .source_vertices
-                            .insert(identity, planes);
+                            .insert(identity, planes.map(|plane| (*plane).clone()));
                         break 'definition;
                     }
                 }
@@ -2114,6 +2112,41 @@ fn compute_two_convex_inputs_projectively(
         classified,
         triangle_soup,
     }))
+}
+
+fn plane_normals_are_independent(planes: [&Plane; 3]) -> HypermeshResult<bool> {
+    let rows = planes.map(|plane| [&plane.normal.x, &plane.normal.y, &plane.normal.z]);
+    if let [
+        [Some(a), Some(b), Some(c)],
+        [Some(d), Some(e), Some(f)],
+        [Some(g), Some(h), Some(i)],
+    ] = rows.map(|row| row.map(Real::exact_rational_ref))
+    {
+        return Ok(!Rational::signed_product_sum_ordering(
+            [true, true, true, false, false, false],
+            [
+                [a, e, i],
+                [b, f, g],
+                [c, d, h],
+                [c, e, g],
+                [b, d, i],
+                [a, f, h],
+            ],
+        )
+        .is_eq());
+    }
+    let determinant = Real::signed_product_sum(
+        [true, true, true, false, false, false],
+        [
+            [rows[0][0], rows[1][1], rows[2][2]],
+            [rows[0][1], rows[1][2], rows[2][0]],
+            [rows[0][2], rows[1][0], rows[2][1]],
+            [rows[0][2], rows[1][1], rows[2][0]],
+            [rows[0][1], rows[1][0], rows[2][2]],
+            [rows[0][0], rows[1][2], rows[2][1]],
+        ],
+    );
+    Ok(crate::predicate::classify_real(&determinant)? != Classification::On)
 }
 
 fn exact_rational_product_sum_classification<const TERMS: usize, const FACTORS: usize>(
@@ -2611,7 +2644,12 @@ fn exact_inside_and_active_planes(
             crate::trace_dispatch!("projective-active-planes", "proposed-empty");
             return Ok(None);
         }
-        if cycle_satisfies_planes(&inside, support_planes, candidate_planes).inspect_err(
+        let verification_planes = candidate_planes
+            .iter()
+            .copied()
+            .filter(|plane| !proposed_planes.contains(plane))
+            .collect::<Vec<_>>();
+        if cycle_satisfies_planes(&inside, support_planes, &verification_planes).inspect_err(
             |_error| {
                 if cfg!(debug_assertions) {
                     eprintln!("[DEBUG] proposed projective verification failed");
