@@ -2402,10 +2402,10 @@ fn collapse_certified_convex_faces(
             }
         }
 
-        let mut outgoing: std::collections::BTreeMap<
-            usize,
-            (usize, Option<Plane>, ConstructionEdgeIdentity),
-        > = std::collections::BTreeMap::new();
+        let boundary_edge_count = edge_uses.values().filter(|&&uses| uses == 1).count();
+        let mut outgoing: StorageHashMap<usize, (usize, Option<Plane>, ConstructionEdgeIdentity)> =
+            StorageHashMap::with_capacity_and_hasher(boundary_edge_count, Default::default());
+        let mut canonical_start = None::<usize>;
         for &polygon_index in &polygon_indices {
             let polygon = &polygons[polygon_index];
             let edge_identities = polygon.known_edge_identities().expect("validated above");
@@ -2444,9 +2444,10 @@ fn collapse_certified_convex_faces(
                 {
                     return Err(crate::error::HypermeshError::UnknownClassification);
                 }
+                canonical_start = Some(canonical_start.map_or(*start, |first| first.min(*start)));
             }
         }
-        let Some(&start) = outgoing.keys().next() else {
+        let Some(start) = canonical_start else {
             return Err(crate::error::HypermeshError::UnknownClassification);
         };
         let mut face_vertices = Vec::with_capacity(outgoing.len());
@@ -3297,6 +3298,59 @@ mod tests {
         assert_eq!(faces[0].vertex_count(), 3);
         assert_eq!(faces[0].delta_w, vec![1, 0]);
         assert_eq!(face_supports, vec![support_identity]);
+    }
+
+    #[test]
+    fn merged_certified_face_cycle_is_independent_of_triangle_order() {
+        let positions: std::sync::Arc<[Point3]> =
+            std::sync::Arc::from([p(0, 0, 0), p(1, 0, 0), p(1, 1, 0), p(0, 1, 0)]);
+        let first = crate::polygon::make_indexed_triangle_with_deferred_edges(
+            positions.clone(),
+            [0, 1, 2],
+            None,
+            0,
+            0,
+        )
+        .with_source_triangle_edge_identities(0, [0, 1, 2]);
+        let second = crate::polygon::make_indexed_triangle_with_deferred_edges(
+            positions,
+            [0, 2, 3],
+            Some(first.support.clone()),
+            0,
+            1,
+        )
+        .with_source_triangle_edge_identities(0, [0, 2, 3]);
+        let support_identity = ConstructionPlaneIdentity { mesh: 0, plane: 0 };
+
+        let collapse = |polygons: &[ConvexPolygon]| {
+            let supports = [vec![&polygons[0].support], Vec::new()];
+            collapse_certified_convex_faces(
+                polygons,
+                &[support_identity, support_identity],
+                &supports,
+            )
+            .unwrap()
+            .0
+            .pop()
+            .unwrap()
+        };
+        let forward = collapse(&[first.clone(), second.clone()]);
+        let reverse = collapse(&[second, first]);
+
+        let expected_vertices =
+            [0, 1, 2, 3].map(|vertex| ConstructionVertexIdentity::Source { mesh: 0, vertex });
+        assert_eq!(
+            forward.known_vertex_identities(),
+            Some(expected_vertices.as_slice())
+        );
+        assert_eq!(
+            reverse.known_vertex_identities(),
+            Some(expected_vertices.as_slice())
+        );
+        assert_eq!(
+            forward.known_edge_identities(),
+            reverse.known_edge_identities()
+        );
     }
 
     #[test]
