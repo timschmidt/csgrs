@@ -697,8 +697,11 @@ impl ProjectivePointCache {
     fn resolve_vertex_coincidences(&mut self) {
         let mut entries = self
             .points
-            .iter()
-            .map(|(identity, point)| (identity.clone(), point.clone(), projective_point_f64(point)))
+            .drain()
+            .map(|(identity, point)| {
+                let approximate = projective_point_f64(&point);
+                (identity, point, approximate)
+            })
             .collect::<Vec<_>>();
         entries.sort_unstable_by(|left, right| left.0.cmp(&right.0));
 
