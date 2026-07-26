@@ -88,6 +88,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "sqrt_domain",
     // Certified predicates and prepared exact/filtered geometry queries.
     "certified_affine_det2_sign",
+    "certified_affine_det2_sign_exact_dyadic_f64",
     "certified_affine_det3_sign",
     "certified_incircle2d_sign",
     "certified_insphere3d_sign",

@@ -1092,6 +1092,23 @@ impl Real {
         Self::certified_affine_det2_sign_f64([ax, ay], [bx, by], [cx, cy])
     }
 
+    /// Certify an affine 2x2 determinant from retained exact-dyadic
+    /// binary64 coordinates.
+    ///
+    /// Callers must have obtained every coordinate through a lossless exact
+    /// dyadic conversion such as [`Real::to_f64_exact_dyadic`]. The same
+    /// conservative roundoff bound as [`Self::certified_affine_det2_sign`] is
+    /// applied, and an inconclusive determinant returns `None`.
+    #[inline]
+    #[doc(hidden)]
+    pub fn certified_affine_det2_sign_exact_dyadic_f64(
+        a: [f64; 2],
+        b: [f64; 2],
+        c: [f64; 2],
+    ) -> Option<RealSign> {
+        Self::certified_affine_det2_sign_f64(a, b, c)
+    }
+
     #[inline]
     fn certified_affine_det2_sign_f64(a: [f64; 2], b: [f64; 2], c: [f64; 2]) -> Option<RealSign> {
         let [ax, ay] = a;

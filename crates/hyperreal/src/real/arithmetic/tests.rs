@@ -1073,7 +1073,16 @@ mod tests {
             let a = [&values[0], &values[1]];
             let b = [&values[2], &values[3]];
             let c = [&values[4], &values[5]];
-            if let Some(filtered) = Real::certified_affine_det2_sign(a, b, c) {
+            let filtered = Real::certified_affine_det2_sign(a, b, c);
+            assert_eq!(
+                Real::certified_affine_det2_sign_exact_dyadic_f64(
+                    [coordinates[0], coordinates[1]],
+                    [coordinates[2], coordinates[3]],
+                    [coordinates[4], coordinates[5]],
+                ),
+                filtered,
+            );
+            if let Some(filtered) = filtered {
                 assert_eq!(filtered, exact_affine_det2_sign(a, b, c));
                 certified += 1;
             }
