@@ -446,7 +446,7 @@ struct ProjectivePointCache {
     points: StorageHashMap<ConstructionVertexIdentity, HomogeneousPoint3>,
     point_approximations: StorageHashMap<ConstructionVertexIdentity, Option<[f64; 3]>>,
     canonical_identities: StorageHashMap<ConstructionVertexIdentity, ConstructionVertexIdentity>,
-    canonical_planes: StorageHashMap<ConstructionPlaneIdentity, ConstructionPlaneIdentity>,
+    canonical_planes: [Vec<ConstructionPlaneIdentity>; 2],
     planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
     source_edges: StorageHashMap<ConstructionEdgeIdentity, [Plane; 2]>,
     source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
@@ -517,7 +517,8 @@ impl ProjectivePointCache {
         identity: ConstructionPlaneIdentity,
     ) -> ConstructionPlaneIdentity {
         self.canonical_planes
-            .get(&identity)
+            .get(identity.mesh)
+            .and_then(|planes| planes.get(identity.plane))
             .copied()
             .unwrap_or(identity)
     }
@@ -1947,20 +1948,18 @@ fn compute_two_convex_inputs_projectively(
     let mut point_plane_caches: [PointPlaneClassificationCache; 2] =
         std::array::from_fn(|_| PointPlaneClassificationCache::default());
     let mut affine_cache = ProjectiveAffineCache::default();
-    let mut projective_point_cache = ProjectivePointCache::default();
+    let mut projective_point_cache = ProjectivePointCache {
+        canonical_planes: canonical_plane_identities,
+        ..ProjectivePointCache::default()
+    };
     for (mesh, planes) in support_planes.iter().enumerate() {
         for (plane, value) in planes.iter().enumerate() {
             let identity = ConstructionPlaneIdentity { mesh, plane };
-            let canonical = canonical_plane_identities[mesh][plane];
+            let canonical = projective_point_cache.canonical_plane_identity(identity);
             projective_point_cache
                 .planes
                 .entry(canonical)
                 .or_insert_with(|| (*value).clone());
-            if identity != canonical {
-                projective_point_cache
-                    .canonical_planes
-                    .insert(identity, canonical);
-            }
         }
     }
     let mut source_vertex_points: StorageHashMap<ConstructionVertexIdentity, &Point3> =
@@ -2057,7 +2056,8 @@ fn compute_two_convex_inputs_projectively(
                 )
             }) && classify_point(point, value) == Ok(Classification::On)
             {
-                let plane_identity = canonical_plane_identities[other][plane];
+                let plane_identity = projective_point_cache
+                    .canonical_plane_identity(ConstructionPlaneIdentity { mesh: other, plane });
                 let incidences = projective_point_cache
                     .point_incidences
                     .entry(identity.clone())
@@ -2082,7 +2082,11 @@ fn compute_two_convex_inputs_projectively(
         let mut has_cooriented_coincident_support = false;
         for (plane_index, &plane) in support_planes[other].iter().enumerate() {
             if !has_cooriented_coincident_support
-                && source_plane == canonical_plane_identities[other][plane_index]
+                && source_plane
+                    == projective_point_cache.canonical_plane_identity(ConstructionPlaneIdentity {
+                        mesh: other,
+                        plane: plane_index,
+                    })
                 && certifiably_same_oriented_plane(&polygon.support, plane).unwrap_or(false)
             {
                 has_cooriented_coincident_support = true;
@@ -2102,7 +2106,11 @@ fn compute_two_convex_inputs_projectively(
                     );
                 }
             })?;
-            let plane_identity = canonical_plane_identities[other][plane_index];
+            let plane_identity =
+                projective_point_cache.canonical_plane_identity(ConstructionPlaneIdentity {
+                    mesh: other,
+                    plane: plane_index,
+                });
             for vertex in on_source_vertices {
                 let incidences = projective_point_cache
                     .point_incidences
