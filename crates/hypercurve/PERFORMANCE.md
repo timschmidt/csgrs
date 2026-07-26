@@ -5581,6 +5581,60 @@ managed ptrace environment.
 
 No prepared API or implementation carrier is removed by this change.
 
+### Retained-output-only Boolean fragment cloning
+
+The immediate four-operation region Boolean path shares one classified split
+topology across union, intersection, difference, and XOR. Result construction
+formerly cloned every classified split fragment before applying the
+operation-specific keep/discard action. The one-cell pathological workload
+therefore cloned all 48 topology fragments four times even though discarded
+fragments never entered an arrangement graph. Result construction now borrows
+the shared classification through action selection and clones or reverses only
+a retained output fragment. Every exact action, topology vertex, source index,
+and traversal branch is unchanged.
+
+Symbolized Callgrind attribution also ruled out an apparent adjacent hotspot:
+all 182 `Curve2::point_at` calls and their 2,392,596 inclusive instructions
+belong to benchmark fixture flattening, not Boolean result construction. On the
+matched one-cell exact Boolean workload, total instructions fell from
+23,525,066 to 23,446,849, a reduction of 78,217 instructions (0.33%).
+Inclusive work in `build_boolean_region_from_topology` fell from 2,485,913 to
+2,415,025 instructions (2.85%), and `CurveRegion2::boolean_regions` fell from
+14,210,772 to 14,140,026 instructions (0.50%). The workload retained four
+decisions, nine candidate pairs, 48 fragments, two point classifications, zero
+blockers, and checksum 6. Its dispatch counts and 15,701 rational temporaries,
+54 reductions, and 156 GCDs were unchanged.
+
+The removed clones share their backing evidence and therefore were reference
+count traffic rather than heap allocations. Heaptrack accordingly remained at
+29,305 allocation events, 1,711 postprocessed temporary allocations, 918.80
+KiB peak heap, and 169.54 KiB reported retained memory. Peak RSS including
+Heaptrack overhead measured 11.27 MiB versus a matched 11.26 MiB baseline, a
+0.01 MiB increase. A same-compiler default-feature release artifact lost 244
+text bytes and four total loadable bytes; the stripped file shrank by 240
+bytes, from 5,139,792 to 5,139,552 bytes.
+
+The workspace call-graph utility regenerated source, tests, benchmarks,
+examples, and fuzz targets for `hypercurve`, `hyperlattice`, `hyperlimit`,
+`hyperreal`, and `hypersolve`: 41,997 nodes and 71,186 edges. Replacing the
+parser's heuristic `.cloned()` target with an explicit fragment `clone` adds
+one named leaf but no edge or depth. SCC-condensed reachable counts/depths were
+68/depth 4 for `CurveRegion2::boolean_regions`, 75/depth 7 for Boolean result
+construction, 224/depth 9 for implicit-conic contacts, and 60/depth 6 for
+contact comparison. Every reachable SCC remained a single node.
+
+The final source passed all-feature/all-target tests, the no-default-feature
+library/test matrix, strict all-target Clippy, warning-denied rustdoc, and the
+unfiltered `cargo bench --workspace --all-features` command. That optimized
+command executed every benchmark target and lane. The complete 67-cell
+pathological workload decided all 268 exact Booleans over 603 candidate pairs
+and 3,248 fragments with no blocker and checksum 6. AddressSanitizer completed
+10,000 region-Boolean runs and 10,000 algebraic-image runs without a target
+failure. Leak detection alone remained disabled for the managed ptrace
+environment.
+
+No prepared API or implementation carrier is removed by this change.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two

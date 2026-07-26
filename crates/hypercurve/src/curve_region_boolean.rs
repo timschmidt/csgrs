@@ -1040,16 +1040,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut arrangement_fragments = Vec::new();
         let mut arrangement_directions = Vec::new();
         for carrier_index in 0..self.data.carriers.len() {
-            for (split_fragment_index, classified) in topology.split_fragments[carrier_index]
-                .iter()
-                .cloned()
-                .enumerate()
+            for (split_fragment_index, classified) in
+                topology.split_fragments[carrier_index].iter().enumerate()
             {
-                let ClassifiedSplitCarrierFragment { split, location } = classified;
+                let split = &classified.split;
                 let action = self.fragment_action(
                     carrier_index,
                     &split.fragment,
-                    location,
+                    classified.location,
                     &topology.overlaps,
                     operation,
                 )?;
@@ -1057,7 +1055,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     continue;
                 }
                 let fragment = match action {
-                    RegionFragmentAction::Keep => split.fragment,
+                    RegionFragmentAction::Keep => split.fragment.clone(),
                     RegionFragmentAction::KeepReversed => split
                         .fragment
                         .reversed()
