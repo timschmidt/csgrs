@@ -1820,11 +1820,47 @@ impl RationalBezier2 {
             ));
         }
 
-        if let Some(contacts) = self.exact_line_image_intersection_contacts(other, policy)? {
-            return Ok(contacts);
+        // A symbolic quadratic conic is better served by its implicit
+        // equation than by direct Bernstein line-side signs. The latter can
+        // exhaust the sign budget before the exact algebraic replay that is
+        // specifically able to retain the symbolic coefficient field.
+        if self.degree() == 2
+            && self
+                .weights()
+                .iter()
+                .any(|weight| weight.exact_rational_ref().is_none())
+            && let Some(Classification::Decided(contacts)) =
+                self.implicit_conic_intersection_contacts(other, policy)?
+        {
+            return Ok(Classification::Decided(contacts));
         }
-        if let Some(contacts) = other.exact_line_image_intersection_contacts(self, policy)? {
-            return Ok(contacts.map(reverse_rational_intersection_contacts));
+        if other.degree() == 2
+            && other
+                .weights()
+                .iter()
+                .any(|weight| weight.exact_rational_ref().is_none())
+            && let Some(Classification::Decided(contacts)) =
+                other.implicit_conic_intersection_contacts(self, policy)?
+        {
+            return Ok(Classification::Decided(
+                reverse_rational_intersection_contacts(contacts),
+            ));
+        }
+
+        // A line-image shortcut can be unable to classify a transcendental
+        // conic even though the implicit-conic route below can replay the
+        // contact exactly. Treat only decided shortcut results as terminal.
+        if let Some(Classification::Decided(contacts)) =
+            self.exact_line_image_intersection_contacts(other, policy)?
+        {
+            return Ok(Classification::Decided(contacts));
+        }
+        if let Some(Classification::Decided(contacts)) =
+            other.exact_line_image_intersection_contacts(self, policy)?
+        {
+            return Ok(Classification::Decided(
+                reverse_rational_intersection_contacts(contacts),
+            ));
         }
 
         if let Some(Classification::Decided(contacts)) =

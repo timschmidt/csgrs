@@ -5367,6 +5367,44 @@ inside immediate two-cutter curve trimming was retained: that lane improved
 from 5.333 to 5.051 microseconds (5.3%) without changing exact intersection or
 materialization behavior.
 
+### Immediate symbolic-conic contacts
+
+The immediate rational-Bezier contact path formerly treated an uncertain
+direct line-image shortcut as terminal. A quadratic with a symbolic weight
+such as pi therefore returned a `RealSign` blocker before reaching the exact
+implicit-conic replay that already supports coefficients in that field.
+Immediate contacts now treat only decided shortcut results as terminal and
+schedule symbolic quadratic conics through implicit replay first. Candidate,
+contact, and topology regressions cover the exact pi-weight conic against a
+degree-elevated cubic line in both operand orders.
+
+Five alternating release runs of the complete `rational_bezier` benchmark
+measured a median 1.024462 milliseconds per pi-conic contact call before route
+selection and 775.225 microseconds after it, a 24.3% reduction. Both variants
+included the correctness fallback; the comparison isolates the scheduling
+change. Callgrind over the full benchmark measured 4,513,909,722 versus
+4,300,545,239 instructions (4.73% fewer). Inclusive work below
+`exact_line_image_intersection_contacts` fell from 459,522,283 to 247,279,812
+instructions (46.2%), removing that unsuccessful layer from each symbolic
+conic call.
+
+Heaptrack over the same complete benchmark recorded 4,983,018 versus 4,722,544
+allocations (5.23% fewer), 535,909 versus 453,880 postprocessed temporary
+allocations (15.3% fewer), and 23.85 versus 23.84 MiB peak heap. A same-compiler
+symbolized executable changed as follows:
+
+| Release artifact component | Fallback only | Symbolic implicit-first | Change |
+| --- | ---: | ---: | ---: |
+| Text | 3,261,112 bytes | 3,262,724 bytes | 1,612 bytes larger |
+| Total loadable | 3,515,050 bytes | 3,515,046 bytes | 4 bytes smaller |
+| Debug file size | 122,954,768 bytes | 122,985,160 bytes | 30,392 bytes larger |
+
+The full rational, curve-path, curve-region, containment, editing, and
+all-feature API-surface benchmark gates completed. The all-feature test suite,
+the 268-decision pathological Boolean workload, strict all-target Clippy, and
+10,000 nightly libFuzzer algebraic-image runs under AddressSanitizer also
+completed without an exactness or safety failure.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -619,6 +619,57 @@ fn implicit_conic_route_replays_degree_elevated_line_contact_in_both_orders() {
 
 #[test]
 #[cfg(feature = "predicates")]
+fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
+    let policy = CurvePolicy::certified();
+    let conic = RationalBezier2::try_new(
+        vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
+        vec![Real::one(), Real::pi(), Real::one()],
+    )
+    .unwrap();
+    let cubic_line = RationalBezier2::try_new(
+        vec![
+            Point2::new(r(0), q(1, 2)),
+            Point2::new(q(1, 3), q(1, 2)),
+            Point2::new(q(2, 3), q(1, 2)),
+            Point2::new(r(1), q(1, 2)),
+        ],
+        vec![Real::one(); 4],
+    )
+    .unwrap();
+
+    let contacts = conic
+        .intersection_contacts(&cubic_line, &policy)
+        .expect("pi-weight conic contact should remain exact");
+
+    assert!(matches!(
+        contacts,
+        RationalBezierIntersectionContacts2::Contacts(ref contacts) if contacts.len() == 1
+    ));
+
+    let reversed = cubic_line
+        .intersection_contacts(&conic, &policy)
+        .expect("reversed pi-weight conic contact should remain exact");
+    assert!(matches!(
+        reversed,
+        RationalBezierIntersectionContacts2::Contacts(ref contacts) if contacts.len() == 1
+    ));
+
+    let candidates = conic
+        .intersection_candidates(&cubic_line, &policy)
+        .expect("pi-weight conic candidates should remain exact");
+    assert!(!matches!(
+        candidates,
+        RationalBezierIntersectionCandidates2::NoIntersection
+    ));
+
+    let topology = conic
+        .intersection_topology(&cubic_line, &policy)
+        .expect("pi-weight conic topology should remain exact");
+    assert_eq!(topology.contacts().len(), 1);
+}
+
+#[test]
+#[cfg(feature = "predicates")]
 fn implicit_conic_route_retains_an_interior_rational_quadratic_cubic_contact() {
     let policy = CurvePolicy::certified();
     let conic = RationalBezier2::try_new(vec![p(5, 6), p(14, 5), p(23, 6)], vec![r(1), r(2), r(1)])
