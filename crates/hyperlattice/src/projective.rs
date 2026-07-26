@@ -72,6 +72,31 @@ impl HomogeneousPoint3 {
 
     /// Converts this finite homogeneous point to affine coordinates.
     pub fn to_affine_point(&self) -> BlasResult<Point3> {
+        if let [Some(x), Some(y), Some(z), Some(weight)] =
+            self.coordinates().map(Real::exact_rational_ref)
+        {
+            if weight.is_one() {
+                crate::trace_dispatch!(
+                    "hyperlattice_projective",
+                    "affine-point",
+                    "exact-unit-weight"
+                );
+                return Ok(Point3::new(self.x.clone(), self.y.clone(), self.z.clone()));
+            }
+            if [x, y, z, weight].into_iter().all(|value| value.is_dyadic()) {
+                crate::trace_dispatch!(
+                    "hyperlattice_projective",
+                    "affine-point",
+                    "exact-dyadic-quotients"
+                );
+                return Ok(Point3::new(
+                    Real::exact_rational_quotient_known_dyadic(&self.x, &self.w)?,
+                    Real::exact_rational_quotient_known_dyadic(&self.y, &self.w)?,
+                    Real::exact_rational_quotient_known_dyadic(&self.z, &self.w)?,
+                ));
+            }
+        }
+        crate::trace_dispatch!("hyperlattice_projective", "affine-point", "general");
         Ok(Point3::new(
             (&self.x / &self.w)?,
             (&self.y / &self.w)?,
@@ -334,6 +359,24 @@ mod tests {
         let point = intersect_three_planes(&x_eq_1, &y_eq_2, &z_eq_3);
         assert_eq!(point, HomogeneousPoint3::new(r(1), r(2), r(3), r(1)));
         assert_eq!(point.to_affine_point().unwrap(), p3(1, 2, 3));
+    }
+
+    #[test]
+    fn wide_dyadic_affine_point_matches_independent_exact_division() {
+        let value = |text: &str| text.parse::<Real>().unwrap();
+        let point = HomogeneousPoint3::new(
+            value("680564733841876926926749214863536422913/128"),
+            value("-340282366920938463463374607431768211507/32"),
+            value("5/256"),
+            value("3/8"),
+        );
+        let expected = Point3::new(
+            (&point.x / &point.w).unwrap(),
+            (&point.y / &point.w).unwrap(),
+            (&point.z / &point.w).unwrap(),
+        );
+
+        assert_eq!(point.to_affine_point().unwrap(), expected);
     }
 
     #[test]
