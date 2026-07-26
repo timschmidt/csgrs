@@ -375,11 +375,26 @@ impl BezierArrangementGraph2 {
         filled_left_faces: bool,
         policy: &CurvePolicy,
     ) -> Classification<BezierArrangementTraversal2> {
-        let defer_higher_derivatives = !certified_successors.is_empty();
+        let defer_tangent_order_evidence = !certified_successors.is_empty();
+        let initial_endpoint_scope = if defer_tangent_order_evidence {
+            RetainedEndpointScope::Connectivity
+        } else {
+            RetainedEndpointScope::TangentOrder
+        };
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "retained-endpoint-scope",
+            if defer_tangent_order_evidence {
+                "connectivity-first"
+            } else {
+                "tangent-order-immediate"
+            },
+        );
         let mut endpoints = Vec::with_capacity(self.fragments.len());
         for fragment in &self.fragments {
             let endpoints_for_fragment =
-                match retained_endpoint_data(fragment, !defer_higher_derivatives, policy) {
+                match retained_endpoint_data(fragment, initial_endpoint_scope, policy) {
                     Some(Classification::Decided(endpoints)) => endpoints,
                     Some(Classification::Uncertain(reason)) => {
                         return Classification::Uncertain(reason);
@@ -393,7 +408,7 @@ impl BezierArrangementGraph2 {
             Classification::Decided(adjacency) => adjacency,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        if defer_higher_derivatives
+        if defer_tangent_order_evidence
             && outgoing.iter().enumerate().any(|(index, candidates)| {
                 candidates.len() > 1
                     && !certified_successors
@@ -403,9 +418,19 @@ impl BezierArrangementGraph2 {
                         .is_some_and(|successor| candidates.contains(&successor))
             })
         {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "retained-endpoint-scope",
+                "tangent-order-rebuild",
+            );
             endpoints.clear();
             for fragment in &self.fragments {
-                let endpoints_for_fragment = match retained_endpoint_data(fragment, true, policy) {
+                let endpoints_for_fragment = match retained_endpoint_data(
+                    fragment,
+                    RetainedEndpointScope::TangentOrder,
+                    policy,
+                ) {
                     Some(Classification::Decided(endpoints)) => endpoints,
                     Some(Classification::Uncertain(reason)) => {
                         return Classification::Uncertain(reason);
@@ -946,6 +971,12 @@ struct RetainedEndpointData {
     end_derivative_source: Option<RetainedAlgebraicDerivativeSource>,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RetainedEndpointScope {
+    Connectivity,
+    TangentOrder,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 enum RetainedEndpointKey {
     Exact(Box<Point2>),
@@ -990,14 +1021,29 @@ fn materialized_endpoint_data(
 
 fn retained_endpoint_data(
     arrangement_fragment: &BezierArrangementFragment2,
-    include_higher_derivatives: bool,
+    scope: RetainedEndpointScope,
     policy: &CurvePolicy,
 ) -> Option<Classification<RetainedEndpointData>> {
     let fragment = arrangement_fragment.fragment();
     match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => match curve
-            .endpoint_data_with_higher_derivatives(policy, include_higher_derivatives)
+        BezierSplitFragment2::Materialized { curve, .. }
+            if scope == RetainedEndpointScope::Connectivity =>
         {
+            let (start, end) = curve.endpoints();
+            Some(Classification::Decided(RetainedEndpointData {
+                start: Some(RetainedEndpointKey::Exact(Box::new(start))),
+                end: Some(RetainedEndpointKey::Exact(Box::new(end))),
+                start_topology_vertex: arrangement_fragment.start_topology_vertex(),
+                end_topology_vertex: arrangement_fragment.end_topology_vertex(),
+                start_tangent: None,
+                end_tangent: None,
+                start_second_derivative: None,
+                start_third_derivative: None,
+                start_derivative_source: None,
+                end_derivative_source: None,
+            }))
+        }
+        BezierSplitFragment2::Materialized { curve, .. } => match curve.endpoint_data(policy) {
             Classification::Decided(data) => Some(Classification::Decided(RetainedEndpointData {
                 start: Some(RetainedEndpointKey::Exact(Box::new(data.start))),
                 end: Some(RetainedEndpointKey::Exact(Box::new(data.end))),
@@ -1041,7 +1087,7 @@ fn retained_endpoint_data(
                 start_image.as_ref(),
                 source_curve.as_ref(),
                 source_start_topology_vertex,
-                include_higher_derivatives,
+                scope,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -1054,7 +1100,7 @@ fn retained_endpoint_data(
                 end_image.as_ref(),
                 source_curve.as_ref(),
                 source_end_topology_vertex,
-                include_higher_derivatives,
+                scope,
                 policy,
             ) {
                 Classification::Decided(data) => data,
@@ -1105,12 +1151,13 @@ fn retained_endpoint_side_data(
     image: Option<&BezierAlgebraicEndpointImage2>,
     source_curve: Option<&BezierSubcurve2>,
     topology_vertex: Option<usize>,
-    include_higher_derivatives: bool,
+    scope: RetainedEndpointScope,
     policy: &CurvePolicy,
 ) -> Classification<Option<RetainedEndpointSideData>> {
     if let Some(image) = image {
-        let derivative_source =
-            retained_algebraic_derivative_source(source_curve, image.parameter());
+        let derivative_source = (scope == RetainedEndpointScope::TangentOrder)
+            .then(|| retained_algebraic_derivative_source(source_curve, image.parameter()))
+            .flatten();
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -1122,7 +1169,7 @@ fn retained_endpoint_side_data(
                 (false, false) => "eager-unkeyed-resolved",
             },
         );
-        if topology_vertex.is_some() && image.is_lazy_first_order() && derivative_source.is_some() {
+        if topology_vertex.is_some() && image.is_lazy_first_order() && source_curve.is_some() {
             return Classification::Decided(Some(RetainedEndpointSideData {
                 point: None,
                 tangent: None,
@@ -1137,33 +1184,34 @@ fn retained_endpoint_side_data(
         let Some(point) = retained_algebraic_point_key(point_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
+        if scope == RetainedEndpointScope::Connectivity {
+            return Classification::Decided(Some(RetainedEndpointSideData {
+                point: Some(point),
+                tangent: None,
+                second_derivative: None,
+                third_derivative: None,
+                derivative_source: None,
+            }));
+        }
         let Ok(tangent_image) = image.try_tangent() else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
         let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
-        let second_derivative = if include_higher_derivatives {
-            match image.second_derivative() {
-                Some(image) => match retained_algebraic_tangent(image) {
-                    Some(tangent) => Some(tangent),
-                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
-                },
-                None => None,
-            }
-        } else {
-            None
+        let second_derivative = match image.second_derivative() {
+            Some(image) => match retained_algebraic_tangent(image) {
+                Some(tangent) => Some(tangent),
+                None => return Classification::Uncertain(UncertaintyReason::Boundary),
+            },
+            None => None,
         };
-        let third_derivative = if include_higher_derivatives {
-            match image.third_derivative() {
-                Some(image) => match retained_algebraic_tangent(image) {
-                    Some(tangent) => Some(tangent),
-                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
-                },
-                None => None,
-            }
-        } else {
-            None
+        let third_derivative = match image.third_derivative() {
+            Some(image) => match retained_algebraic_tangent(image) {
+                Some(tangent) => Some(tangent),
+                None => return Classification::Uncertain(UncertaintyReason::Boundary),
+            },
+            None => None,
         };
         return Classification::Decided(Some(RetainedEndpointSideData {
             point: Some(point),
@@ -1177,13 +1225,18 @@ fn retained_endpoint_side_data(
     let (BezierParameter2::Exact(parameter), Some(source_curve)) = (parameter, source_curve) else {
         return Classification::Decided(None);
     };
-    retained_exact_source_endpoint_side_data(
-        source_curve,
-        parameter,
-        include_higher_derivatives,
-        policy,
-    )
-    .map(Some)
+    if scope == RetainedEndpointScope::Connectivity {
+        return source_curve.point_at(parameter, policy).map(|point| {
+            Some(RetainedEndpointSideData {
+                point: Some(RetainedEndpointKey::Exact(Box::new(point))),
+                tangent: None,
+                second_derivative: None,
+                third_derivative: None,
+                derivative_source: None,
+            })
+        });
+    }
+    retained_exact_source_endpoint_side_data(source_curve, parameter, true, policy).map(Some)
 }
 
 fn retained_exact_source_endpoint_side_data(
@@ -1722,6 +1775,36 @@ mod endpoint_adjacency_tests {
             graph.traverse_retained_with_certified_successors(&[None], &policy),
             graph.traverse_retained_with_tangent_order(&policy)
         );
+    }
+
+    #[test]
+    fn certified_branch_free_traversal_defers_unused_zero_tangent() {
+        let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let start = point2(0, 0);
+        let graph = BezierArrangementGraph2::new(vec![BezierArrangementFragment2::new(
+            0,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    start.clone(),
+                    start,
+                    point2(2, 0),
+                )),
+            },
+        )])
+        .expect("valid branch-free graph");
+        let policy = CurvePolicy::certified();
+
+        assert!(matches!(
+            graph.traverse_retained_with_tangent_order(&policy),
+            Classification::Uncertain(UncertaintyReason::RealSign)
+        ));
+        assert!(matches!(
+            graph.traverse_retained_with_certified_successors(&[None], &policy),
+            Classification::Decided(_)
+        ));
     }
 }
 

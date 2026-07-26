@@ -5635,6 +5635,96 @@ environment.
 
 No prepared API or implementation carrier is removed by this change.
 
+### Connectivity-first retained Boolean endpoints
+
+Retained arrangement traversal formerly built tangent evidence for every
+materialized endpoint before it knew whether tangent ordering was needed.
+Region Boolean construction already carries certified successor choices from
+the classified split topology. When that evidence completely determines every
+multi-successor vertex, endpoint tangents and their higher derivatives are
+unobserved work.
+
+Traversal with certified successors now builds a connectivity-only endpoint
+view first. It retains exact endpoint coordinates and topology vertices but
+does not construct first-, second-, or third-derivative evidence. If any
+multi-successor vertex lacks a valid certified successor, traversal discards
+that partial view and rebuilds the complete tangent-order view before choosing
+a branch. The public tangent-ordered traversal still requests the complete
+view immediately. A zero-tangent regression proves that certified branch-free
+traversal no longer observes an unused tangent, while the existing partial
+successor regression proves that fallback still rebuilds and applies all
+higher-order exact evidence.
+
+The matched one-cell pathological Boolean workload retained four decided
+operations, nine candidate pairs, 48 fragments, two point classifications,
+zero blockers, and checksum 6. Its trace used the connectivity-first path four
+times and never rebuilt tangent order. It retained 40 lazy topology-keyed
+endpoint images and 12 contact-source bound rejections. Rational reductions
+and GCDs stayed at 54 and 156; rational temporaries fell from 15,701 to 14,252,
+a 9.23% reduction.
+
+Symbolized Callgrind attribution changed as follows:
+
+| Inclusive instruction scope | Complete endpoint view | Connectivity first | Change |
+| --- | ---: | ---: | ---: |
+| Whole one-cell workload | 23,446,849 | 22,284,706 | 1,162,143 fewer (4.96%) |
+| `CurveRegion2::boolean_regions` | 14,140,026 | 12,989,614 | 1,150,412 fewer (8.14%) |
+| Shared Boolean result construction | 3,716,114 | 2,565,842 | 1,150,272 fewer (30.95%) |
+| One result-region build | 2,415,025 | 1,264,692 | 1,150,333 fewer (47.63%) |
+| Retained arrangement traversal | 2,104,569 | 962,607 | 1,141,962 fewer (54.26%) |
+
+The old path made 78 native
+`endpoint_data_with_higher_derivatives` calls costing 1,038,787 inclusive
+instructions. The connectivity-only workload makes none of those calls.
+Fixture flattening remains outside the changed Boolean path.
+
+Heaptrack over same-compiler, one-cell executables changed as follows:
+
+| Heap metric | Complete endpoint view | Connectivity first | Change |
+| --- | ---: | ---: | ---: |
+| Allocation events | 29,305 | 28,215 | 1,090 fewer (3.72%) |
+| Postprocessed temporary allocations | 1,711 | 1,663 | 48 fewer (2.81%) |
+| Peak heap | 918.80 KiB | 881.22 KiB | 37.58 KiB lower (4.09%) |
+| Peak RSS | 11.27 MiB | 11.14 MiB | 0.13 MiB lower |
+| Reported retained memory | 169.54 KiB | 155.82 KiB | 13.72 KiB lower (8.09%) |
+
+A matched default-feature release pathological executable also shrank:
+
+| Release artifact component | Complete endpoint view | Connectivity first | Change |
+| --- | ---: | ---: | ---: |
+| Text | 4,876,765 bytes | 4,873,209 bytes | 3,556 bytes smaller |
+| Total loadable | 5,138,021 bytes | 5,133,921 bytes | 4,100 bytes smaller (0.080%) |
+| Stripped file size | 5,139,552 bytes | 5,135,944 bytes | 3,608 bytes smaller (0.070%) |
+
+The unfiltered optimized `cargo bench --workspace --all-features` command
+executed every benchmark target and lane. The affected immediate API lanes
+completed at 16.173 microseconds per union, 94.248 microseconds per four-op
+region Boolean batch, and 111.578 microseconds per immediate curve-path Boolean
+batch, with their exact checksums unchanged. The complete comparative matrix
+ran rectangle and 64-, 256-, and 1,024-vertex polygon Booleans across all
+implementations, as well as every offset and NURBS comparison; no
+representative subset was substituted. The release 100 MiB pathological lane
+completed all 268 exact Booleans over 603 candidate pairs and 3,248 fragments
+with no blocker and checksum 6 in 440.582 milliseconds.
+
+The workspace call-graph utility regenerated source, test, benchmark, example,
+and fuzz nodes for `hypercurve`, `hyperlattice`, `hyperlimit`, `hyperreal`, and
+`hypersolve`: 41,999 nodes and 71,199 edges. SCC-condensed reachable
+counts/depths stayed 68/depth 4 for `CurveRegion2::boolean_regions` and
+75/depth 7 for Boolean result construction. The private retained traversal
+gained two reachable leaf nodes, from 228 to 230, while staying depth 11.
+Implicit-conic contacts remained 224/depth 9 and contact comparison remained
+60/depth 6. Every reachable SCC remained a single node.
+
+The final source passed the complete all-feature/all-target workspace test run,
+the no-default-feature library/test matrix, strict all-target Clippy,
+warning-denied rustdoc, and the full optimized benchmark command above.
+AddressSanitizer completed 10,000 region-Boolean runs and 10,000
+algebraic-image runs without a target failure; leak detection alone remained
+disabled for the managed ptrace environment.
+
+No prepared API or implementation carrier is removed by this change.
+
 ### Cross-stack prepared-removal gate
 
 Prepared implementation surfaces below Hypercurve are removed only after two
