@@ -2300,7 +2300,7 @@ fn collapse_certified_convex_faces(
             continue;
         }
         let source_edge_count = polygon_indices.len().saturating_mul(3);
-        let mut edge_uses: StorageHashMap<ConstructionEdgeIdentity, usize> =
+        let mut edge_uses: StorageHashMap<[usize; 2], usize> =
             StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
         let mut vertices: StorageHashMap<usize, Point3> =
             StorageHashMap::with_capacity_and_hasher(source_edge_count, Default::default());
@@ -2333,7 +2333,13 @@ fn collapse_certified_convex_faces(
                     .or_insert_with(|| points.get(vertex_index).expect("aligned vertex").clone());
             }
             for identity in edge_identities.iter() {
-                *edge_uses.entry(identity.clone()).or_default() += 1;
+                let ConstructionEdgeIdentity::Source { mesh, endpoints } = identity else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                if *mesh != support_identity.mesh {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+                *edge_uses.entry(*endpoints).or_default() += 1;
             }
         }
 
@@ -2348,7 +2354,13 @@ fn collapse_certified_convex_faces(
             let points = polygon.known_vertices.as_ref().expect("validated above");
             for edge_index in 0..edge_identities.len() {
                 let edge_identity = &edge_identities[edge_index];
-                if edge_uses.get(edge_identity).copied() != Some(1) {
+                let ConstructionEdgeIdentity::Source { mesh, endpoints } = edge_identity else {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                };
+                if *mesh != support_identity.mesh {
+                    return Err(crate::error::HypermeshError::UnknownClassification);
+                }
+                if edge_uses.get(endpoints).copied() != Some(1) {
                     continue;
                 }
                 let ConstructionVertexIdentity::Source { vertex: start, .. } =
