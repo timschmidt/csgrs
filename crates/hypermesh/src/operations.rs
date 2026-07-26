@@ -450,7 +450,7 @@ struct ProjectivePointCache {
     planes: StorageHashMap<ConstructionPlaneIdentity, Plane>,
     source_edges: StorageHashMap<ConstructionEdgeIdentity, [Plane; 2]>,
     source_edge_supports: StorageHashMap<ConstructionEdgeIdentity, Vec<ConstructionPlaneIdentity>>,
-    source_vertices: StorageHashMap<ConstructionVertexIdentity, [Plane; 3]>,
+    source_vertices: StorageHashMap<ConstructionVertexIdentity, [ConstructionPlaneIdentity; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
 }
 
@@ -615,10 +615,14 @@ impl ProjectivePointCache {
 
     fn definition_planes(&self, identity: &ConstructionVertexIdentity) -> Option<[&Plane; 3]> {
         match identity {
-            ConstructionVertexIdentity::Source { .. } => self
-                .source_vertices
-                .get(identity)
-                .map(|planes| [&planes[0], &planes[1], &planes[2]]),
+            ConstructionVertexIdentity::Source { .. } => {
+                let planes = self.source_vertices.get(identity)?;
+                Some([
+                    self.planes.get(&planes[0])?,
+                    self.planes.get(&planes[1])?,
+                    self.planes.get(&planes[2])?,
+                ])
+            }
             ConstructionVertexIdentity::SourceEdgePlane {
                 mesh,
                 endpoints,
@@ -2025,9 +2029,10 @@ fn compute_two_convex_inputs_projectively(
                         &projective_point_cache.planes[&supports[third]],
                     ];
                     if plane_normals_are_independent(planes)? {
-                        projective_point_cache
-                            .source_vertices
-                            .insert(identity, planes.map(|plane| (*plane).clone()));
+                        projective_point_cache.source_vertices.insert(
+                            identity,
+                            [supports[first], supports[second], supports[third]],
+                        );
                         break 'definition;
                     }
                 }
