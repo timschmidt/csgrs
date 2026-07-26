@@ -2943,9 +2943,10 @@ fn collapse_certified_convex_faces(
             }
         }
 
-        let mut single_use_vertices = Vec::new();
+        let mut single_use_vertices = [0usize; MAX_SINGLE_USE_CERTIFICATE_TRIANGLES * 3];
+        let mut single_use_vertex_count = 0;
         if polygon_indices.len() <= MAX_SINGLE_USE_CERTIFICATE_TRIANGLES {
-            let mut source_vertices = Vec::with_capacity(source_edge_count);
+            let mut source_vertex_count = 0;
             for &polygon_index in polygon_indices {
                 for identity in polygons[polygon_index]
                     .known_vertex_identities()
@@ -2954,9 +2955,11 @@ fn collapse_certified_convex_faces(
                     let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
                         unreachable!("validated source vertex identity");
                     };
-                    source_vertices.push(vertex);
+                    single_use_vertices[source_vertex_count] = vertex;
+                    source_vertex_count += 1;
                 }
             }
+            let source_vertices = &mut single_use_vertices[..source_vertex_count];
             source_vertices.sort_unstable();
             let mut vertex_index = 0;
             while vertex_index < source_vertices.len() {
@@ -2970,7 +2973,8 @@ fn collapse_certified_convex_faces(
                 // neighbors. The supported input model excludes degenerate
                 // source triangles, so this vertex is certifiably a corner.
                 if next == vertex_index + 1 {
-                    single_use_vertices.push(source_vertices[vertex_index]);
+                    source_vertices[single_use_vertex_count] = source_vertices[vertex_index];
+                    single_use_vertex_count += 1;
                 }
                 vertex_index = next;
             }
@@ -3024,7 +3028,8 @@ fn collapse_certified_convex_faces(
         let start = current;
         let mut face_vertices = Vec::with_capacity(outgoing.len());
         let mut vertex_identities = Vec::with_capacity(outgoing.len());
-        let mut optional_edge_planes = Vec::with_capacity(outgoing.len());
+        let mut edge_planes = Vec::new();
+        let mut edge_planes_complete = true;
         let mut edge_identities = Vec::with_capacity(outgoing.len());
         while face_vertices.len() < outgoing.len() {
             let Ok(outgoing_index) = outgoing.binary_search_by_key(&current, |entry| entry.0)
@@ -3037,7 +3042,17 @@ fn collapse_certified_convex_faces(
                 mesh: support_identity.mesh,
                 vertex: current,
             });
-            optional_edge_planes.push(edge_plane.cloned());
+            if edge_planes_complete {
+                if let Some(edge_plane) = edge_plane {
+                    if edge_planes.is_empty() {
+                        edge_planes.reserve(outgoing.len());
+                    }
+                    edge_planes.push((*edge_plane).clone());
+                } else {
+                    edge_planes.clear();
+                    edge_planes_complete = false;
+                }
+            }
             edge_identities.push(edge_identity.clone());
             current = *next;
             if current == start {
@@ -3047,21 +3062,8 @@ fn collapse_certified_convex_faces(
         if current != start || face_vertices.len() != outgoing.len() {
             return Err(crate::error::HypermeshError::UnknownClassification);
         }
-        let mut edge_planes = optional_edge_planes
-            .into_iter()
-            .collect::<Option<Vec<_>>>()
-            .unwrap_or_default();
-        let certified_noncollinear_vertices = (!single_use_vertices.is_empty()).then(|| {
-            vertex_identities
-                .iter()
-                .map(|identity| {
-                    let ConstructionVertexIdentity::Source { vertex, .. } = identity else {
-                        unreachable!("validated source vertex identity");
-                    };
-                    single_use_vertices.binary_search(vertex).is_ok()
-                })
-                .collect::<Vec<_>>()
-        });
+        let certified_noncollinear_source_vertices = (single_use_vertex_count != 0)
+            .then_some(&single_use_vertices[..single_use_vertex_count]);
         collapse_certified_collinear_face_vertices(
             support_identity.mesh,
             support_planes[support_identity.mesh][support_identity.plane],
@@ -3069,7 +3071,7 @@ fn collapse_certified_convex_faces(
             &mut vertex_identities,
             &mut edge_planes,
             &mut edge_identities,
-            certified_noncollinear_vertices.as_deref(),
+            certified_noncollinear_source_vertices,
         )?;
         let source = &polygons[polygon_indices[0]];
         let mesh_index = usize::try_from(source.mesh_index)
@@ -3112,7 +3114,7 @@ enum SourceEdgeOccurrences {
 }
 
 impl SourceEdgeOccurrences {
-    const PACKED_SORT_MIN_EDGES: usize = 128;
+    const PACKED_SORT_MIN_EDGES: usize = 1;
 
     fn with_capacity(capacity: usize, vertex_count: usize) -> Self {
         let endpoint_bits = usize::BITS - vertex_count.saturating_sub(1).leading_zeros();
@@ -3153,7 +3155,7 @@ impl SourceEdgeOccurrences {
         wide.push((edge, wide.len()));
     }
 
-    fn into_unique_occurrences(self) -> Vec<usize> {
+    fn into_unique_occurrences(self) -> UniqueSourceEdgeOccurrences {
         match self {
             Self::Packed {
                 endpoint_bits: _,
@@ -3162,16 +3164,76 @@ impl SourceEdgeOccurrences {
             } => {
                 edges.sort_unstable();
                 let occurrence_mask = (1_u64 << occurrence_bits) - 1;
-                unique_sorted_runs_by_key(&edges, |edge| edge >> occurrence_bits)
-                    .map(|&edge| (edge & occurrence_mask) as usize)
-                    .collect()
+                let len = unique_sorted_runs_by_key(&edges, |edge| edge >> occurrence_bits).count();
+                UniqueSourceEdgeOccurrences::Packed {
+                    occurrence_bits,
+                    occurrence_mask,
+                    edges,
+                    index: 0,
+                    len,
+                }
             }
             Self::Wide(mut edges) => {
                 edges.sort_unstable_by_key(|entry| entry.0);
-                unique_sorted_runs_by_key(&edges, |entry| entry.0)
-                    .map(|entry| entry.1)
-                    .collect()
+                UniqueSourceEdgeOccurrences::Wide(
+                    unique_sorted_runs_by_key(&edges, |entry| entry.0)
+                        .map(|entry| entry.1)
+                        .collect::<Vec<_>>()
+                        .into_iter(),
+                )
             }
+        }
+    }
+}
+
+enum UniqueSourceEdgeOccurrences {
+    Packed {
+        occurrence_bits: u32,
+        occurrence_mask: u64,
+        edges: Vec<u64>,
+        index: usize,
+        len: usize,
+    },
+    Wide(std::vec::IntoIter<usize>),
+}
+
+impl ExactSizeIterator for UniqueSourceEdgeOccurrences {
+    fn len(&self) -> usize {
+        match self {
+            Self::Packed { len, .. } => *len,
+            Self::Wide(occurrences) => occurrences.len(),
+        }
+    }
+}
+
+impl Iterator for UniqueSourceEdgeOccurrences {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Packed {
+                occurrence_bits,
+                occurrence_mask,
+                edges,
+                index,
+                len,
+            } => {
+                while *index < edges.len() {
+                    let current = *index;
+                    *index += 1;
+                    let key = edges[current] >> *occurrence_bits;
+                    while *index < edges.len() && edges[*index] >> *occurrence_bits == key {
+                        *index += 1;
+                    }
+                    if *index == current + 1 {
+                        *len -= 1;
+                        return Some((edges[current] & *occurrence_mask) as usize);
+                    }
+                }
+                debug_assert_eq!(*len, 0);
+                None
+            }
+            Self::Wide(occurrences) => occurrences.next(),
         }
     }
 }
@@ -3216,13 +3278,12 @@ fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
     vertex_identities: &mut Vec<ConstructionVertexIdentity>,
     edges: &mut Vec<Plane>,
     edge_identities: &mut Vec<ConstructionEdgeIdentity>,
-    certified_noncollinear_vertices: Option<&[bool]>,
+    certified_noncollinear_source_vertices: Option<&[usize]>,
 ) -> HypermeshResult<()> {
     let len = vertices.len();
     if vertex_identities.len() != len
         || (!edges.is_empty() && edges.len() != len)
         || edge_identities.len() != len
-        || certified_noncollinear_vertices.is_some_and(|certified| certified.len() != len)
     {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
@@ -3238,7 +3299,18 @@ fn collapse_certified_collinear_face_vertices<P: Borrow<Point3>>(
         let mut retained_heap = Vec::new();
         let mut retained_len = 0;
         for index in 0..len {
-            let keep = certified_noncollinear_vertices.is_some_and(|certified| certified[index])
+            let certified_noncollinear =
+                certified_noncollinear_source_vertices.is_some_and(|certified| {
+                    let ConstructionVertexIdentity::Source {
+                        mesh: vertex_mesh,
+                        vertex,
+                    } = vertex_identities[index]
+                    else {
+                        return false;
+                    };
+                    vertex_mesh == mesh && certified.contains(&vertex)
+                });
+            let keep = certified_noncollinear
                 || !support.points_are_collinear_on_support(
                     vertices[(index + len - 1) % len].borrow(),
                     vertices[index].borrow(),
@@ -4035,14 +4107,10 @@ mod tests {
             for edge in edges {
                 keys.push(edge);
             }
-            keys.into_unique_occurrences()
+            keys.into_unique_occurrences().collect::<Vec<_>>()
         };
 
         assert_eq!(collect(edges.len()), vec![2]);
-        assert_eq!(
-            collect(SourceEdgeOccurrences::PACKED_SORT_MIN_EDGES),
-            vec![2]
-        );
 
         if usize::BITS > u32::BITS {
             let oversized = usize::try_from(u64::from(u32::MAX) + 1).unwrap();
@@ -4053,7 +4121,10 @@ mod tests {
             fallback.push([1, 2]);
             fallback.push([oversized, oversized + 1]);
             fallback.push([1, 2]);
-            assert_eq!(fallback.into_unique_occurrences(), vec![1]);
+            assert_eq!(
+                fallback.into_unique_occurrences().collect::<Vec<_>>(),
+                vec![1]
+            );
         }
     }
 
