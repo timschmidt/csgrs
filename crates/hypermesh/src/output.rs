@@ -968,9 +968,7 @@ fn mean_output_coordinate<'a>(
             coordinate(&vertices[third]).exact_rational_ref(),
         )
     {
-        return Rational::mean_refs(&[first, second, third])
-            .map(Real::from)
-            .ok_or(HypermeshError::UnknownClassification);
+        return Ok(Real::from(Rational::mean3_refs([first, second, third])));
     }
     if let Some(rationals) = boundary
         .iter()
