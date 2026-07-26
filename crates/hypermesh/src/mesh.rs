@@ -494,8 +494,32 @@ fn bounds_for_positions<'a>(
     let first = positions.next().ok_or(HypermeshError::EmptyInput)?;
     let mut min = first.clone();
     let mut max = first.clone();
+    let first_coordinates = [&first.x, &first.y, &first.z];
+    let mut exact_dyadic_bounds = match first_coordinates.map(Real::to_f64_exact_dyadic) {
+        [Some(x), Some(y), Some(z)] => Some(([x, y, z], [x, y, z])),
+        _ => None,
+    };
 
     for position in positions {
+        if let Some((min_f64, max_f64)) = &mut exact_dyadic_bounds {
+            let coordinates = [&position.x, &position.y, &position.z];
+            if let [Some(x), Some(y), Some(z)] = coordinates.map(Real::to_f64_exact_dyadic) {
+                for (axis, value) in [x, y, z].into_iter().enumerate() {
+                    if value < min_f64[axis] {
+                        min_f64[axis] = value;
+                        *crate::geometry::axis_mut(&mut min, axis) =
+                            axis_ref(position, axis).clone();
+                    }
+                    if value > max_f64[axis] {
+                        max_f64[axis] = value;
+                        *crate::geometry::axis_mut(&mut max, axis) =
+                            axis_ref(position, axis).clone();
+                    }
+                }
+                continue;
+            }
+            exact_dyadic_bounds = None;
+        }
         for axis in 0..3 {
             if compare_real(axis_ref(position, axis), axis_ref(&min, axis))?.is_lt() {
                 *crate::geometry::axis_mut(&mut min, axis) = axis_ref(position, axis).clone();
@@ -513,6 +537,25 @@ fn bounds_for_positions<'a>(
 mod tests {
     use super::*;
     use crate::polygon::RetainedVertexCycle;
+    use hyperlattice::Rational;
+
+    #[test]
+    fn bounds_exact_dyadic_scan_falls_back_for_later_general_rational() {
+        let one_third = Real::new(Rational::fraction(1, 3).unwrap());
+        let points = [
+            Point3::new(Real::from(4), Real::from(-2), Real::from(8)),
+            Point3::new(Real::from(-3), Real::from(5), Real::from(1)),
+            Point3::new(one_third.clone(), Real::from(-7), Real::from(9)),
+        ];
+
+        assert_eq!(
+            bounds_for_positions(&points).unwrap(),
+            Aabb::new(
+                Point3::new(Real::from(-3), Real::from(-7), Real::from(1)),
+                Point3::new(Real::from(4), Real::from(5), Real::from(9)),
+            ),
+        );
+    }
 
     #[test]
     fn deferred_certified_triangles_share_one_indexed_position_pool() {
