@@ -2715,15 +2715,11 @@ fn exact_inside_and_active_planes(
             crate::trace_dispatch!("projective-active-planes", "proposed-empty");
             return Ok(None);
         }
-        let verification_planes = candidate_planes
-            .iter()
-            .copied()
-            .filter(|plane| !proposed_planes.contains(plane))
-            .collect::<Vec<_>>();
         if cycle_satisfies_planes(
             &inside,
             support_planes,
-            &verification_planes,
+            candidate_planes,
+            &proposed_planes,
             support_plane_mesh,
             point_cache,
         )
@@ -2902,11 +2898,13 @@ fn cycle_satisfies_planes(
     cycle: &ProjectiveCycle,
     support_planes: &[&Plane],
     plane_indices: &[usize],
+    excluded_planes: &[usize],
     support_plane_mesh: usize,
     point_cache: &ProjectivePointCache,
 ) -> HypermeshResult<bool> {
     let prepared_planes = plane_indices
         .iter()
+        .filter(|plane_index| !excluded_planes.contains(plane_index))
         .map(|&plane_index| {
             (
                 plane_index,
@@ -3592,7 +3590,8 @@ mod tests {
         }
 
         assert!(
-            cycle_satisfies_planes(&cycle, &[&polygon.support], &[0], 0, &point_cache).unwrap()
+            cycle_satisfies_planes(&cycle, &[&polygon.support], &[0], &[], 0, &point_cache)
+                .unwrap()
         );
     }
 
