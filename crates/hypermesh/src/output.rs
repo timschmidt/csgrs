@@ -11,7 +11,7 @@ use crate::polygon::{
 };
 use crate::storage_hash::StorageHashMap;
 use crate::winding::WindingPair;
-use hyperlattice::{Rational, Real};
+use hyperlattice::{Point3, Rational, Real};
 use hyperreal::{PreparedRationalLine2Filter, PreparedRationalPoint3Query, RealSign};
 
 const RESOLVE_TJUNCTION_MAX_PASSES: usize = 256;
@@ -819,6 +819,9 @@ fn remove_unused_vertices(soup: &mut TriangleSoup) {
             used[vertex] = true;
         }
     }
+    if used.iter().all(|is_used| *is_used) {
+        return;
+    }
     let mut remap = vec![0; soup.vertices.len()];
     let mut next = 0;
     for (index, &is_used) in used.iter().enumerate() {
@@ -1270,6 +1273,40 @@ fn merge_duplicate_convex_polygon_vertices<P>(
 where
     P: Borrow<ConvexPolygon>,
 {
+    // Retained rational cycles can be canonicalized while borrowed, so only
+    // vertices admitted to the merged output clone their exact coordinates.
+    if polygons.iter().all(|polygon| {
+        let polygon = polygon.borrow();
+        polygon.known_vertices.as_ref().is_some_and(|points| {
+            points.len() == polygon.vertex_count()
+                && points.iter().all(|point| {
+                    point.x.exact_rational_ref().is_some()
+                        && point.y.exact_rational_ref().is_some()
+                        && point.z.exact_rational_ref().is_some()
+                })
+        })
+    }) {
+        let position_count = polygons
+            .iter()
+            .map(|polygon| polygon.borrow().vertex_count())
+            .sum();
+        let mut merger = ExactOutputVertexMerger::with_capacity(position_count);
+        let mut indexed_polygons = Vec::with_capacity(polygons.len());
+        for polygon in polygons {
+            let polygon = polygon.borrow();
+            let points = polygon
+                .known_vertices
+                .as_ref()
+                .expect("the retained exact path was validated above");
+            let mut indexed = Vec::with_capacity(points.len());
+            for point in points.iter() {
+                indexed.push(merger.merge(ExactOutputVertexSource::Borrowed(point)));
+            }
+            indexed_polygons.push(indexed);
+        }
+        return Ok((merger.into_vertices(), indexed_polygons));
+    }
+
     let position_count = polygons
         .iter()
         .map(|polygon| polygon.borrow().vertex_count())
@@ -1320,38 +1357,12 @@ where
             && vertex.y.exact_rational_ref().is_some()
             && vertex.z.exact_rational_ref().is_some()
     }) {
-        let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
-        let mut storage_vertices: StorageHashMap<[usize; 3], usize> = StorageHashMap::default();
-        storage_vertices.reserve(positions.len());
-        // Rational's retained arithmetic caches use interior mutability, but
-        // its Eq and Hash implementations depend only on the immutable exact
-        // value. This map intentionally canonicalizes by that value.
-        #[allow(clippy::mutable_key_type)]
-        let mut exact_vertices: HashMap<ExactOutputVertexKey, usize> =
-            HashMap::with_capacity(positions.len());
+        let mut merger = ExactOutputVertexMerger::with_capacity(positions.len());
         for (polygon_index, vertex_index, _, vertex, _) in positions {
-            let storage_key = exact_output_vertex_storage_key(&vertex)
-                .expect("all output vertices were certified exact rational");
-            let merged_index = if let Some(&index) = storage_vertices.get(&storage_key) {
-                index
-            } else {
-                let key = exact_output_vertex_key(&vertex)
-                    .expect("all output vertices were certified exact rational");
-                let index = match exact_vertices.entry(key) {
-                    std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
-                    std::collections::hash_map::Entry::Vacant(entry) => {
-                        let index = vertices.len();
-                        vertices.push(vertex);
-                        entry.insert(index);
-                        index
-                    }
-                };
-                storage_vertices.insert(storage_key, index);
-                index
-            };
-            indexed_polygons[polygon_index][vertex_index] = merged_index;
+            indexed_polygons[polygon_index][vertex_index] =
+                merger.merge(ExactOutputVertexSource::Owned(vertex));
         }
-        return Ok((vertices, indexed_polygons));
+        return Ok((merger.into_vertices(), indexed_polygons));
     }
 
     // Non-rational exact coordinates need not be order-comparable: equality
@@ -1407,20 +1418,77 @@ where
 #[derive(Eq, Hash, PartialEq)]
 struct ExactOutputVertexKey([Rational; 3]);
 
-fn exact_output_vertex_storage_key(vertex: &OutputVertex) -> Option<[usize; 3]> {
-    Some([
-        vertex.x.exact_rational_ref()?.storage_identity(),
-        vertex.y.exact_rational_ref()?.storage_identity(),
-        vertex.z.exact_rational_ref()?.storage_identity(),
-    ])
+enum ExactOutputVertexSource<'a> {
+    Borrowed(&'a Point3),
+    Owned(OutputVertex),
 }
 
-fn exact_output_vertex_key(vertex: &OutputVertex) -> Option<ExactOutputVertexKey> {
-    Some(ExactOutputVertexKey([
-        vertex.x.exact_rational_ref()?.clone(),
-        vertex.y.exact_rational_ref()?.clone(),
-        vertex.z.exact_rational_ref()?.clone(),
-    ]))
+struct ExactOutputVertexMerger {
+    vertices: Vec<OutputVertex>,
+    storage_vertices: StorageHashMap<[usize; 3], usize>,
+    #[allow(clippy::mutable_key_type)]
+    exact_vertices: HashMap<ExactOutputVertexKey, usize>,
+}
+
+impl ExactOutputVertexSource<'_> {
+    fn coordinates(&self) -> [&Real; 3] {
+        match self {
+            Self::Borrowed(point) => [&point.x, &point.y, &point.z],
+            Self::Owned(vertex) => [&vertex.x, &vertex.y, &vertex.z],
+        }
+    }
+
+    fn into_output_vertex(self) -> OutputVertex {
+        match self {
+            Self::Borrowed(point) => OutputVertex {
+                x: point.x.clone(),
+                y: point.y.clone(),
+                z: point.z.clone(),
+            },
+            Self::Owned(vertex) => vertex,
+        }
+    }
+}
+
+impl ExactOutputVertexMerger {
+    fn with_capacity(capacity: usize) -> Self {
+        let mut storage_vertices = StorageHashMap::default();
+        storage_vertices.reserve(capacity);
+        Self {
+            vertices: Vec::with_capacity(capacity),
+            storage_vertices,
+            exact_vertices: HashMap::with_capacity(capacity),
+        }
+    }
+
+    fn merge(&mut self, source: ExactOutputVertexSource<'_>) -> usize {
+        let coordinates = source.coordinates();
+        let exact = coordinates.map(|coordinate| {
+            coordinate
+                .exact_rational_ref()
+                .expect("exact output vertex source was validated")
+        });
+        let storage_key = exact.map(Rational::storage_identity);
+        if let Some(&index) = self.storage_vertices.get(&storage_key) {
+            return index;
+        }
+        let key = ExactOutputVertexKey(exact.map(Clone::clone));
+        let index = match self.exact_vertices.entry(key) {
+            std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
+            std::collections::hash_map::Entry::Vacant(entry) => {
+                let index = self.vertices.len();
+                self.vertices.push(source.into_output_vertex());
+                entry.insert(index);
+                index
+            }
+        };
+        self.storage_vertices.insert(storage_key, index);
+        index
+    }
+
+    fn into_vertices(self) -> Vec<OutputVertex> {
+        self.vertices
+    }
 }
 
 #[cfg(test)]
