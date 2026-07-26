@@ -395,7 +395,16 @@ impl ProjectiveBoundary {
         edge: Plane,
         edge_identity: ConstructionEdgeIdentity,
     ) {
-        if self.points.last() == Some(&point) {
+        // Approximation inequality is only a rejection filter: equal exact
+        // points have the same retained finite view. Deduplication still
+        // requires exact homogeneous equality below.
+        let approximations_differ = self
+            .point_preparations
+            .last()
+            .and_then(|last| last.approximate)
+            .zip(preparation.approximate)
+            .is_some_and(|(last, current)| last != current);
+        if !approximations_differ && self.points.last() == Some(&point) {
             if let Some(last_edge) = self.edges.last_mut() {
                 *last_edge = edge;
             }
