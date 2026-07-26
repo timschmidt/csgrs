@@ -914,7 +914,7 @@ impl Real {
         }
     }
 
-    #[inline(never)]
+    #[inline]
     fn certified_rational_linear_form4_sign_f64(
         coefficients: [f64; 4],
         coefficient_errors: [f64; 4],
