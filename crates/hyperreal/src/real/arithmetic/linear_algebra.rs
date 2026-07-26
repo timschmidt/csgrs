@@ -198,27 +198,25 @@ impl PreparedLinearForm3Filter {
 /// Certified floating filter for repeated signs of a homogeneous
 /// four-variable linear form with exact-rational coefficients and queries.
 ///
-/// Both coefficient and query conversion errors are retained explicitly.
-/// Uncertain results return `None` for the caller's exact fallback.
+/// Each retained value satisfies the uniform conversion-error bound used by
+/// the filter. Uncertain results return `None` for the caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
 pub struct PreparedRationalLinearForm4Filter {
     coefficients: [f64; 4],
-    coefficient_errors: [f64; 4],
 }
 
-/// Certified floating interval for a reusable exact-rational homogeneous
+/// Certified floating approximation of a reusable exact-rational homogeneous
 /// point query.
 ///
 /// Preparing the query once avoids repeating arbitrary-precision-to-`f64`
 /// conversion when the same point is classified against several fixed linear
-/// forms. The retained error radii are conservative; a filter that cannot
-/// certify a sign still returns `None` for the caller's exact fallback.
+/// forms. A filter that cannot certify a sign still returns `None` for the
+/// caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
 pub struct PreparedRationalLinearForm4Query {
     values: [f64; 4],
-    errors: [f64; 4],
 }
 
 /// Certified floating intervals for a reusable exact-rational 3D point.
@@ -322,9 +320,7 @@ impl PreparedRationalLinearForm4Filter {
     ) -> Option<RealSign> {
         Real::certified_rational_linear_form4_sign_f64(
             self.coefficients,
-            self.coefficient_errors,
             query.values,
-            query.errors,
         )
     }
 }
@@ -507,19 +503,15 @@ impl Real {
         coefficients: [&Real; 4],
     ) -> Option<PreparedRationalLinearForm4Filter> {
         let mut values = [0.0; 4];
-        let mut errors = [0.0; 4];
         for (index, coefficient) in
             coefficients.into_iter().enumerate()
         {
-            let (value, error) = Self::rational_f64_with_error(
-                coefficient.exact_rational_ref()?,
-            )?;
+            let (value, _) =
+                Self::rational_f64_with_error(coefficient.exact_rational_ref()?)?;
             values[index] = value;
-            errors[index] = error;
         }
         Some(PreparedRationalLinearForm4Filter {
             coefficients: values,
-            coefficient_errors: errors,
         })
     }
 
@@ -531,12 +523,10 @@ impl Real {
         point: [&Rational; 4],
     ) -> Option<PreparedRationalLinearForm4Query> {
         let mut values = [0.0; 4];
-        let mut errors = [0.0; 4];
         for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], errors[index]) =
-                Self::rational_f64_with_error(coordinate)?;
+            (values[index], _) = Self::rational_f64_with_error(coordinate)?;
         }
-        Some(PreparedRationalLinearForm4Query { values, errors })
+        Some(PreparedRationalLinearForm4Query { values })
     }
 
     /// Prepare a reusable affine 3D point for a homogeneous four-term filter.
@@ -548,13 +538,11 @@ impl Real {
         point: [&Rational; 3],
     ) -> Option<PreparedRationalLinearForm4Query> {
         let mut values = [0.0; 4];
-        let mut errors = [0.0; 4];
         for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], errors[index]) =
-                Self::rational_f64_with_error(coordinate)?;
+            (values[index], _) = Self::rational_f64_with_error(coordinate)?;
         }
         values[3] = 1.0;
-        Some(PreparedRationalLinearForm4Query { values, errors })
+        Some(PreparedRationalLinearForm4Query { values })
     }
 
     /// Prepare reusable conservative floating intervals for one exact-rational
@@ -917,24 +905,8 @@ impl Real {
     #[inline]
     fn certified_rational_linear_form4_sign_f64(
         coefficients: [f64; 4],
-        coefficient_errors: [f64; 4],
         point: [f64; 4],
-        point_errors: [f64; 4],
     ) -> Option<RealSign> {
-        debug_assert!(
-            coefficients
-                .iter()
-                .zip(coefficient_errors)
-                .all(|(value, error)| error == 0.0
-                    || error == value.abs() * (32.0 * f64::EPSILON))
-        );
-        debug_assert!(
-            point
-                .iter()
-                .zip(point_errors)
-                .all(|(value, error)| error == 0.0
-                    || error == value.abs() * (32.0 * f64::EPSILON))
-        );
         let products = [
             coefficients[0] * point[0],
             coefficients[1] * point[1],
