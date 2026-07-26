@@ -108,6 +108,55 @@ impl PolygonSoup {
     }
 }
 
+struct AdjacentSupportEdges {
+    heads: Vec<usize>,
+    entries: Vec<[usize; 5]>,
+}
+
+impl AdjacentSupportEdges {
+    const NONE: usize = usize::MAX;
+
+    fn new(vertex_count: usize, edge_capacity: usize) -> Self {
+        Self {
+            heads: vec![Self::NONE; vertex_count],
+            entries: Vec::with_capacity(edge_capacity),
+        }
+    }
+
+    #[inline]
+    fn get(&self, start: usize, end: usize) -> Option<(usize, usize, usize)> {
+        let (head, other) = if start < end {
+            (start, end)
+        } else {
+            (end, start)
+        };
+        let mut entry_index = self.heads[head];
+        while entry_index != Self::NONE {
+            let [stored_other, stored_start, stored_end, polygon, next] = self.entries[entry_index];
+            if stored_other == other {
+                return Some((stored_start, stored_end, polygon));
+            }
+            entry_index = next;
+        }
+        None
+    }
+
+    #[inline]
+    fn insert_if_absent(&mut self, start: usize, end: usize, polygon: usize) {
+        if self.get(start, end).is_some() {
+            return;
+        }
+        let (head, other) = if start < end {
+            (start, end)
+        } else {
+            (end, start)
+        };
+        let next = self.heads[head];
+        self.heads[head] = self.entries.len();
+        self.entries.push([other, start, end, polygon, next]);
+    }
+}
+
 /// Validates borrowed mesh views and builds a combined polygon soup.
 pub fn build_polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     build_polygon_soup_with_edge_mode(meshes, None, None, false)
@@ -237,9 +286,10 @@ fn build_polygon_soup_with_edge_mode(
         let mut adjacent_support_planes =
             (!predominantly_axis_aligned && retained_positions.is_some() && input_planes.is_none())
                 .then(|| {
-                    let mut adjacent = StorageHashMap::default();
-                    adjacent.reserve(mesh.triangles.len().saturating_mul(3));
-                    adjacent
+                    AdjacentSupportEdges::new(
+                        mesh.positions.len(),
+                        mesh.triangles.len().saturating_mul(3).div_ceil(2),
+                    )
                 });
         for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
             let [i0, i1, i2] = triangle.indices();
@@ -373,9 +423,7 @@ fn build_polygon_soup_with_edge_mode(
             polygons.push(polygon);
             if let Some(adjacent) = adjacent_support_planes.as_mut() {
                 for [start, end] in [[i0, i1], [i1, i2], [i2, i0]] {
-                    let mut key = [start, end];
-                    key.sort_unstable();
-                    adjacent.entry(key).or_insert((start, end, stored_polygon));
+                    adjacent.insert_if_absent(start, end, stored_polygon);
                 }
             }
             polygon_index += 1;
@@ -409,7 +457,7 @@ fn adjacent_coplanar_support_hint(
     positions: &[Point3],
     triangle: [usize; 3],
     polygons: &[ConvexPolygon],
-    adjacent: &StorageHashMap<[usize; 2], (usize, usize, usize)>,
+    adjacent: &AdjacentSupportEdges,
 ) -> Option<Plane> {
     let [Some(p0), Some(p1), Some(p2)] = triangle.map(|index| positions.get(index)) else {
         return None;
@@ -418,9 +466,7 @@ fn adjacent_coplanar_support_hint(
     for edge in 0..3 {
         let start = triangle[edge];
         let end = triangle[(edge + 1) % 3];
-        let mut key = [start, end];
-        key.sort_unstable();
-        let Some(&(stored_start, stored_end, polygon_index)) = adjacent.get(&key) else {
+        let Some((stored_start, stored_end, polygon_index)) = adjacent.get(start, end) else {
             continue;
         };
         let Some(candidate) = polygons.get(polygon_index).map(|polygon| &polygon.support) else {
@@ -694,6 +740,19 @@ mod tests {
         let soup = build_polygon_soup_with_deferred_edges(&[mesh.as_ref()], &[true], None).unwrap();
 
         assert_eq!(soup.polygons[0].support, soup.polygons[1].support);
+    }
+
+    #[test]
+    fn adjacent_support_edges_retain_first_directed_use() {
+        let mut adjacent = AdjacentSupportEdges::new(5, 3);
+        adjacent.insert_if_absent(3, 1, 7);
+        adjacent.insert_if_absent(1, 3, 9);
+        adjacent.insert_if_absent(1, 4, 11);
+
+        assert_eq!(adjacent.get(1, 3), Some((3, 1, 7)));
+        assert_eq!(adjacent.get(3, 1), Some((3, 1, 7)));
+        assert_eq!(adjacent.get(4, 1), Some((1, 4, 11)));
+        assert_eq!(adjacent.get(0, 2), None);
     }
 
     #[test]
