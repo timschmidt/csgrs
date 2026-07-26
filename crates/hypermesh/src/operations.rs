@@ -760,9 +760,18 @@ impl ProjectivePointCache {
         let representatives = (0..entries.len())
             .map(|index| sets.representative(index))
             .collect::<Vec<_>>();
+        let mut merged_classes = vec![false; entries.len()];
+        for (index, &representative) in representatives.iter().enumerate() {
+            if index != representative {
+                merged_classes[representative] = true;
+            }
+        }
         let mut class_incidences = vec![Vec::new(); entries.len()];
         for (index, (identity, _, _)) in entries.iter().enumerate() {
             let representative = representatives[index];
+            if !merged_classes[representative] {
+                continue;
+            }
             if let Some(incidences) = self.point_incidences.get(identity) {
                 for &incidence in incidences {
                     if !class_incidences[representative].contains(&incidence) {
@@ -783,16 +792,15 @@ impl ProjectivePointCache {
                 self.canonical_identities
                     .insert(identity.clone(), canonical_identity);
             }
-            self.point_incidences
-                .insert(identity.clone(), class_incidences[representative].clone());
+            if merged_classes[representative] {
+                self.point_incidences
+                    .insert(identity.clone(), class_incidences[representative].clone());
+            }
         }
         for (identity, point, _) in entries {
             self.points.insert(identity, point);
         }
         for (identity, canonical_identity) in &self.canonical_identities {
-            if identity == canonical_identity {
-                continue;
-            }
             let canonical_point = self
                 .points
                 .get(canonical_identity)
