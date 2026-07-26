@@ -45,6 +45,41 @@ impl Plane {
 
     /// Constructs the oriented plane through three affine points.
     pub fn from_points(p0: &Point3, p1: &Point3, p2: &Point3) -> Self {
+        if let [
+            Some(x0),
+            Some(y0),
+            Some(z0),
+            Some(x1),
+            Some(y1),
+            Some(z1),
+            Some(x2),
+            Some(y2),
+            Some(z2),
+        ] = [
+            &p0.x, &p0.y, &p0.z, &p1.x, &p1.y, &p1.z, &p2.x, &p2.y, &p2.z,
+        ]
+        .map(Real::exact_rational_ref)
+        {
+            let signs = [true, false, false, false, true, true];
+            let x = Rational::signed_product_sum(
+                signs,
+                [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]],
+            );
+            let y = Rational::signed_product_sum(
+                signs,
+                [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]],
+            );
+            let z = Rational::signed_product_sum(
+                signs,
+                [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]],
+            );
+            let offset =
+                Rational::signed_product_sum([false, false, false], [[&x, x0], [&y, y0], [&z, z0]]);
+            return Self::new(
+                Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                Real::from(offset),
+            );
+        }
         let u = sub_points(p1, p0);
         let v = sub_points(p2, p0);
         let normal = cross_arrays(&u, &v);
