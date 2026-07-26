@@ -1145,32 +1145,32 @@ impl ProjectiveCycle {
         plane: &Plane,
         plane_identity: ConstructionPlaneIdentity,
         point_cache: &mut ProjectivePointCache,
-    ) -> Vec<Option<(HomogeneousPoint3, ConstructionVertexIdentity)>> {
-        (0..self.points.len())
-            .map(|index| {
-                let next = (index + 1) % self.points.len();
-                let current_classification = classifications[index];
-                let next_classification = classifications[next];
-                let crossing = (current_classification.is_negative()
-                    && next_classification.is_positive())
-                    || (current_classification.is_positive() && next_classification.is_negative());
-                crossing.then(|| {
-                    let current_value =
-                        homogeneous_point_plane_expression(&self.points[index], plane);
-                    let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
-                    self.cached_crossing_point(
-                        index,
-                        plane_identity,
-                        &self.points[index],
-                        &current_value,
-                        current_classification,
-                        &self.points[next],
-                        &next_value,
-                        point_cache,
-                    )
-                })
-            })
-            .collect()
+    ) -> Vec<(usize, HomogeneousPoint3, ConstructionVertexIdentity)> {
+        let mut crossings = Vec::with_capacity(2);
+        for index in 0..self.points.len() {
+            let next = (index + 1) % self.points.len();
+            let current_classification = classifications[index];
+            let next_classification = classifications[next];
+            let crossing = (current_classification.is_negative()
+                && next_classification.is_positive())
+                || (current_classification.is_positive() && next_classification.is_negative());
+            if crossing {
+                let current_value = homogeneous_point_plane_expression(&self.points[index], plane);
+                let next_value = homogeneous_point_plane_expression(&self.points[next], plane);
+                let (point, identity) = self.cached_crossing_point(
+                    index,
+                    plane_identity,
+                    &self.points[index],
+                    &current_value,
+                    current_classification,
+                    &self.points[next],
+                    &next_value,
+                    point_cache,
+                );
+                crossings.push((index, point, identity));
+            }
+        }
+        crossings
     }
 
     fn clip(
@@ -1268,9 +1268,6 @@ impl ProjectiveCycle {
             let edge_identity = edge_identities
                 .next()
                 .expect("projective edge identity is available");
-            let intersection = intersections
-                .next()
-                .expect("projective crossing slot is available");
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
@@ -1279,8 +1276,10 @@ impl ProjectiveCycle {
                     negative.push(point, point_identity, edge, edge_identity);
                 }
                 (Classification::Negative, Classification::Positive) => {
-                    let (intersection, intersection_identity) =
-                        intersection.expect("strict side transition has an intersection");
+                    let (crossing_index, intersection, intersection_identity) = intersections
+                        .next()
+                        .expect("strict side transition has an intersection");
+                    debug_assert_eq!(crossing_index, index);
                     negative.push(point, point_identity, edge.clone(), edge_identity.clone());
                     negative.push(
                         intersection.clone(),
@@ -1318,8 +1317,10 @@ impl ProjectiveCycle {
                     positive.push(point, point_identity, edge, edge_identity);
                 }
                 (Classification::Positive, Classification::Negative) => {
-                    let (intersection, intersection_identity) =
-                        intersection.expect("strict side transition has an intersection");
+                    let (crossing_index, intersection, intersection_identity) = intersections
+                        .next()
+                        .expect("strict side transition has an intersection");
+                    debug_assert_eq!(crossing_index, index);
                     negative.push(
                         intersection.clone(),
                         intersection_identity.clone(),
@@ -1339,6 +1340,7 @@ impl ProjectiveCycle {
                 }
             }
         }
+        debug_assert!(intersections.next().is_none());
         Ok(ProjectiveClip {
             negative: negative.into_cycle(support.clone(), source_plane),
             positive: positive.into_cycle(support, source_plane),
@@ -1453,9 +1455,6 @@ impl ProjectiveCycle {
             let edge_identity = source_edge_identities
                 .next()
                 .expect("projective edge identity is available");
-            let intersection = intersections
-                .next()
-                .expect("projective crossing slot is available");
             let next = (index + 1) % classifications.len();
             let current_classification = classifications[index];
             let next_classification = classifications[next];
@@ -1467,8 +1466,10 @@ impl ProjectiveCycle {
                     negative.push(point, point_identity, edge, edge_identity);
                 }
                 (Classification::Negative, Classification::Positive) => {
-                    let (intersection, intersection_identity) =
-                        intersection.expect("strict side transition has an intersection");
+                    let (crossing_index, intersection, intersection_identity) = intersections
+                        .next()
+                        .expect("strict side transition has an intersection");
+                    debug_assert_eq!(crossing_index, index);
                     negative.push(point, point_identity, edge, edge_identity);
                     negative.push(
                         intersection,
@@ -1481,13 +1482,16 @@ impl ProjectiveCycle {
                     negative.push(point, point_identity, plane.clone(), split_identity.clone());
                 }
                 (Classification::Positive, Classification::Negative) => {
-                    let (intersection, intersection_identity) =
-                        intersection.expect("strict side transition has an intersection");
+                    let (crossing_index, intersection, intersection_identity) = intersections
+                        .next()
+                        .expect("strict side transition has an intersection");
+                    debug_assert_eq!(crossing_index, index);
                     negative.push(intersection, intersection_identity, edge, edge_identity);
                 }
                 (Classification::Positive, Classification::On | Classification::Positive) => {}
             }
         }
+        debug_assert!(intersections.next().is_none());
         Ok(negative.into_cycle(support, source_plane))
     }
 
