@@ -284,7 +284,7 @@ fn retained_planar_face_point_report_constructor_rejects_inconsistent_evidence()
 }
 
 #[test]
-fn prepared_retained_planar_face_matches_plain_uv_classification() {
+fn batched_retained_planar_face_matches_scalar_uv_classification() {
     let surface = BrepSurfaceId::new(51);
     let face = BrepPlanarFaceRegion::try_new(
         surface,
@@ -293,27 +293,18 @@ fn prepared_retained_planar_face_matches_plain_uv_classification() {
     )
     .unwrap();
     let policy = policy();
-    let prepared = face.prepare_point_queries(&policy);
-
-    assert_eq!(prepared.face(), &face);
-    assert_eq!(prepared.surface(), surface);
-    assert_eq!(prepared.material_loop_count(), 1);
-    assert_eq!(prepared.hole_loop_count(), 1);
-    assert_eq!(prepared.prepared_region().material_contours().len(), 1);
-    assert_eq!(prepared.prepared_region().hole_contours().len(), 1);
-    assert_eq!(face.prepare_topology_queries(&policy).surface(), surface);
-
-    for point in [p(1, 1), p(5, 5), p(3, 5), p(12, 5)] {
-        let plain = face.classify_uv_point(surface, &point, &policy).unwrap();
-        let prepared = prepared
-            .classify_uv_point(surface, &point, &policy)
-            .unwrap();
-        assert_eq!(prepared, plain, "prepared query diverged at {point:?}");
-    }
+    let points = [p(1, 1), p(5, 5), p(3, 5), p(12, 5)];
+    assert_eq!(
+        BrepPlanarFaceRegion::classify_uv_points(&face, surface, &points, &policy).unwrap(),
+        points
+            .iter()
+            .map(|point| face.classify_uv_point(surface, point, &policy).unwrap())
+            .collect::<Vec<_>>()
+    );
 }
 
 #[test]
-fn prepared_retained_planar_face_blocks_surface_mismatch_before_cached_region() {
+fn batched_retained_planar_face_blocks_surface_mismatch_before_region_query() {
     let surface = BrepSurfaceId::new(61);
     let face = BrepPlanarFaceRegion::try_new(
         surface,
@@ -322,12 +313,15 @@ fn prepared_retained_planar_face_blocks_surface_mismatch_before_cached_region() 
     )
     .unwrap();
     let policy = policy();
-    let prepared = face.prepare_point_queries(&policy);
-
     let report = decided(
-        prepared
-            .classify_uv_point(BrepSurfaceId::new(62), &p(1, 1), &policy)
-            .unwrap(),
+        BrepPlanarFaceRegion::classify_uv_points(
+            &face,
+            BrepSurfaceId::new(62),
+            &[p(1, 1)],
+            &policy,
+        )
+        .unwrap()
+        .remove(0),
     );
     assert_eq!(
         report.location(),
@@ -474,33 +468,6 @@ fn retained_planar_face_edge_use_report_constructor_rejects_inconsistent_evidenc
         None,
         0,
     ));
-}
-
-#[test]
-fn prepared_retained_planar_face_edge_use_matches_plain_report() {
-    let surface = BrepSurfaceId::new(101);
-    let face = BrepPlanarFaceRegion::try_new(
-        surface,
-        vec![trim(surface, &[(0, 0), (6, 0), (6, 6), (0, 6)])],
-        vec![trim(surface, &[(2, 2), (4, 2), (4, 4), (2, 4)])],
-    )
-    .unwrap();
-    let policy = policy();
-    let prepared = face.prepare_topology_queries(&policy);
-    let queries = [
-        BrepPcurve::new(surface, open_curve(&[(0, 0), (6, 0)])),
-        BrepPcurve::new(surface, open_curve(&[(4, 4), (4, 2)])),
-        BrepPcurve::new(surface, open_curve(&[(0, 0), (6, 6)])),
-        BrepPcurve::new(BrepSurfaceId::new(102), open_curve(&[(0, 0), (6, 0)])),
-    ];
-
-    for query in &queries {
-        assert_eq!(
-            prepared.edge_use_report(query).unwrap(),
-            face.edge_use_report(query).unwrap(),
-            "prepared edge-use report diverged for {query:?}"
-        );
-    }
 }
 
 #[test]

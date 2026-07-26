@@ -495,17 +495,21 @@ fn bench_shell_audit(c: &mut Criterion) {
                 .unwrap()
         })
     });
-    let prepared_face = face_region.prepare_topology_queries(&curve_policy);
-    c.bench_function("hyperbrep prepared planar face point query", |b| {
+    let batch_queries = vec![query.clone(); 64];
+    c.bench_function("hyperbrep batched planar face point query 64", |b| {
         b.iter(|| {
-            prepared_face
-                .classify_uv_point(pcurve_surface, &query, &curve_policy)
-                .unwrap()
+            BrepPlanarFaceRegion::classify_uv_points(
+                &face_region,
+                pcurve_surface,
+                &batch_queries,
+                &curve_policy,
+            )
+            .unwrap()
         })
     });
     let pcurve = BrepPcurve::new(pcurve_surface, curve_path(&[(0, 100), (0, 0), (100, 0)]));
-    c.bench_function("hyperbrep prepared planar face edge-use query", |b| {
-        b.iter(|| prepared_face.edge_use_report(&pcurve).unwrap())
+    c.bench_function("hyperbrep planar face edge-use query", |b| {
+        b.iter(|| face_region.edge_use_report(&pcurve).unwrap())
     });
 
     let spatial_controls = vec![p(0, 0, 0), p(1, 2, 0), p(2, 0, 2)];

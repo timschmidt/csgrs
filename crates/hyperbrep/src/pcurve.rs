@@ -12,8 +12,8 @@ use std::rc::Rc;
 
 use hypercurve::{
     Classification, Contour2, ContourPointLocation, CurveError, CurveGeometry2, CurvePath2,
-    CurvePolicy, ExactCurveError, Point2, PreparedRegionView2, RegionPointLocation, RegionView2,
-    Segment2, UncertaintyReason,
+    CurvePolicy, ExactCurveError, Point2, RegionPointLocation, RegionView2, Segment2,
+    UncertaintyReason,
 };
 
 use crate::BrepSurfaceId;
@@ -185,18 +185,6 @@ pub struct BrepPlanarFaceRegion {
     surface: BrepSurfaceId,
     material_loops: Vec<BrepPlanarTrimLoop>,
     hole_loops: Vec<BrepPlanarTrimLoop>,
-}
-
-/// Prepared retained planar face for repeated support-surface and UV queries.
-///
-/// The prepared object keeps the retained BREP support identity beside a
-/// prepared borrowed UV region. Cached boxes and prepared segment predicates
-/// are only broad-phase evidence: support-surface mismatch, boundary hits, and
-/// inside/outside status still replay through exact classifiers.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PreparedBrepPlanarFaceRegion<'a> {
-    face: &'a BrepPlanarFaceRegion,
-    region: PreparedRegionView2<'a>,
 }
 
 /// Point classification result for a retained planar face.
@@ -507,44 +495,6 @@ impl BrepPlanarFaceRegion {
         &self.hole_loops
     }
 
-    /// Prepares this face for repeated support-surface and UV point queries.
-    ///
-    /// Preparation borrows the retained trim loops and caches the UV
-    /// [`PreparedRegionView2`] used by repeated point-in-face calls. It does
-    /// not certify any query by itself; every call still first checks the
-    /// retained support-surface identity and then delegates to the exact
-    /// boundary-first region classifier.
-    pub fn prepare_point_queries(&self, policy: &CurvePolicy) -> PreparedBrepPlanarFaceRegion<'_> {
-        let material = self
-            .material_loops
-            .iter()
-            .map(|trim| trim.contour())
-            .collect::<Vec<_>>();
-        let holes = self
-            .hole_loops
-            .iter()
-            .map(|trim| trim.contour())
-            .collect::<Vec<_>>();
-        let region = RegionView2::from_contours(material, holes);
-        PreparedBrepPlanarFaceRegion {
-            face: self,
-            region: PreparedRegionView2::from_region_view(&region, policy),
-        }
-    }
-
-    /// Prepares this face for repeated retained topology queries.
-    ///
-    /// This currently exposes the same point-query package as
-    /// [`BrepPlanarFaceRegion::prepare_point_queries`]. Segment/edge-use and
-    /// analytic-surface frame packages can extend the prepared face handle
-    /// without changing the support-surface-first report contract.
-    pub fn prepare_topology_queries(
-        &self,
-        policy: &CurvePolicy,
-    ) -> PreparedBrepPlanarFaceRegion<'_> {
-        self.prepare_point_queries(policy)
-    }
-
     /// Classifies a UV point against this retained planar face.
     ///
     /// The query first checks retained support-surface identity. Only matching
@@ -586,6 +536,56 @@ impl BrepPlanarFaceRegion {
         )
     }
 
+    /// Classifies a batch of UV points against this retained planar face.
+    ///
+    /// The support-surface check is performed once, then one internal region
+    /// index is reused for every point. Callers receive ordinary evidence
+    /// reports without managing a retained query handle.
+    pub fn classify_uv_points(
+        &self,
+        query_surface: BrepSurfaceId,
+        points: &[Point2],
+        policy: &CurvePolicy,
+    ) -> BrepPlanarResult<Vec<Classification<BrepPlanarFacePointReport>>> {
+        if query_surface != self.surface {
+            return points
+                .iter()
+                .map(|_| {
+                    Ok(Classification::Decided(BrepPlanarFacePointReport::new(
+                        BrepPlanarFacePointLocation::SurfaceMismatch,
+                        None,
+                        self.material_loops.len(),
+                        self.hole_loops.len(),
+                    )?))
+                })
+                .collect();
+        }
+
+        let material = self
+            .material_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let holes = self
+            .hole_loops
+            .iter()
+            .map(|trim| trim.contour())
+            .collect::<Vec<_>>();
+        let region = RegionView2::from_contours(material, holes);
+        region
+            .classify_points(points, policy)
+            .into_iter()
+            .map(|classification| {
+                face_point_report_from_region_classification(
+                    classification,
+                    self.surface,
+                    self.material_loops.len(),
+                    self.hole_loops.len(),
+                )
+            })
+            .collect()
+    }
+
     /// Reports whether an open retained planar pcurve is a face trim edge-use.
     ///
     /// This predicate is structural over retained UV segments: the pcurve must
@@ -619,96 +619,6 @@ impl BrepPlanarFaceRegion {
             );
         };
         face_edge_use_report_from_loops(self, segments)
-    }
-}
-
-impl<'a> PreparedBrepPlanarFaceRegion<'a> {
-    /// Returns the retained planar face that supplied this prepared view.
-    pub const fn face(&self) -> &'a BrepPlanarFaceRegion {
-        self.face
-    }
-
-    /// Returns the retained planar support surface.
-    pub const fn surface(&self) -> BrepSurfaceId {
-        self.face.surface
-    }
-
-    /// Returns the prepared borrowed UV region.
-    pub const fn prepared_region(&self) -> &PreparedRegionView2<'a> {
-        &self.region
-    }
-
-    /// Returns the number of retained material trim loops.
-    pub fn material_loop_count(&self) -> usize {
-        self.face.material_loops.len()
-    }
-
-    /// Returns the number of retained hole trim loops.
-    pub fn hole_loop_count(&self) -> usize {
-        self.face.hole_loops.len()
-    }
-
-    /// Classifies a UV point against this prepared retained planar face.
-    ///
-    /// The support-surface identity check stays outside the prepared UV region.
-    /// Preparation retains reusable object structure; it cannot turn a query
-    /// against the wrong surface into a valid geometric predicate.
-    pub fn classify_uv_point(
-        &self,
-        query_surface: BrepSurfaceId,
-        uv: &Point2,
-        policy: &CurvePolicy,
-    ) -> BrepPlanarResult<Classification<BrepPlanarFacePointReport>> {
-        if query_surface != self.face.surface {
-            return Ok(Classification::Decided(BrepPlanarFacePointReport::new(
-                BrepPlanarFacePointLocation::SurfaceMismatch,
-                None,
-                self.material_loop_count(),
-                self.hole_loop_count(),
-            )?));
-        }
-
-        face_point_report_from_region_classification(
-            self.region.classify_point(uv, policy),
-            self.face.surface,
-            self.material_loop_count(),
-            self.hole_loop_count(),
-        )
-    }
-
-    /// Reports whether an open retained planar pcurve is a prepared face trim edge-use.
-    ///
-    /// Preparation does not change the proof obligation: support-surface
-    /// identity is still checked first, and the accepted edge-use must replay
-    /// as an exact contiguous UV subchain of a retained trim. The prepared face
-    /// owns the borrowed trim structure needed by future broad-phase segment
-    /// filters while keeping this exact image predicate authoritative.
-    pub fn edge_use_report(
-        &self,
-        pcurve: &BrepPcurve,
-    ) -> BrepPlanarResult<BrepPlanarFaceEdgeUseReport> {
-        if pcurve.surface != self.face.surface {
-            return BrepPlanarFaceEdgeUseReport::new(
-                BrepPlanarFaceEdgeUseRelation::SurfaceMismatch,
-                None,
-                None,
-                None,
-                None,
-                0,
-            );
-        }
-
-        let Some(segments) = pcurve.native_segments() else {
-            return BrepPlanarFaceEdgeUseReport::new(
-                BrepPlanarFaceEdgeUseRelation::UnsupportedCurveFamily,
-                Some(self.face.surface),
-                None,
-                None,
-                None,
-                0,
-            );
-        };
-        face_edge_use_report_from_loops(self.face, segments)
     }
 }
 

@@ -456,15 +456,14 @@ impl BrepCurve3 {
 
     /// Evaluates an exact model-space point without demoting coordinates.
     pub fn point_at(&self, parameter: &Real) -> BrepCurveResult3<Point3> {
-        let result = match self.geometry() {
+        match self.geometry() {
             BrepCurveGeometry3::Line(line) => {
                 validate_unit_parameter(parameter, BrepCurveFamily3::Line)?;
                 Ok(line.point_at(parameter))
             }
             BrepCurveGeometry3::RationalBezier(curve) => curve.point_at(parameter),
             BrepCurveGeometry3::Nurbs(curve) => curve.point_at(parameter),
-        };
-        result
+        }
     }
 }
 

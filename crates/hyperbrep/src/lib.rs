@@ -63,7 +63,7 @@ pub use pcurve::{
     BrepPcurve, BrepPcurveImageEqualityReport, BrepPcurveImageRelation, BrepPlanarError,
     BrepPlanarFaceEdgeUseRelation, BrepPlanarFaceEdgeUseReport, BrepPlanarFacePointLocation,
     BrepPlanarFacePointReport, BrepPlanarFaceRegion, BrepPlanarResult, BrepPlanarTrimLoop,
-    BrepPlanarTrimLoopRole, PreparedBrepPlanarFaceRegion,
+    BrepPlanarTrimLoopRole,
 };
 pub use physics::{
     BrepPhysicsFixtureHandoffReport, BrepPhysicsMassBlocker, BrepPhysicsMassHandoffReport,

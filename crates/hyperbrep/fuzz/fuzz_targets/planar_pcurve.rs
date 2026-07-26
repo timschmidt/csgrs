@@ -93,13 +93,12 @@ fuzz_target!(|data: &[u8]| {
                 let uv = point(data[1], data[2]);
                 let _ = face.classify_uv_point(surface, &uv, &policy);
 
-                let prepared = face.prepare_point_queries(&policy);
-                let _ = prepared.face();
-                let _ = prepared.surface();
-                let _ = prepared.prepared_region().region_box();
-                let _ = prepared.material_loop_count();
-                let _ = prepared.hole_loop_count();
-                let _ = prepared.classify_uv_point(surface, &uv, &policy);
+                let _ = BrepPlanarFaceRegion::classify_uv_points(
+                    &face,
+                    surface,
+                    std::slice::from_ref(&uv),
+                    &policy,
+                );
 
                 if vertices.len() >= 2
                     && let Some(edge_path) = curve_path(&vertices[..2])
@@ -114,7 +113,7 @@ fuzz_target!(|data: &[u8]| {
                         let _ = report.segment_count();
                     }
 
-                    if let Ok(report) = prepared.edge_use_report(&edge) {
+                    if let Ok(report) = face.edge_use_report(&edge) {
                         let _ = report.relation();
                         let _ = report.surface();
                         let _ = report.trim_role();
