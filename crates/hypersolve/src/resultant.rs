@@ -276,7 +276,11 @@ fn determinant_linear_polynomial_matrix(
         if row == dimension {
             continue;
         }
-        let Some(partial) = partials[mask].clone() else {
+        // Every predecessor is `mask` with one bit removed and is therefore
+        // numerically smaller. By the time this state is visited, its
+        // polynomial is complete and will never be read again, so move it out
+        // instead of cloning every exact coefficient.
+        let Some(partial) = partials[mask].take() else {
             continue;
         };
         for column in 0..dimension {

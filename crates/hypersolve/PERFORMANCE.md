@@ -494,6 +494,31 @@ The AddressSanitizer region-Boolean replay completed all 2,509 requested
 executions at 5,900 coverage points and 19,225 feature edges with no finding;
 LeakSanitizer remained disabled under ptrace.
 
+### Consumed subset-determinant states
+
+The quotient-ring rational-image resultant expands the determinant of a matrix
+whose entries are linear polynomials in the image variable. Its subset dynamic
+program visits masks in numeric order, so every predecessor of a mask has
+already contributed before that mask is processed. The implementation
+previously cloned the complete exact coefficient vector at every visited mask
+and then never read the stored vector again. It now takes ownership of that
+completed state. The determinant recurrence, signs, coefficient products, and
+degree bound are unchanged.
+
+Generated quotient-ring resultants still agree with independently evaluated
+Sylvester resultants, and the downstream 67-cell all-family Hypercurve workload
+still returns all 268 exact Boolean results with 603 candidate pairs, 3,248
+fragments, 134 classifications, no blockers, and checksum 6.
+
+On the identical three-cell downstream Callgrind workload, instruction
+references fell from 135,526,781 to 134,833,076 (0.51%). Heaptrack allocation
+events fell from 197,456 to 195,380 (1.05%) and its postprocessed temporary
+count from 24,392 to 24,352; peak heap remained 2.19 MiB. The seven-run
+67-cell wall-time median was effectively unchanged at 521.43 milliseconds
+versus 521.68 milliseconds before the ownership change. The same-compiler
+pathological executable grew by 60 text bytes, shed 64 BSS bytes and four
+total loadable bytes, and was 400 bytes smaller on disk.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
