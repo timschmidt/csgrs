@@ -3458,6 +3458,52 @@ impl Rational {
         Some((positive, negative))
     }
 
+    fn signed_product_sum_dyadic_word_totals_unplanned<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+    ) -> Option<(u128, u128)> {
+        let mut magnitudes = [0_u128; TERMS];
+        let mut denominator_shifts = [0_u64; TERMS];
+        let mut max_shift = 0_u64;
+        for i in 0..TERMS {
+            if signs[i] == NoSign {
+                continue;
+            }
+            let mut magnitude = 1_u128;
+            let mut shift = 0_u64;
+            for factor in terms[i] {
+                if factor.is_internally_unreduced() {
+                    return None;
+                }
+                magnitude = magnitude.checked_mul(factor.numerator.to_u128()?)?;
+                shift = shift.checked_add(factor.dyadic_denominator_shift()?)?;
+            }
+            magnitudes[i] = magnitude;
+            denominator_shifts[i] = shift;
+            max_shift = max_shift.max(shift);
+        }
+
+        let mut positive = 0_u128;
+        let mut negative = 0_u128;
+        for i in 0..TERMS {
+            let sign = signs[i];
+            if sign == NoSign {
+                continue;
+            }
+            let scale_shift = u32::try_from(max_shift - denominator_shifts[i]).ok()?;
+            let magnitude = Self::checked_word_shift_left(magnitudes[i], scale_shift)?;
+            match sign {
+                Plus => positive = positive.checked_add(magnitude)?,
+                Minus => negative = negative.checked_add(magnitude)?,
+                NoSign => {}
+            }
+        }
+        Some((positive, negative))
+    }
+
     fn signed_product_sum_dyadic_words_with_plan<
         const TERMS: usize,
         const FACTORS: usize,
@@ -4917,6 +4963,22 @@ impl Rational {
                 };
             }
             _ => {}
+        }
+        // Expanded 2D orientation determinants have six pair products and
+        // overwhelmingly stay in the word-sized dyadic envelope. Probe that
+        // shape directly; wider determinant shapes benefit from the generic
+        // bit-width plan before attempting a word accumulator.
+        if TERMS == 6
+            && FACTORS == 2
+            && let Some((positive, negative)) =
+                Self::signed_product_sum_dyadic_word_totals_unplanned(terms, signs)
+        {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering",
+                "dyadic-word-accumulator"
+            );
+            return positive.cmp(&negative);
         }
         let dyadic_plan = Self::product_sum_dyadic_plan(terms, signs);
         let prefer_wide_dyadic = dyadic_plan

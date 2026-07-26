@@ -3484,6 +3484,67 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_ordering_six_products_preserves_all_fallbacks() {
+        let assert_matches_materialized = |values: &[Rational; 12]| {
+            let terms = [
+                [&values[0], &values[1]],
+                [&values[2], &values[3]],
+                [&values[4], &values[5]],
+                [&values[6], &values[7]],
+                [&values[8], &values[9]],
+                [&values[10], &values[11]],
+            ];
+            let signs = [true, true, false, true, false, false];
+            let materialized = Rational::signed_product_sum(signs, terms);
+            assert_eq!(
+                Rational::signed_product_sum_ordering(signs, terms),
+                materialized.partial_cmp(&Rational::zero()).unwrap(),
+            );
+        };
+
+        assert_matches_materialized(&[
+            Rational::fraction(3, 8).unwrap(),
+            Rational::new(5),
+            Rational::fraction(-7, 16).unwrap(),
+            Rational::new(2),
+            Rational::fraction(11, 4).unwrap(),
+            Rational::fraction(13, 2).unwrap(),
+            Rational::new(17),
+            Rational::fraction(-19, 32).unwrap(),
+            Rational::fraction(23, 8).unwrap(),
+            Rational::new(29),
+            Rational::fraction(31, 16).unwrap(),
+            Rational::new(37),
+        ]);
+
+        let wide = |bits, add| {
+            Rational::from_bigint_fraction(
+                BigInt::from((BigUint::one() << bits) + BigUint::from(add)),
+                BigUint::one() << (bits / 2),
+            )
+            .unwrap()
+        };
+        assert_matches_materialized(&std::array::from_fn(|index| {
+            wide(150 + index * 7, 2 * index + 1)
+        }));
+
+        assert_matches_materialized(&[
+            Rational::fraction(2, 3).unwrap(),
+            Rational::fraction(5, 7).unwrap(),
+            Rational::fraction(-11, 13).unwrap(),
+            Rational::fraction(17, 19).unwrap(),
+            Rational::fraction(23, 29).unwrap(),
+            Rational::fraction(31, 37).unwrap(),
+            Rational::fraction(-41, 43).unwrap(),
+            Rational::fraction(47, 53).unwrap(),
+            Rational::fraction(59, 61).unwrap(),
+            Rational::fraction(67, 71).unwrap(),
+            Rational::fraction(73, 79).unwrap(),
+            Rational::fraction(83, 89).unwrap(),
+        ]);
+    }
+
+    #[test]
     fn signed_product_sum_shared_denominator_consumes_common_scale() {
         let terms = [
             [
