@@ -721,12 +721,29 @@ impl ProjectivePointCache {
             .enumerate()
             .filter_map(|(index, entry)| entry.2.map(|point| (index, point)))
             .collect::<Vec<_>>();
-        finite.sort_unstable_by(|left, right| left.1[0].total_cmp(&right.1[0]));
+        let sort_axis = (0..3)
+            .max_by(|&left, &right| {
+                let normalized_span = |axis| {
+                    let (minimum, maximum) = finite.iter().fold(
+                        (f64::INFINITY, f64::NEG_INFINITY),
+                        |(minimum, maximum), entry| {
+                            (minimum.min(entry.1[axis]), maximum.max(entry.1[axis]))
+                        },
+                    );
+                    (maximum - minimum) / minimum.abs().max(maximum.abs()).max(1.0)
+                };
+                normalized_span(left).total_cmp(&normalized_span(right))
+            })
+            .unwrap_or(0);
+        finite.sort_unstable_by(|left, right| left.1[sort_axis].total_cmp(&right.1[sort_axis]));
         for right in 0..finite.len() {
             let (right_index, right_point) = finite[right];
             for &(left_index, left_point) in finite[..right].iter().rev() {
-                let x_scale = left_point[0].abs().max(right_point[0].abs()).max(1.0);
-                if right_point[0] - left_point[0] > x_scale * 1.0e-9 {
+                let axis_scale = left_point[sort_axis]
+                    .abs()
+                    .max(right_point[sort_axis].abs())
+                    .max(1.0);
+                if right_point[sort_axis] - left_point[sort_axis] > axis_scale * 1.0e-9 {
                     break;
                 }
                 if left_point.iter().zip(right_point).all(|(left, right)| {
