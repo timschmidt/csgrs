@@ -2207,34 +2207,53 @@ fn compute_two_convex_inputs_projectively(
         }
     }
     projective_point_cache.resolve_vertex_coincidences();
-    affine_cache.identities.clear();
-    for fragment in &mut classified {
-        if let Some(vertex_identities) = fragment.polygon.known_vertex_identities() {
-            let canonical_identities = vertex_identities
-                .iter()
-                .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
-                .collect::<Vec<_>>();
-            let original_vertices = fragment
-                .polygon
-                .known_vertices
-                .as_ref()
-                .ok_or(crate::error::HypermeshError::UnknownClassification)?
-                .iter()
-                .cloned()
-                .collect::<Vec<_>>();
-            let vertices = canonical_identities
-                .iter()
-                .zip(original_vertices)
-                .map(|(identity, original)| {
-                    let Some(point) = projective_point_cache.points.get(identity) else {
-                        return Ok(original);
-                    };
-                    affine_cache.resolve(point, Some(identity))
-                })
-                .collect::<HypermeshResult<Vec<_>>>()?;
-            fragment.polygon = fragment
-                .polygon
-                .with_known_vertex_cycle_and_identities(vertices, canonical_identities);
+    if !projective_point_cache.canonical_identities.is_empty() {
+        affine_cache.identities.clear();
+        // Hash-probing each cycle amortizes only for a substantial fragment
+        // family. Small candidates retain the direct rebuild loop.
+        const SELECTIVE_REBUILD_MIN_FRAGMENTS: usize = 32;
+        let select_changed_fragments = classified.len() >= SELECTIVE_REBUILD_MIN_FRAGMENTS;
+        for fragment in &mut classified {
+            if let Some(vertex_identities) = fragment.polygon.known_vertex_identities() {
+                // Coincidence resolution records only identities whose complete
+                // equivalence class selected a different representative. A cycle
+                // containing none of those identities already has both its final
+                // identities and the affine points materialized from them.
+                if select_changed_fragments
+                    && !vertex_identities.iter().any(|identity| {
+                        projective_point_cache
+                            .canonical_identities
+                            .contains_key(identity)
+                    })
+                {
+                    continue;
+                }
+                let canonical_identities = vertex_identities
+                    .iter()
+                    .map(|identity| projective_point_cache.canonical_vertex_identity(identity))
+                    .collect::<Vec<_>>();
+                let original_vertices = fragment
+                    .polygon
+                    .known_vertices
+                    .as_ref()
+                    .ok_or(crate::error::HypermeshError::UnknownClassification)?
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>();
+                let vertices = canonical_identities
+                    .iter()
+                    .zip(original_vertices)
+                    .map(|(identity, original)| {
+                        let Some(point) = projective_point_cache.points.get(identity) else {
+                            return Ok(original);
+                        };
+                        affine_cache.resolve(point, Some(identity))
+                    })
+                    .collect::<HypermeshResult<Vec<_>>>()?;
+                fragment.polygon = fragment
+                    .polygon
+                    .with_known_vertex_cycle_and_identities(vertices, canonical_identities);
+            }
         }
     }
 
@@ -3991,9 +4010,21 @@ mod tests {
             }
 
             cache.resolve_vertex_coincidences();
-            identities
+            let canonical = identities
                 .each_ref()
-                .map(|identity| cache.canonical_vertex_identity(identity))
+                .map(|identity| cache.canonical_vertex_identity(identity));
+            assert_eq!(cache.canonical_identities.len(), 1);
+            for identity in &identities {
+                if *identity == canonical[0] {
+                    assert!(!cache.canonical_identities.contains_key(identity));
+                } else {
+                    assert_eq!(
+                        cache.canonical_identities.get(identity),
+                        Some(&canonical[0])
+                    );
+                }
+            }
+            canonical
         };
 
         let forward = resolve([0, 1]);
