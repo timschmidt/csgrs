@@ -179,6 +179,10 @@ fn build_polygon_soup_with_edge_mode(
         .ok_or(HypermeshError::UnknownClassification)?;
     let mut polygons = Vec::with_capacity(polygon_capacity);
     let mut polygon_index = 0isize;
+    // Deferred source triangles have no materialized boundary planes. Keep
+    // that immutable empty cycle once for the whole input instead of
+    // allocating an identical Arc<Vec<_>> for every triangle.
+    let deferred_edges = defer_edges.then(|| Arc::new(Vec::<Plane>::new()));
     for (mesh_index, mesh) in meshes.iter().enumerate() {
         let input_is_certified_convex =
             certified_convex_inputs.is_some_and(|certified| certified[mesh_index]);
@@ -334,6 +338,11 @@ fn build_polygon_soup_with_edge_mode(
                         Arc::clone(positions),
                         [i0, i1, i2],
                         support_hint,
+                        Arc::clone(
+                            deferred_edges
+                                .as_ref()
+                                .expect("retained positions imply deferred edges"),
+                        ),
                         mesh_index as isize,
                         polygon_index,
                     )
@@ -659,6 +668,10 @@ mod tests {
         };
 
         assert!(Arc::ptr_eq(first, second));
+        assert!(Arc::ptr_eq(
+            &soup.polygons[0].edges,
+            &soup.polygons[1].edges
+        ));
         assert_eq!(*first_indices, [0, 1, 2]);
         assert_eq!(*second_indices, [0, 3, 1]);
         assert_eq!(soup.polygons[0].vertices().unwrap(), positions[..3]);

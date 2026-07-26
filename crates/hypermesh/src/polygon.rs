@@ -545,16 +545,18 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges(
     positions: Arc<[Point3]>,
     indices: [usize; 3],
     support_hint: Option<Plane>,
+    deferred_edges: Arc<Vec<Plane>>,
     mesh_index: isize,
     polygon_index: isize,
 ) -> ConvexPolygon {
+    debug_assert!(deferred_edges.is_empty());
     let [i0, i1, i2] = indices;
     let p0 = &positions[i0];
     let p1 = &positions[i1];
     let p2 = &positions[i2];
     let support = support_hint.unwrap_or_else(|| Plane::from_points(p0, p1, p2));
     ConvexPolygon {
-        edges: Arc::new(Vec::new()),
+        edges: deferred_edges,
         support,
         mesh_index,
         polygon_index,

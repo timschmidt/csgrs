@@ -3654,6 +3654,7 @@ mod tests {
             positions.clone(),
             [0, 1, 2],
             None,
+            std::sync::Arc::new(Vec::new()),
             0,
             0,
         )
@@ -3662,6 +3663,7 @@ mod tests {
             positions,
             [0, 2, 3],
             Some(first.support.clone()),
+            std::sync::Arc::new(Vec::new()),
             0,
             1,
         )
