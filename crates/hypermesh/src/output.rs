@@ -636,6 +636,12 @@ where
             })
             .collect::<Vec<_>>()
     });
+    let recovery_approximate_vertices = filter_recovery_candidates.then(|| {
+        vertices
+            .iter()
+            .map(output_vertex_f64)
+            .collect::<Vec<Option<[f64; 3]>>>()
+    });
     let construction_candidates = prefer_construction_candidates
         .then(|| build_construction_edge_candidates(polygons, &indexed_polygons))
         .transpose()?;
@@ -688,6 +694,7 @@ where
                     canonical,
                     &candidates.groups[candidates.polygon_edges[polygon_index][edge_index]],
                     &candidates.recovery_vertices,
+                    recovery_approximate_vertices.as_deref(),
                     prepared_rational_vertices.as_deref(),
                     filter_recovery_candidates,
                 )
@@ -1588,6 +1595,7 @@ fn split_segment_subedges_exact_candidates<'a>(
     edge: [usize; 2],
     candidates: &ConstructionEdgeCandidateGroup,
     recovery_vertices: &[usize],
+    recovery_approximate_vertices: Option<&[Option<[f64; 3]>]>,
     prepared_rational_vertices: Option<&[Option<PreparedRationalPoint3Query>]>,
     filter_recovery_candidates: bool,
 ) -> HypermeshResult<&'a SplitEdgeChain> {
@@ -1652,12 +1660,14 @@ fn split_segment_subedges_exact_candidates<'a>(
             {
                 continue;
             }
-            if approximate_point_on_segment_candidate(
-                &vertices[vertex_index],
-                &vertices[edge[0]],
-                &vertices[edge[1]],
-            ) == Some(false)
-            {
+            let approximate_candidate = recovery_approximate_vertices.and_then(|vertices| {
+                approximate_point_on_segment_candidate(
+                    vertices[vertex_index]?,
+                    vertices[edge[0]]?,
+                    vertices[edge[1]]?,
+                )
+            });
+            if approximate_candidate == Some(false) {
                 continue;
             }
             if projection_filters.as_ref().is_some_and(|filters| {
@@ -1700,25 +1710,19 @@ fn split_segment_subedges_exact_candidates<'a>(
     Ok(cache.get(&edge).expect("candidate edge was just cached"))
 }
 
-fn approximate_point_on_segment_candidate(
-    point: &OutputVertex,
-    start: &OutputVertex,
-    end: &OutputVertex,
-) -> Option<bool> {
-    let point = [&point.x, &point.y, &point.z].map(Real::to_f64_lossy);
-    let start = [&start.x, &start.y, &start.z].map(Real::to_f64_lossy);
-    let end = [&end.x, &end.y, &end.z].map(Real::to_f64_lossy);
-    let (
-        [Some(px), Some(py), Some(pz)],
-        [Some(ax), Some(ay), Some(az)],
-        [Some(bx), Some(by), Some(bz)],
-    ) = (point, start, end)
+fn output_vertex_f64(vertex: &OutputVertex) -> Option<[f64; 3]> {
+    let [Some(x), Some(y), Some(z)] = [&vertex.x, &vertex.y, &vertex.z].map(Real::to_f64_lossy)
     else {
         return None;
     };
-    let point = [px, py, pz];
-    let start = [ax, ay, az];
-    let end = [bx, by, bz];
+    Some([x, y, z])
+}
+
+fn approximate_point_on_segment_candidate(
+    point: [f64; 3],
+    start: [f64; 3],
+    end: [f64; 3],
+) -> Option<bool> {
     if point
         .iter()
         .chain(start.iter())
