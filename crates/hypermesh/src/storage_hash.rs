@@ -27,6 +27,7 @@ impl Hasher for StorageIdentityHasher {
         self.0
     }
 
+    #[inline]
     fn write(&mut self, bytes: &[u8]) {
         let mut chunks = bytes.chunks_exact(8);
         for chunk in &mut chunks {
