@@ -88,7 +88,7 @@ pub use predicate::{
     PredicatePolicy, RefinementNeed, Sign, SignKnowledge,
 };
 pub use predicates::aabb::{
-    PreparedAabb2, PreparedAabb3, aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
+    aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
     classify_aabb2_intersection_with_facts, classify_aabb3_intersection, classify_point_aabb2,
     classify_point_aabb3, point_in_aabb2, point_in_aabb3, point_in_triangle2_aabb,
 };

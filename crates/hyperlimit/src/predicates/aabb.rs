@@ -18,227 +18,6 @@ use crate::predicates::interval::{
 use crate::predicates::order::compare_reals_with_policy;
 use core::cmp::Ordering;
 
-/// Reusable exact predicates for one closed 2D axis-aligned box.
-///
-/// A prepared AABB stores borrowed min/max points plus [`Aabb2Facts`]. It is a
-/// predicate helper, not a broad-phase tree node: ownership of box ids,
-/// hierarchy links, sweep events, triangulation bins, and curve fragments stays
-/// in higher crates. The cache preserves cheap, representation-derived object
-/// facts across repeated predicates without importing a primitive-float filter.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedAabb2<'a> {
-    min: &'a Point2,
-    max: &'a Point2,
-    facts: Aabb2Facts,
-}
-
-impl<'a> PreparedAabb2<'a> {
-    /// Prepare an AABB and compute its structural extent facts.
-    pub fn new(min: &'a Point2, max: &'a Point2) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_aabb2", "new");
-        Self::from_facts(min, max, crate::geometry::aabb2_facts(min, max))
-    }
-
-    /// Prepare an AABB from caller-cached structural facts.
-    ///
-    /// The caller must pass facts for the same min/max pair. Conservative facts
-    /// only leave specialization opportunities unused; non-conservative facts
-    /// can make a caller select an invalid higher-level broad-phase path.
-    pub const fn from_facts(min: &'a Point2, max: &'a Point2, facts: Aabb2Facts) -> Self {
-        Self { min, max, facts }
-    }
-
-    /// Return the borrowed minimum corner.
-    pub const fn min(&self) -> &'a Point2 {
-        self.min
-    }
-
-    /// Return the borrowed maximum corner.
-    pub const fn max(&self) -> &'a Point2 {
-        self.max
-    }
-
-    /// Return cached structural extent facts.
-    pub const fn facts(&self) -> Aabb2Facts {
-        self.facts
-    }
-
-    /// Classify a point relative to this box using the default policy.
-    pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<Aabb2PointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point relative to this box using an explicit policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Aabb2PointLocation> {
-        classify_point_aabb2_with_policy(self.min, self.max, point, policy)
-    }
-
-    /// Return whether a point lies in this box using the default policy.
-    pub fn contains_point(&self, point: &Point2) -> PredicateOutcome<bool> {
-        self.contains_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return whether a point lies in this box using an explicit policy.
-    pub(crate) fn contains_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        point_in_aabb2_with_policy(self.min, self.max, point, policy)
-    }
-
-    /// Classify this box's intersection with another prepared box using the
-    /// default policy.
-    pub fn classify_intersection(
-        &self,
-        other: &PreparedAabb2,
-    ) -> PredicateOutcome<Aabb2Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy)
-    }
-
-    /// Classify this box's intersection with another prepared box.
-    ///
-    /// Cached [`Aabb2Facts`] are deliberately exposed to callers rather than
-    /// used to replace interval predicates here. Broad-phase code may route
-    /// known-point and known-segment boxes to specialized queues, but this
-    /// method still certifies the relation by exact interval classification,
-    /// with the final topological decision kept inside exact predicates.
-    pub(crate) fn classify_intersection_with_policy(
-        &self,
-        other: &PreparedAabb2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Aabb2Intersection> {
-        classify_aabb2_intersection_with_policy_and_facts(
-            self.min,
-            self.max,
-            other.min,
-            other.max,
-            policy,
-            self.facts,
-            other.facts,
-        )
-    }
-
-    /// Return whether this box intersects another prepared box.
-    pub fn intersects(&self, other: &PreparedAabb2) -> PredicateOutcome<bool> {
-        self.intersects_with_policy(other, PredicatePolicy)
-    }
-
-    /// Return whether this box intersects another prepared box with an explicit
-    /// policy.
-    pub(crate) fn intersects_with_policy(
-        &self,
-        other: &PreparedAabb2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        match self.classify_intersection_with_policy(other, policy) {
-            PredicateOutcome::Decided {
-                value,
-                certainty,
-                stage,
-            } => PredicateOutcome::decided(value.intersects(), certainty, stage),
-            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
-        }
-    }
-}
-
-/// Reusable exact predicates for one closed 3D axis-aligned box.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedAabb3<'a> {
-    min: &'a Point3,
-    max: &'a Point3,
-}
-
-impl<'a> PreparedAabb3<'a> {
-    /// Prepare a 3D AABB.
-    pub fn new(min: &'a Point3, max: &'a Point3) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_aabb3", "new");
-        Self { min, max }
-    }
-
-    /// Return the borrowed minimum corner.
-    pub const fn min(&self) -> &'a Point3 {
-        self.min
-    }
-
-    /// Return the borrowed maximum corner.
-    pub const fn max(&self) -> &'a Point3 {
-        self.max
-    }
-
-    /// Classify a point relative to this box using the default policy.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<Aabb3PointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point relative to this box using an explicit policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Aabb3PointLocation> {
-        classify_point_aabb3_with_policy(self.min, self.max, point, policy)
-    }
-
-    /// Return whether a point lies in this box using the default policy.
-    pub fn contains_point(&self, point: &Point3) -> PredicateOutcome<bool> {
-        self.contains_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return whether a point lies in this box using an explicit policy.
-    pub(crate) fn contains_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        point_in_aabb3_with_policy(self.min, self.max, point, policy)
-    }
-
-    /// Classify this box's intersection with another prepared 3D box.
-    pub fn classify_intersection(
-        &self,
-        other: &PreparedAabb3,
-    ) -> PredicateOutcome<Aabb3Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy)
-    }
-
-    /// Classify this box's intersection with another prepared 3D box with an
-    /// explicit policy.
-    pub(crate) fn classify_intersection_with_policy(
-        &self,
-        other: &PreparedAabb3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Aabb3Intersection> {
-        classify_aabb3_intersection_with_policy(self.min, self.max, other.min, other.max, policy)
-    }
-
-    /// Return whether this box intersects another prepared 3D box.
-    pub fn intersects(&self, other: &PreparedAabb3) -> PredicateOutcome<bool> {
-        self.intersects_with_policy(other, PredicatePolicy)
-    }
-
-    /// Return whether this box intersects another prepared 3D box with an
-    /// explicit policy.
-    pub(crate) fn intersects_with_policy(
-        &self,
-        other: &PreparedAabb3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        match self.classify_intersection_with_policy(other, policy) {
-            PredicateOutcome::Decided {
-                value,
-                certainty,
-                stage,
-            } => PredicateOutcome::decided(value.intersects(), certainty, stage),
-            PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
-        }
-    }
-}
-
 /// Classify a point relative to a closed 2D axis-aligned box.
 pub fn classify_point_aabb2(
     min: &Point2,
@@ -1049,25 +828,22 @@ mod tests {
     }
 
     #[test]
-    fn prepared_aabb_reuses_cached_extent_facts_without_owning_storage() {
+    fn immediate_aabb_predicates_accept_cached_extent_facts() {
         let min = p2(0, 0);
         let max = p2(5, 0);
         let facts = crate::geometry::aabb2_facts(&min, &max);
-        let prepared = PreparedAabb2::from_facts(&min, &max, facts);
 
-        assert_eq!(prepared.min(), &min);
-        assert_eq!(prepared.max(), &max);
-        assert!(prepared.facts().known_segment());
-        assert!(prepared.facts().has_sparse_extent_support());
+        assert!(facts.known_segment());
+        assert!(facts.has_sparse_extent_support());
         assert_eq!(
-            prepared.classify_point(&p2(3, 0)).value(),
+            classify_point_aabb2(&min, &max, &p2(3, 0)).value(),
             Some(Aabb2PointLocation::Boundary)
         );
-        assert_eq!(prepared.contains_point(&p2(6, 0)).value(), Some(false));
+        assert_eq!(point_in_aabb2(&min, &max, &p2(6, 0)).value(), Some(false));
     }
 
     #[test]
-    fn prepared_aabb_intersection_preserves_point_segment_area_cases() {
+    fn immediate_aabb_intersection_preserves_point_segment_area_cases() {
         let point_min = p2(2, 2);
         let point_max = p2(2, 2);
         let segment_min = p2(0, 2);
@@ -1075,43 +851,64 @@ mod tests {
         let area_min = p2(1, 1);
         let area_max = p2(3, 3);
 
-        let point_box = PreparedAabb2::new(&point_min, &point_max);
-        let segment_box = PreparedAabb2::new(&segment_min, &segment_max);
-        let area_box = PreparedAabb2::new(&area_min, &area_max);
+        let point_facts = crate::geometry::aabb2_facts(&point_min, &point_max);
+        let segment_facts = crate::geometry::aabb2_facts(&segment_min, &segment_max);
+        let area_facts = crate::geometry::aabb2_facts(&area_min, &area_max);
 
-        assert!(point_box.facts().known_point());
-        assert!(segment_box.facts().known_segment());
+        assert!(point_facts.known_point());
+        assert!(segment_facts.known_segment());
         assert_eq!(
-            point_box.classify_intersection(&segment_box).value(),
+            classify_aabb2_intersection_with_facts(
+                &point_min,
+                &point_max,
+                &segment_min,
+                &segment_max,
+                point_facts,
+                segment_facts,
+            )
+            .value(),
             Some(Aabb2Intersection::Touching)
         );
         assert_eq!(
-            segment_box.classify_intersection(&area_box).value(),
+            classify_aabb2_intersection_with_facts(
+                &segment_min,
+                &segment_max,
+                &area_min,
+                &area_max,
+                segment_facts,
+                area_facts,
+            )
+            .value(),
             Some(Aabb2Intersection::Touching)
         );
-        assert_eq!(area_box.intersects(&point_box).value(), Some(true));
+        assert_eq!(
+            aabb2s_intersect(&area_min, &area_max, &point_min, &point_max).value(),
+            Some(true)
+        );
     }
 
     #[test]
-    fn prepared_aabb3_reuses_borrowed_storage_for_point_and_intersection_queries() {
+    fn immediate_aabb3_predicates_use_borrowed_storage() {
         let min = p3(0, 0, 0);
         let max = p3(4, 4, 4);
         let other_min = p3(4, 1, 1);
         let other_max = p3(6, 3, 3);
-        let prepared = PreparedAabb3::new(&min, &max);
-        let other = PreparedAabb3::new(&other_min, &other_max);
 
-        assert_eq!(prepared.min(), &min);
-        assert_eq!(prepared.max(), &max);
         assert_eq!(
-            prepared.classify_point(&p3(2, 2, 2)).value(),
+            classify_point_aabb3(&min, &max, &p3(2, 2, 2)).value(),
             Some(Aabb3PointLocation::Inside)
         );
-        assert_eq!(prepared.contains_point(&p3(5, 2, 2)).value(), Some(false));
         assert_eq!(
-            prepared.classify_intersection(&other).value(),
+            point_in_aabb3(&min, &max, &p3(5, 2, 2)).value(),
+            Some(false)
+        );
+        assert_eq!(
+            classify_aabb3_intersection(&min, &max, &other_min, &other_max).value(),
             Some(Aabb3Intersection::Touching)
         );
-        assert_eq!(prepared.intersects(&other).value(), Some(true));
+        assert_eq!(
+            aabb3s_intersect(&min, &max, &other_min, &other_max).value(),
+            Some(true)
+        );
     }
 }

@@ -9,13 +9,14 @@ use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
     PredicateOutcome, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
     PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
-    SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, affine_independent_d,
-    certified_ball_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
+    SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts,
+    affine_independent_d, certified_ball_sign, classify_aabb2_intersection_with_facts,
+    classify_aabb3_intersection, classify_aabb3_sphere_intersection, classify_circle_line2,
     classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
     classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_plane_segment,
-    classify_plane_triangle, classify_point_convex_planes3, classify_point_convex_polygon2,
-    classify_point_line, classify_point_oriented_plane, classify_point_plane,
-    classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
+    classify_plane_triangle, classify_point_aabb3, classify_point_convex_planes3,
+    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
+    classify_point_plane, classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_report, classify_segment3_intersection,
     classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
@@ -60,6 +61,7 @@ impl Workload {
 }
 
 fn bench_predicates(c: &mut Criterion) {
+    bench_aabb_immediate(c);
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_robust_predicates(c);
     bench_filter_cost_breakdown(c);
@@ -76,6 +78,54 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_aabb_immediate(c: &mut Criterion) {
+    let first_2d_min = rational_point2(0, 1, 0, 1);
+    let first_2d_max = rational_point2(8, 1, 0, 1);
+    let second_2d_min = rational_point2(2, 1, -1, 1);
+    let second_2d_max = rational_point2(6, 1, 1, 1);
+    let first_2d_facts = aabb2_facts(&first_2d_min, &first_2d_max);
+    let second_2d_facts = aabb2_facts(&second_2d_min, &second_2d_max);
+    let first_3d_min = rational_point3(0, 1, 0, 1, 0, 1);
+    let first_3d_max = rational_point3(4, 1, 4, 1, 4, 1);
+    let second_3d_min = rational_point3(4, 1, 1, 1, 1, 1);
+    let second_3d_max = rational_point3(6, 1, 3, 1, 3, 1);
+    let query_3d = rational_point3(2, 1, 2, 1, 2, 1);
+
+    let mut group = c.benchmark_group("aabb_immediate");
+    group.bench_function("2d/intersection_with_facts", |bench| {
+        bench.iter(|| {
+            classify_aabb2_intersection_with_facts(
+                black_box(&first_2d_min),
+                black_box(&first_2d_max),
+                black_box(&second_2d_min),
+                black_box(&second_2d_max),
+                black_box(first_2d_facts),
+                black_box(second_2d_facts),
+            )
+        })
+    });
+    group.bench_function("3d/intersection", |bench| {
+        bench.iter(|| {
+            classify_aabb3_intersection(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&second_3d_min),
+                black_box(&second_3d_max),
+            )
+        })
+    });
+    group.bench_function("3d/point", |bench| {
+        bench.iter(|| {
+            classify_point_aabb3(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&query_3d),
+            )
+        })
+    });
+    group.finish();
 }
 
 fn bench_filter_cost_breakdown(c: &mut Criterion) {
