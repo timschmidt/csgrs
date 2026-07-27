@@ -60,6 +60,16 @@ impl Plane {
         ]
         .map(Real::exact_rational_ref)
         {
+            if let Some([x, y, z, offset]) = Rational::affine_plane3_coefficients_known_dyadic([
+                [x0, y0, z0],
+                [x1, y1, z1],
+                [x2, y2, z2],
+            ]) {
+                return Self::new(
+                    Point3::new(Real::from(x), Real::from(y), Real::from(z)),
+                    Real::from(offset),
+                );
+            }
             let exact_dyadic = [x0, y0, z0, x1, y1, z1, x2, y2, z2]
                 .into_iter()
                 .all(Rational::is_dyadic);
