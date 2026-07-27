@@ -777,8 +777,8 @@ impl DyadicStackAccumulator {
         if let Ok(right) = u64::try_from(right) {
             let mut product = [0_u64; 5];
             let mut carry = 0_u128;
-            for (index, left_limb) in left.into_iter().enumerate() {
-                let total = u128::from(left_limb) * u128::from(right) + carry;
+            for index in 0..4 {
+                let total = u128::from(left[index]) * u128::from(right) + carry;
                 product[index] = total as u64;
                 carry = total >> 64;
             }
