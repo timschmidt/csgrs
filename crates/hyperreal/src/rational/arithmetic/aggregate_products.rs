@@ -4031,7 +4031,8 @@ impl Rational {
     /// The caller must have already proved that every factor is dyadic. This
     /// avoids making general exact-rational product sums repeatedly inspect
     /// denominators just to discover that the dyadic schedule does not apply.
-    pub(crate) fn signed_product_sum_known_dyadic<const TERMS: usize>(
+    #[doc(hidden)]
+    pub fn signed_product_sum_known_dyadic<const TERMS: usize>(
         positive_terms: [bool; TERMS],
         terms: [[&Self; 2]; TERMS],
     ) -> Self {

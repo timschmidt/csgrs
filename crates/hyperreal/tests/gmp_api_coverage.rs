@@ -69,6 +69,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "primitive_integer_ratio",
     "shared_denominator_kind",
     "sign_pattern",
+    "signed_product_sum_known_dyadic",
     "structural_facts",
     "zero_one_or_minus_one",
     "zero_or_one",
