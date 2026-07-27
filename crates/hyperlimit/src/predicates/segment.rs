@@ -14,112 +14,6 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
 
-/// Reusable exact predicates for one closed 2D segment.
-///
-/// A prepared segment stores borrowed endpoints plus [`Segment2Facts`]. It is a
-/// predicate helper, not segment topology: ownership of edge ids, constraints,
-/// rings, and DCEL handles remains in higher crates. The prepared form retains
-/// geometric-object facts across repeated predicates.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedSegment2<'a> {
-    start: &'a Point2,
-    end: &'a Point2,
-    facts: Segment2Facts,
-}
-
-impl<'a> PreparedSegment2<'a> {
-    /// Prepare a segment and compute its structural facts.
-    pub fn new(start: &'a Point2, end: &'a Point2) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_segment2", "new");
-        Self::from_facts(start, end, crate::geometry::segment2_facts(start, end))
-    }
-
-    /// Prepare a segment from caller-cached structural facts.
-    ///
-    /// The caller must pass facts for the same endpoint pair. Conservative facts
-    /// merely leave fast paths unused, but non-conservative facts can change
-    /// which exact branch is evaluated.
-    pub const fn from_facts(start: &'a Point2, end: &'a Point2, facts: Segment2Facts) -> Self {
-        Self { start, end, facts }
-    }
-
-    /// Return the segment start endpoint.
-    pub const fn start(&self) -> &'a Point2 {
-        self.start
-    }
-
-    /// Return the segment end endpoint.
-    pub const fn end(&self) -> &'a Point2 {
-        self.end
-    }
-
-    /// Return cached structural facts for this segment.
-    pub const fn facts(&self) -> Segment2Facts {
-        self.facts
-    }
-
-    /// Classify a point relative to this segment using the default policy.
-    pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<PointSegmentLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point relative to this segment using an explicit policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PointSegmentLocation> {
-        classify_point_segment_with_policy_and_facts(
-            self.start, self.end, point, policy, self.facts,
-        )
-    }
-
-    /// Return whether a point lies on this segment using the default policy.
-    pub fn point_on_segment(&self, point: &Point2) -> PredicateOutcome<bool> {
-        self.point_on_segment_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return whether a point lies on this segment using an explicit policy.
-    pub(crate) fn point_on_segment_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        point_on_segment_with_policy_and_facts(self.start, self.end, point, policy, self.facts)
-    }
-
-    /// Classify this segment's intersection with another prepared segment using
-    /// the default policy.
-    pub fn classify_intersection(
-        &self,
-        other: &PreparedSegment2,
-    ) -> PredicateOutcome<SegmentIntersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy)
-    }
-
-    /// Classify this segment's intersection with another prepared segment using
-    /// an explicit policy.
-    ///
-    /// Degenerate point-segment cases use cached facts before falling back to
-    /// the standard four-orientation classifier. Every equality or containment
-    /// result is still certified through exact Real predicates.
-    pub(crate) fn classify_intersection_with_policy(
-        &self,
-        other: &PreparedSegment2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<SegmentIntersection> {
-        classify_segment_intersection_with_policy_and_facts(
-            self.start,
-            self.end,
-            other.start,
-            other.end,
-            policy,
-            self.facts,
-            other.facts,
-        )
-    }
-}
-
 /// Classify `point` relative to the closed segment `ab`.
 pub fn classify_point_segment(
     a: &Point2,
@@ -1422,20 +1316,21 @@ mod tests {
     }
 
     #[test]
-    fn prepared_segment_reuses_cached_facts_for_point_and_intersection_queries() {
+    fn immediate_segment_predicates_reuse_cached_facts() {
         let a = p2(0, 0);
         let b = p2(4, 0);
-        let prepared = PreparedSegment2::new(&a, &b);
-        assert_eq!(prepared.facts().known_degenerate(), Some(false));
+        let facts = crate::geometry::segment2_facts(&a, &b);
+        assert_eq!(facts.known_degenerate(), Some(false));
         assert_eq!(
-            prepared.classify_point(&p2(2, 0)).value(),
+            classify_point_segment_with_facts(&a, &b, &p2(2, 0), facts).value(),
             Some(PointSegmentLocation::OnSegment)
         );
 
         let point = p2(2, 0);
-        let prepared_point = PreparedSegment2::new(&point, &point);
+        let point_facts = crate::geometry::segment2_facts(&point, &point);
         assert_eq!(
-            prepared.classify_intersection(&prepared_point).value(),
+            classify_segment_intersection_with_facts(&a, &b, &point, &point, facts, point_facts,)
+                .value(),
             Some(SegmentIntersection::EndpointTouch)
         );
     }

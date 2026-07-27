@@ -16,16 +16,16 @@ use hyperlimit::{
     classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_plane_segment,
     classify_plane_triangle, classify_point_aabb3, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
-    classify_point_plane, classify_point_ring_even_odd_report, classify_point_segment3,
-    classify_point_sphere3, classify_ray_triangle3_intersection,
-    classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
-    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
-    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
-    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
-    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
-    orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3,
-    support_dop3_from_points,
+    classify_point_plane, classify_point_ring_even_odd_report, classify_point_segment_with_facts,
+    classify_point_segment3, classify_point_sphere3, classify_ray_triangle3_intersection,
+    classify_ray_triangle3_intersection_report, classify_segment_intersection_with_facts,
+    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
+    classify_segment3_intersection, classify_sphere3_intersection, classify_triangle_triangle3,
+    classify_triangle3_degeneracy, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
+    insphere_d, insphere3d, intersect_segment_with_oriented_plane, intersect_three_planes,
+    intersect_two_planes, orient_d, orient2d, orient3d, projected_line_parameter3,
+    projected_segment_parameter3, segment2_facts, support_dop3_from_points,
 };
 use robust::{Coord, Coord3D};
 
@@ -64,6 +64,7 @@ impl Workload {
 fn bench_predicates(c: &mut Criterion) {
     bench_aabb_immediate(c);
     bench_explicit_sphere_immediate(c);
+    bench_segment2_immediate(c);
     bench_segment3_immediate(c);
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_robust_predicates(c);
@@ -81,6 +82,34 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_segment2_immediate(c: &mut Criterion) {
+    let start = rational_point2(0, 1, 0, 1);
+    let end = rational_point2(4, 1, 0, 1);
+    let query = rational_point2(2, 1, 0, 1);
+    let point_start = rational_point2(2, 1, 0, 1);
+    let point_end = rational_point2(2, 1, 0, 1);
+    let facts = segment2_facts(&start, &end);
+    let point_facts = segment2_facts(&point_start, &point_end);
+
+    let mut group = c.benchmark_group("segment2_immediate");
+    group.bench_function("point_with_facts", |bench| {
+        bench.iter(|| classify_point_segment_with_facts(&start, &end, black_box(&query), facts))
+    });
+    group.bench_function("intersection_with_facts", |bench| {
+        bench.iter(|| {
+            classify_segment_intersection_with_facts(
+                &start,
+                &end,
+                black_box(&point_start),
+                black_box(&point_end),
+                facts,
+                point_facts,
+            )
+        })
+    });
+    group.finish();
 }
 
 fn bench_segment3_immediate(c: &mut Criterion) {

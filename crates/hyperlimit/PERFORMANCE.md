@@ -31,6 +31,19 @@ measured 936.57/945.32 ns before and 930.88/922.66 ns after; the sub-2% reversal
 between identical post-change bodies is harness-layout noise rather than a
 predicate regression.
 
+## Immediate facts-aware 2D segment API gate
+
+`PreparedSegment2` combined borrowed endpoints with public `Segment2Facts`.
+Callers can now retain that compact evidence directly and pass it to
+`classify_point_segment_with_facts`, `point_on_segment_with_facts`, or
+`classify_segment_intersection_with_facts`, without a second object interface.
+
+The paired point benchmark measured 256.57 ns through the former carrier and
+254.45 ns through the immediate facts-aware control. The migrated transition
+then measured 243.69 ns. A degenerate point/segment intersection measured
+257.65 ns before and 258.49 ns after, which Criterion classified as no
+performance change (`p = 0.20`).
+
 ## Retained optimization
 
 ### Collapse redundant Real sign-resolution passes
