@@ -541,7 +541,6 @@ struct ProjectivePointCache {
     source_edges: StorageHashMap<SourceEdgeKey, ProjectiveSourceEdge>,
     boundary_planes: StorageHashMap<ProjectiveBoundaryPlaneIdentity, Vec<usize>>,
     inverted_planes: StorageHashMap<ConstructionPlaneIdentity, usize>,
-    source_vertices: StorageHashMap<ConstructionVertexIdentity, [ConstructionPlaneIdentity; 3]>,
     point_incidences: StorageHashMap<ConstructionVertexIdentity, Vec<ConstructionPlaneIdentity>>,
 }
 
@@ -781,14 +780,7 @@ impl ProjectivePointCache {
 
     fn definition_planes(&self, identity: &ConstructionVertexIdentity) -> Option<[&Plane; 3]> {
         match identity {
-            ConstructionVertexIdentity::Source { .. } => {
-                let planes = self.source_vertices.get(identity)?;
-                Some([
-                    self.plane(*self.planes.get(&planes[0])?),
-                    self.plane(*self.planes.get(&planes[1])?),
-                    self.plane(*self.planes.get(&planes[2])?),
-                ])
-            }
+            ConstructionVertexIdentity::Source { .. } => None,
             ConstructionVertexIdentity::SourceEdgePlane {
                 mesh,
                 endpoints,
@@ -2219,38 +2211,6 @@ fn compute_two_convex_inputs_projectively(
             }
         }
     }
-    {
-        let ProjectivePointCache {
-            plane_storage,
-            planes,
-            source_vertices,
-            point_incidences,
-            ..
-        } = &mut projective_point_cache;
-        for (identity, supports) in point_incidences.iter() {
-            if !matches!(identity, ConstructionVertexIdentity::Source { .. }) {
-                continue;
-            }
-            'definition: for first in 0..supports.len() {
-                for second in (first + 1)..supports.len() {
-                    for third in (second + 1)..supports.len() {
-                        let definition = [
-                            &plane_storage[planes[&supports[first]]],
-                            &plane_storage[planes[&supports[second]]],
-                            &plane_storage[planes[&supports[third]]],
-                        ];
-                        if plane_normals_are_independent(definition)? {
-                            source_vertices.insert(
-                                identity.clone(),
-                                [supports[first], supports[second], supports[third]],
-                            );
-                            break 'definition;
-                        }
-                    }
-                }
-            }
-        }
-    }
     for (identity, point) in &source_vertex_points {
         let ConstructionVertexIdentity::Source { mesh, .. } = identity else {
             continue;
@@ -2620,41 +2580,6 @@ fn compute_two_convex_inputs_projectively(
         classified,
         triangle_soup,
     }))
-}
-
-fn plane_normals_are_independent(planes: [&Plane; 3]) -> HypermeshResult<bool> {
-    let rows = planes.map(|plane| [&plane.normal.x, &plane.normal.y, &plane.normal.z]);
-    if let [
-        [Some(a), Some(b), Some(c)],
-        [Some(d), Some(e), Some(f)],
-        [Some(g), Some(h), Some(i)],
-    ] = rows.map(|row| row.map(Real::exact_rational_ref))
-    {
-        return Ok(!Rational::signed_product_sum_ordering(
-            [true, true, true, false, false, false],
-            [
-                [a, e, i],
-                [b, f, g],
-                [c, d, h],
-                [c, e, g],
-                [b, d, i],
-                [a, f, h],
-            ],
-        )
-        .is_eq());
-    }
-    let determinant = Real::signed_product_sum(
-        [true, true, true, false, false, false],
-        [
-            [rows[0][0], rows[1][1], rows[2][2]],
-            [rows[0][1], rows[1][2], rows[2][0]],
-            [rows[0][2], rows[1][0], rows[2][1]],
-            [rows[0][2], rows[1][1], rows[2][0]],
-            [rows[0][1], rows[1][0], rows[2][2]],
-            [rows[0][0], rows[1][2], rows[2][1]],
-        ],
-    );
-    Ok(crate::predicate::classify_real(&determinant)? != Classification::On)
 }
 
 fn exact_rational_product_sum_classification<const TERMS: usize, const FACTORS: usize>(
@@ -4732,6 +4657,7 @@ mod tests {
         let plane_ids: [ConstructionPlaneIdentity; 4] =
             std::array::from_fn(|plane| ConstructionPlaneIdentity { mesh: 0, plane });
         let identities = [
+            ConstructionVertexIdentity::Source { mesh: 0, vertex: 0 },
             ConstructionVertexIdentity::PlaneTriple {
                 planes: [plane_ids[0], plane_ids[1], plane_ids[2]],
             },
@@ -4740,14 +4666,23 @@ mod tests {
             },
         ];
 
-        let resolve = |order: [usize; 2]| {
+        let resolve = |order: [usize; 3]| {
             let mut cache = ProjectivePointCache::default();
             for (identity, plane) in plane_ids.into_iter().zip(planes.iter().cloned()) {
                 cache.support_plane_index(identity, &plane);
             }
             for index in order {
-                let definition = cache.definition_planes(&identities[index]).unwrap();
-                let point = positive_weight_plane_intersection(definition).unwrap();
+                let point = cache
+                    .definition_planes(&identities[index])
+                    .and_then(positive_weight_plane_intersection)
+                    .unwrap_or_else(|| {
+                        HomogeneousPoint3::new(
+                            Real::from(1),
+                            Real::from(2),
+                            Real::from(3),
+                            Real::one(),
+                        )
+                    });
                 let (_, _, interned) =
                     cache.intern_with_approximation_by(identities[index].clone(), || point);
                 assert_eq!(interned, identities[index]);
@@ -4760,8 +4695,12 @@ mod tests {
             let canonical_point_indices = identities
                 .each_ref()
                 .map(|identity| cache.points[identity].point_index);
-            assert_eq!(cache.canonical_identities.len(), 1);
-            assert_eq!(canonical_point_indices[0], canonical_point_indices[1]);
+            assert_eq!(cache.canonical_identities.len(), 2);
+            assert!(
+                canonical_point_indices
+                    .iter()
+                    .all(|&point_index| point_index == canonical_point_indices[0])
+            );
             for identity in &identities {
                 if *identity == canonical[0] {
                     assert!(!cache.canonical_identities.contains_key(identity));
@@ -4775,13 +4714,12 @@ mod tests {
             canonical
         };
 
-        let forward = resolve([0, 1]);
-        let reverse = resolve([1, 0]);
+        let forward = resolve([0, 1, 2]);
+        let reverse = resolve([2, 1, 0]);
+        let shuffled = resolve([1, 0, 2]);
         assert_eq!(forward, reverse);
-        assert_eq!(forward[0], forward[1]);
-        assert_eq!(
-            forward[0],
-            std::cmp::min(identities[0].clone(), identities[1].clone())
-        );
+        assert_eq!(forward, shuffled);
+        assert!(forward.iter().all(|identity| *identity == forward[0]));
+        assert_eq!(forward[0], identities.iter().min().unwrap().clone(),);
     }
 }
