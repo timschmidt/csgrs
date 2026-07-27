@@ -173,11 +173,8 @@ impl BrepFacePlanePreflightReport {
             blockers.push(BrepFacePlanePreflightBlocker::FaceBoundsNotReady);
         } else {
             let prepared_plane = plane.prepare();
-            let prepared_bounds = bounds.prepare().expect("checked bounds readiness");
-            match prepared_plane.classify_aabb3(
-                prepared_bounds.prepared.min(),
-                prepared_bounds.prepared.max(),
-            ) {
+            let (min, max) = bounds.exact_bounds().expect("checked bounds readiness");
+            match prepared_plane.classify_aabb3(min, max) {
                 PredicateOutcome::Decided { value, .. } => {
                     relation = Some(value);
                 }
@@ -324,11 +321,11 @@ impl<'a> PreparedBrepFaceQuery<'a> {
             blockers.push(BrepFacePlanePreflightBlocker::FaceBoundsNotReady);
         } else {
             let prepared_plane = plane.prepare();
-            let prepared_bounds = self.bounds.prepare().expect("checked bounds readiness");
-            match prepared_plane.classify_aabb3(
-                prepared_bounds.prepared.min(),
-                prepared_bounds.prepared.max(),
-            ) {
+            let (min, max) = self
+                .bounds
+                .exact_bounds()
+                .expect("checked bounds readiness");
+            match prepared_plane.classify_aabb3(min, max) {
                 PredicateOutcome::Decided { value, .. } => relation = Some(value),
                 PredicateOutcome::Unknown { .. } => {
                     blockers.push(BrepFacePlanePreflightBlocker::UnknownPlaneAabbRelation);

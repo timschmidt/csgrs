@@ -35,8 +35,7 @@ pub use adjacency::{
 pub use area::{BrepAreaProjectionAxis, BrepFaceAreaBlocker, BrepFaceAreaReport};
 pub use bounds::{
     BrepFaceAabbPreflightBlocker, BrepFaceAabbPreflightReport, BrepFaceBoundsBlocker,
-    BrepFaceBoundsReport, BrepShellBoundsBlocker, BrepShellBoundsReport, PreparedBrepFaceBounds,
-    PreparedBrepShellBounds,
+    BrepFaceBoundsReport, BrepShellBoundsBlocker, BrepShellBoundsReport,
 };
 pub use construction::{
     BrepPlanarExtrusionConstruction, BrepPlanarExtrusionConstructionBlocker,
@@ -1102,13 +1101,13 @@ mod tests {
         assert!(report.zero_z_extent);
         assert_eq!(report.zero_extent_axis_count, 1);
 
-        let prepared = report.prepare().unwrap();
+        let (min, max) = report.exact_bounds().unwrap();
         assert_eq!(
-            prepared.prepared.classify_point(&p(0, 0, 0)).value(),
+            hyperlimit::classify_point_aabb3(min, max, &p(0, 0, 0)).value(),
             Some(hyperlimit::Aabb3PointLocation::Boundary)
         );
         assert_eq!(
-            prepared.prepared.classify_point(&p(1, 1, 1)).value(),
+            hyperlimit::classify_point_aabb3(min, max, &p(1, 1, 1)).value(),
             Some(hyperlimit::Aabb3PointLocation::Outside)
         );
     }
@@ -1125,13 +1124,13 @@ mod tests {
         assert_eq!(report.max, Some(p(1, 1, 1)));
         assert_eq!(report.zero_extent_axis_count, 0);
 
-        let prepared = report.prepare().unwrap();
+        let (min, max) = report.exact_bounds().unwrap();
         assert_eq!(
-            prepared.prepared.classify_point(&p(0, 0, 0)).value(),
+            hyperlimit::classify_point_aabb3(min, max, &p(0, 0, 0)).value(),
             Some(hyperlimit::Aabb3PointLocation::Boundary)
         );
         assert_eq!(
-            prepared.prepared.classify_point(&p(1, 1, 1)).value(),
+            hyperlimit::classify_point_aabb3(min, max, &p(1, 1, 1)).value(),
             Some(hyperlimit::Aabb3PointLocation::Boundary)
         );
     }

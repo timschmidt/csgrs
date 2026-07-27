@@ -141,10 +141,10 @@ planes, AABBs, and predicates. Unknown orderings or signs become blockers
 instead of epsilon comparisons. Broad-phase reports may reject work only after
 certifying disjointness; overlap or contact remains a narrow-phase candidate.
 
-Prepared surfaces, bounds, face queries, planar regions, and cached homogeneous
-control nets amortize repeated work. The curve and pcurve cache carriers use
-`Rc` and `OnceCell`, so they are currently intended for thread-local ownership,
-not shared cross-thread mutation.
+Prepared surfaces and face queries, retained bounds, planar regions, and cached
+homogeneous control nets amortize repeated work. The curve and pcurve cache
+carriers use `Rc` and `OnceCell`, so they are currently intended for
+thread-local ownership, not shared cross-thread mutation.
 
 The measured reference audit, retained evidence-reuse changes, and benchmark
 protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).

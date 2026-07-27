@@ -32,6 +32,18 @@ is deliberately a report-pressure sentinel made from many disjoint loops; it
 does not claim that the resulting outer/inner-loop geometry is a valid material
 region.
 
+## Immediate AABB API gate
+
+Face and shell bounds reports now expose their retained exact corners directly
+through `exact_bounds`. The former prepared bounds wrappers only borrowed those
+same corners and forwarded each query, so face AABB preflight now calls the
+immediate `hyperlimit` predicate without an intermediate carrier.
+
+The focused face-preflight benchmark measured 414.40 us before and 413.79 us
+after. Criterion found no performance change (`p = 0.91`), with a
+-0.37% to +0.35% confidence interval. Exact reports, blockers, and
+narrow-phase scheduling rules are unchanged.
+
 ## Reference disposition
 
 ### Yap: exact geometric computation

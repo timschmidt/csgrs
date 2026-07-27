@@ -8,7 +8,7 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, PreparedAabb3};
+use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_intersection};
 use hyperreal::Real;
 
 use crate::topology::{
@@ -81,15 +81,6 @@ pub struct BrepFaceBoundsReport {
     pub exact_bounds_ready: bool,
 }
 
-/// Borrowed prepared face AABB.
-#[derive(Clone, Debug)]
-pub struct PreparedBrepFaceBounds<'a> {
-    /// Face whose bounds were prepared.
-    pub face: BrepFaceId,
-    /// Prepared `hyperlimit` AABB predicate object.
-    pub prepared: PreparedAabb3<'a>,
-}
-
 /// Exact AABB/support facts for a retained shell.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BrepShellBoundsReport {
@@ -107,13 +98,6 @@ pub struct BrepShellBoundsReport {
     pub blockers: Vec<BrepShellBoundsBlocker>,
     /// Whether the exact shell AABB is available for downstream consumers.
     pub exact_bounds_ready: bool,
-}
-
-/// Borrowed prepared shell AABB.
-#[derive(Clone, Debug)]
-pub struct PreparedBrepShellBounds<'a> {
-    /// Prepared `hyperlimit` AABB predicate object.
-    pub prepared: PreparedAabb3<'a>,
 }
 
 /// Broad-phase face/face AABB preflight report.
@@ -220,14 +204,9 @@ impl BrepFaceBoundsReport {
         }
     }
 
-    /// Prepare the exact AABB for repeated `hyperlimit` bound predicates.
-    pub fn prepare(&self) -> Option<PreparedBrepFaceBounds<'_>> {
-        let min = self.min.as_ref()?;
-        let max = self.max.as_ref()?;
-        Some(PreparedBrepFaceBounds {
-            face: self.face,
-            prepared: PreparedAabb3::new(min, max),
-        })
+    /// Borrow the exact AABB corners when the bounds are ready.
+    pub fn exact_bounds(&self) -> Option<(&Point3, &Point3)> {
+        self.min.as_ref().zip(self.max.as_ref())
     }
 
     fn blocked(
@@ -312,13 +291,9 @@ impl BrepShellBoundsReport {
         }
     }
 
-    /// Prepare the exact shell AABB for repeated `hyperlimit` bound predicates.
-    pub fn prepare(&self) -> Option<PreparedBrepShellBounds<'_>> {
-        let min = self.min.as_ref()?;
-        let max = self.max.as_ref()?;
-        Some(PreparedBrepShellBounds {
-            prepared: PreparedAabb3::new(min, max),
-        })
+    /// Borrow the exact AABB corners when the bounds are ready.
+    pub fn exact_bounds(&self) -> Option<(&Point3, &Point3)> {
+        self.min.as_ref().zip(self.max.as_ref())
     }
 }
 
@@ -355,12 +330,13 @@ impl BrepShell {
 
         let mut relation = None;
         if blockers.is_empty() {
-            let first_prepared = first_bounds.prepare().expect("checked bounds readiness");
-            let second_prepared = second_bounds.prepare().expect("checked bounds readiness");
-            match first_prepared
-                .prepared
-                .classify_intersection(&second_prepared.prepared)
-            {
+            let (first_min, first_max) = first_bounds
+                .exact_bounds()
+                .expect("checked bounds readiness");
+            let (second_min, second_max) = second_bounds
+                .exact_bounds()
+                .expect("checked bounds readiness");
+            match classify_aabb3_intersection(first_min, first_max, second_min, second_max) {
                 PredicateOutcome::Decided { value, .. } => {
                     relation = Some(value);
                 }
