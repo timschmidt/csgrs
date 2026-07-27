@@ -141,7 +141,7 @@ pub use predicates::ring::{
     point_in_ring_even_odd, ring_area_sign, ring_convexity, ring2_facts,
 };
 pub use predicates::segment::{
-    PreparedSegment2, PreparedSegment3, classify_point_segment, classify_point_segment_with_facts,
+    PreparedSegment2, classify_point_segment, classify_point_segment_with_facts,
     classify_point_segment3, classify_segment_intersection,
     classify_segment_intersection_with_facts, classify_segment3_intersection, point_on_segment,
     point_on_segment_with_facts, point_on_segment3, proper_segment_intersection_point,

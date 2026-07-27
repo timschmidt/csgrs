@@ -120,83 +120,6 @@ impl<'a> PreparedSegment2<'a> {
     }
 }
 
-/// Reusable exact predicates for one closed 3D segment.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedSegment3<'a> {
-    start: &'a Point3,
-    end: &'a Point3,
-}
-
-impl<'a> PreparedSegment3<'a> {
-    /// Prepare a borrowed 3D segment predicate.
-    pub fn new(start: &'a Point3, end: &'a Point3) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_segment3", "new");
-        Self { start, end }
-    }
-
-    /// Return the segment start endpoint.
-    pub const fn start(&self) -> &'a Point3 {
-        self.start
-    }
-
-    /// Return the segment end endpoint.
-    pub const fn end(&self) -> &'a Point3 {
-        self.end
-    }
-
-    /// Classify a point relative to this segment using the default policy.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PointSegmentLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point relative to this segment using an explicit policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PointSegmentLocation> {
-        classify_point_segment3_with_policy(self.start, self.end, point, policy)
-    }
-
-    /// Return whether a point lies on this segment using the default policy.
-    pub fn point_on_segment(&self, point: &Point3) -> PredicateOutcome<bool> {
-        self.point_on_segment_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return whether a point lies on this segment using an explicit policy.
-    pub(crate) fn point_on_segment_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<bool> {
-        point_on_segment3_with_policy(self.start, self.end, point, policy)
-    }
-
-    /// Classify this segment's intersection with another prepared 3D segment.
-    pub fn classify_intersection(
-        &self,
-        other: &PreparedSegment3,
-    ) -> PredicateOutcome<Segment3Intersection> {
-        self.classify_intersection_with_policy(other, PredicatePolicy)
-    }
-
-    /// Classify this segment's intersection with another prepared 3D segment
-    /// using an explicit predicate policy.
-    pub(crate) fn classify_intersection_with_policy(
-        &self,
-        other: &PreparedSegment3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Segment3Intersection> {
-        classify_segment3_intersection_with_policy(
-            self.start,
-            self.end,
-            other.start,
-            other.end,
-            policy,
-        )
-    }
-}
-
 /// Classify `point` relative to the closed segment `ab`.
 pub fn classify_point_segment(
     a: &Point2,
@@ -1518,18 +1441,15 @@ mod tests {
     }
 
     #[test]
-    fn prepared_segment3_reuses_borrowed_endpoints() {
+    fn immediate_segment3_predicates_use_borrowed_endpoints() {
         let a = p3(0, 0, 0);
         let b = p3(0, 0, 3);
-        let prepared = PreparedSegment3::new(&a, &b);
 
-        assert_eq!(prepared.start(), &a);
-        assert_eq!(prepared.end(), &b);
         assert_eq!(
-            prepared.classify_point(&p3(0, 0, 2)).value(),
+            classify_point_segment3(&a, &b, &p3(0, 0, 2)).value(),
             Some(PointSegmentLocation::OnSegment)
         );
-        assert_eq!(prepared.point_on_segment(&p3(0, 1, 2)).value(), Some(false));
+        assert_eq!(point_on_segment3(&a, &b, &p3(0, 1, 2)).value(), Some(false));
     }
 
     #[test]
@@ -1576,16 +1496,14 @@ mod tests {
     }
 
     #[test]
-    fn prepared_segment3_classifies_intersection() {
+    fn immediate_segment3_classifies_intersection() {
         let a = p3(0, 0, 0);
         let b = p3(4, 0, 0);
         let c = p3(2, -1, 0);
         let d = p3(2, 1, 0);
-        let first = PreparedSegment3::new(&a, &b);
-        let second = PreparedSegment3::new(&c, &d);
 
         assert_eq!(
-            first.classify_intersection(&second).value(),
+            classify_segment3_intersection(&a, &b, &c, &d).value(),
             Some(Segment3Intersection::Proper)
         );
     }

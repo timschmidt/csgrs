@@ -16,6 +16,21 @@ control. The transition measured 113.73 ns through the former wrapper and
 111.34 ns in the same runs, showing that the transition adds no overhead after
 normalizing for run-wide variation.
 
+## Immediate 3D segment API gate
+
+`PreparedSegment3` likewise stored only borrowed endpoints and forwarded point,
+containment, and intersection queries. Those operations now use
+`classify_point_segment3`, `point_on_segment3`, and
+`classify_segment3_intersection` directly.
+
+The paired point benchmark measured 394.33 ns through the former carrier
+against a 380.51 ns immediate control. After migration, the two identical
+immediate rows measured 401.73 ns and 403.24 ns: both shared run-wide drift,
+while the migrated row removed the wrapper overhead. The intersection pair
+measured 936.57/945.32 ns before and 930.88/922.66 ns after; the sub-2% reversal
+between identical post-change bodies is harness-layout noise rather than a
+predicate regression.
+
 ## Retained optimization
 
 ### Collapse redundant Real sign-resolution passes
