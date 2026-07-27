@@ -82,6 +82,81 @@ mod tests {
     }
 
     #[test]
+    fn rational_linear_form4_filter_normalizes_only_safe_exponent_spans() {
+        fn rational(value: f64) -> Rational {
+            Rational::try_from(value).unwrap()
+        }
+
+        let one = rational(1.0);
+        let zero = Rational::zero();
+        let minimum_safe = rational(f64::from_bits((1023_u64 - 500) << 52));
+        let first_unsafe = rational(f64::from_bits((1023_u64 - 501) << 52));
+
+        let safe_coefficients = [
+            Real::new(one.clone()),
+            Real::new(minimum_safe.clone()),
+            Real::zero(),
+            Real::zero(),
+        ];
+        let safe_filter = Real::prepare_rational_linear_form4_filter([
+            &safe_coefficients[0],
+            &safe_coefficients[1],
+            &safe_coefficients[2],
+            &safe_coefficients[3],
+        ])
+        .expect("a 500-bit coefficient span keeps every product normal");
+        let safe_query =
+            Real::prepare_rational_linear_form4_query([&one, &minimum_safe, &zero, &zero])
+                .expect("a 500-bit query span keeps every product normal");
+        assert_eq!(
+            safe_filter.sign_prepared(&safe_query),
+            Some(RealSign::Positive),
+        );
+
+        let unsafe_coefficients = [
+            Real::new(one.clone()),
+            Real::new(first_unsafe.clone()),
+            Real::zero(),
+            Real::zero(),
+        ];
+        assert!(
+            Real::prepare_rational_linear_form4_filter([
+                &unsafe_coefficients[0],
+                &unsafe_coefficients[1],
+                &unsafe_coefficients[2],
+                &unsafe_coefficients[3],
+            ])
+            .is_none()
+        );
+        assert!(
+            Real::prepare_rational_linear_form4_query([&one, &first_unsafe, &zero, &zero,])
+                .is_none()
+        );
+        assert!(
+            Real::prepare_rational_affine_point3_query([&first_unsafe, &zero, &zero,]).is_none()
+        );
+
+        let largest_power = rational(f64::from_bits(2046_u64 << 52));
+        let upper_safe = rational(f64::from_bits((2046_u64 - 500) << 52));
+        assert!(
+            Real::prepare_rational_linear_form4_query([&largest_power, &upper_safe, &zero, &zero,])
+                .is_some(),
+            "normalization must also work when its exact reciprocal is subnormal",
+        );
+        let tiny_but_convertible = rational(f64::from_bits(50_u64 << 52));
+        assert!(
+            Real::prepare_rational_linear_form4_query([
+                &largest_power,
+                &tiny_but_convertible,
+                &zero,
+                &zero,
+            ])
+            .is_none(),
+            "a nonzero lane that would scale to zero must use exact fallback",
+        );
+    }
+
+    #[test]
     fn parse() {
         let counting: Real = "123456789".parse().unwrap();
         let answer = Real::new(Rational::new(123456789));

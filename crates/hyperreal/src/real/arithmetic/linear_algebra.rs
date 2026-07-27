@@ -511,7 +511,7 @@ impl Real {
             values[index] = value;
         }
         Some(PreparedRationalLinearForm4Filter {
-            coefficients: values,
+            coefficients: Self::normalize_rational_linear_form4_values(values)?,
         })
     }
 
@@ -526,7 +526,9 @@ impl Real {
         for (index, coordinate) in point.into_iter().enumerate() {
             (values[index], _) = Self::rational_f64_with_error(coordinate)?;
         }
-        Some(PreparedRationalLinearForm4Query { values })
+        Some(PreparedRationalLinearForm4Query {
+            values: Self::normalize_rational_linear_form4_values(values)?,
+        })
     }
 
     /// Prepare a reusable affine 3D point for a homogeneous four-term filter.
@@ -542,7 +544,9 @@ impl Real {
             (values[index], _) = Self::rational_f64_with_error(coordinate)?;
         }
         values[3] = 1.0;
-        Some(PreparedRationalLinearForm4Query { values })
+        Some(PreparedRationalLinearForm4Query {
+            values: Self::normalize_rational_linear_form4_values(values)?,
+        })
     }
 
     /// Prepare reusable conservative floating intervals for one exact-rational
@@ -918,36 +922,15 @@ impl Real {
         const INFINITY_MAGNITUDE_BITS: u64 = f64::INFINITY.to_bits();
         const NORMAL_MAGNITUDE_RANGE: u64 =
             INFINITY_MAGNITUDE_BITS - MIN_NORMAL_MAGNITUDE_BITS;
-        // Prepared lanes are normal or exact zero. Unsigned subtraction turns
-        // the normal finite magnitude interval into one range comparison; only
-        // a zero result needs the slow operand check to distinguish exact zero
-        // from multiplication underflow.
-        for index in 0..4 {
-            let product = products[index];
-            let magnitude_bits =
-                product.to_bits() & i64::MAX as u64;
-            if magnitude_bits
-                .wrapping_sub(MIN_NORMAL_MAGNITUDE_BITS)
-                < NORMAL_MAGNITUDE_RANGE
-            {
-                continue;
-            }
-            if magnitude_bits != 0
-                || (coefficients[index].to_bits() << 1 != 0
-                    && point[index].to_bits() << 1 != 0)
-            {
-                return None;
-            }
-        }
+        // Preparation scales both vectors by exact positive powers of two and
+        // rejects exponent spans that could make a nonzero product subnormal.
+        // Every product is therefore finite normal or exact zero.
         let magnitude_sum = products[0].abs()
             + products[1].abs()
             + products[2].abs()
             + products[3].abs();
         let value =
             ((products[0] + products[1]) + products[2]) + products[3];
-        if !value.is_finite() {
-            return None;
-        }
 
         // Each rational conversion is bounded by 32 eps. For one product,
         // coefficient and point conversion therefore contribute at most
@@ -974,6 +957,39 @@ impl Real {
         } else {
             None
         }
+    }
+
+    fn normalize_rational_linear_form4_values(
+        mut values: [f64; 4],
+    ) -> Option<[f64; 4]> {
+        const EXPONENT_MASK: u64 = 0x7ff0_0000_0000_0000;
+        const SAFE_MIN_MAGNITUDE_BITS: u64 =
+            (1023_u64 - 500) << 52;
+        let max_magnitude_bits = values
+            .iter()
+            .map(|value| value.to_bits() & i64::MAX as u64)
+            .max()
+            .unwrap_or(0);
+        if max_magnitude_bits == 0 {
+            return Some(values);
+        }
+        let scale_bits = max_magnitude_bits & EXPONENT_MASK;
+        if scale_bits == 0 || scale_bits == EXPONENT_MASK {
+            return None;
+        }
+        let inverse_scale = 1.0 / f64::from_bits(scale_bits);
+        for value in &mut values {
+            let was_nonzero = value.to_bits() << 1 != 0;
+            *value *= inverse_scale;
+            let magnitude_bits =
+                value.to_bits() & i64::MAX as u64;
+            if was_nonzero
+                && magnitude_bits < SAFE_MIN_MAGNITUDE_BITS
+            {
+                return None;
+            }
+        }
+        Some(values)
     }
 
     #[inline]
