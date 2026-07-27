@@ -60,21 +60,34 @@ impl Plane {
         ]
         .map(Real::exact_rational_ref)
         {
+            let exact_dyadic = [x0, y0, z0, x1, y1, z1, x2, y2, z2]
+                .into_iter()
+                .all(Rational::is_dyadic);
             let signs = [true, false, false, false, true, true];
-            let x = Rational::signed_product_sum(
-                signs,
-                [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]],
-            );
-            let y = Rational::signed_product_sum(
-                signs,
-                [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]],
-            );
-            let z = Rational::signed_product_sum(
-                signs,
-                [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]],
-            );
-            let offset =
-                Rational::signed_product_sum([false, false, false], [[&x, x0], [&y, y0], [&z, z0]]);
+            let x_terms = [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]];
+            let y_terms = [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]];
+            let z_terms = [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]];
+            let x = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, x_terms)
+            } else {
+                Rational::signed_product_sum(signs, x_terms)
+            };
+            let y = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, y_terms)
+            } else {
+                Rational::signed_product_sum(signs, y_terms)
+            };
+            let z = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic(signs, z_terms)
+            } else {
+                Rational::signed_product_sum(signs, z_terms)
+            };
+            let offset_terms = [[&x, x0], [&y, y0], [&z, z0]];
+            let offset = if exact_dyadic {
+                Rational::signed_product_sum_known_dyadic([false; 3], offset_terms)
+            } else {
+                Rational::signed_product_sum([false; 3], offset_terms)
+            };
             return Self::new(
                 Point3::new(Real::from(x), Real::from(y), Real::from(z)),
                 Real::from(offset),
