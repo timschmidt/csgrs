@@ -1,7 +1,7 @@
 //! Exact-aware evolutionary and proposal-search carriers.
 //!
 //! `hyperevolution` owns candidate encodings, populations, fitness reports,
-//! exact comparison policies, archives, and replay policies for the Hyper
+//! exact comparison policies, archives, and replay evidence for the Hyper
 //! ecosystem. It treats stochastic search as proposal generation: accepted
 //! candidates must replay through exact/certified predicates, residuals, or
 //! domain reports.
@@ -37,8 +37,8 @@ pub use oracle::{
 pub use search::{
     AnnealingAcceptance, Archive, Candidate, CrossoverPolicy, DiversityRelation, DiversityReport,
     Genome, HillClimbPolicy, HillClimbReport, HillClimbStopReason, HillClimbStrategy,
-    MutationPolicy, Population, ReplayPolicy, ReplayStatus, SelectionError, SelectionPolicy,
-    SelectionReport, SimulatedAnnealingPolicy, VariationError,
-    classify_simulated_annealing_neighbor, crossover_one_point, exact_structural_diversity,
-    hill_climb_exact, mutate_exact_delta, select_exact_best, select_tournament_by_indices,
+    MutationPolicy, Population, ReplayStatus, SelectionError, SelectionPolicy, SelectionReport,
+    SimulatedAnnealingPolicy, VariationError, classify_simulated_annealing_neighbor,
+    crossover_one_point, exact_structural_diversity, hill_climb_exact, mutate_exact_delta,
+    select_exact_best, select_tournament_by_indices,
 };

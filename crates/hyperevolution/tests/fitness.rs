@@ -4,12 +4,11 @@ use hyperevolution::{
     EvaluationCost, FitnessComparison, FitnessDirection, FitnessInterval,
     FitnessIntervalComparison, FitnessOracle, FitnessReport, FitnessValue, Genome, GpRealExpr,
     GpValidationIssue, GpValidationLimits, HillClimbPolicy, HillClimbStopReason, ParetoRelation,
-    Real, ReplayHook, ReplayPolicy, ReplayStatus, SelectionError, SimulatedAnnealingPolicy,
-    SurrogateDecision, SurrogateScreenReport, SurrogateStage, VariationError,
-    classify_simulated_annealing_neighbor, crossover_one_point, domain_replay_manifest,
-    eval_gp_batch, evaluate_candidate_with_oracle, exact_structural_diversity, hill_climb_exact,
-    mutate_exact_delta, select_exact_best, select_tournament_by_indices,
-    surrogate_allows_archive_promotion,
+    Real, ReplayHook, ReplayStatus, SelectionError, SimulatedAnnealingPolicy, SurrogateDecision,
+    SurrogateScreenReport, SurrogateStage, VariationError, classify_simulated_annealing_neighbor,
+    crossover_one_point, domain_replay_manifest, eval_gp_batch, evaluate_candidate_with_oracle,
+    exact_structural_diversity, hill_climb_exact, mutate_exact_delta, select_exact_best,
+    select_tournament_by_indices, surrogate_allows_archive_promotion,
 };
 use proptest::prelude::*;
 use std::collections::HashMap;
@@ -22,10 +21,7 @@ fn candidate(name: &str, genes: Vec<Real>) -> Candidate {
     Candidate {
         id: id(name),
         genome: Genome { genes },
-        replay_policy: ReplayPolicy {
-            seed: 0,
-            require_exact_replay: true,
-        },
+        proposal_seed: 0,
     }
 }
 
@@ -338,6 +334,7 @@ fn exact_mutation_and_one_point_crossover_preserve_genome_shape() {
         mutated.genome.genes,
         vec![Real::from(1), Real::from(7), Real::from(3)]
     );
+    assert_eq!(mutated.proposal_seed, left.proposal_seed);
     assert_eq!(
         mutate_exact_delta(&left, 4, Real::from(1), id("bad")).unwrap_err(),
         VariationError::GeneIndexOutOfBounds { index: 4, len: 3 }
@@ -353,6 +350,8 @@ fn exact_mutation_and_one_point_crossover_preserve_genome_shape() {
         child_b.genome.genes,
         vec![Real::from(8), Real::from(9), Real::from(3)]
     );
+    assert_eq!(child_a.proposal_seed, left.proposal_seed);
+    assert_eq!(child_b.proposal_seed, right.proposal_seed);
 
     let short = candidate("short", vec![Real::from(1)]);
     assert_eq!(

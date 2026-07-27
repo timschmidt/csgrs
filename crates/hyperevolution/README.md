@@ -30,7 +30,7 @@ Mutate an exact genome, compare its fitness, and archive an accepted replay:
 ```rust
 use hyperevolution::{
     Archive, Candidate, CandidateId, FitnessComparison, FitnessDirection,
-    FitnessReport, Genome, Real, ReplayPolicy, ReplayStatus, mutate_exact_delta,
+    FitnessReport, Genome, Real, ReplayStatus, mutate_exact_delta,
 };
 
 fn main() {
@@ -39,10 +39,7 @@ fn main() {
         genome: Genome {
             genes: vec![Real::from(2), Real::from(3)],
         },
-        replay_policy: ReplayPolicy {
-            seed: 42,
-            require_exact_replay: true,
-        },
+        proposal_seed: 42,
     };
     let child = mutate_exact_delta(
         &seed,
@@ -68,8 +65,9 @@ fn main() {
 
 ## Core API
 
-- `CandidateId`, `Genome`, `Candidate`, `Population`, and `ReplayPolicy` describe
-  reproducible search state over `hyperreal::Real` genes.
+- `CandidateId`, `Genome`, `Candidate`, and `Population` describe reproducible
+  search state over `hyperreal::Real` genes. A candidate carries the seed that
+  generated its proposal; replay acceptance belongs to its fitness report.
 - `FitnessValue` supports scalar, lexicographic, Pareto, and interval objectives.
   `compare_total`, `compare_pareto`, and `FitnessInterval::compare` preserve
   unknown or overlapping results instead of inventing a float ordering.

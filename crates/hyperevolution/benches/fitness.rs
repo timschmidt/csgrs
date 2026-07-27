@@ -4,8 +4,8 @@ use std::time::Instant;
 use hyperevolution::{
     BlackBoxEvaluationReport, Candidate, CandidateId, EvaluationCacheKey, EvaluationCost,
     FitnessDirection, FitnessInterval, FitnessIntervalComparison, FitnessOracle, FitnessReport,
-    FitnessValue, Genome, GpRealExpr, GpValidationLimits, HillClimbPolicy, Real, ReplayPolicy,
-    ReplayStatus, crossover_one_point, evaluate_candidate_with_oracle, exact_structural_diversity,
+    FitnessValue, Genome, GpRealExpr, GpValidationLimits, HillClimbPolicy, Real, ReplayStatus,
+    crossover_one_point, evaluate_candidate_with_oracle, exact_structural_diversity,
     hill_climb_exact, mutate_exact_delta, select_exact_best,
 };
 
@@ -57,10 +57,7 @@ fn main() {
         genome: Genome {
             genes: vec![Real::from(4)],
         },
-        replay_policy: ReplayPolicy {
-            seed: 0,
-            require_exact_replay: true,
-        },
+        proposal_seed: 0,
     };
     let mut hill_steps = 0_usize;
     let selection_candidates = vec![
@@ -70,7 +67,7 @@ fn main() {
             genome: Genome {
                 genes: vec![Real::from(2)],
             },
-            replay_policy: hill_start.replay_policy.clone(),
+            proposal_seed: hill_start.proposal_seed,
         },
     ];
     let selection_reports = vec![
@@ -200,7 +197,7 @@ fn main() {
         genome: Genome {
             genes: vec![Real::from(4); 32],
         },
-        replay_policy: hill_start.replay_policy,
+        proposal_seed: hill_start.proposal_seed,
     };
     let first_policy = HillClimbPolicy::first_improvement(Real::from(1), 1);
     let hill_iterations = 10_000_u32;

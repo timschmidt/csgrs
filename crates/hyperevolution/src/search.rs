@@ -32,15 +32,15 @@ pub struct Genome {
     pub genes: Vec<Real>,
 }
 
-/// Candidate and replay policy.
+/// Candidate and reproducible proposal state.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Candidate {
     /// Candidate id.
     pub id: CandidateId,
     /// Candidate genome.
     pub genome: Genome,
-    /// Replay policy required before acceptance.
-    pub replay_policy: ReplayPolicy,
+    /// Seed used to reproduce proposal generation.
+    pub proposal_seed: u64,
 }
 
 /// Candidate population.
@@ -48,15 +48,6 @@ pub struct Candidate {
 pub struct Population {
     /// Candidate set.
     pub candidates: Vec<Candidate>,
-}
-
-/// Replay policy for accepted proposals.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ReplayPolicy {
-    /// Seed used to reproduce proposal generation.
-    pub seed: u64,
-    /// Whether exact replay is required before archive insertion.
-    pub require_exact_replay: bool,
 }
 
 /// Selection policy carrier.
@@ -502,7 +493,7 @@ pub fn mutate_exact_delta(
     Ok(Candidate {
         id: child_id,
         genome,
-        replay_policy: candidate.replay_policy.clone(),
+        proposal_seed: candidate.proposal_seed,
     })
 }
 
@@ -538,12 +529,12 @@ pub fn crossover_one_point(
         Candidate {
             id: left_child_id,
             genome: Genome { genes: left_genes },
-            replay_policy: left.replay_policy.clone(),
+            proposal_seed: left.proposal_seed,
         },
         Candidate {
             id: right_child_id,
             genome: Genome { genes: right_genes },
-            replay_policy: right.replay_policy.clone(),
+            proposal_seed: right.proposal_seed,
         },
     ))
 }
@@ -647,7 +638,7 @@ fn first_step_neighbors<'a>(
                     Candidate {
                         id,
                         genome,
-                        replay_policy: candidate.replay_policy.clone(),
+                        proposal_seed: candidate.proposal_seed,
                     }
                 })
         })
@@ -667,7 +658,7 @@ fn one_step_neighbors(candidate: &Candidate, step: &Real) -> Vec<Candidate> {
             neighbors.push(Candidate {
                 id,
                 genome,
-                replay_policy: candidate.replay_policy.clone(),
+                proposal_seed: candidate.proposal_seed,
             });
         }
     }

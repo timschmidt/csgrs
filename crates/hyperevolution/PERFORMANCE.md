@@ -12,6 +12,19 @@ comparative measurements, not portable latency guarantees.
 | five-node GP validation | 41 ns | 15 ns | 63.4% faster |
 | 32-gene first-improvement hill step | 54.216 us | 3.562 us | 93.4% faster |
 
+The 2026-07-27 candidate API normalization was gated with five serialized
+optimized runs before and after the change:
+
+| Path | Baseline median | Retained median | Result |
+|---|---:|---:|---:|
+| aggregate evolution benchmark | 3.980 us | 3.821 us | 4.0% faster |
+| 32-gene seed-preserving hill step | 2.666 us | 2.529 us | 5.1% faster |
+| overlapping interval control | 60 ns | 60 ns | unchanged |
+
+The untouched GP-validation control measured 14 ns before and 15 ns after; the
+one-nanosecond movement is below the resolution appropriate for attributing a
+change to the candidate representation.
+
 Interval comparison now retains the two cross-endpoint orderings used by both
 strict separation and overlap/unknown classification. GP validation computes
 depth, node count, arity issues, and structural division issues in one traversal
@@ -35,6 +48,12 @@ instead of being fabricated as exact zero. Selection also verifies that every
 inspected fitness report names the candidate at the same aligned index. These
 checks keep exact values attached to the right combinatorial candidate and
 prevent a proposal adapter from inventing evidence.
+
+Candidates carry only their proposal seed; replay acceptance remains on
+`FitnessReport`. The former replay-policy boolean was never consulted because
+archive admission unconditionally requires accepted replay evidence. Removing
+it eliminates an impossible opt-out state while variation and hill-climbing
+continue to preserve reproducibility.
 
 ### Moore, Kearfott, and Cloud, Introduction to Interval Analysis
 
