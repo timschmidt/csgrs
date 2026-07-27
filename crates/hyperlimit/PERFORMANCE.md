@@ -4,6 +4,18 @@ This document records the reference-driven optimization audit for `hyperlimit`.
 Changes are retained only when the exact report contract remains intact and a
 focused Criterion comparison shows a meaningful improvement.
 
+## Immediate explicit-sphere API gate
+
+`PreparedExplicitSphere3` stored only borrowed center and squared-radius
+references and forwarded its sole point query. The immediate
+`classify_point_sphere3` API now carries that operation directly.
+
+A paired Criterion gate kept a transition row beside an unchanged immediate
+control. The transition measured 113.73 ns through the former wrapper and
+110.75 ns through the immediate API. The control moved from 114.95 ns to
+111.34 ns in the same runs, showing that the transition adds no overhead after
+normalizing for run-wide variation.
+
 ## Retained optimization
 
 ### Collapse redundant Real sign-resolution passes

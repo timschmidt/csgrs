@@ -15,48 +15,6 @@ use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use hyperreal::Real;
 
-/// Reusable explicit 3D sphere classifier.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedExplicitSphere3<'a> {
-    center: &'a Point3,
-    radius_squared: &'a Real,
-}
-
-impl<'a> PreparedExplicitSphere3<'a> {
-    /// Prepare an explicit sphere from a center and squared radius.
-    pub fn new(center: &'a Point3, radius_squared: &'a Real) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_explicit_sphere3", "new");
-        Self {
-            center,
-            radius_squared,
-        }
-    }
-
-    /// Return the borrowed sphere center.
-    pub const fn center(&self) -> &'a Point3 {
-        self.center
-    }
-
-    /// Return the borrowed squared radius.
-    pub const fn radius_squared(&self) -> &'a Real {
-        self.radius_squared
-    }
-
-    /// Classify a point using the default predicate policy.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<SpherePointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point using an explicit predicate policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<SpherePointLocation> {
-        classify_point_sphere3_with_policy(self.center, self.radius_squared, point, policy)
-    }
-}
-
 /// Compare squared distances from `anchor` to `left` and `right`.
 pub fn compare_point2_distance_squared(
     anchor: &Point2,
@@ -1015,20 +973,17 @@ mod tests {
     fn point_sphere3_classifier_uses_squared_radius() {
         let center = p3(0, 0, 0);
         let radius_squared = hyperreal::Real::from(25);
-        let sphere = PreparedExplicitSphere3::new(&center, &radius_squared);
 
-        assert_eq!(sphere.center(), &center);
-        assert_eq!(sphere.radius_squared(), &radius_squared);
         assert_eq!(
             classify_point_sphere3(&center, &radius_squared, &p3(1, 2, 2)).value(),
             Some(SpherePointLocation::Inside)
         );
         assert_eq!(
-            sphere.classify_point(&p3(3, 4, 0)).value(),
+            classify_point_sphere3(&center, &radius_squared, &p3(3, 4, 0)).value(),
             Some(SpherePointLocation::On)
         );
         assert_eq!(
-            sphere.classify_point(&p3(6, 0, 0)).value(),
+            classify_point_sphere3(&center, &radius_squared, &p3(6, 0, 0)).value(),
             Some(SpherePointLocation::Outside)
         );
     }

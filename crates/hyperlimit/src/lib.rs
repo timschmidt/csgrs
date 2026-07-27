@@ -104,11 +104,10 @@ pub use predicates::coplanar::{
     projected_segment_parameter3, projected_vector3,
 };
 pub use predicates::distance::{
-    PreparedExplicitSphere3, classify_aabb3_sphere_intersection, classify_circle_line2,
-    classify_circle_segment2, classify_point_sphere3, classify_sphere3_intersection,
-    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, compare_point2_distance_squared,
-    compare_point3_distance_squared,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_point_sphere3, classify_sphere3_intersection, compare_point_line3_distance_squared,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
+    compare_point2_distance_squared, compare_point3_distance_squared,
 };
 pub use predicates::dop::{
     SupportDop3, SupportDopAabb3Report, SupportDopAabb3SlabReport, SupportDopAabb3ValidationError,
