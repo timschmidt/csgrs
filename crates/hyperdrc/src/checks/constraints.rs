@@ -13,7 +13,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::distance::polygon_boundary_distance_scalar;
+use super::distance::{PreparedBoundaryDistance, polygon_boundary_distance_scalar};
 use super::impedance::{
     DifferentialImpedanceModel, ImpedanceModel, estimate_equal_width_differential_impedance,
     estimate_single_ended_impedance,
@@ -991,11 +991,17 @@ fn net_clearance_constraints(
         .iter()
         .copied()
         .filter_map(|feature| {
-            native_sketch_bounds_scalar(&feature.sketch).map(|bounds| (feature, bounds))
+            native_sketch_bounds_scalar(&feature.sketch).map(|bounds| {
+                (
+                    feature,
+                    bounds,
+                    std::cell::OnceCell::<Option<PreparedBoundaryDistance>>::new(),
+                )
+            })
         })
         .collect::<Vec<_>>();
     bounded_features.sort_by(
-        |(left_feature, left_bounds), (right_feature, right_bounds)| {
+        |(left_feature, left_bounds, _), (right_feature, right_bounds, _)| {
             left_feature.layer.cmp(&right_feature.layer).then_with(|| {
                 scalar_cmp(&left_bounds.min_x, &right_bounds.min_x)
                     .unwrap_or(std::cmp::Ordering::Equal)
@@ -1004,12 +1010,12 @@ fn net_clearance_constraints(
     );
     let mut exact_pair_count = 0_usize;
     let mut violations = Vec::new();
-    for (left_index, (left, left_bounds)) in bounded_features.iter().enumerate() {
+    for (left_index, (left, left_bounds, left_geometry)) in bounded_features.iter().enumerate() {
         let Some(left_net) = &left.net else {
             continue;
         };
         let maximum_x = &left_bounds.max_x + &maximum_clearance;
-        for (right, right_bounds) in bounded_features.iter().skip(left_index + 1) {
+        for (right, right_bounds, right_geometry) in bounded_features.iter().skip(left_index + 1) {
             if left.layer != right.layer {
                 break;
             }
@@ -1031,10 +1037,17 @@ fn net_clearance_constraints(
                 continue;
             };
             exact_pair_count += 1;
-            let Some(gap) = polygon_boundary_distance_scalar(
-                &left.sketch.to_multipolygon(),
-                &right.sketch.to_multipolygon(),
-            ) else {
+            let Some(left_geometry) = left_geometry
+                .get_or_init(|| PreparedBoundaryDistance::new(&left.sketch.to_multipolygon()))
+            else {
+                continue;
+            };
+            let Some(right_geometry) = right_geometry
+                .get_or_init(|| PreparedBoundaryDistance::new(&right.sketch.to_multipolygon()))
+            else {
+                continue;
+            };
+            let Some(gap) = left_geometry.distance_to(right_geometry) else {
                 continue;
             };
             if gap < min_clearance {
@@ -2714,7 +2727,7 @@ mod tests {
         assert!(
             messages
                 .iter()
-                .any(|message| message.contains("fabricator profile custom supports up to 1"))
+                .any(|message| message.contains("fabricator profile custom-shop supports up to 1"))
         );
         assert!(
             messages
@@ -2795,15 +2808,13 @@ mod tests {
             .filter_map(|violation| violation.message)
             .collect::<Vec<_>>();
 
+        assert!(messages.iter().any(|message| {
+            message.contains("fabricator profile custom-shop preferred maximum")
+        }));
         assert!(
-            messages
-                .iter()
-                .any(|message| message.contains("fabricator profile custom preferred maximum"))
-        );
-        assert!(
-            messages
-                .iter()
-                .any(|message| message.contains("fabricator profile custom cost-escalation"))
+            messages.iter().any(|message| {
+                message.contains("fabricator profile custom-shop cost-escalation")
+            })
         );
     }
 

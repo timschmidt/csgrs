@@ -3,7 +3,9 @@
 //! `csgrs` handles boolean geometry. These helpers fill the gap for clearance
 //! fallbacks where two shapes are close but do not intersect.
 
-use geo::{Coord, LineString, MultiPolygon, Polygon};
+#[cfg(test)]
+use geo::Polygon;
+use geo::{Coord, LineString, MultiPolygon};
 use hyperlimit::{CircleSegmentRelation, Point2, SegmentIntersection, classify_circle_segment2};
 
 use crate::Scalar;
@@ -229,109 +231,196 @@ pub(super) fn polygon_boundary_distance_scalar_with_grid(
     right: &MultiPolygon<f64>,
     grid: SourceGridFacts,
 ) -> Option<Scalar> {
-    let mut minimum = None;
-    for left_polygon in &left.0 {
-        for right_polygon in &right.0 {
-            minimum = minimum_scalar(
-                minimum,
-                single_polygon_boundary_distance_scalar(left_polygon, right_polygon, grid),
-            );
-        }
-    }
-    minimum
+    PreparedBoundaryDistance::new_with_grid(left, grid)?
+        .distance_to(&PreparedBoundaryDistance::new_with_grid(right, grid)?)
 }
 
-fn single_polygon_boundary_distance_scalar(
-    left: &Polygon<f64>,
-    right: &Polygon<f64>,
-    grid: SourceGridFacts,
-) -> Option<Scalar> {
-    let mut minimum = ring_boundary_distance_scalar(left.exterior(), right.exterior(), grid);
-
-    for left_hole in left.interiors() {
-        minimum = minimum_scalar(
-            minimum,
-            ring_boundary_distance_scalar(left_hole, right.exterior(), grid),
-        );
-        for right_hole in right.interiors() {
-            minimum = minimum_scalar(
-                minimum,
-                ring_boundary_distance_scalar(left_hole, right_hole, grid),
-            );
-        }
-    }
-
-    for right_hole in right.interiors() {
-        minimum = minimum_scalar(
-            minimum,
-            ring_boundary_distance_scalar(left.exterior(), right_hole, grid),
-        );
-    }
-
-    minimum
+/// Reusable exact boundary metric over one finite compatibility projection.
+///
+/// Coordinates are lifted into [`Scalar`] exactly once. Finite segment bounds
+/// only schedule candidates; exact AABB lower bounds and HyperLimit segment
+/// predicates decide every retained pair.
+pub(super) struct PreparedBoundaryDistance {
+    segments_by_min_x: Vec<LiftedSegment>,
 }
 
-fn ring_boundary_distance_scalar(
-    left: &LineString<f64>,
-    right: &LineString<f64>,
-    grid: SourceGridFacts,
-) -> Option<Scalar> {
-    let mut minimum = None;
-    for left_segment in left.0.windows(2) {
-        for right_segment in right.0.windows(2) {
-            minimum = minimum_scalar(
-                minimum,
-                segment_distance_scalar_with_grid(
-                    left_segment[0],
-                    left_segment[1],
-                    right_segment[0],
-                    right_segment[1],
-                    grid,
-                ),
-            );
-        }
+impl PreparedBoundaryDistance {
+    pub(super) fn new(polygons: &MultiPolygon<f64>) -> Option<Self> {
+        Self::new_with_grid(polygons, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
     }
-    minimum
+
+    fn new_with_grid(polygons: &MultiPolygon<f64>, grid: SourceGridFacts) -> Option<Self> {
+        let provenance = RuleGeometryProvenance::new("exact-clearance-metric", grid);
+        let mut segments_by_min_x = Vec::new();
+        for polygon in &polygons.0 {
+            for ring in std::iter::once(polygon.exterior()).chain(polygon.interiors().iter()) {
+                for segment in ring.0.windows(2) {
+                    segments_by_min_x.push(LiftedSegment::new(segment[0], segment[1], provenance)?);
+                }
+            }
+        }
+        if segments_by_min_x.is_empty() {
+            return None;
+        }
+        segments_by_min_x.sort_by(|left, right| left.finite_min_x.total_cmp(&right.finite_min_x));
+        Some(Self { segments_by_min_x })
+    }
+
+    pub(super) fn distance_to(&self, other: &Self) -> Option<Scalar> {
+        let (outer, indexed) = if self.segments_by_min_x.len() <= other.segments_by_min_x.len() {
+            (&self.segments_by_min_x, &other.segments_by_min_x)
+        } else {
+            (&other.segments_by_min_x, &self.segments_by_min_x)
+        };
+        let mut minimum_squared =
+            lifted_segment_distance_squared(outer.first()?, indexed.first()?)?;
+        if minimum_squared == Scalar::zero() {
+            return Some(Scalar::zero());
+        }
+
+        for left_segment in outer {
+            let radius = conservative_sqrt_projection(&minimum_squared)?;
+            let query_min_x = (left_segment.finite_min_x - radius).next_down();
+            let query_max_x = (left_segment.finite_max_x + radius).next_up();
+            let upper = indexed.partition_point(|segment| segment.finite_min_x <= query_max_x);
+            for right_segment in &indexed[..upper] {
+                if right_segment.finite_max_x < query_min_x
+                    || segment_axis_gap_exceeds(
+                        left_segment.finite_min_y,
+                        left_segment.finite_max_y,
+                        right_segment.finite_min_y,
+                        right_segment.finite_max_y,
+                        radius,
+                    )
+                    || lifted_segment_aabb_distance_squared(left_segment, right_segment)
+                        .is_some_and(|lower_bound| lower_bound >= minimum_squared)
+                {
+                    continue;
+                }
+                if let Some(distance) = lifted_segment_distance_squared(left_segment, right_segment)
+                    && distance < minimum_squared
+                {
+                    minimum_squared = distance;
+                    if minimum_squared == Scalar::zero() {
+                        return Some(Scalar::zero());
+                    }
+                }
+            }
+        }
+        minimum_squared.sqrt().ok()
+    }
 }
 
-fn segment_distance_scalar_with_grid(
-    a_start: Coord<f64>,
-    a_end: Coord<f64>,
-    b_start: Coord<f64>,
-    b_end: Coord<f64>,
-    grid: SourceGridFacts,
-) -> Option<Scalar> {
-    if !coords_are_finite_4(a_start, a_end, b_start, b_end) {
-        return None;
+fn conservative_sqrt_projection(squared: &Scalar) -> Option<f64> {
+    let mut projected = squared.to_f64_lossy().filter(|value| value.is_finite())?;
+    let provenance = RuleGeometryProvenance::new(
+        "exact-clearance-index-radius",
+        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
+    );
+    while provenance
+        .lift_f64(projected)
+        .is_some_and(|lifted| lifted < *squared)
+    {
+        projected = projected.next_up();
     }
-    if segments_intersect_with_grid(a_start, a_end, b_start, b_end, grid) {
+    Some(projected.sqrt().next_up())
+}
+
+struct LiftedSegment {
+    start: [Scalar; 2],
+    end: [Scalar; 2],
+    min_x: Scalar,
+    min_y: Scalar,
+    max_x: Scalar,
+    max_y: Scalar,
+    finite_min_x: f64,
+    finite_min_y: f64,
+    finite_max_x: f64,
+    finite_max_y: f64,
+}
+
+impl LiftedSegment {
+    fn new(start: Coord<f64>, end: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<Self> {
+        let finite_min_x = start.x.min(end.x);
+        let finite_min_y = start.y.min(end.y);
+        let finite_max_x = start.x.max(end.x);
+        let finite_max_y = start.y.max(end.y);
+        let start = lift_scalar_coord(start, provenance)?;
+        let end = lift_scalar_coord(end, provenance)?;
+        let (min_x, max_x) = ordered_pair(&start[0], &end[0])?;
+        let (min_y, max_y) = ordered_pair(&start[1], &end[1])?;
+        Some(Self {
+            start,
+            end,
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+            finite_min_x,
+            finite_min_y,
+            finite_max_x,
+            finite_max_y,
+        })
+    }
+}
+
+fn ordered_pair(left: &Scalar, right: &Scalar) -> Option<(Scalar, Scalar)> {
+    match left.partial_cmp(right)? {
+        std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Some((left.clone(), right.clone())),
+        std::cmp::Ordering::Greater => Some((right.clone(), left.clone())),
+    }
+}
+
+fn lifted_segment_aabb_distance_squared(
+    left: &LiftedSegment,
+    right: &LiftedSegment,
+) -> Option<Scalar> {
+    let dx = exact_interval_gap(&left.min_x, &left.max_x, &right.min_x, &right.max_x)?;
+    let dy = exact_interval_gap(&left.min_y, &left.max_y, &right.min_y, &right.max_y)?;
+    Some(&dx * &dx + &dy * &dy)
+}
+
+fn exact_interval_gap(
+    left_min: &Scalar,
+    left_max: &Scalar,
+    right_min: &Scalar,
+    right_max: &Scalar,
+) -> Option<Scalar> {
+    if left_max < right_min {
+        Some(right_min - left_max)
+    } else if right_max < left_min {
+        Some(left_min - right_max)
+    } else if left_min.partial_cmp(left_max).is_none() || right_min.partial_cmp(right_max).is_none()
+    {
+        None
+    } else {
+        Some(Scalar::zero())
+    }
+}
+
+fn lifted_segment_distance_squared(left: &LiftedSegment, right: &LiftedSegment) -> Option<Scalar> {
+    let a_start = Point2::new(left.start[0].clone(), left.start[1].clone());
+    let a_end = Point2::new(left.end[0].clone(), left.end[1].clone());
+    let b_start = Point2::new(right.start[0].clone(), right.start[1].clone());
+    let b_end = Point2::new(right.end[0].clone(), right.end[1].clone());
+    if !matches!(
+        hyperlimit::classify_segment_intersection(&a_start, &a_end, &b_start, &b_end).value(),
+        Some(SegmentIntersection::Disjoint)
+    ) {
         return Some(Scalar::zero());
     }
 
     [
-        point_segment_distance_scalar_with_grid(a_start, b_start, b_end, grid),
-        point_segment_distance_scalar_with_grid(a_end, b_start, b_end, grid),
-        point_segment_distance_scalar_with_grid(b_start, a_start, a_end, grid),
-        point_segment_distance_scalar_with_grid(b_end, a_start, a_end, grid),
+        point_segment_distance_squared_from_scalars(&left.start, &right.start, &right.end),
+        point_segment_distance_squared_from_scalars(&left.end, &right.start, &right.end),
+        point_segment_distance_squared_from_scalars(&right.start, &left.start, &left.end),
+        point_segment_distance_squared_from_scalars(&right.end, &left.start, &left.end),
     ]
     .into_iter()
     .fold(None, minimum_scalar)
 }
 
-fn point_segment_distance_scalar_with_grid(
-    point: Coord<f64>,
-    start: Coord<f64>,
-    end: Coord<f64>,
-    grid: SourceGridFacts,
-) -> Option<Scalar> {
-    let provenance = RuleGeometryProvenance::new("exact-clearance-metric", grid);
-    let point = lift_scalar_coord(point, provenance)?;
-    let start = lift_scalar_coord(start, provenance)?;
-    let end = lift_scalar_coord(end, provenance)?;
-    point_segment_distance_from_scalars(&point, &start, &end)
-}
-
-fn point_segment_distance_from_scalars(
+fn point_segment_distance_squared_from_scalars(
     point: &[Scalar; 2],
     start: &[Scalar; 2],
     end: &[Scalar; 2],
@@ -340,7 +429,7 @@ fn point_segment_distance_from_scalars(
     let dy = &end[1] - &start[1];
     let length_squared = &dx * &dx + &dy * &dy;
     if length_squared == Scalar::zero() {
-        return scalar_point_distance(point, start);
+        return Some(scalar_point_distance_squared(point, start));
     }
 
     let point_dx = &point[0] - &start[0];
@@ -354,17 +443,17 @@ fn point_segment_distance_from_scalars(
         (numerator / &length_squared).ok()?
     };
     let projection = [&start[0] + &t * &dx, &start[1] + &t * &dy];
-    scalar_point_distance(point, &projection)
+    Some(scalar_point_distance_squared(point, &projection))
 }
 
 fn lift_scalar_coord(coord: Coord<f64>, provenance: RuleGeometryProvenance) -> Option<[Scalar; 2]> {
     Some([provenance.lift_f64(coord.x)?, provenance.lift_f64(coord.y)?])
 }
 
-fn scalar_point_distance(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
+fn scalar_point_distance_squared(left: &[Scalar; 2], right: &[Scalar; 2]) -> Scalar {
     let dx = &left[0] - &right[0];
     let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
+    &dx * &dx + &dy * &dy
 }
 
 fn minimum_scalar(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
@@ -675,8 +764,8 @@ mod tests {
     use crate::geometry::{SourceGridFacts, SourceUnit};
 
     use super::{
-        point_segment_distance, polygon_boundary_distance, polygon_boundary_distance_scalar,
-        polygon_boundary_distance_with_grid, segment_distance,
+        PreparedBoundaryDistance, point_segment_distance, polygon_boundary_distance,
+        polygon_boundary_distance_scalar, polygon_boundary_distance_with_grid, segment_distance,
         segment_segments_within_threshold_with_grid, segments_intersect,
     };
 
@@ -799,6 +888,33 @@ mod tests {
         assert_eq!(
             polygon_boundary_distance_scalar(&left, &right),
             Some(crate::scalar::scalar("2"))
+        );
+    }
+
+    #[test]
+    fn prepared_boundary_reuses_large_exact_segment_field() {
+        let field = MultiPolygon(
+            (0..2_000)
+                .map(|index| square(f64::from(index) * 4.0, 0.0, 1.0))
+                .collect(),
+        );
+        let prepared_field =
+            PreparedBoundaryDistance::new(&field).expect("finite field has exact boundaries");
+        let started = std::time::Instant::now();
+
+        for index in 0..64 {
+            let probe = MultiPolygon(vec![square(f64::from(index) * 4.0, 2.0, 1.0)]);
+            let prepared_probe =
+                PreparedBoundaryDistance::new(&probe).expect("finite probe has exact boundaries");
+            assert_eq!(
+                prepared_field.distance_to(&prepared_probe),
+                Some(crate::scalar::scalar("1"))
+            );
+        }
+
+        assert!(
+            started.elapsed().as_secs_f64() < 2.0,
+            "prepared exact boundary field should be indexed and reused"
         );
     }
 

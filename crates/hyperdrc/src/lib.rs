@@ -126,6 +126,7 @@ use geo::{Coord, LineString, MultiPolygon, Polygon};
 use hyperlattice::{Aabb, Matrix4};
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use std::sync::OnceLock;
 
 /// PCB geometry sketch tagged with layer/source metadata.
 ///
@@ -138,6 +139,8 @@ pub struct PcbSketch {
     metadata: Option<LayerMetadata>,
     exact_bounds: Option<[Scalar; 4]>,
     had_non_finite_input: bool,
+    finite_projection: OnceLock<MultiPolygon<f64>>,
+    exact_component_regions: OnceLock<Option<Vec<hypercurve::CurveRegion2>>>,
 }
 
 /// Exact geometry operation that could not be certified for a PCB check.
@@ -178,6 +181,8 @@ impl PcbSketch {
             metadata,
             exact_bounds: None,
             had_non_finite_input: false,
+            finite_projection: OnceLock::new(),
+            exact_component_regions: OnceLock::new(),
         }
     }
 
@@ -187,11 +192,33 @@ impl PcbSketch {
         exact_bounds: Option<[Scalar; 4]>,
         had_non_finite_input: bool,
     ) -> Self {
+        Self::new_with_exact_bounds_and_projection(
+            profile,
+            metadata,
+            exact_bounds,
+            had_non_finite_input,
+            None,
+        )
+    }
+
+    pub(crate) fn new_with_exact_bounds_and_projection(
+        profile: Profile,
+        metadata: Option<LayerMetadata>,
+        exact_bounds: Option<[Scalar; 4]>,
+        had_non_finite_input: bool,
+        finite_projection: Option<MultiPolygon<f64>>,
+    ) -> Self {
+        let projection = OnceLock::new();
+        if let Some(finite_projection) = finite_projection {
+            let _ = projection.set(finite_projection);
+        }
         Self {
             profile,
             metadata,
             exact_bounds,
             had_non_finite_input,
+            finite_projection: projection,
+            exact_component_regions: OnceLock::new(),
         }
     }
 
@@ -201,6 +228,27 @@ impl PcbSketch {
 
     pub(crate) const fn had_non_finite_input(&self) -> bool {
         self.had_non_finite_input
+    }
+
+    pub(crate) fn exact_component_regions(&self) -> Option<&[hypercurve::CurveRegion2]> {
+        self.exact_component_regions
+            .get_or_init(|| {
+                let policy = hypercurve::CurvePolicy::certified();
+                let profiles = match self.profile.as_curve_region().boundary_profiles(&policy) {
+                    Ok(hypercurve::Classification::Decided(profiles)) => profiles,
+                    Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return None,
+                };
+                profiles
+                    .into_iter()
+                    .map(|profile| {
+                        let loops = std::iter::once(profile.material().clone())
+                            .chain(profile.holes().iter().map(|hole| (*hole).clone()))
+                            .collect();
+                        hypercurve::CurveRegion2::new(loops).ok()
+                    })
+                    .collect()
+            })
+            .as_deref()
     }
 
     /// Return the PCB-owned layer metadata.
@@ -299,6 +347,8 @@ impl Deref for PcbSketch {
 impl DerefMut for PcbSketch {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.exact_bounds = None;
+        self.finite_projection.take();
+        self.exact_component_regions.take();
         &mut self.profile
     }
 }
@@ -374,20 +424,24 @@ pub trait PcbSketchExt {
 
 impl PcbSketchExt for PcbSketch {
     fn to_multipolygon(&self) -> MultiPolygon<f64> {
-        MultiPolygon(
-            self.region_profiles()
-                .into_iter()
-                .filter_map(|profile| {
-                    let exterior = finite_ring_to_linestring(profile.material().points())?;
-                    let interiors = profile
-                        .holes()
-                        .iter()
-                        .filter_map(|hole| finite_ring_to_linestring(hole.points()))
-                        .collect();
-                    Some(Polygon::new(exterior, interiors))
-                })
-                .collect(),
-        )
+        self.finite_projection
+            .get_or_init(|| {
+                MultiPolygon(
+                    self.region_profiles()
+                        .into_iter()
+                        .filter_map(|profile| {
+                            let exterior = finite_ring_to_linestring(profile.material().points())?;
+                            let interiors = profile
+                                .holes()
+                                .iter()
+                                .filter_map(|hole| finite_ring_to_linestring(hole.points()))
+                                .collect();
+                            Some(Polygon::new(exterior, interiors))
+                        })
+                        .collect(),
+                )
+            })
+            .clone()
     }
 
     fn geometry(&self) -> MultiPolygon<f64> {

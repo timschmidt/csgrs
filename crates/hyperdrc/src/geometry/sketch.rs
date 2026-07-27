@@ -4,7 +4,7 @@
 //! topology, while parsers naturally produce `geo` polygons.
 
 use csgrs::sketch::Profile;
-use geo::{Area, LineString, Polygon};
+use geo::{Area, LineString, MultiPolygon, Polygon};
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2};
 
 use crate::{LayerMetadata, PcbSketch};
@@ -20,6 +20,7 @@ pub fn polygons_to_profile(
     metadata: Option<LayerMetadata>,
 ) -> PcbSketch {
     let (exact_bounds, had_non_finite_input) = exact_input_polygon_bounds(&polygons);
+    let finite_projection = (!had_non_finite_input).then(|| MultiPolygon(polygons.clone()));
     let mut material = Vec::new();
     let mut holes = Vec::new();
     for polygon in polygons {
@@ -34,20 +35,22 @@ pub fn polygons_to_profile(
         );
     }
     if material.is_empty() && holes.is_empty() {
-        return PcbSketch::new_with_exact_bounds(
+        return PcbSketch::new_with_exact_bounds_and_projection(
             Profile::empty(),
             metadata,
             exact_bounds,
             had_non_finite_input,
+            finite_projection,
         );
     }
     let region = CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified())
         .unwrap_or_else(|_| CurveRegion2::empty());
-    PcbSketch::new_with_exact_bounds(
+    PcbSketch::new_with_exact_bounds_and_projection(
         Profile::from_curve_region(region),
         metadata,
         exact_bounds,
         had_non_finite_input,
+        finite_projection,
     )
 }
 

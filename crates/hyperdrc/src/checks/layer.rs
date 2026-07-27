@@ -10,10 +10,12 @@
 
 use std::collections::BTreeMap;
 
+use csgrs::{csg::CSG, sketch::Profile};
 use geo::{
     Area, BoundingRect, Coord, Line, LineString, MultiPolygon, Polygon,
     line_intersection::{LineIntersection, line_intersection},
 };
+use hypercurve::CurveRegion2;
 use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, Sign, compare_reals_with_policy};
 
 use crate::checks::distance::polygon_boundary_distance_scalar_with_grid;
@@ -520,17 +522,121 @@ pub fn paste_overhang(
     tolerance: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let overhang = match indexed_difference(
-        "paste-aperture-overhang",
-        paste_name,
-        paste,
-        copper_name,
-        copper,
-        scalar_broad_phase_radius(tolerance),
-        IndexedDifferenceMode::CoverOffset(tolerance.clone()),
-    ) {
+    let overhang = if tolerance == &Scalar::zero() {
+        // Split the authoritative retained regions into exact material
+        // components and subtract only exact-AABB candidates. This avoids one
+        // all-to-all Boolean without projecting a topology decision to f64.
+        exact_componentwise_difference(
+            "paste-aperture-overhang",
+            paste_name,
+            paste,
+            copper_name,
+            copper,
+            None,
+        )
+        .unwrap_or_else(|| {
+            difference_for_check(
+                paste,
+                copper,
+                "paste-aperture-overhang",
+                vec![paste_name.to_string(), copper_name.to_string()],
+            )
+        })
+    } else {
+        exact_componentwise_difference(
+            "paste-aperture-overhang",
+            paste_name,
+            paste,
+            copper_name,
+            copper,
+            Some(tolerance),
+        )
+        .unwrap_or_else(|| {
+            indexed_difference(
+                "paste-aperture-overhang",
+                paste_name,
+                paste,
+                copper_name,
+                copper,
+                scalar_broad_phase_radius(tolerance),
+                IndexedDifferenceMode::CoverOffset(tolerance.clone()),
+            )
+        })
+    };
+    let overhang = match overhang {
         Ok(overhang) => overhang,
         Err(uncertainty) => return vec![*uncertainty],
+    };
+    shapes_violation(
+        "paste-aperture-overhang",
+        Severity::Warning,
+        vec![paste_name.to_string(), copper_name.to_string()],
+        overhang,
+        min_area,
+        format!("paste extends outside copper expanded by tolerance {tolerance}"),
+    )
+}
+
+/// Run paste overhang against retained per-feature copper geometry.
+///
+/// Native callers that retain authored copper should prefer this form over an
+/// overlapping aggregate image. Candidate pruning remains conservative and
+/// every retained subtraction uses exact HyperCurve topology.
+pub fn paste_overhang_from_features(
+    paste_name: &str,
+    paste: &PcbSketch,
+    copper_name: &str,
+    aggregate_copper: &PcbSketch,
+    copper_features: &[&PcbSketch],
+    tolerance: &Scalar,
+    min_area: &Scalar,
+) -> Vec<Violation> {
+    let Some(subjects) = exact_region_components(paste) else {
+        return paste_overhang(
+            paste_name,
+            paste,
+            copper_name,
+            aggregate_copper,
+            tolerance,
+            min_area,
+        );
+    };
+    let mut covers = Vec::new();
+    for feature in copper_features {
+        let Some(mut components) = exact_region_components_or_whole(feature) else {
+            return paste_overhang(
+                paste_name,
+                paste,
+                copper_name,
+                aggregate_copper,
+                tolerance,
+                min_area,
+            );
+        };
+        covers.append(&mut components);
+    }
+    let cover_offset = (tolerance != &Scalar::zero()).then_some(tolerance);
+    let overhang = match exact_componentwise_difference_from_components(
+        "paste-aperture-overhang",
+        paste_name,
+        paste.metadata(),
+        subjects,
+        copper_name,
+        covers,
+        cover_offset,
+    ) {
+        Some(Ok(overhang)) => overhang,
+        Some(Err(uncertainty)) => return vec![*uncertainty],
+        None => {
+            return paste_overhang(
+                paste_name,
+                paste,
+                copper_name,
+                aggregate_copper,
+                tolerance,
+                min_area,
+            );
+        }
     };
     shapes_violation(
         "paste-aperture-overhang",
@@ -1140,17 +1246,98 @@ pub fn solder_mask_expansion(
     max_expansion: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let excessive_opening = match indexed_difference(
+    let excessive_opening = match exact_componentwise_difference(
         "solder-mask-expansion",
         mask_name,
         mask_openings,
         copper_name,
         copper,
-        scalar_broad_phase_radius(max_expansion),
-        IndexedDifferenceMode::CoverOffset(max_expansion.clone()),
-    ) {
+        Some(max_expansion),
+    )
+    .unwrap_or_else(|| {
+        indexed_difference(
+            "solder-mask-expansion",
+            mask_name,
+            mask_openings,
+            copper_name,
+            copper,
+            scalar_broad_phase_radius(max_expansion),
+            IndexedDifferenceMode::CoverOffset(max_expansion.clone()),
+        )
+    }) {
         Ok(excessive) => excessive,
         Err(uncertainty) => return vec![*uncertainty],
+    };
+    shapes_violation(
+        "solder-mask-expansion",
+        Severity::Warning,
+        vec![copper_name.to_string(), mask_name.to_string()],
+        excessive_opening,
+        min_area,
+        format!("solder mask opening exceeds copper expansion {max_expansion}"),
+    )
+}
+
+/// Run solder-mask expansion against retained per-feature copper geometry.
+///
+/// Native callers should prefer this form when they retain authored pads,
+/// routes, vias, and zones. Small exact land patterns are considered before
+/// large planes, avoiding a lossy aggregate decomposition and repeated offsets
+/// while producing the same set difference as the aggregate-layer check.
+pub fn solder_mask_expansion_from_features(
+    copper_name: &str,
+    aggregate_copper: &PcbSketch,
+    copper_features: &[&PcbSketch],
+    mask_name: &str,
+    mask_openings: &PcbSketch,
+    max_expansion: &Scalar,
+    min_area: &Scalar,
+) -> Vec<Violation> {
+    let Some(subjects) = exact_region_components(mask_openings) else {
+        return solder_mask_expansion(
+            copper_name,
+            aggregate_copper,
+            mask_name,
+            mask_openings,
+            max_expansion,
+            min_area,
+        );
+    };
+    let mut covers = Vec::new();
+    for feature in copper_features {
+        let Some(mut components) = exact_region_components_or_whole(feature) else {
+            return solder_mask_expansion(
+                copper_name,
+                aggregate_copper,
+                mask_name,
+                mask_openings,
+                max_expansion,
+                min_area,
+            );
+        };
+        covers.append(&mut components);
+    }
+    let excessive_opening = match exact_componentwise_difference_from_components(
+        "solder-mask-expansion",
+        mask_name,
+        mask_openings.metadata(),
+        subjects,
+        copper_name,
+        covers,
+        Some(max_expansion),
+    ) {
+        Some(Ok(excessive)) => excessive,
+        Some(Err(uncertainty)) => return vec![*uncertainty],
+        None => {
+            return solder_mask_expansion(
+                copper_name,
+                aggregate_copper,
+                mask_name,
+                mask_openings,
+                max_expansion,
+                min_area,
+            );
+        }
     };
     shapes_violation(
         "solder-mask-expansion",
@@ -3782,6 +3969,252 @@ enum IndexedCoverMode {
     OffsetRing(Scalar),
 }
 
+struct ExactRegionComponent {
+    sketch: PcbSketch,
+    conservative_finite_bounds: [f64; 4],
+}
+
+fn exact_region_components(sketch: &PcbSketch) -> Option<Vec<ExactRegionComponent>> {
+    let regions = sketch.exact_component_regions()?;
+    regions
+        .iter()
+        .cloned()
+        .map(|region| {
+            let component = PcbSketch::new(
+                Profile::from_curve_region(region),
+                sketch.metadata().clone(),
+            );
+            Some(ExactRegionComponent {
+                conservative_finite_bounds: conservative_exact_sketch_bounds(&component)?,
+                sketch: component,
+            })
+        })
+        .collect()
+}
+
+fn exact_region_components_or_whole(sketch: &PcbSketch) -> Option<Vec<ExactRegionComponent>> {
+    if matches!(
+        sketch
+            .as_curve_region()
+            .loop_role_counts(&hypercurve::CurvePolicy::certified()),
+        Ok(hypercurve::Classification::Decided((1, 0)))
+    ) {
+        return Some(vec![ExactRegionComponent {
+            sketch: sketch.clone(),
+            conservative_finite_bounds: conservative_exact_sketch_bounds(sketch)?,
+        }]);
+    }
+    if let Some(components) = exact_region_components(sketch) {
+        return Some(components);
+    }
+    let bounds = sketch.to_multipolygon().bounding_rect()?;
+    let points = [
+        [bounds.min().x, bounds.min().y],
+        [bounds.max().x, bounds.max().y],
+    ];
+    Some(vec![ExactRegionComponent {
+        sketch: sketch.clone(),
+        conservative_finite_bounds: conservative_projection_bounds(&points, 1.0e-3)?,
+    }])
+}
+
+/// Conservatively project an exact retained sketch AABB for broad-phase use.
+///
+/// The exact HyperCurve bounds, rather than the compatibility polygon
+/// projection, determine component identity. Expanding the lossy scalar
+/// projection by one representable float keeps rejection conservative without
+/// coupling exact decomposition to tessellation output.
+fn conservative_exact_sketch_bounds(sketch: &PcbSketch) -> Option<[f64; 4]> {
+    let bounds = sketch.bounding_box();
+    let min_x = bounds.mins.x.to_f64_lossy()?;
+    let min_y = bounds.mins.y.to_f64_lossy()?;
+    let max_x = bounds.maxs.x.to_f64_lossy()?;
+    let max_y = bounds.maxs.y.to_f64_lossy()?;
+    if !min_x.is_finite() || !min_y.is_finite() || !max_x.is_finite() || !max_y.is_finite() {
+        return None;
+    }
+    Some([
+        min_x.next_down(),
+        min_y.next_down(),
+        max_x.next_up(),
+        max_y.next_up(),
+    ])
+}
+
+/// Conservative finite bounds for exact-component candidate rejection.
+///
+/// HyperCurve's projection tolerance bounds the emitted chord's deviation from
+/// its retained curve. Expanding every side by that budget and one
+/// representable float means a strict separation can only reject an exact
+/// curve pair that cannot meet. These bounds never certify a topology result.
+fn conservative_projection_bounds(points: &[[f64; 2]], error: f64) -> Option<[f64; 4]> {
+    let first = *points.first()?;
+    if !first[0].is_finite() || !first[1].is_finite() {
+        return None;
+    }
+    let mut bounds = [first[0], first[1], first[0], first[1]];
+    for point in &points[1..] {
+        if !point[0].is_finite() || !point[1].is_finite() {
+            return None;
+        }
+        bounds[0] = bounds[0].min(point[0]);
+        bounds[1] = bounds[1].min(point[1]);
+        bounds[2] = bounds[2].max(point[0]);
+        bounds[3] = bounds[3].max(point[1]);
+    }
+    Some([
+        (bounds[0] - error).next_down(),
+        (bounds[1] - error).next_down(),
+        (bounds[2] + error).next_up(),
+        (bounds[3] + error).next_up(),
+    ])
+}
+
+fn conservative_finite_bounds_are_disjoint(left: [f64; 4], right: [f64; 4]) -> bool {
+    left[2] < right[0] || right[2] < left[0] || left[3] < right[1] || right[3] < left[1]
+}
+
+/// Compute a difference by exact retained-region component.
+///
+/// Certified projection envelopes only reject provably disjoint component
+/// pairs. All candidates flow through the regularized HyperCurve Boolean, and
+/// all output loops remain authoritative retained curves.
+fn exact_componentwise_difference(
+    requested_check: &str,
+    subject_name: &str,
+    subject: &PcbSketch,
+    cover_name: &str,
+    cover: &PcbSketch,
+    cover_offset: Option<&Scalar>,
+) -> Option<Result<PcbSketch, Box<Violation>>> {
+    let subjects = exact_region_components(subject)?;
+    let covers = exact_region_components(cover)?;
+    exact_componentwise_difference_from_components(
+        requested_check,
+        subject_name,
+        subject.metadata(),
+        subjects,
+        cover_name,
+        covers,
+        cover_offset,
+    )
+}
+
+fn exact_componentwise_difference_from_components(
+    requested_check: &str,
+    subject_name: &str,
+    subject_metadata: &Option<LayerMetadata>,
+    subjects: Vec<ExactRegionComponent>,
+    cover_name: &str,
+    mut covers: Vec<ExactRegionComponent>,
+    cover_offset: Option<&Scalar>,
+) -> Option<Result<PcbSketch, Box<Violation>>> {
+    // Small local land patterns usually decide an aperture before a plane or
+    // zone spanning most of the board. Preserve exact subtraction semantics
+    // while deferring expensive large-component offsets until they are
+    // genuinely needed.
+    covers.sort_by(|left, right| {
+        let left_width = left.conservative_finite_bounds[2] - left.conservative_finite_bounds[0];
+        let left_height = left.conservative_finite_bounds[3] - left.conservative_finite_bounds[1];
+        let right_width = right.conservative_finite_bounds[2] - right.conservative_finite_bounds[0];
+        let right_height =
+            right.conservative_finite_bounds[3] - right.conservative_finite_bounds[1];
+        (left_width * left_height).total_cmp(&(right_width * right_height))
+    });
+    let offset_covers = cover_offset
+        .map(|_| {
+            (0..covers.len())
+                .map(|_| std::cell::OnceCell::<PcbSketch>::new())
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    if let Some(distance) = cover_offset {
+        let radius = distance
+            .to_f64_lossy()
+            .filter(|radius| radius.is_finite())
+            .map(f64::abs)?;
+        for component in &mut covers {
+            component.conservative_finite_bounds = [
+                (component.conservative_finite_bounds[0] - radius).next_down(),
+                (component.conservative_finite_bounds[1] - radius).next_down(),
+                (component.conservative_finite_bounds[2] + radius).next_up(),
+                (component.conservative_finite_bounds[3] + radius).next_up(),
+            ];
+        }
+    }
+    let mut combined_remainder: Option<PcbSketch> = None;
+
+    for component in subjects {
+        let mut remainder = Some(component.sketch);
+        for (cover_index, cover) in covers.iter().enumerate() {
+            if conservative_finite_bounds_are_disjoint(
+                component.conservative_finite_bounds,
+                cover.conservative_finite_bounds,
+            ) {
+                continue;
+            }
+            let cover_sketch = if let Some(distance) = cover_offset {
+                let offset = &offset_covers[cover_index];
+                if offset.get().is_none() {
+                    let sketch = match offset_for_check(
+                        &cover.sketch,
+                        distance.clone(),
+                        requested_check,
+                        vec![subject_name.to_string(), cover_name.to_string()],
+                    ) {
+                        Ok(sketch) => sketch,
+                        Err(uncertainty) => return Some(Err(uncertainty)),
+                    };
+                    let _ = offset.set(sketch);
+                }
+                offset
+                    .get()
+                    .expect("candidate cover offset was initialized")
+            } else {
+                &cover.sketch
+            };
+            let current = remainder
+                .as_ref()
+                .expect("nonempty exact component remainder is available");
+            let next = match difference_for_check(
+                current,
+                cover_sketch,
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            ) {
+                Ok(remainder) => remainder,
+                Err(uncertainty) => return Some(Err(uncertainty)),
+            };
+            if next.is_empty() {
+                remainder = None;
+                break;
+            }
+            remainder = Some(next);
+        }
+        if let Some(remainder) = remainder {
+            combined_remainder = Some(match combined_remainder {
+                Some(combined) => match union_for_check(
+                    &combined,
+                    &remainder,
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                ) {
+                    Ok(union) => union,
+                    Err(uncertainty) => return Some(Err(uncertainty)),
+                },
+                None => remainder,
+            });
+        }
+    }
+
+    Some(Ok(combined_remainder.unwrap_or_else(|| {
+        PcbSketch::new(
+            Profile::from_curve_region(CurveRegion2::empty()),
+            subject_metadata.clone(),
+        )
+    })))
+}
+
 fn indexed_difference(
     requested_check: &str,
     subject_name: &str,
@@ -3795,6 +4228,13 @@ fn indexed_difference(
     let subject_count = subject_polygons.len();
     let cover_polygons = cover.to_multipolygon().0;
     let cover_index = LayerPolygonSpatialIndex::new(&cover_polygons, search_radius);
+    let cover_cache = (0..cover_polygons.len())
+        .map(|_| std::cell::OnceCell::<PcbSketch>::new())
+        .collect::<Vec<_>>();
+    let distributes_over_candidates = match &mode {
+        IndexedDifferenceMode::CoverAsIs => true,
+        IndexedDifferenceMode::CoverOffset(distance) => distance >= &Scalar::zero(),
+    };
     let mut remainder_polygons = Vec::new();
     let mut candidate_polygons = 0usize;
 
@@ -3809,40 +4249,85 @@ fn indexed_difference(
             continue;
         }
 
-        let cover_candidates = candidates
-            .into_iter()
-            .map(|index| cover_polygons[index].clone())
-            .collect::<Vec<_>>();
-        let mut cover_candidates = cover_candidates.into_iter();
-        let Some(first_cover) = cover_candidates.next() else {
-            remainder_polygons.push(subject_polygon);
-            continue;
-        };
-        let mut cover_sketch = polygon_to_profile(first_cover, Some(metadata(cover_name)));
-        for candidate in cover_candidates {
-            let candidate = polygon_to_profile(candidate, Some(metadata(cover_name)));
-            cover_sketch = union_for_check(
-                &cover_sketch,
-                &candidate,
-                requested_check,
-                vec![subject_name.to_string(), cover_name.to_string()],
-            )?;
-        }
-        let cover_sketch = match mode {
-            IndexedDifferenceMode::CoverAsIs => cover_sketch,
-            IndexedDifferenceMode::CoverOffset(ref distance) => offset_for_check(
-                &cover_sketch,
+        let mut candidates = candidates;
+        candidates.sort_by(|left, right| {
+            let area = |index: usize| {
+                cover_polygons[index]
+                    .bounding_rect()
+                    .map_or(f64::INFINITY, |bounds| {
+                        bounds.width().abs() * bounds.height().abs()
+                    })
+            };
+            area(*left).total_cmp(&area(*right))
+        });
+        let remainder = if distributes_over_candidates {
+            let mut remainder = subject_island;
+            for candidate in candidates {
+                let cached = &cover_cache[candidate];
+                if cached.get().is_none() {
+                    let mut candidate_sketch = polygon_to_profile(
+                        cover_polygons[candidate].clone(),
+                        Some(metadata(cover_name)),
+                    );
+                    if let IndexedDifferenceMode::CoverOffset(distance) = &mode {
+                        candidate_sketch = offset_for_check(
+                            &candidate_sketch,
+                            distance.clone(),
+                            requested_check,
+                            vec![subject_name.to_string(), cover_name.to_string()],
+                        )?;
+                    }
+                    let _ = cached.set(candidate_sketch);
+                }
+                remainder = difference_for_check(
+                    &remainder,
+                    cached
+                        .get()
+                        .expect("indexed cover candidate was initialized"),
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                )?;
+                if remainder.is_empty() {
+                    break;
+                }
+            }
+            remainder
+        } else {
+            let mut candidates = candidates.into_iter();
+            let Some(first) = candidates.next() else {
+                remainder_polygons.push(subject_polygon);
+                continue;
+            };
+            let mut combined =
+                polygon_to_profile(cover_polygons[first].clone(), Some(metadata(cover_name)));
+            for candidate in candidates {
+                let candidate = polygon_to_profile(
+                    cover_polygons[candidate].clone(),
+                    Some(metadata(cover_name)),
+                );
+                combined = union_for_check(
+                    &combined,
+                    &candidate,
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                )?;
+            }
+            let IndexedDifferenceMode::CoverOffset(distance) = &mode else {
+                unreachable!("only inward offsets require combined candidate geometry");
+            };
+            let combined = offset_for_check(
+                &combined,
                 distance.clone(),
                 requested_check,
                 vec![subject_name.to_string(), cover_name.to_string()],
-            )?,
+            )?;
+            difference_for_check(
+                &subject_island,
+                &combined,
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            )?
         };
-        let remainder = difference_for_check(
-            &subject_island,
-            &cover_sketch,
-            requested_check,
-            vec![subject_name.to_string(), cover_name.to_string()],
-        )?;
         remainder_polygons.extend(remainder.to_multipolygon().0);
     }
 
@@ -4114,13 +4599,13 @@ pub(crate) mod tests {
         layer_sanity, local_copper_density_readiness, mask_island_keepout,
         mechanical_layer_geometry, min_copper_neck_width, minimum_mask_opening,
         minimum_paste_aperture, paste_aperture_coverage, paste_aperture_ratio,
-        paste_aperture_spacing, paste_mask_alignment, paste_overhang,
+        paste_aperture_spacing, paste_mask_alignment, paste_overhang, paste_overhang_from_features,
         silkscreen_board_edge_clearance, silkscreen_clearance, silkscreen_min_width,
         silkscreen_overlap, silkscreen_text_height_readiness, skinny_layer_feature_readiness,
         solder_mask_annular_ring_readiness, solder_mask_board_edge_clearance,
-        solder_mask_expansion, solder_mask_opening_coverage, solder_mask_opening_ratio_readiness,
-        solder_mask_opening_spacing, solder_mask_overlap_clearance, solder_mask_sliver,
-        tiny_layer_feature_readiness,
+        solder_mask_expansion, solder_mask_expansion_from_features, solder_mask_opening_coverage,
+        solder_mask_opening_ratio_readiness, solder_mask_opening_spacing,
+        solder_mask_overlap_clearance, solder_mask_sliver, tiny_layer_feature_readiness,
     };
     use crate::LayerMetadata;
     use crate::geometry::{
@@ -4509,17 +4994,15 @@ pub(crate) mod tests {
         );
         let paste = sketch("paste", vec![square(0.25, 0.2, 1.25, 0.8)]);
 
-        assert!(
-            paste_overhang(
-                "paste",
-                &paste,
-                "top",
-                &copper,
-                &crate::scalar::scalar("0.0"),
-                &crate::scalar::scalar("1.0e-9"),
-            )
-            .is_empty()
+        let violations = paste_overhang(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.0"),
+            &crate::scalar::scalar("1.0e-9"),
         );
+        assert!(violations.is_empty(), "{violations:#?}");
     }
 
     #[test]
@@ -4551,6 +5034,66 @@ pub(crate) mod tests {
             start.elapsed().as_secs_f64() < 2.0,
             "paste overhang should index sparse copper fields"
         );
+    }
+
+    #[test]
+    fn paste_overhang_zero_tolerance_scales_across_many_apertures() {
+        let copper = sketch("top", vec![square(0.0, 0.0, 20.0, 20.0)]);
+        let paste = sketch(
+            "paste",
+            (0..10)
+                .flat_map(|row| {
+                    (0..10).map(move |column| {
+                        let x = 0.25 + f64::from(column) * 1.5;
+                        let y = 0.25 + f64::from(row) * 1.5;
+                        square(x, y, x + 0.75, y + 0.75)
+                    })
+                })
+                .collect(),
+        );
+
+        let start = Instant::now();
+        let violations = paste_overhang(
+            "paste",
+            &paste,
+            "top",
+            &copper,
+            &crate::scalar::scalar("0.0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
+
+        assert!(violations.is_empty());
+        assert!(
+            start.elapsed().as_secs_f64() < 2.0,
+            "zero-tolerance paste overhang should not offset the same copper cover per aperture"
+        );
+    }
+
+    #[test]
+    fn paste_overhang_uses_retained_feature_covers() {
+        let local = sketch("pad", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let remote = sketch("zone", vec![square(100.0, 100.0, 200.0, 200.0)]);
+        let aggregate = sketch(
+            "top",
+            vec![
+                square(0.0, 0.0, 1.0, 1.0),
+                square(100.0, 100.0, 200.0, 200.0),
+            ],
+        );
+        let paste = sketch("paste", vec![square(0.0, 0.0, 1.2, 1.0)]);
+
+        let violations = paste_overhang_from_features(
+            "paste",
+            &paste,
+            "top",
+            &aggregate,
+            &[&local, &remote],
+            &crate::scalar::scalar("0"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "paste-aperture-overhang");
     }
 
     #[test]
@@ -5959,6 +6502,65 @@ pub(crate) mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "solder-mask-expansion");
+    }
+
+    #[test]
+    fn solder_mask_expansion_uses_retained_feature_covers() {
+        let local = sketch("pad", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let remote = sketch("zone", vec![square(100.0, 100.0, 200.0, 200.0)]);
+        let aggregate = sketch(
+            "top",
+            vec![
+                square(0.0, 0.0, 1.0, 1.0),
+                square(100.0, 100.0, 200.0, 200.0),
+            ],
+        );
+        let mask_openings = sketch("mask", vec![square(-0.2, -0.2, 1.2, 1.2)]);
+
+        let violations = solder_mask_expansion_from_features(
+            "top",
+            &aggregate,
+            &[&local, &remote],
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
+
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "solder-mask-expansion");
+    }
+
+    #[test]
+    fn solder_mask_feature_difference_unions_exact_component_remainders() {
+        let left = sketch("pad-left", vec![square(0.0, 0.0, 1.0, 1.0)]);
+        let right = sketch("pad-right", vec![square(4.0, 0.0, 5.0, 1.0)]);
+        let aggregate = sketch(
+            "top",
+            vec![square(0.0, 0.0, 1.0, 1.0), square(4.0, 0.0, 5.0, 1.0)],
+        );
+        let mask_openings = sketch(
+            "mask",
+            vec![square(-0.2, -0.2, 1.2, 1.2), square(3.8, -0.2, 5.2, 1.2)],
+        );
+
+        let violations = solder_mask_expansion_from_features(
+            "top",
+            &aggregate,
+            &[&left, &right],
+            "mask",
+            &mask_openings,
+            &crate::scalar::scalar("0.1"),
+            &crate::scalar::scalar("1.0e-9"),
+        );
+
+        assert!(!violations.is_empty());
+        assert!(
+            violations
+                .iter()
+                .all(|violation| violation.check == "solder-mask-expansion"),
+            "exact component reassembly must not fall back to geometry uncertainty: {violations:?}"
+        );
     }
 
     #[test]
