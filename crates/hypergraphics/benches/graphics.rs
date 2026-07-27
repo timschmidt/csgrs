@@ -1,4 +1,4 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hypergraphics::{
     Color3, ExactCamera, ExactMesh, ExactVertex, Point3, Primitive, Real, ScreenPoint, Viewport,
     grid_mesh,
@@ -34,14 +34,15 @@ fn bench_geometry(c: &mut Criterion) {
         ],
     );
     let query = point(1, 1, 1);
-    let prepared = orientation_mesh
-        .prepare_triangle_orientation(0)
-        .expect("triangle orientation package");
-    c.bench_function("hypergraphics triangle orientation direct", |b| {
+    c.bench_function("hypergraphics triangle orientation immediate", |b| {
         b.iter(|| orientation_mesh.triangle_orientation_against(0, black_box(&query)))
     });
-    c.bench_function("hypergraphics triangle orientation prepared plane", |b| {
-        b.iter(|| prepared.classify_point(black_box(&query)))
+    c.bench_function("hypergraphics clone after orientation reuse", |b| {
+        b.iter_batched(
+            || orientation_mesh.clone(),
+            |mesh| mesh.triangle_orientation_against(0, black_box(&query)),
+            BatchSize::SmallInput,
+        )
     });
 }
 

@@ -29,7 +29,7 @@ pub use camera::ExactCamera;
 pub use camera::{Projection64, ScreenPoint, Viewport};
 pub use error::{Error, Result};
 #[cfg(feature = "exact")]
-pub use geometry::{ExactMesh, ExactVertex, PreparedTriangleOrientation, TriangleOrientation};
+pub use geometry::{ExactMesh, ExactVertex, TriangleOrientation};
 #[cfg(feature = "exact")]
 pub use hyperlattice::{Point2, Point3, Vector2, Vector3};
 #[cfg(feature = "exact")]

@@ -36,9 +36,8 @@ fn main() -> hypergraphics::Result<()> {
 - `axes_mesh`, `grid_mesh`, and `polygon_surface_mesh` construct common scene
   geometry. Polygon triangulation is delegated to `hypertri`.
 - `ExactMesh::triangle_orientation_against` evaluates a robust `hyperlimit`
-  orientation predicate against one triangle.
-- `ExactMesh::prepare_triangle_orientation` retains one triangle's exact
-  oriented-plane filter for repeated picking and side queries.
+  orientation predicate against one triangle and retains repeated triangle
+  queries internally.
 - `ExactCamera`, `Viewport`, and `Projection64` provide orbit-camera projection
   and screen/world conversion.
 - `GpuColoredMesh` and `UnlitProgram` upload and draw the exported `xyz rgb`

@@ -8,14 +8,28 @@ not portable latency guarantees.
 
 | Path | Baseline | Retained | Result |
 |---|---:|---:|---:|
-| repeated triangle orientation | 279 ns | 122 ns prepared | about 56% faster |
+| repeated triangle orientation (2026-07-15) | 279 ns direct | 122 ns caller-prepared | about 56% faster |
 | exact 201-line-per-axis grid construction | 133 us | 123 us | 8.2% faster |
 
-The prepared orientation package owns HyperLimit's oriented plane, determinant
-filter, and exact fallback facts, so it does not borrow the mesh and can be reused by
-hover, picking, and clipping consumers. The one-shot API remains unchanged. Grid
-construction now computes each exact coordinate once and reuses it for the vertical
-and horizontal line with the same coordinate while preserving vertex order.
+The 2026-07-27 immediate-API migration used saved Criterion baselines with 100
+samples per path:
+
+| Path | Baseline estimate | Retained estimate | Result |
+|---|---:|---:|---:|
+| repeated triangle orientation | 68.67 ns direct | 40.80 ns immediate | 40.6% faster |
+| clone and query after orientation reuse | 169.73 ns | 78.76 ns | 53.6% faster |
+| exact 201-line-per-axis grid construction | 53.379 us | 52.055 us | 2.5% faster |
+
+`ExactMesh::triangle_orientation_against` now admits repeated triangles to a
+small thread-safe cache owned by the mesh. The first query still takes the
+ordinary immediate predicate path; reuse promotes the triangle internally.
+Clones share the cache while their vertices remain identical, and mutable
+vertex access detaches and invalidates it. The public prepared handle and its
+manual lifecycle are removed without regressing the affected crate benchmarks.
+
+Grid construction computes each exact coordinate once and reuses it for the
+vertical and horizontal line with the same coordinate while preserving vertex
+order.
 
 An optional `dispatch-trace` test uses a rational point only `1/10^12` away from a
 plane whose coordinates are of order `10^6`. Classification remains decided with
@@ -59,11 +73,12 @@ so the cache was removed.
 
 ## Shewchuk, adaptive robust predicates
 
-One-shot orientation delegates to HyperLimit's exact/adaptive `orient3d` ladder.
-Repeated fixed-triangle queries now use `PreparedOrientedPlane3`, which retains the
-certified determinant filter and exact fallback representation. The public wrapper
-maps the same signed outcome and certainty into `TriangleOrientation`; tests compare
-prepared and direct answers on both sides and on the plane.
+The first orientation delegates to HyperLimit's exact/adaptive `orient3d`
+ladder. Repeated fixed-triangle queries use an internal oriented plane retaining
+the certified determinant filter and exact fallback representation. The one
+public immediate method maps both routes into the same `TriangleOrientation`;
+tests compare automatic reuse with direct answers on both sides and on the
+plane, and verify invalidation after vertex mutation.
 
 ## Considered but not retained
 

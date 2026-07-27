@@ -1,5 +1,11 @@
 //! Hyperreal-owned mesh geometry and explicit render exports.
 
+use std::fmt;
+use std::sync::{
+    Arc, OnceLock,
+    atomic::{AtomicUsize, Ordering},
+};
+
 use hyperlattice::Point3;
 use hyperlimit::{Certainty, PlaneSide, PredicateOutcome, PreparedOrientedPlane3, Sign, orient3d};
 
@@ -79,42 +85,150 @@ impl TriangleOrientation {
     }
 }
 
-/// Reusable exact orientation classifier for one mesh triangle.
-///
-/// The owned oriented-plane package retains HyperLimit's certified determinant
-/// filter and exact fallback facts. It is useful for repeated picking or side
-/// queries against a stable triangle without borrowing the source mesh.
-#[derive(Clone, Debug)]
-pub struct PreparedTriangleOrientation {
+const TRIANGLE_ORIENTATION_CACHE_SLOTS: usize = 4;
+const NO_TRIANGLE_INDEX: usize = usize::MAX;
+
+#[derive(Debug)]
+struct CachedTriangleOrientation {
+    triangle_index: usize,
     plane: PreparedOrientedPlane3,
 }
 
-impl PreparedTriangleOrientation {
-    fn new(a: &Point3, b: &Point3, c: &Point3) -> Self {
+impl CachedTriangleOrientation {
+    fn new(triangle_index: usize, a: &Point3, b: &Point3, c: &Point3) -> Self {
         Self {
+            triangle_index,
             plane: PreparedOrientedPlane3::new(a, b, c),
         }
     }
+}
 
-    /// Classify a query point against the retained oriented triangle plane.
-    pub fn classify_point(&self, point: &Point3) -> TriangleOrientation {
-        TriangleOrientation::from_plane_outcome(self.plane.classify_point(point))
+#[derive(Debug)]
+struct TriangleOrientationCacheSlot {
+    last_query: AtomicUsize,
+    orientation: OnceLock<Box<CachedTriangleOrientation>>,
+}
+
+impl TriangleOrientationCacheSlot {
+    fn new() -> Self {
+        Self {
+            last_query: AtomicUsize::new(NO_TRIANGLE_INDEX),
+            orientation: OnceLock::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct TriangleOrientationCache {
+    slots: [TriangleOrientationCacheSlot; TRIANGLE_ORIENTATION_CACHE_SLOTS],
+}
+
+impl TriangleOrientationCache {
+    fn new() -> Self {
+        Self {
+            slots: std::array::from_fn(|_| TriangleOrientationCacheSlot::new()),
+        }
+    }
+
+    fn classify(
+        &self,
+        triangle_index: usize,
+        triangle: [&Point3; 3],
+        point: &Point3,
+    ) -> TriangleOrientation {
+        let slot = &self.slots[triangle_index % TRIANGLE_ORIENTATION_CACHE_SLOTS];
+        if let Some(orientation) = self.classify_cached(triangle_index, point) {
+            return orientation;
+        }
+        if slot.orientation.get().is_some() {
+            return TriangleOrientation::from_outcome(orient3d(
+                triangle[0],
+                triangle[1],
+                triangle[2],
+                point,
+            ));
+        }
+        let previous = slot.last_query.swap(triangle_index, Ordering::Relaxed);
+        if previous != triangle_index {
+            return TriangleOrientation::from_outcome(orient3d(
+                triangle[0],
+                triangle[1],
+                triangle[2],
+                point,
+            ));
+        }
+        let cached = slot.orientation.get_or_init(|| {
+            Box::new(CachedTriangleOrientation::new(
+                triangle_index,
+                triangle[0],
+                triangle[1],
+                triangle[2],
+            ))
+        });
+        TriangleOrientation::from_plane_outcome(cached.plane.classify_point(point))
+    }
+
+    fn classify_cached(
+        &self,
+        triangle_index: usize,
+        point: &Point3,
+    ) -> Option<TriangleOrientation> {
+        let cached = self.slots[triangle_index % TRIANGLE_ORIENTATION_CACHE_SLOTS]
+            .orientation
+            .get()?;
+        (cached.triangle_index == triangle_index)
+            .then(|| TriangleOrientation::from_plane_outcome(cached.plane.classify_point(point)))
     }
 }
 
 /// Hyperreal-owned colored mesh.
-#[derive(Clone, Debug, PartialEq)]
 pub struct ExactMesh {
     primitive: Primitive,
     vertices: Vec<ExactVertex>,
+    triangle_orientation_cache: Arc<TriangleOrientationCache>,
+}
+
+impl Clone for ExactMesh {
+    fn clone(&self) -> Self {
+        Self {
+            primitive: self.primitive,
+            vertices: self.vertices.clone(),
+            triangle_orientation_cache: Arc::clone(&self.triangle_orientation_cache),
+        }
+    }
+}
+
+impl fmt::Debug for ExactMesh {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_struct("ExactMesh")
+            .field("primitive", &self.primitive)
+            .field("vertices", &self.vertices)
+            .finish()
+    }
+}
+
+impl PartialEq for ExactMesh {
+    fn eq(&self, other: &Self) -> bool {
+        self.primitive == other.primitive && self.vertices == other.vertices
+    }
 }
 
 impl ExactMesh {
+    fn invalidate_triangle_orientation_cache(&mut self) {
+        if let Some(cache) = Arc::get_mut(&mut self.triangle_orientation_cache) {
+            *cache = TriangleOrientationCache::new();
+        } else {
+            self.triangle_orientation_cache = Arc::new(TriangleOrientationCache::new());
+        }
+    }
+
     /// Construct a mesh from exact vertices.
     pub fn new(primitive: Primitive, vertices: Vec<ExactVertex>) -> Self {
         Self {
             primitive,
             vertices,
+            triangle_orientation_cache: Arc::new(TriangleOrientationCache::new()),
         }
     }
 
@@ -135,11 +249,15 @@ impl ExactMesh {
 
     /// Mutably borrow exact vertices.
     pub fn vertices_mut(&mut self) -> &mut Vec<ExactVertex> {
+        self.invalidate_triangle_orientation_cache();
         &mut self.vertices
     }
 
     /// Append one exact vertex.
     pub fn push(&mut self, vertex: ExactVertex) {
+        if Arc::strong_count(&self.triangle_orientation_cache) > 1 {
+            self.triangle_orientation_cache = Arc::new(TriangleOrientationCache::new());
+        }
         self.vertices.push(vertex);
     }
 
@@ -200,6 +318,12 @@ impl ExactMesh {
         triangle_index: usize,
         point: &Point3,
     ) -> Result<TriangleOrientation> {
+        if let Some(orientation) = self
+            .triangle_orientation_cache
+            .classify_cached(triangle_index, point)
+        {
+            return Ok(orientation);
+        }
         if self.primitive != Primitive::Triangles {
             return Err(Error::RequiresTriangles);
         }
@@ -214,30 +338,10 @@ impl ExactMesh {
         let a = &self.vertices[base].position;
         let b = &self.vertices[base + 1].position;
         let c = &self.vertices[base + 2].position;
-        Ok(TriangleOrientation::from_outcome(orient3d(a, b, c, point)))
-    }
-
-    /// Prepare one triangle's exact orientation predicate for repeated queries.
-    pub fn prepare_triangle_orientation(
-        &self,
-        triangle_index: usize,
-    ) -> Result<PreparedTriangleOrientation> {
-        if self.primitive != Primitive::Triangles {
-            return Err(Error::RequiresTriangles);
-        }
-        let triangle_count = self.triangle_count();
-        if triangle_index >= triangle_count {
-            return Err(Error::TriangleIndexOutOfBounds {
-                index: triangle_index,
-                triangle_count,
-            });
-        }
-        let base = triangle_index * 3;
-        Ok(PreparedTriangleOrientation::new(
-            &self.vertices[base].position,
-            &self.vertices[base + 1].position,
-            &self.vertices[base + 2].position,
-        ))
+        let triangle = [a, b, c];
+        Ok(self
+            .triangle_orientation_cache
+            .classify(triangle_index, triangle, point))
     }
 }
 
@@ -280,12 +384,47 @@ mod tests {
             TriangleOrientation::Positive(_) | TriangleOrientation::Negative(_)
         ));
 
-        let prepared = mesh.prepare_triangle_orientation(0).unwrap();
         for query in [p(0, 0, 1), p(0, 0, -1), p(0, 0, 0)] {
             assert_eq!(
-                prepared.classify_point(&query),
-                mesh.triangle_orientation_against(0, &query).unwrap()
+                mesh.triangle_orientation_against(0, &query).unwrap(),
+                TriangleOrientation::from_outcome(orient3d(
+                    &mesh.vertices()[0].position,
+                    &mesh.vertices()[1].position,
+                    &mesh.vertices()[2].position,
+                    &query,
+                ))
             );
         }
+    }
+
+    #[test]
+    fn mutable_vertex_access_invalidates_orientation_reuse() {
+        let color = Color3::new(0.0, 1.0, 0.0).unwrap();
+        let mut mesh = ExactMesh::new(
+            Primitive::Triangles,
+            vec![
+                ExactVertex::new(p(0, 0, 0), color),
+                ExactVertex::new(p(1, 0, 0), color),
+                ExactVertex::new(p(0, 1, 0), color),
+            ],
+        );
+        let query = p(0, 0, 1);
+
+        let before = mesh.triangle_orientation_against(0, &query).unwrap();
+        assert_eq!(
+            mesh.triangle_orientation_against(0, &query).unwrap(),
+            before
+        );
+        let unchanged_clone = mesh.clone();
+        mesh.vertices_mut()[2].position = p(0, -1, 0);
+        let after = mesh.triangle_orientation_against(0, &query).unwrap();
+
+        assert_ne!(after, before);
+        assert_eq!(
+            unchanged_clone
+                .triangle_orientation_against(0, &query)
+                .unwrap(),
+            before
+        );
     }
 }
