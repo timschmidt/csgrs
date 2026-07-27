@@ -7661,9 +7661,15 @@ mod tests {
                 contained.maxs.z.clone(),
             );
 
-            let container = hyperlimit::PreparedAabb3::new(&container_min, &container_max);
-            matches!(container.contains_point(&contained_min).value(), Some(true))
-                && matches!(container.contains_point(&contained_max).value(), Some(true))
+            matches!(
+                hyperlimit::point_in_aabb3(&container_min, &container_max, &contained_min)
+                    .value(),
+                Some(true)
+            ) && matches!(
+                hyperlimit::point_in_aabb3(&container_min, &container_max, &contained_max)
+                    .value(),
+                Some(true)
+            )
         };
 
         assert!(intersecting(&container, &exact_touch));
