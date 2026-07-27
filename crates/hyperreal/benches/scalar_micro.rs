@@ -344,6 +344,14 @@ const SCALAR_MICRO_GROUPS: &[BenchGroupDoc] = &[
                 description: "Adds exact rational-backed `Real` values.",
             },
             BenchDoc {
+                name: "real_exact_average_pair",
+                description: "Averages exact rational-backed `Real` values through the fused pair kernel.",
+            },
+            BenchDoc {
+                name: "real_exact_average_pair_expanded",
+                description: "Averages exact rational-backed `Real` values through separate add and divide operations.",
+            },
+            BenchDoc {
                 name: "real_exact_sub",
                 description: "Subtracts exact rational-backed `Real` values.",
             },
@@ -1517,6 +1525,22 @@ fn bench_pure_scalar_algorithm_speed(c: &mut Criterion) {
     });
     group.bench_function("real_exact_add", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) + black_box(&exact_real_rhs)))
+    });
+    group.bench_function("real_exact_average_pair", |b| {
+        b.iter(|| {
+            black_box(Real::average_pair(
+                black_box(&exact_real_lhs),
+                black_box(&exact_real_rhs),
+            ))
+        })
+    });
+    group.bench_function("real_exact_average_pair_expanded", |b| {
+        b.iter(|| {
+            black_box(
+                ((black_box(&exact_real_lhs) + black_box(&exact_real_rhs)) / Real::from(2_u8))
+                    .unwrap(),
+            )
+        })
     });
     group.bench_function("real_exact_sub", |b| {
         b.iter(|| black_box(black_box(&exact_real_lhs) - black_box(&exact_real_rhs)))

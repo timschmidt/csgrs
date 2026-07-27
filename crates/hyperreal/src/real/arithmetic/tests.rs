@@ -16,6 +16,34 @@ mod tests {
     }
 
     #[test]
+    fn average_pair_preserves_exact_and_symbolic_fast_paths() {
+        let left = Real::new(Rational::fraction(-7, 12).unwrap());
+        let right = Real::new(Rational::fraction(11, 18).unwrap());
+        assert_eq!(
+            Real::average_pair(&left, &right),
+            Real::new(Rational::average_pair(
+                left.exact_rational_ref().unwrap(),
+                right.exact_rational_ref().unwrap(),
+            ))
+        );
+
+        let pi_third = &Real::pi() * &Real::new(Rational::fraction(1, 3).unwrap());
+        let five_pi_thirds = &Real::pi() * &Real::new(Rational::fraction(5, 3).unwrap());
+        assert_eq!(
+            Real::average_pair(&pi_third, &five_pi_thirds),
+            Real::pi()
+        );
+        assert_eq!(
+            Real::average_pair(&Real::zero(), &Real::pi()),
+            &Real::pi() * &Real::new(rationals::HALF.clone())
+        );
+
+        let mixed = Real::average_pair(&Real::pi(), &Real::e());
+        let expanded = ((&Real::pi() + &Real::e()) / Real::from(2_u8)).unwrap();
+        assert_eq!(mixed, expanded);
+    }
+
+    #[test]
     fn same_basis_assignments_match_borrowed_arithmetic() {
         let mut exact = Real::new(Rational::fraction(5, 7).unwrap());
         let exact_rhs = Real::new(Rational::fraction(11, 13).unwrap());

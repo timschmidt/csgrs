@@ -5,6 +5,47 @@ fn finite_f64_operand(value: f64) -> Real {
 }
 
 impl Real {
+    /// Returns the exact arithmetic mean of two real values.
+    ///
+    /// Values with the same symbolic basis keep that basis and average only
+    /// their rational scales. This includes pure rationals and avoids building
+    /// an addition node followed by a division node in the common geometry
+    /// midpoint case. Mixed symbolic values retain the normal addition
+    /// simplifications before applying the exact rational scale of one half.
+    #[inline]
+    pub fn average_pair(left: &Self, right: &Self) -> Self {
+        if left.same_symbolic_basis(right) {
+            crate::trace_dispatch!("real", "average_pair", "same-symbolic-basis");
+            let rational = Rational::average_pair(&left.rational, &right.rational);
+            if rational.sign() == Sign::NoSign {
+                return Self::zero();
+            }
+            if left.class == One {
+                return Self::new(rational);
+            }
+            return Self {
+                rational,
+                class: left.class.clone(),
+                computable: left.computable.clone(),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
+            };
+        }
+
+        if left.has_zero_scale() {
+            crate::trace_dispatch!("real", "average_pair", "lhs-zero");
+            return right.scaled_by_rational(&rationals::HALF);
+        }
+        if right.has_zero_scale() {
+            crate::trace_dispatch!("real", "average_pair", "rhs-zero");
+            return left.scaled_by_rational(&rationals::HALF);
+        }
+
+        crate::trace_dispatch!("real", "average_pair", "mixed-symbolic-basis");
+        (left + right).scaled_by_rational(&rationals::HALF)
+    }
+
     fn simple_log_sum(
         a: Rational,
         b: Rational,
