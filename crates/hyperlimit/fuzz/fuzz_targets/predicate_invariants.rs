@@ -13,8 +13,8 @@
 use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CoplanarProjection, LineSide, Plane3, Point2, Point3, PredicateOutcome,
-    PredicatePolicy, PreparedHalfspaceSystem3, SegmentPlaneRelation, Sign, SphereIntersection,
-    SupportDop3, SupportDopPlaneRelation, SupportDopRelation, SupportSlab3, TriangleDegeneracy,
+    PredicatePolicy, SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3,
+    SupportDopPlaneRelation, SupportDopRelation, SupportSlab3, TriangleDegeneracy,
     certified_ball_sign,
     certified_interval_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
     classify_circle_line2_batch, classify_circle_segment2, classify_circle_segment2_batch,
@@ -711,23 +711,6 @@ fn predicate_invariants(input: Input) {
             "halfspace feasibility witness must replay through point-plane predicates"
         );
     }
-    let prepared_fixed_point_halfspaces = PreparedHalfspaceSystem3::new(&fixed_point_halfspaces);
-    if let Some(feasibility) = prepared_fixed_point_halfspaces
-        .classify_feasibility()
-        .value()
-    {
-        assert!(
-            feasibility.is_feasible(),
-            "prepared coordinate halfspaces that pin a generated point must be feasible"
-        );
-        assert_eq!(
-            feasibility
-                .validate_against_planes(&fixed_point_halfspaces)
-                .value(),
-            Some(true),
-            "prepared halfspace feasibility witnesses must replay exactly"
-        );
-    }
     let impossible_halfspaces = vec![
         Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), 1.into()),
         Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
@@ -748,28 +731,6 @@ fn predicate_invariants(input: Input) {
                 .value(),
             Some(true),
             "halfspace infeasibility certificate must replay exactly"
-        );
-    }
-    let prepared_impossible_halfspaces = PreparedHalfspaceSystem3::new(&impossible_halfspaces);
-    if let Some(report) = prepared_impossible_halfspaces
-        .classify_feasibility()
-        .value()
-    {
-        assert_eq!(
-            report.status,
-            hyperlimit::HalfspaceFeasibility::Infeasible,
-            "prepared opposed exact halfspaces must be infeasible"
-        );
-        assert!(
-            report.infeasibility_certificate.is_some(),
-            "prepared opposed exact halfspaces should retain a Farkas certificate"
-        );
-        assert_eq!(
-            report
-                .validate_against_planes(&impossible_halfspaces)
-                .value(),
-            Some(true),
-            "prepared halfspace infeasibility certificates must replay exactly"
         );
     }
 }

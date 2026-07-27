@@ -210,6 +210,28 @@ normalizing for same-run drift. Evidence construction is the former
 compatibility constructor body without storing the four borrowed source
 references, so the migration also removes handle state without adding work.
 
+### Remove the unused prepared halfspace cache
+
+`PreparedHalfspaceSystem3` stored a borrowed plane slice and eagerly allocated
+one `Plane3Facts` entry per plane, but feasibility never read those facts. Its
+query method only forwarded the original slice to
+`classify_halfspace_feasibility3`. The handle and its duplicate benchmark/fuzz
+paths are removed; callers use the immediate report-bearing classifier.
+
+Serialized paired Criterion runs covered both a feasible shifted box and an
+infeasible opposed pair:
+
+| Halfspace row | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| Feasible transition | 13.878 us | 13.569 us | -2.22% |
+| Feasible unchanged control | 13.803 us | 13.550 us | -1.83% |
+| Infeasible transition | 1.892 us | 1.695 us | -10.42% |
+| Infeasible unchanged control | 1.809 us | 1.696 us | -6.21% |
+
+The transition improved slightly more than its same-run control in both cases.
+Construction also loses the unused per-plane allocation and structural-fact
+scan.
+
 ## Rejected experiments
 
 ### Search short Farkas certificates before active sets

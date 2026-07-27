@@ -122,8 +122,7 @@ pub use predicates::filters::{
     certified_ball_sign, certified_interval_sign, classify_ball_sign_with_policy,
 };
 pub use predicates::halfspace::{
-    HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, PreparedHalfspaceSystem3,
-    classify_halfspace_feasibility3,
+    HalfspaceFeasibilityReport, HalfspaceInfeasibilityCertificate, classify_halfspace_feasibility3,
 };
 pub use predicates::interval::{
     classify_closed_interval_intersection, classify_real_closed_interval,

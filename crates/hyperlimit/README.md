@@ -39,16 +39,15 @@ than inventing a float decision.
   classifications are the common result enums.
 - `orient_d`, `insphere_d`, and `affine_independent_d` provide the first exact
   D-dimensional determinant predicate boundary for triangulation and mesh crates.
-- Prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
-  helpers retain facts for repeated decisions.
+- Immediate segment, triangle, AABB, line, circle/sphere, and halfspace functions
+  accept explicit retained facts or evidence where reuse changes the cost.
 - `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
   witnesses for reusable k-DOP/bounding-volume slab predicates; report-bearing
   AABB projection and oriented-plane classifiers preserve per-slab exact
   interval and halfspace feasibility evidence.
 - `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses,
   active plane sets, and Farkas-style infeasibility certificates for replayable
-  convex-kernel prechecks; `PreparedHalfspaceSystem3` adds the borrowed
-  session-prepared form for repeated feasibility queries.
+  convex-kernel prechecks.
 - Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
   `VersionedFacts`, and `VersionedPrepared` track cache freshness and construction
   provenance.
@@ -61,21 +60,21 @@ determinant term facts, exact reducers, certified interval/ball filters, and bou
 producing. If strict escalation cannot prove a result, the public result is `Unknown`.
 
 Higher crates should carry object facts such as sparse coordinates, ring structure,
-plane facts, or prepared bounds, but the final topology-changing decision should remain
+plane facts, or retained bounds, but the final topology-changing decision should remain
 exact or explicitly unknown.
 
 ## Numerical Explosion
 
 `hyperlimit` combats numerical explosion by staging predicate work. Structural facts,
-prepared bounds, determinant schedules, certified filters, and bounded `Real`
+retained bounds, determinant schedules, certified filters, and bounded `Real`
 refinement are tried before generic exact expansion. When those stages cannot certify a
 sign or relation, the result stays `Unknown` rather than forcing unbounded arithmetic.
 
 ## Performance Model
 
 `hyperlimit` is designed to avoid expensive exact work in common cases. It uses
-structural zero/sign facts, prepared point/segment/triangle/AABB facts, determinant
-schedule hints, certified filters, and versioned prepared objects before generic
+structural zero/sign facts, retained point/segment/triangle/AABB facts, determinant
+schedule hints, certified filters, and versioned cache objects before generic
 refinement. Optional batch APIs and the `parallel` feature let callers evaluate many
 independent predicates through the same strict path.
 
@@ -104,10 +103,10 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 - exact support k-DOP slab carriers with witness-preserving point and AABB projection
   classifiers;
 - exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
-  candidates, point-plane replay, Farkas-style negative certificates, and a
-  prepared/session form instead of primitive LP tolerances;
-- prepared segment, triangle, AABB, line, circle/sphere, plane, and halfspace-system
-  helpers for repeated decisions;
+  candidates, point-plane replay, and Farkas-style negative certificates instead
+  of primitive LP tolerances;
+- immediate segment, triangle, AABB, line, circle/sphere, and halfspace
+  classifiers with explicit reusable facts and evidence;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
   precision-stage, and API-semantics types;
 - versioned sessions, construction certificates, cached approximate-view labels, and
