@@ -1155,7 +1155,7 @@ fn capture_attribute(
         capture_aperture_definition(command, line, report);
     } else if command.starts_with("TF.") {
         capture_tf_attribute(command, line, report);
-    } else if command.starts_with("TA.AperFunction") {
+    } else if command_is_attribute(command, "TA.AperFunction") {
         capture_aper_function(command, line, report);
     } else if command.starts_with("TO.") {
         capture_object_attribute(command, line, report);
@@ -1560,21 +1560,21 @@ fn capture_aperture_definition(command: &str, line: usize, report: &mut GerberMe
 }
 
 fn capture_tf_attribute(command: &str, line: usize, report: &mut GerberMetadataReport) {
-    if command.starts_with("TF.Part") {
+    if command_is_attribute(command, "TF.Part") {
         capture_required_attribute(command, "TF.Part", line, report);
-    } else if command.starts_with("TF.FileFunction") {
+    } else if command_is_attribute(command, "TF.FileFunction") {
         capture_required_attribute(command, "TF.FileFunction", line, report);
-    } else if command.starts_with("TF.FilePolarity") {
+    } else if command_is_attribute(command, "TF.FilePolarity") {
         capture_required_attribute(command, "TF.FilePolarity", line, report);
-    } else if command.starts_with("TF.CreationDate") {
+    } else if command_is_attribute(command, "TF.CreationDate") {
         capture_required_attribute(command, "TF.CreationDate", line, report);
-    } else if command.starts_with("TF.GenerationSoftware") {
+    } else if command_is_attribute(command, "TF.GenerationSoftware") {
         capture_required_attribute(command, "TF.GenerationSoftware", line, report);
-    } else if command.starts_with("TF.ProjectId") {
+    } else if command_is_attribute(command, "TF.ProjectId") {
         capture_required_attribute(command, "TF.ProjectId", line, report);
-    } else if command.starts_with("TF.MD5") {
+    } else if command_is_attribute(command, "TF.MD5") {
         capture_required_attribute(command, "TF.MD5", line, report);
-    } else if command.starts_with("TF.SameCoordinates")
+    } else if command_is_attribute(command, "TF.SameCoordinates")
         && let Some(value) = optional_attribute_value(command, "TF.SameCoordinates")
     {
         insert_attribute(
@@ -1614,13 +1614,20 @@ fn capture_aper_function(command: &str, line: usize, report: &mut GerberMetadata
 }
 
 fn capture_object_attribute(command: &str, line: usize, report: &mut GerberMetadataReport) {
-    if command.starts_with("TO.N") {
+    if command_is_attribute(command, "TO.N") {
         capture_net_attribute(command, line, report);
-    } else if command.starts_with("TO.C") {
+    } else if command_is_attribute(command, "TO.C") {
         capture_component_attribute(command, line, report);
-    } else if command.starts_with("TO.P") {
+    } else if command_is_attribute(command, "TO.P") {
         capture_pin_attribute(command, line, report);
     }
+}
+
+fn command_is_attribute(command: &str, attribute: &str) -> bool {
+    command == attribute
+        || command
+            .strip_prefix(attribute)
+            .is_some_and(|suffix| suffix.starts_with(','))
 }
 
 fn capture_net_attribute(command: &str, line: usize, report: &mut GerberMetadataReport) {
@@ -3039,6 +3046,29 @@ mod tests {
                         if attribute == "TO.N"
                 )
         }));
+    }
+
+    #[test]
+    fn x3_component_attributes_do_not_alias_shorter_x2_object_names() {
+        let report = parse_gerber_metadata_report(
+            b"%TO.C,U3*%\n%TO.CFtp,QFN-32*%\n%TO.CMnt,SMD*%\n%TO.CRot,90.0*%\n%TO.P,U3,7*%\n",
+        );
+
+        assert!(report.issues.is_empty(), "{:?}", report.issues);
+        assert_eq!(
+            report.object_attributes,
+            vec![
+                GerberObjectMetadata::Component {
+                    line: 1,
+                    refdes: "U3".to_string()
+                },
+                GerberObjectMetadata::Pin {
+                    line: 5,
+                    refdes: "U3".to_string(),
+                    pin: Some("7".to_string())
+                }
+            ]
+        );
     }
 
     #[test]
