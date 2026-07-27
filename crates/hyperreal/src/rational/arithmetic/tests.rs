@@ -48,17 +48,18 @@ mod tests {
     #[test]
     fn direct_shifted_wide_narrow_product_matches_biguint() {
         let left = [u64::MAX, u64::MAX - 1, 1, 0];
-        let right = u128::MAX - 17;
-        for shift in [0_u64, 1, 63, 64, 127] {
-            let mut actual = DyadicStackAccumulator::default();
-            assert_eq!(
-                actual.add_wide_word_product(left, right, shift),
-                Some(()),
-                "shift={shift}"
-            );
-            let expected = (limbs_to_biguint(&left) * BigUint::from(right))
-                << usize::try_from(shift).unwrap();
-            assert_eq!(limbs_to_biguint(&actual.0), expected);
+        for right in [u128::from(u64::MAX) - 17, u128::MAX - 17] {
+            for shift in [0_u64, 1, 63, 64, 127] {
+                let mut actual = DyadicStackAccumulator::default();
+                assert_eq!(
+                    actual.add_wide_word_product(left, right, shift),
+                    Some(()),
+                    "right={right}, shift={shift}"
+                );
+                let expected = (limbs_to_biguint(&left) * BigUint::from(right))
+                    << usize::try_from(shift).unwrap();
+                assert_eq!(limbs_to_biguint(&actual.0), expected);
+            }
         }
     }
 
