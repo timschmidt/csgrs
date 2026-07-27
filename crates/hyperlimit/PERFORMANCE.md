@@ -44,6 +44,20 @@ then measured 243.69 ns. A degenerate point/segment intersection measured
 257.65 ns before and 258.49 ns after, which Criterion classified as no
 performance change (`p = 0.20`).
 
+## Immediate orientation-aware 2D triangle API gate
+
+`PreparedTriangle2` retained three borrowed vertices, structural facts, and a
+fixed orientation. Repeated queries only consume the orientation, so
+`classify_point_triangle_with_orientation` now accepts that exact outcome
+directly. Callers can compute it once with `orient2d` and keep point
+classification immediate.
+
+The paired baseline measured 73.093 ns through the former carrier and
+73.504 ns through the immediate control. In the repeated post-change run, the
+two source-identical immediate rows measured 76.002 ns and 76.282 ns, with both
+moving by the same +3.35% against baseline. The equal drift and 0.4 ns
+within-run spread show no normalized regression.
+
 ## Retained optimization
 
 ### Collapse redundant Real sign-resolution passes

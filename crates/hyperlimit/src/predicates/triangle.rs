@@ -7,7 +7,7 @@ use crate::classify::{
     PlaneSide, RayTriangleIntersection, SegmentTriangleIntersection, TetrahedronLocation,
     Triangle3Location, TriangleLocation,
 };
-use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts, triangle2_facts};
+use crate::geometry::{HomogeneousLine3, Plane3, Point2, Point3, Triangle2Facts};
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{orient2d_with_policy, orient3d_with_policy};
@@ -18,105 +18,6 @@ use crate::predicates::segment_plane::{
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
-
-/// Reusable exact predicates for one 2D triangle.
-///
-/// A prepared triangle stores borrowed vertices, [`Triangle2Facts`], and the
-/// orientation result under the policy used at preparation time. This is useful
-/// for ear-clipping and CDT validation loops that classify many candidate
-/// points against the same triangle. It remains a predicate helper: ear nodes,
-/// face ids, cavity ownership, and triangulation policy stay in `hypertri`.
-///
-/// The orientation-side test is the standard triangle containment classifier.
-/// Object facts are cached for repeated exact decisions.
-#[derive(Clone, Copy, Debug)]
-pub struct PreparedTriangle2<'a> {
-    a: &'a Point2,
-    b: &'a Point2,
-    c: &'a Point2,
-    facts: Triangle2Facts,
-    orientation: PredicateOutcome<Sign>,
-}
-
-impl<'a> PreparedTriangle2<'a> {
-    /// Prepare a triangle using the strict predicate context.
-    pub fn new(a: &'a Point2, b: &'a Point2, c: &'a Point2) -> Self {
-        Self::with_policy(a, b, c, PredicatePolicy::STRICT)
-    }
-
-    /// Prepare a triangle using the crate-local strict predicate marker.
-    pub(crate) fn with_policy(
-        a: &'a Point2,
-        b: &'a Point2,
-        c: &'a Point2,
-        policy: PredicatePolicy,
-    ) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_triangle2", "new");
-        let facts = triangle2_facts(a, b, c);
-        let orientation = triangle_orientation_with_policy_and_facts(a, b, c, policy, facts);
-        Self::from_parts(a, b, c, facts, orientation)
-    }
-
-    /// Prepare a triangle from caller-cached facts and orientation.
-    ///
-    /// The caller must pass facts and orientation for the same vertex triple
-    /// under the strict predicate context. Conservative facts merely leave fast
-    /// paths unused, but non-conservative facts or an orientation from different
-    /// vertices can change the classified result.
-    pub const fn from_parts(
-        a: &'a Point2,
-        b: &'a Point2,
-        c: &'a Point2,
-        facts: Triangle2Facts,
-        orientation: PredicateOutcome<Sign>,
-    ) -> Self {
-        Self {
-            a,
-            b,
-            c,
-            facts,
-            orientation,
-        }
-    }
-
-    /// Return vertex `a`.
-    pub const fn a(&self) -> &'a Point2 {
-        self.a
-    }
-
-    /// Return vertex `b`.
-    pub const fn b(&self) -> &'a Point2 {
-        self.b
-    }
-
-    /// Return vertex `c`.
-    pub const fn c(&self) -> &'a Point2 {
-        self.c
-    }
-
-    /// Return cached structural facts.
-    pub const fn facts(&self) -> Triangle2Facts {
-        self.facts
-    }
-
-    /// Return the cached orientation result.
-    pub const fn orientation(&self) -> PredicateOutcome<Sign> {
-        self.orientation
-    }
-
-    /// Classify a point using the strict predicate context.
-    pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<TriangleLocation> {
-        classify_point_triangle_impl(
-            self.a,
-            self.b,
-            self.c,
-            point,
-            PredicatePolicy::STRICT,
-            Some(self.facts),
-            Some(self.orientation),
-        )
-    }
-}
 
 /// Reusable exact predicates for one 3D triangle.
 #[derive(Clone, Debug)]
@@ -1078,6 +979,30 @@ pub fn classify_point_triangle_with_facts(
     facts: Triangle2Facts,
 ) -> PredicateOutcome<TriangleLocation> {
     classify_point_triangle_with_policy_and_facts(a, b, c, point, PredicatePolicy, facts)
+}
+
+/// Classify `point` relative to triangle `abc` using a retained orientation.
+///
+/// `orientation` must be the exact [`crate::orient2d`] outcome for the same
+/// ordered vertices `a`, `b`, and `c`. Retaining that compact outcome avoids
+/// recomputing the triangle's fixed orientation across repeated point queries
+/// while keeping the query itself immediate.
+pub fn classify_point_triangle_with_orientation(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+    orientation: PredicateOutcome<Sign>,
+) -> PredicateOutcome<TriangleLocation> {
+    classify_point_triangle_impl(
+        a,
+        b,
+        c,
+        point,
+        PredicatePolicy::STRICT,
+        None,
+        Some(orientation),
+    )
 }
 
 /// Classify `point` relative to triangle `abc` with both an explicit policy and
@@ -2253,7 +2178,7 @@ mod tests {
         let b = p2(2.0, 0.0);
         let c = p2(5.0, 0.0);
         let point = p2(1.0, 0.0);
-        let facts = triangle2_facts(&a, &b, &c);
+        let facts = crate::geometry::triangle2_facts(&a, &b, &c);
         let policy = PredicatePolicy::STRICT;
 
         assert_eq!(facts.known_degenerate(), Some(true));
@@ -2265,22 +2190,25 @@ mod tests {
     }
 
     #[test]
-    fn prepared_triangle_classifies_points_with_cached_orientation() {
+    fn immediate_triangle_classifier_accepts_cached_orientation() {
         let a = p2(0.0, 0.0);
         let b = p2(3.0, 0.0);
         let c = p2(0.0, 3.0);
         let inside = p2(1.0, 1.0);
         let outside = p2(3.0, 3.0);
 
-        let prepared = PreparedTriangle2::new(&a, &b, &c);
-        assert_eq!(prepared.orientation().value(), Some(Sign::Positive));
-        assert_eq!(prepared.facts().known_non_degenerate(), Some(true));
+        let orientation = crate::orient2d(&a, &b, &c);
+        assert_eq!(orientation.value(), Some(Sign::Positive));
         assert_eq!(
-            prepared.classify_point(&inside).value(),
+            crate::geometry::triangle2_facts(&a, &b, &c).known_non_degenerate(),
+            Some(true)
+        );
+        assert_eq!(
+            classify_point_triangle_with_orientation(&a, &b, &c, &inside, orientation).value(),
             Some(TriangleLocation::Inside)
         );
         assert_eq!(
-            prepared.classify_point(&outside).value(),
+            classify_point_triangle_with_orientation(&a, &b, &c, &outside, orientation).value(),
             Some(TriangleLocation::Outside)
         );
     }

@@ -17,15 +17,16 @@ use hyperlimit::{
     classify_plane_triangle, classify_point_aabb3, classify_point_convex_planes3,
     classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
     classify_point_plane, classify_point_ring_even_odd_report, classify_point_segment_with_facts,
-    classify_point_segment3, classify_point_sphere3, classify_ray_triangle3_intersection,
-    classify_ray_triangle3_intersection_report, classify_segment_intersection_with_facts,
-    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
-    classify_segment3_intersection, classify_sphere3_intersection, classify_triangle_triangle3,
-    classify_triangle3_degeneracy, compare_point_line3_distance_squared,
-    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
-    insphere_d, insphere3d, intersect_segment_with_oriented_plane, intersect_three_planes,
-    intersect_two_planes, orient_d, orient2d, orient3d, projected_line_parameter3,
-    projected_segment_parameter3, segment2_facts, support_dop3_from_points,
+    classify_point_segment3, classify_point_sphere3, classify_point_triangle_with_orientation,
+    classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
+    classify_segment_intersection_with_facts, classify_segment_triangle3_intersection,
+    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
+    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
+    compare_point_line3_distance_squared, compare_point_plane_distance_squared,
+    compare_point_segment3_distance_squared, incircle2d, insphere_d, insphere3d,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient_d,
+    orient2d, orient3d, projected_line_parameter3, projected_segment_parameter3, segment2_facts,
+    support_dop3_from_points,
 };
 use robust::{Coord, Coord3D};
 
@@ -66,6 +67,7 @@ fn bench_predicates(c: &mut Criterion) {
     bench_explicit_sphere_immediate(c);
     bench_segment2_immediate(c);
     bench_segment3_immediate(c);
+    bench_triangle2_immediate(c);
     bench_representation(c, "hyperreal", hyperreal_real);
     bench_robust_predicates(c);
     bench_filter_cost_breakdown(c);
@@ -82,6 +84,28 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_triangle2_immediate(c: &mut Criterion) {
+    let a = rational_point2(0, 1, 0, 1);
+    let b = rational_point2(4, 1, 0, 1);
+    let vertex_c = rational_point2(0, 1, 4, 1);
+    let query = rational_point2(1, 1, 1, 1);
+    let orientation = orient2d(&a, &b, &vertex_c);
+
+    let mut group = c.benchmark_group("triangle2_immediate");
+    group.bench_function("point_with_orientation", |bench| {
+        bench.iter(|| {
+            classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &vertex_c,
+                black_box(&query),
+                orientation,
+            )
+        })
+    });
+    group.finish();
 }
 
 fn bench_segment2_immediate(c: &mut Criterion) {
