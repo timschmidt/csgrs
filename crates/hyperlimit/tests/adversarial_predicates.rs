@@ -230,11 +230,11 @@ fn point_structural_facts_summarize_symbolic_dependencies() {
 }
 
 #[test]
-fn prepared_predicate_facts_preserve_point_local_shared_scales() {
+fn predicate_facts_preserve_point_local_shared_scales() {
     let a = Point2::new(rational(1, 3), rational(2, 3));
     let b = Point2::new(rational(1, 5), rational(2, 5));
-    let prepared = hyperlimit::PreparedLine2::new(&a, &b);
-    let facts = prepared.facts();
+    let orientation = hyperlimit::line2_orientation(&a, &b);
+    let facts = orientation.facts();
 
     assert!(facts.fixed_coordinates_exact_rational);
     assert!(!facts.fixed_coordinates_dyadic);
@@ -326,10 +326,10 @@ fn prepared_predicate_facts_preserve_point_local_shared_scales() {
 }
 
 #[test]
-fn prepared_predicate_facts_select_advisory_determinant_schedule_hints() {
+fn predicate_facts_select_advisory_determinant_schedule_hints() {
     let origin = Point2::new(Real::from(0), Real::from(0));
     let axis = Point2::new(Real::from(3), Real::from(0));
-    let sparse = hyperlimit::PreparedLine2::new(&origin, &axis);
+    let sparse = hyperlimit::line2_orientation(&origin, &axis);
     assert_eq!(
         sparse.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::SparseSupportCandidate {
@@ -340,7 +340,7 @@ fn prepared_predicate_facts_select_advisory_determinant_schedule_hints() {
 
     let fifth_a = Point2::new(rational(1, 5), rational(2, 5));
     let fifth_b = Point2::new(rational(3, 5), rational(4, 5));
-    let shared = hyperlimit::PreparedLine2::new(&fifth_a, &fifth_b);
+    let shared = hyperlimit::line2_orientation(&fifth_a, &fifth_b);
     assert_eq!(
         shared.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::SharedDenominatorCandidate {
@@ -350,7 +350,7 @@ fn prepared_predicate_facts_select_advisory_determinant_schedule_hints() {
 
     let dyadic_a = Point2::new(rational(1, 2), rational(1, 4));
     let dyadic_b = Point2::new(rational(3, 8), rational(5, 16));
-    let dyadic = hyperlimit::PreparedLine2::new(&dyadic_a, &dyadic_b);
+    let dyadic = hyperlimit::line2_orientation(&dyadic_a, &dyadic_b);
     assert_eq!(
         dyadic.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::DyadicCandidate {
@@ -360,7 +360,7 @@ fn prepared_predicate_facts_select_advisory_determinant_schedule_hints() {
 
     let mixed_a = Point2::new(rational(1, 3), rational(2, 5));
     let mixed_b = Point2::new(rational(3, 7), rational(4, 11));
-    let exact = hyperlimit::PreparedLine2::new(&mixed_a, &mixed_b);
+    let exact = hyperlimit::line2_orientation(&mixed_a, &mixed_b);
     assert_eq!(
         exact.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::ExactRationalKernel {
@@ -369,7 +369,7 @@ fn prepared_predicate_facts_select_advisory_determinant_schedule_hints() {
     );
 
     let symbolic = Point2::new(Real::pi(), rational(1, 7));
-    let fallback = hyperlimit::PreparedLine2::new(&mixed_a, &symbolic);
+    let fallback = hyperlimit::line2_orientation(&mixed_a, &symbolic);
     assert_eq!(
         fallback.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::GenericRealFallback

@@ -8,14 +8,14 @@ use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispa
 use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
     PredicateOutcome, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
-    PreparedLine2, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
-    SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts,
-    affine_independent_d, certified_ball_sign, classify_aabb2_intersection_with_facts,
-    classify_aabb3_intersection, classify_aabb3_sphere_intersection, classify_circle_line2,
-    classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
-    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_plane_segment,
-    classify_plane_triangle, classify_point_aabb3, classify_point_convex_planes3,
-    classify_point_convex_polygon2, classify_point_line, classify_point_oriented_plane,
+    PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign, SupportDopRelation,
+    TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts, affine_independent_d,
+    certified_ball_sign, classify_aabb2_intersection_with_facts, classify_aabb3_intersection,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_plane_aabb3_report, classify_plane_segment, classify_plane_triangle,
+    classify_point_aabb3, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_line_with_orientation, classify_point_oriented_plane,
     classify_point_plane, classify_point_ring_even_odd_report, classify_point_segment_with_facts,
     classify_point_segment3, classify_point_sphere3, classify_point_triangle_with_orientation,
     classify_point_triangle3_with_orientation, classify_ray_triangle3_intersection,
@@ -25,8 +25,9 @@ use hyperlimit::{
     classify_triangle3_degeneracy, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
     insphere_d, insphere3d, intersect_segment_with_oriented_plane, intersect_three_planes,
-    intersect_two_planes, orient_d, orient2d, orient3d, projected_line_parameter3,
-    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
+    intersect_two_planes, line2_orientation, orient_d, orient2d, orient3d,
+    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
+    support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -65,6 +66,7 @@ impl Workload {
 fn bench_predicates(c: &mut Criterion) {
     bench_aabb_immediate(c);
     bench_explicit_sphere_immediate(c);
+    bench_line2_immediate(c);
     bench_segment2_immediate(c);
     bench_segment3_immediate(c);
     bench_triangle2_immediate(c);
@@ -85,6 +87,21 @@ fn bench_predicates(c: &mut Criterion) {
     // currently keeps local refinement caches behind `RefCell`, so exact
     // hyperreal benchmark rows stay sequential until the real layer exposes a
     // thread-safe sharing mode.
+}
+
+fn bench_line2_immediate(c: &mut Criterion) {
+    let from = rational_point2(0, 1, 0, 1);
+    let to = rational_point2(4, 1, 1, 1);
+    let query = rational_point2(1, 1, 2, 1);
+    let orientation = line2_orientation(&from, &to);
+
+    let mut group = c.benchmark_group("line2_immediate");
+    group.bench_function("point_with_orientation", |bench| {
+        bench.iter(|| {
+            classify_point_line_with_orientation(&from, &to, black_box(&query), &orientation)
+        })
+    });
+    group.finish();
 }
 
 fn bench_triangle3_immediate(c: &mut Criterion) {
@@ -802,7 +819,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
         })
     });
     group.bench_function("line2/dyadic_filter", |bench| {
-        bench.iter(|| PreparedLine2::new(black_box(&line_a), black_box(&line_b)))
+        bench.iter(|| line2_orientation(black_box(&line_a), black_box(&line_b)))
     });
     let rational_line_a = rational_point2(1, 3, 2, 5);
     let rational_line_b = rational_point2(7, 11, -3, 7);
@@ -815,7 +832,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
         })
     });
     group.bench_function("line2/exact_rational_word_filter", |bench| {
-        bench.iter(|| PreparedLine2::new(black_box(&rational_line_a), black_box(&rational_line_b)))
+        bench.iter(|| line2_orientation(black_box(&rational_line_a), black_box(&rational_line_b)))
     });
 
     let plane_a = point3(-0.85, -0.7, -0.25, hyperreal_real);
@@ -1526,21 +1543,31 @@ fn bench_transformed_predicates(c: &mut Criterion) {
 
     let line_cases = transformed_line_cases();
     if let Some((a, b, _)) = line_cases.first() {
-        let prepared = PreparedLine2::new(a, b);
+        let orientation = line2_orientation(a, b);
         trace_dispatch_cases(
-            "transformed_predicates/classify_point_line/prepared_exact_rational_affine",
+            "transformed_predicates/classify_point_line/oriented_exact_rational_affine",
             &line_cases,
             |(_, _, point)| {
-                black_box(line_score(prepared.classify_point(point)));
+                black_box(line_score(classify_point_line_with_orientation(
+                    a,
+                    b,
+                    point,
+                    &orientation,
+                )));
             },
         );
         group.bench_function(
-            "classify_point_line/prepared_exact_rational_affine",
+            "classify_point_line/oriented_exact_rational_affine",
             |bench| {
                 bench.iter(|| {
                     let mut score = 0_i64;
                     for (_, _, point) in &line_cases {
-                        score += line_score(black_box(prepared.classify_point(black_box(point))));
+                        score += line_score(black_box(classify_point_line_with_orientation(
+                            a,
+                            b,
+                            black_box(point),
+                            &orientation,
+                        )));
                     }
                     black_box(score)
                 });
@@ -1712,27 +1739,36 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
                 });
             },
         );
-        if let Some((a, b, _)) = cases.first() {
-            let prepared = PreparedLine2::new(a, b);
+        if let Some((line_a, line_b, _)) = cases.first() {
+            let orientation = line2_orientation(line_a, line_b);
             trace_dispatch_cases(
                 format!(
-                    "classify_point_line_fixed/{label}_prepared/{}",
+                    "classify_point_line_fixed/{label}_oriented/{}",
                     workload.name()
                 ),
                 &cases,
                 |(_, _, point)| {
-                    black_box(line_score(prepared.classify_point(point)));
+                    black_box(line_score(classify_point_line_with_orientation(
+                        line_a,
+                        line_b,
+                        point,
+                        &orientation,
+                    )));
                 },
             );
             group.bench_with_input(
-                BenchmarkId::new(format!("{label}_prepared"), workload.name()),
+                BenchmarkId::new(format!("{label}_oriented"), workload.name()),
                 &cases,
-                |b, cases| {
-                    b.iter(|| {
+                |bencher, cases| {
+                    bencher.iter(|| {
                         let mut score = 0_i64;
                         for (_, _, point) in cases {
-                            score +=
-                                line_score(black_box(prepared.classify_point(black_box(point))));
+                            score += line_score(black_box(classify_point_line_with_orientation(
+                                line_a,
+                                line_b,
+                                black_box(point),
+                                &orientation,
+                            )));
                         }
                         black_box(score)
                     });

@@ -13,7 +13,7 @@
 use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CoplanarProjection, LineSide, Plane3, Point2, Point3, PredicateOutcome,
-    PredicatePolicy, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3, PreparedLine2,
+    PredicatePolicy, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
     SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3, SupportDopPlaneRelation,
     SupportDopRelation, SupportSlab3, TriangleDegeneracy, certified_ball_sign,
     certified_interval_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
@@ -149,8 +149,11 @@ fn predicate_invariants(input: Input) {
             .expect("even-odd ring report must replay against exact sources");
     }
 
-    let prepared = PreparedLine2::new(&a, &b);
-    assert_eq!(prepared.classify_point(&c).value(), line_side);
+    let orientation = hyperlimit::line2_orientation(&a, &b);
+    assert_eq!(
+        hyperlimit::classify_point_line_with_orientation(&a, &b, &c, &orientation).value(),
+        line_side
+    );
 
     let line_batch_cases = [
         (a.clone(), b.clone(), c.clone()),

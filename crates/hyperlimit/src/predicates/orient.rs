@@ -419,126 +419,106 @@ pub struct PreparedSphere3Polynomial<'a> {
     pub constant: &'a Real,
 }
 
-/// Reusable point-line classifier for a fixed oriented line segment.
+/// Derived exact-predicate evidence for one fixed oriented 2D line.
+///
+/// This value owns certified dyadic and exact-word filters plus fixed-input
+/// scheduling facts, but not the line endpoints. Retain it alongside the
+/// endpoints when classifying many points against the same oriented line.
 #[derive(Clone, Copy, Debug)]
-pub struct PreparedLine2<'a> {
-    from: &'a Point2,
-    to: &'a Point2,
+pub struct Line2Orientation {
     facts: PreparedPredicateFacts,
     filter: Option<PreparedAffineDet2Filter>,
     exact_word_filter: Option<PreparedAffineDet2ExactWordFilter>,
 }
 
-impl<'a> PreparedLine2<'a> {
-    /// Prepare the oriented line from `from` to `to`.
-    ///
-    /// Exact dyadic inputs automatically receive a cached certified filter;
-    /// callers use [`Self::classify_point`] normally in every case.
-    pub fn new(from: &'a Point2, to: &'a Point2) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_line2", "new");
-        Self::from_facts(from, to, PreparedPredicateFacts::line2(from, to))
-    }
-
-    /// Prepare the oriented line from already-collected fixed-coordinate facts.
-    ///
-    /// Higher-level geometry objects often collect structural facts while
-    /// preparing their own topology caches. The owning geometry layer can
-    /// remember common-scale or dyadic eligibility, while `hyperlimit` remains
-    /// the predicate layer that decides sidedness.
-    pub fn from_facts(from: &'a Point2, to: &'a Point2, facts: PreparedPredicateFacts) -> Self {
-        let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
-        let exact_word_filter = if filter.is_none() {
-            Real::prepare_affine_det2_exact_word_filter([&from.x, &from.y], [&to.x, &to.y])
-        } else {
-            None
-        };
-        Self {
-            from,
-            to,
-            facts,
-            filter,
-            exact_word_filter,
-        }
-    }
-
-    /// Return cheap fixed-coordinate facts collected at preparation time.
+impl Line2Orientation {
+    /// Return fixed-coordinate scheduling facts for this line.
     pub const fn facts(&self) -> PreparedPredicateFacts {
         self.facts
     }
+}
 
-    /// Classify a point using the default predicate policy.
-    pub fn classify_point(&self, point: &Point2) -> PredicateOutcome<LineSide> {
-        self.classify_point_with_policy(point, PredicatePolicy)
+/// Derive reusable exact-predicate evidence for oriented line `from -> to`.
+pub fn line2_orientation(from: &Point2, to: &Point2) -> Line2Orientation {
+    line2_orientation_with_facts(from, to, PreparedPredicateFacts::line2(from, to))
+}
+
+/// Derive line-orientation evidence from already-collected fixed-input facts.
+pub fn line2_orientation_with_facts(
+    from: &Point2,
+    to: &Point2,
+    facts: PreparedPredicateFacts,
+) -> Line2Orientation {
+    let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
+    let exact_word_filter = if filter.is_none() {
+        Real::prepare_affine_det2_exact_word_filter([&from.x, &from.y], [&to.x, &to.y])
+    } else {
+        None
+    };
+    Line2Orientation {
+        facts,
+        filter,
+        exact_word_filter,
+    }
+}
+
+/// Classify `point` against `from -> to` using retained line evidence.
+pub fn classify_point_line_with_orientation(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+) -> PredicateOutcome<LineSide> {
+    classify_point_line_with_orientation_and_policy(from, to, point, orientation, PredicatePolicy)
+}
+
+/// Classify a point using retained line evidence and an explicit policy.
+///
+/// `orientation` must have been derived from the same ordered endpoints with
+/// [`line2_orientation`] or [`line2_orientation_with_facts`].
+pub fn classify_point_line_with_orientation_and_policy(
+    from: &Point2,
+    to: &Point2,
+    point: &Point2,
+    orientation: &Line2Orientation,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<LineSide> {
+    if let Some(sign) = orientation
+        .filter
+        .and_then(|filter| filter.sign([&point.x, &point.y]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "line2_orientation",
+            "certified-real-det2-filter"
+        );
+        return PredicateOutcome::decided(
+            LineSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    if let Some(filter) = orientation.exact_word_filter
+        && let Some(sign) = filter.sign([&point.x, &point.y])
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "line2_orientation",
+            "exact-word-homogeneous-det2"
+        );
+        return PredicateOutcome::decided(
+            LineSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
     }
 
-    /// Classify a point using an explicit predicate policy.
-    pub fn classify_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<LineSide> {
-        // Match the ordinary orientation ladder: retain the prepared object
-        // facts, attempt the cheap certified filter, then fall back to the
-        // exact predicate when the error bound cannot separate the sign.
-        if let Some(sign) = self
-            .filter
-            .and_then(|filter| filter.sign([&point.x, &point.y]))
-        {
-            crate::trace_dispatch!("hyperlimit", "prepared_line2", "certified-real-det2-filter");
-            return PredicateOutcome::decided(
-                LineSide::from(crate::real::map_real_sign(sign)),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        if let Some(filter) = self.exact_word_filter {
-            return self.classify_point_exact_word_with_policy(filter, point, policy);
-        }
-
-        if let Some(outcome) =
-            exact_outcome(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
-                super::exact::orient2d(self.from, self.to, point)
-            })
-        {
-            return map_outcome(outcome, LineSide::from);
-        }
-        map_outcome(
-            orient2d_real_expr(self.from, self.to, point, policy),
-            LineSide::from,
-        )
+    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
+        super::exact::orient2d(from, to, point)
+    }) {
+        return map_outcome(outcome, LineSide::from);
     }
-
-    #[inline]
-    fn classify_point_exact_word_with_policy(
-        &self,
-        filter: PreparedAffineDet2ExactWordFilter,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<LineSide> {
-        if let Some(sign) = filter.sign([&point.x, &point.y]) {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "prepared_line2",
-                "exact-word-homogeneous-det2"
-            );
-            return PredicateOutcome::decided(
-                LineSide::from(crate::real::map_real_sign(sign)),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        if let Some(outcome) =
-            exact_outcome(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
-                super::exact::orient2d(self.from, self.to, point)
-            })
-        {
-            return map_outcome(outcome, LineSide::from);
-        }
-        map_outcome(
-            orient2d_real_expr(self.from, self.to, point, policy),
-            LineSide::from,
-        )
-    }
+    map_outcome(orient2d_real_expr(from, to, point, policy), LineSide::from)
 }
 
 /// In-circle predicate for four 2D points.
@@ -1650,25 +1630,25 @@ mod tests {
     }
 
     #[test]
-    fn prepared_line_matches_orient2d_side() {
+    fn retained_line_orientation_matches_orient2d_side() {
         let a = p2(-1.0, -1.0);
         let b = p2(1.0, 1.0);
-        let prepared = PreparedLine2::new(&a, &b);
+        let orientation = line2_orientation(&a, &b);
         assert_eq!(
-            prepared.facts().exact_kernel_hint,
+            orientation.facts().exact_kernel_hint,
             Some(ExactPredicateKernel::Orient2dRationalDet2)
         );
-        assert!(prepared.facts().fixed_coordinates_shared_denominator);
+        assert!(orientation.facts().fixed_coordinates_shared_denominator);
         for point in [p2(-0.75, -0.5), p2(0.5, 0.25), p2(0.125, 0.125)] {
             assert_eq!(
-                prepared.classify_point(&point).value(),
+                classify_point_line_with_orientation(&a, &b, &point, &orientation).value(),
                 classify_point_line(&a, &b, &point).value()
             );
         }
     }
 
     #[test]
-    fn prepared_facts_distinguish_mixed_denominators() {
+    fn line_orientation_facts_distinguish_mixed_denominators() {
         let a = Point2::new(
             Real::from(Rational::fraction(1, 3).unwrap()),
             Real::from(Rational::fraction(2, 3).unwrap()),
@@ -1677,16 +1657,16 @@ mod tests {
             Real::from(Rational::fraction(1, 5).unwrap()),
             Real::from(Rational::fraction(2, 5).unwrap()),
         );
-        let prepared = PreparedLine2::new(&a, &b);
+        let orientation = line2_orientation(&a, &b);
 
-        assert!(prepared.facts().fixed_coordinates_exact_rational);
-        assert!(!prepared.facts().fixed_coordinates_dyadic);
-        assert!(!prepared.facts().fixed_coordinates_shared_denominator);
-        assert_eq!(prepared.facts().fixed_point_shared_scale_mask, 0b11);
+        assert!(orientation.facts().fixed_coordinates_exact_rational);
+        assert!(!orientation.facts().fixed_coordinates_dyadic);
+        assert!(!orientation.facts().fixed_coordinates_shared_denominator);
+        assert_eq!(orientation.facts().fixed_point_shared_scale_mask, 0b11);
     }
 
     #[test]
-    fn prepared_facts_detect_common_reduced_denominator() {
+    fn line_orientation_facts_detect_common_reduced_denominator() {
         let p2r = |x, y| {
             Point2::new(
                 Real::from(Rational::fraction(x, 7).unwrap()),
@@ -1698,12 +1678,12 @@ mod tests {
         let c = p2r(5, 6);
 
         assert!(
-            PreparedLine2::new(&a, &b)
+            line2_orientation(&a, &b)
                 .facts()
                 .fixed_coordinates_shared_denominator
         );
         assert_eq!(
-            PreparedLine2::new(&a, &b)
+            line2_orientation(&a, &b)
                 .facts()
                 .fixed_point_shared_scale_mask,
             0b11

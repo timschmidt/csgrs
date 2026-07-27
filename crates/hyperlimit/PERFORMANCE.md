@@ -162,6 +162,28 @@ public report remains unchanged: all six non-coplanar edge relations are still
 retained, and degeneracy, separation, boundary, proper crossing, and coplanar
 tests replay successfully.
 
+### Replace prepared 2D lines with immediate classification
+
+`PreparedLine2` duplicated its endpoints inside a classifier handle even though
+the reusable state is only orientation evidence. The public surface now exposes
+owned `Line2Orientation` evidence and immediate
+`classify_point_line_with_orientation` functions. Endpoints remain explicit at
+each call, while the certified dyadic filter, exact-word filter, and scheduling
+facts remain reusable.
+
+The paired Criterion gate compared the old prepared method with the new
+immediate function against an unchanged immediate control:
+
+| Row | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| Prepared-to-immediate transition | 16.064 ns | 16.108 ns | +0.27% |
+| Unchanged immediate control | 15.802 ns | 16.231 ns | +2.72% |
+
+The transition moved less than the control in the same serialized run, so
+there is no normalized regression. Hypercurve also retains this owned
+orientation evidence in its repeated containment paths rather than rebuilding
+both filters for every query.
+
 ## Rejected experiments
 
 ### Search short Farkas certificates before active sets
