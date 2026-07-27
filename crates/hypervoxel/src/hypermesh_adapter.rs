@@ -9,7 +9,7 @@ use crate::{
 pub fn adapt_hypermesh_exact_solid(
     mesh: &hypermesh::InputMesh,
 ) -> HypervoxelResult<ExactTriangleSolidMesh> {
-    hypermesh::prepare_input(&[mesh.as_ref()]).map_err(|_| {
+    hypermesh::build_polygon_soup(&[mesh.as_ref()]).map_err(|_| {
         HypervoxelError::InvalidSourceGeometry {
             reason: "hypermesh input is not a validated closed solid",
         }
