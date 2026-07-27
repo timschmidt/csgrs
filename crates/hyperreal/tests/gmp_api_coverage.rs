@@ -31,6 +31,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "div_rem_magnitudes_barrett_batch_candidate",
     "div_rem_magnitudes_barrett_candidate",
     // Structural facts, retained exact values, and exact-set schedules.
+    "affine_plane3_coefficients_known_dyadic",
     "best_sign",
     "checked_exact_integer_cross_difference_quotient",
     "checked_exact_integer_scaled_difference",

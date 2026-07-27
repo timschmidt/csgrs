@@ -3064,6 +3064,56 @@ impl Rational {
         })
     }
 
+    /// Construct the oriented affine plane through three dyadic points.
+    ///
+    /// Coordinate differences, cross products, and the offset remain in
+    /// checked native-word or fixed-stack form. A value outside that envelope
+    /// returns `None` so the caller can retain its arbitrary-precision
+    /// determinant construction.
+    #[doc(hidden)]
+    pub fn affine_plane3_coefficients_known_dyadic(
+        points: [[&Self; 3]; 3],
+    ) -> Option<[Self; 4]> {
+        let point_words = |point: [&Self; 3]| {
+            Some([
+                Self::known_dyadic_word(point[0])?,
+                Self::known_dyadic_word(point[1])?,
+                Self::known_dyadic_word(point[2])?,
+            ])
+        };
+        let first = point_words(points[0])?;
+        let second = point_words(points[1])?;
+        let third = point_words(points[2])?;
+        let difference = |left: [DyadicWord; 3], right: [DyadicWord; 3]| {
+            Some([
+                Self::difference_dyadic_words(left[0], right[0])?,
+                Self::difference_dyadic_words(left[1], right[1])?,
+                Self::difference_dyadic_words(left[2], right[2])?,
+            ])
+        };
+        let u = difference(second, first)?;
+        let v = difference(third, first)?;
+        let normal = [
+            Self::cross_dyadic_words([u[1], u[2]], [v[1], v[2]])?,
+            Self::cross_dyadic_words([u[2], u[0]], [v[2], v[0]])?,
+            Self::cross_dyadic_words([u[0], u[1]], [v[0], v[1]])?,
+        ];
+        let normal_wide = [
+            Self::dyadic_stack_sum_wide_word(normal[0])?,
+            Self::dyadic_stack_sum_wide_word(normal[1])?,
+            Self::dyadic_stack_sum_wide_word(normal[2])?,
+        ];
+        let offset =
+            Self::product_sum_wide_narrow_words(normal_wide, first, [false; 3])?;
+        crate::trace_dispatch!("rational", "affine-plane3", "dyadic-stack-fused");
+        Some([
+            Self::materialize_dyadic_stack_sum(normal[0]),
+            Self::materialize_dyadic_stack_sum(normal[1]),
+            Self::materialize_dyadic_stack_sum(normal[2]),
+            Self::materialize_dyadic_stack_sum(offset),
+        ])
+    }
+
     fn difference_dyadic_words(left: DyadicWord, right: DyadicWord) -> Option<DyadicWord> {
         let denominator_shift = left.denominator_shift.max(right.denominator_shift);
         let align = |value: DyadicWord| {

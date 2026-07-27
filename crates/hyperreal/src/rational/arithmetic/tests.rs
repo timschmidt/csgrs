@@ -3543,6 +3543,76 @@ mod tests {
         ]);
     }
 
+    #[test]
+    fn affine_plane3_dyadic_stack_matches_expanded_determinants_and_falls_back() {
+        let dyadic = |numerator: i64, shift: usize| {
+            Rational::from_bigint_fraction(
+                BigInt::from(numerator),
+                BigUint::one() << shift,
+            )
+            .unwrap()
+        };
+        let points = [
+            [dyadic(17, 3), dyadic(-29, 5), dyadic(43, 4)],
+            [dyadic(61, 6), dyadic(73, 4), dyadic(-89, 7)],
+            [dyadic(-101, 5), dyadic(113, 8), dyadic(127, 6)],
+        ];
+        let references = points.each_ref().map(|point| point.each_ref());
+        let [x0, y0, z0] = references[0];
+        let [x1, y1, z1] = references[1];
+        let [x2, y2, z2] = references[2];
+        let signs = [true, false, false, false, true, true];
+        let x = Rational::signed_product_sum(
+            signs,
+            [[y1, z2], [y1, z0], [y0, z2], [z1, y2], [z1, y0], [z0, y2]],
+        );
+        let y = Rational::signed_product_sum(
+            signs,
+            [[z1, x2], [z1, x0], [z0, x2], [x1, z2], [x1, z0], [x0, z2]],
+        );
+        let z = Rational::signed_product_sum(
+            signs,
+            [[x1, y2], [x1, y0], [x0, y2], [y1, x2], [y1, x0], [y0, x2]],
+        );
+        let offset = Rational::signed_product_sum(
+            [false; 3],
+            [[&x, x0], [&y, y0], [&z, z0]],
+        );
+        assert_eq!(
+            Rational::affine_plane3_coefficients_known_dyadic(references),
+            Some([x, y, z, offset]),
+        );
+
+        let non_dyadic = Rational::fraction(1, 3).unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &non_dyadic;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+
+        let over_width = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 129_usize) + BigUint::one()),
+            BigUint::one(),
+        )
+        .unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &over_width;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+
+        let over_shift = Rational::from_bigint_fraction(
+            BigInt::one(),
+            BigUint::one() << 300_usize,
+        )
+        .unwrap();
+        let mut ineligible = references;
+        ineligible[0][0] = &over_shift;
+        assert!(
+            Rational::affine_plane3_coefficients_known_dyadic(ineligible).is_none()
+        );
+    }
+
     #[cfg(feature = "dispatch-trace")]
     #[test]
     fn signed_product_sum_ordering_traces_four_product_dyadic_stack_path() {
