@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     ArtifactCatalog, ArtifactCatalogError, AssemblyCsvDocument, CoordinateFrame2,
-    FabricationFileKind, PackageDigest, PortableArtifactPath, ReleaseArtifactDescriptor,
-    ReleaseArtifactRole, ReleasePreparationError, ReleasePreparationOptions,
-    ReleasePreparationReport, SemanticDocument,
+    FabricationCamRoundTripReport, FabricationFile, FabricationFileKind, FabricationManifest,
+    PackageDigest, PortableArtifactPath, ReleaseArtifactDescriptor, ReleaseArtifactRole,
+    ReleasePreparationError, ReleasePreparationOptions, ReleasePreparationReport, SemanticDocument,
 };
 
 /// Stable manufacturing-release manifest schema.
@@ -25,6 +25,8 @@ pub const MANUFACTURING_RELEASE_MANIFEST_PATH: &str = "manufacturing-release.jso
 /// Bundled JSON Schema path for the manufacturing-release envelope.
 pub const MANUFACTURING_RELEASE_JSON_SCHEMA_PATH: &str =
     "metadata/manufacturing-release-v1.schema.json";
+/// Canonical semantic document used for independent release verification.
+pub const MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH: &str = "source/design.hypercircuit.json";
 
 /// Returns the committed JSON Schema for the manufacturing-release envelope.
 pub fn manufacturing_release_json_schema() -> serde_json::Value {
@@ -224,6 +226,7 @@ impl ManufacturingReleaseOptions {
 
 /// Immutable release core. Detached signatures are deliberately outside its digest.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ManufacturingReleaseCore {
     pub schema: String,
     pub version: u32,
@@ -264,6 +267,7 @@ impl ManufacturingReleaseCore {
 
 /// Serialized manifest envelope with optional detached signatures.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ManufacturingReleaseManifest {
     pub core: ManufacturingReleaseCore,
     pub core_digest: PackageDigest,
@@ -304,6 +308,7 @@ pub enum ManufacturingReleaseError {
     Io(String),
     ManifestJson(String),
     UnsupportedManifest,
+    Evidence(String),
     Signature(String),
     Archive(String),
     ArchiveLimit(String),
@@ -427,6 +432,23 @@ impl ManufacturingReleaseBundle {
         options.requirements.dedup();
         let mut files = BTreeMap::new();
         let mut descriptors = Vec::new();
+        let semantic_document = document
+            .to_json_pretty()
+            .map_err(|error| {
+                ManufacturingReleaseError::Evidence(format!(
+                    "cannot serialize canonical semantic document: {error:?}"
+                ))
+            })?
+            .into_bytes();
+        descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+            MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH,
+            ReleaseArtifactRole::SemanticDocument,
+            &semantic_document,
+        )?);
+        files.insert(
+            MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH.into(),
+            semantic_document,
+        );
         for file in &report.fabrication.files {
             let path = format!("fabrication/{}", file.name);
             let role = match file.kind {
@@ -731,6 +753,7 @@ impl ManufacturingReleaseBundle {
         verifier: &dyn ReleaseSignatureVerifier,
     ) -> Result<(), ManufacturingReleaseError> {
         self.verify_integrity()?;
+        self.verify_evidence()?;
         for envelope in &self.manifest.signatures {
             let expected_digest = self.manifest.core_digest.canonical_text();
             if envelope.signed_digest != expected_digest {
@@ -742,6 +765,284 @@ impl ManufacturingReleaseBundle {
             verifier
                 .verify(envelope, &signature_payload(&expected_digest))
                 .map_err(ManufacturingReleaseError::Signature)?;
+        }
+        Ok(())
+    }
+
+    /// Independently validates schemas and packaged semantic/manufacturing evidence.
+    pub fn verify_evidence(&self) -> Result<(), ManufacturingReleaseError> {
+        if self.manifest.core.schema != MANUFACTURING_RELEASE_SCHEMA
+            || self.manifest.core.version != MANUFACTURING_RELEASE_VERSION
+        {
+            return Err(ManufacturingReleaseError::UnsupportedManifest);
+        }
+        if self.manifest.core.release_clean != self.manifest.core.release_blockers.is_empty() {
+            return Err(ManufacturingReleaseError::Evidence(
+                "release_clean must exactly reflect whether release_blockers is empty".into(),
+            ));
+        }
+
+        let release_schema = required_file(&self.files, MANUFACTURING_RELEASE_JSON_SCHEMA_PATH)?;
+        if release_schema != include_bytes!("../schemas/manufacturing-release-v1.schema.json") {
+            return Err(ManufacturingReleaseError::Evidence(
+                "packaged manufacturing-release JSON Schema differs from the committed schema"
+                    .into(),
+            ));
+        }
+        let schema: serde_json::Value =
+            serde_json::from_slice(release_schema).map_err(|error| {
+                ManufacturingReleaseError::Evidence(format!(
+                    "packaged manufacturing-release JSON Schema is invalid JSON: {error}"
+                ))
+            })?;
+        if schema["properties"]["core"]["properties"]["version"]["const"]
+            != MANUFACTURING_RELEASE_VERSION
+            || schema["properties"]["core"]["properties"]["schema"]["const"]
+                != MANUFACTURING_RELEASE_SCHEMA
+        {
+            return Err(ManufacturingReleaseError::Evidence(
+                "packaged manufacturing-release JSON Schema targets another schema/version".into(),
+            ));
+        }
+
+        let semantic_bytes =
+            required_file(&self.files, MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH)?;
+        let semantic_text = std::str::from_utf8(semantic_bytes).map_err(|error| {
+            ManufacturingReleaseError::Evidence(format!(
+                "canonical semantic document is not UTF-8: {error}"
+            ))
+        })?;
+        let semantic = SemanticDocument::from_json(semantic_text).map_err(|error| {
+            ManufacturingReleaseError::Evidence(format!(
+                "canonical semantic document failed semantic re-import: {error:?}"
+            ))
+        })?;
+        let intent = serde_json::to_vec(&semantic.design_intent)
+            .expect("design intent is infallibly serializable");
+        if PackageDigest::sha256(&intent) != self.manifest.core.design_intent_digest {
+            return Err(ManufacturingReleaseError::Evidence(
+                "semantic re-import design-intent digest differs from the release core".into(),
+            ));
+        }
+
+        self.verify_drc_evidence()?;
+        self.verify_fabrication_evidence()?;
+        self.verify_assembly_evidence()?;
+        self.verify_optional_evidence_references()?;
+        Ok(())
+    }
+
+    fn verify_drc_evidence(&self) -> Result<(), ManufacturingReleaseError> {
+        let bytes = required_file(&self.files, "evidence/hyperdrc.json")?;
+        if PackageDigest::sha256(bytes) != self.manifest.core.drc_report_digest {
+            return Err(ManufacturingReleaseError::Evidence(
+                "HyperDRC evidence digest differs from the release core".into(),
+            ));
+        }
+        let evidence: serde_json::Value = serde_json::from_slice(bytes).map_err(|error| {
+            ManufacturingReleaseError::Evidence(format!(
+                "HyperDRC evidence is invalid JSON: {error}"
+            ))
+        })?;
+        for (field, expected) in [
+            (
+                "capability_profile_id",
+                self.manifest.core.capability_profile_id.as_str(),
+            ),
+            (
+                "capability_profile_revision",
+                self.manifest.core.capability_profile_revision.as_str(),
+            ),
+            (
+                "capability_profile_digest",
+                self.manifest.core.capability_profile_digest.as_str(),
+            ),
+        ] {
+            if evidence[field].as_str() != Some(expected) {
+                return Err(ManufacturingReleaseError::Evidence(format!(
+                    "HyperDRC evidence field {field} differs from the release core"
+                )));
+            }
+        }
+        let checks = evidence["coverage"]["checks"].as_array().ok_or_else(|| {
+            ManufacturingReleaseError::Evidence(
+                "HyperDRC evidence has no complete coverage check array".into(),
+            )
+        })?;
+        if checks.is_empty() {
+            return Err(ManufacturingReleaseError::Evidence(
+                "HyperDRC evidence selected no readiness checks".into(),
+            ));
+        }
+        let mut identities = BTreeSet::new();
+        let mut coverage_blockers = 0_usize;
+        for check in checks {
+            let identity = check["check"]
+                .as_str()
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| {
+                    ManufacturingReleaseError::Evidence(
+                        "HyperDRC coverage record has no check identity".into(),
+                    )
+                })?;
+            if !identities.insert(identity) {
+                return Err(ManufacturingReleaseError::Evidence(format!(
+                    "duplicate HyperDRC coverage record {identity}"
+                )));
+            }
+            if check["policy_digest"].as_str()
+                != Some(self.manifest.core.capability_profile_digest.as_str())
+            {
+                return Err(ManufacturingReleaseError::Evidence(format!(
+                    "HyperDRC coverage record {identity} has the wrong policy digest"
+                )));
+            }
+            let status = check["status"].as_str().ok_or_else(|| {
+                ManufacturingReleaseError::Evidence(format!(
+                    "HyperDRC coverage record {identity} has no status"
+                ))
+            })?;
+            match status {
+                "passed" | "failed" | "not_applicable" => {}
+                "uncertain" => coverage_blockers += 1,
+                "skipped" => {
+                    if check["reason"]
+                        .as_str()
+                        .is_none_or(|reason| reason.trim().is_empty())
+                    {
+                        coverage_blockers += 1;
+                    }
+                }
+                _ => {
+                    return Err(ManufacturingReleaseError::Evidence(format!(
+                        "HyperDRC coverage record {identity} has unknown status {status}"
+                    )));
+                }
+            }
+        }
+        let violations = evidence["violations"].as_array().ok_or_else(|| {
+            ManufacturingReleaseError::Evidence("HyperDRC evidence has no violation array".into())
+        })?;
+        let drc_errors = violations
+            .iter()
+            .filter(|violation| violation["severity"].as_str() == Some("error"))
+            .count();
+        if self.manifest.core.release_clean && (coverage_blockers != 0 || drc_errors != 0) {
+            return Err(ManufacturingReleaseError::Evidence(
+                "release is marked clean despite blocking HyperDRC evidence".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn verify_fabrication_evidence(&self) -> Result<(), ManufacturingReleaseError> {
+        let manifest_descriptor = self
+            .manifest
+            .core
+            .artifacts
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.role == ReleaseArtifactRole::FabricationManifest)
+            .ok_or_else(|| {
+                ManufacturingReleaseError::Evidence(
+                    "release has no fabrication manifest artifact".into(),
+                )
+            })?;
+        let manifest_bytes = required_file(&self.files, manifest_descriptor.path.as_str())?;
+        if PackageDigest::sha256(manifest_bytes) != self.manifest.core.fabrication_manifest_digest {
+            return Err(ManufacturingReleaseError::Evidence(
+                "fabrication manifest digest differs from the release core".into(),
+            ));
+        }
+        let manifest = FabricationManifest::from_json(manifest_bytes).map_err(|error| {
+            ManufacturingReleaseError::Evidence(format!(
+                "fabrication manifest schema validation failed: {error}"
+            ))
+        })?;
+        let manifest_name = manifest_descriptor
+            .path
+            .as_str()
+            .strip_prefix("fabrication/")
+            .ok_or_else(|| {
+                ManufacturingReleaseError::Evidence(
+                    "fabrication manifest is outside fabrication/".into(),
+                )
+            })?;
+        let mut files = vec![FabricationFile {
+            name: manifest_name.into(),
+            kind: FabricationFileKind::Manifest,
+            bytes: manifest_bytes.to_vec(),
+        }];
+        for entry in &manifest.files {
+            let path = format!("fabrication/{}", entry.name);
+            files.push(FabricationFile {
+                name: entry.name.clone(),
+                kind: entry.kind,
+                bytes: required_file(&self.files, &path)?.to_vec(),
+            });
+        }
+        let audit = FabricationCamRoundTripReport::from_files(&files);
+        if !audit.is_release_clean() {
+            return Err(ManufacturingReleaseError::Evidence(format!(
+                "independent CAM semantic re-import failed: {:?}",
+                audit.issues
+            )));
+        }
+        Ok(())
+    }
+
+    fn verify_assembly_evidence(&self) -> Result<(), ManufacturingReleaseError> {
+        let schema = required_file(&self.files, "assembly/assembly-v2.schema.json")?;
+        let expected =
+            serde_json::to_vec_pretty(&crate::AssemblyOutputs::canonical_v2_json_schema())
+                .expect("assembly JSON Schema is infallibly serializable");
+        if schema != expected {
+            return Err(ManufacturingReleaseError::Evidence(
+                "packaged assembly JSON Schema differs from the library schema".into(),
+            ));
+        }
+        let assembly = required_file(&self.files, "assembly/assembly-v2.json")?;
+        let value: serde_json::Value = serde_json::from_slice(assembly).map_err(|error| {
+            ManufacturingReleaseError::Evidence(format!(
+                "canonical assembly evidence is invalid JSON: {error}"
+            ))
+        })?;
+        if value["version"] != 2 {
+            return Err(ManufacturingReleaseError::Evidence(
+                "canonical assembly evidence is not schema version 2".into(),
+            ));
+        }
+        let mut digest_bytes = Vec::new();
+        for (path, file) in self
+            .files
+            .iter()
+            .filter(|(path, _)| path.starts_with("assembly/"))
+        {
+            digest_bytes.extend_from_slice(&(path.len() as u64).to_be_bytes());
+            digest_bytes.extend_from_slice(path.as_bytes());
+            digest_bytes.extend_from_slice(file);
+        }
+        if PackageDigest::sha256(&digest_bytes) != self.manifest.core.assembly_digest {
+            return Err(ManufacturingReleaseError::Evidence(
+                "assembly evidence digest differs from the release core".into(),
+            ));
+        }
+        Ok(())
+    }
+
+    fn verify_optional_evidence_references(&self) -> Result<(), ManufacturingReleaseError> {
+        for evidence in [
+            &self.manifest.core.mixed_signal_evidence,
+            &self.manifest.core.test_evidence,
+        ] {
+            if let OptionalEvidenceStatus::Provided { artifact } = evidence {
+                let path = PortableArtifactPath::new(artifact.clone())?;
+                required_file(&self.files, path.as_str())?;
+            }
+        }
+        if let Some(panel) = &self.manifest.core.panel_definition {
+            let path = PortableArtifactPath::new(panel.clone())?;
+            required_file(&self.files, path.as_str())?;
         }
         Ok(())
     }
@@ -825,6 +1126,7 @@ impl ManufacturingReleaseBundle {
     /// envelopes can be transported without teaching HyperCircuit the trust store.
     pub fn zip_bytes(&self) -> Result<Vec<u8>, ManufacturingReleaseError> {
         self.verify_integrity()?;
+        self.verify_evidence()?;
         let cursor = Cursor::new(Vec::new());
         let mut writer = zip::ZipWriter::new(cursor);
         let options = zip::write::SimpleFileOptions::default()
@@ -1052,6 +1354,7 @@ impl ManufacturingReleaseBundle {
     /// an envelope that may use a caller-provided signing service.
     pub fn write_directory(&self, root: &Path) -> Result<(), ManufacturingReleaseError> {
         self.verify_integrity()?;
+        self.verify_evidence()?;
         ensure_safe_directory(root)?;
         for (relative, bytes) in &self.files {
             let destination = root.join(relative);
@@ -1143,6 +1446,16 @@ impl ManufacturingReleaseBundle {
         bundle.verify_integrity()?;
         Ok(bundle)
     }
+}
+
+fn required_file<'a>(
+    files: &'a BTreeMap<String, Vec<u8>>,
+    path: &str,
+) -> Result<&'a [u8], ManufacturingReleaseError> {
+    files
+        .get(path)
+        .map(Vec::as_slice)
+        .ok_or_else(|| ManufacturingReleaseError::MissingArtifact(path.into()))
 }
 
 fn read_archive_bytes(
@@ -1329,6 +1642,7 @@ fn decode_hex_digit(value: u8) -> Result<u8, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     #[test]
     fn archive_reader_rejects_duplicate_names_and_symbolic_links_before_manifest_loading() {
@@ -1363,5 +1677,21 @@ mod tests {
             ManufacturingReleaseBundle::from_zip_bytes(&symlink),
             Err(ManufacturingReleaseError::Archive(detail)) if detail.contains("symbolic-link")
         ));
+    }
+
+    proptest! {
+        #[test]
+        fn bounded_arbitrary_archive_bytes_never_panic(
+            bytes in proptest::collection::vec(any::<u8>(), 0..4096)
+        ) {
+            let limits = ReleaseArchiveLimits {
+                maximum_archive_bytes: 4096,
+                maximum_entries: 64,
+                maximum_file_bytes: 4096,
+                maximum_total_bytes: 4096,
+                maximum_compression_ratio: 16,
+            };
+            let _ = ManufacturingReleaseBundle::from_zip_bytes_with_limits(&bytes, limits);
+        }
     }
 }

@@ -13,12 +13,12 @@ use hypercircuit::{
     BoardSide, BoundaryScanChain, CircuitInstanceId, CoordinateFrame2, DesignForTestIntent,
     DesignIntent, Ed25519ReleaseSigner, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
     FunctionalRoleAssignment, FunctionalRoleTarget, MANUFACTURING_RELEASE_JSON_SCHEMA_PATH,
-    MANUFACTURING_RELEASE_MANIFEST_PATH, ManufacturingReleaseBundle,
-    ManufacturingReleaseDifference, ManufacturingReleaseOptions, NetId, NetIntent, NetKind,
-    NetScope, PanelBoardInstance, PanelDefinition, PinRef, ReleaseArchiveLimits,
-    ReleaseSignatureVerifier, ReleaseSigner, RigidTransform2, SemanticDocument, SemanticOrigin,
-    SemanticTarget, SignatureEnvelope, SourcePosition, SourceSpan, TestAccess, TestCoverageMethod,
-    TestRequirement, TestTarget,
+    MANUFACTURING_RELEASE_MANIFEST_PATH, MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH,
+    ManufacturingReleaseBundle, ManufacturingReleaseDifference, ManufacturingReleaseOptions, NetId,
+    NetIntent, NetKind, NetScope, PanelBoardInstance, PanelDefinition, PinRef,
+    ReleaseArchiveLimits, ReleaseSignatureVerifier, ReleaseSigner, RigidTransform2,
+    SemanticDocument, SemanticOrigin, SemanticTarget, SignatureEnvelope, SourcePosition,
+    SourceSpan, TestAccess, TestCoverageMethod, TestRequirement, TestTarget,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -542,6 +542,10 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
         1
     );
     assert!(left.files.contains_key("evidence/hyperdrc.json"));
+    assert!(
+        left.files
+            .contains_key(MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH)
+    );
     assert!(left.files.contains_key("assembly/assembly-v2.json"));
     assert!(left.files.contains_key("assembly/assembly-v2.schema.json"));
     assert!(
@@ -551,6 +555,20 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
 
     let zip = left.zip_bytes().unwrap();
     assert_eq!(zip, right.zip_bytes().unwrap());
+    let golden_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/manufacturing-release/release-board-v1.zip");
+    if std::env::var_os("UPDATE_HYPERCIRCUIT_GOLDEN").is_some() {
+        std::fs::create_dir_all(golden_path.parent().unwrap()).unwrap();
+        std::fs::write(&golden_path, &zip).unwrap();
+    } else {
+        assert_eq!(
+            zip,
+            std::fs::read(&golden_path).unwrap_or_else(|error| panic!(
+                "cannot read golden release {}: {error}; run with UPDATE_HYPERCIRCUIT_GOLDEN=1",
+                golden_path.display()
+            ))
+        );
+    }
     let reparsed = ManufacturingReleaseBundle::from_zip_bytes_with_limits(
         &zip,
         ReleaseArchiveLimits::default(),

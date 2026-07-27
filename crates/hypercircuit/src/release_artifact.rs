@@ -4,6 +4,7 @@ use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
+use unicode_normalization::UnicodeNormalization;
 
 use crate::PackageDigest;
 
@@ -20,6 +21,7 @@ pub enum ReleaseArtifactRole {
     PickAndPlace,
     AssemblyData,
     DrcReport,
+    SemanticDocument,
     Sarif,
     PanelDefinition,
     TestIntent,
@@ -65,7 +67,9 @@ impl PortableArtifactPath {
     /// Validates and retains an already-normalized portable path.
     pub fn new(path: impl Into<String>) -> Result<Self, ArtifactCatalogError> {
         let path = path.into();
+        let normalized = path.nfc().collect::<String>();
         let invalid = path.is_empty()
+            || normalized != path
             || path.starts_with('/')
             || path.starts_with('\\')
             || path.contains('\\')
@@ -188,6 +192,8 @@ mod tests {
         assert!(serde_json::from_str::<PortableArtifactPath>("\"../secret\"").is_err());
         assert!(PortableArtifactPath::new("C:/secret").is_err());
         assert!(PortableArtifactPath::new("fab\\top.gbr").is_err());
+        assert!(PortableArtifactPath::new("fab/cafe\u{301}.gbr").is_err());
+        assert!(PortableArtifactPath::new("fab/caf\u{e9}.gbr").is_ok());
         let descriptor = ReleaseArtifactDescriptor::from_bytes(
             "fab/top.gbr",
             ReleaseArtifactRole::Gerber,

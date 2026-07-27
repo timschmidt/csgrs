@@ -85,6 +85,12 @@ impl PackageDigest {
         if result.algorithm.trim().is_empty() || result.value.trim().is_empty() {
             return Err(PackageResolutionError::InvalidDigest);
         }
+        if result.algorithm == "sha256"
+            && (result.value.len() != 64
+                || !result.value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+        {
+            return Err(PackageResolutionError::InvalidDigest);
+        }
         Ok(result)
     }
 

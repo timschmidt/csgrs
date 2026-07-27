@@ -295,11 +295,12 @@ pub use legacy_csgrs::{
 pub use manufacturing_release::{
     Ed25519ReleaseSigner, Ed25519ReleaseVerifier, MANUFACTURING_RELEASE_JSON_SCHEMA_PATH,
     MANUFACTURING_RELEASE_MANIFEST_PATH, MANUFACTURING_RELEASE_SCHEMA,
-    MANUFACTURING_RELEASE_VERSION, ManufacturingReleaseBundle, ManufacturingReleaseCore,
-    ManufacturingReleaseDifference, ManufacturingReleaseError, ManufacturingReleaseManifest,
-    ManufacturingReleaseOptions, ManufacturingRequirement, ManufacturingRequirementKind,
-    OptionalEvidenceStatus, ReleaseArchiveLimits, ReleaseSignatureVerifier, ReleaseSigner,
-    SignatureEnvelope, manufacturing_release_json_schema,
+    MANUFACTURING_RELEASE_SEMANTIC_DOCUMENT_PATH, MANUFACTURING_RELEASE_VERSION,
+    ManufacturingReleaseBundle, ManufacturingReleaseCore, ManufacturingReleaseDifference,
+    ManufacturingReleaseError, ManufacturingReleaseManifest, ManufacturingReleaseOptions,
+    ManufacturingRequirement, ManufacturingRequirementKind, OptionalEvidenceStatus,
+    ReleaseArchiveLimits, ReleaseSignatureVerifier, ReleaseSigner, SignatureEnvelope,
+    manufacturing_release_json_schema,
 };
 #[cfg(feature = "geometry")]
 pub use materialize::{
