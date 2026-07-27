@@ -10,10 +10,12 @@ use hypercircuit::{
 };
 #[cfg(feature = "interchange")]
 use hypercircuit::{
-    CircuitInstanceId, DesignIntent, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
+    BoardSide, BoundaryScanChain, CircuitInstanceId, CoordinateFrame2, DesignForTestIntent,
+    DesignIntent, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
     FunctionalRoleAssignment, FunctionalRoleTarget, ManufacturingReleaseOptions, NetId, NetIntent,
-    NetKind, NetScope, PinRef, SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition,
-    SourceSpan,
+    NetKind, NetScope, PanelBoardInstance, PanelDefinition, PinRef, RigidTransform2,
+    SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition, SourceSpan, TestAccess,
+    TestCoverageMethod, TestRequirement, TestTarget,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -524,6 +526,12 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
     assert_eq!(left.files, right.files);
     assert!(left.files.contains_key("manufacturing-release.json"));
     assert!(left.files.contains_key("evidence/hyperdrc.json"));
+    assert!(left.files.contains_key("assembly/assembly-v2.json"));
+    assert!(left.files.contains_key("assembly/assembly-v2.schema.json"));
+    assert!(
+        left.files
+            .contains_key("assembly/pick-and-place.csv.dialect.json")
+    );
 
     let mut corrupted = left.clone();
     corrupted
@@ -532,6 +540,142 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
         .unwrap()
         .push(b'!');
     assert!(corrupted.verify().is_err());
+}
+
+#[cfg(feature = "interchange")]
+#[test]
+fn panel_release_expands_components_and_test_access_without_losing_child_identity() {
+    let checked = fluent_release_design();
+    let mut document = SemanticDocument::new(checked.circuit, Some(checked.schematic))
+        .unwrap()
+        .with_pcb(checked.layout)
+        .unwrap();
+    let pcb = document.pcb.as_ref().unwrap();
+    let panel = PanelDefinition {
+        id: "panel-a".into(),
+        frame: CoordinateFrame2::panel_default(),
+        outline: BoardOutline::rectangle(Real::from(200), Real::from(200)),
+        thickness: Real::from(2),
+        minimum_web: Real::one(),
+        minimum_rail: Real::from(3),
+        children: vec![PanelBoardInstance {
+            id: "unit-1".into(),
+            board: pcb.id.clone(),
+            outline: pcb.outline.clone(),
+            transform: RigidTransform2::new([Real::from(50), Real::from(50)], 0, false).unwrap(),
+        }],
+        rails: Vec::new(),
+        keepouts: Vec::new(),
+        tooling_holes: Vec::new(),
+        fiducials: Vec::new(),
+        separation: Vec::new(),
+        coupons: Vec::new(),
+        markings: Vec::new(),
+        edge_requirements: Vec::new(),
+    };
+    let test_target = TestTarget::Net {
+        circuit: document.circuit.id.clone(),
+        net: NetId::new("VCC").unwrap(),
+    };
+    document = document
+        .with_test_intent(DesignForTestIntent {
+            access: vec![TestAccess {
+                id: "TP1".into(),
+                target: test_target,
+                method: TestCoverageMethod::PhysicalAccess,
+                position: Some(point(10, 10)),
+                frame: CoordinateFrame2::board_default(),
+                side: BoardSide::Front,
+                reference: None,
+                pad_or_pin: None,
+                probe_diameter: Some(Real::one()),
+            }],
+            ..DesignForTestIntent::default()
+        })
+        .unwrap()
+        .with_panel(panel)
+        .unwrap();
+
+    let bundle = document
+        .build_manufacturing_release(
+            ManufacturingReleaseOptions::for_document(&document),
+            ReleasePreparationOptions::default(),
+        )
+        .unwrap();
+    bundle.verify().unwrap();
+    assert!(bundle.files.contains_key("panel/panel.json"));
+    assert!(bundle.files.contains_key("panel/panel.svg"));
+    assert!(bundle.files.contains_key("test/panel-test-access.json"));
+    let assembly: serde_json::Value =
+        serde_json::from_slice(&bundle.files["assembly/assembly-v2.json"]).unwrap();
+    assert_eq!(assembly["panel"], "panel-a");
+    assert_eq!(assembly["components"][0]["panel_child"], "unit-1");
+}
+
+#[cfg(feature = "interchange")]
+#[test]
+fn ordinary_release_runs_native_dft_requirements_with_source_evidence() {
+    let checked = fluent_release_design();
+    let circuit_id = checked.circuit.id.clone();
+    let source = SourceSpan::new(
+        "board.copper",
+        SourcePosition::new(100, 10, 1),
+        SourcePosition::new(126, 10, 27),
+    );
+    let mut document = SemanticDocument::new(checked.circuit, Some(checked.schematic))
+        .unwrap()
+        .with_pcb(checked.layout)
+        .unwrap();
+    document.test_intent.requirements.push(TestRequirement {
+        id: "probe-vcc".into(),
+        target: TestTarget::Net {
+            circuit: circuit_id,
+            net: NetId::new("VCC").unwrap(),
+        },
+        accepted_methods: vec![TestCoverageMethod::PhysicalAccess],
+        source: Some(source.clone()),
+    });
+
+    let report = document
+        .prepare_release(ReleasePreparationOptions::default())
+        .unwrap();
+    let finding = report
+        .drc
+        .violations
+        .iter()
+        .find(|finding| finding.check == "testpoint-coverage-readiness")
+        .expect("missing required physical access must be release-visible");
+    assert!(finding.subjects.iter().any(|subject| {
+        subject
+            .source
+            .as_ref()
+            .is_some_and(|span| span.uri == source.uri && span.start.byte == source.start.byte)
+    }));
+    assert!(report.drc.coverage.checks.iter().any(|record| {
+        record.check == "testpoint-coverage-readiness"
+            && record.status == hyperdrc::CheckExecutionStatus::Failed
+    }));
+
+    document.test_intent.requirements[0].accepted_methods =
+        vec![TestCoverageMethod::BoundaryScan {
+            chain: "chain-a".into(),
+        }];
+    document
+        .test_intent
+        .boundary_scan_chains
+        .push(BoundaryScanChain {
+            id: "chain-a".into(),
+            devices: Vec::new(),
+            covered_targets: vec![document.test_intent.requirements[0].target.clone()],
+            instruction_register_length: None,
+        });
+    let covered = document
+        .prepare_release(ReleasePreparationOptions::default())
+        .unwrap();
+    assert!(matches!(
+        covered.drc.test_coverage.records[0].status,
+        hyperdrc::NativeTestCoverageStatus::BoundaryScan { ref chain } if chain == "chain-a"
+    ));
 }
 
 #[test]

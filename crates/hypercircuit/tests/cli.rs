@@ -329,7 +329,9 @@ command = ["cat", "design.json"]
         ],
     );
     assert_success(&inspect);
-    assert!(String::from_utf8_lossy(&inspect.stdout).contains("hypercircuit.manufacturing-release"));
+    assert!(
+        String::from_utf8_lossy(&inspect.stdout).contains("hypercircuit.manufacturing-release")
+    );
 
     fs::remove_dir_all(directory).unwrap();
 }

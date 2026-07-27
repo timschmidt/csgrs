@@ -9,15 +9,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     BoardContour, BoardContourSegment, Circuit, CircuitEventAgenda, CircuitEventRequest,
-    CircuitLibrary, DesignIntent, DesignRevision, PcbLayout, PcbRouteSegment, SchematicLayout,
-    SchematicPresentation, SignalBundleLibrary, TransientRunPolicy,
+    CircuitLibrary, DesignForTestIntent, DesignIntent, DesignRevision, PanelDefinition, PcbLayout,
+    PcbRouteSegment, SchematicLayout, SchematicPresentation, SignalBundleLibrary,
+    TransientRunPolicy,
 };
 
 /// Stable schema family emitted by this crate.
 pub const SEMANTIC_SCHEMA: &str = "org.hypercircuit.semantic";
 
 /// Latest schema version understood by this crate.
-pub const SEMANTIC_SCHEMA_VERSION: u32 = 29;
+pub const SEMANTIC_SCHEMA_VERSION: u32 = 30;
 
 /// Oldest schema revision upgraded by the built-in additive migrations.
 pub const SEMANTIC_SCHEMA_MIN_MIGRATABLE_VERSION: u32 = 8;
@@ -69,6 +70,8 @@ pub enum SemanticMigrationStep {
     /// Version 29 retained language-neutral source spans, net semantics,
     /// functional roles, typed values, and concrete part-resolution evidence.
     AuthoredDesignIntent,
+    /// Version 30 added typed panel and design-for-test manufacturing intent.
+    ManufacturingIntent,
 }
 
 /// Evidence describing an automatic semantic JSON upgrade.
@@ -108,6 +111,12 @@ pub struct SemanticDocument {
     /// Language-neutral authored semantics preserved across front-end lowering.
     #[serde(default)]
     pub design_intent: DesignIntent,
+    /// Release-facing test requirements, access, and coverage claims.
+    #[serde(default)]
+    pub test_intent: DesignForTestIntent,
+    /// Optional typed manufacturing panel definition.
+    #[serde(default)]
+    pub panel: Option<PanelDefinition>,
     /// Preordered exact authored circuit-event trace.
     #[serde(default)]
     pub event_trace: Vec<CircuitEventRequest>,
@@ -142,6 +151,10 @@ pub enum SemanticInterchangeError {
     InvalidSignalBundles { issue_count: usize },
     /// Authored source/net/role/part intent is invalid or stale.
     InvalidDesignIntent { issue_count: usize },
+    /// Design-for-test intent is structurally inconsistent.
+    InvalidTestIntent { issue_count: usize },
+    /// Panel intent is structurally or geometrically inconsistent.
+    InvalidPanel { issue_count: usize },
     /// Authored event trace ordering, payload, or addresses are inconsistent.
     InvalidEventTrace { issue_count: usize },
     /// Exact transient-run bounds or adaptation controls are invalid.
@@ -185,6 +198,14 @@ impl Display for SemanticInterchangeError {
                 formatter,
                 "semantic authored intent has {issue_count} validation issue(s)"
             ),
+            Self::InvalidTestIntent { issue_count } => write!(
+                formatter,
+                "semantic test intent has {issue_count} validation issue(s)"
+            ),
+            Self::InvalidPanel { issue_count } => write!(
+                formatter,
+                "semantic panel has {issue_count} validation issue(s)"
+            ),
             Self::InvalidEventTrace { issue_count } => write!(
                 formatter,
                 "semantic event trace has {issue_count} validation issue(s)"
@@ -216,6 +237,8 @@ impl SemanticDocument {
             circuit_definitions: Vec::new(),
             signal_bundles: SignalBundleLibrary::default(),
             design_intent: DesignIntent::default(),
+            test_intent: DesignForTestIntent::default(),
+            panel: None,
             event_trace: Vec::new(),
             transient_run: None,
             schematic,
@@ -249,6 +272,23 @@ impl SemanticDocument {
         design_intent: DesignIntent,
     ) -> Result<Self, SemanticInterchangeError> {
         self.design_intent = design_intent;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches and validates retained design-for-test intent.
+    pub fn with_test_intent(
+        mut self,
+        test_intent: DesignForTestIntent,
+    ) -> Result<Self, SemanticInterchangeError> {
+        self.test_intent = test_intent;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Attaches and validates a typed manufacturing panel.
+    pub fn with_panel(mut self, panel: PanelDefinition) -> Result<Self, SemanticInterchangeError> {
+        self.panel = Some(panel);
         self.validate()?;
         Ok(self)
     }
@@ -427,6 +467,9 @@ impl SemanticDocument {
         if version < 29 {
             steps.push(SemanticMigrationStep::AuthoredDesignIntent);
         }
+        if version < 30 {
+            steps.push(SemanticMigrationStep::ManufacturingIntent);
+        }
         value["version"] = serde_json::Value::from(SEMANTIC_SCHEMA_VERSION);
         let document = serde_json::from_value::<Self>(value)
             .map_err(|error| SemanticInterchangeError::Json(error.to_string()))?;
@@ -480,6 +523,25 @@ impl SemanticDocument {
             return Err(SemanticInterchangeError::InvalidDesignIntent {
                 issue_count: intent_report.issues.len(),
             });
+        }
+        let test_issues = self.test_intent.validate_against(&library);
+        if !test_issues.is_empty() {
+            return Err(SemanticInterchangeError::InvalidTestIntent {
+                issue_count: test_issues.len(),
+            });
+        }
+        if let Some(panel) = &self.panel {
+            let mut issues = panel.validate();
+            if let Some(pcb) = &self.pcb
+                && panel.children_for_board(&pcb.id).next().is_none()
+            {
+                issues.push(crate::PanelIssue::BoardNotPresent(pcb.id.as_str().into()));
+            }
+            if !issues.is_empty() {
+                return Err(SemanticInterchangeError::InvalidPanel {
+                    issue_count: issues.len(),
+                });
+            }
         }
         let mut event_issue_count = self
             .event_trace
@@ -891,6 +953,24 @@ pub(crate) mod point {
         D: serde::Deserializer<'de>,
     {
         ExactPoint::deserialize(deserializer).map(Into::into)
+    }
+}
+
+pub(crate) mod optional_point {
+    use super::{Deserialize, ExactPoint, Point2, Serialize};
+
+    pub fn serialize<S>(point: &Option<Point2>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        point.as_ref().map(ExactPoint::from).serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Point2>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Option::<ExactPoint>::deserialize(deserializer).map(|point| point.map(Point2::from))
     }
 }
 

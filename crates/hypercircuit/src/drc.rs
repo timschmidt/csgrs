@@ -27,9 +27,10 @@ use hyperdrc::constraint_policy::{
 use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use hyperdrc::{
     CapabilityProfile, Check, CheckCoverage, CheckRunDisposition, EvidenceContext,
-    FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, PcbSketch,
+    FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, NativeTestAccess,
+    NativeTestCoverageMethod, NativeTestCoverageReport, NativeTestRequirement, PcbSketch,
     ReadinessContext, ReadinessRunner, Severity, Violation, default_checks,
-    opinionated_prototype_profile,
+    native_testpoint_coverage, opinionated_prototype_profile,
 };
 use hyperphysics::{
     MaterialPropertyGraph, MaterialPropertyKind, PropertyResolutionStatus, PropertyValue,
@@ -38,11 +39,11 @@ use hyperphysics::{
 use hyperreal::RealSign;
 
 use crate::{
-    BoardSide, Circuit, CircuitId, DesignIntent, DrillShape, FunctionalBindingTarget,
-    FunctionalRole, FunctionalRoleAssignment, FunctionalRoleTarget, KeepoutScope,
-    LandPatternGraphicPrimitive, LayerRole, MaterializedCopperIdentity, NetKind, PcbLayout,
-    PcbMaterializationReport, Plating, ProcessLayerRole, QuantityDimension, Real, SemanticTarget,
-    SourceSpan, StackupLayerKind,
+    BoardSide, Circuit, CircuitId, DesignForTestIntent, DesignIntent, DrillShape,
+    FunctionalBindingTarget, FunctionalRole, FunctionalRoleAssignment, FunctionalRoleTarget,
+    KeepoutScope, LandPatternGraphicPrimitive, LayerRole, MaterializedCopperIdentity, NetKind,
+    PcbLayout, PcbMaterializationReport, Plating, ProcessLayerRole, QuantityDimension, Real,
+    SemanticTarget, SourceSpan, StackupLayerKind, TestCoverageMethod,
 };
 
 /// HyperPhysics custom-property key for a dimensionless relative permittivity.
@@ -232,6 +233,10 @@ pub struct HyperDrcHandoff {
     pub authored_nets: Vec<AuthoredNetIntent>,
     /// Authoritative component/subcircuit functional roles and physical endpoints.
     pub authored_roles: Vec<AuthoredFunctionalRole>,
+    /// Release-facing test requirements evaluated by HyperDRC.
+    pub test_requirements: Vec<NativeTestRequirement>,
+    /// Physical and nonphysical test coverage claims.
+    pub test_access: Vec<NativeTestAccess>,
     /// Retained conversion limitations.
     pub omissions: Vec<DrcHandoffOmission>,
 }
@@ -321,6 +326,8 @@ pub struct HyperDrcReadinessReport {
     pub violations: Vec<Violation>,
     /// Explicit disposition for every check in HyperDRC's default registry.
     pub coverage: CheckCoverage,
+    /// Requirement-by-requirement DFT disposition without conflating access and fault coverage.
+    pub test_coverage: NativeTestCoverageReport,
     /// Selected manufacturing capability identity.
     pub capability_profile_id: String,
     /// Selected manufacturing capability revision.
@@ -625,6 +632,8 @@ impl HyperDrcHandoff {
             authored_components,
             authored_nets: Vec::new(),
             authored_roles: Vec::new(),
+            test_requirements: Vec::new(),
+            test_access: Vec::new(),
             omissions,
         }
     }
@@ -646,6 +655,7 @@ impl HyperDrcHandoff {
             circuit,
             &PcbMaterialPropertyLibrary::default(),
             Some(intent),
+            None,
         )
     }
 
@@ -660,40 +670,93 @@ impl HyperDrcHandoff {
         circuit: &Circuit,
         materials: &PcbMaterialPropertyLibrary,
         intent: Option<&DesignIntent>,
+        test_intent: Option<&DesignForTestIntent>,
     ) -> Self {
         let mut handoff =
             Self::from_materialization_with_materials(layout, materialized, materials);
-        let Some(intent) = intent else {
-            return handoff;
-        };
-        handoff.authored_nets = intent
-            .nets
-            .iter()
-            .filter(|net| net.circuit == circuit.id)
-            .map(|net| AuthoredNetIntent {
-                net: net.net.as_str().to_owned(),
-                kind: authored_net_kind(&net.kind),
-                nominal_voltage: net.nominal_value.as_ref().and_then(|value| {
-                    (value.dimension == QuantityDimension::Voltage).then(|| value.value.clone())
-                }),
-                subject: finding_subject(
-                    "net",
-                    net.net.as_str(),
-                    intent,
-                    &SemanticTarget::Net {
-                        circuit: net.circuit.clone(),
-                        net: net.net.clone(),
+        if let Some(intent) = intent {
+            handoff.authored_nets = intent
+                .nets
+                .iter()
+                .filter(|net| net.circuit == circuit.id)
+                .map(|net| AuthoredNetIntent {
+                    net: net.net.as_str().to_owned(),
+                    kind: authored_net_kind(&net.kind),
+                    nominal_voltage: net.nominal_value.as_ref().and_then(|value| {
+                        (value.dimension == QuantityDimension::Voltage).then(|| value.value.clone())
+                    }),
+                    subject: finding_subject(
+                        "net",
+                        net.net.as_str(),
+                        intent,
+                        &SemanticTarget::Net {
+                            circuit: net.circuit.clone(),
+                            net: net.net.clone(),
+                        },
+                    ),
+                })
+                .collect();
+            handoff.authored_roles = intent
+                .roles
+                .iter()
+                .filter_map(|assignment| {
+                    authored_functional_role(circuit, materialized, intent, assignment)
+                })
+                .collect();
+        }
+        if let Some(test_intent) = test_intent {
+            handoff.test_requirements = test_intent
+                .requirements
+                .iter()
+                .map(|requirement| NativeTestRequirement {
+                    id: requirement.id.clone(),
+                    target: requirement.target.stable_id(),
+                    subject: FindingSubject {
+                        kind: "test-requirement".into(),
+                        id: requirement.id.clone(),
+                        source: requirement.source.as_ref().map(finding_source_span),
                     },
-                ),
-            })
-            .collect();
-        handoff.authored_roles = intent
-            .roles
-            .iter()
-            .filter_map(|assignment| {
-                authored_functional_role(circuit, materialized, intent, assignment)
-            })
-            .collect();
+                    accepted_methods: requirement
+                        .accepted_methods
+                        .iter()
+                        .map(native_test_method)
+                        .collect(),
+                })
+                .collect();
+            let mut test_access = test_intent
+                .access
+                .iter()
+                .map(|access| NativeTestAccess {
+                    id: access.id.clone(),
+                    target: access.target.stable_id(),
+                    method: native_test_method(&access.method),
+                    locations: access
+                        .position
+                        .as_ref()
+                        .map(|point| vec![[point.x.clone(), point.y.clone()]])
+                        .unwrap_or_default(),
+                    subject: Some(FindingSubject {
+                        kind: "test-access".into(),
+                        id: access.id.clone(),
+                        source: None,
+                    }),
+                })
+                .collect::<Vec<_>>();
+            test_access.extend(test_intent.boundary_scan_chains.iter().flat_map(|chain| {
+                chain.covered_targets.iter().map(|target| NativeTestAccess {
+                    id: format!("boundary-scan:{}/{}", chain.id, target.stable_id()),
+                    target: target.stable_id(),
+                    method: NativeTestCoverageMethod::BoundaryScan(chain.id.clone()),
+                    locations: Vec::new(),
+                    subject: Some(FindingSubject {
+                        kind: "boundary-scan-chain".into(),
+                        id: chain.id.clone(),
+                        source: None,
+                    }),
+                })
+            }));
+            handoff.test_access = test_access;
+        }
         handoff
     }
 
@@ -728,6 +791,7 @@ impl HyperDrcHandoff {
             .as_ref()
             .unwrap_or(&policy.process_board_edge_clearance);
         let mut violations = Vec::new();
+        let mut test_coverage = NativeTestCoverageReport::default();
         let runner =
             ReadinessRunner::new(default_checks().iter().copied()).with_context(ReadinessContext {
                 policy_digest: Some(profile_digest.clone()),
@@ -770,6 +834,12 @@ impl HyperDrcHandoff {
                     }
                     Check::AuthoredFunctionalRoleReadiness => {
                         violations.extend(authored_functional_role_readiness(&self.authored_roles));
+                    }
+                    Check::TestpointCoverageReadiness => {
+                        let evaluation =
+                            native_testpoint_coverage(&self.test_requirements, &self.test_access);
+                        test_coverage = evaluation.report;
+                        violations.extend(evaluation.violations);
                     }
                     Check::MinimumMaskOpening => {
                         for process in self.mask_layers() {
@@ -900,6 +970,7 @@ impl HyperDrcHandoff {
         HyperDrcReadinessReport {
             violations,
             coverage,
+            test_coverage,
             capability_profile_id: profile.id.clone(),
             capability_profile_revision: profile.revision.clone(),
             capability_profile_digest: profile_digest,
@@ -989,6 +1060,22 @@ fn authored_net_kind(kind: &NetKind) -> AuthoredNetKind {
             name: name.clone(),
             version: version.clone(),
         },
+    }
+}
+
+fn native_test_method(method: &TestCoverageMethod) -> NativeTestCoverageMethod {
+    match method {
+        TestCoverageMethod::PhysicalAccess => NativeTestCoverageMethod::PhysicalAccess,
+        TestCoverageMethod::BoundaryScan { chain } => {
+            NativeTestCoverageMethod::BoundaryScan(chain.clone())
+        }
+        TestCoverageMethod::Functional { procedure } => {
+            NativeTestCoverageMethod::Functional(procedure.clone())
+        }
+        TestCoverageMethod::Waived { reason } => NativeTestCoverageMethod::Waived(reason.clone()),
+        TestCoverageMethod::Untestable { reason } => {
+            NativeTestCoverageMethod::Untestable(reason.clone())
+        }
     }
 }
 
@@ -1820,6 +1907,8 @@ mod tests {
             authored_components: Vec::new(),
             authored_nets: Vec::new(),
             authored_roles: Vec::new(),
+            test_requirements: Vec::new(),
+            test_access: Vec::new(),
             omissions,
         };
         let report = handoff.run_readiness(&DrcReadinessPolicy::default());

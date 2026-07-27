@@ -6,9 +6,73 @@ use std::str::FromStr;
 use hyperlattice::Point2;
 
 use crate::{
-    AssemblyVariantId, BoardSide, Circuit, CircuitInstanceId, DeviceModelId, LandPatternId,
-    PartRef, PcbLayout, Real,
+    AssemblyVariantId, BoardId, BoardSide, Circuit, CircuitInstanceId, CoordinateFrame2,
+    DeviceModelId, LandPatternId, PanelDefinition, PanelIssue, PartRef, PcbLayout, Real,
+    RigidTransform2,
 };
+
+/// Stable canonical assembly-data schema identity.
+pub const ASSEMBLY_DATA_SCHEMA: &str = "hypercircuit.assembly-data";
+/// Current canonical assembly-data schema revision.
+pub const ASSEMBLY_DATA_VERSION: u32 = 2;
+
+/// Explicit status for assembly facts unavailable from current retained intent.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub enum AssemblyEvidence<T> {
+    Provided(T),
+    NotProvided { reason: String },
+    NotRequired { reason: String },
+}
+
+/// One machine-neutral canonical component record.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct AssemblyComponentV2 {
+    pub stable_component_id: String,
+    pub reference: CircuitInstanceId,
+    pub chosen_part: Option<PartRef>,
+    pub dnp: bool,
+    pub panel_child: Option<String>,
+    pub side: Option<BoardSide>,
+    pub centroid: Option<[Real; 2]>,
+    pub rotation_degrees: Option<Real>,
+    pub coordinate_frame: CoordinateFrame2,
+    pub polarity: AssemblyEvidence<String>,
+    pub pin_one: AssemblyEvidence<String>,
+    pub height: AssemblyEvidence<Real>,
+    pub package: Option<LandPatternId>,
+    pub provenance: Vec<String>,
+}
+
+/// Canonical assembly schema v2; CSV remains a rendered adapter.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct AssemblyDataV2 {
+    pub schema: String,
+    pub version: u32,
+    pub release: String,
+    pub variant: String,
+    pub panel: Option<String>,
+    pub coordinate_frame: CoordinateFrame2,
+    pub components: Vec<AssemblyComponentV2>,
+}
+
+/// Machine-readable CSV dialect sidecar.
+#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AssemblyCsvDialect {
+    pub schema: String,
+    pub schema_version: u32,
+    pub document: String,
+    pub delimiter: char,
+    pub quote: char,
+    pub line_ending: String,
+    pub encoding: String,
+    pub columns: Vec<String>,
+    /// JSON Schema for the decoded row object after CSV parsing.
+    pub row_schema: serde_json::Value,
+}
 
 /// Variant-specific fitted-part substitution for one logical instance.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -432,6 +496,300 @@ impl AssemblyOutputs {
             ));
         }
         output
+    }
+
+    /// Builds canonical assembly schema v2 using exact retained coordinates.
+    pub fn canonical_v2(
+        &self,
+        release: impl Into<String>,
+        frame: CoordinateFrame2,
+        panel: Option<String>,
+        board_to_panel: Option<&RigidTransform2>,
+    ) -> AssemblyDataV2 {
+        let mut components = self
+            .pick_and_place
+            .iter()
+            .map(|row| {
+                let centroid = [row.position.x.clone(), row.position.y.clone()];
+                let centroid =
+                    board_to_panel.map_or(centroid.clone(), |transform| transform.apply(centroid));
+                AssemblyComponentV2 {
+                    stable_component_id: format!("component:{}", row.reference.as_str()),
+                    reference: row.reference.clone(),
+                    chosen_part: row.part.clone(),
+                    dnp: false,
+                    panel_child: None,
+                    side: Some(row.side),
+                    centroid: Some(centroid),
+                    rotation_degrees: Some(row.rotation_degrees.clone()),
+                    coordinate_frame: frame.clone(),
+                    polarity: AssemblyEvidence::NotProvided {
+                        reason: "no typed polarity marker retained for this component".into(),
+                    },
+                    pin_one: AssemblyEvidence::NotProvided {
+                        reason: "no typed pin-one marker retained for this component".into(),
+                    },
+                    height: AssemblyEvidence::NotProvided {
+                        reason: "no selected-package height evidence retained".into(),
+                    },
+                    package: Some(row.land_pattern.clone()),
+                    provenance: row
+                        .part
+                        .as_ref()
+                        .map(|part| vec![format!("part:{}", part.as_str())])
+                        .unwrap_or_default(),
+                }
+            })
+            .collect::<Vec<_>>();
+        components.extend(
+            self.dnp_instances
+                .iter()
+                .map(|reference| AssemblyComponentV2 {
+                    stable_component_id: format!("component:{}", reference.as_str()),
+                    reference: reference.clone(),
+                    chosen_part: None,
+                    dnp: true,
+                    panel_child: None,
+                    side: None,
+                    centroid: None,
+                    rotation_degrees: None,
+                    coordinate_frame: frame.clone(),
+                    polarity: AssemblyEvidence::NotRequired {
+                        reason: "component is not populated in this variant".into(),
+                    },
+                    pin_one: AssemblyEvidence::NotRequired {
+                        reason: "component is not populated in this variant".into(),
+                    },
+                    height: AssemblyEvidence::NotRequired {
+                        reason: "component is not populated in this variant".into(),
+                    },
+                    package: None,
+                    provenance: Vec::new(),
+                }),
+        );
+        components.sort_by(|left, right| left.reference.cmp(&right.reference));
+        AssemblyDataV2 {
+            schema: ASSEMBLY_DATA_SCHEMA.into(),
+            version: ASSEMBLY_DATA_VERSION,
+            release: release.into(),
+            variant: self
+                .variant
+                .as_ref()
+                .map(AssemblyVariantId::as_str)
+                .unwrap_or("default")
+                .into(),
+            panel,
+            coordinate_frame: frame,
+            components,
+        }
+    }
+
+    /// Expands canonical assembly records for every matching child in a panel.
+    pub fn canonical_v2_for_panel(
+        &self,
+        release: impl Into<String>,
+        panel: &PanelDefinition,
+        board: &BoardId,
+    ) -> Result<AssemblyDataV2, PanelIssue> {
+        let release = release.into();
+        let children = panel.children_for_board(board).collect::<Vec<_>>();
+        if children.is_empty() {
+            return Err(PanelIssue::BoardNotPresent(board.as_str().into()));
+        }
+        let mut components = Vec::new();
+        for child in children {
+            let mut child_data = self.canonical_v2(
+                release.clone(),
+                panel.frame.clone(),
+                Some(panel.id.clone()),
+                Some(&child.transform),
+            );
+            for component in &mut child_data.components {
+                component.stable_component_id = format!(
+                    "panel:{}/child:{}/{}",
+                    panel.id, child.id, component.stable_component_id
+                );
+                component.panel_child = Some(child.id.clone());
+            }
+            components.extend(child_data.components);
+        }
+        components.sort_by(|left, right| {
+            left.panel_child
+                .cmp(&right.panel_child)
+                .then_with(|| left.reference.cmp(&right.reference))
+        });
+        Ok(AssemblyDataV2 {
+            schema: ASSEMBLY_DATA_SCHEMA.into(),
+            version: ASSEMBLY_DATA_VERSION,
+            release,
+            variant: self
+                .variant
+                .as_ref()
+                .map(AssemblyVariantId::as_str)
+                .unwrap_or("default")
+                .into(),
+            panel: Some(panel.id.clone()),
+            coordinate_frame: panel.frame.clone(),
+            components,
+        })
+    }
+
+    /// Returns deterministic JSON for the canonical assembly schema.
+    #[cfg(feature = "interchange")]
+    pub fn canonical_v2_json(
+        &self,
+        release: impl Into<String>,
+        frame: CoordinateFrame2,
+        panel: Option<String>,
+        board_to_panel: Option<&RigidTransform2>,
+    ) -> String {
+        serde_json::to_string_pretty(&self.canonical_v2(release, frame, panel, board_to_panel))
+            .expect("canonical assembly data is infallibly serializable")
+    }
+
+    /// JSON Schema for the stable top-level assembly-data v2 contract.
+    pub fn canonical_v2_json_schema() -> serde_json::Value {
+        serde_json::json!({
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "urn:hypercircuit:assembly-data:2",
+            "title": "HyperCircuit canonical assembly data v2",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "schema",
+                "version",
+                "release",
+                "variant",
+                "panel",
+                "coordinate_frame",
+                "components"
+            ],
+            "properties": {
+                "schema": { "const": ASSEMBLY_DATA_SCHEMA },
+                "version": { "const": ASSEMBLY_DATA_VERSION },
+                "release": { "type": "string", "minLength": 1 },
+                "variant": { "type": "string", "minLength": 1 },
+                "panel": { "type": ["string", "null"] },
+                "coordinate_frame": { "type": "object" },
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "stable_component_id",
+                            "reference",
+                            "chosen_part",
+                            "dnp",
+                            "panel_child",
+                            "side",
+                            "centroid",
+                            "rotation_degrees",
+                            "coordinate_frame",
+                            "polarity",
+                            "pin_one",
+                            "height",
+                            "package",
+                            "provenance"
+                        ],
+                        "properties": {
+                            "stable_component_id": { "type": "string", "minLength": 1 },
+                            "reference": { "type": "string", "minLength": 1 },
+                            "chosen_part": { "type": ["string", "null"] },
+                            "dnp": { "type": "boolean" },
+                            "panel_child": { "type": ["string", "null"] },
+                            "side": {},
+                            "centroid": { "type": ["array", "null"], "minItems": 2, "maxItems": 2 },
+                            "rotation_degrees": {},
+                            "coordinate_frame": { "type": "object" },
+                            "polarity": { "type": "object" },
+                            "pin_one": { "type": "object" },
+                            "height": { "type": "object" },
+                            "package": { "type": ["string", "null"] },
+                            "provenance": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    /// Describes each rendered CSV's exact parser dialect and columns.
+    pub fn csv_dialect(document: AssemblyCsvDocument) -> AssemblyCsvDialect {
+        let (name, columns) = match document {
+            AssemblyCsvDocument::Bom => (
+                "bom",
+                vec!["quantity", "references", "part", "model", "land_pattern"],
+            ),
+            AssemblyCsvDocument::PickAndPlace => (
+                "pick_and_place",
+                vec![
+                    "reference",
+                    "part",
+                    "land_pattern",
+                    "x",
+                    "y",
+                    "rotation_degrees",
+                    "side",
+                ],
+            ),
+            AssemblyCsvDocument::Dnp => ("dnp", vec!["reference", "variant"]),
+        };
+        AssemblyCsvDialect {
+            schema: "hypercircuit.assembly-csv-dialect".into(),
+            schema_version: 1,
+            document: name.into(),
+            delimiter: ',',
+            quote: '"',
+            line_ending: "LF".into(),
+            encoding: "UTF-8".into(),
+            columns: columns.into_iter().map(str::to_owned).collect(),
+            row_schema: Self::csv_row_json_schema(document),
+        }
+    }
+
+    /// JSON Schema for one decoded row of a rendered assembly CSV.
+    pub fn csv_row_json_schema(document: AssemblyCsvDocument) -> serde_json::Value {
+        let dialect = match document {
+            AssemblyCsvDocument::Bom => (
+                "bom",
+                vec!["quantity", "references", "part", "model", "land_pattern"],
+            ),
+            AssemblyCsvDocument::PickAndPlace => (
+                "pick-and-place",
+                vec![
+                    "reference",
+                    "part",
+                    "land_pattern",
+                    "x",
+                    "y",
+                    "rotation_degrees",
+                    "side",
+                ],
+            ),
+            AssemblyCsvDocument::Dnp => ("dnp", vec!["reference", "variant"]),
+        };
+        let properties = dialect
+            .1
+            .iter()
+            .map(|column| {
+                (
+                    (*column).to_owned(),
+                    serde_json::json!({ "type": "string" }),
+                )
+            })
+            .collect::<serde_json::Map<_, _>>();
+        serde_json::json!({
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": format!("urn:hypercircuit:assembly-csv-row:{}:1", dialect.0),
+            "type": "object",
+            "additionalProperties": false,
+            "required": dialect.1,
+            "properties": properties
+        })
     }
 
     /// Serializes and independently re-imports all assembly CSV documents.

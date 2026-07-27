@@ -69,6 +69,14 @@ impl CoordinateFrame2 {
         }
     }
 
+    /// Opinionated native panel frame used for panelized release artifacts.
+    pub fn panel_default() -> Self {
+        Self {
+            id: "panel-native".into(),
+            ..Self::board_default()
+        }
+    }
+
     /// Rejects contradictory axis/handedness declarations.
     pub fn validate(&self) -> Result<(), CoordinateTransformError> {
         if self.id.trim().is_empty() {

@@ -61,6 +61,8 @@ pub mod mosfet;
 pub mod nonlinear;
 pub mod package;
 #[cfg(feature = "layout")]
+pub mod panel;
+#[cfg(feature = "layout")]
 pub mod placement;
 #[cfg(feature = "layout")]
 pub mod preview;
@@ -81,6 +83,8 @@ pub mod simulation;
 #[cfg(feature = "layout")]
 pub mod stitching;
 #[cfg(feature = "layout")]
+pub mod test_intent;
+#[cfg(feature = "layout")]
 pub mod tscircuit_routing;
 #[cfg(feature = "drc")]
 pub mod workflow;
@@ -94,9 +98,11 @@ pub use ac::{
 pub use adapter::{AdapterKind, CircuitAdapterReport, ElectrothermalTraceFixture};
 #[cfg(feature = "layout")]
 pub use assembly::{
-    AssemblyCsvDocument, AssemblyCsvField, AssemblyDnpRow, AssemblyOutputs, AssemblyPartOverride,
-    AssemblyRoundTripIssue, AssemblyRoundTripReport, AssemblyVariant, AssemblyVariantIssue,
-    AssemblyVariantValidationReport, BomLine, PickAndPlaceRow,
+    ASSEMBLY_DATA_SCHEMA, ASSEMBLY_DATA_VERSION, AssemblyComponentV2, AssemblyCsvDialect,
+    AssemblyCsvDocument, AssemblyCsvField, AssemblyDataV2, AssemblyDnpRow, AssemblyEvidence,
+    AssemblyOutputs, AssemblyPartOverride, AssemblyRoundTripIssue, AssemblyRoundTripReport,
+    AssemblyVariant, AssemblyVariantIssue, AssemblyVariantValidationReport, BomLine,
+    PickAndPlaceRow,
 };
 #[cfg(feature = "layout")]
 pub use authoring::parts;
@@ -325,6 +331,12 @@ pub use package::{
     LockedCircuitPackage, PackageDigest, PackageRequirement, PackageResolutionError, PackageSource,
 };
 #[cfg(feature = "layout")]
+pub use panel::{
+    PanelBoardInstance, PanelCoupon, PanelDefinition, PanelEdgeRequirement, PanelFiducial,
+    PanelIssue, PanelMarkingRegion, PanelRail, PanelSeparationFeature, PanelTestAccess,
+    PanelToolingHole,
+};
+#[cfg(feature = "layout")]
 pub use placement::{
     PlacementCandidateScore, PlacementEnvelopeSource, PlacementMove, PlacementPinAccessDirection,
     PlacementPinAccessIssue, PlacementPinAccessPolicy, PlacementPinAccessProbeEvidence,
@@ -391,6 +403,12 @@ pub use simulation::{
 };
 #[cfg(feature = "layout")]
 pub use stitching::{ZoneStitchingEvidence, ZoneStitchingRejectionCounts, ZoneStitchingReport};
+#[cfg(feature = "layout")]
+pub use test_intent::{
+    BoundaryScanChain, DesignForTestIntent, FixtureConstraint, PowerDomainTestIntent,
+    ProgrammingTarget, TestAccess, TestCoverageMethod, TestDeviceTarget, TestIntentIssue,
+    TestRequirement, TestTarget,
+};
 #[cfg(feature = "layout")]
 pub use tscircuit_routing::{
     TscircuitRoutingError, TscircuitRoutingExportOptions, TscircuitRoutingImportOptions,

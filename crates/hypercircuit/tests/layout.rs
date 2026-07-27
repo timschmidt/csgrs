@@ -2,15 +2,16 @@
 
 use hypercircuit::{
     AdapterKind, AssemblyOutputs, BoardId, BoardOutline, BoardSide, Circuit, CircuitId,
-    CircuitInstance, CircuitInstanceId, ComponentId, CopperZone, DeviceModel, DeviceModelId,
-    DeviceModelKind, DevicePin, DrillShape, KeepoutId, KeepoutScope, KiCadExportOmission,
-    KiCadExportOptions, KiCadImportOmission, KiCadImportOptions, KiCadImportReport, LandPattern,
-    LandPatternGraphic, LandPatternGraphicId, LandPatternGraphicPrimitive, LandPatternId,
-    LandPatternPad, LayerRole, LayoutValidationIssue, Net, NetClass, NetClassId, NetId, PadId,
-    PadPinMap, PadShape, PcbDesignRules, PcbKeepout, PcbLayout, PcbPlacement, PcbRoute, PcbStackup,
-    PcbVia, PinBinding, PinElectricalKind, PinRef, Plating, Real, RouteId, RoutingNetAliases,
-    RoutingProblemReport, RoutingSolution, RoutingSolutionOmission, StackupLayer, StackupLayerKind,
-    TransientPolicy, ViaId, ZoneId,
+    CircuitInstance, CircuitInstanceId, ComponentId, CoordinateFrame2, CopperZone, DeviceModel,
+    DeviceModelId, DeviceModelKind, DevicePin, DrillShape, KeepoutId, KeepoutScope,
+    KiCadExportOmission, KiCadExportOptions, KiCadImportOmission, KiCadImportOptions,
+    KiCadImportReport, LandPattern, LandPatternGraphic, LandPatternGraphicId,
+    LandPatternGraphicPrimitive, LandPatternId, LandPatternPad, LayerRole, LayoutValidationIssue,
+    Net, NetClass, NetClassId, NetId, PadId, PadPinMap, PadShape, PanelBoardInstance,
+    PanelDefinition, PcbDesignRules, PcbKeepout, PcbLayout, PcbPlacement, PcbRoute, PcbStackup,
+    PcbVia, PinBinding, PinElectricalKind, PinRef, Plating, Real, RigidTransform2, RouteId,
+    RoutingNetAliases, RoutingProblemReport, RoutingSolution, RoutingSolutionOmission,
+    StackupLayer, StackupLayerKind, TransientPolicy, ViaId, ZoneId,
 };
 use hyperlattice::Point2;
 use hyperpath::{LinePathSegment, PcbViaStack, SpecctraRoute, TraceLayer, ViaDrillIntent};
@@ -332,6 +333,79 @@ fn assembly_views_derive_bom_and_pick_and_place_from_retained_identities() {
     assert_eq!(audit.bom, assembly.bom);
     assert_eq!(audit.pick_and_place, assembly.pick_and_place);
     assert!(audit.dnp.is_empty());
+
+    let transform = RigidTransform2::new([Real::from(100), Real::from(50)], 1, false).unwrap();
+    let canonical = assembly.canonical_v2(
+        "release-1",
+        CoordinateFrame2::board_default(),
+        Some("panel-1".into()),
+        Some(&transform),
+    );
+    assert_eq!(canonical.version, 2);
+    assert_eq!(canonical.components[0].stable_component_id, "component:R1");
+    let original = &assembly.pick_and_place[0].position;
+    assert_eq!(
+        canonical.components[0].centroid,
+        Some(transform.apply([original.x.clone(), original.y.clone()]))
+    );
+    let dialect = AssemblyOutputs::csv_dialect(hypercircuit::AssemblyCsvDocument::PickAndPlace);
+    assert_eq!(dialect.columns.last().map(String::as_str), Some("side"));
+    assert_eq!(
+        dialect.row_schema["$id"],
+        "urn:hypercircuit:assembly-csv-row:pick-and-place:1"
+    );
+    assert_eq!(
+        AssemblyOutputs::canonical_v2_json_schema()["properties"]["version"]["const"],
+        2
+    );
+
+    let panel = PanelDefinition {
+        id: "panel-1".into(),
+        frame: CoordinateFrame2::panel_default(),
+        outline: BoardOutline::rectangle(Real::from(100), Real::from(50)),
+        thickness: Real::from(2),
+        minimum_web: Real::one(),
+        minimum_rail: Real::from(3),
+        children: vec![
+            PanelBoardInstance {
+                id: "unit-a".into(),
+                board: layout.id.clone(),
+                outline: layout.outline.clone(),
+                transform: RigidTransform2::new([Real::from(10), Real::from(10)], 0, false)
+                    .unwrap(),
+            },
+            PanelBoardInstance {
+                id: "unit-b".into(),
+                board: layout.id.clone(),
+                outline: layout.outline.clone(),
+                transform: RigidTransform2::new([Real::from(80), Real::from(10)], 2, true).unwrap(),
+            },
+        ],
+        rails: Vec::new(),
+        keepouts: Vec::new(),
+        tooling_holes: Vec::new(),
+        fiducials: Vec::new(),
+        separation: Vec::new(),
+        coupons: Vec::new(),
+        markings: Vec::new(),
+        edge_requirements: Vec::new(),
+    };
+    let panelized = assembly
+        .canonical_v2_for_panel("release-1", &panel, &layout.id)
+        .unwrap();
+    assert_eq!(panelized.components.len(), 2);
+    assert_eq!(
+        panelized.components[0].panel_child.as_deref(),
+        Some("unit-a")
+    );
+    assert_eq!(
+        panelized.components[1].panel_child.as_deref(),
+        Some("unit-b")
+    );
+    assert_ne!(
+        panelized.components[0].centroid,
+        panelized.components[1].centroid
+    );
 }
 
 #[test]

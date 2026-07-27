@@ -10,11 +10,12 @@ use hyperdrc::Severity;
 #[cfg(feature = "interchange")]
 use crate::SemanticDocument;
 use crate::{
-    AssemblyOutputs, AssemblyRoundTripReport, CheckedDesign, CheckedProject, Circuit, DesignIntent,
-    DrcReadinessPolicy, ErcReport, FabricationCamRoundTripReport, FabricationExportOptions,
-    FabricationIntegrityIssue, FabricationPackage, FabricationPackageError,
-    GeometryMaterializationError, HyperDrcHandoff, HyperDrcReadinessReport, MaterializationOptions,
-    PcbLayout, PcbMaterialPropertyLibrary, PcbMaterializationReport, PlacementResolutionReport,
+    AssemblyOutputs, AssemblyRoundTripReport, CheckedDesign, CheckedProject, Circuit,
+    DesignForTestIntent, DesignIntent, DrcReadinessPolicy, ErcReport,
+    FabricationCamRoundTripReport, FabricationExportOptions, FabricationIntegrityIssue,
+    FabricationPackage, FabricationPackageError, GeometryMaterializationError, HyperDrcHandoff,
+    HyperDrcReadinessReport, MaterializationOptions, PcbLayout, PcbMaterialPropertyLibrary,
+    PcbMaterializationReport, PlacementResolutionReport,
 };
 
 /// Policies used to turn one checked design into review and release evidence.
@@ -198,7 +199,7 @@ impl CheckedDesign {
         &self,
         options: ReleasePreparationOptions,
     ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
-        prepare_release(&self.circuit, &self.layout, None, options)
+        prepare_release(&self.circuit, &self.layout, None, None, options)
     }
 }
 
@@ -212,7 +213,13 @@ impl CheckedProject {
         &self,
         options: ReleasePreparationOptions,
     ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
-        prepare_release(&self.composed.circuit, &self.composed.layout, None, options)
+        prepare_release(
+            &self.composed.circuit,
+            &self.composed.layout,
+            None,
+            None,
+            options,
+        )
     }
 }
 
@@ -231,7 +238,13 @@ impl SemanticDocument {
             .pcb
             .as_ref()
             .ok_or(ReleasePreparationError::MissingPcb)?;
-        prepare_release(&self.circuit, layout, Some(&self.design_intent), options)
+        prepare_release(
+            &self.circuit,
+            layout,
+            Some(&self.design_intent),
+            Some(&self.test_intent),
+            options,
+        )
     }
 }
 
@@ -239,6 +252,7 @@ fn prepare_release(
     circuit: &Circuit,
     layout: &PcbLayout,
     design_intent: Option<&DesignIntent>,
+    test_intent: Option<&DesignForTestIntent>,
     options: ReleasePreparationOptions,
 ) -> Result<ReleasePreparationReport, ReleasePreparationError> {
     let placement = layout.resolve_placement_constraints(circuit);
@@ -256,6 +270,7 @@ fn prepare_release(
         circuit,
         &options.pcb_materials,
         design_intent,
+        test_intent,
     );
     let drc = drc_handoff.run_readiness(&options.drc);
     let fabrication = FabricationPackage::from_materialization_with_options(

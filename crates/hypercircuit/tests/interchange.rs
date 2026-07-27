@@ -182,7 +182,10 @@ fn version_twenty_eight_defaults_authored_design_intent() {
         SemanticDocument::from_json_migrating(&serde_json::to_string(&value).unwrap()).unwrap();
     assert_eq!(
         report.steps,
-        vec![SemanticMigrationStep::AuthoredDesignIntent]
+        vec![
+            SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
+        ]
     );
     assert_eq!(migrated, document);
 }
@@ -335,6 +338,7 @@ fn version_twenty_seven_promotes_legacy_bundle_member_names_to_real_types() {
         vec![
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     assert_eq!(
@@ -409,6 +413,7 @@ fn version_eight_json_migrates_through_each_additive_schema_boundary() {
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     assert_eq!(migrated, document);
@@ -475,6 +480,7 @@ fn version_twenty_three_defaults_new_differential_impedance_intent() {
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     let pair = &migrated.pcb.unwrap().rules.differential_pairs[0];
@@ -502,6 +508,7 @@ fn version_twenty_four_defaults_new_phase_tuning_groups() {
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     assert!(migrated.pcb.unwrap().rules.phase_tuning_groups.is_empty());
@@ -554,6 +561,7 @@ fn version_twenty_five_defaults_new_differential_pair_neckdown() {
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     assert!(
@@ -658,6 +666,7 @@ fn version_nineteen_promotes_embedded_symbol_geometry_into_a_library() {
             SemanticMigrationStep::MixedSignalWorkflow,
             SemanticMigrationStep::NativeInterfaceParity,
             SemanticMigrationStep::AuthoredDesignIntent,
+            SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     let schematic = migrated.schematic.unwrap();

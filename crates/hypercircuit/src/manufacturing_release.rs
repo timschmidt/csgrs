@@ -8,9 +8,9 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    ArtifactCatalog, ArtifactCatalogError, CoordinateFrame2, FabricationFileKind, PackageDigest,
-    ReleaseArtifactDescriptor, ReleaseArtifactRole, ReleasePreparationError,
-    ReleasePreparationOptions, ReleasePreparationReport, SemanticDocument,
+    ArtifactCatalog, ArtifactCatalogError, AssemblyCsvDocument, CoordinateFrame2,
+    FabricationFileKind, PackageDigest, ReleaseArtifactDescriptor, ReleaseArtifactRole,
+    ReleasePreparationError, ReleasePreparationOptions, ReleasePreparationReport, SemanticDocument,
 };
 
 /// Stable manufacturing-release manifest schema.
@@ -90,6 +90,8 @@ pub struct ManufacturingReleaseCore {
     pub drc_report_digest: PackageDigest,
     pub design_intent_digest: PackageDigest,
     pub mixed_signal_evidence: OptionalEvidenceStatus,
+    pub test_evidence: OptionalEvidenceStatus,
+    pub panel_definition: Option<String>,
     pub release_clean: bool,
     pub release_blockers: Vec<String>,
     pub artifacts: ArtifactCatalog,
@@ -226,12 +228,72 @@ impl ManufacturingReleaseBundle {
             descriptors.push(ReleaseArtifactDescriptor::from_bytes(path, role, &bytes)?);
             files.insert(path.into(), bytes);
         }
+        let release_identity = format!("{}@{}", options.product, options.revision);
+        let canonical_assembly_data = if let Some(panel) = &document.panel {
+            let board = &document
+                .pcb
+                .as_ref()
+                .expect("release preparation requires PCB layout")
+                .id;
+            report
+                .assembly
+                .canonical_v2_for_panel(release_identity, panel, board)
+                .map_err(|error| ManufacturingReleaseError::Io(format!("{error:?}")))?
+        } else {
+            report.assembly.canonical_v2(
+                release_identity,
+                options.coordinate_frame.clone(),
+                None,
+                None,
+            )
+        };
+        let canonical_assembly = serde_json::to_string_pretty(&canonical_assembly_data)
+            .expect("canonical assembly data is infallibly serializable");
+        let canonical_assembly_path = "assembly/assembly-v2.json";
+        descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+            canonical_assembly_path,
+            ReleaseArtifactRole::AssemblyData,
+            canonical_assembly.as_bytes(),
+        )?);
+        files.insert(
+            canonical_assembly_path.into(),
+            canonical_assembly.into_bytes(),
+        );
+        let canonical_schema_path = "assembly/assembly-v2.schema.json";
+        let canonical_schema =
+            serde_json::to_vec_pretty(&crate::AssemblyOutputs::canonical_v2_json_schema())
+                .expect("assembly JSON Schema is infallibly serializable");
+        descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+            canonical_schema_path,
+            ReleaseArtifactRole::Other("json-schema".into()),
+            &canonical_schema,
+        )?);
+        files.insert(canonical_schema_path.into(), canonical_schema);
+        for (document_kind, path) in [
+            (AssemblyCsvDocument::Bom, "assembly/bom.csv.dialect.json"),
+            (
+                AssemblyCsvDocument::PickAndPlace,
+                "assembly/pick-and-place.csv.dialect.json",
+            ),
+            (AssemblyCsvDocument::Dnp, "assembly/dnp.csv.dialect.json"),
+        ] {
+            let bytes =
+                serde_json::to_vec_pretty(&crate::AssemblyOutputs::csv_dialect(document_kind))
+                    .expect("assembly CSV dialect is infallibly serializable");
+            descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+                path,
+                ReleaseArtifactRole::AssemblyData,
+                &bytes,
+            )?);
+            files.insert(path.into(), bytes);
+        }
         #[derive(Serialize)]
         struct DrcEvidence<'a> {
             capability_profile_id: &'a str,
             capability_profile_revision: &'a str,
             capability_profile_digest: &'a str,
             coverage: &'a hyperdrc::CheckCoverage,
+            test_coverage: &'a hyperdrc::NativeTestCoverageReport,
             violations: &'a [hyperdrc::Violation],
         }
         let drc_bytes = serde_json::to_vec(&DrcEvidence {
@@ -239,6 +301,7 @@ impl ManufacturingReleaseBundle {
             capability_profile_revision: &report.drc.capability_profile_revision,
             capability_profile_digest: &report.drc.capability_profile_digest,
             coverage: &report.drc.coverage,
+            test_coverage: &report.drc.test_coverage,
             violations: &report.drc.violations,
         })
         .expect("DRC release evidence is infallibly serializable");
@@ -260,19 +323,74 @@ impl ManufacturingReleaseBundle {
             })?;
         let assembly_digest = {
             let mut bytes = Vec::new();
-            for path in [
-                "assembly/bom.csv",
-                "assembly/pick-and-place.csv",
-                "assembly/dnp.csv",
-            ] {
+            for (path, file) in files
+                .iter()
+                .filter(|(path, _)| path.starts_with("assembly/"))
+            {
                 bytes.extend_from_slice(&(path.len() as u64).to_be_bytes());
                 bytes.extend_from_slice(path.as_bytes());
-                bytes.extend_from_slice(&files[path]);
+                bytes.extend_from_slice(file);
             }
             PackageDigest::sha256(&bytes)
         };
         let design_intent_bytes = serde_json::to_vec(&document.design_intent)
             .expect("design intent is infallibly serializable");
+        let test_evidence = if document.test_intent == Default::default() {
+            OptionalEvidenceStatus::NotRequired {
+                reason: "no design-for-test requirements declared".into(),
+            }
+        } else {
+            let path = "test/test-intent.json";
+            let bytes = serde_json::to_vec_pretty(&document.test_intent)
+                .expect("test intent is infallibly serializable");
+            descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+                path,
+                ReleaseArtifactRole::TestIntent,
+                &bytes,
+            )?);
+            files.insert(path.into(), bytes);
+            if let (Some(panel), Some(pcb)) = (&document.panel, &document.pcb) {
+                let panel_access = panel
+                    .panelize_test_access(&pcb.id, &document.test_intent)
+                    .map_err(|error| ManufacturingReleaseError::Io(format!("{error:?}")))?;
+                let panel_path = "test/panel-test-access.json";
+                let panel_bytes = serde_json::to_vec_pretty(&panel_access)
+                    .expect("panel test access is infallibly serializable");
+                descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+                    panel_path,
+                    ReleaseArtifactRole::TestIntent,
+                    &panel_bytes,
+                )?);
+                files.insert(panel_path.into(), panel_bytes);
+            }
+            OptionalEvidenceStatus::Provided {
+                artifact: path.into(),
+            }
+        };
+        let panel_definition = if let Some(panel) = &document.panel {
+            let json_path = "panel/panel.json";
+            let json =
+                serde_json::to_vec_pretty(panel).expect("panel intent is infallibly serializable");
+            descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+                json_path,
+                ReleaseArtifactRole::PanelDefinition,
+                &json,
+            )?);
+            files.insert(json_path.into(), json);
+            let svg_path = "panel/panel.svg";
+            let svg = panel
+                .to_svg()
+                .map_err(|error| ManufacturingReleaseError::Io(format!("{error:?}")))?;
+            descriptors.push(ReleaseArtifactDescriptor::from_bytes(
+                svg_path,
+                ReleaseArtifactRole::Drawing,
+                svg.as_bytes(),
+            )?);
+            files.insert(svg_path.into(), svg.into_bytes());
+            Some(json_path.into())
+        } else {
+            None
+        };
         let artifacts = ArtifactCatalog::new(descriptors)?;
         let release_blockers = report
             .release_blockers()
@@ -297,6 +415,8 @@ impl ManufacturingReleaseBundle {
             drc_report_digest: PackageDigest::sha256(&drc_bytes),
             design_intent_digest: PackageDigest::sha256(&design_intent_bytes),
             mixed_signal_evidence: options.mixed_signal_evidence,
+            test_evidence,
+            panel_definition,
             release_clean: release_blockers.is_empty(),
             release_blockers,
             artifacts,
