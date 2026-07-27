@@ -2355,6 +2355,7 @@ mod tests {
     };
     use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
+    use proptest::prelude::*;
 
     #[test]
     fn extracts_x2_file_function_and_file_polarity() {
@@ -3471,5 +3472,14 @@ mod tests {
                 .message()
                 .contains("is not closed before end of file")
         );
+    }
+
+    proptest! {
+        #[test]
+        fn bounded_arbitrary_gerber_metadata_never_panics(
+            bytes in proptest::collection::vec(any::<u8>(), 0..4096)
+        ) {
+            let _ = parse_gerber_metadata_report(&bytes);
+        }
     }
 }
