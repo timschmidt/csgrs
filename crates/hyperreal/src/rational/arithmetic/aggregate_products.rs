@@ -3739,6 +3739,52 @@ impl Rational {
         positive.cmp(&negative)
     }
 
+    fn signed_product_sum_dyadic_wide_narrow_ordering_with_plan<
+        const TERMS: usize,
+        const FACTORS: usize,
+    >(
+        terms: [[&Self; FACTORS]; TERMS],
+        signs: [Sign; TERMS],
+        denominator_shifts: [u64; TERMS],
+        max_shift: u64,
+    ) -> Option<Ordering> {
+        if FACTORS != 2 {
+            return None;
+        }
+        let fixed_magnitude = |value: &BigUint| {
+            if value.bits() > 256 {
+                return None;
+            }
+            let mut words = [0_u64; 4];
+            for (index, word) in value.iter_u64_digits().enumerate() {
+                words[index] = word;
+            }
+            Some(words)
+        };
+        let mut positive = DyadicStackAccumulator::default();
+        let mut negative = DyadicStackAccumulator::default();
+        for i in 0..TERMS {
+            let accumulator = match signs[i] {
+                Plus => &mut positive,
+                Minus => &mut negative,
+                NoSign => continue,
+            };
+            let left = &terms[i][0].numerator;
+            let right = &terms[i][1].numerator;
+            let (wide, narrow) = if let Some(narrow) = right.to_u128() {
+                (fixed_magnitude(left)?, narrow)
+            } else {
+                (fixed_magnitude(right)?, left.to_u128()?)
+            };
+            accumulator.add_wide_word_product(
+                wide,
+                narrow,
+                max_shift - denominator_shifts[i],
+            )?;
+        }
+        Some(positive.0.iter().rev().cmp(negative.0.iter().rev()))
+    }
+
     /// Evaluate a signed product sum when every live factor shares one
     /// reduced denominator.
     ///
@@ -5009,6 +5055,24 @@ impl Rational {
                 crate::trace_dispatch!("rational", "product_sum_ordering", "word-sized");
                 return positive.cmp(&negative);
             }
+        }
+        if TERMS == 4
+            && FACTORS == 2
+            && let Some(plan) = dyadic_plan.as_ref()
+            && let Some(ordering) =
+                Self::signed_product_sum_dyadic_wide_narrow_ordering_with_plan(
+                    terms,
+                    signs,
+                    plan.denominator_shifts,
+                    plan.max_shift,
+                )
+        {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering",
+                "dyadic-stack-accumulator"
+            );
+            return ordering;
         }
 
         if let Some(plan) = dyadic_plan {

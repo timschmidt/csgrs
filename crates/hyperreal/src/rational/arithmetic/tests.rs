@@ -3484,6 +3484,101 @@ mod tests {
     }
 
     #[test]
+    fn signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks() {
+        let wide = |bits: usize, add: u8, shift: usize| {
+            Rational::from_bigint_fraction(
+                BigInt::from((BigUint::one() << bits) + BigUint::from(add)),
+                BigUint::one() << shift,
+            )
+            .unwrap()
+        };
+        let assert_matches_materialized = |values: &[Rational; 8]| {
+            let terms = [
+                [&values[0], &values[1]],
+                [&values[2], &values[3]],
+                [&values[4], &values[5]],
+                [&values[6], &values[7]],
+            ];
+            let signs = [true, false, true, false];
+            let materialized = Rational::signed_product_sum(signs, terms);
+            assert_eq!(
+                Rational::signed_product_sum_ordering(signs, terms),
+                materialized.partial_cmp(&Rational::zero()).unwrap(),
+            );
+        };
+
+        // Four-limb by native-word products fit the fixed stack path.
+        assert_matches_materialized(&[
+            wide(220, 3, 101),
+            wide(90, 5, 43),
+            wide(210, 7, 97),
+            wide(88, 9, 41),
+            wide(200, 11, 89),
+            wide(84, 13, 37),
+            wide(190, 15, 83),
+            wide(80, 17, 31),
+        ]);
+        // A carry beyond six limbs falls through to arbitrary precision.
+        assert_matches_materialized(&[
+            wide(255, 1, 1),
+            wide(127, 1, 1),
+            wide(255, 3, 1),
+            wide(127, 3, 1),
+            wide(255, 5, 1),
+            wide(127, 5, 1),
+            wide(255, 7, 1),
+            wide(127, 7, 1),
+        ]);
+        // Numerators wider than four limbs and pairs with no native-word
+        // factor retain the general arbitrary-precision reducer.
+        assert_matches_materialized(&[
+            wide(270, 3, 109),
+            wide(90, 5, 43),
+            wide(220, 7, 97),
+            wide(150, 9, 61),
+            wide(210, 11, 89),
+            wide(145, 13, 59),
+            wide(200, 15, 83),
+            wide(140, 17, 53),
+        ]);
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn signed_product_sum_ordering_traces_four_product_dyadic_stack_path() {
+        let wide = Rational::from_bigint_fraction(
+            BigInt::from((BigUint::one() << 220_usize) + BigUint::from(3_u8)),
+            BigUint::one() << 101_usize,
+        )
+        .unwrap();
+        let narrow = Rational::fraction(5, 8).unwrap();
+        crate::dispatch_trace::reset();
+        crate::dispatch_trace::with_recording(|| {
+            assert_eq!(
+                Rational::signed_product_sum_ordering(
+                    [true, false, true, false],
+                    [
+                        [&wide, &narrow],
+                        [&wide, &Rational::fraction(3, 4).unwrap()],
+                        [&wide, &Rational::fraction(7, 16).unwrap()],
+                        [&wide, &Rational::fraction(1, 2).unwrap()],
+                    ],
+                ),
+                Ordering::Less,
+            );
+        });
+        let trace = crate::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count(
+                "rational",
+                "product_sum_ordering",
+                "dyadic-stack-accumulator"
+            ),
+            1
+        );
+    }
+
+    #[test]
     fn signed_product_sum_ordering_six_products_preserves_all_fallbacks() {
         let assert_matches_materialized = |values: &[Rational; 12]| {
             let terms = [
