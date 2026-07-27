@@ -165,16 +165,21 @@ fn line_segment_caches_axis_and_exact_length_facts() {
 }
 
 #[test]
-fn line_segment_prepares_bounds() {
+fn line_segment_exposes_bounds_for_immediate_predicates() {
     let segment = LinePathSegment::new(p(9, -2), p(3, 4));
-    let bounds = segment.prepared_bounds();
 
     assert_eq!(segment.bounds_min(), &p(3, -2));
     assert_eq!(segment.bounds_max(), &p(9, 4));
-    assert_eq!(bounds.min(), segment.bounds_min());
-    assert_eq!(bounds.max(), segment.bounds_max());
-    assert!(bounds.contains_point(&p(6, 0)).value().unwrap());
-    assert!(!bounds.contains_point(&p(10, 0)).value().unwrap());
+    assert!(
+        hyperlimit::point_in_aabb2(segment.bounds_min(), segment.bounds_max(), &p(6, 0))
+            .value()
+            .unwrap()
+    );
+    assert!(
+        !hyperlimit::point_in_aabb2(segment.bounds_min(), segment.bounds_max(), &p(10, 0))
+            .value()
+            .unwrap()
+    );
 }
 
 #[test]
@@ -1424,7 +1429,7 @@ fn line_quadratic_bezier_cell_graph_schedules_parabolic_face() {
 }
 
 #[test]
-fn line_quadratic_bezier_arrangement_records_unrepresented_secant_unknown() {
+fn line_quadratic_bezier_arrangement_splits_exact_algebraic_secant_roots() {
     let curve = QuadraticBezier::new(p(0, 0), p(4, 4), p(8, 0));
     let line = LinePathSegment::new(p(0, 1), p(8, 1));
 
@@ -1433,10 +1438,13 @@ fn line_quadratic_bezier_arrangement_records_unrepresented_secant_unknown() {
 
     assert_eq!(
         report.events[0].class,
-        LineQuadraticBezierIntersectionClass::Unknown
+        LineQuadraticBezierIntersectionClass::TwoPoints
     );
-    assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.bezier_breakpoints[0].len(), 2);
+    assert_eq!(report.events[0].intersection.intersections.len(), 2);
+    assert_eq!(report.line_breakpoints[0].len(), 4);
+    assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 3);
+    assert_eq!(report.bezier_fragments.len(), 3);
 }
 
 #[test]
@@ -1536,7 +1544,7 @@ fn line_quadratic_bezier_arrangement_promotes_general_nonlinear_overlap() {
 }
 
 #[test]
-fn line_quadratic_bezier_arrangement_keeps_unordered_algebraic_overlap_unknown() {
+fn line_quadratic_bezier_arrangement_promotes_ordered_algebraic_overlap() {
     let curve = QuadraticBezier::new(p(0, 0), p(2, 0), p(8, 0));
     let line = LinePathSegment::new(p(2, 0), p(6, 0));
 
@@ -1545,10 +1553,13 @@ fn line_quadratic_bezier_arrangement_keeps_unordered_algebraic_overlap_unknown()
 
     assert_eq!(
         report.events[0].class,
-        LineQuadraticBezierIntersectionClass::Unknown
+        LineQuadraticBezierIntersectionClass::Overlap
     );
+    assert_eq!(report.events[0].intersection.intersections.len(), 2);
     assert_eq!(report.line_breakpoints[0].len(), 2);
-    assert_eq!(report.bezier_breakpoints[0].len(), 2);
+    assert_eq!(report.bezier_breakpoints[0].len(), 4);
+    assert_eq!(report.line_fragments.len(), 1);
+    assert_eq!(report.bezier_fragments.len(), 3);
 }
 
 #[test]

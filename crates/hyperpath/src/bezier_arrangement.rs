@@ -52,8 +52,8 @@ pub enum LineQuadraticBezierIntersectionClass {
     OnePoint,
     /// The line crosses the curve at two certified points inside the segment bounds.
     TwoPoints,
-    /// The segment and a degree-elevated linear quadratic Bezier overlap over a
-    /// positive-length interval with certified endpoint witnesses.
+    /// The segment and a monotone collinear quadratic Bezier overlap over a
+    /// positive-length interval with exact inverse endpoint witnesses.
     Overlap,
     /// The exact predicate package cannot certify the relation.
     Unknown,
@@ -730,10 +730,10 @@ pub fn intersect_line_quadratic_bezier(
 /// substitutes `B_x(t) = x_line`. The resulting scalar quadratic is solved in
 /// the object layer and every candidate root is replayed against `[0, 1]` and
 /// the closed segment bounds before it becomes topology. If a support-line
-/// overlap is a degree-elevated line segment, the overlap interval is promoted
-/// to exact endpoint witnesses. Nonlinear collinear Bezier images still return
-/// [`LineQuadraticBezierIntersectionClass::Unknown`] because they need a later
-/// exact inverse-parameter construction.
+/// overlap has a monotone scalar image and exact `Real` inverse parameters, the
+/// overlap interval is promoted to exact endpoint witnesses. Nonmonotone or
+/// undecidable collinear images remain
+/// [`LineQuadraticBezierIntersectionClass::Unknown`].
 ///
 /// Geometric decisions use exact predicates over retained objects, not sampled
 /// approximations. The Bezier substitution is the standard Bernstein-polynomial

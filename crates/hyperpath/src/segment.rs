@@ -9,9 +9,8 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Aabb2Facts, Certainty, Escalation, Point2, PredicateOutcome, PredicatePolicy, PreparedAabb2,
-    RefinementNeed, Segment2Facts, aabb2_facts, compare_reals_with_policy, point2_equal,
-    segment2_facts,
+    Aabb2Facts, Certainty, Escalation, Point2, PredicateOutcome, PredicatePolicy, RefinementNeed,
+    Segment2Facts, aabb2_facts, compare_reals_with_policy, point2_equal, segment2_facts,
 };
 use hyperreal::{Real, RealExactSetFacts, RealSign, SymbolicDependencyMask};
 
@@ -101,11 +100,6 @@ impl LinePathSegment {
     /// Return the exact maximum corner of the segment bounds.
     pub const fn bounds_max(&self) -> &Point2 {
         &self.bounds_max
-    }
-
-    /// Prepare the retained exact segment bounds for repeated broad-phase use.
-    pub fn prepared_bounds(&self) -> PreparedAabb2<'_> {
-        PreparedAabb2::from_facts(&self.bounds_min, &self.bounds_max, self.facts.bounds)
     }
 
     /// Return squared segment length as an exact scalar expression.

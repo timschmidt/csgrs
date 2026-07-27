@@ -66,8 +66,8 @@ give common CAD/CAM/PCB cases cheap exact paths. Provenance records, cached fact
 domain residual builders let repeated checks avoid reinterpreting source units, tangent
 orientation, simple geometry classes, and low-degree constraint structure.
 
-Future performance work should add prepared path objects, spatial indexes, and batch
-certification without changing the exact replay boundary.
+Future performance work should add internal spatial indexes and batch
+certification without changing the immediate API or exact replay boundary.
 
 ## Current Status
 

@@ -7,6 +7,15 @@ their target benchmark improved statistically.
 
 ## Retained result
 
+The 2026-07-27 prepared-bounds API removal was gated on the segment carrier
+with saved Criterion baselines. `line_segment_exact_tangent` measured
+`[53.466 ns, 53.725 ns, 54.025 ns]` before and
+`[53.229 ns, 53.312 ns, 53.399 ns]` after. Criterion found no change
+(`p = 0.37`). `LinePathSegment` continues to retain exact bounds and
+`Aabb2Facts`; callers now pass its immediate `bounds_min()`/`bounds_max()`
+views directly to Hyperlimit predicates instead of constructing a public
+prepared wrapper.
+
 The main retained optimization reuses a certified positive axis gap for
 parallel axis-aligned PCB traces. Previously `check_trace_clearance` first ran
 the full exact segment-intersection classifier, then independently computed the
