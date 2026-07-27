@@ -19,72 +19,21 @@ use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign;
 use hyperreal::Real;
 
-/// Reusable exact predicates for one 3D triangle.
+/// Derived orientation evidence for one ordered 3D triangle.
+///
+/// This value owns the exact winding normal and its certified component signs,
+/// but not the triangle vertices. Retain it when classifying many points
+/// against the same triangle.
 #[derive(Clone, Debug)]
-pub struct PreparedTriangle3<'a> {
-    a: &'a Point3,
-    b: &'a Point3,
-    c: &'a Point3,
+pub struct Triangle3Orientation {
     normal: Triangle3Normal,
     normal_signs: PredicateOutcome<[Sign; 3]>,
 }
 
-impl<'a> PreparedTriangle3<'a> {
-    /// Prepare a 3D triangle using the strict predicate context.
-    pub fn new(a: &'a Point3, b: &'a Point3, c: &'a Point3) -> Self {
-        Self::with_policy(a, b, c, PredicatePolicy::STRICT)
-    }
-
-    /// Prepare a 3D triangle using the crate-local strict predicate marker.
-    pub(crate) fn with_policy(
-        a: &'a Point3,
-        b: &'a Point3,
-        c: &'a Point3,
-        policy: PredicatePolicy,
-    ) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_triangle3", "new");
-        let normal = triangle3_normal(a, b, c);
-        let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
-        Self {
-            a,
-            b,
-            c,
-            normal,
-            normal_signs,
-        }
-    }
-
-    /// Return vertex `a`.
-    pub const fn a(&self) -> &'a Point3 {
-        self.a
-    }
-
-    /// Return vertex `b`.
-    pub const fn b(&self) -> &'a Point3 {
-        self.b
-    }
-
-    /// Return vertex `c`.
-    pub const fn c(&self) -> &'a Point3 {
-        self.c
-    }
-
-    /// Return the cached normal-sign outcome.
+impl Triangle3Orientation {
+    /// Return the certified signs of the winding-normal components.
     pub const fn normal_signs(&self) -> PredicateOutcome<[Sign; 3]> {
         self.normal_signs
-    }
-
-    /// Classify a point using the strict predicate context.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<Triangle3Location> {
-        classify_point_triangle3_impl(
-            self.a,
-            self.b,
-            self.c,
-            point,
-            PredicatePolicy::STRICT,
-            &self.normal,
-            self.normal_signs,
-        )
     }
 }
 
@@ -327,6 +276,39 @@ pub fn classify_point_triangle3(
     point: &Point3,
 ) -> PredicateOutcome<Triangle3Location> {
     classify_point_triangle3_with_policy(a, b, c, point, PredicatePolicy)
+}
+
+/// Derive reusable orientation evidence for ordered triangle `abc`.
+pub fn triangle3_orientation(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Orientation {
+    let normal = triangle3_normal(a, b, c);
+    let normal_signs = triangle3_normal_signs_outcome(&normal, PredicatePolicy::STRICT);
+    Triangle3Orientation {
+        normal,
+        normal_signs,
+    }
+}
+
+/// Classify `point` relative to triangle `abc` using retained orientation.
+///
+/// `orientation` must have been derived from the same ordered vertices with
+/// [`triangle3_orientation`]. The derived normal and its signs are reused while
+/// the point query remains immediate.
+pub fn classify_point_triangle3_with_orientation(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    point: &Point3,
+    orientation: &Triangle3Orientation,
+) -> PredicateOutcome<Triangle3Location> {
+    classify_point_triangle3_impl(
+        a,
+        b,
+        c,
+        point,
+        PredicatePolicy::STRICT,
+        &orientation.normal,
+        orientation.normal_signs,
+    )
 }
 
 /// Classify `point` relative to the 3D triangle `abc` with an explicit
@@ -1782,21 +1764,25 @@ mod tests {
     }
 
     #[test]
-    fn prepared_triangle3_reuses_cached_normal_signs() {
+    fn immediate_triangle3_classifier_reuses_orientation_evidence() {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(2.0, 0.0, 0.0);
         let c = p3(0.0, 2.0, 0.0);
-        let prepared = PreparedTriangle3::new(&a, &b, &c);
+        let orientation = triangle3_orientation(&a, &b, &c);
 
-        assert_eq!(prepared.a(), &a);
-        assert_eq!(prepared.b(), &b);
-        assert_eq!(prepared.c(), &c);
         assert!(matches!(
-            prepared.normal_signs(),
+            orientation.normal_signs(),
             PredicateOutcome::Decided { .. }
         ));
         assert_eq!(
-            prepared.classify_point(&p3(0.25, 0.25, 0.0)).value(),
+            classify_point_triangle3_with_orientation(
+                &a,
+                &b,
+                &c,
+                &p3(0.25, 0.25, 0.0),
+                &orientation,
+            )
+            .value(),
             Some(Triangle3Location::Inside)
         );
     }

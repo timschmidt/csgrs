@@ -58,6 +58,19 @@ two source-identical immediate rows measured 76.002 ns and 76.282 ns, with both
 moving by the same +3.35% against baseline. The equal drift and 0.4 ns
 within-run spread show no normalized regression.
 
+## Immediate orientation-aware 3D triangle API gate
+
+`PreparedTriangle3` retained borrowed vertices alongside an exact derived normal
+and its certified component signs. `Triangle3Orientation` now owns only that
+derived evidence, and `classify_point_triangle3_with_orientation` accepts it
+without turning the triangle into a query object.
+
+The paired baseline measured 1.2454 us through the former carrier and
+1.2204 us through the immediate orientation control. After migration, the
+transition measured 1.1957 us, a statistically significant 4.32% improvement,
+while the control measured 1.2317 us with no detected performance change
+(`p = 0.44`).
+
 ## Retained optimization
 
 ### Collapse redundant Real sign-resolution passes

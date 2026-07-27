@@ -154,12 +154,13 @@ pub use predicates::segment_plane::{
     intersect_segment_with_plane_values, point_plane_value, segment_parameter_from_axis,
 };
 pub use predicates::triangle::{
-    PreparedTriangle3, RayTriangleIntersectionReport, RayTriangleParameterRatio,
-    RayTriangleValidationError, SegmentTriangleIntersectionReport, SegmentTriangleValidationError,
+    RayTriangleIntersectionReport, RayTriangleParameterRatio, RayTriangleValidationError,
+    SegmentTriangleIntersectionReport, SegmentTriangleValidationError, Triangle3Orientation,
     classify_point_tetrahedron, classify_point_triangle, classify_point_triangle_with_facts,
     classify_point_triangle_with_orientation, classify_point_triangle3,
-    classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
-    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
+    classify_point_triangle3_with_orientation, classify_ray_triangle3_intersection,
+    classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
+    classify_segment_triangle3_intersection_report, triangle3_orientation,
     triangle3_winding_normal_sign,
 };
 pub use predicates::triangle_triangle::{
