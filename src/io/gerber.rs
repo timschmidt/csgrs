@@ -249,6 +249,7 @@ impl ToGerber for Profile {
 
 struct ImportState {
     sketch: Profile,
+    pending_dark: Vec<Profile>,
     unit_scale: f64,
     coordinate_mode: CoordinateMode,
     source_current: Coord<f64>,
@@ -266,6 +267,7 @@ impl ImportState {
     fn new(unit: Unit) -> Self {
         Self {
             sketch: Profile::empty(),
+            pending_dark: Vec::new(),
             unit_scale: unit_scale(unit),
             coordinate_mode: CoordinateMode::Absolute,
             source_current: Coord { x: 0.0, y: 0.0 },
@@ -280,7 +282,7 @@ impl ImportState {
         }
     }
 
-    fn finish(self) -> Result<Profile, IoError> {
+    fn finish(mut self) -> Result<Profile, IoError> {
         if self.region.is_some() {
             return Err(IoError::MalformedInput(
                 "Gerber input ends inside a region".into(),
@@ -291,6 +293,7 @@ impl ImportState {
                 "Gerber input ends inside a step-repeat block".into(),
             ));
         }
+        self.flush_pending_dark()?;
         Ok(self.sketch)
     }
 
@@ -449,15 +452,61 @@ impl ImportState {
     fn apply_polarity(&mut self, sketch: Profile) -> Result<(), IoError> {
         let sketches = repeat_sketches(sketch, self.step_repeat)?;
         for sketch in sketches {
-            self.sketch = match self.polarity {
-                Polarity::Dark => self.sketch.try_union(&sketch),
-                Polarity::Clear => self.sketch.try_difference(&sketch),
+            match self.polarity {
+                Polarity::Dark => self.pending_dark.push(sketch),
+                Polarity::Clear => {
+                    self.flush_pending_dark()?;
+                    self.sketch = self.sketch.try_difference(&sketch).map_err(|error| {
+                        IoError::Geometry {
+                            format: "Gerber",
+                            detail: error.to_string(),
+                        }
+                    })?;
+                },
             }
-            .map_err(|error| IoError::Geometry {
-                format: "Gerber",
-                detail: error.to_string(),
-            })?;
         }
+        Ok(())
+    }
+
+    /// Merge consecutive dark objects through a balanced exact-Boolean tree.
+    ///
+    /// Dark Gerber exposure is a commutative union until a clear-polarity
+    /// object appears. Pairwise rounds prevent a large accumulated region from
+    /// being rebuilt for every flash or region while preserving command-order
+    /// semantics at each clear boundary.
+    fn flush_pending_dark(&mut self) -> Result<(), IoError> {
+        if self.pending_dark.is_empty() {
+            return Ok(());
+        }
+        let mut level = std::mem::take(&mut self.pending_dark);
+        while level.len() > 1 {
+            let mut next = Vec::with_capacity(level.len().div_ceil(2));
+            let mut profiles = level.into_iter();
+            while let Some(left) = profiles.next() {
+                let Some(right) = profiles.next() else {
+                    next.push(left);
+                    break;
+                };
+                next.push(left.try_union(&right).map_err(|error| IoError::Geometry {
+                    format: "Gerber",
+                    detail: error.to_string(),
+                })?);
+            }
+            level = next;
+        }
+        let dark = level
+            .pop()
+            .expect("nonempty pending dark level retains one profile");
+        self.sketch = if self.sketch.is_empty() {
+            dark
+        } else {
+            self.sketch
+                .try_union(&dark)
+                .map_err(|error| IoError::Geometry {
+                    format: "Gerber",
+                    detail: error.to_string(),
+                })?
+        };
         Ok(())
     }
 
@@ -1859,6 +1908,8 @@ const fn unit_scale(unit: Unit) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    use std::fmt::Write;
+
     use super::{Coord, FromGerber, ToGerber, convex_hull};
     use crate::csg::CSG;
     use crate::hyper_math::{Real, hreal_from_f64, pi};
@@ -1959,6 +2010,31 @@ mod tests {
         assert!(!parsed.as_curve_region().is_empty());
 
         assert_bounds_close(&parsed, r(0.0), r(0.0), r(4.0), r(3.0), r(1.0e-9));
+    }
+
+    #[test]
+    fn imports_many_dark_regions_through_balanced_exact_unions() {
+        let mut gerber = String::from("%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\n");
+        for index in 0..256_i64 {
+            let column = index % 32;
+            let row = index / 32;
+            let x = column * 3_000_000;
+            let y = row * 3_000_000;
+            writeln!(
+                gerber,
+                "G36*\nX{x}Y{y}D02*\nX{}Y{y}D01*\nX{}Y{}D01*\nX{x}Y{}D01*\nX{x}Y{y}D01*\nG37*",
+                x + 1_000_000,
+                x + 1_000_000,
+                y + 1_000_000,
+                y + 1_000_000,
+            )
+            .unwrap();
+        }
+        gerber.push_str("M02*\n");
+
+        let parsed = Profile::from_gerber(gerber.as_bytes()).unwrap();
+        assert_eq!(parsed.material_contour_count(), 256);
+        assert_bounds_close(&parsed, r(0.0), r(0.0), r(94.0), r(22.0), r(1.0e-9));
     }
 
     #[test]
