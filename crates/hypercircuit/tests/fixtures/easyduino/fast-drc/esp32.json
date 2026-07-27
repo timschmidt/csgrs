@@ -1,0 +1,2811 @@
+{
+  "board": "esp32",
+  "capability_profile": {
+    "digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+    "id": "generic-prototype",
+    "revision": "1"
+  },
+  "coverage": {
+    "checks": [
+      {
+        "check": "mask-island-keepout",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "copper-overlap",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-edge-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-cutout-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-sanity",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-fragments",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-self-intersection-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-notch-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-duplicate-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-nesting-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-overhang",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-aperture-coverage",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-aperture-ratio",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-pad-paste-windowpane-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "stencil-area-ratio-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-aperture-aspect-ratio-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "tombstone-paste-imbalance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-via-exposure-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "minimum-paste-aperture",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-aperture-spacing",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "paste-mask-alignment",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "exposed-copper",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-opening-coverage",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-opening-ratio-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-annular-ring-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-expansion",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-overlap-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-board-edge-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "silkscreen-overlap",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "silkscreen-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "silkscreen-board-edge-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "silkscreen-min-width",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "silkscreen-text-height-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "min-copper-neck",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "acid-trap",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "acid-trap-trace-junction",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "layer-sanity",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "copper-balance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "local-copper-density-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mechanical-layer-geometry",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-sliver",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "minimum-mask-opening",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "solder-mask-opening-spacing",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "annular-ring",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "annular-ring-tolerance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "plating-intent",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "routed-slot-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "castellation-intent",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "castellation-hole-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "via-in-pad-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "drill-to-copper-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-outline-drill-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "drill-spacing",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "drill-aspect-ratio",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "drill-table-consistency",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "copper-width-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "copper-net-intent",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "teardrop-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-relief-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "plane-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "board-edge-exposure",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "high-speed-edge-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "edge-copper-pullback-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "high-voltage-edge-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "controlled-impedance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-width-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-neckdown-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-skew-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-to-pair-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-via-proximity-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-via-return-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-via-symmetry-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "differential-pair-return-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "reference-plane-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "reference-plane-void-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "split-plane-crossing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "return-path-proximity-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "orphaned-zone-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "same-net-island-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "same-net-drill-break-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "different-net-short-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "return-path-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "high-current-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "power-via-array-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "power-via-return-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-via-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-via-distribution-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "power-plane-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "high-current-neck-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "power-pad-entry-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "voltage-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "protective-earth-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "surge-protection-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "sensitive-net-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "sensitive-return-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mixed-signal-partition-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "rf-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "antenna-copper-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "rf-via-fence-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "chassis-stitching-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "edge-stitching-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "gold-finger-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "gold-finger-edge-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "gold-finger-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "gold-finger-drill-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "component-edge-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "component-hole-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "component-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "connector-rework-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "pad-pair-asymmetry-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "connector-return-path-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "decoupling-proximity-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "esd-protection-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "esd-return-path-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "switch-node-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "inductor-copper-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "testpoint-coverage-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "testpoint-accessibility-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "testpoint-copper-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "tooling-hole-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mouse-bite-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "fiducial-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "local-fiducial-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "fiducial-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "dense-pad-escape-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "dense-pad-via-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "dense-pad-mask-bridge-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "selective-wave-solder-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "press-fit-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "conformal-coating-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-pad-via-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-copper-area-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "hot-component-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "thermal-mechanical-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-grounding-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-copper-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-edge-clearance-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-plating-intent-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-distribution-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "mounting-hole-spacing-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "panel-feature-outline-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "edge-plating-intent-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "castellation-pitch-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "different-net-spacing",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "layer-registration-tolerance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "panelization-clearance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "ipc356-coverage",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "ipc356-drill-diameter",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "excellon-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "file-manifest-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "production-artifact-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "stackup-readiness",
+        "check_version": 1,
+        "finding_count": 9,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "failed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "net-constraint-readiness",
+        "check_version": 1,
+        "finding_count": 131,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "failed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "authored-keepout-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "authored-routed-slot-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "authored-component-readiness",
+        "check_version": 1,
+        "finding_count": 29,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "failed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "authored-functional-role-readiness",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "status": "passed",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      },
+      {
+        "check": "waiver-governance",
+        "check_version": 1,
+        "finding_count": 0,
+        "normalized_input_digests": [],
+        "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
+        "reason": "native handoff does not yet implement this registered check",
+        "status": "skipped",
+        "tool": "hyperdrc",
+        "tool_version": "0.3.0"
+      }
+    ],
+    "registry_version": 1
+  },
+  "finding_counts": {
+    "authored-component-readiness": 29,
+    "net-constraint-readiness": 127,
+    "net-via-policy-readiness": 4,
+    "stackup-readiness": 9
+  },
+  "handoff_omissions": [
+    "MissingComponentEnvelope(\"C7\")",
+    "MissingComponentEnvelope(\"C6\")",
+    "MissingComponentEnvelope(\"R3\")",
+    "MissingComponentEnvelope(\"R7\")",
+    "MissingComponentEnvelope(\"R2\")",
+    "MissingComponentEnvelope(\"J1\")",
+    "MissingComponentEnvelope(\"C4\")",
+    "MissingComponentEnvelope(\"U3\")",
+    "MissingComponentEnvelope(\"R5\")",
+    "MissingComponentEnvelope(\"Q1\")",
+    "MissingComponentEnvelope(\"C2\")",
+    "MissingComponentEnvelope(\"C9\")",
+    "MissingComponentEnvelope(\"C3\")",
+    "MissingComponentEnvelope(\"SW2\")",
+    "MissingComponentEnvelope(\"U4\")",
+    "MissingComponentEnvelope(\"SW1\")",
+    "MissingComponentEnvelope(\"C5\")",
+    "MissingComponentEnvelope(\"R8\")",
+    "MissingComponentEnvelope(\"D1\")",
+    "MissingComponentEnvelope(\"C8\")",
+    "MissingComponentEnvelope(\"R1\")",
+    "MissingComponentEnvelope(\"C1\")",
+    "MissingComponentEnvelope(\"R4\")",
+    "MissingComponentEnvelope(\"Q2\")",
+    "MissingComponentEnvelope(\"U2\")",
+    "MissingComponentEnvelope(\"C10\")",
+    "MissingComponentEnvelope(\"U1\")",
+    "MissingComponentEnvelope(\"D2\")",
+    "MissingComponentEnvelope(\"R6\")"
+  ],
+  "violations": [
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e87bc3367aa8760b2e84cca43b41d4f46a6387f48ed27abde5b4e0d0a376944c",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:1006f1f791b25defeb0c861178111ead738fa857823e05c9bc8a1519f15e367c",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:7f12e12889e15314368f241be73ecc4aaf3bcc8188bf9968974399cf23d7765b",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:537f045ecf311bea032456db3d12e2fd0bf728cfaceb6949f81940bae540a824",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "stackup-readiness",
+      "evidence_id": "sha256:e2c83f595c9ccc6349d7b0d6bf10db352271aa1fef89e7b60adc20f78e2a5c45",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "net-via-policy-readiness",
+      "evidence_id": "sha256:7c70d7019be5ee16eac7bd400b6f6daf460130dda9287fc21ef5f900b543f009",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "net-via-policy-readiness",
+      "evidence_id": "sha256:7c70d7019be5ee16eac7bd400b6f6daf460130dda9287fc21ef5f900b543f009",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "net-via-policy-readiness",
+      "evidence_id": "sha256:eb1b5fe203b3b5dc8382335db3c61210b21e69e475cbc3da021e3e6df7d85549",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "net-via-policy-readiness",
+      "evidence_id": "sha256:eb1b5fe203b3b5dc8382335db3c61210b21e69e475cbc3da021e3e6df7d85549",
+      "severity": "warning",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:ebbe646f008c1bf2a1ca831e21006caac6107c95b52b13078c079d3bbf414c18",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:13b17a3b8a03ee9ef2afbe32bffa14a4b44e11f724c2a1a841fa75ca0094c72c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3e71e0327f75409bb9cee2a86cc6433b65a5a9b109610282597b0a407502ee0a",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8057aa46441e8ece0a3063665f96fe3dcf5594ce9070637545f9e27cb15283b3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8214c51d25942015534060418836213b728cf07b311e68de0854d8486f689485",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:5109d98d18d20336f187eb6c920c26229df295d7da591aca7f9277945798928d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:189a4dfe479c9cff91ebd4df0abc6d95ab4d23171f2459dbd9b22eff074cfc61",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:70a9ff3248b9d0769ba65a1e09b959d7eef7f9f8598e22869d182e3c6fa2ffda",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:cd1b7ec522619615269ecfef14fa077594cd83d1fc26dfe5d6be1985feb6e568",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:65e30fde1b0c0701c7ce0db623e4f10e20c563babe3c004e1119ffb1f3b13593",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:73e8b817a71eeaed546facbd8fd20581bc135e3ba73be378136ab9117082ab8f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8620a5cb7e08b0b57f341ec871d4ded588b1a6c3314aa06b1d2c39c7ea4a057c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f0be56a351e25d97449b6fa9c10e8f6e91732ed8a571007482497fdb81f58702",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:bd95ed2c8dad058d1efc0abfad77fafcfaa3eb7cd100beba73b7bf1760260749",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f0779d2c244a23633d132bee3326f9f070f9966314a553512606a82943736c52",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8301936409589e223c1d36772c9dbec496750f713db28c0ebb80f32699e494f6",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:7c5a74abe35f2e18cbb7865cde4d30a27c1466eb5cf34ac83a2716bdea15a980",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:72e9d0978c13509406be914e0e34c4551fdbc8cdc80d72d7d32e62b9306de909",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:0945023f60608141268cbf18f09001d57dfe006c2c14748dab19c3e1139b58ad",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:0edeeb11b9a7e60b0e18f846018e7978b0e6c9ec12c2147b81d7861388411836",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:a667633dd75722a19cb7cd75d8ab7f5e4c9ab4803ab3bb5fc6ec00d6e0f21cfc",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:0b49b32ca206bb1901c3c643bb7226d770890c8a01c89cc7d5bc939c50a6ff9e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:24b47133545e2afefc0be2d34f2fa6e84fb05a9d86fea724e513efe6c65742aa",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:c76983c4c13619c7b7c88fe9fd6c3ea07bac636d20370b5bb61318c0343b2d2d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8f99ef94ac91cf83f030b32aa38af745eae782584e63042134ce7ea85cb2ee1b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:27f02fd7af16c36ef9c056a28a838fd438af002695d57815b868f8e571147d3b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:325767a26b1ae9db65780efa7e87210aab8f7eb4342d80a2b4736f065d2c0661",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:21215c1c7b1c7f675eaa113523553504840108eadca5a3ff058c398a853ec3d5",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6e6f5af872e11e1b6f8e9a4e6eeea3be6e8a0facad7c9ab83d9528c477902e14",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6d26157b972310322ae9268a75c6497023c2b3eee0fd47e38b30d4344aead288",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:573b274c6dd2c80be85b1d9552434e48604616446583479bb913c3bd1cdacd47",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:13c06bf59e94ad5d0b46ea5789b06daec2ca6d2f82aae8917944e473efdfe875",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:4e8b0f0d1ba296484aaec14c7552fc0f494e4ce6430e43767aa49e2c5c3a3d96",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:35252b3b58707890983d873c14f4e611de90de96010f0d8bd1240af793b2cbbf",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:75a8779a0a082ff1f06f3cd304978fca43a255d6b0c1c3a2a4c571ebff5da995",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:e3000b22522bf378076f29db6a29e459c3ad7f73b3110782752917fad9f8540d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3c1cc2c037c7cde68d0c355ec4cc67bf0ca3e4fcea6fd145d225268e66e53aa0",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2a5a263a23514ddefadfdcffaf585c21666da332d2396519fa4c03a2ab17a989",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:7679a73ceb0770dae3eec4727a116829b262ac829faade0d4c66b37c373ca56d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:5fc896e891d8cfce9ae7bf403bff5808ec44757ce2ec2e51c0e913a575b32941",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:36610c38bea5f76344eb79706617b8f0c37651bea65898a4b921658e90476486",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6e6f5af872e11e1b6f8e9a4e6eeea3be6e8a0facad7c9ab83d9528c477902e14",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:da1c025bcb816410e540f121109b23b8039e734a2b8d8bdfcd884bc1d41c9df1",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:5fc896e891d8cfce9ae7bf403bff5808ec44757ce2ec2e51c0e913a575b32941",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6e6f5af872e11e1b6f8e9a4e6eeea3be6e8a0facad7c9ab83d9528c477902e14",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:573b274c6dd2c80be85b1d9552434e48604616446583479bb913c3bd1cdacd47",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:ed257f26c11013402afebc9e64946d2aa0e23da8fbb4825d4d3d55ef03d2cb29",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2a5a263a23514ddefadfdcffaf585c21666da332d2396519fa4c03a2ab17a989",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:249e451b08e896b083d2089fd2a1c093900f09d6d4dc91acbc258834e6b556fe",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6fbc1bae745487f4d132bf585cee27770b0c36e28c704cfd5218b8a43007dbc4",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:4234c2a65c565fdcfefc5ca76b1acb3f4eba78efc289d4d56b79d5f9b6b7a168",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2d2bf09cf95dfddb7b61b3ddc13d8f1dfd1d663ec0ce0dd5ed3d254e2ff5264a",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6471aa8863acb5858ba7cfc4c491cd4ffefcfdb7ee1054ed7aac5fd0157589ad",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:7a26ef962f64fc363ac68067cfb7c834e4c15991a9b730cd9b50691ffa831886",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:1127762e04c9953aa3d6801eb45c01e4ed06d4dea014b2fadafe3b465c6093fb",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:31104d611666d2934a9316090640b71e5d819683f29b5f181b27375872194768",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:66025728495107146fa285c29ab3fd46aa9d17b1fdd4707857f0729d45709cc7",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:e1fa18fe336c11a71340cd1cb8261633ad3dcc47dbf2828c1616d365f459e2e8",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2ef63c564a3ef479a186aa2b267346ad82f27a4a8786caa51698a9f33832de6b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2ef63c564a3ef479a186aa2b267346ad82f27a4a8786caa51698a9f33832de6b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2ef63c564a3ef479a186aa2b267346ad82f27a4a8786caa51698a9f33832de6b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:78529799df6302b1121c43a80fa96f1f9b0be85206153d434a2e25a7c47971f9",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d93a7d88b1d97041b746b06e3f0a5a4d46d94ba36a80f4cf4f48fea9f9879268",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8e6011b9f2f398ca8c8eeb71e146cbc0caebaacf263e16c8e680e27edd46373a",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:65aa77f923c38be0adcc7db7a7af619faf0e0f5864ae54e0db112e98aff62103",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:4e88b635545449a605202db07e55a7bb46becf9acf5ac3da83a412687b7bba0a",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:ea2cbc1ea2d61781ed1fd6dab15921ef81b76a13348cfbce13d986645f5de9f3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:ea2cbc1ea2d61781ed1fd6dab15921ef81b76a13348cfbce13d986645f5de9f3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:80e1fa9ae522abe9391aee052940a2136e92a596f175948f9ecc6c3840379124",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:9079656699c28a3cdac803b0524449ac4923354b0279a4deb9ad34d02f9bef7f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:9079656699c28a3cdac803b0524449ac4923354b0279a4deb9ad34d02f9bef7f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:262b06e0f9b8977c6d7216f181709794d93dadd5fffd8eb226ea7bd8217886c8",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:9079656699c28a3cdac803b0524449ac4923354b0279a4deb9ad34d02f9bef7f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8d764b6262b637206190311afeeab2b2e85c4a0a81040a579d0e4a91fdbd4b6b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:9079656699c28a3cdac803b0524449ac4923354b0279a4deb9ad34d02f9bef7f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:9079656699c28a3cdac803b0524449ac4923354b0279a4deb9ad34d02f9bef7f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:ce338d35ca0a99854ca1831a21ca9590c001fc0d112715c1d9aebc993f6df062",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:b7fe4e6db2448438d71609b5f785f5f95a0ae35d712382a0bb572c2b0cd7cff6",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6a06385e6f8517beba2fcb0bd968ef6f623d3c11a34507e388f153544e2f712b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:4f6b8668329ad6cdab9200e58f337b0dd18ee223d37997067343d907849642f8",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6a06385e6f8517beba2fcb0bd968ef6f623d3c11a34507e388f153544e2f712b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3e6903b186590395e206ced2cda97f40b36c05773506541342956bb3e9d74a2b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:59054c24d6756d46bd086527480c557bfd0c246e28441c581b89640cb05f38af",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3e6903b186590395e206ced2cda97f40b36c05773506541342956bb3e9d74a2b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:57c90b9740fc0e2546606ba636d45524b37e1733857109f23c88c8ac3d1c97ec",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3e6903b186590395e206ced2cda97f40b36c05773506541342956bb3e9d74a2b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:780a03af52c9bbc681ed1921e387ab439763d4e12f4c4c0a52aae9c6333d2e4b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:21ab82b8c04064b048ce9975d0d41fd9d0c722588168d3906aa8967f9a88e948",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:85cecc8ab6c4b116665ac53a3e66b7951a7fd6037b003cbe5a14ff279e00399e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:cdc2f61b16038bb23fc3c90303239fd60e96a36ab1a791220209786cb75bd90e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f7962f190154f558aa9a433b0e1dd8c97167f933a5dac34fafd1985e984a25db",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:5baec4885113c18829e5f3d50027c7ee2c0d37c9827054544f03963f77d1b965",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:23e8bd36ad0cf33d26a46f11dae4e6435754f823ea4c5f02de1225101a526338",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:69598dacae50f17517f9c2cbdb801100e6cfe3a6248c98b55b05d7519494d7ff",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f62522ec0b514081d0379b3cd15ba608fb4c87178b1c56e9584c3ffe5f7a7e5f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:c0150a4166649467af34f6d701783dc3c8f7b01898fbe5d44979944cc4d9cdc6",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f62522ec0b514081d0379b3cd15ba608fb4c87178b1c56e9584c3ffe5f7a7e5f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8c0c6d72215b2cd6467ec18cac99ece70927e670d7887fb7cc69ab6a26b0d3aa",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:cc8a6883b724bb74775347f1a4172cfa40ead39bb149670c851338bf6584ccd6",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:207a30ea83f71835708ec21fde132311a6049512919059079baceae02c67951e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f62522ec0b514081d0379b3cd15ba608fb4c87178b1c56e9584c3ffe5f7a7e5f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f3d64882df28115e1a958d56acaaf2e5b767eea7937282f140866eaefa0e8e52",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:40179219b847db2662c47ddf60675302a1eb0ee4f6d892f26bdc347511c63daa",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:064b050e5b83a67c46d851f6bc708d1cd2d69fa7eef65d6eb9de469347e5240e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:c06f957c881c630253829941ffa108593e13c48f266b8131a6a5e311a8dcad79",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:207a30ea83f71835708ec21fde132311a6049512919059079baceae02c67951e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:c06f957c881c630253829941ffa108593e13c48f266b8131a6a5e311a8dcad79",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d305ae255a42a0d43c7573347c0fa75f9e6b421dc8f1b148b1344ff79dcd2579",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:b7d41b180672cc14e7d0cc5427e4fc84467ce01a4623d68b32ddf59c15683ca3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2c7a6e6eb72d8c07bbdfe05df19cf42fd0f18ca5530d34cb16462cf1887a26ff",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d305ae255a42a0d43c7573347c0fa75f9e6b421dc8f1b148b1344ff79dcd2579",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:3e4172b29379d688eb1fa4ff4d067798b45f9d562189d83fc8f2ab55acf102c8",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6a19512f9d8dfd8821f1fa0193171b3d3d2f574126543d4b6a70e5430dd4c0ff",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f18f5f13bd9ed53cecabbfe546eb0c6fd28c5527112dc1c19158bcef4bbe1b74",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:b063634e7faf13619a520b4dfa429b8f349f027e45b6cb848dbf55a8905c8227",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:141c7e9d7263c0b253b29672896d582aa1b8d4c2bc4f564336d44d440b1be039",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:86c91e16eb03994a47eb1d458d06f341da142d8fdd0cde2a6a591fa7bfb7feff",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:fdc02132f32dc1d9624b0e7425eaa9db3475cce90f768f6ae6bf74cb00f0fc48",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:fea32f22ec8b897ca2f13ea3197b3888e0cb52f146493037e1873dc8c5a7fdc5",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:6507a95568c97c43f2881c6f1d2ca46d9ff1d69daf1dbf8f500932553759b651",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:b27f0eaabe55c8b2c1a25ab51146e7efe836dfe1bfcae3d1e78ee12bd0245b8d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2d3b8340a10bd5d24ef6ba6999768f2621c597cc8c33582efdb96edda4abd152",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:13dde49e0fb12f505feaa376a1677a3972dedd6e0687d5093b295379cb020e6e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:cebfdf367ab01007e839900de4f90cc1e70e2c7322d15a533d325411342c0770",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8d07c8fb4ca1ca93f4bebe2b55c21ed445fdccb81a940464faa71756cfc3afb5",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:16bde19591b88c60c71aa360ad070af9c8422a143442669dba13b9552e781c6c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:4aae941c82185e9a816336b5ffaf00360f545372d6d334edb5501ebdb7fe1c5b",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:f6546f0cb006720a655700a9e3e3e30f54f58c2a4d5adbf73cee1c3fb65ac0f3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:5cfe687c7d93d255d883ca4666ef68f482b8d22360b2c376cfcc44292d78a5ee",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:d3d735795e4cd38efa47a0dd3f56a30693274deecf150bd220ded2c8f1a5fc2c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:dfe454e18e3203d0d168a607a50e9ed6f8892a9bdf16d8d3aaf445a15e0d813c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:996672f9baf78581597d81183b8874a32da5409d81dbe3e689a80688a6f4c87e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:c3b5a76f0e84c3b33e7bbc7284d6b86c37967eaf10b717de3bf87d376945346c",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:b43b566eab23c56d544b5f79135a228c1baa3ff5bde9cfc740790b26e41b937e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:89e32ccc2c18b8559e70a4fd62935478d9cb76b79fa6fc7114f5afac5bf38eb0",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:7f74a7b4b4aeec5a577c019adf86fa79fad6e672a039dcf675e8deda52ebfa2f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:458c77e1dc69a705c54ec8975605bc2e99d3050bf107193eb11d024a61e3ab51",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:b2ef2f9231c5af022083140b4e1c302e8db46cc89228c228fccf4d65f04b28de",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:047b5821220dcbbf25b463bf8fde783753617fbee7f816ff41068cb5086407a9",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:c741f65cc57c708e1467f05de897444428fc58fa699cb03cde593b93a7effd21",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:4c982b141db022eacc8fc85c32255964bd1d744a8d51783e69d47254397317ac",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:3634eb373ca185b5a0504237978e2feee4d498c80de22b10d9bfc9f35a267a52",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:fe9431e3d2633f41c9c6d03d39d6b57f9c12ad23535135d6ebf98b45d159e780",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:8e8fc395f6676cea917c7b5e15ca7e88ca6e2e7e284a327877ca8a3fcd50811f",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:c5ace4337171e24f90b112e07b83fd0c8d3c2aeee78e713770cac908f4a5ece1",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:07dd888e9e720d99f3aaa2022a402b73575261df673d531df0da3ee78a8f9fbb",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:0dc37093a75575d65ff9580cd6c3bbea915b31c2cd64ab564ec409e66daa7a17",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:16b00295dd66e895eb9fc690dfe0534e8fe4042489789d5a4ba84356dd4133a8",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:6b32f4772811b124b12fe1f5cd81925d10ed54ac2a45eab032761720591e56d3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:f199a1733aa88b7999cc11c76329b166dec3035adc77ed1059c2efe0c4108bc4",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:225e839b80aa3c34f8acc6fcd256d0a0a85b39e62bc53bdd21591a02206173a6",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:d3fecd502b2d0c328e39f235d43d7e22bdbc0791d7165233c2fcff85e8160c70",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:aa8e4cb8a0b5880caf585685a09ea6f11beb811c00c631fea4e081d2899d8330",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:93486a98c4ebbb7335b7add87c8897674684f94d4fa8f1ec11e12dea1a47b199",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:7c5ff07d55495ffe71beef20eb6361a06876f6ea45f7b3b90982f1cfdddc65ea",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "authored-component-readiness",
+      "evidence_id": "sha256:ee371138b3ca6080f0b0afddecdc63cd539e201fbe09f6ed5899afcc470fd3c3",
+      "severity": "error",
+      "subjects": []
+    }
+  ]
+}

@@ -927,11 +927,8 @@ impl ManufacturingReleaseBundle {
             .iter()
             .filter(|violation| violation["severity"].as_str() == Some("error"))
             .count();
-        if self.manifest.core.release_clean && (coverage_blockers != 0 || drc_errors != 0) {
-            return Err(ManufacturingReleaseError::Evidence(
-                "release is marked clean despite blocking HyperDRC evidence".into(),
-            ));
-        }
+        self.verify_blocker_count("DrcCoverage", coverage_blockers)?;
+        self.verify_blocker_count("DrcErrors", drc_errors)?;
         Ok(())
     }
 
@@ -982,12 +979,7 @@ impl ManufacturingReleaseBundle {
             });
         }
         let audit = FabricationCamRoundTripReport::from_files(&files);
-        if !audit.is_release_clean() {
-            return Err(ManufacturingReleaseError::Evidence(format!(
-                "independent CAM semantic re-import failed: {:?}",
-                audit.issues
-            )));
-        }
+        self.verify_blocker_count("CamRoundTrip", audit.issues.len())?;
         Ok(())
     }
 
@@ -1043,6 +1035,29 @@ impl ManufacturingReleaseBundle {
         if let Some(panel) = &self.manifest.core.panel_definition {
             let path = PortableArtifactPath::new(panel.clone())?;
             required_file(&self.files, path.as_str())?;
+        }
+        Ok(())
+    }
+
+    fn verify_blocker_count(
+        &self,
+        kind: &str,
+        count: usize,
+    ) -> Result<(), ManufacturingReleaseError> {
+        let expected = format!("{kind}({count})");
+        let retained = self
+            .manifest
+            .core
+            .release_blockers
+            .iter()
+            .filter(|blocker| blocker.starts_with(&format!("{kind}(")))
+            .collect::<Vec<_>>();
+        if (count == 0 && !retained.is_empty())
+            || (count != 0 && (retained.len() != 1 || retained[0].as_str() != expected.as_str()))
+        {
+            return Err(ManufacturingReleaseError::Evidence(format!(
+                "release blocker {kind} does not match independently verified count {count}"
+            )));
         }
         Ok(())
     }

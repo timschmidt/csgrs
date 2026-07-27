@@ -15,6 +15,7 @@ use hyperlattice::Point2;
 #[cfg(feature = "interchange")]
 use hyperpath::TraceLayer;
 use semver::Version;
+use std::fmt::Write as _;
 
 fn name(value: &str) -> CircuitPackageName {
     CircuitPackageName::new(value).unwrap()
@@ -22,6 +23,19 @@ fn name(value: &str) -> CircuitPackageName {
 
 fn requirement(package: &str, version: &str) -> PackageRequirement {
     PackageRequirement::parse(name(package), version, None).unwrap()
+}
+
+fn fixture_digest(label: &str) -> String {
+    let mut digest = String::with_capacity(64);
+    for byte in label.bytes() {
+        write!(&mut digest, "{byte:02x}").unwrap();
+    }
+    digest.extend(std::iter::repeat_n(
+        '0',
+        64_usize.saturating_sub(digest.len()),
+    ));
+    digest.truncate(64);
+    digest
 }
 
 fn release(
@@ -34,7 +48,7 @@ fn release(
         name: name(package),
         version: Version::parse(version).unwrap(),
         source: PackageSource::Registry("hyper.example".into()),
-        digest: PackageDigest::new("sha256", digest).unwrap(),
+        digest: PackageDigest::new("sha256", fixture_digest(digest)).unwrap(),
         exports: Vec::new(),
         dependencies,
     }
@@ -74,7 +88,7 @@ fn resolver_backtracks_to_highest_mutually_compatible_release_and_verifies_lock(
     catalog.verify_lock(&lock).unwrap();
 
     let mut tampered = lock.clone();
-    tampered.packages[0].digest = PackageDigest::new("sha256", "wrong").unwrap();
+    tampered.packages[0].digest = PackageDigest::new("sha256", fixture_digest("wrong")).unwrap();
     assert_eq!(
         catalog.verify_lock(&tampered),
         Err(PackageResolutionError::DigestMismatch(name("footprints")))
@@ -89,7 +103,7 @@ fn package_lock_json_round_trips_exact_coordinates_and_provenance() {
     };
     let lock = catalog.resolve(&[requirement("symbols", "^3")]).unwrap();
     let json = lock.to_json().unwrap();
-    assert!(json.contains("\"sha256:abc123\""));
+    assert!(json.contains(&format!("\"sha256:{}\"", fixture_digest("abc123"))));
     assert!(!json.contains("\"algorithm\""));
     let restored = CircuitPackageLock::from_json(&json).unwrap();
     assert_eq!(restored, lock);

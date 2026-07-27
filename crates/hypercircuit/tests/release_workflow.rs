@@ -645,6 +645,7 @@ fn representative_board_spans_authoring_review_verification_and_release_outputs(
             hypercircuit::SemanticMigrationStep::MixedSignalWorkflow,
             hypercircuit::SemanticMigrationStep::NativeInterfaceParity,
             hypercircuit::SemanticMigrationStep::AuthoredDesignIntent,
+            hypercircuit::SemanticMigrationStep::ManufacturingIntent,
         ]
     );
     assert_eq!(
@@ -833,11 +834,15 @@ fn oversized_authored_mask_expansion_is_reported_by_native_hyperdrc() {
     let drc = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
     let readiness = drc.run_readiness(&DrcReadinessPolicy::default());
 
-    assert!(readiness.violations.iter().any(|violation| {
-        violation.check == "solder-mask-expansion"
-            && violation.severity == hyperdrc::Severity::Warning
-            && violation.layers.iter().any(|layer| layer == "F.Mask")
-    }));
+    assert!(
+        readiness.violations.iter().any(|violation| {
+            violation.check == "solder-mask-expansion"
+                && violation.severity == hyperdrc::Severity::Warning
+                && violation.layers.iter().any(|layer| layer == "F.Mask")
+        }),
+        "readiness violations: {:?}",
+        readiness.violations
+    );
 }
 
 #[test]

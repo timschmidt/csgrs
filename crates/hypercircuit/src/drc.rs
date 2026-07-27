@@ -16,9 +16,9 @@ use hyperdrc::authoring_intent::{
 };
 use hyperdrc::checks::{
     NET_IMPEDANCE_TARGET_READINESS_CHECK, minimum_mask_opening, net_constraint_readiness,
-    paste_overhang, silkscreen_board_edge_clearance, silkscreen_min_width, silkscreen_overlap,
-    solder_mask_board_edge_clearance, solder_mask_expansion, solder_mask_opening_spacing,
-    stackup_readiness,
+    paste_overhang_from_features, silkscreen_board_edge_clearance, silkscreen_min_width,
+    silkscreen_overlap, solder_mask_board_edge_clearance, solder_mask_expansion_from_features,
+    solder_mask_opening_spacing, stackup_readiness,
 };
 use hyperdrc::constraint_policy::{
     DifferentialRole, NetClassConfig, StackupConfig, StackupLayerConfig,
@@ -762,6 +762,19 @@ impl HyperDrcHandoff {
 
     /// Runs HyperDRC's native stackup/net-class and authored-intent checks.
     pub fn run_readiness(&self, policy: &DrcReadinessPolicy) -> HyperDrcReadinessReport {
+        self.run_readiness_selected(policy, default_checks().iter().copied())
+    }
+
+    /// Runs an explicit subset of the shared HyperDRC registry.
+    ///
+    /// This is primarily useful for profiling and fault isolation. Production
+    /// release code should normally use [`Self::run_readiness`], which always
+    /// selects the complete default registry.
+    pub fn run_readiness_selected(
+        &self,
+        policy: &DrcReadinessPolicy,
+        checks: impl IntoIterator<Item = Check>,
+    ) -> HyperDrcReadinessReport {
         let boards = std::slice::from_ref(&self.board);
         let profile = &policy.capability_profile;
         let profile_digest = profile
@@ -792,11 +805,10 @@ impl HyperDrcHandoff {
             .unwrap_or(&policy.process_board_edge_clearance);
         let mut violations = Vec::new();
         let mut test_coverage = NativeTestCoverageReport::default();
-        let runner =
-            ReadinessRunner::new(default_checks().iter().copied()).with_context(ReadinessContext {
-                policy_digest: Some(profile_digest.clone()),
-                ..ReadinessContext::default()
-            });
+        let runner = ReadinessRunner::new(checks).with_context(ReadinessContext {
+            policy_digest: Some(profile_digest.clone()),
+            ..ReadinessContext::default()
+        });
         let coverage = runner
             .run(&mut violations, |check, violations| {
                 match check {
@@ -878,9 +890,17 @@ impl HyperDrcHandoff {
                     Check::SolderMaskExpansion => {
                         for process in self.mask_layers() {
                             if let Some(copper) = self.surface_copper(process.role) {
-                                violations.extend(solder_mask_expansion(
+                                let feature_sketches = self
+                                    .board
+                                    .copper
+                                    .iter()
+                                    .filter(|feature| feature.layer == copper.name)
+                                    .map(|feature| &feature.sketch)
+                                    .collect::<Vec<_>>();
+                                violations.extend(solder_mask_expansion_from_features(
                                     &copper.name,
                                     &copper.sketch,
+                                    &feature_sketches,
                                     &process.name,
                                     &process.sketch,
                                     &policy.maximum_mask_expansion,
@@ -892,11 +912,19 @@ impl HyperDrcHandoff {
                     Check::PasteOverhang => {
                         for process in self.paste_layers() {
                             if let Some(copper) = self.surface_copper(process.role) {
-                                violations.extend(paste_overhang(
+                                let feature_sketches = self
+                                    .board
+                                    .copper
+                                    .iter()
+                                    .filter(|feature| feature.layer == copper.name)
+                                    .map(|feature| &feature.sketch)
+                                    .collect::<Vec<_>>();
+                                violations.extend(paste_overhang_from_features(
                                     &process.name,
                                     &process.sketch,
                                     &copper.name,
                                     &copper.sketch,
+                                    &feature_sketches,
                                     &policy.paste_overhang_tolerance,
                                     &policy.minimum_process_report_area,
                                 ));

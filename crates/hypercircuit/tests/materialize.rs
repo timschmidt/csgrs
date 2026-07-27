@@ -343,10 +343,12 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
         assert_eq!(handoff.stackup.copper_layer_count, Some(2));
         assert_eq!(handoff.authored_keepouts.len(), 1);
         assert_eq!(handoff.authored_slots.len(), 1);
-        let readiness = handoff.run_readiness(&hypercircuit::DrcReadinessPolicy {
-            minimum_route_width: Real::from(2),
-            ..hypercircuit::DrcReadinessPolicy::default()
-        });
+        let mut readiness_policy = hypercircuit::DrcReadinessPolicy::default();
+        readiness_policy
+            .capability_profile
+            .drilling
+            .minimum_routed_slot = Some(Real::from(2));
+        let readiness = handoff.run_readiness(&readiness_policy);
         assert!(!readiness.is_release_clean());
         assert!(
             readiness.violations.iter().any(|violation| {

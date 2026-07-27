@@ -1,5 +1,6 @@
 #![cfg(all(feature = "drc", feature = "interchange"))]
 
+use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -294,9 +295,51 @@ fn run_fast_hyperdrc(slug: &str) {
         "{slug} HyperDRC handoff omissions"
     );
     let readiness = handoff.run_readiness(&DrcReadinessPolicy::default());
+    let finding_count = readiness.violations.len();
+    let mut finding_counts = BTreeMap::<String, usize>::new();
+    let violations = readiness
+        .violations
+        .iter()
+        .map(|violation| {
+            *finding_counts.entry(violation.check.clone()).or_default() += 1;
+            serde_json::json!({
+                "check": violation.check,
+                "severity": violation.severity,
+                "evidence_id": violation.evidence_id,
+                "subjects": violation.subjects,
+            })
+        })
+        .collect::<Vec<_>>();
+    let snapshot = serde_json::json!({
+        "board": slug,
+        "capability_profile": {
+            "id": readiness.capability_profile_id,
+            "revision": readiness.capability_profile_revision,
+            "digest": readiness.capability_profile_digest,
+        },
+        "handoff_omissions": handoff.omissions.iter().map(|value| format!("{value:?}")).collect::<Vec<_>>(),
+        "coverage": readiness.coverage,
+        "finding_counts": finding_counts,
+        "violations": violations,
+    });
+    let mut snapshot_bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
+    snapshot_bytes.push(b'\n');
+    let snapshot_path = fixture_root().join("fast-drc").join(format!("{slug}.json"));
+    if std::env::var_os("UPDATE_HYPERCIRCUIT_EASYDUINO_SNAPSHOTS").is_some() {
+        fs::create_dir_all(snapshot_path.parent().unwrap()).unwrap();
+        fs::write(&snapshot_path, &snapshot_bytes).unwrap();
+    } else {
+        assert_eq!(
+            snapshot_bytes,
+            fs::read(&snapshot_path).unwrap_or_else(|error| panic!(
+                "read {}: {error}; regenerate with UPDATE_HYPERCIRCUIT_EASYDUINO_SNAPSHOTS=1",
+                snapshot_path.display()
+            )),
+            "{slug} HyperDRC coverage/finding snapshot changed"
+        );
+    }
     assert_eq!(
-        readiness.violations.len(),
-        board.fast_drc_findings,
+        finding_count, board.fast_drc_findings,
         "{slug} HyperDRC findings"
     );
 }

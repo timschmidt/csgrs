@@ -35,6 +35,23 @@ an exact blocker:
 cargo bench --bench easyduino_full_pipeline --features "drc interchange"
 ```
 
+An unfiltered full-pipeline run compares ordinary `prepare_release` coverage,
+finding counts, typed blockers, and independent round-trip dispositions against
+`ordinary-release.json`. Regenerate it only after reviewing an intentional
+release-policy or geometry change:
+
+```text
+UPDATE_HYPERCIRCUIT_EASYDUINO_RELEASE_SNAPSHOT=1 \
+  cargo bench --bench easyduino_full_pipeline --features "drc interchange"
+```
+
 `manifest.toml` is the completeness ledger. It pins source and native hashes
 plus semantic counts so deleting, replacing, or partially importing a board
-fails deterministically.
+fails deterministically. `fast-drc/` stores geometry-free, reviewable snapshots
+of all 160 shared-runner dispositions and every durable finding identity for
+each board. Regenerate those snapshots intentionally with:
+
+```text
+UPDATE_HYPERCIRCUIT_EASYDUINO_SNAPSHOTS=1 \
+  cargo test --features "drc interchange" --test easyduino
+```

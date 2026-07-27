@@ -568,6 +568,7 @@ pub fn intelligent_exchange_adapter_available(program: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     fn identity(format: IntelligentPcbExchangeFormat) -> IntelligentPcbExchangeAdapterIdentity {
         IntelligentPcbExchangeAdapterIdentity {
@@ -657,6 +658,27 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    proptest! {
+        #[test]
+        fn bounded_arbitrary_ipc2581_xml_never_panics(
+            bytes in proptest::collection::vec(any::<u8>(), 0..2048)
+        ) {
+            let policy = Ipc2581XmlPolicy {
+                schema_uri: "fixture://licensed-schema.xsd".into(),
+                schema_digest: PackageDigest::sha256(b"schema"),
+                root_local_name: "IPC-2581".into(),
+                namespace_attribute: "xmlns".into(),
+                namespace: "urn:fixture:ipc2581".into(),
+                revision_attribute: "revision".into(),
+                revision: "C".into(),
+                maximum_bytes: 2048,
+                maximum_depth: 16,
+                maximum_events: 256,
+            };
+            let _ = inspect_ipc2581_xml(&bytes, &policy);
+        }
     }
 
     #[cfg(unix)]
