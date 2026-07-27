@@ -1938,7 +1938,7 @@ fn refine_algebraic_lower_gap(
 }
 
 fn midpoint_real(first: &Real, second: &Real) -> CurveResult<Real> {
-    ((first + second) / Real::from(2_u8)).map_err(Into::into)
+    Ok(Real::average_pair(first, second))
 }
 
 impl BezierParameterRange2 {

@@ -2897,6 +2897,8 @@ impl CurveRegion2 {
         }
 
         let evaluators = self.retained_rational_evaluators()?;
+        let native_loops = self.native_boundary_loops();
+        let native_bounds = self.native_boundary_bounds(policy);
         for (hole_index, role) in roles.iter().enumerate() {
             if *role != CurveRegionLoopRole::Hole {
                 continue;
@@ -2909,57 +2911,117 @@ impl CurveRegion2 {
                 }
             };
 
-            let mut owner: Option<(usize, Real)> = None;
+            let mut owner: Option<usize> = None;
             for (profile_index, profile) in profiles.iter().enumerate() {
                 let material_index = profile.material_loop_index;
-                match classify_point_against_retained_loop(
-                    profile.material,
-                    &evaluators[material_index],
-                    &point,
-                    policy,
-                )? {
+                if native_bounds.is_some_and(|bounds| {
+                    matches!(
+                        bounds[material_index].contains_point(&point, policy),
+                        Classification::Decided(false)
+                    )
+                }) {
+                    continue;
+                }
+                let containment = if let Some(native_loops) = native_loops {
+                    classify_point_against_native_loop_after_bounds(
+                        &native_loops[material_index],
+                        &point,
+                        policy,
+                    )?
+                } else {
+                    classify_point_against_retained_loop(
+                        profile.material,
+                        &evaluators[material_index],
+                        &point,
+                        policy,
+                    )?
+                };
+                match containment {
                     Classification::Decided(
                         ContourPointLocation::Inside | ContourPointLocation::Boundary,
-                    ) => {
-                        let Some(area) = profile.material.signed_area()? else {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                        };
-                        let magnitude = match real_sign(&area, policy) {
-                            Some(RealSign::Negative) => Real::zero() - area,
-                            Some(RealSign::Positive) => area,
-                            Some(RealSign::Zero) => {
-                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                            }
-                            None => {
-                                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-                            }
-                        };
-                        match &owner {
-                            None => owner = Some((profile_index, magnitude)),
-                            Some((_, owner_magnitude)) => {
-                                match compare_reals(&magnitude, owner_magnitude, policy) {
-                                    Some(std::cmp::Ordering::Less) => {
-                                        owner = Some((profile_index, magnitude));
+                    ) => match owner {
+                        None => owner = Some(profile_index),
+                        Some(owner_index) => {
+                            let candidate_point =
+                                match retained_loop_sample_point(profile.material, policy)? {
+                                    Classification::Decided(point) => point,
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
                                     }
-                                    Some(
-                                        std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                                    ) => {}
-                                    None => {
-                                        return Ok(Classification::Uncertain(
-                                            UncertaintyReason::Ordering,
-                                        ));
+                                };
+                            let current_owner = &profiles[owner_index];
+                            let current_material_index = current_owner.material_loop_index;
+                            let candidate_inside_owner = if let Some(native_loops) = native_loops {
+                                classify_point_against_native_loop_after_bounds(
+                                    &native_loops[current_material_index],
+                                    &candidate_point,
+                                    policy,
+                                )?
+                            } else {
+                                classify_point_against_retained_loop(
+                                    current_owner.material,
+                                    &evaluators[current_material_index],
+                                    &candidate_point,
+                                    policy,
+                                )?
+                            };
+                            match candidate_inside_owner {
+                                Classification::Decided(
+                                    ContourPointLocation::Inside | ContourPointLocation::Boundary,
+                                ) => owner = Some(profile_index),
+                                Classification::Decided(ContourPointLocation::Outside) => {
+                                    let owner_point = match retained_loop_sample_point(
+                                        current_owner.material,
+                                        policy,
+                                    )? {
+                                        Classification::Decided(point) => point,
+                                        Classification::Uncertain(reason) => {
+                                            return Ok(Classification::Uncertain(reason));
+                                        }
+                                    };
+                                    let owner_inside_candidate =
+                                        if let Some(native_loops) = native_loops {
+                                            classify_point_against_native_loop_after_bounds(
+                                                &native_loops[material_index],
+                                                &owner_point,
+                                                policy,
+                                            )?
+                                        } else {
+                                            classify_point_against_retained_loop(
+                                                profile.material,
+                                                &evaluators[material_index],
+                                                &owner_point,
+                                                policy,
+                                            )?
+                                        };
+                                    match owner_inside_candidate {
+                                        Classification::Decided(
+                                            ContourPointLocation::Inside
+                                            | ContourPointLocation::Boundary,
+                                        ) => {}
+                                        Classification::Decided(ContourPointLocation::Outside) => {
+                                            return Ok(Classification::Uncertain(
+                                                UncertaintyReason::Ordering,
+                                            ));
+                                        }
+                                        Classification::Uncertain(reason) => {
+                                            return Ok(Classification::Uncertain(reason));
+                                        }
                                     }
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
                                 }
                             }
                         }
-                    }
+                    },
                     Classification::Decided(ContourPointLocation::Outside) => {}
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
             }
-            let Some((owner, _)) = owner else {
+            let Some(owner) = owner else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             profiles[owner].hole_loop_indices.push(hole_index);
