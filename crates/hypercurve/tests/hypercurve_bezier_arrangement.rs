@@ -963,16 +963,6 @@ fn certified_overlap_evidence_is_retained_across_graph_clones() {
         BezierRetainedOverlapEvidence2::from_graph(&cloned, &policy()),
         evidence
     );
-
-    let exact_symbolic_graph = partial_line_overlap_graph();
-    assert!(
-        BezierRetainedOverlapEvidence2::from_graph(
-            &exact_symbolic_graph,
-            &CurvePolicy::exact_symbolic(),
-        )
-        .is_decided()
-    );
-    assert!(!exact_symbolic_graph.is_certified_overlap_evidence_cached());
 }
 
 #[test]

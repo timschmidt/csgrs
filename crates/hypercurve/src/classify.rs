@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
-use crate::{CurvePolicy, NumericMode, Point2};
+use crate::{CurvePolicy, Point2};
 
 /// Result of a classification step.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -96,7 +96,7 @@ pub(crate) fn classify_oriented_line(
     point: &Point2,
     policy: &CurvePolicy,
 ) -> Classification<LineSide> {
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
         // Preview mode is a display/editing classifier. Use the current Real
         // approximation consistently here instead of sending rotated radical
         // expressions into the certified predicate path, otherwise arc sweep
@@ -155,7 +155,7 @@ pub(crate) fn orient2d_real_expr(from: &Point2, to: &Point2, point: &Point2) -> 
 }
 
 pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> {
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let Some(value) = value.to_f64_lossy()
         && value.is_finite()
     {
@@ -200,7 +200,7 @@ pub(crate) fn compare_reals(left: &Real, right: &Real, policy: &CurvePolicy) -> 
     }
 
     #[cfg(feature = "predicates")]
-    if !matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+    if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
         // Curve parameter ordering is a topology predicate: it decides whether
         // an intersection root lies on a segment, whether two split markers
         // coincide, and how degenerate overlaps are classified. Route the sign
@@ -228,7 +228,7 @@ pub(crate) fn compare_reals_for_split_ordering(
     right: &Real,
     policy: &CurvePolicy,
 ) -> Option<Ordering> {
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
@@ -281,11 +281,11 @@ pub(crate) fn closed_unit_interval_location(
     // Edge-preview f64 parameters are candidate filters only: decisively
     // out-of-range values cannot represent finite segment hits, while
     // near-boundary values still fall through to exact comparison.
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let Some(approx) = value.to_f64_lossy()
     {
         let tolerance = policy
-            .tolerance
+            .preview_tolerance
             .map(|tolerance| tolerance.absolute.max(tolerance.relative))
             .unwrap_or(1e-12);
         if approx.is_finite() && (approx < -tolerance || approx > 1.0 + tolerance) {

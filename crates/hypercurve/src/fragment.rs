@@ -17,8 +17,8 @@ use crate::region_crossing_winding::{RegionLineCrossing, RegionLineCrossingWindi
 use crate::segment::LineSupport2;
 use crate::{
     CircularArc2, Classification, Contour2, ContourSplitMarkers, CurveError, CurvePolicy,
-    CurveResult, LineSeg2, NumericMode, ParamRange, Point2, RegionContourKey, Segment2,
-    SegmentSplitMarker, UncertaintyReason,
+    CurveResult, LineSeg2, ParamRange, Point2, RegionContourKey, Segment2, SegmentSplitMarker,
+    UncertaintyReason,
 };
 
 /// One source-contour fragment between adjacent split markers.
@@ -544,7 +544,7 @@ fn split_marker_matches_source_segment(
             let distance = marker.point.distance_squared(&expected);
             match point_distance_is_zero(&distance, &marker.point, &expected, policy) {
                 Some(true) => Ok(Classification::Decided(())),
-                Some(false) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+                Some(false) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 Some(false) => Err(CurveError::Topology(
@@ -567,7 +567,7 @@ fn point_distance_is_zero(
         return Some(true);
     }
 
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(distance_squared), Some(left_scale), Some(right_scale)) = (
             distance_squared.to_f64_lossy(),
             point_coordinate_scale(left),
@@ -576,7 +576,7 @@ fn point_distance_is_zero(
         && distance_squared.is_finite()
     {
         let (absolute, relative) = policy
-            .tolerance
+            .preview_tolerance
             .map(|tolerance| (tolerance.absolute, tolerance.relative))
             .unwrap_or((1e-12, 1e-12));
         let scale = left_scale.max(right_scale).max(1.0);
@@ -606,7 +606,7 @@ fn split_marker_matches_source_arc(
     let radius_delta = marker.point.distance_squared(source_arc.center()) - &radius_squared;
     match radius_delta_is_zero(&radius_delta, &radius_squared, policy) {
         Some(true) => {}
-        Some(false) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+        Some(false) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
         Some(false) => {
@@ -620,7 +620,7 @@ fn split_marker_matches_source_arc(
     match source_arc.contains_sweep_point(&marker.point, policy) {
         Classification::Decided(true) => {}
         Classification::Decided(false)
-            if matches!(policy.numeric_mode, NumericMode::EdgePreview) =>
+            if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) =>
         {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
@@ -639,7 +639,7 @@ fn split_marker_matches_source_arc(
         };
     match compare_reals(&marker.param, &expected_param, policy) {
         Some(Ordering::Equal) => Ok(Classification::Decided(())),
-        Some(_) if matches!(policy.numeric_mode, NumericMode::EdgePreview) => {
+        Some(_) if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
         Some(_) => Err(CurveError::Topology(
@@ -809,9 +809,9 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
         return Some(true);
     }
 
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview) {
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
         let (absolute, relative) = policy
-            .tolerance
+            .preview_tolerance
             .map(|tolerance| (tolerance.absolute, tolerance.relative))
             .unwrap_or((1e-12, 1e-12));
         let radius_scale = radius_squared

@@ -1571,11 +1571,6 @@ mod tests {
             .exact_dyadic_line_aabbs(&CurvePolicy::certified())
             .unwrap();
         assert!(Rc::ptr_eq(&bounds, &replay));
-        assert!(
-            contour
-                .exact_dyadic_line_aabbs(&CurvePolicy::exact_symbolic())
-                .is_none()
-        );
     }
 
     #[test]

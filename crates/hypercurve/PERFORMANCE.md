@@ -5830,6 +5830,62 @@ added 712 text bytes plus one 4 KiB loadable page, so it was also reverted.
 These rejected results prevent API simplification from silently weakening the
 current performance envelope.
 
+### Closed curve-operation policy
+
+`CurvePolicy` is now the only public numeric-policy type. Its private state
+admits two valid constructions: certified topology, or an explicitly
+toleranced edge preview. The redundant `ExactSymbolic` label, separately
+public `NumericMode` and `Tolerance` types, mutable predicate policy, and public
+fields are removed. Exact decisions retain the strict Hyperlimit predicate
+policy; the old exact-symbolic cache bypasses were removed because those
+caches contain lossless exact evidence.
+
+The release containment and intersection gates were run serially before and
+after the change. Because repeated sub-microsecond wall-clock passes moved by
+more than the candidate/control deltas, the committed pre-change tree was also
+built in a local sibling clone and interleaved with the candidate. Wins and
+losses reversed between adjacent passes, and every candidate timing band
+overlapped its unchanged control band. The final private representation and
+crate-internal reads preserve the pre-change field order, discriminants, and
+strict predicate-policy storage, so the public simplification does not insert
+an accessor boundary or alter a topology algorithm.
+
+Representative final candidate and immediately adjacent unchanged-control
+passes were:
+
+| Containment case | Candidate | Unchanged control |
+| --- | ---: | ---: |
+| Contour bounding-box miss | 439 ns | 420 ns |
+| 64-point batched bounding-box miss | 6.262 us | 6.329 us |
+| Sparse-region outside | 32.440 us | 33.051 us |
+| Sparse-region single hit | 54.266 us | 52.808 us |
+| 64-point batched sparse region | 831.960 us | 821.772 us |
+| Sparse-region filled area | 14.166 us | 14.192 us |
+
+| Intersection case | Candidate | Unchanged control |
+| --- | ---: | ---: |
+| Line/circle secant relation | 1.936 us | 1.974 us |
+| Circle/circle secant relation | 568 ns | 512 ns |
+| Same-circle arc overlap | 6.710 us | 6.649 us |
+| Same-circle endpoint pair | 4.334 us | 4.346 us |
+| Two-point arc crossing | 1.849 us | 1.780 us |
+| Sparse 160-segment self contacts | 120.873 us | 124.567 us |
+| Sparse 160-segment curve intersections | 21.732 us | 21.582 us |
+| Sparse 120-contour region events | 2.475 us | 2.426 us |
+
+Earlier candidate passes reached 421 ns for the contour miss, 31.424 us for
+sparse outside classification, 52.346 us for the single-hit case, 121.277 us
+for sparse self contacts, and 1.872 us for the line/circle relation. The
+unchanged controls varied comparably, including 420--445 ns for the contour
+miss, 13.409--14.435 us for filled area, 1.974--2.086 us for the line/circle
+relation, and 6.512--6.798 us for same-circle overlap. There is no repeatable
+performance regression within the observed machine-noise envelope.
+
+Correctness validation covered the all-feature library and integration suite,
+the no-default-feature library and integration suite, the UI example, and all
+in-workspace direct consumers (`csgrs`, `hyperbrep`, `hypercircuit`,
+`hyperdrc`, `hyperpack`, and `synaps-cad`).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

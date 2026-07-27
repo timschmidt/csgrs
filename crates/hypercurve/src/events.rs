@@ -1383,7 +1383,7 @@ impl DenseAabbRankSchedule {
         second_index: &SegmentAabbXIndex,
         policy: &CurvePolicy,
     ) -> Option<Self> {
-        if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
             return None;
         }
         u32::try_from(second_segment_count).ok()?;
@@ -2033,8 +2033,9 @@ fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &Cur
         return true;
     }
 
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.tolerance)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+        && let (Some(distance), Some(tolerance)) =
+            (distance.to_f64_lossy(), policy.preview_tolerance)
     {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         return distance.is_finite() && distance <= tolerance * tolerance;

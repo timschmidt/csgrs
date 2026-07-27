@@ -15,8 +15,8 @@ use crate::classify::{
 };
 use crate::segment::RetainedLineRelation2;
 use crate::{
-    CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2, NumericMode,
-    Point2, Segment2, UncertaintyReason,
+    CircularArc2, Classification, CurveError, CurvePolicy, CurveResult, LineSeg2, Point2, Segment2,
+    UncertaintyReason,
 };
 
 /// Parameter range on a segment.
@@ -575,7 +575,7 @@ impl LineSeg2 {
         // a bounded orientation filter; small/public pairs retain their lean
         // exact path, and preview tolerance semantics remain unchanged.
         let certified_support_relation = if !aabb_overlap_certified
-            || matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+            || matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         {
             CertifiedLineSegmentSupportRelation::Unknown
         } else {
@@ -686,7 +686,7 @@ impl LineSeg2 {
         arc: &CircularArc2,
         policy: &CurvePolicy,
     ) -> CurveResult<LineArcIntersection> {
-        if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
             && let Some(result) = intersect_line_arc_edge_preview(self, arc, policy)?
         {
             return Ok(result);
@@ -840,7 +840,7 @@ fn intersect_line_arc_edge_preview(
         .map(f64::abs)
         .fold(1.0_f64, f64::max);
     let epsilon = policy
-        .tolerance
+        .preview_tolerance
         .map(|tolerance| tolerance.relative.max(tolerance.absolute / length_scale))
         .unwrap_or(1e-12);
     let discriminant_tolerance = epsilon * half_b.mul_add(half_b, (a * c).abs()).abs().max(1.0);
@@ -1746,7 +1746,7 @@ fn intersect_distinct_circle_arcs(
     center_distance_squared: Real,
     policy: &CurvePolicy,
 ) -> CurveResult<ArcArcIntersection> {
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let Some(result) = intersect_distinct_circle_arcs_edge_preview(a, b, policy)?
     {
         return Ok(result);
@@ -1893,7 +1893,7 @@ fn preview_circle_data(a: &CircularArc2, b: &CircularArc2) -> Option<[f64; 6]> {
 fn preview_length_tolerance(policy: &CurvePolicy, values: [f64; 6]) -> f64 {
     let scale = values.into_iter().map(f64::abs).fold(1.0_f64, f64::max);
     policy
-        .tolerance
+        .preview_tolerance
         .map(|tolerance| tolerance.absolute.max(tolerance.relative) * scale)
         .unwrap_or(1e-12 * scale)
 }
@@ -2034,7 +2034,7 @@ fn line_point_at_for_policy(
     line_param: &Real,
     policy: &CurvePolicy,
 ) -> CurveResult<Point2> {
-    if matches!(policy.numeric_mode, NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(t), Some(start_x), Some(start_y), Some(end_x), Some(end_y)) = (
             line_param.to_f64_lossy(),
             line.start().x().to_f64_lossy(),

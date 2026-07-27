@@ -261,8 +261,9 @@ fn point_is_connectivity(
         return true;
     }
 
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.tolerance)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
+        && let (Some(distance), Some(tolerance)) =
+            (distance.to_f64_lossy(), policy.preview_tolerance)
     {
         let tolerance = tolerance.absolute.max(tolerance.relative);
         return distance.is_finite() && distance <= tolerance * tolerance;

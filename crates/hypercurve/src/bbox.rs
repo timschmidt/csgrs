@@ -97,7 +97,7 @@ impl Aabb2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
 
-        if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+        if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
             // Preview topology prefers conservative candidate retention over a
             // tight arc box. Cardinal sweep tests contain radicals after
             // rotation; keeping the full circle envelope prevents broad-phase
@@ -525,7 +525,7 @@ fn include_coordinate(
     value: &Real,
     policy: &CurvePolicy,
 ) -> Option<()> {
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(value_approx), Some(min_approx), Some(max_approx)) =
             (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value_approx.is_finite()
@@ -551,7 +551,7 @@ fn include_coordinate(
 }
 
 fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(left), Some(right)) = (left.to_f64_lossy(), right.to_f64_lossy())
         && left.is_finite()
         && right.is_finite()
@@ -566,7 +566,7 @@ fn real_less(left: &Real, right: &Real, policy: &CurvePolicy) -> Option<bool> {
 }
 
 fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> Option<bool> {
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let (Some(value), Some(min), Some(max)) =
             (value.to_f64_lossy(), min.to_f64_lossy(), max.to_f64_lossy())
         && value.is_finite()
@@ -608,7 +608,7 @@ fn real_between(value: &Real, min: &Real, max: &Real, policy: &CurvePolicy) -> O
 
 fn edge_preview_tolerance(policy: &CurvePolicy) -> f64 {
     policy
-        .tolerance
+        .preview_tolerance
         .map(|tolerance| tolerance.absolute.max(tolerance.relative))
         .unwrap_or(1e-12)
 }

@@ -7,7 +7,7 @@ use hypercurve::{
     ContourFragmentSet, ContourIntersection, ContourIntersectionSet, ContourOperand,
     ContourSplitMarkers, CubicBezier2, Curve2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
     CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule, LineSeg2,
-    OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2, Tolerance,
+    OffsetCap, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, Segment2,
 };
 use serde::{Deserialize, Serialize};
 
@@ -1191,7 +1191,7 @@ pub fn policy() -> CurvePolicy {
     // predicate policy inside this value remains strict, and the UI must not
     // treat sampled `f64`/Geo fallback output as exact topology provenance.
     // Finite output remains useful only with explicit boundary handling.
-    CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
+    CurvePolicy::edge_preview(1e-7, 1e-7)
 }
 
 pub fn boolean_polylines(

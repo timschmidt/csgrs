@@ -74,7 +74,7 @@ impl<'a> PreparedLineSeg2<'a> {
     /// Classifies a point relative to this segment's oriented supporting line.
     pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
             // Reuse the fixed endpoint conversion and query facts, then let
             // hyperlimit select the exact determinant schedule. This is the
             // certified orientation predicate at the curve-object
@@ -160,7 +160,7 @@ impl<'a> PreparedCircularArc2<'a> {
         policy: &CurvePolicy,
     ) -> Classification<bool> {
         #[cfg(feature = "predicates")]
-        if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
             let sweep_kind = match crate::arc_bezier::classify_sweep(self.arc) {
                 Ok(kind) => kind,
                 Err(crate::ExactCurveError::Blocked(blocker)) => {
@@ -720,7 +720,7 @@ fn segment_indices_sorted_by_max_x(
     segment_boxes: &[Option<Aabb2>],
     policy: &CurvePolicy,
 ) -> Option<Vec<usize>> {
-    if matches!(policy.numeric_mode, crate::NumericMode::EdgePreview) {
+    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
         return None;
     }
     segment_indices_sorted_by_box_coordinate(segment_boxes, policy, Aabb2::max_x)
@@ -734,7 +734,7 @@ fn prepared_line_winding_index(
 ) -> Option<PreparedLineWindingIndex> {
     const MIN_INDEXED_LINE_SEGMENTS: usize = 8;
     if segments.len() < MIN_INDEXED_LINE_SEGMENTS
-        || matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+        || matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
     {
         return None;
     }
@@ -836,7 +836,7 @@ fn sorted_box_coordinate_partition(
     coordinate: for<'a> fn(&'a Aabb2) -> &'a crate::Real,
     include_equal_in_lower_partition: bool,
 ) -> Option<usize> {
-    if !matches!(policy.numeric_mode, crate::NumericMode::EdgePreview)
+    if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
         && let Some(query_preview) = query.to_f64_lossy().filter(|value| value.is_finite())
     {
         let mut preview_start = 0;

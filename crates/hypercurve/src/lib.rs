@@ -229,7 +229,7 @@ pub use nurbs::{
 };
 pub use offset::OffsetCap;
 pub use point::Point2;
-pub use policy::{CurvePolicy, NumericMode, Tolerance};
+pub use policy::CurvePolicy;
 pub use polynomial_spline::{
     PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
 };

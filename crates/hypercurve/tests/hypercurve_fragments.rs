@@ -4,7 +4,7 @@ use hypercurve::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, Contour2, ContourFragment,
     ContourFragmentSet, ContourIntersection, ContourOperand, ContourSplitMarkers, CurveError,
     CurvePolicy, LineArcIntersection, LineLineIntersection, LineSeg2, ParamRange, Point2, Real,
-    Segment2, SegmentIntersection, SegmentSplitMarker, Tolerance,
+    Segment2, SegmentIntersection, SegmentSplitMarker,
 };
 use proptest::prelude::*;
 
@@ -51,7 +51,7 @@ fn policy() -> CurvePolicy {
 }
 
 fn approx_policy() -> CurvePolicy {
-    CurvePolicy::edge_preview(Tolerance::new(1e-7, 1e-7))
+    CurvePolicy::edge_preview(1e-7, 1e-7)
 }
 
 fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
