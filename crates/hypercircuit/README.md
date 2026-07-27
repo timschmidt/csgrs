@@ -86,7 +86,9 @@ cargo run --features drc,interchange --bin hypercircuit -- \
 cargo run --features drc,interchange --bin hypercircuit -- \
   export-svg main review/board.svg
 cargo run --features drc,interchange --bin hypercircuit -- \
-  release main release/
+  release build main release.zip
+cargo run --features drc,interchange --bin hypercircuit -- \
+  release verify release.zip
 ```
 
 Project commands search the current directory and its ancestors for a
@@ -140,8 +142,13 @@ catalog.
 
 `check` replays semantic validation and ERC; when PCB intent is attached it
 also builds the full placement, csgrs materialization, HyperDRC, fabrication,
-CAM re-import, and assembly evidence in memory. `release` writes the audited
-Gerber X2, Excellon, IPC-D-356, manifest, BOM, pick-and-place, and DNP bytes.
+CAM re-import, and assembly evidence in memory. `release` writes attributed
+Gerber/X3 component layers, Gerber Job, Excellon, IPC-D-356, deterministic
+manifests, DRC evidence, assembly schema, BOM, pick-and-place, and DNP bytes.
+A `.zip` output selects the bounded deterministic archive form; other paths
+select a directory. Signing is optional and separate from core identity. See
+[`docs/manufacturing-release.md`](docs/manufacturing-release.md) for defaults,
+verification, signing tradeoffs, and intelligent-format adapter boundaries.
 Both commands exit with status 2 when typed release blockers remain, while
 malformed input or impossible evidence construction exits with status 1.
 KiCad export writes same-stem `.kicad_pro` and `.kicad_dru` companions when

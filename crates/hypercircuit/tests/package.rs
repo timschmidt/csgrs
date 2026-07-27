@@ -89,6 +89,8 @@ fn package_lock_json_round_trips_exact_coordinates_and_provenance() {
     };
     let lock = catalog.resolve(&[requirement("symbols", "^3")]).unwrap();
     let json = lock.to_json().unwrap();
+    assert!(json.contains("\"sha256:abc123\""));
+    assert!(!json.contains("\"algorithm\""));
     let restored = CircuitPackageLock::from_json(&json).unwrap();
     assert_eq!(restored, lock);
     catalog.verify_lock(&restored).unwrap();

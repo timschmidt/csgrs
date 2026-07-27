@@ -47,9 +47,19 @@ impl Display for ArtifactCatalogError {
 impl std::error::Error for ArtifactCatalogError {}
 
 /// Portable normalized relative UTF-8 path.
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]
 pub struct PortableArtifactPath(String);
+
+impl<'de> Deserialize<'de> for PortableArtifactPath {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let path = String::deserialize(deserializer)?;
+        Self::new(path).map_err(serde::de::Error::custom)
+    }
+}
 
 impl PortableArtifactPath {
     /// Validates and retains an already-normalized portable path.
@@ -175,6 +185,7 @@ mod tests {
     #[test]
     fn path_traversal_duplicates_and_byte_mutation_are_rejected_or_detected() {
         assert!(PortableArtifactPath::new("../secret").is_err());
+        assert!(serde_json::from_str::<PortableArtifactPath>("\"../secret\"").is_err());
         assert!(PortableArtifactPath::new("C:/secret").is_err());
         assert!(PortableArtifactPath::new("fab\\top.gbr").is_err());
         let descriptor = ReleaseArtifactDescriptor::from_bytes(

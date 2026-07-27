@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hypercircuit:manufacturing-release:1",
+  "title": "HyperCircuit manufacturing release manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["core", "core_digest", "signatures"],
+  "properties": {
+    "core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "version",
+        "product",
+        "revision",
+        "variant",
+        "generated_by",
+        "source_revision",
+        "coordinate_frame",
+        "standards",
+        "requirements",
+        "capability_profile_id",
+        "capability_profile_revision",
+        "capability_profile_digest",
+        "fabrication_manifest_digest",
+        "assembly_digest",
+        "drc_report_digest",
+        "design_intent_digest",
+        "mixed_signal_evidence",
+        "test_evidence",
+        "panel_definition",
+        "release_clean",
+        "release_blockers",
+        "artifacts"
+      ],
+      "properties": {
+        "schema": {"const": "hypercircuit.manufacturing-release"},
+        "version": {"const": 1},
+        "product": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "variant": {"type": "string", "minLength": 1},
+        "generated_by": {"type": "string", "minLength": 1},
+        "source_revision": {"type": ["string", "null"]},
+        "coordinate_frame": {"type": "object"},
+        "standards": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "name", "standard"],
+            "properties": {
+              "kind": {
+                "enum": ["inspection", "test", "special_process"]
+              },
+              "name": {"type": "string", "minLength": 1},
+              "standard": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "capability_profile_id": {"type": "string", "minLength": 1},
+        "capability_profile_revision": {"type": "string", "minLength": 1},
+        "capability_profile_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "fabrication_manifest_digest": {"$ref": "#/$defs/digest"},
+        "assembly_digest": {"$ref": "#/$defs/digest"},
+        "drc_report_digest": {"$ref": "#/$defs/digest"},
+        "design_intent_digest": {"$ref": "#/$defs/digest"},
+        "mixed_signal_evidence": {"$ref": "#/$defs/optionalEvidence"},
+        "test_evidence": {"$ref": "#/$defs/optionalEvidence"},
+        "panel_definition": {"type": ["string", "null"]},
+        "release_clean": {"type": "boolean"},
+        "release_blockers": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["artifacts"],
+          "properties": {
+            "artifacts": {
+              "type": "array",
+              "items": {"$ref": "#/$defs/artifact"}
+            }
+          }
+        }
+      }
+    },
+    "core_digest": {"$ref": "#/$defs/digest"},
+    "signatures": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/signature"}
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "optionalEvidence": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["not_required"],
+          "properties": {
+            "not_required": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reason"],
+              "properties": {"reason": {"type": "string", "minLength": 1}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["not_provided"],
+          "properties": {
+            "not_provided": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reason"],
+              "properties": {"reason": {"type": "string", "minLength": 1}}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provided"],
+          "properties": {
+            "provided": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["artifact"],
+              "properties": {"artifact": {"type": "string", "minLength": 1}}
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "role", "byte_length", "digest"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+        },
+        "role": {},
+        "byte_length": {"type": "integer", "minimum": 0},
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "signed_digest",
+        "public_key",
+        "signature"
+      ],
+      "properties": {
+        "algorithm": {"type": "string", "minLength": 1},
+        "key_id": {"type": "string", "minLength": 1},
+        "signed_digest": {"$ref": "#/$defs/digest"},
+        "public_key": {"type": ["string", "null"]},
+        "signature": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

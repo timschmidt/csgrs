@@ -32,6 +32,8 @@ pub mod event_simulation;
 pub mod fabrication;
 pub mod hierarchy;
 pub mod identity;
+#[cfg(feature = "interchange")]
+pub mod intelligent_exchange;
 pub mod intent;
 #[cfg(feature = "interchange")]
 pub mod interchange;
@@ -181,6 +183,7 @@ pub use fabrication::{
     FabricationExportOptions, FabricationFile, FabricationFileKind, FabricationIntegrityIssue,
     FabricationLengthUnit, FabricationManifest, FabricationManifestError, FabricationManifestFile,
     FabricationPackage, FabricationPackageError, FabricationTestPoint, FabricationTestPointKind,
+    GERBER_JOB_FORMAT_REVISION, GERBER_JOB_SCHEMA_REVISION, GERBER_LAYER_FORMAT_REVISION,
 };
 #[cfg(feature = "drc")]
 pub use fabrication::{
@@ -204,6 +207,15 @@ pub use identity::{
     SchematicSheetId, SchematicSheetLinkId, SchematicSheetPortId, SchematicSymbolDefinitionId,
     SchematicSymbolId, SchematicWireId, SignalBundleId, SubcircuitInstanceId, ViaId, ViaStyleId,
     ZoneId,
+};
+#[cfg(feature = "interchange")]
+pub use intelligent_exchange::{
+    INTELLIGENT_EXCHANGE_SCHEMA, INTELLIGENT_EXCHANGE_VERSION, IntelligentPcbExchangeAdapter,
+    IntelligentPcbExchangeAdapterIdentity, IntelligentPcbExchangeError, IntelligentPcbExchangeFile,
+    IntelligentPcbExchangeFormat, IntelligentPcbExchangeManifest, IntelligentPcbExchangePackage,
+    IntelligentPcbExchangeRequest, Ipc2581XmlInspection, Ipc2581XmlPolicy,
+    SubprocessIntelligentPcbExchangeAdapter, inspect_ipc2581_xml,
+    intelligent_exchange_adapter_available,
 };
 pub use intent::{
     DesignIntent, DesignIntentIssue, DesignIntentValidationReport, DimensionedValue,
@@ -281,10 +293,13 @@ pub use legacy_csgrs::{
 };
 #[cfg(all(feature = "drc", feature = "interchange"))]
 pub use manufacturing_release::{
+    Ed25519ReleaseSigner, Ed25519ReleaseVerifier, MANUFACTURING_RELEASE_JSON_SCHEMA_PATH,
     MANUFACTURING_RELEASE_MANIFEST_PATH, MANUFACTURING_RELEASE_SCHEMA,
     MANUFACTURING_RELEASE_VERSION, ManufacturingReleaseBundle, ManufacturingReleaseCore,
     ManufacturingReleaseDifference, ManufacturingReleaseError, ManufacturingReleaseManifest,
-    ManufacturingReleaseOptions, OptionalEvidenceStatus, SignatureEnvelope,
+    ManufacturingReleaseOptions, ManufacturingRequirement, ManufacturingRequirementKind,
+    OptionalEvidenceStatus, ReleaseArchiveLimits, ReleaseSignatureVerifier, ReleaseSigner,
+    SignatureEnvelope, manufacturing_release_json_schema,
 };
 #[cfg(feature = "geometry")]
 pub use materialize::{

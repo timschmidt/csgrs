@@ -319,7 +319,7 @@ command = ["cat", "design.json"]
         ],
     );
     assert_success(&compare);
-    assert!(String::from_utf8_lossy(&compare.stdout).contains("identical release cores"));
+    assert!(String::from_utf8_lossy(&compare.stdout).contains("identical releases"));
     let inspect = invoke_in(
         &directory,
         &[
@@ -332,6 +332,52 @@ command = ["cat", "design.json"]
     assert!(
         String::from_utf8_lossy(&inspect.stdout).contains("hypercircuit.manufacturing-release")
     );
+    let release_zip = directory.join("release.zip");
+    assert_success(&invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("build"),
+            Path::new("main"),
+            &release_zip,
+        ],
+    ));
+    assert!(release_zip.is_file());
+    assert_success(&invoke_in(
+        &directory,
+        &[Path::new("release"), Path::new("verify"), &release_zip],
+    ));
+    let signing_seed = directory.join("release-signing-seed.hex");
+    fs::write(&signing_seed, "07".repeat(32)).unwrap();
+    let sign = invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("sign"),
+            &release_zip,
+            Path::new("--key-id"),
+            Path::new("test-release-key"),
+            Path::new("--seed-file"),
+            &signing_seed,
+        ],
+    );
+    assert_success(&sign);
+    assert!(String::from_utf8_lossy(&sign.stdout).contains("signed sha256:"));
+    assert_success(&invoke_in(
+        &directory,
+        &[Path::new("release"), Path::new("verify"), &release_zip],
+    ));
+    let archive_compare = invoke_in(
+        &directory,
+        &[
+            Path::new("release"),
+            Path::new("compare"),
+            &release_directory,
+            &release_zip,
+        ],
+    );
+    assert_success(&archive_compare);
+    assert!(String::from_utf8_lossy(&archive_compare.stdout).contains("identical release cores"));
 
     fs::remove_dir_all(directory).unwrap();
 }

@@ -13,7 +13,7 @@ use hyperreal::Real;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    DrillShape, MaterializationProjection, MaterializedCopperIdentity, PcbLayout,
+    BoardSide, DrillShape, MaterializationProjection, MaterializedCopperIdentity, PcbLayout,
     PcbMaterializationReport, Plating, ProcessLayerRole, ProcessMaterializationOmission,
     ProductionTextEvidence, StackupLayerKind,
 };
@@ -24,6 +24,10 @@ use crate::{
 pub enum FabricationFileKind {
     /// RS-274X image with X2 file attributes.
     GerberX2,
+    /// Gerber component layer carrying X3 assembly attributes.
+    GerberX3,
+    /// Ucamco Gerber Job File JSON sidecar.
+    GerberJob,
     /// Excellon drill program.
     Excellon,
     /// IPC-D-356 bare-board electrical-test netlist.
@@ -46,7 +50,13 @@ pub struct FabricationFile {
 /// Stable schema name written into every fabrication manifest.
 pub const FABRICATION_MANIFEST_SCHEMA: &str = "hypercircuit.fabrication-manifest";
 /// Current fabrication-manifest schema version.
-pub const FABRICATION_MANIFEST_VERSION: u32 = 9;
+pub const FABRICATION_MANIFEST_VERSION: u32 = 10;
+/// Ucamco layer-format revision implemented by emitted attributed Gerber.
+pub const GERBER_LAYER_FORMAT_REVISION: &str = "2026.05";
+/// Ucamco Gerber Job Format specification revision implemented by the sidecar.
+pub const GERBER_JOB_FORMAT_REVISION: &str = "2020.08";
+/// Ucamco public Gerber Job JSON Schema revision targeted by the sidecar.
+pub const GERBER_JOB_SCHEMA_REVISION: &str = "2023.06";
 
 /// Unit in which retained board geometry was authored before millimetre CAM output.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -172,6 +182,15 @@ pub struct FabricationManifest {
     pub board: String,
     /// Generator crate and version.
     pub generated_by: String,
+    /// Ucamco Gerber Layer Format revision targeted by emitted files.
+    #[serde(default)]
+    pub gerber_layer_format_revision: String,
+    /// Ucamco Gerber Job Format specification revision targeted by the sidecar.
+    #[serde(default)]
+    pub gerber_job_format_revision: String,
+    /// Ucamco public Gerber Job JSON Schema revision targeted by the sidecar.
+    #[serde(default)]
+    pub gerber_job_schema_revision: String,
     /// Unit declared for retained source geometry.
     pub source_length_unit: FabricationLengthUnit,
     /// CAM output unit; currently always millimetres.
@@ -246,14 +265,17 @@ impl FabricationManifest {
         if manifest.schema != FABRICATION_MANIFEST_SCHEMA {
             return Err(FabricationManifestError::UnsupportedSchema(manifest.schema));
         }
-        if !matches!(manifest.version, 7 | 8 | FABRICATION_MANIFEST_VERSION) {
+        if !matches!(manifest.version, 7..=FABRICATION_MANIFEST_VERSION) {
             return Err(FabricationManifestError::UnsupportedVersion(
                 manifest.version,
             ));
         }
         let mut manifest = manifest;
-        if matches!(manifest.version, 7 | 8) {
+        if matches!(manifest.version, 7..=9) {
             manifest.version = FABRICATION_MANIFEST_VERSION;
+            manifest.gerber_layer_format_revision = GERBER_LAYER_FORMAT_REVISION.into();
+            manifest.gerber_job_format_revision = GERBER_JOB_FORMAT_REVISION.into();
+            manifest.gerber_job_schema_revision = GERBER_JOB_SCHEMA_REVISION.into();
         }
         Ok(manifest)
     }
@@ -397,6 +419,13 @@ pub enum FabricationCamRoundTripIssue {
         /// Geometry parse failure.
         detail: String,
     },
+    /// Gerber Job JSON or semantic inventory validation failed.
+    GerberJob {
+        /// Source filename.
+        file: String,
+        /// Schema/inventory failure.
+        detail: String,
+    },
     /// Excellon bytes were not valid UTF-8.
     ExcellonText(String),
     /// Excellon structure, units, coordinate format, or parser evidence failed.
@@ -502,7 +531,10 @@ impl FabricationCamRoundTripReport {
                 continue;
             };
             match entry.kind {
-                FabricationFileKind::GerberX2 => audit_gerber(file, &mut report),
+                FabricationFileKind::GerberX2 | FabricationFileKind::GerberX3 => {
+                    audit_gerber(file, &mut report)
+                }
+                FabricationFileKind::GerberJob => audit_gerber_job(file, files, &mut report),
                 FabricationFileKind::Excellon => {
                     parsed_drills += audit_excellon(file, &mut report);
                 }
@@ -579,6 +611,8 @@ pub enum FabricationPackageError {
     NonFiniteDrill(String),
     /// Connected pad/via identity cannot be represented faithfully in IPC-D-356.
     Connectivity(String),
+    /// A Gerber attribute field contains a forbidden separator/control character.
+    UnrepresentableAttribute(String),
     /// Deterministic JSON manifest serialization failed.
     Manifest(String),
 }
@@ -609,6 +643,12 @@ impl Display for FabricationPackageError {
                 write!(
                     formatter,
                     "electrical-test identity cannot be represented: {source}"
+                )
+            }
+            Self::UnrepresentableAttribute(value) => {
+                write!(
+                    formatter,
+                    "Gerber attribute field cannot be represented: {value}"
                 )
             }
             Self::Manifest(error) => write!(formatter, "manifest serialization failed: {error}"),
@@ -679,7 +719,7 @@ impl FabricationPackage {
             files.push(FabricationFile {
                 name: format!("{}-{}.gbr", sanitize(layout.id.as_str()), sanitize(name)),
                 kind: FabricationFileKind::GerberX2,
-                bytes: add_x2_attributes(gerber, &function),
+                bytes: add_x2_attributes(gerber, &function, "Positive"),
             });
         }
 
@@ -694,11 +734,11 @@ impl FabricationPackage {
             let gerber = profile
                 .to_gerber()
                 .map_err(|error| FabricationPackageError::Gerber(format!("{error:?}")))?;
-            let (suffix, function) = process_file_role(image.role);
+            let (suffix, function, polarity) = process_file_role(image.role);
             files.push(FabricationFile {
                 name: format!("{}-{suffix}.gbr", sanitize(layout.id.as_str())),
                 kind: FabricationFileKind::GerberX2,
-                bytes: add_x2_attributes(gerber, function),
+                bytes: add_x2_attributes(gerber, function, polarity),
             });
         }
 
@@ -709,6 +749,20 @@ impl FabricationPackage {
             kind: FabricationFileKind::GerberX2,
             bytes: profile,
         });
+
+        let bottom_layer = conductor_layers.len().max(1);
+        for (side, layer, suffix) in [
+            (BoardSide::Front, 1, "F_Components"),
+            (BoardSide::Back, bottom_layer, "B_Components"),
+        ] {
+            if let Some(bytes) = component_gerber(layout, side, layer, &millimeter_factor)? {
+                files.push(FabricationFile {
+                    name: format!("{}-{suffix}.gbr", sanitize(layout.id.as_str())),
+                    kind: FabricationFileKind::GerberX3,
+                    bytes,
+                });
+            }
+        }
 
         let plated = materialized
             .drills
@@ -733,14 +787,26 @@ impl FabricationPackage {
             files.push(FabricationFile {
                 name: format!("{}-PTH.drl", sanitize(layout.id.as_str())),
                 kind: FabricationFileKind::Excellon,
-                bytes: excellon(&plated, true, &millimeter_factor)?.into_bytes(),
+                bytes: excellon(
+                    &plated,
+                    true,
+                    conductor_layers.len().max(1),
+                    &millimeter_factor,
+                )?
+                .into_bytes(),
             });
         }
         if !non_plated.is_empty() {
             files.push(FabricationFile {
                 name: format!("{}-NPTH.drl", sanitize(layout.id.as_str())),
                 kind: FabricationFileKind::Excellon,
-                bytes: excellon(&non_plated, false, &millimeter_factor)?.into_bytes(),
+                bytes: excellon(
+                    &non_plated,
+                    false,
+                    conductor_layers.len().max(1),
+                    &millimeter_factor,
+                )?
+                .into_bytes(),
             });
         }
         let (test_points, connectivity_omissions) =
@@ -752,6 +818,12 @@ impl FabricationPackage {
                 bytes: ipc356(&test_points).into_bytes(),
             });
         }
+        let job = gerber_job(layout, &files, &millimeter_factor)?;
+        files.push(FabricationFile {
+            name: format!("{}.gbrjob", sanitize(layout.id.as_str())),
+            kind: FabricationFileKind::GerberJob,
+            bytes: job,
+        });
         let represented_copper_features = materialized.copper_features.len();
         let represented_process_features = materialized.process_features.len();
         let represented_drills = materialized.drills.len();
@@ -761,6 +833,9 @@ impl FabricationPackage {
             version: FABRICATION_MANIFEST_VERSION,
             board: layout.id.as_str().into(),
             generated_by: format!("hypercircuit/{}", env!("CARGO_PKG_VERSION")),
+            gerber_layer_format_revision: GERBER_LAYER_FORMAT_REVISION.into(),
+            gerber_job_format_revision: GERBER_JOB_FORMAT_REVISION.into(),
+            gerber_job_schema_revision: GERBER_JOB_SCHEMA_REVISION.into(),
             source_length_unit: options.source_length_unit,
             output_length_unit: FabricationLengthUnit::Millimeter,
             files: files.iter().map(manifest_file).collect(),
@@ -820,6 +895,75 @@ impl FabricationPackage {
 }
 
 #[cfg(feature = "drc")]
+fn audit_gerber_job(
+    file: &FabricationFile,
+    files: &[FabricationFile],
+    audit: &mut FabricationCamRoundTripReport,
+) {
+    let fail = |audit: &mut FabricationCamRoundTripReport, detail: String| {
+        audit.issues.push(FabricationCamRoundTripIssue::GerberJob {
+            file: file.name.clone(),
+            detail,
+        });
+    };
+    let value: serde_json::Value = match serde_json::from_slice(&file.bytes) {
+        Ok(value) => value,
+        Err(error) => {
+            fail(audit, format!("invalid JSON: {error}"));
+            return;
+        }
+    };
+    let Some(root) = value.as_object() else {
+        fail(audit, "root must be an object".into());
+        return;
+    };
+    let allowed = [
+        "Header",
+        "GeneralSpecs",
+        "MaterialStackup",
+        "DesignRules",
+        "FilesAttributes",
+    ];
+    if let Some(name) = root.keys().find(|name| !allowed.contains(&name.as_str())) {
+        fail(audit, format!("unsupported root property {name}"));
+    }
+    if value["Header"]["GenerationSoftware"]["Application"] != "hypercircuit" {
+        fail(
+            audit,
+            "Header.GenerationSoftware.Application is not hypercircuit".into(),
+        );
+    }
+    if value["GeneralSpecs"]["LayerNumber"]
+        .as_u64()
+        .is_none_or(|layers| layers == 0)
+    {
+        fail(audit, "GeneralSpecs.LayerNumber must be positive".into());
+    }
+    let declared = value["FilesAttributes"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|entry| entry["Path"].as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    let expected = files
+        .iter()
+        .filter(|candidate| {
+            !matches!(
+                candidate.kind,
+                FabricationFileKind::Manifest | FabricationFileKind::GerberJob
+            )
+        })
+        .map(|candidate| candidate.name.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    if declared != expected {
+        fail(
+            audit,
+            format!("FilesAttributes mismatch: declared {declared:?}, expected {expected:?}"),
+        );
+    }
+}
+
+#[cfg(feature = "drc")]
 fn audit_gerber(file: &FabricationFile, audit: &mut FabricationCamRoundTripReport) {
     let metadata = hyperdrc::gerber_metadata::parse_gerber_metadata_report(&file.bytes);
     for issue in &metadata.issues {
@@ -849,6 +993,22 @@ fn audit_gerber(file: &FabricationFile, audit: &mut FabricationCamRoundTripRepor
             .push(FabricationCamRoundTripIssue::GerberSetup {
                 file: file.name.clone(),
                 detail: "TF.Part is not Single".into(),
+            });
+    }
+    if metadata.metadata.file_polarity.is_none() {
+        audit
+            .issues
+            .push(FabricationCamRoundTripIssue::GerberSetup {
+                file: file.name.clone(),
+                detail: "missing TF.FilePolarity".into(),
+            });
+    }
+    if metadata.metadata.same_coordinates.is_none() {
+        audit
+            .issues
+            .push(FabricationCamRoundTripIssue::GerberSetup {
+                file: file.name.clone(),
+                detail: "missing TF.SameCoordinates".into(),
             });
     }
     if metadata.image_setup.units != Some(hyperdrc::gerber_metadata::GerberUnits::Millimeters) {
@@ -1056,9 +1216,10 @@ fn sha256(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-fn add_x2_attributes(gerber: Vec<u8>, function: &str) -> Vec<u8> {
+fn add_x2_attributes(gerber: Vec<u8>, function: &str, polarity: &str) -> Vec<u8> {
     let attributes = format!(
-        "%TF.FileFunction,{function}*%\n%TF.Part,Single*%\n%TF.GenerationSoftware,Hyper,hypercircuit,0.3.0*%\n"
+        "%TF.FileFunction,{function}*%\n%TF.FilePolarity,{polarity}*%\n%TF.SameCoordinates*%\n%TF.Part,Single*%\n%TF.GenerationSoftware,Hyper,hypercircuit,{}*%\n",
+        env!("CARGO_PKG_VERSION")
     );
     let mut output = attributes.into_bytes();
     output.extend(gerber);
@@ -1071,14 +1232,243 @@ fn scale_profile(profile: &Profile, factor: &Real) -> Profile {
         .scale(factor.clone(), factor.clone(), Real::one())
 }
 
-fn process_file_role(role: ProcessLayerRole) -> (&'static str, &'static str) {
+fn process_file_role(role: ProcessLayerRole) -> (&'static str, &'static str, &'static str) {
     match role {
-        ProcessLayerRole::FrontSolderMask => ("F_Mask", "Soldermask,Top"),
-        ProcessLayerRole::BackSolderMask => ("B_Mask", "Soldermask,Bot"),
-        ProcessLayerRole::FrontPaste => ("F_Paste", "Paste,Top"),
-        ProcessLayerRole::BackPaste => ("B_Paste", "Paste,Bot"),
-        ProcessLayerRole::FrontSilkscreen => ("F_Silkscreen", "Legend,Top"),
-        ProcessLayerRole::BackSilkscreen => ("B_Silkscreen", "Legend,Bot"),
+        ProcessLayerRole::FrontSolderMask => ("F_Mask", "Soldermask,Top", "Negative"),
+        ProcessLayerRole::BackSolderMask => ("B_Mask", "Soldermask,Bot", "Negative"),
+        ProcessLayerRole::FrontPaste => ("F_Paste", "Paste,Top", "Positive"),
+        ProcessLayerRole::BackPaste => ("B_Paste", "Paste,Bot", "Positive"),
+        ProcessLayerRole::FrontSilkscreen => ("F_Silkscreen", "Legend,Top", "Positive"),
+        ProcessLayerRole::BackSilkscreen => ("B_Silkscreen", "Legend,Bot", "Positive"),
+    }
+}
+
+fn component_gerber(
+    layout: &PcbLayout,
+    side: BoardSide,
+    layer: usize,
+    millimeter_factor: &Real,
+) -> Result<Option<Vec<u8>>, FabricationPackageError> {
+    let placements = layout
+        .placements
+        .iter()
+        .filter(|placement| placement.side == side)
+        .collect::<Vec<_>>();
+    if placements.is_empty() {
+        return Ok(None);
+    }
+    let side_name = if side == BoardSide::Front {
+        "Top"
+    } else {
+        "Bot"
+    };
+    let mut output = format!(
+        "%TF.GenerationSoftware,Hyper,hypercircuit,{}*%\n%TF.SameCoordinates*%\n%TF.FileFunction,Component,L{layer},{side_name}*%\n%TF.FilePolarity,Positive*%\n%TF.Part,Single*%\n%FSLAX46Y46*%\n%MOMM*%\n%LPD*%\n%TA.AperFunction,ComponentMain*%\n%ADD10C,0.300000*%\n%TA.AperFunction,ComponentPin*%\n%ADD11C,0.100000*%\n%TD*%\nG01*\n",
+        env!("CARGO_PKG_VERSION")
+    );
+    for placement in placements {
+        let reference = gerber_attribute_field(placement.instance.as_str())?;
+        let land_pattern = layout
+            .land_patterns
+            .iter()
+            .find(|pattern| pattern.id == placement.land_pattern)
+            .ok_or_else(|| {
+                FabricationPackageError::Gerber(format!(
+                    "placement {} references missing land pattern {}",
+                    placement.instance.as_str(),
+                    placement.land_pattern.as_str()
+                ))
+            })?;
+        let footprint = gerber_attribute_field(land_pattern.id.as_str())?;
+        let x = gerber_coordinate(&(placement.position.x.clone() * millimeter_factor.clone()))
+            .ok_or_else(|| FabricationPackageError::Gerber(reference.clone()))?;
+        let y = gerber_coordinate(&(placement.position.y.clone() * millimeter_factor.clone()))
+            .ok_or_else(|| FabricationPackageError::Gerber(reference.clone()))?;
+        let rotation = finite(&placement.rotation_degrees)
+            .ok_or_else(|| FabricationPackageError::Gerber(reference.clone()))?;
+        let drilled = land_pattern
+            .pads
+            .iter()
+            .filter(|pad| pad.drill.is_some())
+            .count();
+        let mount = if drilled == 0 {
+            "SMD"
+        } else if drilled == land_pattern.pads.len() {
+            "TH"
+        } else {
+            "Other"
+        };
+        writeln!(output, "D10*").expect("writing to String cannot fail");
+        writeln!(output, "%TO.C,{reference}*%").expect("writing to String cannot fail");
+        writeln!(output, "%TO.CFtp,{footprint}*%").expect("writing to String cannot fail");
+        writeln!(output, "%TO.CMnt,{mount}*%").expect("writing to String cannot fail");
+        writeln!(output, "%TO.CRot,{rotation:.6}*%").expect("writing to String cannot fail");
+        writeln!(output, "X{x}Y{y}D03*").expect("writing to String cannot fail");
+        output.push_str("%TD*%\n");
+        writeln!(output, "D11*").expect("writing to String cannot fail");
+        for mapping in &land_pattern.pin_map {
+            let Some(pad) = land_pattern.pads.iter().find(|pad| pad.id == mapping.pad) else {
+                continue;
+            };
+            let pin = gerber_attribute_field(mapping.pin.as_str())?;
+            let point = placement.transform_point(&pad.center);
+            let x = gerber_coordinate(&(point.x * millimeter_factor.clone()))
+                .ok_or_else(|| FabricationPackageError::Gerber(reference.clone()))?;
+            let y = gerber_coordinate(&(point.y * millimeter_factor.clone()))
+                .ok_or_else(|| FabricationPackageError::Gerber(reference.clone()))?;
+            writeln!(output, "%TO.P,{reference},{pin}*%").expect("writing to String cannot fail");
+            writeln!(output, "X{x}Y{y}D03*").expect("writing to String cannot fail");
+        }
+        output.push_str("%TD*%\n");
+    }
+    output.push_str("M02*\n");
+    Ok(Some(output.into_bytes()))
+}
+
+fn gerber_job(
+    layout: &PcbLayout,
+    files: &[FabricationFile],
+    millimeter_factor: &Real,
+) -> Result<Vec<u8>, FabricationPackageError> {
+    let conductor_count = layout
+        .stackup
+        .layers
+        .iter()
+        .filter(|layer| matches!(layer.kind, StackupLayerKind::Conductor(_)))
+        .count();
+    let board_thickness = layout
+        .stackup
+        .layers
+        .iter()
+        .fold(Real::zero(), |sum, layer| sum + layer.thickness.clone());
+    let board_thickness = finite(&(board_thickness * millimeter_factor.clone()))
+        .ok_or_else(|| FabricationPackageError::Manifest("non-finite board thickness".into()))?;
+    let mut general_specs = serde_json::json!({
+        "ProjectId": { "Name": layout.id.as_str() },
+        "LayerNumber": conductor_count,
+        "BoardThickness": board_thickness
+    });
+    if let Some([x, y]) = linear_board_size(layout, millimeter_factor) {
+        general_specs["Size"] = serde_json::json!({ "X": x, "Y": y });
+    }
+    let material_stackup = layout
+        .stackup
+        .layers
+        .iter()
+        .map(|layer| {
+            let layer_type = match &layer.kind {
+                StackupLayerKind::Conductor(_) => "Copper",
+                StackupLayerKind::Dielectric => "Dielectric",
+                StackupLayerKind::SolderMask => "SolderMask",
+                StackupLayerKind::Custom(_) => "Other",
+            };
+            let thickness = finite(&(layer.thickness.clone() * millimeter_factor.clone()));
+            let mut value = serde_json::json!({ "Type": layer_type });
+            if let Some(thickness) = thickness {
+                value["Thickness"] = serde_json::json!(thickness);
+            }
+            if let Some(material) = &layer.material {
+                value["Material"] = serde_json::json!(material);
+            }
+            value
+        })
+        .collect::<Vec<_>>();
+    let file_attributes = files
+        .iter()
+        .filter(|file| file.kind != FabricationFileKind::Manifest)
+        .map(|file| {
+            let mut value = serde_json::json!({
+                "Path": file.name,
+                "FileFormat": match file.kind {
+                    FabricationFileKind::GerberX2 | FabricationFileKind::GerberX3 => "Gerber",
+                    FabricationFileKind::Excellon => "Excellon",
+                    FabricationFileKind::Ipc356 => "IPC-D-356",
+                    FabricationFileKind::GerberJob | FabricationFileKind::Manifest => "JSON",
+                }
+            });
+            if let Some(function) = file_attribute(&file.bytes, "TF.FileFunction") {
+                value["FileFunction"] = serde_json::json!(function);
+            }
+            if let Some(polarity) = file_attribute(&file.bytes, "TF.FilePolarity") {
+                value["FilePolarity"] = serde_json::json!(polarity);
+            }
+            value
+        })
+        .collect::<Vec<_>>();
+    let job = serde_json::json!({
+        "Header": {
+            "GenerationSoftware": {
+                "Vendor": "Hyper",
+                "Application": "hypercircuit",
+                "Version": env!("CARGO_PKG_VERSION")
+            },
+            "Comment": format!(
+                "Gerber Job Format {}; public schema {}; Gerber Layer Format {}",
+                GERBER_JOB_FORMAT_REVISION,
+                GERBER_JOB_SCHEMA_REVISION,
+                GERBER_LAYER_FORMAT_REVISION
+            )
+        },
+        "GeneralSpecs": general_specs,
+        "MaterialStackup": material_stackup,
+        "FilesAttributes": file_attributes
+    });
+    let mut bytes = serde_json::to_vec_pretty(&job)
+        .map_err(|error| FabricationPackageError::Manifest(error.to_string()))?;
+    bytes.push(b'\n');
+    Ok(bytes)
+}
+
+fn linear_board_size(layout: &PcbLayout, millimeter_factor: &Real) -> Option<[f64; 2]> {
+    let points = layout.outline.exterior.linear_vertices()?;
+    let first = points.first()?;
+    let mut min_x = first.x.clone();
+    let mut max_x = first.x.clone();
+    let mut min_y = first.y.clone();
+    let mut max_y = first.y.clone();
+    for point in points.iter().skip(1) {
+        if point.x < min_x {
+            min_x = point.x.clone();
+        }
+        if point.x > max_x {
+            max_x = point.x.clone();
+        }
+        if point.y < min_y {
+            min_y = point.y.clone();
+        }
+        if point.y > max_y {
+            max_y = point.y.clone();
+        }
+    }
+    Some([
+        finite(&((max_x - min_x) * millimeter_factor.clone()))?,
+        finite(&((max_y - min_y) * millimeter_factor.clone()))?,
+    ])
+}
+
+fn file_attribute(bytes: &[u8], name: &str) -> Option<String> {
+    let source = std::str::from_utf8(bytes).ok()?;
+    let prefix = format!("%{name},");
+    let comment_prefix = format!("; #@! {name},");
+    source.lines().find_map(|line| {
+        line.strip_prefix(&prefix)
+            .and_then(|value| value.strip_suffix("*%"))
+            .or_else(|| line.strip_prefix(&comment_prefix))
+            .map(str::to_owned)
+    })
+}
+
+fn gerber_attribute_field(value: &str) -> Result<String, FabricationPackageError> {
+    if value.is_empty()
+        || value
+            .bytes()
+            .any(|byte| matches!(byte, b',' | b'*' | b'%' | b'\r' | b'\n'))
+    {
+        Err(FabricationPackageError::UnrepresentableAttribute(
+            value.into(),
+        ))
+    } else {
+        Ok(value.into())
     }
 }
 
@@ -1201,8 +1591,23 @@ fn profile_gerber(
     millimeter_factor: &Real,
     projection: FabricationContourProjectionPolicy,
 ) -> Result<(Vec<u8>, Vec<MaterializationProjection>), FabricationPackageError> {
-    let mut output = String::from(
-        "%TF.FileFunction,Profile,NP*%\n%TF.Part,Single*%\n%TF.GenerationSoftware,Hyper,hypercircuit,0.3.0*%\nG04 Generated by hypercircuit*\n%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\n%ADD10C,0.010000*%\nD10*\nG75*\nG01*\n",
+    let mut output = format!(
+        concat!(
+            "%TF.FileFunction,Profile,NP*%\n",
+            "%TF.FilePolarity,Positive*%\n",
+            "%TF.SameCoordinates*%\n",
+            "%TF.Part,Single*%\n",
+            "%TF.GenerationSoftware,Hyper,hypercircuit,{}*%\n",
+            "G04 Generated by hypercircuit*\n",
+            "%MOMM*%\n",
+            "%FSLAX46Y46*%\n",
+            "%LPD*%\n",
+            "%ADD10C,0.010000*%\n",
+            "D10*\n",
+            "G75*\n",
+            "G01*\n"
+        ),
+        env!("CARGO_PKG_VERSION")
     );
     let mut projections = Vec::new();
     write_profile_contour(
@@ -1315,6 +1720,7 @@ fn write_profile_contour(
 fn excellon(
     drills: &[&crate::DrillHit],
     plated: bool,
+    conductor_layers: usize,
     millimeter_factor: &Real,
 ) -> Result<String, FabricationPackageError> {
     let mut tools = BTreeMap::<String, (Real, Vec<&crate::DrillHit>)>::new();
@@ -1332,10 +1738,11 @@ fn excellon(
     let mut output = String::from("M48\n;FILE_FORMAT=4:6\nMETRIC,TZ\n");
     writeln!(
         output,
-        "; #@! TF.FileFunction,{},{},{}",
+        "; #@! TF.FileFunction,{},{},{},{},Drill",
         if plated { "Plated" } else { "NonPlated" },
         1,
-        if plated { "PTH" } else { "NPTH" }
+        conductor_layers,
+        if plated { "PTH" } else { "NPTH" },
     )
     .expect("writing to String cannot fail");
     for (index, (_, (diameter, _))) in tools.iter().enumerate() {

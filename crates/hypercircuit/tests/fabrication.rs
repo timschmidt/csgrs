@@ -144,7 +144,16 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
     assert_eq!(package.represented_copper_features, 2);
     assert_eq!(package.represented_process_features, 1);
     assert_eq!(package.represented_drills, 2);
-    assert_eq!(package.files.len(), 8);
+    assert_eq!(
+        package.files.len(),
+        9,
+        "{:?}",
+        package
+            .files
+            .iter()
+            .map(|file| (&file.name, file.kind))
+            .collect::<Vec<_>>()
+    );
     assert!(
         package
             .files
@@ -162,6 +171,17 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
     assert!(package.files.iter().any(|file| {
         file.kind == FabricationFileKind::Excellon && file.bytes.starts_with(b"M48\n")
     }));
+    let gerber_job = package
+        .files
+        .iter()
+        .find(|file| file.kind == FabricationFileKind::GerberJob)
+        .unwrap();
+    let gerber_job: serde_json::Value = serde_json::from_slice(&gerber_job.bytes).unwrap();
+    assert_eq!(gerber_job["GeneralSpecs"]["LayerNumber"], 2);
+    assert_eq!(
+        gerber_job["Header"]["GenerationSoftware"]["Application"],
+        "hypercircuit"
+    );
     assert!(package.files.iter().any(|file| {
         file.kind == FabricationFileKind::Ipc356
             && std::str::from_utf8(&file.bytes)
@@ -195,7 +215,19 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
             ProcessMaterializationOmission::ViaMaskIntentUnavailable { .. }
         )
     }));
-    assert_eq!(package.manifest.files.len(), 7);
+    assert_eq!(package.manifest.files.len(), 8);
+    assert_eq!(
+        package.manifest.gerber_layer_format_revision,
+        hypercircuit::GERBER_LAYER_FORMAT_REVISION
+    );
+    assert_eq!(
+        package.manifest.gerber_job_format_revision,
+        hypercircuit::GERBER_JOB_FORMAT_REVISION
+    );
+    assert_eq!(
+        package.manifest.gerber_job_schema_revision,
+        hypercircuit::GERBER_JOB_SCHEMA_REVISION
+    );
     assert_eq!(package.manifest.represented_test_points, 1);
     assert_eq!(package.manifest.test_points.len(), 1);
     assert!(
@@ -557,6 +589,15 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     )
     .unwrap();
     assert_eq!(package.represented_process_features, 4);
+    assert!(package.files.iter().any(|file| {
+        file.kind == FabricationFileKind::GerberX3
+            && std::str::from_utf8(&file.bytes)
+                .unwrap()
+                .contains("TF.FileFunction,Component,L2,Bot")
+            && std::str::from_utf8(&file.bytes)
+                .unwrap()
+                .contains("TO.P,R1,1")
+    }));
     assert_eq!(
         package.manifest.production_text,
         materialized.production_text

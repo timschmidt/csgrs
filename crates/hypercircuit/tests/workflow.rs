@@ -11,11 +11,14 @@ use hypercircuit::{
 #[cfg(feature = "interchange")]
 use hypercircuit::{
     BoardSide, BoundaryScanChain, CircuitInstanceId, CoordinateFrame2, DesignForTestIntent,
-    DesignIntent, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
-    FunctionalRoleAssignment, FunctionalRoleTarget, ManufacturingReleaseOptions, NetId, NetIntent,
-    NetKind, NetScope, PanelBoardInstance, PanelDefinition, PinRef, RigidTransform2,
-    SemanticDocument, SemanticOrigin, SemanticTarget, SourcePosition, SourceSpan, TestAccess,
-    TestCoverageMethod, TestRequirement, TestTarget,
+    DesignIntent, Ed25519ReleaseSigner, FunctionalBinding, FunctionalBindingTarget, FunctionalRole,
+    FunctionalRoleAssignment, FunctionalRoleTarget, MANUFACTURING_RELEASE_JSON_SCHEMA_PATH,
+    MANUFACTURING_RELEASE_MANIFEST_PATH, ManufacturingReleaseBundle,
+    ManufacturingReleaseDifference, ManufacturingReleaseOptions, NetId, NetIntent, NetKind,
+    NetScope, PanelBoardInstance, PanelDefinition, PinRef, ReleaseArchiveLimits,
+    ReleaseSignatureVerifier, ReleaseSigner, RigidTransform2, SemanticDocument, SemanticOrigin,
+    SemanticTarget, SignatureEnvelope, SourcePosition, SourceSpan, TestAccess, TestCoverageMethod,
+    TestRequirement, TestTarget,
 };
 use hyperlattice::Point2;
 use hyperpath::TraceLayer;
@@ -524,7 +527,20 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
     assert!(left.manifest.signatures.is_empty());
     assert_eq!(left.manifest.core_digest, right.manifest.core_digest);
     assert_eq!(left.files, right.files);
+    assert_eq!(
+        left.compare(&right),
+        ManufacturingReleaseDifference::Identical
+    );
     assert!(left.files.contains_key("manufacturing-release.json"));
+    assert!(
+        left.files
+            .contains_key(MANUFACTURING_RELEASE_JSON_SCHEMA_PATH)
+    );
+    assert_eq!(
+        hypercircuit::manufacturing_release_json_schema()["properties"]["core"]["properties"]["version"]
+            ["const"],
+        1
+    );
     assert!(left.files.contains_key("evidence/hyperdrc.json"));
     assert!(left.files.contains_key("assembly/assembly-v2.json"));
     assert!(left.files.contains_key("assembly/assembly-v2.schema.json"));
@@ -533,6 +549,50 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
             .contains_key("assembly/pick-and-place.csv.dialect.json")
     );
 
+    let zip = left.zip_bytes().unwrap();
+    assert_eq!(zip, right.zip_bytes().unwrap());
+    let reparsed = ManufacturingReleaseBundle::from_zip_bytes_with_limits(
+        &zip,
+        ReleaseArchiveLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(reparsed.manifest.core_digest, left.manifest.core_digest);
+    assert!(
+        ManufacturingReleaseBundle::from_zip_bytes_with_limits(
+            &zip,
+            ReleaseArchiveLimits {
+                maximum_file_bytes: 8,
+                ..ReleaseArchiveLimits::default()
+            },
+        )
+        .is_err()
+    );
+    let mut malicious = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    let zip_options = zip::write::SimpleFileOptions::default();
+    malicious.start_file("../escape", zip_options).unwrap();
+    std::io::Write::write_all(&mut malicious, b"bad").unwrap();
+    let malicious = malicious.finish().unwrap().into_inner();
+    assert!(ManufacturingReleaseBundle::from_zip_bytes(&malicious).is_err());
+    let mut signed = left.clone();
+    signed
+        .sign_with(&Ed25519ReleaseSigner::from_seed("release-test", &[7; 32]).unwrap())
+        .unwrap();
+    signed.verify().unwrap();
+    assert_eq!(signed.manifest.core_digest, left.manifest.core_digest);
+    assert_eq!(signed.manifest.signatures.len(), 1);
+    assert_eq!(
+        left.compare(&signed),
+        ManufacturingReleaseDifference::SignatureOnly
+    );
+    signed.manifest.signatures[0]
+        .signature
+        .replace_range(0..2, "00");
+    signed.files.insert(
+        MANUFACTURING_RELEASE_MANIFEST_PATH.into(),
+        serde_json::to_vec_pretty(&signed.manifest).unwrap(),
+    );
+    assert!(signed.verify().is_err());
+
     let mut corrupted = left.clone();
     corrupted
         .files
@@ -540,6 +600,54 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
         .unwrap()
         .push(b'!');
     assert!(corrupted.verify().is_err());
+
+    let mut missing_manifest = left.clone();
+    missing_manifest
+        .files
+        .remove(MANUFACTURING_RELEASE_MANIFEST_PATH);
+    assert!(missing_manifest.verify().is_err());
+
+    struct ExternalSigner;
+    impl ReleaseSigner for ExternalSigner {
+        fn algorithm(&self) -> &str {
+            "fixture-hsm"
+        }
+
+        fn key_id(&self) -> &str {
+            "external-key"
+        }
+
+        fn public_key(&self) -> Option<Vec<u8>> {
+            None
+        }
+
+        fn sign(&self, _payload: &[u8]) -> Result<Vec<u8>, String> {
+            Ok(vec![1, 2, 3])
+        }
+    }
+    struct ExternalVerifier;
+    impl ReleaseSignatureVerifier for ExternalVerifier {
+        fn verify(&self, envelope: &SignatureEnvelope, payload: &[u8]) -> Result<(), String> {
+            if envelope.algorithm == "fixture-hsm"
+                && envelope.key_id == "external-key"
+                && envelope.signature == "010203"
+                && payload.starts_with(b"hypercircuit.manufacturing-release-signature.v1\0")
+            {
+                Ok(())
+            } else {
+                Err("fixture signature mismatch".into())
+            }
+        }
+    }
+    let mut externally_signed = left;
+    externally_signed.sign_with(&ExternalSigner).unwrap();
+    let externally_signed_zip = externally_signed.zip_bytes().unwrap();
+    assert!(ManufacturingReleaseBundle::from_zip_bytes(&externally_signed_zip).is_err());
+    ManufacturingReleaseBundle::from_zip_bytes_with_signature_verifier(
+        &externally_signed_zip,
+        &ExternalVerifier,
+    )
+    .unwrap();
 }
 
 #[cfg(feature = "interchange")]

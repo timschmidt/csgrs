@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
 use hypercircuit::{
-    AssemblyOutputs, KiCadExportOptions, ManufacturingReleaseBundle,
+    AssemblyOutputs, Ed25519ReleaseSigner, KiCadExportOptions, ManufacturingReleaseBundle,
     ManufacturingReleaseDifference, ManufacturingReleaseOptions, PcbSvgOptions,
     ProjectDesignProvider, ProjectManifest, ProjectProviderKind, ReleasePreparationOptions,
     SemanticDocument,
@@ -29,11 +29,12 @@ USAGE:
     hypercircuit bom [design-name] [--out bom.csv]
     hypercircuit export-kicad <design.json | design-name> <board.kicad_pcb>
     hypercircuit export-svg <design.json | design-name> <board.svg>
-    hypercircuit release build <design.json | design-name> <output-directory>
-    hypercircuit release verify <release-directory>
+    hypercircuit release build <design.json | design-name> <output-directory-or-zip>
+    hypercircuit release verify <release-directory-or-zip>
     hypercircuit release compare <release-a> <release-b>
-    hypercircuit release inspect <release-directory>
-    hypercircuit release <design.json | design-name> <output-directory>  # legacy alias
+    hypercircuit release inspect <release-directory-or-zip>
+    hypercircuit release sign <release-directory-or-zip> --key-id <id> --seed-file <hex-file>
+    hypercircuit release <design.json | design-name> <output-directory-or-zip>  # legacy alias
     hypercircuit --help
     hypercircuit --version
 
@@ -114,7 +115,7 @@ fn release_command(arguments: &[String]) -> Result<bool, String> {
         }
         Some("verify") => {
             expect_arity(arguments, 3)?;
-            let bundle = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+            let bundle = ManufacturingReleaseBundle::read_path(Path::new(&arguments[2]))
                 .map_err(|error| format!("release verification failed: {error}"))?;
             println!(
                 "verified {} ({})",
@@ -129,33 +130,74 @@ fn release_command(arguments: &[String]) -> Result<bool, String> {
         }
         Some("inspect") => {
             expect_arity(arguments, 3)?;
-            let bundle = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+            let bundle = ManufacturingReleaseBundle::read_path(Path::new(&arguments[2]))
                 .map_err(|error| format!("release inspection failed: {error}"))?;
             println!("{}", bundle.manifest_json_pretty());
             Ok(true)
         }
         Some("compare") => {
             expect_arity(arguments, 4)?;
-            let left = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[2]))
+            let left = ManufacturingReleaseBundle::read_path(Path::new(&arguments[2]))
                 .map_err(|error| format!("cannot read first release: {error}"))?;
-            let right = ManufacturingReleaseBundle::read_directory(Path::new(&arguments[3]))
+            let right = ManufacturingReleaseBundle::read_path(Path::new(&arguments[3]))
                 .map_err(|error| format!("cannot read second release: {error}"))?;
             match left.compare(&right) {
-                ManufacturingReleaseDifference::Identical => println!("identical release cores"),
+                ManufacturingReleaseDifference::Identical => println!("identical releases"),
+                ManufacturingReleaseDifference::SignatureOnly => {
+                    println!("signature-only change (identical release cores)")
+                }
                 ManufacturingReleaseDifference::MetadataOnly => {
                     println!("metadata-only release change")
                 }
-                ManufacturingReleaseDifference::ArtifactOrSemantic => {
-                    println!("artifact or semantic release change")
+                ManufacturingReleaseDifference::ArtifactOnly => {
+                    println!("artifact-byte release change")
+                }
+                ManufacturingReleaseDifference::Semantic => {
+                    println!("semantic design-intent release change")
                 }
             }
             Ok(true)
         }
+        Some("sign") => sign_release(arguments),
         _ => {
             expect_arity(arguments, 3)?;
             release(&load_design(Some(&arguments[1]))?, Path::new(&arguments[2]))
         }
     }
+}
+
+fn sign_release(arguments: &[String]) -> Result<bool, String> {
+    expect_arity(arguments, 7)?;
+    let path = Path::new(&arguments[2]);
+    let mut key_id = None;
+    let mut seed_file = None;
+    for option in arguments[3..].chunks_exact(2) {
+        match option[0].as_str() {
+            "--key-id" => key_id = Some(option[1].as_str()),
+            "--seed-file" => seed_file = Some(Path::new(&option[1])),
+            unknown => return Err(format!("unknown signing option `{unknown}`\n\n{USAGE}")),
+        }
+    }
+    let key_id = key_id.ok_or_else(|| format!("`--key-id` is required\n\n{USAGE}"))?;
+    let seed_file = seed_file.ok_or_else(|| format!("`--seed-file` is required\n\n{USAGE}"))?;
+    let seed = fs::read_to_string(seed_file)
+        .map_err(|error| format!("cannot read {}: {error}", seed_file.display()))?;
+    let signer = Ed25519ReleaseSigner::from_seed_hex(key_id, &seed)
+        .map_err(|error| format!("invalid signing seed: {error}"))?;
+    let mut bundle = ManufacturingReleaseBundle::read_path(path)
+        .map_err(|error| format!("cannot read release for signing: {error}"))?;
+    bundle
+        .sign_with(&signer)
+        .map_err(|error| format!("cannot sign release: {error}"))?;
+    bundle
+        .write_path(path)
+        .map_err(|error| format!("cannot write signed release: {error}"))?;
+    println!(
+        "signed {} with ed25519 key {}",
+        bundle.manifest.core_digest.canonical_text(),
+        key_id
+    );
+    Ok(bundle.manifest.core.release_clean)
 }
 
 fn expect_arity_range(arguments: &[String], minimum: usize, maximum: usize) -> Result<(), String> {
@@ -434,7 +476,7 @@ fn release(loaded: &LoadedDesign, output: &Path) -> Result<bool, String> {
         .build_manufacturing_release(options, loaded.release_options.clone())
         .map_err(|error| format!("cannot construct manufacturing release: {error}"))?;
     bundle
-        .write_directory(output)
+        .write_path(output)
         .map_err(|error| format!("cannot write manufacturing release: {error}"))?;
     println!(
         "wrote {} verified release file(s) to {}; {} release blocker(s)",

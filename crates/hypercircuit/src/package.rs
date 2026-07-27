@@ -28,7 +28,9 @@ use crate::{
 /// Stable JSON lockfile schema identity.
 pub const CIRCUIT_PACKAGE_LOCK_SCHEMA: &str = "hypercircuit.package-lock";
 /// Current JSON lockfile schema version.
-pub const CIRCUIT_PACKAGE_LOCK_VERSION: u32 = 1;
+///
+/// Version 2 uses the canonical `algorithm:value` digest representation.
+pub const CIRCUIT_PACKAGE_LOCK_VERSION: u32 = 2;
 /// Stable portable part-library artifact schema identity.
 #[cfg(feature = "interchange")]
 pub const PART_LIBRARY_ARTIFACT_SCHEMA: &str = "hypercircuit.part-library";
@@ -60,7 +62,6 @@ pub enum PackageSource {
 }
 
 /// Content digest retained independently from an artifact source locator.
-#[cfg_attr(feature = "interchange", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct PackageDigest {
     /// Digest algorithm, such as `sha256` or `blake3`.
@@ -75,10 +76,12 @@ impl PackageDigest {
         algorithm: impl Into<String>,
         value: impl Into<String>,
     ) -> Result<Self, PackageResolutionError> {
-        let result = Self {
-            algorithm: algorithm.into(),
-            value: value.into(),
-        };
+        let algorithm = algorithm.into().trim().to_ascii_lowercase();
+        let mut value = value.into().trim().to_owned();
+        if algorithm == "sha256" {
+            value.make_ascii_lowercase();
+        }
+        let result = Self { algorithm, value };
         if result.algorithm.trim().is_empty() || result.value.trim().is_empty() {
             return Err(PackageResolutionError::InvalidDigest);
         }
@@ -97,6 +100,30 @@ impl PackageDigest {
     /// Returns the unambiguous `algorithm:value` display form.
     pub fn canonical_text(&self) -> String {
         format!("{}:{}", self.algorithm.to_ascii_lowercase(), self.value)
+    }
+}
+
+#[cfg(feature = "interchange")]
+impl serde::Serialize for PackageDigest {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.canonical_text())
+    }
+}
+
+#[cfg(feature = "interchange")]
+impl<'de> serde::Deserialize<'de> for PackageDigest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let encoded = <String as serde::Deserialize>::deserialize(deserializer)?;
+        let (algorithm, value) = encoded
+            .split_once(':')
+            .ok_or_else(|| serde::de::Error::custom("digest must use algorithm:value form"))?;
+        Self::new(algorithm, value).map_err(serde::de::Error::custom)
     }
 }
 
