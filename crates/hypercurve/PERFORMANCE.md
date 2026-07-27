@@ -5886,6 +5886,29 @@ the no-default-feature library and integration suite, the UI example, and all
 in-workspace direct consumers (`csgrs`, `hyperbrep`, `hypercircuit`,
 `hyperdrc`, `hyperpack`, and `synaps-cad`).
 
+### Retain immediate line-orientation evidence
+
+Hyperlimit retired `PreparedLine2` in favor of explicit endpoints, owned
+`Line2Orientation` evidence, and immediate classification functions.
+Hypercurve's retained line and arc query structures now store that evidence
+directly. This preserves certified dyadic and exact-word filters across
+repeated containment queries; the previous facts-only cache reconstructed
+both filters for every classified point.
+
+Two serialized release runs before and after the migration showed no
+regression. The affected single-hit and batched sparse-region paths improved
+slightly, while unrelated controls remained within their observed run-to-run
+variation:
+
+| Containment case | Before range | After range |
+| --- | ---: | ---: |
+| Contour bounding-box miss | 442--451 ns | 430--440 ns |
+| 64-point batched bounding-box miss | 6.205--6.471 us | 6.392--6.712 us |
+| Sparse-region outside | 32.521--32.948 us | 32.471--32.623 us |
+| Sparse-region single hit | 52.099--56.555 us | 53.415--54.387 us |
+| 64-point batched sparse region | 830.291--845.751 us | 825.186--830.554 us |
+| Sparse-region filled area | 13.538--14.050 us | 14.054--14.240 us |
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

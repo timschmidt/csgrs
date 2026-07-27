@@ -29,7 +29,7 @@ use crate::{
 /// exact supporting-line predicate. That split follows the exactness model's EGC model of
 /// carrying object structure forward without moving combinatorial decisions
 /// out of the predicate layer.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct PreparedLineSeg2<'a> {
     line: &'a LineSeg2,
     facts: LineSeg2Facts,
@@ -38,7 +38,24 @@ pub(crate) struct PreparedLineSeg2<'a> {
     #[cfg(feature = "predicates")]
     predicate_end: hyperlimit::Point2,
     #[cfg(feature = "predicates")]
-    predicate_facts: hyperlimit::PreparedPredicateFacts,
+    predicate_orientation: hyperlimit::Line2Orientation,
+}
+
+impl PartialEq for PreparedLineSeg2<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.line != other.line || self.facts != other.facts {
+            return false;
+        }
+        #[cfg(feature = "predicates")]
+        {
+            self.predicate_start == other.predicate_start
+                && self.predicate_end == other.predicate_end
+        }
+        #[cfg(not(feature = "predicates"))]
+        {
+            true
+        }
+    }
 }
 
 impl<'a> PreparedLineSeg2<'a> {
@@ -49,14 +66,14 @@ impl<'a> PreparedLineSeg2<'a> {
         {
             let predicate_start = predicate_point(line.start());
             let predicate_end = predicate_point(line.end());
-            let predicate_facts =
-                hyperlimit::PreparedLine2::new(&predicate_start, &predicate_end).facts();
+            let predicate_orientation =
+                hyperlimit::line2_orientation(&predicate_start, &predicate_end);
             Self {
                 line,
                 facts,
                 predicate_start,
                 predicate_end,
-                predicate_facts,
+                predicate_orientation,
             }
         }
 
@@ -75,16 +92,16 @@ impl<'a> PreparedLineSeg2<'a> {
     pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
         #[cfg(feature = "predicates")]
         if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
-            // Reuse the fixed endpoint conversion and query facts, then let
+            // Reuse the fixed endpoint conversion and orientation evidence, then let
             // hyperlimit select the exact determinant schedule. This is the
             // certified orientation predicate at the curve-object
             // boundary, with the exactness model's exact/approximate split preserved by
             // keeping EdgePreview outside the certified path.
             let query = predicate_point(point);
-            return classify_prepared_line(
+            return classify_oriented_line(
                 &self.predicate_start,
                 &self.predicate_end,
-                self.predicate_facts,
+                &self.predicate_orientation,
                 &query,
                 policy,
             );
@@ -102,7 +119,7 @@ impl<'a> PreparedLineSeg2<'a> {
 /// the standard circle/arc primitive decomposition while preserving
 /// the exactness model's EGC split between exact topology predicates and approximate output
 /// adapters. See standard geometric constructions, and exact-computation discipline.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub(crate) struct PreparedCircularArc2<'a> {
     arc: &'a CircularArc2,
     facts: CircularArc2Facts,
@@ -113,9 +130,27 @@ pub(crate) struct PreparedCircularArc2<'a> {
     #[cfg(feature = "predicates")]
     predicate_end: hyperlimit::Point2,
     #[cfg(feature = "predicates")]
-    center_start_facts: hyperlimit::PreparedPredicateFacts,
+    center_start_orientation: hyperlimit::Line2Orientation,
     #[cfg(feature = "predicates")]
-    center_end_facts: hyperlimit::PreparedPredicateFacts,
+    center_end_orientation: hyperlimit::Line2Orientation,
+}
+
+impl PartialEq for PreparedCircularArc2<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.arc != other.arc || self.facts != other.facts {
+            return false;
+        }
+        #[cfg(feature = "predicates")]
+        {
+            self.predicate_center == other.predicate_center
+                && self.predicate_start == other.predicate_start
+                && self.predicate_end == other.predicate_end
+        }
+        #[cfg(not(feature = "predicates"))]
+        {
+            true
+        }
+    }
 }
 
 impl<'a> PreparedCircularArc2<'a> {
@@ -127,18 +162,18 @@ impl<'a> PreparedCircularArc2<'a> {
             let predicate_center = predicate_point(arc.center());
             let predicate_start = predicate_point(arc.start());
             let predicate_end = predicate_point(arc.end());
-            let center_start_facts =
-                hyperlimit::PreparedLine2::new(&predicate_center, &predicate_start).facts();
-            let center_end_facts =
-                hyperlimit::PreparedLine2::new(&predicate_center, &predicate_end).facts();
+            let center_start_orientation =
+                hyperlimit::line2_orientation(&predicate_center, &predicate_start);
+            let center_end_orientation =
+                hyperlimit::line2_orientation(&predicate_center, &predicate_end);
             Self {
                 arc,
                 facts,
                 predicate_center,
                 predicate_start,
                 predicate_end,
-                center_start_facts,
-                center_end_facts,
+                center_start_orientation,
+                center_end_orientation,
             }
         }
 
@@ -174,17 +209,17 @@ impl<'a> PreparedCircularArc2<'a> {
                 return Classification::Decided(true);
             }
             let query = predicate_point(point);
-            let start_side = classify_prepared_line(
+            let start_side = classify_oriented_line(
                 &self.predicate_center,
                 &self.predicate_start,
-                self.center_start_facts,
+                &self.center_start_orientation,
                 &query,
                 policy,
             );
-            let end_side = classify_prepared_line(
+            let end_side = classify_oriented_line(
                 &self.predicate_center,
                 &self.predicate_end,
-                self.center_end_facts,
+                &self.center_end_orientation,
                 &query,
                 policy,
             );
@@ -1032,15 +1067,20 @@ fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
 }
 
 #[cfg(feature = "predicates")]
-fn classify_prepared_line(
+fn classify_oriented_line(
     from: &hyperlimit::Point2,
     to: &hyperlimit::Point2,
-    facts: hyperlimit::PreparedPredicateFacts,
+    orientation: &hyperlimit::Line2Orientation,
     point: &hyperlimit::Point2,
     policy: &CurvePolicy,
 ) -> Classification<LineSide> {
-    let prepared = hyperlimit::PreparedLine2::from_facts(from, to, facts);
-    match prepared.classify_point_with_policy(point, policy.predicate_policy) {
+    match hyperlimit::classify_point_line_with_orientation_and_policy(
+        from,
+        to,
+        point,
+        orientation,
+        policy.predicate_policy,
+    ) {
         hyperlimit::PredicateOutcome::Decided { value, .. } => {
             Classification::Decided(line_side_from_hyperlimit(value))
         }
