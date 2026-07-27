@@ -184,6 +184,32 @@ there is no normalized regression. Hypercurve also retains this owned
 orientation evidence in its repeated containment paths rather than rebuilding
 both filters for every query.
 
+### Replace prepared lifted predicates with immediate evidence
+
+`PreparedIncircle2` and `PreparedInsphere3` mixed borrowed source points with
+owned filters and lifted-polynomial coefficients. The reusable state is now
+owned by `Incircle2Evidence` and `Insphere3Evidence`; immediate query functions
+take the ordered source points explicitly. The supporting public data types are
+also named for what they contain: `PredicateFacts`, `LiftedPolynomialFacts`,
+`Circle2Polynomial`, and `Sphere3Polynomial`.
+
+The serialized paired Criterion gate compared each compatibility method with
+the corresponding immediate evidence function, with an identical immediate
+control in the same run:
+
+| Predicate row | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| In-circle transition | 34.641 ns | 34.243 ns | -1.15% |
+| In-circle unchanged control | 34.667 ns | 34.176 ns | -1.42% |
+| In-sphere transition | 75.544 ns | 76.095 ns | +0.73% |
+| In-sphere unchanged control | 75.378 ns | 76.433 ns | +1.40% |
+
+The in-circle transition tracked its control within 0.27%, while the in-sphere
+transition moved 0.67% less than its control. Neither predicate regressed after
+normalizing for same-run drift. Evidence construction is the former
+compatibility constructor body without storing the four borrowed source
+references, so the migration also removes handle state without adding work.
+
 ## Rejected experiments
 
 ### Search short Farkas certificates before active sets

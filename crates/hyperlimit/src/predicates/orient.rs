@@ -181,36 +181,36 @@ pub(crate) fn classify_point_line_with_policy(
     )
 }
 
-/// Cheap facts cached by prepared orientation and lifted-circle handles.
+/// Cheap facts retained by orientation and lifted-predicate evidence.
 ///
-/// These facts are intentionally about the fixed part of a prepared predicate,
+/// These facts are intentionally about the fixed part of retained evidence,
 /// not about the query point. Repeated predicates can use them to select exact
 /// rational, dyadic, or future shared-scale schedules before building scalar
 /// expression trees for every query.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PreparedPredicateFacts {
+pub struct PredicateFacts {
     /// Every fixed coordinate is represented as an exact rational `Real`.
     pub fixed_coordinates_exact_rational: bool,
     /// Every fixed coordinate is represented as an exact dyadic rational.
     pub fixed_coordinates_dyadic: bool,
     /// All fixed exact-rational coordinates have the same reduced denominator.
     ///
-    /// The prepared object records that a shared-denominator schedule is
+    /// The evidence records that a shared-denominator schedule is
     /// eligible without owning a new coordinate representation.
     pub fixed_coordinates_shared_denominator: bool,
     /// Bit mask of fixed points whose own coordinates share one reduced
     /// denominator.
     ///
     /// This is deliberately weaker than
-    /// [`PreparedPredicateFacts::fixed_coordinates_shared_denominator`]: a
-    /// prepared predicate may have point-local homogeneous/common-scale
+    /// [`PredicateFacts::fixed_coordinates_shared_denominator`]: predicate
+    /// evidence may have point-local homogeneous/common-scale
     /// structure even when different fixed points use different grids. Carrying
     /// that object-local fact preserves the information needed for future
     /// homogeneous determinant schedules without exposing rational storage.
     pub fixed_point_shared_scale_mask: u128,
     /// Bit mask of fixed points structurally known to be the coordinate origin.
     ///
-    /// This point-level sparse fact is cached on the prepared predicate rather
+    /// This point-level sparse fact is retained with the predicate evidence rather
     /// than rediscovered in each query, allowing arithmetic schedules to be
     /// selected from reusable object facts.
     pub fixed_point_origin_mask: u128,
@@ -224,13 +224,13 @@ pub struct PreparedPredicateFacts {
     /// Bit mask of fixed points with at least one coordinate whose zero status
     /// is structurally unknown.
     ///
-    /// Keeping unknown-zero provenance lets prepared predicates avoid selecting
+    /// Keeping unknown-zero provenance avoids selecting
     /// sparse exact kernels from incomplete facts while still carrying the
     /// uncertainty explicitly.
     pub fixed_point_unknown_zero_mask: u128,
     /// Union of scalar symbolic dependency families across all fixed points.
     ///
-    /// This is a prepared-object scheduling fact, not an exact predicate
+    /// This is an evidence scheduling fact, not an exact predicate
     /// certificate. It lets repeated line, circle, plane, and sphere queries
     /// retain the same symbolic-family summary as their fixed point objects
     /// without exposing `Real` internals. Reusable expression structure reaches
@@ -240,7 +240,7 @@ pub struct PreparedPredicateFacts {
     pub exact_kernel_hint: Option<ExactPredicateKernel>,
 }
 
-impl PreparedPredicateFacts {
+impl PredicateFacts {
     /// Counts fixed points whose own coordinates share one reduced denominator.
     pub fn fixed_point_shared_scale_count(self) -> u32 {
         self.fixed_point_shared_scale_mask.count_ones()
@@ -266,7 +266,7 @@ impl PreparedPredicateFacts {
     /// Returns whether any fixed point carries coordinate zero uncertainty.
     ///
     /// Unknown-zero facts must block sparse schedules that require certified
-    /// support, so the uncertainty stays at the prepared-object layer.
+    /// support, so the uncertainty stays in the evidence layer.
     pub fn has_fixed_point_unknown_zero(self) -> bool {
         self.fixed_point_unknown_zero_mask != 0
     }
@@ -283,7 +283,7 @@ impl PreparedPredicateFacts {
     /// Select an advisory determinant schedule from retained object facts.
     ///
     /// The returned value is deliberately a hint. It is useful for choosing
-    /// prepared arithmetic packages, trace labels, and higher-level cache
+    /// retained arithmetic packages, trace labels, and higher-level cache
     /// payoff estimates, but it is not a predicate certificate. Exact predicate
     /// reports still certify topology after reusable object structure selects a
     /// candidate arithmetic schedule.
@@ -327,16 +327,16 @@ impl PreparedPredicateFacts {
     }
 }
 
-/// Structural facts for a prepared lifted-circle or lifted-sphere polynomial.
+/// Structural facts for a retained lifted-circle or lifted-sphere polynomial.
 ///
-/// A prepared in-circle or in-sphere query evaluates a fixed polynomial in the
+/// An evidence-aware in-circle or in-sphere query evaluates a fixed polynomial in the
 /// query point's coordinates. This fact package summarizes those fixed
 /// coefficients so downstream caches can retain exact-set, dyadic,
 /// shared-scale, and sparse-support opportunities without exposing internal
 /// coefficient storage. Predicate calls use those retained object facts to
 /// select certified arithmetic.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PreparedLiftedPolynomialFacts {
+pub struct LiftedPolynomialFacts {
     /// Exact-rational representation facts for the fixed polynomial coefficients.
     pub coefficient_exact: RealExactSetFacts,
     /// Bit mask of coefficients known to be exactly zero.
@@ -347,7 +347,7 @@ pub struct PreparedLiftedPolynomialFacts {
     pub coefficient_unknown_zero_mask: u128,
 }
 
-impl PreparedLiftedPolynomialFacts {
+impl LiftedPolynomialFacts {
     /// Counts coefficients known to be exactly zero.
     pub fn coefficient_zero_count(self) -> u32 {
         self.coefficient_zero_mask.count_ones()
@@ -384,12 +384,12 @@ impl PreparedLiftedPolynomialFacts {
     }
 }
 
-/// Borrowed coefficient view for a prepared lifted 2D circle polynomial.
+/// Borrowed coefficient view for a retained lifted 2D circle polynomial.
 ///
 /// Query evaluation uses `x_coeff*x + y_coeff*y + lift_coeff*(x^2+y^2) +
 /// constant`, where the sign is interpreted by the in-circle convention.
 #[derive(Clone, Copy, Debug)]
-pub struct PreparedCircle2Polynomial<'a> {
+pub struct Circle2Polynomial<'a> {
     /// Coefficient multiplied by query `x`.
     pub x_coeff: &'a Real,
     /// Coefficient multiplied by query `y`.
@@ -400,13 +400,13 @@ pub struct PreparedCircle2Polynomial<'a> {
     pub constant: &'a Real,
 }
 
-/// Borrowed coefficient view for a prepared lifted 3D sphere polynomial.
+/// Borrowed coefficient view for a retained lifted 3D sphere polynomial.
 ///
 /// Query evaluation uses `x_coeff*x + y_coeff*y + z_coeff*z +
 /// lift_coeff*(x^2+y^2+z^2) + constant`, with sign interpreted by the
 /// in-sphere convention.
 #[derive(Clone, Copy, Debug)]
-pub struct PreparedSphere3Polynomial<'a> {
+pub struct Sphere3Polynomial<'a> {
     /// Coefficient multiplied by query `x`.
     pub x_coeff: &'a Real,
     /// Coefficient multiplied by query `y`.
@@ -426,28 +426,28 @@ pub struct PreparedSphere3Polynomial<'a> {
 /// endpoints when classifying many points against the same oriented line.
 #[derive(Clone, Copy, Debug)]
 pub struct Line2Orientation {
-    facts: PreparedPredicateFacts,
+    facts: PredicateFacts,
     filter: Option<PreparedAffineDet2Filter>,
     exact_word_filter: Option<PreparedAffineDet2ExactWordFilter>,
 }
 
 impl Line2Orientation {
     /// Return fixed-coordinate scheduling facts for this line.
-    pub const fn facts(&self) -> PreparedPredicateFacts {
+    pub const fn facts(&self) -> PredicateFacts {
         self.facts
     }
 }
 
 /// Derive reusable exact-predicate evidence for oriented line `from -> to`.
 pub fn line2_orientation(from: &Point2, to: &Point2) -> Line2Orientation {
-    line2_orientation_with_facts(from, to, PreparedPredicateFacts::line2(from, to))
+    line2_orientation_with_facts(from, to, PredicateFacts::line2(from, to))
 }
 
 /// Derive line-orientation evidence from already-collected fixed-input facts.
 pub fn line2_orientation_with_facts(
     from: &Point2,
     to: &Point2,
-    facts: PreparedPredicateFacts,
+    facts: PredicateFacts,
 ) -> Line2Orientation {
     let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
     let exact_word_filter = if filter.is_none() {
@@ -611,134 +611,136 @@ fn incircle2d_real_expr(
     )
 }
 
-/// Reusable in-circle predicate for a fixed oriented circle through three 2D points.
+/// Reusable exact-predicate evidence for an oriented circle through three points.
 #[derive(Clone, Debug)]
-pub struct PreparedIncircle2<'a> {
-    a: &'a Point2,
-    b: &'a Point2,
-    c: &'a Point2,
-    facts: PreparedPredicateFacts,
+pub struct Incircle2Evidence {
+    facts: PredicateFacts,
     filter: Option<PreparedIncircle2dFilter>,
-    coefficient_facts: PreparedLiftedPolynomialFacts,
+    coefficient_facts: LiftedPolynomialFacts,
     x_coeff: Real,
     y_coeff: Real,
     lift_coeff: Real,
     constant: Real,
 }
 
-impl<'a> PreparedIncircle2<'a> {
-    /// Prepare the oriented circumcircle through `a`, `b`, and `c`.
-    ///
-    /// Exact dyadic inputs automatically receive a cached certified filter;
-    /// callers use [`Self::test_point`] normally in every case.
-    pub fn new(a: &'a Point2, b: &'a Point2, c: &'a Point2) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_incircle2", "new");
-        let a_lift = point2_lift(a);
-        let b_lift = point2_lift(b);
-        let c_lift = point2_lift(c);
-
-        let y_lift_one = det3_with_unit_col2(&a.y, &a_lift, &b.y, &b_lift, &c.y, &c_lift);
-        let x_lift_one = det3_with_unit_col2(&a.x, &a_lift, &b.x, &b_lift, &c.x, &c_lift);
-        let x_y_one = det3_with_unit_col2(&a.x, &a.y, &b.x, &b.y, &c.x, &c.y);
-        let x_y_lift = det3_refs(
-            [&a.x, &a.y, &a_lift],
-            [&b.x, &b.y, &b_lift],
-            [&c.x, &c.y, &c_lift],
-        );
-        let x_coeff = neg(&y_lift_one);
-        let y_coeff = x_lift_one;
-        let lift_coeff = neg(&x_y_one);
-        let constant = x_y_lift;
-        let coefficient_facts =
-            lifted_polynomial_facts([&x_coeff, &y_coeff, &lift_coeff, &constant]);
-        let filter = Real::prepare_incircle2d_filter([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
-
-        Self {
-            a,
-            b,
-            c,
-            facts: PreparedPredicateFacts::incircle2(a, b, c),
-            filter,
-            coefficient_facts,
-            x_coeff,
-            y_coeff,
-            lift_coeff,
-            constant,
-        }
-    }
-
-    /// Test a point using the default predicate policy.
-    pub fn test_point(&self, point: &Point2) -> PredicateOutcome<Sign> {
-        self.test_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return cheap fixed-coordinate facts collected at preparation time.
-    pub const fn facts(&self) -> PreparedPredicateFacts {
+impl Incircle2Evidence {
+    /// Return fixed-coordinate scheduling facts for the source points.
+    pub const fn facts(&self) -> PredicateFacts {
         self.facts
     }
 
-    /// Return structural facts for the cached lifted-circle polynomial.
-    pub const fn coefficient_facts(&self) -> PreparedLiftedPolynomialFacts {
+    /// Return structural facts for the retained lifted-circle polynomial.
+    pub const fn coefficient_facts(&self) -> LiftedPolynomialFacts {
         self.coefficient_facts
     }
 
-    /// Return borrowed cached coefficients for the lifted-circle polynomial.
-    pub const fn polynomial(&self) -> PreparedCircle2Polynomial<'_> {
-        PreparedCircle2Polynomial {
+    /// Return borrowed retained coefficients for the lifted-circle polynomial.
+    pub const fn polynomial(&self) -> Circle2Polynomial<'_> {
+        Circle2Polynomial {
             x_coeff: &self.x_coeff,
             y_coeff: &self.y_coeff,
             lift_coeff: &self.lift_coeff,
             constant: &self.constant,
         }
     }
+}
 
-    /// Test a point using an explicit predicate policy.
-    pub(crate) fn test_point_with_policy(
-        &self,
-        point: &Point2,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Sign> {
-        if let Some(sign) = self
-            .filter
-            .and_then(|filter| filter.sign([&point.x, &point.y]))
-        {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "prepared_incircle2",
-                "certified-real-incircle2d-filter"
-            );
-            return PredicateOutcome::decided(
-                crate::real::map_real_sign(sign),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
+/// Derive reusable evidence for the oriented circumcircle through `a`, `b`, and `c`.
+pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Evidence {
+    crate::trace_dispatch!("hyperlimit", "incircle2_evidence", "derive");
+    let a_lift = point2_lift(a);
+    let b_lift = point2_lift(b);
+    let c_lift = point2_lift(c);
 
-        if let Some(outcome) = exact_outcome(
-            policy,
-            ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-            || super::exact::incircle2d(self.a, self.b, self.c, point),
-        ) {
-            return outcome;
-        }
+    let y_lift_one = det3_with_unit_col2(&a.y, &a_lift, &b.y, &b_lift, &c.y, &c_lift);
+    let x_lift_one = det3_with_unit_col2(&a.x, &a_lift, &b.x, &b_lift, &c.x, &c_lift);
+    let x_y_one = det3_with_unit_col2(&a.x, &a.y, &b.x, &b.y, &c.x, &c.y);
+    let x_y_lift = det3_refs(
+        [&a.x, &a.y, &a_lift],
+        [&b.x, &b.y, &b_lift],
+        [&c.x, &c.y, &c_lift],
+    );
+    let x_coeff = neg(&y_lift_one);
+    let y_coeff = x_lift_one;
+    let lift_coeff = neg(&x_y_one);
+    let constant = x_y_lift;
+    let coefficient_facts = lifted_polynomial_facts([&x_coeff, &y_coeff, &lift_coeff, &constant]);
+    let filter = Real::prepare_incircle2d_filter([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
 
-        crate::trace_dispatch!("hyperlimit", "prepared_incircle2", "circle-polynomial");
-        let x_term = mul(&self.x_coeff, &point.x);
-        let y_term = mul(&self.y_coeff, &point.y);
-        let lift = point2_lift(point);
-        let lift_term = mul(&self.lift_coeff, &lift);
-        let xy = add(&x_term, &y_term);
-        let xyl = add(&xy, &lift_term);
-        let det = add(&xyl, &self.constant);
-
-        resolve_real_sign(
-            &det,
-            policy,
-            || None,
-            || super::exact::incircle2d(self.a, self.b, self.c, point),
-            RefinementNeed::RealRefinement,
-        )
+    Incircle2Evidence {
+        facts: PredicateFacts::incircle2(a, b, c),
+        filter,
+        coefficient_facts,
+        x_coeff,
+        y_coeff,
+        lift_coeff,
+        constant,
     }
+}
+
+/// Test `point` against an oriented circle using retained evidence.
+pub fn incircle2d_with_evidence(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+    evidence: &Incircle2Evidence,
+) -> PredicateOutcome<Sign> {
+    incircle2d_with_evidence_and_policy(a, b, c, point, evidence, PredicatePolicy)
+}
+
+/// Test a point using retained circle evidence and an explicit policy.
+///
+/// `evidence` must have been derived from the same ordered source points with
+/// [`incircle2_evidence`].
+pub fn incircle2d_with_evidence_and_policy(
+    a: &Point2,
+    b: &Point2,
+    c: &Point2,
+    point: &Point2,
+    evidence: &Incircle2Evidence,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    if let Some(sign) = evidence
+        .filter
+        .and_then(|filter| filter.sign([&point.x, &point.y]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "incircle2_evidence",
+            "certified-real-incircle2d-filter"
+        );
+        return PredicateOutcome::decided(
+            crate::real::map_real_sign(sign),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    if let Some(outcome) = exact_outcome(
+        policy,
+        ExactPredicateKernel::Incircle2dRationalLiftedDet3,
+        || super::exact::incircle2d(a, b, c, point),
+    ) {
+        return outcome;
+    }
+
+    crate::trace_dispatch!("hyperlimit", "incircle2_evidence", "circle-polynomial");
+    let x_term = mul(&evidence.x_coeff, &point.x);
+    let y_term = mul(&evidence.y_coeff, &point.y);
+    let lift = point2_lift(point);
+    let lift_term = mul(&evidence.lift_coeff, &lift);
+    let xy = add(&x_term, &y_term);
+    let xyl = add(&xy, &lift_term);
+    let det = add(&xyl, &evidence.constant);
+
+    resolve_real_sign(
+        &det,
+        policy,
+        || None,
+        || super::exact::incircle2d(a, b, c, point),
+        RefinementNeed::RealRefinement,
+    )
 }
 
 /// In-sphere predicate for five 3D points.
@@ -906,16 +908,12 @@ fn insphere3d_real_expr(
     )
 }
 
-/// Reusable in-sphere predicate for a fixed oriented sphere through four 3D points.
+/// Reusable exact-predicate evidence for an oriented sphere through four points.
 #[derive(Clone, Debug)]
-pub struct PreparedInsphere3<'a> {
-    a: &'a Point3,
-    b: &'a Point3,
-    c: &'a Point3,
-    d: &'a Point3,
+pub struct Insphere3Evidence {
     filter: Option<PreparedInsphere3dFilter>,
-    facts: PreparedPredicateFacts,
-    coefficient_facts: PreparedLiftedPolynomialFacts,
+    facts: PredicateFacts,
+    coefficient_facts: LiftedPolynomialFacts,
     x_coeff: Real,
     y_coeff: Real,
     z_coeff: Real,
@@ -923,96 +921,20 @@ pub struct PreparedInsphere3<'a> {
     constant: Real,
 }
 
-impl<'a> PreparedInsphere3<'a> {
-    /// Prepare the oriented circumsphere through `a`, `b`, `c`, and `d`.
-    ///
-    /// Exact dyadic inputs automatically receive a cached certified filter;
-    /// callers use [`Self::test_point`] normally in every case.
-    pub fn new(a: &'a Point3, b: &'a Point3, c: &'a Point3, d: &'a Point3) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_insphere3", "new");
-        let a_lift = point3_lift(a);
-        let b_lift = point3_lift(b);
-        let c_lift = point3_lift(c);
-        let d_lift = point3_lift(d);
-
-        let y_z_lift_one = det4_with_unit_col3(
-            [&a.y, &a.z, &a_lift],
-            [&b.y, &b.z, &b_lift],
-            [&c.y, &c.z, &c_lift],
-            [&d.y, &d.z, &d_lift],
-        );
-        let x_z_lift_one = det4_with_unit_col3(
-            [&a.x, &a.z, &a_lift],
-            [&b.x, &b.z, &b_lift],
-            [&c.x, &c.z, &c_lift],
-            [&d.x, &d.z, &d_lift],
-        );
-        let x_y_lift_one = det4_with_unit_col3(
-            [&a.x, &a.y, &a_lift],
-            [&b.x, &b.y, &b_lift],
-            [&c.x, &c.y, &c_lift],
-            [&d.x, &d.y, &d_lift],
-        );
-        let x_y_z_one = det4_with_unit_col3(
-            [&a.x, &a.y, &a.z],
-            [&b.x, &b.y, &b.z],
-            [&c.x, &c.y, &c.z],
-            [&d.x, &d.y, &d.z],
-        );
-        let x_y_z_lift = det4_refs(
-            [&a.x, &a.y, &a.z, &a_lift],
-            [&b.x, &b.y, &b.z, &b_lift],
-            [&c.x, &c.y, &c.z, &c_lift],
-            [&d.x, &d.y, &d.z, &d_lift],
-        );
-        let x_coeff = y_z_lift_one;
-        let y_coeff = neg(&x_z_lift_one);
-        let z_coeff = x_y_lift_one;
-        let lift_coeff = neg(&x_y_z_one);
-        let constant = x_y_z_lift;
-        let coefficient_facts =
-            lifted_polynomial_facts([&x_coeff, &y_coeff, &z_coeff, &lift_coeff, &constant]);
-        let filter = Real::prepare_insphere3d_filter(
-            [&a.x, &a.y, &a.z],
-            [&b.x, &b.y, &b.z],
-            [&c.x, &c.y, &c.z],
-            [&d.x, &d.y, &d.z],
-        );
-
-        Self {
-            a,
-            b,
-            c,
-            d,
-            filter,
-            facts: PreparedPredicateFacts::insphere3(a, b, c, d),
-            coefficient_facts,
-            x_coeff,
-            y_coeff,
-            z_coeff,
-            lift_coeff,
-            constant,
-        }
-    }
-
-    /// Test a point using the default predicate policy.
-    pub fn test_point(&self, point: &Point3) -> PredicateOutcome<Sign> {
-        self.test_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Return cheap fixed-coordinate facts collected at preparation time.
-    pub const fn facts(&self) -> PreparedPredicateFacts {
+impl Insphere3Evidence {
+    /// Return fixed-coordinate scheduling facts for the source points.
+    pub const fn facts(&self) -> PredicateFacts {
         self.facts
     }
 
-    /// Return structural facts for the cached lifted-sphere polynomial.
-    pub const fn coefficient_facts(&self) -> PreparedLiftedPolynomialFacts {
+    /// Return structural facts for the retained lifted-sphere polynomial.
+    pub const fn coefficient_facts(&self) -> LiftedPolynomialFacts {
         self.coefficient_facts
     }
 
-    /// Return borrowed cached coefficients for the lifted-sphere polynomial.
-    pub const fn polynomial(&self) -> PreparedSphere3Polynomial<'_> {
-        PreparedSphere3Polynomial {
+    /// Return borrowed retained coefficients for the lifted-sphere polynomial.
+    pub const fn polynomial(&self) -> Sphere3Polynomial<'_> {
+        Sphere3Polynomial {
             x_coeff: &self.x_coeff,
             y_coeff: &self.y_coeff,
             z_coeff: &self.z_coeff,
@@ -1020,56 +942,139 @@ impl<'a> PreparedInsphere3<'a> {
             constant: &self.constant,
         }
     }
+}
 
-    /// Test a point using an explicit predicate policy.
-    pub(crate) fn test_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<Sign> {
-        if let Some(sign) = self
-            .filter
-            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
-        {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "prepared_insphere3",
-                "certified-real-insphere3d-filter"
-            );
-            return PredicateOutcome::decided(
-                crate::real::map_real_sign(sign),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
+/// Derive reusable evidence for the oriented sphere through `a`, `b`, `c`, and `d`.
+pub fn insphere3_evidence(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Insphere3Evidence {
+    crate::trace_dispatch!("hyperlimit", "insphere3_evidence", "derive");
+    let a_lift = point3_lift(a);
+    let b_lift = point3_lift(b);
+    let c_lift = point3_lift(c);
+    let d_lift = point3_lift(d);
 
-        if let Some(outcome) = exact_outcome(
-            policy,
-            ExactPredicateKernel::Insphere3dRationalLiftedDet4,
-            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
-        ) {
-            return outcome;
-        }
+    let y_z_lift_one = det4_with_unit_col3(
+        [&a.y, &a.z, &a_lift],
+        [&b.y, &b.z, &b_lift],
+        [&c.y, &c.z, &c_lift],
+        [&d.y, &d.z, &d_lift],
+    );
+    let x_z_lift_one = det4_with_unit_col3(
+        [&a.x, &a.z, &a_lift],
+        [&b.x, &b.z, &b_lift],
+        [&c.x, &c.z, &c_lift],
+        [&d.x, &d.z, &d_lift],
+    );
+    let x_y_lift_one = det4_with_unit_col3(
+        [&a.x, &a.y, &a_lift],
+        [&b.x, &b.y, &b_lift],
+        [&c.x, &c.y, &c_lift],
+        [&d.x, &d.y, &d_lift],
+    );
+    let x_y_z_one = det4_with_unit_col3(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+        [&d.x, &d.y, &d.z],
+    );
+    let x_y_z_lift = det4_refs(
+        [&a.x, &a.y, &a.z, &a_lift],
+        [&b.x, &b.y, &b.z, &b_lift],
+        [&c.x, &c.y, &c.z, &c_lift],
+        [&d.x, &d.y, &d.z, &d_lift],
+    );
+    let x_coeff = y_z_lift_one;
+    let y_coeff = neg(&x_z_lift_one);
+    let z_coeff = x_y_lift_one;
+    let lift_coeff = neg(&x_y_z_one);
+    let constant = x_y_z_lift;
+    let coefficient_facts =
+        lifted_polynomial_facts([&x_coeff, &y_coeff, &z_coeff, &lift_coeff, &constant]);
+    let filter = Real::prepare_insphere3d_filter(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+        [&d.x, &d.y, &d.z],
+    );
 
-        crate::trace_dispatch!("hyperlimit", "prepared_insphere3", "sphere-polynomial");
-        let x_term = mul(&self.x_coeff, &point.x);
-        let y_term = mul(&self.y_coeff, &point.y);
-        let z_term = mul(&self.z_coeff, &point.z);
-        let lift = point3_lift(point);
-        let lift_term = mul(&self.lift_coeff, &lift);
-        let xy = add(&x_term, &y_term);
-        let xyz = add(&xy, &z_term);
-        let xyzl = add(&xyz, &lift_term);
-        let det = add(&xyzl, &self.constant);
-
-        resolve_real_sign(
-            &det,
-            policy,
-            || None,
-            || super::exact::insphere3d(self.a, self.b, self.c, self.d, point),
-            RefinementNeed::RealRefinement,
-        )
+    Insphere3Evidence {
+        filter,
+        facts: PredicateFacts::insphere3(a, b, c, d),
+        coefficient_facts,
+        x_coeff,
+        y_coeff,
+        z_coeff,
+        lift_coeff,
+        constant,
     }
+}
+
+/// Test `point` against an oriented sphere using retained evidence.
+pub fn insphere3d_with_evidence(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+    point: &Point3,
+    evidence: &Insphere3Evidence,
+) -> PredicateOutcome<Sign> {
+    insphere3d_with_evidence_and_policy(a, b, c, d, point, evidence, PredicatePolicy)
+}
+
+/// Test a point using retained sphere evidence and an explicit policy.
+///
+/// `evidence` must have been derived from the same ordered source points with
+/// [`insphere3_evidence`].
+pub fn insphere3d_with_evidence_and_policy(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    d: &Point3,
+    point: &Point3,
+    evidence: &Insphere3Evidence,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    if let Some(sign) = evidence
+        .filter
+        .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "insphere3_evidence",
+            "certified-real-insphere3d-filter"
+        );
+        return PredicateOutcome::decided(
+            crate::real::map_real_sign(sign),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
+    if let Some(outcome) = exact_outcome(
+        policy,
+        ExactPredicateKernel::Insphere3dRationalLiftedDet4,
+        || super::exact::insphere3d(a, b, c, d, point),
+    ) {
+        return outcome;
+    }
+
+    crate::trace_dispatch!("hyperlimit", "insphere3_evidence", "sphere-polynomial");
+    let x_term = mul(&evidence.x_coeff, &point.x);
+    let y_term = mul(&evidence.y_coeff, &point.y);
+    let z_term = mul(&evidence.z_coeff, &point.z);
+    let lift = point3_lift(point);
+    let lift_term = mul(&evidence.lift_coeff, &lift);
+    let xy = add(&x_term, &y_term);
+    let xyz = add(&xy, &z_term);
+    let xyzl = add(&xyz, &lift_term);
+    let det = add(&xyzl, &evidence.constant);
+
+    resolve_real_sign(
+        &det,
+        policy,
+        || None,
+        || super::exact::insphere3d(a, b, c, d, point),
+        RefinementNeed::RealRefinement,
+    )
 }
 
 fn add(left: &Real, right: &Real) -> Real {
@@ -1125,7 +1130,7 @@ fn det4_refs(a: [&Real; 4], b: [&Real; 4], c: [&Real; 4], d: [&Real; 4]) -> Real
     let minor3 = det3_refs([b[0], b[1], b[2]], [c[0], c[1], c[2]], [d[0], d[1], d[2]]);
 
     // Keep the fallback Laplace cofactor combination as one fixed product-sum
-    // instead of materializing four products. Exact-rational prepared
+    // instead of materializing four products. Exact-rational retained
     // coefficients then use the same delayed normalization as `det3_refs`.
     Real::signed_product_sum(
         [true, false, true, false],
@@ -1166,14 +1171,14 @@ fn exact_outcome(
 fn fixed_point_facts_2<const N: usize>(
     points: [&Point2; N],
     kernel: ExactPredicateKernel,
-) -> PreparedPredicateFacts {
+) -> PredicateFacts {
     // Delegate scalar representation classification to `hyperreal` and retain
     // only the predicate-level summary, keeping denominator identity opaque
     // while carrying common-scale eligibility to exact-kernel selection.
     let facts = Real::exact_set_facts(points.iter().flat_map(|point| [&point.x, &point.y]));
     let point_masks = fixed_point_structure_masks_2(points);
 
-    PreparedPredicateFacts {
+    PredicateFacts {
         fixed_coordinates_exact_rational: facts.all_exact_rational,
         fixed_coordinates_dyadic: facts.all_dyadic,
         fixed_coordinates_shared_denominator: facts.shared_denominator,
@@ -1186,18 +1191,16 @@ fn fixed_point_facts_2<const N: usize>(
     }
 }
 
-fn lifted_polynomial_facts<const N: usize>(
-    coefficients: [&Real; N],
-) -> PreparedLiftedPolynomialFacts {
+fn lifted_polynomial_facts<const N: usize>(coefficients: [&Real; N]) -> LiftedPolynomialFacts {
     debug_assert!(N <= u128::BITS as usize);
-    // Keep coefficient facts at the prepared-object boundary rather than
+    // Keep coefficient facts at the evidence boundary rather than
     // recomputing them in triangulation or CSG code; they select faster exact
     // arithmetic schedules without becoming topology certificates.
     let coefficient_exact = Real::exact_set_facts(coefficients);
     let (coefficient_zero_mask, coefficient_nonzero_mask, coefficient_unknown_zero_mask) =
         real_zero_masks(coefficients);
 
-    PreparedLiftedPolynomialFacts {
+    LiftedPolynomialFacts {
         coefficient_exact,
         coefficient_zero_mask,
         coefficient_nonzero_mask,
@@ -1224,7 +1227,7 @@ fn real_zero_masks<const N: usize>(coordinates: [&Real; N]) -> (u128, u128, u128
 fn fixed_point_facts_3<const N: usize>(
     points: [&Point3; N],
     kernel: ExactPredicateKernel,
-) -> PreparedPredicateFacts {
+) -> PredicateFacts {
     let facts = Real::exact_set_facts(
         points
             .iter()
@@ -1232,7 +1235,7 @@ fn fixed_point_facts_3<const N: usize>(
     );
     let point_masks = fixed_point_structure_masks_3(points);
 
-    PreparedPredicateFacts {
+    PredicateFacts {
         fixed_coordinates_exact_rational: facts.all_exact_rational,
         fixed_coordinates_dyadic: facts.all_dyadic,
         fixed_coordinates_shared_denominator: facts.shared_denominator,
@@ -1571,12 +1574,12 @@ mod tests {
             1
         );
 
-        let prepared = PreparedIncircle2::new(&a, &b, &c);
+        let evidence = incircle2_evidence(&a, &b, &c);
         hyperreal::dispatch_trace::reset();
-        let prepared_outcome = hyperreal::dispatch_trace::with_recording(|| {
-            prepared.test_point_with_policy(&d, PredicatePolicy::STRICT)
+        let evidence_outcome = hyperreal::dispatch_trace::with_recording(|| {
+            incircle2d_with_evidence_and_policy(&a, &b, &c, &d, &evidence, PredicatePolicy::STRICT)
         });
-        assert_eq!(prepared_outcome.value(), Some(Sign::Positive));
+        assert_eq!(evidence_outcome.value(), Some(Sign::Positive));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
             trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
@@ -1616,12 +1619,20 @@ mod tests {
             1
         );
 
-        let prepared = PreparedInsphere3::new(&a, &b, &c, &d);
+        let evidence = insphere3_evidence(&a, &b, &c, &d);
         hyperreal::dispatch_trace::reset();
-        let prepared_outcome = hyperreal::dispatch_trace::with_recording(|| {
-            prepared.test_point_with_policy(&e, PredicatePolicy::STRICT)
+        let evidence_outcome = hyperreal::dispatch_trace::with_recording(|| {
+            insphere3d_with_evidence_and_policy(
+                &a,
+                &b,
+                &c,
+                &d,
+                &e,
+                &evidence,
+                PredicatePolicy::STRICT,
+            )
         });
-        assert_eq!(prepared_outcome.value(), Some(Sign::Negative));
+        assert_eq!(evidence_outcome.value(), Some(Sign::Negative));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
             trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
@@ -1689,12 +1700,12 @@ mod tests {
             0b11
         );
         assert!(
-            PreparedIncircle2::new(&a, &b, &c)
+            incircle2_evidence(&a, &b, &c)
                 .facts()
                 .fixed_coordinates_shared_denominator
         );
         assert_eq!(
-            PreparedIncircle2::new(&a, &b, &c)
+            incircle2_evidence(&a, &b, &c)
                 .facts()
                 .fixed_point_shared_scale_mask,
             0b111
@@ -1713,12 +1724,12 @@ mod tests {
         let s = p3r(10, 12, 13);
 
         assert!(
-            PreparedInsphere3::new(&p, &q, &r, &s)
+            insphere3_evidence(&p, &q, &r, &s)
                 .facts()
                 .fixed_coordinates_shared_denominator
         );
         assert_eq!(
-            PreparedInsphere3::new(&p, &q, &r, &s)
+            insphere3_evidence(&p, &q, &r, &s)
                 .facts()
                 .fixed_point_shared_scale_mask,
             0b1111
@@ -1726,26 +1737,26 @@ mod tests {
     }
 
     #[test]
-    fn prepared_lifted_polynomial_facts_match_cached_coefficients() {
+    fn lifted_polynomial_facts_match_retained_coefficients() {
         let a = rp2(1, 0);
         let b = rp2(0, 1);
         let c = rp2(-1, 0);
-        let prepared = PreparedIncircle2::new(&a, &b, &c);
-        let poly = prepared.polynomial();
+        let evidence = incircle2_evidence(&a, &b, &c);
+        let poly = evidence.polynomial();
 
         assert_eq!(
-            prepared.coefficient_facts(),
+            evidence.coefficient_facts(),
             lifted_polynomial_facts([poly.x_coeff, poly.y_coeff, poly.lift_coeff, poly.constant])
         );
         assert!(
-            prepared
+            evidence
                 .coefficient_facts()
                 .coefficient_exact
                 .all_exact_rational
         );
-        assert!(prepared.coefficient_facts().has_dyadic_schedule());
+        assert!(evidence.coefficient_facts().has_dyadic_schedule());
         assert_eq!(
-            prepared
+            evidence
                 .coefficient_facts()
                 .coefficient_unknown_zero_count(),
             0
@@ -1769,14 +1780,14 @@ mod tests {
                 RefinementNeed::RealRefinement,
             )
             .value(),
-            prepared.test_point(&query).value()
+            incircle2d_with_evidence(&a, &b, &c, &query, &evidence).value()
         );
 
         let p = rp3(0, 0, 0);
         let q = rp3(1, 0, 0);
         let r = rp3(0, 1, 0);
         let s = rp3(0, 0, 1);
-        let sphere = PreparedInsphere3::new(&p, &q, &r, &s);
+        let sphere = insphere3_evidence(&p, &q, &r, &s);
         let sphere_poly = sphere.polynomial();
 
         assert_eq!(
@@ -1829,42 +1840,42 @@ mod tests {
                 RefinementNeed::RealRefinement,
             )
             .value(),
-            sphere.test_point(&sphere_query).value()
+            insphere3d_with_evidence(&p, &q, &r, &s, &sphere_query, &sphere).value()
         );
     }
 
     #[test]
-    fn prepared_incircle_matches_incircle2d_sign() {
+    fn incircle_evidence_matches_incircle2d_sign() {
         let a = p2(0.82, 0.0);
         let b = p2(0.0, 0.82);
         let c = p2(-0.82, 0.0);
-        let prepared = PreparedIncircle2::new(&a, &b, &c);
+        let evidence = incircle2_evidence(&a, &b, &c);
         assert_eq!(
-            prepared.facts().exact_kernel_hint,
+            evidence.facts().exact_kernel_hint,
             Some(ExactPredicateKernel::Incircle2dRationalLiftedDet3)
         );
         for point in [p2(0.2, 0.1), p2(0.95, 0.0), p2(0.82, 0.0)] {
             assert_eq!(
-                prepared.test_point(&point).value(),
+                incircle2d_with_evidence(&a, &b, &c, &point, &evidence).value(),
                 incircle2d(&a, &b, &c, &point).value()
             );
         }
     }
 
     #[test]
-    fn prepared_insphere_matches_insphere3d_sign() {
+    fn insphere_evidence_matches_insphere3d_sign() {
         let a = p3(0.82, 0.0, 0.0);
         let b = p3(-0.82, 0.0, 0.0);
         let c = p3(0.0, 0.82, 0.0);
         let d = p3(0.0, 0.0, 0.82);
-        let prepared = PreparedInsphere3::new(&a, &b, &c, &d);
+        let evidence = insphere3_evidence(&a, &b, &c, &d);
         assert_eq!(
-            prepared.facts().exact_kernel_hint,
+            evidence.facts().exact_kernel_hint,
             Some(ExactPredicateKernel::Insphere3dRationalLiftedDet4)
         );
         for point in [p3(0.1, 0.1, 0.1), p3(1.1, 0.0, 0.0), p3(0.82, 0.0, 0.0)] {
             assert_eq!(
-                prepared.test_point(&point).value(),
+                insphere3d_with_evidence(&a, &b, &c, &d, &point, &evidence).value(),
                 insphere3d(&a, &b, &c, &d, &point).value()
             );
         }

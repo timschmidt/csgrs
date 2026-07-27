@@ -3,7 +3,7 @@
 //! The generated inputs stay in `hyperreal::Real` and never use primitive-float
 //! topology. The checks focus on metamorphic laws that should survive every
 //! exact kernel and fallback route: orientation reversal/cyclicity, batch/scalar
-//! agreement, prepared-line/prepared-incircle/prepared-insphere agreement, and
+//! agreement, retained-evidence agreement, and
 //! circle/sphere boundary behavior.
 //!
 //! Run with: `cargo fuzz run predicate_invariants` from `hyperlimit/fuzz/`.
@@ -13,9 +13,9 @@
 use arbitrary::Arbitrary;
 use hyperlimit::{
     AabbSphereIntersection, CoplanarProjection, LineSide, Plane3, Point2, Point3, PredicateOutcome,
-    PredicatePolicy, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
-    SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3, SupportDopPlaneRelation,
-    SupportDopRelation, SupportSlab3, TriangleDegeneracy, certified_ball_sign,
+    PredicatePolicy, PreparedHalfspaceSystem3, SegmentPlaneRelation, Sign, SphereIntersection,
+    SupportDop3, SupportDopPlaneRelation, SupportDopRelation, SupportSlab3, TriangleDegeneracy,
+    certified_ball_sign,
     certified_interval_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
     classify_circle_line2_batch, classify_circle_segment2, classify_circle_segment2_batch,
     classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
@@ -28,7 +28,8 @@ use hyperlimit::{
     classify_segment3_intersection_batch, classify_sphere3_intersection,
     classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2d, insphere3d,
+    compare_point_segment3_distance_squared, incircle2_evidence, incircle2d,
+    incircle2d_with_evidence, insphere3_evidence, insphere3d, insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient2d,
     orient2d_batch, projected_line_parameter3, projected_segment_parameter3,
 };
@@ -55,7 +56,7 @@ impl RawPoint {
 /// Generated 3D rational point.
 ///
 /// Rational inputs ensure fuzzing exercises exact predicate packages and
-/// prepared-object reuse, not primitive-float filters.
+/// retained-evidence reuse, not primitive-float filters.
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawPoint3 {
     x_num: i16,
@@ -180,42 +181,42 @@ fn predicate_invariants(input: Input) {
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &r));
     assert_decided_zero(insphere3d(&p, &q, &r, &s, &s));
 
-    let prepared_incircle = PreparedIncircle2::new(&a, &b, &c);
+    let incircle_evidence = incircle2_evidence(&a, &b, &c);
     assert_eq!(
-        prepared_incircle.test_point(&d).value(),
+        incircle2d_with_evidence(&a, &b, &c, &d, &incircle_evidence).value(),
         incircle2d(&a, &b, &c, &d).value(),
-        "prepared in-circle path must agree with scalar predicate"
+        "retained in-circle evidence must agree with the scalar predicate"
     );
     assert!(
-        prepared_incircle
+        incircle_evidence
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
         "rational fuzz sites must produce exact rational lifted-circle coefficients"
     );
     assert_eq!(
-        prepared_incircle
+        incircle_evidence
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,
         "rational lifted-circle coefficients should have decidable zero status"
     );
 
-    let prepared_insphere = PreparedInsphere3::new(&p, &q, &r, &s);
+    let insphere_evidence = insphere3_evidence(&p, &q, &r, &s);
     assert_eq!(
-        prepared_insphere.test_point(&t).value(),
+        insphere3d_with_evidence(&p, &q, &r, &s, &t, &insphere_evidence).value(),
         insphere3d(&p, &q, &r, &s, &t).value(),
-        "prepared in-sphere path must agree with scalar predicate"
+        "retained in-sphere evidence must agree with the scalar predicate"
     );
     assert!(
-        prepared_insphere
+        insphere_evidence
             .coefficient_facts()
             .coefficient_exact
             .all_exact_rational,
         "rational fuzz sites must produce exact rational lifted-sphere coefficients"
     );
     assert_eq!(
-        prepared_insphere
+        insphere_evidence
             .coefficient_facts()
             .coefficient_unknown_zero_count(),
         0,

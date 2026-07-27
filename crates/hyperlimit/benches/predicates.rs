@@ -7,10 +7,10 @@ use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
-    PredicateOutcome, PreparedHalfspaceSystem3, PreparedIncircle2, PreparedInsphere3,
-    PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign, SupportDopRelation,
-    TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts, affine_independent_d,
-    certified_ball_sign, classify_aabb2_intersection_with_facts, classify_aabb3_intersection,
+    PredicateOutcome, PreparedHalfspaceSystem3, PreparedOrientedPlane3, Segment3Intersection,
+    SegmentPlaneRelation, Sign, SupportDopRelation, TriangleDegeneracy,
+    TriangleTriangleIntersection, aabb2_facts, affine_independent_d, certified_ball_sign,
+    classify_aabb2_intersection_with_facts, classify_aabb3_intersection,
     classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
     classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
     classify_plane_aabb3_report, classify_plane_segment, classify_plane_triangle,
@@ -23,9 +23,10 @@ use hyperlimit::{
     classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_report,
     classify_segment3_intersection, classify_sphere3_intersection, classify_triangle_triangle3,
     classify_triangle3_degeneracy, compare_point_line3_distance_squared,
-    compare_point_plane_distance_squared, compare_point_segment3_distance_squared, incircle2d,
-    insphere_d, insphere3d, intersect_segment_with_oriented_plane, intersect_three_planes,
-    intersect_two_planes, line2_orientation, orient_d, orient2d, orient3d,
+    compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
+    incircle2_evidence, incircle2d, incircle2d_with_evidence, insphere_d, insphere3_evidence,
+    insphere3d, insphere3d_with_evidence, intersect_segment_with_oriented_plane,
+    intersect_three_planes, intersect_two_planes, line2_orientation, orient_d, orient2d, orient3d,
     projected_line_parameter3, projected_segment_parameter3, segment2_facts,
     support_dop3_from_points, triangle3_orientation,
 };
@@ -67,6 +68,7 @@ fn bench_predicates(c: &mut Criterion) {
     bench_aabb_immediate(c);
     bench_explicit_sphere_immediate(c);
     bench_line2_immediate(c);
+    bench_lifted_predicate_immediate(c);
     bench_segment2_immediate(c);
     bench_segment3_immediate(c);
     bench_triangle2_immediate(c);
@@ -102,6 +104,50 @@ fn bench_line2_immediate(c: &mut Criterion) {
         })
     });
     group.finish();
+}
+
+fn bench_lifted_predicate_immediate(c: &mut Criterion) {
+    let circle_a = rational_point2(1, 1, 0, 1);
+    let circle_b = rational_point2(0, 1, 1, 1);
+    let circle_c = rational_point2(-1, 1, 0, 1);
+    let circle_query = rational_point2(0, 1, 0, 1);
+    let circle_evidence = incircle2_evidence(&circle_a, &circle_b, &circle_c);
+
+    let mut circle_group = c.benchmark_group("incircle2_immediate");
+    circle_group.bench_function("point_with_evidence", |bench| {
+        bench.iter(|| {
+            incircle2d_with_evidence(
+                &circle_a,
+                &circle_b,
+                &circle_c,
+                black_box(&circle_query),
+                &circle_evidence,
+            )
+        })
+    });
+    circle_group.finish();
+
+    let sphere_a = rational_point3(1, 1, 0, 1, 0, 1);
+    let sphere_b = rational_point3(0, 1, 1, 1, 0, 1);
+    let sphere_c = rational_point3(0, 1, 0, 1, 1, 1);
+    let sphere_d = rational_point3(-1, 1, 0, 1, 0, 1);
+    let sphere_query = rational_point3(0, 1, 0, 1, 0, 1);
+    let sphere_evidence = insphere3_evidence(&sphere_a, &sphere_b, &sphere_c, &sphere_d);
+
+    let mut sphere_group = c.benchmark_group("insphere3_immediate");
+    sphere_group.bench_function("point_with_evidence", |bench| {
+        bench.iter(|| {
+            insphere3d_with_evidence(
+                &sphere_a,
+                &sphere_b,
+                &sphere_c,
+                &sphere_d,
+                black_box(&sphere_query),
+                &sphere_evidence,
+            )
+        })
+    });
+    sphere_group.finish();
 }
 
 fn bench_triangle3_immediate(c: &mut Criterion) {
@@ -937,7 +983,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
     });
     group.bench_function("incircle2/dyadic_filter", |bench| {
         bench.iter(|| {
-            PreparedIncircle2::new(
+            incircle2_evidence(
                 black_box(&circle_a),
                 black_box(&circle_b),
                 black_box(&circle_c),
@@ -977,7 +1023,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
     });
     group.bench_function("insphere3/dyadic_filter", |bench| {
         bench.iter(|| {
-            PreparedInsphere3::new(
+            insphere3_evidence(
                 black_box(&sphere_a),
                 black_box(&sphere_b),
                 black_box(&sphere_c),
@@ -1471,12 +1517,18 @@ fn bench_shared_scale_views(c: &mut Criterion) {
         });
     });
     if let Some((a, b, c, _)) = incircle_cases.first() {
-        let prepared = PreparedIncircle2::new(a, b, c);
-        group.bench_function("incircle2d/common_denominator_prepared", |bench| {
+        let evidence = incircle2_evidence(a, b, c);
+        group.bench_function("incircle2d/common_denominator_evidence", |bench| {
             bench.iter(|| {
                 let mut score = 0_i64;
                 for (_, _, _, d) in &incircle_cases {
-                    score += sign_score(black_box(prepared.test_point(black_box(d))));
+                    score += sign_score(black_box(incircle2d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        black_box(d),
+                        &evidence,
+                    )));
                 }
                 black_box(score)
             });
@@ -1500,12 +1552,19 @@ fn bench_shared_scale_views(c: &mut Criterion) {
         });
     });
     if let Some((a, b, c, d, _)) = insphere_cases.first() {
-        let prepared = PreparedInsphere3::new(a, b, c, d);
-        group.bench_function("insphere3d/common_denominator_prepared", |bench| {
+        let evidence = insphere3_evidence(a, b, c, d);
+        group.bench_function("insphere3d/common_denominator_evidence", |bench| {
             bench.iter(|| {
                 let mut score = 0_i64;
                 for (_, _, _, _, e) in &insphere_cases {
-                    score += sign_score(black_box(prepared.test_point(black_box(e))));
+                    score += sign_score(black_box(insphere3d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        d,
+                        black_box(e),
+                        &evidence,
+                    )));
                 }
                 black_box(score)
             });
@@ -1600,7 +1659,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
     }
 
     // The in-circle determinant is especially sensitive to expansion strategy.
-    // Cold and prepared transformed rows reveal whether lifted-circle
+    // Cold and evidence-aware transformed rows reveal whether lifted-circle
     // coefficient reuse preserves the exact determinant sign.
     let incircle_cases = transformed_incircle2d_cases();
     trace_dispatch_cases(
@@ -1625,19 +1684,25 @@ fn bench_transformed_predicates(c: &mut Criterion) {
         });
     });
     if let Some((a, b, c, _)) = incircle_cases.first() {
-        let prepared = PreparedIncircle2::new(a, b, c);
+        let evidence = incircle2_evidence(a, b, c);
         trace_dispatch_cases(
-            "transformed_predicates/incircle2d/prepared_exact_rational_affine",
+            "transformed_predicates/incircle2d/evidence_exact_rational_affine",
             &incircle_cases,
             |(_, _, _, d)| {
-                black_box(sign_score(prepared.test_point(d)));
+                black_box(sign_score(incircle2d_with_evidence(a, b, c, d, &evidence)));
             },
         );
-        group.bench_function("incircle2d/prepared_exact_rational_affine", |bench| {
+        group.bench_function("incircle2d/evidence_exact_rational_affine", |bench| {
             bench.iter(|| {
                 let mut score = 0_i64;
                 for (_, _, _, d) in &incircle_cases {
-                    score += sign_score(black_box(prepared.test_point(black_box(d))));
+                    score += sign_score(black_box(incircle2d_with_evidence(
+                        a,
+                        b,
+                        c,
+                        black_box(d),
+                        &evidence,
+                    )));
                 }
                 black_box(score)
             });
@@ -1957,23 +2022,31 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                 });
             },
         );
-        if let Some((a, b, c, _)) = cases.first() {
-            let prepared = PreparedIncircle2::new(a, b, c);
+        if let Some((source_a, source_b, source_c, _)) = cases.first() {
+            let evidence = incircle2_evidence(source_a, source_b, source_c);
             trace_dispatch_cases(
-                format!("incircle2d/{label}_prepared/{}", workload.name()),
+                format!("incircle2d/{label}_evidence/{}", workload.name()),
                 &cases,
                 |(_, _, _, d)| {
-                    black_box(sign_score(prepared.test_point(d)));
+                    black_box(sign_score(incircle2d_with_evidence(
+                        source_a, source_b, source_c, d, &evidence,
+                    )));
                 },
             );
             group.bench_with_input(
-                BenchmarkId::new(format!("{label}_prepared"), workload.name()),
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
                 &cases,
-                |b, cases| {
-                    b.iter(|| {
+                |bencher, cases| {
+                    bencher.iter(|| {
                         let mut score = 0_i64;
                         for (_, _, _, d) in cases {
-                            score += sign_score(black_box(prepared.test_point(black_box(d))));
+                            score += sign_score(black_box(incircle2d_with_evidence(
+                                source_a,
+                                source_b,
+                                source_c,
+                                black_box(d),
+                                &evidence,
+                            )));
                         }
                         black_box(score)
                     });
@@ -2014,23 +2087,32 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                 });
             },
         );
-        if let Some((a, b, c, d, _)) = cases.first() {
-            let prepared = PreparedInsphere3::new(a, b, c, d);
+        if let Some((source_a, source_b, source_c, source_d, _)) = cases.first() {
+            let evidence = insphere3_evidence(source_a, source_b, source_c, source_d);
             trace_dispatch_cases(
-                format!("insphere3d/{label}_prepared/{}", workload.name()),
+                format!("insphere3d/{label}_evidence/{}", workload.name()),
                 &cases,
                 |(_, _, _, _, e)| {
-                    black_box(sign_score(prepared.test_point(e)));
+                    black_box(sign_score(insphere3d_with_evidence(
+                        source_a, source_b, source_c, source_d, e, &evidence,
+                    )));
                 },
             );
             group.bench_with_input(
-                BenchmarkId::new(format!("{label}_prepared"), workload.name()),
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
                 &cases,
-                |b, cases| {
-                    b.iter(|| {
+                |bencher, cases| {
+                    bencher.iter(|| {
                         let mut score = 0_i64;
                         for (_, _, _, _, e) in cases {
-                            score += sign_score(black_box(prepared.test_point(black_box(e))));
+                            score += sign_score(black_box(insphere3d_with_evidence(
+                                source_a,
+                                source_b,
+                                source_c,
+                                source_d,
+                                black_box(e),
+                                &evidence,
+                            )));
                         }
                         black_box(score)
                     });

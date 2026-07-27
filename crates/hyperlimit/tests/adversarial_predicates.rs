@@ -252,7 +252,7 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     assert!(facts.fixed_symbolic_dependencies.is_empty());
 
     let c = Point2::new(Real::pi(), rational(3, 7));
-    let incircle = hyperlimit::PreparedIncircle2::new(&a, &b, &c);
+    let incircle = hyperlimit::incircle2_evidence(&a, &b, &c);
     let facts = incircle.facts();
     assert!(!facts.fixed_coordinates_exact_rational);
     assert_eq!(facts.fixed_point_shared_scale_mask, 0b011);
@@ -273,7 +273,7 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     let origin3_symbolic = Point3::new(Real::from(0), Real::from(0), Real::from(0));
     let x_axis3_symbolic = Point3::new(Real::from(1), Real::from(0), Real::from(0));
     let y_axis3_symbolic = Point3::new(Real::from(0), Real::from(1), Real::from(0));
-    let symbolic_insphere = hyperlimit::PreparedInsphere3::new(
+    let symbolic_insphere = hyperlimit::insphere3_evidence(
         &origin3_symbolic,
         &x_axis3_symbolic,
         &y_axis3_symbolic,
@@ -299,8 +299,8 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     let origin = Point2::new(Real::from(0), Real::from(0));
     let y_axis = Point2::new(Real::from(0), Real::from(5));
     let unknown = Point2::new(unknown_zero(), Real::from(0));
-    let prepared = hyperlimit::PreparedIncircle2::new(&origin, &y_axis, &unknown);
-    let facts = prepared.facts();
+    let evidence = hyperlimit::incircle2_evidence(&origin, &y_axis, &unknown);
+    let facts = evidence.facts();
     assert_eq!(facts.fixed_point_origin_mask, 0b001);
     assert_eq!(facts.fixed_point_one_hot_mask, 0b010);
     assert_eq!(facts.fixed_point_unknown_zero_mask, 0b100);
@@ -314,8 +314,8 @@ fn predicate_facts_preserve_point_local_shared_scales() {
     let x_axis3 = Point3::new(Real::from(7), Real::from(0), Real::from(0));
     let y_axis3 = Point3::new(Real::from(0), Real::from(-1), Real::from(0));
     let unknown3 = Point3::new(Real::from(0), unknown_zero(), Real::from(0));
-    let prepared = hyperlimit::PreparedInsphere3::new(&origin3, &x_axis3, &y_axis3, &unknown3);
-    let facts = prepared.facts();
+    let evidence = hyperlimit::insphere3_evidence(&origin3, &x_axis3, &y_axis3, &unknown3);
+    let facts = evidence.facts();
     assert_eq!(facts.fixed_point_origin_mask, 0b0001);
     assert_eq!(facts.fixed_point_one_hot_mask, 0b0110);
     assert_eq!(facts.fixed_point_unknown_zero_mask, 0b1000);

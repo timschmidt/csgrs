@@ -70,11 +70,12 @@ pub use geometry::{
     point2_displacement_facts, segment2_facts, triangle2_facts,
 };
 pub use orient::{
-    Line2Orientation, Point2, Point3, PreparedCircle2Polynomial, PreparedIncircle2,
-    PreparedInsphere3, PreparedLiftedPolynomialFacts, PreparedPredicateFacts,
-    PreparedSphere3Polynomial, classify_point_line, classify_point_line_with_orientation,
-    classify_point_line_with_orientation_and_policy, incircle2d, insphere3d, line2_orientation,
-    line2_orientation_with_facts, orient2d, orient2d_with_policy, orient3d,
+    Circle2Polynomial, Incircle2Evidence, Insphere3Evidence, LiftedPolynomialFacts,
+    Line2Orientation, Point2, Point3, PredicateFacts, Sphere3Polynomial, classify_point_line,
+    classify_point_line_with_orientation, classify_point_line_with_orientation_and_policy,
+    incircle2_evidence, incircle2d, incircle2d_with_evidence, incircle2d_with_evidence_and_policy,
+    insphere3_evidence, insphere3d, insphere3d_with_evidence, insphere3d_with_evidence_and_policy,
+    line2_orientation, line2_orientation_with_facts, orient2d, orient2d_with_policy, orient3d,
 };
 pub use plane::{
     Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,
