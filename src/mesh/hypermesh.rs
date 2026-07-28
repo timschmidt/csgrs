@@ -413,7 +413,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
     pub fn to_hypermesh_exact(&self) -> ::hypermesh::HypermeshResult<InputMesh> {
         let buffers = self.to_hypermesh_buffers();
         let mesh = input_mesh_from_buffers(&buffers);
-        ::hypermesh::build_polygon_soup(&[mesh.as_ref()])?;
+        ::hypermesh::polygon_soup(&[mesh.as_ref()])?;
         Ok(mesh)
     }
 
