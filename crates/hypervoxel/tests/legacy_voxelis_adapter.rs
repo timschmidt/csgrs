@@ -14,7 +14,7 @@ use voxelis::{
 
 #[test]
 fn legacy_storage_materializes_directly_into_chunk_pages() {
-    let frame = GridFrame::builder().depth(3).build().unwrap();
+    let frame = GridFrame::unit(3).unwrap();
     let shape = ChunkShape::new(1).unwrap();
     let mut interner = VoxInterner::<u8>::with_memory_budget(16_384);
     let mut tree = VoxTree::<u8>::new(MaxDepth::new(3));
@@ -38,7 +38,7 @@ fn legacy_storage_materializes_directly_into_chunk_pages() {
 
 #[test]
 fn legacy_storage_rejects_depth_mismatch() {
-    let frame = GridFrame::builder().depth(3).build().unwrap();
+    let frame = GridFrame::unit(3).unwrap();
     let interner = VoxInterner::<u8>::with_memory_budget(4096);
     let tree = VoxTree::<u8>::new(MaxDepth::new(2));
     assert!(
@@ -54,7 +54,7 @@ fn legacy_storage_rejects_depth_mismatch() {
 
 #[test]
 fn legacy_storage_builds_a_direct_exact_surface_mesh() {
-    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let frame = GridFrame::unit(2).unwrap();
     let mut interner = VoxInterner::<u8>::with_memory_budget(4096);
     let mut tree = VoxTree::<u8>::new(MaxDepth::new(2));
     assert!(tree.set(&mut interner, IVec3::new(1, 1, 1), 4));
@@ -73,7 +73,7 @@ fn legacy_storage_builds_a_direct_exact_surface_mesh() {
 
 #[test]
 fn empty_legacy_storage_has_no_surface_mesh() {
-    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let frame = GridFrame::unit(2).unwrap();
     let interner = VoxInterner::<u8>::with_memory_budget(4096);
     let tree = VoxTree::<u8>::new(MaxDepth::new(2));
     assert!(
@@ -95,7 +95,7 @@ proptest! {
         z in 0_i32..4,
         value in 1_u8..=u8::MAX,
     ) {
-        let frame = GridFrame::builder().depth(2).build().unwrap();
+        let frame = GridFrame::unit(2).unwrap();
         let mut interner = VoxInterner::<u8>::with_memory_budget(4096);
         let mut tree = VoxTree::<u8>::new(MaxDepth::new(2));
         prop_assert!(tree.set(&mut interner, IVec3::new(x, y, z), value));

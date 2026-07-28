@@ -9,7 +9,7 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|data: (u8, u8, bool, bool, bool, bool)| {
     let (depth_raw, mutate_index, _stale, drop_last, duplicate_first, non_exact_first) = data;
     let depth = (depth_raw % 3) + 1;
-    let frame = GridFrame::builder().depth(depth).build().unwrap();
+    let frame = GridFrame::unit(depth).unwrap();
     let cells_per_axis = frame.cells_per_axis();
     let mut rows = Vec::new();
     for z in 0..cells_per_axis {

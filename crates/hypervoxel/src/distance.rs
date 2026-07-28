@@ -297,7 +297,7 @@ mod tests {
 
     #[test]
     fn distance_preview_preserves_address_order_and_exact_occupancy() {
-        let mut grid = SparseVoxelGrid::new(GridFrame::builder().depth(2).build().unwrap());
+        let mut grid = SparseVoxelGrid::new(GridFrame::unit(2).unwrap());
         for xyz in [[0, 1, 0], [1, 0, 1]] {
             grid.set(
                 VoxelAddress::new(2, xyz).unwrap(),

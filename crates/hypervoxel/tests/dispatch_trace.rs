@@ -1,7 +1,9 @@
 #![cfg(feature = "dispatch-trace")]
 
 use hyperreal::{Rational, Real};
-use hypervoxel::{ExactBox, GridFrame, MaterialRegionId, VoxelizationPolicy, voxelize_exact_box};
+use hypervoxel::{
+    ExactBox, GridFrame, LengthUnit, MaterialRegionId, VoxelizationPolicy, voxelize_exact_box,
+};
 
 fn q(numerator: i64, denominator: u64) -> Real {
     Rational::fraction(numerator, denominator)
@@ -14,12 +16,13 @@ fn exact_rational_voxelization_does_not_request_approximation() {
     hyperreal::dispatch_trace::reset();
     let _recording = hyperreal::dispatch_trace::recording_scope();
 
-    let frame = GridFrame::builder()
-        .origin([q(0, 1), q(0, 1), q(0, 1)])
-        .pitch([q(1, 3), q(1, 3), q(1, 3)])
-        .depth(2)
-        .build()
-        .unwrap();
+    let frame = GridFrame::new(
+        [q(0, 1), q(0, 1), q(0, 1)],
+        [q(1, 3), q(1, 3), q(1, 3)],
+        2,
+        LengthUnit::Unitless,
+    )
+    .unwrap();
     let solid = ExactBox::new([q(1, 3), q(1, 3), q(1, 3)], [q(2, 3), q(2, 3), q(2, 3)]);
     let (_, report) = voxelize_exact_box(
         frame,

@@ -96,7 +96,7 @@ pub use field::{
     CertifiedFieldBall, CertifiedFieldInterval, CertifiedTensorInterval, CertifiedVectorInterval,
     FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleQuery, query_field_samples,
 };
-pub use frame::{GridAxis, GridFrame, GridFrameBuilder, GridFrameFacts, LengthUnit};
+pub use frame::{GridFrame, GridFrameFacts, LengthUnit};
 pub use halfspace::{
     ExactHalfSpace, ExactHalfSpaceReport, VoxelHalfSpaceClassifier,
     classify_cell_against_halfspace, voxelize_exact_halfspace,

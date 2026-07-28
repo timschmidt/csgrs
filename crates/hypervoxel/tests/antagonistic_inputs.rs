@@ -11,11 +11,13 @@ fn real_fraction(n: i64, d: u64) -> Real {
 
 #[test]
 fn rejects_depths_that_would_overflow_octree_address_arithmetic() {
-    let err = GridFrame::builder()
-        .depth(22)
-        .units(LengthUnit::Micrometer)
-        .build()
-        .unwrap_err();
+    let err = GridFrame::new(
+        [0.into(), 0.into(), 0.into()],
+        [1.into(), 1.into(), 1.into()],
+        22,
+        LengthUnit::Micrometer,
+    )
+    .unwrap_err();
 
     assert_eq!(
         err,
@@ -37,16 +39,17 @@ fn rejects_addresses_outside_their_depth_cube() {
 
 #[test]
 fn exact_bounds_survive_large_negative_origin_and_prime_denominator_pitch() {
-    let frame = GridFrame::builder()
-        .origin([(-10_000).into(), 0.into(), 5.into()])
-        .pitch([
+    let frame = GridFrame::new(
+        [(-10_000).into(), 0.into(), 5.into()],
+        [
             real_fraction(1, 97),
             real_fraction(2, 97),
             real_fraction(3, 97),
-        ])
-        .depth(6)
-        .build()
-        .unwrap();
+        ],
+        6,
+        LengthUnit::Unitless,
+    )
+    .unwrap();
 
     let bounds = VoxelAddress::new(6, [63, 62, 61])
         .unwrap()
@@ -59,7 +62,7 @@ fn exact_bounds_survive_large_negative_origin_and_prime_denominator_pitch() {
 
 #[test]
 fn integer_aligned_exact_box_uses_half_open_cell_volume() {
-    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let frame = GridFrame::unit(2).unwrap();
     let exact_box = ExactBox::new(
         [Real::from(1), Real::from(1), Real::from(1)],
         [Real::from(3), Real::from(3), Real::from(3)],
@@ -98,7 +101,7 @@ fn integer_aligned_exact_box_uses_half_open_cell_volume() {
 
 #[test]
 fn fractional_exact_box_keeps_conservative_boundary_cells() {
-    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let frame = GridFrame::unit(2).unwrap();
     let exact_box = ExactBox::new(
         [
             real_fraction(1, 2),
@@ -160,7 +163,7 @@ proptest! {
 
     #[test]
     fn generated_exact_bounds_have_positive_unit_extent(depth in 0_u8..8, x in 0_u64..512, y in 0_u64..512, z in 0_u64..512) {
-        let frame = GridFrame::builder().depth(depth).build().unwrap();
+        let frame = GridFrame::unit(depth).unwrap();
         let cells = 1_u64 << depth;
         let address = VoxelAddress::new(depth, [x % cells, y % cells, z % cells]).unwrap();
         let bounds = address.bounds(&frame).unwrap();

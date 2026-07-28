@@ -22,7 +22,7 @@ fn tri(vertices: [[Real; 3]; 3]) -> ExactTriangle3 {
 fuzz_target!(|data: (u8, u8, u8, bool)| {
     let (depth_raw, lo_raw, span_raw, closed_solid) = data;
     let depth = (depth_raw % 3) + 2;
-    let frame = GridFrame::builder().depth(depth).build().unwrap();
+    let frame = GridFrame::unit(depth).unwrap();
     let cells = 1_u64 << depth;
     let lo = 1 + (u64::from(lo_raw) % (cells - 1));
     let hi = (lo + 1 + (u64::from(span_raw) % (cells - lo))).min(cells);

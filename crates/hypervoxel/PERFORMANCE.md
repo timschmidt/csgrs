@@ -19,6 +19,9 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 | `exact_voxel_surface_triangle_mesh_handoff` | 67.1 µs | 53.7 µs | 20.0% faster |
 | `chunk_paged_connected_component` | 7.420 µs | 6.562 µs | 11.6% faster |
 | `exact_exposed_face_extraction_report` | 467.4 µs | 432.6 µs | 7.4% faster |
+| `grid_frame_construction` | 258.52 ns | 220.67 ns | 14.6% faster |
+| `exact_cell_bounds` | 1.0300 µs | 1.0316 µs | 0.2% slower (noise) |
+| `exact_box_voxelization` | 149.20 ms | 142.67 ms | 4.4% faster |
 
 ## Retained Changes
 
@@ -59,6 +62,12 @@ one rational `CellBounds` value per surface cell. Indexed triangle mesh output
 still derives deterministic vertices from the topology audit's ordered set,
 but its lookup-only vertex index uses `FxHashMap`. Neither hash table is exposed
 as ordering or topology evidence.
+
+Grid frames are now created immediately with `GridFrame::new` or the concise
+`GridFrame::unit` constructor. The public builder and its separately wrapped
+axis objects were removed; validated pitches are retained directly by the
+frame. The construction sentinel improved while exact bounds and box
+voxelization preserved or improved their established performance.
 
 ## Exactness and Scope Checks
 

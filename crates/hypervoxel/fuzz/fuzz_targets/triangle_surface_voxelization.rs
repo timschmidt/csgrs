@@ -10,7 +10,7 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|data: (u8, [u8; 9], bool)| {
     let (depth_raw, coords, _source_replay) = data;
     let depth = (depth_raw % 3) + 1;
-    let frame = GridFrame::builder().depth(depth).build().unwrap();
+    let frame = GridFrame::unit(depth).unwrap();
     let cells = 1_u64 << depth;
     let vertex = |i: usize| -> [Real; 3] {
         [

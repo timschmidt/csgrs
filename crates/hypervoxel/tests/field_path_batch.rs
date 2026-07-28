@@ -18,7 +18,7 @@ fn rf(n: i64, d: u64) -> Real {
 }
 
 fn frame() -> GridFrame {
-    GridFrame::builder().depth(3).build().unwrap()
+    GridFrame::unit(3).unwrap()
 }
 
 #[test]
@@ -496,7 +496,7 @@ fn support_mask_reports_unsupported_unknown_and_lossy_cells_explicitly() {
     assert_eq!(empty_paged.target_pages, 0);
     assert!(!empty_paged.exact_paged_support_ready);
 
-    let coarser_support = SparseVoxelGrid::new(GridFrame::builder().depth(2).build().unwrap());
+    let coarser_support = SparseVoxelGrid::new(GridFrame::unit(2).unwrap());
     let coarser_support =
         ChunkPagedSparseGrid::from_sparse_grid(&coarser_support, ChunkShape::new(0).unwrap())
             .unwrap();

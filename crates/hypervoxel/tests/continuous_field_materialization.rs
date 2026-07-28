@@ -5,7 +5,7 @@ use hypervoxel::{
 use proptest::prelude::*;
 
 fn frame(depth: u8) -> GridFrame {
-    GridFrame::builder().depth(depth).build().unwrap()
+    GridFrame::unit(depth).unwrap()
 }
 
 fn full_rows(frame: &GridFrame) -> Vec<ContinuousFieldVoxelCell> {

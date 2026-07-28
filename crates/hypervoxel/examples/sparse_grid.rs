@@ -4,10 +4,7 @@ use hypervoxel::{
 };
 
 fn main() -> HypervoxelResult<()> {
-    let frame = GridFrame::builder()
-        .pitch([1.into(), 1.into(), 1.into()])
-        .depth(3)
-        .build()?;
+    let frame = GridFrame::unit(3)?;
     let mut grid = SparseVoxelGrid::new(frame);
     let address = VoxelAddress::new(3, [2, 1, 0])?;
 

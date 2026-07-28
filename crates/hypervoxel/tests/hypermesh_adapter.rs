@@ -35,7 +35,7 @@ fn hypermesh_exact_solid_adapts_to_scheduled_triangle_voxelization() {
     let solid = ExactTriangleSolid::new(solid).unwrap();
     assert_eq!(solid.triangle_count(), 4);
 
-    let frame = GridFrame::builder().depth(2).build().unwrap();
+    let frame = GridFrame::unit(2).unwrap();
     let (_, report, schedule) = voxelize_exact_triangle_solid(
         frame,
         &solid,

@@ -14,7 +14,7 @@ use libfuzzer_sys::fuzz_target;
 fuzz_target!(|data: (u8, u64, u64, u64)| {
     let (depth_raw, x, y, z) = data;
     let depth = depth_raw % 9;
-    let frame = GridFrame::builder().depth(depth).build().unwrap();
+    let frame = GridFrame::unit(depth).unwrap();
     let cells = 1_u64 << depth;
     let address = VoxelAddress::new(depth, [x % cells, y % cells, z % cells]).unwrap();
 
@@ -79,7 +79,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert!(batch_grid.is_empty());
 
     let intake_depth = (depth_raw % 3) + 1;
-    let intake_frame = GridFrame::builder().depth(intake_depth).build().unwrap();
+    let intake_frame = GridFrame::unit(intake_depth).unwrap();
     let intake_cells = intake_frame.cells_per_axis();
     let mut rows = Vec::new();
     for iz in 0..intake_cells {
@@ -101,7 +101,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(intake.len() as u64, intake_cells.pow(3));
 
     let voxel_depth = (depth_raw % 3) + 2;
-    let voxel_frame = GridFrame::builder().depth(voxel_depth).build().unwrap();
+    let voxel_frame = GridFrame::unit(voxel_depth).unwrap();
     let voxel_cells = 1_u64 << voxel_depth;
     let lo = 1_u64;
     let hi = voxel_cells - 1;

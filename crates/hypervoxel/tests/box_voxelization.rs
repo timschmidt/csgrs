@@ -18,12 +18,7 @@ fn rf(n: i64, d: u64) -> Real {
 }
 
 fn frame() -> GridFrame {
-    GridFrame::builder()
-        .origin([r(0), r(0), r(0)])
-        .pitch([r(1), r(1), r(1)])
-        .depth(2)
-        .build()
-        .unwrap()
+    GridFrame::unit(2).unwrap()
 }
 
 #[test]

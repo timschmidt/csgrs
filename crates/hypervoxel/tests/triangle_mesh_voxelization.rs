@@ -25,7 +25,7 @@ fn rf(numerator: i64, denominator: u64) -> Real {
 }
 
 fn frame(depth: u8) -> GridFrame {
-    GridFrame::builder().depth(depth).build().unwrap()
+    GridFrame::unit(depth).unwrap()
 }
 
 fn tri(vertices: [[Real; 3]; 3]) -> ExactTriangle3 {

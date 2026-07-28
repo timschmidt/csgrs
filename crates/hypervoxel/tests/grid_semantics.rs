@@ -18,17 +18,17 @@ fn rf(n: i64, d: u64) -> Real {
 }
 
 fn frame(depth: u8) -> GridFrame {
-    GridFrame::builder()
-        .origin([r(-1), r(2), r(3)])
-        .pitch([
+    GridFrame::new(
+        [r(-1), r(2), r(3)],
+        [
             Rational::fraction(1, 8).unwrap().into(),
             Rational::fraction(1, 4).unwrap().into(),
             Rational::fraction(1, 2).unwrap().into(),
-        ])
-        .depth(depth)
-        .units(LengthUnit::Millimeter)
-        .build()
-        .unwrap()
+        ],
+        depth,
+        LengthUnit::Millimeter,
+    )
+    .unwrap()
 }
 
 #[test]
@@ -45,17 +45,33 @@ fn exact_cell_bounds_use_grid_depth_not_float_chunk_size() {
 }
 
 #[test]
+fn unit_frame_is_immediate_and_explicit() {
+    let frame = GridFrame::unit(3).unwrap();
+
+    assert_eq!(frame.origin(), &[r(0), r(0), r(0)]);
+    assert_eq!(frame.pitches(), &[r(1), r(1), r(1)]);
+    assert_eq!(frame.depth(), 3);
+    assert_eq!(frame.units(), LengthUnit::Unitless);
+}
+
+#[test]
 fn frame_rejects_non_positive_or_unknown_cell_axes() {
-    let zero = GridFrame::builder()
-        .pitch([r(1), r(0), r(1)])
-        .build()
-        .unwrap_err();
+    let zero = GridFrame::new(
+        [r(0), r(0), r(0)],
+        [r(1), r(0), r(1)],
+        0,
+        LengthUnit::Unitless,
+    )
+    .unwrap_err();
     assert_eq!(zero, HypervoxelError::NonPositiveCellAxis { axis: 1 });
 
-    let negative = GridFrame::builder()
-        .pitch([r(1), r(1), r(-1)])
-        .build()
-        .unwrap_err();
+    let negative = GridFrame::new(
+        [r(0), r(0), r(0)],
+        [r(1), r(1), r(-1)],
+        0,
+        LengthUnit::Unitless,
+    )
+    .unwrap_err();
     assert_eq!(negative, HypervoxelError::NonPositiveCellAxis { axis: 2 });
 }
 
@@ -629,7 +645,7 @@ fn spatial_aggregate_reports_exact_bounds_and_child_mask() {
     assert_eq!(bounds.min, left.bounds(grid.frame()).unwrap().min);
     assert_eq!(bounds.max, right.bounds(grid.frame()).unwrap().max);
 
-    let empty_frame = hypervoxel::GridFrame::builder().depth(2).build().unwrap();
+    let empty_frame = hypervoxel::GridFrame::unit(2).unwrap();
     let empty = VoxelSpatialAggregateFacts::from_grid(&SparseVoxelGrid::new(empty_frame)).unwrap();
     assert_eq!(empty.stored_cells, 0);
     assert!(!empty.has_spatial_evidence);

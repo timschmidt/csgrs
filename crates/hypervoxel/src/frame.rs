@@ -26,33 +26,11 @@ pub enum LengthUnit {
     Nanometer,
 }
 
-/// One exact axis pitch for an axis-aligned voxel grid.
-#[derive(Clone, Debug, PartialEq)]
-pub struct GridAxis {
-    pitch: Real,
-}
-
-impl GridAxis {
-    /// Creates a grid axis after proving the pitch is structurally positive.
-    pub fn new(pitch: Real, axis: usize) -> HypervoxelResult<Self> {
-        match pitch.structural_facts().sign {
-            Some(RealSign::Positive) => Ok(Self { pitch }),
-            Some(_) => Err(HypervoxelError::NonPositiveCellAxis { axis }),
-            None => Err(HypervoxelError::UnknownCellAxisSign { axis }),
-        }
-    }
-
-    /// Returns the exact cell pitch along this axis.
-    pub fn pitch(&self) -> &Real {
-        &self.pitch
-    }
-}
-
 /// Exact axis-aligned grid frame.
 #[derive(Clone, Debug, PartialEq)]
 pub struct GridFrame {
     origin: [Real; 3],
-    axes: [GridAxis; 3],
+    pitches: [Real; 3],
     depth: u8,
     units: LengthUnit,
 }
@@ -72,21 +50,30 @@ impl GridFrame {
             });
         }
 
+        for (axis, pitch) in pitch.iter().enumerate() {
+            match pitch.structural_facts().sign {
+                Some(RealSign::Positive) => {}
+                Some(_) => return Err(HypervoxelError::NonPositiveCellAxis { axis }),
+                None => return Err(HypervoxelError::UnknownCellAxisSign { axis }),
+            }
+        }
+
         Ok(Self {
             origin,
-            axes: [
-                GridAxis::new(pitch[0].clone(), 0)?,
-                GridAxis::new(pitch[1].clone(), 1)?,
-                GridAxis::new(pitch[2].clone(), 2)?,
-            ],
+            pitches: pitch,
             depth,
             units,
         })
     }
 
-    /// Starts a builder for an exact grid frame.
-    pub fn builder() -> GridFrameBuilder {
-        GridFrameBuilder::default()
+    /// Creates a unitless frame at the origin with unit pitch on every axis.
+    pub fn unit(depth: u8) -> HypervoxelResult<Self> {
+        Self::new(
+            [0.into(), 0.into(), 0.into()],
+            [1.into(), 1.into(), 1.into()],
+            depth,
+            LengthUnit::Unitless,
+        )
     }
 
     /// Returns the exact frame origin.
@@ -94,14 +81,14 @@ impl GridFrame {
         &self.origin
     }
 
-    /// Returns the exact axis pitches.
-    pub fn axes(&self) -> &[GridAxis; 3] {
-        &self.axes
+    /// Returns the exact cell pitches in x/y/z order.
+    pub fn pitches(&self) -> &[Real; 3] {
+        &self.pitches
     }
 
     /// Returns the exact pitch for one axis.
     pub fn pitch(&self, axis: usize) -> &Real {
-        self.axes[axis].pitch()
+        &self.pitches[axis]
     }
 
     /// Returns the maximum octree/grid depth.
@@ -172,56 +159,5 @@ impl GridFrameFacts {
     /// Returns whether the frame admits an integer-grid exact schedule.
     pub fn has_integer_grid_schedule(&self) -> bool {
         self.exact_scalars.has_integer_grid_schedule()
-    }
-}
-
-/// Builder for [`GridFrame`].
-#[derive(Clone, Debug)]
-pub struct GridFrameBuilder {
-    origin: [Real; 3],
-    pitch: [Real; 3],
-    depth: u8,
-    units: LengthUnit,
-}
-
-impl Default for GridFrameBuilder {
-    fn default() -> Self {
-        Self {
-            origin: [0.into(), 0.into(), 0.into()],
-            pitch: [1.into(), 1.into(), 1.into()],
-            depth: 0,
-            units: LengthUnit::Unitless,
-        }
-    }
-}
-
-impl GridFrameBuilder {
-    /// Sets the exact origin.
-    pub fn origin(mut self, origin: [Real; 3]) -> Self {
-        self.origin = origin;
-        self
-    }
-
-    /// Sets the exact per-axis cell pitch.
-    pub fn pitch(mut self, pitch: [Real; 3]) -> Self {
-        self.pitch = pitch;
-        self
-    }
-
-    /// Sets the maximum grid depth.
-    pub fn depth(mut self, depth: u8) -> Self {
-        self.depth = depth;
-        self
-    }
-
-    /// Sets the source units.
-    pub fn units(mut self, units: LengthUnit) -> Self {
-        self.units = units;
-        self
-    }
-
-    /// Builds the validated frame.
-    pub fn build(self) -> HypervoxelResult<GridFrame> {
-        GridFrame::new(self.origin, self.pitch, self.depth, self.units)
     }
 }

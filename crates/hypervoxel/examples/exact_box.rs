@@ -5,12 +5,12 @@ use hypervoxel::{
 };
 
 fn main() -> HypervoxelResult<()> {
-    let frame = GridFrame::builder()
-        .units(LengthUnit::Millimeter)
-        .origin([0.into(), 0.into(), 0.into()])
-        .pitch([1.into(), 1.into(), 1.into()])
-        .depth(3)
-        .build()?;
+    let frame = GridFrame::new(
+        [0.into(), 0.into(), 0.into()],
+        [1.into(), 1.into(), 1.into()],
+        3,
+        LengthUnit::Millimeter,
+    )?;
     let solid = ExactBox::new(
         [Real::from(1), Real::from(1), Real::from(1)],
         [Real::from(3), Real::from(3), Real::from(3)],

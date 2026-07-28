@@ -37,7 +37,7 @@ expanding every cell into coordinate geometry.
 
 | Task | Primary types and functions |
 | --- | --- |
-| Define a grid | `GridFrame::builder`, `GridSource`, `LengthUnit`, `GridFrameFacts` |
+| Define a grid | `GridFrame::new`, `GridFrame::unit`, `LengthUnit`, `GridFrameFacts` |
 | Address cells | `VoxelAddress`, `CellBounds`, `ChunkAddress`, `ChunkShape` |
 | Store facts | `VoxelCell`, `VoxelPayload`, `SparseVoxelGrid`, `VoxelEditBatch` |
 | Attach domain records | `VoxelSideTables`, `MaterialRegionRecord`, `FieldSampleRecord`, `ProcessStateRecord` |
@@ -84,23 +84,20 @@ its topology:
 ```rust
 use hyperreal::Real;
 use hypervoxel::{
-    ExactBox, GridFrame, GridSource, HypervoxelResult, LengthUnit,
-    MaterialRegionId, VoxelizationPolicy, voxelize_exact_box,
+    ExactBox, GridFrame, HypervoxelResult, LengthUnit, MaterialRegionId,
+    VoxelizationPolicy, voxelize_exact_box,
 };
 
 fn main() -> HypervoxelResult<()> {
-    let source = GridSource::new("example:box", 1);
-    let frame = GridFrame::builder()
-        .units(LengthUnit::Millimeter)
-        .origin([0.into(), 0.into(), 0.into()])
-        .pitch([1.into(), 1.into(), 1.into()])
-        .depth(3)
-        .source(source.clone())
-        .build()?;
+    let frame = GridFrame::new(
+        [0.into(), 0.into(), 0.into()],
+        [1.into(), 1.into(), 1.into()],
+        3,
+        LengthUnit::Millimeter,
+    )?;
     let solid = ExactBox::new(
         [Real::from(1), Real::from(1), Real::from(1)],
         [Real::from(3), Real::from(3), Real::from(3)],
-        Some(source),
     );
 
     let (grid, report) = voxelize_exact_box(
@@ -126,10 +123,7 @@ use hypervoxel::{
 };
 
 fn edit_one_cell() -> HypervoxelResult<()> {
-    let frame = GridFrame::builder()
-        .pitch([1.into(), 1.into(), 1.into()])
-        .depth(3)
-        .build()?;
+    let frame = GridFrame::unit(3)?;
     let mut grid = SparseVoxelGrid::new(frame);
     let address = VoxelAddress::new(3, [2, 1, 0])?;
     let edit = grid.set(address, VoxelCell::material(MaterialRegionId(4)))?;

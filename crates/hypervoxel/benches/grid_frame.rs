@@ -2,8 +2,8 @@ use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     ExactBox, ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
-    GridFrame, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid, VoxelAddress,
-    VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
+    GridFrame, LengthUnit, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid,
+    VoxelAddress, VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
     extract_exposed_faces, lossy_quad_mesh_from_faces, voxelize_exact_box,
     voxelize_exact_triangle_solid,
 };
@@ -13,16 +13,17 @@ fn r(n: i32) -> Real {
 }
 
 fn frame(depth: u8) -> GridFrame {
-    GridFrame::builder()
-        .origin([r(0), r(0), r(0)])
-        .pitch([
+    GridFrame::new(
+        [r(0), r(0), r(0)],
+        [
             Rational::fraction(1, 8).unwrap().into(),
             Rational::fraction(1, 8).unwrap().into(),
             Rational::fraction(1, 8).unwrap().into(),
-        ])
-        .depth(depth)
-        .build()
-        .unwrap()
+        ],
+        depth,
+        LengthUnit::Unitless,
+    )
+    .unwrap()
 }
 
 fn populated_sparse_grid(depth: u8) -> SparseVoxelGrid {
@@ -50,6 +51,26 @@ fn exact_tetrahedron_solid() -> ExactTriangleSolidMesh {
         .map(|indices| ExactTriangle3::new(indices.map(|index| vertices[index].clone()), None))
         .into();
     ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles), true)
+}
+
+fn bench_grid_frame_construction(c: &mut Criterion) {
+    let origin = [r(-3), r(5), r(7)];
+    let pitch = [
+        Rational::fraction(1, 8).unwrap().into(),
+        Rational::fraction(1, 16).unwrap().into(),
+        Rational::fraction(1, 32).unwrap().into(),
+    ];
+    c.bench_function("grid_frame_construction", |b| {
+        b.iter(|| {
+            GridFrame::new(
+                black_box(origin.clone()),
+                black_box(pitch.clone()),
+                black_box(12),
+                black_box(LengthUnit::Millimeter),
+            )
+            .unwrap()
+        })
+    });
 }
 
 fn bench_cell_bounds(c: &mut Criterion) {
@@ -106,7 +127,7 @@ fn bench_svo_compaction_and_expansion(c: &mut Criterion) {
 }
 
 fn bench_surface_paths(c: &mut Criterion) {
-    let frame = GridFrame::builder().depth(5).build().unwrap();
+    let frame = GridFrame::unit(5).unwrap();
     let solid = ExactBox::new([r(4), r(4), r(4)], [r(20), r(20), r(20)]);
     let (grid, _) = voxelize_exact_box(
         frame,
@@ -195,6 +216,7 @@ fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
 
 criterion_group!(
     benches,
+    bench_grid_frame_construction,
     bench_cell_bounds,
     bench_sparse_edits,
     bench_exact_box_voxelization,
