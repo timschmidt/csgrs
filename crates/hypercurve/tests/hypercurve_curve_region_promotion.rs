@@ -599,7 +599,6 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
 
     let promoted = CurveRegion2::try_from_line_arc_region(&source, &policy).unwrap();
 
-    assert!(promoted.is_line_image_region_cached());
     assert_eq!(
         decided(promoted.loop_roles(&policy).unwrap()),
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,]
@@ -648,7 +647,6 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
         )
         .unwrap();
 
-    assert!(transformed.is_line_image_region_cached());
     assert_eq!(
         decided(transformed.loop_roles(&policy).unwrap()),
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material]
@@ -747,7 +745,6 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
             .unwrap();
 
         assert_eq!(transformed.loop_fill_rules(), Some([fill_rule].as_slice()));
-        assert!(transformed.is_line_image_region_cached());
         assert_eq!(
             transformed.classify_point(&p(10, 5), &policy).unwrap(),
             Classification::Decided(expected)
@@ -787,7 +784,6 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
                 Real::zero()
             })
         );
-        assert!(region.is_line_image_region_cached());
     }
 }
 
@@ -1108,13 +1104,12 @@ fn region_promotion_retains_hole_role_for_projection() {
 }
 
 #[test]
-fn empty_region_promotion_is_decided_and_cached() {
+fn empty_region_promotion_is_decided_and_reusable() {
     let policy = CurvePolicy::certified();
     let promoted =
         CurveRegion2::try_from_line_arc_region(&LineArcRegion2::empty(), &policy).unwrap();
 
     assert!(promoted.is_empty());
-    assert!(promoted.is_line_image_region_cached());
     assert!(decided(promoted.loop_roles(&policy).unwrap()).is_empty());
     assert!(decided(promoted.filled_side_is_left(&policy).unwrap()).is_empty());
     assert!(

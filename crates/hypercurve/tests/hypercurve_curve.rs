@@ -109,20 +109,15 @@ fn top_level_curve_carries_every_public_family() {
     );
 }
 #[test]
-fn top_level_curve_region_classifies_points_and_shares_native_boundary_cache() {
+fn top_level_curve_region_classifies_points_and_shares_results() {
     let region = CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()]).unwrap();
     let clone = region.clone();
-    assert!(!region.is_native_boundary_cache_cached());
-    assert!(!region.is_signed_area_cached());
     assert_eq!(region.signed_area(), Ok(None));
-    assert!(region.is_signed_area_cached());
-    assert!(clone.is_signed_area_cached());
+    assert_eq!(clone.signed_area(), Ok(None));
     assert_eq!(
         region.classify_point(&p(8, -1), &CurvePolicy::certified()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
-    assert!(region.is_native_boundary_cache_cached());
-    assert!(clone.is_native_boundary_cache_cached());
     assert_eq!(
         clone.classify_point(&p(8, -4), &CurvePolicy::certified()),
         Ok(Classification::Decided(RegionPointLocation::Outside))
@@ -144,13 +139,14 @@ fn top_level_curve_region_classifies_points_and_shares_native_boundary_cache() {
     .unwrap();
     let bounded = CurveRegion2::try_from_boundary_paths(&[square]).unwrap();
     let bounded_clone = bounded.clone();
-    assert!(!bounded.is_native_boundary_bounds_cache_cached());
     assert_eq!(
         bounded.classify_point(&p(1, 1), &CurvePolicy::certified()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
-    assert!(bounded.is_native_boundary_bounds_cache_cached());
-    assert!(bounded_clone.is_native_boundary_bounds_cache_cached());
+    assert_eq!(
+        bounded_clone.classify_point(&p(1, 1), &CurvePolicy::certified()),
+        Ok(Classification::Decided(RegionPointLocation::Inside))
+    );
 }
 
 #[test]

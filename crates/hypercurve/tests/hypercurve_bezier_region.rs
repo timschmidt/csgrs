@@ -891,7 +891,6 @@ fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers()
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
     let clone = retained.clone();
-    assert!(!retained.is_line_image_region_cached());
     assert_eq!(
         retained.classify_point(&p(1, 1), &policy()).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -908,8 +907,10 @@ fn retained_line_image_role_evidence_accepts_exact_algebraic_endpoint_carriers()
         retained.classify_point(&p(7, 3), &policy()).unwrap(),
         Classification::Decided(RegionPointLocation::Outside)
     );
-    assert!(retained.is_line_image_region_cached());
-    assert!(clone.is_line_image_region_cached());
+    assert_eq!(
+        clone.classify_point(&p(3, 3), &policy()).unwrap(),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
 }
 
 #[test]
@@ -942,9 +943,6 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let clone = region.clone();
 
     assert!(region.has_algebraic_fragments());
-    assert!(!region.is_native_boundary_cache_cached());
-    assert!(!region.is_line_image_region_cached());
-    assert!(!region.is_retained_rational_evaluator_cache_cached());
     assert_eq!(
         region.classify_point(&p(0, 0), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -961,10 +959,10 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
         region.classify_point(&p(0, 1), &policy).unwrap(),
         Classification::Decided(RegionPointLocation::Boundary)
     );
-    assert!(region.is_retained_rational_evaluator_cache_cached());
-    assert!(clone.is_retained_rational_evaluator_cache_cached());
-    assert!(region.is_line_image_region_cached());
-    assert!(clone.is_line_image_region_cached());
+    assert_eq!(
+        clone.classify_point(&p(0, 0), &policy).unwrap(),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
 }
 
 #[test]

@@ -6075,6 +6075,21 @@ at 1.506/1.401 ms, and its retained replay at 8/7 ns. Serialized `curve_path`
 runs kept retained path promotion at 2/2 ns and immediate topology at
 21.073/20.836 us.
 
+### Curve-region result cache-state boundary
+
+Curve regions now expose classification, native-contour eligibility, boundary
+roles, exact rational evaluation, and signed area through their result APIs
+without public cache-state probes. Clone-shared retention remains private;
+tests verify repeated classification and area results across clones.
+
+Serialized `bezier_region` runs measured algebraic ray classification at
+76.196 us before and 75.368--77.510 us after, clone-retained curve-region
+classification at 35.781 us before and 35.932--37.578 us after, native signed
+depth at 1.197 us before and 1.192--1.334 us after, and retained algebraic
+classification at 27.837 us before and 27.703--27.884 us after. The serialized
+`editing` signed-area gate improved cold computation from 11.010 to 10.249 us
+and 100,000 clone replays from 32 to 31 ns each.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

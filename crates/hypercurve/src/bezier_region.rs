@@ -3030,31 +3030,6 @@ impl CurveRegion2 {
         Ok(Classification::Decided(profiles))
     }
 
-    /// Returns whether native boundary conversion has already been retained.
-    pub fn is_native_boundary_cache_cached(&self) -> bool {
-        self.native_boundary_loops.get().is_some()
-    }
-
-    /// Returns whether decided native boundary bounds have been retained.
-    pub fn is_native_boundary_bounds_cache_cached(&self) -> bool {
-        self.native_boundary_bounds.get().is_some()
-    }
-
-    /// Returns whether line-image eligibility and any decided region have been cached.
-    pub fn is_line_image_region_cached(&self) -> bool {
-        self.line_image_region.get().is_some()
-    }
-
-    /// Returns whether algebraic-carrier rational evaluators have been retained.
-    pub fn is_retained_rational_evaluator_cache_cached(&self) -> bool {
-        self.retained_rational_evaluators.get().is_some()
-    }
-
-    /// Returns whether the exact aggregate signed area has been retained.
-    pub fn is_signed_area_cached(&self) -> bool {
-        self.signed_area_cache.get().is_some()
-    }
-
     /// Populates clone-shared data used by immediate exact point classification.
     fn prepare_classification_caches(&self, policy: &CurvePolicy) -> CurveResult<()> {
         let _ = self.native_boundary_loops();
