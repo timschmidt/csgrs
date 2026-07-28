@@ -133,3 +133,17 @@ paths before and after the public API change:
 The direct point and cell entry points are explicitly inlined across the crate
 boundary. An alternating old-source/new-source run was also used after an initially
 slower sample, preventing ambient machine drift from being mistaken for an API cost.
+
+## Derived contour report summaries
+
+Dual- and gradient-contouring reports now retain their source rows and blockers
+without separately stored copies of vector lengths, filtered counts, or
+`validation_handoff_ready`. Count methods derive diagnostics from the evidence,
+and `is_validation_ready` is exactly `blockers.is_empty()`. The reports therefore
+remove those corresponding contradictory public states.
+
+Serialized 100-sample Criterion gates found no regression. The exact affine
+dual-contouring report moved from a 6.9938 us median to 7.0002 us; Criterion
+reported no change (`p = 0.87`). The gradient-contouring projection report
+moved from 5.5655 us to 5.5759 us (+0.19% by medians); Criterion kept the
+change within its noise threshold.

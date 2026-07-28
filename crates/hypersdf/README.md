@@ -60,6 +60,8 @@ states.
 - `SdfPreviewGrid`, `SdfSamplingReport`, `SdfGridSamplingReport`,
   `SdfMeshPreviewReport`, and `SdfShaderExportReport` are preview-only adapter
   reports.
+- `SdfDualContouringReport` and `SdfGradientContourReport` retain proposal rows
+  and derive their counts and validation readiness directly from that evidence.
 - `SdfProjectionProposal` and `SdfProjectionReplayReport` accept or reject external
   solver candidates by replaying exact boundary classification.
 - `SdfVoxelCellGrid`, `SdfVoxelBatch`, and the optional

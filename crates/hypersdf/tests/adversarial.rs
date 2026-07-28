@@ -384,10 +384,10 @@ proptest! {
             .expect("valid generated dual-contouring grid");
 
         prop_assert!(report.is_self_consistent());
-        prop_assert!(report.validation_handoff_ready);
-        prop_assert_eq!(report.crossing_edge_count, 4);
-        prop_assert_eq!(report.exact_edge_root_count, 4);
-        prop_assert_eq!(report.active_cell_count, 1);
+        prop_assert!(report.is_validation_ready());
+        prop_assert_eq!(report.crossing_edge_count(), 4);
+        prop_assert_eq!(report.exact_edge_root_count(), 4);
+        prop_assert_eq!(report.active_cell_count(), 1);
         prop_assert_eq!(
             report.cells[0].placement_status,
             SdfDualVertexPlacementStatus::ExactAffineQefCandidate
@@ -403,8 +403,8 @@ proptest! {
             .expect("valid generated zero-touch grid");
 
         prop_assert!(report.is_self_consistent());
-        prop_assert!(!report.validation_handoff_ready);
-        prop_assert!(report.zero_touch_edge_count > 0);
+        prop_assert!(!report.is_validation_ready());
+        prop_assert!(report.zero_touch_edge_count() > 0);
         prop_assert!(report.blockers.contains(&SdfDualContouringBlocker::DegenerateZeroTouch));
     }
 
@@ -417,9 +417,9 @@ proptest! {
             .expect("valid generated gradient-contouring grid");
 
         prop_assert!(report.is_self_consistent());
-        prop_assert!(!report.validation_handoff_ready);
-        prop_assert_eq!(report.active_cell_count, 1);
-        prop_assert_eq!(report.kept_projection_count, 1);
+        prop_assert!(!report.is_validation_ready());
+        prop_assert_eq!(report.active_cell_count(), 1);
+        prop_assert_eq!(report.kept_projection_count(), 1);
         prop_assert!(report.blockers.contains(&SdfGradientContourBlocker::LossyGradientApproximation));
         let projected = report.projections[0].projected_point.expect("kept projection");
         prop_assert_eq!(projected[0], f64::from(offset));
@@ -595,12 +595,12 @@ fn dual_contouring_affine_plane_builds_exact_qef_handoff() {
 
     assert!(report.is_self_consistent());
     assert_eq!(report.source, SdfDualContouringSource::ExactSdfReplay);
-    assert!(report.validation_handoff_ready);
+    assert!(report.is_validation_ready());
     assert!(report.blockers.is_empty());
-    assert_eq!(report.crossing_edge_count, 4);
-    assert_eq!(report.exact_edge_root_count, 4);
-    assert_eq!(report.sampled_edge_root_count, 0);
-    assert_eq!(report.active_cell_count, 1);
+    assert_eq!(report.crossing_edge_count(), 4);
+    assert_eq!(report.exact_edge_root_count(), 4);
+    assert_eq!(report.sampled_edge_root_count(), 0);
+    assert_eq!(report.active_cell_count(), 1);
     assert!(report.crossings.iter().all(|crossing| {
         crossing.root_evidence == SdfDualEdgeRootEvidence::ExactAffineEdgeRoot
             && crossing.exact_hermite_ready()
@@ -630,15 +630,15 @@ fn dual_contouring_signed_samples_stay_lossy_proposals() {
 
     assert!(report.is_self_consistent());
     assert_eq!(report.source, SdfDualContouringSource::SignedGridSamples);
-    assert!(!report.validation_handoff_ready);
+    assert!(!report.is_validation_ready());
     assert!(
         report
             .blockers
             .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples)
     );
-    assert_eq!(report.crossing_edge_count, 4);
-    assert_eq!(report.exact_edge_root_count, 0);
-    assert_eq!(report.sampled_edge_root_count, 4);
+    assert_eq!(report.crossing_edge_count(), 4);
+    assert_eq!(report.exact_edge_root_count(), 0);
+    assert_eq!(report.sampled_edge_root_count(), 4);
     assert_eq!(
         report.cells[0].placement_status,
         SdfDualVertexPlacementStatus::ProposalOnly
@@ -654,8 +654,8 @@ fn dual_contouring_zero_endpoint_reports_degenerate_topology() {
         .expect("valid zero-touch grid");
 
     assert!(report.is_self_consistent());
-    assert!(!report.validation_handoff_ready);
-    assert_eq!(report.zero_touch_edge_count, 8);
+    assert!(!report.is_validation_ready());
+    assert_eq!(report.zero_touch_edge_count(), 8);
     assert!(
         report
             .blockers
@@ -680,9 +680,9 @@ fn dual_contouring_nonlinear_edge_crossing_requires_root_replay() {
         .expect("valid nonlinear grid");
 
     assert!(report.is_self_consistent());
-    assert!(!report.validation_handoff_ready);
-    assert_eq!(report.crossing_edge_count, 4);
-    assert_eq!(report.exact_edge_root_count, 0);
+    assert!(!report.is_validation_ready());
+    assert_eq!(report.crossing_edge_count(), 4);
+    assert_eq!(report.exact_edge_root_count(), 0);
     assert!(
         report
             .blockers
@@ -715,7 +715,7 @@ fn dual_contouring_malformed_signed_grid_does_not_panic_or_claim_handoff() {
     let report =
         SdfDualContouringReport::from_signed_grid_samples(SdfGridSamplingReport { grid, samples });
 
-    assert!(!report.validation_handoff_ready);
+    assert!(!report.is_validation_ready());
     assert!(
         report
             .blockers
@@ -734,17 +734,17 @@ fn gradient_contouring_plane_reports_projected_sampled_candidates() {
 
     assert!(report.is_self_consistent());
     assert_eq!(report.source, SdfGradientContourSource::RetainedSdfGrid);
-    assert!(!report.validation_handoff_ready);
+    assert!(!report.is_validation_ready());
     assert!(
         report
             .blockers
             .contains(&SdfGradientContourBlocker::LossyGradientApproximation)
     );
-    assert_eq!(report.sample_count, 8);
-    assert_eq!(report.finite_gradient_count, 8);
-    assert_eq!(report.active_cell_count, 1);
-    assert_eq!(report.kept_projection_count, 1);
-    assert_eq!(report.rejected_projection_count, 0);
+    assert_eq!(report.sample_count(), 8);
+    assert_eq!(report.finite_gradient_count(), 8);
+    assert_eq!(report.active_cell_count(), 1);
+    assert_eq!(report.kept_projection_count(), 1);
+    assert_eq!(report.rejected_projection_count(), 0);
     assert_eq!(
         report.projections[0].filter_status,
         SdfContourProjectionFilterStatus::KeptProposal
@@ -773,13 +773,13 @@ fn gradient_contouring_connectivity_is_sampled_proposal_only() {
         .expect("valid connected gradient-contouring grid");
 
     assert!(report.is_self_consistent());
-    assert_eq!(report.active_cell_count, 2);
-    assert_eq!(report.kept_projection_count, 2);
+    assert_eq!(report.active_cell_count(), 2);
+    assert_eq!(report.kept_projection_count(), 2);
     assert_eq!(report.connectivity.len(), 1);
     assert_eq!(report.connectivity[0].axis, 1);
     assert_eq!(report.connectivity[0].face_crossing_count, 2);
     assert_eq!(report.connectivity_component_count, 1);
-    assert!(!report.validation_handoff_ready);
+    assert!(!report.is_validation_ready());
     assert!(
         report
             .blockers
@@ -796,9 +796,9 @@ fn gradient_contouring_zero_touch_is_filtered_before_projection() {
         .expect("valid zero-touch gradient-contouring grid");
 
     assert!(report.is_self_consistent());
-    assert_eq!(report.active_cell_count, 1);
-    assert_eq!(report.kept_projection_count, 0);
-    assert_eq!(report.rejected_projection_count, 1);
+    assert_eq!(report.active_cell_count(), 1);
+    assert_eq!(report.kept_projection_count(), 0);
+    assert_eq!(report.rejected_projection_count(), 1);
     assert_eq!(
         report.projections[0].filter_status,
         SdfContourProjectionFilterStatus::DegenerateZeroTouch
@@ -821,8 +821,8 @@ fn gradient_contouring_external_signed_grid_remains_lossy() {
 
     assert!(report.is_self_consistent());
     assert_eq!(report.source, SdfGradientContourSource::ExternalSignedGrid);
-    assert_eq!(report.kept_projection_count, 1);
-    assert!(!report.validation_handoff_ready);
+    assert_eq!(report.kept_projection_count(), 1);
+    assert!(!report.is_validation_ready());
     assert!(
         report
             .blockers
@@ -839,7 +839,7 @@ fn gradient_contouring_reports_nonfinite_samples_and_bad_steps() {
         .expect("valid grid with invalid SDF values");
 
     assert!(nonfinite.is_self_consistent());
-    assert_eq!(nonfinite.non_finite_sample_count, 8);
+    assert_eq!(nonfinite.non_finite_sample_count(), 8);
     assert!(
         nonfinite
             .blockers
@@ -901,7 +901,7 @@ fn gradient_contouring_reports_nonfinite_samples_and_bad_steps() {
         samples,
     });
 
-    assert!(!bad_step.validation_handoff_ready);
+    assert!(!bad_step.is_validation_ready());
     assert!(
         bad_step
             .blockers

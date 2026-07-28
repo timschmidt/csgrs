@@ -40,10 +40,10 @@ fuzz_target!(|data: &[u8]| {
         .dual_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
         .expect("positive fuzz grid");
     assert!(report.is_self_consistent());
-    assert_eq!(report.validation_handoff_ready, report.blockers.is_empty());
-    if report.validation_handoff_ready {
-        assert_eq!(report.unknown_sample_count, 0);
-        assert_eq!(report.sampled_edge_root_count, 0);
+    assert_eq!(report.is_validation_ready(), report.blockers.is_empty());
+    if report.is_validation_ready() {
+        assert_eq!(report.unknown_sample_count(), 0);
+        assert_eq!(report.sampled_edge_root_count(), 0);
         assert!(report
             .crossings
             .iter()
@@ -52,7 +52,7 @@ fuzz_target!(|data: &[u8]| {
 
     let sampled = SdfDualContouringReport::from_signed_grid_samples(report.grid_samples.clone());
     assert!(sampled.is_self_consistent());
-    assert!(!sampled.validation_handoff_ready);
+    assert!(!sampled.is_validation_ready());
     assert!(sampled
         .blockers
         .contains(&SdfDualContouringBlocker::LossyPrimitiveSamples));

@@ -243,26 +243,10 @@ pub struct SdfGradientContourReport {
     pub projections: Vec<SdfProjectedSurfacePointRecord>,
     /// Face-adjacent connectivity proposals between kept projected cells.
     pub connectivity: Vec<SdfContourConnectivityEdge>,
-    /// Number of grid sample rows.
-    pub sample_count: usize,
-    /// Number of samples with unknown sign.
-    pub unknown_sample_count: usize,
-    /// Number of samples with missing or non-finite primitive values.
-    pub non_finite_sample_count: usize,
-    /// Number of gradients with all finite components.
-    pub finite_gradient_count: usize,
-    /// Number of active cells before filtering.
-    pub active_cell_count: usize,
-    /// Number of kept projected surface proposals.
-    pub kept_projection_count: usize,
-    /// Number of active cells rejected by filters.
-    pub rejected_projection_count: usize,
     /// Number of sampled connectivity components among kept projections.
     pub connectivity_component_count: usize,
     /// Global blockers for validation handoff.
     pub blockers: Vec<SdfGradientContourBlocker>,
-    /// Whether this report can be consumed as exact validation handoff.
-    pub validation_handoff_ready: bool,
 }
 
 impl SdfGradientContourReport {
@@ -271,56 +255,77 @@ impl SdfGradientContourReport {
         build_gradient_contour_report(SdfGradientContourSource::ExternalSignedGrid, grid_samples)
     }
 
+    /// Declared grid sample count, or zero when the grid dimensions overflow.
+    pub fn sample_count(&self) -> usize {
+        self.grid_samples.grid.point_count().unwrap_or(0)
+    }
+
+    /// Number of samples with unknown sign.
+    pub fn unknown_sample_count(&self) -> usize {
+        self.samples
+            .iter()
+            .filter(|sample| sample.sign == SdfGradientContourSampleSign::Unknown)
+            .count()
+    }
+
+    /// Number of samples with missing or non-finite primitive values.
+    pub fn non_finite_sample_count(&self) -> usize {
+        self.samples
+            .iter()
+            .filter(|sample| sample.value.is_none())
+            .count()
+    }
+
+    /// Number of gradients with all finite components.
+    pub fn finite_gradient_count(&self) -> usize {
+        self.gradients
+            .iter()
+            .filter(|gradient| gradient.is_finite())
+            .count()
+    }
+
+    /// Number of active cells before filtering.
+    pub fn active_cell_count(&self) -> usize {
+        self.projections
+            .iter()
+            .filter(|projection| {
+                !matches!(
+                    projection.filter_status,
+                    SdfContourProjectionFilterStatus::InactiveCell
+                )
+            })
+            .count()
+    }
+
+    /// Number of kept projected surface proposals.
+    pub fn kept_projection_count(&self) -> usize {
+        self.projections
+            .iter()
+            .filter(|projection| projection.is_kept())
+            .count()
+    }
+
+    /// Number of active cells rejected by filters.
+    pub fn rejected_projection_count(&self) -> usize {
+        self.active_cell_count()
+            .saturating_sub(self.kept_projection_count())
+    }
+
+    /// Whether this report can be consumed as exact validation input.
+    pub fn is_validation_ready(&self) -> bool {
+        self.blockers.is_empty()
+    }
+
     /// Validate summary fields against retained rows.
     pub fn is_self_consistent(&self) -> bool {
         self.grid_samples.is_self_consistent()
-            && self.sample_count == self.samples.len()
-            && self.unknown_sample_count
-                == self
-                    .samples
-                    .iter()
-                    .filter(|sample| sample.sign == SdfGradientContourSampleSign::Unknown)
-                    .count()
-            && self.non_finite_sample_count
-                == self
-                    .samples
-                    .iter()
-                    .filter(|sample| sample.value.is_none())
-                    .count()
-            && self.finite_gradient_count
-                == self
-                    .gradients
-                    .iter()
-                    .filter(|gradient| gradient.is_finite())
-                    .count()
-            && self.active_cell_count
-                == self
-                    .projections
-                    .iter()
-                    .filter(|projection| {
-                        !matches!(
-                            projection.filter_status,
-                            SdfContourProjectionFilterStatus::InactiveCell
-                        )
-                    })
-                    .count()
-            && self.kept_projection_count
-                == self
-                    .projections
-                    .iter()
-                    .filter(|projection| projection.is_kept())
-                    .count()
-            && self.rejected_projection_count
-                == self
-                    .active_cell_count
-                    .saturating_sub(self.kept_projection_count)
+            && self.sample_count() == self.samples.len()
             && self.connectivity.iter().all(|edge| {
                 edge.lower_projection_index < self.projections.len()
                     && edge.upper_projection_index < self.projections.len()
                     && self.projections[edge.lower_projection_index].is_kept()
                     && self.projections[edge.upper_projection_index].is_kept()
             })
-            && self.validation_handoff_ready == self.blockers.is_empty()
     }
 }
 
@@ -416,27 +421,8 @@ fn build_gradient_contour_report(
         );
     }
 
-    let active_cell_count = projections
-        .iter()
-        .filter(|projection| {
-            !matches!(
-                projection.filter_status,
-                SdfContourProjectionFilterStatus::InactiveCell
-            )
-        })
-        .count();
-    let kept_projection_count = projections
-        .iter()
-        .filter(|projection| projection.is_kept())
-        .count();
-    let finite_gradient_count = gradients
-        .iter()
-        .filter(|gradient| gradient.is_finite())
-        .count();
-    let rejected_projection_count = active_cell_count.saturating_sub(kept_projection_count);
     let connectivity_component_count =
         connectivity_components(projections.len(), &connectivity, &projections);
-    let validation_handoff_ready = blockers.is_empty();
 
     SdfGradientContourReport {
         source,
@@ -446,16 +432,8 @@ fn build_gradient_contour_report(
         gradients,
         projections,
         connectivity,
-        sample_count: expected_count.unwrap_or(0),
-        unknown_sample_count,
-        non_finite_sample_count,
-        finite_gradient_count,
-        active_cell_count,
-        kept_projection_count,
-        rejected_projection_count,
         connectivity_component_count,
         blockers,
-        validation_handoff_ready,
     }
 }
 

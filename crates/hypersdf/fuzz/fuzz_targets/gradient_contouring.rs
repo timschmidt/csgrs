@@ -38,15 +38,15 @@ fuzz_target!(|data: &[u8]| {
         .gradient_contouring_report_from_grid(grid, SdfSamplingPrecision::F64)
         .expect("positive fuzz grid");
     assert!(report.is_self_consistent());
-    assert!(!report.validation_handoff_ready);
+    assert!(!report.is_validation_ready());
     assert!(report
         .blockers
         .contains(&SdfGradientContourBlocker::LossyGradientApproximation));
-    assert!(report.kept_projection_count <= report.active_cell_count);
+    assert!(report.kept_projection_count() <= report.active_cell_count());
     assert_eq!(
-        report.rejected_projection_count,
-        report.active_cell_count
-            .saturating_sub(report.kept_projection_count)
+        report.rejected_projection_count(),
+        report.active_cell_count()
+            .saturating_sub(report.kept_projection_count())
     );
     for projection in &report.projections {
         if projection.is_kept() {
@@ -60,7 +60,7 @@ fuzz_target!(|data: &[u8]| {
 
     let sampled = SdfGradientContourReport::from_signed_grid_samples(report.grid_samples.clone());
     assert!(sampled.is_self_consistent());
-    assert!(!sampled.validation_handoff_ready);
+    assert!(!sampled.is_validation_ready());
     assert!(sampled
         .blockers
         .contains(&SdfGradientContourBlocker::LossyGradientApproximation));

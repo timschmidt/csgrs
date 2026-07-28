@@ -312,26 +312,8 @@ pub struct SdfDualContouringReport {
     pub crossings: Vec<SdfDualEdgeCrossingRecord>,
     /// Per-cell topology and QEF reports.
     pub cells: Vec<SdfDualCellReport>,
-    /// Declared sample count after grid validation.
-    pub sample_count: usize,
-    /// Number of unknown sample signs.
-    pub unknown_sample_count: usize,
-    /// Number of primitive sample rows without finite values.
-    pub non_finite_sample_count: usize,
-    /// Number of active grid edges.
-    pub crossing_edge_count: usize,
-    /// Number of cells with active crossings.
-    pub active_cell_count: usize,
-    /// Number of active edges with unique exact roots.
-    pub exact_edge_root_count: usize,
-    /// Number of active edges backed only by primitive signed samples.
-    pub sampled_edge_root_count: usize,
-    /// Number of active edges touching a zero endpoint or zero edge.
-    pub zero_touch_edge_count: usize,
     /// Global blockers for validation handoff.
     pub blockers: Vec<SdfDualContouringBlocker>,
-    /// Whether a mesh owner may consume this as exact validation handoff input.
-    pub validation_handoff_ready: bool,
 }
 
 impl SdfDualContouringReport {
@@ -346,57 +328,81 @@ impl SdfDualContouringReport {
         build_dual_contouring_report(None, grid_samples)
     }
 
+    /// Declared grid sample count, or zero when the grid dimensions overflow.
+    pub fn sample_count(&self) -> usize {
+        self.grid_samples.grid.point_count().unwrap_or(0)
+    }
+
+    /// Number of unknown sample signs.
+    pub fn unknown_sample_count(&self) -> usize {
+        self.samples
+            .iter()
+            .filter(|sample| sample.sign == SdfGridSampleSign::Unknown)
+            .count()
+    }
+
+    /// Number of primitive sample rows without finite values.
+    pub fn non_finite_sample_count(&self) -> usize {
+        self.samples
+            .iter()
+            .filter(|sample| sample.primitive_value.is_none())
+            .count()
+    }
+
+    /// Number of active grid edges.
+    pub fn crossing_edge_count(&self) -> usize {
+        self.crossings.len()
+    }
+
+    /// Number of cells with active crossings.
+    pub fn active_cell_count(&self) -> usize {
+        self.cells
+            .iter()
+            .filter(|cell| !matches!(cell.topology_status, SdfDualCellTopologyStatus::Inactive))
+            .count()
+    }
+
+    /// Number of active edges with unique exact roots.
+    pub fn exact_edge_root_count(&self) -> usize {
+        self.crossings
+            .iter()
+            .filter(|crossing| crossing.root_evidence.has_exact_unique_root())
+            .count()
+    }
+
+    /// Number of active edges backed only by primitive signed samples.
+    pub fn sampled_edge_root_count(&self) -> usize {
+        self.crossings
+            .iter()
+            .filter(|crossing| {
+                crossing.root_evidence == SdfDualEdgeRootEvidence::SampledSignChangeOnly
+            })
+            .count()
+    }
+
+    /// Number of active edges touching a zero endpoint or zero edge.
+    pub fn zero_touch_edge_count(&self) -> usize {
+        self.crossings
+            .iter()
+            .filter(|crossing| {
+                matches!(
+                    crossing.crossing_kind,
+                    SdfDualEdgeCrossingKind::EndpointTouch
+                        | SdfDualEdgeCrossingKind::CoincidentZeroEdge
+                )
+            })
+            .count()
+    }
+
+    /// Whether a mesh owner may consume this as exact validation input.
+    pub fn is_validation_ready(&self) -> bool {
+        self.blockers.is_empty()
+    }
+
     /// Validate summary fields against retained rows.
     pub fn is_self_consistent(&self) -> bool {
         self.grid_samples.is_self_consistent()
-            && self.sample_count == self.samples.len()
-            && self.unknown_sample_count
-                == self
-                    .samples
-                    .iter()
-                    .filter(|sample| sample.sign == SdfGridSampleSign::Unknown)
-                    .count()
-            && self.non_finite_sample_count
-                == self
-                    .samples
-                    .iter()
-                    .filter(|sample| sample.primitive_value.is_none())
-                    .count()
-            && self.crossing_edge_count == self.crossings.len()
-            && self.exact_edge_root_count
-                == self
-                    .crossings
-                    .iter()
-                    .filter(|crossing| crossing.root_evidence.has_exact_unique_root())
-                    .count()
-            && self.sampled_edge_root_count
-                == self
-                    .crossings
-                    .iter()
-                    .filter(|crossing| {
-                        crossing.root_evidence == SdfDualEdgeRootEvidence::SampledSignChangeOnly
-                    })
-                    .count()
-            && self.zero_touch_edge_count
-                == self
-                    .crossings
-                    .iter()
-                    .filter(|crossing| {
-                        matches!(
-                            crossing.crossing_kind,
-                            SdfDualEdgeCrossingKind::EndpointTouch
-                                | SdfDualEdgeCrossingKind::CoincidentZeroEdge
-                        )
-                    })
-                    .count()
-            && self.active_cell_count
-                == self
-                    .cells
-                    .iter()
-                    .filter(|cell| {
-                        !matches!(cell.topology_status, SdfDualCellTopologyStatus::Inactive)
-                    })
-                    .count()
+            && self.sample_count() == self.samples.len()
             && self.cells.iter().all(|cell| {
                 cell.crossing_edge_indices
                     .iter()
@@ -406,7 +412,6 @@ impl SdfDualContouringReport {
                         .iter()
                         .all(|term| term.crossing_edge_index < self.crossings.len())
             })
-            && self.validation_handoff_ready == self.blockers.is_empty()
     }
 }
 
@@ -511,46 +516,14 @@ fn build_dual_contouring_report(
         }
     }
 
-    let exact_edge_root_count = crossings
-        .iter()
-        .filter(|crossing| crossing.root_evidence.has_exact_unique_root())
-        .count();
-    let sampled_edge_root_count = crossings
-        .iter()
-        .filter(|crossing| crossing.root_evidence == SdfDualEdgeRootEvidence::SampledSignChangeOnly)
-        .count();
-    let zero_touch_edge_count = crossings
-        .iter()
-        .filter(|crossing| {
-            matches!(
-                crossing.crossing_kind,
-                SdfDualEdgeCrossingKind::EndpointTouch
-                    | SdfDualEdgeCrossingKind::CoincidentZeroEdge
-            )
-        })
-        .count();
-    let active_cell_count = cells
-        .iter()
-        .filter(|cell| !matches!(cell.topology_status, SdfDualCellTopologyStatus::Inactive))
-        .count();
-    let validation_handoff_ready = blockers.is_empty();
     SdfDualContouringReport {
         source,
         metric_status,
         grid_samples,
         samples,
-        crossing_edge_count: crossings.len(),
         crossings,
-        active_cell_count,
         cells,
-        sample_count: expected_count.unwrap_or(0),
-        unknown_sample_count,
-        non_finite_sample_count,
-        exact_edge_root_count,
-        sampled_edge_root_count,
-        zero_touch_edge_count,
         blockers,
-        validation_handoff_ready,
     }
 }
 
