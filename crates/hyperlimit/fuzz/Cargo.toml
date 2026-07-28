@@ -25,3 +25,9 @@ name = "predicate_invariants"
 path = "fuzz_targets/predicate_invariants.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
