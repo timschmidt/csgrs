@@ -16,16 +16,10 @@ exact = ["dep:hyperreal", "dep:hyperlattice", "dep:hyperlimit", "dep:hypertri", 
 dispatch-trace = ["exact", "hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal", optional = true }
-hyperlattice = { path = "../hyperlattice", optional = true }
-hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
-hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
-# hyperreal = { version = "0.13.0" }
-# hyperlattice = { version = "0.6.0" }
-# hyperlimit = { version = "0.4.0", default-features = false, features = ["std"] }
-# hypertri = { version = "0.4.0", default-features = false, features = ["earcut"] }
+hyperreal = { version = "0.13.1", path = "../hyperreal", optional = true }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice", optional = true }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 
 bytemuck = "1.23"
 glow = "0.16"
