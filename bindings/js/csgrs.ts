@@ -84,6 +84,11 @@ export class Mesh<F extends Family> {
     this.handle = handle;
   }
 
+  /** @internal Wrap a handle returned by another typed binding operation. */
+  static fromNativeHandle<F extends Family>(family: F, handle: unknown): Mesh<F> {
+    return new Mesh(family, handle);
+  }
+
   static cube<F extends Family>(family: F, width: Scalar<F>): Mesh<F> {
     return new Mesh(family, call(`csgrs_mesh_${family}_cube`, width));
   }
@@ -270,18 +275,21 @@ export class Profile<F extends Family> {
   }
 
   extrude(height: Scalar<F>): Mesh<F> {
-    return new Mesh(this.family, call(`csgrs_profile_${this.family}_extrude`, this.handle, height));
+    return Mesh.fromNativeHandle(
+      this.family,
+      call(`csgrs_profile_${this.family}_extrude`, this.handle, height),
+    );
   }
 
   extrudeVector(direction: Vec3<Scalar<F>>): Mesh<F> {
-    return new Mesh(
+    return Mesh.fromNativeHandle(
       this.family,
       call(`csgrs_profile_${this.family}_extrude_vector`, this.handle, direction),
     );
   }
 
   revolve(angleDegrees: Scalar<F>, segments: number): Mesh<F> {
-    return new Mesh(
+    return Mesh.fromNativeHandle(
       this.family,
       call(`csgrs_profile_${this.family}_revolve`, this.handle, angleDegrees, segments),
     );
