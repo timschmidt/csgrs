@@ -7,7 +7,7 @@
 /// preserving the caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedAffineDet2Filter {
+pub struct AffineDet2Filter {
     a: [f64; 2],
     direction: [f64; 2],
 }
@@ -19,7 +19,7 @@ pub struct PreparedAffineDet2Filter {
 /// separation exit without reloading the same scalar views.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedAffineDet2PairFilter {
+pub struct AffineDet2PairFilter {
     first: [[f64; 2]; 2],
     second: [[f64; 2]; 2],
 }
@@ -32,11 +32,27 @@ pub struct PreparedAffineDet2PairFilter {
 /// Values that do not fit return `None` for the arbitrary-precision fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedAffineDet2ExactWordFilter {
+pub struct AffineDet2ExactWordFilter {
     line: [i128; 3],
 }
 
-impl PreparedAffineDet2ExactWordFilter {
+impl AffineDet2ExactWordFilter {
+    /// Construct a checked word-sized line filter from exact-rational points.
+    ///
+    /// Each point may use unrelated coordinate denominators. Values that do
+    /// not fit the homogeneous `i128` representation return `None`.
+    #[inline]
+    pub fn from_reals(a: [&Real; 2], b: [&Real; 2]) -> Option<Self> {
+        let [ax, ay, aw] = Real::exact_rational_homogeneous_point2_i128(a)?;
+        let [bx, by, bw] = Real::exact_rational_homogeneous_point2_i128(b)?;
+        let x_coefficient = ay.checked_mul(bw)?.checked_sub(aw.checked_mul(by)?)?;
+        let y_coefficient = aw.checked_mul(bx)?.checked_sub(ax.checked_mul(bw)?)?;
+        let w_coefficient = ax.checked_mul(by)?.checked_sub(ay.checked_mul(bx)?)?;
+        Some(Self {
+            line: [x_coefficient, y_coefficient, w_coefficient],
+        })
+    }
+
     /// Try to decide the exact determinant sign for query point `c`.
     #[inline]
     pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
@@ -53,7 +69,26 @@ impl PreparedAffineDet2ExactWordFilter {
     }
 }
 
-impl PreparedAffineDet2Filter {
+impl AffineDet2Filter {
+    /// Construct a reusable determinant filter from exact-dyadic real points.
+    #[inline]
+    pub fn from_reals(a: [&Real; 2], b: [&Real; 2]) -> Option<Self> {
+        let [ax, ay, bx, by] = Real::exact_dyadic_f64([a[0], a[1], b[0], b[1]])?;
+        Self::from_f64([ax, ay], [bx, by])
+    }
+
+    /// Construct a determinant filter directly from exact binary64 points.
+    #[inline]
+    pub fn from_f64(a: [f64; 2], b: [f64; 2]) -> Option<Self> {
+        let direction = [b[0] - a[0], b[1] - a[1]];
+        if !Real::normal_or_zero_f64(direction[0])
+            || !Real::normal_or_zero_f64(direction[1])
+        {
+            return None;
+        }
+        Some(Self { a, direction })
+    }
+
     /// Try to certify the determinant sign for query point `c`.
     #[inline]
     pub fn sign(&self, c: [&Real; 2]) -> Option<RealSign> {
@@ -86,7 +121,37 @@ impl PreparedAffineDet2Filter {
     }
 }
 
-impl PreparedAffineDet2PairFilter {
+impl AffineDet2PairFilter {
+    /// Construct both determinant directions from exact-dyadic real points.
+    #[inline]
+    pub fn from_reals(
+        first_start: [&Real; 2],
+        first_end: [&Real; 2],
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<Self> {
+        let [fax, fay, fbx, fby, sax, say, sbx, sby] = Real::exact_dyadic_f64([
+            first_start[0],
+            first_start[1],
+            first_end[0],
+            first_end[1],
+            second_start[0],
+            second_start[1],
+            second_end[0],
+            second_end[1],
+        ])?;
+        Some(Self {
+            first: [[fax, fay], [fbx, fby]],
+            second: [[sax, say], [sbx, sby]],
+        })
+    }
+
+    /// Construct both determinant directions from exact binary64 points.
+    #[inline]
+    pub const fn from_f64(first: [[f64; 2]; 2], second: [[f64; 2]; 2]) -> Self {
+        Self { first, second }
+    }
+
     /// Orient both endpoints of the second pair against the first pair.
     #[inline]
     pub fn first_signs(&self) -> (Option<RealSign>, Option<RealSign>) {
@@ -398,26 +463,19 @@ impl Real {
         })
     }
 
-    /// Prepare an exact word-sized affine 2D determinant filter.
+    /// Try to decide an affine 2D determinant sign with checked word arithmetic.
     ///
-    /// This compiles the fixed points into the homogeneous line through them.
-    /// Rational coordinates may have unrelated denominators: each point is
-    /// converted independently to one common scale without GCD reduction.
-    /// Checked overflow preserves the existing arbitrary-precision fallback.
+    /// Each exact-rational point may use unrelated coordinate denominators.
+    /// Values that do not fit the homogeneous `i128` representation return
+    /// `None` for the arbitrary-precision fallback.
     #[inline]
     #[doc(hidden)]
-    pub fn prepare_affine_det2_exact_word_filter(
+    pub fn exact_rational_affine_det2_word_sign(
         a: [&Real; 2],
         b: [&Real; 2],
-    ) -> Option<PreparedAffineDet2ExactWordFilter> {
-        let [ax, ay, aw] = Self::exact_rational_homogeneous_point2_i128(a)?;
-        let [bx, by, bw] = Self::exact_rational_homogeneous_point2_i128(b)?;
-        let x_coefficient = ay.checked_mul(bw)?.checked_sub(aw.checked_mul(by)?)?;
-        let y_coefficient = aw.checked_mul(bx)?.checked_sub(ax.checked_mul(bw)?)?;
-        let w_coefficient = ax.checked_mul(by)?.checked_sub(ay.checked_mul(bx)?)?;
-        Some(PreparedAffineDet2ExactWordFilter {
-            line: [x_coefficient, y_coefficient, w_coefficient],
-        })
+        c: [&Real; 2],
+    ) -> Option<RealSign> {
+        AffineDet2ExactWordFilter::from_reals(a, b)?.sign(c)
     }
 
     /// Prepare an exact word-sized affine 3D determinant filter.
@@ -607,89 +665,6 @@ impl Real {
             to: to_values,
             to_errors,
         })
-    }
-
-    /// Prepare a certified affine 2D determinant filter for fixed points `a`
-    /// and `b`.
-    ///
-    /// This is the reusable counterpart of [`Self::certified_affine_det2_sign`].
-    /// It caches only exact dyadic primitive views; it never caches or returns
-    /// an approximate topology decision.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_affine_det2_filter(
-        a: [&Real; 2],
-        b: [&Real; 2],
-    ) -> Option<PreparedAffineDet2Filter> {
-        let [ax, ay, bx, by] = Self::exact_dyadic_f64([a[0], a[1], b[0], b[1]])?;
-        Self::prepare_affine_det2_filter_from_exact_dyadic_f64([ax, ay], [bx, by])
-    }
-
-    /// Prepare an affine determinant filter from retained exact-dyadic
-    /// binary64 endpoints.
-    ///
-    /// The line direction and its range certificate are computed once so
-    /// repeated query points do not reload that fixed work.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_affine_det2_filter_from_exact_dyadic_f64(
-        a: [f64; 2],
-        b: [f64; 2],
-    ) -> Option<PreparedAffineDet2Filter> {
-        let direction = [b[0] - a[0], b[1] - a[1]];
-        if !Self::normal_or_zero_f64(direction[0])
-            || !Self::normal_or_zero_f64(direction[1])
-        {
-            return None;
-        }
-        Some(PreparedAffineDet2Filter { a, direction })
-    }
-
-    /// Prepare both affine determinant directions for a segment pair.
-    ///
-    /// Construction succeeds only when all four endpoints have lossless
-    /// dyadic `f64` views. Each returned sign remains independently certified;
-    /// an inconclusive determinant is `None` for the caller's exact fallback.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_affine_det2_pair_filter(
-        first_start: [&Real; 2],
-        first_end: [&Real; 2],
-        second_start: [&Real; 2],
-        second_end: [&Real; 2],
-    ) -> Option<PreparedAffineDet2PairFilter> {
-        let [fax, fay, fbx, fby, sax, say, sbx, sby] = Self::exact_dyadic_f64([
-            first_start[0],
-            first_start[1],
-            first_end[0],
-            first_end[1],
-            second_start[0],
-            second_start[1],
-            second_end[0],
-            second_end[1],
-        ])?;
-        Some(PreparedAffineDet2PairFilter {
-            first: [[fax, fay], [fbx, fby]],
-            second: [[sax, say], [sbx, sby]],
-        })
-    }
-
-    /// Prepare both affine determinant directions from retained finite
-    /// binary64 coordinates.
-    ///
-    /// Every finite binary64 value is an exact dyadic rational. Geometry
-    /// caches that have already established a lossless correspondence between
-    /// their exact coordinates and these values can therefore reuse the same
-    /// certified roundoff-bound filter without reloading the scalar caches.
-    /// Non-finite arithmetic remains inconclusive when the returned filter is
-    /// queried, preserving the exact fallback.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
-        first: [[f64; 2]; 2],
-        second: [[f64; 2]; 2],
-    ) -> PreparedAffineDet2PairFilter {
-        PreparedAffineDet2PairFilter { first, second }
     }
 
     #[inline]

@@ -933,11 +933,11 @@ mod tests {
     }
 
     #[test]
-    fn prepared_affine_det2_filter_matches_one_shot_filter() {
+    fn affine_det2_filter_matches_one_shot_filter() {
         let a = [Real::try_from(-1.0_f64).unwrap(), Real::try_from(-1.0_f64).unwrap()];
         let b = [Real::try_from(1.0_f64).unwrap(), Real::try_from(1.0_f64).unwrap()];
-        let prepared = Real::prepare_affine_det2_filter([&a[0], &a[1]], [&b[0], &b[1]])
-            .expect("dyadic fixed points should prepare");
+        let filter = AffineDet2Filter::from_reals([&a[0], &a[1]], [&b[0], &b[1]])
+            .expect("dyadic fixed points should fit");
 
         for c in [
             [Real::try_from(0.25_f64).unwrap(), Real::try_from(0.5_f64).unwrap()],
@@ -945,7 +945,7 @@ mod tests {
             [Real::try_from(0.5_f64).unwrap(), Real::try_from(0.25_f64).unwrap()],
         ] {
             assert_eq!(
-                prepared.sign([&c[0], &c[1]]),
+                filter.sign([&c[0], &c[1]]),
                 Real::certified_affine_det2_sign(
                     [&a[0], &a[1]],
                     [&b[0], &b[1]],
@@ -954,17 +954,17 @@ mod tests {
             );
         }
 
-        let retained = Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
+        let retained = AffineDet2Filter::from_f64(
             [-1.0, -1.0],
             [1.0, 1.0],
         )
-        .expect("normal exact-dyadic direction should prepare");
+        .expect("normal exact-dyadic direction should fit");
         assert_eq!(
             retained.signs_exact_dyadic_f64([[0.25, 0.5], [0.5, 0.25]]),
             (Some(RealSign::Positive), Some(RealSign::Negative)),
         );
         assert!(
-            Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
+            AffineDet2Filter::from_f64(
                 [-f64::MAX, 0.0],
                 [f64::MAX, 0.0],
             )
@@ -973,7 +973,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_affine_det2_pair_filter_matches_one_shot_directions() {
+    fn affine_det2_pair_filter_matches_one_shot_directions() {
         fn point(value: &[Real; 2]) -> [&Real; 2] {
             [&value[0], &value[1]]
         }
@@ -992,15 +992,15 @@ mod tests {
                 [Real::try_from(3.0_f64).unwrap(), Real::try_from(6.0_f64).unwrap()],
             ],
         ] {
-            let prepared = Real::prepare_affine_det2_pair_filter(
+            let filter = AffineDet2PairFilter::from_reals(
                 point(&first[0]),
                 point(&first[1]),
                 point(&second[0]),
                 point(&second[1]),
             )
-            .expect("dyadic segment endpoints should prepare");
+            .expect("dyadic segment endpoints should fit");
             assert_eq!(
-                prepared.first_signs(),
+                filter.first_signs(),
                 (
                     Real::certified_affine_det2_sign(
                         point(&first[0]),
@@ -1015,7 +1015,7 @@ mod tests {
                 ),
             );
             assert_eq!(
-                prepared.second_signs(),
+                filter.second_signs(),
                 (
                     Real::certified_affine_det2_sign(
                         point(&second[0]),
@@ -1033,7 +1033,7 @@ mod tests {
 
         let third = Real::new(Rational::fraction(1, 3).unwrap());
         assert!(
-            Real::prepare_affine_det2_pair_filter(
+            AffineDet2PairFilter::from_reals(
                 [&third, &first[0][1]],
                 [&first[1][0], &first[1][1]],
                 [&first[0][0], &first[0][1]],
@@ -1042,7 +1042,7 @@ mod tests {
             .is_none()
         );
 
-        let retained = Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+        let retained = AffineDet2PairFilter::from_f64(
             [[-2.0, -1.0], [3.0, 2.0]],
             [[-1.0, 2.0], [2.0, -2.0]],
         );
@@ -1051,7 +1051,7 @@ mod tests {
             (Some(RealSign::Positive), Some(RealSign::Negative))
         );
         assert_eq!(
-            Real::prepare_affine_det2_pair_filter_from_exact_dyadic_f64(
+            AffineDet2PairFilter::from_f64(
                 [[0.0, 0.0], [1.0, 1.0]],
                 [[f64::INFINITY, 0.0], [0.0, 1.0]],
             )
@@ -1061,7 +1061,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_affine_det2_exact_word_filter_handles_unrelated_denominators() {
+    fn affine_det2_exact_word_filter_handles_unrelated_denominators() {
         let a = [
             Real::new(Rational::fraction(1, 3).unwrap()),
             Real::new(Rational::fraction(2, 5).unwrap()),
@@ -1070,7 +1070,7 @@ mod tests {
             Real::new(Rational::fraction(7, 11).unwrap()),
             Real::new(Rational::fraction(-3, 7).unwrap()),
         ];
-        let prepared = Real::prepare_affine_det2_exact_word_filter(
+        let filter = AffineDet2ExactWordFilter::from_reals(
             [&a[0], &a[1]],
             [&b[0], &b[1]],
         )
@@ -1088,7 +1088,7 @@ mod tests {
         ] {
             let c_refs = [&c[0], &c[1]];
             assert_eq!(
-                prepared.sign(c_refs),
+                filter.sign(c_refs),
                 Some(exact_affine_det2_sign(
                     [&a[0], &a[1]],
                     [&b[0], &b[1]],
@@ -1097,11 +1097,11 @@ mod tests {
             );
         }
 
-        assert_eq!(prepared.sign([&Real::pi(), &Real::zero()]), None);
+        assert_eq!(filter.sign([&Real::pi(), &Real::zero()]), None);
     }
 
     #[test]
-    fn prepared_affine_det2_exact_word_filter_matches_randomized_rationals() {
+    fn affine_det2_exact_word_filter_matches_randomized_rationals() {
         let mut state = 0x3c6e_f372_fe94_f82b_u64;
         for _ in 0..20_000 {
             let mut values = Vec::with_capacity(6);
@@ -1118,10 +1118,10 @@ mod tests {
             let a = [&values[0], &values[1]];
             let b = [&values[2], &values[3]];
             let c = [&values[4], &values[5]];
-            let prepared = Real::prepare_affine_det2_exact_word_filter(a, b)
+            let filter = AffineDet2ExactWordFilter::from_reals(a, b)
                 .expect("small randomized rationals should fit the word filter");
             assert_eq!(
-                prepared.sign(c),
+                filter.sign(c),
                 Some(exact_affine_det2_sign(a, b, c)),
                 "values={values:?}",
             );

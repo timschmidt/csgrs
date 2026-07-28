@@ -38,7 +38,7 @@ pub use crate::computable::Computable;
 
 mod real;
 pub use crate::real::{
-    PreparedAffineDet2ExactWordFilter, PreparedAffineDet2Filter, PreparedAffineDet2PairFilter,
+    AffineDet2ExactWordFilter, AffineDet2Filter, AffineDet2PairFilter,
     PreparedAffineDet3ExactWordFilter, PreparedAffineDet3Filter, PreparedIncircle2dFilter,
     PreparedInsphere3dFilter, PreparedLinearForm3Filter, PreparedRationalLine2Filter,
     PreparedRationalLinearForm4Filter, PreparedRationalLinearForm4Query,

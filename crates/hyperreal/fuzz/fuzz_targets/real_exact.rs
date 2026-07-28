@@ -170,8 +170,8 @@ fuzz_target!(|input: Input| {
 
     let determinant =
         Real::certified_affine_det2_sign([a, b], [c, &values[3]], [&values[4], &values[5]]);
-    if let Some(prepared) = Real::prepare_affine_det2_filter([a, b], [c, &values[3]]) {
-        assert_eq!(prepared.sign([&values[4], &values[5]]), determinant);
+    if let Some(filter) = hyperreal::AffineDet2Filter::from_reals([a, b], [c, &values[3]]) {
+        assert_eq!(filter.sign([&values[4], &values[5]]), determinant);
     }
 
     let points = [

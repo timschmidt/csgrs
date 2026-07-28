@@ -1179,7 +1179,7 @@ GMP/MPFR oracle remains absent from the release dependency graph.
 
 ### Retained exact-dyadic affine determinant inputs
 
-Geometry caches that have already proved a lossless binary64 view can now prepare
+Geometry caches that have already proved a lossless binary64 view can now construct
 the paired affine determinant filter directly from those retained coordinates.
 The filter applies the same conservative roundoff bound, and non-finite or
 inconclusive arithmetic still returns no sign for the caller's exact word or
@@ -1292,8 +1292,8 @@ absolute underflow error is already covered.
 
 The reusable two-dimensional filter now also retains its checked line direction
 instead of recomputing it for every query, and accepts two retained exact-dyadic
-binary64 points in one call. Downstream Hypercurve prepares the fixed source
-line once per broad-phase suffix and lazily prepares the other direction only
+binary64 points in one call. Downstream Hypercurve retains the fixed source
+line filter once per broad-phase suffix and constructs the other direction only
 after the first same-side rejection fails. No approximate result is cached:
 every returned sign remains independently bounded, and inconclusive directions
 or points still enter the exact word and arbitrary-precision fallbacks.
