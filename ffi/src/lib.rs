@@ -1,6 +1,22 @@
 #![allow(unsafe_code)]
 #![allow(private_bounds, private_interfaces)]
+#![allow(
+    clippy::missing_safety_doc,
+    reason = "the generated C ABI shares one crate-level pointer and ownership contract"
+)]
 #![deny(unused)]
+
+//! C ABI for the scalar-adapted CSGRS surface.
+//!
+//! # Safety
+//!
+//! Every exported function follows the contract in `include/csgrs.h` and the
+//! crate README: input pointers must be null or valid for the documented read,
+//! output pointers must be valid for one write, opaque handles must come from
+//! this library with the matching scalar family, and owned values must be
+//! released exactly once by their matching `*_free` function. Callers must not
+//! use borrowed thread-local error strings after the next ABI call on the same
+//! thread.
 
 use csgrs_adapter::{
     Aabb3, AdapterError, F32, F64, I128, Mesh, Profile, RawReal, Real, ScalarAdapter,
@@ -1510,7 +1526,7 @@ macro_rules! export_family {
                     .copied()
                     .map(<$family as Family>::vec2_to_adapter)
                     .collect::<FfiResult<Vec<_>>>()?;
-                let profile = ProfileOf::<$family>::polygon(&points )?;
+                let profile = ProfileOf::<$family>::polygon(&points)?;
                 unsafe { out_handle(out, profile_handle::<$family>(profile)) }
             })
         }
@@ -1660,7 +1676,8 @@ macro_rules! export_family {
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let mesh = profile.extrude(<$family as Family>::scalar_to_adapter(height)?, ())?;
+                let mesh =
+                    profile.extrude(<$family as Family>::scalar_to_adapter(height)?, ())?;
                 unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
             })
         }

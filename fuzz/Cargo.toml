@@ -8,18 +8,11 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-csgrs = { path = "..", features = ["offset", "svg-io"] }
-hypercurve = { path = "../../hypercurve" }
-hyperlimit = { path = "../../hyperlimit" }
-hyperlattice = { path = "../../hyperlattice" }
-hypersdf = { path = "../../hypersdf" }
-# csgrs = { version = "0.23.0", features = ["offset"] }
-# hypercurve = "0.3.0"
-# hyperlimit = "0.4.0"
-# hyperlattice = "0.6.0"
-# hypersdf = "0.2.0"
+csgrs = { version = "0.23.0", path = "..", features = ["offset", "svg-io"] }
+hypercurve = { version = "0.3.0", path = "../../hypercurve" }
+hyperlimit = { version = "0.4.0", path = "../../hyperlimit" }
+hyperlattice = { version = "0.6.0", path = "../../hyperlattice" }
+hypersdf = { version = "0.2.0", path = "../../hypersdf" }
 libfuzzer-sys = "0.4"
 hashbrown = "0.15"
 

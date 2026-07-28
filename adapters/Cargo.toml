@@ -9,9 +9,9 @@ repository = "https://github.com/timschmidt/csgrs"
 readme = "README.md"
 
 [dependencies]
-csgrs = { path = "..", default-features = false }
-hyperlattice = { path = "../../hyperlattice" }
-hyperreal = { path = "../../hyperreal", default-features = false }
+csgrs = { version = "0.23.0", path = "..", default-features = false }
+hyperlattice = { version = "0.6.0", path = "../../hyperlattice" }
+hyperreal = { version = "0.13.1", path = "../../hyperreal", default-features = false }
 
 [features]
 default = ["mesh", "sketch"]

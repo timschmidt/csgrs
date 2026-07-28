@@ -22,3 +22,46 @@ Every binding preserves the same scalar families:
 The outward API is intentionally generated-shaped. Add or rename operations in
 the Rust adapter facade first, mirror them in `csgrs-ffi`, then update the thin
 language wrappers. Do not put geometry logic in language bindings.
+
+## Build order
+
+Build the ABI once before running native wrappers:
+
+```sh
+cargo build --release --manifest-path ../ffi/Cargo.toml
+```
+
+Then validate the wrapper you ship:
+
+- C++: include `cpp/csgrs.hpp`, point the compiler at
+  `../ffi/include`, link `csgrs_ffi`, and compile a program that constructs and
+  frees at least one object;
+- Python: set `CSGRS_LIBRARY` or pass the built library path to `load()`, then
+  run a small construction/operation/free cycle;
+- Go: make the header and library visible to cgo, add the package to a Go
+  module, and run `go test`;
+- JavaScript/TypeScript: provide a native loader implementing the C ABI names
+  consumed by `js/csgrs.ts`, then run `tsc --noEmit` and a loader integration
+  test.
+
+Repository-level syntax checks that need no live native loader are:
+
+```sh
+python3 -m py_compile bindings/python/csgrs.py
+c++ -std=c++17 -fsyntax-only -x c++ bindings/cpp/csgrs.hpp
+tsc --noEmit --target ES2020 --strict bindings/js/csgrs.ts
+```
+
+The C header is the ABI authority. Language wrappers own lifetime convenience,
+exceptions/results, and idiomatic naming only. Scalar conversion, Boolean
+behavior, metadata rules, and topology stay in the Rust layers.
+
+## Compatibility
+
+Opaque handles may cross only the ABI version that created them. Callers must
+use the matching free function, must not mix scalar families, and must copy any
+borrowed last-error text before another ABI call. The wrappers are currently
+developed with the repository and do not promise independent semantic
+versioning.
+
+All binding code follows the CSGRS MIT license.
