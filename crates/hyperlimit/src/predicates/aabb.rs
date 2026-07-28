@@ -17,6 +17,7 @@ use crate::predicates::interval::{
 };
 use crate::predicates::order::compare_reals_with_policy;
 use core::cmp::Ordering;
+use hyperreal::Real;
 
 /// Classify a point relative to a closed 2D axis-aligned box.
 pub fn classify_point_aabb2(
@@ -180,6 +181,39 @@ pub(crate) fn classify_point_aabb3_with_policy(
     point: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Aabb3PointLocation> {
+    if let (Some(min), Some(max), Some(point)) = (
+        exact_rational_coordinates3([&min.x, &min.y, &min.z]),
+        exact_rational_coordinates3([&max.x, &max.y, &max.z]),
+        exact_rational_coordinates3([&point.x, &point.y, &point.z]),
+    ) {
+        crate::trace_dispatch!("hyperlimit", "classify_point_aabb3", "exact-rational");
+        let mut boundary = false;
+        for axis in 0..3 {
+            let (lower, upper) = if min[axis] <= max[axis] {
+                (min[axis], max[axis])
+            } else {
+                (max[axis], min[axis])
+            };
+            if point[axis] < lower || point[axis] > upper {
+                return PredicateOutcome::decided(
+                    Aabb3PointLocation::Outside,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
+            }
+            boundary |= point[axis] == lower || point[axis] == upper;
+        }
+        return PredicateOutcome::decided(
+            if boundary {
+                Aabb3PointLocation::Boundary
+            } else {
+                Aabb3PointLocation::Inside
+            },
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
     let mut trace = DecisionTrace::default();
 
     let x = match decided(
@@ -239,6 +273,99 @@ pub(crate) fn classify_point_aabb3_with_policy(
 /// Return whether a point lies in a closed 3D axis-aligned box.
 pub fn point_in_aabb3(min: &Point3, max: &Point3, point: &Point3) -> PredicateOutcome<bool> {
     point_in_aabb3_with_policy(min, max, point, PredicatePolicy)
+}
+
+/// Return whether a point lies in the relative interior of an ordered 3D box.
+///
+/// `min` and `max` must be ordered on every axis. Positive-width axes use open
+/// interval membership, while zero-width axes require exact equality. This is
+/// the relative-interior predicate used by lower-dimensional subdivision
+/// cells embedded in 3D.
+#[inline]
+pub fn point_in_ordered_aabb3_relative_interior(
+    min: &Point3,
+    max: &Point3,
+    point: &Point3,
+) -> PredicateOutcome<bool> {
+    point_in_ordered_aabb3_relative_interior_with_policy(min, max, point, PredicatePolicy)
+}
+
+#[inline]
+fn point_in_ordered_aabb3_relative_interior_with_policy(
+    min: &Point3,
+    max: &Point3,
+    point: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    let min = [&min.x, &min.y, &min.z];
+    let max = [&max.x, &max.y, &max.z];
+    let point = [&point.x, &point.y, &point.z];
+
+    if let (Some(min), Some(max), Some(point)) = (
+        exact_rational_coordinates3(min),
+        exact_rational_coordinates3(max),
+        exact_rational_coordinates3(point),
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "point_in_ordered_aabb3_relative_interior",
+            "exact-rational"
+        );
+        let inside = (0..3).all(|axis| {
+            if min[axis] == max[axis] {
+                point[axis] == min[axis]
+            } else {
+                min[axis] < point[axis] && point[axis] < max[axis]
+            }
+        });
+        return PredicateOutcome::decided(inside, Certainty::Exact, Escalation::Exact);
+    }
+
+    let mut trace = DecisionTrace::default();
+    for axis in 0..3 {
+        let extent = match decided(
+            compare_reals_with_policy(min[axis], max[axis], policy),
+            &mut trace,
+        ) {
+            Ok(ordering) => ordering,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if extent == Ordering::Equal {
+            let on_axis = match decided(
+                compare_reals_with_policy(point[axis], min[axis], policy),
+                &mut trace,
+            ) {
+                Ok(ordering) => ordering == Ordering::Equal,
+                Err(unknown) => return unknown.into_outcome(),
+            };
+            if !on_axis {
+                return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+            }
+            continue;
+        }
+
+        let above_minimum = match decided(
+            compare_reals_with_policy(point[axis], min[axis], policy),
+            &mut trace,
+        ) {
+            Ok(ordering) => ordering == Ordering::Greater,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if !above_minimum {
+            return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+        }
+        let below_maximum = match decided(
+            compare_reals_with_policy(point[axis], max[axis], policy),
+            &mut trace,
+        ) {
+            Ok(ordering) => ordering == Ordering::Less,
+            Err(unknown) => return unknown.into_outcome(),
+        };
+        if !below_maximum {
+            return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+        }
+    }
+    PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
 /// Return whether a point lies in a closed 3D axis-aligned box with an explicit
@@ -461,6 +588,52 @@ pub(crate) fn classify_aabb3_intersection_with_policy(
     second_max: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Aabb3Intersection> {
+    if let (Some(first_min), Some(first_max), Some(second_min), Some(second_max)) = (
+        exact_rational_coordinates3([&first_min.x, &first_min.y, &first_min.z]),
+        exact_rational_coordinates3([&first_max.x, &first_max.y, &first_max.z]),
+        exact_rational_coordinates3([&second_min.x, &second_min.y, &second_min.z]),
+        exact_rational_coordinates3([&second_max.x, &second_max.y, &second_max.z]),
+    ) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "classify_aabb3_intersection",
+            "exact-rational"
+        );
+        let mut touching = false;
+        for axis in 0..3 {
+            let (first_lower, first_upper) = if first_min[axis] <= first_max[axis] {
+                (first_min[axis], first_max[axis])
+            } else {
+                (first_max[axis], first_min[axis])
+            };
+            let (second_lower, second_upper) = if second_min[axis] <= second_max[axis] {
+                (second_min[axis], second_max[axis])
+            } else {
+                (second_max[axis], second_min[axis])
+            };
+            if first_upper < second_lower || second_upper < first_lower {
+                return PredicateOutcome::decided(
+                    Aabb3Intersection::Disjoint,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
+            }
+            touching |= first_upper == second_lower
+                || second_upper == first_lower
+                || first_lower == first_upper
+                || second_lower == second_upper;
+        }
+        return PredicateOutcome::decided(
+            if touching {
+                Aabb3Intersection::Touching
+            } else {
+                Aabb3Intersection::Overlapping
+            },
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
     let mut trace = DecisionTrace::default();
 
     let x = match decided(
@@ -560,6 +733,129 @@ pub fn aabb3s_intersect(
     )
 }
 
+/// Return whether two ordered closed 3D boxes intersect inclusively.
+///
+/// Both min/max pairs must already be ordered on every axis. Skipping interval
+/// normalization makes this the canonical broad-phase predicate for retained
+/// AABB structures.
+#[inline]
+pub fn ordered_aabb3s_intersect(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+) -> PredicateOutcome<bool> {
+    ordered_aabb3s_intersect_with_policy(
+        first_min,
+        first_max,
+        second_min,
+        second_max,
+        PredicatePolicy,
+    )
+}
+
+#[inline]
+fn ordered_aabb3s_intersect_with_policy(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<bool> {
+    ordered_aabb3_pairwise_relation(
+        first_min,
+        first_max,
+        second_min,
+        second_max,
+        policy,
+        OrderedAabb3Relation::Intersects,
+    )
+}
+
+/// Return whether one ordered closed 3D box contains another inclusively.
+///
+/// Both min/max pairs must already be ordered on every axis.
+#[inline]
+pub fn ordered_aabb3_contains(
+    outer_min: &Point3,
+    outer_max: &Point3,
+    inner_min: &Point3,
+    inner_max: &Point3,
+) -> PredicateOutcome<bool> {
+    ordered_aabb3_pairwise_relation(
+        outer_min,
+        outer_max,
+        inner_min,
+        inner_max,
+        PredicatePolicy,
+        OrderedAabb3Relation::Contains,
+    )
+}
+
+#[derive(Clone, Copy)]
+enum OrderedAabb3Relation {
+    Intersects,
+    Contains,
+}
+
+#[inline]
+fn ordered_aabb3_pairwise_relation(
+    first_min: &Point3,
+    first_max: &Point3,
+    second_min: &Point3,
+    second_max: &Point3,
+    policy: PredicatePolicy,
+    relation: OrderedAabb3Relation,
+) -> PredicateOutcome<bool> {
+    let first_min = [&first_min.x, &first_min.y, &first_min.z];
+    let first_max = [&first_max.x, &first_max.y, &first_max.z];
+    let second_min = [&second_min.x, &second_min.y, &second_min.z];
+    let second_max = [&second_max.x, &second_max.y, &second_max.z];
+
+    if let (Some(first_min), Some(first_max), Some(second_min), Some(second_max)) = (
+        exact_rational_coordinates3(first_min),
+        exact_rational_coordinates3(first_max),
+        exact_rational_coordinates3(second_min),
+        exact_rational_coordinates3(second_max),
+    ) {
+        crate::trace_dispatch!("hyperlimit", "ordered_aabb3_relation", "exact-rational");
+        let value = match relation {
+            OrderedAabb3Relation::Intersects => (0..3).all(|axis| {
+                first_max[axis] >= second_min[axis] && second_max[axis] >= first_min[axis]
+            }),
+            OrderedAabb3Relation::Contains => (0..3).all(|axis| {
+                first_min[axis] <= second_min[axis] && first_max[axis] >= second_max[axis]
+            }),
+        };
+        return PredicateOutcome::decided(value, Certainty::Exact, Escalation::Exact);
+    }
+
+    let mut trace = DecisionTrace::default();
+    for axis in 0..3 {
+        let comparisons = match relation {
+            OrderedAabb3Relation::Intersects => [
+                (first_max[axis], second_min[axis], Ordering::Less),
+                (second_max[axis], first_min[axis], Ordering::Less),
+            ],
+            OrderedAabb3Relation::Contains => [
+                (first_min[axis], second_min[axis], Ordering::Greater),
+                (first_max[axis], second_max[axis], Ordering::Less),
+            ],
+        };
+        for (left, right, rejecting_ordering) in comparisons {
+            let ordering = match decided(compare_reals_with_policy(left, right, policy), &mut trace)
+            {
+                Ok(ordering) => ordering,
+                Err(unknown) => return unknown.into_outcome(),
+            };
+            if ordering == rejecting_ordering {
+                return PredicateOutcome::decided(false, trace.certainty, trace.stage);
+            }
+        }
+    }
+    PredicateOutcome::decided(true, trace.certainty, trace.stage)
+}
+
 /// Return whether two closed 3D axis-aligned boxes intersect with an explicit
 /// predicate escalation policy.
 pub(crate) fn aabb3s_intersect_with_policy(
@@ -586,6 +882,14 @@ fn is_interval_boundary(location: RealIntervalLocation) -> bool {
         location,
         RealIntervalLocation::AtLowerEndpoint | RealIntervalLocation::AtUpperEndpoint
     )
+}
+
+#[inline]
+fn exact_rational_coordinates3(coordinates: [&Real; 3]) -> Option<[&hyperreal::Rational; 3]> {
+    let [Some(x), Some(y), Some(z)] = coordinates.map(Real::exact_rational_ref) else {
+        return None;
+    };
+    Some([x, y, z])
 }
 
 fn aabb3_has_zero_extent_axis(
@@ -825,6 +1129,39 @@ mod tests {
             Some(Aabb3PointLocation::Outside)
         );
         assert_eq!(point_in_aabb3(&min, &max, &p3(4, 1, 1)).value(), Some(true));
+    }
+
+    #[test]
+    fn ordered_aabb3_predicates_cover_overlap_containment_and_relative_interior() {
+        let outer_min = p3(0, 0, 0);
+        let outer_max = p3(4, 4, 4);
+        let inner_min = p3(1, 0, 1);
+        let inner_max = p3(3, 0, 3);
+
+        assert_eq!(
+            ordered_aabb3s_intersect(&outer_min, &outer_max, &inner_min, &inner_max).value(),
+            Some(true)
+        );
+        assert_eq!(
+            ordered_aabb3_contains(&outer_min, &outer_max, &inner_min, &inner_max).value(),
+            Some(true)
+        );
+        assert_eq!(
+            ordered_aabb3s_intersect(&outer_min, &outer_max, &p3(5, 1, 1), &p3(6, 2, 2)).value(),
+            Some(false)
+        );
+        assert_eq!(
+            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(2, 0, 2)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(1, 0, 2)).value(),
+            Some(false)
+        );
+        assert_eq!(
+            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(2, 1, 2)).value(),
+            Some(false)
+        );
     }
 
     #[test]

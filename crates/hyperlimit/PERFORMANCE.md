@@ -153,6 +153,37 @@ cargo bench --bench predicates -- \
   --warm-up-time 1 --measurement-time 4 --sample-size 40
 ```
 
+### Batch exact ordered-AABB decisions
+
+Retained spatial structures already maintain ordered 3D box endpoints, but
+higher crates were rebuilding overlap, containment, and relative-interior
+tests from six to nine independent scalar predicates. Hyperlimit now owns
+`ordered_aabb3s_intersect`, `ordered_aabb3_contains`, and
+`point_in_ordered_aabb3_relative_interior`. Their first cascade stage borrows
+all coordinates and decides exact-rational boxes as one batch; unresolved
+symbolic coordinates retain the existing per-comparison predicate pipeline.
+The general, endpoint-normalizing 3D point and intersection classifiers use the
+same exact-rational stage before falling through to their prior interval
+cascade.
+
+The 40-sample general intersection row improved from 113.18 ns to 86.60 ns
+(23.56%), and point classification improved from 58.95 ns to 54.98 ns (6.48%).
+Full-axis ordered intersection, containment, and relative-interior decisions
+measured 24.50 ns, 24.12 ns, and 29.94 ns respectively.
+
+Downstream serialized gates found no Hypermesh regression: the 6,144-triangle
+polygon-soup row moved by +0.68% (`p = 0.22`) and the 192-cell Boolean row by
+-0.34% (`p = 0.69`). Hypervoxel's exact box and triangle-solid voxelization
+rows improved by 4.89% and 3.89%. Focused Hypersdf AABB point/cell rows measured
+238.72/252.83 ns, Hyperbrep face-AABB preflight measured 417.26 us, and
+Hyperphysics exact AABB contact replay measured 535 ns. A 20-sample CSGRS warm
+check remained at 1.019 us for a box and 75.633 us for a medium sphere.
+
+```sh
+cargo bench --bench predicates -- 'aabb_immediate/3d/' \
+  --warm-up-time 1 --measurement-time 4 --sample-size 40
+```
+
 ### Reuse point/ring edge orientations
 
 `classify_point_ring_even_odd_report` formerly evaluated `orient2(a, b,

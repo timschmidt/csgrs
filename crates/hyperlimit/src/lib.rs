@@ -100,7 +100,8 @@ pub use predicate::{
 pub use predicates::aabb::{
     aabb2s_intersect, aabb3s_intersect, classify_aabb2_intersection,
     classify_aabb2_intersection_with_facts, classify_aabb3_intersection, classify_point_aabb2,
-    classify_point_aabb3, point_in_aabb2, point_in_aabb3, point_in_triangle2_aabb,
+    classify_point_aabb3, ordered_aabb3_contains, ordered_aabb3s_intersect, point_in_aabb2,
+    point_in_aabb3, point_in_ordered_aabb3_relative_interior, point_in_triangle2_aabb,
 };
 pub use predicates::convex::{classify_point_convex_planes3, classify_point_convex_polygon2};
 pub use predicates::coplanar::{

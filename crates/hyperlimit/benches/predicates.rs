@@ -29,10 +29,10 @@ use hyperlimit::{
     incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
     insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    line2_orientation, orient_d, orient2 as orient2d, orient3 as orient3d,
-    oriented_plane3_evidence, plane3_evidence, point2_displacement_facts,
-    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
-    support_dop3_from_points, triangle3_orientation,
+    line2_orientation, ordered_aabb3_contains, ordered_aabb3s_intersect, orient_d,
+    orient2 as orient2d, orient3 as orient3d, oriented_plane3_evidence, plane3_evidence,
+    point_in_ordered_aabb3_relative_interior, point2_displacement_facts, projected_line_parameter3,
+    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -290,6 +290,8 @@ fn bench_aabb_immediate(c: &mut Criterion) {
     let first_3d_max = rational_point3(4, 1, 4, 1, 4, 1);
     let second_3d_min = rational_point3(4, 1, 1, 1, 1, 1);
     let second_3d_max = rational_point3(6, 1, 3, 1, 3, 1);
+    let contained_3d_min = rational_point3(1, 1, 1, 1, 1, 1);
+    let contained_3d_max = rational_point3(3, 1, 3, 1, 3, 1);
     let query_3d = rational_point3(2, 1, 2, 1, 2, 1);
 
     let mut group = c.benchmark_group("aabb_immediate");
@@ -318,6 +320,35 @@ fn bench_aabb_immediate(c: &mut Criterion) {
     group.bench_function("3d/point", |bench| {
         bench.iter(|| {
             classify_point_aabb3(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&query_3d),
+            )
+        })
+    });
+    group.bench_function("3d/ordered_intersection", |bench| {
+        bench.iter(|| {
+            ordered_aabb3s_intersect(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&second_3d_min),
+                black_box(&second_3d_max),
+            )
+        })
+    });
+    group.bench_function("3d/ordered_contains", |bench| {
+        bench.iter(|| {
+            ordered_aabb3_contains(
+                black_box(&first_3d_min),
+                black_box(&first_3d_max),
+                black_box(&contained_3d_min),
+                black_box(&contained_3d_max),
+            )
+        })
+    });
+    group.bench_function("3d/relative_interior", |bench| {
+        bench.iter(|| {
+            point_in_ordered_aabb3_relative_interior(
                 black_box(&first_3d_min),
                 black_box(&first_3d_max),
                 black_box(&query_3d),
