@@ -135,7 +135,7 @@ fn main() -> CurveResult<()> {
         rational_interval,
         &policy,
     )?);
-    let reconstruction_iterations = 5_000_u32;
+    let reconstruction_iterations = 500_000_u32;
     let started = Instant::now();
     let mut reconstructed = 0_usize;
     for _ in 0..reconstruction_iterations {

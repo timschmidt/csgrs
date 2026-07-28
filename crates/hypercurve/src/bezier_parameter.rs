@@ -792,12 +792,6 @@ impl BezierAlgebraicParameter2 {
         self.data.root_count
     }
 
-    /// Returns whether exact rational reconstruction has already produced a
-    /// decided positive or negative result for this clone-shared parameter.
-    pub fn is_represented_rational_root_cached(&self) -> bool {
-        self.data.shared.represented_rational_root.get().is_some()
-    }
-
     fn retained_sturm_sequence(
         &self,
         policy: &CurvePolicy,
@@ -1005,6 +999,7 @@ impl BezierAlgebraicParameter2 {
     /// bound. Continued-fraction candidates are accepted only after exact
     /// polynomial replay. Nonrational coefficients and irrational roots return
     /// `None` without demoting the algebraic carrier.
+    #[inline]
     pub fn represented_rational_root(
         &self,
         policy: &CurvePolicy,
@@ -1012,6 +1007,13 @@ impl BezierAlgebraicParameter2 {
         if let Some(root) = self.data.shared.represented_rational_root.get() {
             return Ok(Classification::Decided(root.clone()));
         }
+        self.compute_represented_rational_root(policy)
+    }
+
+    fn compute_represented_rational_root(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Option<Real>>> {
         let result = if self.data.polynomial.degree() == 1 {
             self.represented_linear_root(policy)?
         } else {

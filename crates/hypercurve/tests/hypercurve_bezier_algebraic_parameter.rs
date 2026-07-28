@@ -247,12 +247,12 @@ fn algebraic_parameter_recovers_represented_linear_root() {
     let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
     let clone = parameter.clone();
 
-    assert!(!parameter.is_represented_rational_root_cached());
+    let represented = parameter.represented_rational_root(&policy()).unwrap();
+    assert_eq!(represented, Classification::Decided(Some(q(1, 2))));
     assert_eq!(
-        parameter.represented_rational_root(&policy()).unwrap(),
-        Classification::Decided(Some(q(1, 2)))
+        clone.represented_rational_root(&policy()).unwrap(),
+        represented
     );
-    assert!(clone.is_represented_rational_root_cached());
     assert_eq!(
         BezierParameter2::algebraic(clone)
             .promote_represented_rational_root(&policy())

@@ -5989,6 +5989,22 @@ times were 484.376/477.364 us for cold evaluation, 8.115/8.009 us for retained
 evaluation, and 628.701/619.791 us for exact splitting. Checksums were
 unchanged, and each candidate result is about 1.3--1.4% faster.
 
+### Algebraic-parameter cache-state boundary
+
+`BezierAlgebraicParameter2` now exposes represented rational roots directly,
+without exposing whether the clone-shared reconstruction cell is populated.
+The immediate accessor keeps a small inline retained-result path and delegates
+first-use reconstruction to a private helper. Its focused replay sentinel was
+lengthened from 5,000 to 500,000 calls so sub-microsecond comparisons are
+meaningful.
+
+Three serialized runs of isolated pre-change and final binaries showed no
+regression. Replaying 500,000 represented roots took 17.248--18.773 ms before
+and 16.966--17.371 ms after. Refined ordering overlapped at
+11.768--12.326 us versus 11.975--12.178 us, while polynomial point/tangent
+images improved from 2.559--2.772 us to 2.518--2.634 us. Every checksum was
+unchanged.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
