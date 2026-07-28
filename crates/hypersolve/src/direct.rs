@@ -1,7 +1,7 @@
 //! Direct exact reductions for simple solver rows.
 //!
 //! SolveSpace performs substitution and "soluble alone" passes before Newton
-//! iteration. This module adds the exact-stack version for prepared affine
+//! iteration. This module adds the exact-stack version for affine residual
 //! equality rows with one active variable and square affine equality systems.
 //! The result is a candidate assignment produced by exact `hyperreal::Real`
 //! arithmetic; callers still replay and certify the full problem before
@@ -35,7 +35,7 @@ pub struct DirectAffineSolution {
 ///
 /// This is the report-bearing version of SolveSpace's pre-Newton affine
 /// reduction for the Hyper stack. It solves only active equality systems whose
-/// rows are already prepared affine blocks, using exact Gaussian elimination
+/// rows already have affine coefficient forms, using exact Gaussian elimination
 /// over [`Real`]. The output remains a candidate assignment: the exact
 /// construction/proof boundary still requires ordinary residual replay before
 /// accepting it. SolveSpace's documented
@@ -56,7 +56,7 @@ pub enum DirectAffineSystemStatus {
         /// Source constraint index.
         constraint_index: usize,
     },
-    /// An active equality row did not have a prepared affine block.
+    /// An active equality row did not have an affine coefficient form.
     NonAffineRow {
         /// Source constraint index.
         constraint_index: usize,
@@ -104,7 +104,7 @@ impl DirectAffineSystemReport {
     }
 }
 
-/// Exact root candidates for one prepared univariate quadratic equality row.
+/// Exact root candidates for one univariate quadratic equality row.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DirectQuadraticSolution {
     /// Source constraint index that produced these roots.
@@ -473,7 +473,7 @@ pub(crate) fn direct_quadratic_roots(
 /// Solve a square active affine equality system exactly.
 ///
 /// This helper is intentionally stricter than the lossy dense solver: every
-/// active constraint must be an equality with a prepared affine residual, and
+/// active constraint must be an equality with an affine residual form, and
 /// the active equality row count must equal the variable count. It constructs
 /// `A*x = -c` directly from retained affine coefficients and solves with
 /// certified nonzero pivots. The returned assignments are proposal values that
@@ -666,7 +666,7 @@ fn direct_affine_system_report(
     }
 }
 
-/// Solve prepared univariate quadratic equality rows exactly when possible.
+/// Solve univariate quadratic equality rows exactly when possible.
 ///
 /// This is a proposal-stage analogue of SolveSpace's soluble-alone pass for a
 /// bounded nonlinear row. Roots from `a*x^2 + b*x + c = 0` are returned only
@@ -676,8 +676,7 @@ fn direct_affine_system_report(
 pub fn solve_direct_univariate_quadratic_equalities(
     prepared: &PreparedProblem<'_>,
 ) -> Result<Vec<DirectQuadraticSolution>, DirectSolveError> {
-    let mut solutions =
-        Vec::with_capacity(prepared.facts().prepared_univariate_quadratic_active_rows);
+    let mut solutions = Vec::with_capacity(prepared.facts().univariate_quadratic_form_active_rows);
     for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
@@ -787,7 +786,7 @@ pub fn certify_direct_univariate_quadratic_roots_with_config(
     Ok(reports)
 }
 
-/// Find exact two-variable equality substitutions from prepared affine rows.
+/// Find exact two-variable equality substitutions from affine residual forms.
 ///
 /// Rows of the form `x - y + c = 0` become `x = y - c`. The implementation is
 /// intentionally narrow: it accepts only structurally signed unit coefficients
@@ -1115,9 +1114,9 @@ pub fn apply_equality_substitution_classes(
     }
 }
 
-/// Rewrite prepared affine rows through equality-substitution classes.
+/// Rewrite affine residual forms through equality-substitution classes.
 ///
-/// For every active prepared affine residual `c + sum(a_i*x_i)`, each symbol
+/// For every active affine residual `c + sum(a_i*x_i)`, each symbol
 /// that belongs to a substitution class is replaced by
 /// `representative + offset`. The resulting exact row is compacted by symbol
 /// and exact zero coefficients are dropped. This is the first affine

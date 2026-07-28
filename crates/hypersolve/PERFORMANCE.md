@@ -24,11 +24,27 @@ boundary, but no optimization may turn such a proposal into proof.
 | Powell, hybrid method | Powell-hybrid and dogleg names route to the dense dogleg trust-region proposal. The step is bounded and diagnosed, while acceptance still depends on exact residual/candidate certification. |
 | Sederberg and Nishita, Bezier clipping | Bernstein convex-hull sign exclusion and recursive interval contraction inform the root-subdivision surfaces. Hypersolve returns algebraic parameter intervals; it does not duplicate `hypercurve`'s curve/curve topology machinery. |
 | Shoemake, quaternion curves | Unit quaternions and quaternion-derived frame axes are used for exact sketch workplanes, projection, and symmetry constraints. Spherical interpolation was not added because this crate constrains static frames rather than generating animation curves. |
-| Smale, one-point Newton estimates | Prepared univariate quadratics expose an exact conservative alpha certificate, using the rational threshold `1/8` to avoid adding a radical solely for the bound. Exact roots, multiple roots, zero derivatives, failed bounds, and undecided comparisons are distinct statuses. |
+| Smale, one-point Newton estimates | Univariate quadratic forms expose an exact conservative alpha certificate, using the rational threshold `1/8` to avoid adding a radical solely for the bound. Exact roots, multiple roots, zero derivatives, failed bounds, and undecided comparisons are distinct statuses. |
 | Sturm, numerical equations | Exact Sturm sequences count distinct roots over rational intervals and guide isolation/refinement. Endpoint roots and multiplicities are handled through square-free and replay evidence instead of floating tolerances. |
 | Sylvester, syzygetic relations and resultants | The coefficient matrix of the two-polynomial elimination map is constructed explicitly and its determinant is evaluated by Bareiss. Constant-polynomial conventions bypass artificial zero-dimensional determinants. |
 | Tinney and Walker, optimally ordered sparse factorization | Symbolic fill is audited separately from numeric fraction-free updates, with certified-zero cancellation and conservative unknown entries. A retained opt-in symmetric minimum-degree solver now records both permutations, performs exact sparse Bareiss elimination in the reordered system, restores source variable order, and exactly replays the source system. The authored-order API remains unchanged because already-good orderings are faster without the extra analysis. |
 | Yap, exact geometric computation | Exact expressions, prepared object facts, certified signs, algebraic intervals, and named lossy adapters enforce the construction/proof boundary throughout the crate. Every retained optimization reuses exact evidence or changes only the construction schedule; none changes a branch criterion. |
+
+## Immediate residual-form API gate
+
+Affine and quadratic rows are now named as immutable mathematical forms:
+`AffineResidual`, `UnivariateQuadraticResidual`, `QuadraticResidual`,
+`QuadraticLinearTerm`, and `QuadraticTerm`. Their immediate `from_expr`
+constructors replace preparation functions, and a shape error now reports
+`ResidualShapeMismatch`.
+
+Serialized 100-sample comparisons found no regression. Constructing a
+16-row univariate quadratic problem moved from 46.313 us to 46.586 us
+(+0.27%, `p = 0.31`, 95% interval -0.27% to +0.76%). Constructing the
+multivariate equivalent improved from 35.860 us to 34.955 us (-2.88%,
+`p < 0.05`, 95% interval -3.84% to -2.08%). The parsing and evaluation
+kernels are unchanged; the improvement is consistent with code layout. The
+renamed retained sentinels subsequently measured 48.200 us and 35.011 us.
 
 ## Retained measurements
 

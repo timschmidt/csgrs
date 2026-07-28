@@ -442,14 +442,13 @@ fn pow_degree(value: ExprDegree, exponent: i64) -> ExprDegree {
 #[derive(Clone, Debug)]
 pub enum ExprEvalError {
     UnboundSymbol(SymbolRef),
-    /// A prepared expression object no longer matches the model shape it was
-    /// derived from.
+    /// A residual form no longer matches the model shape it was derived from.
     ///
     /// Exact-computation metadata is only valid while its structural
     /// assumptions still hold. The exactness boundary frames this as choosing an arithmetic and
     /// representation package for the current problem formulation, not as
     /// creating a model-independent scalar cache.
-    PreparedShapeMismatch {
+    ResidualShapeMismatch {
         expected_coefficients: usize,
         actual_variables: usize,
     },

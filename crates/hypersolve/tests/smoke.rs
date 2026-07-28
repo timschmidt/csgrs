@@ -9926,16 +9926,16 @@ fn prepared_problem_caches_residual_dependency_and_sparsity_facts() {
     assert_eq!(facts.constraint_count, 3);
     assert_eq!(facts.active_constraint_count, 3);
     assert_eq!(facts.affine_active_rows, 1);
-    assert_eq!(facts.prepared_affine_active_rows, 2);
+    assert_eq!(facts.affine_form_active_rows, 2);
     assert_eq!(facts.polynomial_active_rows, 3);
-    assert_eq!(facts.prepared_quadratic_active_rows, 1);
+    assert_eq!(facts.quadratic_form_active_rows, 1);
     assert_eq!(facts.non_polynomial_active_rows, 0);
     assert_eq!(facts.known_zero_constant_active_rows, 0);
     assert_eq!(facts.known_nonzero_constant_active_rows, 1);
     assert_eq!(facts.unknown_sign_constant_active_rows, 0);
     assert!(facts.has_known_nonzero_constant_residual());
     assert_eq!(facts.structural_jacobian_nonzeros, 3);
-    assert!(!facts.all_active_rows_prepared_affine());
+    assert!(!facts.all_active_rows_have_affine_forms());
 
     assert_eq!(prepared.constraints()[0].dependent_columns, vec![0]);
     assert_eq!(prepared.constraints()[1].dependent_columns, vec![0, 1]);
@@ -9980,9 +9980,9 @@ fn prepared_problem_extracts_multivariate_quadratic_residuals() {
         .as_ref()
         .expect("mixed quadratic row should be prepared");
 
-    assert_eq!(prepared.facts().prepared_quadratic_active_rows, 1);
-    assert_eq!(block.facts().prepared_quadratic_row_count, 1);
-    assert_eq!(block.facts().prepared_univariate_quadratic_row_count, 0);
+    assert_eq!(prepared.facts().quadratic_form_active_rows, 1);
+    assert_eq!(block.facts().quadratic_form_row_count, 1);
+    assert_eq!(block.facts().univariate_quadratic_form_row_count, 0);
     assert_eq!(quadratic.constant(), &real(11));
     assert_eq!(quadratic.linear_terms().len(), 1);
     assert_eq!(quadratic.linear_terms()[0].symbol, SymbolId(1));
@@ -10000,7 +10000,7 @@ fn prepared_problem_extracts_multivariate_quadratic_residuals() {
 }
 
 #[test]
-fn candidate_replay_uses_prepared_quadratic_residual_blocks() {
+fn candidate_replay_uses_quadratic_residual_forms() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -10018,7 +10018,7 @@ fn candidate_replay_uses_prepared_quadratic_residual_blocks() {
     assert_eq!(
         prepared
             .evaluate_constraint_residual(0, &context)
-            .expect("prepared quadratic replay should succeed"),
+            .expect("quadratic-form replay should succeed"),
         Real::zero()
     );
     assert!(
@@ -10093,7 +10093,7 @@ fn geometry_domain_keeps_point_coincidence_affine_rows_split() {
 }
 
 #[test]
-fn prepared_affine_residual_preserves_coefficients_and_exact_product_sum_eval() {
+fn affine_residual_preserves_coefficients_and_exact_product_sum_eval() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -10109,7 +10109,7 @@ fn prepared_affine_residual_preserves_coefficients_and_exact_product_sum_eval() 
         .as_ref()
         .expect("affine row should be prepared");
 
-    assert!(prepared.facts().all_active_rows_prepared_affine());
+    assert!(prepared.facts().all_active_rows_have_affine_forms());
     assert_eq!(affine.coefficients(), &[real(2), real(-3)]);
     assert_eq!(affine.constant(), &real(11));
     assert_eq!(affine.nonzero_coefficient_count(), 2);
@@ -10118,7 +10118,7 @@ fn prepared_affine_residual_preserves_coefficients_and_exact_product_sum_eval() 
 
     let prepared_value = affine
         .eval_real(&problem.variables, context.bindings())
-        .expect("prepared affine eval should succeed");
+        .expect("affine-form evaluation should succeed");
     let ordinary_value = problem.constraints[0]
         .residual
         .eval_real(context.bindings())
@@ -10132,7 +10132,7 @@ fn prepared_affine_residual_preserves_coefficients_and_exact_product_sum_eval() 
 }
 
 #[test]
-fn prepared_affine_residual_rejects_stale_model_shape() {
+fn affine_residual_rejects_stale_model_shape() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
     problem.add_variable("x", real(5));
@@ -10144,10 +10144,10 @@ fn prepared_affine_residual_rejects_stale_model_shape() {
 
     let error = affine
         .eval_real(&[], context_from_problem(&problem).bindings())
-        .expect_err("stale prepared affine row must not evaluate against a different model shape");
+        .expect_err("a stale affine form must not evaluate against a different model shape");
 
     match error {
-        hypersolve::ExprEvalError::PreparedShapeMismatch {
+        hypersolve::ExprEvalError::ResidualShapeMismatch {
             expected_coefficients,
             actual_variables,
         } => {
@@ -10219,9 +10219,9 @@ fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
     assert_eq!(facts.active_row_count, 5);
     assert_eq!(facts.constant_row_count, 2);
     assert_eq!(facts.constant_contradiction_count, 1);
-    assert_eq!(facts.prepared_affine_row_count, 1);
+    assert_eq!(facts.affine_form_row_count, 1);
     assert_eq!(facts.polynomial_nonlinear_row_count, 1);
-    assert_eq!(facts.prepared_univariate_quadratic_row_count, 0);
+    assert_eq!(facts.univariate_quadratic_form_row_count, 0);
     assert_eq!(facts.non_polynomial_row_count, 1);
     assert_eq!(facts.nonlinear_proposal_row_count, 2);
     assert!(facts.has_exact_constant_contradiction());
@@ -10235,7 +10235,7 @@ fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
         block.rows()[1].kind,
         SolverBlockRowKind::ConstantCertifiedContradiction
     );
-    assert_eq!(block.rows()[2].kind, SolverBlockRowKind::PreparedAffine);
+    assert_eq!(block.rows()[2].kind, SolverBlockRowKind::AffineForm);
     assert_eq!(block.rows()[3].kind, SolverBlockRowKind::Polynomial);
     assert_eq!(block.rows()[4].kind, SolverBlockRowKind::NonPolynomial);
 }
@@ -10267,11 +10267,8 @@ fn prepared_problem_extracts_univariate_quadratic_residuals() {
         .expect("powi(2) row should be prepared");
 
     assert_eq!(prepared.facts().polynomial_active_rows, 3);
-    assert_eq!(
-        prepared.facts().prepared_univariate_quadratic_active_rows,
-        2
-    );
-    assert_eq!(block.facts().prepared_univariate_quadratic_row_count, 2);
+    assert_eq!(prepared.facts().univariate_quadratic_form_active_rows, 2);
+    assert_eq!(block.facts().univariate_quadratic_form_row_count, 2);
     assert_eq!(first.symbol(), SymbolId(0));
     assert_eq!(first.quadratic(), &real(2));
     assert_eq!(first.linear(), &real(-7));

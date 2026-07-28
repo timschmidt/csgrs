@@ -1,4 +1,4 @@
-//! Prepared affine residual blocks for exact solver evaluation.
+//! Affine residual forms for exact solver evaluation.
 //!
 //! This module keeps affine row structure next to the solver model instead of
 //! rediscovering it while forming residuals or Jacobians. The dense f64 solver
@@ -12,7 +12,7 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::model::{Problem, Variable};
 use crate::symbolic::{Expr, ExprEvalError, SymbolId, SymbolRef};
 
-/// Prepared exact coefficients for one affine residual row.
+/// Exact coefficients for one affine residual row.
 ///
 /// The row represents `constant + sum(coefficients[i] * variables[i])` in the
 /// source problem's variable order. It is deliberately solver-owned metadata:
@@ -23,14 +23,24 @@ use crate::symbolic::{Expr, ExprEvalError, SymbolId, SymbolRef};
 /// rational product-sum route uses delayed normalization like fraction-free
 /// elimination.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedAffineResidual {
+pub struct AffineResidual {
     constant: Real,
     coefficients: Vec<Real>,
     coefficient_exact: RealExactSetFacts,
     nonzero_coefficient_count: usize,
 }
 
-impl PreparedAffineResidual {
+impl AffineResidual {
+    /// Extract an affine residual form from an expression.
+    ///
+    /// Returns `None` when the expression is not affine in the problem's
+    /// variables or contains an invalid constant division.
+    pub fn from_expr(expression: &Expr, problem: &Problem) -> Option<Self> {
+        let mut builder = AffineBuilder::new(problem);
+        builder.collect(expression, Real::one())?;
+        Some(builder.finish())
+    }
+
     /// Return the residual constant term.
     pub fn constant(&self) -> &Real {
         &self.constant
@@ -73,7 +83,7 @@ impl PreparedAffineResidual {
         bindings: &HashMap<SymbolId, Real>,
     ) -> Result<Real, ExprEvalError> {
         if self.coefficients.len() != variables.len() {
-            return Err(ExprEvalError::PreparedShapeMismatch {
+            return Err(ExprEvalError::ResidualShapeMismatch {
                 expected_coefficients: self.coefficients.len(),
                 actual_variables: variables.len(),
             });
@@ -210,16 +220,6 @@ impl PreparedAffineResidual {
     }
 }
 
-/// Try to prepare an affine residual row for the given problem variables.
-pub fn prepare_affine_residual(
-    expression: &Expr,
-    problem: &Problem,
-) -> Option<PreparedAffineResidual> {
-    let mut builder = AffineBuilder::new(problem);
-    builder.collect(expression, Real::one())?;
-    Some(builder.finish())
-}
-
 struct AffineBuilder<'a> {
     problem: &'a Problem,
     coefficients: Vec<Real>,
@@ -292,7 +292,7 @@ impl<'a> AffineBuilder<'a> {
         }
     }
 
-    fn finish(self) -> PreparedAffineResidual {
+    fn finish(self) -> AffineResidual {
         let mut values = self.coefficients.iter().collect::<Vec<_>>();
         values.push(&self.constant);
         let coefficient_exact = Real::exact_set_facts(values);
@@ -306,7 +306,7 @@ impl<'a> AffineBuilder<'a> {
                 )
             })
             .count();
-        PreparedAffineResidual {
+        AffineResidual {
             constant: self.constant,
             coefficients: self.coefficients,
             coefficient_exact,

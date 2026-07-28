@@ -1,4 +1,4 @@
-//! Prepared low-degree polynomial residual blocks.
+//! Low-degree polynomial residual forms.
 //!
 //! SolveSpace keeps symbolic expressions and derivative structure available
 //! before Newton iteration. This module adds the exact-stack equivalent for a
@@ -15,18 +15,18 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::model::{Problem, Variable};
 use crate::symbolic::{Expr, ExprEvalError, SymbolId, SymbolRef};
 
-/// One exact linear term retained in a prepared multivariate quadratic row.
+/// One exact linear term retained in a multivariate quadratic row.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedLinearTerm {
+pub struct QuadraticLinearTerm {
     /// Solver symbol multiplied by this coefficient.
     pub symbol: SymbolId,
     /// Exact coefficient for `symbol`.
     pub coefficient: Real,
 }
 
-/// One exact quadratic term retained in a prepared multivariate quadratic row.
+/// One exact quadratic term retained in a multivariate quadratic row.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedQuadraticTerm {
+pub struct QuadraticTerm {
     /// First solver symbol in canonical sorted order.
     pub first: SymbolId,
     /// Second solver symbol in canonical sorted order.
@@ -35,9 +35,9 @@ pub struct PreparedQuadraticTerm {
     pub coefficient: Real,
 }
 
-/// Prepared exact coefficients for one degree-at-most-two residual.
+/// Exact coefficients for one degree-at-most-two residual.
 ///
-/// This is the multivariate sibling of [`PreparedUnivariateQuadraticResidual`].
+/// This is the multivariate sibling of [`UnivariateQuadraticResidual`].
 /// It preserves the bounded polynomial package
 /// `c + sum_i l_i*x_i + sum_ij q_ij*x_i*x_j` without expanding into a generic
 /// CAS. SolveSpace-style nonlinear dispatch can inspect the row before Newton
@@ -45,26 +45,83 @@ pub struct PreparedQuadraticTerm {
 /// the original expression remains authoritative and exact replay is still
 /// required before accepting a candidate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedQuadraticResidual {
+pub struct QuadraticResidual {
     constant: Real,
-    linear_terms: Vec<PreparedLinearTerm>,
-    quadratic_terms: Vec<PreparedQuadraticTerm>,
+    linear_terms: Vec<QuadraticLinearTerm>,
+    quadratic_terms: Vec<QuadraticTerm>,
     coefficient_exact: RealExactSetFacts,
 }
 
-impl PreparedQuadraticResidual {
+impl QuadraticResidual {
+    /// Extract a degree-at-most-two residual form from an expression.
+    ///
+    /// Returns `None` when the expression is not quadratic in the problem's
+    /// variables or refers to a symbol outside the problem.
+    pub fn from_expr(expression: &Expr, problem: &Problem) -> Option<Self> {
+        let poly = collect_multivariate_quadratic(expression)?;
+        if !poly.is_higher_zero() {
+            return None;
+        }
+        for symbols in poly.terms.keys() {
+            for symbol in symbols {
+                if !problem
+                    .variables
+                    .iter()
+                    .any(|variable| variable.symbol == *symbol)
+                {
+                    return None;
+                }
+            }
+        }
+
+        let mut constant = Real::zero();
+        let mut linear_terms = Vec::new();
+        let mut quadratic_terms = Vec::new();
+        let mut coefficient_refs = Vec::new();
+
+        for (symbols, coefficient) in poly.terms {
+            if is_structural_zero(&coefficient) {
+                continue;
+            }
+            match symbols.as_slice() {
+                [] => constant = coefficient,
+                [symbol] => linear_terms.push(QuadraticLinearTerm {
+                    symbol: *symbol,
+                    coefficient,
+                }),
+                [first, second] => quadratic_terms.push(QuadraticTerm {
+                    first: *first,
+                    second: *second,
+                    coefficient,
+                }),
+                _ => return None,
+            }
+        }
+        coefficient_refs.push(&constant);
+        coefficient_refs.extend(linear_terms.iter().map(|term| &term.coefficient));
+        coefficient_refs.extend(quadratic_terms.iter().map(|term| &term.coefficient));
+        let coefficient_exact = Real::exact_set_facts(coefficient_refs);
+
+        Some(Self {
+            constant,
+            linear_terms,
+            quadratic_terms,
+            coefficient_exact,
+        })
+    }
+
     /// Return the constant coefficient.
     pub fn constant(&self) -> &Real {
         &self.constant
     }
 
     /// Return exact retained linear terms.
-    pub fn linear_terms(&self) -> &[PreparedLinearTerm] {
+    pub fn linear_terms(&self) -> &[QuadraticLinearTerm] {
         &self.linear_terms
     }
 
     /// Return exact retained quadratic and cross terms.
-    pub fn quadratic_terms(&self) -> &[PreparedQuadraticTerm] {
+    pub fn quadratic_terms(&self) -> &[QuadraticTerm] {
         &self.quadratic_terms
     }
 
@@ -73,7 +130,7 @@ impl PreparedQuadraticResidual {
         self.coefficient_exact
     }
 
-    /// Evaluate the prepared quadratic row with bound variable values.
+    /// Evaluate the quadratic row with bound variable values.
     pub fn eval_real(
         &self,
         variables: &[Variable],
@@ -107,14 +164,14 @@ impl PreparedQuadraticResidual {
     }
 }
 
-/// Prepared exact coefficients for one univariate quadratic residual.
+/// Exact coefficients for one univariate quadratic residual.
 ///
 /// The row represents `quadratic * x^2 + linear * x + constant` for one solver
 /// symbol. It is not a general CAS form; it is a bounded structural summary
 /// meant to keep small polynomial rows inspectable before a lossy nonlinear
 /// backend proposes a candidate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedUnivariateQuadraticResidual {
+pub struct UnivariateQuadraticResidual {
     symbol: SymbolId,
     constant: Real,
     linear: Real,
@@ -122,7 +179,35 @@ pub struct PreparedUnivariateQuadraticResidual {
     coefficient_exact: RealExactSetFacts,
 }
 
-impl PreparedUnivariateQuadraticResidual {
+impl UnivariateQuadraticResidual {
+    /// Extract a univariate quadratic residual form from an expression.
+    ///
+    /// Returns `None` when the expression is not a quadratic in exactly one
+    /// problem variable.
+    pub fn from_expr(expression: &Expr, problem: &Problem) -> Option<Self> {
+        let poly = collect_polynomial(expression)?;
+        let symbol = poly.symbol?;
+        if !problem
+            .variables
+            .iter()
+            .any(|variable| variable.symbol == symbol)
+        {
+            return None;
+        }
+        if !poly.is_higher_zero() {
+            return None;
+        }
+        let coefficient_exact =
+            Real::exact_set_facts([&poly.constant, &poly.linear, &poly.quadratic]);
+        Some(Self {
+            symbol,
+            constant: poly.constant,
+            linear: poly.linear,
+            quadratic: poly.quadratic,
+            coefficient_exact,
+        })
+    }
+
     /// Return the solver symbol used by this polynomial row.
     pub const fn symbol(&self) -> SymbolId {
         self.symbol
@@ -148,7 +233,7 @@ impl PreparedUnivariateQuadraticResidual {
         self.coefficient_exact
     }
 
-    /// Evaluate the prepared quadratic row with bound variable values.
+    /// Evaluate the quadratic row with bound variable values.
     pub fn eval_real(
         &self,
         variables: &[Variable],
@@ -170,90 +255,6 @@ impl PreparedUnivariateQuadraticResidual {
             + self.linear.clone() * value.clone()
             + self.constant.clone())
     }
-}
-
-/// Try to prepare a univariate quadratic residual for the given problem.
-pub fn prepare_univariate_quadratic_residual(
-    expression: &Expr,
-    problem: &Problem,
-) -> Option<PreparedUnivariateQuadraticResidual> {
-    let poly = collect_polynomial(expression)?;
-    let symbol = poly.symbol?;
-    if !problem
-        .variables
-        .iter()
-        .any(|variable| variable.symbol == symbol)
-    {
-        return None;
-    }
-    if !poly.is_higher_zero() {
-        return None;
-    }
-    let coefficient_exact = Real::exact_set_facts([&poly.constant, &poly.linear, &poly.quadratic]);
-    Some(PreparedUnivariateQuadraticResidual {
-        symbol,
-        constant: poly.constant,
-        linear: poly.linear,
-        quadratic: poly.quadratic,
-        coefficient_exact,
-    })
-}
-
-/// Try to prepare any degree-at-most-two polynomial residual for the problem.
-pub fn prepare_quadratic_residual(
-    expression: &Expr,
-    problem: &Problem,
-) -> Option<PreparedQuadraticResidual> {
-    let poly = collect_multivariate_quadratic(expression)?;
-    if !poly.is_higher_zero() {
-        return None;
-    }
-    for symbols in poly.terms.keys() {
-        for symbol in symbols {
-            if !problem
-                .variables
-                .iter()
-                .any(|variable| variable.symbol == *symbol)
-            {
-                return None;
-            }
-        }
-    }
-
-    let mut constant = Real::zero();
-    let mut linear_terms = Vec::new();
-    let mut quadratic_terms = Vec::new();
-    let mut coefficient_refs = Vec::new();
-
-    for (symbols, coefficient) in poly.terms {
-        if is_structural_zero(&coefficient) {
-            continue;
-        }
-        match symbols.as_slice() {
-            [] => constant = coefficient,
-            [symbol] => linear_terms.push(PreparedLinearTerm {
-                symbol: *symbol,
-                coefficient,
-            }),
-            [first, second] => quadratic_terms.push(PreparedQuadraticTerm {
-                first: *first,
-                second: *second,
-                coefficient,
-            }),
-            _ => return None,
-        }
-    }
-    coefficient_refs.push(&constant);
-    coefficient_refs.extend(linear_terms.iter().map(|term| &term.coefficient));
-    coefficient_refs.extend(quadratic_terms.iter().map(|term| &term.coefficient));
-    let coefficient_exact = Real::exact_set_facts(coefficient_refs);
-
-    Some(PreparedQuadraticResidual {
-        constant,
-        linear_terms,
-        quadratic_terms,
-        coefficient_exact,
-    })
 }
 
 #[derive(Clone, Debug)]

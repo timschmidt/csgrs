@@ -66,8 +66,8 @@ proptest! {
         let expected_nonzero = constants.len() - expected_zero;
 
         prop_assert_eq!(facts.active_constraint_count, constants.len());
-        prop_assert_eq!(facts.prepared_affine_active_rows, constants.len());
-        prop_assert!(facts.all_active_rows_prepared_affine());
+        prop_assert_eq!(facts.affine_form_active_rows, constants.len());
+        prop_assert!(facts.all_active_rows_have_affine_forms());
         prop_assert_eq!(facts.known_zero_constant_active_rows, expected_zero);
         prop_assert_eq!(facts.known_nonzero_constant_active_rows, expected_nonzero);
         prop_assert_eq!(facts.unknown_sign_constant_active_rows, 0);
@@ -101,8 +101,8 @@ proptest! {
         let prepared = PreparedProblem::new(&problem);
 
         prop_assert_eq!(prepared.facts().active_constraint_count, coefficients.len());
-        prop_assert_eq!(prepared.facts().prepared_affine_active_rows, coefficients.len());
-        prop_assert!(prepared.facts().all_active_rows_prepared_affine());
+        prop_assert_eq!(prepared.facts().affine_form_active_rows, coefficients.len());
+        prop_assert!(prepared.facts().all_active_rows_have_affine_forms());
         prop_assert_eq!(prepared.facts().known_zero_constant_active_rows, 0);
         prop_assert_eq!(prepared.facts().known_nonzero_constant_active_rows, 0);
         prop_assert_eq!(prepared.facts().unknown_sign_constant_active_rows, 0);
@@ -113,7 +113,7 @@ proptest! {
     }
 
     #[test]
-    fn prepared_affine_residuals_match_expression_evaluation(
+    fn affine_residual_forms_match_expression_evaluation(
         a in -16_i16..=16,
         b in -16_i16..=16,
         c in -64_i16..=64,
@@ -5482,7 +5482,7 @@ proptest! {
 
         prop_assert_eq!(block.facts().constant_row_count, constants.len());
         prop_assert_eq!(block.facts().constant_contradiction_count, expected_contradictions);
-        prop_assert_eq!(block.facts().prepared_affine_row_count, affine_count);
+        prop_assert_eq!(block.facts().affine_form_row_count, affine_count);
         prop_assert!(block.rows().iter().take(constants.len()).all(|row| matches!(
             row.kind,
             SolverBlockRowKind::ConstantCertifiedZero
@@ -5827,7 +5827,7 @@ proptest! {
     }
 
     #[test]
-    fn prepared_univariate_quadratic_generated_coefficients_replay_exactly(
+    fn univariate_quadratic_forms_replay_generated_coefficients_exactly(
         a in -8_i16..=8,
         b in -8_i16..=8,
         c in -8_i16..=8,
@@ -5852,8 +5852,8 @@ proptest! {
             + i64::from(b) * i64::from(x_value)
             + i64::from(c);
 
-        prop_assert_eq!(prepared.facts().prepared_univariate_quadratic_active_rows, 1);
-        prop_assert_eq!(block.facts().prepared_univariate_quadratic_row_count, 1);
+        prop_assert_eq!(prepared.facts().univariate_quadratic_form_active_rows, 1);
+        prop_assert_eq!(block.facts().univariate_quadratic_form_row_count, 1);
         prop_assert_eq!(quadratic.quadratic(), &Real::from(i64::from(a)));
         prop_assert_eq!(quadratic.linear(), &Real::from(i64::from(b)));
         prop_assert_eq!(quadratic.constant(), &Real::from(i64::from(c)));
@@ -5866,7 +5866,7 @@ proptest! {
     }
 
     #[test]
-    fn prepared_multivariate_quadratic_generated_coefficients_replay_exactly(
+    fn multivariate_quadratic_forms_replay_generated_coefficients_exactly(
         ax2 in -4_i16..=4,
         bxy in -4_i16..=4,
         cy2 in -4_i16..=4,
@@ -5903,8 +5903,8 @@ proptest! {
             + i64::from(ey) * i64::from(y_value)
             + i64::from(f);
 
-        prop_assert_eq!(prepared.facts().prepared_quadratic_active_rows, 1);
-        prop_assert_eq!(block.facts().prepared_quadratic_row_count, 1);
+        prop_assert_eq!(prepared.facts().quadratic_form_active_rows, 1);
+        prop_assert_eq!(block.facts().quadratic_form_row_count, 1);
         prop_assert_eq!(
             quadratic
                 .eval_real(problem.variables.as_slice(), context_from_problem(&problem).bindings())

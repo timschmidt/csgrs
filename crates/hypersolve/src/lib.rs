@@ -71,7 +71,7 @@ pub use active_set::{
     audit_active_set, propose_active_set_update, regenerate_active_set_affine_candidate,
     regenerate_active_set_quadratic_candidates, run_active_set_update_loop,
 };
-pub use affine::PreparedAffineResidual;
+pub use affine::AffineResidual;
 pub use algebraic::{
     AlgebraicPolynomialValueInterval, AlgebraicRootAffineTransformReport,
     AlgebraicRootAffineTransformStatus, AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport,
@@ -214,9 +214,7 @@ pub use linalg::{
 };
 pub use model::{Constraint, ConstraintKind, Problem, Variable, VariableId};
 pub use polynomial::{
-    PreparedLinearTerm, PreparedQuadraticResidual, PreparedQuadraticTerm,
-    PreparedUnivariateQuadraticResidual, prepare_quadratic_residual,
-    prepare_univariate_quadratic_residual,
+    QuadraticLinearTerm, QuadraticResidual, QuadraticTerm, UnivariateQuadraticResidual,
 };
 pub use predicates::{Classification, PredicateBackend, PredicateReport};
 pub use prepared::{

@@ -33,7 +33,7 @@ than internal truth.
   solver model.
 - `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and prepared problem
   types evaluate residuals and preserve structure.
-- `PreparedAffineResidual`, polynomial residual types, solver-block facts, equality
+- `AffineResidual`, polynomial residual types, solver-block facts, equality
   substitution classes, class-application reports, affine-row elimination reports,
   direct equality helpers, and univariate root-isolation reports expose reusable
   exact subproblems.
@@ -162,7 +162,7 @@ assert_eq!(certification.certified_satisfied_rows, 1);
 assert!(!certification.has_certified_violation());
 ```
 
-Prepared affine/quadratic residuals, direct equality substitution, domain preflight,
+Affine/quadratic residual forms, direct equality substitution, domain preflight,
 interval, Krawczyk, and alpha reports, dense linear adapter diagnostics, predicate
 reports, and domain helper modules keep solver structure visible across geometry, PCB,
 and toolpath problems.

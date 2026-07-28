@@ -2,7 +2,7 @@
 //!
 //! This module is the first variable-box proof stage for `hypersolve`. For an
 //! affine residual `c + a*x + b*y`, a box around the candidate maps to an exact
-//! residual ball with radius `|a|*rx + |b|*ry`. For prepared quadratic rows,
+//! residual ball with radius `|a|*rx + |b|*ry`. For quadratic row forms,
 //! the same proof stage uses exact Taylor enclosures: univariate
 //! `|(2*a*x0 + b)|*r + |a|*r^2`, and multivariate
 //! `sum_i |grad_i(x0)|*r_i + sum_ij |q_ij|*r_i*r_j`. The final sign proof is
@@ -22,7 +22,7 @@ use crate::certification::{
     CandidateResidualBall, certify_candidate, certify_candidate_with_residual_balls,
 };
 use crate::eval::EvaluationContext;
-use crate::polynomial::PreparedQuadraticResidual;
+use crate::polynomial::QuadraticResidual;
 use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
@@ -38,11 +38,11 @@ pub struct VariableBall {
 /// Retained polynomial package used for interval-box certification.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IntervalBoxCertificationPackage {
-    /// Use prepared affine residual enclosures only.
+    /// Use retained affine residual enclosures only.
     Affine,
-    /// Use prepared univariate quadratic Taylor enclosures.
+    /// Use retained univariate quadratic Taylor enclosures.
     UnivariateQuadratic,
-    /// Use prepared multivariate quadratic Taylor enclosures.
+    /// Use retained multivariate quadratic Taylor enclosures.
     MultivariateQuadratic,
 }
 
@@ -104,7 +104,7 @@ pub enum AffineIntervalError {
     },
 }
 
-/// Errors that make prepared quadratic interval certification invalid.
+/// Errors that make quadratic-form interval certification invalid.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum QuadraticIntervalError {
     /// One supplied variable radius was structurally negative.
@@ -112,9 +112,9 @@ pub enum QuadraticIntervalError {
         /// Symbol whose radius was invalid.
         symbol: SymbolId,
     },
-    /// The candidate did not bind the variable used by a prepared quadratic row.
+    /// The candidate did not bind the variable used by a quadratic row.
     UnboundCandidateSymbol {
-        /// Symbol required by the prepared row.
+        /// Symbol required by the quadratic form.
         symbol: SymbolId,
     },
     /// A coefficient, derivative, or Taylor term sign was not certifiable, so
@@ -151,7 +151,7 @@ pub enum AffineKrawczykStatus {
         /// Source constraint index.
         constraint_index: usize,
     },
-    /// An active equality row did not have a prepared affine block.
+    /// An active equality row did not have an affine form.
     NonAffineRow {
         /// Source constraint index.
         constraint_index: usize,
@@ -224,7 +224,7 @@ pub struct AffineKrawczykReport {
 /// Status for a one-variable quadratic Krawczyk certificate.
 ///
 /// This is the first nonlinear Krawczyk proof surface in `hypersolve`. It is
-/// deliberately scoped to prepared rows `a*x^2 + b*x + c = 0`, where the
+/// deliberately scoped to rows `a*x^2 + b*x + c = 0`, where the
 /// interval derivative is exact and the Krawczyk image has a simple closed
 /// form. The criterion follows Krawczyk's interval operator
 /// the Krawczyk operator while preserving the exact replay
@@ -239,17 +239,17 @@ pub enum QuadraticKrawczykStatus {
         /// Source constraint index.
         constraint_index: usize,
     },
-    /// The active equality row does not have a prepared univariate quadratic.
+    /// The active equality row does not have a univariate quadratic form.
     NonQuadraticRow {
         /// Source constraint index.
         constraint_index: usize,
     },
-    /// The candidate context did not bind the prepared row's symbol.
+    /// The candidate context did not bind the row's symbol.
     UnboundCandidateSymbol {
         /// Missing symbol.
         symbol: SymbolId,
     },
-    /// No radius was supplied for the prepared row's symbol.
+    /// No radius was supplied for the row's symbol.
     MissingVariableRadius {
         /// Missing symbol.
         symbol: SymbolId,
@@ -455,8 +455,8 @@ impl MultivariateQuadraticKrawczykReport {
 
 /// Certify a candidate using affine variable-box residual enclosures.
 ///
-/// Rows without prepared affine residuals fall back to exact point replay. For
-/// prepared affine rows, this computes an exact residual ball and asks
+/// Rows without affine residual forms fall back to exact point replay. For
+/// retained affine forms, this computes an exact residual ball and asks
 /// `hyperlimit` to certify the whole ball sign. Missing variable radii are
 /// treated as exact zero-radius variables.
 pub fn certify_affine_interval_candidate(
@@ -605,7 +605,7 @@ pub fn certify_affine_krawczyk_box(
                 Err(error) => {
                     let symbol = match error {
                         crate::symbolic::ExprEvalError::UnboundSymbol(symbol) => symbol.id,
-                        crate::symbolic::ExprEvalError::PreparedShapeMismatch { .. } => {
+                        crate::symbolic::ExprEvalError::ResidualShapeMismatch { .. } => {
                             return affine_krawczyk_report(
                                 AffineKrawczykStatus::NonAffineRow { constraint_index },
                                 variable_count,
@@ -734,7 +734,7 @@ pub fn certify_affine_krawczyk_box(
     )
 }
 
-/// Certify prepared univariate quadratic rows with a Krawczyk box.
+/// Certify univariate quadratic rows with a Krawczyk box.
 ///
 /// For `f(x) = a*x^2 + b*x + c` and candidate center `x0`, this uses
 /// `C = 1 / f'(x0)`. The one-dimensional Krawczyk image is bounded by
@@ -1170,11 +1170,11 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
     )
 }
 
-/// Certify a candidate using prepared univariate quadratic interval enclosures.
+/// Certify a candidate using univariate quadratic interval enclosures.
 ///
 /// This is the first nonlinear interval proof stage in `hypersolve`. It does
 /// not run interval Newton or Krawczyk iteration; instead it encloses each
-/// already-prepared quadratic residual over the supplied variable ball using
+/// retained quadratic residual form over the supplied variable ball using
 /// the exact Taylor form
 ///
 /// `f(x0 + dx) = f(x0) + (2*a*x0 + b)*dx + a*dx^2`.
@@ -1239,10 +1239,10 @@ pub fn certify_quadratic_interval_candidate(
     ))
 }
 
-/// Certify a candidate using prepared multivariate quadratic interval enclosures.
+/// Certify a candidate using multivariate quadratic interval enclosures.
 ///
 /// This extends [`certify_quadratic_interval_candidate`] from single-symbol
-/// rows to retained cross terms. For a prepared quadratic residual
+/// rows to retained cross terms. For a quadratic residual form
 ///
 /// `f(x) = c + sum_i l_i*x_i + sum_ij q_ij*x_i*x_j`,
 ///
@@ -1442,7 +1442,7 @@ fn validate_multivariate_quadratic_krawczyk_variable_balls(
 }
 
 fn quadratic_gradient(
-    quadratic: &PreparedQuadraticResidual,
+    quadratic: &QuadraticResidual,
     variables: &[crate::model::Variable],
     context: &EvaluationContext,
 ) -> Vec<Real> {
@@ -1486,7 +1486,7 @@ fn quadratic_gradient(
 }
 
 fn quadratic_remainder_radius(
-    quadratic: &PreparedQuadraticResidual,
+    quadratic: &QuadraticResidual,
     radius_by_symbol: &HashMap<SymbolId, Real>,
 ) -> Option<Real> {
     let mut radius = Real::zero();
@@ -1505,7 +1505,7 @@ fn quadratic_remainder_radius(
 }
 
 fn quadratic_derivative_variation(
-    quadratic: &PreparedQuadraticResidual,
+    quadratic: &QuadraticResidual,
     variables: &[crate::model::Variable],
     radius_by_symbol: &HashMap<SymbolId, Real>,
 ) -> Option<Vec<Real>> {

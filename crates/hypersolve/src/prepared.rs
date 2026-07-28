@@ -9,13 +9,10 @@
 //! separation between object structure and arithmetic-package selection; see
 //! the exact-geometric-computation model.
 
-use crate::affine::{PreparedAffineResidual, prepare_affine_residual};
+use crate::affine::AffineResidual;
 use crate::eval::{EvalError, EvaluationContext, ResidualEvaluation, positive_part};
 use crate::model::{ConstraintKind, Problem};
-use crate::polynomial::{
-    PreparedQuadraticResidual, PreparedUnivariateQuadraticResidual, prepare_quadratic_residual,
-    prepare_univariate_quadratic_residual,
-};
+use crate::polynomial::{QuadraticResidual, UnivariateQuadraticResidual};
 use crate::symbolic::{Expr, ExprDegree, ExprFacts, SymbolId};
 use hyperreal::RealSign;
 
@@ -91,14 +88,14 @@ pub struct PreparedProblemFacts {
     pub active_constraint_count: usize,
     /// Number of active residual rows that are structurally affine.
     pub affine_active_rows: usize,
-    /// Number of active residual rows with prepared affine coefficient blocks.
-    pub prepared_affine_active_rows: usize,
+    /// Number of active residual rows with affine coefficient forms.
+    pub affine_form_active_rows: usize,
     /// Number of active residual rows that are structurally polynomial.
     pub polynomial_active_rows: usize,
-    /// Number of active polynomial rows with prepared univariate quadratic blocks.
-    pub prepared_univariate_quadratic_active_rows: usize,
-    /// Number of active polynomial rows with prepared degree-at-most-two blocks.
-    pub prepared_quadratic_active_rows: usize,
+    /// Number of active polynomial rows with univariate quadratic forms.
+    pub univariate_quadratic_form_active_rows: usize,
+    /// Number of active polynomial rows with degree-at-most-two forms.
+    pub quadratic_form_active_rows: usize,
     /// Number of active residual rows that are structurally non-polynomial.
     pub non_polynomial_active_rows: usize,
     /// Number of active constant residual rows whose exact value is known zero.
@@ -119,10 +116,10 @@ impl PreparedProblemFacts {
         self.active_constraint_count > 0 && self.affine_active_rows == self.active_constraint_count
     }
 
-    /// Returns whether every active row has a prepared affine coefficient block.
-    pub fn all_active_rows_prepared_affine(&self) -> bool {
+    /// Returns whether every active row has an affine coefficient form.
+    pub fn all_active_rows_have_affine_forms(&self) -> bool {
         self.active_constraint_count > 0
-            && self.prepared_affine_active_rows == self.active_constraint_count
+            && self.affine_form_active_rows == self.active_constraint_count
     }
 
     /// Returns whether every active row is structurally polynomial.
@@ -146,9 +143,9 @@ impl PreparedProblemFacts {
 pub struct PreparedProblem<'a> {
     problem: &'a Problem,
     constraints: Vec<PreparedConstraintFacts>,
-    affine_residuals: Vec<Option<PreparedAffineResidual>>,
-    univariate_quadratic_residuals: Vec<Option<PreparedUnivariateQuadraticResidual>>,
-    quadratic_residuals: Vec<Option<PreparedQuadraticResidual>>,
+    affine_residuals: Vec<Option<AffineResidual>>,
+    univariate_quadratic_residuals: Vec<Option<UnivariateQuadraticResidual>>,
+    quadratic_residuals: Vec<Option<QuadraticResidual>>,
     facts: PreparedProblemFacts,
     jacobian_sparsity: Vec<Vec<bool>>,
 }
@@ -165,10 +162,10 @@ impl<'a> PreparedProblem<'a> {
         let mut constraints = Vec::with_capacity(problem.constraints.len());
         let mut active_constraint_count = 0_usize;
         let mut affine_active_rows = 0_usize;
-        let mut prepared_affine_active_rows = 0_usize;
+        let mut affine_form_active_rows = 0_usize;
         let mut polynomial_active_rows = 0_usize;
-        let mut prepared_univariate_quadratic_active_rows = 0_usize;
-        let mut prepared_quadratic_active_rows = 0_usize;
+        let mut univariate_quadratic_form_active_rows = 0_usize;
+        let mut quadratic_form_active_rows = 0_usize;
         let mut non_polynomial_active_rows = 0_usize;
         let mut known_zero_constant_active_rows = 0_usize;
         let mut known_nonzero_constant_active_rows = 0_usize;
@@ -186,13 +183,13 @@ impl<'a> PreparedProblem<'a> {
             let row_sparsity = row_sparsity(problem.variables.len(), &dependent_columns);
             let affine_residual = (residual.degree == ExprDegree::Polynomial(1)
                 || residual.degree == ExprDegree::Constant)
-                .then(|| prepare_affine_residual(&constraint.residual, problem))
+                .then(|| AffineResidual::from_expr(&constraint.residual, problem))
                 .flatten();
             let univariate_quadratic_residual = (residual.degree == ExprDegree::Polynomial(2))
-                .then(|| prepare_univariate_quadratic_residual(&constraint.residual, problem))
+                .then(|| UnivariateQuadraticResidual::from_expr(&constraint.residual, problem))
                 .flatten();
             let quadratic_residual = (residual.degree == ExprDegree::Polynomial(2))
-                .then(|| prepare_quadratic_residual(&constraint.residual, problem))
+                .then(|| QuadraticResidual::from_expr(&constraint.residual, problem))
                 .flatten();
 
             if constraint.active {
@@ -202,7 +199,7 @@ impl<'a> PreparedProblem<'a> {
                     ExprDegree::Constant => {
                         polynomial_active_rows += 1;
                         if affine_residual.is_some() {
-                            prepared_affine_active_rows += 1;
+                            affine_form_active_rows += 1;
                         }
                         match residual_constant_sign {
                             Some(RealSign::Zero) => known_zero_constant_active_rows += 1,
@@ -216,16 +213,16 @@ impl<'a> PreparedProblem<'a> {
                         affine_active_rows += 1;
                         polynomial_active_rows += 1;
                         if affine_residual.is_some() {
-                            prepared_affine_active_rows += 1;
+                            affine_form_active_rows += 1;
                         }
                     }
                     ExprDegree::Polynomial(_) => {
                         polynomial_active_rows += 1;
                         if univariate_quadratic_residual.is_some() {
-                            prepared_univariate_quadratic_active_rows += 1;
+                            univariate_quadratic_form_active_rows += 1;
                         }
                         if quadratic_residual.is_some() {
-                            prepared_quadratic_active_rows += 1;
+                            quadratic_form_active_rows += 1;
                         }
                     }
                     ExprDegree::NonPolynomial => {
@@ -253,10 +250,10 @@ impl<'a> PreparedProblem<'a> {
             constraint_count: problem.constraints.len(),
             active_constraint_count,
             affine_active_rows,
-            prepared_affine_active_rows,
+            affine_form_active_rows,
             polynomial_active_rows,
-            prepared_univariate_quadratic_active_rows,
-            prepared_quadratic_active_rows,
+            univariate_quadratic_form_active_rows,
+            quadratic_form_active_rows,
             non_polynomial_active_rows,
             known_zero_constant_active_rows,
             known_nonzero_constant_active_rows,
@@ -299,29 +296,29 @@ impl<'a> PreparedProblem<'a> {
         &self.jacobian_sparsity
     }
 
-    /// Returns prepared affine residual rows in source-constraint order.
+    /// Returns affine residual forms in source-constraint order.
     ///
     /// `None` marks non-affine rows or affine shapes that could not be safely
-    /// extracted. Missing affine preparation is only a performance miss: the
+    /// extracted. A missing affine form is only a performance miss: the
     /// original expression tree remains authoritative for evaluation.
-    pub fn affine_residuals(&self) -> &[Option<PreparedAffineResidual>] {
+    pub fn affine_residuals(&self) -> &[Option<AffineResidual>] {
         &self.affine_residuals
     }
 
-    /// Returns prepared univariate quadratic residual blocks by source row.
-    pub fn univariate_quadratic_residuals(&self) -> &[Option<PreparedUnivariateQuadraticResidual>] {
+    /// Returns univariate quadratic residual forms by source row.
+    pub fn univariate_quadratic_residuals(&self) -> &[Option<UnivariateQuadraticResidual>] {
         &self.univariate_quadratic_residuals
     }
 
-    /// Returns prepared degree-at-most-two residual blocks by source row.
-    pub fn quadratic_residuals(&self) -> &[Option<PreparedQuadraticResidual>] {
+    /// Returns degree-at-most-two residual forms by source row.
+    pub fn quadratic_residuals(&self) -> &[Option<QuadraticResidual>] {
         &self.quadratic_residuals
     }
 
     /// Evaluate one source residual through the best retained exact package.
     ///
-    /// Prepared affine rows use fixed product-sum coefficient blocks; prepared
-    /// quadratic rows use retained constant, linear, square, and cross terms;
+    /// Affine forms use fixed product-sum coefficient blocks; quadratic forms
+    /// use retained constant, linear, square, and cross terms;
     /// all other rows fall back to the original expression tree. This is the
     /// solver analogue of the exact recommendation to choose an arithmetic package
     /// from object structure before expanding into scalar questions.

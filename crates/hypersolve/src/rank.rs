@@ -37,7 +37,7 @@ pub struct ExactAffineRankReport {
     pub equality_row_count: usize,
     /// Active non-equality rows skipped by this equality-rank diagnostic.
     pub skipped_non_equality_rows: usize,
-    /// Active equality-like rows that were not prepared affine rows.
+    /// Active equality-like rows without affine residual forms.
     pub unsupported_rows: Vec<usize>,
     /// Certified rank of the coefficient matrix, when available.
     pub coefficient_rank: Option<usize>,

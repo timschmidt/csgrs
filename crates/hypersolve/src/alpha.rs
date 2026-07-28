@@ -1,8 +1,8 @@
-//! Alpha-theory style certificates for prepared polynomial solver rows.
+//! Alpha-theory style certificates for polynomial solver rows.
 //!
 //! This module is intentionally narrow. It does not try to make `hypersolve`
 //! a computer algebra system; it consumes the retained
-//! [`PreparedUnivariateQuadraticResidual`](crate::PreparedUnivariateQuadraticResidual)
+//! [`UnivariateQuadraticResidual`](crate::UnivariateQuadraticResidual)
 //! package and proves a conservative Newton basin condition with exact
 //! `Real` arithmetic. The trust boundary follows the exact-geometric-computation model: numerical iteration may
 //! propose a point, while exact replay and proof-producing filters decide what
@@ -20,14 +20,14 @@ use crate::model::ConstraintKind;
 use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
-/// Result of an alpha-theory proof attempt for one prepared quadratic row.
+/// Result of an alpha-theory proof attempt for one quadratic row.
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnivariateQuadraticAlphaRow {
     /// Source constraint index in the problem.
     pub constraint_index: usize,
     /// Constraint name copied for diagnostics.
     pub name: String,
-    /// Solver symbol used by the prepared quadratic.
+    /// Solver symbol used by the quadratic form.
     pub symbol: SymbolId,
     /// Exact residual value at the candidate center.
     pub residual: Real,
@@ -58,7 +58,7 @@ pub enum UnivariateQuadraticAlphaStatus {
     ExactMultipleRoot,
     /// The derivative is certified zero while the residual is not.
     ZeroDerivative,
-    /// Exact replay could not bind the prepared row's symbol.
+    /// Exact replay could not bind the row's symbol.
     UnboundCandidateSymbol {
         /// Missing symbol.
         symbol: SymbolId,
@@ -76,14 +76,14 @@ impl UnivariateQuadraticAlphaStatus {
     }
 }
 
-/// Report for alpha-theory checks over prepared univariate quadratic rows.
+/// Report for alpha-theory checks over univariate quadratic rows.
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnivariateQuadraticAlphaReport {
     /// Per-row proof attempts.
     pub rows: Vec<UnivariateQuadraticAlphaRow>,
     /// Number of rows that produced proof-bearing statuses.
     pub certified_rows: usize,
-    /// Number of active prepared univariate quadratic equality rows examined.
+    /// Number of active univariate quadratic equality rows examined.
     pub examined_rows: usize,
 }
 
@@ -95,7 +95,7 @@ impl UnivariateQuadraticAlphaReport {
     }
 }
 
-/// Certify prepared univariate quadratic equality rows using an exact alpha
+/// Certify univariate quadratic equality rows using an exact alpha
 /// sufficient condition.
 ///
 /// For `f(x) = a*x^2 + b*x + c`, Smale-style alpha theory reduces to the exact

@@ -4550,11 +4550,11 @@ fn certification(c: &mut Criterion) {
         })
     });
     let quadratic_problem = univariate_quadratic_problem(16);
-    c.bench_function("prepared_univariate_quadratic_rows", |b| {
+    c.bench_function("univariate_quadratic_row_forms", |b| {
         b.iter(|| PreparedProblem::new(&quadratic_problem))
     });
     let multivariate_quadratic = multivariate_quadratic_problem(16);
-    c.bench_function("prepared_multivariate_quadratic_rows", |b| {
+    c.bench_function("multivariate_quadratic_row_forms", |b| {
         b.iter(|| PreparedProblem::new(&multivariate_quadratic))
     });
     let prepared_multivariate_quadratic = PreparedProblem::new(&multivariate_quadratic);
@@ -4927,7 +4927,7 @@ fn certification(c: &mut Criterion) {
             )
         })
     });
-    c.bench_function("prepared_quadratic_candidate_replay", |b| {
+    c.bench_function("quadratic_form_candidate_replay", |b| {
         b.iter(|| {
             for row in 0..prepared_multivariate_quadratic.problem().constraints.len() {
                 let _ = prepared_multivariate_quadratic

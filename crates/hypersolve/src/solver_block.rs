@@ -23,8 +23,8 @@ pub enum SolverBlockRowKind {
     ConstantCertifiedContradiction,
     /// Active constant row whose sign cannot be certified structurally.
     ConstantUnknown,
-    /// Active affine row with a prepared coefficient block.
-    PreparedAffine,
+    /// Active affine row with an extracted coefficient form.
+    AffineForm,
     /// Active affine row that was recognized but not extracted.
     AffineUnprepared,
     /// Active polynomial row of degree at least two.
@@ -42,7 +42,7 @@ impl SolverBlockRowKind {
                 | Self::ConstantCertifiedZero
                 | Self::ConstantCertifiedContradiction
                 | Self::ConstantUnknown
-                | Self::PreparedAffine
+                | Self::AffineForm
                 | Self::AffineUnprepared
         )
     }
@@ -79,14 +79,14 @@ pub struct PreparedSolverBlockFacts {
     pub constant_row_count: usize,
     /// Active constant rows that are exact contradictions.
     pub constant_contradiction_count: usize,
-    /// Active rows with prepared affine coefficient blocks.
-    pub prepared_affine_row_count: usize,
+    /// Active rows with affine coefficient forms.
+    pub affine_form_row_count: usize,
     /// Active polynomial rows of degree at least two.
     pub polynomial_nonlinear_row_count: usize,
-    /// Active polynomial rows with prepared univariate quadratic coefficient blocks.
-    pub prepared_univariate_quadratic_row_count: usize,
+    /// Active polynomial rows with univariate quadratic coefficient forms.
+    pub univariate_quadratic_form_row_count: usize,
     /// Active polynomial rows with prepared degree-at-most-two coefficient blocks.
-    pub prepared_quadratic_row_count: usize,
+    pub quadratic_form_row_count: usize,
     /// Active non-polynomial rows.
     pub non_polynomial_row_count: usize,
     /// Number of rows that require a nonlinear proposal engine.
@@ -123,10 +123,10 @@ impl PreparedSolverBlock {
         let mut inactive_row_count = 0;
         let mut constant_row_count = 0;
         let mut constant_contradiction_count = 0;
-        let mut prepared_affine_row_count = 0;
+        let mut affine_form_row_count = 0;
         let mut polynomial_nonlinear_row_count = 0;
-        let mut prepared_univariate_quadratic_row_count = 0;
-        let mut prepared_quadratic_row_count = 0;
+        let mut univariate_quadratic_form_row_count = 0;
+        let mut quadratic_form_row_count = 0;
         let mut non_polynomial_row_count = 0;
         let mut nonlinear_proposal_row_count = 0;
         let mut structural_jacobian_nonzeros = 0;
@@ -144,14 +144,14 @@ impl PreparedSolverBlock {
                     SolverBlockRowKind::ConstantCertifiedZero
                     | SolverBlockRowKind::ConstantCertifiedContradiction
                     | SolverBlockRowKind::ConstantUnknown => constant_row_count += 1,
-                    SolverBlockRowKind::PreparedAffine => prepared_affine_row_count += 1,
+                    SolverBlockRowKind::AffineForm => affine_form_row_count += 1,
                     SolverBlockRowKind::Polynomial => {
                         polynomial_nonlinear_row_count += 1;
                         if prepared.univariate_quadratic_residuals()[constraint_index].is_some() {
-                            prepared_univariate_quadratic_row_count += 1;
+                            univariate_quadratic_form_row_count += 1;
                         }
                         if prepared.quadratic_residuals()[constraint_index].is_some() {
-                            prepared_quadratic_row_count += 1;
+                            quadratic_form_row_count += 1;
                         }
                     }
                     SolverBlockRowKind::NonPolynomial => non_polynomial_row_count += 1,
@@ -178,10 +178,10 @@ impl PreparedSolverBlock {
             inactive_row_count,
             constant_row_count,
             constant_contradiction_count,
-            prepared_affine_row_count,
+            affine_form_row_count,
             polynomial_nonlinear_row_count,
-            prepared_univariate_quadratic_row_count,
-            prepared_quadratic_row_count,
+            univariate_quadratic_form_row_count,
+            quadratic_form_row_count,
             non_polynomial_row_count,
             nonlinear_proposal_row_count,
             structural_jacobian_nonzeros,
@@ -201,7 +201,7 @@ impl PreparedSolverBlock {
     }
 }
 
-fn classify_row(facts: &PreparedConstraintFacts, has_prepared_affine: bool) -> SolverBlockRowKind {
+fn classify_row(facts: &PreparedConstraintFacts, has_affine_form: bool) -> SolverBlockRowKind {
     if !facts.active {
         return SolverBlockRowKind::Inactive;
     }
@@ -215,8 +215,8 @@ fn classify_row(facts: &PreparedConstraintFacts, has_prepared_affine: bool) -> S
         return SolverBlockRowKind::ConstantUnknown;
     }
     if facts.is_affine_row() {
-        return if has_prepared_affine {
-            SolverBlockRowKind::PreparedAffine
+        return if has_affine_form {
+            SolverBlockRowKind::AffineForm
         } else {
             SolverBlockRowKind::AffineUnprepared
         };
