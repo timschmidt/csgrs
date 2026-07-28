@@ -28,8 +28,8 @@ default-members = ["voxelis", "voxelis-memory"]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../hypermesh", optional = true }
 voxelis = { version = "25.5.0", path = "voxelis", optional = true }
 glam = { workspace = true, optional = true }
