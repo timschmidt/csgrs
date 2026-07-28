@@ -1,9 +1,10 @@
 //! Named signal bundles and directional views for hierarchical composition.
 //!
-//! The retained circuit IR continues to use individual [`CircuitPort`] and
-//! [`SubcircuitPortBinding`] records. This layer adds nominal, ordered bundle
-//! contracts over those records and deliberately lowers a checked bundle
-//! connection back into the existing hierarchy representation.
+//! The retained circuit IR continues to use individual
+//! [`CircuitPort`](crate::CircuitPort) and [`SubcircuitPortBinding`] records.
+//! This layer adds nominal, ordered bundle contracts over those records and
+//! deliberately lowers a checked bundle connection back into the existing
+//! hierarchy representation.
 
 use std::collections::{BTreeMap, BTreeSet};
 

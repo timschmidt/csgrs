@@ -42,18 +42,16 @@ interchange = [
 lceda = ["interchange"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal" }
-hypersolve = { path = "../hypersolve" }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hypersolve = { version = "0.3.0", path = "../hypersolve" }
 semver = { version = "1.0.28", features = ["serde"] }
-hyperlattice = { path = "../hyperlattice", optional = true }
-hyperlimit = { path = "../hyperlimit", optional = true }
-hyperpath = { path = "../hyperpath", optional = true }
-hypercurve = { path = "../hypercurve", optional = true }
-csgrs = { path = "../csgrs", default-features = false, features = ["sketch", "offset", "obj-io", "gltf-io", "vrml-io", "gerber-io", "truetype-text"], optional = true }
-hyperdrc = { path = "../hyperdrc", optional = true }
-hyperphysics = { path = "../hyperphysics", optional = true }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice", optional = true }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", optional = true }
+hyperpath = { version = "0.3.0", path = "../hyperpath", optional = true }
+hypercurve = { version = "0.3.0", path = "../hypercurve", optional = true }
+csgrs = { version = "0.23.0", path = "../csgrs", default-features = false, features = ["sketch", "offset", "obj-io", "gltf-io", "vrml-io", "gerber-io", "truetype-text"], optional = true }
+hyperdrc = { version = "0.3.0", path = "../hyperdrc", optional = true }
+hyperphysics = { version = "0.3.0", path = "../hyperphysics", optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 serde_json = { version = "1.0.149", optional = true }
 sha2 = { version = "0.10.9", optional = true }
@@ -62,8 +60,6 @@ ring = { version = "0.17.14", optional = true }
 zip = { version = "2.4.2", default-features = false, features = ["deflate"], optional = true }
 quick-xml = { version = "0.39.4", optional = true }
 unicode-normalization = "0.1.24"
-# hyperreal = { version = "0.13.0" }
-# hypersolve = { version = "0.3.0" }
 [dev-dependencies]
 proptest = "1.7.0"
 
