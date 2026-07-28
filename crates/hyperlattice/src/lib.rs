@@ -40,7 +40,7 @@ pub use hyperreal::{
     DomainFacts as RealDomainFacts, DomainStatus as RealDomainStatus,
     ExpressionDegree as RealExpressionDegree, MagnitudeBits as RealMagnitudeBits, Rational,
     RationalStorageClass, Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
-    RealExactSetSignPattern, RealSign, RealStructuralFacts as RealFacts,
+    RealExactSetFacts, RealExactSetSignPattern, RealSign, RealStructuralFacts as RealFacts,
     SymbolicDependencyMask as RealSymbolicDependencyMask, ZeroKnowledge as ZeroStatus,
     ZeroOneMinusOneStatus as RealZeroOneMinusOneStatus,
 };
@@ -52,7 +52,6 @@ mod error;
 pub use error::{AbortSignal, BlasResult, CheckedBlasResult, Problem};
 
 mod kernels;
-pub use kernels::ExactRealSetFacts;
 pub(crate) use kernels::{ExactRationalKind, RealKernelExt};
 
 mod algebra2;

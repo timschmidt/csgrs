@@ -66,7 +66,7 @@ impl HomogeneousPoint3 {
     }
 
     /// Returns exact-rational structure facts for the homogeneous tuple.
-    pub fn coordinate_facts(&self) -> crate::ExactRealSetFacts {
+    pub fn coordinate_facts(&self) -> crate::RealExactSetFacts {
         Real::exact_set_facts(self.coordinates())
     }
 
@@ -138,7 +138,7 @@ impl HomogeneousLine3 {
     }
 
     /// Returns exact-rational structure facts for all Pluecker coordinates.
-    pub fn coordinate_facts(&self) -> crate::ExactRealSetFacts {
+    pub fn coordinate_facts(&self) -> crate::RealExactSetFacts {
         Real::exact_set_facts([
             &self.direction.x,
             &self.direction.y,

@@ -723,6 +723,22 @@ The exact-rational object trace records
 `paired-dyadic-word-sized`, `paired-general-word-sized`, and the
 arbitrary-precision fallback.
 
+## Single retained shared-scale fact packet
+
+`SharedScaleVec` now stores one `VectorSharedScaleFacts` packet instead of
+retaining the same `RealExactSetFacts` summary both directly and inside that
+packet. On the 64-bit validation target, `SharedScaleVec<3>` shrank from 384 to
+288 bytes; the eliminated scalar-owned summary is 96 bytes. A layout regression
+test reconstructs the former duplicated shape and requires the consolidated
+carrier to save at least one complete exact-set summary.
+
+The focused fresh-construction sentinel measured the duplicated baseline at
+228.10 ns and the consolidated carrier at 221.13 ns, a 2.78% mean improvement
+with Criterion's 95% change interval of -4.71% to -0.60%. The scalar fact scan
+and retained scheduling behavior are unchanged. Hyperlattice also reexports
+Hyperreal's canonical `RealExactSetFacts` directly rather than maintaining a
+second compatibility type name.
+
 ## Trace evidence
 
 `dispatch_trace.md` was regenerated from the diagnostic build. It confirms that dense
@@ -745,6 +761,7 @@ present workload from being mistaken for executed lattice/dependency work.
 cargo bench --bench regression_sentinels -- 'sentinel/matrix3/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/determinant_fractional'
+cargo bench --bench regression_sentinels -- 'sentinel/vector/shared_scale_owned_common_denominator'
 cargo bench --bench mathbench -- scalar_large_integer_exp
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
 cargo bench --bench api_dispatch_trace --features hyperreal-dispatch-trace

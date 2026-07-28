@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use hyperlattice::{Matrix3, Matrix4, Real, Vector3, Vector4, sqrt};
+use hyperlattice::{Matrix3, Matrix4, Real, SharedScaleVec, Vector3, Vector4, sqrt};
 use std::hint::black_box;
 
 fn r(value: i32) -> Real {
@@ -86,6 +86,20 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         |b| {
             let vector = Vector4::new([frac(1, 7), frac(-2, 7), frac(3, 7), frac(4, 7)]);
             b.iter(|| vector.shared_scale_view())
+        },
+    );
+
+    c.bench_function(
+        "sentinel/vector/shared_scale_owned_common_denominator",
+        |b| {
+            b.iter_batched(
+                || [frac(1, 7), frac(-2, 7), frac(3, 7), frac(4, 7)],
+                |components| {
+                    black_box(SharedScaleVec::from_components(components))
+                        .expect("sevenths share a reduced denominator")
+                },
+                criterion::BatchSize::SmallInput,
+            )
         },
     );
 

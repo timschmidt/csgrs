@@ -6,7 +6,7 @@
 //! metadata for downstream predicates, not topology decisions.
 
 use crate::{
-    BlasResult, ExactRealSetFacts, Real, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus,
+    BlasResult, Real, RealExactSetFacts, RealSymbolicDependencyMask, Vector2, Vector3, ZeroStatus,
 };
 use std::ops::{Add, Sub};
 
@@ -15,7 +15,7 @@ use std::ops::{Add, Sub};
 pub struct PointSharedScaleView<'a, const N: usize> {
     coordinates: [&'a Real; N],
     /// Exact-rational facts for the borrowed coordinates.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u128,
     /// Bit mask of coordinates known to be nonzero.
@@ -102,7 +102,7 @@ impl<'a, const N: usize> PointSharedScaleView<'a, N> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PointSharedScaleFacts<const N: usize> {
     /// Exact-rational facts for the coordinates.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u128,
     /// Bit mask of coordinates known to be nonzero.
@@ -142,7 +142,7 @@ impl<const N: usize> PointSharedScaleFacts<N> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Point2Facts {
     /// Exact-rational representation facts for the coordinate set.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all coordinates.
     pub symbolic_dependencies: RealSymbolicDependencyMask,
     /// Bit mask of coordinates known to be exactly zero.
@@ -195,7 +195,7 @@ impl Point2Facts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Point3Facts {
     /// Exact-rational representation facts for the coordinate set.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all coordinates.
     pub symbolic_dependencies: RealSymbolicDependencyMask,
     /// Bit mask of coordinates known to be exactly zero.

@@ -5,14 +5,7 @@
 //! small-matrix scheduling decisions that choose when to use sparse or fused
 //! product sums.
 
-use hyperreal::Real;
-
-/// Exact-rational structure shared by a fixed set of [`Real`] values.
-///
-/// This is a compatibility alias for the scalar-layer fact type. Keeping the
-/// public `hyperlattice` name avoids churn for vector/matrix callers while
-/// making `hyperreal` the semantic owner of rational representation facts.
-pub type ExactRealSetFacts = hyperreal::RealExactSetFacts;
+use hyperreal::{Real, RealExactSetFacts};
 
 /// Already-known exact-rational representation class for a real value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -26,7 +19,7 @@ pub(crate) enum ExactRationalKind {
     ExactDyadicRational,
 }
 
-pub(crate) fn exact_real_set_facts<'a, I>(values: I) -> ExactRealSetFacts
+pub(crate) fn exact_real_set_facts<'a, I>(values: I) -> RealExactSetFacts
 where
     I: IntoIterator<Item = &'a Real>,
 {

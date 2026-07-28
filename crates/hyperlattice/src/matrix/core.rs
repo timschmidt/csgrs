@@ -19,9 +19,9 @@ use crate::scalar::{
 };
 use crate::vector::{Vector3, Vector4, Vector4GeometricFacts, Vector4HomogeneousKind};
 use crate::{
-    AbortSignal, BlasResult, CheckedBlasResult, ExactRationalKind, ExactRealSetFacts, Problem,
-    Real, RealKernelExt, RealSign, RealSymbolicDependencyMask, RealZeroOneMinusOneStatus,
-    ZeroStatus,
+    AbortSignal, BlasResult, CheckedBlasResult, ExactRationalKind, Problem, Real,
+    RealExactSetFacts, RealKernelExt, RealSign, RealSymbolicDependencyMask,
+    RealZeroOneMinusOneStatus, ZeroStatus,
 };
 
 fn identity_array<const N: usize>() -> [[Real; N]; N] {
@@ -164,7 +164,7 @@ fn matrix_has_zero_lane<const N: usize>(masks: [u8; N]) -> bool {
 
 #[inline]
 fn matrix_determinant_schedule_hint<const N: usize>(
-    exact: ExactRealSetFacts,
+    exact: RealExactSetFacts,
     row_zero_masks: [u8; N],
     column_zero_masks: [u8; N],
     is_diagonal: bool,
@@ -529,7 +529,7 @@ pub enum Matrix4TransformKind {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Matrix3StructuralFacts {
     /// Exact-rational representation facts for all entries.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all entries.
     ///
     /// This gives matrix and transform code a stable
@@ -703,7 +703,7 @@ impl Matrix3StructuralFacts {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Matrix4StructuralFacts {
     /// Exact-rational representation facts for all entries.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all entries.
     ///
     /// Transform stacks can retain this alongside affine and sparse facts to
@@ -888,7 +888,7 @@ impl Matrix4StructuralFacts {
 #[derive(Clone, Copy, Debug)]
 struct Matrix3Facts {
     public: Matrix3StructuralFacts,
-    exact: ExactRealSetFacts,
+    exact: RealExactSetFacts,
     is_identity: bool,
     is_diagonal: bool,
     // Triangular structure is used to select O(n²) triangular inverse kernels
@@ -969,7 +969,7 @@ fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactR
 #[derive(Clone, Copy, Debug)]
 struct Matrix4Facts {
     public: Matrix4StructuralFacts,
-    exact: ExactRealSetFacts,
+    exact: RealExactSetFacts,
     is_identity: bool,
     is_diagonal: bool,
     is_upper_triangular: bool,
@@ -11132,7 +11132,7 @@ impl Matrix3 {
     /// shared-denominator exact schedules before entering determinant, inverse,
     /// or predicate preparation code. Object structure stays visible long enough
     /// to choose the exact arithmetic package.
-    pub fn exact_facts(&self) -> ExactRealSetFacts {
+    pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix3-exact-facts");
         matrix3_facts(&self.0).exact
     }
@@ -11564,7 +11564,7 @@ impl Matrix4 {
     /// coarse summary lets higher-level code prepare exact kernels without
     /// re-querying every scalar entry, while `hyperreal` remains responsible
     /// for denominator storage and reduction.
-    pub fn exact_facts(&self) -> ExactRealSetFacts {
+    pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix4-exact-facts");
         matrix4_facts(&self.0).exact
     }

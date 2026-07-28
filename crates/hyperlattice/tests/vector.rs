@@ -1,11 +1,13 @@
 mod common;
 
+use std::mem::{align_of, size_of};
+
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
     Axis2, Problem, RationalStorageClass, RealExactSetDenominatorKind,
     RealExactSetDyadicExponentClass, RealExactSetSignPattern, RealSymbolicDependencyMask,
-    SharedScaleVec, SignedAxis2, Vector2, Vector3, Vector4, Vector4HomogeneousKind, ZeroStatus,
-    one, pi, zero,
+    SharedScaleVec, SignedAxis2, Vector2, Vector3, Vector4, Vector4HomogeneousKind,
+    VectorSharedScaleFacts, ZeroStatus, one, pi, zero,
 };
 
 #[test]
@@ -351,15 +353,14 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     assert_eq!(owned_facts, owned.as_view().facts());
     assert!(owned_facts.is_known_dense());
     assert_eq!(owned_facts.known_nonzero_count(), 3);
-    assert!(owned.exact.has_shared_denominator_schedule());
-    assert_eq!(owned.facts.exact, owned.exact);
-    assert!(!owned.exact.has_integer_grid_schedule());
+    assert!(owned.facts().exact.has_shared_denominator_schedule());
+    assert!(!owned.facts().exact.has_integer_grid_schedule());
     assert_eq!(
-        owned.exact.shared_denominator_kind(),
+        owned.facts().exact.shared_denominator_kind(),
         Some(RealExactSetDenominatorKind::SharedNonDyadic)
     );
     assert_eq!(
-        owned.exact.sign_pattern(),
+        owned.facts().exact.sign_pattern(),
         RealExactSetSignPattern::MixedKnown
     );
     assert_eq!(owned.components()[0], frac(1, 9));
@@ -372,9 +373,9 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     let from_vector = Vector3::new([frac(1, 4), frac(3, 4), frac(-5, 4)])
         .into_shared_scale()
         .expect("quarters share a reduced denominator");
-    assert!(from_vector.exact.has_dyadic_schedule());
+    assert!(from_vector.facts().exact.has_dyadic_schedule());
     assert_eq!(
-        from_vector.exact.max_dyadic_exponent_class,
+        from_vector.facts().exact.max_dyadic_exponent_class,
         Some(RealExactSetDyadicExponentClass::Small)
     );
     assert_eq!(
@@ -385,8 +386,8 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
     let zero_units = Vector4::new([zero(), one(), -one(), zero()])
         .into_shared_scale()
         .expect("signed unit coordinates are integer-grid shared scale");
-    assert!(zero_units.exact.has_integer_grid_schedule());
-    assert!(zero_units.exact.has_signed_unit_schedule());
+    assert!(zero_units.facts().exact.has_integer_grid_schedule());
+    assert!(zero_units.facts().exact.has_signed_unit_schedule());
     assert!(zero_units.facts().has_integer_grid_schedule());
     assert!(zero_units.facts().has_signed_unit_schedule());
     assert_eq!(zero_units.facts().known_zero_count(), 2);
@@ -396,6 +397,30 @@ fn owned_shared_scale_vectors_preserve_common_scale_across_lifetimes() {
         Vector4::new([unknown_zero(), frac(1, 7), frac(2, 7), frac(3, 7)])
             .into_shared_scale()
             .is_none()
+    );
+}
+
+#[test]
+fn owned_shared_scale_vector_retains_one_fact_packet() {
+    #[allow(dead_code)]
+    struct DuplicatedSharedScaleVec<const N: usize> {
+        components: [hyperlattice::Real; N],
+        exact: hyperlattice::RealExactSetFacts,
+        facts: VectorSharedScaleFacts<N>,
+    }
+
+    let retained_payload =
+        size_of::<[hyperlattice::Real; 3]>() + size_of::<VectorSharedScaleFacts<3>>();
+    let maximum_alignment_padding = align_of::<VectorSharedScaleFacts<3>>() - 1;
+
+    assert!(
+        size_of::<SharedScaleVec<3>>() <= retained_payload + maximum_alignment_padding,
+        "owned shared-scale vectors must not duplicate their exact-set summary"
+    );
+    assert!(
+        size_of::<DuplicatedSharedScaleVec<3>>() - size_of::<SharedScaleVec<3>>()
+            >= size_of::<hyperlattice::RealExactSetFacts>(),
+        "consolidation should save at least one complete exact-set summary"
     );
 }
 
@@ -415,7 +440,7 @@ fn shared_scale_vectors_use_known_exact_dot_products() {
 
     let zeros = SharedScaleVec::from_components([zero(), zero()]).expect("zero grid is shared");
     assert_eq!(zeros.dot(&zeros), zero());
-    assert!(zeros.exact.has_signed_unit_schedule());
+    assert!(zeros.facts().exact.has_signed_unit_schedule());
 
     let dyadic_left =
         SharedScaleVec::from_components([frac(1, 8), frac(3, 8), frac(-5, 8), frac(7, 8)])
@@ -423,7 +448,7 @@ fn shared_scale_vectors_use_known_exact_dot_products() {
     let dyadic_right =
         SharedScaleVec::from_components([frac(3, 8), frac(-5, 8), frac(7, 8), frac(-1, 8)])
             .expect("eighths share a dyadic denominator");
-    assert!(dyadic_left.exact.has_dyadic_schedule());
+    assert!(dyadic_left.facts().exact.has_dyadic_schedule());
     assert_eq!(
         dyadic_left.dot(&dyadic_right),
         Vector4::new(dyadic_left.components().clone())
@@ -453,7 +478,7 @@ fn shared_scale_vectors_use_known_exact_wedge_products() {
         .expect("eighths share a dyadic denominator");
     let dyadic_right = SharedScaleVec::from_components([frac(7, 8), frac(1, 8)])
         .expect("eighths share a dyadic denominator");
-    assert!(dyadic_left.exact.has_dyadic_schedule());
+    assert!(dyadic_left.facts().exact.has_dyadic_schedule());
     assert_eq!(
         dyadic_left.wedge(&dyadic_right),
         Vector2::new(dyadic_left.components().clone())

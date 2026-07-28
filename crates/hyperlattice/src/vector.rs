@@ -7,7 +7,7 @@ use std::sync::atomic::Ordering;
 
 use crate::scalar::{clone_with_abort, reject_definite_zero, require_known_nonzero, with_abort};
 use crate::{
-    AbortSignal, BlasResult, CheckedBlasResult, ExactRealSetFacts, Problem, Real, RealKernelExt,
+    AbortSignal, BlasResult, CheckedBlasResult, Problem, Real, RealExactSetFacts, RealKernelExt,
     RealSymbolicDependencyMask, RealZeroOneMinusOneStatus, ZeroStatus,
 };
 
@@ -91,7 +91,7 @@ impl Axis2 {
 pub struct VectorSharedScaleView<'a, const N: usize> {
     components: [&'a Real; N],
     /// Exact-rational representation facts for all borrowed coordinates.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u128,
     /// Bit mask of coordinates known to be nonzero.
@@ -110,7 +110,7 @@ pub struct VectorSharedScaleView<'a, const N: usize> {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct VectorSharedScaleFacts<const N: usize> {
     /// Exact-rational representation facts for all coordinates.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Bit mask of coordinates known to be exactly zero.
     pub known_zero_mask: u128,
     /// Bit mask of coordinates known to be nonzero.
@@ -354,10 +354,12 @@ impl<'a> VectorSharedScaleView<'a, 3> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct SharedScaleVec<const N: usize> {
     components: [Real; N],
-    /// Exact-rational representation facts for all owned coordinates.
-    pub exact: ExactRealSetFacts,
-    /// Cached common-scale and sparse-support fact packet.
-    pub facts: VectorSharedScaleFacts<N>,
+    /// Retained common-scale and sparse-support fact packet.
+    ///
+    /// The exact-set summary lives only in this packet. Keeping a second copy
+    /// beside it previously inflated every owned shared-scale vector without
+    /// providing any additional evidence.
+    facts: VectorSharedScaleFacts<N>,
 }
 
 impl<const N: usize> SharedScaleVec<N> {
@@ -379,11 +381,7 @@ impl<const N: usize> SharedScaleVec<N> {
         }
         let refs = from_fn(|index| &components[index]);
         let facts = vector_shared_scale_facts(exact, refs);
-        Some(Self {
-            components,
-            exact,
-            facts,
-        })
+        Some(Self { components, facts })
     }
 
     /// Returns the owned coordinates by reference.
@@ -398,8 +396,8 @@ impl<const N: usize> SharedScaleVec<N> {
 
     /// Returns a borrowed shared-scale view over the owned coordinates.
     ///
-    /// The view recomputes conservative masks from the retained coordinates but
-    /// preserves the same scalar abstraction boundary as direct vector views.
+    /// The view reuses the retained exact-set summary and masks without
+    /// rescanning the coordinates.
     pub fn as_view(&self) -> VectorSharedScaleView<'_, N> {
         VectorSharedScaleView {
             components: from_fn(|index| &self.components[index]),
@@ -516,7 +514,7 @@ fn vector_zero_status_masks<const N: usize>(components: [&Real; N]) -> (u128, u1
 
 #[inline]
 fn vector_shared_scale_facts<const N: usize>(
-    exact: ExactRealSetFacts,
+    exact: RealExactSetFacts,
     components: [&Real; N],
 ) -> VectorSharedScaleFacts<N> {
     let (known_zero_mask, known_nonzero_mask, unknown_zero_mask) =
@@ -596,7 +594,7 @@ pub struct Vector2Facts {
     /// to select dyadic or shared-denominator exact kernels without peeking
     /// into `hyperreal::Rational` internals. It is structural metadata only;
     /// topological decisions still belong in `hyperlimit`.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all components.
     ///
     /// This summary lets transform, predicate-preparation, and future solver
@@ -725,7 +723,7 @@ pub struct Vector3Facts {
     /// Zero status for `[x, y, z]` components.
     pub component_zero: [ZeroStatus; 3],
     /// Exact-rational representation facts for the coordinate set.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all components.
     ///
     /// This is structural metadata for algorithm selection only. Incidence,
@@ -785,7 +783,7 @@ pub struct Vector4Facts {
     /// Zero status for `[x, y, z, w]` components.
     pub component_zero: [ZeroStatus; 4],
     /// Exact-rational representation facts for the coordinate set.
-    pub exact: ExactRealSetFacts,
+    pub exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families across all components.
     ///
     /// Homogeneous transform pipelines can use this to keep symbolic constants
@@ -1829,7 +1827,7 @@ impl Vector3 {
     /// The facts are intentionally coarse and storage-free. They let higher
     /// crates carry a common-scale signal while keeping exact determinant and
     /// predicate decisions routed through the appropriate kernel layer.
-    pub fn exact_facts(&self) -> ExactRealSetFacts {
+    pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector3-exact-facts");
         crate::kernels::exact_real_set_facts(self.0.iter())
     }
@@ -2072,7 +2070,7 @@ impl Vector4 {
     /// This is a retained structural fact for projective and affine pipelines:
     /// callers can detect dyadic grids or shared reduced denominators before
     /// choosing a fixed exact schedule, without exposing scalar storage.
-    pub fn exact_facts(&self) -> ExactRealSetFacts {
+    pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_vector", "query", "vector4-exact-facts");
         crate::kernels::exact_real_set_facts(self.0.iter())
     }
