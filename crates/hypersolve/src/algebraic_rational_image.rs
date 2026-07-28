@@ -106,15 +106,7 @@ pub struct AlgebraicRootRationalImageReport {
     pub message: Option<String>,
 }
 
-/// Reusable rational-image transform for expressions with one denominator.
-///
-/// Construction evaluates and retains the denominator at the represented
-/// source root. Each call to [`Self::transform`] evaluates only its numerator,
-/// then follows the same resultant and fallback paths as
-/// [`transform_algebraic_root_rational_image`]. This is useful for projective
-/// coordinate vectors and derivative vectors whose components share a
-/// denominator.
-pub struct AlgebraicRootRationalImageContext<'a> {
+struct RationalImageBatchContext<'a> {
     root: &'a AlgebraicRootRepresentation,
     denominator_coefficients: &'a [Real],
     denominator_evaluation: AlgebraicRootPolynomialEvaluationReport,
@@ -137,9 +129,8 @@ struct DirectRationalMap {
     cleared_coefficients: OnceLock<Option<(Vec<Real>, Vec<Real>)>>,
 }
 
-impl<'a> AlgebraicRootRationalImageContext<'a> {
-    /// Retains one root and denominator for several numerator images.
-    pub fn new(
+impl<'a> RationalImageBatchContext<'a> {
+    fn new(
         root: &'a AlgebraicRootRepresentation,
         denominator_coefficients: &'a [Real],
         policy: PredicatePolicy,
@@ -157,8 +148,7 @@ impl<'a> AlgebraicRootRationalImageContext<'a> {
         }
     }
 
-    /// Constructs exact evidence for one numerator over the retained denominator.
-    pub fn transform(&self, numerator_coefficients: &[Real]) -> AlgebraicRootRationalImageReport {
+    fn transform(&self, numerator_coefficients: &[Real]) -> AlgebraicRootRationalImageReport {
         let evaluation = evaluate_rational_expression_with_denominator_evaluation(
             self.root,
             numerator_coefficients,
@@ -178,6 +168,22 @@ impl<'a> AlgebraicRootRationalImageContext<'a> {
             },
         )
     }
+}
+
+/// Transform several rational expressions with one shared denominator.
+///
+/// The denominator certificate and exact source polynomial are resolved once
+/// inside this completed operation. Every returned element is the same exact
+/// report produced by [`transform_algebraic_root_rational_image`] for the
+/// corresponding numerator.
+pub fn transform_algebraic_root_rational_images<const N: usize>(
+    root: &AlgebraicRootRepresentation,
+    numerator_coefficients: [&[Real]; N],
+    denominator_coefficients: &[Real],
+    policy: PredicatePolicy,
+) -> [AlgebraicRootRationalImageReport; N] {
+    let context = RationalImageBatchContext::new(root, denominator_coefficients, policy);
+    numerator_coefficients.map(|numerator| context.transform(numerator))
 }
 
 /// Reusable rational map for several roots of one source polynomial.
@@ -1194,18 +1200,23 @@ mod tests {
     }
 
     #[test]
-    fn rational_image_context_matches_independent_shared_denominator_transforms() {
+    fn rational_image_batch_matches_independent_shared_denominator_transforms() {
         let root = sqrt_two_positive();
         let denominator = [real(3), Real::one()];
         let numerators = [
             [real(1), real(2), Real::one()],
             [real(-2), Real::one(), Real::one()],
         ];
-        let context = AlgebraicRootRationalImageContext::new(&root, &denominator, PredicatePolicy);
+        let reports = transform_algebraic_root_rational_images(
+            &root,
+            [&numerators[0], &numerators[1]],
+            &denominator,
+            PredicatePolicy,
+        );
 
-        for numerator in numerators {
+        for (report, numerator) in reports.into_iter().zip(numerators) {
             assert_eq!(
-                context.transform(&numerator),
+                report,
                 transform_algebraic_root_rational_image(
                     &root,
                     &numerator,

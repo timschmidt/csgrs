@@ -102,9 +102,9 @@ pub use algebraic_polynomial_image::{
     transform_algebraic_root_polynomial_image,
 };
 pub use algebraic_rational_image::{
-    AlgebraicRootRationalImageContext, AlgebraicRootRationalImageReport,
-    AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
+    AlgebraicRootRationalImageReport, AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
     transform_algebraic_root_rational_image, transform_algebraic_root_rational_image_in_interval,
+    transform_algebraic_root_rational_images,
 };
 pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,

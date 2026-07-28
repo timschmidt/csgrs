@@ -98,14 +98,20 @@ assembly and replay moved from 658.98 ns to 653.20 ns (-0.99%, within
 Criterion's noise threshold, 95% interval -1.40% to -0.60%). The retained
 benchmark is now `sparse_linear_batch_replay`.
 
-## Rational-image context API gate
+## Rational-image API gate
 
-Reusable algebraic transforms now describe their retained mathematical role:
-`AlgebraicRootRationalImageContext` shares one denominator evaluation across
-several numerator images, and `AlgebraicRootRationalMap` shares one exact map
-across roots of its source polynomial. The immediate
+`transform_algebraic_root_rational_images` immediately transforms several
+numerators over one denominator while sharing its exact evaluation and source
+polynomial internally. `AlgebraicRootRationalMap` remains a retained
+mathematical map because its exact elimination is reused across independently
+discovered roots of the same source polynomial. The singular
 `transform_algebraic_root_rational_image` functions remain the ordinary
-one-shot surface.
+one-expression surface.
+
+Three serialized downstream runs gated removal of the former public
+shared-denominator context. HyperCurve's 20,000-iteration rational Bezier
+algebraic point-and-tangent image sentinel moved from a 6.132 us median to
+6.123 us (-0.15%), with all 40,000 expected coordinate images transformed.
 
 Serialized 100-sample comparisons found no regression. The small immediate
 rational image moved from 5.0899 us to 5.0823 us (Criterion change -0.32%,
@@ -487,7 +493,7 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,899 coverage points and 19,166 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
-### Shared-denominator rational-image context
+### Shared-denominator rational-image reuse
 
 Projective point and derivative coordinates transform several rational
 expressions at the same represented root with one homogeneous denominator.
@@ -495,15 +501,15 @@ Independent calls formerly repeated the denominator polynomial evaluation and
 the source-polynomial rational-to-primitive-integer conversion before building
 each coordinate's distinct exact resultant.
 
-`AlgebraicRootRationalImageContext` evaluates and retains the denominator
-certificate once. Its sequential `transform` calls preserve the complete
-per-coordinate reports and existing short-circuit boundary, while lazily
-converting and retaining the common source polynomial only when the direct
-resultant route reaches that stage. Numerator evaluation, rational-map
-monotonicity proof, coordinate-specific resultant, isolating interval, fallback
-images, validation, and uncertainty statuses remain unchanged. A direct
-prepared-versus-independent report equality regression covers two nonlinear
-numerators over one denominator.
+The immediate `transform_algebraic_root_rational_images` operation evaluates
+and retains the denominator certificate only for the duration of one completed
+batch. It preserves complete per-coordinate reports while lazily converting
+and sharing the common source polynomial only when the direct resultant route
+reaches that stage. Numerator evaluation, rational-map monotonicity proof,
+coordinate-specific resultant, isolating interval, fallback images,
+validation, and uncertainty statuses remain unchanged. A batch-versus-
+independent report equality regression covers two nonlinear numerators over
+one denominator.
 
 On the downstream one-cell all-family exact Boolean sentinel, reuse by
 Hypercurve's rational point and derivative images reduced the rounded ten-run
