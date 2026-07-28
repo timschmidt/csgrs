@@ -8,6 +8,24 @@ not portable absolute promises.
 
 ## Retained changes
 
+### Immediate runtime triangulation reports
+
+Runtime algorithm selection formerly exposed `plan_polygon_triangulation`,
+which cloned polygon facts into a public plan before callers separately invoked
+`triangulate_polygon`. Runtime selection now stays inside the immediate
+operation: `triangulate_polygon` returns only triangles, while
+`triangulate_polygon_with_report` returns the triangles and the selected
+algorithm, quality policy, and input facts together.
+
+The stable runtime rows use the same five-vertex rational spike and were
+collected serially with all algorithms and runtime selection enabled:
+
+| benchmark | plan API | immediate API | result |
+| --- | ---: | ---: | ---: |
+| `runtime_polygon_triangulation` | 2.683 µs | 2.650 µs | 1.2% faster |
+| `runtime_polygon_triangulation_report` | 2.805 µs | 2.685 µs | 4.3% faster |
+| `exact_rational_spike_earcut` control | 2.694 µs | 2.662 µs | 1.2% faster |
+
 ### Opt-in BRIO-style batch insertion
 
 Amenta, Choi, and Rote show that biased randomized insertion orders preserve

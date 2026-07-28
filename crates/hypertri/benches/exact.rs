@@ -1,4 +1,4 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hypertri::{Constraint, Point2, Rational, Real};
 
 fn r(value: i64) -> Real {
@@ -24,6 +24,24 @@ fn bench_exact_triangulation(c: &mut Criterion) {
 
     c.bench_function("exact_rational_spike_earcut", |b| {
         b.iter(|| hypertri::earcut(&rational_spike, &[]).unwrap())
+    });
+
+    let runtime_polygon = hypertri::PolygonInput::new(rational_spike.clone(), Vec::new());
+    let runtime_options = hypertri::TriangulationOptions::default();
+    c.bench_function("runtime_polygon_triangulation", |b| {
+        b.iter(|| {
+            hypertri::triangulate_polygon(black_box(&runtime_polygon), black_box(runtime_options))
+                .unwrap()
+        })
+    });
+    c.bench_function("runtime_polygon_triangulation_report", |b| {
+        b.iter(|| {
+            hypertri::triangulate_polygon_with_report(
+                black_box(&runtime_polygon),
+                black_box(runtime_options),
+            )
+            .unwrap()
+        })
     });
 
     c.bench_function("exact_rational_spike_earcut_diagnostics", |b| {

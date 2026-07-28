@@ -46,8 +46,9 @@ APIs.
 - `TriangulationDataStructureD`, its stable vertex/cell/facet handles, and the
   combinatorial, manifold, and geometric validation reports provide the dynamic
   D-dimensional storage layer.
-- `TriangulationOptions`, `PolygonTriangulationAlgorithm`, `QualityPolicy`, and
-  `PolygonTriangulationPlan` describe runtime selection when enabled.
+- `TriangulationOptions`, `PolygonTriangulationAlgorithm`, and `QualityPolicy`
+  configure runtime selection; `triangulate_polygon_with_report` returns the
+  selected algorithm and input facts alongside the triangles.
 - Optional `f64` entry points are boundary adapters that reject non-finite coordinates
   and exact-lift finite values.
 
@@ -103,8 +104,8 @@ Implemented today:
 - topology validation, local constrained-Delaunay validation, property tests, fuzz
   targets including exact D-dimensional flip round trips, and benchmarks.
 
-Known limits: prepared polygon schedules and DCEL storage are still future performance
-work. The accepted topology contract is exact and validation-heavy by design.
+Known limits: persistent DCEL storage is still future performance work. The accepted
+topology contract is exact and validation-heavy by design.
 
 ## Installation
 
@@ -218,7 +219,7 @@ cargo run --example cdt --features cdt
 cargo run --example nd --features nd
 cargo bench --bench earcut --features earcut,f64-interop
 cargo bench --bench delaunay --features cdt,f64-interop
-cargo bench --bench exact --features all-algorithms
+cargo bench --bench exact --features all-algorithms,runtime-select
 ```
 
 ## References

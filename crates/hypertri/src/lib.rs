@@ -41,8 +41,8 @@ pub use nd::{
 };
 #[cfg(feature = "runtime-select")]
 pub use runtime::{
-    PolygonTriangulationAlgorithm, PolygonTriangulationPlan, QualityPolicy, TriangulationOptions,
-    plan_polygon_triangulation, triangulate_polygon,
+    PolygonTriangulationAlgorithm, PolygonTriangulationReport, QualityPolicy, TriangulationOptions,
+    triangulate_polygon, triangulate_polygon_with_report,
 };
 pub use types::{
     Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real, RingConvexity,

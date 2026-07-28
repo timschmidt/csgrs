@@ -45,55 +45,20 @@ impl Default for TriangulationOptions {
     }
 }
 
-/// Resolved runtime plan for one polygon triangulation request.
+/// Runtime selection report for one completed polygon triangulation.
 ///
-/// The plan is intentionally a lightweight value rather than a prepared
-/// triangulation cache. It records the selected algorithm together with the
-/// structural polygon facts that justified selection, giving callers and future
-/// dispatch code a stable place to retain cheap exact information. These facts
-/// are advisory scheduling metadata only; exact predicates inside the selected
-/// algorithm remain the topology certificates.
+/// The report records the selected algorithm together with the structural
+/// polygon facts that justified selection. These facts are advisory scheduling
+/// metadata only; exact predicates inside the selected algorithm remain the
+/// topology certificates.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PolygonTriangulationPlan {
-    algorithm: PolygonTriangulationAlgorithm,
-    quality: QualityPolicy,
-    facts: PolygonInputFacts,
-}
-
-impl PolygonTriangulationPlan {
-    /// Return the algorithm selected for this input.
-    pub const fn algorithm(&self) -> PolygonTriangulationAlgorithm {
-        self.algorithm
-    }
-
-    /// Return the quality preference that participated in selection.
-    pub const fn quality(&self) -> QualityPolicy {
-        self.quality
-    }
-
-    /// Return the retained structural facts for the planned input.
-    pub const fn facts(&self) -> &PolygonInputFacts {
-        &self.facts
-    }
-}
-
-/// Resolve the runtime plan for a polygon input without executing it.
-///
-/// This is the semantic handoff point for future inexpensive structure such as
-/// convexity, monotone-ring status, duplicate/collinear cleanup counts, source
-/// grid denominator, and constraint density. Those facts belong with
-/// [`PolygonInputFacts`] or a later prepared polygon type, not inside earcut or
-/// CDT internals.
-pub fn plan_polygon_triangulation(
-    input: &PolygonInput,
-    options: TriangulationOptions,
-) -> Result<PolygonTriangulationPlan> {
-    let algorithm = resolve_algorithm_for_facts(options, input.facts())?;
-    Ok(PolygonTriangulationPlan {
-        algorithm,
-        quality: options.quality,
-        facts: input.facts().clone(),
-    })
+pub struct PolygonTriangulationReport {
+    /// Algorithm selected for the completed triangulation.
+    pub algorithm: PolygonTriangulationAlgorithm,
+    /// Quality preference that participated in selection.
+    pub quality: QualityPolicy,
+    /// Structural facts used during runtime selection.
+    pub facts: PolygonInputFacts,
 }
 
 /// Triangulate a polygon using runtime algorithm selection.
@@ -101,12 +66,23 @@ pub fn triangulate_polygon(
     input: &PolygonInput,
     options: TriangulationOptions,
 ) -> Result<TriangleIndices> {
-    let plan = plan_polygon_triangulation(input, options)?;
-    triangulate_polygon_points_with_algorithm(
-        input.vertices(),
-        input.hole_indices(),
-        plan.algorithm,
-    )
+    triangulate_polygon_selected(input, options).map(|(triangles, _)| triangles)
+}
+
+/// Triangulate a polygon and report the runtime selection facts.
+pub fn triangulate_polygon_with_report(
+    input: &PolygonInput,
+    options: TriangulationOptions,
+) -> Result<(TriangleIndices, PolygonTriangulationReport)> {
+    let (triangles, algorithm) = triangulate_polygon_selected(input, options)?;
+    Ok((
+        triangles,
+        PolygonTriangulationReport {
+            algorithm,
+            quality: options.quality,
+            facts: input.facts().clone(),
+        },
+    ))
 }
 
 /// Triangulate borrowed polygon buffers using runtime algorithm selection.
@@ -120,6 +96,19 @@ pub fn triangulate_polygon_points(
 
     let algorithm = resolve_algorithm(options)?;
     triangulate_polygon_points_with_algorithm(vertices, hole_indices, algorithm)
+}
+
+fn triangulate_polygon_selected(
+    input: &PolygonInput,
+    options: TriangulationOptions,
+) -> Result<(TriangleIndices, PolygonTriangulationAlgorithm)> {
+    let algorithm = resolve_algorithm_for_facts(options, input.facts())?;
+    let triangles = triangulate_polygon_points_with_algorithm(
+        input.vertices(),
+        input.hole_indices(),
+        algorithm,
+    )?;
+    Ok((triangles, algorithm))
 }
 
 fn triangulate_polygon_points_with_algorithm(

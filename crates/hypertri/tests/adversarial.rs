@@ -649,18 +649,17 @@ fn exact_earcut_hole_bridge_uses_exact_visibility() {
 fn runtime_auto_uses_compiled_boundary_preserving_path() {
     let input = hypertri::PolygonInput::new(vec![p(0, 0), p(1, 0), p(1, 1), p(0, 1)], vec![]);
 
-    let plan =
-        hypertri::plan_polygon_triangulation(&input, hypertri::TriangulationOptions::default())
-            .unwrap();
+    let (triangles, report) = hypertri::triangulate_polygon_with_report(
+        &input,
+        hypertri::TriangulationOptions::default(),
+    )
+    .unwrap();
     assert_eq!(
-        plan.algorithm(),
+        report.algorithm,
         hypertri::PolygonTriangulationAlgorithm::Earcut
     );
-    assert_eq!(plan.facts(), input.facts());
-    assert!(plan.facts().all_coordinates_exact_rational());
-
-    let triangles =
-        hypertri::triangulate_polygon(&input, hypertri::TriangulationOptions::default()).unwrap();
+    assert_eq!(&report.facts, input.facts());
+    assert!(report.facts.all_coordinates_exact_rational());
 
     assert_eq!(triangles.len(), 6);
 }
@@ -674,14 +673,12 @@ fn runtime_can_choose_cdt_polygon_path_explicitly() {
         quality: hypertri::QualityPolicy::PreferDelaunay,
     };
 
-    let plan = hypertri::plan_polygon_triangulation(&input, options).unwrap();
+    let (triangles, report) = hypertri::triangulate_polygon_with_report(&input, options).unwrap();
     assert_eq!(
-        plan.algorithm(),
+        report.algorithm,
         hypertri::PolygonTriangulationAlgorithm::ConstrainedDelaunay
     );
-    assert_eq!(plan.quality(), hypertri::QualityPolicy::PreferDelaunay);
-
-    let triangles = hypertri::triangulate_polygon(&input, options).unwrap();
+    assert_eq!(report.quality, hypertri::QualityPolicy::PreferDelaunay);
 
     assert_eq!(triangles.len(), 6);
 }
@@ -696,14 +693,14 @@ fn runtime_auto_uses_polygon_facts_to_avoid_cdt_on_degenerate_ring_edges() {
         quality: hypertri::QualityPolicy::PreferDelaunay,
     };
 
-    let plan = hypertri::plan_polygon_triangulation(&input, options).unwrap();
+    let (_, report) = hypertri::triangulate_polygon_with_report(&input, options).unwrap();
 
     assert_eq!(input.facts().known_degenerate_edge_count(), 1);
     assert_eq!(
-        plan.algorithm(),
+        report.algorithm,
         hypertri::PolygonTriangulationAlgorithm::Earcut
     );
-    assert_eq!(plan.facts(), input.facts());
+    assert_eq!(&report.facts, input.facts());
 }
 
 #[cfg(all(feature = "runtime-select", feature = "cdt", feature = "earcut"))]
