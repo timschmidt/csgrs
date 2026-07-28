@@ -291,11 +291,6 @@ impl RationalBezierIntersectionTopology2 {
         &self.data.second
     }
 
-    /// Returns whether arrangement assembly has already been retained.
-    pub fn is_arrangement_cached(&self) -> bool {
-        self.data.arrangement.get().is_some()
-    }
-
     /// Builds an arrangement graph once and returns a clone-shared fact view.
     pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {
         match self.data.arrangement.get_or_init(|| {
@@ -609,20 +604,6 @@ impl RationalBezier2 {
     /// Returns the exact parameter range in the root curve's source domain.
     pub fn source_parameter_range(&self) -> &ParamRange {
         &self.data.lineage.range
-    }
-
-    /// Returns whether elevation to `target_degree` has already been retained.
-    pub fn is_degree_elevation_cached(&self, target_degree: usize) -> bool {
-        if target_degree == self.degree() {
-            return true;
-        }
-        let Some(offset) = target_degree.checked_sub(self.degree()) else {
-            return false;
-        };
-        self.data
-            .degree_elevations
-            .get()
-            .is_some_and(|elevations| elevations.borrow().len() >= offset)
     }
 
     /// Elevates this rational Bezier exactly to `target_degree`.

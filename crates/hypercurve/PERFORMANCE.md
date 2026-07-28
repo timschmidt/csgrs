@@ -6005,6 +6005,20 @@ and 16.966--17.371 ms after. Refined ordering overlapped at
 images improved from 2.559--2.772 us to 2.518--2.634 us. Every checksum was
 unchanged.
 
+### Rational-operation cache-state boundary
+
+Completed rational-Bezier topology and degree-elevation carriers now expose
+their arrangement and elevated curves directly, without public
+`is_*_cached` probes. Repeated views, owned arrangements, elevated curves, and
+retained failure results remain clone-shared and are tested by value.
+
+Serialized isolated pre-change/candidate binaries measured the immediate
+topology workflow at 99.628/95.708 us, cold degree elevation at
+25.614/25.340 us per curve, and 100,000 retained elevations at
+652.916/513.835 us. The full rational benchmark kept every checksum unchanged;
+the two additional candidate runs also placed topology and cold elevation
+within their observed pre-change variation.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

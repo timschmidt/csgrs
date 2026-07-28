@@ -911,9 +911,8 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
                 BezierSplitFragment2::AlgebraicEndpointImages { .. }
             ))
     );
-    assert!(!topology.is_arrangement_cached());
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
-    assert!(topology.is_arrangement_cached());
+    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
     assert_eq!(topology.arrangement_graph().unwrap().len(), 4);
 
     let split = decided(
@@ -1351,7 +1350,6 @@ fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
 fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_lineage() {
     let curve = curve();
     let clone = curve.clone();
-    assert!(!curve.is_degree_elevation_cached(5));
 
     let elevated = curve.elevated_to_degree(5).unwrap();
     assert_eq!(elevated.degree(), 5);
@@ -1365,8 +1363,6 @@ fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_line
             curve.point_at(&parameter, &CurvePolicy::certified())
         );
     }
-    assert!(clone.is_degree_elevation_cached(4));
-    assert!(clone.is_degree_elevation_cached(5));
     assert_eq!(clone.elevated_to_degree(5).unwrap(), elevated);
     assert_eq!(
         elevated.source_parameter_range(),
@@ -1382,11 +1378,12 @@ fn rational_bezier_degree_elevation_evidence_invalid_target_and_zero_projective_
     assert_eq!(invalid.family(), CurveFamily2::RationalBezier);
 
     let singular = RationalBezier2::try_new(vec![p(0, 0), p(2, 0)], vec![r(1), r(-1)]).unwrap();
+    let first = singular.elevated_to_degree(2);
     assert!(matches!(
-        singular.elevated_to_degree(2),
+        &first,
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::DegreeElevation
                 && blocker.family() == CurveFamily2::RationalBezier
     ));
-    assert!(singular.is_degree_elevation_cached(2));
+    assert_eq!(singular.elevated_to_degree(2), first);
 }
