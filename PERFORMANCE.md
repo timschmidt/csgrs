@@ -1,7 +1,7 @@
 # Reference-Guided Performance Notes
 
 These measurements retain only changes that preserve exact rows, output size,
-and benchmark checksums. They were collected on 15, 17, 18, and 20 July 2026 with
+and benchmark checksums. They were collected on 15, 17, 18, 20, and 28 July 2026 with
 the release benchmark profile. Times are medians after two warmup batches.
 
 | Workload | Before | After | Change | Preserved evidence |
@@ -142,6 +142,14 @@ Three warm release samples of the overlapping-box sentinel measured
 polygons/corners and the same checksum in every sample. The certified
 axis-aligned-box shortcuts dominate that fixture; non-box workloads remain
 covered by the direct HyperMesh triangle-soup path.
+
+Matrix transforms now use Hyperlattice's immediate scalar and batch APIs; no
+caller-managed matrix cache, prepared divisor, or transform handle remains.
+The retained-layout path batches point and normal rows so structural facts are
+computed once inside each operation. The serialized
+`kernel/affine_transform/sphere_shear` gate moved from 208.278 us/op to
+206.997 us/op (0.62% faster), with all 960 output coordinates and checksum
+`5925854529696364912` unchanged.
 
 Cold HyperMesh output materialization now appends all triangle vertices to one
 preallocated buffer and gives each CSGRS polygon an exact shared range. Source
