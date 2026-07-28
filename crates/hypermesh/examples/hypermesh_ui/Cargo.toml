@@ -5,12 +5,8 @@ edition = "2024"
 publish = false
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hypermesh = { path = "../.." }
-# hypermesh = { version = "0.1.0" }
-hypergraphics = { path = "../../../hypergraphics" }
-# hypergraphics = { version = "0.1.0" }
+hypermesh = { version = "0.1.0", path = "../.." }
+hypergraphics = { version = "0.1.0", path = "../../../hypergraphics" }
 eframe = { version = "0.33.0", default-features = false, features = [
     "accesskit",
     "default_fonts",
