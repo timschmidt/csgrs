@@ -10,6 +10,7 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 
 | Benchmark | Baseline estimate | Retained estimate | Change |
 | --- | ---: | ---: | ---: |
+| `region_aggregate` | 663.3 ns | 537.0 ns | 19.0% faster |
 | `manhattan_distance_preview_32_cube_512_sources` | 5.170 ms | 0.908 ms | 82.4% faster |
 | `semantic_connected_component` | 227.1 µs | 95.8 µs | 57.8% faster |
 | `address_ray_trace` | 216.7 ns | 166.3 ns | 23.3% faster |
@@ -18,6 +19,12 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 | `exact_exposed_face_extraction_report` | 467.4 µs | 432.6 µs | 7.4% faster |
 
 ## Retained Changes
+
+Sparse-grid queries are now inherent operations on `SparseVoxelGrid`; they no
+longer require a wrapper that duplicates the grid frame and aggregate. Region
+aggregation also streams matching cells directly into the fact accumulator
+instead of first collecting a temporary vector. The retained benchmark uses
+the same populated depth-eight grid and query region as the prepared baseline.
 
 The exact Manhattan transform already used six linear relaxations. Result
 assembly nevertheless inserted every sample into a `BTreeMap` and then queried

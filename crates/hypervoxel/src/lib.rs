@@ -120,11 +120,11 @@ pub use path::{
 };
 pub use query::{
     AabbBroadPhaseCandidate, AabbBroadPhaseQuery, ConnectedComponentQuery, ManhattanDistanceBand,
-    NeighborQuery, OccupancyQuery, PreparedSparseVoxelGridExt, QueryRegion, voxel_neighbors6,
+    NeighborQuery, OccupancyQuery, QueryRegion, voxel_neighbors6,
 };
 pub use report::{
-    BoundaryPolicy, PreparedVoxelGrid, QuantizationPolicy, VoxelPredicateCertificateReport,
-    VoxelizationPolicy, VoxelizationReport,
+    BoundaryPolicy, QuantizationPolicy, VoxelPredicateCertificateReport, VoxelizationPolicy,
+    VoxelizationReport,
 };
 pub use serialize::{DeterministicSnapshot, SnapshotFormat};
 pub use side_table::{

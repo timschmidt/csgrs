@@ -3,9 +3,9 @@ use hypervoxel::{
     AddressRay, AggregateCertainty, AxisPermutationTransform, CellBounds, CertifiedFieldInterval,
     CertifiedTensorInterval, CertifiedVectorInterval, ChunkPagedSparseGrid, ChunkShape,
     ExactAffineTransform, FieldAggregateFacts, FieldEnvelopeFacts, FieldSampleId,
-    FieldSampleRecord, GridFrame, HypervoxelError, MaterialRegionId, PreparedVoxelGrid, SignedAxis,
-    SparseVoxelGrid, SupportCellStatus, SupportDirection, VoxelAddress, VoxelCell, VoxelEditBatch,
-    VoxelSideTables, classify_chunk_paged_support_mask, classify_support_mask, query_field_samples,
+    FieldSampleRecord, GridFrame, HypervoxelError, MaterialRegionId, SignedAxis, SparseVoxelGrid,
+    SupportCellStatus, SupportDirection, VoxelAddress, VoxelCell, VoxelEditBatch, VoxelSideTables,
+    classify_chunk_paged_support_mask, classify_support_mask, query_field_samples,
     sweep_address_segment, trace_address_ray, trace_address_segment,
 };
 
@@ -227,12 +227,10 @@ fn address_segment_sweep_samples_cells_and_conservative_aggregate() {
         )
         .unwrap();
     }
-    let aggregate = grid.stored_aggregate();
-    let prepared = PreparedVoxelGrid::new(frame(), grid, aggregate);
     let start = VoxelAddress::new(3, [1, 1, 1]).unwrap();
     let end = VoxelAddress::new(3, [3, 1, 1]).unwrap();
 
-    let sweep = sweep_address_segment(&prepared, start, end).unwrap();
+    let sweep = sweep_address_segment(&grid, start, end).unwrap();
     assert_eq!(sweep.trace.addresses.len(), 3);
     assert!(sweep.trace.exact_address_trace_ready);
     assert!(sweep.trace.reached_end);

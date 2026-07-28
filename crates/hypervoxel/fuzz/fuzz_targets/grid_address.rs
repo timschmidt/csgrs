@@ -3,8 +3,8 @@
 use hyperreal::Real;
 use hypervoxel::{
     ChunkPagedSparseGrid, ChunkShape, ContinuousFieldVoxelBatch, ContinuousFieldVoxelCell,
-    ExactBox, GridFrame, MaterialRegionId, PreparedSparseVoxelGridExt, PreparedVoxelGrid,
-    SparseVoxelGrid, SvoVoxelGrid, VoxelAddress, VoxelCell, VoxelEditBatch, VoxelizationPolicy,
+    ExactBox, GridFrame, MaterialRegionId, SparseVoxelGrid, SvoVoxelGrid, VoxelAddress, VoxelCell,
+    VoxelEditBatch, VoxelizationPolicy,
     continuous_field_address, exact_voxel_surface_triangle_mesh_from_faces,
     extract_chunk_paged_exposed_faces, extract_exposed_faces, greedy_face_patch_plan,
     lossy_quad_mesh_from_faces, voxelize_exact_box,
@@ -46,10 +46,9 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     assert_eq!(svo.get(address).unwrap(), material);
     assert_eq!(svo.to_sparse_grid().unwrap(), sparse);
 
-    let prepared = PreparedVoxelGrid::new(frame.clone(), sparse.clone(), sparse.stored_aggregate());
-    assert_eq!(prepared.query_occupancy(address).unwrap().cell, material);
+    assert_eq!(sparse.query_occupancy(address).unwrap().cell, material);
     assert!(
-        prepared
+        sparse
             .query_connected_component(address)
             .unwrap()
             .addresses
@@ -99,7 +98,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     }
     .materialize_exact_sparse_grid()
     .unwrap();
-    assert_eq!(intake.storage.len() as u64, intake_cells.pow(3));
+    assert_eq!(intake.len() as u64, intake_cells.pow(3));
 
     let voxel_depth = (depth_raw % 3) + 2;
     let voxel_frame = GridFrame::builder().depth(voxel_depth).build().unwrap();

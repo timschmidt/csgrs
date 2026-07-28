@@ -38,11 +38,10 @@ pub struct ExactVoxelSurfaceTriangleMesh {
 /// Builds an exact indexed triangle mesh from audited voxel faces.
 ///
 /// Each exact voxel quad is split deterministically into two indexed
-/// triangles. The function first runs
-/// [`audit_exact_voxel_surface_topology`]; if the face set is empty, mixed
-/// depth, duplicate, open, degenerate, or nonmanifold, no triangles are
-/// emitted and the report records the topology blockers. This keeps exact
-/// mesh handoff separate from preview mesh repair or display triangulation.
+/// triangles. The function first validates the surface topology; if the face
+/// set is empty, mixed depth, duplicate, open, degenerate, or nonmanifold, it
+/// returns an error without emitting triangles. This keeps exact mesh handoff
+/// separate from preview mesh repair or display triangulation.
 pub fn exact_voxel_surface_triangle_mesh_from_faces(
     faces: &[ExactVoxelFace],
 ) -> HypervoxelResult<ExactVoxelSurfaceTriangleMesh> {

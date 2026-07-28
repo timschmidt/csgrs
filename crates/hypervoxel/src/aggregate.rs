@@ -27,7 +27,7 @@ pub enum AggregateCertainty {
     Lossy,
 }
 
-/// Conservative facts for a parent or prepared grid.
+/// Conservative facts for a parent or voxel grid.
 #[derive(Clone, Debug, PartialEq)]
 pub struct VoxelAggregateFacts {
     /// Number of children represented by this aggregate.

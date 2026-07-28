@@ -2,11 +2,10 @@ use hyperlimit::Aabb3Intersection;
 use hyperreal::{Rational, Real};
 use hypervoxel::{
     BoundaryPolicy, ExactAabb3, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, GridFrame,
-    HypervoxelError, MaterialRegionId, OccupancyState, PreparedSparseVoxelGridExt,
-    PreparedVoxelGrid, QuantizationPolicy, QueryRegion, SparseVoxelGrid, VoxelAddress, VoxelCell,
-    VoxelPayload, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
-    extract_exposed_faces, greedy_face_patch_plan, lossy_obj_from_quad_mesh,
-    lossy_quad_mesh_from_faces, voxel_neighbors6, voxelize_exact_box,
+    HypervoxelError, MaterialRegionId, OccupancyState, QuantizationPolicy, QueryRegion,
+    SparseVoxelGrid, VoxelAddress, VoxelCell, VoxelPayload, VoxelizationPolicy,
+    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces, greedy_face_patch_plan,
+    lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
 
@@ -168,31 +167,31 @@ fn boundary_as_unknown_keeps_uncertainty_explicit() {
     );
 }
 
-fn prepared_box() -> PreparedVoxelGrid<SparseVoxelGrid> {
+fn voxelized_box() -> SparseVoxelGrid {
     let exact_box = ExactBox::new([r(1), r(1), r(1)], [r(3), r(3), r(3)]);
-    let (grid, report) = voxelize_exact_box(
+    let (grid, _) = voxelize_exact_box(
         frame(),
         &exact_box,
         MaterialRegionId(4),
         VoxelizationPolicy::conservative_cover(),
     )
     .unwrap();
-    PreparedVoxelGrid::new(report.frame, grid, report.aggregate)
+    grid
 }
 
 #[test]
-fn prepared_queries_use_direct_grid_evidence() {
-    let prepared = prepared_box();
+fn grid_queries_use_direct_evidence() {
+    let grid = voxelized_box();
     let region = QueryRegion {
         min: [1, 1, 1],
         max: [2, 2, 2],
         depth: 2,
     };
-    let aggregate = prepared.query_region_aggregate(&region).unwrap();
+    let aggregate = grid.query_region_aggregate(&region);
     assert_eq!(aggregate.child_count, 8);
     assert!(aggregate.all_filled);
 
-    let broad_phase = prepared
+    let broad_phase = grid
         .query_aabb_broad_phase(&ExactAabb3 {
             min: [r(0), r(0), r(0)],
             max: [r(1), r(1), r(1)],
@@ -220,8 +219,8 @@ fn exact_cell_center_and_corners_remain_rational() {
 
 #[test]
 fn exposed_faces_feed_direct_lossy_and_exact_mesh_paths() {
-    let prepared = prepared_box();
-    let faces = extract_exposed_faces(&prepared.storage).unwrap();
+    let grid = voxelized_box();
+    let faces = extract_exposed_faces(&grid).unwrap();
     assert_eq!(faces.len(), 24);
     assert!(faces.iter().all(|face| face.cell_bounds.extent(0) == r(1)));
 
@@ -240,7 +239,7 @@ fn exposed_faces_feed_direct_lossy_and_exact_mesh_paths() {
     assert_eq!(exact.triangles.len(), 48);
     assert!(!exact.vertices.is_empty());
 
-    let mut uncertain = prepared.storage.clone();
+    let mut uncertain = grid.clone();
     uncertain
         .set(
             VoxelAddress::new(2, [1, 1, 1]).unwrap(),
@@ -251,19 +250,19 @@ fn exposed_faces_feed_direct_lossy_and_exact_mesh_paths() {
 }
 
 #[test]
-fn prepared_connectivity_stays_in_integer_grid_space() {
-    let prepared = prepared_box();
+fn grid_connectivity_stays_in_integer_grid_space() {
+    let grid = voxelized_box();
     let seed = VoxelAddress::new(2, [1, 1, 1]).unwrap();
 
     assert_eq!(
         voxel_neighbors6(VoxelAddress::new(2, [0, 0, 0]).unwrap()).len(),
         3
     );
-    assert_eq!(prepared.query_neighbors6(seed).neighbors.len(), 6);
-    let component = prepared.query_connected_component(seed).unwrap();
+    assert_eq!(grid.query_neighbors6(seed).neighbors.len(), 6);
+    let component = grid.query_connected_component(seed).unwrap();
     assert_eq!(component.addresses.len(), 8);
     assert!(component.exact_component_ready);
-    let band = prepared.query_manhattan_band(seed, 1).unwrap();
+    let band = grid.query_manhattan_band(seed, 1).unwrap();
     assert_eq!(band.distances.len(), 4);
     assert_eq!(band.distances[&seed], 0);
 }

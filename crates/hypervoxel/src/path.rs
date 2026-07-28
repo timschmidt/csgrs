@@ -8,8 +8,8 @@
 //! explicitly selected.
 
 use crate::{
-    HypervoxelError, HypervoxelResult, PreparedVoxelGrid, SparseVoxelGrid, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell,
+    HypervoxelError, HypervoxelResult, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
+    VoxelCell,
 };
 
 /// Deterministic address-space segment trace.
@@ -121,7 +121,7 @@ pub fn trace_address_segment(
 
 /// Sweeps through explicitly stored sparse cells along an address-space segment.
 pub fn sweep_address_segment(
-    prepared: &PreparedVoxelGrid<SparseVoxelGrid>,
+    grid: &SparseVoxelGrid,
     start: VoxelAddress,
     end: VoxelAddress,
 ) -> HypervoxelResult<SegmentSweepQuery> {
@@ -129,7 +129,7 @@ pub fn sweep_address_segment(
     let cells = trace
         .addresses
         .iter()
-        .map(|address| prepared.storage.get(*address))
+        .map(|address| grid.get(*address))
         .collect::<HypervoxelResult<Vec<_>>>()?;
     let aggregate = VoxelAggregateFacts::from_cells(cells.iter());
     Ok(SegmentSweepQuery {

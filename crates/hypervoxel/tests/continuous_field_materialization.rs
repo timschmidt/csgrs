@@ -31,12 +31,12 @@ fn batch(frame: GridFrame, cells: Vec<ContinuousFieldVoxelCell>) -> ContinuousFi
 #[test]
 fn exact_continuous_field_rows_materialize_a_complete_cover() {
     let frame = frame(2);
-    let prepared = batch(frame.clone(), full_rows(&frame))
+    let grid = batch(frame.clone(), full_rows(&frame))
         .materialize_exact_sparse_grid()
         .unwrap();
 
-    assert_eq!(prepared.storage.frame(), &frame);
-    assert_eq!(prepared.storage.len(), 64);
+    assert_eq!(grid.frame(), &frame);
+    assert_eq!(grid.len(), 64);
 }
 
 #[test]

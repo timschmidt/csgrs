@@ -1,10 +1,9 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    ExactBox, GridFrame, MaterialRegionId, PreparedSparseVoxelGridExt, PreparedVoxelGrid,
-    QueryRegion, SparseVoxelGrid, SvoVoxelGrid, VoxelAddress, VoxelCell, VoxelizationPolicy,
-    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces,
-    lossy_quad_mesh_from_faces, voxelize_exact_box,
+    ExactBox, GridFrame, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid,
+    VoxelAddress, VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
+    extract_exposed_faces, lossy_quad_mesh_from_faces, voxelize_exact_box,
 };
 
 fn r(n: i32) -> Real {
@@ -114,17 +113,15 @@ fn bench_surface_paths(c: &mut Criterion) {
     });
 }
 
-fn bench_prepared_queries(c: &mut Criterion) {
+fn bench_grid_queries(c: &mut Criterion) {
     let grid = populated_sparse_grid(8);
-    let aggregate = grid.stored_aggregate();
-    let prepared = PreparedVoxelGrid::new(grid.frame().clone(), grid, aggregate);
     let region = QueryRegion {
         min: [0, 0, 0],
         max: [127, 127, 127],
         depth: 8,
     };
-    c.bench_function("prepared_region_aggregate", |b| {
-        b.iter(|| prepared.query_region_aggregate(black_box(&region)).unwrap())
+    c.bench_function("region_aggregate", |b| {
+        b.iter(|| grid.query_region_aggregate(black_box(&region)))
     });
 }
 
@@ -166,7 +163,7 @@ criterion_group!(
     bench_exact_box_voxelization,
     bench_svo_compaction_and_expansion,
     bench_surface_paths,
-    bench_prepared_queries,
+    bench_grid_queries,
     bench_hypermesh_exact_adapter,
 );
 criterion_main!(benches);

@@ -8,8 +8,8 @@
 use std::collections::BTreeSet;
 
 use crate::{
-    GridFrame, HypervoxelError, HypervoxelResult, OccupancyState, PreparedVoxelGrid,
-    SparseVoxelGrid, VoxelAddress, VoxelCell,
+    GridFrame, HypervoxelError, HypervoxelResult, OccupancyState, SparseVoxelGrid, VoxelAddress,
+    VoxelCell,
 };
 
 /// One externally classified continuous-field cell.
@@ -39,19 +39,16 @@ pub struct ContinuousFieldVoxelBatch {
 
 impl ContinuousFieldVoxelBatch {
     /// Materializes supplied cells without imposing a dense-cover requirement.
-    pub fn materialize_sparse_grid(&self) -> HypervoxelResult<PreparedVoxelGrid<SparseVoxelGrid>> {
+    pub fn materialize_sparse_grid(&self) -> HypervoxelResult<SparseVoxelGrid> {
         let mut grid = SparseVoxelGrid::new(self.frame.clone());
         for row in &self.cells {
             grid.set(row.address, row.cell)?;
         }
-        let aggregate = grid.stored_aggregate();
-        Ok(PreparedVoxelGrid::new(self.frame.clone(), grid, aggregate))
+        Ok(grid)
     }
 
     /// Materializes only a complete, unique, exact finest-depth frame cover.
-    pub fn materialize_exact_sparse_grid(
-        &self,
-    ) -> HypervoxelResult<PreparedVoxelGrid<SparseVoxelGrid>> {
+    pub fn materialize_exact_sparse_grid(&self) -> HypervoxelResult<SparseVoxelGrid> {
         let expected = frame_cell_count(&self.frame).ok_or(
             HypervoxelError::InvalidContinuousFieldMaterialization {
                 reason: "frame cell count exceeds addressable storage",

@@ -175,25 +175,3 @@ impl VoxelizationReport {
             && self.legacy_adapter.is_none()
     }
 }
-
-/// Prepared grid handle with retained aggregate facts.
-#[derive(Clone, Debug, PartialEq)]
-pub struct PreparedVoxelGrid<S> {
-    /// Grid frame.
-    pub frame: GridFrame,
-    /// Storage backend or handle.
-    pub storage: S,
-    /// Retained aggregate facts.
-    pub aggregate: VoxelAggregateFacts,
-}
-
-impl<S> PreparedVoxelGrid<S> {
-    /// Creates a prepared grid handle.
-    pub fn new(frame: GridFrame, storage: S, aggregate: VoxelAggregateFacts) -> Self {
-        Self {
-            frame,
-            storage,
-            aggregate,
-        }
-    }
-}

@@ -1,4 +1,4 @@
-//! Prepared query helpers for semantic sparse voxel grids.
+//! Immediate query helpers for semantic sparse voxel grids.
 
 use std::collections::{BTreeMap, VecDeque};
 
@@ -6,8 +6,7 @@ use hyperlimit::{Aabb3Intersection, Point3, PredicateOutcome, classify_aabb3_int
 use rustc_hash::FxHashSet;
 
 use crate::{
-    ExactAabb3, OccupancyState, PreparedVoxelGrid, SparseVoxelGrid, VoxelAddress,
-    VoxelAggregateFacts, VoxelCell,
+    ExactAabb3, OccupancyState, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell,
 };
 
 /// Occupancy query result for one address.
@@ -24,7 +23,7 @@ pub struct OccupancyQuery {
     pub exact_cell_evidence_ready: bool,
 }
 
-/// Coarse query region used by prepared APIs.
+/// Coarse sparse-grid query region.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QueryRegion {
     /// Minimum inclusive address.
@@ -89,7 +88,7 @@ pub struct ManhattanDistanceBand {
     pub exact_distance_band_ready: bool,
 }
 
-/// One exact AABB broad-phase candidate from a prepared sparse grid.
+/// One exact AABB broad-phase candidate from a sparse grid.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AabbBroadPhaseCandidate {
     /// Candidate cell address.
@@ -174,46 +173,13 @@ pub fn voxel_neighbors6(address: VoxelAddress) -> Vec<VoxelAddress> {
     neighbors
 }
 
-/// Sparse-grid query extensions for prepared grids.
-pub trait PreparedSparseVoxelGridExt {
+impl SparseVoxelGrid {
     /// Queries one address.
-    fn query_occupancy(&self, address: VoxelAddress) -> crate::HypervoxelResult<OccupancyQuery>;
-
-    /// Returns aggregate facts for stored cells in a region.
-    fn query_region_aggregate(
+    pub fn query_occupancy(
         &self,
-        region: &QueryRegion,
-    ) -> crate::HypervoxelResult<VoxelAggregateFacts>;
-
-    /// Returns all explicitly stored non-empty addresses in deterministic order.
-    fn stored_non_empty_addresses(&self) -> Vec<VoxelAddress>;
-
-    /// Returns in-frame six-neighbors for one address.
-    fn query_neighbors6(&self, address: VoxelAddress) -> NeighborQuery;
-
-    /// Returns the connected component of stored non-empty cells containing `seed`.
-    fn query_connected_component(
-        &self,
-        seed: VoxelAddress,
-    ) -> crate::HypervoxelResult<ConnectedComponentQuery>;
-
-    /// Returns a bounded six-connected Manhattan-distance band over stored non-empty cells.
-    fn query_manhattan_band(
-        &self,
-        seed: VoxelAddress,
-        max_distance: u32,
-    ) -> crate::HypervoxelResult<ManhattanDistanceBand>;
-
-    /// Returns exact AABB broad-phase candidates over stored non-empty cells.
-    fn query_aabb_broad_phase(
-        &self,
-        query: &ExactAabb3,
-    ) -> crate::HypervoxelResult<AabbBroadPhaseQuery>;
-}
-
-impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
-    fn query_occupancy(&self, address: VoxelAddress) -> crate::HypervoxelResult<OccupancyQuery> {
-        let cell = self.storage.get(address)?;
+        address: VoxelAddress,
+    ) -> crate::HypervoxelResult<OccupancyQuery> {
+        let cell = self.get(address)?;
         Ok(OccupancyQuery {
             address,
             cell,
@@ -221,28 +187,22 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
         })
     }
 
-    fn query_region_aggregate(
-        &self,
-        region: &QueryRegion,
-    ) -> crate::HypervoxelResult<VoxelAggregateFacts> {
-        let cells = self
-            .storage
-            .iter()
-            .filter(|(address, _)| region.contains(**address))
-            .map(|(_, cell)| cell)
-            .collect::<Vec<_>>();
-        Ok(VoxelAggregateFacts::from_cells(cells))
+    /// Returns aggregate facts for stored cells in a region.
+    pub fn query_region_aggregate(&self, region: &QueryRegion) -> VoxelAggregateFacts {
+        VoxelAggregateFacts::from_cells(
+            self.iter()
+                .filter(|(address, _)| region.contains(**address))
+                .map(|(_, cell)| cell),
+        )
     }
 
-    fn stored_non_empty_addresses(&self) -> Vec<VoxelAddress> {
-        self.storage
-            .iter()
-            .filter(|(_, cell)| cell.occupancy != OccupancyState::Empty)
-            .map(|(address, _)| *address)
-            .collect()
+    /// Returns all explicitly stored addresses in deterministic order.
+    pub fn stored_non_empty_addresses(&self) -> Vec<VoxelAddress> {
+        self.iter().map(|(address, _)| *address).collect()
     }
 
-    fn query_neighbors6(&self, address: VoxelAddress) -> NeighborQuery {
+    /// Returns in-frame six-neighbors for one address.
+    pub fn query_neighbors6(&self, address: VoxelAddress) -> NeighborQuery {
         NeighborQuery {
             address,
             neighbors: voxel_neighbors6(address),
@@ -250,7 +210,8 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
         }
     }
 
-    fn query_connected_component(
+    /// Returns the connected component of stored cells containing `seed`.
+    pub fn query_connected_component(
         &self,
         seed: VoxelAddress,
     ) -> crate::HypervoxelResult<ConnectedComponentQuery> {
@@ -263,12 +224,13 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
         })
     }
 
-    fn query_manhattan_band(
+    /// Returns a bounded six-connected Manhattan-distance band over stored cells.
+    pub fn query_manhattan_band(
         &self,
         seed: VoxelAddress,
         max_distance: u32,
     ) -> crate::HypervoxelResult<ManhattanDistanceBand> {
-        let seed_cell = self.storage.get(seed)?;
+        let seed_cell = self.get(seed)?;
         let mut distances = BTreeMap::new();
         if seed_cell.occupancy == OccupancyState::Empty {
             return Ok(ManhattanDistanceBand {
@@ -295,7 +257,7 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
                 if !seen.insert(neighbor) {
                     continue;
                 }
-                let cell = self.storage.get(neighbor)?;
+                let cell = self.get(neighbor)?;
                 if cell.occupancy == OccupancyState::Empty {
                     continue;
                 }
@@ -317,7 +279,8 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
         })
     }
 
-    fn query_aabb_broad_phase(
+    /// Returns exact AABB broad-phase candidates over stored cells.
+    pub fn query_aabb_broad_phase(
         &self,
         query: &ExactAabb3,
     ) -> crate::HypervoxelResult<AabbBroadPhaseQuery> {
@@ -330,7 +293,7 @@ impl PreparedSparseVoxelGridExt for PreparedVoxelGrid<SparseVoxelGrid> {
         let addresses = self.stored_non_empty_addresses();
         let tested_cells = addresses.len();
         for address in addresses {
-            let bounds = ExactAabb3::from(address.bounds(&self.frame)?);
+            let bounds = ExactAabb3::from(address.bounds(self.frame())?);
             match classify_aabb3_intersection(
                 &query_min,
                 &query_max,
