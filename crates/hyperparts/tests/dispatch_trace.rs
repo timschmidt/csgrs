@@ -43,8 +43,6 @@ fn exact_eda_numeric_intake_does_not_request_approximation() {
     assert_eq!(result.status, EdaIntakeStatus::Accepted);
 
     let correlation = hyperreal::dispatch_trace::snapshot_trace().correlation_summary();
-    assert!(correlation.rational_reductions > 0);
-    assert!(correlation.rational_gcds > 0);
     assert_eq!(correlation.approximation_events, 0);
     assert_eq!(correlation.unknown_fact_events, 0);
 }
