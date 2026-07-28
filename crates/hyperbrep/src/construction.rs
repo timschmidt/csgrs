@@ -8,6 +8,7 @@
 //! trusted BREP evidence.
 
 use std::collections::BTreeSet;
+use std::fmt::{Display, Formatter};
 
 use hypercurve::{Classification, Contour2, CurvePolicy, CurveRegion2, Segment2};
 use hyperlimit::{Plane3, Point2 as LimitPoint2, Point3};
@@ -21,7 +22,7 @@ use crate::topology::{
 
 /// Explicit blocker for exact planar-region BREP construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum BrepPlanarRegionConstructionBlocker {
+pub enum BrepPlanarRegionBlocker {
     /// The source region has no material contour.
     EmptyRegion,
     /// The first construction slice accepts one material contour only.
@@ -40,28 +41,16 @@ pub enum BrepPlanarRegionConstructionBlocker {
     ConstructedShellNotExactReady,
 }
 
-/// Exact planar-region construction artifact.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BrepPlanarRegionConstruction {
-    /// Constructed retained BREP shell, when every construction gate succeeds.
-    pub shell: Option<BrepShell>,
-    /// Number of material contours in the source region.
-    pub material_contour_count: usize,
-    /// Number of hole contours in the source region.
-    pub hole_contour_count: usize,
-    /// Number of retained exact vertices emitted.
-    pub vertex_count: usize,
-    /// Number of retained exact edges emitted.
-    pub edge_count: usize,
-    /// Explicit construction blockers.
-    pub blockers: Vec<BrepPlanarRegionConstructionBlocker>,
-    /// Whether the retained shell is exact construction evidence.
-    pub exact_construction_ready: bool,
+/// Failure to construct an exact planar-region BREP shell.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BrepPlanarRegionError {
+    /// Every independently observed construction blocker, in stable order.
+    pub blockers: Vec<BrepPlanarRegionBlocker>,
 }
 
 /// Explicit blocker for exact linear extrusion construction.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum BrepPlanarExtrusionConstructionBlocker {
+pub enum BrepPlanarExtrusionBlocker {
     /// The source region has no material contour.
     EmptyRegion,
     /// This exact extrusion slice accepts one material contour only.
@@ -82,241 +71,266 @@ pub enum BrepPlanarExtrusionConstructionBlocker {
     ConstructedSolidNotExactReady,
 }
 
-/// Exact vertical extrusion construction artifact.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BrepPlanarExtrusionConstruction {
-    /// Constructed retained BREP shell, when every construction gate succeeds.
-    pub shell: Option<BrepShell>,
-    /// Number of source contour vertices across material and hole contours.
-    pub source_vertex_count: usize,
-    /// Number of retained exact vertices emitted.
-    pub vertex_count: usize,
-    /// Number of retained exact edges emitted.
-    pub edge_count: usize,
-    /// Number of retained exact faces emitted.
-    pub face_count: usize,
-    /// Explicit construction blockers.
-    pub blockers: Vec<BrepPlanarExtrusionConstructionBlocker>,
-    /// Whether the retained shell is exact solid evidence.
-    pub exact_construction_ready: bool,
+/// Failure to construct an exact vertical-prism BREP shell.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BrepPlanarExtrusionError {
+    /// Every independently observed construction blocker, in stable order.
+    pub blockers: Vec<BrepPlanarExtrusionBlocker>,
 }
 
-impl BrepPlanarRegionConstruction {
-    /// Construct a single planar BREP face from a line-only `CurveRegion2`.
-    ///
-    /// This minimal bridge from `hypercurve` retains the exact curve object
-    /// until surface-frame evaluation constructs model-space vertices.
-    /// Unsupported segments block construction instead of falling back to a
-    /// display polyline.
-    pub fn from_region_on_surface(region: &CurveRegion2, surface: BrepSurface) -> Self {
-        let mut blockers = BTreeSet::new();
-        let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
-            Ok(Classification::Decided(native)) => Some(native),
-            Ok(Classification::Uncertain(_)) | Err(_) => {
-                blockers.insert(BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment);
-                None
-            }
-        };
-        let material_contour_count = native
-            .as_ref()
-            .map_or(0, |native| native.material_contours().len());
-        let hole_contour_count = native
-            .as_ref()
-            .map_or(0, |native| native.hole_contours().len());
-        if material_contour_count == 0 {
-            blockers.insert(BrepPlanarRegionConstructionBlocker::EmptyRegion);
-        }
-        if material_contour_count > 1 {
-            blockers.insert(BrepPlanarRegionConstructionBlocker::MultipleMaterialContours);
-        }
-        let frame = surface.frame_report();
-        if !frame.exact_frame_ready {
-            blockers.insert(BrepPlanarRegionConstructionBlocker::SurfaceFrameNotReady);
-        }
-
-        let mut vertices = Vec::new();
-        let mut edges = Vec::new();
-        let mut next_vertex_id = 0_u64;
-        let mut next_edge_id = 0_u64;
-        let mut next_loop_id = 0_u64;
-
-        let (outer, inner) = {
-            let mut loop_builder = PlanarLoopBuilder {
-                surface: &surface,
-                vertices: &mut vertices,
-                edges: &mut edges,
-                next_vertex_id: &mut next_vertex_id,
-                next_edge_id: &mut next_edge_id,
-                next_loop_id: &mut next_loop_id,
-                blockers: &mut blockers,
-            };
-            let outer = native
-                .as_ref()
-                .and_then(|native| native.material_contours().first())
-                .and_then(|contour| loop_builder.build(contour));
-
-            let mut inner = Vec::new();
-            if let Some(native) = &native {
-                for contour in native.hole_contours() {
-                    if let Some(face_loop) = loop_builder.build(contour) {
-                        inner.push(face_loop);
-                    }
-                }
-            }
-            (outer, inner)
-        };
-
-        let shell = if blockers.is_empty() {
-            outer.map(|outer| BrepShell {
-                vertices,
-                edges,
-                faces: vec![BrepFace::with_inner(
-                    BrepFaceId(0),
-                    surface.id,
-                    outer,
-                    inner,
-                )],
-                surfaces: vec![surface],
-            })
-        } else {
-            None
-        };
-
-        let shell = match shell {
-            Some(shell) => {
-                let validation = shell.face_validation_report(BrepFaceId(0));
-                if !validation.exact_face_boundary_ready {
-                    blockers
-                        .insert(BrepPlanarRegionConstructionBlocker::ConstructedShellNotExactReady);
-                }
-                if blockers.is_empty() {
-                    Some(shell)
-                } else {
-                    None
-                }
-            }
-            None => None,
-        };
-
-        let blockers = blockers.into_iter().collect::<Vec<_>>();
-        Self {
-            material_contour_count,
-            hole_contour_count,
-            vertex_count: shell.as_ref().map_or(0, |shell| shell.vertices.len()),
-            edge_count: shell.as_ref().map_or(0, |shell| shell.edges.len()),
-            exact_construction_ready: blockers.is_empty() && shell.is_some(),
-            shell,
-            blockers,
-        }
+impl Display for BrepPlanarRegionError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "planar-region BREP construction blocked by {:?}",
+            self.blockers
+        )
     }
 }
 
-impl BrepPlanarExtrusionConstruction {
-    /// Construct a closed vertical prism shell from a line-only `CurveRegion2`.
-    ///
-    /// This is the first solid construction bridge from `hypercurve` into
-    /// `hyperbrep`. It preserves material and hole contours as BREP edges and
-    /// emits analytic side planes instead of triangulating or sampling.
-    /// Unsupported source families and unresolved signs block the shell before
-    /// downstream physics or voxel handoffs can trust it.
-    pub fn vertical_prism_from_region(region: &CurveRegion2, base_z: Real, height: Real) -> Self {
-        let mut blockers = BTreeSet::new();
-        let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
-            Ok(Classification::Decided(native)) => Some(native),
-            Ok(Classification::Uncertain(_)) | Err(_) => {
-                blockers.insert(BrepPlanarExtrusionConstructionBlocker::UnsupportedCurveSegment);
-                None
-            }
-        };
-        let material_contour_count = native
-            .as_ref()
-            .map_or(0, |native| native.material_contours().len());
-        if material_contour_count == 0 {
-            blockers.insert(BrepPlanarExtrusionConstructionBlocker::EmptyRegion);
-        }
-        if material_contour_count > 1 {
-            blockers.insert(BrepPlanarExtrusionConstructionBlocker::MultipleMaterialContours);
-        }
-        match height.partial_cmp(&Real::from(0)) {
-            Some(core::cmp::Ordering::Greater) => {}
-            Some(_) => {
-                blockers.insert(BrepPlanarExtrusionConstructionBlocker::NonPositiveHeight);
-            }
-            None => {
-                blockers.insert(BrepPlanarExtrusionConstructionBlocker::UnknownHeightSign);
-            }
-        }
+impl std::error::Error for BrepPlanarRegionError {}
 
+impl Display for BrepPlanarExtrusionError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "planar extrusion BREP construction blocked by {:?}",
+            self.blockers
+        )
+    }
+}
+
+impl std::error::Error for BrepPlanarExtrusionError {}
+
+/// Constructs a single planar BREP face from a line-only `CurveRegion2`.
+///
+/// This minimal bridge from `hypercurve` retains the exact curve object until
+/// surface-frame evaluation constructs model-space vertices. Unsupported
+/// segments return typed blockers instead of falling back to a display
+/// polyline.
+#[inline]
+pub fn planar_region_shell(
+    region: &CurveRegion2,
+    surface: BrepSurface,
+) -> Result<BrepShell, BrepPlanarRegionError> {
+    let mut blockers = BTreeSet::new();
+    let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
+        Ok(Classification::Decided(native)) => Some(native),
+        Ok(Classification::Uncertain(_)) | Err(_) => {
+            blockers.insert(BrepPlanarRegionBlocker::UnsupportedCurveSegment);
+            None
+        }
+    };
+    let material_contour_count = native
+        .as_ref()
+        .map_or(0, |native| native.material_contours().len());
+    if material_contour_count == 0 {
+        blockers.insert(BrepPlanarRegionBlocker::EmptyRegion);
+    }
+    if material_contour_count > 1 {
+        blockers.insert(BrepPlanarRegionBlocker::MultipleMaterialContours);
+    }
+    let frame = surface.frame_report();
+    if !frame.exact_frame_ready {
+        blockers.insert(BrepPlanarRegionBlocker::SurfaceFrameNotReady);
+    }
+
+    let mut vertices = Vec::new();
+    let mut edges = Vec::new();
+    let mut next_vertex_id = 0_u64;
+    let mut next_edge_id = 0_u64;
+    let mut next_loop_id = 0_u64;
+
+    let (outer, inner) = {
+        let mut loop_builder = PlanarLoopBuilder {
+            surface: &surface,
+            vertices: &mut vertices,
+            edges: &mut edges,
+            next_vertex_id: &mut next_vertex_id,
+            next_edge_id: &mut next_edge_id,
+            next_loop_id: &mut next_loop_id,
+            blockers: &mut blockers,
+        };
         let outer = native
             .as_ref()
             .and_then(|native| native.material_contours().first())
-            .and_then(|contour| collect_line_contour_points(contour, &mut blockers));
-        let mut loops = Vec::new();
-        if let Some(points) = outer {
-            loops.push(PrismSourceLoop {
-                points,
-                is_hole: false,
-            });
-        }
+            .and_then(|contour| loop_builder.build(contour));
+
+        let mut inner = Vec::new();
         if let Some(native) = &native {
             for contour in native.hole_contours() {
-                match collect_line_contour_points(contour, &mut blockers) {
-                    Some(points) => loops.push(PrismSourceLoop {
-                        points,
-                        is_hole: true,
-                    }),
-                    None => {
-                        blockers.insert(BrepPlanarExtrusionConstructionBlocker::HoleContourInvalid);
-                    }
+                if let Some(face_loop) = loop_builder.build(contour) {
+                    inner.push(face_loop);
                 }
             }
         }
-        let source_vertex_count = loops
-            .iter()
-            .map(|source_loop| source_loop.points.len())
-            .sum();
-        let shell = if blockers.is_empty() {
-            Some(build_vertical_prism_shell(loops, base_z, height))
-        } else {
+        (outer, inner)
+    };
+
+    if !blockers.is_empty() {
+        return Err(BrepPlanarRegionError {
+            blockers: blockers.into_iter().collect(),
+        });
+    }
+    let Some(outer) = outer else {
+        unreachable!("missing outer loop must have produced a blocker");
+    };
+    let shell = BrepShell {
+        vertices,
+        edges,
+        faces: vec![BrepFace::with_inner(
+            BrepFaceId(0),
+            surface.id,
+            outer,
+            inner,
+        )],
+        surfaces: vec![surface],
+    };
+    let validation = shell.face_validation_report(BrepFaceId(0));
+    if !validation.exact_face_boundary_ready {
+        blockers.insert(BrepPlanarRegionBlocker::ConstructedShellNotExactReady);
+    }
+    if blockers.is_empty() {
+        Ok(shell)
+    } else {
+        Err(BrepPlanarRegionError {
+            blockers: blockers.into_iter().collect(),
+        })
+    }
+}
+
+/// Constructs a closed vertical prism shell from a line-only `CurveRegion2`.
+///
+/// The exact bridge preserves material and hole contours as BREP edges and
+/// emits analytic side planes instead of triangulating or sampling.
+/// Unsupported source families and unresolved signs return typed blockers
+/// before downstream physics or voxel handoffs can trust the shell.
+#[inline]
+pub fn vertical_prism_shell(
+    region: &CurveRegion2,
+    base_z: Real,
+    height: Real,
+) -> Result<BrepShell, BrepPlanarExtrusionError> {
+    let construction = vertical_prism_construction(region, base_z, height);
+    match construction.shell {
+        Some(shell) => Ok(shell),
+        None => Err(BrepPlanarExtrusionError {
+            blockers: construction.blockers,
+        }),
+    }
+}
+
+// Keep the validated construction's wider internal return layout out of the
+// public `Result` ABI. A serialized old/new benchmark confirmed that this
+// boundary preserves the established extrusion performance.
+struct PlanarExtrusionLayout {
+    shell: Option<BrepShell>,
+    _source_vertex_count: usize,
+    _vertex_count: usize,
+    _edge_count: usize,
+    _face_count: usize,
+    blockers: Vec<BrepPlanarExtrusionBlocker>,
+    _ready: bool,
+}
+
+#[inline(never)]
+fn vertical_prism_construction(
+    region: &CurveRegion2,
+    base_z: Real,
+    height: Real,
+) -> PlanarExtrusionLayout {
+    let mut blockers = BTreeSet::new();
+    let native = match region.native_contours_fast_path(&CurvePolicy::certified()) {
+        Ok(Classification::Decided(native)) => Some(native),
+        Ok(Classification::Uncertain(_)) | Err(_) => {
+            blockers.insert(BrepPlanarExtrusionBlocker::UnsupportedCurveSegment);
             None
-        };
+        }
+    };
+    let material_contour_count = native
+        .as_ref()
+        .map_or(0, |native| native.material_contours().len());
+    if material_contour_count == 0 {
+        blockers.insert(BrepPlanarExtrusionBlocker::EmptyRegion);
+    }
+    if material_contour_count > 1 {
+        blockers.insert(BrepPlanarExtrusionBlocker::MultipleMaterialContours);
+    }
+    match height.partial_cmp(&Real::from(0)) {
+        Some(core::cmp::Ordering::Greater) => {}
+        Some(_) => {
+            blockers.insert(BrepPlanarExtrusionBlocker::NonPositiveHeight);
+        }
+        None => {
+            blockers.insert(BrepPlanarExtrusionBlocker::UnknownHeightSign);
+        }
+    }
 
-        let shell = match shell {
-            Some(shell) => {
-                let solid = shell.solid_readiness_report();
-                if !solid.exact_solid_boundary_ready {
-                    blockers.insert(
-                        BrepPlanarExtrusionConstructionBlocker::ConstructedSolidNotExactReady,
-                    );
-                }
-                if blockers.is_empty() {
-                    Some(shell)
-                } else {
-                    None
+    let outer = native
+        .as_ref()
+        .and_then(|native| native.material_contours().first())
+        .and_then(|contour| collect_line_contour_points(contour, &mut blockers));
+    let mut loops = Vec::new();
+    if let Some(points) = outer {
+        loops.push(PrismSourceLoop {
+            points,
+            is_hole: false,
+        });
+    }
+    if let Some(native) = &native {
+        for contour in native.hole_contours() {
+            match collect_line_contour_points(contour, &mut blockers) {
+                Some(points) => loops.push(PrismSourceLoop {
+                    points,
+                    is_hole: true,
+                }),
+                None => {
+                    blockers.insert(BrepPlanarExtrusionBlocker::HoleContourInvalid);
                 }
             }
-            None => None,
-        };
-
-        let blockers = blockers.into_iter().collect::<Vec<_>>();
-        Self {
-            source_vertex_count,
-            vertex_count: shell.as_ref().map_or(0, |shell| shell.vertices.len()),
-            edge_count: shell.as_ref().map_or(0, |shell| shell.edges.len()),
-            face_count: shell.as_ref().map_or(0, |shell| shell.faces.len()),
-            exact_construction_ready: blockers.is_empty() && shell.is_some(),
-            shell,
-            blockers,
         }
+    }
+    let source_vertex_count = loops
+        .iter()
+        .map(|source_loop| source_loop.points.len())
+        .sum();
+    let shell = if blockers.is_empty() {
+        Some(build_vertical_prism_shell(loops, base_z, height))
+    } else {
+        None
+    };
+    let shell = match shell {
+        Some(shell) => {
+            let solid = shell.solid_readiness_report();
+            if !solid.exact_solid_boundary_ready {
+                blockers.insert(BrepPlanarExtrusionBlocker::ConstructedSolidNotExactReady);
+            }
+            if blockers.is_empty() {
+                Some(shell)
+            } else {
+                None
+            }
+        }
+        None => None,
+    };
+    let blockers = blockers.into_iter().collect::<Vec<_>>();
+    PlanarExtrusionLayout {
+        _source_vertex_count: source_vertex_count,
+        _vertex_count: shell.as_ref().map_or(0, |shell| shell.vertices.len()),
+        _edge_count: shell.as_ref().map_or(0, |shell| shell.edges.len()),
+        _face_count: shell.as_ref().map_or(0, |shell| shell.faces.len()),
+        _ready: blockers.is_empty() && shell.is_some(),
+        shell,
+        blockers,
     }
 }
 
 fn collect_line_contour_points(
     contour: &Contour2,
-    blockers: &mut BTreeSet<BrepPlanarExtrusionConstructionBlocker>,
+    blockers: &mut BTreeSet<BrepPlanarExtrusionBlocker>,
 ) -> Option<Vec<hypercurve::Point2>> {
     if contour.is_empty() {
-        blockers.insert(BrepPlanarExtrusionConstructionBlocker::EmptyContour);
+        blockers.insert(BrepPlanarExtrusionBlocker::EmptyContour);
         return None;
     }
     let mut points = Vec::with_capacity(contour.len());
@@ -324,18 +338,18 @@ fn collect_line_contour_points(
     let mut first_start = None;
     for segment in contour.segments() {
         let Segment2::Line(line) = segment else {
-            blockers.insert(BrepPlanarExtrusionConstructionBlocker::UnsupportedCurveSegment);
+            blockers.insert(BrepPlanarExtrusionBlocker::UnsupportedCurveSegment);
             return None;
         };
         if previous_end.as_ref().is_some_and(|end| end != line.start()) {
-            blockers.insert(BrepPlanarExtrusionConstructionBlocker::BrokenContourChain);
+            blockers.insert(BrepPlanarExtrusionBlocker::BrokenContourChain);
         }
         first_start.get_or_insert_with(|| line.start().clone());
         previous_end = Some(line.end().clone());
         points.push(line.start().clone());
     }
     if first_start.as_ref() != previous_end.as_ref() {
-        blockers.insert(BrepPlanarExtrusionConstructionBlocker::BrokenContourChain);
+        blockers.insert(BrepPlanarExtrusionBlocker::BrokenContourChain);
     }
     Some(points)
 }
@@ -585,14 +599,13 @@ struct PlanarLoopBuilder<'a> {
     next_vertex_id: &'a mut u64,
     next_edge_id: &'a mut u64,
     next_loop_id: &'a mut u64,
-    blockers: &'a mut BTreeSet<BrepPlanarRegionConstructionBlocker>,
+    blockers: &'a mut BTreeSet<BrepPlanarRegionBlocker>,
 }
 
 impl PlanarLoopBuilder<'_> {
     fn build(&mut self, contour: &Contour2) -> Option<BrepLoop> {
         if contour.is_empty() {
-            self.blockers
-                .insert(BrepPlanarRegionConstructionBlocker::EmptyContour);
+            self.blockers.insert(BrepPlanarRegionBlocker::EmptyContour);
             return None;
         }
 
@@ -603,12 +616,12 @@ impl PlanarLoopBuilder<'_> {
         for segment in contour.segments() {
             let Segment2::Line(line) = segment else {
                 self.blockers
-                    .insert(BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment);
+                    .insert(BrepPlanarRegionBlocker::UnsupportedCurveSegment);
                 return None;
             };
             if previous_end.as_ref().is_some_and(|end| end != line.start()) {
                 self.blockers
-                    .insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
+                    .insert(BrepPlanarRegionBlocker::BrokenContourChain);
             }
             first_start.get_or_insert_with(|| line.start().clone());
             previous_end = Some(line.end().clone());
@@ -635,7 +648,7 @@ impl PlanarLoopBuilder<'_> {
 
         if first_start.as_ref() != previous_end.as_ref() {
             self.blockers
-                .insert(BrepPlanarRegionConstructionBlocker::BrokenContourChain);
+                .insert(BrepPlanarRegionBlocker::BrokenContourChain);
         }
         let face_loop = BrepLoop::new(BrepLoopId(*self.next_loop_id), coedges);
         *self.next_loop_id += 1;
@@ -648,12 +661,12 @@ fn lift_or_insert_vertex(
     point: &hypercurve::Point2,
     vertices: &mut Vec<BrepVertex>,
     next_vertex_id: &mut u64,
-    blockers: &mut BTreeSet<BrepPlanarRegionConstructionBlocker>,
+    blockers: &mut BTreeSet<BrepPlanarRegionBlocker>,
 ) -> Option<BrepVertexId> {
     let point = LimitPoint2::new(point.x().clone(), point.y().clone());
     let evaluated = surface.evaluate_frame_uv(point);
     let Some(point) = evaluated.point else {
-        blockers.insert(BrepPlanarRegionConstructionBlocker::SurfaceEvaluationFailed);
+        blockers.insert(BrepPlanarRegionBlocker::SurfaceEvaluationFailed);
         return None;
     };
     Some(insert_vertex(point, vertices, next_vertex_id))

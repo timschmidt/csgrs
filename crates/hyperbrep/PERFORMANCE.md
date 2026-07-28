@@ -80,6 +80,23 @@ The affected HyperVoxel comparisons improved exact-solid construction from
 materialization after the migration. Exact AABB, triangle-source, policy, and
 predicate-certificate semantics are unchanged.
 
+## Immediate planar-construction API gate
+
+The public planar constructors now return a finished `BrepShell` or a typed
+multi-blocker error. This removes the former construction carriers, which
+combined an optional shell, a redundant readiness boolean, duplicate output
+counts, and blockers in one publicly constructible state.
+
+The existing Criterion construction sentinels were measured serially before
+and after the change. Initial baselines were 28.834--29.043 us for a planar
+face, 136.50--138.34 us for a simple prism, and 300.83--304.06 us for a holed
+prism. Clean post-change runs measured 28.684--28.810, 136.38--136.87, and
+303.02--304.66 us respectively; the holed intervals overlap. A longer,
+immediately sequential old/new A/B confirmation measured 308.56--313.04 us
+for the committed API and 304.41--305.26 us for the immediate API, about 1.9%
+faster at the midpoint. An earlier post-change sample was discarded because
+the host's scheduled rootkit scan was active during that measurement.
+
 ## Reference disposition
 
 ### Yap: exact geometric computation

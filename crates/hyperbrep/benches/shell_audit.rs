@@ -1,10 +1,10 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperbrep::{
     BrepCoedge, BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoop,
-    BrepLoopId, BrepNurbsCurve3, BrepPcurve, BrepPlanarExtrusionConstruction, BrepPlanarFaceRegion,
-    BrepPlanarRegionConstruction, BrepPlanarTrimLoop, BrepRationalBezier3, BrepShell, BrepSurface,
-    BrepSurfaceId, BrepSurfaceKind, BrepVertex, BrepVertexId,
-    classify_plane_surface_point_with_evidence,
+    BrepLoopId, BrepNurbsCurve3, BrepPcurve, BrepPlanarFaceRegion, BrepPlanarTrimLoop,
+    BrepRationalBezier3, BrepShell, BrepSurface, BrepSurfaceId, BrepSurfaceKind, BrepVertex,
+    BrepVertexId, classify_plane_surface_point_with_evidence, planar_region_shell,
+    vertical_prism_shell,
 };
 use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, Point2, Point3};
@@ -420,26 +420,17 @@ fn bench_shell_audit(c: &mut Criterion) {
     let source_region = rectangle_region(64, 32);
     let source_surface = BrepSurface::plane(BrepSurfaceId(0), Plane3::new(p(0, 0, 1), r(0)));
     c.bench_function("hyperbrep planar region face construction", |b| {
-        b.iter(|| {
-            BrepPlanarRegionConstruction::from_region_on_surface(
-                &source_region,
-                source_surface.clone(),
-            )
-        })
+        b.iter(|| planar_region_shell(&source_region, source_surface.clone()).unwrap())
     });
     c.bench_function("hyperbrep planar region extrusion construction", |b| {
-        b.iter(|| {
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&source_region, r(0), r(8))
-        })
+        b.iter(|| vertical_prism_shell(&source_region, r(0), r(8)).unwrap())
     });
     let holed_region = curve_region(
         vec![rectangle_contour(0, 0, 64, 32)],
         vec![rectangle_contour(8, 8, 24, 24)],
     );
     c.bench_function("hyperbrep holed region extrusion construction", |b| {
-        b.iter(|| {
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&holed_region, r(0), r(8))
-        })
+        b.iter(|| vertical_prism_shell(&holed_region, r(0), r(8)).unwrap())
     });
     let plane_surface = BrepSurface::plane(BrepSurfaceId(99), Plane3::new(p(0, 0, 1), r(-512)));
     let surface_evidence = plane_surface.evidence();

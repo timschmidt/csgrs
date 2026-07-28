@@ -1,12 +1,11 @@
 use hyperbrep::{
     BrepCoedge, BrepEdge, BrepEdgeAgreementBlocker, BrepEdgeId, BrepEdgeOrientation,
     BrepExactSolidHandoffBlocker, BrepExactSurfaceHandoffBlocker, BrepFace, BrepFaceAreaBlocker,
-    BrepFaceId, BrepLoop, BrepLoopId, BrepPhysicsMassBlocker, BrepPlanarExtrusionConstruction,
-    BrepPlanarExtrusionConstructionBlocker, BrepPlanarRegionConstruction,
-    BrepPlanarRegionConstructionBlocker, BrepShell, BrepShellBlocker, BrepShellVolumeBlocker,
-    BrepSurface, BrepSurfaceId, BrepSurfaceIntersectionRelation, BrepTopologyValidationBlocker,
+    BrepFaceId, BrepLoop, BrepLoopId, BrepPhysicsMassBlocker, BrepPlanarExtrusionBlocker,
+    BrepPlanarRegionBlocker, BrepShell, BrepShellBlocker, BrepShellVolumeBlocker, BrepSurface,
+    BrepSurfaceId, BrepSurfaceIntersectionRelation, BrepTopologyValidationBlocker,
     BrepTriangleMeshBlocker, BrepTrimLoopBlocker, BrepVertex, BrepVertexId,
-    classify_surface_point_with_evidence,
+    classify_surface_point_with_evidence, planar_region_shell, vertical_prism_shell,
 };
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, PlaneSide, Point2, Point3, classify_point_plane};
@@ -202,17 +201,16 @@ proptest! {
                 Plane3::new(p(0, 0, 1), r(0)),
             )
         };
-        let constructed = BrepPlanarRegionConstruction::from_region_on_surface(&region, surface);
-
-        prop_assert_eq!(constructed.exact_construction_ready, !unsupported_surface);
+        let constructed = planar_region_shell(&region, surface);
         if unsupported_surface {
+            let error = constructed.unwrap_err();
             prop_assert!(
-                constructed
+                error
                     .blockers
-                    .contains(&BrepPlanarRegionConstructionBlocker::SurfaceFrameNotReady)
+                    .contains(&BrepPlanarRegionBlocker::SurfaceFrameNotReady)
             );
         } else {
-            let shell = constructed.shell.as_ref().unwrap();
+            let shell = constructed.unwrap();
             prop_assert_eq!(shell.vertices.len(), 4);
             prop_assert_eq!(shell.edges.len(), 4);
             let uv_bounds = shell.face_uv_bounds_report(BrepFaceId(0));
@@ -235,19 +233,10 @@ proptest! {
         height in 1_i32..=24,
     ) {
         let region = rect_region(width, depth);
-        let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
-            &region,
-            r(0),
-            r(height),
-        );
-
-        prop_assert!(constructed.exact_construction_ready);
-        prop_assert!(constructed.blockers.is_empty());
-        prop_assert_eq!(constructed.source_vertex_count, 4);
-        prop_assert_eq!(constructed.vertex_count, 8);
-        prop_assert_eq!(constructed.edge_count, 12);
-        prop_assert_eq!(constructed.face_count, 6);
-        let shell = constructed.shell.as_ref().unwrap();
+        let shell = vertical_prism_shell(&region, r(0), r(height)).unwrap();
+        prop_assert_eq!(shell.vertices.len(), 8);
+        prop_assert_eq!(shell.edges.len(), 12);
+        prop_assert_eq!(shell.faces.len(), 6);
         let solid = shell.solid_readiness_report();
         prop_assert!(solid.exact_solid_boundary_ready);
         prop_assert_eq!(
@@ -263,17 +252,17 @@ proptest! {
     fn generated_planar_extrusion_construction_rejects_invalid_height(
         height in -24_i32..=0,
     ) {
-        let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+        let error = vertical_prism_shell(
             &rect_region(2, 3),
             r(0),
             r(height),
-        );
+        )
+        .unwrap_err();
 
-        prop_assert!(!constructed.exact_construction_ready);
         prop_assert!(
-            constructed
+            error
                 .blockers
-                .contains(&BrepPlanarExtrusionConstructionBlocker::NonPositiveHeight)
+                .contains(&BrepPlanarExtrusionBlocker::NonPositiveHeight)
         );
     }
 
@@ -291,18 +280,10 @@ proptest! {
             vec![rect_contour(0, 0, outer_width, outer_depth)],
             vec![rect_contour(1, 1, 1 + hole_width, 1 + hole_depth)],
         );
-        let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
-            &region,
-            r(0),
-            r(height),
-        );
-
-        prop_assert!(constructed.exact_construction_ready);
-        prop_assert_eq!(constructed.source_vertex_count, 8);
-        prop_assert_eq!(constructed.vertex_count, 16);
-        prop_assert_eq!(constructed.edge_count, 24);
-        prop_assert_eq!(constructed.face_count, 10);
-        let shell = constructed.shell.as_ref().unwrap();
+        let shell = vertical_prism_shell(&region, r(0), r(height)).unwrap();
+        prop_assert_eq!(shell.vertices.len(), 16);
+        prop_assert_eq!(shell.edges.len(), 24);
+        prop_assert_eq!(shell.faces.len(), 10);
         let solid = shell.solid_readiness_report();
         prop_assert!(solid.exact_solid_boundary_ready);
         prop_assert_eq!(

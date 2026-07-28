@@ -1,6 +1,6 @@
 #![no_main]
 
-use hyperbrep::BrepPlanarExtrusionConstruction;
+use hyperbrep::vertical_prism_shell;
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperreal::Real;
 use libfuzzer_sys::fuzz_target;
@@ -38,13 +38,12 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
     let width = i32::from((width_raw % 12) + 1);
     let depth = i32::from((depth_raw % 12) + 1);
     let height = i32::from((height_raw % 12) + 1);
-    let constructed = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
+    let shell = vertical_prism_shell(
         &rectangle(width, depth),
         r(0),
         r(height),
-    );
-    assert!(constructed.exact_construction_ready);
-    let shell = constructed.shell.as_ref().unwrap();
+    )
+    .unwrap();
     let frame = hypervoxel::GridFrame::new(
         [r(0), r(0), r(0)],
         [r(1), r(1), r(1)],

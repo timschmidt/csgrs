@@ -119,11 +119,11 @@ false; the blocker is part of the API contract, not ancillary logging.
 
 ## Construction and derived output
 
-`BrepPlanarRegionConstruction::from_region_on_surface` constructs a retained
-planar face from a line-only exact `hypercurve::CurveRegion2` and a derived
-surface frame. `BrepPlanarExtrusionConstruction::vertical_prism_from_region` constructs
-a closed vertical prism with analytic side planes. Both return the shell and a
-fresh construction manifest only after their validation gates pass.
+`planar_region_shell` immediately constructs a retained planar face from a
+line-only exact `hypercurve::CurveRegion2` and a derived surface frame.
+`vertical_prism_shell` immediately constructs a closed vertical prism with
+analytic side planes. Both return the finished shell after their validation
+gates pass, or a typed error containing every observed blocker.
 
 Tessellation projects exact-ready planar loops into UV, calls `hypertri`, and
 lifts the result back to exact 3D points. Triangle, physics, voxel, mesh, and

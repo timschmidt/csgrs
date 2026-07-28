@@ -38,8 +38,8 @@ pub use bounds::{
     BrepFaceBoundsReport, BrepShellBoundsBlocker, BrepShellBoundsReport,
 };
 pub use construction::{
-    BrepPlanarExtrusionConstruction, BrepPlanarExtrusionConstructionBlocker,
-    BrepPlanarRegionConstruction, BrepPlanarRegionConstructionBlocker,
+    BrepPlanarExtrusionBlocker, BrepPlanarExtrusionError, BrepPlanarRegionBlocker,
+    BrepPlanarRegionError, planar_region_shell, vertical_prism_shell,
 };
 pub use curve::{
     BrepCurve3, BrepCurveError3, BrepCurveErrorKind3, BrepCurveFamily3, BrepCurveGeometry3,
@@ -552,15 +552,12 @@ mod tests {
         let first = rectangle_contour(0, 0, 1, 1);
         let second = rectangle_contour(3, 0, 4, 1);
         let disconnected = curve_region(vec![first, second], Vec::new());
-        let disconnected_report = BrepPlanarRegionConstruction::from_region_on_surface(
-            &disconnected,
-            plane(0, 0, 0, 1, 0),
-        );
-        assert!(!disconnected_report.exact_construction_ready);
+        let disconnected_error =
+            planar_region_shell(&disconnected, plane(0, 0, 0, 1, 0)).unwrap_err();
         assert!(
-            disconnected_report
+            disconnected_error
                 .blockers
-                .contains(&BrepPlanarRegionConstructionBlocker::MultipleMaterialContours)
+                .contains(&BrepPlanarRegionBlocker::MultipleMaterialContours)
         );
 
         let arc_contour = Contour2::from_bulge_vertices(&[
@@ -570,29 +567,21 @@ mod tests {
         ])
         .unwrap();
         let arc_region = curve_region(vec![arc_contour], Vec::new());
-        let arc_report =
-            BrepPlanarRegionConstruction::from_region_on_surface(&arc_region, plane(0, 0, 0, 1, 0));
-        assert!(!arc_report.exact_construction_ready);
+        let arc_error = planar_region_shell(&arc_region, plane(0, 0, 0, 1, 0)).unwrap_err();
         assert!(
-            arc_report
+            arc_error
                 .blockers
-                .contains(&BrepPlanarRegionConstructionBlocker::UnsupportedCurveSegment)
+                .contains(&BrepPlanarRegionBlocker::UnsupportedCurveSegment)
         );
     }
 
     #[test]
     fn planar_extrusion_construction_builds_exact_closed_prism() {
         let region = rectangle_region(0, 0, 2, 3);
-        let constructed =
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&region, r(0), r(4));
-
-        assert!(constructed.exact_construction_ready);
-        assert!(constructed.blockers.is_empty());
-        assert_eq!(constructed.source_vertex_count, 4);
-        assert_eq!(constructed.vertex_count, 8);
-        assert_eq!(constructed.edge_count, 12);
-        assert_eq!(constructed.face_count, 6);
-        let shell = constructed.shell.as_ref().unwrap();
+        let shell = vertical_prism_shell(&region, r(0), r(4)).unwrap();
+        assert_eq!(shell.vertices.len(), 8);
+        assert_eq!(shell.edges.len(), 12);
+        assert_eq!(shell.faces.len(), 6);
         let solid = shell.solid_readiness_report();
         assert!(solid.exact_solid_boundary_ready);
         assert!(solid.exact_volume_ready);
@@ -604,16 +593,12 @@ mod tests {
 
     #[test]
     fn planar_extrusion_construction_rejects_zero_height_and_arcs() {
-        let zero_height = BrepPlanarExtrusionConstruction::vertical_prism_from_region(
-            &rectangle_region(0, 0, 1, 1),
-            r(0),
-            r(0),
-        );
-        assert!(!zero_height.exact_construction_ready);
+        let zero_height =
+            vertical_prism_shell(&rectangle_region(0, 0, 1, 1), r(0), r(0)).unwrap_err();
         assert!(
             zero_height
                 .blockers
-                .contains(&BrepPlanarExtrusionConstructionBlocker::NonPositiveHeight)
+                .contains(&BrepPlanarExtrusionBlocker::NonPositiveHeight)
         );
 
         let arc_contour = Contour2::from_bulge_vertices(&[
@@ -623,13 +608,11 @@ mod tests {
         ])
         .unwrap();
         let arc_region = curve_region(vec![arc_contour], Vec::new());
-        let arc_report =
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&arc_region, r(0), r(1));
-        assert!(!arc_report.exact_construction_ready);
+        let arc_error = vertical_prism_shell(&arc_region, r(0), r(1)).unwrap_err();
         assert!(
-            arc_report
+            arc_error
                 .blockers
-                .contains(&BrepPlanarExtrusionConstructionBlocker::UnsupportedCurveSegment)
+                .contains(&BrepPlanarExtrusionBlocker::UnsupportedCurveSegment)
         );
     }
 
@@ -638,16 +621,10 @@ mod tests {
         let outer = rectangle_contour(0, 0, 4, 4);
         let hole = rectangle_contour(1, 1, 2, 2);
         let holed = curve_region(vec![outer], vec![hole]);
-        let constructed =
-            BrepPlanarExtrusionConstruction::vertical_prism_from_region(&holed, r(0), r(2));
-
-        assert!(constructed.exact_construction_ready);
-        assert!(constructed.blockers.is_empty());
-        assert_eq!(constructed.source_vertex_count, 8);
-        assert_eq!(constructed.vertex_count, 16);
-        assert_eq!(constructed.edge_count, 24);
-        assert_eq!(constructed.face_count, 10);
-        let shell = constructed.shell.as_ref().unwrap();
+        let shell = vertical_prism_shell(&holed, r(0), r(2)).unwrap();
+        assert_eq!(shell.vertices.len(), 16);
+        assert_eq!(shell.edges.len(), 24);
+        assert_eq!(shell.faces.len(), 10);
         let solid = shell.solid_readiness_report();
         assert!(solid.exact_solid_boundary_ready);
         assert_eq!(solid.volume.signed_six_volume, Some(r(180)));
