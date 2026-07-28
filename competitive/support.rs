@@ -1,11 +1,7 @@
 use std::{collections::BTreeMap, num::NonZeroU32};
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
-use csgrs::{
-    Real,
-    mesh::Mesh,
-    triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D},
-};
+use csgrs::{Real, mesh::Mesh, triangulated::IndexedTriangleMesh3D};
 use hyperlattice::{Point3, Vector3};
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -21,6 +17,8 @@ pub const YEAHRIGHT_BASE_TRIANGLES: usize = 1_128;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_TRIANGLES: usize =
     YEAHRIGHT_BASE_TRIANGLES * YEAHRIGHT_SUBDIVISIONS * YEAHRIGHT_SUBDIVISIONS;
+pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
+pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Operation {
@@ -164,6 +162,14 @@ pub fn yeahright_boolean_case() -> MeshPair {
     }
 }
 
+pub fn yeahright_control_mesh() -> RawMesh {
+    let mesh =
+        parse_triangle_obj(include_str!("../benchmarks/data/yeahright/controlmesh.obj"));
+    assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(mesh.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
+    mesh
+}
+
 pub fn prepare(case: &Case) -> Prepared {
     prepare_meshes(&case.left, &case.right)
 }
@@ -173,6 +179,23 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> Prepared {
         csgrs: [to_convex_csgrs(left), to_convex_csgrs(right)],
         boolmesh: [to_boolmesh(left), to_boolmesh(right)],
         manifold: [to_manifold(left), to_manifold(right)],
+    }
+}
+
+pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
+    let base = parse_triangle_obj(include_str!(
+        "../benchmarks/data/yeahright/yeahright_boolean_hull.obj"
+    ));
+    let mut exact_hull = to_convex_csgrs(&base);
+    for _ in 0..YEAHRIGHT_SUBDIVISIONS.ilog2() {
+        exact_hull =
+            exact_hull.subdivide_triangles(NonZeroU32::new(1).expect("one is nonzero"));
+    }
+    assert_eq!(exact_hull.triangles().len(), YEAHRIGHT_TRIANGLES);
+    Prepared {
+        csgrs: [exact_hull, to_convex_csgrs(&case.right)],
+        boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
+        manifold: [to_manifold(&case.left), to_manifold(&case.right)],
     }
 }
 
@@ -419,23 +442,23 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
 }
 
 fn raw_from_csgrs(mesh: &Mesh<()>) -> RawMesh {
-    let indexed = mesh.indexed_triangles();
+    let buffers = mesh.to_hypermesh_buffers();
     RawMesh {
-        positions: indexed
+        positions: buffers
             .positions
-            .iter()
+            .chunks_exact(3)
             .map(|point| {
                 [
-                    approximate(&point.x),
-                    approximate(&point.y),
-                    approximate(&point.z),
+                    approximate(&point[0]),
+                    approximate(&point[1]),
+                    approximate(&point[2]),
                 ]
             })
             .collect(),
-        triangles: indexed
-            .faces
-            .iter()
-            .map(|face| face.map(|corner| corner.0))
+        triangles: buffers
+            .indices
+            .chunks_exact(3)
+            .map(|triangle| [triangle[0], triangle[1], triangle[2]])
             .collect(),
     }
 }

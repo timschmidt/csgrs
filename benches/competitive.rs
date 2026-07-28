@@ -8,9 +8,9 @@ mod competitive_support;
 use std::hint::black_box;
 
 use competitive_support::{
-    Operation, corpus, large_boolean_case, prepare, prepare_meshes, run_boolmesh, run_csgrs,
-    run_manifold, to_boolmesh, to_csgrs, to_manifold, to_three_d_asset,
-    validate_with_tri_mesh, yeahright_boolean_case,
+    Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh,
+    run_csgrs, run_manifold, to_boolmesh, to_csgrs, to_manifold, to_three_d_asset,
+    validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh,
 };
 use support::{Config, Measurement, print_header};
 
@@ -88,7 +88,7 @@ fn main() {
     }
 
     let yeahright_case = yeahright_boolean_case();
-    let yeahright_prepared = prepare_meshes(&yeahright_case.left, &yeahright_case.right);
+    let yeahright_prepared = prepare_yeahright(&yeahright_case);
     let yeahright_input_faces =
         yeahright_case.left.triangles.len() + yeahright_case.right.triangles.len();
     for operation in Operation::ALL {
@@ -272,6 +272,66 @@ fn main() {
             let mesh = tri_mesh::Mesh::new(&asset);
             Measurement::new(
                 yeahright_case.left.triangles.len() as u64,
+                mesh.no_faces() as u64,
+                mesh.no_vertices() as u64,
+            )
+        },
+    );
+
+    let yeahright_control = yeahright_control_mesh();
+    let full_triangle_count = yeahright_control.triangles.len() as u64;
+    config.run_engine(
+        "csgrs",
+        "competitive-full",
+        "mesh_import",
+        "yeahright_control_genus131_11894",
+        1,
+        || {
+            let mesh = to_csgrs(black_box(&yeahright_control));
+            Measurement::new(
+                full_triangle_count,
+                mesh.triangles().len() as u64,
+                mesh.vertex_count() as u64,
+            )
+        },
+    );
+    config.run_engine(
+        "boolmesh",
+        "competitive-full",
+        "mesh_import",
+        "yeahright_control_genus131_11894",
+        1,
+        || {
+            let mesh = to_boolmesh(black_box(&yeahright_control));
+            Measurement::new(full_triangle_count, mesh.nf as u64, mesh.nv as u64)
+        },
+    );
+    config.run_engine(
+        "manifold-rust",
+        "competitive-full",
+        "mesh_import",
+        "yeahright_control_genus131_11894",
+        1,
+        || {
+            let mesh = to_manifold(black_box(&yeahright_control));
+            Measurement::new(
+                full_triangle_count,
+                mesh.num_tri() as u64,
+                mesh.num_vert() as u64,
+            )
+        },
+    );
+    config.run_engine(
+        "tri-mesh",
+        "competitive-full",
+        "mesh_import",
+        "yeahright_control_genus131_11894",
+        1,
+        || {
+            let asset = to_three_d_asset(black_box(&yeahright_control));
+            let mesh = tri_mesh::Mesh::new(&asset);
+            Measurement::new(
+                full_triangle_count,
                 mesh.no_faces() as u64,
                 mesh.no_vertices() as u64,
             )

@@ -154,8 +154,22 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             return Ok(mesh);
         }
 
-        let left_input = self.build_hypermesh_input(true, false);
-        let right_input = other.build_hypermesh_input(true, false);
+        let mut left_input = self.build_hypermesh_input(true, false);
+        let mut right_input = other.build_hypermesh_input(true, false);
+        match (
+            left_input.support_planes.is_empty(),
+            right_input.support_planes.is_empty(),
+        ) {
+            (true, false) => {
+                self.polygons.exact_supports();
+                left_input = self.build_hypermesh_input(true, false);
+            },
+            (false, true) => {
+                other.polygons.exact_supports();
+                right_input = other.build_hypermesh_input(true, false);
+            },
+            _ => {},
+        }
         let shortcut = if left_input.buffers.indices.is_empty() {
             Some(BooleanShortcut::LeftEmpty)
         } else if right_input.buffers.indices.is_empty() {
@@ -176,17 +190,29 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let right = input_mesh_from_buffers(&right_input.buffers);
         let certified_convex_inputs =
             [self.has_convex_pwn_fact(), other.has_convex_pwn_fact()];
-        let support_planes = [
-            left_input.support_planes.as_slice(),
-            right_input.support_planes.as_slice(),
-        ];
-        let soup = ::hypermesh::boolean_triangle_soup_with_certified_convex_inputs_and_planes(
-            &[left.as_ref(), right.as_ref()],
-            operation.as_hypermesh(),
-            &certified_convex_inputs,
-            &support_planes,
-            EmberConfig::default(),
-        )
+        let inputs = [left.as_ref(), right.as_ref()];
+        let soup = if left_input.support_planes.len() == left.triangles.len()
+            && right_input.support_planes.len() == right.triangles.len()
+        {
+            let support_planes = [
+                left_input.support_planes.as_slice(),
+                right_input.support_planes.as_slice(),
+            ];
+            ::hypermesh::boolean_triangle_soup_with_certified_convex_inputs_and_planes(
+                &inputs,
+                operation.as_hypermesh(),
+                &certified_convex_inputs,
+                &support_planes,
+                EmberConfig::default(),
+            )
+        } else {
+            ::hypermesh::boolean_triangle_soup_with_certified_convex_inputs(
+                &inputs,
+                operation.as_hypermesh(),
+                &certified_convex_inputs,
+                EmberConfig::default(),
+            )
+        }
         .map_err(HypermeshError::Boolean)?;
         self.materialize_hypermesh_soup(
             other,
@@ -252,8 +278,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut position_ids = HashMap::<u64, usize>::new();
         let mut source_polygons =
             Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
-        let polygon_supports =
-            retain_sources.then(|| Arc::clone(self.polygons.exact_supports()));
+        let polygon_supports = retain_sources
+            .then(|| self.polygons.retained_exact_supports().map(Arc::clone))
+            .flatten();
         let mut support_planes = Vec::with_capacity(triangle_capacity);
 
         let mut push_triangle = |vertices: &[Vertex]| {
@@ -352,8 +379,9 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         let mut indices = Vec::with_capacity(triangle_capacity * 3);
         let mut source_polygons =
             Vec::with_capacity(if retain_sources { triangle_capacity } else { 0 });
-        let polygon_supports =
-            retain_sources.then(|| Arc::clone(self.polygons.exact_supports()));
+        let polygon_supports = retain_sources
+            .then(|| self.polygons.retained_exact_supports().map(Arc::clone))
+            .flatten();
         let mut support_planes = Vec::with_capacity(triangle_capacity);
         let mut corner_offset = 0usize;
         for polygon_index in 0..self.polygons.len() {
