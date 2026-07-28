@@ -13,6 +13,7 @@ readme = "readme.md"
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
+autobenches = false
 
 [workspace]
 members = ["ffi"]
@@ -49,32 +50,39 @@ crate-type = ["cdylib", "rlib"]
 
 [[bench]]
 name = "part_blueprint"
+path = "benchmarks/rust/part_blueprint.rs"
 harness = false
 
 [[bench]]
 name = "mesh_pipeline"
+path = "benchmarks/rust/mesh_pipeline.rs"
 harness = false
 
 [[bench]]
 name = "kernel_comparison"
+path = "benchmarks/rust/kernel_comparison.rs"
 harness = false
 
 [[bench]]
 name = "feature_pipeline"
+path = "benchmarks/rust/feature_pipeline.rs"
 harness = false
 required-features = ["bench-feature-pipeline"]
 
 [[bench]]
 name = "profile_primitives"
+path = "benchmarks/rust/profile_primitives.rs"
 harness = false
 required-features = ["sketch"]
 
 [[bench]]
 name = "competitive"
+path = "benchmarks/rust/competitive.rs"
 harness = false
 
 [[bench]]
 name = "adapter_graphics_export"
+path = "benchmarks/rust/adapter_graphics_export.rs"
 harness = false
 
 [profile.release]

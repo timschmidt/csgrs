@@ -1,4 +1,4 @@
-//! Repeatable mesh conversion and Boolean benchmark for time and heap tracing.
+//! Repeatable mesh conversion and Boolean benchmark for timing and heap tracing.
 
 use std::hint::black_box;
 use std::time::Instant;

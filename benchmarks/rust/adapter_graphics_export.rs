@@ -1,3 +1,5 @@
+//! Primitive-scalar graphics export benchmark.
+
 use std::hint::black_box;
 use std::time::Instant;
 

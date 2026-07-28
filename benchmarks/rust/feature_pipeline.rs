@@ -1,5 +1,6 @@
 //! Broad csgrs/Hyper-stack coverage for end-to-end optimization anchors.
 
+#[path = "../support/harness.rs"]
 mod support;
 
 use std::hint::black_box;
@@ -753,7 +754,7 @@ fn run() {
     config.run("feature", "text", "truetype_outline", 2, || {
         let output = Profile::text(
             "csgrs benchmark",
-            include_bytes!("../asar.ttf"),
+            include_bytes!("../../asar.ttf"),
             Real::from(24_u8),
         );
         profile_measurement(&output, 15)

@@ -15,6 +15,17 @@ This suite provides three complementary optimization anchors:
   deterministically subdivided 4,512-triangle hull, while all four libraries
   construct their native mesh carrier from the same hull.
 
+Everything needed to understand or reproduce a measurement lives in this
+directory:
+
+- `rust/` contains the explicitly registered Cargo benchmark targets.
+- `support/` contains the shared CSV harness and competitive correctness corpus.
+- `native/` contains the CGAL and OpenCascade counterparts.
+- `data/` contains benchmark fixtures and their provenance.
+- `results/` receives generated samples and summaries.
+- `run.sh` orchestrates serialized runs; `summarize.py` validates and compares
+  their output.
+
 Every runner emits the same CSV schema. Raw samples are intentionally retained;
 `summarize.py` validates them and reports median nanoseconds per operation plus
 the ratio to csgrs. Full native runs also enforce that every `kernel`,

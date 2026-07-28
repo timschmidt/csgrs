@@ -1,5 +1,6 @@
 //! Workloads with counterparts in `benchmarks/native` for direct kernel comparison.
 
+#[path = "../support/harness.rs"]
 mod support;
 
 use std::{

@@ -1,5 +1,6 @@
 //! Per-constructor profile benchmarks for isolating exact-geometry costs.
 
+#[path = "../support/harness.rs"]
 mod support;
 
 use std::hint::black_box;
