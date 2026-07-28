@@ -3261,7 +3261,7 @@ pub fn board_outline_notch_readiness(layer_name: &str, outline: &PcbSketch) -> V
 /// Flag board-outline notches using retained source-grid facts.
 ///
 /// The inside-corner/reflex decision is a topology predicate and is classified
-/// through `hyperlimit::orient2d` after lifting source coordinates. The final
+/// through `hyperlimit::orient2` after lifting source coordinates. The final
 /// notch angle remains a compatibility metric for reporting and thresholding at
 /// the current `geo`/`csgrs` boundary. Exact predicates decide topology;
 /// approximate quantities stay named adapters.
@@ -3805,7 +3805,7 @@ fn orient_coords_with_grid(
     let previous = lift_coord_with_provenance(previous, provenance)?;
     let current = lift_coord_with_provenance(current, provenance)?;
     let next = lift_coord_with_provenance(next, provenance)?;
-    hyperlimit::orient2d_with_policy(&previous, &current, &next, PredicatePolicy::STRICT).value()
+    hyperlimit::orient2_with_policy(&previous, &current, &next, PredicatePolicy::STRICT).value()
 }
 
 fn polygon_bounding_rects_overlap_with_grid(
