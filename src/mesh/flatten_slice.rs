@@ -279,7 +279,7 @@ fn push_convex_hull_point(hull: &mut Vec<[Real; 2]>, point: [Real; 2]) -> Option
             hull[hull.len() - 1][1].clone(),
         );
         let end = hyperlimit::Point2::new(point[0].clone(), point[1].clone());
-        match hyperlimit::orient2d(&origin, &middle, &end).value()? {
+        match hyperlimit::orient2(&origin, &middle, &end).value()? {
             hyperlimit::Sign::Positive => break,
             hyperlimit::Sign::Negative | hyperlimit::Sign::Zero => {
                 hull.pop();
