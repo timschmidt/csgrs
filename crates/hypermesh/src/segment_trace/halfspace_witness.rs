@@ -713,22 +713,9 @@ pub(super) fn point_strictly_inside_halfspace_cell_or_unknown(
 }
 
 fn point_strictly_inside_probe_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        if compare_real(min, max)?.is_eq() {
-            if compare_real(axis_ref(point, axis), min)?.is_ne() {
-                return Ok(false);
-            }
-            continue;
-        }
-        if !compare_real(axis_ref(point, axis), min)?.is_gt()
-            || !compare_real(axis_ref(point, axis), max)?.is_lt()
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
+    hyperlimit::point_in_ordered_aabb3_relative_interior(&bounds.min, &bounds.max, point)
+        .value()
+        .ok_or(HypermeshError::UnknownClassification)
 }
 
 fn shifted_halfspace_cell(

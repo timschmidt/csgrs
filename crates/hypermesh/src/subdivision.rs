@@ -1953,14 +1953,9 @@ fn reusable_contracted_task_reference_from_cached_subdivision_if_certified(
 }
 
 fn bounds_contains_bounds(outer: &Aabb, inner: &Aabb) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        if compare_real(axis_ref(&outer.min, axis), axis_ref(&inner.min, axis))?.is_gt()
-            || compare_real(axis_ref(&outer.max, axis), axis_ref(&inner.max, axis))?.is_lt()
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
+    hyperlimit::ordered_aabb3_contains(&outer.min, &outer.max, &inner.min, &inner.max)
+        .value()
+        .ok_or(HypermeshError::UnknownClassification)
 }
 
 fn cache_child_subdivision_result(
@@ -11160,22 +11155,9 @@ fn reference_axis_surface_crossing(
 }
 
 fn point_strictly_inside_bounds(point: &Point3, bounds: &Aabb) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        let min = axis_ref(&bounds.min, axis);
-        let max = axis_ref(&bounds.max, axis);
-        if compare_real(min, max)?.is_eq() {
-            if compare_real(axis_ref(point, axis), min)?.is_ne() {
-                return Ok(false);
-            }
-            continue;
-        }
-        if !compare_real(axis_ref(point, axis), min)?.is_gt()
-            || !compare_real(axis_ref(point, axis), max)?.is_lt()
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
+    hyperlimit::point_in_ordered_aabb3_relative_interior(&bounds.min, &bounds.max, point)
+        .value()
+        .ok_or(HypermeshError::UnknownClassification)
 }
 
 fn point_lies_on_local_surface(

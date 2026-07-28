@@ -10,6 +10,25 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-07-28: canonical ordered-AABB predicates
+
+Status: **kept**
+
+Exact BVH overlap, subdivision-cache containment, and two copies of
+lower-dimensional cell relative-interior logic now forward to Hyperlimit's
+ordered-AABB predicates. The canonical cascade batches exact-rational
+coordinates before using the general Real comparison pipeline, while retaining
+Hypermesh's existing `UnknownClassification` boundary.
+
+Hyperlimit's general exact 3D box intersection and point rows improved by
+23.56% and 6.48%; the new full-axis ordered operations take roughly 24--30 ns.
+Hypermesh's 6,144-triangle polygon-soup row moved from 12.411 ms to 12.692 ms
+with no detected change (`p = 0.22`, 95% change interval -0.36% to +1.84%).
+The 192-cell subdivided-cube union moved from 80.506 ms to 79.993 ms, also with
+no detected change (`p = 0.69`, interval -1.86% to +1.33%). A transitive
+Hypervoxel gate improved exact box voxelization by 4.89% and triangle-solid
+voxelization by 3.89%.
+
 ## 2026-07-28: canonical projected triangle degeneracy
 
 Status: **kept**

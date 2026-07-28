@@ -502,14 +502,9 @@ fn classify_bounds_against_plane(
 
 /// Returns true when two exact AABBs overlap.
 pub fn bounds_overlap(left: &ApproxBounds, right: &ApproxBounds) -> HypermeshResult<bool> {
-    for axis in 0..3 {
-        if compare_real(axis_ref(&left.max, axis), axis_ref(&right.min, axis))?.is_lt()
-            || compare_real(axis_ref(&right.max, axis), axis_ref(&left.min, axis))?.is_lt()
-        {
-            return Ok(false);
-        }
-    }
-    Ok(true)
+    hyperlimit::ordered_aabb3s_intersect(&left.min, &left.max, &right.min, &right.max)
+        .value()
+        .ok_or(HypermeshError::UnknownClassification)
 }
 
 fn union_bounds<'a>(
