@@ -534,6 +534,24 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
 }
 
 #[test]
+fn unified_native_arrangement_exposes_immediate_evidence() {
+    let source = square(0, 0, 4, 4).segments().to_vec();
+    let result = CurveRegion2::arrange_unordered_segments(
+        source,
+        FillRule::NonZero,
+        &CurvePolicy::certified(),
+    )
+    .unwrap();
+
+    assert!(result.region().is_some());
+    assert_eq!(result.fill_rule(), FillRule::NonZero);
+    assert_eq!(result.source_segment_count(), 4);
+    assert!(result.status().unwrap().is_native_exact());
+    assert_eq!(result.summary().materialized_region(), Some(true));
+    assert_eq!(result.blocker(), None);
+}
+
+#[test]
 fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
     let policy = CurvePolicy::certified();
     for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {

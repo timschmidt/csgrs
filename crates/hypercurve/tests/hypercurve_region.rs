@@ -277,11 +277,10 @@ fn unordered_line_segments_build_region_with_source_provenance() {
     let sources = built.source_evidence().unwrap();
     assert_eq!(sources.len(), 4);
     assert_eq!(sources[0].source_segment_index(), 0);
-    assert_eq!(built.report().source_evidence(), Some(sources));
 }
 
 #[test]
-fn unordered_line_segments_report_disconnected_boundary_blocker() {
+fn unordered_line_segments_retain_disconnected_boundary_blocker() {
     let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 1, 0), line(3, 0, 4, 0)],
         FillRule::NonZero,
@@ -298,7 +297,6 @@ fn unordered_line_segments_report_disconnected_boundary_blocker() {
     assert_eq!(built.endpoint_graph_dangling_endpoint_count(), Some(4));
     assert_eq!(built.endpoint_graph_blocker_point(), Some(&p(0, 0)));
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(built.report().blocker(), built.blocker());
 }
 
 #[test]
@@ -322,7 +320,7 @@ fn unordered_line_segments_split_crossings_before_boundary_blocker() {
 }
 
 #[test]
-fn unordered_line_segments_report_overlap_source_pair_blocker() {
+fn unordered_line_segments_retain_overlap_source_pair_blocker() {
     let built = evaluate_unordered_line_segments(
         vec![line(0, 0, 4, 0), line(2, 0, 6, 0)],
         FillRule::NonZero,
@@ -338,7 +336,6 @@ fn unordered_line_segments_report_overlap_source_pair_blocker() {
         Some(SegmentKind::Line)
     );
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(built.report().split_overlap_relation_count(), Some(1));
 }
 
 #[test]
@@ -376,7 +373,7 @@ fn unordered_segments_return_retained_evidence() {
     let result =
         evaluate_borrowed_unordered_line_segments(&lines, FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let evidence = result.report();
+    let evidence = &result;
     assert!(evidence.status().unwrap().is_native_exact());
     assert_eq!(evidence.source_segment_count(), 4);
     assert!(evidence.source_line_segments().is_some());
@@ -391,7 +388,7 @@ fn unordered_segments_return_retained_evidence() {
     let result =
         evaluate_unordered_line_segments(lines.clone(), FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let evidence = result.report();
+    let evidence = &result;
     assert!(evidence.status().unwrap().is_native_exact());
     assert_eq!(evidence.source_segment_count(), 4);
     assert!(matches!(classification, Classification::Decided(_)));
@@ -401,7 +398,7 @@ fn unordered_segments_return_retained_evidence() {
         evaluate_borrowed_unordered_line_segments(&disconnected, FillRule::NonZero, &policy())
             .unwrap();
     let classification = result.region_classification();
-    let evidence = result.report();
+    let evidence = &result;
     assert_eq!(
         classification,
         Classification::Uncertain(UncertaintyReason::Boundary)
@@ -414,7 +411,7 @@ fn unordered_segments_return_retained_evidence() {
         evaluate_borrowed_unordered_segments(&native_segments, FillRule::NonZero, &policy())
             .unwrap();
     let classification = result.region_classification();
-    let evidence = result.report();
+    let evidence = &result;
     assert!(evidence.status().unwrap().is_native_exact());
     assert_eq!(evidence.source_segment_count(), 4);
     assert!(evidence.source_line_segments().is_none());
@@ -423,7 +420,7 @@ fn unordered_segments_return_retained_evidence() {
     let result =
         evaluate_unordered_segments(native_segments, FillRule::NonZero, &policy()).unwrap();
     let classification = result.region_classification();
-    let evidence = result.report();
+    let evidence = &result;
     assert!(evidence.status().unwrap().is_native_exact());
     assert!(matches!(classification, Classification::Decided(_)));
 }
@@ -453,7 +450,6 @@ fn unordered_native_segments_build_line_arc_region_with_source_provenance() {
     assert_eq!(arranged.len(), 2);
     assert_eq!(arranged[0].source_segment_kind(), SegmentKind::Line);
     assert_eq!(arranged[1].source_segment_kind(), SegmentKind::Arc);
-    assert_eq!(built.report().arranged_source_evidence(), Some(arranged));
 }
 
 #[test]
@@ -480,7 +476,7 @@ fn borrowed_unordered_native_segments_evaluate_retained_arrangement() {
 }
 
 #[test]
-fn region_arrangement_builds_line_region_with_line_specific_report() {
+fn region_arrangement_builds_line_region_with_immediate_evidence() {
     let lines = vec![
         line(4, 0, 0, 0),
         line(4, 4, 4, 0),
@@ -509,27 +505,10 @@ fn region_arrangement_builds_line_region_with_line_specific_report() {
     assert_eq!(result.output_ring_count(), Some(1));
     assert_eq!(result.output_boundary_segment_count(), Some(4));
     assert_eq!(result.output_contour_count(), Some(1));
-
-    let report = result.report();
-    assert_eq!(report.summary(), result.summary());
-    assert_eq!(report.source_segments(), result.source_segments());
-    assert_eq!(report.source_segment_count(), result.source_segment_count());
-    assert_eq!(
-        report.split_intersection_evidence(),
-        result.split_intersection_evidence()
-    );
-    assert_eq!(
-        report.arranged_source_evidence(),
-        result.arranged_source_evidence()
-    );
-    assert_eq!(report.source_evidence(), result.source_evidence());
-    assert_eq!(report.role_evidence(), result.role_evidence());
-    assert_eq!(report.status(), result.status());
-    assert_eq!(report.blocker(), result.blocker());
 }
 
 #[test]
-fn region_arrangement_reports_output_role_containment() {
+fn region_arrangement_retains_output_role_containment() {
     let lines = vec![
         line(0, 0, 10, 0),
         line(10, 0, 10, 10),
@@ -558,10 +537,9 @@ fn region_arrangement_reports_output_role_containment() {
     let roles = result.role_evidence().unwrap();
     assert_eq!(roles[0].role(), RegionBoundaryContourRole2::Material);
     assert_eq!(roles[1].role(), RegionBoundaryContourRole2::Hole);
-    assert_eq!(result.report().role_evidence(), Some(roles));
 }
 #[test]
-fn region_arrangement_reports_overlap_blocker() {
+fn region_arrangement_retains_overlap_blocker() {
     let segments = vec![
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
         Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
@@ -580,9 +558,6 @@ fn region_arrangement_reports_overlap_blocker() {
     assert_eq!(result.split_overlap_relation_count(), Some(1));
     assert_eq!(result.endpoint_graph_endpoint_count(), None);
     assert_eq!(result.output_ring_count(), None);
-    assert_eq!(result.report().summary(), result.summary());
-    assert_eq!(result.report().blocker(), result.blocker());
-    assert_eq!(result.report().split_overlap_relation_count(), Some(1));
 }
 
 #[test]
@@ -607,7 +582,7 @@ fn unordered_native_segments_return_decided_region() {
 }
 
 #[test]
-fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
+fn unordered_native_segments_retain_arc_overlap_boundary_blocker() {
     let built = evaluate_unordered_segments(
         vec![
             Segment2::Arc(arc_bulge(0, 0, 4, 0, 1)),
@@ -635,7 +610,6 @@ fn unordered_native_segments_report_arc_overlap_boundary_blocker() {
     );
     assert_eq!(built.endpoint_graph_endpoint_count(), None);
     assert_eq!(built.blocker(), Some(UncertaintyReason::Boundary));
-    assert_eq!(built.report().blocker(), built.blocker());
 }
 
 #[test]

@@ -25,6 +25,7 @@ use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
 use crate::classify::{compare_reals, is_zero, real_sign};
+use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
     Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierArrangementGraph2,
     BezierArrangementTraversal2, BezierEndpointPointImage2, BezierFlatteningOptions,
@@ -37,8 +38,8 @@ use crate::{
     CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2, CurvePathIntersectionContact2,
     CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2,
     LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementReport2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementSummary2, RegionPointLocation,
+    RetainedTopologyStatus, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -179,11 +180,12 @@ impl<'a> CurveRegionNativeContourView2<'a> {
     }
 }
 
-/// Immediate native line/arc arrangement with a unified curved output report.
+/// Immediate native line/arc arrangement with a unified curved output.
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
-    report: RegionArrangementReport2,
+    workspace: Rc<ExactCurveWorkspace2>,
+    summary: RegionArrangementSummary2,
 }
 
 /// Evidence-bearing native contour nesting with authoritative unified output.
@@ -273,6 +275,10 @@ pub struct CurveRegionCertifiedParallelOffsetResult2 {
 }
 
 impl CurveRegionArrangement2 {
+    fn facts(&self) -> &ExactCurveWorkspace2 {
+        &self.workspace
+    }
+
     /// Returns the materialized unified region, if role assignment succeeded.
     pub const fn region(&self) -> Option<&CurveRegion2> {
         self.region.as_ref()
@@ -282,27 +288,40 @@ impl CurveRegionArrangement2 {
     pub fn region_classification(&self) -> Classification<&CurveRegion2> {
         match self.region() {
             Some(region) => Classification::Decided(region),
-            None => Classification::Uncertain(
-                self.report
-                    .blocker()
-                    .unwrap_or(UncertaintyReason::Unsupported),
-            ),
+            None => {
+                Classification::Uncertain(self.blocker().unwrap_or(UncertaintyReason::Unsupported))
+            }
         }
     }
 
-    /// Returns the complete native arrangement report retained during promotion.
-    pub const fn report(&self) -> &RegionArrangementReport2 {
-        &self.report
+    /// Returns the fill rule used by the completed native arrangement.
+    pub fn fill_rule(&self) -> FillRule {
+        self.facts().request().fill_rule()
+    }
+
+    /// Returns the number of exact source segments evaluated by the arrangement.
+    pub fn source_segment_count(&self) -> usize {
+        self.facts().request().source_segment_count()
+    }
+
+    /// Returns final semantic facts from the completed arrangement.
+    pub const fn summary(&self) -> &RegionArrangementSummary2 {
+        &self.summary
+    }
+
+    /// Returns the final retained topology status, when evaluation completed.
+    pub const fn status(&self) -> Option<RetainedTopologyStatus> {
+        self.summary.status()
+    }
+
+    /// Returns the blocker when the completed arrangement could not materialize a region.
+    pub const fn blocker(&self) -> Option<UncertaintyReason> {
+        self.summary.blocker()
     }
 
     /// Consumes the result and returns its unified region, if materialized.
     pub fn into_region(self) -> Option<CurveRegion2> {
         self.region
-    }
-
-    /// Consumes the result and preserves both output and its arrangement report.
-    pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementReport2) {
-        (self.region, self.report)
     }
 }
 
@@ -1799,12 +1818,16 @@ fn promote_native_region_arrangement(
     arrangement: RegionArrangement2,
     policy: &CurvePolicy,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    let (region, report) = arrangement.into_region_with_report();
+    let (region, workspace, summary) = arrangement.into_region_with_facts();
     let region = region
         .as_ref()
         .map(|region| CurveRegion2::try_from_line_arc_region(region, policy))
         .transpose()?;
-    Ok(CurveRegionArrangement2 { region, report })
+    Ok(CurveRegionArrangement2 {
+        region,
+        workspace,
+        summary,
+    })
 }
 
 fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {

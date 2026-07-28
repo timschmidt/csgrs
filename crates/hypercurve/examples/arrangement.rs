@@ -28,11 +28,9 @@ fn main() -> hypercurve::CurveResult<()> {
             panic!("arrangement blocked with retained uncertainty: {reason:?}");
         }
     };
-    let report = result.report();
-
-    assert!(report.status().unwrap().is_native_exact());
-    assert_eq!(report.source_segment_count(), 4);
-    assert_eq!(report.materialized_region(), Some(true));
+    assert!(result.status().unwrap().is_native_exact());
+    assert_eq!(result.source_segment_count(), 4);
+    assert_eq!(result.materialized_region(), Some(true));
     assert!(matches!(
         region.classify_point(&p(2, 2), &policy),
         Classification::Decided(RegionPointLocation::Inside)

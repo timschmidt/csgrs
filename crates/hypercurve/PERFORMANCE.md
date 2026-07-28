@@ -5959,6 +5959,32 @@ the retired curved-region Boolean corpus and pathological workload, strict
 all-target Clippy, warning-free rustdoc, the focused immediate arrangement
 tests, and compilation of every fuzz target.
 
+### Single immediate arrangement result
+
+`RegionArrangementReport2` and the `report()` / `into_report()` transitions
+have now been retired. `RegionArrangement2` owns its shared immutable facts,
+summary, and optional region directly, so callers inspect the completed
+operation without entering a second report lifecycle. `CurveRegionArrangement2`
+uses the same ownership model after immediately promoting any native output and
+exposes its summary, status, blocker, and source count directly. Three duplicate
+source-cache fields that became unreachable with the report wrapper were also
+removed.
+
+Three serialized editing runs of the committed pre-change tree in an isolated
+checkout and three candidate runs produced the following ranges and medians:
+
+| Editing case | Pre-change range (median) | Immediate-only range (median) | Median change |
+| --- | ---: | ---: | ---: |
+| Boundary-contour control | 15.252--15.669 us (15.414 us) | 15.528--15.673 us (15.632 us) | +1.4% |
+| Unordered line arrangement | 22.265--22.596 us (22.534 us) | 21.901--22.928 us (22.620 us) | +0.4% |
+| Unordered native line/arc arrangement | 22.691--22.958 us (22.830 us) | 22.613--23.128 us (22.994 us) | +0.7% |
+| Immediate evidence replay | 274.141--282.661 us / 100k (277.530 us) | 129.212--130.491 us / 100k (129.861 us) | -53.2% |
+
+All construction ranges overlap, and their sub-percent affected median changes
+are smaller than the control movement. The replay case intentionally measures
+the new direct borrow instead of cloning the retired report wrapper; checksums
+remain identical.
+
 ### Completed overlap-split terminology
 
 Linear and rational overlap-refinement results now expose
