@@ -18,8 +18,8 @@ use crate::status::SdfMetricStatus;
 /// Source route used to build an approximated-gradient contouring report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SdfGradientContourSource {
-    /// Samples were generated from a retained prepared SDF expression.
-    PreparedSdfGrid,
+    /// Samples were generated from a retained exact-aware SDF.
+    RetainedSdfGrid,
     /// Samples came from an external or caller-supplied signed grid.
     ExternalSignedGrid,
 }
@@ -324,10 +324,10 @@ impl SdfGradientContourReport {
     }
 }
 
-pub(crate) fn gradient_contour_report_from_prepared_grid(
+pub(crate) fn gradient_contour_report_from_sdf_grid(
     grid_samples: SdfGridSamplingReport,
 ) -> SdfGradientContourReport {
-    build_gradient_contour_report(SdfGradientContourSource::PreparedSdfGrid, grid_samples)
+    build_gradient_contour_report(SdfGradientContourSource::RetainedSdfGrid, grid_samples)
 }
 
 fn build_gradient_contour_report(

@@ -20,23 +20,22 @@ solver proposals explicitly separate from certified geometry.
   square root, trigonometric nodes, offsets, translations, and affine transforms;
 - exact-friendly primitives for planes, spheres, AABBs, rounded AABBs, finite
   cylinders, capsules, tori, and slabs;
-- `PreparedSdf` handles with structural facts, source-version freshness, point
-  classification, conservative cell classification, intervals, gradients,
-  normals, Lipschitz reports, batch reports, previews, projection replay, and
-  handoff packaging;
+- `Sdf` fields with cached structural facts, immediate point and conservative
+  cell classification, intervals, gradients, normals, Lipschitz reports,
+  previews, projection replay, and voxel classification;
 - `SdfFacts` summaries for node counts, primitive counts, transform counts,
   parameter exactness, dyadic/common-denominator schedules, domain status,
   metric status, gradient status, and Lipschitz status;
 - preview-only point/grid sampling, GLSL export, and Surface Nets mesh diagnostics;
-- exact conservative voxel-cell and frame-aware `hypervoxel` handoff reports;
+- exact conservative voxel-cell batches and frame-aware `hypervoxel` lowering;
 - optional `hypervoxel-adapter` feature for materializing continuous-field intake
-  manifests into `hypervoxel` storage-facing records.
+  batches into `hypervoxel` storage-facing records.
 
 The crate does not claim that every expression is a true Euclidean signed distance.
 Many routes are sign-equivalent implicit fields, and that distinction is carried by
 `SdfMetricStatus`. Unsupported trig cell ranges, nonsmooth gradients, invalid
-domains, stale source versions, non-octree voxel frames, and preview-only adapters
-are explicit report states.
+domains, unsupported voxel frames, and preview-only adapters are explicit report
+states.
 
 ## Main Types
 
@@ -45,30 +44,27 @@ are explicit report states.
 - `SdfPrimitive` owns analytic shape packages: `Plane`, `Sphere`, `Aabb`,
   `RoundedAabb`, `Cylinder`, `Capsule`, `Torus`, and `Slab`.
 - `SdfCoordinate` identifies coordinate fields and primitive axes.
-- `PreparedSdf` caches `SdfFacts` and exposes all classification, preview, solver,
-  and handoff APIs.
+- `Sdf` retains an expression, caches `SdfFacts`, and exposes the classification,
+  preview, solver-replay, and voxel APIs directly.
 - `SdfFacts` records structural scheduling data and exact-parameter facts.
 - `SdfPointClassificationReport` and `SdfCellClassificationReport` carry
   certified or unknown point/cell location evidence.
-- `SdfMetricStatus`, `SdfDomainStatus`, `SdfEvidenceStatus`, `SdfFreshness`,
+- `SdfMetricStatus`, `SdfDomainStatus`, `SdfEvidenceStatus`,
   `SdfGradientStatus`, `SdfNormalStatus`, and `SdfLipschitzStatus` separate metric
-  claims, domain validity, predicate evidence, freshness, and differential support.
+  claims, domain validity, predicate evidence, and differential support.
 - `SdfIntervalReport`, `SdfGradientReport`, `SdfNormalReport`, and
   `SdfLipschitzReport` provide exact scalar ranges and differential facts where
   certified.
-- `SdfBatchDispatch`, `SdfCachePayoffReport`,
-  `SdfPointBatchClassificationReport`, and `SdfCellBatchClassificationReport`
-  expose prepared-handle reuse without changing scalar semantics.
+- `Sdf::classify_points` and `Sdf::classify_cells` provide immediate batch
+  queries without changing scalar semantics.
 - `SdfPreviewGrid`, `SdfSamplingReport`, `SdfGridSamplingReport`,
   `SdfMeshPreviewReport`, and `SdfShaderExportReport` are preview-only adapter
   reports.
 - `SdfProjectionProposal` and `SdfProjectionReplayReport` accept or reject external
   solver candidates by replaying exact boundary classification.
-- `SdfVoxelHandoffReport`, `SdfVoxelCellGrid`, `SdfHypervoxelHandoffReport`,
-  `SdfHypervoxelInterchangeManifest`, and `SdfHypervoxelInterchangeReport` bridge
-  continuous fields into grid and voxel consumers.
-- `SdfHandoffPackage` and `SdfHandoffRequirementReport` force downstream consumers
-  to request a named domain before trusting any optional payload.
+- `SdfVoxelCellGrid`, `SdfVoxelBatch`, and the optional
+  `continuous_field_batch_from_sdf` adapter bridge continuous fields into voxel
+  consumers.
 
 ## Precision
 
@@ -90,10 +86,10 @@ consumer replays exact predicates.
 
 ## Performance
 
-`PreparedSdf` caches structural facts once and reuses them across point, cell, batch,
-gradient, interval, preview, and handoff APIs. Batch reports currently use scalar
-replay but include dispatch and cache-payoff metadata so future vectorized or parallel
-evaluators can preserve the same report contract.
+`Sdf::new` caches structural facts once and the field reuses them across point,
+cell, batch, gradient, interval, preview, and voxel APIs. Batch queries currently
+use scalar replay, leaving room for later vectorized or parallel evaluators without
+changing the report contract.
 
 Point reports carry the scalar produced during classification instead of evaluating the
 expression a second time. Exact affine intervals use per-axis interval accumulation,
@@ -111,7 +107,7 @@ counts, non-finite output counts, normal provenance, and preview-only topology s
 
 Criterion coverage in `benches/classification.rs` tracks primitives, CSG, transforms,
 arithmetic, gradients, normals, intervals, Lipschitz bounds, previews, projection
-replay, handoff packages, and hypervoxel grid/interchange paths.
+replay, and voxel-grid classification.
 
 ## Numerical Explosion
 
@@ -123,10 +119,10 @@ scalar expression just to sample it.
 
 Intervals and Lipschitz bounds are local, report-scoped evidence. Unsupported trig
 cell ranges, nonsmooth CSG ties, ambiguous gradients, invalid domains, and failed
-float lowerings become explicit unknowns. Handoff packages require named domains, so
-a preview mesh or shader cannot accidentally stand in for continuous-field evidence.
-Source-version freshness lets downstream crates reject stale prepared facts instead of
-trusting cached classifications after a generator changes.
+float lowerings become explicit unknowns. Preview meshes and shaders remain named
+lossy outputs rather than continuous-field evidence. Callers construct a new `Sdf`
+when an expression changes, so cached facts and the retained expression cannot
+diverge.
 
 ## Usage
 
@@ -135,7 +131,7 @@ Build primitives and CSG with exact parameters:
 ```rust,no_run
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
-use hypersdf::{prepare, SdfCoordinate, SdfExpr, SdfPointLocation};
+use hypersdf::{Sdf, SdfCoordinate, SdfExpr, SdfPointLocation};
 
 fn r(value: i32) -> Real {
     Real::from(value)
@@ -147,13 +143,18 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 
 let sphere = SdfExpr::sphere(p(0, 0, 0), r(25));
 let slab = SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(3));
-let field = prepare(sphere.intersection(slab).offset(r(1)));
+let field = Sdf::new(sphere.intersection(slab).offset(r(1)));
 
 assert_eq!(field.classify_point(&p(0, 0, 0)).location, SdfPointLocation::Inside);
 assert_eq!(field.classify_point(&p(0, 0, 4)).location, SdfPointLocation::Boundary);
 assert_eq!(field.classify_point(&p(8, 0, 0)).location, SdfPointLocation::Outside);
 
-let cylinder = prepare(SdfExpr::cylinder(SdfCoordinate::Z, p(0, 0, 0), r(25), r(3)));
+let cylinder = Sdf::new(SdfExpr::cylinder(
+    SdfCoordinate::Z,
+    p(0, 0, 0),
+    r(25),
+    r(3),
+));
 assert_eq!(cylinder.classify_point(&p(3, 4, 0)).location, SdfPointLocation::Boundary);
 ```
 
@@ -162,16 +163,13 @@ reports:
 
 ```rust,ignore
 use hyperlattice::{Matrix4, Vector3};
-use hypersdf::{prepare_versioned, SdfBatchDispatch, SdfFreshness};
+use hypersdf::{Sdf, SdfExpr};
 
-let linear = prepare_versioned(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)), 1);
-let stale = linear.clone().with_current_source_version(2);
-assert_eq!(stale.freshness(), SdfFreshness::Stale);
+let linear = Sdf::new(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
 
 let points = [p(1, 0, 1), p(1, 1, 1)];
-let batch = linear.classify_points_report(points.iter());
-assert_eq!(batch.dispatch, SdfBatchDispatch::ScalarReplay);
-assert!(batch.is_self_consistent());
+let batch = linear.classify_points(points.iter());
+assert_eq!(batch.len(), points.len());
 
 let interval = linear
     .interval_cell(&p(0, 0, 0), &p(1, 1, 1))
@@ -194,7 +192,7 @@ let swap_xy = Matrix4([
     [r(0), r(0), r(1), r(0)],
     [r(0), r(0), r(0), r(1)],
 ]);
-let transformed = prepare(SdfExpr::x().affine_transform(swap_xy)?);
+let transformed = Sdf::new(SdfExpr::x().affine_transform(swap_xy)?);
 assert_eq!(
     transformed.classify_point(&p(10, 0, 0)).location,
     SdfPointLocation::Boundary
@@ -204,9 +202,9 @@ assert_eq!(
 Preview samples, meshes, and shader source without promoting them to topology:
 
 ```rust,ignore
-use hypersdf::{SdfPreviewGrid, SdfSampleTopologyStatus, SdfSamplingPrecision};
+use hypersdf::{Sdf, SdfPreviewGrid, SdfSampleTopologyStatus, SdfSamplingPrecision};
 
-let sdf = prepare(SdfExpr::sphere(p(0, 0, 0), r(25)));
+let sdf = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25)));
 let points = [p(0, 0, 0), p(3, 4, 0), p(8, 0, 0)];
 let samples = sdf.sample_points_preview(points.iter(), SdfSamplingPrecision::F32);
 assert_eq!(samples.topology_status, SdfSampleTopologyStatus::PreviewOnly);
@@ -223,15 +221,15 @@ let shader = sdf.export_glsl_preview("field", SdfSamplingPrecision::F32);
 assert!(shader.is_complete());
 ```
 
-Replay solver proposals and package named handoff domains:
+Replay solver proposals and classify an exact voxel grid:
 
 ```rust,ignore
 use hypersdf::{
-    SdfHandoffDomain, SdfProjectionProposal, SdfProjectionProposalKind,
-    SdfProjectionReplayStatus, SdfVoxelCellGrid, SdfVoxelGridSource, SdfVoxelLengthUnit,
+    Sdf, SdfProjectionProposal, SdfProjectionProposalKind,
+    SdfProjectionReplayStatus, SdfVoxelCellGrid, SdfVoxelLengthUnit,
 };
 
-let sdf = prepare(SdfExpr::sphere(p(0, 0, 0), r(25)));
+let sdf = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25)));
 let projection = sdf.replay_projection_proposal(SdfProjectionProposal::new(
     "closest-point-fixture",
     SdfProjectionProposalKind::ClosestPoint,
@@ -241,26 +239,16 @@ let projection = sdf.replay_projection_proposal(SdfProjectionProposal::new(
 assert_eq!(projection.status, SdfProjectionReplayStatus::BoundaryCertified);
 
 let voxel_grid = SdfVoxelCellGrid::new(p(-4, -4, -4), p(4, 4, 4), [2, 2, 2])
-    .with_units(SdfVoxelLengthUnit::Millimeter)
-    .with_source(SdfVoxelGridSource::new("sdf:sphere", 1));
-let voxel_report = sdf
-    .classify_voxel_grid_for_handoff(voxel_grid)
+    .with_units(SdfVoxelLengthUnit::Millimeter);
+let voxel_batch = sdf
+    .classify_voxel_grid(voxel_grid)
     .expect("valid exact voxel grid");
-assert!(voxel_report.hypervoxel_ready());
-
-let package = sdf
-    .handoff_package()
-    .with_hypervoxel_grid(voxel_report)
-    .with_projection_replay(projection);
-
-assert!(package.require_domain(SdfHandoffDomain::ContinuousField).is_ready());
-assert!(package.require_domain(SdfHandoffDomain::HypervoxelGrid).is_ready());
-assert!(package.require_domain(SdfHandoffDomain::ProjectionReplay).is_ready());
+assert!(voxel_batch.is_complete());
 ```
 
-With the optional `hypervoxel-adapter` feature, `continuous_field_manifest_from_sdf`
-can lower a ready `SdfHypervoxelHandoffReport` into a `hypervoxel`
-`ContinuousFieldVoxelManifest` using the caller's `GridFrame` and material id.
+With the optional `hypervoxel-adapter` feature,
+`continuous_field_batch_from_sdf` lowers an `SdfVoxelBatch` into
+`hypervoxel` continuous-field intake records.
 
 ## Development
 

@@ -3,8 +3,8 @@ use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
 use hypersdf::{
-    SdfCoordinate, SdfExpr, SdfGradientContourReport, SdfPreviewGrid, SdfProjectionProposal,
-    SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid, prepare,
+    Sdf, SdfCoordinate, SdfExpr, SdfGradientContourReport, SdfPreviewGrid, SdfProjectionProposal,
+    SdfProjectionProposalKind, SdfSamplingPrecision, SdfVoxelCellGrid,
 };
 
 fn r(value: i32) -> Real {
@@ -16,47 +16,47 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 }
 
 fn bench_point_classification(c: &mut Criterion) {
-    let plane = prepare(SdfExpr::plane(Plane3::new(p(0, 0, 1), r(-5))));
-    let slab = prepare(SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(5)));
-    let cylinder = prepare(SdfExpr::cylinder(
+    let plane = Sdf::new(SdfExpr::plane(Plane3::new(p(0, 0, 1), r(-5))));
+    let slab = Sdf::new(SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(5)));
+    let cylinder = Sdf::new(SdfExpr::cylinder(
         SdfCoordinate::Z,
         p(0, 0, 0),
         r(100),
         r(5),
     ));
-    let capsule = prepare(SdfExpr::capsule(SdfCoordinate::Z, p(0, 0, 0), r(100), r(5)));
-    let torus = prepare(SdfExpr::torus(SdfCoordinate::Z, p(0, 0, 0), r(25), r(4)));
-    let sphere = prepare(SdfExpr::sphere(p(0, 0, 0), r(100)));
-    let aabb = prepare(SdfExpr::aabb(p(-10, -10, -10), p(10, 10, 10)));
-    let rounded_aabb = prepare(SdfExpr::rounded_aabb(
+    let capsule = Sdf::new(SdfExpr::capsule(SdfCoordinate::Z, p(0, 0, 0), r(100), r(5)));
+    let torus = Sdf::new(SdfExpr::torus(SdfCoordinate::Z, p(0, 0, 0), r(25), r(4)));
+    let sphere = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(100)));
+    let aabb = Sdf::new(SdfExpr::aabb(p(-10, -10, -10), p(10, 10, 10)));
+    let rounded_aabb = Sdf::new(SdfExpr::rounded_aabb(
         p(-10, -10, -10),
         p(10, 10, 10),
         r(25),
     ));
     let csg =
-        prepare(SdfExpr::sphere(p(-4, 0, 0), r(25)).union(SdfExpr::sphere(p(4, 0, 0), r(25))));
-    let translated = prepare(SdfExpr::sphere(p(0, 0, 0), r(100)).translate(p(10, 0, 0)));
+        Sdf::new(SdfExpr::sphere(p(-4, 0, 0), r(25)).union(SdfExpr::sphere(p(4, 0, 0), r(25))));
+    let translated = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(100)).translate(p(10, 0, 0)));
     let swap_xy = Matrix4([
         [r(0), r(1), r(0), r(0)],
         [r(1), r(0), r(0), r(0)],
         [r(0), r(0), r(1), r(0)],
         [r(0), r(0), r(0), r(1)],
     ]);
-    let affine = prepare(
+    let affine = Sdf::new(
         SdfExpr::x()
             .affine_transform(swap_xy)
             .expect("invertible affine transform"),
     );
-    let offset = prepare(SdfExpr::aabb(p(-10, -10, -10), p(10, 10, 10)).offset(r(2)));
-    let coordinate = prepare(SdfExpr::x().offset(r(1)));
-    let linear = prepare(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
-    let arithmetic = prepare(
+    let offset = Sdf::new(SdfExpr::aabb(p(-10, -10, -10), p(10, 10, 10)).offset(r(2)));
+    let coordinate = Sdf::new(SdfExpr::x().offset(r(1)));
+    let linear = Sdf::new(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
+    let arithmetic = Sdf::new(
         SdfExpr::x()
             .add_expr(SdfExpr::y())
             .mul_expr(SdfExpr::z().abs()),
     );
-    let sqrt_expr = prepare(SdfExpr::x().mul_expr(SdfExpr::x()).sqrt());
-    let trig_expr = prepare(SdfExpr::x().sin().add_expr(SdfExpr::y().cos()));
+    let sqrt_expr = Sdf::new(SdfExpr::x().mul_expr(SdfExpr::x()).sqrt());
+    let trig_expr = Sdf::new(SdfExpr::x().sin().add_expr(SdfExpr::y().cos()));
     let point = p(3, 4, 5);
 
     c.bench_function("hypersdf plane point classification", |b| {
@@ -95,7 +95,7 @@ fn bench_point_classification(c: &mut Criterion) {
         p(-4, 0, 0),
         p(4, 0, 0),
     ];
-    c.bench_function("hypersdf prepared point batch classification", |b| {
+    c.bench_function("hypersdf point batch classification", |b| {
         b.iter(|| csg.classify_points(black_box(points.iter())))
     });
     c.bench_function("hypersdf preview sample points f32", |b| {
@@ -108,7 +108,7 @@ fn bench_point_classification(c: &mut Criterion) {
     c.bench_function("hypersdf mesh preview diagnostic", |b| {
         b.iter(|| csg.mesh_preview_from_grid(black_box(grid.clone()), SdfSamplingPrecision::F32))
     });
-    let dual_affine = prepare(SdfExpr::x());
+    let dual_affine = Sdf::new(SdfExpr::x());
     let dual_grid = SdfPreviewGrid::new(p(-1, -1, -1), p(2, 2, 2), [2, 2, 2]);
     c.bench_function("hypersdf dual contouring exact affine report", |b| {
         b.iter(|| {
@@ -190,28 +190,28 @@ fn bench_point_classification(c: &mut Criterion) {
 }
 
 fn bench_cell_classification(c: &mut Criterion) {
-    let sphere = prepare(SdfExpr::sphere(p(0, 0, 0), r(10_000)));
-    let slab = prepare(SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(100)));
-    let cylinder = prepare(SdfExpr::cylinder(
+    let sphere = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(10_000)));
+    let slab = Sdf::new(SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(100)));
+    let cylinder = Sdf::new(SdfExpr::cylinder(
         SdfCoordinate::Z,
         p(0, 0, 0),
         r(10_000),
         r(100),
     ));
-    let capsule = prepare(SdfExpr::capsule(
+    let capsule = Sdf::new(SdfExpr::capsule(
         SdfCoordinate::Z,
         p(0, 0, 0),
         r(10_000),
         r(100),
     ));
-    let torus = prepare(SdfExpr::torus(
+    let torus = Sdf::new(SdfExpr::torus(
         SdfCoordinate::Z,
         p(0, 0, 0),
         r(10_000),
         r(100),
     ));
-    let aabb = prepare(SdfExpr::aabb(p(-100, -100, -100), p(100, 100, 100)));
-    let rounded_aabb = prepare(SdfExpr::rounded_aabb(
+    let aabb = Sdf::new(SdfExpr::aabb(p(-100, -100, -100), p(100, 100, 100)));
+    let rounded_aabb = Sdf::new(SdfExpr::rounded_aabb(
         p(-100, -100, -100),
         p(100, 100, 100),
         r(400),
@@ -222,19 +222,19 @@ fn bench_cell_classification(c: &mut Criterion) {
         [r(0), r(0), r(1), r(0)],
         [r(0), r(0), r(0), r(1)],
     ]);
-    let affine = prepare(
+    let affine = Sdf::new(
         SdfExpr::x()
             .affine_transform(swap_xy)
             .expect("invertible affine transform"),
     );
-    let linear = prepare(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
-    let arithmetic = prepare(
+    let linear = Sdf::new(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
+    let arithmetic = Sdf::new(
         SdfExpr::x()
             .add_expr(SdfExpr::constant(r(2)))
             .mul_expr(SdfExpr::y().sub_expr(SdfExpr::constant(r(1))))
             .abs(),
     );
-    let sqrt_expr = prepare(SdfExpr::x().add_expr(SdfExpr::constant(r(100))).sqrt());
+    let sqrt_expr = Sdf::new(SdfExpr::x().add_expr(SdfExpr::constant(r(100))).sqrt());
     let min = p(-10, -10, -10);
     let max = p(10, 10, 10);
 
@@ -247,7 +247,7 @@ fn bench_cell_classification(c: &mut Criterion) {
 
     let mins = [p(-10, -10, -10), p(90, 90, 90), p(200, 200, 200)];
     let maxs = [p(10, 10, 10), p(110, 110, 110), p(210, 210, 210)];
-    c.bench_function("hypersdf prepared cell batch classification", |b| {
+    c.bench_function("hypersdf cell batch classification", |b| {
         b.iter(|| sphere.classify_cells(black_box(mins.iter().zip(maxs.iter()))))
     });
     let voxel_grid = SdfVoxelCellGrid::new(p(-100, -100, -100), p(50, 50, 50), [4, 4, 4]);

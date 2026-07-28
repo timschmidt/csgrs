@@ -3,7 +3,7 @@
 use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::Point3;
 use hyperreal::Real;
-use hypersdf::{SdfExpr, prepare};
+use hypersdf::{Sdf, SdfExpr};
 
 fn r(value: i32) -> Real {
     Real::from(value)
@@ -19,7 +19,7 @@ fn exact_point_and_affine_interval_replay_do_not_request_approximation() {
     let _recording = hyperreal::dispatch_trace::recording_scope();
 
     let csg =
-        prepare(SdfExpr::sphere(p(-4, 0, 0), r(25)).union(SdfExpr::sphere(p(4, 0, 0), r(25))));
+        Sdf::new(SdfExpr::sphere(p(-4, 0, 0), r(25)).union(SdfExpr::sphere(p(4, 0, 0), r(25))));
     let point = csg.classify_point(&p(0, 0, 0));
     assert!(point.is_self_consistent());
 
@@ -29,7 +29,7 @@ fn exact_point_and_affine_interval_replay_do_not_request_approximation() {
         [r(0), r(0), r(1), r(0)],
         [r(0), r(0), r(0), r(1)],
     ]);
-    let affine = prepare(
+    let affine = Sdf::new(
         SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7))
             .affine_transform(shear_xy)
             .expect("invertible shear"),

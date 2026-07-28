@@ -51,7 +51,7 @@ impl SdfTransform {
     /// Only homogeneous matrices with last row `[0, 0, 0, 1]` are accepted.
     /// Projective transforms are deliberately rejected until the SDF model has
     /// explicit denominator-domain reports. The inverse is computed once using
-    /// `hyperlattice` exact matrix inversion so stable objects are prepared once.
+    /// `hyperlattice` exact matrix inversion and retained with the transform.
     pub fn affine(matrix: Matrix4) -> Result<Self, SdfTransformError> {
         if !is_affine_matrix(&matrix) {
             return Err(SdfTransformError::NonAffineMatrix);

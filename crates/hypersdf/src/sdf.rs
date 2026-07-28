@@ -1,10 +1,10 @@
-//! Prepared SDF classifiers.
+//! Exact-aware SDF queries.
 //!
-//! Prepared handles are the SDF-level analogue of `hyperlimit` prepared
-//! predicates: they retain object shape and report exact evidence instead of
-//! collapsing a query to primitive floats. The cell routines deliberately use
-//! stronger primitive predicates when available, including the exact AABB/plane
-//! and AABB/sphere tests from classical box culling.
+//! [`Sdf`] retains an expression and its structural facts so immediate queries
+//! can report exact evidence instead of collapsing results to primitive floats.
+//! The cell routines deliberately use stronger primitive predicates when
+//! available, including the exact AABB/plane and AABB/sphere tests from
+//! classical box culling.
 
 use hyperlimit::{
     Aabb3Intersection, AabbSphereIntersection, Certainty, Escalation, PlaneAabbRelation, Point3,
@@ -19,9 +19,7 @@ use crate::facts::SdfFacts;
 use crate::gradient::{
     SdfGradientReport, SdfNormalReport, gradient_expr_point, normal_from_gradient_report,
 };
-use crate::gradient_contour::{
-    SdfGradientContourReport, gradient_contour_report_from_prepared_grid,
-};
+use crate::gradient_contour::{SdfGradientContourReport, gradient_contour_report_from_sdf_grid};
 use crate::interval::{SdfIntervalReport, interval_expr_cell};
 use crate::lipschitz::{SdfLipschitzReport, lipschitz_expr_cell};
 use crate::mesh::SdfMeshPreviewReport;
@@ -40,15 +38,15 @@ use crate::status::{
 };
 use crate::voxel::{SdfVoxelBatch, SdfVoxelCellGrid, SdfVoxelGridError, voxel_cell_bounds};
 
-/// Prepared exact-aware SDF expression.
+/// Retained exact-aware signed-distance or implicit field.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedSdf {
+pub struct Sdf {
     expr: SdfExpr,
     facts: SdfFacts,
 }
 
-impl PreparedSdf {
-    /// Prepare an expression for repeated classification.
+impl Sdf {
+    /// Construct a field and retain its structural facts for immediate queries.
     pub fn new(expr: SdfExpr) -> Self {
         let facts = SdfFacts::from_expr(&expr);
         Self { expr, facts }
@@ -65,11 +63,13 @@ impl PreparedSdf {
     }
 
     /// Return the expression metric status.
+    #[inline]
     pub fn metric_status(&self) -> SdfMetricStatus {
         self.facts.metric_status
     }
 
     /// Classify a point and return a report rather than a bare boolean.
+    #[inline]
     pub fn classify_point(&self, point: &Point3) -> SdfPointClassificationReport {
         let (outcome, scalar_value) = classify_expr_point_with_scalar(&self.expr, point);
         SdfPointClassificationReport {
@@ -81,10 +81,10 @@ impl PreparedSdf {
         }
     }
 
-    /// Classify many points through one retained prepared handle.
+    /// Classify many points through this retained field.
     ///
     /// This is a scheduling surface, not alternate topology semantics: every
-    /// item is classified by [`PreparedSdf::classify_point`], so scalar and
+    /// item is classified by [`Sdf::classify_point`], so scalar and
     /// batch results must match exactly. Later SIMD, trace, or parallel
     /// evaluators can specialize this method without changing the report
     /// contract.
@@ -115,7 +115,7 @@ impl PreparedSdf {
         }
     }
 
-    /// Return exact symbolic gradients for many points through one prepared handle.
+    /// Return exact symbolic gradients for many points through this field.
     pub fn gradient_points<'a, I>(&self, points: I) -> Vec<SdfGradientReport>
     where
         I: IntoIterator<Item = &'a Point3>,
@@ -148,6 +148,7 @@ impl PreparedSdf {
     }
 
     /// Classify a closed AABB/cell conservatively.
+    #[inline]
     pub fn classify_cell(&self, min: &Point3, max: &Point3) -> SdfCellClassificationReport {
         let outcome = classify_expr_cell(&self.expr, min, max);
         SdfCellClassificationReport {
@@ -159,10 +160,10 @@ impl PreparedSdf {
         }
     }
 
-    /// Classify many closed AABB/cells through one retained prepared handle.
+    /// Classify many closed AABB/cells through this retained field.
     ///
     /// Each pair is interpreted as `(min, max)` in the same inclusive sense as
-    /// [`PreparedSdf::classify_cell`]. Hyperlimit interval predicates normalize
+    /// [`Sdf::classify_cell`]. Hyperlimit interval predicates normalize
     /// endpoint order where the underlying primitive classifier supports it.
     pub fn classify_cells<'a, I>(&self, cells: I) -> Vec<SdfCellClassificationReport>
     where
@@ -277,7 +278,7 @@ impl PreparedSdf {
         precision: SdfSamplingPrecision,
     ) -> Result<SdfGradientContourReport, SdfGridSamplingError> {
         self.sample_grid_preview(grid, precision)
-            .map(gradient_contour_report_from_prepared_grid)
+            .map(gradient_contour_report_from_sdf_grid)
     }
 
     /// Export a preview-only GLSL scalar function.

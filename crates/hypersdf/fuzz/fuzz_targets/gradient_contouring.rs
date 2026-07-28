@@ -4,7 +4,7 @@ use hyperlimit::Point3;
 use hyperreal::Real;
 use hypersdf::{
     SdfExpr, SdfGradientContourBlocker, SdfGradientContourReport, SdfPreviewGrid,
-    SdfSamplingPrecision, prepare,
+    SdfSamplingPrecision, Sdf,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -23,11 +23,11 @@ fuzz_target!(|data: &[u8]| {
     let ny = u32::from(data[8] % 4) + 2;
 
     let sdf = match mode {
-        0 => prepare(SdfExpr::x().sub_expr(SdfExpr::constant(r(origin_x + step_x)))),
-        1 => prepare(SdfExpr::x()),
-        2 => prepare(SdfExpr::sphere(p(0, 0, 0), r(25))),
-        3 => prepare(SdfExpr::x().tan()),
-        _ => prepare(SdfExpr::x().mul_expr(SdfExpr::x()).sub_expr(SdfExpr::constant(r(4)))),
+        0 => Sdf::new(SdfExpr::x().sub_expr(SdfExpr::constant(r(origin_x + step_x)))),
+        1 => Sdf::new(SdfExpr::x()),
+        2 => Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25))),
+        3 => Sdf::new(SdfExpr::x().tan()),
+        _ => Sdf::new(SdfExpr::x().mul_expr(SdfExpr::x()).sub_expr(SdfExpr::constant(r(4)))),
     };
     let grid = SdfPreviewGrid::new(
         p(origin_x, origin_y, origin_z),

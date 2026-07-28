@@ -11,7 +11,7 @@ not portable latency promises.
 |---|---:|---:|---:|
 | affine cell interval | 21.90 us | 1.30 us | 94.1% faster |
 | sphere point report | 752 ns | 510 ns | 32-34% faster |
-| prepared six-point CSG batch | 8.22 us | 5.40 us | 34-38% faster |
+| retained six-point CSG batch | 8.22 us | 5.40 us | 34-38% faster |
 | 4 x 4 x 4 exact-grid preview | 70.20 us | 58.92 us | 15.3% faster |
 | mesh preview including that grid | 79.79 us | 60.87 us | 19.7% faster |
 | sphere cell interval | 6.56 us | 1.47 us | 75.9% faster |
@@ -23,7 +23,7 @@ The retained implementations are:
 
 - Arvo-style per-output-axis transformed-AABB accumulation instead of transforming
   eight corners. The same Moore interval form computes exact plane and linear ranges.
-- A one-pass prepared point evaluator that retains each already-computed exact scalar
+- A one-pass point evaluator that retains each already-computed exact scalar
   while preserving the existing CSG location-composition rules.
 - Per-axis exact grid-coordinate schedules, so an `x` coordinate is constructed once
   and reused for every `y,z` combination rather than rebuilt at every grid point.
@@ -100,7 +100,7 @@ competing tree and preserving one source of frame/indexing truth.
 
 ### Yap, Towards Exact Geometric Computation
 
-Retained through object preparation, square-root-free predicates, exact interval and
+Retained through field structure, square-root-free predicates, exact interval and
 sign decisions, and the one-pass report evaluator. The evaluator now exploits context
 across what were formerly separate classification and scalar calls, matching Yap's
 recommendation that expression/object packages expose cross-call optimization. Lossy
@@ -118,3 +118,18 @@ never become topology evidence without exact replay.
 - The small dual-contouring affine benchmark did not materially benefit from the grid
   coordinate cache; the cache was retained because the direct grid and mesh benchmarks
   improved significantly and the formula is identical.
+
+## Immediate API gate
+
+The 2026-07-27 removal of the `PreparedSdf`/`prepare` protocol retained the same
+expression and fact cache behind `Sdf::new`. Criterion compared the affected batch
+paths before and after the public API change:
+
+| Path | Before | After | Criterion result |
+|---|---:|---:|---|
+| six-point CSG point batch | 2.616-2.645 us | 2.580-2.606 us | within noise threshold |
+| three-cell sphere batch | 957.95-967.83 ns | 973.26-980.67 ns | within noise threshold |
+
+The direct point and cell entry points are explicitly inlined across the crate
+boundary. An alternating old-source/new-source run was also used after an initially
+slower sample, preventing ambient machine drift from being mistaken for an API cost.
