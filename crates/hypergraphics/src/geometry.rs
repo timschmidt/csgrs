@@ -7,7 +7,10 @@ use std::sync::{
 };
 
 use hyperlattice::Point3;
-use hyperlimit::{Certainty, PlaneSide, PredicateOutcome, PreparedOrientedPlane3, Sign, orient3d};
+use hyperlimit::{
+    Certainty, OrientedPlane3Evidence, PlaneSide, PredicateOutcome, Sign,
+    classify_point_oriented_plane_with_evidence, orient3d, oriented_plane3_evidence,
+};
 
 use crate::error::{Error, Result};
 pub use crate::render::{Color3, Primitive, RenderVertex64};
@@ -91,14 +94,14 @@ const NO_TRIANGLE_INDEX: usize = usize::MAX;
 #[derive(Debug)]
 struct CachedTriangleOrientation {
     triangle_index: usize,
-    plane: PreparedOrientedPlane3,
+    evidence: OrientedPlane3Evidence,
 }
 
 impl CachedTriangleOrientation {
     fn new(triangle_index: usize, a: &Point3, b: &Point3, c: &Point3) -> Self {
         Self {
             triangle_index,
-            plane: PreparedOrientedPlane3::new(a, b, c),
+            evidence: oriented_plane3_evidence(a, b, c),
         }
     }
 }
@@ -165,7 +168,10 @@ impl TriangleOrientationCache {
                 triangle[2],
             ))
         });
-        TriangleOrientation::from_plane_outcome(cached.plane.classify_point(point))
+        TriangleOrientation::from_plane_outcome(classify_point_oriented_plane_with_evidence(
+            point,
+            &cached.evidence,
+        ))
     }
 
     fn classify_cached(
@@ -176,8 +182,12 @@ impl TriangleOrientationCache {
         let cached = self.slots[triangle_index % TRIANGLE_ORIENTATION_CACHE_SLOTS]
             .orientation
             .get()?;
-        (cached.triangle_index == triangle_index)
-            .then(|| TriangleOrientation::from_plane_outcome(cached.plane.classify_point(point)))
+        (cached.triangle_index == triangle_index).then(|| {
+            TriangleOrientation::from_plane_outcome(classify_point_oriented_plane_with_evidence(
+                point,
+                &cached.evidence,
+            ))
+        })
     }
 }
 

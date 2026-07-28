@@ -27,6 +27,12 @@ Clones share the cache while their vertices remain identical, and mutable
 vertex access detaches and invalidates it. The public prepared handle and its
 manual lifecycle are removed without regressing the affected crate benchmarks.
 
+The stack-wide plane-evidence rename retained the same cache and immediate
+query path. A second serialized 100-sample gate measured 40.70 to 39.86 ns for
+the repeated query and 79.31 to 78.08 ns for clone-and-query. Criterion measured
+the first improvement as significant and classified the second within its
+noise threshold.
+
 Grid construction computes each exact coordinate once and reuses it for the
 vertical and horizontal line with the same coordinate while preserving vertex
 order.
