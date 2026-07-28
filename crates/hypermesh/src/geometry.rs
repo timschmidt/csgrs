@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real, RealSign};
+use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
 
 use crate::error::HypermeshResult;
 pub use crate::predicate::{
@@ -116,56 +116,12 @@ impl Plane {
     /// `Plane::from_points(...).is_valid()`: it evaluates cross-product
     /// components only until one is not structurally zero and does not build
     /// the unused plane offset.
+    #[inline]
     pub fn points_are_nondegenerate(p0: &Point3, p1: &Point3, p2: &Point3) -> bool {
-        let coordinates = [
-            [&p0.x, &p0.y, &p0.z],
-            [&p1.x, &p1.y, &p1.z],
-            [&p2.x, &p2.y, &p2.z],
-        ];
-        // A successful primitive filter is a certificate of the exact sign;
-        // inconclusive projections continue to exact rational or symbolic
-        // evaluation below.
-        for [u, v] in [[1, 2], [2, 0], [0, 1]] {
-            if matches!(
-                Real::certified_affine_det2_sign(
-                    [coordinates[0][u], coordinates[0][v]],
-                    [coordinates[1][u], coordinates[1][v]],
-                    [coordinates[2][u], coordinates[2][v]],
-                ),
-                Some(RealSign::Negative | RealSign::Positive)
-            ) {
-                return true;
-            }
-        }
-        if let [
-            [Some(x0), Some(y0), Some(z0)],
-            [Some(x1), Some(y1), Some(z1)],
-            [Some(x2), Some(y2), Some(z2)],
-        ] = coordinates.map(|point| point.map(Real::exact_rational_ref))
-        {
-            let uy = y1 - y0;
-            let uz = z1 - z0;
-            let vy = y2 - y0;
-            let vz = z2 - z0;
-            if rational_difference_cross_is_nonzero(&uy, &vz, &uz, &vy) {
-                return true;
-            }
-            let ux = x1 - x0;
-            let vx = x2 - x0;
-            return rational_difference_cross_is_nonzero(&uz, &vx, &ux, &vz)
-                || rational_difference_cross_is_nonzero(&ux, &vy, &uy, &vx);
-        }
-        let uy = &p1.y - &p0.y;
-        let uz = &p1.z - &p0.z;
-        let vy = &p2.y - &p0.y;
-        let vz = &p2.z - &p0.z;
-        if difference_cross_is_nonzero(&uy, &vz, &uz, &vy) {
-            return true;
-        }
-        let ux = &p1.x - &p0.x;
-        let vx = &p2.x - &p0.x;
-        difference_cross_is_nonzero(&uz, &vx, &ux, &vz)
-            || difference_cross_is_nonzero(&ux, &vy, &uy, &vx)
+        matches!(
+            hyperlimit::classify_triangle3_degeneracy(p0, p1, p2),
+            hyperlimit::TriangleDegeneracy::NonDegenerate
+        )
     }
 
     pub(crate) fn points_are_collinear_on_support(
@@ -259,36 +215,6 @@ impl Plane {
         }
         None
     }
-}
-
-#[inline]
-fn difference_cross_is_nonzero(
-    left_a: &Real,
-    left_b: &Real,
-    right_a: &Real,
-    right_b: &Real,
-) -> bool {
-    if let [Some(left_a), Some(left_b), Some(right_a), Some(right_b)] =
-        [left_a, left_b, right_a, right_b].map(Real::exact_rational_ref)
-    {
-        return !Rational::signed_product_sum_ordering(
-            [true, false],
-            [[left_a, left_b], [right_a, right_b]],
-        )
-        .is_eq();
-    }
-    !Real::diff_of_products(left_a, left_b, right_a, right_b).definitely_zero()
-}
-
-#[inline]
-fn rational_difference_cross_is_nonzero(
-    left_a: &Rational,
-    left_b: &Rational,
-    right_a: &Rational,
-    right_b: &Rational,
-) -> bool {
-    !Rational::signed_product_sum_ordering([true, false], [[left_a, left_b], [right_a, right_b]])
-        .is_eq()
 }
 
 impl Plane3Coefficients for Plane {

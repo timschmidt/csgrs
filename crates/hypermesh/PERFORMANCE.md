@@ -10,6 +10,35 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-07-28: canonical projected triangle degeneracy
+
+Status: **kept**
+
+Plane construction previously owned an 80-line cascade for proving that three
+3D points were non-collinear. Hyperlimit already exposed the corresponding
+exact predicate, but its implementation eagerly materialized and classified
+all three coordinate projections. The optimized stage-major cascade now lives
+in Hyperlimit, and `Plane::points_are_nondegenerate` consumes its explicit
+`NonDegenerate`, `Degenerate`, or `Unknown` result instead of maintaining a
+second determinant implementation.
+
+The direct 40-sample predicate gate improved from 436.90 ns to 33.72 ns
+(92.26%). Hypermesh's 6,144-triangle polygon-soup gate moved from 12.427 ms to
+12.275 ms (1.23% lower, within Criterion's configured noise threshold). The
+24-triangle cube-pair gate measured 43.531 us before and 43.688 us after; its
+intervals overlapped and Criterion classified the 1.34% estimate as within the
+noise threshold. Projection-order tests cover XY, XZ, YZ, and exactly
+collinear inputs, while Hypermesh's differential tests continue to compare the
+canonical result with materialized plane validation and the former rational
+path.
+
+A serialized CSGRS downstream gate kept medium-sphere construction at
+75.289 us warm (75.733 us in the preceding full-stack run), 5.33x faster than
+CGAL. Its five-sample fresh-process median increased from 1.338 ms to 1.695 ms,
+identifying a one-time cold-start tradeoff that is not present in the repeated
+construction path. Unit-box construction remained flat-to-better cold and
+improved from 1.362 us to 1.211 us warm in the paired focused run.
+
 ## 2026-07-28: immediate construction and classification APIs
 
 Status: **kept**
