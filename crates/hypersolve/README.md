@@ -1,175 +1,236 @@
 <h1>
-  hypersolve
-  <img src="./doc/hypersolve.png" alt="hypersolve logo" width="144" align="right">
+  Hypersolve
+  <img src="./doc/hypersolve.png" alt="Hypersolve logo" width="144" align="right">
 </h1>
 
-`hypersolve` is the experimental exact-aware solver layer for the Hyper stack. It models
-variables, constraints, symbolic residuals, problem analysis, interval and candidate
-certification, direct equality helpers, and lossy dense-solver adapters while keeping
-`hyperreal::Real` values visible.
+Exact-aware symbolic constraints, direct subproblem solvers, candidate
+certification, and explicit numerical proposal adapters for the Hyper stack.
 
-The crate is not a production nonlinear optimizer yet. It is the place where solver
-intent, residual structure, active-set facts, and adapter precision boundaries are made
-auditable before future high-performance backends are introduced.
+Hypersolve represents variables and residuals with `hyperreal::Real`, analyzes
+their algebraic structure, solves supported exact subproblems, and records
+whether a proposed candidate was certified, violated, or left unresolved. It
+is not a claim that every nonlinear problem can be solved exactly, nor is its
+dense floating-point proposal loop a source of topology truth.
 
-## Typical Solver Problems
+Domain geometry remains owned by Hyperlimit, Hypercurve, Hypertri, and their
+consumers. Hypersolve owns reusable equation structure and certification.
 
-Solvers often mix symbolic intent, numeric residual evaluation, linear algebra,
-predicate branches, and convergence policy inside one loop. When a solve fails, barely
-passes, or changes branch, it can be unclear whether the issue was conditioning, stale
-Jacobian structure, a lossy adapter, a wrong active set, or a genuinely discrete
-topology rule.
+This README describes crate version `0.3.0`.
 
-`hypersolve` separates those layers. Expressions carry dependency and degree facts;
-problem analyses retain row and Jacobian structure; direct and interval helpers expose
-certificates; dense primitive linear solving is a named adapter with diagnostics rather
-than internal truth.
+## Primary types
 
-## Main Types
+| Type | Role |
+| --- | --- |
+| `Expr`, `SymbolId`, `ExprFacts`, `ExprDegree` | Symbolic residual and structural facts |
+| `Problem`, `Variable`, `Constraint` | Solver model |
+| `ProblemAnalysis`, `ConstraintFacts`, `SolverBlock` | Dependency, degree, affine, polynomial, and sparsity analysis |
+| `EvaluationContext`, `ResidualEvaluation` | Exact candidate bindings and residual values |
+| `AffineResidual`, `QuadraticResidual`, `UnivariateQuadraticResidual` | Recognized exact subproblems |
+| `CandidateCertificationReport`, `CandidateDomainReport` | Candidate proof, violation, uncertainty, and domain evidence |
+| `AlgebraicRootRepresentation` | Isolated exact algebraic root carrier |
+| `SolverConfig`, `SolverState`, `SolveReport` | Explicit proposal-engine state and diagnostics |
+| `SketchSolveProblem`, `SketchConstraintBuilder` | Sketch-specific equation construction and reports |
 
-- `Expr`, `SymbolId`, `ExprFacts`, and `ExprDegree` describe symbolic residual
-  expressions over `Real`.
-- `Problem`, `Variable`, `VariableId`, `Constraint`, and `ConstraintKind` describe the
-  solver model.
-- `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and problem-analysis
-  types evaluate residuals and preserve structure.
-- `AffineResidual`, polynomial residual types, solver-block facts, equality
-  substitution classes, class-application reports, affine-row elimination reports,
-  direct equality helpers, and univariate root-isolation reports expose reusable
-  exact subproblems.
-- `CandidateCertificationReport`, lossy-adapter-only reports, candidate-domain
-  reports, residual balls, interval certification helpers, affine Krawczyk reports,
-  univariate quadratic alpha reports, and predicate reports describe proof or
-  uncertainty.
-- `ProposalEngineKind`, `ProposalEngineReport`, `DenseLinearBackend`,
-  `LinearSolveReport`, `SolverConfig`, `SolverState`, and `SolveReport` make
-  lossy candidate generation explicit.
-- `DenseResidualReplayReport`, `DenseResidualReplayError`, and
-  `replay_dense_linear_residuals` provide the shared exact dense residual replay helper
-  used by crates such as `hypercircuit`.
-- `SimplexProjectionReport` provides exact closest-point, squared-distance, and
-  barycentric evidence for small convex hulls used by collision and geometry crates.
-
-## Precision Model
-
-Residual definitions and structural facts use `Real`. Dense primitive solves are
-explicit adapters and report their precision boundary, pivot diagnostics, and
-convergence outcome. Geometry or topology predicates should be delegated to
-`hyperlimit`, `hypercurve`, `hypertri`, or the domain crate that owns the object.
-
-Unknown certification is a first-class result. The crate should not turn unresolved
-interval, predicate, or residual evidence into a float decision just to make a solve
-look complete.
-
-## Numerical Explosion
-
-`hypersolve` combats numerical explosion by separating symbolic residual structure from
-candidate generation. Degree facts, dependency masks, affine rows, substitution classes,
-Sturm intervals, and replay reports keep exact cases small and push generic nonlinear
-work into named proposal adapters whose outputs must be certified before acceptance.
-
-## Performance Model
-
-`hypersolve` works to keep expensive solving out of cases where structure already gives
-an answer. Problem facts record constant rows, affine rows, polynomial rows,
-dependency masks, sparse Jacobian structure, and affine residual reuse. Direct equality
-substitution, substitution-class candidate propagation, substitution-class affine row
-elimination, univariate quadratic helpers, and Sturm root isolation handle small exact
-cases before a generic nonlinear loop is needed.
-
-Sparse backends exploit the same records: they skip certified structural zeros,
-reuse symbolic rows for exact elimination and replay, and offer an opt-in symmetric
-minimum-degree Bareiss solve for high-fill input orderings. Its report retains both
-permutations, restores source variable order, and exactly replays the original system.
-Levenberg-Marquardt is a named
-lossy route through the current dense damped normal-equation proposal step. Powell
-hybrid and dogleg use the dense trust-region proposal, BFGS retains a dense inverse-
-Hessian approximation, and SQP uses the documented equality least-squares relaxation.
-All remain proposal-only routes whose outputs require exact replay or certification.
-
-The complete reference-to-implementation audit, retained benchmark results, and
-architecture boundaries are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-## Current Status
-
-Implemented today:
-
-- symbolic expressions, simplification, structural facts, and differentiation;
-- exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
-- problem analysis, affine and polynomial forms, and solver-block facts;
-- direct one-row and square-system affine helpers, univariate-quadratic equality
-  helpers with full-candidate replay reports, equality-substitution analysis,
-  exact substitution-class construction, class-based candidate propagation, and
-  non-mutating affine row elimination reports;
-- exact-rational univariate polynomial root isolation by Descartes and Bernstein
-  count bounds, recursive Bernstein subdivision reports, represented algebraic
-  root wrappers, square-free reduction, Sturm intervals, bounded interval
-  refinement, and exact rational witness replay;
-- candidate, lossy-adapter-only, candidate-domain, interval, affine Krawczyk,
-  univariate and multivariate quadratic Krawczyk, and univariate quadratic alpha
-  certification surfaces;
-- exact domain preflight for division, negative powers, square root, logarithm,
-  inverse circular, and inverse hyperbolic residual nodes;
-- reusable exact dense linear residual replay for domain crates that build their own
-  small linear systems;
-- exhaustive small-simplex origin projection using exact Gram systems, certified
-  nonnegative barycentric weights, and explicit unknown ordering reports;
-- a dense damped least-squares prototype with proposal-engine and adapter diagnostics;
-- geometry residual helper modules. PCB, routing, and toolpath residual builders now
-  live in `hyperpath::solve`, where their domain semantics are owned.
-
-Known limits: nonlinear solve policy is still experimental, dense linear solving is
-intentionally approximate, and domain topology remains delegated to sibling crates.
-
-## Installation
+## Install
 
 ```toml
 [dependencies]
 hypersolve = "0.3.0"
 ```
 
-For sibling checkouts:
+Hypersolve has no default features. `dispatch-trace` is for exact-dispatch
+instrumentation and does not change the mathematical API.
 
-```toml
-[dependencies]
-hypersolve = { path = "../hypersolve" }
-```
+## Quick start
 
-## Usage
+This checked example evaluates and certifies the candidate \(x=2\) for
+\(x^2-4=0\).
 
-Define residuals symbolically, evaluate candidates, and certify the result instead of
-trusting a proposal loop by itself:
-
+<!-- quickstart:start -->
 ```rust
-use hypersolve::{
-    Constraint, Expr, ProblemAnalysis, Problem, certify_candidate, context_from_problem,
-};
 use hyperreal::Real;
+use hypersolve::{Constraint, Expr, Problem, certify_candidate, context_from_problem};
 
-let mut problem = Problem::default();
-let x = problem.add_variable("x", Real::from(2));
-let x_expr = Expr::symbol(problem.variables[x.0 as usize].symbol, "x");
-problem.add_constraint(Constraint::equality(
-    "x squared is four",
-    x_expr.clone() * x_expr - Expr::real(Real::from(4)),
-));
+fn main() {
+    let mut problem = Problem::default();
+    let x = problem.add_variable("x", Real::from(2));
+    let x_expr = Expr::symbol(problem.variables[x.0 as usize].symbol, "x");
+    problem.add_constraint(Constraint::equality(
+        "x squared is four",
+        x_expr.clone() * x_expr - Expr::real(Real::from(4)),
+    ));
 
-let analysis = problem.analyze();
-let candidate = context_from_problem(&problem);
-let certification = certify_candidate(&analysis, &candidate);
+    let analysis = problem.analyze();
+    let candidate = context_from_problem(&problem);
+    let certification = certify_candidate(&analysis, &candidate);
 
-assert_eq!(certification.certified_satisfied_rows, 1);
-assert!(!certification.has_certified_violation());
+    assert_eq!(certification.certified_satisfied_rows, 1);
+    assert!(!certification.has_certified_violation());
+}
+```
+<!-- quickstart:end -->
+
+Run it with:
+
+```sh
+cargo run --example basic
 ```
 
-Affine/quadratic residual forms, direct equality substitution, domain preflight,
-interval, Krawczyk, and alpha reports, dense linear adapter diagnostics, predicate
-reports, and domain helper modules keep solver structure visible across geometry, PCB,
-and toolpath problems.
+## Solver model
 
-## Development
+```text
+Expr + Variable + Constraint
+             │
+          Problem
+             │ analyze
+       ProblemAnalysis
+        ┌────┴───────────────┐
+ exact/direct routes    numerical proposal
+        │                        │
+        └──────── candidate ─────┘
+                     │
+       domain preflight + exact replay
+                     │
+       certified / violated / unknown
+```
 
-Useful local checks:
+Structural analysis is intentionally reusable. It records dependencies,
+degrees, constant/affine/polynomial rows, sparse Jacobian structure, and solver
+blocks before an algorithm is selected.
+
+## API guide
+
+### Expressions, models, and evaluation
+
+- `Expr::{real, symbol, structural_facts, dependencies, simplify, derivative,
+  eval_real}` builds and inspects symbolic residuals. Standard arithmetic and
+  supported elementary functions compose expressions.
+- `Variable::new` and `Variable::with_bounds` create variables directly.
+  `Problem::{add_variable, add_constraint, analyze}` is the usual model path.
+- `Constraint::equality` creates a zero-residual equation;
+  `ConstraintKind` identifies other row semantics.
+- `context_from_problem`, `EvaluationContext::bind`, and
+  `evaluate_residuals` create and evaluate exact candidates.
+- `symbolic_jacobian`, `symbolic_jacobian_with_analysis`, and
+  `finite_difference_jacobian` expose exact-symbolic and explicitly finite
+  Jacobian routes.
+
+### Structural and direct exact solving
+
+- `ProblemAnalysis::{facts, constraints, jacobian_sparsity,
+  affine_residuals, univariate_quadratic_residuals, quadratic_residuals,
+  evaluate_residuals}` exposes retained row structure.
+- `AffineResidual::from_expr`, `QuadraticResidual::from_expr`, and
+  `UnivariateQuadraticResidual::from_expr` recognize useful exact forms.
+- `solve_direct_affine_equalities` and `solve_direct_affine_system` solve
+  supported one-row or square affine systems.
+- `determinant_bareiss`, `solve_dense_linear_system_bareiss`, and the sparse,
+  multi-right-hand-side, pattern-preserving, and minimum-degree Bareiss
+  variants provide exact fraction-free linear algebra with reports.
+- `analyze_exact_affine_rank` reports exact rank evidence.
+- `find_equality_substitutions`, `validate_equality_substitutions`,
+  `equality_substitution_classes`, `apply_equality_substitutions`,
+  `apply_equality_substitution_classes`, and
+  `eliminate_affine_rows_with_substitution_classes` expose exact rewriting
+  without mutating the source problem.
+- `solve_direct_univariate_quadratic_equalities` and
+  `certify_direct_univariate_quadratic_roots` enumerate and replay supported
+  quadratic candidates.
+
+### Polynomial and algebraic roots
+
+- Root-isolation APIs provide Descartes/Bernstein bounds, recursive Bernstein
+  subdivision, square-free reduction, Sturm intervals, bounded refinement, and
+  exact rational-witness replay.
+- `represent_univariate_algebraic_roots` and
+  `validate_algebraic_root_representation` create and check retained isolated
+  roots.
+- `compare_algebraic_root_representations`, affine/Möbius/binary transforms,
+  polynomial images, rational images, and arithmetic reports operate without
+  first lowering roots to primitive floats.
+- `resultant_parametric_curve_intersection` and
+  `resultant_rational_parametric_curve_intersection` expose solver-level curve
+  elimination reports. Curve topology still belongs to Hypercurve.
+- Bézier, rational Bézier, B-spline span, and NURBS span substitution functions
+  convert retained curve data into polynomial systems with explicit status.
+
+### Certification
+
+- `certify_candidate`, `certify_candidate_with_config`, and
+  `certify_candidate_with_residual_balls` replay candidate rows.
+- `certify_candidate_domains` preflights division, powers, square root,
+  logarithm, inverse circular functions, and inverse hyperbolic functions.
+- Interval APIs certify exact residual ranges over candidate boxes.
+- Affine and quadratic Krawczyk reports, plus
+  `certify_univariate_quadratic_alpha`, expose supported local existence and
+  uniqueness evidence.
+- `certify_candidate_batch` and `schedule_candidate_batch_predicates` reuse
+  predicate schedules across candidates.
+- `replay_dense_linear_residuals` is the shared exact replay helper for domain
+  crates that generate small dense systems.
+- `project_origin_onto_simplex` returns exact closest-point, squared-distance,
+  barycentric, and ordering evidence for small convex hulls.
+
+Unknown certification is a result, not a request to fall through to a float
+comparison.
+
+### Proposal engines and active sets
+
+- `solve_damped_least_squares` runs the configured dense proposal engine and
+  returns `SolveReport`.
+- `SolverConfig` selects limits, tolerances, Jacobian policy, and
+  `ProposalEngineKind`; `SolverState` carries candidate values.
+- Dense linear, Levenberg–Marquardt, Powell hybrid/dogleg, BFGS, and SQP routes
+  are proposal generators. Their precision and preprocessing are retained in
+  `ProposalEngineReport`.
+- `audit_active_set`, `propose_active_set_update`,
+  `regenerate_active_set_affine_candidate`,
+  `regenerate_active_set_quadratic_candidates`, and
+  `run_active_set_update_loop` make active-mask changes auditable.
+- Failed-constraint search reports identify single, pair, and bounded set
+  removals without silently weakening the source model.
+
+### Sketch and domain helpers
+
+- `SketchSolveProblem` and `SketchConstraintBuilder` build exact-aware 2D and
+  projected-workplane constraints.
+- Builder methods cover coincidence, incidence, horizontal/vertical,
+  parallel/perpendicular/same-direction, distances and ranges, radii,
+  concentricity, length equality/ratio/difference, angles, tangency,
+  midpoint/symmetry, parameter bounds, chamfer/fillet-related continuity, and
+  projected 3D equivalents.
+- Sketch preflight functions audit entity domains, workplanes, unit/tolerance
+  declarations, degeneracy, compatibility fixtures, construction
+  certificates, and failed constraints.
+- `SolverPoint2`, `squared_distance_expr`, `point_coincidence_equations`, and
+  tangent helpers are small reusable equation builders.
+
+Routing, PCB, and toolpath residual builders live in Hyperpath, where their
+domain semantics can be documented and validated.
+
+## Guarantees and boundaries
+
+- Residual definitions, direct algebra, and certification use
+  `hyperreal::Real`.
+- A numerical proposal is never automatically a certified solution.
+- Domain-invalid expressions are reported before residual acceptance.
+- Geometry predicates are delegated to the crate that owns the geometry.
+- Dense finite linear algebra, finite differences, convergence tolerances, and
+  numerical stopping conditions are named adapter policy.
+- Exact reports retain dependencies, row structure, pivots, permutations,
+  intervals, witnesses, or replay values needed to audit the conclusion.
+
+The nonlinear proposal layer is experimental. Consumers should accept a
+candidate only when the required domain and residual reports are certified for
+their use case.
+
+## Feature flags
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `dispatch-trace` | no | Hyperreal/Hyperlattice/Hyperlimit exact-dispatch instrumentation |
+
+## Validation and performance
 
 ```sh
 cargo fmt --all -- --check
@@ -179,33 +240,73 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 cargo check --benches --all-features
 ```
 
+The benchmark protocol, measured results, and retained/rejected optimization
+record are in [PERFORMANCE.md](PERFORMANCE.md). Fuzz replay instructions are in
+[fuzz/README.md](fuzz/README.md); dispatch instrumentation is documented in
+[dispatch_trace.md](dispatch_trace.md).
+
 ## References
 
-- [Bareiss, "Sylvester's Identity and Multistep Integer-Preserving Gaussian Elimination" (1968)](https://doi.org/10.1090/S0025-5718-1968-0226829-0)
-- Bouma et al., ["A Geometric Constraint Solver" (1995)](https://doi.org/10.1016/0010-4485(95)00007-4)
-- Collins, ["Subresultants and Reduced Polynomial Remainder Sequences" (1967)](https://doi.org/10.1145/321371.321381)
-- Collins and Loos, "Real Zeros of Polynomials," in *Computer Algebra* (1982)
-- Descartes, [*La Géométrie* (1637)](https://gallica.bnf.fr/ark:/12148/btv1b86069594)
-- Farin, [*Curves and Surfaces for CAGD*, fifth edition (2002)](https://doi.org/10.1016/B978-1-55860-737-8.X5000-5)
-- Farouki and Rajan, ["Algorithms for Polynomials in Bernstein Form" (1988)](https://doi.org/10.1016/0167-8396(88)90016-7)
-- Krawczyk, ["Newton-Algorithmen zur Bestimmung von Nullstellen mit Fehlerschranken" (1969)](https://doi.org/10.1007/BF02234767)
-- Levenberg, ["A Method for the Solution of Certain Non-Linear Problems in Least Squares" (1944)](https://doi.org/10.1090/qam/10666)
-- Marquardt, ["An Algorithm for Least-Squares Estimation of Nonlinear Parameters" (1963)](https://doi.org/10.1137/0111030)
-- Moore, *Interval Analysis* (1966)
-- Nocedal and Wright, [*Numerical Optimization*, second edition (2006)](https://doi.org/10.1007/978-0-387-40065-5)
-- Powell, ["A Hybrid Method for Nonlinear Equations" (1970)](https://doi.org/10.1007/BFb0067700)
-- Sederberg and Nishita, ["Curve Intersection Using Bézier Clipping" (1990)](https://doi.org/10.1145/97879.97913)
-- Shoemake, ["Animating Rotation with Quaternion Curves" (1985)](https://doi.org/10.1145/325334.325242)
-- Smale, ["Newton's Method Estimates from Data at One Point" (1986)](https://doi.org/10.1007/978-1-4612-4984-9_1)
-- Sturm, ["Mémoire sur la résolution des équations numériques" (1835)](https://eudml.org/doc/183280)
-- Sylvester, ["On a Theory of the Syzygetic Relations of Two Rational Integral Functions" (1853)](https://doi.org/10.1098/rsta.1853.0005)
-- Tinney and Walker, ["Direct Solutions of Sparse Network Equations by Optimally Ordered Triangular Factorization" (1967)](https://doi.org/10.1109/TPAS.1967.291823)
-- Yap, ["Towards Exact Geometric Computation" (1997)](https://doi.org/10.1016/S0925-7721(96)00040-2)
+These sources describe the exact algebra, interval certification, nonlinear
+proposal, and geometric-constraint techniques relevant to Hypersolve:
 
-## Hyper Ecosystem
+- Bareiss, E. H. “Sylvester’s Identity and Multistep Integer-Preserving
+  Gaussian Elimination.” *Mathematics of Computation* 22, 1968.
+  [DOI: 10.1090/S0025-5718-1968-0226829-0](https://doi.org/10.1090/S0025-5718-1968-0226829-0).
+- Bouma, W., Fudos, I., Hoffmann, C. M., Cai, J., and Paige, R. “A Geometric
+  Constraint Solver.” *Computer-Aided Design* 27(6), 1995.
+  [DOI: 10.1016/0010-4485(95)00007-4](https://doi.org/10.1016/0010-4485(95)00007-4).
+- Collins, G. E. “Subresultants and Reduced Polynomial Remainder Sequences.”
+  *JACM* 14(1), 1967.
+  [DOI: 10.1145/321371.321381](https://doi.org/10.1145/321371.321381).
+- Farouki, R. T., and Rajan, V. T. “Algorithms for Polynomials in Bernstein
+  Form.” *Computer Aided Geometric Design* 5(1), 1988.
+  [DOI: 10.1016/0167-8396(88)90016-7](https://doi.org/10.1016/0167-8396(88)90016-7).
+- Krawczyk, R. “Newton-Algorithmen zur Bestimmung von Nullstellen mit
+  Fehlerschranken.” *Computing* 4, 1969.
+  [DOI: 10.1007/BF02234767](https://doi.org/10.1007/BF02234767).
+- Levenberg, K. “A Method for the Solution of Certain Non-Linear Problems in
+  Least Squares.” *Quarterly of Applied Mathematics* 2, 1944.
+  [DOI: 10.1090/qam/10666](https://doi.org/10.1090/qam/10666).
+- Marquardt, D. W. “An Algorithm for Least-Squares Estimation of Nonlinear
+  Parameters.” *SIAM Journal on Applied Mathematics* 11(2), 1963.
+  [DOI: 10.1137/0111030](https://doi.org/10.1137/0111030).
+- Moore, R. E. *Interval Analysis*. Prentice-Hall, 1966.
+- Nocedal, J., and Wright, S. J. *Numerical Optimization*, 2nd ed. Springer,
+  2006. [DOI: 10.1007/978-0-387-40065-5](https://doi.org/10.1007/978-0-387-40065-5).
+- Powell, M. J. D. “A Hybrid Method for Nonlinear Equations.” In *Numerical
+  Methods for Nonlinear Algebraic Equations*, 1970.
+  [DOI: 10.1007/BFb0067700](https://doi.org/10.1007/BFb0067700).
+- Sederberg, T. W., and Nishita, T. “Curve Intersection Using Bézier
+  Clipping.” *Computer-Aided Design* 22(9), 1990.
+  [DOI: 10.1016/0010-4485(90)90039-F](https://doi.org/10.1016/0010-4485(90)90039-F).
+- Smale, S. “Newton’s Method Estimates from Data at One Point.” In *The
+  Merging of Disciplines*, 1986.
+  [DOI: 10.1007/978-1-4612-4984-9_1](https://doi.org/10.1007/978-1-4612-4984-9_1).
+- Sturm, C. “Mémoire sur la résolution des équations numériques.” 1835.
+  [EuDML](https://eudml.org/doc/183280).
+- Tinney, W. F., and Walker, J. W. “Direct Solutions of Sparse Network
+  Equations by Optimally Ordered Triangular Factorization.” *IEEE Transactions
+  on Power Apparatus and Systems*, 1967.
+  [DOI: 10.1109/TPAS.1967.291823](https://doi.org/10.1109/TPAS.1967.291823).
+- Yap, C. K. “Towards Exact Geometric Computation.” *Computational Geometry*
+  7(1–2), 1997.
+  [DOI: 10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
 
-`hypersolve` uses [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[hyperlimit](https://github.com/timschmidt/hyperlimit). It provides solver and
-certification services to the other [Hyper geometry and engineering
-crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).
+## Acknowledgements
+
+Hypersolve builds on
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/hyperlimit). The research cited
+above informs its algorithms and evidence boundaries without implying
+source-code derivation.
+
+## License and contributing
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+Bug reports should include the smallest problem, initial candidate, selected
+proposal engine, enabled features, and complete analysis/certification report.
+Before proposing a change, run formatting, the focused regression, all-feature
+tests, and strict Clippy.
