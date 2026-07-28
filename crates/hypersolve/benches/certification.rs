@@ -1,19 +1,19 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRefinementComparisonConfig,
-    AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
-    BatchPredicateScheduleConfig, BsplineKnotSpanSubstitutionConfig, Constraint,
-    CurveResultantParameter, DraggedParameterWeight, EqualitySubstitution, Expr,
-    IntervalBoxCertificationPackage, IsolatedRootInterval, PolynomialCurvePoint2,
-    PolynomialParametricCurve2, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RationalCurveControlPoint2, RationalParametricCurve2, SolverBlock,
-    SolverConfig, SolverPoint2, SolverState, SparseLinearSystem, SparseResidualTerm, SymbolId,
-    UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
-    analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
-    arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
-    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
-    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    AlgebraicRootArithmeticOp, AlgebraicRootKind, AlgebraicRootRationalMap,
+    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicRootValidationReport, AlgebraicRootValidationStatus, BatchPredicateScheduleConfig,
+    BsplineKnotSpanSubstitutionConfig, Constraint, CurveResultantParameter, DraggedParameterWeight,
+    EqualitySubstitution, Expr, IntervalBoxCertificationPackage, IsolatedRootInterval,
+    PolynomialCurvePoint2, PolynomialParametricCurve2, Problem, ProposalEngineKind,
+    ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
+    RationalParametricCurve2, SolverBlock, SolverConfig, SolverPoint2, SolverState,
+    SparseLinearSystem, SparseResidualTerm, SymbolId, UnivariateResultantPairInput, VariableBall,
+    analyze_exact_affine_rank, analyze_sparse_bareiss_elimination_pattern,
+    apply_equality_substitution_classes, arithmetic_algebraic_root_representations,
+    audit_active_set, audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
+    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -4772,6 +4772,16 @@ fn certification(c: &mut Criterion) {
                 hyperlimit::PredicatePolicy,
             )
         })
+    });
+    let rational_map = AlgebraicRootRationalMap::new(
+        &sqrt_two.polynomial_coefficients,
+        &[r(0), r(1), r(1)],
+        &[r(1)],
+        hyperlimit::PredicatePolicy,
+    );
+    rational_map.transform(&sqrt_two);
+    c.bench_function("algebraic_root_rational_map_transform", |b| {
+        b.iter(|| rational_map.transform(&sqrt_two))
     });
     c.bench_function(
         "transform_algebraic_root_rational_image_degree_12_cubic",

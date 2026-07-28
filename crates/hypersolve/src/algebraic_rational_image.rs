@@ -234,11 +234,6 @@ impl AlgebraicRootRationalMap {
         self.transform_with_target(root, Some(target))
     }
 
-    /// Returns whether direct elimination has been attempted and retained.
-    pub fn is_resultant_cached(&self) -> bool {
-        self.resultant_polynomial.get().is_some()
-    }
-
     fn transform_with_target(
         &self,
         root: &AlgebraicRootRepresentation,
@@ -1242,7 +1237,7 @@ mod tests {
             &denominator,
             PredicatePolicy,
         );
-        assert!(!map.is_resultant_cached());
+        assert!(map.resultant_polynomial.get().is_none());
         assert!(map.direct_map.get().is_none());
 
         for root in [&positive, &negative] {
@@ -1255,7 +1250,7 @@ mod tests {
                     PredicatePolicy,
                 )
             );
-            assert!(map.is_resultant_cached());
+            assert!(map.resultant_polynomial.get().is_some());
             let direct_map = map
                 .direct_map
                 .get()
@@ -1296,7 +1291,7 @@ mod tests {
             )
         );
         assert!(map.direct_map.get().is_none());
-        assert!(!map.is_resultant_cached());
+        assert!(map.resultant_polynomial.get().is_none());
     }
 
     #[test]

@@ -115,6 +115,16 @@ interval -0.43% to +0.77%). Retaining the private direct-map builder as a free
 function preserved the former code layout; an associated-constructor
 experiment regressed the small transform and was rejected.
 
+## Rational-map cache-state API gate
+
+`AlgebraicRootRationalMap` now exposes only the immediate `transform` and
+`transform_in_interval` operations, not whether its private resultant
+`OnceLock` has been populated. Module tests still inspect that private state to
+prove reuse and mismatched-source fallback. A dedicated retained-map Criterion
+case now keeps the completed operation performance-gated: removing
+`is_resultant_cached` improved a warm nonlinear transform from
+3.3783–3.4054 us to 3.1845–3.2242 us.
+
 ## Retained measurements
 
 The timings below are paired Criterion release runs on the same machine. They
