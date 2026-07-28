@@ -130,6 +130,29 @@ cargo bench --bench predicates -- \
   --warm-up-time 1 --measurement-time 3 --sample-size 40
 ```
 
+### Cascade projected triangle degeneracy by stage
+
+`classify_triangle3_degeneracy` is now the canonical 3D collinearity predicate
+used by Hypermesh plane validation. It previously cloned three pairs of
+projected `Point2` values and eagerly ran all three orientation cascades before
+inspecting any result. The predicate now borrows the original coordinates and
+tries every projection at one escalation stage before advancing: certified
+primitive determinant filters, word-sized exact rationals, arbitrary exact
+rationals, and finally generic `Real` evaluation. A certified nonzero
+projection exits immediately; all three projections must still be certified
+zero before degeneracy is reported.
+
+The 40-sample common XY-nondegenerate sentinel improved from 436.90 ns to
+33.72 ns, a 92.26% mean reduction with Criterion's 95% change interval of
+-92.33% to -92.20%. Hypermesh removed its separate 80-line nondegeneracy
+cascade and now consumes this result directly.
+
+```sh
+cargo bench --bench predicates -- \
+  'hypermesh_port_helpers/triangle3_degeneracy/projected_orientations' \
+  --warm-up-time 1 --measurement-time 4 --sample-size 40
+```
+
 ### Reuse point/ring edge orientations
 
 `classify_point_ring_even_odd_report` formerly evaluated `orient2(a, b,

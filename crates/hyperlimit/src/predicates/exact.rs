@@ -11,12 +11,16 @@ use hyperreal::{Rational, Real};
 
 /// Try the exact rational 2D orientation kernel.
 pub(super) fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Option<Sign> {
-    let ax = exact_rational_ref(&a.x)?;
-    let ay = exact_rational_ref(&a.y)?;
-    let bx = exact_rational_ref(&b.x)?;
-    let by = exact_rational_ref(&b.y)?;
-    let cx = exact_rational_ref(&c.x)?;
-    let cy = exact_rational_ref(&c.y)?;
+    orient2d_coordinates([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y])
+}
+
+/// Try the exact rational 2D orientation kernel over borrowed coordinates.
+#[inline]
+pub(super) fn orient2d_coordinates(a: [&Real; 2], b: [&Real; 2], c: [&Real; 2]) -> Option<Sign> {
+    let [ax, ay] = a.map(exact_rational_ref);
+    let [bx, by] = b.map(exact_rational_ref);
+    let [cx, cy] = c.map(exact_rational_ref);
+    let (ax, ay, bx, by, cx, cy) = (ax?, ay?, bx?, by?, cx?, cy?);
 
     crate::trace_dispatch!("hyperlimit", "exact_orient2d", "rational-det2");
 

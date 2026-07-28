@@ -175,38 +175,65 @@ pub enum TriangleDegeneracy {
 /// Degeneracy is tested by exact 2D orientation in coordinate projections. If
 /// every projection has zero orientation, the three 3D points are collinear.
 /// This uses exact determinant predicates in every coordinate projection.
+#[inline]
 pub fn classify_triangle3_degeneracy(a: &Point3, b: &Point3, c: &Point3) -> TriangleDegeneracy {
-    let outcomes = [
-        orient2d(
-            &project_point3(a, CoplanarProjection::Xy),
-            &project_point3(b, CoplanarProjection::Xy),
-            &project_point3(c, CoplanarProjection::Xy),
-        ),
-        orient2d(
-            &project_point3(a, CoplanarProjection::Xz),
-            &project_point3(b, CoplanarProjection::Xz),
-            &project_point3(c, CoplanarProjection::Xz),
-        ),
-        orient2d(
-            &project_point3(a, CoplanarProjection::Yz),
-            &project_point3(b, CoplanarProjection::Yz),
-            &project_point3(c, CoplanarProjection::Yz),
-        ),
-    ];
+    let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
+    let projections = [[0, 1], [0, 2], [1, 2]].map(|[u, v]| {
+        (
+            [coordinates[0][u], coordinates[0][v]],
+            [coordinates[1][u], coordinates[1][v]],
+            [coordinates[2][u], coordinates[2][v]],
+        )
+    });
+    let mut signs = [None; 3];
 
-    let mut all_zero = true;
-
-    for outcome in outcomes {
-        match outcome.value() {
-            Some(Sign::Positive | Sign::Negative) => {
+    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+        if let Some(sign) = super::orient::orient2d_certified_real_filter(a, b, c) {
+            if sign != Sign::Zero {
                 return TriangleDegeneracy::NonDegenerate;
             }
-            Some(Sign::Zero) => {}
-            None => all_zero = false,
+            signs[index] = Some(Sign::Zero);
+        }
+    }
+    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+        if signs[index].is_none()
+            && let Some(sign) = super::orient::orient2d_exact_word_filter(a, b, c)
+        {
+            if sign != Sign::Zero {
+                return TriangleDegeneracy::NonDegenerate;
+            }
+            signs[index] = Some(Sign::Zero);
+        }
+    }
+    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+        if signs[index].is_none()
+            && let Some(sign) = super::exact::orient2d_coordinates(a, b, c)
+        {
+            if sign != Sign::Zero {
+                return TriangleDegeneracy::NonDegenerate;
+            }
+            signs[index] = Some(Sign::Zero);
+        }
+    }
+    for (index, (a, b, c)) in projections.iter().copied().enumerate() {
+        if signs[index].is_none() {
+            let outcome = super::orient::orient2d_real_coordinates(
+                a,
+                b,
+                c,
+                crate::predicate::PredicatePolicy::STRICT,
+            );
+            match outcome.value() {
+                Some(Sign::Positive | Sign::Negative) => {
+                    return TriangleDegeneracy::NonDegenerate;
+                }
+                Some(Sign::Zero) => signs[index] = Some(Sign::Zero),
+                None => {}
+            }
         }
     }
 
-    if all_zero {
+    if signs.into_iter().all(|sign| sign == Some(Sign::Zero)) {
         TriangleDegeneracy::Degenerate
     } else {
         TriangleDegeneracy::Unknown
@@ -630,8 +657,14 @@ mod tests {
 
     #[test]
     fn triangle3_degeneracy_uses_projected_orientations() {
-        let result = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0));
-        assert_eq!(result, TriangleDegeneracy::NonDegenerate);
+        let xy = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0));
+        assert_eq!(xy, TriangleDegeneracy::NonDegenerate);
+
+        let xz = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 0, 1));
+        assert_eq!(xz, TriangleDegeneracy::NonDegenerate);
+
+        let yz = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1));
+        assert_eq!(yz, TriangleDegeneracy::NonDegenerate);
 
         let degenerate = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2));
         assert_eq!(degenerate, TriangleDegeneracy::Degenerate);

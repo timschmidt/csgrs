@@ -27,28 +27,25 @@ pub fn orient2d_with_policy(
     c: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    if let Some(sign) = Real::certified_affine_det2_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]) {
-        crate::trace_dispatch!("hyperlimit", "orient2d", "certified-real-det2-filter");
+    orient2d_coordinates_with_policy([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], policy)
+}
+
+pub(crate) fn orient2d_coordinates_with_policy(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
+    if let Some(sign) = orient2d_certified_real_filter(a, b, c) {
         // The primitive operations are only a conservative proof shortcut over
         // exact dyadic Real values. Preserve the existing public exact-rational
         // semantics and kernel certificate; dispatch tracing still identifies
         // the faster internal route for profiling.
-        return PredicateOutcome::decided(
-            crate::real::map_real_sign(sign),
-            Certainty::Exact,
-            Escalation::Exact,
-        );
+        return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
     }
 
-    if let Some(sign) =
-        Real::exact_rational_affine_det2_word_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y])
-    {
-        crate::trace_dispatch!("hyperlimit", "orient2d", "exact-word-rational-det2-filter");
-        return PredicateOutcome::decided(
-            crate::real::map_real_sign(sign),
-            Certainty::Exact,
-            Escalation::Exact,
-        );
+    if let Some(sign) = orient2d_exact_word_filter(a, b, c) {
+        return PredicateOutcome::decided(sign, Certainty::Exact, Escalation::Exact);
     }
 
     // Structural-dispatch note: when callers carry integer-grid scale,
@@ -56,11 +53,11 @@ pub fn orient2d_with_policy(
     // predicate can choose a faster exact determinant expansion before building
     // the generic Real expression tree.
     if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2RationalDet2, || {
-        super::exact::orient2d(a, b, c)
+        super::exact::orient2d_coordinates(a, b, c)
     }) {
         return outcome;
     }
-    orient2d_real_expr(a, b, c, policy)
+    orient2d_real_coordinates(a, b, c, policy)
 }
 
 fn orient2d_real_expr(
@@ -69,11 +66,20 @@ fn orient2d_real_expr(
     c: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
+    orient2d_real_coordinates([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], policy)
+}
+
+pub(crate) fn orient2d_real_coordinates(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<Sign> {
     crate::trace_dispatch!("hyperlimit", "orient2d", "real-determinant");
-    let abx = sub(&b.x, &a.x);
-    let aby = sub(&b.y, &a.y);
-    let acx = sub(&c.x, &a.x);
-    let acy = sub(&c.y, &a.y);
+    let abx = sub(b[0], a[0]);
+    let aby = sub(b[1], a[1]);
+    let acx = sub(c[0], a[0]);
+    let acy = sub(c[1], a[1]);
     let left = mul(&abx, &acy);
     let right = mul(&aby, &acx);
     let det = sub(&left, &right);
@@ -85,9 +91,31 @@ fn orient2d_real_expr(
             let _ = (&abx, &aby, &acx, &acy);
             signed_term_filter(&[(&left, Sign::Positive), (&right, Sign::Negative)])
         },
-        || super::exact::orient2d(a, b, c),
+        || super::exact::orient2d_coordinates(a, b, c),
         RefinementNeed::RealRefinement,
     )
+}
+
+#[inline]
+pub(crate) fn orient2d_certified_real_filter(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+) -> Option<Sign> {
+    let sign = Real::certified_affine_det2_sign(a, b, c)?;
+    crate::trace_dispatch!("hyperlimit", "orient2d", "certified-real-det2-filter");
+    Some(crate::real::map_real_sign(sign))
+}
+
+#[inline]
+pub(crate) fn orient2d_exact_word_filter(
+    a: [&Real; 2],
+    b: [&Real; 2],
+    c: [&Real; 2],
+) -> Option<Sign> {
+    let sign = Real::exact_rational_affine_det2_word_sign(a, b, c)?;
+    crate::trace_dispatch!("hyperlimit", "orient2d", "exact-word-rational-det2-filter");
+    Some(crate::real::map_real_sign(sign))
 }
 
 /// Orientation of four 3D points. Positive means `d` is on the positive side
