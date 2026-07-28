@@ -14,8 +14,8 @@ categories = ["mathematics", "graphics", "algorithms"]
 fast-surface-nets = "0.2.1"
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
 hypervoxel = { version = "0.3.0", path = "../hypervoxel", optional = true }
 
