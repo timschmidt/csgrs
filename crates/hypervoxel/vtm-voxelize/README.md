@@ -25,3 +25,10 @@ statistics or `tracy` for profiling.
 
 See [Voxelis Voxelize](../voxelis-voxelize/README.md) for the library workflow
 and [HyperVoxel](../README.md) for exact-aware voxelization.
+
+## Acknowledgements and license
+
+This tool is bundled from
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis), created by
+Artur Wyszyński and its contributors. It retains the upstream
+[MIT](../LICENSE-MIT) OR [Apache-2.0](../LICENSE-APACHE) license.

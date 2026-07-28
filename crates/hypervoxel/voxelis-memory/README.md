@@ -46,3 +46,10 @@ cargo clippy -p voxelis-memory --all-targets --all-features --locked -- -D warni
 The allocator design supports [Voxelis](../voxelis/README.md). See
 [HyperVoxel](../README.md) for the exact-aware voxel layer and wider Hyper
 ecosystem.
+
+## Acknowledgements and license
+
+This package is bundled from
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis), created by
+Artur Wyszyński and its contributors. It retains the upstream
+[MIT](LICENSE-MIT) OR [Apache-2.0](LICENSE-APACHE) license.

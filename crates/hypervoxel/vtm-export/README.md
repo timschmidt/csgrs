@@ -23,3 +23,10 @@ the `tracy` feature for profiling.
 
 See [Voxelis](../voxelis/README.md) for VTM and mesh APIs and
 [HyperVoxel](../README.md) for exact-aware handoffs and the Hyper ecosystem.
+
+## Acknowledgements and license
+
+This tool is bundled from
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis), created by
+Artur Wyszyński and its contributors. It retains the upstream
+[MIT](../LICENSE-MIT) OR [Apache-2.0](../LICENSE-APACHE) license.

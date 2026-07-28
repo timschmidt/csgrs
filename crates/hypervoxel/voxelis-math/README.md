@@ -44,3 +44,10 @@ cargo clippy -p voxelis-math --all-targets --all-features --locked -- -D warning
 
 See [HyperVoxel](../README.md) for the exact-aware layer and the wider Hyper
 ecosystem.
+
+## Acknowledgements and license
+
+This package is bundled from
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis), created by
+Artur Wyszyński and its contributors. It retains the upstream
+[MIT](../LICENSE-MIT) OR [Apache-2.0](../LICENSE-APACHE) license.

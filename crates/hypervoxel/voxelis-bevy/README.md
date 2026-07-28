@@ -27,3 +27,10 @@ Features:
 
 See [Voxelis](../voxelis/README.md) for storage and mesh types and
 [HyperVoxel](../README.md) for the exact-aware layer.
+
+## Acknowledgements and license
+
+This package is bundled from
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis), created by
+Artur Wyszyński and its contributors. It retains the upstream
+[MIT](../LICENSE-MIT) OR [Apache-2.0](../LICENSE-APACHE) license.

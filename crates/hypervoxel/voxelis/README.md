@@ -64,3 +64,10 @@ cargo bench -p voxelis --bench voxtree_bench
 
 See the repository-level [HyperVoxel guide](../README.md) for exact grid facts,
 proof-bearing classification, and links to the wider Hyper geometry stack.
+
+## Acknowledgements and license
+
+Voxelis was created by Artur Wyszyński and the
+[WildPixelGames/Voxelis](https://github.com/WildPixelGames/voxelis)
+contributors. This bundled package retains the upstream
+[MIT](../LICENSE-MIT) OR [Apache-2.0](../LICENSE-APACHE) license.
