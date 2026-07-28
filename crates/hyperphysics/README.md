@@ -1,254 +1,285 @@
 <h1>
-  hyperphysics
-  <img src="./doc/hyperphysics.png" alt="hyperphysics logo" width="144" align="right">
+  Hyperphysics
+  <img src="./doc/hyperphysics.png" alt="Hyperphysics logo" width="144" align="right">
 </h1>
 
-`hyperphysics` owns exact-aware physical carriers for the Hyper ecosystem. It records
-materials, property assertions, bodies, fixtures, shapes, mass properties, contact
-reports, field/process handoffs, and residual replay surfaces over `hyperreal::Real`
-and `hyperlattice::Vector3` values.
+Exact-aware physical setup, mass-property, collision-query, material, and
+multiphysics handoff carriers for the Hyper ecosystem.
 
-The crate is not a replacement runtime physics engine. It is an adapter and
-certification layer where authored physical facts stay visible before approximate
-simulation, field, or engine exports are trusted.
+Hyperphysics keeps authored physical facts visible before approximate
+simulation or field engines consume them. It owns material provenance, bodies,
+fixtures, physical shape interpretation, exact mass properties, contact and
+support-map reports, force/step replay, and report-bearing thermal, optical,
+electromagnetic, photochemical, diffusion, and fluid interfaces.
 
-## Typical Physics Problems
+It is not a real-time rigid-body engine or a full PDE solver. Runtime proposals
+remain separate from certified setup and replay evidence.
 
-Physics engines optimize throughput and stability under finite time steps. Contact
-manifolds, collision margins, mass properties, material data, and constraint solvers
-often combine approximation policy with geometry cleanup. That is useful at runtime, but
-it makes it hard to audit whether a simulation lost a constraint because of tolerance,
-mesh repair, or a real modeling issue.
+This README describes crate version `0.3.0`.
 
-`hyperphysics` keeps authored physical facts separate from runtime proposals. Exact
-material and geometry-derived reports are retained at setup time, lossy exports are
-named, and coupled or simulated states should be accepted only after exact residual or
-diagnostic replay where possible.
+## Primary types
 
-## Main Types
+| Type | Role |
+| --- | --- |
+| `ExactMaterial`, `MaterialId` | Material identity, density, and validation |
+| `MaterialPropertyGraph`, `MaterialAssertion`, `SourceSpec` | Source-attributed physical properties |
+| `ExactBody3`, `ExactFixture3`, `PhysicsShape3` | Body/fixture hierarchy and physical geometry |
+| `ClosedTriangleMesh3`, `AxisAlignedBox3`, `Plane3`, `Ray3`, `Segment3`, `Triangle3` | Supported exact shape carriers |
+| `MassPropertyReport3`, `SymmetricInertia3` | Exact uniform-density mass and inertia |
+| `GjkQueryReport3`, `AabbContactReport3` | Convex and box contact/separation evidence |
+| `ForceAccumulator3`, `StepReplayReport3`, `SystemDiagnostics3` | Exact force and integration replay |
+| `HypersolveResidualReplayReport` | Exact replay of coupled residual rows |
 
-- `ExactMaterial`, `MaterialPropertyGraph`, `MaterialAssertion`, and
-  `ResolvedPropertyReport` store source-attributed material facts.
-- `ExactBody3`, `ExactFixture3`, `PhysicsShape3`, `ClosedTriangleMesh3`,
-  `AxisAlignedBox3`, `Plane3`, `Ray3`, `Segment3`, and `Triangle3` describe physical
-  shapes and fixtures.
-- `MassPropertyReport3`, `SymmetricInertia3`, and `MassPropertyCertificate3` report
-  exact uniform-density mass properties.
-- `ContactMaterial`, `AabbContactReport3`, and contact classification types describe
-  current contact evidence.
-- `ForceAccumulator3`, `StepReplayReport3`, `SystemDiagnostics3`, and
-  `HypersolveResidualReplayReport` record replay and diagnostics.
-- Thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
-  modules define exact-aware handoff/report carriers for future solvers.
-- `SourceSpec`, `PropertyValue`, `ExternalReplacementStatus`, and certification reports
-  make material-property provenance, conflicts, unknowns, and external proposals visible.
-
-## Precision Model
-
-Physical setup data uses `Real` and exact vectors. Mesh mass properties are computed
-from oriented triangle decompositions using exact arithmetic. Material reports preserve
-exact values, exact intervals, explicit unknowns, conflicts, and external replacement
-status. Contact and shape reports prefer exact classification or explicit uncertainty
-over tolerance inflation.
-
-Primitive floats belong at rendering, external simulation-engine, file IO, diagnostics,
-or adapter boundaries. They are not physical truth inside the crate.
-
-Numerical explosion is controlled by retaining physical facts as compact source objects:
-materials, fixtures, support maps, AABBs, oriented mesh integrals, property graphs, and
-residual rows. The crate does not turn every physical carrier into a dense sampled field;
-field, fluid, thermal, EM, and process adapters must report what they approximate.
-
-## Performance Model
-
-`hyperphysics` preserves cheap object facts so future adapters can avoid unnecessary
-exact or simulation work: body class, shape kind, AABB bounds, support maps,
-mass/inertia structure, material category, and coupling policy. Exact setup reports are
-small enough to replay in tests and CI, while runtime-heavy work such as contact
-manifold generation, FEM/FVM/FDTD/SPH evolution, and engine bridges remains outside the
-core carrier layer.
-
-Performance improvements should come from prepared shape facts, broad-phase bounds,
-specialized exact queries, and explicit lossy adapters rather than hidden primitive
-predicates.
-
-The measured reference audit, retained/rejected experiments, and exact dispatch-trace
-protocol are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-## Current Status
-
-Implemented today:
-
-- exact material IDs, density validation, property graphs, and elastic derivation;
-- exact bodies, fixtures, closed meshes, AABBs, planes, rays, segments, support maps,
-  and point/query reports;
-- support-map-generic GJK intersection and separation-distance queries with exact
-  Minkowski witnesses, Hypersolve barycentric projection evidence, bounded
-  iteration, and explicit unknown termination;
-- exact uniform-density mass properties for closed triangle meshes;
-- contact material validation and AABB contact classification;
-- force accumulation, explicit step replay, momentum, and kinetic-energy diagnostics;
-- `hypersolve` residual replay rows for coupled candidates;
-- thermal, optical, electromagnetic, photochemical, reaction-diffusion, and fluid
-  handoff/report carriers.
-
-Known limits: GJK currently has a built-in support-map implementation for AABBs while
-other convex shapes implement `ExactSupportMap3`; penetration depth/contact manifold
-generation, impulse solving, continuous collision, richer mesh validation, and full
-field/fluid/thermal evolution remain future certified solver or adapter work.
-
-## Installation
+## Install
 
 ```toml
 [dependencies]
 hyperphysics = "0.3.0"
 ```
 
-For sibling checkouts:
+There are no default features. `dispatch-trace` forwards exact-dispatch
+instrumentation through the geometry and scalar stack.
 
-```toml
-[dependencies]
-hyperphysics = { path = "../hyperphysics" }
-```
+## Quick start
 
-## Usage
+This checked example creates an exact material, fixture, and dynamic body.
 
-Create exact setup facts, then hand simulation or field work to explicit adapters:
-
-```rust,no_run
+<!-- quickstart:start -->
+```rust
 use hyperlattice::Vector3;
 use hyperphysics::{
-    AxisAlignedBox3, BodyId, BodyKind, ExactBody3, ExactFixture3, ExactMaterial,
-    FixtureId, MaterialId, PhysicsShape3,
+    AxisAlignedBox3, BodyId, BodyKind, ExactBody3, ExactFixture3, ExactMaterial, FixtureId,
+    MaterialId, PhysicsShape3,
 };
 use hyperreal::Real;
 
 fn main() -> hyperphysics::PhysicsResult<()> {
-    let material = ExactMaterial::new(
-        MaterialId::new("aluminum")?,
-        "aluminum",
-        Real::from(2700),
-    )?;
-
-    let shape = PhysicsShape3::AxisAlignedBox(Box::new(AxisAlignedBox3::new(
+    let material = ExactMaterial::new(MaterialId::new("aluminum")?, "aluminum", Real::from(2700))?;
+    let bounds = AxisAlignedBox3::new(
         Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
         Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
-    )?));
-
-    let fixture = ExactFixture3::new(FixtureId::new("fixture-0")?, shape, material);
+    )?;
+    let fixture = ExactFixture3::new(
+        FixtureId::new("fixture-0")?,
+        PhysicsShape3::axis_aligned_box(bounds),
+        material,
+    );
     let body = ExactBody3::new(BodyId::new("body-0")?, BodyKind::Dynamic, vec![fixture]);
+
     assert_eq!(body.fixtures().len(), 1);
     Ok(())
 }
 ```
+<!-- quickstart:end -->
 
-Exact contact and replay reports keep runtime proposals auditable:
+Run it with:
 
-```rust,no_run
-use hyperlattice::Vector3;
-use hyperphysics::{
-    AabbContactReport3, AxisAlignedBox3, ContactClassification, ForceAccumulator3,
-    ForceContribution3, StepReplayReport3,
-};
-use hyperreal::Real;
-
-fn main() -> hyperphysics::PhysicsResult<()> {
-    let left = AxisAlignedBox3::new(
-        Vector3::new([Real::from(0), Real::from(0), Real::from(0)]),
-        Vector3::new([Real::from(1), Real::from(1), Real::from(1)]),
-    )?;
-    let right = AxisAlignedBox3::new(
-        Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
-        Vector3::new([Real::from(2), Real::from(1), Real::from(1)]),
-    )?;
-    let contact = AabbContactReport3::classify(&left, &right)?;
-    assert_eq!(contact.classification, ContactClassification::Touching);
-
-    let mut forces = ForceAccumulator3::default();
-    forces.push(ForceContribution3 {
-        source: "test force".into(),
-        force: Vector3::new([Real::from(1), Real::from(0), Real::from(0)]),
-    });
-    let step = StepReplayReport3::symplectic_euler_replay(
-        Real::from(2),
-        Real::from(1),
-        Vector3::zero(),
-        Vector3::zero(),
-        &forces,
-    )?;
-    assert!(step.exact_replay);
-    Ok(())
-}
+```sh
+cargo run --example basic
 ```
 
-Mass properties, contact reports, thermal/optical/electromagnetic/photochemical/fluid
-carriers, force accumulators, and `hypersolve` residual replay rows all keep authored
-physical facts separate from runtime engine proposals.
+## Ownership and evidence
 
-## References
+```text
+geometry carrier + ExactMaterial
+              │
+         ExactFixture3
+              │
+          ExactBody3
+              │
+      setup/query/replay reports
+              │
+ approximate runtime or field adapter
+```
 
-The implementation comments describe local invariants; the scientific and numerical
-background is consolidated here.
+Geometry crates own geometric truth. Hyperphysics assigns physical meaning and
+validates the evidence required for mass, collision, material, and coupling
+operations. Primitive floats belong at engine, rendering, diagnostic, or file
+boundaries.
 
-- Bender, Jan, and Dan Koschier. "Divergence-Free Smoothed Particle Hydrodynamics."
-  *Proceedings of SCA*, 2015, https://doi.org/10.1145/2786784.2786796.
-- Beer, August. "Bestimmung der Absorption des rothen Lichts in farbigen
-  Flüssigkeiten." *Annalen der Physik und Chemie*, 1852,
-  https://doi.org/10.1002/andp.18521620505.
-- Carslaw, H. S., and J. C. Jaeger. *Conduction of Heat in Solids*. 2nd ed., Oxford
-  University Press, 1959.
-- Fick, Adolf. "Ueber Diffusion." *Annalen der Physik*, vol. 170, no. 1, 1855,
-  https://doi.org/10.1002/andp.18551700105.
-- Fourier, Joseph. *The Analytical Theory of Heat*. Cambridge University Press, 1878.
-- Gilbert, Elmer G., Daniel W. Johnson, and S. Sathiya Keerthi. "A Fast Procedure for
-  Computing the Distance Between Complex Objects in Three-Dimensional Space."
-  *IEEE Journal on Robotics and Automation*, vol. 4, no. 2, 1988,
-  https://doi.org/10.1109/56.2083.
-- Ihmsen, Markus, et al. "Implicit Incompressible SPH." *IEEE Transactions on
-  Visualization and Computer Graphics*, vol. 20, no. 3, 2014,
-  https://doi.org/10.1109/TVCG.2013.105.
-- Jacobs, Paul F. *Rapid Prototyping & Manufacturing: Fundamentals of
-  Stereolithography*. Society of Manufacturing Engineers, 1992.
-- Lambert, Johann Heinrich. *Photometria*. 1760.
-- Landau, L. D., and E. M. Lifshitz. *Theory of Elasticity*. 3rd ed., Butterworth-
-  Heinemann, 1986.
-- Marsden, Jerrold E., and Matthew West. "Discrete Mechanics and Variational
-  Integrators." *Acta Numerica*, vol. 10, 2001,
-  https://doi.org/10.1017/S096249290100006X.
-- Maxwell, James Clerk. "A Dynamical Theory of the Electromagnetic Field."
-  *Philosophical Transactions of the Royal Society of London*, 1865,
-  https://doi.org/10.1098/rstl.1865.0008.
-- Mirtich, Brian. "Fast and Accurate Computation of Polyhedral Mass Properties."
-  *Journal of Graphics Tools*, vol. 1, no. 2, 1996,
-  https://doi.org/10.1080/10867651.1996.10487458.
-- Monaghan, J. J. "Smoothed Particle Hydrodynamics." *Annual Review of Astronomy and
-  Astrophysics*, vol. 30, 1992, https://doi.org/10.1146/annurev.aa.30.090192.002551.
-- Stewart, David E., and Jeffrey C. Trinkle. "An Implicit Time-Stepping Scheme for
-  Rigid Body Dynamics with Inelastic Collisions and Coulomb Friction."
-  *International Journal for Numerical Methods in Engineering*, vol. 39, no. 15,
-  1996, https://doi.org/10.1002/(SICI)1097-0207(19960815)39:15%3C2673::AID-NME972%3E3.0.CO;2-I.
-- Stratton, Julius Adams. *Electromagnetic Theory*. McGraw-Hill, 1941.
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
-  vol. 7, nos. 1-2, 1997, https://doi.org/10.1016/0925-7721(95)00040-2.
+## API guide
 
-## Development
+### Materials and properties
+
+- `MaterialId::new` and `ExactMaterial::new` create validated material identity,
+  name, and exact density.
+- `SourceSpec::new` identifies an authority and locator.
+- `PropertyValue::{exact_scalar, interval, external_proposal}` distinguishes
+  exact facts, exact intervals, and externally proposed replacements.
+- `MaterialPropertyGraph::{push, assertions, resolve}` retains competing
+  `MaterialAssertion` values and reports agreement, conflict, unknowns, and
+  external replacement status.
+- `derive_isotropic_shear_modulus` derives supported elastic facts with source
+  and equation evidence.
+- `PhysicalPort` and `PhysicsCertificationReport` define explicit material and
+  multiphysics handoff boundaries.
+
+### Bodies, shapes, and mass
+
+- `BodyId::new`, `FixtureId::new`, `ExactFixture3::new`, and
+  `ExactBody3::new` build the body hierarchy.
+- `Triangle3::new`, `ClosedTriangleMesh3::new`,
+  `AxisAlignedBox3::new`, `Plane3::new`, `Ray3::new`, and `Segment3::new`
+  construct supported exact shapes.
+- `PhysicsShape3::{closed_triangle_mesh, axis_aligned_box,
+  classification_report}` is the common physical shape carrier.
+- `ClosedTriangleMesh3::to_hypermesh_exact` performs the explicit exact mesh
+  conversion.
+- `MassPropertyReport3::{zero, uniform_density_mass_properties,
+  material_mass_properties}` computes exact oriented-triangle volume, center
+  of mass, and symmetric inertia with a `MassPropertyCertificate3`.
+
+### Classification and collision
+
+- Shape `classify_point` methods report exact box, plane, or triangle point
+  relations.
+- `Plane3::{classify_ray, classify_segment}` reports supported ray/segment
+  relations without tolerance inflation.
+- `AxisAlignedBox3::{certified_disjoint, support_map}` exposes broad-phase and
+  support evidence.
+- `ExactSupportMap3` is the generic convex support interface.
+  `gjk_query_3d` and `gjk_query_3d_with_config` return intersection,
+  separation, closest simplex, Hypersolve projection evidence, iteration, and
+  termination status.
+- `AabbContactReport3::classify` distinguishes separated, touching, and
+  overlapping boxes exactly.
+- `ContactMaterial::new` validates restitution and friction properties.
+
+### Forces, integration, and residual replay
+
+- `ForceAccumulator3::{push, contributions, total_force}` retains individual
+  authored force sources and their exact sum.
+- `StepReplayReport3::{explicit_euler_replay, symplectic_euler_replay}`
+  reproduces one exact integration step and records the selected policy.
+- `SystemDiagnostics3::from_mass_velocity` reports exact momentum and kinetic
+  energy where supported.
+- `HypersolveResidualReplayReport::replay` evaluates coupled constraints and
+  `all_residuals_zero` summarizes exact satisfaction.
+
+These are replay and diagnostic APIs, not an open-ended time-stepping runtime.
+
+### Thermal, optical, electromagnetic, process, and fluid carriers
+
+- `ThermalMaterial::new`, `TemperatureField3::new`,
+  `SteadySlabConductionReport::through_slab`,
+  `HeatSource3::joule_heating`,
+  `TransientThermalStepReport::energy_balance_step`, and
+  `LumpedRcThermalStepReport::explicit_euler_step` provide exact-aware thermal
+  setup and replay reports.
+- `OpticalMedium`, `OpticalRay3`, and `OpticalInterface3` classify interfaces;
+  `SnellNormalReport`, `FresnelNormalReport`, and
+  `BeerLambertSlabReport::through_slab` expose supported optical calculations.
+- `ElectromagneticMaterial::new`,
+  `linear_isotropic_electric_response`, field regions, and boundary conditions
+  retain electromagnetic setup and report status.
+- `VatPhotopolymerWorkingCurve::replay`,
+  `ReactionDiffusionTransport::diffusive_courant_report`, and related
+  concentration/state carriers expose process-model decisions.
+- `FluidMaterial`, `FluidParticle3`, `FluidBoundary3`, and
+  `FluidFixture3::{with_particle, with_boundary, conservation_report}` retain
+  fluid setup and conservation evidence.
+
+These modules define validated inputs and small exact replay surfaces. They do
+not claim full FEM, FVM, FDTD, SPH, reaction-diffusion, or optical-field
+evolution.
+
+## Guarantees and boundaries
+
+- Physical setup values use `hyperreal::Real` and exact Hyperlattice vectors.
+- Mesh mass properties use exact oriented triangle decompositions.
+- Material reports preserve source, exact value or interval, conflicts, and
+  replacement status.
+- Contact reports prefer exact classification or explicit uncertainty over
+  hidden margins.
+- External engine state is a proposal until the required exact residual or
+  diagnostic replay succeeds.
+- Retained bodies, fixtures, AABBs, support maps, property graphs, and residual
+  rows keep exact work compact instead of expanding every carrier into a
+  sampled field.
+
+Current collision support includes generic GJK over `ExactSupportMap3` and a
+built-in AABB implementation. Penetration depth, contact manifolds, impulse
+solving, continuous collision, and complete field evolution are outside the
+current certified API.
+
+## Feature flags
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `dispatch-trace` | no | Exact-dispatch instrumentation across scalar and geometry dependencies |
+
+## Validation and performance
 
 ```sh
 cargo fmt --all -- --check
-cargo test --locked
-cargo check --benches --locked
-cargo clippy --all-targets --locked -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
-cargo bench --bench mass_properties
+cargo test --all-features --locked
+cargo clippy --all-targets --all-features --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features --locked
+cargo check --benches --all-features
 ```
 
-## Hyper Ecosystem
+Measured benchmarks, dispatch-trace expectations, and the reference-guided
+performance audit are recorded in [PERFORMANCE.md](PERFORMANCE.md). Fuzz
+ownership and replay instructions live in [fuzz/README.md](fuzz/README.md).
 
-`hyperphysics` builds on [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[hyperlimit](https://github.com/timschmidt/hyperlimit), consumes shape facts from
-[hypermesh](https://github.com/timschmidt/hypermesh), and replays coupled residuals
-through [hypersolve](https://github.com/timschmidt/hypersolve). Related physical
-contexts live in [hypercircuit](https://github.com/timschmidt/hypercircuit),
-[hyperpath](https://github.com/timschmidt/hyperpath), and
-[hyperparts](https://github.com/timschmidt/hyperparts).
+## References
+
+These sources cover the mechanics, collision, mass-property, and multiphysics
+models represented by the crate:
+
+- Gilbert, E. G., Johnson, D. W., and Keerthi, S. S. “A Fast Procedure for
+  Computing the Distance Between Complex Objects in Three-Dimensional Space.”
+  *IEEE Journal on Robotics and Automation* 4(2), 1988.
+  [DOI: 10.1109/56.2083](https://doi.org/10.1109/56.2083).
+- Mirtich, B. “Fast and Accurate Computation of Polyhedral Mass Properties.”
+  *Journal of Graphics Tools* 1(2), 1996.
+  [DOI: 10.1080/10867651.1996.10487458](https://doi.org/10.1080/10867651.1996.10487458).
+- Marsden, J. E., and West, M. “Discrete Mechanics and Variational
+  Integrators.” *Acta Numerica* 10, 2001.
+  [DOI: 10.1017/S096249290100006X](https://doi.org/10.1017/S096249290100006X).
+- Stewart, D. E., and Trinkle, J. C. “An Implicit Time-Stepping Scheme for
+  Rigid Body Dynamics with Inelastic Collisions and Coulomb Friction.”
+  *International Journal for Numerical Methods in Engineering* 39(15), 1996.
+  [DOI](https://doi.org/10.1002/(SICI)1097-0207(19960815)39:15%3C2673::AID-NME972%3E3.0.CO;2-I).
+- Landau, L. D., and Lifshitz, E. M. *Theory of Elasticity*, 3rd ed.
+  Butterworth-Heinemann, 1986.
+- Carslaw, H. S., and Jaeger, J. C. *Conduction of Heat in Solids*, 2nd ed.
+  Oxford University Press, 1959.
+- Maxwell, J. C. “A Dynamical Theory of the Electromagnetic Field.”
+  *Philosophical Transactions of the Royal Society of London*, 1865.
+  [DOI: 10.1098/rstl.1865.0008](https://doi.org/10.1098/rstl.1865.0008).
+- Beer, A. “Bestimmung der Absorption des rothen Lichts in farbigen
+  Flüssigkeiten.” *Annalen der Physik und Chemie*, 1852.
+  [DOI: 10.1002/andp.18521620505](https://doi.org/10.1002/andp.18521620505).
+- Fick, A. “Ueber Diffusion.” *Annalen der Physik* 170(1), 1855.
+  [DOI: 10.1002/andp.18551700105](https://doi.org/10.1002/andp.18551700105).
+- Monaghan, J. J. “Smoothed Particle Hydrodynamics.”
+  *Annual Review of Astronomy and Astrophysics* 30, 1992.
+  [DOI: 10.1146/annurev.aa.30.090192.002551](https://doi.org/10.1146/annurev.aa.30.090192.002551).
+- Ihmsen, M., Cornelis, J., Solenthaler, B., Horvath, C., and Teschner, M.
+  “Implicit Incompressible SPH.” *IEEE TVCG* 20(3), 2014.
+  [DOI: 10.1109/TVCG.2013.105](https://doi.org/10.1109/TVCG.2013.105).
+- Bender, J., and Koschier, D. “Divergence-Free Smoothed Particle
+  Hydrodynamics.” *Proceedings of SCA*, 2015.
+  [DOI: 10.1145/2786784.2786796](https://doi.org/10.1145/2786784.2786796).
+- Yap, C. K. “Towards Exact Geometric Computation.” *Computational Geometry*
+  7(1–2), 1997.
+  [DOI: 10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
+
+## Acknowledgements
+
+Hyperphysics builds on
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/hyperlattice),
+[Hyperlimit](https://github.com/timschmidt/hyperlimit),
+[Hypermesh](https://github.com/timschmidt/hypermesh), and
+[Hypersolve](https://github.com/timschmidt/hypersolve). The cited scientific
+work informs the report models without implying source-code derivation.
+
+## License and contributing
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+Bug reports should include exact shape/material inputs, the operation, enabled
+features, and the complete report. Before proposing a change, run formatting,
+the focused regression, all-feature tests, and strict Clippy.
