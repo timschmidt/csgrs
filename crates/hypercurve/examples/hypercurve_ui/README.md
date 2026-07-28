@@ -1,12 +1,24 @@
-# hypercurve UI Test Article
+# Hypercurve UI
 
 This is a small egui test article for `hypercurve`; all geometry operations are
 routed through the native `hypercurve` kernel.
+
+It is an unpublished visual test and debugging application, not an alternate
+curve API. Use it to edit fixtures, compare Boolean/offset results, inspect
+fillets and chamfers across every public curve family, and share a compressed
+scene URL.
+
+## Views
 
 The Fillets and Chamfers tabs exercise line, circular-arc, polynomial Bezier,
 rational quadratic, arbitrary rational Bezier, polynomial B-spline, and NURBS
 inputs in one place. Their scene tests require every public `Curve2` family to
 remain represented after the edit.
+
+The remaining views cover single- and multi-polyline Booleans, offset modes,
+interactive table/JSON editing, and a bounded `CurveRegion2` torture scene.
+
+## Run
 
 Run natively:
 
@@ -37,3 +49,13 @@ and rendering APIs require primitive floats. Core `hypercurve` operations lift
 finite UI coordinates into hyperreal-backed Real values before topology decisions;
 Geo boolean output is used only as an interactive display fallback when the
 exact curve kernel evidence an unresolved case.
+
+## Validation
+
+```text
+cargo test --manifest-path examples/hypercurve_ui/Cargo.toml
+cargo clippy --manifest-path examples/hypercurve_ui/Cargo.toml --all-targets -- -D warnings
+trunk build examples/hypercurve_ui/index.html --release
+```
+
+The app is `publish = false` and follows Hypercurve's Apache-2.0 license.
