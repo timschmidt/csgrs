@@ -1,4 +1,4 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     ArcDirection, BeadFillAxis, BezierParameter, CardinalPoint, CardinalRotation, CircularArc,
@@ -12,34 +12,28 @@ use hyperpath::{
     RectangularPocket, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
     SpecctraGridKeepoutShape, SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraLayerAlias,
     SpecctraNetAlias, SweptLineSegment, TangentSpan, TraceLayer, ViaDrillIntent,
-    ViaFabricationPolicy, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
-    arrange_line_segments_with_quadratic_beziers,
+    ViaFabricationPolicy, alternating_detour_meander, arrange_cubic_beziers, arrange_explicit_arcs,
+    arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
+    arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
-    arrange_rational_quadratic_beziers, build_alternating_detour_meander, build_g1_join_problem,
-    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
-    certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
-    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
-    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
-    certify_via_fabrication_policy, check_cardinal_rect_pad_board_clearance,
-    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
-    check_circular_pad_obround_board_clearance, check_convex_pad_board_clearance,
-    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
-    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
-    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
-    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
-    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    arrange_rational_quadratic_beziers, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_cubic_ph_inverse_length, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_quintic_ph_g1_smoothing, certify_quintic_ph_inverse_length,
+    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
+    certify_tangent_alignment_candidate, certify_via_fabrication_policy,
+    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
+    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
+    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
+    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
+    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
+    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
+    check_trace_circular_board_clearance, check_trace_clearance,
+    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
     check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
     check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
@@ -47,19 +41,24 @@ use hyperpath::{
     check_trace_via_clearance, check_trace_via_drill_clearance, check_via_drill_board_clearance,
     classify_meander_candidate_slots, classify_meander_placement_slots,
     classify_meander_placement_slots_with_keepouts, classify_tangent_alignment,
-    classify_tangent_chain, classify_tangent_join, import_specctra_trace_record,
+    classify_tangent_chain, classify_tangent_join, g1_join_problem, import_specctra_trace_record,
     import_specctra_via_record, intersect_axis_aligned_line_cubic_bezier,
     intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
     intersect_line_rational_quadratic_bezier, intersect_rectangular_regions,
-    offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
-    offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
-    parse_specctra_grid_route_records, parse_specctra_grid_trace_records,
-    serialize_specctra_grid_arc_wire_records, serialize_specctra_grid_keepout_records,
-    serialize_specctra_grid_route_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
-    specctra_grid_keepout_record, specctra_grid_trace_record, specctra_grid_via_record,
-    subtract_rectangular_region,
+    keepout_aware_detour_meander, length_match_problem, multi_detour_meander,
+    nonuniform_detour_meander, obstacle_aware_detour_meander, offset_axis_aligned_segment,
+    offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
+    offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
+    oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
+    parse_specctra_grid_trace_records, rectangular_bead_plan, rectangular_pocket_link_graph,
+    rectangular_pocket_plan, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_plan, serialize_specctra_grid_arc_wire_records,
+    serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
+    serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
+    single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
+    specctra_grid_trace_record, specctra_grid_via_record, subtract_rectangular_region,
+    tangent_alignment_problem,
 };
 use hyperreal::{Rational, Real};
 
@@ -226,15 +225,26 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
-    let tangent_model = build_tangent_alignment_problem(p(3, 4), p(6, 8));
+    let tangent_candidate = p(3, 4);
+    let tangent_target = p(6, 8);
+    c.bench_function("tangent_alignment_problem_construction", |b| {
+        b.iter(|| {
+            tangent_alignment_problem(
+                black_box(tangent_candidate.clone()),
+                black_box(tangent_target.clone()),
+            )
+        })
+    });
+    let tangent_model =
+        tangent_alignment_problem(tangent_candidate.clone(), tangent_target.clone());
     c.bench_function("tangent_alignment_hypersolve_certification", |b| {
         b.iter(|| certify_tangent_alignment_candidate(&tangent_model))
     });
-    let oriented_tangent_model = build_oriented_tangent_alignment_problem(p(3, 4), p(6, 8));
+    let oriented_tangent_model = oriented_tangent_alignment_problem(p(3, 4), p(6, 8));
     c.bench_function("oriented_tangent_alignment_hypersolve_certification", |b| {
         b.iter(|| certify_tangent_alignment_candidate(&oriented_tangent_model))
     });
-    let g1_join_model = build_g1_join_problem(p(10, 20), p(3, 4), p(10, 20), p(6, 8));
+    let g1_join_model = g1_join_problem(p(10, 20), p(3, 4), p(10, 20), p(6, 8));
     c.bench_function("g1_join_hypersolve_certification", |b| {
         b.iter(|| certify_g1_join_candidate(&g1_join_model))
     });
@@ -1454,7 +1464,19 @@ fn path_predicates(c: &mut Criterion) {
         })
     });
 
-    let model = build_length_match_problem(r(1000), r(1250), r(250));
+    let current_length = r(1000);
+    let target_length = r(1250);
+    let extra_length = r(250);
+    c.bench_function("length_match_problem_construction", |b| {
+        b.iter(|| {
+            length_match_problem(
+                black_box(current_length.clone()),
+                black_box(target_length.clone()),
+                black_box(extra_length.clone()),
+            )
+        })
+    });
+    let model = length_match_problem(current_length, target_length, extra_length);
     c.bench_function("length_match_hypersolve_certification", |b| {
         b.iter(|| certify_length_extension(&model))
     });
@@ -1691,29 +1713,19 @@ fn path_predicates(c: &mut Criterion) {
         })
     });
     c.bench_function("single_detour_meander_exact_build", |b| {
-        b.iter(|| {
-            build_single_detour_meander(&tune_source, r(250), OffsetSide::Left, PredicatePolicy)
-        })
+        b.iter(|| single_detour_meander(&tune_source, r(250), OffsetSide::Left, PredicatePolicy))
     });
     c.bench_function("multi_detour_meander_exact_build", |b| {
-        b.iter(|| {
-            build_multi_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy)
-        })
+        b.iter(|| multi_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy))
     });
     c.bench_function("alternating_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_alternating_detour_meander(
-                &tune_source,
-                r(250),
-                4,
-                OffsetSide::Left,
-                PredicatePolicy,
-            )
+            alternating_detour_meander(&tune_source, r(250), 4, OffsetSide::Left, PredicatePolicy)
         })
     });
     c.bench_function("nonuniform_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_nonuniform_detour_meander(
+            nonuniform_detour_meander(
                 &tune_source,
                 vec![r(25), r(75), r(50)],
                 OffsetSide::Left,
@@ -1727,7 +1739,7 @@ fn path_predicates(c: &mut Criterion) {
     }];
     c.bench_function("obstacle_aware_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_obstacle_aware_detour_meander(
+            obstacle_aware_detour_meander(
                 &tune_source,
                 r(250),
                 4,
@@ -1755,7 +1767,7 @@ fn path_predicates(c: &mut Criterion) {
     }];
     c.bench_function("keepout_aware_detour_meander_exact_build", |b| {
         b.iter(|| {
-            build_keepout_aware_detour_meander(
+            keepout_aware_detour_meander(
                 &tune_source,
                 r(250),
                 4,
@@ -2072,18 +2084,16 @@ fn path_predicates(c: &mut Criterion) {
     });
     let pocket = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_pocket_offset_ring_schedule", |b| {
-        b.iter(|| {
-            build_rectangular_pocket_plan(pocket.clone(), r(125), r(250), 128, PredicatePolicy)
-        })
+        b.iter(|| rectangular_pocket_plan(pocket.clone(), r(125), r(250), 128, PredicatePolicy))
     });
     let pocket_plan =
-        build_rectangular_pocket_plan(pocket.clone(), r(125), r(250), 24, PredicatePolicy).unwrap();
+        rectangular_pocket_plan(pocket.clone(), r(125), r(250), 24, PredicatePolicy).unwrap();
     c.bench_function("rectangular_pocket_link_graph", |b| {
-        b.iter(|| build_rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy))
+        b.iter(|| rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy))
     });
     c.bench_function("rectangular_additive_bead_schedule", |b| {
         b.iter(|| {
-            build_rectangular_bead_plan(
+            rectangular_bead_plan(
                 pocket.clone(),
                 BeadFillAxis::Horizontal,
                 r(400),
@@ -2093,7 +2103,7 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
-    let bead_plan = build_rectangular_bead_plan(
+    let bead_plan = rectangular_bead_plan(
         pocket.clone(),
         BeadFillAxis::Horizontal,
         r(400),
@@ -2103,13 +2113,13 @@ fn path_predicates(c: &mut Criterion) {
     )
     .unwrap();
     c.bench_function("rectangular_serpentine_infill_graph", |b| {
-        b.iter(|| build_rectangular_serpentine_infill_graph(bead_plan.clone(), PredicatePolicy))
+        b.iter(|| rectangular_serpentine_infill_graph(bead_plan.clone(), PredicatePolicy))
     });
     let support_overhang = RectangularPocket::new(p(1_000, 1_000), p(3_000, 2_000)).unwrap();
     let support_base = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_support_footprint_plan", |b| {
         b.iter(|| {
-            build_rectangular_support_plan(
+            rectangular_support_plan(
                 support_overhang.clone(),
                 support_base.clone(),
                 r(125),
@@ -2142,11 +2152,7 @@ fn path_predicates(c: &mut Criterion) {
     ];
     c.bench_function("rectangular_rest_material_graph", |b| {
         b.iter(|| {
-            build_rectangular_rest_material_graph(
-                pocket.clone(),
-                rest_cutters.clone(),
-                PredicatePolicy,
-            )
+            rectangular_rest_material_graph(pocket.clone(), rest_cutters.clone(), PredicatePolicy)
         })
     });
 

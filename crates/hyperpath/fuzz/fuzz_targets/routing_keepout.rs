@@ -3,7 +3,7 @@
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
     LinePathSegment, MeanderKeepout, MeanderObstacle, OffsetSide,
-    build_keepout_aware_detour_meander, classify_meander_placement_slots_with_keepouts,
+    keepout_aware_detour_meander, classify_meander_placement_slots_with_keepouts,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -71,7 +71,7 @@ fuzz_target!(|data: &[u8]| {
     assert_eq!(report.slots.len(), bump_count as usize);
     assert!(report.slots[0].preferred_blocked);
 
-    let routed = build_keepout_aware_detour_meander(
+    let routed = keepout_aware_detour_meander(
         &source,
         r(2 * amplitude * i64::try_from(bump_count).unwrap()),
         bump_count,
@@ -85,7 +85,7 @@ fuzz_target!(|data: &[u8]| {
 
     let diagonal = LinePathSegment::new(p(0, 0), p(3, 4));
     assert_eq!(
-        build_keepout_aware_detour_meander(
+        keepout_aware_detour_meander(
             &diagonal,
             r(2),
             1,

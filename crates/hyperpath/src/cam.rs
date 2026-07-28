@@ -19,11 +19,11 @@ mod rest;
 
 pub use pocket_link::{
     PocketLinkGraphError, PocketLinkSegment, PocketRingSegment, PocketRingSide,
-    RectangularPocketLinkGraph, build_rectangular_pocket_link_graph,
+    RectangularPocketLinkGraph, rectangular_pocket_link_graph,
 };
 pub use rest::{
     RectangularRestCutRecord, RectangularRestMaterialError, RectangularRestMaterialGraph,
-    RectangularRestMaterialStage, build_rectangular_rest_material_graph,
+    RectangularRestMaterialStage, rectangular_rest_material_graph,
 };
 
 /// Exact axis-aligned rectangular pocket boundary.
@@ -330,14 +330,14 @@ impl RectangularPocket {
     }
 }
 
-/// Build an exact rectangular contour-parallel pocket schedule.
+/// Create an exact rectangular contour-parallel pocket schedule.
 ///
 /// The first ring is inset by `tool_radius`; each next ring is inset by one
 /// additional `stepover`. The function stops before emitting a ring whose
 /// bounds cannot be certified as ordered. This is only the pocket/rest graph
 /// skeleton: no path linking, cutter engagement, corner cleanup, or rest
 /// material decision is accepted here.
-pub fn build_rectangular_pocket_plan(
+pub fn rectangular_pocket_plan(
     pocket: RectangularPocket,
     tool_radius: Real,
     stepover: Real,
@@ -386,7 +386,7 @@ pub fn build_rectangular_pocket_plan(
     })
 }
 
-/// Build an exact rectangular additive bead schedule.
+/// Create an exact rectangular additive bead schedule.
 ///
 /// The first bead centerline is inset by `bead_width / 2` from the low side of
 /// the pitch axis, and later beads advance by `spacing`. This is the additive
@@ -394,7 +394,7 @@ pub fn build_rectangular_pocket_plan(
 /// centerlines for infill/skin planning while leaving region set algebra,
 /// supports, corner starts/stops, and process validation to downstream exact
 /// predicates.
-pub fn build_rectangular_bead_plan(
+pub fn rectangular_bead_plan(
     region: RectangularPocket,
     axis: BeadFillAxis,
     bead_width: Real,
@@ -471,14 +471,14 @@ pub fn build_rectangular_bead_plan(
     })
 }
 
-/// Build an exact serpentine infill graph from a rectangular bead plan.
+/// Create an exact serpentine infill graph from a rectangular bead plan.
 ///
 /// The graph alternates bead direction, then inserts exact straight connectors
 /// between consecutive oriented bead centerlines. It validates every generated
 /// connector endpoint with `hyperlimit` equality rather than relying on object
 /// identity, preserving the Yap-style separation between construction and
 /// predicate certification.
-pub fn build_rectangular_serpentine_infill_graph(
+pub fn rectangular_serpentine_infill_graph(
     plan: RectangularBeadPlan,
     policy: PredicatePolicy,
 ) -> Result<RectangularInfillGraph, InfillGraphError> {
@@ -527,14 +527,14 @@ pub fn build_rectangular_serpentine_infill_graph(
     })
 }
 
-/// Build and classify an exact rectangular support footprint.
+/// Create and classify an exact rectangular support footprint.
 ///
 /// The support footprint is the overhang rectangle expanded by `xy_margin` in
 /// X and Y. The function does not clip to the base: clipping is an arrangement
 /// or mesh-domain operation and should be represented explicitly later.
 /// Instead, this returns the exact expanded footprint plus a containment
 /// status.
-pub fn build_rectangular_support_plan(
+pub fn rectangular_support_plan(
     overhang: RectangularPocket,
     base: RectangularPocket,
     xy_margin: Real,

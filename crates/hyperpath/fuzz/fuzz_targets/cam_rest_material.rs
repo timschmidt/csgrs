@@ -1,7 +1,7 @@
 #![no_main]
 
 use hyperlimit::{Point2, PredicatePolicy};
-use hyperpath::{RectangularPocket, build_rectangular_rest_material_graph};
+use hyperpath::{RectangularPocket, rectangular_rest_material_graph};
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
 
@@ -50,7 +50,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     }
 
-    let graph = build_rectangular_rest_material_graph(stock.clone(), cutters, PredicatePolicy::default())
+    let graph = rectangular_rest_material_graph(stock.clone(), cutters, PredicatePolicy::default())
         .expect("integer rectangle rest graph should certify");
     assert!(graph.all_area_certified());
     assert_eq!(

@@ -57,8 +57,8 @@ pub struct LengthMatchProblem {
     pub extra_length_symbol: SymbolId,
 }
 
-/// Build a one-variable exact residual `current + extra - target = 0`.
-pub fn build_length_match_problem(
+/// Create a one-variable exact residual `current + extra - target = 0`.
+pub fn length_match_problem(
     current: Real,
     target: Real,
     initial_extra: Real,
@@ -407,7 +407,7 @@ impl SingleDetourMeander {
             .source
             .axis_length(policy)
             .ok_or(MeanderError::UnsupportedSourceGeometry)?;
-        let model = build_length_match_problem(current, target, self.extra_length.clone());
+        let model = length_match_problem(current, target, self.extra_length.clone());
         Ok(certify_length_extension(&model))
     }
 }
@@ -432,7 +432,7 @@ impl MultiDetourMeander {
             .source
             .axis_length(policy)
             .ok_or(MeanderError::UnsupportedSourceGeometry)?;
-        let model = build_length_match_problem(current, target, self.extra_length.clone());
+        let model = length_match_problem(current, target, self.extra_length.clone());
         Ok(certify_length_extension(&model))
     }
 }
@@ -453,7 +453,7 @@ impl NonUniformDetourMeander {
             .source
             .axis_length(policy)
             .ok_or(MeanderError::UnsupportedSourceGeometry)?;
-        let model = build_length_match_problem(current, target, self.extra_length.clone());
+        let model = length_match_problem(current, target, self.extra_length.clone());
         Ok(certify_length_extension(&model))
     }
 }
@@ -522,14 +522,14 @@ pub enum RouteCertificationError {
     ScheduleShapeMismatch,
 }
 
-/// Build a one-bump rectangular meander from an exact extra length.
+/// Create a one-bump rectangular meander from an exact extra length.
 ///
 /// For a nonzero extra length, this replaces one axis-aligned source segment by
 /// three axis-aligned segments: connector, parallel offset run, connector. The
 /// added path length is exactly `2 * amplitude`, so `amplitude = extra / 2`.
 /// The topology is intentionally simple; clearance against other traces, pads,
 /// and board edges must still be certified by the exact PCB predicates.
-pub fn build_single_detour_meander(
+pub fn single_detour_meander(
     source: &LinePathSegment,
     extra_length: Real,
     side: OffsetSide,
@@ -565,7 +565,7 @@ pub fn build_single_detour_meander(
     })
 }
 
-/// Build a repeated rectangular meander with exact equal bump amplitudes.
+/// Create a repeated rectangular meander with exact equal bump amplitudes.
 ///
 /// The source is split into `bump_count` equal axis-aligned subsegments. Each
 /// subsegment is replaced by connector, parallel offset run, and connector
@@ -573,7 +573,7 @@ pub fn build_single_detour_meander(
 /// is deliberately a candidate generator only: clearance, no-short, and
 /// board-edge predicates must still certify the emitted swept geometry before a
 /// router commits it, following Yap's exact-geometric-computation boundary.
-pub fn build_multi_detour_meander(
+pub fn multi_detour_meander(
     source: &LinePathSegment,
     extra_length: Real,
     bump_count: u64,
@@ -583,7 +583,7 @@ pub fn build_multi_detour_meander(
     build_multi_detour_meander_with_side(source, extra_length, bump_count, policy, |_| side)
 }
 
-/// Build a repeated rectangular meander with exact alternating sides.
+/// Create a repeated rectangular meander with exact alternating sides.
 ///
 /// This is the first topology variant beyond same-side equal bumps. It still
 /// uses equal amplitudes so the continuous parameter remains
@@ -592,7 +592,7 @@ pub fn build_multi_detour_meander(
 /// propose this topology, while exact path predicates must still certify
 /// clearance before output, matching Yap's proposed-object/certified-decision
 /// split.
-pub fn build_alternating_detour_meander(
+pub fn alternating_detour_meander(
     source: &LinePathSegment,
     extra_length: Real,
     bump_count: u64,
@@ -608,14 +608,14 @@ pub fn build_alternating_detour_meander(
     })
 }
 
-/// Build a rectangular meander with caller-supplied exact amplitudes.
+/// Create a rectangular meander with caller-supplied exact amplitudes.
 ///
 /// The source is split into as many equal subsegments as there are amplitudes.
 /// Each nonzero amplitude creates one rectangular detour of that exact height,
 /// adding `2 * amplitude` to the path. This is a candidate-construction layer:
 /// obstacle avoidance may choose the amplitudes, but exact length replay and
 /// clearance predicates still decide whether the route can be accepted.
-pub fn build_nonuniform_detour_meander(
+pub fn nonuniform_detour_meander(
     source: &LinePathSegment,
     amplitudes: Vec<Real>,
     side: OffsetSide,
@@ -624,7 +624,7 @@ pub fn build_nonuniform_detour_meander(
     build_nonuniform_detour_meander_with_side(source, amplitudes, policy, |_| side)
 }
 
-/// Build a repeated rectangular meander while choosing sides around keepouts.
+/// Create a repeated rectangular meander while choosing sides around keepouts.
 ///
 /// Each bump first tries `preferred_side`; if any of that bump's exact
 /// connector/offset segments intersects a retained [`MeanderObstacle`], the
@@ -633,7 +633,7 @@ pub fn build_nonuniform_detour_meander(
 /// topology from sampled clearance. This is the PCB routing analogue of Yap's
 /// proposed-object/certified-decision split and follows the Lee/Hightower
 /// tradition by keeping search heuristic and exact validation separate.
-pub fn build_obstacle_aware_detour_meander(
+pub fn obstacle_aware_detour_meander(
     source: &LinePathSegment,
     extra_length: Real,
     bump_count: u64,
@@ -713,14 +713,14 @@ pub fn build_obstacle_aware_detour_meander(
     })
 }
 
-/// Build a repeated rectangular meander while choosing sides around keepouts.
+/// Create a repeated rectangular meander while choosing sides around keepouts.
 ///
 /// This generalized variant accepts retained rectangular and circular keepouts.
 /// Circular keepouts are tested by exact segment-to-disc distance predicates
 /// for the three candidate bump legs. That extends obstacle-aware routing
 /// beyond rectangular keepouts without moving copper clipping, board booleans,
 /// or pad topology into `hyperpath`.
-pub fn build_keepout_aware_detour_meander(
+pub fn keepout_aware_detour_meander(
     source: &LinePathSegment,
     extra_length: Real,
     bump_count: u64,

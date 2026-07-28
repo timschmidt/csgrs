@@ -2,8 +2,8 @@
 
 use hyperlimit::{Point2, PredicatePolicy};
 use hyperpath::{
-    PocketLinkGraphError, RectangularPocket, build_rectangular_pocket_link_graph,
-    build_rectangular_pocket_plan,
+    PocketLinkGraphError, RectangularPocket, rectangular_pocket_link_graph,
+    rectangular_pocket_plan,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -30,7 +30,7 @@ fuzz_target!(|data: &[u8]| {
     let stepover = positive(data[2], 16);
     let max_rings = usize::from(data[3] % 24) + 1;
     let pocket = RectangularPocket::new(p(0, 0), p(width, height)).unwrap();
-    let plan = build_rectangular_pocket_plan(
+    let plan = rectangular_pocket_plan(
         pocket,
         r(1),
         r(stepover),
@@ -39,7 +39,7 @@ fuzz_target!(|data: &[u8]| {
     )
     .unwrap();
 
-    match build_rectangular_pocket_link_graph(plan.clone(), PredicatePolicy::default()) {
+    match rectangular_pocket_link_graph(plan.clone(), PredicatePolicy::default()) {
         Ok(graph) => {
             assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
             assert_eq!(graph.plan, plan);

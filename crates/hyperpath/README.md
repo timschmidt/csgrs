@@ -23,7 +23,8 @@ constraint miss.
 `hyperpath` keeps those responsibilities visible. It records provenance and source-grid
 units, separates path candidates from certification reports, and exposes exact-aware
 checks for clearances, tangency, length matching, offsets, and CAM rectangular plans
-before downstream crates accept the path as ready.
+before downstream crates accept the path as ready. Construction functions return these
+completed domain values immediately; they do not expose a prepared-object lifecycle.
 
 ## Main Types
 
@@ -37,7 +38,7 @@ before downstream crates accept the path as ready.
   ring checks, via drill policy, and layer-span reports.
 - Routing helpers describe length matching, meanders, obstacle-aware detours,
   differential-pair skew, and constant feed-time certification.
-- `PcbConstraintSet`, `ToolpathConstraintSet`, `RectangularRegion`, and residual builders
+- `PcbConstraintSet`, `ToolpathConstraintSet`, `RectangularRegion`, and residual functions
   lower PCB/CAM semantics into `hypersolve` without moving domain ownership out of
   `hyperpath`.
 - Specctra import/export records provide a text/grid route handoff surface,
@@ -63,7 +64,7 @@ does not eagerly expand every path into sampled polylines or global arrangements
 The crate focuses on small exact-aware carriers and specialized checks rather than a
 single global path search. Axis-aligned, cardinal, rectangular, and grid-route helpers
 give common CAD/CAM/PCB cases cheap exact paths. Provenance records, cached facts, and
-domain residual builders let repeated checks avoid reinterpreting source units, tangent
+domain residual functions let repeated checks avoid reinterpreting source units, tangent
 orientation, simple geometry classes, and low-degree constraint structure.
 
 Future performance work should add internal spatial indexes and batch
@@ -83,7 +84,7 @@ Implemented today:
   layer-span reports;
 - length-match, meander, obstacle-aware detour, differential-pair skew, constant
   feed-time, and Specctra route helpers;
-- PCB and toolpath residual builders for center clearance, differential-pair skew,
+- PCB and toolpath residual functions for center clearance, differential-pair skew,
   length matching, feed/time, Bezier offset samples, rectangular containment, and
   rectangular area replay.
 

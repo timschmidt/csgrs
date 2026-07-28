@@ -100,9 +100,9 @@ pub enum PocketLinkGraphError {
     InvalidConnectorEndpoint,
 }
 
-/// Build an exact retained link graph from a rectangular pocket schedule.
+/// Create an exact retained link graph from a rectangular pocket schedule.
 ///
-/// The builder validates that every scheduled ring has positive extent and
+/// The function validates that every scheduled ring has positive extent and
 /// that each adjacent pair is exactly nested. It then emits four exact
 /// side-segments per ring plus a deterministic lower-left dogleg between
 /// adjacent rings. The dogleg is represented as one or two axis-aligned
@@ -110,7 +110,7 @@ pub enum PocketLinkGraphError {
 ///
 /// This is not a pocketing executor. It is the path-domain graph carrier that a
 /// later arrangement or hypermesh intake can certify, reject, or transform.
-pub fn build_rectangular_pocket_link_graph(
+pub fn rectangular_pocket_link_graph(
     plan: RectangularPocketPlan,
     policy: PredicatePolicy,
 ) -> Result<RectangularPocketLinkGraph, PocketLinkGraphError> {

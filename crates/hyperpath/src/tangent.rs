@@ -361,7 +361,7 @@ pub fn classify_tangent_chain(
 
 /// Certify every adjacent G1 join in a retained path chain through `hypersolve`.
 ///
-/// Each adjacent pair lowers to [`build_g1_join_problem`] and is replayed by
+/// Each adjacent pair lowers to [`g1_join_problem`] and is replayed by
 /// [`certify_g1_join_candidate`]. This is intentionally redundant with the
 /// direct predicate classifier: it gives solver-generated smooth chains the
 /// same exact residual replay boundary as individual tangent and length
@@ -370,7 +370,7 @@ pub fn certify_g1_chain(spans: &[TangentSpan]) -> G1ChainCertificationReport {
     let joins = spans
         .windows(2)
         .map(|pair| {
-            let model = build_g1_join_problem(
+            let model = g1_join_problem(
                 pair[0].end.clone(),
                 pair[0].end_tangent.clone(),
                 pair[1].start.clone(),
@@ -382,7 +382,7 @@ pub fn certify_g1_chain(spans: &[TangentSpan]) -> G1ChainCertificationReport {
     G1ChainCertificationReport { joins }
 }
 
-/// Build a two-variable exact tangent-alignment residual.
+/// Create a two-variable exact tangent-alignment residual.
 ///
 /// The residual is `candidate_x * target_y - candidate_y * target_x = 0`.
 /// A nonlinear solver may move the candidate tangent components, but accepted
@@ -390,28 +390,25 @@ pub fn certify_g1_chain(spans: &[TangentSpan]) -> G1ChainCertificationReport {
 /// the tangent analogue of the length replay boundary used in routing and
 /// follows Yap's rule that numerical proposals are not trusted until exact
 /// predicates certify them.
-pub fn build_tangent_alignment_problem(
-    candidate: Point2,
-    target: Point2,
-) -> TangentAlignmentProblem {
+pub fn tangent_alignment_problem(candidate: Point2, target: Point2) -> TangentAlignmentProblem {
     build_tangent_alignment_problem_with_orientation(candidate, target, false)
 }
 
-/// Build a two-variable oriented tangent-alignment model.
+/// Create a two-variable oriented tangent-alignment model.
 ///
 /// This includes the cross-product equality from
-/// [`build_tangent_alignment_problem`] and adds `candidate · target >= 0`.
+/// [`tangent_alignment_problem`] and adds `candidate · target >= 0`.
 /// The inequality rejects opposite-direction tangents during exact replay while
 /// still avoiding vector normalization. That makes it the solver-side
 /// counterpart to [`TangentAlignment::SameDirection`].
-pub fn build_oriented_tangent_alignment_problem(
+pub fn oriented_tangent_alignment_problem(
     candidate: Point2,
     target: Point2,
 ) -> TangentAlignmentProblem {
     build_tangent_alignment_problem_with_orientation(candidate, target, true)
 }
 
-/// Build an exact endpoint-plus-oriented-tangent G1 join model.
+/// Create an exact endpoint-plus-oriented-tangent G1 join model.
 ///
 /// The model contains endpoint equality residuals
 /// `candidate_endpoint - target_endpoint = 0`, the tangent cross-product
@@ -420,7 +417,7 @@ pub fn build_oriented_tangent_alignment_problem(
 /// may move endpoint and tangent variables, but this model replays the exact
 /// retained candidate before the geometry is accepted. That is the path-level
 /// version of Yap's proposed-object/certified-decision boundary.
-pub fn build_g1_join_problem(
+pub fn g1_join_problem(
     candidate_endpoint: Point2,
     candidate_tangent: Point2,
     target_endpoint: Point2,

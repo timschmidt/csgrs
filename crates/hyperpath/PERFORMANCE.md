@@ -7,6 +7,24 @@ their target benchmark improved statistically.
 
 ## Retained result
 
+The 2026-07-28 immediate-construction API migration removed the redundant
+`build_` prefix from 16 public CAM, routing, and tangent functions. These
+functions already return completed plans, graphs, meanders, or solver problems;
+there is no prepared object or deferred execution phase. The implementation is
+unchanged, and the affected paths were measured serially with 100 Criterion
+samples before and after the rename:
+
+| Benchmark | Before | After | Midpoint change |
+| --- | ---: | ---: | ---: |
+| `tangent_alignment_problem_construction` | `[278.35 ns, 279.55 ns, 280.90 ns]` | `[280.57 ns, 281.09 ns, 281.64 ns]` | +0.55% |
+| `length_match_problem_construction` | `[154.37 ns, 155.35 ns, 156.46 ns]` | `[154.82 ns, 155.28 ns, 155.81 ns]` | -0.05% |
+| `multi_detour_meander_exact_build` | `[12.895 us, 12.937 us, 12.985 us]` | `[12.925 us, 12.968 us, 13.014 us]` | +0.24% |
+| `rectangular_pocket_offset_ring_schedule` | `[5.3898 us, 5.4204 us, 5.4551 us]` | `[5.3142 us, 5.3377 us, 5.3627 us]` | -1.53% |
+
+No measured midpoint regressed by 2%. The historical
+`multi_detour_meander_exact_build` benchmark identifier remains unchanged so
+the saved comparison series stays continuous; it is not a public API.
+
 The 2026-07-27 prepared-bounds API removal was gated on the segment carrier
 with saved Criterion baselines. `line_segment_exact_tangent` measured
 `[53.466 ns, 53.725 ns, 54.025 ns]` before and

@@ -118,16 +118,16 @@ pub enum RectangularRestMaterialError {
     AreaCertificationFailed,
 }
 
-/// Build an exact retained rest-material graph for rectangular stock.
+/// Create an exact retained rest-material graph for rectangular stock.
 ///
-/// The builder applies cutters in deterministic input order. Each cutter is
+/// The function applies cutters in deterministic input order. Each cutter is
 /// subtracted from every active positive-area rest piece; all positive-area
 /// remainders are retained for the next stage. Every stage and the final graph
 /// then receive exact area-conservation replay rows. This gives CAM and
 /// `hypermesh` callers a material-source graph without pretending that
 /// `hyperpath` has already performed general polygon booleans, cutter
 /// engagement validation, or linking.
-pub fn build_rectangular_rest_material_graph(
+pub fn rectangular_rest_material_graph(
     stock: RectangularPocket,
     cutters: impl IntoIterator<Item = RectangularPocket>,
     policy: PredicatePolicy,

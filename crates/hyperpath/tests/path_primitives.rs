@@ -51,36 +51,29 @@ use hyperpath::{
     SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
     TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
     ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, arrange_cubic_beziers, arrange_explicit_arcs, arrange_line_segments,
-    arrange_line_segments_with_cubic_beziers, arrange_line_segments_with_explicit_arcs,
-    arrange_line_segments_with_mixed_beziers, arrange_line_segments_with_mixed_curves,
-    arrange_line_segments_with_quadratic_beziers,
+    ViaLayerTransitionClass, alternating_detour_meander, arrange_cubic_beziers,
+    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
+    arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
     arrange_rational_quadratic_beziers, audit_specctra_route_rule_widths,
-    audit_specctra_trace_rule_clearances, build_alternating_detour_meander, build_g1_join_problem,
-    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_oriented_tangent_alignment_problem, build_rectangular_bead_plan,
-    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, build_single_detour_meander, build_tangent_alignment_problem,
-    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
-    certify_constant_feed_time, certify_constant_feed_time_for_path,
-    certify_corner_lookahead_limits, certify_cubic_ph_inverse_length,
-    certify_differential_pair_skew, certify_g1_chain, certify_g1_join_candidate,
-    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
-    certify_multi_phase_jerk_ramp_feed_schedule, certify_quintic_ph_g1_smoothing,
-    certify_quintic_ph_g1_smoothing_between, certify_quintic_ph_inverse_length,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    certify_tangent_alignment_candidate, certify_via_fabrication_policy,
-    check_cardinal_rect_pad_board_clearance, check_circular_pad_board_clearance,
-    check_circular_pad_circular_board_clearance, check_circular_pad_obround_board_clearance,
-    check_convex_pad_board_clearance, check_obround_pad_board_clearance,
-    check_oriented_rect_pad_board_clearance, check_orthogonal_pad_board_clearance,
-    check_rect_pad_board_clearance, check_rounded_rect_pad_board_clearance,
-    check_trace_board_clearance, check_trace_cardinal_rect_pad_clearance,
-    check_trace_circular_board_clearance, check_trace_clearance,
-    check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
+    audit_specctra_trace_rule_clearances, certify_acceleration_limited_feed_time,
+    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
+    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
+    certify_cubic_ph_inverse_length, certify_differential_pair_skew, certify_g1_chain,
+    certify_g1_join_candidate, certify_jerk_ramp_feed_schedule, certify_length_extension,
+    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
+    certify_quintic_ph_g1_smoothing, certify_quintic_ph_g1_smoothing_between,
+    certify_quintic_ph_inverse_length, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, certify_tangent_alignment_candidate,
+    certify_via_fabrication_policy, check_cardinal_rect_pad_board_clearance,
+    check_circular_pad_board_clearance, check_circular_pad_circular_board_clearance,
+    check_circular_pad_obround_board_clearance, check_convex_pad_board_clearance,
+    check_obround_pad_board_clearance, check_oriented_rect_pad_board_clearance,
+    check_orthogonal_pad_board_clearance, check_rect_pad_board_clearance,
+    check_rounded_rect_pad_board_clearance, check_trace_board_clearance,
+    check_trace_cardinal_rect_pad_clearance, check_trace_circular_board_clearance,
+    check_trace_clearance, check_trace_convex_board_clearance, check_trace_convex_pad_clearance,
     check_trace_obround_board_clearance, check_trace_obround_pad_clearance,
     check_trace_oriented_rect_pad_clearance, check_trace_orthogonal_board_clearance,
     check_trace_orthogonal_pad_clearance, check_trace_pad_clearance,
@@ -89,21 +82,26 @@ use hyperpath::{
     classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
     classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
     classify_tangent_alignment, classify_tangent_chain, classify_tangent_join,
-    export_specctra_trace_record, import_specctra_arc_wire_record, import_specctra_keepout_record,
-    import_specctra_text_route, import_specctra_trace_record, import_specctra_via_record,
-    intersect_axis_aligned_line_cubic_bezier, intersect_axis_aligned_line_quadratic_bezier,
+    export_specctra_trace_record, g1_join_problem, import_specctra_arc_wire_record,
+    import_specctra_keepout_record, import_specctra_text_route, import_specctra_trace_record,
+    import_specctra_via_record, intersect_axis_aligned_line_cubic_bezier,
+    intersect_axis_aligned_line_quadratic_bezier,
     intersect_axis_aligned_line_rational_quadratic_bezier, intersect_line_cubic_bezier,
     intersect_line_quadratic_bezier, intersect_line_rational_quadratic_bezier,
-    intersect_rectangular_regions, offset_axis_aligned_segment, offset_cardinal_arc,
-    offset_cubic_bezier_sample, offset_explicit_arc, offset_higher_order_bezier_sample,
-    offset_quadratic_bezier_sample, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, serialize_specctra_grid_arc_wire_records,
+    intersect_rectangular_regions, keepout_aware_detour_meander, length_match_problem,
+    multi_detour_meander, nonuniform_detour_meander, obstacle_aware_detour_meander,
+    offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
+    offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
+    oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
+    parse_specctra_grid_trace_records, rectangular_bead_plan, rectangular_pocket_link_graph,
+    rectangular_pocket_plan, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_plan, serialize_specctra_grid_arc_wire_records,
     serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
     serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
-    serialize_specctra_grid_via_records, specctra_grid_arc_wire_record,
+    serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
     specctra_grid_keepout_record, specctra_grid_route_rule_record, specctra_grid_trace_record,
-    specctra_grid_via_record, subtract_rectangular_region, tangent_cross, tangent_dot,
-    tangent_norm_squared,
+    specctra_grid_via_record, subtract_rectangular_region, tangent_alignment_problem,
+    tangent_cross, tangent_dot, tangent_norm_squared,
 };
 use hyperreal::{Rational, Real};
 use hypersolve::AlgebraicRootPolynomialImageStatus;
@@ -4037,8 +4035,8 @@ fn tangent_join_reports_mismatch_corner_and_degenerate_cases() {
 
 #[test]
 fn tangent_alignment_problem_certifies_exact_cross_residual() {
-    let satisfied = build_tangent_alignment_problem(p(3, 4), p(6, 8));
-    let violated = build_tangent_alignment_problem(p(3, 4), p(0, 5));
+    let satisfied = tangent_alignment_problem(p(3, 4), p(6, 8));
+    let violated = tangent_alignment_problem(p(3, 4), p(0, 5));
 
     assert!(
         certify_tangent_alignment_candidate(&satisfied).all_satisfied(),
@@ -4052,8 +4050,8 @@ fn tangent_alignment_problem_certifies_exact_cross_residual() {
 
 #[test]
 fn oriented_tangent_alignment_problem_rejects_opposite_direction() {
-    let same = build_oriented_tangent_alignment_problem(p(3, 4), p(6, 8));
-    let opposite = build_oriented_tangent_alignment_problem(p(3, 4), p(-6, -8));
+    let same = oriented_tangent_alignment_problem(p(3, 4), p(6, 8));
+    let opposite = oriented_tangent_alignment_problem(p(3, 4), p(-6, -8));
 
     assert!(certify_tangent_alignment_candidate(&same).all_satisfied());
     assert!(certify_tangent_alignment_candidate(&opposite).has_certified_violation());
@@ -4061,9 +4059,9 @@ fn oriented_tangent_alignment_problem_rejects_opposite_direction() {
 
 #[test]
 fn g1_join_problem_certifies_endpoint_and_oriented_tangent() {
-    let satisfied = build_g1_join_problem(p(3, 4), p(-4, 3), p(3, 4), p(-8, 6));
-    let endpoint_mismatch = build_g1_join_problem(p(3, 4), p(-4, 3), p(3, 5), p(-8, 6));
-    let tangent_reversed = build_g1_join_problem(p(3, 4), p(-4, 3), p(3, 4), p(8, -6));
+    let satisfied = g1_join_problem(p(3, 4), p(-4, 3), p(3, 4), p(-8, 6));
+    let endpoint_mismatch = g1_join_problem(p(3, 4), p(-4, 3), p(3, 5), p(-8, 6));
+    let tangent_reversed = g1_join_problem(p(3, 4), p(-4, 3), p(3, 4), p(8, -6));
 
     assert!(certify_g1_join_candidate(&satisfied).all_satisfied());
     assert!(certify_g1_join_candidate(&endpoint_mismatch).has_certified_violation());
@@ -6709,8 +6707,7 @@ fn bezier_offset_samples_reject_invalid_inputs() {
 #[test]
 fn rectangular_pocket_plan_schedules_exact_inset_rings() {
     let pocket = RectangularPocket::new(p(0, 0), p(20, 12)).unwrap();
-    let plan =
-        build_rectangular_pocket_plan(pocket.clone(), r(2), r(3), 8, PredicatePolicy).unwrap();
+    let plan = rectangular_pocket_plan(pocket.clone(), r(2), r(3), 8, PredicatePolicy).unwrap();
 
     assert_eq!(plan.pocket, pocket);
     assert_eq!(plan.rings.len(), 2);
@@ -6736,18 +6733,18 @@ fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
     );
     let pocket = RectangularPocket::new(p(0, 0), p(100, 100)).unwrap();
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(-1), r(1), 1, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_plan(pocket.clone(), r(-1), r(1), 1, PredicatePolicy).unwrap_err(),
         PocketPlanError::NegativeToolRadius
     );
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(1), r(0), 1, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_plan(pocket.clone(), r(1), r(0), 1, PredicatePolicy).unwrap_err(),
         PocketPlanError::NonPositiveStepover
     );
     assert_eq!(
-        build_rectangular_pocket_plan(pocket.clone(), r(1), r(1), 0, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_plan(pocket.clone(), r(1), r(1), 0, PredicatePolicy).unwrap_err(),
         PocketPlanError::ZeroMaxRings
     );
-    let limited = build_rectangular_pocket_plan(pocket, r(1), r(1), 2, PredicatePolicy).unwrap();
+    let limited = rectangular_pocket_plan(pocket, r(1), r(1), 2, PredicatePolicy).unwrap();
     assert_eq!(limited.rings.len(), 2);
     assert_eq!(limited.stop_reason, PocketPlanStopReason::MaxRingsReached);
 }
@@ -6755,8 +6752,8 @@ fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
 #[test]
 fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
     let pocket = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
-    let plan = build_rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy).unwrap();
-    let graph = build_rectangular_pocket_link_graph(plan.clone(), PredicatePolicy).unwrap();
+    let plan = rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy).unwrap();
+    let graph = rectangular_pocket_link_graph(plan.clone(), PredicatePolicy).unwrap();
 
     assert_eq!(graph.plan, plan);
     assert_eq!(graph.ring_segments.len(), 8);
@@ -6787,7 +6784,7 @@ fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
 
 #[test]
 fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
-    let empty = build_rectangular_pocket_plan(
+    let empty = rectangular_pocket_plan(
         RectangularPocket::new(p(0, 0), p(2, 2)).unwrap(),
         r(2),
         r(1),
@@ -6797,11 +6794,11 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
     .unwrap();
     assert!(empty.rings.is_empty());
     assert_eq!(
-        build_rectangular_pocket_link_graph(empty, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_link_graph(empty, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::EmptyPlan
     );
 
-    let collapsed = build_rectangular_pocket_plan(
+    let collapsed = rectangular_pocket_plan(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(5),
         r(1),
@@ -6811,11 +6808,11 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
     .unwrap();
     assert_eq!(collapsed.rings[0].min, collapsed.rings[0].max);
     assert_eq!(
-        build_rectangular_pocket_link_graph(collapsed, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_link_graph(collapsed, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::DegenerateRing
     );
 
-    let mut bad_index = build_rectangular_pocket_plan(
+    let mut bad_index = rectangular_pocket_plan(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(1),
         r(2),
@@ -6825,11 +6822,11 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
     .unwrap();
     bad_index.rings[1].index = 4;
     assert_eq!(
-        build_rectangular_pocket_link_graph(bad_index, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_link_graph(bad_index, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::InvalidRingIndex
     );
 
-    let mut non_nested = build_rectangular_pocket_plan(
+    let mut non_nested = rectangular_pocket_plan(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(1),
         r(2),
@@ -6839,7 +6836,7 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
     .unwrap();
     non_nested.rings[1].min = p(0, 3);
     assert_eq!(
-        build_rectangular_pocket_link_graph(non_nested, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_link_graph(non_nested, PredicatePolicy).unwrap_err(),
         PocketLinkGraphError::NonNestedRings
     );
 }
@@ -6847,7 +6844,7 @@ fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
 #[test]
 fn rectangular_bead_plan_schedules_exact_centerlines() {
     let region = RectangularPocket::new(p(0, 0), p(10, 6)).unwrap();
-    let plan = build_rectangular_bead_plan(
+    let plan = rectangular_bead_plan(
         region.clone(),
         BeadFillAxis::Horizontal,
         r(2),
@@ -6867,7 +6864,7 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
     assert_eq!(plan.beads[1].pitch_position, r(3));
     assert_eq!(plan.beads[2].pitch_position, r(5));
 
-    let vertical = build_rectangular_bead_plan(
+    let vertical = rectangular_bead_plan(
         RectangularPocket::new(p(0, 0), p(10, 6)).unwrap(),
         BeadFillAxis::Vertical,
         r(2),
@@ -6885,7 +6882,7 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
 fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
     let region = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
     assert_eq!(
-        build_rectangular_bead_plan(
+        rectangular_bead_plan(
             region.clone(),
             BeadFillAxis::Horizontal,
             r(0),
@@ -6897,7 +6894,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
         BeadPlanError::NonPositiveBeadWidth
     );
     assert_eq!(
-        build_rectangular_bead_plan(
+        rectangular_bead_plan(
             region.clone(),
             BeadFillAxis::Horizontal,
             r(1),
@@ -6909,7 +6906,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
         BeadPlanError::NonPositiveSpacing
     );
     assert_eq!(
-        build_rectangular_bead_plan(
+        rectangular_bead_plan(
             region.clone(),
             BeadFillAxis::Horizontal,
             r(1),
@@ -6920,7 +6917,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
         .unwrap_err(),
         BeadPlanError::ZeroMaxBeads
     );
-    let limited = build_rectangular_bead_plan(
+    let limited = rectangular_bead_plan(
         region,
         BeadFillAxis::Horizontal,
         r(2),
@@ -6935,7 +6932,7 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
 
 #[test]
 fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
-    let plan = build_rectangular_bead_plan(
+    let plan = rectangular_bead_plan(
         RectangularPocket::new(p(0, 0), p(10, 6)).unwrap(),
         BeadFillAxis::Horizontal,
         r(2),
@@ -6944,7 +6941,7 @@ fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
         PredicatePolicy,
     )
     .unwrap();
-    let graph = build_rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy).unwrap();
+    let graph = rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy).unwrap();
 
     assert_eq!(graph.plan, plan);
     assert_eq!(graph.deposition_segments.len(), 3);
@@ -6965,7 +6962,7 @@ fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
 
 #[test]
 fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
-    let plan = build_rectangular_bead_plan(
+    let plan = rectangular_bead_plan(
         RectangularPocket::new(p(0, 0), p(10, 1)).unwrap(),
         BeadFillAxis::Horizontal,
         r(2),
@@ -6977,7 +6974,7 @@ fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
 
     assert!(plan.beads.is_empty());
     assert_eq!(
-        build_rectangular_serpentine_infill_graph(plan, PredicatePolicy).unwrap_err(),
+        rectangular_serpentine_infill_graph(plan, PredicatePolicy).unwrap_err(),
         InfillGraphError::EmptyBeadPlan
     );
 }
@@ -6987,8 +6984,7 @@ fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
     let overhang = RectangularPocket::new(p(4, 4), p(6, 6)).unwrap();
     let base = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
     let plan =
-        build_rectangular_support_plan(overhang.clone(), base.clone(), r(1), PredicatePolicy)
-            .unwrap();
+        rectangular_support_plan(overhang.clone(), base.clone(), r(1), PredicatePolicy).unwrap();
 
     assert_eq!(plan.overhang, overhang);
     assert_eq!(plan.base, base);
@@ -6997,7 +6993,7 @@ fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
     assert_eq!(plan.footprint.max(), &p(7, 7));
     assert_eq!(plan.status, SupportFootprintStatus::ContainedInBase);
 
-    let outside = build_rectangular_support_plan(
+    let outside = rectangular_support_plan(
         RectangularPocket::new(p(1, 1), p(3, 3)).unwrap(),
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(2),
@@ -7011,7 +7007,7 @@ fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
 #[test]
 fn rectangular_support_plan_rejects_negative_margin() {
     assert_eq!(
-        build_rectangular_support_plan(
+        rectangular_support_plan(
             RectangularPocket::new(p(4, 4), p(6, 6)).unwrap(),
             RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
             r(-1),
@@ -7106,8 +7102,7 @@ fn rectangular_rest_material_graph_replays_multi_cut_area_exactly() {
         RectangularPocket::new(p(8, 0), p(12, 10)).unwrap(),
     ];
     let graph =
-        build_rectangular_rest_material_graph(stock.clone(), cutters.clone(), PredicatePolicy)
-            .unwrap();
+        rectangular_rest_material_graph(stock.clone(), cutters.clone(), PredicatePolicy).unwrap();
 
     assert_eq!(graph.stock, stock);
     assert_eq!(graph.cutters, cutters);
@@ -7157,7 +7152,7 @@ fn rectangular_rest_material_graph_replays_multi_cut_area_exactly() {
 #[test]
 fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
     assert_eq!(
-        build_rectangular_rest_material_graph(
+        rectangular_rest_material_graph(
             RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
             Vec::<RectangularPocket>::new(),
             PredicatePolicy
@@ -7166,7 +7161,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
         RectangularRestMaterialError::EmptyCutterSet
     );
 
-    let disjoint_and_touching = build_rectangular_rest_material_graph(
+    let disjoint_and_touching = rectangular_rest_material_graph(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         vec![
             RectangularPocket::new(p(11, 0), p(12, 10)).unwrap(),
@@ -7188,7 +7183,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
         RectangularRegionRelation::Touching
     );
 
-    let covered = build_rectangular_rest_material_graph(
+    let covered = rectangular_rest_material_graph(
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         vec![
             RectangularPocket::new(p(-1, -1), p(11, 11)).unwrap(),
@@ -7208,7 +7203,7 @@ fn rectangular_rest_material_graph_handles_disjoint_touching_and_full_cover() {
 
 #[test]
 fn length_match_problem_certifies_exact_extension_candidate() {
-    let model = build_length_match_problem(r(100), r(125), r(25));
+    let model = length_match_problem(r(100), r(125), r(25));
     let report = certify_length_extension(&model);
 
     assert!(report.all_satisfied());
@@ -7217,7 +7212,7 @@ fn length_match_problem_certifies_exact_extension_candidate() {
 
 #[test]
 fn length_match_problem_reports_wrong_extension_as_violation() {
-    let model = build_length_match_problem(r(100), r(125), r(20));
+    let model = length_match_problem(r(100), r(125), r(20));
     let report = certify_length_extension(&model);
 
     assert!(report.has_certified_violation());
@@ -8264,8 +8259,7 @@ fn multi_phase_jerk_ramp_schedule_rejects_shape_and_invalid_phase_inputs() {
 #[test]
 fn single_detour_meander_adds_exact_length_and_certifies_target() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
-    let meander =
-        build_single_detour_meander(&source, r(6), OffsetSide::Left, PredicatePolicy).unwrap();
+    let meander = single_detour_meander(&source, r(6), OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.amplitude, r(3));
     assert_eq!(meander.segments.len(), 3);
@@ -8289,17 +8283,15 @@ fn single_detour_meander_handles_zero_and_rejects_invalid_inputs() {
     let source = LinePathSegment::new(p(0, 0), p(10, 0));
     let diagonal = LinePathSegment::new(p(0, 0), p(1, 1));
 
-    let zero =
-        build_single_detour_meander(&source, r(0), OffsetSide::Left, PredicatePolicy).unwrap();
+    let zero = single_detour_meander(&source, r(0), OffsetSide::Left, PredicatePolicy).unwrap();
     assert_eq!(zero.segments, vec![source.clone()]);
     assert_eq!(zero.exact_axis_length(PredicatePolicy).unwrap(), r(10));
     assert_eq!(
-        build_single_detour_meander(&source, r(-1), OffsetSide::Left, PredicatePolicy).unwrap_err(),
+        single_detour_meander(&source, r(-1), OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::NegativeExtraLength
     );
     assert_eq!(
-        build_single_detour_meander(&diagonal, r(2), OffsetSide::Left, PredicatePolicy)
-            .unwrap_err(),
+        single_detour_meander(&diagonal, r(2), OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::UnsupportedSourceGeometry
     );
 }
@@ -8308,7 +8300,7 @@ fn single_detour_meander_handles_zero_and_rejects_invalid_inputs() {
 fn multi_detour_meander_splits_source_and_certifies_exact_length() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
     let meander =
-        build_multi_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy).unwrap();
+        multi_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.bump_count, 3);
     assert_eq!(meander.amplitude, r(2));
@@ -8333,7 +8325,7 @@ fn multi_detour_meander_splits_source_and_certifies_exact_length() {
 fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
     let vertical = LinePathSegment::new(p(0, 10), p(0, 0));
     let meander =
-        build_multi_detour_meander(&vertical, r(8), 2, OffsetSide::Left, PredicatePolicy).unwrap();
+        multi_detour_meander(&vertical, r(8), 2, OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.amplitude, r(2));
     assert_eq!(meander.segments.len(), 6);
@@ -8343,13 +8335,11 @@ fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
     assert_eq!(meander.segments[5].end(), &p(0, 0));
     assert_eq!(meander.exact_axis_length(PredicatePolicy).unwrap(), r(18));
     assert_eq!(
-        build_multi_detour_meander(&vertical, r(8), 0, OffsetSide::Left, PredicatePolicy)
-            .unwrap_err(),
+        multi_detour_meander(&vertical, r(8), 0, OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::ZeroBumps
     );
     assert_eq!(
-        build_multi_detour_meander(&vertical, r(-1), 2, OffsetSide::Left, PredicatePolicy)
-            .unwrap_err(),
+        multi_detour_meander(&vertical, r(-1), 2, OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::NegativeExtraLength
     );
 }
@@ -8358,8 +8348,7 @@ fn multi_detour_meander_handles_vertical_reversed_and_rejects_bad_bumps() {
 fn alternating_detour_meander_flips_sides_and_certifies_length() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
     let meander =
-        build_alternating_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy)
-            .unwrap();
+        alternating_detour_meander(&source, r(12), 3, OffsetSide::Left, PredicatePolicy).unwrap();
 
     assert_eq!(meander.bump_count, 3);
     assert_eq!(meander.amplitude, r(2));
@@ -8382,7 +8371,7 @@ fn alternating_detour_meander_flips_sides_and_certifies_length() {
 #[test]
 fn nonuniform_detour_meander_retains_amplitudes_and_certifies_length() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
-    let meander = build_nonuniform_detour_meander(
+    let meander = nonuniform_detour_meander(
         &source,
         vec![r(1), r(3), r(2)],
         OffsetSide::Left,
@@ -8413,12 +8402,11 @@ fn nonuniform_detour_meander_rejects_empty_and_negative_amplitudes() {
     let source = LinePathSegment::new(p(0, 0), p(12, 0));
 
     assert_eq!(
-        build_nonuniform_detour_meander(&source, vec![], OffsetSide::Left, PredicatePolicy)
-            .unwrap_err(),
+        nonuniform_detour_meander(&source, vec![], OffsetSide::Left, PredicatePolicy).unwrap_err(),
         MeanderError::ZeroBumps
     );
     assert_eq!(
-        build_nonuniform_detour_meander(
+        nonuniform_detour_meander(
             &source,
             vec![r(1), r(-1)],
             OffsetSide::Left,
@@ -8427,13 +8415,9 @@ fn nonuniform_detour_meander_rejects_empty_and_negative_amplitudes() {
         .unwrap_err(),
         MeanderError::NegativeAmplitude
     );
-    let zero = build_nonuniform_detour_meander(
-        &source,
-        vec![r(0), r(0)],
-        OffsetSide::Left,
-        PredicatePolicy,
-    )
-    .unwrap();
+    let zero =
+        nonuniform_detour_meander(&source, vec![r(0), r(0)], OffsetSide::Left, PredicatePolicy)
+            .unwrap();
     assert_eq!(zero.segments, vec![source]);
     assert_eq!(zero.extra_length, Real::zero());
 }
@@ -8445,7 +8429,7 @@ fn obstacle_aware_detour_meander_selects_clear_side_and_certifies_length() {
         min: p(-1, 1),
         max: p(2, 3),
     };
-    let routed = build_obstacle_aware_detour_meander(
+    let routed = obstacle_aware_detour_meander(
         &source,
         r(12),
         3,
@@ -8572,7 +8556,7 @@ fn keepout_aware_detour_meander_routes_around_round_keepouts() {
         center: p(2, 2),
         radius: r(1),
     };
-    let routed = build_keepout_aware_detour_meander(
+    let routed = keepout_aware_detour_meander(
         &source,
         r(12),
         3,
@@ -8756,7 +8740,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
         max: p(5, -1),
     };
     assert_eq!(
-        build_obstacle_aware_detour_meander(
+        obstacle_aware_detour_meander(
             &source,
             r(12),
             3,
@@ -8773,7 +8757,7 @@ fn obstacle_aware_detour_meander_rejects_blocked_or_invalid_keepouts() {
         max: p(1, 1),
     };
     assert_eq!(
-        build_obstacle_aware_detour_meander(
+        obstacle_aware_detour_meander(
             &source,
             r(12),
             3,
@@ -10755,7 +10739,7 @@ proptest! {
         let size = i64::from(size);
         let stepover = i64::from(stepover);
         let pocket = RectangularPocket::new(p(0, 0), p(size, size)).unwrap();
-        let plan = build_rectangular_pocket_plan(
+        let plan = rectangular_pocket_plan(
             pocket,
             r(0),
             r(stepover),
@@ -10783,7 +10767,7 @@ proptest! {
         let size = i64::from(size);
         let stepover = i64::from(stepover);
         let pocket = RectangularPocket::new(p(0, 0), p(size, size)).unwrap();
-        let plan = build_rectangular_pocket_plan(
+        let plan = rectangular_pocket_plan(
             pocket,
             r(1),
             r(stepover),
@@ -10795,11 +10779,11 @@ proptest! {
         }).count();
 
         if positive_rings == 0 || positive_rings != plan.rings.len() {
-            prop_assert!(build_rectangular_pocket_link_graph(plan, PredicatePolicy).is_err());
+            prop_assert!(rectangular_pocket_link_graph(plan, PredicatePolicy).is_err());
             return Ok(());
         }
 
-        let graph = build_rectangular_pocket_link_graph(plan, PredicatePolicy).unwrap();
+        let graph = rectangular_pocket_link_graph(plan, PredicatePolicy).unwrap();
         prop_assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
         prop_assert_eq!(
             graph.links.len(),
@@ -10829,7 +10813,7 @@ proptest! {
         let height = i64::from(height);
         let spacing = i64::from(spacing);
         let region = RectangularPocket::new(p(0, 0), p(10, height)).unwrap();
-        let plan = build_rectangular_bead_plan(
+        let plan = rectangular_bead_plan(
             region,
             BeadFillAxis::Horizontal,
             r(2),
@@ -10860,7 +10844,7 @@ proptest! {
     ) {
         let height = i64::from(height);
         let spacing = i64::from(spacing);
-        let plan = build_rectangular_bead_plan(
+        let plan = rectangular_bead_plan(
             RectangularPocket::new(p(0, 0), p(10, height)).unwrap(),
             BeadFillAxis::Horizontal,
             r(2),
@@ -10870,7 +10854,7 @@ proptest! {
         ).unwrap();
         prop_assume!(!plan.beads.is_empty());
         let expected_links = plan.beads.len().saturating_sub(1);
-        let graph = build_rectangular_serpentine_infill_graph(
+        let graph = rectangular_serpentine_infill_graph(
             plan,
             PredicatePolicy,
         ).unwrap();
@@ -10909,7 +10893,7 @@ proptest! {
             p(x0 + width, y0 + height),
         ).unwrap();
         let base = RectangularPocket::new(p(-20, -20), p(80, 80)).unwrap();
-        let plan = build_rectangular_support_plan(
+        let plan = rectangular_support_plan(
             overhang,
             base,
             r(margin),
@@ -10979,7 +10963,7 @@ proptest! {
             RectangularPocket::new(p(vertical_x, 0), p(width, height)).unwrap(),
             RectangularPocket::new(p(0, horizontal_y), p(width, height)).unwrap(),
         ];
-        let graph = build_rectangular_rest_material_graph(
+        let graph = rectangular_rest_material_graph(
             stock,
             cutters,
             PredicatePolicy,
@@ -11041,7 +11025,7 @@ proptest! {
         extra in 0_i16..=200,
     ) {
         let source = LinePathSegment::new(p(0, 0), p(i64::from(length), 0));
-        let meander = build_single_detour_meander(
+        let meander = single_detour_meander(
             &source,
             r(i64::from(extra)),
             OffsetSide::Left,
@@ -11402,7 +11386,7 @@ proptest! {
         bump_count in 1_u64..=8,
     ) {
         let source = LinePathSegment::new(p(0, 0), p(i64::from(length), 0));
-        let meander = build_multi_detour_meander(
+        let meander = multi_detour_meander(
             &source,
             r(i64::from(extra)),
             bump_count,
@@ -11440,7 +11424,7 @@ proptest! {
         } else {
             OffsetSide::Right
         };
-        let meander = build_alternating_detour_meander(
+        let meander = alternating_detour_meander(
             &source,
             r(i64::from(extra)),
             bump_count,
@@ -11475,7 +11459,7 @@ proptest! {
         let source = LinePathSegment::new(p(0, 0), p(i64::from(length), 0));
         let amplitudes = vec![r(i64::from(a)), r(i64::from(b)), r(i64::from(c))];
         let expected_extra = i64::from(a + b + c) * 2;
-        let meander = build_nonuniform_detour_meander(
+        let meander = nonuniform_detour_meander(
             &source,
             amplitudes,
             OffsetSide::Left,
@@ -11502,7 +11486,7 @@ proptest! {
         bump_count in 1_u64..=8,
     ) {
         let source = LinePathSegment::new(p(0, 0), p(i64::from(length), 0));
-        let routed = build_obstacle_aware_detour_meander(
+        let routed = obstacle_aware_detour_meander(
             &source,
             r(i64::from(extra)),
             bump_count,
@@ -13365,7 +13349,7 @@ proptest! {
             candidate.x.clone() * r(i64::from(scale)),
             candidate.y.clone() * r(i64::from(scale)),
         );
-        let model = build_tangent_alignment_problem(candidate, target);
+        let model = tangent_alignment_problem(candidate, target);
 
         prop_assert!(certify_tangent_alignment_candidate(&model).all_satisfied());
     }
@@ -13382,7 +13366,7 @@ proptest! {
             -candidate.x.clone() * r(i64::from(scale)),
             -candidate.y.clone() * r(i64::from(scale)),
         );
-        let model = build_oriented_tangent_alignment_problem(candidate, target);
+        let model = oriented_tangent_alignment_problem(candidate, target);
 
         prop_assert!(certify_tangent_alignment_candidate(&model).has_certified_violation());
     }
@@ -13402,7 +13386,7 @@ proptest! {
             tangent.x.clone() * r(i64::from(scale)),
             tangent.y.clone() * r(i64::from(scale)),
         );
-        let model = build_g1_join_problem(endpoint.clone(), tangent, endpoint, target_tangent);
+        let model = g1_join_problem(endpoint.clone(), tangent, endpoint, target_tangent);
 
         prop_assert!(certify_g1_join_candidate(&model).all_satisfied());
     }

@@ -88,10 +88,9 @@ pub use cam::{
     RectangularRegionDifference, RectangularRegionIntersection, RectangularRegionRelation,
     RectangularRestCutRecord, RectangularRestMaterialError, RectangularRestMaterialGraph,
     RectangularRestMaterialStage, RectangularSupportPlan, RegionBooleanError,
-    SupportFootprintStatus, SupportPlanError, build_rectangular_bead_plan,
-    build_rectangular_pocket_link_graph, build_rectangular_pocket_plan,
-    build_rectangular_rest_material_graph, build_rectangular_serpentine_infill_graph,
-    build_rectangular_support_plan, intersect_rectangular_regions, subtract_rectangular_region,
+    SupportFootprintStatus, SupportPlanError, intersect_rectangular_regions, rectangular_bead_plan,
+    rectangular_pocket_link_graph, rectangular_pocket_plan, rectangular_rest_material_graph,
+    rectangular_serpentine_infill_graph, rectangular_support_plan, subtract_rectangular_region,
 };
 pub use curve_cell::{
     CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellError,
@@ -223,17 +222,17 @@ pub use routing::{
     MeanderKeepoutCandidatePlacementReport, MeanderKeepoutPlacementReport, MeanderObstacle,
     MeanderPlacementCandidate, MeanderPlacementReport, MeanderPlacementSlot, MultiDetourMeander,
     MultiPhaseJerkRampFeedScheduleReport, NonUniformDetourMeander, ObstacleAwareDetourMeander,
-    RouteCertificationError, SingleDetourMeander, build_alternating_detour_meander,
-    build_keepout_aware_detour_meander, build_length_match_problem, build_multi_detour_meander,
-    build_nonuniform_detour_meander, build_obstacle_aware_detour_meander,
-    build_single_detour_meander, certify_acceleration_limited_feed_time,
-    certify_acceleration_limited_feed_time_for_path, certify_constant_feed_time,
-    certify_constant_feed_time_for_path, certify_corner_lookahead_limits,
-    certify_differential_pair_skew, certify_jerk_ramp_feed_schedule, certify_length_extension,
-    certify_lookahead_feed_schedule, certify_multi_phase_jerk_ramp_feed_schedule,
-    certify_symmetric_jerk_limited_feed_time, certify_symmetric_jerk_limited_feed_time_for_path,
-    classify_meander_candidate_slots, classify_meander_candidate_slots_with_keepouts,
-    classify_meander_placement_slots, classify_meander_placement_slots_with_keepouts,
+    RouteCertificationError, SingleDetourMeander, alternating_detour_meander,
+    certify_acceleration_limited_feed_time, certify_acceleration_limited_feed_time_for_path,
+    certify_constant_feed_time, certify_constant_feed_time_for_path,
+    certify_corner_lookahead_limits, certify_differential_pair_skew,
+    certify_jerk_ramp_feed_schedule, certify_length_extension, certify_lookahead_feed_schedule,
+    certify_multi_phase_jerk_ramp_feed_schedule, certify_symmetric_jerk_limited_feed_time,
+    certify_symmetric_jerk_limited_feed_time_for_path, classify_meander_candidate_slots,
+    classify_meander_candidate_slots_with_keepouts, classify_meander_placement_slots,
+    classify_meander_placement_slots_with_keepouts, keepout_aware_detour_meander,
+    length_match_problem, multi_detour_meander, nonuniform_detour_meander,
+    obstacle_aware_detour_meander, single_detour_meander,
 };
 pub use segment::{Axis, LinePathSegment, LinePathSegmentFacts, SegmentParameterOrder};
 pub use solve::{
@@ -267,9 +266,9 @@ pub use specctra::{
 pub use swept::{SweptLineSegment, SweptLineSegmentFacts};
 pub use tangent::{
     G1ChainCertificationReport, G1JoinProblem, TangentAlignment, TangentAlignmentProblem,
-    TangentChainReport, TangentJoinClass, TangentJoinReport, TangentSpan, build_g1_join_problem,
-    build_oriented_tangent_alignment_problem, build_tangent_alignment_problem, certify_g1_chain,
+    TangentChainReport, TangentJoinClass, TangentJoinReport, TangentSpan, certify_g1_chain,
     certify_g1_join_candidate, certify_tangent_alignment_candidate, classify_tangent_alignment,
-    classify_tangent_chain, classify_tangent_join, tangent_cross, tangent_dot,
+    classify_tangent_chain, classify_tangent_join, g1_join_problem,
+    oriented_tangent_alignment_problem, tangent_alignment_problem, tangent_cross, tangent_dot,
     tangent_norm_squared,
 };
