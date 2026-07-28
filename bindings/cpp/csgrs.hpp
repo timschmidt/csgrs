@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../ffi/include/csgrs.h"
+#include "../../../csgrs-ffi/include/csgrs.h"
 
 #include <cstddef>
 #include <stdexcept>
