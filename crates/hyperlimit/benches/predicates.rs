@@ -975,7 +975,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     );
     group.bench_function("linear_form3_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_linear_form3_filter([
+            hyperreal::LinearForm3Filter::from_reals([
                 black_box(&explicit_plane.normal.x),
                 black_box(&explicit_plane.normal.y),
                 black_box(&explicit_plane.normal.z),

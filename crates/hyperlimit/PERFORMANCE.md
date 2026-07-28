@@ -282,7 +282,39 @@ The exact-rational orientation and dyadic construction improvements were
 statistically significant; Criterion classified the other movements within
 the configured noise threshold.
 
+### Use direct linear-form filters
+
+Explicit-plane evidence now constructs `LinearForm3Filter` directly, while
+one-shot classification continues through `certified_linear_form3_sign`.
+The unused rational-query method was removed from the retained dyadic carrier;
+non-dyadic queries keep the existing exact fallback.
+
+Serialized 100-sample Criterion gates found no regression:
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Linear-form filter construction | 12.892 ns | 12.633 ns | -2.01% |
+| Explicit-plane evidence derivation | 831.95 ns | 829.42 ns | -0.30% |
+| Point/plane, immediate easy batch | 20.751 us | 20.878 us | +0.61% |
+| Point/plane, immediate near-degenerate batch | 19.538 us | 19.246 us | -1.49% |
+| Point/plane, retained easy batch | 8.9877 us | 8.8333 us | -1.72% |
+| Point/plane, retained near-degenerate batch | 7.5186 us | 7.5470 us | +0.38% |
+| Plane/segment dyadic composition | 142.88 us | 141.14 us | -1.22% |
+| Plane/triangle dyadic composition | 45.859 us | 44.887 us | -2.12% |
+
+Criterion classified the two small positive movements as noise.
+
 ## Rejected experiments
+
+### Merge rational queries into `LinearForm3Filter::sign`
+
+Folding exact-rational conversion into the retained filter's public `sign`
+method made the representation surface smaller, but inlining the fallback
+inflated the dyadic evidence loop by 52--76%. Moving the rational work behind a
+cold non-inlined helper still left retained easy and near-degenerate batches
+9.5% and 12.9% slower, with one-shot batches also 2--3% slower. The experiment
+was rejected. The final API removes the unused rational-specific method and
+keeps the hot retained filter explicitly dyadic.
 
 ### Search short Farkas certificates before active sets
 

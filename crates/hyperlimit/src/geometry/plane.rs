@@ -4,8 +4,8 @@ use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::{
-    AffineDet3ExactWordFilter, AffineDet3Filter, PreparedLinearForm3Filter, Real,
-    RealExactSetFacts, ZeroKnowledge,
+    AffineDet3ExactWordFilter, AffineDet3Filter, LinearForm3Filter, Real, RealExactSetFacts,
+    ZeroKnowledge,
 };
 
 use crate::RealSymbolicDependencyMask;
@@ -292,7 +292,7 @@ impl Plane3 {
 #[derive(Clone, Copy, Debug)]
 pub struct Plane3Evidence {
     facts: Plane3Facts,
-    filter: Option<PreparedLinearForm3Filter>,
+    filter: Option<LinearForm3Filter>,
 }
 
 impl Plane3Evidence {
@@ -305,7 +305,7 @@ impl Plane3Evidence {
 /// Derive reusable exact-predicate evidence for an explicit plane.
 pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
     crate::trace_dispatch!("hyperlimit", "plane3_evidence", "derive");
-    let filter = Real::prepare_linear_form3_filter([
+    let filter = LinearForm3Filter::from_reals([
         &plane.normal.x,
         &plane.normal.y,
         &plane.normal.z,
@@ -549,7 +549,7 @@ pub(crate) fn classify_point_plane_without_filter_with_policy(
 
 #[inline(always)]
 fn classify_point_plane_with_filter(
-    filter: Option<PreparedLinearForm3Filter>,
+    filter: Option<LinearForm3Filter>,
     point: &Point3,
     plane: &Plane3,
     policy: PredicatePolicy,
@@ -644,7 +644,7 @@ pub(crate) fn classify_plane_triangle_with_policy(
     c: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<PlaneTriangleRelation> {
-    let filter = Real::prepare_linear_form3_filter([
+    let filter = LinearForm3Filter::from_reals([
         &plane.normal.x,
         &plane.normal.y,
         &plane.normal.z,
