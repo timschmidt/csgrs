@@ -6,7 +6,7 @@ use super::*;
 use crate::error::HypermeshError;
 use crate::geometry::{axis_ref, classify_point, classify_real, compare_real};
 use crate::halfspace::{aabb_core_halfspaces, axis_halfspace, support_side_halfspace};
-use crate::polygon::{ConvexPolygon, make_quad, make_triangle};
+use crate::polygon::{ConvexPolygon, convex_quad, convex_triangle};
 use hyperlimit::Plane3 as LimitPlane3;
 
 fn r(value: i32) -> Real {
@@ -71,7 +71,7 @@ fn trace_retry_only_suppresses_unknown_classification() {
 
 #[test]
 fn trace_axis_segment_rejects_transition_dimension_mismatch() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -82,7 +82,7 @@ fn trace_axis_segment_rejects_transition_dimension_mismatch() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_unmatched_edge_crossing() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
         trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
@@ -92,7 +92,7 @@ fn trace_axis_segment_reports_unknown_for_unmatched_edge_crossing() {
 
 #[test]
 fn trace_axis_segment_preserves_duplicate_strict_crossing_multiplicity() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     let traced =
@@ -103,8 +103,8 @@ fn trace_axis_segment_preserves_duplicate_strict_crossing_multiplicity() {
 
 #[test]
 fn trace_axis_segment_pairs_each_coplanar_shared_edge_incidence() {
-    let mut lower = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 0);
-    let mut upper = make_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 1);
+    let mut lower = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 0);
+    let mut upper = convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 1);
     lower.delta_w = vec![1];
     upper.delta_w = vec![1];
 
@@ -122,9 +122,9 @@ fn trace_axis_segment_pairs_each_coplanar_shared_edge_incidence() {
 
 #[test]
 fn trace_axis_segment_combines_strict_and_paired_edge_layers() {
-    let mut full = make_quad(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 0);
-    let mut lower = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 1);
-    let mut upper = make_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 2);
+    let mut full = convex_quad(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 0);
+    let mut lower = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 1, 1), 0, 1);
+    let mut upper = convex_triangle(&p(1, -1, -1), &p(1, 1, 1), &p(1, -1, 1), 0, 2);
     full.delta_w = vec![1];
     lower.delta_w = vec![1];
     upper.delta_w = vec![1];
@@ -137,7 +137,7 @@ fn trace_axis_segment_combines_strict_and_paired_edge_layers() {
 
 #[test]
 fn trace_axis_segment_rejects_duplicated_vertex_crossing() {
-    let mut wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -148,7 +148,7 @@ fn trace_axis_segment_rejects_duplicated_vertex_crossing() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
         trace_axis_segment(&p(1, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
@@ -158,7 +158,7 @@ fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
         trace_axis_segment(&p(1, 0, 0), &p(1, 0, 0), 0, &[0], &[wall]),
@@ -168,7 +168,7 @@ fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_when_ray_lies_in_parallel_support_plane() {
-    let wall = make_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
+    let wall = convex_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
 
     assert_eq!(
         trace_axis_segment(&p(-1, 0, 0), &p(3, 0, 0), 0, &[0], &[wall]),
@@ -178,7 +178,7 @@ fn trace_axis_segment_reports_unknown_when_ray_lies_in_parallel_support_plane() 
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
         trace_direct_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]),
@@ -188,7 +188,7 @@ fn trace_direct_segment_reports_unknown_for_unmatched_edge_crossing() {
 
 #[test]
 fn trace_direct_segment_preserves_duplicate_strict_crossing_multiplicity() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     let traced =
@@ -199,7 +199,7 @@ fn trace_direct_segment_preserves_duplicate_strict_crossing_multiplicity() {
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_endpoint_surface_contact() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
         trace_direct_segment(&p(1, 0, 0), &p(2, 0, 0), &[0], &[wall]),
@@ -209,7 +209,7 @@ fn trace_direct_segment_reports_unknown_for_endpoint_surface_contact() {
 
 #[test]
 fn trace_direct_segment_reports_unknown_for_zero_length_surface_contact() {
-    let wall = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let wall = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
         trace_direct_segment(&p(1, 0, 0), &p(1, 0, 0), &[0], &[wall]),
@@ -228,7 +228,7 @@ fn centroid_is_fallible_and_reports_empty_input() {
 
 #[test]
 fn endpoint_box_detours_are_cut_by_surface_crossings() {
-    let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
 
     let cursor =
         InteriorBoxDetourTargetCursor::new(&p(0, 0, 0), &p(4, 4, 4), &[slanted], &[], None)
@@ -286,7 +286,7 @@ fn endpoint_box_cursor_keeps_boxes_crossing_arrangement_plane() {
 fn bounded_cursor_keeps_unsplit_domain_crossing_surface_plane() {
     let start = p(0, 0, 0);
     let end = p(2, 1, 0);
-    let wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     let planes = detour_arrangement_planes(std::slice::from_ref(&wall));
     let trace_bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
@@ -299,8 +299,8 @@ fn bounded_cursor_keeps_unsplit_domain_crossing_surface_plane() {
 
 #[test]
 fn detour_arrangement_uses_unique_polygon_support_planes() {
-    let first = make_triangle(&p(0, 0, 0), &p(0, 2, 0), &p(0, 0, 2), 0, 0);
-    let second = make_triangle(&p(0, 1, 1), &p(0, 3, 1), &p(0, 1, 3), 0, 1);
+    let first = convex_triangle(&p(0, 0, 0), &p(0, 2, 0), &p(0, 0, 2), 0, 0);
+    let second = convex_triangle(&p(0, 1, 1), &p(0, 3, 1), &p(0, 1, 3), 0, 1);
 
     let planes = detour_arrangement_planes(&[first.clone(), second]);
 
@@ -324,7 +324,7 @@ fn arrangement_cell_shortcut_rejects_support_plane_boundary() {
 
 #[test]
 fn traced_cell_shortcut_ignores_spatially_disjoint_support_plane() {
-    let polygon = make_triangle(&p(0, 10, 0), &p(0, 12, 0), &p(0, 10, 2), 0, 0);
+    let polygon = convex_triangle(&p(0, 10, 0), &p(0, 12, 0), &p(0, 10, 2), 0, 0);
 
     assert!(points_share_open_traced_cell(&p(-1, 0, 0), &p(1, 0, 0), &[polygon],).unwrap());
 }
@@ -435,7 +435,7 @@ fn strict_aabb_target_cursor_exhausts_direct_targets_before_shifted_families() {
 fn interior_box_target_batches_preserve_legacy_target_set_and_cursor_unknown() {
     let start = p(0, 0, 0);
     let end = p(4, 4, 0);
-    let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
     let polygons = [slanted];
     let expected = interior_box_detour_targets(&start, &end, &polygons).unwrap();
     let mut cache = InteriorBoxDetourTargetBatchCache::default();
@@ -507,7 +507,7 @@ fn detour_target_family_marks_surviving_targets_uncertain_after_unknown() {
 fn interior_box_target_batches_preserve_unknown_after_emitting_targets() {
     let start = p(0, 0, 0);
     let end = p(4, 4, 0);
-    let slanted = make_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
+    let slanted = convex_triangle(&p(0, 2, -2), &p(0, 2, 2), &p(4, -2, 0), 0, 0);
     let polygons = [slanted];
     let mut cache = InteriorBoxDetourTargetBatchCache::default();
 
@@ -1007,8 +1007,8 @@ fn interior_box_detour_target_collection_backtracks_after_uncertified_box_family
 fn axis_box_surface_cut_collection_backtracks_after_uncertified_crossing() {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
         &start,
@@ -1034,8 +1034,8 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
         &start,
@@ -1074,8 +1074,8 @@ fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family
  {
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let err = interior_box_detour_targets_with_queries(
         &start,
@@ -1100,8 +1100,8 @@ fn interior_box_detour_target_collection_reports_unknown_when_surface_cut_family
 fn axis_box_surface_cut_collection_treats_boundary_crossing_as_unknown_and_keeps_later_cut() {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
         &start,
@@ -1130,8 +1130,8 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
 {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
         &start,
@@ -1163,8 +1163,8 @@ fn axis_box_surface_cut_collection_treats_endpoint_boundary_contact_as_unknown_a
 fn axis_box_surface_cut_collection_treats_start_boundary_contact_as_unknown_and_keeps_later_cut() {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (intervals, saw_unknown) = interior_box_axis_intervals_with_surface_queries(
         &start,
@@ -1197,8 +1197,8 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
         &start,
@@ -1240,8 +1240,8 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
         &start,
@@ -1287,8 +1287,8 @@ fn interior_box_detour_target_collection_marks_surviving_targets_uncertain_after
  {
     let start = p(0, 0, 0);
     let end = p(3, 0, 0);
-    let first = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let targets = interior_box_detour_targets_with_queries(
         &start,
@@ -2007,7 +2007,7 @@ fn collect_strict_halfspace_seed_family_tracks_unknown_after_halfspace_boundary_
 
 #[test]
 fn collect_strict_halfspace_seed_family_tracks_unknown_after_leaf_boundary_candidate() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
     let family =
         collect_strict_halfspace_seed_family(Ok(vec![p(3, 0, 0), p(1, 1, 1)]), |candidate| {
@@ -2354,7 +2354,7 @@ fn shifted_halfspace_witnesses_mark_survivors_uncertain_after_boundary_seed_cand
 
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let bounds = leaf_bounds(&vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
@@ -2372,7 +2372,7 @@ fn strict_leaf_witness_seeds_include_strict_halfspace_triangle_centroid() {
 
 #[test]
 fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
-    let leaf = make_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
+    let leaf = convex_quad(&p(0, 0, 0), &p(4, 0, 0), &p(4, 4, 0), &p(0, 4, 0), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let bounds = leaf_bounds(&vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
@@ -2390,7 +2390,7 @@ fn strict_leaf_witness_seeds_include_strict_halfspace_geometry_family() {
 
 #[test]
 fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
-    let leaf = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let leaf = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
     let points = shifted_edge_interior_points(&leaf, &center).unwrap();
@@ -2418,7 +2418,7 @@ fn shifted_edge_interior_points_move_vertices_inside_by_certified_margins() {
 
 #[test]
 fn bounded_probes_include_certified_normal_direction_probe() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
@@ -2441,7 +2441,7 @@ fn bounded_probes_include_certified_normal_direction_probe() {
 
 #[test]
 fn bounded_probes_find_positive_probe_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
@@ -2467,9 +2467,9 @@ fn bounded_probes_find_positive_probe_for_core_leaf_wall_case() {
 
 #[test]
 fn bounded_probes_keep_positive_probe_before_intervening_surface() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -2, -2), p(5, 2, 2));
     let interior_points = certified_leaf_interior_points(&wall.support, &wall.edges).unwrap();
@@ -2492,7 +2492,7 @@ fn bounded_probes_keep_positive_probe_before_intervening_surface() {
 
 #[test]
 fn positive_probe_traces_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let ref_point = p(0, 0, 0);
@@ -2530,7 +2530,7 @@ fn positive_probe_traces_for_core_leaf_wall_case() {
 
 #[test]
 fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let ref_point = p(0, 0, 0);
     let ref_definitions = vec![axis_plane_definition(&ref_point)];
@@ -2611,7 +2611,7 @@ fn trace_probe_winding_with_query_caches_reuses_lower_trace_state_for_core_leaf_
 
 #[test]
 fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -2735,7 +2735,7 @@ fn probe_reachability_with_query_caches_reuses_lower_trace_state_for_core_leaf_w
 
 #[test]
 fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -2808,7 +2808,7 @@ fn no_step_definition_search_caches_whole_query_for_core_leaf_wall_case() {
 
 #[test]
 fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -2928,7 +2928,7 @@ fn full_no_detour_definition_search_caches_whole_query_for_core_leaf_wall_case()
 
 #[test]
 fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -3031,7 +3031,7 @@ fn interior_box_axis_intervals_cache_reuses_core_leaf_wall_case_query() {
 
 #[test]
 fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -3105,7 +3105,7 @@ fn strict_aabb_target_family_cache_reuses_core_leaf_wall_case_query() {
 
 #[test]
 fn adjacent_normal_probes_preserve_family_uncertainty_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -3126,7 +3126,7 @@ fn adjacent_normal_probes_preserve_family_uncertainty_for_core_leaf_wall_case() 
 
 #[test]
 fn strict_normal_probe_targets_preserve_family_uncertainty_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -3162,7 +3162,7 @@ fn strict_normal_probe_targets_preserve_family_uncertainty_for_core_leaf_wall_ca
 
 #[test]
 fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -3217,7 +3217,7 @@ fn strict_normal_probe_direct_seed_phase_stays_certified_for_core_leaf_wall_case
 
 #[test]
 fn direct_normal_probe_seed_build_stays_certified_for_core_leaf_wall_case() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(-2, -2, -2), p(3, 3, 3));
     let support = wall.support.clone();
@@ -4146,7 +4146,7 @@ fn cached_direct_probe_reachability_reuses_identical_query() {
     let start = p(0, 0, 0);
     let end = p(1, 0, 0);
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![make_triangle(
+    let polygons = vec![convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4192,7 +4192,7 @@ fn cached_direct_probe_reachability_reuses_reversed_query() {
     let start = p(0, 0, 0);
     let end = p(1, 0, 0);
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![make_triangle(
+    let polygons = vec![convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4236,7 +4236,7 @@ fn cached_direct_probe_reachability_reuses_reversed_query() {
 fn cached_direct_probe_reachability_shares_identical_polygon_families() {
     let mut cache = Vec::new();
     let host_support = Plane::axis_aligned(2, r(0));
-    let polygons = vec![make_triangle(
+    let polygons = vec![convex_triangle(
         &p(2, -1, -1),
         &p(2, 1, -1),
         &p(2, 0, 1),
@@ -4358,7 +4358,7 @@ fn trace_axis_ordered_paths_try_later_ordering_after_uncertified_surface_query()
 fn trace_axis_ordered_paths_try_later_ordering_after_boundary_surface_query() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);
-    let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
 
     let winding = trace_axis_ordered_paths_with_surface_query(
         &start,
@@ -4422,7 +4422,7 @@ fn trace_axis_ordered_paths_reports_unknown_for_zero_length_surface_contact() {
 fn trace_axis_ordered_paths_try_later_ordering_after_endpoint_surface_contact() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);
-    let polygon = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let polygon = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     let winding = trace_axis_ordered_paths_with_queries(
         &start,
@@ -5014,8 +5014,8 @@ fn detour_trace_cycle_guard_reuses_surface_queries_across_failed_branches() {
 
 #[test]
 fn normal_probe_is_clipped_before_intervening_surface() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
-    let blocker = make_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let blocker = convex_triangle(&p(6, 0, 0), &p(0, 6, 0), &p(0, 0, 6), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let vertices = leaf.vertices().unwrap();
     let center = centroid(&vertices).unwrap().unwrap();
@@ -5055,8 +5055,8 @@ fn adjacent_normal_probe_stop_values_backtrack_after_uncertified_crossing() {
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
         &interior,
@@ -5092,8 +5092,8 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_uncertified_crossi
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
         &interior,
@@ -5143,8 +5143,8 @@ fn adjacent_normal_probe_reports_unknown_when_corridor_family_is_partially_uncer
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let err = adjacent_normal_probes_with_queries(
         &interior,
@@ -5177,8 +5177,8 @@ fn adjacent_normal_probe_stop_values_retain_boundary_crossing_as_stop() {
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
         &interior,
@@ -5208,8 +5208,8 @@ fn adjacent_normal_probe_stop_values_treat_boundary_start_contact_as_unknown_and
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
         &interior,
@@ -5239,8 +5239,8 @@ fn adjacent_normal_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_
     let interior = p(1, 1, 1);
     let direction = support.normal.clone();
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_normal_probe_stop_values_with_queries(
         &interior,
@@ -5327,8 +5327,8 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_boundary_start_con
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
         &interior,
@@ -5373,8 +5373,8 @@ fn adjacent_normal_probe_marks_later_corridor_uncertain_after_endpoint_boundary_
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_normal_probes_with_queries(
         &interior,
@@ -5931,7 +5931,7 @@ fn probe_point_build_collection_reports_unknown_if_all_candidates_are_uncertifie
 
 #[test]
 fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = InteriorLeafPoint {
         point: p(1, 1, 1),
@@ -5960,8 +5960,8 @@ fn adjacent_axis_probe_uses_corridor_witness_and_retains_definition() {
 fn adjacent_axis_probe_stop_values_backtrack_after_uncertified_crossing() {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
         &interior,
@@ -5993,8 +5993,8 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_uncertified_crossing
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
         &interior,
@@ -6041,8 +6041,8 @@ fn adjacent_axis_probe_reports_unknown_when_corridor_family_is_partially_uncerti
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let err = adjacent_axis_probes_with_queries(
         &interior,
@@ -6070,8 +6070,8 @@ fn adjacent_axis_probe_reports_unknown_when_corridor_family_is_partially_uncerti
 fn adjacent_axis_probe_stop_values_retain_boundary_crossing_as_stop() {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
         &interior,
@@ -6105,8 +6105,8 @@ fn adjacent_axis_probe_stop_values_treat_endpoint_boundary_contact_as_unknown_an
  {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
         &interior,
@@ -6140,8 +6140,8 @@ fn adjacent_axis_probe_stop_values_treat_start_boundary_contact_as_unknown_and_k
 {
     let interior = p(1, 1, 1);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = adjacent_axis_probe_stop_values_with_queries(
         &interior,
@@ -6225,8 +6225,8 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_crossing() 
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
         &interior,
@@ -6278,8 +6278,8 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_endpoint_boundary_co
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(4, 0, 0), &p(4, 1, 0), &p(4, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
         &interior,
@@ -6331,8 +6331,8 @@ fn adjacent_axis_probe_marks_later_corridor_uncertain_after_boundary_start_conta
         uncertified_definition_fallback: false,
     };
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 1);
 
     let probes = adjacent_axis_probes_with_queries(
         &interior,
@@ -6688,7 +6688,7 @@ fn adjacent_axis_probe_preserves_retained_definition_when_axis_direction_allows(
 
 #[test]
 fn leaf_classification_uses_certified_slanted_normal_probe() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_definitions = [axis_plane_definition(&p(0, 0, 0))];
@@ -6710,7 +6710,7 @@ fn leaf_classification_uses_certified_slanted_normal_probe() {
 
 #[test]
 fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_replay() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
@@ -6747,7 +6747,7 @@ fn leaf_classification_keeps_certified_direct_leaf_witness_after_invalid_active_
 
 #[test]
 fn leaf_classification_certifies_fallback_marked_interior_after_complete_probe_proof() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
@@ -6776,7 +6776,7 @@ fn leaf_classification_certifies_fallback_marked_interior_after_complete_probe_p
 
 #[test]
 fn positive_probe_traces_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let ref_point = p(0, 0, 0);
@@ -6812,7 +6812,7 @@ fn positive_probe_traces_for_slanted_leaf_case() {
 
 #[test]
 fn certified_leaf_interior_points_exist_for_slanted_leaf_case() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
     let interior_points = certified_leaf_interior_points(&leaf.support, &leaf.edges).unwrap();
 
@@ -6822,7 +6822,7 @@ fn certified_leaf_interior_points_exist_for_slanted_leaf_case() {
 
 #[test]
 fn bounded_probes_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -6844,7 +6844,7 @@ fn bounded_probes_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn bounded_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -6871,7 +6871,7 @@ fn bounded_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
 
 #[test]
 fn adjacent_normal_probe_stop_values_exist_for_slanted_leaf_case() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
         .unwrap()
@@ -6901,7 +6901,7 @@ fn adjacent_normal_probe_stop_values_exist_for_slanted_leaf_case() {
 
 #[test]
 fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -6944,7 +6944,7 @@ fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn strict_normal_probe_targets_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -6992,7 +6992,7 @@ fn strict_normal_probe_targets_preserve_family_uncertainty_for_slanted_leaf_case
 
 #[test]
 fn adjacent_normal_probes_find_positive_probe_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -7013,7 +7013,7 @@ fn adjacent_normal_probes_find_positive_probe_for_slanted_leaf_case() {
 
 #[test]
 fn adjacent_normal_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -7039,7 +7039,7 @@ fn adjacent_normal_probes_preserve_family_uncertainty_for_slanted_leaf_case() {
 
 #[test]
 fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case_unrestricted() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -7076,7 +7076,7 @@ fn strict_normal_probe_targets_find_positive_probe_for_slanted_leaf_case_unrestr
 
 #[test]
 fn strict_normal_probe_direct_seed_phase_finds_positive_probe_for_slanted_leaf_case_unrestricted() {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -7139,7 +7139,7 @@ fn strict_normal_probe_direct_seed_phase_finds_positive_probe_for_slanted_leaf_c
 #[test]
 fn strict_normal_probe_direct_seed_phase_keeps_certified_probe_for_slanted_leaf_case_unrestricted()
 {
-    let mut leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let mut leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     leaf.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let interior = certified_leaf_interior_points(&leaf.support, &leaf.edges)
@@ -7199,7 +7199,7 @@ fn strict_normal_probe_direct_seed_phase_keeps_certified_probe_for_slanted_leaf_
 
 #[test]
 fn strict_leaf_cell_points_retain_replayable_planes() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
 
     let interior = strict_leaf_cell_points(&leaf, &center)
@@ -7217,7 +7217,7 @@ fn strict_leaf_cell_points_retain_replayable_planes() {
 
 #[test]
 fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
     let vertices = leaf.vertices().unwrap();
     let bounds = leaf_bounds(&vertices).unwrap();
@@ -7261,7 +7261,7 @@ fn strict_leaf_cell_points_include_shifted_leaf_vertices() {
 
 #[test]
 fn strict_leaf_cell_points_merge_same_point_certified_shifted_replay_definitions() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
     let vertices = leaf.vertices().unwrap();
     let bounds = leaf_bounds(&vertices).unwrap();
@@ -7434,7 +7434,7 @@ fn normal_probe_shifted_seed_families_keep_raw_roots_without_certified_direct_pr
 
 #[test]
 fn strict_leaf_cell_points_return_only_strict_points() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let center = p(1, 1, 1);
 
     let interiors = strict_leaf_cell_points(&leaf, &center).unwrap();
@@ -7447,7 +7447,7 @@ fn strict_leaf_cell_points_return_only_strict_points() {
 
 #[test]
 fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let interiors = strict_leaf_witness_points(&leaf, &vertices).unwrap();
@@ -7462,7 +7462,7 @@ fn strict_leaf_witness_points_include_shifted_leaf_vertices() {
 
 #[test]
 fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let bounds = leaf_bounds(&vertices).unwrap();
     let halfspaces = leaf_halfspaces(&leaf);
@@ -7505,7 +7505,7 @@ fn strict_leaf_witness_points_extend_direct_family_with_stricter_leaf_cells() {
 
 #[test]
 fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_uncertainty() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
     let witness = p(1, 1, 1);
     let extra_definition = [
@@ -7550,7 +7550,7 @@ fn strict_leaf_witness_points_merge_stricter_replay_definitions_with_family_unce
 
 #[test]
 fn strict_leaf_witness_points_try_shifted_search_from_report_witness_seed() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let interiors = strict_leaf_witness_points_with_seed_families(
@@ -7792,7 +7792,7 @@ fn leaf_point_build_collection_reports_unknown_if_all_candidates_are_uncertified
 
 #[test]
 fn certified_leaf_test_point_prefers_replayable_interior_witness() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let expected_points = interior_leaf_points(&leaf)
         .unwrap()
         .into_iter()
@@ -7812,7 +7812,7 @@ fn certified_leaf_test_point_prefers_replayable_interior_witness() {
 
 #[test]
 fn interior_leaf_points_drop_naked_centroid_when_replayable_points_exist() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
 
     let points = interior_leaf_points(&leaf).unwrap();
 
@@ -7853,7 +7853,7 @@ fn leaf_interior_definitions_include_non_basis_active_halfspaces() {
 
 #[test]
 fn strict_leaf_witness_retains_axis_definition_when_active_replay_fails() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
@@ -7879,7 +7879,7 @@ fn strict_leaf_witness_retains_axis_definition_when_active_replay_fails() {
 
 #[test]
 fn strict_leaf_witness_preserves_inherited_uncertified_definition_fallback() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
@@ -7892,7 +7892,7 @@ fn strict_leaf_witness_preserves_inherited_uncertified_definition_fallback() {
 
 #[test]
 fn strict_leaf_witness_reports_unknown_for_leaf_boundary_contact() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(3, 0, 0);
     let halfspaces = vec![limit_plane_from_plane(&leaf.support)];
 
@@ -7904,7 +7904,7 @@ fn strict_leaf_witness_reports_unknown_for_leaf_boundary_contact() {
 
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_unknown() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let points = strict_leaf_witness_points_with_seed_families(
@@ -7931,7 +7931,7 @@ fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_seed_family_
 
 #[test]
 fn strict_leaf_witness_points_mark_surviving_points_uncertain_after_boundary_seed_candidate() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let vertices = leaf.vertices().unwrap();
 
     let points = strict_leaf_witness_points_with_seed_families(
@@ -7978,7 +7978,7 @@ fn leaf_witness_seed_family_gate_allows_shifted_seed_sources_after_unknown_direc
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(1, 1, 1),
         families: vec![
@@ -8012,7 +8012,7 @@ fn strict_leaf_witness_from_shifted_witness_merges_definition_families() {
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_reports_unknown_for_leaf_boundary_contact() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(3, 0, 0),
         families: vec![ShiftedHalfspaceWitnessFamily {
@@ -8030,7 +8030,7 @@ fn strict_leaf_witness_from_shifted_witness_reports_unknown_for_leaf_boundary_co
 
 #[test]
 fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_singular() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = ShiftedHalfspaceWitness {
         point: p(1, 1, 1),
         families: vec![
@@ -8060,7 +8060,7 @@ fn strict_leaf_witness_from_shifted_witness_stays_certified_when_one_family_is_s
 
 #[test]
 fn strict_leaf_witness_keeps_certified_replay_after_invalid_active_index() {
-    let leaf = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
+    let leaf = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 0, 0);
     let witness = p(1, 1, 1);
     let halfspaces = vec![
         limit_plane_from_plane(&leaf.support),
@@ -8705,7 +8705,7 @@ fn duplicate_interior_points_prefer_certified_duplicate_definitions() {
 
 #[test]
 fn plane_replacement_path_traces_certified_winding_steps() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let start = axis_plane_defined_point(&p(0, 0, 0));
     let end = axis_plane_defined_point(&p(2, 0, 0));
@@ -8717,7 +8717,7 @@ fn plane_replacement_path_traces_certified_winding_steps() {
 
 #[test]
 fn retained_reference_definitions_try_later_plane_replacement_paths() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let invalid_start = [
         Plane::axis_aligned(0, r(0)),
@@ -8759,7 +8759,7 @@ fn retained_probe_definitions_try_later_plane_replacement_paths() {
         planes: vec![invalid_probe_definition, axis_plane_definition(&p(2, 1, 0))],
         uncertified_definition_fallback: false,
     };
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -8786,7 +8786,7 @@ fn retained_definition_segment_search_continues_after_uncertified_direct_family(
         Plane::axis_aligned(0, r(0)),
     ];
     let probe_point = p(2, 1, 0);
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -8816,7 +8816,7 @@ fn retained_plane_replacement_skips_mismatched_start_definition() {
     let end = p(0, 1, 0);
     let mismatched_start = axis_plane_definition(&p(2, 0, 0));
     let end_definition = axis_plane_definition(&end);
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, 2, -2), &p(1, 0, 2), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, 2, -2), &p(1, 0, 2), 0, 0);
     wall.delta_w = vec![1];
     let mut no_detour_cache = Vec::new();
     let mut detour_target_cache = DetourTargetFamilyCache::default();
@@ -8931,9 +8931,9 @@ fn definition_pair_trace_search_skips_permuted_definition_pairs() {
 #[test]
 fn detour_legs_retry_direct_paths_when_axis_order_fails() {
     let blockers = vec![
-        make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
-        make_triangle(&p(0, 1, 0), &p(1, 1, 0), &p(0, 2, 0), 0, 1),
-        make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 2),
+        convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0),
+        convex_triangle(&p(0, 1, 0), &p(1, 1, 0), &p(0, 2, 0), 0, 1),
+        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 2),
     ];
 
     assert_eq!(
@@ -8979,7 +8979,7 @@ fn detour_legs_retry_direct_paths_when_axis_order_fails() {
 
 #[test]
 fn detour_legs_retry_plane_replacement_from_detour_definitions() {
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let detour = DetourTarget {
         point: p(2, 1, 0),
@@ -9025,7 +9025,7 @@ fn detour_legs_retry_plane_replacement_from_detour_definitions() {
 
 #[test]
 fn detour_legs_can_use_retained_start_definitions() {
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let start = p(0, 0, 0);
     let end = p(2, 2, 0);
@@ -9613,7 +9613,7 @@ fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
     let first_detour = p(1, 0, 0);
     let second_detour = p(2, 0, 1);
     let end = p(3, 0, 0);
-    let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
     let mut surface_cache = Vec::new();
 
     let winding = trace_segment_via_detours_with_cycle_guard_with_surface_query(
@@ -9653,7 +9653,7 @@ fn detour_trace_cycle_guard_tries_later_detour_after_boundary_surface_query() {
 
 #[test]
 fn point_lies_on_traced_surface_reports_unknown_for_boundary_contact() {
-    let polygon = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(1, 1, 0), 0, 0);
 
     assert_eq!(
         point_lies_on_traced_surface(&p(1, 0, 0), std::slice::from_ref(&polygon)),
@@ -9726,7 +9726,7 @@ fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
         planes: Vec::new(),
         uncertified_definition_fallback: false,
     };
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -9742,7 +9742,7 @@ fn axis_defined_probes_retry_plane_replacement_from_reference_definitions() {
 #[test]
 fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let interior = InteriorLeafPoint {
         point: p(0, 0, 0),
         planes: vec![[
@@ -9781,7 +9781,7 @@ fn probe_reachability_retries_plane_replacement_from_retained_definitions() {
 #[test]
 fn probe_reaches_adjacent_cell_reports_unknown_for_boundary_crossing() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
 
     assert_eq!(
         probe_reaches_adjacent_cell(&p(0, 0, 0), &p(2, 0, 0), &host_support, &[blocker]),
@@ -9792,7 +9792,7 @@ fn probe_reaches_adjacent_cell_reports_unknown_for_boundary_crossing() {
 #[test]
 fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
     let host_support = Plane::axis_aligned(2, r(-10));
-    let wall = make_triangle(&p(-4, 4, -4), &p(4, -4, -4), &p(0, 0, 4), 0, 0);
+    let wall = convex_triangle(&p(-4, 4, -4), &p(4, -4, -4), &p(0, 0, 4), 0, 0);
 
     assert!(
         !probe_polyline_reaches_adjacent_cell(
@@ -9815,7 +9815,7 @@ fn probe_polyline_classifies_internal_surface_vertex_from_incident_sides() {
 #[test]
 fn no_step_plane_replacement_classifies_axis_path_vertex_crossings_as_blocked() {
     let host_support = Plane::axis_aligned(2, r(5));
-    let wall = make_triangle(&p(5, 1, 1), &p(5, 5, 9), &p(4, 5, 4), 0, 1);
+    let wall = convex_triangle(&p(5, 1, 1), &p(5, 5, 9), &p(4, 5, 4), 0, 1);
     let start = Point3::new(q(5983, 1350), q(1787, 450), q(2431, 675));
     let end = Point3::new(q(6523, 1500), q(21217, 5400), q(271, 75));
 
@@ -9840,7 +9840,7 @@ fn probe_reaches_adjacent_cell_accepts_zero_length_clear_point() {
 #[test]
 fn probe_reaches_adjacent_cell_reports_unknown_for_zero_length_surface_contact() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = make_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let blocker = convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
 
     assert_eq!(
         probe_reaches_adjacent_cell(&p(1, 0, 0), &p(1, 0, 0), &host_support, &[blocker]),
@@ -9895,7 +9895,7 @@ fn probe_reachability_definition_search_skips_mismatched_endpoint_definitions() 
 #[test]
 fn probe_reachability_definition_search_continues_after_boundary_direct_check() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let start = p(0, 0, 0);
     let end = p(2, 0, 0);
 
@@ -10047,7 +10047,7 @@ fn probe_reachability_definition_search_preferring_precheck_prioritizes_unknown_
 #[test]
 fn probe_step_detour_helper_retries_lower_definition_trace() {
     let host_support = Plane::axis_aligned(2, r(0));
-    let blocker = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let blocker = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
     let interior = InteriorLeafPoint {
         point: p(0, 0, 0),
         planes: vec![[
@@ -10673,13 +10673,13 @@ fn probe_reachability_uses_geometry_seeded_arrangement_detour_replacement_leg() 
     let start = p(0, 0, 0);
     let end = p(4, 4, 4);
     let mut blockers = vec![
-        make_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
-        make_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+        convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+        convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
     ];
 
     for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
-        blockers.push(make_triangle(
+        blockers.push(convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 5, -1),
             &px(x, 2, 5),
@@ -12153,7 +12153,7 @@ fn ordered_interior_points_for_probe_search_prefers_axis_aligned_definition_plan
 #[test]
 fn ordered_interior_points_for_probe_search_with_support_prefers_retained_definition_points_in_root_host_fixture()
  {
-    use crate::mesh::build_polygon_soup;
+    use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
@@ -12185,7 +12185,7 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = soup.polygons.clone();
     let host = face_at(&polygons, 0, 1);
     let intersections = polygons
@@ -13652,7 +13652,7 @@ fn plane_replacement_no_nested_ordering_warmup_reuses_cached_local_warm_state() 
 
 #[test]
 fn probe_hot_leaf_probe_family_breakdown() {
-    use crate::mesh::build_polygon_soup;
+    use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
     fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
@@ -13684,7 +13684,7 @@ fn probe_hot_leaf_probe_family_breakdown() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         face_at(&soup.polygons, 1, 4),
         face_at(&soup.polygons, 1, 5),
@@ -14728,9 +14728,9 @@ fn trace_segment_from_definitions_cycle_guard_skips_revisited_path_points() {
 #[test]
 fn detour_recursion_limit_scales_with_local_polygon_count() {
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
-        make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
-        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
 
     assert_eq!(detour_recursion_limit(&[]), 2);
@@ -14740,8 +14740,8 @@ fn detour_recursion_limit_scales_with_local_polygon_count() {
 #[test]
 fn plane_replacement_step_detour_limit_scales_with_local_polygon_count() {
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
-        make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 0, 1),
     ];
 
     assert_eq!(plane_replacement_step_detour_limit(&[]), 1);
@@ -14755,9 +14755,9 @@ fn polygon_scaled_detour_budget_allows_two_nested_detours() {
     let outer = p(2, 0, 0);
     let end = p(3, 0, 0);
     let polygons = vec![
-        make_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
-        make_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
-        make_triangle(&p(0, 10, 2), &p(1, 10, 2), &p(0, 11, 2), 0, 2),
+        convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+        convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+        convex_triangle(&p(0, 10, 2), &p(1, 10, 2), &p(0, 11, 2), 0, 2),
     ];
     let outer_target = DetourTarget {
         point: outer.clone(),
@@ -14817,8 +14817,8 @@ fn polygon_scaled_probe_step_detour_budget_allows_two_nested_detours() {
     let outer = p(2, 0, 0);
     let end = p(3, 0, 0);
     let polygons = vec![
-        make_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
-        make_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
+        convex_triangle(&p(0, 10, 0), &p(1, 10, 0), &p(0, 11, 0), 0, 0),
+        convex_triangle(&p(0, 10, 1), &p(1, 10, 1), &p(0, 11, 1), 0, 1),
     ];
     let outer_target = DetourTarget {
         point: outer.clone(),
@@ -14883,7 +14883,7 @@ fn probe_fallback_retries_axis_start_after_retained_definitions_fail() {
         planes: vec![valid_probe_definition],
         uncertified_definition_fallback: false,
     };
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
 
     assert_eq!(
@@ -14905,7 +14905,7 @@ fn probe_winding_reports_unknown_if_all_definition_paths_are_uncertified() {
         Plane::axis_aligned(0, r(1)),
         Plane::axis_aligned(0, r(2)),
     ]];
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let probe = ProbePoint {
         point: p(2, 1, 0),

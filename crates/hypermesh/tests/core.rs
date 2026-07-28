@@ -6,10 +6,10 @@ use hypermesh::{
     SubdivisionConfig, SubdivisionTask, Triangle, boolean_operation,
     boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
     boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
-    boolean_triangle_soup_with_certified_convex_inputs_and_planes, build_polygon_soup,
-    certify_output_polygon_closure, classify_leaf_polygon, classify_point, classify_polygon_output,
-    intersect_polygons, make_indicator, make_quad, make_triangle, process_leaf_into, subdivide,
-    trace_axis_segment, trace_segment, triangulate_and_resolve_certified,
+    boolean_triangle_soup_with_certified_convex_inputs_and_planes, certify_output_polygon_closure,
+    classify_leaf_polygon, classify_point, classify_polygon_output, convex_quad, convex_triangle,
+    intersect_polygons, polygon_soup, process_leaf_into, subdivide, trace_axis_segment,
+    trace_segment, triangulate_and_resolve_certified,
 };
 
 fn r(value: i32) -> Real {
@@ -26,7 +26,7 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
 
 #[test]
 fn convex_polygon_clones_share_edge_planes() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cloned = polygon.clone();
 
     assert!(std::sync::Arc::ptr_eq(&polygon.edges, &cloned.edges));
@@ -91,7 +91,7 @@ fn tetra_mesh() -> hypermesh::InputMesh {
 fn public_polygon_soup_build_emits_correlated_dispatch_trace() {
     let mesh = tetra_mesh();
     hyperreal::dispatch_trace::reset();
-    let soup = hyperreal::dispatch_trace::with_recording(|| build_polygon_soup(&[mesh.as_ref()]))
+    let soup = hyperreal::dispatch_trace::with_recording(|| polygon_soup(&[mesh.as_ref()]))
         .expect("tetrahedron polygon soup remains certified");
     assert!(!soup.polygons.is_empty());
 
@@ -263,28 +263,32 @@ fn triangle_lies_on_cube_boundary(
 
 #[test]
 fn winding_indicators_match_boolean_semantics() {
-    let union = make_indicator(BooleanOp::Union, 2);
-    let intersection = make_indicator(BooleanOp::Intersection, 2);
-    let difference = make_indicator(BooleanOp::Difference, 2);
-    let xor = make_indicator(BooleanOp::SymmetricDifference, 2);
+    assert!(BooleanOp::Union.contains(&[1, 0]));
+    assert!(!BooleanOp::Union.contains(&[0, 0]));
+    assert!(BooleanOp::Intersection.contains(&[1, 1]));
+    assert!(!BooleanOp::Intersection.contains(&[1, 0]));
+    assert!(BooleanOp::Difference.contains(&[1, 0]));
+    assert!(!BooleanOp::Difference.contains(&[1, 1]));
+    assert!(BooleanOp::SymmetricDifference.contains(&[1, 0]));
+    assert!(!BooleanOp::SymmetricDifference.contains(&[1, 1]));
 
-    assert!(union(&[1, 0]));
-    assert!(!union(&[0, 0]));
-    assert!(intersection(&[1, 1]));
-    assert!(!intersection(&[1, 0]));
-    assert!(difference(&[1, 0]));
-    assert!(!difference(&[1, 1]));
-    assert!(xor(&[1, 0]));
-    assert!(!xor(&[1, 1]));
-
-    assert_eq!(classify_polygon_output(&[0, 0], &[1, 0], &union), 1);
-    assert_eq!(classify_polygon_output(&[1, 0], &[0, 0], &union), -1);
-    assert_eq!(classify_polygon_output(&[1, 0], &[1, 1], &union), 0);
+    assert_eq!(
+        classify_polygon_output(&[0, 0], &[1, 0], BooleanOp::Union),
+        1
+    );
+    assert_eq!(
+        classify_polygon_output(&[1, 0], &[0, 0], BooleanOp::Union),
+        -1
+    );
+    assert_eq!(
+        classify_polygon_output(&[1, 0], &[1, 1], BooleanOp::Union),
+        0
+    );
 }
 
 #[test]
 fn triangle_plane_and_vertices_are_exact_reals() {
-    let tri = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let tri = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     assert!(tri.is_valid());
     assert_eq!(tri.vertex_count(), 3);
     assert_eq!(
@@ -299,10 +303,10 @@ fn triangle_plane_and_vertices_are_exact_reals() {
 }
 
 #[test]
-fn borrowed_build_polygon_soup_builds_polygon_soup() {
+fn borrowed_polygon_soup_returns_combined_soup() {
     let mesh = tetra_mesh();
 
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
     assert_eq!(soup.polygons.len(), 4);
     assert!(
@@ -313,9 +317,9 @@ fn borrowed_build_polygon_soup_builds_polygon_soup() {
 }
 
 #[test]
-fn build_polygon_soup_rejects_empty_mesh_views() {
+fn polygon_soup_rejects_empty_mesh_views() {
     assert!(matches!(
-        build_polygon_soup(&[]),
+        polygon_soup(&[]),
         Err(hypermesh::HypermeshError::EmptyInput)
     ));
 
@@ -325,18 +329,18 @@ fn build_polygon_soup_rejects_empty_mesh_views() {
         triangles: &[],
     };
     assert_eq!(
-        build_polygon_soup(&[empty]),
+        polygon_soup(&[empty]),
         Err(hypermesh::HypermeshError::EmptyMesh { mesh_index: 0 })
     );
 }
 
 #[test]
-fn build_polygon_soup_rejects_open_source_meshes() {
+fn polygon_soup_rejects_open_source_meshes() {
     let positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let triangles = [Triangle::new(0, 1, 2)];
 
     assert_eq!(
-        build_polygon_soup(&[MeshRef {
+        polygon_soup(&[MeshRef {
             positions: &positions,
             triangles: &triangles,
         }]),
@@ -348,12 +352,12 @@ fn build_polygon_soup_rejects_open_source_meshes() {
 }
 
 #[test]
-fn build_polygon_soup_rejects_closed_valence_non_pwn_source_meshes() {
+fn polygon_soup_rejects_closed_valence_non_pwn_source_meshes() {
     let mut mesh = tetra_mesh();
     mesh.triangles[0] = Triangle::new(0, 1, 2);
 
     assert_eq!(
-        build_polygon_soup(&[mesh.as_ref()]),
+        polygon_soup(&[mesh.as_ref()]),
         Err(HypermeshError::NonPwnInput {
             mesh_index: 0,
             unbalanced_edges: 3,
@@ -362,11 +366,11 @@ fn build_polygon_soup_rejects_closed_valence_non_pwn_source_meshes() {
 }
 
 #[test]
-fn build_polygon_soup_accepts_balanced_non_manifold_edge_multiplicity() {
+fn polygon_soup_accepts_balanced_non_manifold_edge_multiplicity() {
     let mut mesh = tetra_mesh();
     mesh.triangles.extend(mesh.triangles.clone());
 
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
 
     assert_eq!(soup.polygons.len(), 8);
     assert!(soup.polygons.iter().all(|polygon| polygon.delta_w == [1]));
@@ -410,11 +414,11 @@ fn canceling_non_manifold_pwn_union_uses_general_path() {
 }
 
 #[test]
-fn build_polygon_soup_rejects_degenerate_source_triangles() {
+fn polygon_soup_rejects_degenerate_source_triangles() {
     let repeated_positions = vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)];
     let repeated = [Triangle::new(0, 0, 2)];
     assert_eq!(
-        build_polygon_soup(&[MeshRef {
+        polygon_soup(&[MeshRef {
             positions: &repeated_positions,
             triangles: &repeated,
         }]),
@@ -427,7 +431,7 @@ fn build_polygon_soup_rejects_degenerate_source_triangles() {
     let collinear_positions = vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)];
     let collinear = [Triangle::new(0, 1, 2)];
     assert_eq!(
-        build_polygon_soup(&[MeshRef {
+        polygon_soup(&[MeshRef {
             positions: &collinear_positions,
             triangles: &collinear,
         }]),
@@ -439,10 +443,10 @@ fn build_polygon_soup_rejects_degenerate_source_triangles() {
 }
 
 #[test]
-fn build_polygon_soup_accepts_owned_mesh_views() {
+fn polygon_soup_accepts_owned_mesh_views() {
     let mesh = tetra_mesh();
 
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     assert_eq!(soup.num_meshes, 1);
     assert_eq!(soup.polygons.len(), 4);
     assert!(
@@ -454,7 +458,7 @@ fn build_polygon_soup_accepts_owned_mesh_views() {
 
 #[test]
 fn clipping_triangle_against_axis_plane_splits_both_sides() {
-    let tri = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let tri = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let split = Plane::axis_aligned(0, r(1));
     let clipped = clip_polygon(&tri, &split).unwrap();
 
@@ -465,8 +469,8 @@ fn clipping_triangle_against_axis_plane_splits_both_sides() {
 
 #[test]
 fn intersecting_non_coplanar_triangles_produce_segment() {
-    let xy = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let yz = make_triangle(&p(0, 0, -1), &p(0, 0, 1), &p(0, 2, 0), 1, 0);
+    let xy = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let yz = convex_triangle(&p(0, 0, -1), &p(0, 0, 1), &p(0, 2, 0), 1, 0);
 
     let intersection = intersect_polygons(&xy, &yz, 1).unwrap();
     assert_eq!(
@@ -484,8 +488,8 @@ fn intersecting_non_coplanar_triangles_produce_segment() {
 
 #[test]
 fn coplanar_overlapping_triangles_report_overlap() {
-    let a = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let b = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
+    let a = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let b = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
 
     let intersection = intersect_polygons(&a, &b, 3).unwrap();
     assert_eq!(
@@ -497,8 +501,8 @@ fn coplanar_overlapping_triangles_report_overlap() {
 
 #[test]
 fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
-    let horizontal = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
-    let vertical = make_quad(&p(-1, -2, 0), &p(1, -2, 0), &p(1, 2, 0), &p(-1, 2, 0), 1, 0);
+    let horizontal = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let vertical = convex_quad(&p(-1, -2, 0), &p(1, -2, 0), &p(1, 2, 0), &p(-1, 2, 0), 1, 0);
 
     let intersection = intersect_polygons(&horizontal, &vertical, 7).unwrap();
 
@@ -511,8 +515,8 @@ fn coplanar_crossing_quads_report_overlap_without_contained_vertices() {
 
 #[test]
 fn coplanar_identical_quads_report_overlap_from_interior_witness() {
-    let left = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
-    let right = make_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 1, 0);
+    let left = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 0, 0);
+    let right = convex_quad(&p(-2, -1, 0), &p(2, -1, 0), &p(2, 1, 0), &p(-2, 1, 0), 1, 0);
 
     let intersection = intersect_polygons(&left, &right, 11).unwrap();
 
@@ -580,8 +584,8 @@ fn boolean_operation_validates_before_general_path() {
 
 #[test]
 fn local_bsp_splits_leaf_with_intersection_segment() {
-    let host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
+    let host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
     let segment = intersect_polygons(&host, &cutter, 1)
         .unwrap()
         .segment
@@ -598,8 +602,8 @@ fn local_bsp_splits_leaf_with_intersection_segment() {
 
 #[test]
 fn local_bsp_overlap_can_disable_higher_index_duplicate_leaf() {
-    let lower = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-    let higher = make_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
+    let lower = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let higher = convex_triangle(&p(1, 1, 0), &p(2, 1, 0), &p(1, 2, 0), 1, 2);
     let intersection = intersect_polygons(&higher, &lower, 0).unwrap();
     let overlap = intersection.overlap.as_ref().unwrap();
 
@@ -612,10 +616,10 @@ fn local_bsp_overlap_can_disable_higher_index_duplicate_leaf() {
 #[test]
 fn exact_bvh_reports_overlapping_polygon_bounds() {
     let left = vec![
-        make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
-        make_triangle(&p(10, 0, 0), &p(11, 0, 0), &p(10, 1, 0), 0, 1),
+        convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+        convex_triangle(&p(10, 0, 0), &p(11, 0, 0), &p(10, 1, 0), 0, 1),
     ];
-    let right = vec![make_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 1, 0)];
+    let right = vec![convex_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 1, 0)];
 
     let left_bvh = hypermesh::ExactBvh::build(&left).unwrap();
     let right_bvh = hypermesh::ExactBvh::build(&right).unwrap();
@@ -638,7 +642,7 @@ fn exact_bvh_reports_overlapping_polygon_bounds() {
 fn exact_bvh_builds_a_hierarchy_for_nontrivial_inputs() {
     let polygons = (0..32)
         .map(|x| {
-            make_triangle(
+            convex_triangle(
                 &p(x * 3, 0, 0),
                 &p(x * 3 + 1, 0, 0),
                 &p(x * 3, 1, 0),
@@ -717,7 +721,7 @@ fn point_bvh_oriented_plane_candidates_match_orient3() {
 
 #[test]
 fn trace_axis_segment_accumulates_exact_winding_crossing() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     let traced = trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]).unwrap();
@@ -728,7 +732,7 @@ fn trace_axis_segment_accumulates_exact_winding_crossing() {
 
 #[test]
 fn trace_segment_uses_axis_orderings_for_l_path() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
 
     let winding = trace_segment(&p(0, 0, 0), &p(2, 0, 0), &[0], &[wall]).unwrap();
@@ -738,9 +742,9 @@ fn trace_segment_uses_axis_orderings_for_l_path() {
 #[test]
 fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
     let blockers = vec![
-        make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
 
     let winding = trace_segment(&p(0, 0, 0), &p(2, 2, 2), &[0], &blockers).unwrap();
@@ -750,11 +754,11 @@ fn trace_segment_uses_detour_when_axis_order_corners_hit_surfaces() {
 #[test]
 fn trace_segment_uses_direct_path_when_axis_order_corners_hit_surfaces() {
     let mut blockers = vec![
-        make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
-    let mut diagonal_wall = make_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 1, 0);
+    let mut diagonal_wall = convex_triangle(&p(3, 0, 0), &p(0, 3, 0), &p(0, 0, 3), 1, 0);
     diagonal_wall.delta_w = vec![1];
     blockers.push(diagonal_wall);
 
@@ -765,13 +769,13 @@ fn trace_segment_uses_direct_path_when_axis_order_corners_hit_surfaces() {
 #[test]
 fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
     let mut blockers = vec![
-        make_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
-        make_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
+        convex_triangle(&p(4, 0, 0), &p(5, 0, 0), &p(4, 1, 0), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(1, 4, 0), &p(0, 5, 0), 0, 1),
+        convex_triangle(&p(0, 0, 4), &p(1, 0, 4), &p(0, 1, 4), 0, 2),
     ];
 
     for (index, x) in [q(4, 3), r(2), q(8, 3)].into_iter().enumerate() {
-        blockers.push(make_triangle(
+        blockers.push(convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 5, -1),
             &px(x, 2, 5),
@@ -786,7 +790,7 @@ fn trace_segment_uses_arrangement_detour_when_fixed_fraction_box_is_blocked() {
 
 #[test]
 fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
 
@@ -806,7 +810,7 @@ fn leaf_classification_traces_to_probe_and_returns_winding_vector() {
 
 #[test]
 fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
 
@@ -826,9 +830,9 @@ fn leaf_classification_reports_unknown_when_no_valid_probe_path_exists() {
 
 #[test]
 fn leaf_classification_places_probe_before_intervening_surface() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
 
@@ -848,10 +852,10 @@ fn leaf_classification_places_probe_before_intervening_surface() {
 
 #[test]
 fn process_leaf_classifies_direct_polygon_slice() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(-2, -2, -2), p(3, 3, 3));
-    let union = make_indicator(BooleanOp::Union, 1);
+    let union = BooleanOp::Union;
 
     let mut output = Vec::new();
     let stats = process_leaf_into(
@@ -860,7 +864,7 @@ fn process_leaf_classifies_direct_polygon_slice() {
         &p(0, 0, 0),
         &axis_defs(&p(0, 0, 0)),
         &[0],
-        &union,
+        union,
         &mut output,
     )
     .unwrap();
@@ -877,10 +881,10 @@ fn process_leaf_classifies_direct_polygon_slice() {
 
 #[test]
 fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let union = make_indicator(BooleanOp::Union, 1);
+    let union = BooleanOp::Union;
 
     let mut output = Vec::new();
     let err = process_leaf_into(
@@ -889,7 +893,7 @@ fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
         &p(0, 0, 0),
         &axis_defs(&p(0, 0, 0)),
         &[0],
-        &union,
+        union,
         &mut output,
     )
     .unwrap_err();
@@ -900,12 +904,12 @@ fn process_leaf_reports_unknown_when_no_valid_probe_path_exists() {
 
 #[test]
 fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
-    let mut blocker = make_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
+    let mut blocker = convex_triangle(&p(2, -10, -10), &p(2, 10, -10), &p(2, 0, 10), 1, 0);
     blocker.delta_w = vec![1];
     let bounds = hypermesh::Aabb::new(p(1, -2, -2), p(5, 2, 2));
-    let union = make_indicator(BooleanOp::Union, 2);
+    let union = BooleanOp::Union;
 
     let mut output = Vec::new();
     let stats = process_leaf_into(
@@ -914,7 +918,7 @@ fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
         &p(0, 0, 0),
         &axis_defs(&p(0, 0, 0)),
         &[0],
-        &union,
+        union,
         &mut output,
     )
     .unwrap();
@@ -928,13 +932,13 @@ fn process_leaf_uses_alternate_probe_when_first_probe_path_is_blocked() {
 
 #[test]
 fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 1);
+    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 1);
     cutter.delta_w = vec![0, 1];
     let polygons = vec![host, cutter];
     let bounds = hypermesh::Aabb::new(p(-1, -1, -2), p(3, 3, 2));
-    let union = make_indicator(BooleanOp::Union, 2);
+    let union = BooleanOp::Union;
     let mut output = Vec::new();
 
     let stats = process_leaf_into(
@@ -943,7 +947,7 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
         &p(-1, -1, -1),
         &axis_defs(&p(-1, -1, -1)),
         &[0, 0],
-        &union,
+        union,
         &mut output,
     )
     .unwrap();
@@ -958,13 +962,13 @@ fn process_leaf_uses_bsp_for_intersecting_cross_mesh_polygons() {
 
 #[test]
 fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1];
-    let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 0, 1);
+    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 0, 1);
     cutter.delta_w = vec![1];
     let polygons = vec![host, cutter];
     let bounds = hypermesh::Aabb::new(p(-1, -1, -2), p(3, 3, 2));
-    let union = make_indicator(BooleanOp::Union, 1);
+    let union = BooleanOp::Union;
     let mut output = Vec::new();
 
     let stats = process_leaf_into(
@@ -973,7 +977,7 @@ fn process_leaf_uses_bsp_for_same_mesh_self_intersections() {
         &p(-1, -1, -1),
         &axis_defs(&p(-1, -1, -1)),
         &[0],
-        &union,
+        union,
         &mut output,
     )
     .unwrap();
@@ -1278,8 +1282,8 @@ fn convex_certification_accepts_a_box_and_rejects_disconnected_shells() {
 #[test]
 fn subdivision_processes_certified_leaf_at_max_depth() {
     let mesh = cube_mesh(0, 2);
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
-    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let operation = BooleanOp::Union;
     let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig { max_depth: 0 };
 
@@ -1290,7 +1294,7 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
             p(-1, -1, -1),
             vec![0; num_meshes],
         ),
-        &indicator,
+        operation,
         config,
     )
     .unwrap();
@@ -1302,8 +1306,8 @@ fn subdivision_processes_certified_leaf_at_max_depth() {
 #[test]
 fn subdivision_with_split_room_returns_certified_fragments() {
     let mesh = cube_mesh(0, 2);
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
-    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
+    let operation = BooleanOp::Union;
     let num_meshes = soup.num_meshes;
     let config = SubdivisionConfig { max_depth: 1 };
 
@@ -1314,7 +1318,7 @@ fn subdivision_with_split_room_returns_certified_fragments() {
             p(-1, -1, -1),
             vec![0; num_meshes],
         ),
-        &indicator,
+        operation,
         config,
     )
     .unwrap();
@@ -1325,11 +1329,11 @@ fn subdivision_with_split_room_returns_certified_fragments() {
 
 #[test]
 fn subdivision_escapes_projected_reference_on_surface() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
-    let indicator = make_indicator(BooleanOp::Union, 1);
+    let operation = BooleanOp::Union;
     let config = SubdivisionConfig { max_depth: 4 };
 
     let result = subdivide(
@@ -1339,7 +1343,7 @@ fn subdivision_escapes_projected_reference_on_surface() {
             p(1, 3, 3),
             vec![0],
         ),
-        &indicator,
+        operation,
         config,
     );
     assert!(result.is_ok(), "{result:?}");
@@ -1349,8 +1353,8 @@ fn subdivision_escapes_projected_reference_on_surface() {
 fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = build_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
-    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let operation = BooleanOp::Union;
     let config = SubdivisionConfig { max_depth: 4 };
 
     let result = subdivide(
@@ -1360,7 +1364,7 @@ fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
             p(1, 3, 3),
             vec![0; soup.num_meshes],
         ),
-        &indicator,
+        operation,
         config,
     );
 
@@ -1371,8 +1375,8 @@ fn subdivision_escapes_projected_reference_on_surface_for_closed_meshes() {
 fn subdivision_normalizes_closed_edge_and_vertex_references() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = build_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
-    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let operation = BooleanOp::Union;
     let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     for ref_point in [p(1, 2, 1), p(1, 1, 1)] {
@@ -1383,7 +1387,7 @@ fn subdivision_normalizes_closed_edge_and_vertex_references() {
                 ref_point,
                 vec![0; soup.num_meshes],
             ),
-            &indicator,
+            operation,
             SubdivisionConfig { max_depth: 4 },
         )
         .unwrap();
@@ -1397,7 +1401,7 @@ fn subdivision_normalizes_closed_edge_and_vertex_references() {
 fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_closed_meshes() {
     let left = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(4, 1, 1), p(4, 5, 1), p(4, 3, 5), p(5, 3, 2));
-    let soup = build_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let ref_point = p(1, 3, 3);
     let ref_wnv = vec![0; soup.num_meshes];
@@ -1409,7 +1413,7 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
     ];
 
     for (op, expected_volume_numerator) in cases {
-        let indicator = make_indicator(op, soup.num_meshes);
+        let operation = op;
         let output = subdivide(
             SubdivisionTask::new(
                 soup.polygons.clone(),
@@ -1417,7 +1421,7 @@ fn subdivision_projected_reference_surface_case_preserves_boolean_semantics_for_
                 ref_point.clone(),
                 ref_wnv.clone(),
             ),
-            &indicator,
+            operation,
             SubdivisionConfig { max_depth: 4 },
         )
         .unwrap_or_else(|err| panic!("{op:?} failed: {err:?}"));
@@ -1436,7 +1440,7 @@ fn subdivision_support_reference_fallback_classifies_each_axis_face() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face(&soup.polygons, 0, 5),
         axis_face(&soup.polygons, 1, 5),
@@ -1449,10 +1453,10 @@ fn subdivision_support_reference_fallback_classifies_each_axis_face() {
     let bounds = hypermesh::Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let ref_point = p(0, 5, 5);
     let ref_wnv = vec![0; soup.num_meshes];
-    let indicator = make_indicator(BooleanOp::Union, soup.num_meshes);
+    let operation = BooleanOp::Union;
     let classified = subdivide(
         SubdivisionTask::new(polygons, bounds, ref_point, ref_wnv),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 4 },
     )
     .unwrap_or_else(|err| panic!("support reference fallback failed: {err:?}"));

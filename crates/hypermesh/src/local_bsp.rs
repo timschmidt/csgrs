@@ -510,7 +510,7 @@ fn classify_overlap_test_relation(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::polygon::make_triangle;
+    use crate::polygon::convex_triangle;
     use hyperlattice::{HomogeneousPoint3, Point3, Real};
 
     fn r(value: i32) -> Real {
@@ -527,7 +527,7 @@ mod tests {
 
     #[test]
     fn overlap_test_relation_prefers_strict_inside_over_boundary_only_points() {
-        let other = make_triangle(
+        let other = convex_triangle(
             &p(0, 0, 0),
             &Point3::new(q(4, 3), r(0), r(0)),
             &Point3::new(r(0), q(4, 3), r(0)),
@@ -545,8 +545,8 @@ mod tests {
 
     #[test]
     fn repeated_overlap_plane_splits_do_not_grow_bsp_again() {
-        let host = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
-        let other = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
+        let host = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+        let other = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 1, 0);
         let overlap = OverlapInfo {
             other_polygon_idx: 0,
             other_edges: other.edges.as_ref().clone(),

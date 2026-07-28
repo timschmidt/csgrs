@@ -113,8 +113,7 @@ pub use intersection::{
 };
 pub use local_bsp::{BspLeaf, LocalBsp};
 pub use mesh::{
-    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, build_polygon_soup,
-    certify_convex_mesh,
+    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, certify_convex_mesh, polygon_soup,
 };
 pub use operations::{
     EmberConfig, boolean_difference, boolean_intersection, boolean_operation,
@@ -127,7 +126,7 @@ pub use output::{
     certify_output_polygon_closure, extract_output, triangle_soup_closure_evidence,
     triangle_soup_is_closed, triangulate_and_resolve_certified,
 };
-pub use polygon::{ApproxBounds, ConvexPolygon, InputTrianglePlanes, make_quad, make_triangle};
+pub use polygon::{ApproxBounds, ConvexPolygon, InputTrianglePlanes, convex_quad, convex_triangle};
 pub use segment_trace::{
     TraceAxisSegmentResult, classify_leaf_polygon, trace_axis_segment, trace_segment,
 };
@@ -136,6 +135,6 @@ pub use subdivision::{
     process_leaf_into, subdivide, subdivide_into,
 };
 pub use winding::{
-    BooleanOp, Indicator, WindingNumberTransitionVector, WindingNumberVector, WindingPair,
-    classify_polygon_output, make_indicator, propagate_wnv,
+    BooleanOp, WindingNumberTransitionVector, WindingNumberVector, WindingPair,
+    classify_polygon_output, propagate_wnv,
 };

@@ -38,8 +38,7 @@ use crate::segment_trace::{
     trace_segment_from_definitions_with_step_detoured_plane_replacement_in_bounds,
 };
 use crate::winding::{
-    BooleanOp, Indicator, WindingNumberVector, WindingPair,
-    can_boolean_op_be_inside_with_component_ranges,
+    BooleanOp, WindingNumberVector, WindingPair, can_boolean_op_be_inside_with_component_ranges,
     can_boolean_op_be_inside_with_transition_reachability, classify_polygon_output, propagate_wnv,
 };
 use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
@@ -288,7 +287,7 @@ pub fn process_leaf(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
-    indicator: &Indicator,
+    operation: BooleanOp,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
     process_leaf_into(
@@ -297,7 +296,7 @@ pub fn process_leaf(
         ref_point,
         ref_definitions,
         ref_wnv,
-        indicator,
+        operation,
         &mut output,
     )?;
     Ok(output)
@@ -310,7 +309,7 @@ pub fn process_leaf_into(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
-    indicator: &Indicator,
+    operation: BooleanOp,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let mut certified_output = Vec::new();
@@ -320,7 +319,7 @@ pub fn process_leaf_into(
         ref_point,
         ref_definitions,
         ref_wnv,
-        indicator,
+        operation,
         &mut certified_output,
     )?;
     merge_unique_classified_polygons(output, certified_output);
@@ -333,7 +332,7 @@ fn process_leaf_into_inner(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
-    indicator: &Indicator,
+    operation: BooleanOp,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<LeafProcessingStats> {
     let leaf_classification_cache = RefCell::new(Vec::new());
@@ -344,7 +343,7 @@ fn process_leaf_into_inner(
         ref_point,
         ref_definitions,
         ref_wnv,
-        indicator,
+        operation,
         false,
         &[],
         false,
@@ -380,7 +379,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
     ref_point: &Point3,
     ref_definitions: &[[Plane; 3]],
     ref_wnv: &[i32],
-    indicator: &Indicator,
+    operation: BooleanOp,
     emit_all_transitions: bool,
     certified_convex_inputs: &[bool],
     allow_certified_root_host_classification: bool,
@@ -438,7 +437,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 emit_one_direct_from_w_front(
                     polygon,
                     w_front.clone(),
-                    indicator,
+                    operation,
                     emit_all_transitions,
                     output,
                     &mut output_buckets,
@@ -453,7 +452,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                     ref_wnv,
                     polygons,
                     &polygon.delta_w,
-                    indicator,
+                    operation,
                     emit_all_transitions,
                     leaf_classification_cache,
                     Some(&leaf_cache_context),
@@ -508,7 +507,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
                 let classification = if emit_all_transitions && w_front != w_back {
                     ARRANGEMENT_CLASSIFICATION
                 } else {
-                    classify_polygon_output(&w_front, &w_back, indicator)
+                    classify_polygon_output(&w_front, &w_back, operation)
                 };
                 if classification != 0 {
                     let mut fragment = polygon.clone();
@@ -566,7 +565,7 @@ fn process_leaf_into_inner_with_pairwise_cache(
             let classification = if emit_all_transitions && w_front != w_back {
                 ARRANGEMENT_CLASSIFICATION
             } else {
-                classify_polygon_output(&w_front, &w_back, indicator)
+                classify_polygon_output(&w_front, &w_back, operation)
             };
             if classification != 0 {
                 let mut fragment = polygon.clone();
@@ -661,7 +660,7 @@ fn ordered_bsp_leaf_indices_by_complexity(leaves: &[BspLeaf]) -> Vec<usize> {
 /// Recursively subdivides a task and returns classified output polygons.
 pub fn subdivide(
     task: SubdivisionTask,
-    indicator: &Indicator,
+    operation: BooleanOp,
     config: SubdivisionConfig,
 ) -> HypermeshResult<Vec<ClassifiedPolygon>> {
     let mut output = Vec::new();
@@ -671,25 +670,24 @@ pub fn subdivide(
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
-    let mut process_leaf = move |task: &SubdivisionTask,
-                                 indicator: &Indicator,
-                                 output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(
-            task,
-            indicator,
-            false,
-            output,
-            pairwise_cache,
-            host_bsp_cache,
-            bsp_leaf_cache,
-            leaf_classification_cache,
-            leaf_point_classification_cache,
-            &[],
-        )
-    };
+    let mut process_leaf =
+        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+            process_leaf_task_into_with_caches(
+                task,
+                operation,
+                false,
+                output,
+                pairwise_cache,
+                host_bsp_cache,
+                bsp_leaf_cache,
+                leaf_classification_cache,
+                leaf_point_classification_cache,
+                &[],
+            )
+        };
     subdivide_into_inner_with(
         task,
-        indicator,
+        operation,
         config,
         None,
         &mut output,
@@ -720,31 +718,29 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
         certified_embedded_inputs: certified_convex_inputs.to_vec(),
         ..SubdivisionRuntimeCaches::default()
     };
-    let indicator = crate::winding::make_indicator(operation, task.ref_wnv.len());
     let pairwise_cache = &caches.pairwise_intersections;
     let host_bsp_cache = &caches.host_bsp_leaves;
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
-    let mut process_leaf = move |task: &SubdivisionTask,
-                                 indicator: &Indicator,
-                                 output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(
-            task,
-            indicator,
-            false,
-            output,
-            pairwise_cache,
-            host_bsp_cache,
-            bsp_leaf_cache,
-            leaf_classification_cache,
-            leaf_point_classification_cache,
-            certified_convex_inputs,
-        )
-    };
+    let mut process_leaf =
+        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+            process_leaf_task_into_with_caches(
+                task,
+                operation,
+                false,
+                output,
+                pairwise_cache,
+                host_bsp_cache,
+                bsp_leaf_cache,
+                leaf_classification_cache,
+                leaf_point_classification_cache,
+                certified_convex_inputs,
+            )
+        };
     subdivide_into_inner_with(
         task,
-        &indicator,
+        operation,
         config,
         Some(operation),
         &mut output,
@@ -762,7 +758,7 @@ pub(crate) fn subdivide_boolean_with_certified_convex_inputs(
 /// from that task is retained.
 pub fn subdivide_into(
     task: SubdivisionTask,
-    indicator: &Indicator,
+    operation: BooleanOp,
     config: SubdivisionConfig,
     output: &mut Vec<ClassifiedPolygon>,
 ) -> HypermeshResult<()> {
@@ -773,25 +769,24 @@ pub fn subdivide_into(
     let bsp_leaf_cache = &caches.bsp_leaf_certification;
     let leaf_classification_cache = &caches.leaf_classification;
     let leaf_point_classification_cache = &caches.leaf_point_classification;
-    let mut process_leaf = move |task: &SubdivisionTask,
-                                 indicator: &Indicator,
-                                 output: &mut Vec<ClassifiedPolygon>| {
-        process_leaf_task_into_with_caches(
-            task,
-            indicator,
-            false,
-            output,
-            pairwise_cache,
-            host_bsp_cache,
-            bsp_leaf_cache,
-            leaf_classification_cache,
-            leaf_point_classification_cache,
-            &[],
-        )
-    };
+    let mut process_leaf =
+        move |task: &SubdivisionTask, operation: BooleanOp, output: &mut Vec<ClassifiedPolygon>| {
+            process_leaf_task_into_with_caches(
+                task,
+                operation,
+                false,
+                output,
+                pairwise_cache,
+                host_bsp_cache,
+                bsp_leaf_cache,
+                leaf_classification_cache,
+                leaf_point_classification_cache,
+                &[],
+            )
+        };
     subdivide_into_inner_with(
         task,
-        indicator,
+        operation,
         config,
         None,
         &mut certified_output,
@@ -805,13 +800,13 @@ pub fn subdivide_into(
 
 fn subdivide_into_inner_with(
     mut task: SubdivisionTask,
-    indicator: &Indicator,
+    operation: BooleanOp,
     config: SubdivisionConfig,
     reachability_operation: Option<BooleanOp>,
     output: &mut Vec<ClassifiedPolygon>,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
-        &Indicator,
+        BooleanOp,
         &mut Vec<ClassifiedPolygon>,
     ) -> HypermeshResult<LeafProcessingStats>,
     caches: &SubdivisionRuntimeCaches,
@@ -849,8 +844,8 @@ fn subdivide_into_inner_with(
     if task.depth == 0 && !has_cached_polygon_family_result && !root_reference_is_on_surface {
         root_leaf_attempted = true;
         if let Some(certified_output) =
-            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-                process_leaf(task, indicator, output)
+            certified_leaf_output_if_complete_with(&task, operation, |task, operation, output| {
+                process_leaf(task, operation, output)
             })?
         {
             crate::trace_dispatch!("subdivision", "root-leaf-complete");
@@ -891,7 +886,7 @@ fn subdivide_into_inner_with(
                 let mut contracted_output = Vec::new();
                 subdivide_into_inner_with(
                     contracted_task.clone(),
-                    indicator,
+                    operation,
                     config,
                     reachability_operation,
                     &mut contracted_output,
@@ -908,8 +903,8 @@ fn subdivide_into_inner_with(
     if task.depth == 0 && !root_leaf_attempted {
         root_leaf_attempted = true;
         if let Some(certified_output) =
-            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-                process_leaf(task, indicator, output)
+            certified_leaf_output_if_complete_with(&task, operation, |task, operation, output| {
+                process_leaf(task, operation, output)
             })?
         {
             crate::trace_dispatch!("subdivision", "root-leaf-complete");
@@ -957,8 +952,8 @@ fn subdivide_into_inner_with(
         if !root_leaf_attempted
             && let Some(certified_output) = certified_leaf_output_if_complete_with(
                 &task,
-                indicator,
-                |task, indicator, output| process_leaf(task, indicator, output),
+                operation,
+                |task, operation, output| process_leaf(task, operation, output),
             )?
         {
             crate::trace_dispatch!("subdivision", "leaf-complete");
@@ -974,8 +969,8 @@ fn subdivide_into_inner_with(
 
     if !root_leaf_attempted
         && let Some(certified_output) =
-            certified_leaf_output_if_complete_with(&task, indicator, |task, indicator, output| {
-                process_leaf(task, indicator, output)
+            certified_leaf_output_if_complete_with(&task, operation, |task, operation, output| {
+                process_leaf(task, operation, output)
             })?
     {
         crate::trace_dispatch!("subdivision", "leaf-complete");
@@ -1048,7 +1043,7 @@ fn subdivide_into_inner_with(
     if let Some(candidate_output) = try_ranked_subdivision_attempts(
         &task,
         preferred_split,
-        indicator,
+        operation,
         config,
         reachability_operation,
         process_leaf,
@@ -1067,7 +1062,7 @@ fn subdivide_into_inner_with(
     if let Some(candidate_output) = try_ranked_subdivision_attempts(
         &task,
         deferred_splits,
-        indicator,
+        operation,
         config,
         reachability_operation,
         process_leaf,
@@ -1118,12 +1113,12 @@ fn partition_preferred_subdivision_split(
 fn try_ranked_subdivision_attempts(
     task: &SubdivisionTask,
     split_attempts: impl IntoIterator<Item = RankedSplitAttempt>,
-    indicator: &Indicator,
+    operation: BooleanOp,
     config: SubdivisionConfig,
     reachability_operation: Option<BooleanOp>,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
-        &Indicator,
+        BooleanOp,
         &mut Vec<ClassifiedPolygon>,
     ) -> HypermeshResult<LeafProcessingStats>,
     caches: &SubdivisionRuntimeCaches,
@@ -1146,7 +1141,7 @@ fn try_ranked_subdivision_attempts(
                     task,
                     split_child.polygons,
                     split_child.bounds,
-                    indicator,
+                    operation,
                     config,
                     reachability_operation,
                     &mut candidate_output,
@@ -1271,14 +1266,14 @@ fn process_split_attempt_child(
     task: &SubdivisionTask,
     child_polygons: Vec<ConvexPolygon>,
     child_bounds: Aabb,
-    indicator: &Indicator,
+    operation: BooleanOp,
     config: SubdivisionConfig,
     reachability_operation: Option<BooleanOp>,
     candidate_output: &mut Vec<ClassifiedPolygon>,
     candidate_buckets: &mut ClassifiedPolygonBucketState,
     process_leaf: &mut impl FnMut(
         &SubdivisionTask,
-        &Indicator,
+        BooleanOp,
         &mut Vec<ClassifiedPolygon>,
     ) -> HypermeshResult<LeafProcessingStats>,
     caches: &SubdivisionRuntimeCaches,
@@ -1343,7 +1338,7 @@ fn process_split_attempt_child(
             let mut child_output = Vec::new();
             subdivide_into_inner_with(
                 child_task.clone(),
-                indicator,
+                operation,
                 config,
                 reachability_operation,
                 &mut child_output,
@@ -2138,7 +2133,7 @@ fn leaf_classification_cache_context_matches(
 
 fn process_leaf_task_into_with_caches(
     task: &SubdivisionTask,
-    indicator: &Indicator,
+    operation: BooleanOp,
     emit_all_transitions: bool,
     output: &mut Vec<ClassifiedPolygon>,
     pairwise_cache: &RefCell<Vec<PairwiseIntersectionsCacheEntry>>,
@@ -2193,7 +2188,7 @@ fn process_leaf_task_into_with_caches(
         &task.ref_point,
         &task.ref_definitions,
         &task.ref_wnv,
-        indicator,
+        operation,
         emit_all_transitions,
         certified_embedded_inputs,
         task.depth == 0 && task.ref_wnv.iter().all(|winding| *winding == 0),
@@ -2208,15 +2203,15 @@ fn process_leaf_task_into_with_caches(
 
 fn certified_leaf_output_if_complete_with(
     task: &SubdivisionTask,
-    indicator: &Indicator,
+    operation: BooleanOp,
     mut process_leaf: impl FnMut(
         &SubdivisionTask,
-        &Indicator,
+        BooleanOp,
         &mut Vec<ClassifiedPolygon>,
     ) -> HypermeshResult<LeafProcessingStats>,
 ) -> HypermeshResult<Option<Vec<ClassifiedPolygon>>> {
     let mut certified_output = Vec::new();
-    let stats = match process_leaf(task, indicator, &mut certified_output) {
+    let stats = match process_leaf(task, operation, &mut certified_output) {
         Ok(stats) => stats,
         Err(crate::error::HypermeshError::UnknownClassification) => return Ok(None),
         Err(err) => return Err(err),
@@ -2275,7 +2270,7 @@ fn emit_one_direct(
     ref_wnv: &[i32],
     class_polygons: &[ConvexPolygon],
     classification_host_delta_w: &[i32],
-    indicator: &Indicator,
+    operation: BooleanOp,
     emit_all_transitions: bool,
     cache: &RefCell<Vec<LeafClassificationCacheEntry>>,
     context: Option<&Arc<LeafClassificationCacheContextKey>>,
@@ -2308,7 +2303,7 @@ fn emit_one_direct(
     let emitted = emit_one_direct_from_w_front(
         polygon,
         w_front.clone(),
-        indicator,
+        operation,
         emit_all_transitions,
         output,
         output_buckets,
@@ -2319,7 +2314,7 @@ fn emit_one_direct(
 fn emit_one_direct_from_w_front(
     polygon: &ConvexPolygon,
     w_front: WindingNumberVector,
-    indicator: &Indicator,
+    operation: BooleanOp,
     emit_all_transitions: bool,
     output: &mut Vec<ClassifiedPolygon>,
     output_buckets: &mut ClassifiedPolygonBucketState,
@@ -2328,7 +2323,7 @@ fn emit_one_direct_from_w_front(
     let classification = if emit_all_transitions && w_front != w_back {
         ARRANGEMENT_CLASSIFICATION
     } else {
-        classify_polygon_output(&w_front, &w_back, indicator)
+        classify_polygon_output(&w_front, &w_back, operation)
     };
     if classification != 0 {
         let mut classified = ClassifiedPolygon::new(polygon.clone(), classification);

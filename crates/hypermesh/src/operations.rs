@@ -26,7 +26,7 @@ use crate::polygon::{
 use crate::predicate::{ProjectivePoint3PredicateEvidence, RationalPlane4PredicateEvidence};
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
-use crate::winding::{BooleanOp, WindingPair, make_indicator};
+use crate::winding::{BooleanOp, WindingPair};
 
 struct BooleanComputation {
     soup: crate::mesh::PolygonSoup,
@@ -52,7 +52,6 @@ impl BooleanComputation {
     }
 
     fn into_selected_result(self, operation: BooleanOp) -> HypermeshResult<(BooleanResult, bool)> {
-        let indicator = make_indicator(operation, self.soup.num_meshes);
         let mut selected = Vec::with_capacity(self.classified.len());
         for mut polygon in self.classified {
             let winding = polygon
@@ -61,7 +60,7 @@ impl BooleanComputation {
             let classification = crate::winding::classify_polygon_output(
                 &winding.w_front,
                 &winding.w_back,
-                &indicator,
+                operation,
             );
             if classification != 0 {
                 polygon.classification = classification;
@@ -96,14 +95,12 @@ impl BooleanComputation {
 fn select_triangle_arrangement(
     arrangement: &crate::output::ClassifiedTriangleArrangement,
     op: BooleanOp,
-    num_meshes: usize,
 ) -> HypermeshResult<crate::output::TriangleSoup> {
     if arrangement.soup.triangles.len() != arrangement.windings.len()
         || arrangement.soup.triangles.len() != arrangement.soup.sources.len()
     {
         return Err(crate::error::HypermeshError::UnknownClassification);
     }
-    let indicator = make_indicator(op, num_meshes);
     let mut triangles = Vec::new();
     let mut sources = Vec::new();
     for ((triangle, source), winding) in arrangement
@@ -114,7 +111,7 @@ fn select_triangle_arrangement(
         .zip(&arrangement.windings)
     {
         let classification =
-            crate::winding::classify_polygon_output(&winding.w_front, &winding.w_back, &indicator);
+            crate::winding::classify_polygon_output(&winding.w_front, &winding.w_back, op);
         if classification == 0 {
             continue;
         }
@@ -300,7 +297,7 @@ fn compute_boolean(
     let mut soup = if use_two_convex_candidate {
         build_polygon_soup_with_deferred_edges(meshes, certified_convex_inputs, input_planes)?
     } else if certified_convex_inputs.is_empty() {
-        crate::mesh::build_polygon_soup(meshes)?
+        crate::mesh::polygon_soup(meshes)?
     } else {
         build_polygon_soup_with_certified_convex_inputs(
             meshes,
@@ -2502,7 +2499,6 @@ fn compute_two_convex_inputs_projectively(
 
     let triangle_soup = {
         if retain_winding && operation != BooleanOp::SymmetricDifference {
-            let indicator = make_indicator(operation, support_planes.len());
             for fragment in &mut classified {
                 let winding = fragment
                     .winding()
@@ -2510,16 +2506,14 @@ fn compute_two_convex_inputs_projectively(
                 fragment.classification = crate::winding::classify_polygon_output(
                     &winding.w_front,
                     &winding.w_back,
-                    &indicator,
+                    operation,
                 );
             }
         }
         let triangulate_fallback = || {
             if retain_winding {
                 crate::output::triangulate_classified_arrangement_precomputed_f64_scan(&classified)
-                    .and_then(|triangles| {
-                        select_triangle_arrangement(&triangles, operation, support_planes.len())
-                    })
+                    .and_then(|triangles| select_triangle_arrangement(&triangles, operation))
             } else {
                 crate::output::triangulate_preclassified_arrangement_precomputed_f64_scan(
                     &classified,
@@ -2562,7 +2556,7 @@ fn compute_two_convex_inputs_projectively(
                     recover,
                 )
                 .and_then(|triangles| {
-                        select_triangle_arrangement(&triangles, operation, support_planes.len())
+                        select_triangle_arrangement(&triangles, operation)
                     })
             };
             triangulate(false)
@@ -3949,7 +3943,6 @@ mod tests {
             BooleanOp::Difference,
             BooleanOp::SymmetricDifference,
         ] {
-            let indicator = make_indicator(operation, 2);
             for host in 0..2 {
                 let other = 1 - host;
                 for inside_other in [false, true] {
@@ -3957,7 +3950,7 @@ mod tests {
                     let expected = crate::winding::classify_polygon_output(
                         &winding.w_front,
                         &winding.w_back,
-                        &indicator,
+                        operation,
                     );
                     assert_eq!(
                         projective_transition_classification(host, other, inside_other, operation,),
@@ -4125,7 +4118,7 @@ mod tests {
 
     #[test]
     fn consuming_projective_split_preserves_shared_boundary_identities() {
-        let polygon = crate::polygon::make_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
+        let polygon = crate::polygon::convex_triangle(&p(0, 0, -1), &p(2, 0, 1), &p(0, 2, 0), 0, 0)
             .with_source_triangle_edge_identities(0, [0, 1, 2]);
         let mut point_cache = ProjectivePointCache::default();
         let cycle = ProjectiveCycle::from_polygon(
@@ -4558,7 +4551,7 @@ mod tests {
 
     #[test]
     fn source_relation_stops_after_exact_crossing_is_certified() {
-        let polygon = crate::polygon::make_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
+        let polygon = crate::polygon::convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();
         let mut on_source_vertices = Vec::new();
@@ -4574,7 +4567,7 @@ mod tests {
 
     #[test]
     fn source_relation_indexes_certified_source_vertices_without_coordinate_hashing() {
-        let polygon = crate::polygon::make_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
+        let polygon = crate::polygon::convex_triangle(&p(0, 0, 1), &p(0, 0, -1), &p(1, 0, 0), 0, 0)
             .with_source_triangle_edge_identities(0, [7, 9, 11]);
         let plane = Plane::axis_aligned(2, Real::zero());
         let mut cache = PointPlaneClassificationCache::default();

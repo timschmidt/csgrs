@@ -10,6 +10,51 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## 2026-07-28: immediate construction and classification APIs
+
+Status: **kept**
+
+Three public free functions returned completed values despite carrying
+`build_` or `make_` lifecycle verbs. They are now named for their immediate
+results: `polygon_soup`, `convex_triangle`, and `convex_quad`.
+
+Boolean classification previously required `make_indicator` to allocate and
+return a boxed predicate, even though all supported behavior was already
+described by `BooleanOp`; its mesh-count argument was unused. The predicate
+carrier and constructor are removed. `BooleanOp::contains` now classifies a
+winding vector immediately, while `classify_polygon_output`, `process_leaf`,
+and subdivision accept `BooleanOp` directly. This removes an allocation,
+dynamic dispatch, and a prepared object from the public API.
+
+The triangle and quad constructors now spell their three and four edge planes
+directly instead of constructing them through an indexed modulo iterator. This
+keeps the geometry identical while making the fixed arity explicit and
+recovering a code-generation regression exposed by the performance gate.
+
+The affected release paths were measured serially with 100 Criterion samples
+before and after (20 samples for the end-to-end Boolean):
+
+| Benchmark | Before | After | Midpoint change |
+| --- | ---: | ---: | ---: |
+| `convex_polygon/triangle_construction` | 1.1794--1.1870 us | 1.1743--1.1784 us | -0.60% |
+| `convex_polygon/quad_construction` | 1.4708--1.4779 us | 1.4518--1.4596 us | -1.27% |
+| `build_polygon_soup/cube_pair` | 44.088--44.594 us | 44.199--44.849 us | +0.42% |
+| `boolean_immediate_output/cubes/triangle_soup/Union` | 2.2691--2.2840 ms | 2.3030--2.3188 ms | +1.51% |
+
+The soup comparison reported no statistically significant change (`p = 0.09`).
+All unrelated sentinels drifted upward together during the final run, so the
+Boolean gate was also repeated against an archived clean `HEAD` in the same
+session. Clean `HEAD` measured 2.3007--2.3398 ms versus the final
+2.3030--2.3188 ms, a -0.33% midpoint change with overlapping intervals. The
+direct Boolean API therefore shows no same-session regression; the nominal
+cross-session increase reflects machine drift rather than the API change.
+
+The removed boxed-indicator constructor itself previously cost
+1.8543--1.8928 ns per allocation. It has no after measurement because the
+carrier and its benchmark no longer exist. The historical
+`build_polygon_soup` benchmark identifier remains stable for comparison
+continuity and is not a public API.
+
 ## 2026-07-26: index split-edge incidence candidates
 
 Status: **kept**

@@ -8,9 +8,9 @@ use hypermesh::{
     BooleanOp, EmberConfig, ExactGpuMeshBuffers, Point3, Real, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
     approximate_interleaved_gpu_mesh_f64, boolean_operation, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs, build_polygon_soup, convex_hull,
-    convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, extract_output,
-    triangulate_and_resolve_certified,
+    boolean_triangle_soup_with_certified_convex_inputs, convex_hull,
+    convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_quad,
+    convex_triangle, extract_output, polygon_soup, triangulate_and_resolve_certified,
 };
 
 fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
@@ -44,15 +44,42 @@ fn bench_end_to_end(c: &mut Criterion) {
     let nested_cubes = common::nested_cube_pair();
     let octahedra = common::octahedron_pair();
 
+    let p0 = Point3::new(Real::zero(), Real::zero(), Real::zero());
+    let p1 = Point3::new(Real::one(), Real::zero(), Real::zero());
+    let p2 = Point3::new(Real::one(), Real::one(), Real::zero());
+    let p3 = Point3::new(Real::zero(), Real::one(), Real::zero());
+    c.bench_function("convex_polygon/triangle_construction", |b| {
+        b.iter(|| {
+            convex_triangle(
+                black_box(&p0),
+                black_box(&p1),
+                black_box(&p3),
+                black_box(0),
+                black_box(0),
+            )
+        })
+    });
+    c.bench_function("convex_polygon/quad_construction", |b| {
+        b.iter(|| {
+            convex_quad(
+                black_box(&p0),
+                black_box(&p1),
+                black_box(&p2),
+                black_box(&p3),
+                black_box(0),
+                black_box(0),
+            )
+        })
+    });
     c.bench_function("build_polygon_soup/cube_pair", |b| {
         b.iter(|| {
-            build_polygon_soup(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
+            polygon_soup(black_box(&[cubes[0].as_ref(), cubes[1].as_ref()]))
                 .expect("benchmark mesh is valid")
         })
     });
     c.bench_function("build_polygon_soup/subdivided_cube_pair_3072_each", |b| {
         b.iter(|| {
-            build_polygon_soup(black_box(&[
+            polygon_soup(black_box(&[
                 subdivided_cubes[0].as_ref(),
                 subdivided_cubes[1].as_ref(),
             ]))

@@ -2897,7 +2897,7 @@ fn vertex_axis(vertex: &OutputVertex, axis: usize) -> &Real {
 mod tests {
     use super::*;
     use crate::geometry::Aabb;
-    use crate::polygon::make_triangle;
+    use crate::polygon::convex_triangle;
     use crate::winding::WindingPair;
     use hyperlattice::Point3;
 
@@ -2978,7 +2978,7 @@ mod tests {
 
     #[test]
     fn exact_corner_boundary_appends_a_convex_fan() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let vertices = vec![ov(0, 0, 0), ov(1, 0, 0), ov(1, 1, 0), ov(0, 1, 0)];
         let mut triangles = Vec::new();
 
@@ -2998,7 +2998,7 @@ mod tests {
 
     #[test]
     fn exact_corner_boundary_skips_collinear_vertices() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 0, 0);
         let vertices = vec![ov(0, 0, 0), ov(1, 0, 0), ov(2, 0, 0), ov(0, 1, 0)];
         let mut triangles = Vec::new();
 
@@ -3018,7 +3018,7 @@ mod tests {
 
     #[test]
     fn exact_corner_fan_preserves_collinear_vertices_opposite_the_anchor() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let vertices = vec![
             ov(0, 0, 0),
             ov(2, 0, 0),
@@ -3188,7 +3188,7 @@ mod tests {
 
     #[test]
     fn output_extraction_uses_real_vertices() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let result = BooleanResult::new(
             PolygonSoup {
                 polygons: vec![polygon],
@@ -3327,9 +3327,9 @@ mod tests {
     #[test]
     fn expanded_boundary_uses_unsplit_opposite_corner_fan() {
         let polygons = vec![
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, -1, 0), 0, 1),
-            make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(2, -1, 0), 0, 2),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, -1, 0), 0, 1),
+            convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(2, -1, 0), 0, 2),
         ];
 
         let (soup, _) = triangulate_closed_polygon_arrangement(
@@ -3405,7 +3405,7 @@ mod tests {
         let b = plane(0, 1);
         let c = plane(1, 0);
         let source_edge = |endpoints| ConstructionEdgeIdentity::Source { mesh: 0, endpoints };
-        let first = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let first = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
         let first = first.with_known_vertex_cycle_and_edges(
             first.vertices().unwrap(),
             vec![
@@ -3420,7 +3420,7 @@ mod tests {
                 source_edge([0, 2]),
             ],
         );
-        let second = make_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 0, 1);
+        let second = convex_triangle(&p(1, 0, 0), &p(3, 0, 0), &p(1, 2, 0), 0, 1);
         let second = second.with_known_vertex_cycle_and_edges(
             second.vertices().unwrap(),
             vec![
@@ -3513,7 +3513,7 @@ mod tests {
 
     #[test]
     fn certified_triangulation_rejects_duplicate_open_faces_exactly() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let result = BooleanResult::new(
             PolygonSoup {
                 polygons: vec![polygon.clone(), polygon],
@@ -3536,7 +3536,7 @@ mod tests {
 
     #[test]
     fn certified_triangulation_rejects_open_output() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let result = BooleanResult::new(
             PolygonSoup {
                 polygons: vec![polygon],
@@ -3559,7 +3559,7 @@ mod tests {
 
     #[test]
     fn boolean_result_preserves_classified_winding_evidence() {
-        let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+        let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
         let mut classified = ClassifiedPolygon::new(polygon, 1);
         classified.winding = Some(WindingPair {
             w_front: vec![0],
@@ -3588,7 +3588,7 @@ mod tests {
     #[test]
     fn boolean_result_dedupes_exact_duplicate_oriented_classified_polygons() {
         let mut first = ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         );
         first.winding = Some(WindingPair {
@@ -3596,7 +3596,7 @@ mod tests {
             w_back: vec![1],
         });
         let second = ClassifiedPolygon::new(
-            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 7),
+            convex_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 7),
             1,
         );
 
@@ -3623,11 +3623,11 @@ mod tests {
     #[test]
     fn boolean_result_keeps_distinct_same_support_polygons() {
         let first = ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
             1,
         );
         let second = ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
             1,
         );
 
@@ -3648,11 +3648,11 @@ mod tests {
     fn push_unique_classified_polygon_merges_duplicate_classified_output() {
         let mut output = Vec::new();
         let first = ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         );
         let mut second = ClassifiedPolygon::new(
-            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 3),
+            convex_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 3),
             1,
         );
         second.winding = Some(WindingPair {
@@ -3678,11 +3678,11 @@ mod tests {
     #[test]
     fn merge_unique_classified_polygons_dedupes_exact_duplicate_output() {
         let mut output = vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )];
         let mut duplicate = ClassifiedPolygon::new(
-            make_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 4),
+            convex_triangle(&p(1, 0, 0), &p(0, 1, 0), &p(0, 0, 0), 1, 4),
             1,
         );
         duplicate.winding = Some(WindingPair {
@@ -3707,11 +3707,11 @@ mod tests {
     #[test]
     fn merge_unique_classified_polygons_keeps_distinct_same_support_polygons() {
         let mut output = vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0),
             1,
         )];
         let incoming = vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
             1,
         )];
 
@@ -3722,8 +3722,8 @@ mod tests {
 
     #[test]
     fn certified_triangulation_rejects_open_surface_after_boundary_tjunction_cleanup() {
-        let lower = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-        let upper = make_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1);
+        let lower = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+        let upper = convex_triangle(&p(1, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1);
         let result = BooleanResult::new(
             PolygonSoup {
                 polygons: vec![lower, upper],

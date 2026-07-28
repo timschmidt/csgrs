@@ -1,11 +1,11 @@
 use super::*;
 use crate::geometry::Plane;
 use crate::intersection::OverlapInfo;
-use crate::mesh::{OutputVertex, PolygonSoup, build_polygon_soup};
+use crate::mesh::{OutputVertex, PolygonSoup, polygon_soup};
 use crate::operations::{EmberConfig, boolean_operation};
 use crate::output::{BooleanResult, TriangleSoup, triangulate_and_resolve_certified};
-use crate::polygon::make_triangle;
-use crate::winding::{BooleanOp, make_indicator};
+use crate::polygon::convex_triangle;
+use crate::winding::BooleanOp;
 use crate::{InputMesh, Triangle};
 
 fn r(value: i32) -> Real {
@@ -38,7 +38,7 @@ fn reference_target_clones_share_definition_families() {
 
 #[test]
 fn support_reference_context_clones_share_immutable_families() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let definitions = axis_defs(&p(0, 0, 1));
     let context = support_reference_cache_context_key(
         &p(0, 0, 1),
@@ -166,7 +166,7 @@ fn axis_face_polygon(polygons: &[ConvexPolygon], axis: usize, value: i32) -> Con
 
 #[test]
 fn cached_leaf_classification_reuses_rotated_edge_cycles() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut rotated_edges = polygon.edges[1..].to_vec();
     rotated_edges.push(polygon.edges[0].clone());
     let mut cache = Vec::new();
@@ -204,7 +204,7 @@ fn cached_leaf_classification_reuses_rotated_edge_cycles() {
 
 #[test]
 fn leaf_classification_lookup_limit_skips_same_pass_entries() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut cache = Vec::new();
     let mut calls = 0;
 
@@ -244,7 +244,7 @@ fn leaf_classification_lookup_limit_skips_same_pass_entries() {
 
 #[test]
 fn cached_leaf_classification_distinguishes_leaf_context() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let left_context = Arc::new(LeafClassificationCacheContextKey {
         polygon_profile: polygon_family_profile(std::slice::from_ref(&polygon)),
         polygons: vec![polygon.clone()],
@@ -300,7 +300,7 @@ fn cached_leaf_classification_distinguishes_leaf_context() {
 
 #[test]
 fn cached_leaf_point_classification_reuses_identical_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
         .unwrap()
         .into_iter()
@@ -353,7 +353,7 @@ fn cached_leaf_point_classification_reuses_identical_state() {
 
 #[test]
 fn leaf_point_classification_lookup_limit_skips_same_pass_entries() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
         .unwrap()
         .into_iter()
@@ -404,7 +404,7 @@ fn leaf_point_classification_lookup_limit_skips_same_pass_entries() {
 
 #[test]
 fn cached_leaf_point_classification_distinguishes_context() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let point = certified_leaf_interior_points(&polygon.support, &polygon.edges)
         .unwrap()
         .into_iter()
@@ -467,9 +467,9 @@ fn cached_leaf_point_classification_distinguishes_context() {
 
 #[test]
 fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = make_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+    let mut cutter = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let cache = RefCell::new(Vec::new());
 
@@ -523,10 +523,10 @@ fn cached_bsp_leaf_certification_reuses_permuted_polygon_families() {
 
 #[test]
 fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() {
-    let host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let segment_other = make_triangle(&p(1, 0, -1), &p(1, 1, 1), &p(1, 2, -1), 1, 0);
-    let overlap_other = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 2, 0);
-    let skipped_other = make_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 3, 0);
+    let host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let segment_other = convex_triangle(&p(1, 0, -1), &p(1, 1, 1), &p(1, 2, -1), 1, 0);
+    let overlap_other = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 2, 0);
+    let skipped_other = convex_triangle(&p(0, 0, 1), &p(2, 0, 1), &p(0, 2, 1), 3, 0);
     let polygons = vec![
         host.clone(),
         segment_other.clone(),
@@ -544,9 +544,9 @@ fn bsp_leaf_certification_candidate_indices_use_host_segment_and_overlap_only() 
 
 #[test]
 fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = make_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
+    let mut cutter = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(2, -1, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let cache = RefCell::new(Vec::new());
 
@@ -591,7 +591,7 @@ fn cached_host_bsp_leaves_reuse_permuted_polygon_families() {
 
 #[test]
 fn bsp_leaf_edge_cycle_dedupe_skips_rotated_duplicates() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let mut rotated_edges = polygon.edges[1..].to_vec();
     rotated_edges.push(polygon.edges[0].clone());
     let mut seen = Vec::new();
@@ -650,8 +650,8 @@ fn can_split_any_certified_positive_extent() {
 fn select_subdivision_split_prefers_interior_arrangement_gap() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
 
     let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
@@ -663,7 +663,7 @@ fn select_subdivision_split_prefers_interior_arrangement_gap() {
 #[test]
 fn select_subdivision_split_prefers_nonempty_arrangement_gap() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygons = vec![make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
+    let polygons = vec![convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 0, 0)];
 
     let (axis, value) = select_subdivision_split(&bounds, &polygons).unwrap();
 
@@ -675,8 +675,8 @@ fn select_subdivision_split_prefers_nonempty_arrangement_gap() {
 fn select_subdivision_split_can_use_intersection_segment_coordinates() {
     let bounds = Aabb::new(p(-3, 0, -1), p(3, 4, 1));
     let horizontal =
-        crate::polygon::make_quad(&p(-3, 0, 0), &p(3, 0, 0), &p(3, 4, 0), &p(-3, 4, 0), 0, 0);
-    let vertical = make_triangle(&p(-2, 2, -1), &p(2, 2, -1), &p(1, 2, 1), 1, 0);
+        crate::polygon::convex_quad(&p(-3, 0, 0), &p(3, 0, 0), &p(3, 4, 0), &p(-3, 4, 0), 0, 0);
+    let vertical = convex_triangle(&p(-2, 2, -1), &p(2, 2, -1), &p(1, 2, 1), 1, 0);
 
     let candidates =
         intersection_split_candidates(&bounds, &[horizontal.clone(), vertical.clone()], 0).unwrap();
@@ -689,8 +689,8 @@ fn select_subdivision_split_can_use_intersection_segment_coordinates() {
 
 #[test]
 fn arrangement_split_candidates_from_axis_values_matches_direct_query() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![horizontal, vertical];
 
@@ -704,8 +704,8 @@ fn arrangement_split_candidates_from_axis_values_matches_direct_query() {
 
 #[test]
 fn cached_polygon_axis_values_reuse_permuted_polygon_families() {
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     let first =
@@ -718,8 +718,8 @@ fn cached_polygon_axis_values_reuse_permuted_polygon_families() {
 
 #[test]
 fn cached_polygon_axis_values_memoize_current_equivalent_state() {
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     cached_polygon_axis_values_with(&cache, &[polygon_a.clone(), polygon_b.clone()]).unwrap();
@@ -732,8 +732,8 @@ fn cached_polygon_axis_values_memoize_current_equivalent_state() {
 fn subdivision_has_no_split_without_interior_arrangement_events() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
 
     let splits = ordered_subdivision_splits(&bounds, &polygons).unwrap();
@@ -745,8 +745,8 @@ fn subdivision_has_no_split_without_interior_arrangement_events() {
 fn cached_subdivision_has_no_split_without_interior_arrangement_events() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
     let caches = SubdivisionRuntimeCaches::default();
 
@@ -769,8 +769,8 @@ fn cached_subdivision_has_no_split_without_interior_arrangement_events() {
 fn descendant_splits_only_use_the_cached_root_event_basis() {
     let root_bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let root_polygons = vec![
-        make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
     let caches = SubdivisionRuntimeCaches::default();
     let root_basis = cached_root_split_basis_with(
@@ -783,7 +783,7 @@ fn descendant_splits_only_use_the_cached_root_event_basis() {
     .unwrap();
     let root_axis_value_cache_len = caches.polygon_axis_values.borrow().len();
     let descendant_bounds = root_bounds.right_half(0, q(3, 2));
-    let descendant_polygons = vec![make_triangle(&p(3, 0, 0), &p(4, 2, 0), &p(3, 0, 2), 0, 0)];
+    let descendant_polygons = vec![convex_triangle(&p(3, 0, 0), &p(4, 2, 0), &p(3, 0, 2), 0, 0)];
     let descendant_axis_values = polygon_axis_values(&descendant_polygons).unwrap();
     let descendant_local_splits = arrangement_split_candidates_from_axis_values(
         &descendant_bounds,
@@ -880,17 +880,17 @@ fn each_root_split_plane_is_removed_from_both_child_branches() {
 fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
     let mut output = Vec::new();
     let mut leaf_calls = 0;
 
     let err = subdivide_into_inner_with(
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 0 },
         None,
         &mut output,
@@ -912,18 +912,18 @@ fn subdivision_exhausts_arrangement_splits_before_depth_budget() {
 fn certified_root_leaf_preempts_available_arrangement_splits() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
-        make_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
+        convex_triangle(&p(0, 0, 0), &p(10, 0, 0), &p(0, 0, 4), 0, 0),
+        convex_triangle(&p(0, 4, 0), &p(10, 4, 0), &p(0, 4, 4), 1, 0),
     ];
     let emitted = ClassifiedPolygon::new(polygons[0].clone(), 1);
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
     let mut output = Vec::new();
     let mut leaf_calls = 0;
 
     subdivide_into_inner_with(
         SubdivisionTask::new(polygons, bounds, p(-1, -1, -1), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig::default(),
         None,
         &mut output,
@@ -1021,7 +1021,7 @@ fn intersection_split_sources_win_arrangement_ties() {
 
 #[test]
 fn duplicate_arrangement_split_candidate_promotes_to_intersection_source() {
-    let polygons = vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)];
+    let polygons = vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)];
     let mut candidates = vec![SplitCandidate {
         axis: 0,
         value: r(5),
@@ -1129,8 +1129,8 @@ fn split_ranking_prefers_candidates_without_unchanged_parent_children() {
 fn ordered_subdivision_splits_rank_best_candidate_first() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
 
     let ordered = ordered_subdivision_splits(&bounds, &polygons).unwrap();
@@ -1141,8 +1141,8 @@ fn ordered_subdivision_splits_rank_best_candidate_first() {
 
 #[test]
 fn intersection_split_candidates_from_segments_matches_direct_query() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![horizontal, vertical];
 
@@ -1155,8 +1155,8 @@ fn intersection_split_candidates_from_segments_matches_direct_query() {
 
 #[test]
 fn split_intersection_segments_with_pairwise_cache_matches_direct_query() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let polygons = vec![horizontal, vertical];
     let cache = RefCell::new(Vec::<PairwiseIntersectionsCacheEntry>::new());
 
@@ -1169,8 +1169,8 @@ fn split_intersection_segments_with_pairwise_cache_matches_direct_query() {
 #[test]
 fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1216,8 +1216,8 @@ fn cached_ordered_subdivision_splits_reuse_permuted_polygon_families() {
 #[test]
 fn cached_unique_subdivision_split_attempt_count_reuses_equivalent_child_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let mut cache = Vec::new();
     let calls = std::cell::Cell::new(0);
 
@@ -1251,8 +1251,8 @@ fn cached_unique_subdivision_split_attempt_count_reuses_equivalent_child_state()
 #[test]
 fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1288,7 +1288,7 @@ fn cached_ordered_subdivision_splits_memoize_current_equivalent_state() {
 
 #[test]
 fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_results_match() {
-    let polygon = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
     let axis_value_cache = RefCell::new(Vec::new());
     let cache = RefCell::new(SplitCandidatesCache::default());
     let fanout_cache = RefCell::new(Vec::new());
@@ -1337,8 +1337,8 @@ fn cached_ordered_subdivision_splits_cache_distinguishes_bounds_even_when_result
 fn cached_ordered_subdivision_splits_populate_partition_cache() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 4, 4));
     let polygons = vec![
-        make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
-        make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
+        convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0),
+        convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0),
     ];
     let axis_value_cache = RefCell::new(Vec::new());
     let split_cache = RefCell::new(SplitCandidatesCache::default());
@@ -1374,7 +1374,7 @@ fn cached_ordered_subdivision_splits_populate_partition_cache() {
 #[test]
 fn cached_ordered_subdivision_splits_dedupes_equivalent_child_partitions() {
     let bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
-    let polygon = make_triangle(&p(1, 1, 1), &p(2, 1, 1), &p(1, 2, 1), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 1), &p(2, 1, 1), &p(1, 2, 1), 0, 0);
     let polygons = vec![polygon];
     let axis_value_cache = RefCell::new(Vec::new());
     let split_cache = RefCell::new(SplitCandidatesCache::default());
@@ -1401,8 +1401,8 @@ fn cached_ordered_subdivision_splits_dedupes_equivalent_child_partitions() {
 
 #[test]
 fn cached_split_child_partition_reuses_permuted_polygon_families() {
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     let first = cached_split_child_partition_with(
@@ -1421,8 +1421,8 @@ fn cached_split_child_partition_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_split_child_partition_memoizes_current_equivalent_state() {
-    let polygon_a = make_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
-    let polygon_b = make_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
+    let polygon_a = convex_triangle(&p(1, 0, 0), &p(1, 2, 0), &p(1, 0, 2), 0, 0);
+    let polygon_b = convex_triangle(&p(2, 0, 0), &p(2, 2, 0), &p(2, 0, 2), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     cached_split_child_partition_with(&cache, &[polygon_a.clone(), polygon_b.clone()], 0, &r(3))
@@ -1579,7 +1579,7 @@ fn compute_new_reference_skips_projected_search_after_support_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
 
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
@@ -1625,7 +1625,7 @@ fn alternate_support_reference_matches_general_boolean_results() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let refs = [x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()];
     for op in [
         BooleanOp::Union,
@@ -1633,7 +1633,7 @@ fn alternate_support_reference_matches_general_boolean_results() {
         BooleanOp::Difference,
         BooleanOp::SymmetricDifference,
     ] {
-        let indicator = make_indicator(op, soup.num_meshes);
+        let operation = op;
         let classified = subdivide(
             SubdivisionTask::new(
                 soup.polygons.clone(),
@@ -1641,7 +1641,7 @@ fn alternate_support_reference_matches_general_boolean_results() {
                 p(0, 5, 5),
                 vec![0; soup.num_meshes],
             ),
-            &indicator,
+            operation,
             SubdivisionConfig { max_depth: 4 },
         )
         .unwrap_or_else(|err| panic!("alternate {op:?} failed: {err:?}"));
@@ -1671,7 +1671,7 @@ fn ordered_subdivision_splits_keep_lower_child_load_ahead_of_downstream_fanout()
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -1756,7 +1756,7 @@ fn full_soup_hot_fragment_classifies_with_positive_normal_probe() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -1917,7 +1917,7 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let caches = SubdivisionRuntimeCaches::default();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
@@ -2079,8 +2079,8 @@ fn full_soup_root_host_nine_leaf_one_point_zero_classifies() {
 
 #[test]
 fn ordered_reference_search_polygons_prefers_bounds_overlaps() {
-    let overlapping = make_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
-    let disjoint = make_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
+    let overlapping = convex_triangle(&p(1, 1, 1), &p(3, 1, 1), &p(1, 3, 1), 10, 0);
+    let disjoint = convex_triangle(&p(8, 8, 8), &p(9, 8, 8), &p(8, 9, 8), 20, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
     let ordered = ordered_reference_search_polygons(&[disjoint, overlapping.clone()], &bounds);
@@ -3864,16 +3864,16 @@ fn reference_result_or_error_reports_reference_failure_when_all_families_are_cer
 #[test]
 fn certified_leaf_output_helper_runs_leaf_attempt_once() {
     let task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
         p(0, 0, 0),
         vec![0],
     );
-    let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+    let operation = BooleanOp::Union;
     let mut attempts = 0;
 
     let output =
-        certified_leaf_output_if_complete_with(&task, &indicator, |_task, _indicator, _output| {
+        certified_leaf_output_if_complete_with(&task, operation, |_task, _indicator, _output| {
             attempts += 1;
             Err(crate::error::HypermeshError::UnknownClassification)
         })
@@ -3886,19 +3886,19 @@ fn certified_leaf_output_helper_runs_leaf_attempt_once() {
 #[test]
 fn unsplittable_subdivision_runs_leaf_processor_once() {
     let task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(0, 0, 0)),
         p(0, 0, 0),
         vec![0],
     );
-    let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+    let operation = BooleanOp::Union;
     let mut attempts = 0;
     let mut output = Vec::new();
     let caches = SubdivisionRuntimeCaches::default();
 
     let err = subdivide_into_inner_with(
         task,
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 0 },
         None,
         &mut output,
@@ -3918,7 +3918,7 @@ fn unsplittable_subdivision_runs_leaf_processor_once() {
 
 #[test]
 fn recursive_child_bounds_contract_unchanged_polygon_family() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
@@ -3934,8 +3934,8 @@ fn recursive_child_bounds_contract_unchanged_polygon_family() {
 
 #[test]
 fn recursive_child_bounds_contracts_permuted_unchanged_polygon_family() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
@@ -3951,9 +3951,9 @@ fn recursive_child_bounds_contracts_permuted_unchanged_polygon_family() {
 
 #[test]
 fn recursive_child_bounds_contract_changed_polygon_family() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
-    let clipped = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1), 0, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let clipped = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 0, 1), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let child_bounds = parent_bounds.left_half(0, r(5));
 
@@ -3968,7 +3968,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_returns_contracted_task() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -3997,7 +3997,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4020,7 +4020,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_skips_already_tight_task() 
 #[test]
 fn contract_task_to_polygon_family_bounds_if_tighter_never_expands_task() {
     let task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(0, 0, 0)),
         p(0, 0, 0),
         vec![0],
@@ -4038,7 +4038,7 @@ fn contract_task_to_polygon_family_bounds_if_tighter_reuses_cached_subdivision_r
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4082,7 +4082,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let polygons = vec![
         axis_face_polygon(&soup.polygons, 0, 5),
         axis_face_polygon(&soup.polygons, 1, 5),
@@ -4101,10 +4101,10 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
         vec![0; soup.num_meshes],
     );
     let cached_output = vec![ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 1),
         1,
     )];
-    let indicator = crate::winding::make_indicator(BooleanOp::Union, 1);
+    let operation = BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
     caches
         .child_subdivision
@@ -4119,7 +4119,7 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
 
     subdivide_into_inner_with(
         task,
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 0 },
         None,
         &mut output,
@@ -4138,8 +4138,8 @@ fn subdivide_into_inner_with_reuses_cached_contracted_task_result() {
 
 #[test]
 fn ordered_split_attempt_children_prefers_changed_family_before_unchanged_parent_copy() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let children = ordered_split_attempt_children(
         &parent,
@@ -4158,9 +4158,9 @@ fn ordered_split_attempt_children_prefers_changed_family_before_unchanged_parent
 
 #[test]
 fn ordered_split_attempt_children_prefers_smaller_changed_child_family() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
-    let polygon_c = make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 2, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_c = convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 2, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone(), polygon_c.clone()];
     let children = ordered_split_attempt_children(
         &parent,
@@ -4362,8 +4362,8 @@ fn preferred_split_partition_preserves_deferred_rank_order() {
 
 #[test]
 fn split_child_matches_parent_geometry_requires_same_bounds_and_family() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -4377,8 +4377,8 @@ fn split_child_matches_parent_geometry_requires_same_bounds_and_family() {
 
 #[test]
 fn split_child_matches_parent_geometry_rejects_tighter_bounds() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let parent = vec![polygon_a.clone(), polygon_b.clone()];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let tighter_bounds = Aabb::new(p(0, 0, 0), p(2, 4, 4));
@@ -4393,8 +4393,8 @@ fn split_child_matches_parent_geometry_rejects_tighter_bounds() {
 
 #[test]
 fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
@@ -4420,8 +4420,8 @@ fn cached_polygon_family_bounds_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_polygon_family_bounds_memoizes_current_equivalent_state() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let cache = RefCell::new(Vec::new());
 
     cached_polygon_family_bounds_with(&cache, &[polygon_a.clone(), polygon_b.clone()], |_p| {
@@ -4438,8 +4438,8 @@ fn cached_polygon_family_bounds_memoizes_current_equivalent_state() {
 
 #[test]
 fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let polygons = vec![horizontal, vertical];
     let cache = RefCell::new(Vec::new());
 
@@ -4453,8 +4453,8 @@ fn cached_pairwise_intersections_reuse_identical_polygon_sequence() {
 
 #[test]
 fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let first_polygons = vec![horizontal.clone(), vertical.clone()];
     let second_polygons = vec![vertical, horizontal];
     let cache = RefCell::new(Vec::new());
@@ -4470,8 +4470,8 @@ fn cached_pairwise_intersections_reuse_permuted_polygon_sequence() {
 
 #[test]
 fn cached_pairwise_intersections_memoize_current_equivalent_state() {
-    let horizontal = make_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
-    let vertical = make_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
+    let horizontal = convex_triangle(&p(2, 1, 0), &p(8, 1, 0), &p(5, 1, 4), 0, 0);
+    let vertical = convex_triangle(&p(5, 0, 1), &p(5, 4, 1), &p(5, 2, 4), 1, 0);
     let first_polygons = vec![horizontal.clone(), vertical.clone()];
     let second_polygons = vec![vertical, horizontal];
     let cache = RefCell::new(Vec::new());
@@ -4567,7 +4567,7 @@ fn cached_pure_halfspace_containment_reuses_permuted_halfspaces() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branch() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let parent_bounds = Aabb::new(p(0, 0, 0), p(10, 10, 10));
     let left_x = recursive_child_bounds(
         std::slice::from_ref(&polygon),
@@ -4601,7 +4601,7 @@ fn subdivision_child_partition_dedupe_skips_duplicate_contracted_unchanged_branc
 
 #[test]
 fn subdivision_child_partition_dedupe_keeps_distinct_nonempty_bounds() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let mut seen = Vec::new();
     let left_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let left_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
@@ -4624,7 +4624,7 @@ fn subdivision_child_partition_dedupe_keeps_distinct_nonempty_bounds() {
 
 #[test]
 fn cached_child_reference_reuses_identical_child_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -4665,7 +4665,7 @@ fn cached_child_reference_reuses_identical_child_state() {
 
 #[test]
 fn cached_child_reference_stores_only_certified_result_definitions() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let old_ref = p(0, 0, 0);
@@ -4694,7 +4694,7 @@ fn cached_child_reference_stores_only_certified_result_definitions() {
 
 #[test]
 fn cached_child_reference_reuses_permuted_parent_definition_families() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -4740,8 +4740,8 @@ fn cached_child_reference_reuses_permuted_parent_definition_families() {
 
 #[test]
 fn cached_child_reference_memoizes_current_equivalent_state() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let cache = RefCell::new(Vec::new());
     let old_ref = p(0, 0, 0);
@@ -4774,8 +4774,8 @@ fn cached_child_reference_memoizes_current_equivalent_state() {
 
 #[test]
 fn cached_child_reference_prefers_newest_exact_alias_state() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let old_ref = p(0, 0, 0);
     let old_ref_definitions = axis_defs(&old_ref);
@@ -4817,7 +4817,7 @@ fn cached_child_reference_prefers_newest_exact_alias_state() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_child_bounds_separate() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds_a = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let bounds_b = Aabb::new(p(0, 0, 0), p(2, 1, 0));
     let cache = RefCell::new(Vec::new());
@@ -4858,7 +4858,7 @@ fn cached_child_reference_keeps_distinct_child_bounds_separate() {
 
 #[test]
 fn reusable_child_reference_if_certified_reuses_parent_reference() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4892,8 +4892,8 @@ fn reusable_child_reference_if_certified_reuses_parent_reference() {
 
 #[test]
 fn reusable_child_reference_if_certified_reuses_changed_child_family_when_point_stays_valid() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
-    let other = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let other = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4927,7 +4927,7 @@ fn reusable_child_reference_if_certified_reuses_changed_child_family_when_point_
 
 #[test]
 fn reusable_child_reference_if_certified_skips_invalid_point() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4954,7 +4954,7 @@ fn reusable_child_reference_if_certified_skips_invalid_point() {
 
 #[test]
 fn reusable_child_reference_if_certified_memoizes_current_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
@@ -4999,7 +4999,7 @@ fn propagate_child_reference_prefers_direct_result_before_equivalent_cached_reus
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
             soup.polygons.clone(),
@@ -5076,7 +5076,7 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
     let x_mesh = tetra_from_face_and_apex(p(5, 1, 1), p(5, 5, 9), p(5, 9, 1), p(4, 5, 4));
     let y_mesh = tetra_from_face_and_apex(p(1, 5, 1), p(9, 5, 1), p(5, 5, 9), p(5, 4, 4));
     let z_mesh = tetra_from_face_and_apex(p(1, 1, 5), p(5, 9, 5), p(9, 1, 5), p(5, 4, 4));
-    let soup = build_polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[x_mesh.as_ref(), y_mesh.as_ref(), z_mesh.as_ref()]).unwrap();
     let root_task = contract_task_to_polygon_family_bounds_if_tighter(
         &SubdivisionTask::new(
             soup.polygons.clone(),
@@ -5148,7 +5148,7 @@ fn propagate_child_reference_prefers_direct_result_before_exact_cached_hit() {
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let cache = RefCell::new(vec![ChildReferenceCacheEntry {
@@ -5183,7 +5183,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target(
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target_across_tighter_bounds()
  {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let cached_point = p(2, 1, 1);
@@ -5218,7 +5218,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_reuses_cached_target_
 
 #[test]
 fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent_winding() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let query_wnv = vec![7];
@@ -5257,7 +5257,7 @@ fn reusable_child_reference_from_cached_trace_reuses_cached_target_across_parent
 
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let cache = RefCell::new(vec![ChildReferenceCacheEntry {
@@ -5293,7 +5293,7 @@ fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target_across_tighter_bounds()
  {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let cached_bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let query_bounds = Aabb::new(p(0, 0, 0), p(3, 3, 3));
     let cached_point = p(2, 1, 1);
@@ -5329,7 +5329,7 @@ fn reusable_child_reference_from_cached_result_if_certified_reuses_cached_target
 
 #[test]
 fn reusable_child_reference_from_cached_result_if_certified_skips_invalid_cached_target() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(0, 0, 0);
     let query_point = p(1, 1, 1);
@@ -5362,7 +5362,7 @@ fn reusable_child_reference_from_cached_result_if_certified_skips_invalid_cached
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_skips_invalid_cached_target() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(0, 0, 0);
     let query_point = p(1, 1, 1);
@@ -5393,7 +5393,7 @@ fn reusable_child_reference_from_cached_trace_if_certified_skips_invalid_cached_
 
 #[test]
 fn reusable_child_reference_from_cached_trace_if_certified_memoizes_current_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let cached_point = p(2, 1, 1);
     let query_point = cached_point.clone();
@@ -5441,14 +5441,14 @@ fn reusable_child_reference_from_cached_trace_if_certified_memoizes_current_stat
 
 #[test]
 fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
-    let polygon = make_triangle(&p(1, 1, 0), &p(3, 1, 0), &p(1, 3, 0), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 0), &p(3, 1, 0), &p(1, 3, 0), 0, 0);
     let task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(4, 4, 4)),
         p(2, 2, 2),
         vec![0],
     );
-    let indicator = make_indicator(BooleanOp::Union, 1);
+    let operation = BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
     let mut candidate_output = Vec::new();
     let mut candidate_buckets = ClassifiedPolygonBucketState::new();
@@ -5457,7 +5457,7 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
         &task,
         vec![polygon],
         task.bounds.clone(),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 4 },
         Some(BooleanOp::Union),
         &mut candidate_output,
@@ -5479,8 +5479,8 @@ fn process_split_attempt_child_backtracks_on_identical_recursive_state() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_permuted_polygon_order() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let mut seen = Vec::new();
 
@@ -5502,8 +5502,8 @@ fn subdivision_child_partition_dedupe_skips_permuted_polygon_order() {
 
 #[test]
 fn subdivision_child_partition_dedupe_skips_swapped_equivalent_children() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let left_bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let right_bounds = Aabb::new(p(0, 0, 1), p(1, 1, 1));
     let mut seen = Vec::new();
@@ -5526,7 +5526,7 @@ fn subdivision_child_partition_dedupe_skips_swapped_equivalent_children() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_parent_reference_states_separate() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5569,8 +5569,8 @@ fn cached_child_reference_keeps_distinct_parent_reference_states_separate() {
 
 #[test]
 fn cached_child_reference_keeps_distinct_source_polygon_families_separate() {
-    let source_polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let source_polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let source_polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let source_polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 0));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5610,8 +5610,8 @@ fn cached_child_reference_keeps_distinct_source_polygon_families_separate() {
 
 #[test]
 fn cached_child_reference_reuses_permuted_source_polygon_families() {
-    let source_polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let source_polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let source_polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let source_polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(1, 1, 1));
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
@@ -5653,7 +5653,7 @@ fn cached_child_reference_reuses_permuted_source_polygon_families() {
 #[test]
 fn cached_child_subdivision_reuses_identical_child_task() {
     let task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5664,7 +5664,7 @@ fn cached_child_subdivision_reuses_identical_child_task() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5672,7 +5672,7 @@ fn cached_child_subdivision_reuses_identical_child_task() {
     let second = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5685,13 +5685,13 @@ fn cached_child_subdivision_reuses_identical_child_task() {
 #[test]
 fn cached_child_subdivision_keeps_distinct_child_tasks_separate() {
     let task_a = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
     );
     let task_b = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5716,7 +5716,7 @@ fn cached_child_subdivision_keeps_distinct_child_tasks_separate() {
 #[test]
 fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let mut task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(1, 2, 3),
         vec![0],
@@ -5735,7 +5735,7 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5743,7 +5743,7 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
     let second = cached_child_subdivision_with(&cache, &permuted_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5755,8 +5755,8 @@ fn cached_child_subdivision_reuses_permuted_parent_definition_families() {
 
 #[test]
 fn cached_child_subdivision_reuses_permuted_polygon_families() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_a.clone(), polygon_b.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5771,7 +5771,7 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
     let first = cached_child_subdivision_with(&cache, &task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5779,7 +5779,7 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
     let second = cached_child_subdivision_with(&cache, &permuted_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5791,8 +5791,8 @@ fn cached_child_subdivision_reuses_permuted_polygon_families() {
 
 #[test]
 fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_a.clone(), polygon_b.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5805,14 +5805,14 @@ fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
 
     cached_child_subdivision_with(&cache, &task, || {
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
     .unwrap();
     cached_child_subdivision_with(&cache, &permuted_task, || {
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5828,8 +5828,8 @@ fn cached_child_subdivision_memoizes_current_equivalent_task_state() {
 
 #[test]
 fn cached_child_subdivision_prefers_newest_exact_alias_state() {
-    let polygon_a = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
-    let polygon_b = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let polygon_a = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let polygon_b = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     let task = SubdivisionTask::new(
         vec![polygon_b.clone(), polygon_a.clone()],
         Aabb::new(p(0, 0, 0), p(1, 1, 1)),
@@ -5843,11 +5843,11 @@ fn cached_child_subdivision_prefers_newest_exact_alias_state() {
         task.ref_wnv.clone(),
     );
     let older_result = vec![ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
         1,
     )];
     let newer_result = vec![ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+        convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
         1,
     )];
     let cache = RefCell::new(vec![
@@ -5871,7 +5871,7 @@ fn cached_child_subdivision_prefers_newest_exact_alias_state() {
 #[test]
 fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task() {
     let mut deeper_task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -5885,7 +5885,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
     let first = cached_child_subdivision_with(&cache, &deeper_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5893,7 +5893,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
     let second = cached_child_subdivision_with(&cache, &shallower_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -5905,7 +5905,7 @@ fn cached_child_subdivision_reuses_deeper_success_for_shallower_equivalent_task(
 
 #[test]
 fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5926,7 +5926,7 @@ fn reusable_child_subdivision_if_certified_reuses_changed_reference_state() {
 
 #[test]
 fn reusable_child_subdivision_if_certified_skips_invalid_reference_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5946,7 +5946,7 @@ fn reusable_child_subdivision_if_certified_skips_invalid_reference_state() {
 
 #[test]
 fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let existing_task =
         SubdivisionTask::new(vec![polygon.clone()], bounds.clone(), p(1, 1, 1), vec![0]);
@@ -5966,7 +5966,7 @@ fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
     let cached = cached_child_subdivision_with(&cache, &query_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -5978,7 +5978,7 @@ fn reusable_child_subdivision_if_certified_memoizes_current_task_state() {
 
 #[test]
 fn reusable_child_subdivision_if_certified_reuses_result_across_tighter_bounds() {
-    let polygon = make_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
+    let polygon = convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
     let existing_task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -6007,7 +6007,7 @@ fn reusable_child_subdivision_if_certified_reuses_result_across_tighter_bounds()
 
 #[test]
 fn reusable_child_subdivision_if_certified_skips_cached_result_invalid_for_tighter_bounds() {
-    let polygon = make_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
+    let polygon = convex_triangle(&p(2, 2, 0), &p(4, 2, 0), &p(2, 4, 0), 0, 0);
     let existing_task = SubdivisionTask::new(
         vec![polygon.clone()],
         Aabb::new(p(0, 0, 0), p(6, 6, 6)),
@@ -6036,7 +6036,7 @@ fn reusable_child_subdivision_if_certified_skips_cached_result_invalid_for_tight
 #[test]
 fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_result_across_parent_winding()
  {
-    let mut polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let mut polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     polygon.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
     let query_task =
@@ -6081,7 +6081,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_reuses_cached_resul
 
 #[test]
 fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_cached_winding() {
-    let mut polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let mut polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
     polygon.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, -2), p(4, 4, 2));
     let query_task =
@@ -6116,7 +6116,7 @@ fn reusable_child_subdivision_from_cached_trace_if_certified_skips_mismatched_ca
 #[test]
 fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let mut shallower_task = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
@@ -6130,7 +6130,7 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let first = cached_child_subdivision_with(&cache, &shallower_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
+            convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0),
             1,
         )])
     })
@@ -6138,7 +6138,7 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
     let second = cached_child_subdivision_with(&cache, &deeper_task, || {
         calls.set(calls.get() + 1);
         Ok(vec![ClassifiedPolygon::new(
-            make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
+            convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 1),
             1,
         )])
     })
@@ -6151,13 +6151,13 @@ fn cached_child_subdivision_keeps_shallower_and_deeper_successes_separate() {
 #[test]
 fn cached_child_subdivision_allows_nested_shared_cache_queries() {
     let task_a = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(1, 1, 0)),
         p(0, 0, 0),
         vec![0],
     );
     let task_b = SubdivisionTask::new(
-        vec![make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
+        vec![convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0)],
         Aabb::new(p(0, 0, 0), p(2, 2, 0)),
         p(0, 0, 0),
         vec![0],
@@ -6401,7 +6401,7 @@ fn cached_reference_target_from_halfspace_witness_distinguishes_active_state() {
 
 #[test]
 fn valid_reference_rejects_local_surface_points() {
-    let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -6410,9 +6410,9 @@ fn valid_reference_rejects_local_surface_points() {
 
 #[test]
 fn surface_reference_normalization_departs_open_parallel_surface_family() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let polygons = vec![left, right];
     let bounds = Aabb::new(p(1, 1, 1), p(4, 5, 5));
@@ -6430,7 +6430,7 @@ fn surface_reference_normalization_departs_open_parallel_surface_family() {
 #[test]
 fn surface_reference_normalization_selects_matching_positive_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
@@ -6459,7 +6459,7 @@ fn surface_reference_normalization_selects_matching_positive_side_winding() {
 #[test]
 fn surface_reference_normalization_selects_matching_negative_side_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     let polygon = soup
         .polygons
         .iter()
@@ -6487,7 +6487,7 @@ fn surface_reference_normalization_selects_matching_negative_side_winding() {
 #[test]
 fn surface_reference_normalization_finds_matching_vertex_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, definitions, winding) =
@@ -6503,7 +6503,7 @@ fn surface_reference_normalization_finds_matching_vertex_cell() {
 #[test]
 fn surface_reference_normalization_finds_matching_edge_cell() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, _definitions, winding) =
@@ -6519,7 +6519,7 @@ fn surface_reference_normalization_finds_matching_edge_cell() {
 fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
     let left = tetra_from_face_and_apex(p(2, 0, 0), p(2, 6, 0), p(2, 3, 6), p(0, 3, 2));
     let right = tetra_from_face_and_apex(p(0, 3, 0), p(6, 3, 0), p(3, 3, 6), p(3, 5, 2));
-    let soup = build_polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
+    let soup = polygon_soup(&[left.as_ref(), right.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let (point, _definitions, winding) =
@@ -6534,7 +6534,7 @@ fn surface_reference_normalization_finds_matching_noncoplanar_surface_cell() {
 #[test]
 fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_winding() {
     let mesh = tetra_from_face_and_apex(p(1, 1, 1), p(1, 5, 1), p(1, 3, 5), p(0, 3, 2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     let err = normalize_surface_reference(&p(1, 1, 1), &[7], &bounds, &soup.polygons).unwrap_err();
@@ -6547,7 +6547,7 @@ fn surface_reference_normalization_exhausts_adjacent_cells_for_impossible_windin
 
 #[test]
 fn surface_reference_closure_allows_non_manifold_edge_valence() {
-    let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![
         polygon.clone(),
         polygon.clone(),
@@ -6561,7 +6561,7 @@ fn surface_reference_closure_allows_non_manifold_edge_valence() {
 
 #[test]
 fn surface_reference_closure_rejects_unbalanced_non_manifold_edge_valence() {
-    let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![polygon.clone(), polygon.clone(), polygon];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6570,7 +6570,7 @@ fn surface_reference_closure_rejects_unbalanced_non_manifold_edge_valence() {
 
 #[test]
 fn surface_reference_closure_rejects_boundary_edges() {
-    let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
     assert!(!polygon_family_is_closed_within_bounds(&[polygon], &bounds, 1).unwrap());
@@ -6578,7 +6578,7 @@ fn surface_reference_closure_rejects_boundary_edges() {
 
 #[test]
 fn surface_reference_closure_rejects_missing_winding_component_mesh() {
-    let polygon = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let polygon = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     let polygons = vec![polygon.clone(), polygon];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6587,7 +6587,7 @@ fn surface_reference_closure_rejects_missing_winding_component_mesh() {
 
 #[test]
 fn certified_reference_validity_reports_unknown_for_local_surface_boundary_point() {
-    let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -6599,7 +6599,7 @@ fn certified_reference_validity_reports_unknown_for_local_surface_boundary_point
 
 #[test]
 fn compute_new_reference_reports_unknown_after_boundary_inherited_reference_if_search_exhausts() {
-    let mut wall = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let old_ref = p(0, 0, 0);
     let bounds = Aabb::new(old_ref.clone(), old_ref.clone());
@@ -6612,7 +6612,7 @@ fn compute_new_reference_reports_unknown_after_boundary_inherited_reference_if_s
 
 #[test]
 fn trace_reference_target_rejects_invalid_targets() {
-    let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
 
@@ -6658,7 +6658,7 @@ fn reference_trace_bounds_expand_only_to_inherited_reference() {
 fn trace_reference_target_uses_bounded_detour_for_valid_target() {
     let ref_point = p(0, 0, 0);
     let target_point = p(2, 1, 0);
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
@@ -6699,7 +6699,7 @@ fn trace_reference_target_retries_axis_plane_replacement_definitions() {
         Plane::axis_aligned(0, r(1)),
         Plane::axis_aligned(0, r(0)),
     ];
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
@@ -6740,7 +6740,7 @@ fn trace_reference_target_retries_axis_start_after_retained_definitions_fail() {
         Plane::axis_aligned(1, r(1)),
         Plane::from_coefficients(r(1), r(1), r(1), r(-3)),
     ];
-    let mut wall = make_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
+    let mut wall = convex_triangle(&p(1, -2, -2), &p(1, -2, 0), &p(1, 1, 0), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, -1, -1), p(3, 2, 1));
 
@@ -6782,12 +6782,12 @@ fn trace_reference_target_uses_detour_on_plane_replacement_step() {
         Plane::axis_aligned(2, r(0)),
     ];
     let mut blockers = vec![
-        make_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        make_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
+        convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
+        convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
+        convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
     ];
     for (index, x) in [q(2, 3), r(1), q(4, 3)].into_iter().enumerate() {
-        blockers.push(make_triangle(
+        blockers.push(convex_triangle(
             &px(x.clone(), -1, -1),
             &px(x.clone(), 3, -1),
             &px(x, 1, 3),
@@ -6822,9 +6822,9 @@ fn trace_reference_target_uses_detour_on_plane_replacement_step() {
 
 #[test]
 fn projection_escape_bounds_stop_at_nearest_axis_surfaces() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6842,9 +6842,9 @@ fn projection_escape_bounds_stop_at_nearest_axis_surfaces() {
 
 #[test]
 fn projection_escape_bounds_family_includes_later_exact_boxes() {
-    let mut x_wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = make_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -6890,8 +6890,8 @@ fn projection_escape_bounds_family_backtracks_after_uncertified_candidate_box() 
 fn escaped_reference_axis_stop_values_backtrack_after_uncertified_crossing() {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
         &projected,
@@ -6918,8 +6918,8 @@ fn escaped_reference_axis_stop_values_backtrack_after_uncertified_crossing() {
 fn escaped_reference_axis_stop_values_treat_boundary_crossing_as_unknown_and_keep_later_corridor() {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = make_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
         &projected,
@@ -6950,8 +6950,8 @@ fn escaped_reference_axis_stop_values_treat_endpoint_boundary_contact_as_unknown
  {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = make_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(3, 0, 0), &p(3, 1, 0), &p(3, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
         &projected,
@@ -6986,8 +6986,8 @@ fn escaped_reference_axis_stop_values_treat_start_boundary_contact_as_unknown_an
  {
     let projected = p(0, 0, 0);
     let bounds = Aabb::new(p(0, 0, 0), p(3, 1, 1));
-    let first = make_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
-    let second = make_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
+    let first = convex_triangle(&p(0, 0, 0), &p(0, 1, 0), &p(0, 0, 1), 0, 0);
+    let second = convex_triangle(&p(2, 0, 0), &p(2, 1, 0), &p(2, 0, 1), 0, 1);
 
     let (stop_values, saw_unknown) = escaped_reference_axis_stop_values_with_queries(
         &projected,
@@ -7039,9 +7039,9 @@ fn escaped_reference_axis_stop_values_treat_bound_start_contact_as_unknown() {
 
 #[test]
 fn projection_axis_escape_reference_certifies_fallback_corridor_witness_after_trace() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -10953,7 +10953,7 @@ fn cached_reference_escape_search_in_query_caches_skips_retrace_for_invalid_cach
 
 #[test]
 fn projection_axis_escape_stop_values_include_later_bound_corridor() {
-    let mut wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -10973,7 +10973,7 @@ fn projection_axis_escape_stop_values_report_unknown_for_bound_start_contact() {
 
 #[test]
 fn projection_axis_escape_reference_backtracks_after_empty_nearer_corridor() {
-    let mut wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11009,9 +11009,9 @@ fn projection_axis_escape_reference_backtracks_after_empty_nearer_corridor() {
 
 #[test]
 fn projection_axis_escape_reference_backtracks_after_uncertified_corridor() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut attempts = 0;
@@ -11040,9 +11040,9 @@ fn projection_axis_escape_reference_backtracks_after_uncertified_corridor() {
 
 #[test]
 fn projection_axis_escape_reference_accepts_later_corridor_after_endpoint_boundary_contact() {
-    let mut boundary = make_triangle(&p(6, 3, 3), &p(6, 5, 3), &p(6, 3, 5), 0, 0);
+    let mut boundary = convex_triangle(&p(6, 3, 3), &p(6, 5, 3), &p(6, 3, 5), 0, 0);
     boundary.delta_w = vec![1];
-    let mut interior = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut interior = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     interior.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11075,9 +11075,9 @@ fn projection_axis_escape_reference_accepts_later_corridor_after_endpoint_bounda
 
 #[test]
 fn projection_axis_escape_reference_accepts_later_corridor_after_boundary_start_contact() {
-    let mut boundary = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut boundary = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     boundary.delta_w = vec![1];
-    let mut interior = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut interior = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     interior.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_corridors = Vec::new();
@@ -11220,9 +11220,9 @@ fn projection_axis_escape_reference_certifies_only_fallback_corridor_success() {
 
 #[test]
 fn projection_axis_escape_reference_reports_unknown_if_all_corridors_are_uncertified() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11239,9 +11239,9 @@ fn projection_axis_escape_reference_reports_unknown_if_all_corridors_are_uncerti
 
 #[test]
 fn projection_escape_reference_backtracks_after_uncertified_tight_box() {
-    let mut x_wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = make_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11473,9 +11473,9 @@ fn projection_escape_reference_accepts_later_box_after_uncertified_axis_option_f
 
 #[test]
 fn projection_escape_reference_reports_unknown_if_all_boxes_are_uncertified() {
-    let mut left = make_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
+    let mut left = convex_triangle(&p(1, 1, 1), &p(1, 5, 1), &p(1, 3, 5), 0, 0);
     left.delta_w = vec![1];
-    let mut right = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
+    let mut right = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 1);
     right.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
 
@@ -11492,9 +11492,9 @@ fn projection_escape_reference_reports_unknown_if_all_boxes_are_uncertified() {
 
 #[test]
 fn projection_escape_reference_backtracks_after_empty_tighter_box() {
-    let mut x_wall = make_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
+    let mut x_wall = convex_triangle(&p(4, 1, 1), &p(4, 5, 1), &p(4, 3, 5), 0, 0);
     x_wall.delta_w = vec![1];
-    let mut y_wall = make_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
+    let mut y_wall = convex_triangle(&p(0, 5, 0), &p(6, 5, 0), &p(0, 5, 6), 0, 1);
     y_wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(6, 6, 6));
     let mut searched_boxes = Vec::new();
@@ -11552,7 +11552,7 @@ fn support_plane_cell_finds_target_when_midpoint_is_blocked() {
 
 #[test]
 fn point_lies_on_any_support_plane_reports_unknown_for_boundary_contact() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
 
     let err = point_lies_on_any_support_plane(&p(2, 0, 0), &[polygon]).unwrap_err();
 
@@ -11561,7 +11561,7 @@ fn point_lies_on_any_support_plane_reports_unknown_for_boundary_contact() {
 
 #[test]
 fn point_lies_on_any_support_plane_ignores_coplanar_points_outside_polygon() {
-    let polygon = make_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
+    let polygon = convex_triangle(&p(0, 0, 0), &p(4, 0, 0), &p(0, 4, 0), 0, 0);
 
     assert!(!point_lies_on_any_support_plane(&p(5, 5, 0), &[polygon]).unwrap());
 }
@@ -12453,9 +12453,9 @@ fn shifted_projected_escape_target_family_search_backtracks_after_uncertified_ea
 
 #[test]
 fn winding_reachability_prunes_difference_when_other_mesh_cannot_reach_zero() {
-    let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![0, 1];
-    let mut second = make_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
+    let mut second = convex_triangle(&p(0, 0, 1), &p(1, 0, 1), &p(0, 1, 1), 1, 0);
     second.delta_w = vec![0, 1];
 
     assert!(
@@ -12466,7 +12466,7 @@ fn winding_reachability_prunes_difference_when_other_mesh_cannot_reach_zero() {
 
 #[test]
 fn winding_reachability_keeps_difference_when_other_mesh_can_reach_zero() {
-    let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![0, 1];
 
     assert!(
@@ -12476,7 +12476,7 @@ fn winding_reachability_keeps_difference_when_other_mesh_can_reach_zero() {
 
 #[test]
 fn winding_reachability_prunes_correlated_difference_when_zero_is_not_jointly_reachable() {
-    let mut correlated = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut correlated = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     correlated.delta_w = vec![1, 1];
 
     assert!(
@@ -12489,15 +12489,15 @@ fn cached_winding_reachability_reuses_transition_multiset_across_polygon_geometr
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
-    let mut first = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first.delta_w = vec![1, 1];
-    let mut second = make_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 1, 0);
+    let mut second = convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 1, 0);
     second.delta_w = vec![0, -1];
     let first_polygons = vec![first.clone(), second.clone()];
 
-    let mut third = make_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 2, 0);
+    let mut third = convex_triangle(&p(3, 0, 0), &p(4, 0, 0), &p(3, 1, 0), 2, 0);
     third.delta_w = vec![0, -1];
-    let mut fourth = make_triangle(&p(3, 0, 2), &p(4, 0, 2), &p(3, 1, 2), 3, 0);
+    let mut fourth = convex_triangle(&p(3, 0, 2), &p(4, 0, 2), &p(3, 1, 2), 3, 0);
     fourth.delta_w = vec![1, 1];
     let second_polygons = vec![third, fourth];
 
@@ -12533,7 +12533,7 @@ fn cached_winding_reachability_distinguishes_reference_winding_context() {
     let cache = RefCell::new(Vec::new());
     let calls = std::cell::Cell::new(0);
 
-    let mut first_polygon = make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
+    let mut first_polygon = convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 0);
     first_polygon.delta_w = vec![0, 1];
     let mut second_polygon = first_polygon.clone();
     second_polygon.mesh_index = 1;
@@ -12824,7 +12824,7 @@ fn reference_target_trace_search_skips_support_surface_targets_before_trace() {
 
 #[test]
 fn reference_target_trace_search_tries_later_target_after_boundary_support_surface_contact() {
-    let polygon = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+    let polygon = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
     let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
     let interior = ReferenceTarget::axis_defined(p(1, 1, 1));
     let mut trace_calls = 0;
@@ -12847,7 +12847,7 @@ fn reference_target_trace_search_tries_later_target_after_boundary_support_surfa
 #[test]
 fn reference_target_trace_search_reports_unknown_when_boundary_support_surface_contact_blocks_only_target()
  {
-    let polygon = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
+    let polygon = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 0, 4), 0, 0);
     let boundary = ReferenceTarget::axis_defined(p(2, 0, 2));
 
     let err = trace_reference_targets_backtracking_unknown(vec![boundary], &[polygon], |_target| {
@@ -13149,7 +13149,7 @@ fn reference_target_trace_search_tries_later_target_after_uncertified_reference_
 fn reference_target_trace_search_tries_later_target_after_boundary_local_surface_validity_query() {
     let first = ReferenceTarget::axis_defined(p(2, 1, 2));
     let second = ReferenceTarget::axis_defined(p(1, 1, 1));
-    let mut wall = make_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
+    let mut wall = convex_triangle(&p(2, 0, 0), &p(2, 4, 0), &p(2, 2, 4), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(0, 0, 0), p(4, 4, 4));
     let mut surface_cache = Vec::new();
@@ -13822,19 +13822,19 @@ fn reference_propagation_reports_unknown_for_uncertain_exhausted_construction() 
 
 #[test]
 fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
 
     let err = subdivide_into(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 0 },
         &mut output,
     )
@@ -13852,17 +13852,17 @@ fn subdivide_into_keeps_output_unchanged_on_uncertified_failure() {
 
 #[test]
 fn unsplittable_task_requires_certified_leaf_completion() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let mut output = Vec::new();
     let emitted = ClassifiedPolygon::new(wall.clone(), 1);
     let caches = SubdivisionRuntimeCaches::default();
 
     let err = subdivide_into_inner_with(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 4 },
         None,
         &mut output,
@@ -13885,17 +13885,17 @@ fn unsplittable_task_requires_certified_leaf_completion() {
 
 #[test]
 fn unsplittable_task_accepts_certified_leaf_completion() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let mut output = Vec::new();
     let emitted = ClassifiedPolygon::new(wall.clone(), 1);
     let caches = SubdivisionRuntimeCaches::default();
 
     subdivide_into_inner_with(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 4 },
         None,
         &mut output,
@@ -13917,19 +13917,19 @@ fn unsplittable_task_accepts_certified_leaf_completion() {
 
 #[test]
 fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, 0, 0), p(1, 0, 0));
     let ref_point = p(0, 0, 0);
     let mut task = SubdivisionTask::new(vec![wall], bounds, ref_point.clone(), vec![0]);
     task.ref_definitions = vec![axis_plane_definition(&p(9, 9, 9))];
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let caches = SubdivisionRuntimeCaches::default();
     let mut output = Vec::new();
 
     subdivide_into_inner_with(
         task,
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 4 },
         None,
         &mut output,
@@ -13949,19 +13949,19 @@ fn subdivision_normalizes_reference_definitions_before_leaf_processing() {
 
 #[test]
 fn subdivision_keeps_splitting_after_uncertified_leaf_failure() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
 
     let err = subdivide_into(
         SubdivisionTask::new(vec![wall], bounds, p(0, 0, 0), vec![0]),
-        &indicator,
+        operation,
         SubdivisionConfig { max_depth: 0 },
         &mut output,
     )
@@ -13979,7 +13979,7 @@ fn subdivision_keeps_splitting_after_uncertified_leaf_failure() {
 
 #[test]
 fn operation_subdivision_discards_fixed_difference_outside_region() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 1, 0);
     wall.delta_w = vec![0, 1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let output = subdivide_boolean(
@@ -13994,7 +13994,7 @@ fn operation_subdivision_discards_fixed_difference_outside_region() {
 
 #[test]
 fn operation_subdivision_keeps_potential_difference_region() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1, 0];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
     let err = subdivide_boolean(
@@ -14015,12 +14015,12 @@ fn operation_subdivision_keeps_potential_difference_region() {
 
 #[test]
 fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
-    let mut wall = make_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
+    let mut wall = convex_triangle(&p(1, -1, -1), &p(1, 1, -1), &p(1, 0, 1), 0, 0);
     wall.delta_w = vec![1];
     let bounds = Aabb::new(p(1, -1, -1), p(1, 1, 1));
-    let indicator = crate::winding::make_indicator(crate::winding::BooleanOp::Union, 1);
+    let operation = crate::winding::BooleanOp::Union;
     let sentinel = ClassifiedPolygon::new(
-        make_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
+        convex_triangle(&p(0, 0, 0), &p(1, 0, 0), &p(0, 1, 0), 0, 99),
         1,
     );
     let mut output = vec![sentinel.clone()];
@@ -14031,7 +14031,7 @@ fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
         &p(0, 0, 0),
         &axis_defs(&p(0, 0, 0)),
         &[0],
-        &indicator,
+        operation,
         &mut output,
     )
     .unwrap_err();
@@ -14042,9 +14042,9 @@ fn process_leaf_into_keeps_output_unchanged_on_uncertified_failure() {
 
 #[test]
 fn bsp_leaf_certification_rejects_unsplit_interior_segment() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 0, 0);
     host.delta_w = vec![1, 0];
-    let mut cutter = make_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
+    let mut cutter = convex_triangle(&p(1, 0, -1), &p(1, 0, 1), &p(1, 2, 0), 1, 0);
     cutter.delta_w = vec![0, 1];
     let polygons = vec![host.clone(), cutter];
 
@@ -14055,9 +14055,9 @@ fn bsp_leaf_certification_rejects_unsplit_interior_segment() {
 
 #[test]
 fn bsp_leaf_certification_rejects_boundary_ambiguous_overlap() {
-    let mut host = make_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 1, 0);
+    let mut host = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 2, 0), 1, 0);
     host.delta_w = vec![0, 1];
-    let mut overlap = make_triangle(
+    let mut overlap = convex_triangle(
         &p(0, 0, 0),
         &Point3::new(q(4, 3), r(0), r(0)),
         &Point3::new(r(0), q(4, 3), r(0)),
@@ -14074,8 +14074,8 @@ fn bsp_leaf_certification_rejects_boundary_ambiguous_overlap() {
 
 #[test]
 fn segment_interval_witness_finds_strict_overlap_when_midpoint_is_on_boundary() {
-    let left = make_triangle(&p(1, -1, 0), &p(3, -1, 0), &p(1, 1, 0), 0, 0);
-    let right = make_triangle(&p(0, -2, 0), &p(4, -2, 0), &p(0, 2, 0), 1, 0);
+    let left = convex_triangle(&p(1, -1, 0), &p(3, -1, 0), &p(1, 1, 0), 0, 0);
+    let right = convex_triangle(&p(0, -2, 0), &p(4, -2, 0), &p(0, 2, 0), 1, 0);
 
     assert!(
         segment_has_strict_interior_point_in_both(&p(0, 0, 0), &p(2, 0, 0), &left, &right).unwrap()

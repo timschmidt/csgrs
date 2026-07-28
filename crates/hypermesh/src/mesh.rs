@@ -8,10 +8,9 @@ use hyperlattice::{Point3, Real, RealSign};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Aabb, Classification, Plane, axis_ref, classify_point, compare_real};
 use crate::polygon::{
-    ConvexPolygon, InputTrianglePlanes, exact_axis_aligned_triangle_support,
+    ConvexPolygon, InputTrianglePlanes, convex_triangle, exact_axis_aligned_triangle_support,
     make_indexed_triangle_with_deferred_edges,
-    make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle,
-    make_triangle_with_input_planes,
+    make_indexed_triangle_with_deferred_edges_and_input_planes, make_triangle_with_input_planes,
 };
 use crate::storage_hash::StorageHashMap;
 
@@ -157,8 +156,8 @@ impl AdjacentSupportEdges {
     }
 }
 
-/// Validates borrowed mesh views and builds a combined polygon soup.
-pub fn build_polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
+/// Validates borrowed mesh views and returns their combined polygon soup.
+pub fn polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup> {
     build_polygon_soup_with_edge_mode(meshes, None, None, false)
 }
 
@@ -168,7 +167,7 @@ pub fn build_polygon_soup(meshes: &[MeshRef<'_>]) -> HypermeshResult<PolygonSoup
 /// A successful result may be retained by mesh owners as a reusable convexity
 /// fact for subsequent Boolean operations.
 pub fn certify_convex_mesh(mesh: MeshRef<'_>) -> HypermeshResult<()> {
-    let soup = build_polygon_soup(&[mesh])?;
+    let soup = polygon_soup(&[mesh])?;
     for polygon in &soup.polygons {
         for point in mesh.positions {
             if crate::predicate::classify_point(point, &polygon.support)?
@@ -406,7 +405,7 @@ fn build_polygon_soup_with_edge_mode(
                     mesh_index as isize,
                     polygon_index,
                 ),
-                (None, None) => make_triangle(p0, p1, p2, mesh_index as isize, polygon_index),
+                (None, None) => convex_triangle(p0, p1, p2, mesh_index as isize, polygon_index),
             }
             .with_source_triangle_edge_identities(mesh_index, [i0, i1, i2]);
             if !polygon.support.is_valid() {
@@ -777,6 +776,6 @@ mod tests {
             classify_indexed_edge_balance(&mesh.as_ref()),
             EdgeBalance::default()
         );
-        build_polygon_soup(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
+        polygon_soup(&[mesh.as_ref()]).expect("closed coincident-index tetrahedron");
     }
 }

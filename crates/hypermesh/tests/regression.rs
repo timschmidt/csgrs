@@ -4,8 +4,9 @@ use std::str::FromStr;
 use hypermesh::{
     Aabb, BooleanOp, BooleanResult, Classification, EmberConfig, ExactBvh, HypermeshResult,
     InputMesh, MeshRef, OutputVertex, Plane, Point3, Real, Triangle, TriangleSoup,
-    boolean_difference, boolean_intersection, boolean_operation, boolean_union, build_polygon_soup,
-    certify_output_polygon_closure, classify_point, triangulate_and_resolve_certified,
+    boolean_difference, boolean_intersection, boolean_operation, boolean_union,
+    certify_output_polygon_closure, classify_point, polygon_soup,
+    triangulate_and_resolve_certified,
 };
 use proptest::prelude::*;
 
@@ -463,14 +464,13 @@ fn assert_overlapping_box_xor_topology(a: InputMesh, b: InputMesh, volumes: [i32
         config(),
     )
     .unwrap();
-    let indicator = hypermesh::winding::make_indicator(BooleanOp::SymmetricDifference, 2);
     for winding in xor_result.winding_pairs() {
         let winding = winding
             .as_ref()
             .expect("general XOR output must retain winding evidence");
         assert_ne!(
-            indicator(&winding.w_front),
-            indicator(&winding.w_back),
+            BooleanOp::SymmetricDifference.contains(&winding.w_front),
+            BooleanOp::SymmetricDifference.contains(&winding.w_back),
             "emitted XOR polygon does not separate inside from outside",
         );
     }
@@ -612,7 +612,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
 #[test]
 fn roundtrip_preserves_triangle_vertices_exactly() {
     let mesh = octahedron([r(0), r(0), r(0)], r(2));
-    let soup = build_polygon_soup(&[mesh.as_ref()]).unwrap();
+    let soup = polygon_soup(&[mesh.as_ref()]).unwrap();
 
     assert_eq!(soup.polygons.len(), mesh.triangles.len());
     for (poly_index, polygon) in soup.polygons.iter().enumerate() {
@@ -644,7 +644,7 @@ fn roundtrip_preserves_triangle_vertices_exactly() {
 fn bvh_candidates_match_bruteforce_bounds_for_complex_fixture() {
     let a = octahedron([r(0), r(0), r(0)], r(3));
     let b = octahedron([r(1), r(1), r(1)], r(3));
-    let soup = build_polygon_soup(&[a.as_ref(), b.as_ref()]).unwrap();
+    let soup = polygon_soup(&[a.as_ref(), b.as_ref()]).unwrap();
     let polygons = soup.polygons;
     let left = polygons
         .iter()

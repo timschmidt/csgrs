@@ -19,7 +19,7 @@ pub struct WindingPair {
     pub w_back: WindingNumberVector,
 }
 
-/// Boolean operation indicator.
+/// Boolean operation used to classify winding vectors.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BooleanOp {
     /// Set union.
@@ -32,19 +32,20 @@ pub enum BooleanOp {
     SymmetricDifference,
 }
 
-/// Borrowable indicator function object.
-pub type Indicator = dyn Fn(&[i32]) -> bool + Send + Sync + 'static;
-
-/// Creates a boolean operation indicator.
-pub fn make_indicator(op: BooleanOp, _num_meshes: usize) -> Box<Indicator> {
-    match op {
-        BooleanOp::Union => Box::new(|w| w.iter().any(|value| *value != 0)),
-        BooleanOp::Intersection => Box::new(|w| w.iter().all(|value| *value != 0)),
-        BooleanOp::Difference => Box::new(|w| {
-            w.first().copied().unwrap_or_default() != 0 && w.iter().skip(1).all(|value| *value == 0)
-        }),
-        BooleanOp::SymmetricDifference => {
-            Box::new(|w| w.iter().filter(|value| **value != 0).count() % 2 == 1)
+impl BooleanOp {
+    /// Returns whether a winding vector lies inside this Boolean result.
+    #[inline]
+    pub fn contains(self, winding: &[i32]) -> bool {
+        match self {
+            Self::Union => winding.iter().any(|value| *value != 0),
+            Self::Intersection => winding.iter().all(|value| *value != 0),
+            Self::Difference => {
+                winding.first().copied().unwrap_or_default() != 0
+                    && winding.iter().skip(1).all(|value| *value == 0)
+            }
+            Self::SymmetricDifference => {
+                winding.iter().filter(|value| **value != 0).count() % 2 == 1
+            }
         }
     }
 }
@@ -89,8 +90,7 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
     ref_wnv: &[i32],
     transitions: &[WindingNumberTransitionVector],
 ) -> HypermeshResult<bool> {
-    let indicator = make_indicator(op, ref_wnv.len());
-    if indicator(ref_wnv) {
+    if op.contains(ref_wnv) {
         return Ok(true);
     }
 
@@ -108,7 +108,7 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
             next.insert(apply_transition(state, 1, transition)?);
         }
 
-        if next.iter().any(|state| indicator(state)) {
+        if next.iter().any(|state| op.contains(state)) {
             return Ok(true);
         }
 
@@ -129,9 +129,9 @@ pub(crate) fn can_boolean_op_be_inside_with_transition_reachability(
 }
 
 /// Classifies a polygon output transition.
-pub fn classify_polygon_output(w_front: &[i32], w_back: &[i32], indicator: &Indicator) -> i8 {
-    let front_in = indicator(w_front);
-    let back_in = indicator(w_back);
+pub fn classify_polygon_output(w_front: &[i32], w_back: &[i32], operation: BooleanOp) -> i8 {
+    let front_in = operation.contains(w_front);
+    let back_in = operation.contains(w_back);
 
     if !front_in && back_in {
         1

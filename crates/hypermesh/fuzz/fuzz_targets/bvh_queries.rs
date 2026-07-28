@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use hypermesh::bvh::bounds_overlap;
 use hypermesh::{
     ApproxBounds, Classification, ExactBvh, ExactPointBvh, Plane, Point3, Real, classify_point,
-    make_triangle,
+    convex_triangle,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -23,7 +23,7 @@ fuzz_target!(|data: [u8; 33]| {
         .map(|index| {
             let x = i64::from(data[index * 2 + 1] % 17) - 8;
             let y = i64::from(data[index * 2 + 2] % 17) - 8;
-            make_triangle(
+            convex_triangle(
                 &p(x, y, 0),
                 &p(x + 2, y, 0),
                 &p(x, y + 2, 0),

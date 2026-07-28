@@ -622,8 +622,8 @@ impl ConvexPolygon {
     }
 }
 
-/// Creates a triangle polygon from three exact positions.
-pub fn make_triangle(
+/// Returns a convex triangle from three exact positions.
+pub fn convex_triangle(
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
@@ -631,17 +631,11 @@ pub fn make_triangle(
     polygon_index: isize,
 ) -> ConvexPolygon {
     let support = Plane::from_points(p0, p1, p2);
-    let points = [p0, p1, p2];
-    let edges = (0..3)
-        .map(|i| {
-            edge_plane(
-                points[i],
-                points[(i + 1) % 3],
-                points[(i + 2) % 3],
-                &support,
-            )
-        })
-        .collect();
+    let edges = Vec::from([
+        edge_plane(p0, p1, p2, &support),
+        edge_plane(p1, p2, p0, &support),
+        edge_plane(p2, p0, p1, &support),
+    ]);
 
     ConvexPolygon {
         support,
@@ -829,8 +823,8 @@ pub(crate) fn make_indexed_triangle_with_deferred_edges_and_input_planes(
     }
 }
 
-/// Creates a quad polygon from four coplanar exact positions in winding order.
-pub fn make_quad(
+/// Returns a convex quad from four coplanar exact positions in winding order.
+pub fn convex_quad(
     p0: &Point3,
     p1: &Point3,
     p2: &Point3,
@@ -839,17 +833,12 @@ pub fn make_quad(
     polygon_index: isize,
 ) -> ConvexPolygon {
     let support = Plane::from_points(p0, p1, p2);
-    let points = [p0, p1, p2, p3];
-    let edges = (0..4)
-        .map(|i| {
-            edge_plane(
-                points[i],
-                points[(i + 1) % 4],
-                points[(i + 2) % 4],
-                &support,
-            )
-        })
-        .collect();
+    let edges = Vec::from([
+        edge_plane(p0, p1, p2, &support),
+        edge_plane(p1, p2, p3, &support),
+        edge_plane(p2, p3, p0, &support),
+        edge_plane(p3, p0, p1, &support),
+    ]);
 
     ConvexPolygon {
         support,
@@ -979,7 +968,7 @@ mod tests {
 
     #[test]
     fn source_triangle_identities_expand_from_compact_descriptor() {
-        let polygon = make_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
+        let polygon = convex_triangle(&point(0, 0, 0), &point(1, 0, 0), &point(0, 1, 0), 3, 7)
             .with_source_triangle_edge_identities(3, [9, 2, 5]);
 
         assert!(std::mem::size_of::<RetainedIdentityCycles>() <= 5 * std::mem::size_of::<usize>());

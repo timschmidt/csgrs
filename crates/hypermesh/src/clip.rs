@@ -165,7 +165,7 @@ mod tests {
 
     use super::clip_polygon_to_aabb;
     use crate::geometry::Aabb;
-    use crate::polygon::make_triangle;
+    use crate::polygon::convex_triangle;
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
@@ -175,7 +175,7 @@ mod tests {
     fn clip_polygon_to_aabb_preserves_closed_boundary_faces() {
         let bounds = Aabb::new(p(0, -2, -2), p(2, 2, 2));
         for x in [0, 2] {
-            let polygon = make_triangle(&p(x, -1, -1), &p(x, 1, -1), &p(x, 0, 1), 0, 0);
+            let polygon = convex_triangle(&p(x, -1, -1), &p(x, 1, -1), &p(x, 0, 1), 0, 0);
 
             let clipped = clip_polygon_to_aabb(&polygon, &bounds).unwrap();
 

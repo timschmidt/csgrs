@@ -2,7 +2,7 @@
 
 use hypermesh::clip::{clip_polygon, clip_polygon_to_aabb};
 use hypermesh::{
-    Aabb, Classification, Plane, Point3, Real, classify_point, make_quad, make_triangle,
+    Aabb, Classification, Plane, Point3, Real, classify_point, convex_quad, convex_triangle,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -22,8 +22,8 @@ fuzz_target!(|data: [u8; 8]| {
         i64::from(data[3] % 9) - 4,
         i64::from(data[4] % 9) - 4,
     );
-    let triangle = make_triangle(&p(-4, -3, 0), &p(5, -3, 0), &p(-4, 6, 0), 0, 0);
-    let quad = make_quad(&p(-4, -3, 0), &p(5, -3, 0), &p(5, 6, 0), &p(-4, 6, 0), 0, 1);
+    let triangle = convex_triangle(&p(-4, -3, 0), &p(5, -3, 0), &p(-4, 6, 0), 0, 0);
+    let quad = convex_quad(&p(-4, -3, 0), &p(5, -3, 0), &p(5, 6, 0), &p(-4, 6, 0), 0, 1);
     assert!(triangle.is_valid());
     assert!(quad.is_valid());
     assert_eq!(triangle.vertices().unwrap().len(), 3);

@@ -30,7 +30,7 @@ closure fact cannot be certified, the operation returns `HypermeshError`.
 ## Main Types
 
 - `InputMesh`, `MeshRef`, and `Triangle` are the owned and borrowed indexed-triangle
-  input types. `build_polygon_soup` validates inputs and builds a combined `PolygonSoup`.
+  input types. `polygon_soup` validates inputs and returns a combined `PolygonSoup`.
 - `Point3`, `Vector3`, and `Real` are re-exported from `hyperlattice` for exact mesh
   coordinates.
 - `Plane`, `Aabb`, `Classification`, `ConvexPolygon`, `ExactBvh`, and `LocalBsp`
@@ -76,7 +76,7 @@ error rather than an approximate topology decision.
 
 The Boolean path follows the EMBER architecture:
 
-1. `build_polygon_soup` validates each source mesh and converts triangles to exact planar
+1. `polygon_soup` validates each source mesh and converts triangles to exact planar
    polygons with winding-number transitions.
 2. Adaptive axis-aligned subdivision isolates local arrangements while propagating an
    outside reference point and its winding vector.

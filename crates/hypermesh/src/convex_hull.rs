@@ -569,7 +569,7 @@ mod tests {
         let hull = convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), 4);
         assert_eq!(hull.triangles.len(), 4);
-        crate::build_polygon_soup(&[hull.as_ref()]).unwrap();
+        crate::polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -600,7 +600,7 @@ mod tests {
         let hull = convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), 8);
         assert_eq!(hull.triangles.len(), 12);
-        crate::build_polygon_soup(&[hull.as_ref()]).unwrap();
+        crate::polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -619,7 +619,7 @@ mod tests {
                 || point.z == boundary
                 || point.z == -boundary.clone()
         }));
-        crate::build_polygon_soup(&[hull.as_ref()]).unwrap();
+        crate::polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -631,7 +631,7 @@ mod tests {
         let hull = convex_hull(&input).unwrap();
         assert_eq!(hull.positions.len(), input.len());
         assert_eq!(hull.triangles.len(), input.len() * 2 - 4);
-        crate::build_polygon_soup(&[hull.as_ref()]).unwrap();
+        crate::polygon_soup(&[hull.as_ref()]).unwrap();
     }
 
     #[test]
@@ -676,7 +676,7 @@ mod tests {
         }));
 
         let hull = convex_hull(&input).unwrap();
-        crate::build_polygon_soup(&[hull.as_ref()]).unwrap();
+        crate::polygon_soup(&[hull.as_ref()]).unwrap();
         for triangle in &hull.triangles {
             let [a, b, c] = triangle.indices();
             let plane =
