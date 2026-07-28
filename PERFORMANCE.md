@@ -38,6 +38,16 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 ## Retained changes
 
+Mesh broad-phase disjoint and point-outside tests now consume Hyperlimit's
+canonical exact AABB predicates instead of rebuilding six scalar comparisons.
+A serialized 20-sample disjoint-box competitive gate preserved every output and
+checksum. CSGRS measured 25.132 us for union, 0.253 us for intersection, and
+1.083 us for difference. The corresponding fresh pre-lift run measured
+22.568/0.240/1.005 us, while the unchanged competitors drifted by comparable
+amounts in the same runs (roughly 4--19%); normalized results show no attributable
+regression. Hyperlimit's direct ordered full-axis predicate takes 24.50 ns, and
+the exact intersection cascade improved 23.56%.
+
 The primitive-scalar adapter now benchmarks its public graphics export on a
 48,384-vertex sphere. It traverses the core's retained exact HyperMesh rows once
 and writes directly into the requested interleaved layout; the benchmark keeps

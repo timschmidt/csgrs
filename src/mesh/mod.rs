@@ -1394,39 +1394,23 @@ fn include_point3_bounds(bounds: &mut Option<(Point3, Point3)>, point: &Point3) 
 }
 
 fn aabbs_decided_disjoint(left: &Aabb, right: &Aabb) -> bool {
-    [
-        (&left.maxs.x, &right.mins.x),
-        (&right.maxs.x, &left.mins.x),
-        (&left.maxs.y, &right.mins.y),
-        (&right.maxs.y, &left.mins.y),
-        (&left.maxs.z, &right.mins.z),
-        (&right.maxs.z, &left.mins.z),
-    ]
-    .into_iter()
-    .any(|(maximum, minimum)| {
-        matches!(
-            hyperlimit::compare_reals(maximum, minimum).value(),
-            Some(std::cmp::Ordering::Less)
+    matches!(
+        hyperlimit::ordered_aabb3s_intersect(
+            &left.mins,
+            &left.maxs,
+            &right.mins,
+            &right.maxs,
         )
-    })
+        .value(),
+        Some(false)
+    )
 }
 
 fn point_decided_outside_aabb(point: &Point3, bounds: &Aabb) -> bool {
-    [
-        (&point.x, &bounds.mins.x, &bounds.maxs.x),
-        (&point.y, &bounds.mins.y, &bounds.maxs.y),
-        (&point.z, &bounds.mins.z, &bounds.maxs.z),
-    ]
-    .into_iter()
-    .any(|(coordinate, minimum, maximum)| {
-        matches!(
-            hyperlimit::compare_reals(coordinate, minimum).value(),
-            Some(std::cmp::Ordering::Less)
-        ) || matches!(
-            hyperlimit::compare_reals(coordinate, maximum).value(),
-            Some(std::cmp::Ordering::Greater)
-        )
-    })
+    matches!(
+        hyperlimit::point_in_aabb3(&bounds.mins, &bounds.maxs, point).value(),
+        Some(false)
+    )
 }
 
 fn exact_f64(value: &Real) -> Option<f64> {
