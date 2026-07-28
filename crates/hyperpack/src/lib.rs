@@ -69,10 +69,9 @@ pub use heuristic3d::{
 };
 pub use hyperreal::Real;
 pub use irregular2d::{
-    IrregularBottomLeftReport2, IrregularPackError2, IrregularPackResult2, IrregularSheetItem2,
-    IrregularSheetObjective2, IrregularSheetPlacement2, IrregularSheetVerification2,
-    PreparedIrregularPacking2, PreparedNoFitPair2, bottom_left_irregular_2d,
-    prepare_irregular_packing_2d, verify_irregular_packing_2d,
+    IrregularBottomLeftReport2, IrregularNoFitPair2, IrregularPackError2, IrregularPackResult2,
+    IrregularPacking2, IrregularSheetItem2, IrregularSheetObjective2, IrregularSheetPlacement2,
+    IrregularSheetVerification2,
 };
 pub use model::{
     AxisBox3, Bin3, ContainerFrame3, FreeSpaceReport3, HeuristicFamily, Item3, ItemId,

@@ -1,7 +1,7 @@
 //! Exact-aware irregular 2D sheet packing.
 //!
 //! Convex line contours receive exact no-fit regions from `hypercurve`.
-//! Prepared geometry is immutable and keyed by stable item ids, so it cannot
+//! Retained geometry is immutable and keyed by stable item ids, so it cannot
 //! silently outlive the shapes from which it was built. Replay remains the
 //! authority: unsupported curves, concave decomposition, and undecidable
 //! predicates propagate as [`FeasibilityStatus::Unknown`].
@@ -19,7 +19,7 @@ use crate::{FeasibilityStatus, ItemId, PackError, SheetBin2};
 /// Result alias for irregular packing operations that can fail in either crate.
 pub type IrregularPackResult2<T> = Result<T, IrregularPackError2>;
 
-/// Error surfaced while preparing or replaying irregular geometry.
+/// Error surfaced while constructing or querying irregular geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum IrregularPackError2 {
     /// Packing-model validation failed.
@@ -80,14 +80,14 @@ pub struct IrregularSheetPlacement2 {
 
 /// Cached no-fit result for one canonical unordered pair of item ids.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedNoFitPair2 {
+pub struct IrregularNoFitPair2 {
     fixed_item: ItemId,
     moving_item: ItemId,
     obstacle: Option<TranslationObstacle2>,
     blocker: Option<TranslationObstacleBlocker2>,
 }
 
-impl PreparedNoFitPair2 {
+impl IrregularNoFitPair2 {
     /// Canonically ordered stationary item id.
     pub const fn fixed_item(&self) -> &ItemId {
         &self.fixed_item
@@ -111,21 +111,21 @@ impl PreparedNoFitPair2 {
 
 /// Immutable item inventory and pairwise no-fit cache for repeated search.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedIrregularPacking2 {
+pub struct IrregularPacking2 {
     items: BTreeMap<ItemId, IrregularSheetItem2>,
-    pairs: BTreeMap<(ItemId, ItemId), PreparedNoFitPair2>,
+    pairs: BTreeMap<(ItemId, ItemId), IrregularNoFitPair2>,
     ready_pair_count: usize,
     blocked_pair_count: usize,
 }
 
-impl PreparedIrregularPacking2 {
+impl IrregularPacking2 {
     /// Immutable item inventory retained with the cache.
     pub const fn items(&self) -> &BTreeMap<ItemId, IrregularSheetItem2> {
         &self.items
     }
 
     /// Canonically keyed unordered item-pair cache.
-    pub const fn pairs(&self) -> &BTreeMap<(ItemId, ItemId), PreparedNoFitPair2> {
+    pub const fn pairs(&self) -> &BTreeMap<(ItemId, ItemId), IrregularNoFitPair2> {
         &self.pairs
     }
 
@@ -176,7 +176,7 @@ pub struct IrregularSheetVerification2 {
     pub facts: Vec<String>,
 }
 
-/// Deterministic bottom-left proposal report for prepared irregular items.
+/// Deterministic bottom-left proposal report for retained irregular items.
 #[derive(Clone, Debug, PartialEq)]
 pub struct IrregularBottomLeftReport2 {
     /// Proposed placements in stable item-id order.
@@ -195,271 +195,273 @@ pub struct IrregularBottomLeftReport2 {
     pub replay: IrregularSheetVerification2,
 }
 
-/// Build one exact no-fit region for every unordered pair of declared items.
-pub fn prepare_irregular_packing_2d(
-    items: &[IrregularSheetItem2],
-) -> IrregularPackResult2<PreparedIrregularPacking2> {
-    let item_map = items
-        .iter()
-        .cloned()
-        .map(|item| (item.id.clone(), item))
-        .collect::<BTreeMap<_, _>>();
-    if item_map.len() != items.len() {
-        return Err(PackError::DuplicateItem.into());
-    }
-
-    let policy = CurvePolicy::certified();
-    let ids = item_map.keys().cloned().collect::<Vec<_>>();
-    let mut pairs = BTreeMap::new();
-    let mut ready_pair_count = 0;
-    let mut blocked_pair_count = 0;
-    for fixed_index in 0..ids.len() {
-        for moving_index in (fixed_index + 1)..ids.len() {
-            let fixed_id = ids[fixed_index].clone();
-            let moving_id = ids[moving_index].clone();
-            let report = translation_obstacle_convex(
-                &item_map[&fixed_id].shape,
-                &item_map[&moving_id].shape,
-                &policy,
-            )?;
-            let obstacle = report.obstacle().cloned();
-            let blocker = report.blocker().cloned();
-            if obstacle.is_some() {
-                ready_pair_count += 1;
-            } else {
-                blocked_pair_count += 1;
-            }
-            pairs.insert(
-                (fixed_id.clone(), moving_id.clone()),
-                PreparedNoFitPair2 {
-                    fixed_item: fixed_id,
-                    moving_item: moving_id,
-                    obstacle,
-                    blocker,
-                },
-            );
+impl IrregularPacking2 {
+    /// Construct an immutable item inventory and its exact pairwise no-fit cache.
+    #[inline]
+    pub fn new(items: &[IrregularSheetItem2]) -> IrregularPackResult2<Self> {
+        let item_map = items
+            .iter()
+            .cloned()
+            .map(|item| (item.id.clone(), item))
+            .collect::<BTreeMap<_, _>>();
+        if item_map.len() != items.len() {
+            return Err(PackError::DuplicateItem.into());
         }
-    }
 
-    Ok(PreparedIrregularPacking2 {
-        items: item_map,
-        pairs,
-        ready_pair_count,
-        blocked_pair_count,
-    })
+        let policy = CurvePolicy::certified();
+        let ids = item_map.keys().cloned().collect::<Vec<_>>();
+        let mut pairs = BTreeMap::new();
+        let mut ready_pair_count = 0;
+        let mut blocked_pair_count = 0;
+        for fixed_index in 0..ids.len() {
+            for moving_index in (fixed_index + 1)..ids.len() {
+                let fixed_id = ids[fixed_index].clone();
+                let moving_id = ids[moving_index].clone();
+                let report = translation_obstacle_convex(
+                    &item_map[&fixed_id].shape,
+                    &item_map[&moving_id].shape,
+                    &policy,
+                )?;
+                let obstacle = report.obstacle().cloned();
+                let blocker = report.blocker().cloned();
+                if obstacle.is_some() {
+                    ready_pair_count += 1;
+                } else {
+                    blocked_pair_count += 1;
+                }
+                pairs.insert(
+                    (fixed_id.clone(), moving_id.clone()),
+                    IrregularNoFitPair2 {
+                        fixed_item: fixed_id,
+                        moving_item: moving_id,
+                        obstacle,
+                        blocker,
+                    },
+                );
+            }
+        }
+
+        Ok(Self {
+            items: item_map,
+            pairs,
+            ready_pair_count,
+            blocked_pair_count,
+        })
+    }
 }
 
-/// Propose a translation-only layout from sheet corners and cached no-fit vertices.
-///
-/// Items are considered in stable id order. For each item, candidates include
-/// its sheet lower-left translation and full/x/y projections of every relevant
-/// cached no-fit boundary vertex. Exactly feasible candidates are ranked by y
-/// then x. This is a deterministic proposal heuristic, not an optimality proof;
-/// [`IrregularBottomLeftReport2::replay`] remains authoritative.
-pub fn bottom_left_irregular_2d(
-    bin: &SheetBin2,
-    prepared: &PreparedIrregularPacking2,
-) -> IrregularPackResult2<IrregularBottomLeftReport2> {
-    let mut placements: Vec<IrregularSheetPlacement2> = Vec::new();
-    let mut unplaced = Vec::new();
-    let mut candidates_tested = 0;
-    let mut cache_boundary_candidates = 0;
-    let mut unknown_candidates = 0;
-    let mut uncertain_orderings = 0;
+impl IrregularPacking2 {
+    /// Propose a translation-only layout from sheet corners and cached no-fit vertices.
+    ///
+    /// Items are considered in stable id order. For each item, candidates include
+    /// its sheet lower-left translation and full/x/y projections of every relevant
+    /// cached no-fit boundary vertex. Exactly feasible candidates are ranked by y
+    /// then x. This is a deterministic proposal heuristic, not an optimality proof;
+    /// [`IrregularBottomLeftReport2::replay`] remains authoritative.
+    #[inline]
+    pub fn bottom_left(&self, bin: &SheetBin2) -> IrregularPackResult2<IrregularBottomLeftReport2> {
+        let mut placements: Vec<IrregularSheetPlacement2> = Vec::new();
+        let mut unplaced = Vec::new();
+        let mut candidates_tested = 0;
+        let mut cache_boundary_candidates = 0;
+        let mut unknown_candidates = 0;
+        let mut uncertain_orderings = 0;
 
-    for item in prepared.items.values() {
-        let Some((min_x, min_y, _, _)) = contour_bounds(&item.shape) else {
-            unplaced.push(item.id.clone());
-            continue;
-        };
-        let base_x = -min_x;
-        let base_y = -min_y;
-        let mut candidates = vec![(base_x.clone(), base_y.clone())];
-        for placed in &placements {
-            let pair = canonical_pair(prepared, &placed.item, &item.id);
-            let Some(obstacle) = pair.obstacle() else {
+        for item in self.items.values() {
+            let Some((min_x, min_y, _, _)) = contour_bounds(&item.shape) else {
+                unplaced.push(item.id.clone());
                 continue;
             };
-            let candidate_is_moving = pair.moving_item() == &item.id;
-            for segment in obstacle.boundary().segments() {
-                let vertex = segment.start();
-                let (x, y) = if candidate_is_moving {
-                    (&placed.x + vertex.x(), &placed.y + vertex.y())
-                } else {
-                    (&placed.x - vertex.x(), &placed.y - vertex.y())
-                };
-                candidates.push((x.clone(), y.clone()));
-                candidates.push((x, base_y.clone()));
-                candidates.push((base_x.clone(), y));
-                cache_boundary_candidates += 3;
-            }
-        }
-
-        let mut best: Option<IrregularSheetPlacement2> = None;
-        for (x, y) in candidates {
-            candidates_tested += 1;
-            let candidate = IrregularSheetPlacement2 {
-                item: item.id.clone(),
-                x,
-                y,
-            };
-            let mut proposal = placements.clone();
-            proposal.push(candidate.clone());
-            match verify_irregular_packing_2d(bin, prepared, &proposal)?.status {
-                FeasibilityStatus::Infeasible => {}
-                FeasibilityStatus::Unknown => unknown_candidates += 1,
-                FeasibilityStatus::Feasible => match &best {
-                    None => best = Some(candidate),
-                    Some(current) => match compare_bottom_left(&candidate, current) {
-                        Some(Ordering::Less) => best = Some(candidate),
-                        Some(Ordering::Equal | Ordering::Greater) => {}
-                        None => uncertain_orderings += 1,
-                    },
-                },
-            }
-        }
-        match best {
-            Some(placement) => placements.push(placement),
-            None => unplaced.push(item.id.clone()),
-        }
-    }
-
-    let replay = verify_irregular_packing_2d(bin, prepared, &placements)?;
-    Ok(IrregularBottomLeftReport2 {
-        placements,
-        unplaced,
-        candidates_tested,
-        cache_boundary_candidates,
-        unknown_candidates,
-        uncertain_orderings,
-        replay,
-    })
-}
-
-/// Replay translations against sheet containment and the prepared no-fit cache.
-pub fn verify_irregular_packing_2d(
-    bin: &SheetBin2,
-    prepared: &PreparedIrregularPacking2,
-    placements: &[IrregularSheetPlacement2],
-) -> IrregularPackResult2<IrregularSheetVerification2> {
-    let policy = CurvePolicy::certified();
-    let mut status = FeasibilityStatus::Feasible;
-    let mut containment_checks = 0;
-    let mut no_overlap_checks = 0;
-    let mut facts = Vec::new();
-
-    for placement in placements {
-        let item = prepared
-            .items
-            .get(&placement.item)
-            .ok_or(PackError::MissingItem)?;
-        containment_checks += 1;
-        match contained_in_sheet(bin, item, placement) {
-            Some(true) => {}
-            Some(false) => {
-                status = FeasibilityStatus::Infeasible;
-                facts.push(format!("{} outside sheet", placement.item.as_str()));
-            }
-            None => {
-                if status != FeasibilityStatus::Infeasible {
-                    status = FeasibilityStatus::Unknown;
-                }
-                facts.push(format!(
-                    "{} sheet containment was not exactly decidable",
-                    placement.item.as_str()
-                ));
-            }
-        }
-    }
-
-    if status != FeasibilityStatus::Infeasible {
-        for left_index in 0..placements.len() {
-            for right_index in (left_index + 1)..placements.len() {
-                let left = &placements[left_index];
-                let right = &placements[right_index];
-                if left.item == right.item {
+            let base_x = -min_x;
+            let base_y = -min_y;
+            let mut candidates = vec![(base_x.clone(), base_y.clone())];
+            for placed in &placements {
+                let pair = canonical_pair(self, &placed.item, &item.id);
+                let Some(obstacle) = pair.obstacle() else {
                     continue;
-                }
-                no_overlap_checks += 1;
-                match classify_pair(prepared, left, right, &policy)? {
-                    PairStatus::SeparatedOrTouching => {}
-                    PairStatus::Overlapping => {
-                        status = FeasibilityStatus::Infeasible;
-                        facts.push(format!(
-                            "{} overlaps {}",
-                            left.item.as_str(),
-                            right.item.as_str()
-                        ));
-                    }
-                    PairStatus::Unknown => {
-                        status = FeasibilityStatus::Unknown;
-                        facts.push(format!(
-                            "{} / {} no-fit classification is unavailable",
-                            left.item.as_str(),
-                            right.item.as_str()
-                        ));
-                    }
-                }
-            }
-        }
-    }
-
-    let mut placement_counts = BTreeMap::<ItemId, usize>::new();
-    for placement in placements {
-        *placement_counts.entry(placement.item.clone()).or_default() += 1;
-    }
-    let mut unplaced = Vec::new();
-    let mut duplicates = Vec::new();
-    let mut used_area = Some(Real::zero());
-    let mut placed_items = 0;
-    for item in prepared.items.values() {
-        let count = placement_counts.get(&item.id).copied().unwrap_or(0);
-        match count {
-            0 => unplaced.push(item.id.clone()),
-            _ => {
-                placed_items += 1;
-                if count > 1 {
-                    duplicates.push(item.id.clone());
-                }
-                used_area = match (used_area, absolute_contour_area(&item.shape)?) {
-                    (Some(total), Some(area)) => Some(total + area * Real::from(count as i64)),
-                    _ => None,
                 };
+                let candidate_is_moving = pair.moving_item() == &item.id;
+                for segment in obstacle.boundary().segments() {
+                    let vertex = segment.start();
+                    let (x, y) = if candidate_is_moving {
+                        (&placed.x + vertex.x(), &placed.y + vertex.y())
+                    } else {
+                        (&placed.x - vertex.x(), &placed.y - vertex.y())
+                    };
+                    candidates.push((x.clone(), y.clone()));
+                    candidates.push((x, base_y.clone()));
+                    candidates.push((base_x.clone(), y));
+                    cache_boundary_candidates += 3;
+                }
+            }
+
+            let mut best: Option<IrregularSheetPlacement2> = None;
+            for (x, y) in candidates {
+                candidates_tested += 1;
+                let candidate = IrregularSheetPlacement2 {
+                    item: item.id.clone(),
+                    x,
+                    y,
+                };
+                let mut proposal = placements.clone();
+                proposal.push(candidate.clone());
+                match self.verify(bin, &proposal)?.status {
+                    FeasibilityStatus::Infeasible => {}
+                    FeasibilityStatus::Unknown => unknown_candidates += 1,
+                    FeasibilityStatus::Feasible => match &best {
+                        None => best = Some(candidate),
+                        Some(current) => match compare_bottom_left(&candidate, current) {
+                            Some(Ordering::Less) => best = Some(candidate),
+                            Some(Ordering::Equal | Ordering::Greater) => {}
+                            None => uncertain_orderings += 1,
+                        },
+                    },
+                }
+            }
+            match best {
+                Some(placement) => placements.push(placement),
+                None => unplaced.push(item.id.clone()),
             }
         }
-    }
-    if !duplicates.is_empty() {
-        status = FeasibilityStatus::Infeasible;
-        for duplicate in &duplicates {
-            facts.push(format!("{} placed more than once", duplicate.as_str()));
-        }
-    }
-    if used_area.is_none() && status != FeasibilityStatus::Infeasible {
-        status = FeasibilityStatus::Unknown;
-        facts.push("one or more contour areas were unavailable".to_string());
+
+        let replay = self.verify(bin, &placements)?;
+        Ok(IrregularBottomLeftReport2 {
+            placements,
+            unplaced,
+            candidates_tested,
+            cache_boundary_candidates,
+            unknown_candidates,
+            uncertain_orderings,
+            replay,
+        })
     }
 
-    let bin_area = bin.size.area();
-    let waste_area = used_area.as_ref().map(|used_area| &bin_area - used_area);
-    Ok(IrregularSheetVerification2 {
-        status,
-        containment_checks,
-        no_overlap_checks,
-        objective: IrregularSheetObjective2 {
-            bin_area,
-            used_area,
-            waste_area,
-            placed_items,
-            unplaced_items: unplaced.len(),
-            duplicate_placements: placement_counts
-                .values()
-                .map(|count| count.saturating_sub(1))
-                .sum(),
-        },
-        unplaced,
-        duplicates,
-        facts,
-    })
+    /// Replay translations against sheet containment and the retained no-fit cache.
+    #[inline]
+    pub fn verify(
+        &self,
+        bin: &SheetBin2,
+        placements: &[IrregularSheetPlacement2],
+    ) -> IrregularPackResult2<IrregularSheetVerification2> {
+        let policy = CurvePolicy::certified();
+        let mut status = FeasibilityStatus::Feasible;
+        let mut containment_checks = 0;
+        let mut no_overlap_checks = 0;
+        let mut facts = Vec::new();
+
+        for placement in placements {
+            let item = self
+                .items
+                .get(&placement.item)
+                .ok_or(PackError::MissingItem)?;
+            containment_checks += 1;
+            match contained_in_sheet(bin, item, placement) {
+                Some(true) => {}
+                Some(false) => {
+                    status = FeasibilityStatus::Infeasible;
+                    facts.push(format!("{} outside sheet", placement.item.as_str()));
+                }
+                None => {
+                    if status != FeasibilityStatus::Infeasible {
+                        status = FeasibilityStatus::Unknown;
+                    }
+                    facts.push(format!(
+                        "{} sheet containment was not exactly decidable",
+                        placement.item.as_str()
+                    ));
+                }
+            }
+        }
+
+        if status != FeasibilityStatus::Infeasible {
+            for left_index in 0..placements.len() {
+                for right_index in (left_index + 1)..placements.len() {
+                    let left = &placements[left_index];
+                    let right = &placements[right_index];
+                    if left.item == right.item {
+                        continue;
+                    }
+                    no_overlap_checks += 1;
+                    match classify_pair(self, left, right, &policy)? {
+                        PairStatus::SeparatedOrTouching => {}
+                        PairStatus::Overlapping => {
+                            status = FeasibilityStatus::Infeasible;
+                            facts.push(format!(
+                                "{} overlaps {}",
+                                left.item.as_str(),
+                                right.item.as_str()
+                            ));
+                        }
+                        PairStatus::Unknown => {
+                            status = FeasibilityStatus::Unknown;
+                            facts.push(format!(
+                                "{} / {} no-fit classification is unavailable",
+                                left.item.as_str(),
+                                right.item.as_str()
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut placement_counts = BTreeMap::<ItemId, usize>::new();
+        for placement in placements {
+            *placement_counts.entry(placement.item.clone()).or_default() += 1;
+        }
+        let mut unplaced = Vec::new();
+        let mut duplicates = Vec::new();
+        let mut used_area = Some(Real::zero());
+        let mut placed_items = 0;
+        for item in self.items.values() {
+            let count = placement_counts.get(&item.id).copied().unwrap_or(0);
+            match count {
+                0 => unplaced.push(item.id.clone()),
+                _ => {
+                    placed_items += 1;
+                    if count > 1 {
+                        duplicates.push(item.id.clone());
+                    }
+                    used_area = match (used_area, absolute_contour_area(&item.shape)?) {
+                        (Some(total), Some(area)) => Some(total + area * Real::from(count as i64)),
+                        _ => None,
+                    };
+                }
+            }
+        }
+        if !duplicates.is_empty() {
+            status = FeasibilityStatus::Infeasible;
+            for duplicate in &duplicates {
+                facts.push(format!("{} placed more than once", duplicate.as_str()));
+            }
+        }
+        if used_area.is_none() && status != FeasibilityStatus::Infeasible {
+            status = FeasibilityStatus::Unknown;
+            facts.push("one or more contour areas were unavailable".to_string());
+        }
+
+        let bin_area = bin.size.area();
+        let waste_area = used_area.as_ref().map(|used_area| &bin_area - used_area);
+        Ok(IrregularSheetVerification2 {
+            status,
+            containment_checks,
+            no_overlap_checks,
+            objective: IrregularSheetObjective2 {
+                bin_area,
+                used_area,
+                waste_area,
+                placed_items,
+                unplaced_items: unplaced.len(),
+                duplicate_placements: placement_counts
+                    .values()
+                    .map(|count| count.saturating_sub(1))
+                    .sum(),
+            },
+            unplaced,
+            duplicates,
+            facts,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -470,23 +472,23 @@ enum PairStatus {
 }
 
 fn canonical_pair<'a>(
-    prepared: &'a PreparedIrregularPacking2,
+    packing: &'a IrregularPacking2,
     left: &ItemId,
     right: &ItemId,
-) -> &'a PreparedNoFitPair2 {
+) -> &'a IrregularNoFitPair2 {
     let key = if left < right {
         (left.clone(), right.clone())
     } else {
         (right.clone(), left.clone())
     };
-    prepared
+    packing
         .pairs
         .get(&key)
-        .expect("prepared cache contains every distinct item pair")
+        .expect("packing cache contains every distinct item pair")
 }
 
 fn classify_pair(
-    prepared: &PreparedIrregularPacking2,
+    packing: &IrregularPacking2,
     left: &IrregularSheetPlacement2,
     right: &IrregularSheetPlacement2,
     policy: &CurvePolicy,
@@ -496,7 +498,7 @@ fn classify_pair(
     } else {
         (right, left)
     };
-    let pair = canonical_pair(prepared, &fixed.item, &moving.item);
+    let pair = canonical_pair(packing, &fixed.item, &moving.item);
     let Some(obstacle) = pair.obstacle() else {
         return Ok(PairStatus::Unknown);
     };
@@ -637,70 +639,70 @@ mod tests {
     }
 
     #[test]
-    fn prepares_one_canonical_cache_entry_per_unordered_pair() {
-        let prepared = prepare_irregular_packing_2d(&[
+    fn constructs_one_canonical_cache_entry_per_unordered_pair() {
+        let packing = IrregularPacking2::new(&[
             rectangle("a", 1, 1),
             rectangle("b", 2, 1),
             rectangle("c", 1, 2),
         ])
         .unwrap();
 
-        assert_eq!(prepared.pairs().len(), 3);
-        assert_eq!(prepared.ready_pair_count(), 3);
-        assert_eq!(prepared.blocked_pair_count(), 0);
+        assert_eq!(packing.pairs().len(), 3);
+        assert_eq!(packing.ready_pair_count(), 3);
+        assert_eq!(packing.blocked_pair_count(), 0);
     }
 
     #[test]
     fn replay_allows_boundary_contact_and_rejects_interior_overlap() {
         let bin = SheetBin2::new(Rect2::new(r(10), r(10)).unwrap());
-        let prepared =
-            prepare_irregular_packing_2d(&[rectangle("a", 2, 2), rectangle("b", 2, 2)]).unwrap();
-        let touching = verify_irregular_packing_2d(
-            &bin,
-            &prepared,
-            &[
-                IrregularSheetPlacement2 {
-                    item: id("a"),
-                    x: r(0),
-                    y: r(0),
-                },
-                IrregularSheetPlacement2 {
-                    item: id("b"),
-                    x: r(2),
-                    y: r(0),
-                },
-            ],
-        )
-        .unwrap();
+        let packing =
+            IrregularPacking2::new(&[rectangle("a", 2, 2), rectangle("b", 2, 2)]).unwrap();
+        let touching = packing
+            .verify(
+                &bin,
+                &[
+                    IrregularSheetPlacement2 {
+                        item: id("a"),
+                        x: r(0),
+                        y: r(0),
+                    },
+                    IrregularSheetPlacement2 {
+                        item: id("b"),
+                        x: r(2),
+                        y: r(0),
+                    },
+                ],
+            )
+            .unwrap();
         assert_eq!(touching.status, FeasibilityStatus::Feasible);
 
-        let overlapping = verify_irregular_packing_2d(
-            &bin,
-            &prepared,
-            &[
-                IrregularSheetPlacement2 {
-                    item: id("a"),
-                    x: r(0),
-                    y: r(0),
-                },
-                IrregularSheetPlacement2 {
-                    item: id("b"),
-                    x: r(1),
-                    y: r(0),
-                },
-            ],
-        )
-        .unwrap();
+        let overlapping = packing
+            .verify(
+                &bin,
+                &[
+                    IrregularSheetPlacement2 {
+                        item: id("a"),
+                        x: r(0),
+                        y: r(0),
+                    },
+                    IrregularSheetPlacement2 {
+                        item: id("b"),
+                        x: r(1),
+                        y: r(0),
+                    },
+                ],
+            )
+            .unwrap();
         assert_eq!(overlapping.status, FeasibilityStatus::Infeasible);
     }
 
     #[test]
     fn bottom_left_reuses_no_fit_vertices_and_replays_the_proposal() {
         let bin = SheetBin2::new(Rect2::new(r(4), r(2)).unwrap());
-        let prepared =
-            prepare_irregular_packing_2d(&[rectangle("a", 2, 2), rectangle("b", 2, 2)]).unwrap();
+        let packing =
+            IrregularPacking2::new(&[rectangle("a", 2, 2), rectangle("b", 2, 2)]).unwrap();
 
-        let report = bottom_left_irregular_2d(&bin, &prepared).unwrap();
+        let report = packing.bottom_left(&bin).unwrap();
 
         assert_eq!(report.placements.len(), 2);
         assert!(report.unplaced.is_empty());
@@ -716,37 +718,29 @@ mod tests {
             id: id("concave"),
             shape: polygon(&[(0, 0), (2, 0), (1, 1), (2, 2), (0, 2)]),
         };
-        let prepared = prepare_irregular_packing_2d(&[rectangle("box", 1, 1), concave]).unwrap();
-        assert_eq!(prepared.ready_pair_count(), 0);
-        assert_eq!(prepared.blocked_pair_count(), 1);
-        assert!(
-            prepared
-                .pairs()
-                .values()
-                .next()
-                .unwrap()
-                .blocker()
-                .is_some()
-        );
+        let packing = IrregularPacking2::new(&[rectangle("box", 1, 1), concave]).unwrap();
+        assert_eq!(packing.ready_pair_count(), 0);
+        assert_eq!(packing.blocked_pair_count(), 1);
+        assert!(packing.pairs().values().next().unwrap().blocker().is_some());
 
         let bin = SheetBin2::new(Rect2::new(r(10), r(10)).unwrap());
-        let replay = verify_irregular_packing_2d(
-            &bin,
-            &prepared,
-            &[
-                IrregularSheetPlacement2 {
-                    item: id("box"),
-                    x: r(0),
-                    y: r(0),
-                },
-                IrregularSheetPlacement2 {
-                    item: id("concave"),
-                    x: r(5),
-                    y: r(5),
-                },
-            ],
-        )
-        .unwrap();
+        let replay = packing
+            .verify(
+                &bin,
+                &[
+                    IrregularSheetPlacement2 {
+                        item: id("box"),
+                        x: r(0),
+                        y: r(0),
+                    },
+                    IrregularSheetPlacement2 {
+                        item: id("concave"),
+                        x: r(5),
+                        y: r(5),
+                    },
+                ],
+            )
+            .unwrap();
         assert_eq!(replay.status, FeasibilityStatus::Unknown);
     }
 }

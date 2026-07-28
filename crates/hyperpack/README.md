@@ -100,14 +100,14 @@ facts, lower bounds, initial free space, and reuse metadata for repeated search.
 `PlacementOrder3` separately reports deterministic ordering evidence. Both are
 advisory; `verify_packing_3d` remains the immediate authoritative query.
 
-`PreparedIrregularPacking2` owns a stable item inventory and caches one exact
-Hypercurve no-fit region per unordered convex-item pair. Cache blockers are
-retained as data, and `verify_irregular_packing_2d` replays sheet containment,
-pair contact/overlap, and accounting without introducing an epsilon. Boundary
+`IrregularPacking2::new` owns a stable item inventory and caches one exact
+Hypercurve no-fit region per unordered convex-item pair. Cache blockers remain
+data, while `.verify` immediately replays sheet containment, pair
+contact/overlap, and accounting without introducing an epsilon. Boundary
 contact is feasible; an unavailable no-fit region produces `Unknown`.
-`bottom_left_irregular_2d` deterministically proposes translations from the
-sheet corner and cached no-fit boundary vertices, then attaches authoritative
-replay to the proposal report.
+`.bottom_left` deterministically proposes translations from the sheet corner
+and cached no-fit boundary vertices, then attaches authoritative replay to the
+proposal report.
 
 The bounded solver returns `Unknown` when its item or node limit prevents an
 exhaustive result. A feasible replay proves feasibility, while objective values,

@@ -55,6 +55,22 @@ placements through the same immediate `verify_packing_3d` query.
 The small repeated-size movement is within normal run-to-run noise; the affected
 analysis and replay workloads did not materially regress.
 
+## Immediate Irregular 2D API Gate
+
+The irregular no-fit cache is reusable domain state rather than a separate
+preparation phase. The 2026-07-27 API change therefore retains it as
+`IrregularPacking2`, with immediate `new`, `verify`, and `bottom_left` methods.
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Construct three-item no-fit cache | 32.526 us | 32.393 us | 0.4% faster |
+| Verify three retained irregular items | 5.209 us | 5.272 us | 1.2% slower |
+| Propose three-item bottom-left layout | 99.161 us | 99.304 us | 0.1% slower |
+
+All movements are within run-to-run noise. The immediate entry points are
+explicitly inlined across the crate boundary, while the retained cache and
+exact replay implementation are unchanged.
+
 ## Exactness Check
 
 With `dispatch-trace` enabled, `tests/dispatch_trace.rs` exercises exact
