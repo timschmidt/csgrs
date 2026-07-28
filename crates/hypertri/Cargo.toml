@@ -21,12 +21,10 @@ f64-interop = []
 serde = ["dep:serde", "hyperreal/serde"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal" }
-hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
-# hyperreal = { version = "0.13.0" }
-# hyperlimit = { version = "0.4.0", default-features = false, features = ["std"] }
+# Cargo uses the path in this workspace and retains the version requirement in
+# the published manifest.
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]
