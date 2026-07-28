@@ -18,7 +18,7 @@
 //! use borrowed thread-local error strings after the next ABI call on the same
 //! thread.
 
-use csgrs_adapter::{
+use csgrs::adapter::{
     Aabb3, AdapterError, F32, F64, I128, Mesh, Profile, RawReal, Real, ScalarAdapter,
 };
 use hyperlattice::Matrix4;

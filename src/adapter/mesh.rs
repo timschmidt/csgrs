@@ -1,10 +1,10 @@
-use crate::Aabb3;
-use crate::scalar::{
+use super::Aabb3;
+use super::scalar::{
     AdapterError, AdapterResult, F32, F64, I128, RawReal, ScalarAdapter, real3_to_scalar,
     scalar3_to_real,
 };
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh as CoreMesh;
+use crate::csg::CSG;
+use crate::mesh::Mesh as CoreMesh;
 use hyperlattice::{Matrix4, Point3, Vector3};
 use std::fmt::Debug;
 use std::marker::PhantomData;

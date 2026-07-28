@@ -3,8 +3,8 @@
 Language bindings sit above `csgrs-ffi`, not above the geometry core. This keeps
 the maintenance shape flat:
 
-- Rust users choose `csgrs` for raw hyperreals or `csgrs-adapter` for scalar
-  families.
+- Rust users choose exact core types or the namespaced `csgrs::adapter` scalar
+  families from the same crate.
 - C users include `../ffi/include/csgrs.h` and link `csgrs-ffi`.
 - C++ uses `cpp/csgrs.hpp`, a RAII wrapper over the C ABI.
 - Python uses `python/csgrs.py`, a `ctypes` wrapper over the C ABI.
@@ -20,7 +20,7 @@ Every binding preserves the same scalar families:
 - `real`
 
 The outward API is intentionally generated-shaped. Add or rename operations in
-the Rust adapter facade first, mirror them in `csgrs-ffi`, then update the thin
+`csgrs::adapter` first, mirror them in `csgrs-ffi`, then update the thin
 language wrappers. Do not put geometry logic in language bindings.
 
 ## Build order

@@ -7,8 +7,8 @@ the release benchmark profile. Times are medians after two warmup batches.
 | Workload | Before | After | Change | Preserved evidence |
 |---|---:|---:|---:|---|
 | `mesh_queries/graphics_buffers` | 1.170 ms/op | 0.139 ms/op | 88.1% faster | 1,584 indices and exact position/normal regression |
-| `adapters/graphics_export/f32_48384` | 59.4 ms/op | 1.04 ms/op | 98.2% faster | Same finite row/index contract and strict overflow error |
-| `adapters/graphics_export/f64_48384` (split-buffer control) | 1.16 ms/op | 0.52 ms/op | 55.2% faster | Same 48,384 interleaved rows and indices with no temporary split buffers |
+| `adapter_graphics_export/f32_48384` | 59.4 ms/op | 1.04 ms/op | 98.2% faster | Same finite row/index contract and strict overflow error |
+| `adapter_graphics_export/f64_48384` (split-buffer control) | 1.16 ms/op | 0.52 ms/op | 55.2% faster | Same 48,384 interleaved rows and indices with no temporary split buffers |
 | `mesh_io/all_exporters` | 87.602 ms | 81.581 ms | 6.9% faster | 385,166 output bytes and checksum |
 | `mesh_boolean/immediate_four` | 0.596–0.659 ms | operation-scoped | N/A | Four independently closure-certified outputs, 120 polygons/corners, stable checksum |
 | `mesh_queries/ray_intersections` | 32.851 ms/op | 30.819 ms/op | 6.2% faster | Same exact ordered hit points, distances, and checksum |

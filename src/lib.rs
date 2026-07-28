@@ -46,6 +46,7 @@
     clippy::too_many_arguments
 )]
 
+pub mod adapter;
 pub mod errors;
 #[allow(dead_code, unused_imports)]
 pub(crate) mod hyper_math;

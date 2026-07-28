@@ -12,6 +12,6 @@ readme = "README.md"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
-csgrs-adapter = { version = "0.1.0", path = "../adapters" }
+csgrs = { version = "0.23.0", path = "..", default-features = false, features = ["sketch"] }
 hyperlattice = { version = "0.6.0", path = "../../hyperlattice" }
 hyperreal = { version = "0.13.1", path = "../../hyperreal", default-features = false }
