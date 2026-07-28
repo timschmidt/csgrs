@@ -330,16 +330,6 @@ impl NurbsCurve2 {
         result
     }
 
-    /// Returns whether this exact ordered refinement request is retained.
-    pub fn is_knot_refinement_cached(&self, knots: &[Real]) -> bool {
-        self.data.knot_refinements.get().is_some_and(|refinements| {
-            refinements
-                .borrow()
-                .iter()
-                .any(|(retained_knots, _)| retained_knots == knots)
-        })
-    }
-
     /// Removes one exact interior knot occurrence when that preserves the curve.
     ///
     /// Removal is certified as the inverse of homogeneous Boehm insertion: the
@@ -367,16 +357,6 @@ impl NurbsCurve2 {
         }
         removals.push((knot, result.clone()));
         result
-    }
-
-    /// Returns whether this exact knot-removal result or blocker is retained.
-    pub fn is_knot_removal_cached(&self, knot: &Real) -> bool {
-        self.data.knot_removals.get().is_some_and(|removals| {
-            removals
-                .borrow()
-                .iter()
-                .any(|(retained_knot, _)| retained_knot == knot)
-        })
     }
 
     /// Elevates every exact rational Bezier knot span to `target_degree`.
@@ -416,16 +396,6 @@ impl NurbsCurve2 {
         result
     }
 
-    /// Returns whether this exact target degree has retained spans or a blocker.
-    pub fn is_degree_elevation_cached(&self, target_degree: usize) -> bool {
-        self.data.degree_elevations.get().is_some_and(|elevations| {
-            elevations
-                .borrow()
-                .iter()
-                .any(|(retained_degree, _)| *retained_degree == target_degree)
-        })
-    }
-
     /// Returns an exact NURBS carrier elevated to `target_degree`.
     ///
     /// Every rational Bezier span is elevated homogeneously, adjacent span
@@ -463,16 +433,6 @@ impl NurbsCurve2 {
         }
         elevated_curves.push((target_degree, result.clone()));
         result
-    }
-
-    /// Returns whether this exact elevated carrier or blocker is retained.
-    pub fn is_elevated_curve_cached(&self, target_degree: usize) -> bool {
-        self.data.elevated_curves.get().is_some_and(|elevations| {
-            elevations
-                .borrow()
-                .iter()
-                .any(|(retained_degree, _)| *retained_degree == target_degree)
-        })
     }
 
     fn degree_elevation_uncached(

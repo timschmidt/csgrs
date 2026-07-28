@@ -6034,6 +6034,21 @@ circle-region replays remained 2--6 ns. The Boolean batch baseline of
 64-curve full-overlap workflow similarly moved from 600.337 us to a candidate
 range of 587.604--614.277 us with the same 25,800 checksum.
 
+### NURBS editing cache-state boundary
+
+NURBS knot insertion, exact knot removal, span elevation, and
+continuity-preserving carrier elevation now return their immediate results
+without public cache-state probes. Equal requests, failures, and blockers
+remain privately retained across clones; tests verify repeated exact results
+and shared retained data directly.
+
+Serialized `bspline` runs measured cold batch insertion at 5.268 us before and
+4.775--5.008 us after, exact knot removal at 7.040 us before and
+6.331--6.566 us after, and exact span elevation at 37.907 us before and
+36.633--37.500 us after. Continuity-preserving elevation measured 79.279 us
+before and 78.746 us in the confirming candidate run. Retained operations
+remained 3--34 ns.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

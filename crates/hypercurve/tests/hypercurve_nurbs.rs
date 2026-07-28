@@ -238,12 +238,10 @@ fn nurbs_batch_knot_refinement_projects_once_and_reuses_clone_shared_result() {
     .unwrap();
     let clone = curve.clone();
     let request = vec![r(1), r(1)];
-    assert!(!curve.is_knot_refinement_cached(&request));
 
     let batch = curve.insert_knots(request.clone()).unwrap();
     let sequential = curve.insert_knot(r(1)).unwrap().insert_knot(r(1)).unwrap();
     assert_eq!(batch, sequential);
-    assert!(clone.is_knot_refinement_cached(&request));
     for parameter in [r(0), q(1, 2), r(1), q(3, 2), r(2)] {
         assert_eq!(batch.point_at(&parameter), curve.point_at(&parameter));
     }
@@ -265,7 +263,6 @@ fn nurbs_batch_knot_refinement_retains_contextual_failure_without_mutating_sourc
     let first = curve.insert_knots(request.clone()).unwrap_err();
     assert_eq!(first.operation(), CurveOperation2::KnotInsertion);
     assert_eq!(first.family(), CurveFamily2::Nurbs);
-    assert!(curve.is_knot_refinement_cached(&request));
     assert_eq!(curve.insert_knots(request).unwrap_err(), first);
     assert_eq!(curve.control_points().len(), source_control_count);
 }
@@ -282,7 +279,6 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
     let knot = q(3, 4);
     let refined = curve.insert_knot(knot.clone()).unwrap();
     let clone = refined.clone();
-    assert!(!refined.is_knot_removal_cached(&knot));
 
     let removed = refined.remove_knot(knot.clone()).unwrap().unwrap();
     assert_eq!(removed.degree(), curve.degree());
@@ -293,7 +289,6 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
         assert_eq!(removed.point_at(&parameter), curve.point_at(&parameter));
     }
 
-    assert!(clone.is_knot_removal_cached(&knot));
     let retained = removed.bezier_decomposition().unwrap();
     let replay = clone.remove_knot(knot).unwrap().unwrap();
     assert!(std::ptr::eq(
@@ -306,9 +301,7 @@ fn nurbs_knot_removal_exactly_inverts_insertion_and_reuses_clone_shared_proof() 
 fn nurbs_knot_removal_retains_exact_negative_result_and_contextual_domain_errors() {
     let curve = quadratic_nurbs();
     let clone = curve.clone();
-    assert!(!curve.is_knot_removal_cached(&r(1)));
     assert!(curve.remove_knot(r(1)).unwrap().is_none());
-    assert!(clone.is_knot_removal_cached(&r(1)));
     assert!(clone.remove_knot(r(1)).unwrap().is_none());
 
     for knot in [r(-1), r(0), r(2), r(3)] {
@@ -349,7 +342,7 @@ fn periodic_nurbs_knot_removal_preserves_period_and_wrapped_image() {
 }
 
 #[test]
-fn nurbs_degree_elevation_retains_exact_span_image_intervals_source_and_cache() {
+fn nurbs_degree_elevation_retains_exact_span_image_intervals_and_source() {
     let curve = NurbsCurve2::try_new(
         2,
         vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
@@ -358,7 +351,6 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_source_and_cache() 
     )
     .unwrap();
     let clone = curve.clone();
-    assert!(!curve.is_degree_elevation_cached(4));
 
     let elevation = curve.degree_elevation(4).unwrap();
     assert_eq!(elevation.source_degree(), 2);
@@ -386,7 +378,6 @@ fn nurbs_degree_elevation_retains_exact_span_image_intervals_source_and_cache() 
             );
         }
     }
-    assert!(clone.is_degree_elevation_cached(4));
     let replay = clone.degree_elevation(4).unwrap();
     assert!(std::ptr::eq(
         elevation.spans().as_ptr(),
@@ -404,7 +395,6 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
     )
     .unwrap();
     let clone = curve.clone();
-    assert!(!curve.is_elevated_curve_cached(4));
 
     let elevated = curve.elevated_to_degree(4).unwrap();
     assert_eq!(elevated.degree(), 4);
@@ -427,7 +417,6 @@ fn nurbs_elevated_carrier_preserves_image_source_and_source_continuity() {
         );
     }
 
-    assert!(clone.is_elevated_curve_cached(4));
     let retained = elevated.bezier_decomposition().unwrap();
     let replay = clone.elevated_to_degree(4).unwrap();
     assert!(std::ptr::eq(
@@ -514,7 +503,6 @@ fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_block
     let blocked = singular.degree_elevation(2).unwrap_err();
     assert_eq!(blocked.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(blocked.family(), CurveFamily2::Nurbs);
-    assert!(singular.is_degree_elevation_cached(2));
     assert_eq!(singular.degree_elevation(2).unwrap_err(), blocked);
 }
 
