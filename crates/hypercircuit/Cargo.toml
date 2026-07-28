@@ -43,12 +43,12 @@ lceda = ["interchange"]
 
 [dependencies]
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hypersolve = { version = "0.3.0", path = "../hypersolve" }
+hypersolve = { version = "0.3.1", path = "../hypersolve" }
 semver = { version = "1.0.28", features = ["serde"] }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice", optional = true }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit", optional = true }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice", optional = true }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", optional = true }
 hyperpath = { version = "0.3.0", path = "../hyperpath", optional = true }
-hypercurve = { version = "0.3.0", path = "../hypercurve", optional = true }
+hypercurve = { version = "0.3.1", path = "../hypercurve", optional = true }
 csgrs = { version = "0.23.0", path = "../csgrs", default-features = false, features = ["sketch", "offset", "obj-io", "gltf-io", "vrml-io", "gerber-io", "truetype-text"], optional = true }
 hyperdrc = { version = "0.3.0", path = "../hyperdrc", optional = true }
 hyperphysics = { version = "0.3.0", path = "../hyperphysics", optional = true }
