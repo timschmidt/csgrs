@@ -3,244 +3,308 @@
   <img src="./doc/hyperlimit.png" alt="Hyper, a clever mathematician" width="144" align="right">
 </h1>
 
-`hyperlimit` provides exact geometry predicates over `hyperreal::Real` values. Predicate
-calls return both the classified result and provenance for how the result was decided.
+`hyperlimit` provides exact-aware geometric predicates over
+`hyperreal::Real`. Each predicate returns either a classified value with the
+stage and certainty that decided it, or explicit uncertainty.
 
-The crate is not a polygon, mesh, BSP, CSG, or intersection engine. It owns reusable
-predicate semantics and strict escalation; object topology belongs in the higher crate
-that owns the geometry.
+The crate owns reusable predicate semantics, exact constructions that support
+those predicates, and strict escalation. It does not own curves,
+triangulations, meshes, BSP trees, CSG grammar, or application topology.
 
-## Typical Predicate Problems
+## Why a predicate layer?
 
-Geometry algorithms usually fail at branch points: a determinant near zero, a point
-exactly on a segment, a cocircular/cospherical test, or a broad-phase shortcut that
-disagrees with topology. Pure `f64` code often patches those cases with tolerances, but
-one wrong sign can change triangulation, booleans, mesh topology, clearance reports, or
-solver active sets.
+Geometry algorithms change combinatorial structure at branch points: a point
+is left or right of a line, inside or outside a ring, above or below a plane,
+or within a circumsphere. An epsilon comparison can make those answers depend
+on scale and can give different parts of an algorithm inconsistent results.
 
-`hyperlimit` makes the escalation ladder part of the API. It uses structural facts,
-exact reducers, certified interval/ball filters, and bounded `Real` refinement. If the
-strict escalation cannot certify a result, it returns `Unknown` with provenance rather
-than inventing a float decision.
+Hyperlimit makes the decision path visible:
 
-## Main Types
+```text
+Real coordinates + retained object facts
+                  │
+                  ▼
+ structural facts / exact reducers / certified filters
+                  │
+                  ▼
+          bounded Real refinement
+             ┌────┴────┐
+             ▼         ▼
+          Decided    Unknown
+       value + stage  needed + stage
+```
 
-- `Point2`, `Point3`, point facts, shared-scale point views, `HomogeneousPoint3`, and
-  `HomogeneousLine3` are predicate-facing re-exports of lattice-owned object carriers.
-- `Plane3`, `Plane3Facts`, `Plane3Evidence`, `TrianglePlaneReport`,
-  `PlaneAabbReport`, and homogeneous plane-incidence helpers keep 3D sidedness
-  and projective incidence under strict predicates.
-- `PredicateOutcome<T>`, `PredicateReport<T>`, `PredicateCertificate`, `Certainty`,
-  `Escalation`, `PredicatePrecisionStage`, and `PredicateApiSemantics` describe what was
-  decided and how.
-- Predicate escalation uses the single strict exact/refined path; callers do not
-  select alternate policies.
-- `Sign`, `LineSide`, `PlaneSide`, `TriangleLocation`, `SegmentIntersection`,
-  `TriangleTriangleIntersection`, `RingPointLocation`, interval, and AABB
-  classifications are the common result enums.
-- `orient_d`, `insphere_d`, and `affine_independent_d` provide the first exact
-  D-dimensional determinant predicate boundary for triangulation and mesh crates.
-- Immediate segment, triangle, AABB, line, circle/sphere, and halfspace functions
-  accept explicit retained facts or evidence where reuse changes the cost.
-- `SupportDop3` and `SupportSlab3` retain exact support-axis bounds and source
-  witnesses for reusable k-DOP/bounding-volume slab predicates; report-bearing
-  AABB projection and oriented-plane classifiers preserve per-slab exact
-  interval and halfspace feasibility evidence.
-- `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses,
-  active plane sets, and Farkas-style infeasibility certificates for replayable
-  convex-kernel prechecks.
+An `Unknown` outcome is not a false or zero result. Higher topology code must
+propagate it, request more capability, or choose an explicitly documented
+policy outside this crate.
 
-## Precision Model
+## Primary types
 
-Predicate coordinates are `Real` values. The resolver tries exact structural facts,
-determinant term facts, exact reducers, certified interval/ball filters, and bounded
-`Real` refinement. Approximate edge metadata is explicit and labeled; it is not proof
-producing. If strict escalation cannot prove a result, the public result is `Unknown`.
+| Type | Purpose |
+| --- | --- |
+| `PredicateOutcome<T>` | A decided value with certainty/provenance, or an unresolved result. |
+| `Sign`, `SignKnowledge` | Exact sign and partial sign knowledge. |
+| `Certainty`, `Escalation`, `RefinementNeed` | Describe why a result is trustworthy or what remains unresolved. |
+| `PredicatePolicy` | The crate's strict bounded-refinement policy. |
+| `Point2`, `Point3` | Predicate-facing re-exports of Hyperlattice points. |
+| `Plane3` | Plane represented by `normal · point + offset = 0`. |
+| `LineSide`, `PlaneSide`, location/relation enums | Typed classifications for geometric queries. |
+| Evidence and `*Facts` types | Reusable exact structure for repeated queries. |
+| Report and validation types | Replayable classifications with retained intermediate evidence. |
+| `SupportDop3`, `WitnessedSupportDop3` | Exact support-slab bounding volumes, optionally retaining source witnesses. |
+| `error::PredicateError`, `error::Result<T>` | Construction and validation errors. |
 
-Higher crates should carry object facts such as sparse coordinates, ring structure,
-plane facts, or retained bounds, but the final topology-changing decision should remain
-exact or explicitly unknown.
+## Quick start
 
-## Numerical Explosion
+Create a project and add the crate:
 
-`hyperlimit` combats numerical explosion by staging predicate work. Structural facts,
-retained bounds, determinant schedules, certified filters, and bounded `Real`
-refinement are tried before generic exact expansion. When those stages cannot certify a
-sign or relation, the result stays `Unknown` rather than forcing unbounded arithmetic.
+```sh
+cargo new exact-predicates
+cd exact-predicates
+cargo add hyperlimit
+```
 
-## Performance Model
-
-`hyperlimit` is designed to avoid expensive exact work in common cases. It uses
-structural zero/sign facts, retained point/segment/triangle/AABB facts, determinant
-schedule hints, certified filters, and versioned cache objects before generic
-refinement. Optional batch APIs and the `parallel` feature let callers evaluate many
-independent predicates through the same strict path.
-
-Dispatch tracing exists to show whether predicates are using structural facts, exact
-reducers, filters, bounded refinement, or fallback paths.
-
-## Current Status
-
-Version `0.4.0` is an early but usable predicate crate. It currently includes:
-
-- predicate-facing re-exports of lattice-owned `Point2`, `Point3`, shared-scale point
-  facts, homogeneous points, and Pluecker lines;
-- `Plane3`, retained plane evidence, homogeneous point/plane incidence classification,
-  exact two-plane/three-plane intersection wrappers, and report-bearing
-  plane/AABB support-extrema classification;
-- exact real and point ordering, squared-distance comparison, interval, AABB, segment,
-  ring, triangle, line, plane, orientation, in-circle, in-sphere, and
-  D-dimensional orientation/in-sphere/affine-independence predicates;
-- exact report-bearing even-odd point/ring classification that retains boundary
-  edge checks, y-straddle comparisons, orientation signs, and crossing parity;
-- exact report-bearing 3D triangle/triangle classification that composes
-  plane-side rejection, segment/triangle edge replay, and coplanar projected
-  overlap predicates;
-- exact segment/ray triangle reports that retain support-plane crossing
-  parameters, candidate points, and point/triangle replay evidence;
-- exact support k-DOP slab carriers with witness-preserving point and AABB projection
-  classifiers;
-- exact 3D halfspace feasibility reports over `Plane3` systems, using active-set
-  candidates, point-plane replay, and Farkas-style negative certificates instead
-  of primitive LP tolerances;
-- immediate segment, triangle, AABB, line, circle/sphere, and halfspace
-  classifiers with explicit reusable facts and evidence;
-- `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
-  precision-stage, and API-semantics types;
-- optional parallel batch APIs and dispatch tracing for performance audits.
-
-Known limits: `hyperlimit` intentionally stops at reusable predicates and small
-classifiers. It does not store curves, triangulations, meshes, solver active sets, or
-domain-specific geometry.
-
-## Installation
+Equivalent manifest entry:
 
 ```toml
 [dependencies]
 hyperlimit = "0.4.0"
 ```
 
-Feature summary:
+Replace `src/main.rs` with:
 
-- `std`: default support feature.
-- `parallel`: enables batch predicate variants backed by Rayon.
-- `dispatch-trace`: records predicate dispatch provenance during benchmarks.
+<!-- quickstart:start -->
+```rust
+use hyperlimit::{Point2, Real, Sign, orient2};
 
-## Usage
+fn main() {
+    let a = Point2::new(Real::from(0), Real::from(0));
+    let b = Point2::new(Real::from(1), Real::from(0));
+    let c = Point2::new(Real::from(0), Real::from(1));
+
+    let orientation = orient2(&a, &b, &c);
+    assert_eq!(orientation.value(), Some(Sign::Positive));
+    println!("{orientation:?}");
+}
+```
+<!-- quickstart:end -->
+
+Run it with `cargo run`. The same source is checked in as
+[`examples/readme_quickstart.rs`](examples/readme_quickstart.rs), compiled by
+the test suite, and compared with this README block.
+
+## Reading predicate outcomes
+
+`PredicateOutcome::Decided` contains `value`, `certainty`, and `stage`.
+`PredicateOutcome::Unknown` contains the `RefinementNeed` and the stage where
+evaluation stopped. Use `value()` only when discarding that diagnostic context
+is acceptable:
 
 ```rust
-use hyperlimit::{
-    Plane3, Point2, Point3, Sign, classify_homogeneous_point_plane,
-    intersect_three_planes, orient2d,
-};
-use hyperreal::Real;
+use hyperlimit::{PredicateOutcome, RefinementNeed};
 
-let a = Point2::new(Real::from(0), Real::from(0));
-let b = Point2::new(Real::from(1), Real::from(0));
-let c = Point2::new(Real::from(0), Real::from(1));
-
-assert_eq!(orient2(&a, &b, &c).value(), Some(Sign::Positive));
-
-let px = Plane3::new(Point3::new(Real::from(1), Real::from(0), Real::from(0)), Real::from(-1));
-let py = Plane3::new(Point3::new(Real::from(0), Real::from(1), Real::from(0)), Real::from(-2));
-let pz = Plane3::new(Point3::new(Real::from(0), Real::from(0), Real::from(1)), Real::from(-3));
-let point = intersect_three_planes(&px, &py, &pz);
-assert_eq!(classify_homogeneous_point_plane(&point, &px).value(), Some(true));
+fn require_decided<T>(outcome: PredicateOutcome<T>) -> Result<T, RefinementNeed> {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { needed, .. } => Err(needed),
+    }
+}
 ```
+
+## API guide
+
+### Signs, order, and intervals
+
+| Task | API |
+| --- | --- |
+| Classify one scalar | `classify_real_sign`, `RealPredicateExt` |
+| Compare scalars | `compare_reals`, `compare_reals_with_policy`, `real_le`, `real_ge`, `real_min`, `real_max`, `real_clamp` |
+| Compare points | `compare_point2_lexicographic`, `compare_point3_lexicographic`, `point2_equal`, `point3_equal` |
+| Classify a closed interval | `classify_real_closed_interval`, `real_in_closed_interval` |
+| Intersect intervals | `classify_closed_interval_intersection`, `closed_intervals_intersect` |
+| Use certified scalar filters | `certified_ball_sign`, `certified_interval_sign`, `classify_ball_sign_with_policy` |
+
+### Orientation and lifted predicates
+
+| Task | API |
+| --- | --- |
+| 2D/3D orientation | `orient2`, `orient2_with_policy`, `orient3` |
+| Point against a directed line | `classify_point_line` |
+| Retain a line orientation | `line2_orientation`, `line2_orientation_with_facts`, `classify_point_line_with_orientation` |
+| In-circle | `incircle2`, `incircle2_evidence`, `incircle2_with_evidence` |
+| In-sphere | `insphere3`, `insphere3_evidence`, `insphere3_with_evidence` |
+| D-dimensional predicates | `orient_d`, `insphere_d`, `affine_independent_d` |
+
+Evidence-based classifiers also expose `*_with_policy` variants for callers
+that need an explicit `PredicatePolicy`.
+
+### Segments, rings, and planar regions
+
+| Task | API |
+| --- | --- |
+| Point on segment | `classify_point_segment`, `classify_point_segment3`, `point_on_segment`, `point_on_segment3` |
+| Segment intersection | `classify_segment_intersection`, `classify_segment3_intersection`, `proper_segment_intersection_point` |
+| Reuse 2D facts | `point2_displacement_facts`, `segment2_facts`, `triangle2_facts`, `classify_point_segment_with_facts`, `classify_segment_intersection_with_facts` |
+| Ring structure | `ring2_facts`, `indexed_ring2_facts`, `ring_area_sign`, `indexed_ring_area_sign`, `ring_convexity`, `indexed_ring_convexity` |
+| Point in ring | `classify_point_ring_even_odd`, `classify_point_indexed_ring_even_odd`, `point_in_ring_even_odd`, `point_in_indexed_ring_even_odd` |
+| Replay ring decisions | `classify_point_ring_even_odd_report`, `classify_point_indexed_ring_even_odd_report` |
+| Convex containment | `classify_point_convex_polygon2`, `classify_point_convex_planes3` |
+
+### AABBs, distances, circles, and spheres
+
+| Task | API |
+| --- | --- |
+| Point/AABB | `classify_point_aabb2`, `classify_point_aabb3`, `point_in_aabb2`, `point_in_aabb3` |
+| AABB/AABB | `classify_aabb2_intersection`, `classify_aabb3_intersection`, `aabb2s_intersect`, `aabb3s_intersect` |
+| Ordered AABBs | `ordered_aabb3_contains`, `ordered_aabb3s_intersect`, `point_in_ordered_aabb3_relative_interior` |
+| Reuse box facts | `aabb2_facts`, `classify_aabb2_intersection_with_facts`, `point_in_triangle2_aabb` |
+| Compare squared distances | `compare_point2_distance_squared`, `compare_point3_distance_squared`, `compare_point_line3_distance_squared`, `compare_point_segment3_distance_squared`, `compare_point_plane_distance_squared` |
+| Circle relations | `classify_circle_line2`, `classify_circle_segment2` |
+| Sphere relations | `classify_point_sphere3`, `classify_sphere3_intersection`, `classify_aabb3_sphere_intersection` |
+
+### Planes and exact constructions
+
+Construct `Plane3` with its public `normal: Point3` and `offset: Real` fields.
+
+| Task | API |
+| --- | --- |
+| Point/plane | `classify_point_plane`, `classify_point_oriented_plane` |
+| Plane/segment or triangle | `classify_plane_segment`, `classify_plane_triangle`, `classify_triangle_against_oriented_plane` |
+| Plane/AABB | `classify_plane_aabb3`, `classify_plane_aabb3_report` |
+| Retain evidence | `plane3_evidence`, `oriented_plane3_evidence`, corresponding `classify_*_with_evidence` methods |
+| Homogeneous intersections | `intersect_two_planes`, `intersect_three_planes`, `intersect_homogeneous_line_plane` |
+| Homogeneous incidence | `classify_homogeneous_point_plane` |
+| Segment/plane construction | `intersect_segment_with_plane`, `intersect_segment_with_oriented_plane`, `intersect_segment_with_plane_values` |
+| Validate/reconstruct crossings | `construct_segment_plane_crossing_from_values`, `interpolate_point3`, `point_plane_value`, `segment_parameter_from_axis` |
+
+Reports expose `validate` and `validate_against_sources`/`*_triangles` methods
+so retained decisions can be checked against their source geometry.
+
+### Triangles and tetrahedra
+
+| Task | API |
+| --- | --- |
+| Point/triangle | `classify_point_triangle`, `classify_point_triangle3`, facts/orientation reuse variants |
+| Triangle orientation and degeneracy | `triangle3_orientation`, `triangle3_winding_normal_sign`, `classify_triangle3_degeneracy` |
+| Segment or ray/triangle | `classify_segment_triangle3_intersection`, `classify_ray_triangle3_intersection` and report variants |
+| Triangle/triangle | `classify_triangle_triangle3`, `classify_triangle_triangle3_with_policy`, `classify_triangle_triangle3_points_with_policy` |
+| Point/tetrahedron | `classify_point_tetrahedron` |
+| Coplanar triangles | `classify_coplanar_triangles`, `classify_coplanar_triangle_points`, `derive_coplanar_triangle_relation` |
+| Coplanar projection | `choose_coplanar_projection`, `project_point3`, `project_triangle3`, projected area, turn, line, and segment helpers |
+
+### Support DOPs and halfspaces
+
+| Task | API |
+| --- | --- |
+| Build a support DOP | `SupportDop3::from_points`, `support_dop3_from_points` |
+| Retain witnesses | `WitnessedSupportDop3::from_points`, `witnessed_support_dop3_from_points` |
+| Inspect or update | `slabs`, `validate`, `validate_against_points`, `refresh_for_changed_vertices`, `to_support_dop3` |
+| Classify | `classify_point`, `classify_aabb3`, `classify_plane3` and report variants |
+| Work with slabs/axes | `SupportDopAxis3`, `SupportSlab3::new`, `project_point` |
+| Test convex feasibility | `classify_halfspace_feasibility3`, `HalfspaceFeasibilityReport`, `HalfspaceInfeasibilityCertificate` |
+
+Witness and report types make broad-phase decisions replayable without turning
+their cached data into an unchecked certificate.
+
+### Batch evaluation
+
+Sequential batch front doors are `orient2_batch`, `orient3_batch`,
+`incircle2_batch`, `insphere3_batch`, `classify_point_line_batch`,
+`classify_point_plane_batch`, `classify_point_oriented_plane_batch`,
+`classify_segment3_intersection_batch`,
+`classify_segment_triangle3_intersection_batch`,
+`classify_ray_triangle3_intersection_batch`,
+`classify_circle_line2_batch`, and `classify_circle_segment2_batch`.
+
+With `parallel`, the same names gain a `_parallel` suffix and use Rayon.
+Associated `*Case` aliases document each batch tuple shape.
+
+## Features
+
+| Feature | Default | Effect |
+| --- | --- | --- |
+| `std` | yes | Standard-library support used by the current crate build. |
+| `parallel` | no | Enables Rayon-backed parallel batch variants; implies `std`. |
+| `dispatch-trace` | no | Enables lower-stack predicate/scalar dispatch instrumentation. |
+
+## Guarantees and boundaries
+
+- A decided result comes from structural, filtered, exact, or bounded-refined
+  evidence recorded in the outcome.
+- Primitive floats are never an undocumented fallback for predicate decisions.
+- An unresolved predicate remains `Unknown`.
+- Retained facts and evidence can reduce repeated-query cost but do not change
+  predicate semantics.
+- Approximate metadata, including intentionally lossy DOP expansion adapters,
+  is labeled and is not proof-producing.
+- Hyperlimit owns predicates and small predicate-supporting constructions.
+  Curves, rings as topology, triangulations, meshes, and CSG remain higher-layer
+  responsibilities.
+
+## Ecosystem and further documentation
+
+- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact-aware
+  scalars, structural facts, and bounded refinement.
+- [Hyperlattice](https://github.com/timschmidt/hyperlattice) owns points,
+  homogeneous carriers, and linear algebra.
+- [Hypercurve](https://github.com/timschmidt/hypercurve),
+  [Hypertri](https://github.com/timschmidt/hypertri), and
+  [Hypermesh](https://github.com/timschmidt/hypermesh) consume these predicates.
+
+[`PERFORMANCE.md`](PERFORMANCE.md) records benchmark methodology and retained
+optimization evidence. [`benchmarks.md`](benchmarks.md) contains generated
+results. Generate complete type fields and signatures with `cargo doc --open`.
 
 ## References
 
-Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*,
-Academic Press, 1990, pp. 548-550.
+- Guigue, Philippe, and Olivier Devillers. “Fast and Robust
+  Triangle-Triangle Overlap Test Using Orientation Predicates.” *Journal of
+  Graphics Tools*, vol. 8, no. 1, 2003, pp. 39–52.
+  [doi:10.1080/10867651.2003.10487580](https://doi.org/10.1080/10867651.2003.10487580).
+- Hormann, Kai, and Alexander Agathos. “The Point in Polygon Problem for
+  Arbitrary Polygons.” *Computational Geometry*, vol. 20, no. 3, 2001,
+  pp. 131–144.
+  [doi:10.1016/S0925-7721(01)00012-8](https://doi.org/10.1016/S0925-7721(01)00012-8).
+- Klosowski, James T., et al. “Efficient Collision Detection Using Bounding
+  Volume Hierarchies of k-DOPs.” *IEEE Transactions on Visualization and
+  Computer Graphics*, vol. 4, no. 1, 1998, pp. 21–36.
+  [doi:10.1109/2945.675649](https://doi.org/10.1109/2945.675649).
+- Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
+- Seidel, Raimund. “Small-Dimensional Linear Programming and Convex Hulls Made
+  Easy.” *Discrete & Computational Geometry*, vol. 6, 1991, pp. 423–434.
+  [doi:10.1007/BF02574699](https://doi.org/10.1007/BF02574699).
+- Shewchuk, Jonathan Richard. “Adaptive Precision Floating-Point Arithmetic
+  and Fast Robust Geometric Predicates.” *Discrete & Computational Geometry*,
+  vol. 18, 1997, pp. 305–363.
+  [doi:10.1007/PL00009321](https://doi.org/10.1007/PL00009321).
+- Yap, Chee K. “Towards Exact Geometric Computation.” *Computational
+  Geometry*, vol. 7, 1997, pp. 3–23.
+  [doi:10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
 
-Bareiss, Erwin H. "Sylvester's Identity and Multistep Integer-Preserving
-Gaussian Elimination." *Mathematics of Computation*, vol. 22, no. 103, 1968,
-pp. 565-578.
+Shewchuk and Yap motivate exact escalation; Guigue and Devillers cover the
+orientation-based triangle overlap route; Hormann and Agathos cover even-odd
+point/ring classification; Klosowski et al. cover k-DOP bounds; Moore and
+Seidel underpin certified bounds and small-dimensional feasibility.
 
-Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
-Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
-no. 9, 1979, pp. 643-647.
+## Acknowledgements
 
-de Berg, Mark, Otfried Cheong, Marc van Kreveld, and Mark Overmars.
-*Computational Geometry: Algorithms and Applications*. 3rd ed., Springer, 2008.
+Hyperlimit is developed by Timothy Schmidt as the predicate layer of the Hyper
+ecosystem. It builds on the exact-real work and contributors acknowledged by
+Hyperreal and on Hyperlattice's object carriers.
 
-Ericson, Christer. *Real-Time Collision Detection*. Morgan Kaufmann, 2005.
+## License and contributing
 
-Guigue, Philippe, and Olivier Devillers. "Fast and Robust Triangle-Triangle
-Overlap Test Using Orientation Predicates." *Journal of Graphics Tools*, vol.
-8, no. 1, 2003, pp. 25-42.
+Hyperlimit is available under either the MIT License or the Apache License 2.0,
+as declared in [`Cargo.toml`](Cargo.toml). The repository's [`LICENSE`](LICENSE)
+contains the MIT terms.
 
-Gustavson, Fred G. "Two Fast Algorithms for Sparse Matrices: Multiplication
-and Permuted Transposition." *ACM Transactions on Mathematical Software*, vol.
-4, no. 3, 1978, pp. 250-269.
-
-Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
-Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
-131-144.
-
-Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
-
-Möller, Tomas. "A Fast Triangle-Triangle Intersection Test." *Journal of
-Graphics Tools*, vol. 2, no. 2, 1997, pp. 25-30.
-
-Klosowski, James T., Martin Held, Joseph S. B. Mitchell, Henry Sowizral, and
-Karel Zikan. "Efficient Collision Detection Using Bounding Volume Hierarchies
-of k-DOPs." *IEEE Transactions on Visualization and Computer Graphics*, vol. 4,
-no. 1, 1998, pp. 21-36.
-
-Seidel, Raimund. "Small-Dimensional Linear Programming and Convex Hulls Made
-Easy." *Discrete & Computational Geometry*, vol. 6, 1991, pp. 423-434.
-
-Schrijver, Alexander. *Theory of Linear and Integer Programming*. Wiley, 1986.
-
-Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
-Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
-18, no. 3, 1997, pp. 305-363.
-
-Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
-vol. 7, nos. 1-2, 1997, pp. 3-23.
-
-## Benchmarks and Development
-
-Run checks:
+Changes should preserve explicit uncertainty and keep topology ownership out of
+the predicate layer. Before submitting a change, run:
 
 ```sh
-cargo test
-cargo test --no-default-features
-cargo test --all-features
+cargo fmt --all -- --check
+cargo test --all-targets --all-features
+cargo test --all-targets --no-default-features
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 ```
-
-Run the broad feature set:
-
-```sh
-cargo test --features parallel
-```
-
-Run benchmarks:
-
-```sh
-cargo bench --bench predicates
-```
-
-The generated benchmark summary is in [`benchmarks.md`](benchmarks.md).
-The reference-driven optimization record is in [`PERFORMANCE.md`](PERFORMANCE.md).
-
-Run dispatch tracing separately:
-
-```sh
-cargo bench --bench predicates --features dispatch-trace -- --write-dispatch-trace-md
-```
-
-The generated trace summary is in [`dispatch_trace.md`](dispatch_trace.md).
-
-## License
-
-MIT OR Apache-2.0.
-
-Related Hyper crates: [hyperreal](https://github.com/timschmidt/hyperreal) provides
-scalars, [hyperlattice](https://github.com/timschmidt/hyperlattice) provides linear
-algebra carriers, and [hypercurve](https://github.com/timschmidt/hypercurve),
-[hypertri](https://github.com/timschmidt/hypertri), and
-[hypermesh](https://github.com/timschmidt/hypermesh) consume these predicates. The
-[remaining Hyper repositories](https://github.com/timschmidt?tab=repositories&q=hyper)
-build higher-level geometry and application layers.

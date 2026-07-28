@@ -31,6 +31,9 @@ std = []
 dispatch-trace = ["hyperreal/dispatch-trace"]
 parallel = ["std", "dep:rayon"]
 
+[[example]]
+name = "readme_quickstart"
+
 [[bench]]
 name = "predicates"
 harness = false
