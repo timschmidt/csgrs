@@ -11,7 +11,7 @@ use crate::predicate::{
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 use hyperreal::{
-    PreparedAffineDet2ExactWordFilter, PreparedAffineDet2Filter, PreparedIncircle2dFilter,
+    AffineDet2ExactWordFilter, AffineDet2Filter, PreparedIncircle2dFilter,
     PreparedInsphere3dFilter, Real, RealExactSetFacts, ZeroKnowledge,
 };
 
@@ -40,8 +40,8 @@ pub fn orient2d_with_policy(
         );
     }
 
-    if let Some(sign) = Real::prepare_affine_det2_exact_word_filter([&a.x, &a.y], [&b.x, &b.y])
-        .and_then(|filter| filter.sign([&c.x, &c.y]))
+    if let Some(sign) =
+        Real::exact_rational_affine_det2_word_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y])
     {
         crate::trace_dispatch!("hyperlimit", "orient2d", "exact-word-rational-det2-filter");
         return PredicateOutcome::decided(
@@ -427,8 +427,8 @@ pub struct Sphere3Polynomial<'a> {
 #[derive(Clone, Copy, Debug)]
 pub struct Line2Orientation {
     facts: PredicateFacts,
-    filter: Option<PreparedAffineDet2Filter>,
-    exact_word_filter: Option<PreparedAffineDet2ExactWordFilter>,
+    filter: Option<AffineDet2Filter>,
+    exact_word_filter: Option<AffineDet2ExactWordFilter>,
 }
 
 impl Line2Orientation {
@@ -449,9 +449,9 @@ pub fn line2_orientation_with_facts(
     to: &Point2,
     facts: PredicateFacts,
 ) -> Line2Orientation {
-    let filter = Real::prepare_affine_det2_filter([&from.x, &from.y], [&to.x, &to.y]);
+    let filter = AffineDet2Filter::from_reals([&from.x, &from.y], [&to.x, &to.y]);
     let exact_word_filter = if filter.is_none() {
-        Real::prepare_affine_det2_exact_word_filter([&from.x, &from.y], [&to.x, &to.y])
+        AffineDet2ExactWordFilter::from_reals([&from.x, &from.y], [&to.x, &to.y])
     } else {
         None
     };

@@ -876,7 +876,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let line_b = point2(1.0, 1.0, hyperreal_real);
     group.bench_function("affine_det2_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_affine_det2_filter(
+            hyperreal::AffineDet2Filter::from_reals(
                 [black_box(&line_a.x), black_box(&line_a.y)],
                 [black_box(&line_b.x), black_box(&line_b.y)],
             )
@@ -889,7 +889,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let rational_line_b = rational_point2(7, 11, -3, 7);
     group.bench_function("affine_det2_exact_word_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_affine_det2_exact_word_filter(
+            hyperreal::AffineDet2ExactWordFilter::from_reals(
                 [black_box(&rational_line_a.x), black_box(&rational_line_a.y)],
                 [black_box(&rational_line_b.x), black_box(&rational_line_b.y)],
             )
