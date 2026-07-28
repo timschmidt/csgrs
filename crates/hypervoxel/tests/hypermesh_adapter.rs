@@ -2,8 +2,8 @@
 
 use hypermesh::{InputMesh, Point3, Real, Triangle};
 use hypervoxel::{
-    GridFrame, MaterialRegionId, PreparedExactTriangleSolidMesh, VoxelizationPolicy,
-    adapt_hypermesh_exact_solid, voxelize_prepared_exact_triangle_solid_mesh,
+    ExactTriangleSolid, GridFrame, MaterialRegionId, VoxelizationPolicy,
+    adapt_hypermesh_exact_solid, voxelize_exact_triangle_solid,
 };
 
 fn tetrahedron_i64() -> InputMesh {
@@ -28,18 +28,17 @@ fn point(x: i64, y: i64, z: i64) -> Point3 {
 }
 
 #[test]
-fn hypermesh_exact_solid_adapts_to_prepared_triangle_voxelization() {
+fn hypermesh_exact_solid_adapts_to_scheduled_triangle_voxelization() {
     let mesh = tetrahedron_i64();
     let solid = adapt_hypermesh_exact_solid(&mesh).unwrap();
     assert!(solid.report().exact_solid_source_ready);
-    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
-    assert!(prepared.report().exact_prepared_solid_ready);
-    assert_eq!(prepared.report().prepared_triangle_count, 4);
+    let solid = ExactTriangleSolid::new(solid).unwrap();
+    assert_eq!(solid.triangle_count(), 4);
 
     let frame = GridFrame::builder().depth(2).build().unwrap();
-    let (_, report, schedule) = voxelize_prepared_exact_triangle_solid_mesh(
+    let (_, report, schedule) = voxelize_exact_triangle_solid(
         frame,
-        &prepared,
+        &solid,
         MaterialRegionId(9),
         VoxelizationPolicy::conservative_cover(),
     )

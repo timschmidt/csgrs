@@ -58,8 +58,8 @@ mod svo;
 mod svo_surface;
 mod transform;
 mod triangle_mesh;
-mod triangle_prepared;
 mod triangle_row_cache;
+mod triangle_solid;
 #[cfg(feature = "legacy-voxelis")]
 mod voxelis_adapter;
 mod voxelize;
@@ -156,22 +156,19 @@ pub use triangle_mesh::{
     classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh,
 };
-pub use triangle_prepared::{
-    PreparedExactTriangle, PreparedExactTriangleSolidMesh, PreparedExactTriangleSolidMeshReport,
-    PreparedRayParityAttemptReport, PreparedTriangleSolidAdaptiveAxisSweepVoxelizationReport,
-    PreparedTriangleSolidAxisSweepVoxelizationReport, PreparedTriangleSolidCellReport,
-    PreparedTriangleSolidComponentConsensusVoxelizationReport,
-    PreparedTriangleSolidComponentVoxelizationReport,
-    PreparedTriangleSolidConsensusAxisSweepVoxelizationReport,
-    PreparedTriangleSolidVoxelizationReport, classify_cell_against_prepared_triangle_solid_mesh,
-    voxelize_prepared_exact_triangle_solid_mesh,
-    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_components,
-    voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus,
+pub use triangle_solid::{
+    ExactTriangleSolid, RayParityAttemptReport, TriangleSolidAdaptiveAxisSweepVoxelizationReport,
+    TriangleSolidAxisSweepVoxelizationReport, TriangleSolidCellReport,
+    TriangleSolidComponentConsensusVoxelizationReport, TriangleSolidComponentVoxelizationReport,
+    TriangleSolidConsensusAxisSweepVoxelizationReport, TriangleSolidVoxelizationReport,
+    classify_cell_against_exact_triangle_solid, voxelize_exact_triangle_solid,
+    voxelize_exact_triangle_solid_by_adaptive_axis_sweeps,
+    voxelize_exact_triangle_solid_by_adaptive_local_component_consensus,
+    voxelize_exact_triangle_solid_by_axis_sweeps,
+    voxelize_exact_triangle_solid_by_component_consensus,
+    voxelize_exact_triangle_solid_by_components,
+    voxelize_exact_triangle_solid_by_consensus_axis_sweeps,
+    voxelize_exact_triangle_solid_by_local_component_consensus,
 };
 #[cfg(feature = "legacy-voxelis")]
 pub use voxelis_adapter::{

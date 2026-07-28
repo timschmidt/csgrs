@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 
 use crate::HypervoxelResult;
-use crate::triangle_prepared::AxisRowParity;
+use crate::triangle_solid::AxisRowParity;
 
 #[derive(Clone, Debug, PartialEq)]
 struct RetainedAxisRowParity {

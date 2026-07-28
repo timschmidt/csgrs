@@ -1,14 +1,14 @@
 # HyperVoxel Fuzz Targets
 
 This `cargo-fuzz` package exercises exact grid addressing, continuous-field
-materialization, triangle surface and solid voxelization, prepared-triangle
+materialization, triangle surface and solid voxelization, scheduled-triangle
 reuse, and the retained `hypermesh` adapter.
 
 Run one target from the repository root, for example:
 
 ```sh
 cargo fuzz run grid_address
-cargo fuzz run prepared_triangle_solid_voxelization
+cargo fuzz run triangle_solid_voxelization
 cargo fuzz run hypermesh_adapter
 ```
 
@@ -24,7 +24,7 @@ versions.
 - `continuous_field_materialization` covers certified continuous-field sampling.
 - `triangle_surface_voxelization` and `triangle_solid_voxelization` cover direct
   mesh conversion.
-- `prepared_triangle_solid_voxelization` covers reusable prepared geometry and
+- `triangle_solid_voxelization` covers reusable exact geometry and
   row caches.
 - `hypermesh_adapter` covers retained-mesh validation and conversion.
 

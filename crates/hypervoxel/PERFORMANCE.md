@@ -10,6 +10,8 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 
 | Benchmark | Baseline estimate | Retained estimate | Change |
 | --- | ---: | ---: | ---: |
+| `triangle_solid_construction` | 8.313 µs | 7.148 µs | 14.0% faster |
+| `triangle_solid_voxelization` | 5.388 ms | 5.298 ms | 1.7% faster |
 | `region_aggregate` | 663.3 ns | 537.0 ns | 19.0% faster |
 | `manhattan_distance_preview_32_cube_512_sources` | 5.170 ms | 0.908 ms | 82.4% faster |
 | `semantic_connected_component` | 227.1 µs | 95.8 µs | 57.8% faster |
@@ -20,11 +22,19 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 
 ## Retained Changes
 
+`ExactTriangleSolid` now validates and retains exact scheduling facts during
+ordinary construction, so callers cannot receive a successful but unusable
+intermediate object. Its facet table indexes retained source triangles instead
+of cloning their exact coordinates, and construction shares each triangle's
+predicate points with its readiness audit. HyperBrep's downstream exact
+geometry and materialization sentinels measured 247.8 µs and 376.4 µs after
+the migration.
+
 Sparse-grid queries are now inherent operations on `SparseVoxelGrid`; they no
 longer require a wrapper that duplicates the grid frame and aggregate. Region
 aggregation also streams matching cells directly into the fact accumulator
 instead of first collecting a temporary vector. The retained benchmark uses
-the same populated depth-eight grid and query region as the prepared baseline.
+the same populated depth-eight grid and query region as the former wrapper.
 
 The exact Manhattan transform already used six linear relaxations. Result
 assembly nevertheless inserted every sample into a `BTreeMap` and then queried

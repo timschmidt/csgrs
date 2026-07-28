@@ -42,7 +42,7 @@ expanding every cell into coordinate geometry.
 | Store facts | `VoxelCell`, `VoxelPayload`, `SparseVoxelGrid`, `VoxelEditBatch` |
 | Attach domain records | `VoxelSideTables`, `MaterialRegionRecord`, `FieldSampleRecord`, `ProcessStateRecord` |
 | Voxelize primitives | `ExactBox`, `ExactHalfSpace`, `ExactConvexHalfSpaceSet`, and their `voxelize_*` functions |
-| Voxelize triangles | `ExactTriangleSurfaceMesh`, `ExactTriangleSolidMesh`, `PreparedExactTriangleSolidMesh` |
+| Voxelize triangles | `ExactTriangleSurfaceMesh`, `ExactTriangleSolidMesh`, `ExactTriangleSolid` |
 | Query and summarize | `VoxelAggregateFacts`, `VoxelSpatialAggregateFacts`, `select_lod_cells`, `voxel_neighbors6` |
 | Extract exact surfaces | `extract_exposed_faces_with_report`, `sparse_exact_surface_triangle_mesh_with_report` |
 | Use compressed storage | `ChunkPagedSparseGrid`, `SvoVoxelGrid`, deterministic snapshot and replay reports |
@@ -145,7 +145,7 @@ Runnable versions are in [`examples/exact_box.rs`](examples/exact_box.rs) and
 
 - Use `voxelize_exact_halfspace` or
   `voxelize_exact_convex_halfspace_set` for proof-producing linear predicates.
-- Prepare a closed triangle solid with `PreparedExactTriangleSolidMesh::prepare`
+- Construct a closed triangle solid with `ExactTriangleSolid::new`
   before selecting a per-cell, component, or axis-sweep voxelization schedule.
 - Call `query_material_regions`, `query_field_samples`, and the side-table audit
   functions before handing payload IDs to a domain crate.
@@ -164,7 +164,7 @@ Implemented today:
 - exact frames, addresses, cells, side tables, edit batches, and sparse storage;
 - exact box, half-space, convex-half-space, triangle-surface, and closed-triangle
   solid classification;
-- prepared triangle schedules with explicit acceleration and fallback evidence;
+- exact triangle schedules with explicit acceleration and fallback evidence;
 - aggregate, LOD, neighbor, connected-component, broad-phase, support, path,
   and Manhattan-distance reports;
 - exact exposed-face and indexed lattice-surface handoffs;

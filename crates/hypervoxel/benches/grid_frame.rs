@@ -1,9 +1,11 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    ExactBox, GridFrame, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid,
-    VoxelAddress, VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
+    ExactBox, ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
+    GridFrame, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid, VoxelAddress,
+    VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
     extract_exposed_faces, lossy_quad_mesh_from_faces, voxelize_exact_box,
+    voxelize_exact_triangle_solid,
 };
 
 fn r(n: i32) -> Real {
@@ -34,6 +36,20 @@ fn populated_sparse_grid(depth: u8) -> SparseVoxelGrid {
         .unwrap();
     }
     grid
+}
+
+fn exact_tetrahedron_solid() -> ExactTriangleSolidMesh {
+    let point = |x, y, z| [r(x), r(y), r(z)];
+    let vertices = [
+        point(0, 0, 0),
+        point(1, 0, 0),
+        point(0, 1, 0),
+        point(0, 0, 1),
+    ];
+    let triangles = [[0, 2, 1], [0, 1, 3], [1, 2, 3], [2, 0, 3]]
+        .map(|indices| ExactTriangle3::new(indices.map(|index| vertices[index].clone()), None))
+        .into();
+    ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles), true)
 }
 
 fn bench_cell_bounds(c: &mut Criterion) {
@@ -125,6 +141,27 @@ fn bench_grid_queries(c: &mut Criterion) {
     });
 }
 
+fn bench_triangle_solid(c: &mut Criterion) {
+    let solid = exact_tetrahedron_solid();
+    c.bench_function("triangle_solid_construction", |b| {
+        b.iter(|| ExactTriangleSolid::new(black_box(solid.clone())).unwrap())
+    });
+
+    let solid = ExactTriangleSolid::new(solid).unwrap();
+    let frame = frame(3);
+    c.bench_function("triangle_solid_voxelization", |b| {
+        b.iter(|| {
+            voxelize_exact_triangle_solid(
+                black_box(frame.clone()),
+                black_box(&solid),
+                MaterialRegionId(3),
+                VoxelizationPolicy::conservative_cover(),
+            )
+            .unwrap()
+        })
+    });
+}
+
 fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
     #[cfg(feature = "hypermesh-adapter")]
     {
@@ -164,6 +201,7 @@ criterion_group!(
     bench_svo_compaction_and_expansion,
     bench_surface_paths,
     bench_grid_queries,
+    bench_triangle_solid,
     bench_hypermesh_exact_adapter,
 );
 criterion_main!(benches);

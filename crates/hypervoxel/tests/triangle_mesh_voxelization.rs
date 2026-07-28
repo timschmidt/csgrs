@@ -1,18 +1,18 @@
 use hyperreal::{Rational, Real};
 use hypervoxel::{
-    ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame, HypervoxelError,
-    MaterialRegionId, OccupancyState, PreparedExactTriangleSolidMesh, VoxelAddress,
+    ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
+    GridFrame, HypervoxelError, MaterialRegionId, OccupancyState, VoxelAddress,
     VoxelTriangleMeshClassifier, VoxelTriangleSolidClassifier, VoxelizationPolicy,
-    classify_cell_against_prepared_triangle_solid_mesh, classify_cell_against_triangle_solid_mesh,
-    classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid_mesh,
-    voxelize_exact_triangle_surface_mesh, voxelize_prepared_exact_triangle_solid_mesh,
-    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus,
-    voxelize_prepared_exact_triangle_solid_mesh_by_components,
-    voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps,
-    voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus,
+    classify_cell_against_exact_triangle_solid, classify_cell_against_triangle_solid_mesh,
+    classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid,
+    voxelize_exact_triangle_solid_by_adaptive_axis_sweeps,
+    voxelize_exact_triangle_solid_by_adaptive_local_component_consensus,
+    voxelize_exact_triangle_solid_by_axis_sweeps,
+    voxelize_exact_triangle_solid_by_component_consensus,
+    voxelize_exact_triangle_solid_by_components,
+    voxelize_exact_triangle_solid_by_consensus_axis_sweeps,
+    voxelize_exact_triangle_solid_by_local_component_consensus, voxelize_exact_triangle_solid_mesh,
+    voxelize_exact_triangle_surface_mesh,
 };
 use proptest::prelude::*;
 
@@ -120,11 +120,11 @@ fn sheared_box_surface(min: i64, max: i64) -> ExactTriangleSurfaceMesh {
     ])
 }
 
-fn prepared_cube(depth: u8, min: i64, max: i64) -> (GridFrame, PreparedExactTriangleSolidMesh) {
+fn exact_cube(depth: u8, min: i64, max: i64) -> (GridFrame, ExactTriangleSolid) {
     let frame = frame(depth);
     let solid = ExactTriangleSolidMesh::new(cube_surface(min, max), true);
-    let prepared = PreparedExactTriangleSolidMesh::prepare(solid).unwrap();
-    (frame, prepared)
+    let solid = ExactTriangleSolid::new(solid).unwrap();
+    (frame, solid)
 }
 
 #[test]
@@ -204,68 +204,59 @@ fn exact_triangle_solid_classifies_boundary_inside_and_outside() {
 }
 
 #[test]
-fn prepared_and_direct_solid_voxelization_match() {
-    let (frame, prepared) = prepared_cube(3, 2, 6);
+fn scheduled_and_direct_solid_voxelization_match() {
+    let (frame, solid) = exact_cube(3, 2, 6);
     let (direct_grid, direct_report) = voxelize_exact_triangle_solid_mesh(
         frame.clone(),
-        prepared.solid(),
+        solid.mesh(),
         MaterialRegionId(4),
         VoxelizationPolicy::conservative_cover(),
     )
     .unwrap();
-    let (prepared_grid, prepared_report, schedule) = voxelize_prepared_exact_triangle_solid_mesh(
+    let (scheduled_grid, scheduled_report, schedule) = voxelize_exact_triangle_solid(
         frame,
-        &prepared,
+        &solid,
         MaterialRegionId(4),
         VoxelizationPolicy::conservative_cover(),
     )
     .unwrap();
-    assert_eq!(prepared_grid, direct_grid);
-    assert_eq!(prepared_report.aggregate, direct_report.aggregate);
-    assert_eq!(prepared_report.unknown_cells, 0);
+    assert_eq!(scheduled_grid, direct_grid);
+    assert_eq!(scheduled_report.aggregate, direct_report.aggregate);
+    assert_eq!(scheduled_report.unknown_cells, 0);
     assert!(schedule.boundary_aabb_rejections > 0);
 }
 
 #[test]
 fn component_and_sweep_accelerators_match_per_cell_classification() {
-    let (frame, prepared) = prepared_cube(3, 2, 6);
+    let (frame, solid) = exact_cube(3, 2, 6);
     let policy = VoxelizationPolicy::conservative_cover();
     let material = MaterialRegionId(5);
-    let (expected, _, _) = voxelize_prepared_exact_triangle_solid_mesh(
+    let (expected, _, _) =
+        voxelize_exact_triangle_solid(frame.clone(), &solid, material, policy.clone()).unwrap();
+    let (components, _, component_schedule) = voxelize_exact_triangle_solid_by_components(
         frame.clone(),
-        &prepared,
+        &solid,
         material,
         policy.clone(),
     )
     .unwrap();
-    let (components, _, component_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_components(
-            frame.clone(),
-            &prepared,
-            material,
-            policy.clone(),
-        )
-        .unwrap();
-    let (axis, _, axis_schedule) = voxelize_prepared_exact_triangle_solid_mesh_by_axis_sweeps(
+    let (axis, _, axis_schedule) = voxelize_exact_triangle_solid_by_axis_sweeps(
         frame.clone(),
-        &prepared,
+        &solid,
         material,
         policy.clone(),
     )
     .unwrap();
-    let (adaptive, _, adaptive_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_axis_sweeps(
-            frame.clone(),
-            &prepared,
-            material,
-            policy.clone(),
-        )
-        .unwrap();
+    let (adaptive, _, adaptive_schedule) = voxelize_exact_triangle_solid_by_adaptive_axis_sweeps(
+        frame.clone(),
+        &solid,
+        material,
+        policy.clone(),
+    )
+    .unwrap();
     let (consensus, _, consensus_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_consensus_axis_sweeps(
-            frame, &prepared, material, policy,
-        )
-        .unwrap();
+        voxelize_exact_triangle_solid_by_consensus_axis_sweeps(frame, &solid, material, policy)
+            .unwrap();
 
     assert_eq!(components, expected);
     assert_eq!(axis, expected);
@@ -280,39 +271,30 @@ fn component_and_sweep_accelerators_match_per_cell_classification() {
 #[test]
 fn component_consensus_variants_match_per_cell_on_sheared_solid() {
     let frame = frame(3);
-    let prepared = PreparedExactTriangleSolidMesh::prepare(ExactTriangleSolidMesh::new(
-        sheared_box_surface(1, 5),
-        true,
-    ))
-    .unwrap();
+    let solid =
+        ExactTriangleSolid::new(ExactTriangleSolidMesh::new(sheared_box_surface(1, 5), true))
+            .unwrap();
     let policy = VoxelizationPolicy::conservative_cover();
     let material = MaterialRegionId(6);
-    let (expected, _, _) = voxelize_prepared_exact_triangle_solid_mesh(
+    let (expected, _, _) =
+        voxelize_exact_triangle_solid(frame.clone(), &solid, material, policy.clone()).unwrap();
+    let (global, _, global_schedule) = voxelize_exact_triangle_solid_by_component_consensus(
         frame.clone(),
-        &prepared,
+        &solid,
         material,
         policy.clone(),
     )
     .unwrap();
-    let (global, _, global_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_component_consensus(
-            frame.clone(),
-            &prepared,
-            material,
-            policy.clone(),
-        )
-        .unwrap();
-    let (local, _, local_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_local_component_consensus(
-            frame.clone(),
-            &prepared,
-            material,
-            policy.clone(),
-        )
-        .unwrap();
+    let (local, _, local_schedule) = voxelize_exact_triangle_solid_by_local_component_consensus(
+        frame.clone(),
+        &solid,
+        material,
+        policy.clone(),
+    )
+    .unwrap();
     let (adaptive, _, adaptive_schedule) =
-        voxelize_prepared_exact_triangle_solid_mesh_by_adaptive_local_component_consensus(
-            frame, &prepared, material, policy,
+        voxelize_exact_triangle_solid_by_adaptive_local_component_consensus(
+            frame, &solid, material, policy,
         )
         .unwrap();
 
@@ -325,20 +307,19 @@ fn component_consensus_variants_match_per_cell_on_sheared_solid() {
 }
 
 #[test]
-fn prepared_classifier_reuses_exact_schedule() {
-    let (frame, prepared) = prepared_cube(3, 2, 6);
+fn classifier_reuses_exact_schedule() {
+    let (frame, solid) = exact_cube(3, 2, 6);
     let inside = VoxelAddress::new(3, [3, 3, 3]).unwrap();
-    let report =
-        classify_cell_against_prepared_triangle_solid_mesh(inside, &frame, &prepared).unwrap();
+    let report = classify_cell_against_exact_triangle_solid(inside, &frame, &solid).unwrap();
     assert_eq!(report.classifier, VoxelTriangleSolidClassifier::Inside);
     assert!(report.boundary_aabb_rejections > 0);
 }
 
 #[test]
-fn prepared_triangle_solid_rejects_open_source() {
+fn exact_triangle_solid_rejects_open_source() {
     let solid = ExactTriangleSolidMesh::new(cube_surface(1, 3), false);
     assert_eq!(
-        PreparedExactTriangleSolidMesh::prepare(solid),
+        ExactTriangleSolid::new(solid),
         Err(HypervoxelError::InvalidSourceGeometry {
             reason: "triangle solid mesh lacks exact closed-solid replay"
         })
@@ -347,7 +328,7 @@ fn prepared_triangle_solid_rejects_open_source() {
 
 proptest! {
     #[test]
-    fn generated_cube_solids_match_direct_and_prepared_paths(
+    fn generated_cube_solids_match_direct_and_scheduled_paths(
         depth in 2_u8..4,
         min in 0_i64..2,
         extent in 1_i64..3,
@@ -356,14 +337,14 @@ proptest! {
         let cells = 1_i64 << depth;
         let max = (min + extent).min(cells);
         prop_assume!(min < max);
-        let solid = ExactTriangleSolidMesh::new(cube_surface(min, max), true);
-        let prepared = PreparedExactTriangleSolidMesh::prepare(solid.clone()).unwrap();
+        let mesh = ExactTriangleSolidMesh::new(cube_surface(min, max), true);
+        let solid = ExactTriangleSolid::new(mesh.clone()).unwrap();
         let policy = VoxelizationPolicy::conservative_cover();
         let (direct, direct_report) = voxelize_exact_triangle_solid_mesh(
-            frame.clone(), &solid, MaterialRegionId(9), policy.clone(),
+            frame.clone(), &mesh, MaterialRegionId(9), policy.clone(),
         ).unwrap();
-        let (cached, cached_report, _) = voxelize_prepared_exact_triangle_solid_mesh(
-            frame, &prepared, MaterialRegionId(9), policy,
+        let (cached, cached_report, _) = voxelize_exact_triangle_solid(
+            frame, &solid, MaterialRegionId(9), policy,
         ).unwrap();
         prop_assert_eq!(&cached, &direct);
         prop_assert_eq!(cached_report.aggregate, direct_report.aggregate);

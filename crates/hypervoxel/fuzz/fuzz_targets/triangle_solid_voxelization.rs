@@ -3,7 +3,11 @@
 use hyperreal::Real;
 use hypervoxel::{
     ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh, GridFrame, MaterialRegionId,
-    VoxelizationPolicy, voxelize_exact_triangle_solid_mesh,
+    ExactTriangleSolid, VoxelizationPolicy, voxelize_exact_triangle_solid_mesh,
+    voxelize_exact_triangle_solid,
+    voxelize_exact_triangle_solid_by_adaptive_local_component_consensus,
+    voxelize_exact_triangle_solid_by_axis_sweeps,
+    voxelize_exact_triangle_solid_by_component_consensus,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -16,7 +20,7 @@ fn tri(vertices: [[Real; 3]; 3]) -> ExactTriangle3 {
 }
 
 fuzz_target!(|data: (u8, u8, u8, bool)| {
-    let (depth_raw, lo_raw, span_raw, closed_replay) = data;
+    let (depth_raw, lo_raw, span_raw, closed_solid) = data;
     let depth = (depth_raw % 3) + 2;
     let frame = GridFrame::builder().depth(depth).build().unwrap();
     let cells = 1_u64 << depth;
@@ -37,19 +41,65 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         tri([p(lo, lo, hi), p(hi, lo, hi), p(lo, hi, hi)]),
         tri([p(hi, lo, hi), p(hi, hi, hi), p(lo, hi, hi)]),
     ]);
-    let solid = ExactTriangleSolidMesh::new(surface, closed_replay);
-    let result = voxelize_exact_triangle_solid_mesh(
-        frame,
+    let mesh = ExactTriangleSolidMesh::new(surface, closed_solid);
+    let solid = ExactTriangleSolid::new(mesh.clone());
+    if !closed_solid {
+        assert!(solid.is_err());
+        return;
+    }
+    let solid = solid.unwrap();
+    let policy = VoxelizationPolicy::conservative_cover();
+
+    let (ordinary, ordinary_report) = voxelize_exact_triangle_solid_mesh(
+        frame.clone(),
+        &mesh,
+        MaterialRegionId(1),
+        policy.clone(),
+    )
+    .unwrap();
+    let (direct, direct_report, _) = voxelize_exact_triangle_solid(
+        frame.clone(),
         &solid,
         MaterialRegionId(1),
-        VoxelizationPolicy::conservative_cover(),
-    );
-    if closed_replay {
-        let (grid, report) = result.unwrap();
+        policy.clone(),
+    )
+    .unwrap();
+    let (sweep, sweep_report, _) = voxelize_exact_triangle_solid_by_axis_sweeps(
+        frame.clone(),
+        &solid,
+        MaterialRegionId(1),
+        policy.clone(),
+    )
+    .unwrap();
+    let (components, component_report, _) =
+        voxelize_exact_triangle_solid_by_component_consensus(
+            frame.clone(),
+            &solid,
+            MaterialRegionId(1),
+            policy.clone(),
+        )
+        .unwrap();
+    let (adaptive, adaptive_report, _) =
+        voxelize_exact_triangle_solid_by_adaptive_local_component_consensus(
+            frame,
+            &solid,
+            MaterialRegionId(1),
+            policy,
+        )
+        .unwrap();
+
+    assert_eq!(direct, ordinary);
+    assert_eq!(sweep, ordinary);
+    assert_eq!(components, ordinary);
+    assert_eq!(adaptive, ordinary);
+    for report in [
+        ordinary_report,
+        direct_report,
+        sweep_report,
+        component_report,
+        adaptive_report,
+    ] {
         assert_eq!(report.unknown_cells, 0);
-        assert!(grid.len() <= report.aggregate.child_count);
         assert!(report.predicate_certificates.is_fully_certified());
-    } else {
-        assert!(result.is_err());
     }
 });

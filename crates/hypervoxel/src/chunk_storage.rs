@@ -484,7 +484,7 @@ impl ChunkPagedSparseGrid {
 
     /// Returns the six-connected component of explicit non-empty cells.
     ///
-    /// This is the chunk-paged counterpart to prepared sparse-grid component
+    /// This is the chunk-paged counterpart to sparse-grid component
     /// queries. The traversal uses exact integer 6-neighbor adjacency and page
     /// membership only as a storage shortcut: a missing page proves all
     /// explicit sparse cells in that page are absent, while present pages still

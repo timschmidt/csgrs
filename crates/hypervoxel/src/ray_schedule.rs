@@ -1,4 +1,4 @@
-//! Exact ray/AABB scheduling predicates for prepared voxelization.
+//! Exact ray/AABB scheduling predicates for triangle-solid voxelization.
 //!
 //! This module is an acceleration layer only: it may reject triangle AABBs
 //! that a parity ray cannot reach, but it never accepts an inside/outside

@@ -47,6 +47,10 @@ impl ExactTriangle3 {
 
     /// Reports whether this triangle is structurally usable for voxelization.
     pub fn report(&self) -> ExactTriangle3Report {
+        self.points_and_report().1
+    }
+
+    pub(crate) fn points_and_report(&self) -> ([hyperlimit::Point3; 3], ExactTriangle3Report) {
         let points = self.points();
         let location = classify_point_triangle3(&points[0], &points[1], &points[2], &points[0]);
         let (degenerate, unknown_predicate) = match location.value() {
@@ -54,11 +58,14 @@ impl ExactTriangle3 {
             Some(_) => (false, false),
             None => (false, true),
         };
-        ExactTriangle3Report {
-            degenerate,
-            unknown_predicate,
-            exact_triangle_ready: !degenerate && !unknown_predicate,
-        }
+        (
+            points,
+            ExactTriangle3Report {
+                degenerate,
+                unknown_predicate,
+                exact_triangle_ready: !degenerate && !unknown_predicate,
+            },
+        )
     }
 
     pub(crate) fn points(&self) -> [hyperlimit::Point3; 3] {

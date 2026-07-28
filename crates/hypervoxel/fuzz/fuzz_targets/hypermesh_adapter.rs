@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypermesh::{InputMesh, Point3, Real, Triangle};
-use hypervoxel::{PreparedExactTriangleSolidMesh, adapt_hypermesh_exact_solid};
+use hypervoxel::{ExactTriangleSolid, adapt_hypermesh_exact_solid};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: (u8, bool, bool)| {
@@ -35,8 +35,8 @@ fuzz_target!(|data: (u8, bool, bool)| {
 
     let adapter = adapt_hypermesh_exact_solid(&mesh);
     if closed_policy {
-        let prepared = PreparedExactTriangleSolidMesh::prepare(adapter.unwrap()).unwrap();
-        assert!(prepared.report().exact_prepared_solid_ready);
+        let solid = ExactTriangleSolid::new(adapter.unwrap()).unwrap();
+        assert_eq!(solid.triangle_count(), 4);
     } else {
         assert!(adapter.is_err());
     }

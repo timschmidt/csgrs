@@ -1,4 +1,4 @@
-//! Report-bearing voxelization and prepared-grid handles.
+//! Report-bearing voxelization types.
 //!
 //! Voxelization reports keep exact predicate accounting next to the resulting
 //! grid. Combinatorial classifications are part of the object-level state, not
