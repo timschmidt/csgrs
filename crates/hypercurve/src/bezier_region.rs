@@ -3030,12 +3030,11 @@ impl CurveRegion2 {
         Ok(Classification::Decided(profiles))
     }
 
-    /// Populates clone-shared data used by immediate exact point classification.
-    fn prepare_classification_caches(&self, policy: &CurvePolicy) -> CurveResult<()> {
-        let _ = self.native_boundary_loops();
-        let _ = self.native_boundary_bounds(policy);
-        let _ = self.retained_rational_evaluators()?;
-
+    /// Returns the certified internal line/arc accelerator when this region has one.
+    pub(crate) fn native_line_arc_region(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<&LineArcRegion2>> {
         if self.line_image_region.get().is_none() {
             if self.certified_loop_roles.is_some() {
                 match self.certified_line_image_region(policy)? {
@@ -3060,15 +3059,6 @@ impl CurveRegion2 {
                 }
             }
         }
-        Ok(())
-    }
-
-    /// Returns the certified internal line/arc accelerator when this region has one.
-    pub(crate) fn native_line_arc_region(
-        &self,
-        policy: &CurvePolicy,
-    ) -> CurveResult<Classification<&LineArcRegion2>> {
-        self.prepare_classification_caches(policy)?;
         Ok(
             match self.line_image_region.get().and_then(Option::as_ref) {
                 Some(region) => Classification::Decided(region),
@@ -3405,10 +3395,14 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             }
         };
-        self.prepare_classification_caches(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
-        let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let region = match self
+            .native_line_arc_region(policy)
+            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+        {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let roles = match self
             .loop_roles(policy)
@@ -3907,10 +3901,14 @@ impl CurveRegion2 {
                 CurveError::InvalidCurveRange,
             ));
         }
-        self.prepare_classification_caches(policy)
-            .map_err(|cause| curve_region_edit_error(operation, cause))?;
-        let Some(region) = self.line_image_region.get().and_then(Option::as_ref) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let region = match self
+            .native_line_arc_region(policy)
+            .map_err(|cause| curve_region_edit_error(operation, cause))?
+        {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
         let roles = match self
             .loop_roles(policy)
@@ -4148,16 +4146,18 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurvePolicy,
     ) -> CurveResult<Classification<i32>> {
-        self.prepare_classification_caches(policy)?;
-        if !self.signed_loop_composition
-            && let Some(Some(region)) = self.line_image_region.get()
-        {
-            return Ok(region.signed_depth(point, policy));
+        if !self.signed_loop_composition {
+            match self.native_line_arc_region(policy)? {
+                Classification::Decided(region) => {
+                    return Ok(region.signed_depth(point, policy));
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
-        self.signed_depth_after_preparation(point, policy)
+        self.signed_depth_from_boundaries(point, policy)
     }
 
-    fn signed_depth_after_preparation(
+    fn signed_depth_from_boundaries(
         &self,
         point: &Point2,
         policy: &CurvePolicy,

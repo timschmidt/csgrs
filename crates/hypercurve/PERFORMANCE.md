@@ -6090,6 +6090,21 @@ classification at 27.837 us before and 27.703--27.884 us after. The serialized
 `editing` signed-area gate improved cold computation from 11.010 to 10.249 us
 and 100,000 clone replays from 32 to 31 ns each.
 
+### Immediate curve-region classification path
+
+Curve-region classification no longer runs a separate eager preparation phase
+that populated native boundaries, bounds, rational evaluators, and line-image
+state together. Immediate native line/arc queries now retain only their result;
+unsupported carriers fall through to the exact boundary representation, which
+initializes only the data that representation consumes.
+
+Against the immediately preceding serialized run, two candidate
+`bezier_region` runs measured retained curve-region classification at
+35.674--36.017 us versus 35.932 us, native signed depth at 1.185--1.196 us
+versus 1.192 us, algebraic classification at 27.333--28.293 us versus
+27.703 us, and algebraic line-role evidence at 58.883--60.406 us versus
+59.425 us.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
