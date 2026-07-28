@@ -15,14 +15,11 @@ default = []
 dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperlimit = { path = "../hyperlimit", default-features = false }
-hyperreal = { path = "../hyperreal", default-features = false }
-hypersolve = { path = "../hypersolve", default-features = false }
-# hyperlimit = { version = "0.4.0", default-features = false }
-# hyperreal = { version = "0.13.0", default-features = false }
-# hypersolve = { version = "0.3.0", default-features = false }
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+hypersolve = { version = "0.3.0", path = "../hypersolve", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
