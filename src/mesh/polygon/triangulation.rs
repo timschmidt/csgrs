@@ -203,7 +203,7 @@ fn strictly_convex_exact_word_projection<'a>(
 fn strictly_convex(points: &[hypertri::Point2], first_turn: Option<Sign>) -> bool {
     let mut winding = first_turn;
     for index in usize::from(first_turn.is_some())..points.len() {
-        let Ok(sign) = ExactKernel::orient2d(
+        let Ok(sign) = ExactKernel::orient2(
             &points[index],
             &points[(index + 1) % points.len()],
             &points[(index + 2) % points.len()],

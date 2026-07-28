@@ -1890,7 +1890,7 @@ fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> Result<bool
             target: "Real",
         })?;
     Ok(matches!(
-        hyperlimit::orient2d(&origin, &a, &b).value(),
+        hyperlimit::orient2(&origin, &a, &b).value(),
         Some(hyperlimit::Sign::Positive)
     ))
 }

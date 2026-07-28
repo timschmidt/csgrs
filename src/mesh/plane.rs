@@ -342,7 +342,7 @@ impl Plane {
         let b = hlimit_point3(&self.point_b);
         let c = hlimit_point3(&self.point_c);
         let d = hlimit_point3(point);
-        match hyperlimit::orient3d(&a, &b, &c, &d).value()? {
+        match hyperlimit::orient3(&a, &b, &c, &d).value()? {
             hyperlimit::Sign::Positive => Some(BACK),
             hyperlimit::Sign::Negative => Some(FRONT),
             hyperlimit::Sign::Zero => Some(COPLANAR),
