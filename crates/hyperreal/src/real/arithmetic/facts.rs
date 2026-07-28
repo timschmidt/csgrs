@@ -304,74 +304,6 @@ impl Real {
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
     }
 
-    /// Prepare one exact-dyadic line for repeated compact crossing queries.
-    #[doc(hidden)]
-    pub fn prepare_exact_dyadic_line2(
-        start: [&Real; 2],
-        end: [&Real; 2],
-    ) -> Option<crate::PreparedExactDyadicLine2> {
-        Rational::prepare_line_intersection2_first_known_dyadic(
-            start.map(|value| &value.rational),
-            end.map(|value| &value.rational),
-        )
-    }
-
-    /// Prepare one exact binary64 line without traversing retained rationals.
-    #[doc(hidden)]
-    pub fn prepare_exact_dyadic_f64_line2(
-        start: [f64; 2],
-        end: [f64; 2],
-    ) -> Option<crate::PreparedExactDyadicLine2> {
-        Rational::prepare_line_intersection2_first_exact_dyadic_f64(start, end)
-    }
-
-    /// Solve a certified proper crossing against one prepared dyadic line.
-    #[doc(hidden)]
-    pub fn exact_rational_line_intersection2_point_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [&Real; 2],
-        second_end: [&Real; 2],
-    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
-        Rational::line_intersection2_point_with_prepared_first(
-            first,
-            second_start.map(|value| &value.rational),
-            second_end.map(|value| &value.rational),
-        )
-        .map(|(parameters, point)| (parameters, point.map(Real::new)))
-    }
-
-    /// Solve a crossing against prepared and exact binary64 source lines.
-    #[doc(hidden)]
-    pub fn exact_dyadic_f64_line_intersection2_point_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [f64; 2],
-        second_end: [f64; 2],
-    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
-        Rational::line_intersection2_point_with_prepared_first_exact_dyadic_f64(
-            first,
-            second_start,
-            second_end,
-        )
-        .map(|(parameters, point)| (parameters, point.map(Real::new)))
-    }
-
-    /// Retain exact crossing coordinates without allocating rational scalars.
-    #[doc(hidden)]
-    pub fn exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [f64; 2],
-        second_end: [f64; 2],
-    ) -> Option<(
-        crate::ExactDyadicLineParameters2,
-        crate::ExactDyadicLinePoint2,
-    )> {
-        Rational::line_intersection2_retained_point_with_prepared_first_exact_dyadic_f64(
-            first,
-            second_start,
-            second_end,
-        )
-    }
-
     /// Solve a certified proper crossing whose dyadic determinants exceed the
     /// native-word carrier but fit the wider fixed-stack envelope.
     #[doc(hidden)]
@@ -388,54 +320,6 @@ impl Real {
             second_end.map(|value| &value.rational),
         )
         .map(|(parameters, point)| (parameters, point.map(Real::new)))
-    }
-
-    /// Solve a wide certified crossing against one prepared dyadic line.
-    #[doc(hidden)]
-    pub fn exact_rational_line_intersection2_point_wide_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [&Real; 2],
-        second_end: [&Real; 2],
-    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
-        Rational::line_intersection2_point_wide_with_prepared_first(
-            first,
-            second_start.map(|value| &value.rational),
-            second_end.map(|value| &value.rational),
-        )
-        .map(|(parameters, point)| (parameters, point.map(Real::new)))
-    }
-
-    /// Solve a wide crossing against prepared and exact binary64 source lines.
-    #[doc(hidden)]
-    pub fn exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [f64; 2],
-        second_end: [f64; 2],
-    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
-        Rational::line_intersection2_point_wide_with_prepared_first_exact_dyadic_f64(
-            first,
-            second_start,
-            second_end,
-        )
-        .map(|(parameters, point)| (parameters, point.map(Real::new)))
-    }
-
-    /// Retain wide exact crossing coordinates without allocating rational
-    /// scalars.
-    #[doc(hidden)]
-    pub fn exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
-        first: &crate::PreparedExactDyadicLine2,
-        second_start: [f64; 2],
-        second_end: [f64; 2],
-    ) -> Option<(
-        crate::ExactDyadicWideLineParameters2,
-        crate::ExactDyadicWideLinePoint2,
-    )> {
-        Rational::line_intersection2_retained_point_wide_with_prepared_first_exact_dyadic_f64(
-            first,
-            second_start,
-            second_end,
-        )
     }
 
     /// Solve a certified proper crossing between exact dyadic endpoints while
@@ -1316,6 +1200,123 @@ impl Real {
         } else {
             [scaled_lower, scaled_upper]
         })
+    }
+}
+
+impl crate::ExactDyadicLine2 {
+    /// Retain an exact-dyadic line from exact real endpoints.
+    ///
+    /// Returns `None` when an endpoint or the line delta exceeds the compact
+    /// native-word representation.
+    #[doc(hidden)]
+    pub fn from_reals(start: [&Real; 2], end: [&Real; 2]) -> Option<Self> {
+        Rational::exact_dyadic_line2_from_rationals(
+            start.map(|value| &value.rational),
+            end.map(|value| &value.rational),
+        )
+    }
+
+    /// Retain an exact-dyadic line directly from finite binary64 endpoints.
+    ///
+    /// Returns `None` when an endpoint or the line delta exceeds the compact
+    /// native-word representation.
+    #[doc(hidden)]
+    pub fn from_f64(start: [f64; 2], end: [f64; 2]) -> Option<Self> {
+        Rational::exact_dyadic_line2_from_f64(start, end)
+    }
+
+    /// Intersect this line with a second exact-dyadic real line.
+    #[doc(hidden)]
+    pub fn intersection_point(
+        &self,
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_with_first_line(
+            self,
+            second_start.map(|value| &value.rational),
+            second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Intersect this line with a second exact binary64 line.
+    #[doc(hidden)]
+    pub fn intersection_point_f64(
+        &self,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(crate::ExactDyadicLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_with_first_line_exact_dyadic_f64(
+            self,
+            second_start,
+            second_end,
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Intersect this line with a binary64 line and retain exact coordinates.
+    #[doc(hidden)]
+    pub fn retained_intersection_point_f64(
+        &self,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(
+        crate::ExactDyadicLineParameters2,
+        crate::ExactDyadicLinePoint2,
+    )> {
+        Rational::line_intersection2_retained_point_with_first_line_exact_dyadic_f64(
+            self,
+            second_start,
+            second_end,
+        )
+    }
+
+    /// Intersect this line with a real line using the wide fixed-stack carrier.
+    #[doc(hidden)]
+    pub fn wide_intersection_point(
+        &self,
+        second_start: [&Real; 2],
+        second_end: [&Real; 2],
+    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_wide_with_first_line(
+            self,
+            second_start.map(|value| &value.rational),
+            second_end.map(|value| &value.rational),
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Intersect this line with a binary64 line using the wide carrier.
+    #[doc(hidden)]
+    pub fn wide_intersection_point_f64(
+        &self,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(crate::ExactDyadicWideLineParameters2, [Real; 2])> {
+        Rational::line_intersection2_point_wide_with_first_line_exact_dyadic_f64(
+            self,
+            second_start,
+            second_end,
+        )
+        .map(|(parameters, point)| (parameters, point.map(Real::new)))
+    }
+
+    /// Use the wide carrier and retain the exact intersection coordinates.
+    #[doc(hidden)]
+    pub fn wide_retained_intersection_point_f64(
+        &self,
+        second_start: [f64; 2],
+        second_end: [f64; 2],
+    ) -> Option<(
+        crate::ExactDyadicWideLineParameters2,
+        crate::ExactDyadicWideLinePoint2,
+    )> {
+        Rational::line_intersection2_retained_point_wide_with_first_line_exact_dyadic_f64(
+            self,
+            second_start,
+            second_end,
+        )
     }
 }
 

@@ -149,14 +149,14 @@ struct DyadicLineIntersectionPlan {
     numerators: [DyadicWord; 2],
 }
 
-/// Prepared exact-dyadic source line for repeated intersection points.
+/// Exact-dyadic source line for repeated intersection queries.
 ///
 /// The compact endpoint words and their exact delta are retained without
 /// materializing standalone rational differences. Queries that exceed this
 /// native-word envelope return `None` for the general exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedExactDyadicLine2 {
+pub struct ExactDyadicLine2 {
     start: [DyadicWord; 2],
     delta: [DyadicWord; 2],
 }
@@ -925,10 +925,10 @@ impl Rational {
         })
     }
 
-    fn prepare_line2_known_dyadic(
+    pub(crate) fn exact_dyadic_line2_from_rationals(
         start: [&Self; 2],
         end: [&Self; 2],
-    ) -> Option<PreparedExactDyadicLine2> {
+    ) -> Option<ExactDyadicLine2> {
         let point_words = |point: [&Self; 2]| {
             Some([
                 Self::known_dyadic_word(point[0])?,
@@ -937,7 +937,7 @@ impl Rational {
         };
         let start = point_words(start)?;
         let end = point_words(end)?;
-        Some(PreparedExactDyadicLine2 {
+        Some(ExactDyadicLine2 {
             start,
             delta: [
                 Self::difference_dyadic_words(end[0], start[0])?,
@@ -946,10 +946,10 @@ impl Rational {
         })
     }
 
-    fn prepare_line2_exact_dyadic_f64(
+    pub(crate) fn exact_dyadic_line2_from_f64(
         start: [f64; 2],
         end: [f64; 2],
-    ) -> Option<PreparedExactDyadicLine2> {
+    ) -> Option<ExactDyadicLine2> {
         let point_words = |point: [f64; 2]| {
             Some([
                 Self::exact_dyadic_f64_word(point[0])?,
@@ -958,7 +958,7 @@ impl Rational {
         };
         let start = point_words(start)?;
         let end = point_words(end)?;
-        Some(PreparedExactDyadicLine2 {
+        Some(ExactDyadicLine2 {
             start,
             delta: [
                 Self::difference_dyadic_words(end[0], start[0])?,
@@ -973,16 +973,16 @@ impl Rational {
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicLineIntersectionPlan> {
-        let first = Self::prepare_line2_known_dyadic(first_start, first_end)?;
-        Self::line_intersection2_plan_with_prepared_first(
+        let first = Self::exact_dyadic_line2_from_rationals(first_start, first_end)?;
+        Self::line_intersection2_plan_with_first_line(
             &first,
             second_start,
             second_end,
         )
     }
 
-    fn line_intersection2_plan_with_prepared_first(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_plan_with_first_line(
+        first: &ExactDyadicLine2,
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicLineIntersectionPlan> {
@@ -994,11 +994,11 @@ impl Rational {
         };
         let second_start = point_words(second_start)?;
         let second_end = point_words(second_end)?;
-        Self::line_intersection2_plan_with_prepared_first_words(first, second_start, second_end)
+        Self::line_intersection2_plan_with_first_line_words(first, second_start, second_end)
     }
 
-    fn line_intersection2_plan_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_plan_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<DyadicLineIntersectionPlan> {
@@ -1008,15 +1008,15 @@ impl Rational {
                 Self::exact_dyadic_f64_word(point[1])?,
             ])
         };
-        Self::line_intersection2_plan_with_prepared_first_words(
+        Self::line_intersection2_plan_with_first_line_words(
             first,
             point_words(second_start)?,
             point_words(second_end)?,
         )
     }
 
-    fn line_intersection2_plan_with_prepared_first_words(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_plan_with_first_line_words(
+        first: &ExactDyadicLine2,
         second_start: [DyadicWord; 2],
         second_end: [DyadicWord; 2],
     ) -> Option<DyadicLineIntersectionPlan> {
@@ -1053,16 +1053,16 @@ impl Rational {
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicWideLineIntersectionPlan> {
-        let first = Self::prepare_line2_known_dyadic(first_start, first_end)?;
-        Self::line_intersection2_wide_plan_with_prepared_first(
+        let first = Self::exact_dyadic_line2_from_rationals(first_start, first_end)?;
+        Self::line_intersection2_wide_plan_with_first_line(
             &first,
             second_start,
             second_end,
         )
     }
 
-    fn line_intersection2_wide_plan_with_prepared_first(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_wide_plan_with_first_line(
+        first: &ExactDyadicLine2,
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<DyadicWideLineIntersectionPlan> {
@@ -1074,11 +1074,11 @@ impl Rational {
         };
         let second_start = point_words(second_start)?;
         let second_end = point_words(second_end)?;
-        Self::line_intersection2_wide_plan_with_prepared_first_words(first, second_start, second_end)
+        Self::line_intersection2_wide_plan_with_first_line_words(first, second_start, second_end)
     }
 
-    fn line_intersection2_wide_plan_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_wide_plan_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<DyadicWideLineIntersectionPlan> {
@@ -1088,15 +1088,15 @@ impl Rational {
                 Self::exact_dyadic_f64_word(point[1])?,
             ])
         };
-        Self::line_intersection2_wide_plan_with_prepared_first_words(
+        Self::line_intersection2_wide_plan_with_first_line_words(
             first,
             point_words(second_start)?,
             point_words(second_end)?,
         )
     }
 
-    fn line_intersection2_wide_plan_with_prepared_first_words(
-        first: &PreparedExactDyadicLine2,
+    fn line_intersection2_wide_plan_with_first_line_words(
+        first: &ExactDyadicLine2,
         second_start: [DyadicWord; 2],
         second_end: [DyadicWord; 2],
     ) -> Option<DyadicWideLineIntersectionPlan> {
@@ -4434,32 +4434,18 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn prepare_line_intersection2_first_known_dyadic(
-        first_start: [&Self; 2],
-        first_end: [&Self; 2],
-    ) -> Option<PreparedExactDyadicLine2> {
-        Self::prepare_line2_known_dyadic(first_start, first_end)
-    }
-
-    pub(crate) fn prepare_line_intersection2_first_exact_dyadic_f64(
-        first_start: [f64; 2],
-        first_end: [f64; 2],
-    ) -> Option<PreparedExactDyadicLine2> {
-        Self::prepare_line2_exact_dyadic_f64(first_start, first_end)
-    }
-
-    pub(crate) fn line_intersection2_point_with_prepared_first(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_point_with_first_line(
+        first: &ExactDyadicLine2,
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<(ExactDyadicLineParameters2, [Self; 2])> {
         let plan =
-            Self::line_intersection2_plan_with_prepared_first(first, second_start, second_end)?;
+            Self::line_intersection2_plan_with_first_line(first, second_start, second_end)?;
         let point = Self::line_intersection2_point_from_plan(plan)?;
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-fused-point-prepared"
+            "dyadic-stack-fused-point-first-line"
         );
         Some((
             ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
@@ -4467,12 +4453,12 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn line_intersection2_point_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_point_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<(ExactDyadicLineParameters2, [Self; 2])> {
-        let plan = Self::line_intersection2_plan_with_prepared_first_exact_dyadic_f64(
+        let plan = Self::line_intersection2_plan_with_first_line_exact_dyadic_f64(
             first,
             second_start,
             second_end,
@@ -4481,7 +4467,7 @@ impl Rational {
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-fused-point-prepared-f64"
+            "dyadic-stack-fused-point-first-line-f64"
         );
         Some((
             ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
@@ -4489,12 +4475,12 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn line_intersection2_retained_point_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_retained_point_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<(ExactDyadicLineParameters2, ExactDyadicLinePoint2)> {
-        let plan = Self::line_intersection2_plan_with_prepared_first_exact_dyadic_f64(
+        let plan = Self::line_intersection2_plan_with_first_line_exact_dyadic_f64(
             first,
             second_start,
             second_end,
@@ -4503,7 +4489,7 @@ impl Rational {
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-retained-point-prepared-f64"
+            "dyadic-stack-retained-point-first-line-f64"
         );
         Some((
             ExactDyadicLineParameters2::from_words(plan.numerators, plan.denominator),
@@ -4535,12 +4521,12 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn line_intersection2_point_wide_with_prepared_first(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_point_wide_with_first_line(
+        first: &ExactDyadicLine2,
         second_start: [&Self; 2],
         second_end: [&Self; 2],
     ) -> Option<(ExactDyadicWideLineParameters2, [Self; 2])> {
-        let plan = Self::line_intersection2_wide_plan_with_prepared_first(
+        let plan = Self::line_intersection2_wide_plan_with_first_line(
             first,
             second_start,
             second_end,
@@ -4549,7 +4535,7 @@ impl Rational {
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-fused-point-wide-prepared"
+            "dyadic-stack-fused-point-wide-first-line"
         );
         Some((
             ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
@@ -4557,12 +4543,12 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn line_intersection2_point_wide_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_point_wide_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<(ExactDyadicWideLineParameters2, [Self; 2])> {
-        let plan = Self::line_intersection2_wide_plan_with_prepared_first_exact_dyadic_f64(
+        let plan = Self::line_intersection2_wide_plan_with_first_line_exact_dyadic_f64(
             first,
             second_start,
             second_end,
@@ -4571,7 +4557,7 @@ impl Rational {
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-fused-point-wide-prepared-f64"
+            "dyadic-stack-fused-point-wide-first-line-f64"
         );
         Some((
             ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),
@@ -4579,12 +4565,12 @@ impl Rational {
         ))
     }
 
-    pub(crate) fn line_intersection2_retained_point_wide_with_prepared_first_exact_dyadic_f64(
-        first: &PreparedExactDyadicLine2,
+    pub(crate) fn line_intersection2_retained_point_wide_with_first_line_exact_dyadic_f64(
+        first: &ExactDyadicLine2,
         second_start: [f64; 2],
         second_end: [f64; 2],
     ) -> Option<(ExactDyadicWideLineParameters2, ExactDyadicWideLinePoint2)> {
-        let plan = Self::line_intersection2_wide_plan_with_prepared_first_exact_dyadic_f64(
+        let plan = Self::line_intersection2_wide_plan_with_first_line_exact_dyadic_f64(
             first,
             second_start,
             second_end,
@@ -4593,7 +4579,7 @@ impl Rational {
         crate::trace_dispatch!(
             "rational",
             "line-intersection2",
-            "dyadic-stack-retained-point-wide-prepared-f64"
+            "dyadic-stack-retained-point-wide-first-line-f64"
         );
         Some((
             ExactDyadicWideLineParameters2::from_words(plan.numerators, plan.denominator),

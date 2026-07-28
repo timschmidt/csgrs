@@ -4,7 +4,7 @@ mod tests {
     use crate::real::arithmetic::curve;
     use crate::{
         CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, DomainStatus,
-        ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational,
+        ExactDyadicLine2, ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational,
         RationalStorageClass, Real, RealEqualityCertificate, RealExactSetDenominatorKind,
         RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern,
         RealOrderingCertificate, RealSign, RealSignCertificate, RealStructuralFacts,
@@ -2969,18 +2969,17 @@ mod tests {
                     [&second_end[0], &second_end[1]],
                 )
                 .expect("the point-only kernel shares the fused path's checked bounds");
-            let prepared = Real::prepare_exact_dyadic_line2(
+            let first_line = ExactDyadicLine2::from_reals(
                 [&first_start[0], &first_start[1]],
                 [&first_end[0], &first_end[1]],
             )
-            .expect("the fused path's first line should prepare");
-            let (prepared_parameters, prepared_point) =
-                Real::exact_rational_line_intersection2_point_with_prepared_first(
-                    &prepared,
+            .expect("the fused path's first line should fit");
+            let (line_parameters, line_point) = first_line
+                .intersection_point(
                     [&second_start[0], &second_start[1]],
                     [&second_end[0], &second_end[1]],
                 )
-                .expect("prepared and one-shot compact paths share bounds");
+                .expect("retained-line and one-shot compact paths share bounds");
             let exact_f64_point = |point: &[Real; 2]| {
                 [
                     point[0]
@@ -2991,21 +2990,16 @@ mod tests {
                         .expect("the compact oracle coordinates fit binary64"),
                 ]
             };
-            let f64_prepared = Real::prepare_exact_dyadic_f64_line2(
+            let f64_line = ExactDyadicLine2::from_f64(
                 exact_f64_point(first_start),
                 exact_f64_point(first_end),
             )
-            .expect("the compact binary64 line should prepare directly");
-            let (f64_parameters, f64_point) =
-                Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
-                    &f64_prepared,
-                    exact_f64_point(second_start),
-                    exact_f64_point(second_end),
-                )
+            .expect("the compact binary64 line should fit directly");
+            let (f64_parameters, f64_point) = f64_line
+                .intersection_point_f64(exact_f64_point(second_start), exact_f64_point(second_end))
                 .expect("direct binary64 and retained-rational paths share bounds");
-            let (retained_f64_parameters, retained_f64_point) =
-                Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-                    &f64_prepared,
+            let (retained_f64_parameters, retained_f64_point) = f64_line
+                .retained_intersection_point_f64(
                     exact_f64_point(second_start),
                     exact_f64_point(second_end),
                 )
@@ -3043,15 +3037,15 @@ mod tests {
                 ]
             );
             assert_eq!(point_only, point);
-            assert_eq!(prepared_point, point);
+            assert_eq!(line_point, point);
             assert_eq!(f64_point, point);
             assert_eq!(retained_f64_point.materialize(), point);
             assert_eq!(
-                prepared_parameters.materialize_first_parameter(),
+                line_parameters.materialize_first_parameter(),
                 expected_first
             );
             assert_eq!(
-                prepared_parameters.materialize_second_parameter(),
+                line_parameters.materialize_second_parameter(),
                 expected_second
             );
             assert_eq!(f64_parameters.materialize_first_parameter(), expected_first);
@@ -3130,7 +3124,7 @@ mod tests {
             )
             .is_none()
         );
-        assert!(Real::prepare_exact_dyadic_line2([&wide, &zero], [&one, &one]).is_none());
+        assert!(ExactDyadicLine2::from_reals([&wide, &zero], [&one, &one]).is_none());
     }
 
     #[test]
@@ -3207,30 +3201,20 @@ mod tests {
 
         let binary64_extent = 2_f64.powi(100);
         let binary64_near_extent = f64::from_bits(binary64_extent.to_bits() - 1);
-        let binary64_prepared = Real::prepare_exact_dyadic_f64_line2(
-            [0.0, 0.0],
-            [binary64_extent, binary64_near_extent],
-        )
-        .expect("word-sized binary64 endpoints should prepare");
+        let binary64_line =
+            ExactDyadicLine2::from_f64([0.0, 0.0], [binary64_extent, binary64_near_extent])
+                .expect("word-sized binary64 endpoints should fit");
         assert!(
-            Real::exact_dyadic_f64_line_intersection2_point_with_prepared_first(
-                &binary64_prepared,
-                [0.0, binary64_near_extent],
-                [binary64_extent, 0.0],
-            )
-            .is_none(),
+            binary64_line
+                .intersection_point_f64([0.0, binary64_near_extent], [binary64_extent, 0.0],)
+                .is_none(),
             "the native determinant carrier should reject the 200-bit product"
         );
-        let (binary64_parameters, binary64_point) =
-            Real::exact_dyadic_f64_line_intersection2_point_wide_with_prepared_first(
-                &binary64_prepared,
-                [0.0, binary64_near_extent],
-                [binary64_extent, 0.0],
-            )
+        let (binary64_parameters, binary64_point) = binary64_line
+            .wide_intersection_point_f64([0.0, binary64_near_extent], [binary64_extent, 0.0])
             .expect("the fixed wide carrier should retain the binary64 crossing");
-        let (retained_binary64_parameters, retained_binary64_point) =
-            Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
-                &binary64_prepared,
+        let (retained_binary64_parameters, retained_binary64_point) = binary64_line
+            .wide_retained_intersection_point_f64(
                 [0.0, binary64_near_extent],
                 [binary64_extent, 0.0],
             )
@@ -3254,12 +3238,10 @@ mod tests {
         );
         assert_eq!(retained_binary64_point.materialize(), binary64_point);
         assert!(
-            Real::prepare_exact_dyadic_f64_line2([f64::INFINITY, 0.0], [binary64_extent, 0.0],)
-                .is_none()
+            ExactDyadicLine2::from_f64([f64::INFINITY, 0.0], [binary64_extent, 0.0],).is_none()
         );
         assert!(
-            Real::prepare_exact_dyadic_f64_line2([2_f64.powi(200), 0.0], [binary64_extent, 0.0],)
-                .is_none()
+            ExactDyadicLine2::from_f64([2_f64.powi(200), 0.0], [binary64_extent, 0.0],).is_none()
         );
     }
 
@@ -3318,18 +3300,17 @@ mod tests {
             else {
                 continue;
             };
-            let prepared = Real::prepare_exact_dyadic_line2(
+            let first_line = ExactDyadicLine2::from_reals(
                 [&first_start[0], &first_start[1]],
                 [&first_end[0], &first_end[1]],
             )
             .expect("the wide determinant path still uses word-sized source deltas");
-            let (prepared_parameters, prepared_point) =
-                Real::exact_rational_line_intersection2_point_wide_with_prepared_first(
-                    &prepared,
+            let (line_parameters, line_point) = first_line
+                .wide_intersection_point(
                     [&second_start[0], &second_start[1]],
                     [&second_end[0], &second_end[1]],
                 )
-                .expect("prepared and one-shot wide paths share bounds");
+                .expect("retained-line and one-shot wide paths share bounds");
             let first_numerator = Real::diff_of_products(
                 &start_delta[0],
                 &second_delta[1],
@@ -3353,13 +3334,13 @@ mod tests {
                     Real::affine(&first_start[1], &expected_first, &first_delta[1]),
                 ]
             );
-            assert_eq!(prepared_point, point);
+            assert_eq!(line_point, point);
             assert_eq!(
-                prepared_parameters.materialize_first_parameter(),
+                line_parameters.materialize_first_parameter(),
                 expected_first
             );
             assert_eq!(
-                prepared_parameters.materialize_second_parameter(),
+                line_parameters.materialize_second_parameter(),
                 expected_second
             );
             retained_cases.push((parameters, expected_first, expected_second));
