@@ -15,18 +15,17 @@ use hyperlimit::{
     AabbSphereIntersection, CoplanarProjection, LineSide, Plane3, Point2, Point3, PredicateOutcome,
     PredicatePolicy, SegmentPlaneRelation, Sign, SphereIntersection, SupportDop3,
     SupportDopPlaneRelation, SupportDopRelation, SupportSlab3, TriangleDegeneracy,
-    certified_ball_sign,
-    certified_interval_sign, classify_aabb3_sphere_intersection, classify_circle_line2,
-    classify_circle_line2_batch, classify_circle_segment2, classify_circle_segment2_batch,
-    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
-    classify_plane_aabb3_report, classify_point_convex_planes3, classify_point_convex_polygon2,
-    classify_point_line, classify_point_line_batch, classify_point_ring_even_odd,
-    classify_point_ring_even_odd_report, classify_ray_triangle3_intersection,
-    classify_ray_triangle3_intersection_batch, classify_ray_triangle3_intersection_report,
-    classify_segment_triangle3_intersection, classify_segment_triangle3_intersection_batch,
-    classify_segment_triangle3_intersection_report, classify_segment3_intersection,
-    classify_segment3_intersection_batch, classify_sphere3_intersection,
-    classify_triangle_triangle3, classify_triangle3_degeneracy,
+    certified_ball_sign, certified_interval_sign, classify_aabb3_sphere_intersection,
+    classify_circle_line2, classify_circle_line2_batch, classify_circle_segment2,
+    classify_circle_segment2_batch, classify_coplanar_triangles, classify_halfspace_feasibility3,
+    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_point_convex_planes3,
+    classify_point_convex_polygon2, classify_point_line, classify_point_line_batch,
+    classify_point_ring_even_odd, classify_point_ring_even_odd_report,
+    classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_batch,
+    classify_ray_triangle3_intersection_report, classify_segment_triangle3_intersection,
+    classify_segment_triangle3_intersection_batch, classify_segment_triangle3_intersection_report,
+    classify_segment3_intersection, classify_segment3_intersection_batch,
+    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
     compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
     incircle2_with_evidence as incircle2d_with_evidence, insphere3 as insphere3d,
@@ -246,7 +245,7 @@ fn predicate_invariants(input: Input) {
         "certified ball signs must agree with their exact interval enclosure"
     );
 
-    let strict = hyperlimit::orient2d_with_policy(&a, &b, &c, PredicatePolicy::STRICT);
+    let strict = hyperlimit::orient2_with_policy(&a, &b, &c, PredicatePolicy::STRICT);
     if let Some(sign) = orient2d(&a, &b, &c).value() {
         // The explicit strict policy and convenience entry point must preserve
         // the same exact-rational orientation decision.
