@@ -230,6 +230,14 @@ memory-pressure stress periodically to instantiate and union the 18,048- and
 cargo test --release --test competitive larger_yeahright_fixtures_expose_memory_pressure -- --ignored --nocapture
 ```
 
+The same suite always imports and validates the original 11,894-triangle,
+genus-131 control mesh. Its rotated-copy Boolean remains an explicit ignored
+memory-ceiling test:
+
+```bash
+cargo test --release --test competitive full_resolution_yeahright_rotated_intersection_remains_a_hard_test -- --ignored --nocapture
+```
+
 Run the crate checks from this directory:
 
 ```bash

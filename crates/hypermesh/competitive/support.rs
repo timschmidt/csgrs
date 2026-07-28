@@ -21,6 +21,8 @@ pub const YEAHRIGHT_BASE_TRIANGLES: usize = 1_128;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
 pub const YEAHRIGHT_TRIANGLES: usize =
     YEAHRIGHT_BASE_TRIANGLES * YEAHRIGHT_SUBDIVISIONS * YEAHRIGHT_SUBDIVISIONS;
+pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
+pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
 pub const YEAHRIGHT_STRESS_SUBDIVISIONS: [usize; 2] = [4, 8];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -212,6 +214,13 @@ pub fn large_boolean_case() -> Case {
 
 pub fn yeahright_boolean_case() -> MeshPair {
     yeahright_boolean_case_with_subdivisions(YEAHRIGHT_SUBDIVISIONS)
+}
+
+pub fn yeahright_control_mesh() -> RawMesh {
+    let mesh = parse_triangle_obj(include_str!("data/controlmesh.obj"));
+    assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(mesh.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
+    mesh
 }
 
 pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair {

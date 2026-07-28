@@ -1180,6 +1180,29 @@ intersection, 2.274/2.291 ms for difference, and 2.413/2.434 ms for symmetric
 difference. The larger YeahRight immediate triangle-soup union measured
 10.302/10.356 ms, a change within Criterion's noise threshold.
 
+## 2026-07-28: original full-resolution mesh gate
+
+The original YeahRight control mesh is now committed directly to Hypermesh's
+competitive corpus and used in every competitive run. It contains 5,687
+vertices and 5,845 arbitrary source polygons, fan-triangulating to 11,894
+triangles with genus 131. An always-on test validates the raw closure,
+finiteness, nondegeneracy, exact carrier counts, and Hypermesh closed-PWN input
+contract.
+
+Fresh serialized Criterion import measurements were:
+
+| engine | full control mesh import |
+| --- | ---: |
+| Hypermesh | 2.90--3.00 ms |
+| boolmesh | 7.98--8.23 ms |
+| manifold-rust | 5.70--5.75 ms |
+| tri-mesh | 1.89--1.90 ms |
+
+The original rotated-copy Boolean remains an ignored explicit hard test at the
+same 11,894-by-11,894-triangle resolution. It is intentionally outside routine
+gates because the corresponding CSGRS workload previously reached about
+116 GiB RSS.
+
 ## Completed reference disposition
 
 All reference-derived ideas are mapped as follows:

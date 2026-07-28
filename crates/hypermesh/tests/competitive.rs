@@ -1,13 +1,18 @@
 #[path = "../competitive/support.rs"]
 mod support;
 
-use hypermesh::{Plane, Point3, triangle_soup_closure_evidence, triangulate_and_resolve_certified};
+use hypermesh::{
+    BooleanOp, EmberConfig, Plane, Point3, boolean_triangle_soup, polygon_soup,
+    triangle_soup_closure_evidence, triangulate_and_resolve_certified,
+};
 use support::{
-    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_BASE_TRIANGLES, YEAHRIGHT_STRESS_SUBDIVISIONS,
-    YEAHRIGHT_TRIANGLES, assert_close, assert_summary, corpus, large_boolean_case, prepare,
-    prepare_yeahright, prepare_yeahright_with_subdivisions, raw_from_hypermesh, run_boolmesh,
-    run_hypermesh, run_hypermesh_exact, run_hypermesh_polygon, run_manifold, summarize,
+    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_BASE_TRIANGLES, YEAHRIGHT_CONTROL_TRIANGLES,
+    YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_STRESS_SUBDIVISIONS, YEAHRIGHT_TRIANGLES, assert_close,
+    assert_summary, corpus, large_boolean_case, prepare, prepare_yeahright,
+    prepare_yeahright_with_subdivisions, raw_from_hypermesh, run_boolmesh, run_hypermesh,
+    run_hypermesh_exact, run_hypermesh_polygon, run_manifold, summarize, to_hypermesh,
     validate_with_tri_mesh, yeahright_boolean_case, yeahright_boolean_case_with_subdivisions,
+    yeahright_control_mesh,
 };
 
 #[test]
@@ -268,6 +273,46 @@ fn yeahright_polygon_and_triangle_immediate_apis_remain_consistent() {
             &format!("HyperMesh immediate {} area", operation.name()),
         );
     }
+}
+
+#[test]
+fn full_resolution_yeahright_reaches_and_validates_in_hypermesh() {
+    let raw = yeahright_control_mesh();
+    let summary = summarize(&raw);
+    assert_eq!(raw.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(summary.triangles, YEAHRIGHT_CONTROL_TRIANGLES);
+    assert!(summary.closed);
+    assert!(summary.finite);
+    assert!(summary.nondegenerate);
+
+    let exact = to_hypermesh(&raw);
+    assert_eq!(exact.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(exact.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
+    polygon_soup(&[exact.as_ref()])
+        .expect("full-resolution YeahRight must satisfy Hypermesh's closed-PWN input contract");
+}
+
+#[test]
+#[ignore = "manual 11,894-by-11,894 triangle memory-ceiling test"]
+fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
+    let source = yeahright_control_mesh();
+    let rotated = support::RawMesh {
+        positions: source
+            .positions
+            .iter()
+            .map(|[x, y, z]| [z + 1.0, y + 12.0, 1.0 - x])
+            .collect(),
+        triangles: source.triangles.clone(),
+    };
+    let left = to_hypermesh(&source);
+    let right = to_hypermesh(&rotated);
+    let output = boolean_triangle_soup(
+        &[left.as_ref(), right.as_ref()],
+        BooleanOp::Intersection,
+        EmberConfig::default(),
+    )
+    .expect("full-resolution YeahRight intersection must remain valid");
+    assert!(!output.triangles.is_empty());
 }
 
 #[test]

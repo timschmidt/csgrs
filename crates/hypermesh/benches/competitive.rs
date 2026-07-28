@@ -8,7 +8,7 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use support::{
     Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
     run_hypermesh_polygon, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
-    to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case,
+    to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh,
 };
 
 fn competitive(c: &mut Criterion) {
@@ -168,6 +168,29 @@ fn competitive(c: &mut Criterion) {
         });
     });
     yeahright_import_group.finish();
+
+    let yeahright_control = yeahright_control_mesh();
+    let mut full_import_group =
+        c.benchmark_group("competitive_full_mesh_import/control_genus131_11894");
+    full_import_group.sample_size(10);
+    full_import_group.warm_up_time(Duration::from_secs(1));
+    full_import_group.measurement_time(Duration::from_secs(3));
+    full_import_group.bench_function("hypermesh", |benchmark| {
+        benchmark.iter(|| to_hypermesh(black_box(&yeahright_control)));
+    });
+    full_import_group.bench_function("boolmesh", |benchmark| {
+        benchmark.iter(|| to_boolmesh(black_box(&yeahright_control)));
+    });
+    full_import_group.bench_function("manifold-rust", |benchmark| {
+        benchmark.iter(|| to_manifold(black_box(&yeahright_control)));
+    });
+    full_import_group.bench_function("tri-mesh", |benchmark| {
+        benchmark.iter(|| {
+            let asset = to_three_d_asset(black_box(&yeahright_control));
+            tri_mesh::Mesh::new(&asset)
+        });
+    });
+    full_import_group.finish();
 
     let hypermesh_output = run_hypermesh(&prepare(&cases[0]).hypermesh, Operation::Union);
     let mut topology_group = c.benchmark_group("competitive_topology/box_union");
