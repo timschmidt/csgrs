@@ -888,14 +888,14 @@ rustdoc, benchmark and fuzz-target builds, and the release WASM demo. A
 failure. The downstream CSGRS all-feature suite passed all 370 library tests and
 every integration test.
 
-## 2026-07-19: prepare projected rational output vertices once
+## 2026-07-19: retain projected rational output vertices
 
 Status: **kept**
 
 Construction-aware T-junction filtering projected the same exact output vertex
 into many certified 2D line predicates, converting its arbitrary-precision
 coordinates and rebuilding conservative error radii each time. The output merge
-now prepares every rational 3D vertex once when recovery filtering is enabled.
+now retains each rational 3D query once when recovery filtering is enabled.
 Line endpoints and candidate queries select their two axes from those retained
 intervals; failed conversions, invalid projections, and uncertain filters still
 fall through to the unchanged exact point-on-segment predicate.
@@ -903,14 +903,14 @@ fall through to the unchanged exact point-on-segment predicate.
 Eight alternating counter runs each performed 500 fresh, globally shifted
 sphere/box operations:
 
-| operation | repeated-conversion instructions | prepared-point instructions | result | cycle result |
+| operation | repeated-conversion instructions | retained-point instructions | result | cycle result |
 | --- | ---: | ---: | ---: | ---: |
 | union | 9,955,432,140 | 9,516,772,993 | 4.41% fewer | 4.04% fewer |
 | difference | 8,488,857,196 | 8,487,528,295 | 0.02% fewer | neutral |
 
 `Rational::to_f64_lossy` fell from 4.91% to 2.09% self time in the union
 profile. Heap profiles rose from 1,183,904 to 1,183,949 allocations over 50
-unions—only 0.9 allocation per operation for the prepared-query vector. The
+unions—only 0.9 allocation per operation for the retained-query vector. The
 Hyperreal regression suite locks positive, negative, uncertain, and invalid-axis
 filter behavior while Hypermesh's exact split-edge and output suites retain the
 same topology.
@@ -1069,6 +1069,23 @@ no Criterion regression: union 2.284 ms, intersection 2.191 ms, difference
 2.239 ms, and symmetric difference 2.373 ms. The first repeat drifted upward
 across all four operations; the already-built binary returned to the baseline
 range on the next serialized run.
+
+## 2026-07-27: direct rational output line APIs
+
+Status: **kept**
+
+Projected rational output predicates now construct point queries and line
+filters directly rather than entering a prepared-object lifecycle. One-shot
+callers can use Hyperreal's immediate certified line-sign API. Construction-
+aware T-junction recovery retains the same compact coordinate intervals and
+line filters because the earlier counter gate established their benefit;
+uncertain filters still reach the exact point-on-segment predicate.
+
+The serialized cube triangle-output gate reported no Criterion regression.
+Baseline/candidate medians were 2.302/2.307 ms for union, 2.285/2.300 ms for
+intersection, 2.274/2.291 ms for difference, and 2.413/2.434 ms for symmetric
+difference. The larger YeahRight immediate triangle-soup union measured
+10.302/10.356 ms, a change within Criterion's noise threshold.
 
 ## Completed reference disposition
 
