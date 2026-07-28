@@ -181,7 +181,7 @@ proptest! {
                 .blockers
                 .contains(&BrepTriangleMeshBlocker::SolidReadinessNotReady)
         );
-        prop_assert!(shell.prepare_voxel_geometry().is_err());
+        prop_assert!(shell.voxel_geometry().is_err());
     }
 
      #[test]
@@ -255,7 +255,7 @@ proptest! {
             Some(r(6 * width * depth * height))
         );
         prop_assert!(shell.physics_mass_handoff_report(r(1)).exact_physics_mass_ready);
-        let voxel = shell.prepare_voxel_geometry();
+        let voxel = shell.voxel_geometry();
         prop_assert!(voxel.is_ok());
     }
 

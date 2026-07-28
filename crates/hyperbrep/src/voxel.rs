@@ -1,30 +1,29 @@
 //! Direct exact voxelization geometry for retained BREP shells.
 
 use hypervoxel::{
-    ExactBox, ExactTriangle3, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
-    PreparedExactTriangleSolidMesh,
+    ExactBox, ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
 };
 
 use crate::topology::BrepShell;
 
-/// Failure to prepare a retained BREP shell for exact voxelization.
+/// Failure to construct exact voxel geometry from a retained BREP shell.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BrepVoxelError {
     BoundsUnavailable,
     TriangleMeshUnavailable,
-    TriangleSolidPreparationFailed,
+    TriangleSolidConstructionFailed,
 }
 
 /// Lean geometry consumed by HyperVoxel broad and narrow phases.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BrepVoxelGeometry {
     pub exact_aabb: ExactBox,
-    pub triangle_solid: PreparedExactTriangleSolidMesh,
+    pub triangle_solid: ExactTriangleSolid,
 }
 
 impl BrepShell {
-    /// Prepares exact AABB and triangle-solid geometry for voxelization.
-    pub fn prepare_voxel_geometry(&self) -> Result<BrepVoxelGeometry, BrepVoxelError> {
+    /// Returns exact AABB and triangle-solid geometry for voxelization.
+    pub fn voxel_geometry(&self) -> Result<BrepVoxelGeometry, BrepVoxelError> {
         let bounds = self.shell_bounds_report();
         if !bounds.exact_bounds_ready {
             return Err(BrepVoxelError::BoundsUnavailable);
@@ -51,8 +50,8 @@ impl BrepShell {
             })
             .collect();
         let solid = ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles), true);
-        let triangle_solid = PreparedExactTriangleSolidMesh::prepare(solid)
-            .map_err(|_| BrepVoxelError::TriangleSolidPreparationFailed)?;
+        let triangle_solid = ExactTriangleSolid::new(solid)
+            .map_err(|_| BrepVoxelError::TriangleSolidConstructionFailed)?;
         Ok(BrepVoxelGeometry {
             exact_aabb,
             triangle_solid,

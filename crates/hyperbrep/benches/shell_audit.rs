@@ -399,15 +399,15 @@ fn bench_shell_audit(c: &mut Criterion) {
         hypervoxel::LengthUnit::Unitless,
     )
     .unwrap();
-    c.bench_function("hyperbrep prepare voxel geometry", |b| {
-        b.iter(|| cube.prepare_voxel_geometry().unwrap())
+    c.bench_function("hyperbrep voxel geometry", |b| {
+        b.iter(|| cube.voxel_geometry().unwrap())
     });
-    let prepared_voxel_solid = cube.prepare_voxel_geometry().unwrap().triangle_solid;
-    c.bench_function("hyperbrep prepared voxel solid materialization", |b| {
+    let voxel_solid = cube.voxel_geometry().unwrap().triangle_solid;
+    c.bench_function("hyperbrep voxel solid materialization", |b| {
         b.iter(|| {
-            hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
+            hypervoxel::voxelize_exact_triangle_solid(
                 voxel_frame.clone(),
-                &prepared_voxel_solid,
+                &voxel_solid,
                 hypervoxel::MaterialRegionId(1),
                 hypervoxel::VoxelizationPolicy::conservative_cover(),
             )

@@ -52,8 +52,8 @@ fuzz_target!(|data: (u8, u8, u8, bool)| {
         hypervoxel::LengthUnit::Unitless,
     )
     .unwrap();
-    let geometry = shell.prepare_voxel_geometry().unwrap();
-    let _ = hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
+    let geometry = shell.voxel_geometry().unwrap();
+    let _ = hypervoxel::voxelize_exact_triangle_solid(
         frame,
         &geometry.triangle_solid,
         hypervoxel::MaterialRegionId(1),

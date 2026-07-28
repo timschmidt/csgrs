@@ -67,6 +67,19 @@ the evidence classifier across the crate boundary; the generic function still
 preserves explicit unsupported surface reports. Exact report contents,
 blockers, and narrow-phase rules remain unchanged.
 
+## Immediate voxel-geometry API gate
+
+`BrepShell::voxel_geometry` now constructs HyperVoxel's validated
+`ExactTriangleSolid` directly. The handoff no longer exposes a preparation
+verb, a partly usable triangle wrapper, or a separate readiness report.
+
+The affected HyperVoxel comparisons improved exact-solid construction from
+8.313 us to 7.148 us (14.0%) and depth-three tetrahedron voxelization from
+5.388 ms to 5.298 ms (1.7%). HyperBrep's retained cube sentinels measured
+247.8 us for voxel-geometry construction and 376.4 us for voxel
+materialization after the migration. Exact AABB, triangle-source, policy, and
+predicate-certificate semantics are unchanged.
+
 ## Reference disposition
 
 ### Yap: exact geometric computation

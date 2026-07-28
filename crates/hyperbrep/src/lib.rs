@@ -904,7 +904,7 @@ mod tests {
     }
 
     #[test]
-    fn voxel_geometry_prepares_exact_aabb_and_triangle_solid() {
+    fn voxel_geometry_constructs_exact_aabb_and_triangle_solid() {
         let shell = cube_shell();
         let frame = hypervoxel::GridFrame::new(
             [r(0), r(0), r(0)],
@@ -913,10 +913,10 @@ mod tests {
             hypervoxel::LengthUnit::Unitless,
         )
         .unwrap();
-        let geometry = shell.prepare_voxel_geometry().unwrap();
+        let geometry = shell.voxel_geometry().unwrap();
         assert_eq!(geometry.exact_aabb.min, [r(0), r(0), r(0)]);
         assert_eq!(geometry.exact_aabb.max, [r(1), r(1), r(1)]);
-        let (_, voxel_report, schedule) = hypervoxel::voxelize_prepared_exact_triangle_solid_mesh(
+        let (_, voxel_report, schedule) = hypervoxel::voxelize_exact_triangle_solid(
             frame,
             &geometry.triangle_solid,
             hypervoxel::MaterialRegionId(7),
