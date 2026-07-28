@@ -11,9 +11,7 @@ use fast_surface_nets::{SurfaceNetsBuffer, surface_nets};
 use hyperlattice::{Point3, Real, Vector3};
 use hyperlimit::Point3 as HPoint3;
 use hyperreal::RealSign;
-use hypersdf::{
-    PreparedSdf, SdfExpr, SdfMeshPreviewReport, SdfPreviewGrid, SdfSamplingPrecision,
-};
+use hypersdf::{Sdf, SdfExpr, SdfMeshPreviewReport, SdfPreviewGrid, SdfSamplingPrecision};
 use std::fmt::Debug;
 
 /// Diagnostics captured while sampling and meshing an SDF.
@@ -126,14 +124,12 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
         iso_value: Real,
         metadata: M,
     ) -> (Mesh<M>, SdfDiagnostics) {
-        let prepared = hypersdf::prepare(expr);
-        Self::prepared_sdf_with_diagnostics(
-            &prepared, resolution, min_pt, max_pt, iso_value, metadata,
-        )
+        let sdf = Sdf::new(expr);
+        Self::sdf_field_with_diagnostics(&sdf, resolution, min_pt, max_pt, iso_value, metadata)
     }
 
-    /// Return a mesh preview and diagnostics generated from a prepared
-    /// [`hypersdf::PreparedSdf`].
+    /// Return a mesh preview and diagnostics generated from a retained
+    /// [`hypersdf::Sdf`] field.
     ///
     /// `hypersdf` keeps continuous-field ownership and reports that sampled
     /// scalars are preview-only. csgrs consumes that report to compose a mesh
@@ -141,8 +137,8 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
     /// computation model (<https://doi.org/10.1016/0925-7721(95)00040-2>) and
     /// by Gibson's Surface Nets preview meshing work, "Constrained Elastic
     /// Surface Nets," MERL TR99-24, 1999.
-    pub fn prepared_sdf_with_diagnostics(
-        prepared: &PreparedSdf,
+    pub fn sdf_field_with_diagnostics(
+        sdf: &Sdf,
         resolution: (usize, usize, usize),
         min_pt: Point3,
         max_pt: Point3,
@@ -170,8 +166,7 @@ impl<M: Clone + Debug + Send + Sync> Mesh<M> {
             return (Mesh::empty(), diagnostics);
         };
 
-        let Ok(grid_report) = prepared.sample_grid_preview(grid, SdfSamplingPrecision::F64)
-        else {
+        let Ok(grid_report) = sdf.sample_grid_preview(grid, SdfSamplingPrecision::F64) else {
             diagnostics.non_finite_sample_count = diagnostics.sample_count;
             diagnostics.positive_sample_count = diagnostics.sample_count;
             return (Mesh::empty(), diagnostics);
