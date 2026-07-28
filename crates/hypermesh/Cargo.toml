@@ -3,12 +3,17 @@ name = "hypermesh"
 version = "0.1.0"
 edition = "2024"
 description = "Hyperreal-backed exact mesh boolean primitives for Rust."
+authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "MIT"
+repository = "https://github.com/timschmidt/hypermesh"
+readme = "README.md"
+keywords = ["mesh", "boolean", "geometry", "exact", "csg"]
+categories = ["mathematics", "graphics", "algorithms"]
 
 [dependencies]
-hyperlattice = { path = "../hyperlattice" }
-hyperreal = { path = "../hyperreal" }
-hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"] }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 boolmesh = "=0.1.9"

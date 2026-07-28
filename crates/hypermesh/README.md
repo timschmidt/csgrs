@@ -1,157 +1,76 @@
 # hypermesh
 
-`hypermesh` provides exact 3D triangle-mesh Boolean operations for the Hyper geometry
-stack. It accepts finite, closed, piecewise-winding-number (PWN) meshes, constructs
-local exact arrangements using an EMBER-style subdivision and BSP pipeline, propagates
-winding-number evidence, and returns a certified polygon arrangement or an explicit
-error.
+`hypermesh` provides exact 3D triangle-mesh Boolean operations for the Hyper
+geometry stack. It validates finite closed piecewise-winding-number (PWN)
+meshes, builds local exact arrangements with an EMBER-style subdivision and
+BSP pipeline, propagates winding-number evidence, and returns certified
+polygon or triangle output.
 
-The crate owns mesh validation, intersection, classification, and certified output
-triangulation. File-format IO, including OBJ parsing and export, belongs in adapter
-crates such as [`csgrs`](https://github.com/timschmidt/csgrs).
+The crate owns indexed triangle input, mesh validation, intersection,
+classification, winding propagation, and output closure. File formats,
+parametric solid grammar, extrusion/revolution/sweep/loft construction, and
+cross-representation conversion belong in adapter and CSG crates such as
+CSGRS.
 
-## WASM Demo
+This README describes crate version `0.1.0`.
 
-The WASM demo is configured for <https://timschmidt.github.io/hypermesh/>. Its source
-and Trunk configuration live in [`examples/hypermesh_ui`](./examples/hypermesh_ui).
+## Why exact mesh Booleans?
 
-## Typical Mesh Problems
+A mesh Boolean changes topology based on sidedness, coplanarity, segment
+incidence, polygon overlap, and winding transitions. If different stages round
+the same configuration differently, the output can crack, lose faces, or
+require tolerance-driven repair.
 
-Mesh Booleans make topology depend on exact geometric branch decisions: sidedness,
-coplanarity, segment incidence, polygon overlap, winding transitions, and output edge
-cancellation. Floating-point disagreement at any of those branches can create cracks,
-drop faces, invert output, or make a repair loop depend on tolerance choices.
+Hypermesh keeps that decision chain explicit:
 
-`hypermesh` routes topology-changing decisions through `hyperreal`, `hyperlattice`,
-and `hyperlimit`. It does not repair an uncertified result into apparent success. When
-a required sign, incidence, reference-propagation step, leaf classification, or output
-closure fact cannot be certified, the operation returns `HypermeshError`.
+```text
+closed PWN InputMesh values
+           │  validate indices, degeneracy, closure, orientation
+           ▼
+       PolygonSoup
+           │  exact subdivision + local BSP arrangements
+           ▼
+   classified fragments + winding evidence
+           │  certify directed edge cancellation
+           ▼
+      BooleanResult
+           │  certified triangulation and T-junction resolution
+           ▼
+      TriangleSoup
+```
 
-## Main Types
+An uncertified sign, incidence, reference-propagation step, leaf
+classification, subdivision budget, or closure fact is a `HypermeshError`.
+The crate does not repair an unresolved result into apparent success.
 
-- `InputMesh`, `MeshRef`, and `Triangle` are the owned and borrowed indexed-triangle
-  input types. `polygon_soup` validates inputs and returns a combined `PolygonSoup`.
-- `Point3`, `Vector3`, and `Real` are re-exported from `hyperlattice` for exact mesh
-  coordinates.
-- `Plane`, `Aabb`, `Classification`, `ConvexPolygon`, `ExactBvh`, and `LocalBsp`
-  expose the principal exact geometry and local-arrangement building blocks.
-- `PairwiseIntersection`, `PairwiseIntersectionType`, `IntersectionSegment`, and
-  `OverlapInfo` describe exact polygon intersection results.
-- `BooleanOp` selects `Union`, `Intersection`, `Difference`, or
-  `SymmetricDifference`. `EmberConfig` controls the optional subdivision-depth
-  budget.
-- `BooleanResult` contains the certified operation-specific polygon output. Its
-  `output`, `classifications`, and `winding_pairs` accessors expose geometry and
-  classification evidence.
-- `OutputPolygon` is an extracted polygon with explicit exact vertices.
-  `TriangleSoup` is the indexed triangle output produced by
-  `triangulate_and_resolve_certified` or the immediate
-  `boolean_triangle_soup` entry point.
-- `ExactGpuMeshBuffers` preserves exact position/normal rows with `u32` indices;
-  `GpuMeshBuffersF32` and `GpuMeshBuffersF64` are explicit finite approximations
-  for graphics APIs. `TriangleSoup::try_to_gpu_mesh_f32` and
-  `TriangleSoup::try_to_gpu_mesh_f64` build flat-shaded buffers directly;
-  `approximate_interleaved_gpu_mesh_f32` and its `f64` counterpart avoid
-  temporary split buffers for interleaved renderer vertex layouts.
-- `TriangleSoupClosureEvidence`, `triangle_soup_closure_evidence`, and
-  `triangle_soup_is_closed` expose exact output closure diagnostics.
+## Primary types
 
-## Precision Model
+| Type | Purpose |
+| --- | --- |
+| `InputMesh`, `MeshRef`, `Triangle` | Owned and borrowed indexed-triangle input. |
+| `PolygonSoup` | Validated combined exact polygon input for one or more meshes. |
+| `Point3`, `Vector3`, `Real` | Re-exported exact coordinate carriers. |
+| `Plane`, `Aabb`, `Classification` | Exact plane, bounds, and sidedness primitives. |
+| `ConvexPolygon`, `ExactBvh`, `LocalBsp` | Principal arrangement and acceleration structures. |
+| `BooleanOp`, `EmberConfig` | Operation selection and optional subdivision-depth budget. |
+| `BooleanResult` | Certified polygon arrangement with classifications and winding evidence. |
+| `OutputPolygon`, `TriangleSoup` | Exact polygon and indexed triangle output. |
+| `TriangleSoupClosureEvidence` | Exact boundary, imbalance, and non-manifold diagnostics. |
+| `ExactGpuMeshBuffers`, `GpuMeshBuffersF32`, `GpuMeshBuffersF64` | Exact and explicitly approximate renderer-neutral buffers. |
+| `HypermeshError`, `HypermeshResult<T>` | Invalid input, unresolved predicate, budget, and output-certification failures. |
 
-Native coordinates are `hyperreal::Real` values carried by `hyperlattice::Point3`.
-Planes, intersections, winding transitions, and closure checks retain exact values;
-primitive floats should remain at explicit import, rendering, or export boundaries.
+## Quick start
 
-The supported input model is a non-empty collection of finite, closed, consistently
-oriented PWN triangle meshes. Disconnected and nested closed components are supported.
-Empty meshes, invalid indices, degenerate triangles, open surfaces, directed edge
-imbalances, and arbitrary non-PWN surface collections are rejected.
-
-Completeness applies when every strict predicate required by the finite closed-PWN
-operation is decidable under the bounded refinement policy. Computable `Real` values
-whose required signs cannot be certified remain outside that boundary and produce an
-error rather than an approximate topology decision.
-
-## Algorithm
-
-The Boolean path follows the EMBER architecture:
-
-1. `polygon_soup` validates each source mesh and converts triangles to exact planar
-   polygons with winding-number transitions.
-2. Adaptive axis-aligned subdivision isolates local arrangements while propagating an
-   outside reference point and its winding vector.
-3. Local BSP trees split intersecting polygons into disjoint fragments.
-4. Exact segment traces classify fragments from front/back winding vectors.
-5. `certify_output_polygon_closure` verifies singleton-edge absence and exact directed
-   edge cancellation before the operation succeeds.
-6. `triangulate_and_resolve_certified` triangulates the arrangement, resolves output
-   T-junctions and crossings, and rejects open or zero-volume output.
-
-`EmberConfig::default()` uses `DEFAULT_MAX_DEPTH`, currently `usize::MAX`: there is no
-caller-selected arbitrary depth cap. A finite `max_depth` is a certification budget;
-reaching it before a leaf is certified returns `SubdivisionDepthLimit`.
-
-## Numerical Explosion
-
-`hypermesh` limits exact-expression growth structurally. Axis-aligned subdivision
-reduces candidate sets, exact BVH bounds avoid unnecessary polygon tests, plane-based
-polygons defer affine division through homogeneous intersections, and local BSP trees
-avoid constructing one global arrangement. Cached plane and edge profiles also reduce
-repeated exact comparisons during output assembly.
-
-## Performance Model
-
-The implementation prioritizes pruning work before invoking expensive exact
-predicates: AABB and BVH rejection, adaptive subdivision, leaf-level pairwise tests,
-local winding traces, and operation-specific reachability all constrain the exact
-work. Every public Boolean call is immediate and operation-scoped.
-`boolean_operation` returns certified polygons, while `boolean_triangle_soup`
-fuses the same operation with indexed output materialization. Certified-convex
-variants accept exact facts from mesh owners without exposing intermediate
-arrangement state.
-The current implementation is single-process Rust and does not claim the parallel
-throughput numbers of the EMBER reference implementation.
-
-## Current Status
-
-Implemented today:
-
-- exact union, intersection, difference, and symmetric difference over multiple
-  finite closed-PWN triangle meshes;
-- immediate operation-specific polygon and triangle-soup Boolean paths;
-- input validation for indices, degeneracy, closure, and directed edge balance;
-- exact polygon intersection, adaptive subdivision, local BSP splitting, and winding
-  classification;
-- certified polygon output and indexed triangle-soup extraction;
-- backend-neutral exact, binary32, and binary64 GPU position, normal, and `u32`
-  index buffers;
-- closure diagnostics and explicit errors for uncertified or unsupported cases;
-- a browser demo built with Rust, Yew, WebAssembly, and Trunk.
-
-Current boundaries:
-
-- `hypermesh` does not parse or write OBJ, STL, or other file formats;
-- open surfaces and arbitrary polygon soups are not Boolean inputs;
-- a successful Boolean result is exact; the optional GPU adapters make the
-  `Real`-to-`f32` or `Real`-to-`f64` approximation explicit and offer strict or
-  documented zero-fallback conversion policies;
-- explicitly bounded subdivision can fail when the selected depth is insufficient.
-
-## Installation
-
-The Hyper crates are currently developed as sibling repositories:
+For sibling Hyper checkouts:
 
 ```toml
 [dependencies]
 hypermesh = { path = "../hypermesh" }
-hyperlattice = { path = "../hyperlattice" }
-hyperreal = { path = "../hyperreal" }
 ```
 
-`hypermesh` currently has no optional Cargo features.
+Replace `src/main.rs` with:
 
-## Usage
-
+<!-- quickstart:start -->
 ```rust
 use hypermesh::{
     BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, boolean_operation,
@@ -159,14 +78,7 @@ use hypermesh::{
 };
 
 fn tetrahedron(offset: i64) -> InputMesh {
-    let p = |x, y, z| {
-        Point3::new(
-            Real::from(x + offset),
-            Real::from(y),
-            Real::from(z),
-        )
-    };
-
+    let p = |x, y, z| Point3::new(Real::from(x + offset), Real::from(y), Real::from(z));
     InputMesh::new(
         vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)],
         vec![
@@ -179,107 +91,245 @@ fn tetrahedron(offset: i64) -> InputMesh {
 }
 
 fn main() -> hypermesh::HypermeshResult<()> {
-    let a = tetrahedron(0);
-    let b = tetrahedron(3);
-    let meshes = [a.as_ref(), b.as_ref()];
-
+    let first = tetrahedron(0);
+    let second = tetrahedron(3);
     let result = boolean_operation(
-        &meshes,
+        &[first.as_ref(), second.as_ref()],
         BooleanOp::Union,
         EmberConfig::default(),
     )?;
     let triangles = triangulate_and_resolve_certified(&result)?;
-    let gpu = triangles
-        .try_to_gpu_mesh_f32()
-        .expect("finite exact output should approximate for the renderer");
-
     println!("{} exact output triangles", triangles.triangles.len());
-    println!("{} GPU indices", gpu.indices.len());
     Ok(())
 }
 ```
+<!-- quickstart:end -->
 
-For two meshes, `boolean_union`, `boolean_intersection`, `boolean_difference`, and
-`boolean_symmetric_difference` are convenience wrappers. Use `boolean_operation`
-for multi-mesh operations and `boolean_triangle_soup` when indexed triangles are
-the desired result. Use `extract_output` when polygon loops are preferable.
+Run it with:
 
-## Development
-
-Paper-derived optimization experiments and their benchmark, trace, and test
-evidence are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-The pinned competitive suite compares the same Boolean corpus with `boolmesh`
-and the pure-Rust Manifold port, then validates HyperMesh output through
-`tri-mesh`'s half-edge carrier. Its benchmark also runs all three Boolean
-operations on two 3,072-triangle closed meshes. Every competitor is additionally
-wired to the public-domain YeahRight corpus: the Boolean engines clip a
-deterministically subdivided 4,512-triangle hull, while all four libraries
-construct their native mesh carrier from that same hull:
-
-```bash
-cargo test --test competitive
-cargo bench --bench competitive
-```
-
-The regular suite keeps the 4,512-triangle YeahRight fixture. Run the ignored
-memory-pressure stress periodically to instantiate and union the 18,048- and
-72,192-triangle variants while retaining all competitor carriers together:
-
-```bash
-cargo test --release --test competitive larger_yeahright_fixtures_expose_memory_pressure -- --ignored --nocapture
-```
-
-The same suite always imports and validates the original 11,894-triangle,
-genus-131 control mesh. Its rotated-copy Boolean remains an explicit ignored
-memory-ceiling test:
-
-```bash
-cargo test --release --test competitive full_resolution_yeahright_rotated_intersection_remains_a_hard_test -- --ignored --nocapture
-```
-
-Run the crate checks from this directory:
-
-```bash
-cargo fmt --check
-cargo test --all-targets
-cargo clippy --all-targets -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
-cargo check --examples --benches
+```sh
 cargo run --example basic
 ```
 
-Build the browser demo with Trunk and the WebAssembly target installed:
+The same source is [`examples/basic.rs`](examples/basic.rs); the test suite
+compiles it and checks that it remains identical to this README block.
 
-```bash
-rustup target add wasm32-unknown-unknown
-cd examples/hypermesh_ui
-trunk build --release --locked
+## Supported input model
+
+Boolean input must be a non-empty collection of finite, closed, consistently
+oriented PWN triangle meshes. Disconnected and nested closed components are
+supported.
+
+The following are rejected before or during the certified Boolean path:
+
+- empty meshes and invalid triangle indices;
+- degenerate source triangles;
+- open triangle soups or directed edge imbalance;
+- arbitrary non-PWN surface collections;
+- a predicate that strict bounded refinement cannot decide;
+- a caller-selected subdivision limit reached before certification.
+
+Completeness is scoped to the finite closed-PWN model when every required exact
+predicate is decidable. Arbitrary computable `Real` coordinates can fall
+outside that boundary if their needed signs cannot be certified.
+
+## API guide
+
+### Build and validate input
+
+| Task | API |
+| --- | --- |
+| Construct triangles and meshes | `Triangle::new`, `InputMesh::new` |
+| Borrow without copying | `InputMesh::as_ref`, `MeshRef` |
+| Validate and combine | `polygon_soup` |
+| Certify reusable convexity | `certify_convex_mesh` |
+| Construct a convex face | `convex_triangle`, `convex_quad`, `ConvexPolygon::from_points` |
+| Construct planes and bounds | `Plane::from_coefficients`, `from_points`, `axis_aligned`; `Aabb` helpers |
+
+`polygon_soup` is the public input-contract check. A higher owner may retain a
+successful convexity result and pass it through the certified-convex Boolean
+entry points.
+
+### Run Boolean operations
+
+| Task | API |
+| --- | --- |
+| Multi-mesh polygon output | `boolean_operation` |
+| Immediate indexed output | `boolean_triangle_soup` |
+| Two-input conveniences | `boolean_union`, `boolean_intersection`, `boolean_difference`, `boolean_symmetric_difference` |
+| Reuse convex-input facts | `boolean_operation_with_certified_convex_inputs`, `boolean_triangle_soup_with_certified_convex_inputs` |
+| Reuse exact source planes | `boolean_triangle_soup_with_certified_convex_inputs_and_planes` |
+| Select the operation | `BooleanOp::{Union, Intersection, Difference, SymmetricDifference}` |
+| Set a certification budget | `EmberConfig { max_depth }` |
+
+`EmberConfig::default()` uses `DEFAULT_MAX_DEPTH`, currently `usize::MAX`.
+A finite `max_depth` is a caller-selected certification budget, not a license
+to return a partial result.
+
+### Inspect and materialize output
+
+| Task | API |
+| --- | --- |
+| Read certified polygons | `BooleanResult::output` |
+| Read classification evidence | `classifications`, `winding_pairs` |
+| Extract output polygons | `extract_output` |
+| Triangulate certified polygons | `triangulate_and_resolve_certified` |
+| Certify polygon closure | `certify_output_polygon_closure` |
+| Check triangle closure | `triangle_soup_closure_evidence`, `triangle_soup_is_closed` |
+
+Triangulation resolves output T-junctions and crossings, then rejects open or
+zero-volume output. Closure is a precondition for success, not a repair
+performed after the fact.
+
+### Export graphics buffers
+
+| Task | API |
+| --- | --- |
+| Preserve exact vertices | `TriangleSoup::to_exact_gpu_mesh_buffers`, `ExactGpuMeshBuffers::from_triangles` |
+| Strict finite export | `TriangleSoup::try_to_gpu_mesh_f32`, `try_to_gpu_mesh_f64` |
+| Documented zero fallback | `to_gpu_mesh_f32_or_zero`, `to_gpu_mesh_f64_or_zero` |
+| Convert exact buffers | `approximate_gpu_mesh_f32`, `approximate_gpu_mesh_f64` and `_or_zero` variants |
+| Build interleaved buffers | `approximate_interleaved_gpu_mesh_f32`, `approximate_interleaved_gpu_mesh_f64` |
+
+The primitive-float types are presentation data. They must not be fed back into
+mesh topology decisions.
+
+### Use lower-level geometry
+
+| Task | API |
+| --- | --- |
+| Classify points | `classify_point`, `classify_projective_point` |
+| Intersect polygons | `intersect_polygons` and intersection result types |
+| Build/query acceleration | `ExactBvh::build`, `ExactPointBvh::build`, query methods |
+| Clip | `clip::clip_polygon`, `clip::clip_polygon_to_aabb` |
+| Build convex hulls | `convex_hull`, `convex_hull_with_coplanar_groups`, `convex_hull_with_retained_facts` |
+| Trace classifications | `trace_segment`, `trace_axis_segment`, `classify_leaf_polygon` |
+| Drive subdivision | `subdivide`, `subdivide_into`, `process_leaf`, `process_leaf_into` |
+| Propagate winding | `propagate_wnv`, `classify_polygon_output` |
+
+These surfaces support mesh-kernel authors. Most applications should use the
+operation and output APIs above.
+
+## Algorithm and guarantees
+
+The Boolean path follows the EMBER architecture:
+
+1. Validate source meshes and construct exact planar polygons with winding
+   transitions.
+2. Use axis-aligned subdivision and exact BVHs to isolate local arrangements.
+3. Split intersecting polygons in local BSP trees.
+4. Trace exact segments to classify front/back winding vectors.
+5. Verify singleton-edge absence and exact directed edge cancellation.
+6. Triangulate, resolve junctions, and certify indexed output closure.
+
+Bounds, BVHs, cached plane/edge profiles, retained source identities, and
+certified-convex facts reduce exact work. They are scheduling evidence; the
+final topology still comes from exact predicates and closure checks.
+
+## Features
+
+| Feature | Default | Effect |
+| --- | --- | --- |
+| `fuzz-bounded-campaign` | no | Enables explicitly bounded fuzz campaign behavior. |
+| `dispatch-trace` | no | Enables correlated Hyperreal, Hyperlattice, and Hyperlimit dispatch tracing. |
+
+Hypermesh has no default features.
+
+## Original full-resolution hard fixture
+
+The public-domain YeahRight corpus is a permanent cross-kernel regression
+asset. `competitive/data/controlmesh.obj` is the original 5,687-vertex,
+5,845-polygon, genus-131 control mesh; fan triangulation produces 11,894
+triangles.
+
+The ordinary test suite always imports the full-resolution mesh, checks its
+finite/closed/nondegenerate topology, lifts every coordinate into Hypermesh,
+and runs `polygon_soup`:
+
+```sh
+cargo test --release --test competitive \
+  full_resolution_yeahright_reaches_and_validates_in_hypermesh -- --nocapture
 ```
 
-GitHub Actions runs the native crate checks and the locked WASM demo build. The Pages
-workflow publishes the Trunk output from `main` when GitHub Pages is configured to use
-GitHub Actions as its source.
+The rotated-copy 11,894-by-11,894 triangle intersection remains an ignored,
+explicit memory-ceiling hard test rather than being replaced by a reduced
+fixture:
+
+```sh
+cargo test --release --test competitive \
+  full_resolution_yeahright_rotated_intersection_remains_a_hard_test \
+  -- --ignored --nocapture
+```
+
+The competitive suite also retains a 4,512-triangle subdivided convex-hull
+Boolean corpus and opt-in 18,048/72,192-triangle pressure cases. Fixture
+provenance and dimensions are recorded in
+[`competitive/data/README.md`](competitive/data/README.md).
+
+## Ecosystem and further documentation
+
+- [Hyperreal](https://github.com/timschmidt/hyperreal) supplies exact-aware
+  scalars.
+- [Hyperlattice](https://github.com/timschmidt/hyperlattice) supplies points
+  and projective carriers.
+- [Hyperlimit](https://github.com/timschmidt/hyperlimit) supplies certified
+  predicates.
+- [CSGRS](https://github.com/timschmidt/csgrs) owns CSG grammar, parametric
+  construction, file IO, and conversions into this mesh kernel.
+
+[`PERFORMANCE.md`](PERFORMANCE.md) contains benchmark methodology, competitive
+results, and retained/rejected optimization evidence. Generate complete
+signatures with `cargo doc --open`.
+
+The browser demo is deployed at <https://timschmidt.github.io/hypermesh/> and
+its source lives in [`examples/hypermesh_ui`](examples/hypermesh_ui).
 
 ## References
 
-- Philip Trettner, Julius Nehring-Wirxel, and Leif Kobbelt. [EMBER: Exact Mesh
-  Booleans via Efficient & Robust Local
-  Arrangements](https://doi.org/10.1145/3528223.3530181). ACM Transactions on
-  Graphics 41(4), 2022.
-- Qingnan Zhou, Eitan Grinspun, Denis Zorin, and Alec Jacobson. [Mesh
-  Arrangements for Solid Geometry](https://doi.org/10.1145/2897824.2925901).
-  ACM Transactions on Graphics 35(4), 2016.
-- Alec Jacobson, Ladislav Kavan, and Olga Sorkine-Hornung. [Robust
-  Inside-Outside Segmentation Using Generalized Winding
-  Numbers](https://doi.org/10.1145/2461912.2461916). ACM Transactions on
-  Graphics 32(4), 2013.
+- Trettner, Philip, Julius Nehring-Wirxel, and Leif Kobbelt. “EMBER: Exact
+  Mesh Booleans via Efficient & Robust Local Arrangements.” *ACM Transactions
+  on Graphics*, vol. 41, no. 4, 2022.
+  [doi:10.1145/3528223.3530181](https://doi.org/10.1145/3528223.3530181).
+- Zhou, Qingnan, Eitan Grinspun, Denis Zorin, and Alec Jacobson. “Mesh
+  Arrangements for Solid Geometry.” *ACM Transactions on Graphics*, vol. 35,
+  no. 4, 2016.
+  [doi:10.1145/2897824.2925901](https://doi.org/10.1145/2897824.2925901).
+- Jacobson, Alec, Ladislav Kavan, and Olga Sorkine-Hornung. “Robust
+  Inside-Outside Segmentation Using Generalized Winding Numbers.” *ACM
+  Transactions on Graphics*, vol. 32, no. 4, 2013.
+  [doi:10.1145/2461912.2461916](https://doi.org/10.1145/2461912.2461916).
+- Shewchuk, Jonathan Richard. “Adaptive Precision Floating-Point Arithmetic
+  and Fast Robust Geometric Predicates.” *Discrete & Computational Geometry*,
+  vol. 18, 1997, pp. 305–363.
+  [doi:10.1007/PL00009321](https://doi.org/10.1007/PL00009321).
+- Yap, Chee K. “Towards Exact Geometric Computation.” *Computational
+  Geometry*, vol. 7, 1997, pp. 3–23.
+  [doi:10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721%2895%2900040-2).
 
-## Hyper Ecosystem
+EMBER defines the local-arrangement architecture; Zhou et al. and Jacobson et
+al. cover arrangement and winding classification; Shewchuk and Yap establish
+the robust/exact predicate boundary.
 
-`hypermesh` builds on [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlimit](https://github.com/timschmidt/hyperlimit), and
-[hyperlattice](https://github.com/timschmidt/hyperlattice). It supplies exact
-triangle-mesh Booleans to [hyperbrep](https://github.com/timschmidt/hyperbrep),
-[csgrs](https://github.com/timschmidt/csgrs), and the other [Hyper geometry
-crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).
+## Acknowledgements
+
+Hypermesh is developed by Timothy Schmidt, with repository-history
+contributions from sakikomikado. The architecture is directly informed by the
+EMBER paper and the mesh-arrangement literature above.
+
+Keenan Crane released the original YeahRight model and all of its meshes into
+the public domain. That contribution makes the permanent full-resolution
+cross-kernel regression gate possible.
+
+## License and contributing
+
+Hypermesh is distributed under the MIT License; see [`LICENSE`](LICENSE).
+Changes must preserve the closed-PWN input contract, explicit uncertainty, and
+output-closure certification. Before submitting a change, run:
+
+```sh
+cargo fmt --all -- --check
+cargo test --all-features
+cargo clippy --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+cargo check --manifest-path fuzz/Cargo.toml --bins
+```
