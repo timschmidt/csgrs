@@ -380,7 +380,6 @@ fn matrix_fuzz(input: Input) {
     );
 }
 
-
 fn assert_matrix3_fact_helpers(facts: Matrix3StructuralFacts) {
     let hint = facts.determinant_schedule_hint();
     assert_eq!(
