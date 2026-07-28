@@ -53,9 +53,9 @@ pub enum BrepPointFacePlaneBlocker {
     UnknownPointPlaneRelation,
 }
 
-/// Explicit blocker for reusable face-query evidence.
+/// Explicit blocker for an immediate face-query batch.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum BrepFaceQueryEvidenceBlocker {
+pub enum BrepFaceQueryBatchBlocker {
     /// Source face was not found in the shell.
     MissingFace,
     /// Face references a surface id not present in the shell.
@@ -64,8 +64,6 @@ pub enum BrepFaceQueryEvidenceBlocker {
     UnsupportedSurface,
     /// The retained plane has lossy, unknown, or invalid exact-core facts.
     SurfaceNotReady,
-    /// Exact face bounds could not be derived for cached AABB preflights.
-    FaceBoundsNotReady,
 }
 
 /// Broad-phase plane/face report using exact face bounds.
@@ -126,26 +124,20 @@ pub struct BrepPointFacePlaneReport {
     pub preflight_ready: bool,
 }
 
-/// Borrowed source and owned evidence for repeated face queries.
+/// Internal support-surface context for one immediate face-query batch.
 #[derive(Clone, Debug)]
-pub struct BrepFaceQueryEvidence<'a> {
-    /// Face whose query evidence was derived.
-    pub face: BrepFaceId,
-    /// Exact face bounds cached for repeated broad-phase plane/AABB tests.
-    pub bounds: BrepFaceBoundsReport,
-    /// Retained surface evidence when the face references one.
-    pub surface: Option<BrepSurfaceEvidence>,
+struct BrepFaceQueryContext<'a> {
+    face: BrepFaceId,
+    surface: Option<BrepSurfaceEvidence>,
     surface_source: Option<&'a BrepSurface>,
-    /// Explicit evidence blockers.
-    pub blockers: Vec<BrepFaceQueryEvidenceBlocker>,
-    /// Whether all cached query evidence is ready.
-    pub query_ready: bool,
+    blockers: Vec<BrepFaceQueryBatchBlocker>,
+    query_ready: bool,
 }
 
-/// Batch diagnostics for repeated face queries using retained evidence.
+/// Aggregate diagnostics for an immediate face-query batch.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BrepFaceQueryBatchReport {
-    /// Face whose query evidence was used.
+    /// Face that was queried.
     pub face: BrepFaceId,
     /// Number of point/support-plane queries replayed.
     pub point_query_count: usize,
@@ -155,10 +147,10 @@ pub struct BrepFaceQueryBatchReport {
     pub certified_rejection_count: usize,
     /// Number of query results that still require exact trim/domain replay.
     pub narrow_phase_candidate_count: usize,
-    /// Whether the query evidence was exact-ready.
+    /// Whether the query inputs were exact-ready.
     pub query_ready: bool,
-    /// Explicit blockers copied from the query evidence.
-    pub blockers: Vec<BrepFaceQueryEvidenceBlocker>,
+    /// Explicit blockers encountered while resolving the query inputs.
+    pub blockers: Vec<BrepFaceQueryBatchBlocker>,
 }
 
 impl BrepFacePlanePreflightReport {
@@ -170,6 +162,10 @@ impl BrepFacePlanePreflightReport {
     /// predicates before any topology change.
     pub fn from_shell_face_plane(shell: &BrepShell, face: BrepFaceId, plane: &Plane3) -> Self {
         let bounds = shell.face_bounds_report(face);
+        Self::from_face_bounds(face, bounds, plane)
+    }
+
+    fn from_face_bounds(face: BrepFaceId, bounds: BrepFaceBoundsReport, plane: &Plane3) -> Self {
         let mut blockers = Vec::new();
         let mut relation = None;
 
@@ -205,17 +201,9 @@ impl BrepFacePlanePreflightReport {
     }
 }
 
-impl<'a> BrepFaceQueryEvidence<'a> {
-    /// Derive retained face evidence for repeated exact support-plane queries.
-    ///
-    /// Object facts and predicate evidence are retained, but every point,
-    /// segment, or AABB query still returns an exact, certified, or unknown report.
-    pub fn from_shell_face(shell: &'a BrepShell, face: BrepFaceId) -> Self {
-        let bounds = shell.face_bounds_report(face);
+impl<'a> BrepFaceQueryContext<'a> {
+    fn from_shell_face(shell: &'a BrepShell, face: BrepFaceId) -> Self {
         let mut blockers = Vec::new();
-        if !bounds.exact_bounds_ready {
-            blockers.push(BrepFaceQueryEvidenceBlocker::FaceBoundsNotReady);
-        }
 
         let (surface_source, surface) =
             match shell.faces.iter().find(|candidate| candidate.id == face) {
@@ -232,26 +220,26 @@ impl<'a> BrepFaceQueryEvidence<'a> {
                                 blockers: surface_blockers,
                                 ..
                             } => {
-                                blockers.push(BrepFaceQueryEvidenceBlocker::SurfaceNotReady);
+                                blockers.push(BrepFaceQueryBatchBlocker::SurfaceNotReady);
                                 if surface_blockers.iter().any(|blocker| {
                                     matches!(
                                         blocker,
                                         crate::surface::BrepSurfaceBlocker::UnsupportedFamily
                                     )
                                 }) {
-                                    blockers.push(BrepFaceQueryEvidenceBlocker::UnsupportedSurface);
+                                    blockers.push(BrepFaceQueryBatchBlocker::UnsupportedSurface);
                                 }
                             }
                         }
                         (Some(surface), Some(evidence))
                     }
                     None => {
-                        blockers.push(BrepFaceQueryEvidenceBlocker::MissingSurface);
+                        blockers.push(BrepFaceQueryBatchBlocker::MissingSurface);
                         (None, None)
                     }
                 },
                 None => {
-                    blockers.push(BrepFaceQueryEvidenceBlocker::MissingFace);
+                    blockers.push(BrepFaceQueryBatchBlocker::MissingFace);
                     (None, None)
                 }
             };
@@ -259,7 +247,6 @@ impl<'a> BrepFaceQueryEvidence<'a> {
         let query_ready = blockers.is_empty();
         Self {
             face,
-            bounds,
             surface,
             surface_source,
             blockers,
@@ -267,9 +254,8 @@ impl<'a> BrepFaceQueryEvidence<'a> {
         }
     }
 
-    /// Classify a point against the cached face support plane.
-    pub fn point_face_plane_preflight(&self, point: &Point3) -> BrepPointFacePlaneReport {
-        let mut blockers = point_blockers_from_evidence(&self.blockers);
+    fn point_face_plane_preflight(&self, point: &Point3) -> BrepPointFacePlaneReport {
+        let mut blockers = point_blockers_from_batch(&self.blockers);
         let mut side = None;
         if blockers.is_empty() {
             match (&self.surface_source, &self.surface) {
@@ -306,13 +292,12 @@ impl<'a> BrepFaceQueryEvidence<'a> {
         BrepPointFacePlaneReport::from_parts(self.face, side, blockers)
     }
 
-    /// Classify a segment against the retained face support plane.
-    pub fn segment_face_plane_preflight(
+    fn segment_face_plane_preflight(
         &self,
         start: &Point3,
         end: &Point3,
     ) -> BrepSegmentFacePlaneReport {
-        let mut blockers = segment_blockers_from_evidence(&self.blockers);
+        let mut blockers = segment_blockers_from_batch(&self.blockers);
         let mut relation = None;
         if blockers.is_empty() {
             match (&self.surface_source, &self.surface) {
@@ -337,58 +322,23 @@ impl<'a> BrepFaceQueryEvidence<'a> {
         BrepSegmentFacePlaneReport::from_parts(self.face, relation, blockers)
     }
 
-    /// Classify the cached face bounds against a query plane.
-    pub fn face_plane_preflight(&self, plane: &Plane3) -> BrepFacePlanePreflightReport {
-        let mut blockers = Vec::new();
-        let mut relation = None;
-        if !self.bounds.exact_bounds_ready {
-            blockers.push(BrepFacePlanePreflightBlocker::FaceBoundsNotReady);
-        } else {
-            let (min, max) = self
-                .bounds
-                .exact_bounds()
-                .expect("checked bounds readiness");
-            match classify_plane_aabb3(plane, min, max) {
-                PredicateOutcome::Decided { value, .. } => relation = Some(value),
-                PredicateOutcome::Unknown { .. } => {
-                    blockers.push(BrepFacePlanePreflightBlocker::UnknownPlaneAabbRelation);
-                }
-            }
-        }
-        BrepFacePlanePreflightReport::from_parts(self.face, self.bounds.clone(), relation, blockers)
-    }
-
-    /// Replay a batch of point and segment support-plane queries and return
-    /// cache-payoff diagnostics.
-    pub fn batch_report(
+    fn batch_report(
         &self,
         points: &[Point3],
         segments: &[(&Point3, &Point3)],
     ) -> BrepFaceQueryBatchReport {
-        let point_reports = points
-            .iter()
-            .map(|point| self.point_face_plane_preflight(point))
-            .collect::<Vec<_>>();
-        let segment_reports = segments
-            .iter()
-            .map(|(start, end)| self.segment_face_plane_preflight(start, end))
-            .collect::<Vec<_>>();
-        let certified_rejection_count = point_reports
-            .iter()
-            .filter(|report| report.certified_off_support_plane)
-            .count()
-            + segment_reports
-                .iter()
-                .filter(|report| report.certified_no_plane_contact)
-                .count();
-        let narrow_phase_candidate_count = point_reports
-            .iter()
-            .filter(|report| report.requires_trim_replay)
-            .count()
-            + segment_reports
-                .iter()
-                .filter(|report| report.requires_narrow_phase)
-                .count();
+        let mut certified_rejection_count = 0;
+        let mut narrow_phase_candidate_count = 0;
+        for point in points {
+            let report = self.point_face_plane_preflight(point);
+            certified_rejection_count += usize::from(report.certified_off_support_plane);
+            narrow_phase_candidate_count += usize::from(report.requires_trim_replay);
+        }
+        for (start, end) in segments {
+            let report = self.segment_face_plane_preflight(start, end);
+            certified_rejection_count += usize::from(report.certified_no_plane_contact);
+            narrow_phase_candidate_count += usize::from(report.requires_narrow_phase);
+        }
         BrepFaceQueryBatchReport {
             face: self.face,
             point_query_count: points.len(),
@@ -565,31 +515,6 @@ impl BrepPointFacePlaneReport {
     }
 }
 
-impl BrepFacePlanePreflightReport {
-    fn from_parts(
-        face: BrepFaceId,
-        bounds: BrepFaceBoundsReport,
-        relation: Option<PlaneAabbRelation>,
-        blockers: Vec<BrepFacePlanePreflightBlocker>,
-    ) -> Self {
-        let certified_no_plane_crossing = matches!(
-            relation,
-            Some(PlaneAabbRelation::Below | PlaneAabbRelation::Above)
-        );
-        let requires_narrow_phase = relation == Some(PlaneAabbRelation::Intersecting);
-        let preflight_ready = blockers.is_empty();
-        Self {
-            face,
-            bounds,
-            relation,
-            certified_no_plane_crossing,
-            requires_narrow_phase,
-            blockers,
-            preflight_ready,
-        }
-    }
-}
-
 impl BrepShell {
     /// Classify a face's exact AABB against a plane as broad-phase evidence.
     pub fn face_plane_preflight(
@@ -598,6 +523,24 @@ impl BrepShell {
         plane: &Plane3,
     ) -> BrepFacePlanePreflightReport {
         BrepFacePlanePreflightReport::from_shell_face_plane(self, face, plane)
+    }
+
+    /// Classify one face's exact bounds against several planes immediately.
+    ///
+    /// Bounds are derived once inside this completed batch operation and are
+    /// not exposed as a separate query lifecycle.
+    pub fn face_plane_preflight_batch(
+        &self,
+        face: BrepFaceId,
+        planes: &[Plane3],
+    ) -> Vec<BrepFacePlanePreflightReport> {
+        let bounds = self.face_bounds_report(face);
+        planes
+            .iter()
+            .map(|plane| {
+                BrepFacePlanePreflightReport::from_face_bounds(face, bounds.clone(), plane)
+            })
+            .collect()
     }
 
     /// Classify a segment against a face support plane as preflight evidence.
@@ -619,54 +562,55 @@ impl BrepShell {
         BrepPointFacePlaneReport::from_shell_face_point(self, face, point)
     }
 
-    /// Derive evidence for repeated support-plane and bounds preflights.
-    pub fn face_query_evidence(&self, face: BrepFaceId) -> BrepFaceQueryEvidence<'_> {
-        BrepFaceQueryEvidence::from_shell_face(self, face)
+    /// Run point and segment support-plane preflights as one immediate batch.
+    ///
+    /// Surface evidence is resolved once inside the call. The returned report
+    /// contains aggregate scheduling diagnostics; callers do not own a
+    /// reusable query handle.
+    pub fn face_query_batch_report(
+        &self,
+        face: BrepFaceId,
+        points: &[Point3],
+        segments: &[(&Point3, &Point3)],
+    ) -> BrepFaceQueryBatchReport {
+        BrepFaceQueryContext::from_shell_face(self, face).batch_report(points, segments)
     }
 }
 
-fn point_blockers_from_evidence(
-    blockers: &[BrepFaceQueryEvidenceBlocker],
+fn point_blockers_from_batch(
+    blockers: &[BrepFaceQueryBatchBlocker],
 ) -> Vec<BrepPointFacePlaneBlocker> {
     blockers
         .iter()
-        .filter_map(|blocker| match blocker {
-            BrepFaceQueryEvidenceBlocker::MissingFace => {
-                Some(BrepPointFacePlaneBlocker::MissingFace)
+        .map(|blocker| match blocker {
+            BrepFaceQueryBatchBlocker::MissingFace => BrepPointFacePlaneBlocker::MissingFace,
+            BrepFaceQueryBatchBlocker::MissingSurface => BrepPointFacePlaneBlocker::MissingSurface,
+            BrepFaceQueryBatchBlocker::UnsupportedSurface => {
+                BrepPointFacePlaneBlocker::UnsupportedSurface
             }
-            BrepFaceQueryEvidenceBlocker::MissingSurface => {
-                Some(BrepPointFacePlaneBlocker::MissingSurface)
+            BrepFaceQueryBatchBlocker::SurfaceNotReady => {
+                BrepPointFacePlaneBlocker::SurfaceNotReady
             }
-            BrepFaceQueryEvidenceBlocker::UnsupportedSurface => {
-                Some(BrepPointFacePlaneBlocker::UnsupportedSurface)
-            }
-            BrepFaceQueryEvidenceBlocker::SurfaceNotReady => {
-                Some(BrepPointFacePlaneBlocker::SurfaceNotReady)
-            }
-            BrepFaceQueryEvidenceBlocker::FaceBoundsNotReady => None,
         })
         .collect()
 }
 
-fn segment_blockers_from_evidence(
-    blockers: &[BrepFaceQueryEvidenceBlocker],
+fn segment_blockers_from_batch(
+    blockers: &[BrepFaceQueryBatchBlocker],
 ) -> Vec<BrepSegmentFacePlaneBlocker> {
     blockers
         .iter()
-        .filter_map(|blocker| match blocker {
-            BrepFaceQueryEvidenceBlocker::MissingFace => {
-                Some(BrepSegmentFacePlaneBlocker::MissingFace)
+        .map(|blocker| match blocker {
+            BrepFaceQueryBatchBlocker::MissingFace => BrepSegmentFacePlaneBlocker::MissingFace,
+            BrepFaceQueryBatchBlocker::MissingSurface => {
+                BrepSegmentFacePlaneBlocker::MissingSurface
             }
-            BrepFaceQueryEvidenceBlocker::MissingSurface => {
-                Some(BrepSegmentFacePlaneBlocker::MissingSurface)
+            BrepFaceQueryBatchBlocker::UnsupportedSurface => {
+                BrepSegmentFacePlaneBlocker::UnsupportedSurface
             }
-            BrepFaceQueryEvidenceBlocker::UnsupportedSurface => {
-                Some(BrepSegmentFacePlaneBlocker::UnsupportedSurface)
+            BrepFaceQueryBatchBlocker::SurfaceNotReady => {
+                BrepSegmentFacePlaneBlocker::SurfaceNotReady
             }
-            BrepFaceQueryEvidenceBlocker::SurfaceNotReady => {
-                Some(BrepSegmentFacePlaneBlocker::SurfaceNotReady)
-            }
-            BrepFaceQueryEvidenceBlocker::FaceBoundsNotReady => None,
         })
         .collect()
 }

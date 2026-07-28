@@ -107,8 +107,9 @@ entry points on `BrepShell` are:
   `face_validation_report`, and `shell_validation_report`;
 - `face_bounds_report`, `shell_bounds_report`, `face_area_report`, and
   `shell_volume_report`;
-- `face_query_evidence`, `face_aabb_preflight`, `face_plane_preflight`,
-  `segment_face_plane_preflight`, and `point_face_plane_preflight`;
+- `face_query_batch_report`, `face_aabb_preflight`, `face_plane_preflight`,
+  `face_plane_preflight_batch`, `segment_face_plane_preflight`, and
+  `point_face_plane_preflight`;
 - `solid_readiness_report`, `exact_surface_handoff`, and
   `exact_solid_handoff`;
 - `exact_planar_tessellation_report`, `exact_triangle_mesh_handoff_report`,

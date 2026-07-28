@@ -532,25 +532,19 @@ proptest! {
         prop_assert!(point_preflight.preflight_ready);
         prop_assert_eq!(point_preflight.side, Some(hyperlimit::PlaneSide::On));
         prop_assert!(point_preflight.requires_trim_replay);
-        let evidence = shell.face_query_evidence(BrepFaceId(0));
-        prop_assert!(evidence.query_ready);
-        prop_assert_eq!(
-            evidence.face_plane_preflight(&Plane3::new(p(0, 0, 1), r(0))),
-            plane_preflight
+        let plane_batch = shell.face_plane_preflight_batch(
+            BrepFaceId(0),
+            &[Plane3::new(p(0, 0, 1), r(0))],
         );
         prop_assert_eq!(
-            evidence.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1)),
-            segment_preflight
-        );
-        prop_assert_eq!(
-            evidence.point_face_plane_preflight(&p(0, 0, 0)),
-            point_preflight
+            plane_batch.first(),
+            Some(&plane_preflight)
         );
         let points = vec![p(0, 0, 0), p(0, 0, 1)];
         let segment_start = p(0, 0, -1);
         let segment_end = p(0, 0, 1);
         let segments = vec![(&segment_start, &segment_end)];
-        let batch = evidence.batch_report(&points, &segments);
+        let batch = shell.face_query_batch_report(BrepFaceId(0), &points, &segments);
         prop_assert_eq!(batch.point_query_count, 2);
         prop_assert_eq!(batch.segment_query_count, 1);
         prop_assert_eq!(batch.certified_rejection_count, 1);

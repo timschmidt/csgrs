@@ -351,18 +351,14 @@ fn bench_shell_audit(c: &mut Criterion) {
     c.bench_function("hyperbrep point face-plane preflight report", |b| {
         b.iter(|| trim_shell.point_face_plane_preflight(BrepFaceId(0), &query_point))
     });
-    c.bench_function("hyperbrep face query evidence derivation", |b| {
-        b.iter(|| trim_shell.face_query_evidence(BrepFaceId(0)))
-    });
-    let query_evidence = trim_shell.face_query_evidence(BrepFaceId(0));
     let query_points = (0..1024).map(|i| p(i % 17, i % 31, 0)).collect::<Vec<_>>();
     let query_segments = query_points
         .iter()
         .take(128)
         .map(|point| (point, &segment_end))
         .collect::<Vec<_>>();
-    c.bench_function("hyperbrep face query evidence batch report", |b| {
-        b.iter(|| query_evidence.batch_report(&query_points, &query_segments))
+    c.bench_function("hyperbrep immediate face query batch report", |b| {
+        b.iter(|| trim_shell.face_query_batch_report(BrepFaceId(0), &query_points, &query_segments))
     });
     c.bench_function("hyperbrep face validation report", |b| {
         b.iter(|| trim_shell.face_validation_report(BrepFaceId(0)))

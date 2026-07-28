@@ -67,6 +67,32 @@ the evidence classifier across the crate boundary; the generic function still
 preserves explicit unsupported surface reports. Exact report contents,
 blockers, and narrow-phase rules remain unchanged.
 
+## Immediate face-query batch API gate
+
+The remaining public `BrepFaceQueryEvidence` handle is now internal to one
+completed operation. `face_query_batch_report` resolves support-surface
+evidence once and immediately aggregates point and segment preflights.
+`face_plane_preflight_batch` likewise derives face bounds once per completed
+plane batch. Callers no longer construct, retain, or inspect a partly reusable
+query object.
+
+Serialized 100-sample Criterion runs compared the new operation with the
+prepared handle's batch replay and retained the individual query benchmarks as
+controls:
+
+| Benchmark | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| 1,024 point plus 128 segment face-query batch | 179.95 us | 163.60 us | -9.09% |
+| Segment/face-plane preflight | 660.31 ns | 665.97 ns | +0.86% |
+| Point/face-plane preflight | 608.90 ns | 587.30 ns | -3.55% |
+| Face/plane AABB preflight | 208.24 us | 210.53 us | +1.10% |
+
+Criterion reported no segment change, an improved point preflight, and the
+face/plane movement within its noise threshold. The immediate batch also
+eliminates the prepared handle's separate 209.44 us median derivation cost.
+Aggregate counts, exact classifications, blockers, and narrow-phase scheduling
+semantics are unchanged.
+
 ## Immediate voxel-geometry API gate
 
 `BrepShell::voxel_geometry` now constructs HyperVoxel's validated
