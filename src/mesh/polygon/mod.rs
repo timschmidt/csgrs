@@ -654,11 +654,11 @@ impl LazySourceVertices {
                         flip_normals,
                     } => {
                         let position = matrix
-                            .prepare()
+                            .cached()
                             .transform_point3(&source.position)
                             .expect("retained affine transform preserves finite points");
                         let transformed_normal =
-                            normal_matrix.prepare().transform_direction3(&source.normal);
+                            normal_matrix.cached().transform_direction3(&source.normal);
                         let mut normal = if *normalize_normals {
                             finite_normalized_exact_rational(&transformed_normal)
                                 .or_else(|| transformed_normal.normalize_checked().ok())

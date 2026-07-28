@@ -338,14 +338,14 @@ fn rigidly_transformed_supports(
     supports: &[::hypermesh::InputTrianglePlanes],
     matrix: &Matrix4,
 ) -> Arc<Vec<::hypermesh::InputTrianglePlanes>> {
-    let prepared = matrix.prepare();
+    let cached_matrix = matrix.cached();
     let translation = Vector3::new([
         matrix[0][3].clone(),
         matrix[1][3].clone(),
         matrix[2][3].clone(),
     ]);
     let transform_plane = |plane: &::hypermesh::Plane| {
-        let normal = prepared.transform_direction3(&Vector3::new([
+        let normal = cached_matrix.transform_direction3(&Vector3::new([
             plane.normal.x.clone(),
             plane.normal.y.clone(),
             plane.normal.z.clone(),
@@ -2956,7 +2956,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
             repeated
         });
 
-        let prepared_matrix = matrix.prepare();
+        let cached_matrix = matrix.cached();
         if let Some(transform_layout) = self
             .polygons
             .retained_transform_layout()
@@ -3035,10 +3035,10 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 .map(|(slot, _)| {
                     let source =
                         transform_layout.position_representative(&self.polygons, slot);
-                    let position = prepared_matrix
+                    let position = cached_matrix
                         .transform_point3(&source.position)
                         .expect("rigid transforms preserve affine points");
-                    let normal = prepared_matrix.transform_direction3(&source.normal);
+                    let normal = cached_matrix.transform_direction3(&source.normal);
                     let finite = finite_matrix.as_ref().and_then(|matrix| {
                         let source_finite = transform_layout
                             .position_f64
@@ -3208,7 +3208,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
         }
         let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
-        let matrix_facts = prepared_matrix.structural_facts();
+        let matrix_facts = cached_matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
         let mut transformed_planes = HashMap::new();
@@ -3238,7 +3238,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                     let position_f64 = finite_matrix.as_ref().and_then(|matrix| {
                         transform_point_f64_lossy(matrix, vertex.position_f64_lossy()?)
                     });
-                    let position = prepared_matrix
+                    let position = cached_matrix
                         .transform_point3(&vertex.position)
                         .expect("rigid transforms preserve affine points");
                     let position_id = fresh_position_id();
@@ -3264,7 +3264,7 @@ impl<M: Clone + Send + Sync + Debug> Mesh<M> {
                 } else {
                     let source_normal = vertex.normal.clone();
                     let transformed_normal =
-                        prepared_matrix.transform_direction3(&source_normal);
+                        cached_matrix.transform_direction3(&source_normal);
                     transformed_normals
                         .entry(source_position_id)
                         .or_default()
@@ -6708,7 +6708,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
             repeated
         });
 
-        let mut prepared_matrix = mat.prepare();
+        let mut cached_matrix = mat.cached();
         let transformed_bounds = self.polygons.axis_aligned_box_fact().and_then(|bounds| {
             let xs = [&bounds.mins.x, &bounds.maxs.x];
             let ys = [&bounds.mins.y, &bounds.maxs.y];
@@ -6718,7 +6718,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 for y in ys {
                     for z in zs {
                         let point = Point3::new(x.clone(), y.clone(), z.clone());
-                        let point = prepared_matrix.transform_point3(&point).ok()?;
+                        let point = cached_matrix.transform_point3(&point).ok()?;
                         include_point3_bounds(&mut transformed, &point);
                     }
                 }
@@ -6726,7 +6726,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
             transformed.map(|(mins, maxs)| Aabb::new(mins, maxs))
         });
         // Compute inverse transpose for normal transformation
-        let mat_inv_transpose = match prepared_matrix.inverse() {
+        let mat_inv_transpose = match cached_matrix.inverse() {
             Ok(inv) => inv.transpose(),
             Err(_) => {
                 eprintln!(
@@ -6735,7 +6735,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 Matrix4::identity()
             },
         };
-        let prepared_inverse_transpose = mat_inv_transpose.prepare();
+        let cached_inverse_transpose = mat_inv_transpose.cached();
 
         let finite_matrix = matrix_f64_lossy(mat);
         if let Some(transform_layout) = self
@@ -6801,9 +6801,9 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 .map(|(position_slot, _)| {
                     let source = transform_layout
                         .position_representative(&self.polygons, position_slot);
-                    let position = prepared_matrix.transform_point3(&source.position).ok()?;
+                    let position = cached_matrix.transform_point3(&source.position).ok()?;
                     let transformed_normal =
-                        prepared_inverse_transpose.transform_direction3(&source.normal);
+                        cached_inverse_transpose.transform_direction3(&source.normal);
                     let normal = finite_normalized_exact_rational(&transformed_normal)
                         .or_else(|| transformed_normal.normalize_checked().ok())?;
                     let finite = finite_matrix.as_ref().and_then(|matrix| {
@@ -6873,7 +6873,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
         let mut mesh = self.clone();
         let mut transformed_positions = HashMap::<u64, (Point3, u64, Option<[f64; 3]>)>::new();
         let mut transformed_normals = HashMap::<u64, Vec<(Vector3, Vector3)>>::new();
-        let matrix_facts = prepared_matrix.structural_facts();
+        let matrix_facts = cached_matrix.structural_facts();
         let mut transformed_coordinates: [HashMap<[Option<u64>; 3], u64>; 3] =
             std::array::from_fn(|_| HashMap::new());
         let mut transformed_planes = HashMap::new();
@@ -6904,7 +6904,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                     let position_f64 = finite_matrix.as_ref().and_then(|matrix| {
                         transform_point_f64_lossy(matrix, vert.position_f64_lossy()?)
                     });
-                    match prepared_matrix.transform_point3(&vert.position) {
+                    match cached_matrix.transform_point3(&vert.position) {
                         Ok(position) => {
                             let position_id = fresh_position_id();
                             transformed_positions.insert(
@@ -6939,7 +6939,7 @@ impl<M: Clone + Send + Sync + Debug> CSG for Mesh<M> {
                 } else {
                     let source_normal = vert.normal.clone();
                     let transformed_normal =
-                        prepared_inverse_transpose.transform_direction3(&source_normal);
+                        cached_inverse_transpose.transform_direction3(&source_normal);
                     if let Some(normal) = finite_normalized_exact_rational(&transformed_normal)
                         .or_else(|| transformed_normal.normalize_checked().ok())
                     {

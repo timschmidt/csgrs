@@ -2,7 +2,7 @@ use super::Polygon;
 use crate::mesh::plane::first_nondegenerate_support;
 use crate::vertex::Vertex;
 use hyperlattice::{Point3, Real, Vector3};
-use hyperreal::RealSign;
+use hyperreal::{AffineDet2ExactWordFilter, RealSign};
 use hypertri::kernel::{ExactKernel, Kernel};
 use hypertri::types::Sign;
 use std::cmp::Ordering;
@@ -183,8 +183,8 @@ fn strictly_convex_exact_word_projection<'a>(
         let a = projected(position(index));
         let b = projected(position((index + 1) % vertex_count));
         let c = projected(position((index + 2) % vertex_count));
-        let Some(sign) = Real::prepare_affine_det2_exact_word_filter(a, b)
-            .and_then(|filter| filter.sign(c))
+        let Some(sign) =
+            AffineDet2ExactWordFilter::from_reals(a, b).and_then(|filter| filter.sign(c))
         else {
             return false;
         };
