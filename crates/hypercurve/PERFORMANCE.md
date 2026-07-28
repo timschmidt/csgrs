@@ -6019,6 +6019,21 @@ topology workflow at 99.628/95.708 us, cold degree elevation at
 the two additional candidate runs also placed topology and cold elevation
 within their observed pre-change variation.
 
+### Intersection-topology cache-state boundary
+
+Intersection topology, path Boolean selections, and retained overlap graphs
+now expose their immediate arrangement, traversal, region, and overlap
+evidence results without public cache-state probes. Clone-sharing remains
+private; tests verify repeated borrowed-result identity or exact value
+equality.
+
+Serialized curve-path runs measured immediate topology at 21.563 us before
+and 20.638--21.174 us after. The four retained line, arc, nonlinear, and
+circle-region replays remained 2--6 ns. The Boolean batch baseline of
+115.729 us was bracketed by 112.772 and 123.095 us candidate runs. The
+64-curve full-overlap workflow similarly moved from 600.337 us to a candidate
+range of 587.604--614.277 us with the same 25,800 checksum.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

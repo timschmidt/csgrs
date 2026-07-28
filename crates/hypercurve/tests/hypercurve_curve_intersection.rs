@@ -76,9 +76,8 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
-    assert!(!topology.is_arrangement_cached());
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
-    assert!(topology.is_arrangement_cached());
+    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
 }
 
 #[test]
@@ -742,9 +741,8 @@ fn path_pair_immediate_topology_splits_each_authored_curve_once() {
             .sum::<usize>(),
         6
     );
-    assert!(!topology.is_arrangement_cached());
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 12);
-    assert!(topology.is_arrangement_cached());
+    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 12);
 }
 
 #[test]
@@ -907,19 +905,14 @@ fn path_boolean_selection_materializes_exact_regularized_operation_matrix() {
     for (operation, expected_area, expected_kept) in cases {
         let selection = selections.selection(operation);
         assert_eq!(selection.kept_fragment_count(), expected_kept);
-        assert!(selection.is_arrangement_cached());
         assert_eq!(
             selection.arrangement_graph_view().unwrap().len(),
             expected_kept
         );
-        assert!(selection.is_arrangement_cached());
-        assert!(selection.is_traversal_cached());
         let traversal = selection.traversal_view().unwrap();
-        assert!(selection.is_traversal_cached());
+        assert!(std::ptr::eq(traversal, selection.traversal_view().unwrap()));
         assert!(traversal.chains().iter().all(|chain| chain.is_closed()));
-        assert!(selection.is_region_cached());
         let region = selections.region(operation);
-        assert!(selection.is_region_cached());
         assert!(std::ptr::eq(region, selection.region_view().unwrap()));
         assert_eq!(region.signed_area().unwrap(), Some(expected_area));
     }

@@ -876,11 +876,6 @@ impl CurvePathBooleanSelection2 {
             .count()
     }
 
-    /// Returns whether selected arrangement assembly has already been retained.
-    pub fn is_arrangement_cached(&self) -> bool {
-        self.data.arrangement.get().is_some()
-    }
-
     /// Borrows the exact selected-fragment arrangement.
     pub fn arrangement_graph_view(&self) -> ExactCurveResult<&BezierArrangementGraph2> {
         match self.data.arrangement.get_or_init(|| {
@@ -925,11 +920,6 @@ impl CurvePathBooleanSelection2 {
         }
     }
 
-    /// Returns whether exact selected traversal has already been retained.
-    pub fn is_traversal_cached(&self) -> bool {
-        self.data.traversal.get().is_some()
-    }
-
     /// Borrows exact selected boundary traversal.
     pub fn traversal_view(&self) -> ExactCurveResult<&BezierArrangementTraversal2> {
         match self.data.traversal.get_or_init(|| {
@@ -947,11 +937,6 @@ impl CurvePathBooleanSelection2 {
             Ok(traversal) => Ok(traversal),
             Err(error) => Err(error.clone()),
         }
-    }
-
-    /// Returns whether retained region materialization has already been retained.
-    pub fn is_region_cached(&self) -> bool {
-        self.data.region.get().is_some()
     }
 
     /// Borrows the exact retained curved Boolean region.
@@ -1003,11 +988,6 @@ impl CurvePathIntersectionTopology2 {
     /// Returns split topology for authored curves in the second path.
     pub fn second(&self) -> &[CurvePathSplit2] {
         &self.data.second
-    }
-
-    /// Returns whether the combined arrangement has already been retained.
-    pub fn is_arrangement_cached(&self) -> bool {
-        self.data.arrangement.get().is_some()
     }
 
     /// Borrows the lazily assembled aggregate arrangement graph.

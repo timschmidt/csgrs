@@ -212,12 +212,6 @@ impl BezierArrangementGraph2 {
         let _ = self.certified_overlap_evidence.set(Box::new(evidence));
     }
 
-    /// Returns whether exact retained-overlap evidence has been cached for the
-    /// certified policy.
-    pub fn is_certified_overlap_evidence_cached(&self) -> bool {
-        self.certified_overlap_evidence.get().is_some()
-    }
-
     /// Returns retained fragments.
     pub fn fragments(&self) -> &[BezierArrangementFragment2] {
         &self.fragments

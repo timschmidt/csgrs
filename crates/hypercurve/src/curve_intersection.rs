@@ -1518,11 +1518,6 @@ impl CurveIntersectionTopology2 {
         &self.data.second
     }
 
-    /// Returns whether arrangement assembly has already been retained.
-    pub fn is_arrangement_cached(&self) -> bool {
-        self.data.arrangement.get().is_some()
-    }
-
     /// Borrows the lazily assembled arrangement graph.
     pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {
         match self.data.arrangement.get_or_init(|| {

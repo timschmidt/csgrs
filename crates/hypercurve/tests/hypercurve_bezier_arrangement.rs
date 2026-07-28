@@ -949,16 +949,13 @@ fn retained_overlap_evidence_finds_identical_materialized_fragments() {
 }
 
 #[test]
-fn certified_overlap_evidence_is_retained_across_graph_clones() {
+fn certified_overlap_evidence_replays_across_graph_clones() {
     let graph = partial_line_overlap_graph();
-    assert!(!graph.is_certified_overlap_evidence_cached());
 
     let evidence = BezierRetainedOverlapEvidence2::from_graph(&graph, &policy());
     assert!(evidence.is_decided());
-    assert!(graph.is_certified_overlap_evidence_cached());
 
     let cloned = graph.clone();
-    assert!(cloned.is_certified_overlap_evidence_cached());
     assert_eq!(
         BezierRetainedOverlapEvidence2::from_graph(&cloned, &policy()),
         evidence
@@ -966,7 +963,7 @@ fn certified_overlap_evidence_is_retained_across_graph_clones() {
 }
 
 #[test]
-fn empty_overlap_refinement_preserves_exact_unit_fragment_and_cache() {
+fn empty_overlap_refinement_preserves_exact_unit_fragment() {
     let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
         0,
         0,
@@ -986,7 +983,6 @@ fn empty_overlap_refinement_preserves_exact_unit_fragment_and_cache() {
         linear.refined_fragments()[0].local_range(),
         &ParamRange::new(r(0), r(1))
     );
-    assert!(linear.graph().is_certified_overlap_evidence_cached());
 
     let rational = decided(graph.split_retained_rational_overlaps(&policy()));
     assert_eq!(rational.graph(), &graph);
@@ -997,7 +993,6 @@ fn empty_overlap_refinement_preserves_exact_unit_fragment_and_cache() {
         rational.refined_fragments()[0].local_range(),
         &ParamRange::new(r(0), r(1))
     );
-    assert!(rational.graph().is_certified_overlap_evidence_cached());
 }
 
 #[test]
