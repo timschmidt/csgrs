@@ -11,17 +11,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperbrep = { path = ".." }
-hypercurve = { path = "../../hypercurve" }
-hyperlimit = { path = "../../hyperlimit" }
-hyperreal = { path = "../../hyperreal" }
-hypervoxel = { path = "../../hypervoxel" }
-# hyperbrep = "0.2.0"
-# hypercurve = "0.3.0"
-# hyperreal = "0.13.1"
-# hypervoxel = "0.3.0"
+hyperbrep = { version = "0.2.0", path = ".." }
+hypercurve = { version = "0.3.0", path = "../../hypercurve" }
+hyperlimit = { version = "0.4.0", path = "../../hyperlimit" }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+hypervoxel = { version = "0.3.0", path = "../../hypervoxel" }
 
 [patch.crates-io]
 hyperreal = { path = "../../hyperreal" }
