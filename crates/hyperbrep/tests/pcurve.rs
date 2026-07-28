@@ -111,15 +111,18 @@ fn planar_pcurve_owns_top_level_nurbs_and_reports_native_trim_limit() {
     let reversed = BrepPcurve::new(surface, path.reversed().unwrap());
 
     assert_eq!(directed.path().curves().len(), 1);
-    assert!(!reversed.is_reversed_path_cached());
+    let image_report = directed.image_equality_report(&reversed).unwrap();
+    assert_eq!(
+        image_report.relation(),
+        BrepPcurveImageRelation::SameReversed
+    );
     assert_eq!(
         directed
             .image_equality_report(&reversed)
             .unwrap()
             .relation(),
-        BrepPcurveImageRelation::SameReversed
+        image_report.relation()
     );
-    assert!(reversed.is_reversed_path_cached());
 
     let face = BrepPlanarFaceRegion::try_new(
         surface,
@@ -127,11 +130,15 @@ fn planar_pcurve_owns_top_level_nurbs_and_reports_native_trim_limit() {
         Vec::new(),
     )
     .unwrap();
+    let edge_use_report = face.edge_use_report(&directed).unwrap();
     assert_eq!(
-        face.edge_use_report(&directed).unwrap().relation(),
+        edge_use_report.relation(),
         BrepPlanarFaceEdgeUseRelation::UnsupportedCurveFamily
     );
-    assert!(directed.is_native_segment_view_cached());
+    assert_eq!(
+        face.edge_use_report(&directed).unwrap().relation(),
+        edge_use_report.relation()
+    );
 }
 
 #[test]

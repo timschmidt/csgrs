@@ -31,7 +31,7 @@ fn top_level_spatial_line_evaluates_exactly() {
 }
 
 #[test]
-fn spatial_rational_bezier_retains_one_homogeneous_control_net() {
+fn spatial_rational_bezier_clones_evaluate_identically() {
     let curve = BrepRationalBezier3::try_new(
         vec![p(0, 0, 0), p(1, 2, 0), p(2, 0, 2)],
         vec![r(1), r(1), r(1)],
@@ -39,13 +39,14 @@ fn spatial_rational_bezier_retains_one_homogeneous_control_net() {
     .unwrap();
     let clone = curve.clone();
 
-    assert!(!curve.is_homogeneous_control_net_cached());
     assert_eq!(
         curve.point_at(&q(1, 2)).unwrap(),
         Point3::new(r(1), r(1), q(1, 2))
     );
-    assert!(curve.is_homogeneous_control_net_cached());
-    assert!(clone.is_homogeneous_control_net_cached());
+    assert_eq!(
+        clone.point_at(&q(1, 2)).unwrap(),
+        Point3::new(r(1), r(1), q(1, 2))
+    );
     assert_eq!(clone.point_at(&r(0)).unwrap(), p(0, 0, 0));
     assert_eq!(clone.point_at(&r(1)).unwrap(), p(2, 0, 2));
 }
@@ -72,7 +73,10 @@ fn spatial_nurbs_matches_its_clamped_rational_bezier() {
             bezier.point_at(&parameter).unwrap()
         );
     }
-    assert!(clone.is_homogeneous_control_net_cached());
+    assert_eq!(
+        clone.point_at(&q(1, 2)).unwrap(),
+        bezier.point_at(&q(1, 2)).unwrap()
+    );
 }
 
 #[test]

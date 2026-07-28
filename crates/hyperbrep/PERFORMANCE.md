@@ -133,6 +133,18 @@ images are cached at the pcurve carrier. No second BREP-specific evaluator was
 added; keeping one exact curve representation avoids disagreement between
 topology and geometry layers.
 
+The public API exposes the exact operations and their results, not whether an
+internal `OnceCell` happens to be populated. Removing the four cache-state
+queries leaves homogeneous controls, reversed pcurves, and native segment views
+retained exactly as before. Before that API-only change, serialized Criterion
+ranges were 1.6070–1.6548 us for a rational Bezier point, 1.8464–1.8591 us for
+a NURBS point, 288.40–289.52 ns for pcurve image equality, and
+184.65–186.12 ns for a face edge-use query. Final serialized measurements were
+1.5952–1.6087 us, 1.8122–1.8730 us, 285.09–286.30 ns, and
+183.66–184.12 ns respectively. The retained native-segment accessor now takes
+an explicit already-initialized fast path, which preserves lazy first use while
+making the repeated immediate edge-use query slightly faster.
+
 ### Meisters: polygon ears
 
 Exact planar tessellation delegates polygon triangulation to `hypertri`, whose

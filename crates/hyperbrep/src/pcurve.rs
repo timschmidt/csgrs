@@ -316,16 +316,6 @@ impl BrepPcurve {
         &self.data.path
     }
 
-    /// Returns whether reverse traversal has already been retained.
-    pub fn is_reversed_path_cached(&self) -> bool {
-        self.data.reversed_path.get().is_some()
-    }
-
-    /// Returns whether native line/arc extraction has already been retained.
-    pub fn is_native_segment_view_cached(&self) -> bool {
-        self.data.native_segments.get().is_some()
-    }
-
     /// Compares two open planar pcurves by exact UV image.
     ///
     /// This is a structural exact predicate over authored top-level curves:
@@ -367,7 +357,11 @@ impl BrepPcurve {
         }
     }
 
+    #[inline(always)]
     fn native_segments(&self) -> Option<&[Segment2]> {
+        if let Some(segments) = self.data.native_segments.get() {
+            return segments.as_deref();
+        }
         self.data
             .native_segments
             .get_or_init(|| {

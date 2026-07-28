@@ -236,11 +236,6 @@ impl BrepRationalBezier3 {
         &self.data.weights
     }
 
-    /// Returns whether weighted controls have already been retained.
-    pub fn is_homogeneous_control_net_cached(&self) -> bool {
-        self.data.homogeneous_controls.get().is_some()
-    }
-
     /// Evaluates a point exactly over `[0, 1]` with homogeneous de Casteljau.
     pub fn point_at(&self, parameter: &Real) -> BrepCurveResult3<Point3> {
         validate_unit_parameter(parameter, BrepCurveFamily3::RationalBezier)?;
@@ -341,11 +336,6 @@ impl BrepNurbsCurve3 {
     /// Returns the exact active knot domain.
     pub fn parameter_domain(&self) -> &BrepCurveParameterDomain3 {
         &self.data.domain
-    }
-
-    /// Returns whether weighted controls have already been retained.
-    pub fn is_homogeneous_control_net_cached(&self) -> bool {
-        self.data.homogeneous_controls.get().is_some()
     }
 
     /// Evaluates an exact model-space point with homogeneous de Boor.
