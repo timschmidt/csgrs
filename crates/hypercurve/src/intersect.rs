@@ -7,7 +7,9 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{PreparedAffineDet2Filter, PreparedAffineDet2PairFilter, Real, RealSign};
+use hyperreal::{
+    AffineDet2ExactWordFilter, AffineDet2Filter, AffineDet2PairFilter, Real, RealSign,
+};
 
 use crate::classify::{
     at_unit_interval_endpoint, compare_reals, in_closed_unit_interval, is_zero, max_real, min_real,
@@ -896,7 +898,7 @@ pub(crate) fn certified_line_segment_support_relation(
     first: &LineSeg2,
     second: &LineSeg2,
 ) -> CertifiedLineSegmentSupportRelation {
-    let floating = Real::prepare_affine_det2_pair_filter(
+    let floating = AffineDet2PairFilter::from_reals(
         [first.start().x(), first.start().y()],
         [first.end().x(), first.end().y()],
         [second.start().x(), second.start().y()],
@@ -905,10 +907,10 @@ pub(crate) fn certified_line_segment_support_relation(
     certified_line_segment_support_relation_with_filter(first, second, floating)
 }
 
-pub(crate) fn certified_line_segment_support_relation_with_prepared_exact_dyadic_f64(
+pub(crate) fn certified_line_segment_support_relation_with_exact_dyadic_f64_filter(
     first: &LineSeg2,
     second: &LineSeg2,
-    first_filter: Option<PreparedAffineDet2Filter>,
+    first_filter: Option<AffineDet2Filter>,
     first_endpoints: [[f64; 2]; 2],
     second_endpoints: [[f64; 2]; 2],
 ) -> CertifiedLineSegmentSupportRelation {
@@ -921,13 +923,10 @@ pub(crate) fn certified_line_segment_support_relation_with_prepared_exact_dyadic
             })
         },
         || {
-            Real::prepare_affine_det2_filter_from_exact_dyadic_f64(
-                second_endpoints[0],
-                second_endpoints[1],
-            )
-            .map_or((None, None), |filter| {
-                filter.signs_exact_dyadic_f64(first_endpoints)
-            })
+            AffineDet2Filter::from_f64(second_endpoints[0], second_endpoints[1])
+                .map_or((None, None), |filter| {
+                    filter.signs_exact_dyadic_f64(first_endpoints)
+                })
         },
     )
 }
@@ -935,7 +934,7 @@ pub(crate) fn certified_line_segment_support_relation_with_prepared_exact_dyadic
 fn certified_line_segment_support_relation_with_filter(
     first: &LineSeg2,
     second: &LineSeg2,
-    floating: Option<PreparedAffineDet2PairFilter>,
+    floating: Option<AffineDet2PairFilter>,
 ) -> CertifiedLineSegmentSupportRelation {
     certified_line_segment_support_relation_with_floating_signs(
         first,
@@ -972,7 +971,7 @@ where
         // Inconclusive rational inputs get the checked homogeneous i128
         // filter; overflow or symbolic coordinates retain `None` for the
         // arbitrary-precision fallback.
-        if let Some(exact) = Real::prepare_affine_det2_exact_word_filter(start, end) {
+        if let Some(exact) = AffineDet2ExactWordFilter::from_reals(start, end) {
             signs.0 = signs.0.or_else(|| exact.sign(first));
             signs.1 = signs.1.or_else(|| exact.sign(second));
         }
@@ -1025,12 +1024,8 @@ pub(crate) fn certified_line_crossing_winding_delta(
     let start = [first.start().x(), first.start().y()];
     let end = [first.end().x(), first.end().y()];
     let second_start = [second.start().x(), second.start().y()];
-    let sign = Real::prepare_affine_det2_filter(start, end)
-        .and_then(|filter| filter.sign(second_start))
-        .or_else(|| {
-            Real::prepare_affine_det2_exact_word_filter(start, end)
-                .and_then(|filter| filter.sign(second_start))
-        })?;
+    let sign = Real::certified_affine_det2_sign(start, end, second_start)
+        .or_else(|| Real::exact_rational_affine_det2_word_sign(start, end, second_start))?;
     match sign {
         RealSign::Positive => Some(1),
         RealSign::Negative => Some(-1),

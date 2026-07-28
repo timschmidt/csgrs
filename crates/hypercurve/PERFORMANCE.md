@@ -903,7 +903,7 @@ was disabled under ptrace.
 
 Dense decided line candidates now reuse the ranked AABB crossover to run a
 bounded exact-sign orientation filter before arbitrary-precision intersection
-algebra. Exact dyadic coordinates use prepared certified `f64` determinant
+algebra. Exact dyadic coordinates use retained certified `f64` determinant
 signs; inconclusive rational coordinates retry a checked homogeneous `i128`
 filter. A strict same-side proof rejects the finite segment pair, two opposite-
 side proofs certify a proper crossing, and every zero, overflow, symbolic, or

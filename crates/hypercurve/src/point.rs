@@ -1,10 +1,10 @@
 //! Two-dimensional points backed by [`hyperreal::Real`].
 
+#[cfg(test)]
+use hyperreal::ExactDyadicLine2;
 use hyperreal::{
     ExactDyadicLinePoint2, ExactDyadicWideLinePoint2, Real, ZeroKnowledge as ZeroStatus,
 };
-#[cfg(test)]
-use hyperreal::ExactDyadicLine2;
 use std::{
     fmt,
     ptr::NonNull,
