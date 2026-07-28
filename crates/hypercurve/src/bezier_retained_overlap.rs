@@ -311,7 +311,7 @@ pub struct BezierRetainedLinearOverlapSplitGraph2 {
     graph: BezierArrangementGraph2,
     refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
     overlap_evidence: BezierRetainedOverlapEvidence2,
-    split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+    overlap_splits: Vec<BezierRetainedLinearOverlapSplit2>,
     resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
 }
 
@@ -374,7 +374,7 @@ pub struct BezierRetainedRationalOverlapSplitGraph2 {
     graph: BezierArrangementGraph2,
     refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
     overlap_evidence: BezierRetainedOverlapEvidence2,
-    split_plan: Vec<BezierRetainedRationalOverlapSplit2>,
+    overlap_splits: Vec<BezierRetainedRationalOverlapSplit2>,
     resolved_overlaps: Vec<BezierRetainedResolvedRationalOverlap2>,
 }
 
@@ -532,7 +532,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         graph: BezierArrangementGraph2,
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
         overlap_evidence: BezierRetainedOverlapEvidence2,
-        split_plan: Vec<BezierRetainedLinearOverlapSplit2>,
+        overlap_splits: Vec<BezierRetainedLinearOverlapSplit2>,
         resolved_overlaps: Vec<BezierRetainedResolvedLinearOverlap2>,
     ) -> CurveResult<Self> {
         if graph.len() != refined_fragments.len() {
@@ -545,14 +545,14 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
             &graph,
             &refined_fragments,
             &overlap_evidence,
-            &split_plan,
+            &overlap_splits,
             &resolved_overlaps,
         )?;
         Ok(Self {
             graph,
             refined_fragments,
             overlap_evidence,
-            split_plan,
+            overlap_splits,
             resolved_overlaps,
         })
     }
@@ -567,14 +567,14 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
         &self.refined_fragments
     }
 
-    /// Returns the overlap evidence consumed to build the split plan.
+    /// Returns the overlap evidence consumed to derive these splits.
     pub const fn overlap_evidence(&self) -> &BezierRetainedOverlapEvidence2 {
         &self.overlap_evidence
     }
 
     /// Returns the certified linear-overlap splits used for refinement.
-    pub fn split_plan(&self) -> &[BezierRetainedLinearOverlapSplit2] {
-        &self.split_plan
+    pub fn overlap_splits(&self) -> &[BezierRetainedLinearOverlapSplit2] {
+        &self.overlap_splits
     }
 
     /// Returns resolved refined-fragment overlap spans.
@@ -596,7 +596,7 @@ impl BezierRetainedLinearOverlapSplitGraph2 {
             self.graph,
             self.refined_fragments,
             self.overlap_evidence,
-            self.split_plan,
+            self.overlap_splits,
             self.resolved_overlaps,
         )
     }
@@ -608,7 +608,7 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
         graph: BezierArrangementGraph2,
         refined_fragments: Vec<BezierRetainedOverlapRefinedFragment2>,
         overlap_evidence: BezierRetainedOverlapEvidence2,
-        split_plan: Vec<BezierRetainedRationalOverlapSplit2>,
+        overlap_splits: Vec<BezierRetainedRationalOverlapSplit2>,
         resolved_overlaps: Vec<BezierRetainedResolvedRationalOverlap2>,
     ) -> CurveResult<Self> {
         if graph.len() != refined_fragments.len() {
@@ -621,14 +621,14 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
             &graph,
             &refined_fragments,
             &overlap_evidence,
-            &split_plan,
+            &overlap_splits,
             &resolved_overlaps,
         )?;
         Ok(Self {
             graph,
             refined_fragments,
             overlap_evidence,
-            split_plan,
+            overlap_splits,
             resolved_overlaps,
         })
     }
@@ -649,8 +649,8 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
     }
 
     /// Returns represented strict rational-overlap split evidence.
-    pub fn split_plan(&self) -> &[BezierRetainedRationalOverlapSplit2] {
-        &self.split_plan
+    pub fn overlap_splits(&self) -> &[BezierRetainedRationalOverlapSplit2] {
+        &self.overlap_splits
     }
 
     /// Returns rational overlaps resolved to refined graph fragments.
@@ -672,7 +672,7 @@ impl BezierRetainedRationalOverlapSplitGraph2 {
             self.graph,
             self.refined_fragments,
             self.overlap_evidence,
-            self.split_plan,
+            self.overlap_splits,
             self.resolved_overlaps,
         )
     }
@@ -682,16 +682,16 @@ fn validate_linear_overlap_refinement_provenance(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     overlap_evidence: &BezierRetainedOverlapEvidence2,
-    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    overlap_splits: &[BezierRetainedLinearOverlapSplit2],
     resolved_overlaps: &[BezierRetainedResolvedLinearOverlap2],
 ) -> CurveResult<()> {
-    if split_plan.len() != resolved_overlaps.len() {
+    if overlap_splits.len() != resolved_overlaps.len() {
         return Err(CurveError::Topology(
-            "retained linear-overlap resolved span count does not match split plan".to_owned(),
+            "retained linear-overlap resolved span count does not match overlap splits".to_owned(),
         ));
     }
 
-    for split in split_plan {
+    for split in overlap_splits {
         if !overlap_evidence_has_linear_split(overlap_evidence, split) {
             return Err(CurveError::Topology(
                 "retained linear-overlap split does not match source overlap evidence evidence"
@@ -731,7 +731,7 @@ fn validate_linear_overlap_refinement_provenance(
             resolved.second_local_range(),
         )?;
 
-        if !split_plan.iter().any(|split| {
+        if !overlap_splits.iter().any(|split| {
             split.first_fragment_index() == resolved.first_original_fragment_index()
                 && split.second_fragment_index() == resolved.second_original_fragment_index()
                 && split.first_bezier_range() == resolved.first_local_range()
@@ -740,7 +740,7 @@ fn validate_linear_overlap_refinement_provenance(
                 && split.extent() == resolved.extent()
         }) {
             return Err(CurveError::Topology(
-                "retained resolved overlap lacks matching split-plan evidence".to_owned(),
+                "retained resolved overlap lacks matching split evidence".to_owned(),
             ));
         }
 
@@ -772,16 +772,17 @@ fn validate_rational_overlap_refinement_provenance(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
     overlap_evidence: &BezierRetainedOverlapEvidence2,
-    split_plan: &[BezierRetainedRationalOverlapSplit2],
+    overlap_splits: &[BezierRetainedRationalOverlapSplit2],
     resolved_overlaps: &[BezierRetainedResolvedRationalOverlap2],
 ) -> CurveResult<()> {
-    if split_plan.len() != resolved_overlaps.len() {
+    if overlap_splits.len() != resolved_overlaps.len() {
         return Err(CurveError::Topology(
-            "retained rational-overlap resolved span count does not match split plan".to_owned(),
+            "retained rational-overlap resolved span count does not match overlap splits"
+                .to_owned(),
         ));
     }
 
-    for split in split_plan {
+    for split in overlap_splits {
         if !overlap_evidence_has_rational_split(overlap_evidence, split) {
             return Err(CurveError::Topology(
                 "retained rational-overlap split does not match source overlap evidence".to_owned(),
@@ -817,7 +818,7 @@ fn validate_rational_overlap_refinement_provenance(
             resolved.second_original_fragment_index(),
             resolved.second_local_range(),
         )?;
-        if !split_plan.iter().any(|split| {
+        if !overlap_splits.iter().any(|split| {
             split.first_fragment_index() == resolved.first_original_fragment_index()
                 && split.second_fragment_index() == resolved.second_original_fragment_index()
                 && split.first_bezier_range() == resolved.first_local_range()
@@ -826,7 +827,7 @@ fn validate_rational_overlap_refinement_provenance(
                 && split.extent() == resolved.extent()
         }) {
             return Err(CurveError::Topology(
-                "retained resolved rational overlap lacks matching split-plan evidence".to_owned(),
+                "retained resolved rational overlap lacks matching split evidence".to_owned(),
             ));
         }
     }
@@ -1403,11 +1404,11 @@ impl BezierArrangementGraph2 {
             Classification::Decided(evidence) => evidence,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let split_plan = match overlap_evidence.linear_bezier_overlap_splits(self, policy) {
-            Classification::Decided(split_plan) => split_plan,
+        let overlap_splits = match overlap_evidence.linear_bezier_overlap_splits(self, policy) {
+            Classification::Decided(overlap_splits) => overlap_splits,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        if split_plan.is_empty() {
+        if overlap_splits.is_empty() {
             let refined_fragments = match unchanged_refined_fragments(self.len()) {
                 Ok(fragments) => fragments,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -1423,7 +1424,7 @@ impl BezierArrangementGraph2 {
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
         }
-        let boundaries = match linear_overlap_boundaries(self.len(), &split_plan, policy) {
+        let boundaries = match linear_overlap_boundaries(self.len(), &overlap_splits, policy) {
             Classification::Decided(boundaries) => boundaries,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -1433,16 +1434,20 @@ impl BezierArrangementGraph2 {
             Classification::Decided(refinement) => refinement,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let resolved_overlaps =
-            match resolved_linear_overlap_spans(&graph, &refined_fragments, &split_plan, policy) {
-                Classification::Decided(resolved) => resolved,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
+        let resolved_overlaps = match resolved_linear_overlap_spans(
+            &graph,
+            &refined_fragments,
+            &overlap_splits,
+            policy,
+        ) {
+            Classification::Decided(resolved) => resolved,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
         match BezierRetainedLinearOverlapSplitGraph2::new(
             graph,
             refined_fragments,
             overlap_evidence,
-            split_plan,
+            overlap_splits,
             resolved_overlaps,
         ) {
             Ok(refinement) => Classification::Decided(refinement),
@@ -1504,11 +1509,11 @@ impl BezierArrangementGraph2 {
             Classification::Decided(evidence) => evidence,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let split_plan = match overlap_evidence.rational_bezier_overlap_splits(policy) {
-            Classification::Decided(split_plan) => split_plan,
+        let overlap_splits = match overlap_evidence.rational_bezier_overlap_splits(policy) {
+            Classification::Decided(overlap_splits) => overlap_splits,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        if split_plan.is_empty() {
+        if overlap_splits.is_empty() {
             let refined_fragments = match unchanged_refined_fragments(self.len()) {
                 Ok(fragments) => fragments,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -1524,7 +1529,7 @@ impl BezierArrangementGraph2 {
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
         }
-        let boundaries = match rational_overlap_boundaries(self.len(), &split_plan, policy) {
+        let boundaries = match rational_overlap_boundaries(self.len(), &overlap_splits, policy) {
             Classification::Decided(boundaries) => boundaries,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -1534,7 +1539,7 @@ impl BezierArrangementGraph2 {
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         let resolved_overlaps =
-            match resolved_rational_overlap_spans(&refined_fragments, &split_plan, policy) {
+            match resolved_rational_overlap_spans(&refined_fragments, &overlap_splits, policy) {
                 Classification::Decided(resolved) => resolved,
                 Classification::Uncertain(reason) => return Classification::Uncertain(reason),
             };
@@ -1542,7 +1547,7 @@ impl BezierArrangementGraph2 {
             graph,
             refined_fragments,
             overlap_evidence,
-            split_plan,
+            overlap_splits,
             resolved_overlaps,
         ) {
             Ok(refinement) => Classification::Decided(refinement),
@@ -2105,11 +2110,11 @@ fn line_overlap_extent(
 
 fn linear_overlap_boundaries(
     fragment_count: usize,
-    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    overlap_splits: &[BezierRetainedLinearOverlapSplit2],
     policy: &CurvePolicy,
 ) -> Classification<Vec<Vec<Real>>> {
     let mut boundaries = vec![vec![Real::zero(), Real::one()]; fragment_count];
-    for split in split_plan {
+    for split in overlap_splits {
         if !push_boundary(
             &mut boundaries,
             split.first_fragment_index(),
@@ -2159,11 +2164,11 @@ fn unchanged_refined_fragments(
 
 fn rational_overlap_boundaries(
     fragment_count: usize,
-    split_plan: &[BezierRetainedRationalOverlapSplit2],
+    overlap_splits: &[BezierRetainedRationalOverlapSplit2],
     policy: &CurvePolicy,
 ) -> Classification<Vec<Vec<Real>>> {
     let mut boundaries = vec![vec![Real::zero(), Real::one()]; fragment_count];
-    for split in split_plan {
+    for split in overlap_splits {
         if !push_boundary(
             &mut boundaries,
             split.first_fragment_index(),
@@ -2350,11 +2355,11 @@ fn refine_graph_at_boundaries(
 fn resolved_linear_overlap_spans(
     graph: &BezierArrangementGraph2,
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
-    split_plan: &[BezierRetainedLinearOverlapSplit2],
+    overlap_splits: &[BezierRetainedLinearOverlapSplit2],
     policy: &CurvePolicy,
 ) -> Classification<Vec<BezierRetainedResolvedLinearOverlap2>> {
-    let mut resolved = Vec::with_capacity(split_plan.len());
-    for split in split_plan {
+    let mut resolved = Vec::with_capacity(overlap_splits.len());
+    for split in overlap_splits {
         let first_refined_fragment_index = match find_refined_fragment_for_range(
             refined_fragments,
             split.first_fragment_index(),
@@ -2403,11 +2408,11 @@ fn resolved_linear_overlap_spans(
 
 fn resolved_rational_overlap_spans(
     refined_fragments: &[BezierRetainedOverlapRefinedFragment2],
-    split_plan: &[BezierRetainedRationalOverlapSplit2],
+    overlap_splits: &[BezierRetainedRationalOverlapSplit2],
     policy: &CurvePolicy,
 ) -> Classification<Vec<BezierRetainedResolvedRationalOverlap2>> {
-    let mut resolved = Vec::with_capacity(split_plan.len());
-    for split in split_plan {
+    let mut resolved = Vec::with_capacity(overlap_splits.len());
+    for split in overlap_splits {
         let first_refined_fragment_index = match find_refined_fragment_for_range(
             refined_fragments,
             split.first_fragment_index(),

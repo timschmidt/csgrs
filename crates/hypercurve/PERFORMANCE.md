@@ -2619,7 +2619,7 @@ When an exact overlap scan produces no split boundaries, linear and rational
 refinement now preserve the graph directly and emit one exact unit-range
 provenance record per fragment. This avoids rebuilding every fragment,
 resorting `[0, 1]` boundaries, and then rescanning the identical refined graph.
-Nonempty split plans still run the complete existing construction and
+Nonempty overlap split sets still run the complete existing construction and
 validation path.
 
 Same-machine release A/B measurements against commit `95e10c5`, with 1,024
@@ -5958,6 +5958,20 @@ Correctness validation covered all all-feature Hypercurve tests, including
 the retired curved-region Boolean corpus and pathological workload, strict
 all-target Clippy, warning-free rustdoc, the focused immediate arrangement
 tests, and compilation of every fuzz target.
+
+### Completed overlap-split terminology
+
+Linear and rational overlap-refinement results now expose
+`overlap_splits()` instead of `split_plan()`. The refinement call has already
+derived, applied, resolved, and validated every returned split, so the new
+name describes completed immutable evidence rather than implying a deferred
+operation.
+
+The serialized 64-curve full-overlap workflow measured 636.574 us/iteration
+before the rename. Two post-change runs measured 647.987 and
+590.214 us/iteration with the same 25,800 checksum. The post-change range
+straddles the baseline and the confirmation is 7.3% faster, so this
+terminology-only API change introduces no measurable regression.
 
 ## Optimization boundary
 

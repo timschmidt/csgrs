@@ -979,7 +979,7 @@ fn empty_overlap_refinement_preserves_exact_unit_fragment_and_cache() {
 
     let linear = decided(graph.split_retained_linear_overlaps(&policy()));
     assert_eq!(linear.graph(), &graph);
-    assert!(linear.split_plan().is_empty());
+    assert!(linear.overlap_splits().is_empty());
     assert!(linear.resolved_overlaps().is_empty());
     assert_eq!(linear.refined_fragments().len(), 1);
     assert_eq!(
@@ -990,7 +990,7 @@ fn empty_overlap_refinement_preserves_exact_unit_fragment_and_cache() {
 
     let rational = decided(graph.split_retained_rational_overlaps(&policy()));
     assert_eq!(rational.graph(), &graph);
-    assert!(rational.split_plan().is_empty());
+    assert!(rational.overlap_splits().is_empty());
     assert!(rational.resolved_overlaps().is_empty());
     assert_eq!(rational.refined_fragments().len(), 1);
     assert_eq!(
@@ -1100,29 +1100,29 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
 
-    let split_plan = decided(evidence.rational_bezier_overlap_splits(&policy()));
-    assert_eq!(split_plan.len(), 1);
+    let overlap_splits = decided(evidence.rational_bezier_overlap_splits(&policy()));
+    assert_eq!(overlap_splits.len(), 1);
     assert_eq!(
-        split_plan[0].first_bezier_range(),
+        overlap_splits[0].first_bezier_range(),
         &ParamRange::new(q(1, 2), r(1))
     );
     assert_eq!(
-        split_plan[0].second_bezier_range(),
+        overlap_splits[0].second_bezier_range(),
         &ParamRange::new(r(0), r(1))
     );
     assert_eq!(
-        split_plan[0].orientation(),
+        overlap_splits[0].orientation(),
         RationalBezierOverlapOrientation2::Same
     );
     assert_eq!(
-        split_plan[0].extent(),
+        overlap_splits[0].extent(),
         BezierRetainedOverlapExtent2::PartialFirstFullSecond
     );
 
     let refinement = decided(graph.split_retained_rational_overlaps(&policy()));
     assert_eq!(refinement.graph().len(), 3);
     assert_eq!(refinement.refined_fragments().len(), 3);
-    assert_eq!(refinement.split_plan(), split_plan);
+    assert_eq!(refinement.overlap_splits(), overlap_splits);
     assert_eq!(refinement.resolved_overlaps().len(), 1);
     let resolved = &refinement.resolved_overlaps()[0];
     assert_eq!(resolved.first_refined_fragment_index(), 1);
@@ -1519,9 +1519,9 @@ fn retained_resolved_overlap_constructor_rejects_unordered_indices() {
 fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_evidence, split_plan, _) =
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, _) =
         refinement.clone().into_parts();
-    let split = &split_plan[0];
+    let split = &overlap_splits[0];
     let forged = BezierRetainedResolvedLinearOverlap2::new(
         0,
         2,
@@ -1539,7 +1539,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
         refined_graph,
         refined_fragments,
         overlap_evidence,
-        split_plan,
+        overlap_splits,
         vec![forged],
     ));
 }
@@ -1548,7 +1548,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_resolved_provenance() {
 fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_evidence, split_plan, resolved_overlaps) =
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, resolved_overlaps) =
         refinement.into_parts();
     let resolved = &resolved_overlaps[0];
     assert_eq!(
@@ -1572,7 +1572,7 @@ fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
         refined_graph,
         refined_fragments,
         overlap_evidence,
-        split_plan,
+        overlap_splits,
         vec![forged],
     ));
 }
@@ -1581,14 +1581,14 @@ fn retained_linear_overlap_split_graph_rejects_forged_orientation() {
 fn retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, _, split_plan, resolved_overlaps) =
+    let (refined_graph, refined_fragments, _, overlap_splits, resolved_overlaps) =
         refinement.into_parts();
 
     assert_topology_error(BezierRetainedLinearOverlapSplitGraph2::new(
         refined_graph,
         refined_fragments,
         BezierRetainedOverlapEvidence2::new(Vec::new()).unwrap(),
-        split_plan,
+        overlap_splits,
         resolved_overlaps,
     ));
 }
@@ -1597,9 +1597,9 @@ fn retained_linear_overlap_split_graph_rejects_missing_split_evidence_evidence()
 fn retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry() {
     let graph = partial_line_overlap_graph();
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
-    let (refined_graph, refined_fragments, overlap_evidence, split_plan, resolved_overlaps) =
+    let (refined_graph, refined_fragments, overlap_evidence, overlap_splits, resolved_overlaps) =
         refinement.into_parts();
-    let split = &split_plan[0];
+    let split = &overlap_splits[0];
     let resolved = &resolved_overlaps[0];
     let forged_segment = LineSeg2::try_new(p(10, 0), p(12, 0)).unwrap();
     let forged_split = BezierRetainedLinearOverlapSplit2::new(
@@ -1831,7 +1831,7 @@ fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
 
     let refinement = decided(graph.split_retained_linear_overlaps(&policy()));
     assert_eq!(refinement.overlap_evidence().len(), 1);
-    assert_eq!(refinement.split_plan().len(), 1);
+    assert_eq!(refinement.overlap_splits().len(), 1);
     assert_eq!(refinement.resolved_overlaps().len(), 1);
     assert_eq!(refinement.graph().len(), 4);
     assert_eq!(refinement.refined_fragments().len(), 4);
@@ -2002,7 +2002,7 @@ fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop(
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
 
     assert_eq!(traversal.refinement().graph().len(), 6);
-    assert_eq!(traversal.refinement().split_plan().len(), 1);
+    assert_eq!(traversal.refinement().overlap_splits().len(), 1);
     assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
     assert_eq!(
         traversal.refinement().resolved_overlaps()[0].orientation(),
