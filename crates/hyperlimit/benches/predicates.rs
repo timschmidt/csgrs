@@ -904,7 +904,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let plane_c = point3(-0.35, 0.85, 0.05, hyperreal_real);
     group.bench_function("affine_det3_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_affine_det3_filter(
+            hyperreal::AffineDet3Filter::from_reals(
                 [
                     black_box(&plane_a.x),
                     black_box(&plane_a.y),
@@ -937,7 +937,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let rational_plane_c = rational_point3(-2, 17, 7, 19, 3, 23);
     group.bench_function("affine_det3_exact_word_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_affine_det3_exact_word_filter(
+            hyperreal::AffineDet3ExactWordFilter::from_reals(
                 [
                     black_box(&rational_plane_a.x),
                     black_box(&rational_plane_a.y),

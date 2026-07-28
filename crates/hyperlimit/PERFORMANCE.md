@@ -260,6 +260,28 @@ removes the former handle-call overhead. Criterion classified both positive
 derivation movements as within its noise threshold and found no regression.
 HyperBrep and HyperGraphics consumer gates are recorded in those crates.
 
+### Use immediate checked-word `orient3d`
+
+Exact-rational one-shot orientation now tries Hyperreal's checked homogeneous
+`i128` determinant before constructing arbitrary-precision rational
+differences and products. Retained oriented-plane evidence uses the same
+descriptive filter types directly; overflow and symbolic inputs still enter
+the existing exact fallback.
+
+Serialized 100-sample Criterion gates found no regression:
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Exact-rational `orient3d`, common denominator | 237.34 us | 139.99 us | -41.01% |
+| Dyadic affine-det3 filter construction | 24.234 ns | 22.021 ns | -9.13% |
+| Exact-word affine-det3 filter construction | 190.40 ns | 188.98 ns | -0.75% |
+| Dyadic oriented-plane evidence | 1.3791 us | 1.3608 us | -1.33% |
+| Exact-rational oriented-plane evidence | 1.6781 us | 1.6453 us | -1.95% |
+
+The exact-rational orientation and dyadic construction improvements were
+statistically significant; Criterion classified the other movements within
+the configured noise threshold.
+
 ## Rejected experiments
 
 ### Search short Farkas certificates before active sets

@@ -4,7 +4,7 @@ use crate::predicate::PredicatePolicy;
 use core::cmp::Ordering;
 
 use hyperreal::{
-    PreparedAffineDet3ExactWordFilter, PreparedAffineDet3Filter, PreparedLinearForm3Filter, Real,
+    AffineDet3ExactWordFilter, AffineDet3Filter, PreparedLinearForm3Filter, Real,
     RealExactSetFacts, ZeroKnowledge,
 };
 
@@ -362,8 +362,8 @@ pub fn classify_point_plane_with_evidence_and_policy(
 /// point-plane evidence instead of rebuilding the `orient3d` determinant.
 #[derive(Clone, Debug)]
 pub struct OrientedPlane3Evidence {
-    filter: Option<PreparedAffineDet3Filter>,
-    exact_word_filter: Option<Box<PreparedAffineDet3ExactWordFilter>>,
+    filter: Option<AffineDet3Filter>,
+    exact_word_filter: Option<Box<AffineDet3ExactWordFilter>>,
     plane: Plane3,
     facts: Plane3Facts,
 }
@@ -406,13 +406,10 @@ pub fn oriented_plane3_evidence(a: &Point3, b: &Point3, c: &Point3) -> OrientedP
 
     let plane = Plane3::new(Point3::new(nx, ny, nz), dot_a);
     let facts = plane.structural_facts();
-    let filter = Real::prepare_affine_det3_filter(
-        [&a.x, &a.y, &a.z],
-        [&b.x, &b.y, &b.z],
-        [&c.x, &c.y, &c.z],
-    );
+    let filter =
+        AffineDet3Filter::from_reals([&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]);
     let exact_word_filter = if filter.is_none() {
-        Real::prepare_affine_det3_exact_word_filter(
+        AffineDet3ExactWordFilter::from_reals(
             [&a.x, &a.y, &a.z],
             [&b.x, &b.y, &b.z],
             [&c.x, &c.y, &c.z],

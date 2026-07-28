@@ -118,6 +118,20 @@ pub(crate) fn orient3d_with_policy(
         );
     }
 
+    if let Some(sign) = Real::exact_rational_affine_det3_word_sign(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+        [&d.x, &d.y, &d.z],
+    ) {
+        crate::trace_dispatch!("hyperlimit", "orient3d", "exact-word-rational-det3-filter");
+        return PredicateOutcome::decided(
+            crate::real::map_real_sign(sign),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+
     if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient3dRationalDet3, || {
         super::exact::orient3d(a, b, c, d)
     }) {
@@ -1482,7 +1496,7 @@ mod tests {
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient3d_uses_compact_rational_kernel_for_common_denominators() {
+    fn orient3d_uses_exact_word_filter_for_common_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1507,14 +1521,18 @@ mod tests {
 
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
+            trace.path_count("hyperlimit", "orient3d", "exact-word-rational-det3-filter"),
             1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
+            0
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn orient3d_uses_compact_rational_kernel_for_mixed_denominators() {
+    fn orient3d_uses_exact_word_filter_for_mixed_denominators() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
@@ -1538,6 +1556,41 @@ mod tests {
         assert_eq!(outcome.value(), Some(Sign::Positive));
 
         let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "orient3d", "exact-word-rational-det3-filter"),
+            1
+        );
+        assert_eq!(
+            trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
+            0
+        );
+    }
+
+    #[cfg(feature = "dispatch-trace")]
+    #[test]
+    fn orient3d_word_overflow_uses_compact_rational_fallback() {
+        let _trace_lock = dispatch_trace_test_lock()
+            .lock()
+            .expect("dispatch trace test lock poisoned");
+        let zero = Real::zero();
+        let large = Real::from(i64::MAX);
+        let a = Point3::new(large.clone(), zero.clone(), zero.clone());
+        let b = Point3::new(zero.clone(), large.clone(), zero.clone());
+        let c = Point3::new(zero.clone(), zero.clone(), large);
+        let d = Point3::new(zero.clone(), zero.clone(), zero);
+
+        hyperreal::dispatch_trace::reset();
+        let outcome = hyperreal::dispatch_trace::with_recording(|| {
+            orient3d_with_policy(&a, &b, &c, &d, PredicatePolicy::STRICT)
+        });
+
+        assert_eq!(outcome.value(), Some(Sign::Positive));
+
+        let trace = hyperreal::dispatch_trace::take_trace();
+        assert_eq!(
+            trace.path_count("hyperlimit", "orient3d", "exact-word-rational-det3-filter"),
+            0
+        );
         assert_eq!(
             trace.path_count("hyperlimit", "exact_orient3d", "rational-det3"),
             1
