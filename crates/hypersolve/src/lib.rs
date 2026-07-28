@@ -166,12 +166,12 @@ pub use direct::{
     EqualitySubstitutionClassMember, EqualitySubstitutionCycle,
     EqualitySubstitutionEliminationReport, EqualitySubstitutionProblem,
     EqualitySubstitutionValidation, apply_equality_substitution_classes,
-    apply_equality_substitutions, build_equality_substitution_classes,
-    certify_direct_univariate_quadratic_roots,
+    apply_equality_substitutions, certify_direct_univariate_quadratic_roots,
     certify_direct_univariate_quadratic_roots_with_config,
-    eliminate_affine_rows_with_substitution_classes, find_equality_substitution_cycles,
-    find_equality_substitutions, solve_direct_affine_equalities, solve_direct_affine_system,
-    solve_direct_univariate_quadratic_equalities, validate_equality_substitutions,
+    eliminate_affine_rows_with_substitution_classes, equality_substitution_classes,
+    find_equality_substitution_cycles, find_equality_substitutions, solve_direct_affine_equalities,
+    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
+    validate_equality_substitutions,
 };
 pub use domain::geometry::{
     Point2 as SolverPoint2, named_equation, point_coincidence_equations, squared_distance_equation,
@@ -307,10 +307,10 @@ pub use sketch_units::{
 };
 pub use sketch_workplanes::{
     SketchWorkplaneFrameReport, SketchWorkplaneFrameStatus, SketchWorkplanePointLiftReport,
-    SketchWorkplanePointProjectionReport, build_sketch_workplane_frame,
-    build_sketch_workplane_frame_with_policy, lift_sketch_point2_to_workplane3,
+    SketchWorkplanePointProjectionReport, lift_sketch_point2_to_workplane3,
     lift_sketch_point2_to_workplane3_with_policy, project_sketch_point3_to_workplane2,
-    project_sketch_point3_to_workplane2_with_policy,
+    project_sketch_point3_to_workplane2_with_policy, sketch_workplane_frame,
+    sketch_workplane_frame_with_policy,
 };
 pub use solver::{DraggedParameterWeight, SolverConfig, SolverState, solve_damped_least_squares};
 pub use solver_block::{SolverBlock, SolverBlockFacts, SolverBlockRow, SolverBlockRowKind};

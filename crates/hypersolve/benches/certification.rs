@@ -12,8 +12,8 @@ use hypersolve::{
     UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
     analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
     arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
-    build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
+    certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
+    certify_candidate_domains, certify_direct_univariate_quadratic_roots,
     certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
     certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
     certify_sketch_construction, certify_univariate_quadratic_alpha,
@@ -23,10 +23,11 @@ use hypersolve::{
     count_bernstein_univariate_polynomial_interval_roots,
     count_descartes_univariate_polynomial_roots, determinant_bareiss, diagnose_failed_constraints,
     diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
-    enumerate_direct_univariate_quadratic_branches, evaluate_polynomial_at_algebraic_root,
-    evaluate_rational_expression_at_algebraic_root, isolate_univariate_polynomial_roots,
-    lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
-    preflight_sketch_entity_domains, preflight_sketch_parameter_domains, propose_active_set_update,
+    enumerate_direct_univariate_quadratic_branches, equality_substitution_classes,
+    evaluate_polynomial_at_algebraic_root, evaluate_rational_expression_at_algebraic_root,
+    isolate_univariate_polynomial_roots, lift_sketch_point2_to_workplane3,
+    preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, propose_active_set_update,
     regenerate_active_set_affine_candidate, regenerate_active_set_quadratic_candidates,
     replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
@@ -36,7 +37,7 @@ use hypersolve::{
     schedule_univariate_resultant_pairs, search_failed_constraint_minimal_removals,
     search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
     search_failed_constraint_single_removals, sketch_compatibility_fixtures,
-    solve_damped_least_squares, solve_dense_linear_system_bareiss,
+    sketch_workplane_frame, solve_damped_least_squares, solve_dense_linear_system_bareiss,
     solve_dense_linear_system_bareiss_multi_rhs, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, solve_sparse_linear_system_bareiss,
     solve_sparse_linear_system_bareiss_minimum_degree,
@@ -2785,6 +2786,9 @@ fn certification(c: &mut Criterion) {
         b.iter(|| preflight_sketch_degeneracies(&degeneracy_sketch))
     });
     let (workplane_sketch, workplane, workplane_points) = sketch_problem_with_workplane_lifts(16);
+    c.bench_function("sketch_workplane_frame", |b| {
+        b.iter(|| sketch_workplane_frame(&workplane_sketch, workplane))
+    });
     c.bench_function("sketch_workplane_point_lifts", |b| {
         b.iter(|| {
             for point in &workplane_points {
@@ -4532,7 +4536,7 @@ fn certification(c: &mut Criterion) {
             offset: r(-2),
         },
     ];
-    let substitution_classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let substitution_classes = equality_substitution_classes(&substitutions).unwrap();
     c.bench_function("eliminate_affine_rows_with_substitution_classes", |b| {
         b.iter(|| {
             eliminate_affine_rows_with_substitution_classes(
@@ -5386,7 +5390,7 @@ fn certification(c: &mut Criterion) {
         })
         .collect::<Vec<_>>();
     c.bench_function("build_equality_substitution_classes_exact", |b| {
-        b.iter(|| build_equality_substitution_classes(&substitutions))
+        b.iter(|| equality_substitution_classes(&substitutions))
     });
 
     c.bench_function("domain_geometry_squared_distance_build", |b| {

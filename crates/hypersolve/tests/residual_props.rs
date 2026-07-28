@@ -6716,7 +6716,7 @@ proptest! {
 
         let prepared = problem.analyze();
         let substitutions = hypersolve::find_equality_substitutions(&prepared).unwrap();
-        let classes = hypersolve::build_equality_substitution_classes(&substitutions).unwrap();
+        let classes = hypersolve::equality_substitution_classes(&substitutions).unwrap();
         let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
         let reduced = &report.rows[2];
 
@@ -6767,7 +6767,7 @@ proptest! {
                 offset: Real::from(z_offset),
             },
         ];
-        let classes = hypersolve::build_equality_substitution_classes(&substitutions).unwrap();
+        let classes = hypersolve::equality_substitution_classes(&substitutions).unwrap();
         let mut context = hypersolve::EvaluationContext::default();
         context.bind(
             SymbolId(2),

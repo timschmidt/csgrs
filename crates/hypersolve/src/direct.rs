@@ -944,14 +944,14 @@ pub fn validate_equality_substitutions(
     EqualitySubstitutionValidation { problems }
 }
 
-/// Build exact equality-substitution classes when the graph is consistent.
+/// Returns exact equality-substitution classes when the graph is consistent.
 ///
 /// Edges have the form `left = right + offset`. The returned class members use
 /// `symbol = representative + offset_from_representative`, which is the shape
 /// needed by future union-find and affine-row elimination passes. Consistent
 /// cycles are allowed because they still define one equality class; inconsistent
 /// cycles and conflicting duplicate rewrites return the validation report.
-pub fn build_equality_substitution_classes(
+pub fn equality_substitution_classes(
     substitutions: &[EqualitySubstitution],
 ) -> Result<Vec<EqualitySubstitutionClass>, EqualitySubstitutionValidation> {
     let validation = validate_equality_substitutions(substitutions);

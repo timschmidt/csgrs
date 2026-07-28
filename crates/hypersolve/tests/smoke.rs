@@ -21,8 +21,7 @@ use hypersolve::{
     SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseLinearSystem,
     SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
     analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
-    audit_sketch_unit_tolerances, build_equality_substitution_classes,
-    build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
+    audit_sketch_unit_tolerances, certify_affine_interval_candidate, certify_affine_krawczyk_box,
     certify_candidate, certify_candidate_batch, certify_candidate_domains,
     certify_candidate_with_config, certify_candidate_with_residual_balls,
     certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
@@ -32,19 +31,20 @@ use hypersolve::{
     context_from_problem, diagnose_failed_constraints,
     diagnose_failed_constraints_from_certification, diagnose_sketch_failed_constraints,
     eliminate_affine_rows_with_substitution_classes,
-    enumerate_direct_univariate_quadratic_branches, evaluate_residuals, facts_depend_on_symbol,
-    find_equality_substitutions, isolate_univariate_polynomial_roots,
-    lift_sketch_point2_to_workplane3, point_coincidence_equations, preflight_sketch_degeneracies,
-    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
-    project_sketch_point3_to_workplane2, regenerate_active_set_affine_candidate,
-    replay_sketch_compatibility_fixture, replay_sparse_linear_residual_batch,
-    report_lossy_adapter_only_candidate, schedule_candidate_batch_predicates,
-    search_failed_constraint_minimal_removals, search_failed_constraint_pair_removals,
-    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
-    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
-    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
-    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
-    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    enumerate_direct_univariate_quadratic_branches, equality_substitution_classes,
+    evaluate_residuals, facts_depend_on_symbol, find_equality_substitutions,
+    isolate_univariate_polynomial_roots, lift_sketch_point2_to_workplane3,
+    point_coincidence_equations, preflight_sketch_degeneracies, preflight_sketch_entity_domains,
+    preflight_sketch_parameter_domains, project_sketch_point3_to_workplane2,
+    regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
+    replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
+    schedule_candidate_batch_predicates, search_failed_constraint_minimal_removals,
+    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
+    search_failed_constraint_single_removals, sketch_angle_builders, sketch_compatibility_fixtures,
+    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
+    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
+    sketch_tangency_builders, sketch_workplane_frame, solve_damped_least_squares,
+    solve_direct_affine_equalities, solve_direct_affine_system,
     solve_direct_univariate_quadratic_equalities, squared_distance_equation,
     tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
@@ -5319,7 +5319,7 @@ fn sketch_workplane_frame_reports_exact_quaternion_axes_and_lift_project() {
     let point2 = sketch.add_point2d("uv", real(3), real(4));
     let point3 = sketch.add_point3d("xyz", real(13), real(24), real(30));
 
-    let frame = build_sketch_workplane_frame(&sketch, workplane);
+    let frame = sketch_workplane_frame(&sketch, workplane);
 
     assert_eq!(frame.status, SketchWorkplaneFrameStatus::Certified);
     assert_eq!(
@@ -8359,7 +8359,7 @@ fn sketch_workplane_frame_respects_rotated_unit_quaternion_basis() {
     let workplane = sketch.add_workplane("workplane", origin, normal);
     let point2 = sketch.add_point2d("uv", real(2), real(3));
 
-    let frame = build_sketch_workplane_frame(&sketch, workplane);
+    let frame = sketch_workplane_frame(&sketch, workplane);
     let lift = lift_sketch_point2_to_workplane3(&sketch, workplane, point2);
 
     assert_eq!(frame.status, SketchWorkplaneFrameStatus::Certified);
@@ -8380,7 +8380,7 @@ fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
     let wrong_origin_workplane = sketch.add_workplane("wrong origin", point2, bad_normal);
     let wrong_normal_workplane = sketch.add_workplane("wrong normal", origin, distance);
 
-    let nonunit = build_sketch_workplane_frame(&sketch, nonunit_workplane);
+    let nonunit = sketch_workplane_frame(&sketch, nonunit_workplane);
     assert_eq!(
         nonunit.status,
         SketchWorkplaneFrameStatus::NonunitNormal {
@@ -8388,7 +8388,7 @@ fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
         }
     );
 
-    let wrong_origin = build_sketch_workplane_frame(&sketch, wrong_origin_workplane);
+    let wrong_origin = sketch_workplane_frame(&sketch, wrong_origin_workplane);
     assert_eq!(
         wrong_origin.status,
         SketchWorkplaneFrameStatus::WrongEntityKind {
@@ -8397,7 +8397,7 @@ fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
         }
     );
 
-    let wrong_normal = build_sketch_workplane_frame(&sketch, wrong_normal_workplane);
+    let wrong_normal = sketch_workplane_frame(&sketch, wrong_normal_workplane);
     assert_eq!(
         wrong_normal.status,
         SketchWorkplaneFrameStatus::WrongEntityKind {
@@ -8406,7 +8406,7 @@ fn sketch_workplane_frame_reports_nonunit_and_invalid_references() {
         }
     );
 
-    let missing = build_sketch_workplane_frame(&sketch, SketchEntityHandle(999));
+    let missing = sketch_workplane_frame(&sketch, SketchEntityHandle(999));
     assert_eq!(
         missing.status,
         SketchWorkplaneFrameStatus::MissingEntity {
@@ -11502,7 +11502,7 @@ fn equality_substitution_classes_preserve_offsets_to_representative() {
         },
     ];
 
-    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let classes = equality_substitution_classes(&substitutions).unwrap();
 
     assert_eq!(classes.len(), 1);
     assert_eq!(classes[0].representative, SymbolId(0));
@@ -11531,7 +11531,7 @@ fn equality_substitution_class_application_populates_candidate_or_reports_confli
             offset: real(-5),
         },
     ];
-    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let classes = equality_substitution_classes(&substitutions).unwrap();
 
     let mut context = hypersolve::EvaluationContext::default();
     context.bind(SymbolId(2), real(9));
@@ -11600,7 +11600,7 @@ fn equality_substitution_elimination_carries_exact_offsets_into_affine_rows() {
 
     let prepared = problem.analyze();
     let substitutions = find_equality_substitutions(&prepared).unwrap();
-    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let classes = equality_substitution_classes(&substitutions).unwrap();
     let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
 
     assert_eq!(report.affine_rows_considered, 3);
@@ -11644,7 +11644,7 @@ fn equality_substitution_elimination_classifies_reduced_constant_rows() {
         right: SymbolId(0),
         offset: real(3),
     }];
-    let classes = build_equality_substitution_classes(&substitutions).unwrap();
+    let classes = equality_substitution_classes(&substitutions).unwrap();
     let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
 
     assert_eq!(report.affine_rows_considered, 3);

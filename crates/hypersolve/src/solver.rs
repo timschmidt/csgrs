@@ -9,8 +9,8 @@ use crate::diagnostics::{
     ProposalPreprocessingReport, SolveReport,
 };
 use crate::direct::{
-    build_equality_substitution_classes, find_equality_substitutions,
-    solve_direct_affine_equalities, solve_direct_univariate_quadratic_equalities,
+    equality_substitution_classes, find_equality_substitutions, solve_direct_affine_equalities,
+    solve_direct_univariate_quadratic_equalities,
 };
 use crate::eval::context_from_problem;
 use crate::jacobian::{
@@ -504,7 +504,7 @@ fn apply_modified_newton_substitution_seeds(
         let Ok(substitutions) = find_equality_substitutions(&analysis) else {
             return;
         };
-        let Ok(classes) = build_equality_substitution_classes(&substitutions) else {
+        let Ok(classes) = equality_substitution_classes(&substitutions) else {
             return;
         };
         classes

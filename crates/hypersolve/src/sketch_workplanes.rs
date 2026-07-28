@@ -119,18 +119,18 @@ pub struct SketchWorkplanePointProjectionReport {
     pub status: SketchWorkplaneFrameStatus,
 }
 
-/// Build exact frame facts for a retained workplane using the default
+/// Returns exact frame facts for a retained workplane using the default
 /// predicate policy.
-pub fn build_sketch_workplane_frame(
+pub fn sketch_workplane_frame(
     sketch: &SketchSolveProblem,
     workplane: SketchEntityHandle,
 ) -> SketchWorkplaneFrameReport {
-    build_sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy)
+    sketch_workplane_frame_with_policy(sketch, workplane, PredicatePolicy)
 }
 
-/// Build exact frame facts for a retained workplane using an explicit
+/// Returns exact frame facts for a retained workplane using an explicit
 /// predicate policy.
-pub fn build_sketch_workplane_frame_with_policy(
+pub fn sketch_workplane_frame_with_policy(
     sketch: &SketchSolveProblem,
     workplane: SketchEntityHandle,
     policy: PredicatePolicy,
@@ -215,7 +215,7 @@ pub fn lift_sketch_point2_to_workplane3_with_policy(
             };
         }
     };
-    let frame = build_sketch_workplane_frame_with_policy(sketch, workplane, policy);
+    let frame = sketch_workplane_frame_with_policy(sketch, workplane, policy);
     if !frame.status.is_certified() {
         return SketchWorkplanePointLiftReport {
             workplane,
@@ -282,7 +282,7 @@ pub fn project_sketch_point3_to_workplane2_with_policy(
             };
         }
     };
-    let frame = build_sketch_workplane_frame_with_policy(sketch, workplane, policy);
+    let frame = sketch_workplane_frame_with_policy(sketch, workplane, policy);
     if !frame.status.is_certified() {
         return SketchWorkplanePointProjectionReport {
             workplane,

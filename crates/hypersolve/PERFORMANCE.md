@@ -30,6 +30,26 @@ boundary, but no optimization may turn such a proposal into proof.
 | Tinney and Walker, optimally ordered sparse factorization | Symbolic fill is audited separately from numeric fraction-free updates, with certified-zero cancellation and conservative unknown entries. A retained opt-in symmetric minimum-degree solver now records both permutations, performs exact sparse Bareiss elimination in the reordered system, restores source variable order, and exactly replays the source system. The authored-order API remains unchanged because already-good orderings are faster without the extra analysis. |
 | Yap, exact geometric computation | Exact expressions, analyzed object facts, certified signs, algebraic intervals, and named lossy adapters enforce the construction/proof boundary throughout the crate. Every retained optimization reuses exact evidence or changes only the construction schedule; none changes a branch criterion. |
 
+## Immediate substitution and workplane APIs
+
+The remaining public `build_` lifecycle names returned completed values with
+no deferred execution phase. They are now `equality_substitution_classes`,
+`sketch_workplane_frame`, and `sketch_workplane_frame_with_policy`. Algorithms,
+reports, and exact acceptance criteria are unchanged.
+
+Serialized 100-sample Criterion measurements found no regression:
+
+| Benchmark | Before | After | Midpoint change |
+| --- | ---: | ---: | ---: |
+| `build_equality_substitution_classes_exact` | 4.8974--4.9367 us | 4.8147--4.8278 us | -1.92% |
+| `sketch_workplane_frame` | 1.2273--1.2406 us | 1.2109--1.2158 us | -1.65% |
+
+The first post-change substitution-class run measured 4.9733--5.0438 us; the
+required isolated confirmation returned below baseline and is the accepted
+serialized gate above. The historical `build_equality_substitution_classes`
+benchmark identifier remains stable for comparison continuity and is not a
+public API.
+
 ## Immediate residual-form API gate
 
 Affine and quadratic rows are now named as immutable mathematical forms:
