@@ -1,0 +1,28 @@
+[package]
+name = "hypergraphics-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+hypergraphics = { path = "..", features = ["exact"] }
+hyperreal = { path = "../../hyperreal" }
+libfuzzer-sys = "0.4"
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypertri = { path = "../../hypertri" }
+
+[[bin]]
+name = "scene_invariants"
+path = "fuzz_targets/scene_invariants.rs"
+test = false
+doc = false
+bench = false
