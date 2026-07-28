@@ -5,6 +5,8 @@ without digging through a large demo binary.
 
 ## Geometry Examples
 
+- `basic.rs`: minimal profile extrusion, mesh Boolean, manifold check, and STL
+  export; this is synchronized with the root README.
 - `basic_shapes.rs`: cube, sphere, cylinder, ellipsoid, and torus.
 - `basic2d_shapes_and_offsetting.rs`: 2D sketches and offset variants.
 - `boolean_operations.rs`: union, difference, intersection, and xor.
@@ -23,6 +25,7 @@ without digging through a large demo binary.
 ## Running
 
 ```bash
+cargo run --example basic
 cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
