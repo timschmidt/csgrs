@@ -8,9 +8,8 @@ parallel, and writes occupied cells through `VoxModel<i32>` batches.
 
 - `Voxelizer::new` sizes the model from the parsed mesh.
 - `Voxelizer::empty` starts with an unbounded empty model.
-- `build_face_to_chunk_map` computes the chunk work schedule.
-- `voxelize_mesh` consumes a prepared schedule; `voxelize` performs the full
-  workflow; `simple_voxelize` provides the direct comparison path.
+- `voxelize` immediately partitions and voxelizes the complete mesh.
+- `simple_voxelize` provides the vertex-only comparison path.
 - `Voxelizer::model` contains the resulting `VoxModel<i32>`.
 
 ```rust,no_run

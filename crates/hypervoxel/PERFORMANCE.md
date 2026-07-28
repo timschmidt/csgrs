@@ -77,6 +77,19 @@ redundant copy of the input face count. The same 2,304-face exact box shell was
 measured serially with 100 Criterion samples before and after; its interval
 improved from 65.298--65.719 µs to 62.882--63.116 µs.
 
+Legacy OBJ surface voxelization now exposes only the complete
+`Voxelizer::voxelize()` operation. The former public
+`build_face_to_chunk_map()` / `voxelize_mesh(map)` lifecycle exposed an
+implementation-specific `FxHashMap` schedule that had no downstream consumers.
+Chunk partitioning remains the same private phase of the immediate operation.
+
+The new `voxelis-voxelize` release benchmark performs one untimed warm-up and
+then voxelizes the same closed 12-triangle cube ten times, checking that each
+iteration emits one occupied chunk. Three serialized pre-change samples ranged
+from 0.978 to 1.218 ms per iteration with a 1.089 ms median. Three immediate-only
+samples ranged from 1.007 to 1.043 ms with a 1.040 ms median, 4.5% faster. The
+ranges overlap and all checksums remained ten.
+
 ## Exactness and Scope Checks
 
 `tests/dispatch_trace.rs` exercises a fractional exact box and requires nonzero

@@ -137,11 +137,9 @@ impl Voxelizer {
         self.model.clear();
     }
 
-    /// Maps each candidate chunk coordinate to the OBJ faces overlapping its
-    /// voxel-space bounding box.
-    pub fn build_face_to_chunk_map(&mut self) -> FxHashMap<IVec3, Vec<IVec3>> {
+    fn face_to_chunk_map(&self) -> FxHashMap<IVec3, Vec<IVec3>> {
         #[cfg(feature = "tracy")]
-        let _span = tracy_client::span!("Voxelizer::build_face_to_chunk_map");
+        let _span = tracy_client::span!("Voxelizer::face_to_chunk_map");
 
         let mut chunk_face_map: FxHashMap<IVec3, Vec<IVec3>> = FxHashMap::default();
 
@@ -266,11 +264,9 @@ impl Voxelizer {
         }
     }
 
-    /// Voxelizes the chunks in a prepared face schedule and applies their
-    /// batches to [`Self::model`].
-    pub fn voxelize_mesh(&mut self, chunk_face_map: FxHashMap<IVec3, Vec<IVec3>>) {
+    fn voxelize_face_schedule(&mut self, chunk_face_map: FxHashMap<IVec3, Vec<IVec3>>) {
         #[cfg(feature = "tracy")]
-        let _span = tracy_client::span!("Voxelizer::voxelize_mesh");
+        let _span = tracy_client::span!("Voxelizer::voxelize_face_schedule");
 
         let (tx, rx) = bounded::<(IVec3, Batch<i32>)>(1024);
 
@@ -439,7 +435,10 @@ impl Voxelizer {
         println!("Simple voxelize took: {:?}", now.elapsed());
     }
 
-    /// Builds the face schedule and voxelizes the complete source mesh.
+    /// Voxelizes the complete source mesh immediately.
+    ///
+    /// Chunk scheduling is an internal phase of this operation, so callers do
+    /// not need to construct, own, or pass an intermediate face map.
     pub fn voxelize(&mut self) {
         #[cfg(feature = "tracy")]
         let _span = tracy_client::span!("Voxelizer::voxelize");
@@ -450,7 +449,7 @@ impl Voxelizer {
 
         println!("Building face-to-chunk mapping");
 
-        let chunk_face_map = self.build_face_to_chunk_map();
+        let chunk_face_map = self.face_to_chunk_map();
 
         let face_to_chunk_map_time = face_to_chunk_map_time.elapsed();
 
@@ -458,7 +457,7 @@ impl Voxelizer {
 
         println!("Voxelizing mesh");
 
-        self.voxelize_mesh(chunk_face_map);
+        self.voxelize_face_schedule(chunk_face_map);
 
         let voxelize_time = voxelize_time.elapsed();
 
@@ -480,6 +479,58 @@ impl Voxelizer {
         println!(
             "Done, {} chunks, empty: {empty_chunks}, face-to-chunk: {face_to_chunk_map_time:?}, voxelized: {voxelize_time:?}, total: {total:?}",
             self.model.chunks.len(),
+        );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cube_mesh() -> Obj {
+        Obj {
+            vertices: vec![
+                DVec3::new(0.0, 0.0, 0.0),
+                DVec3::new(0.75, 0.0, 0.0),
+                DVec3::new(0.75, 0.75, 0.0),
+                DVec3::new(0.0, 0.75, 0.0),
+                DVec3::new(0.0, 0.0, 0.75),
+                DVec3::new(0.75, 0.0, 0.75),
+                DVec3::new(0.75, 0.75, 0.75),
+                DVec3::new(0.0, 0.75, 0.75),
+            ],
+            faces: vec![
+                IVec3::new(1, 2, 3),
+                IVec3::new(1, 3, 4),
+                IVec3::new(5, 7, 6),
+                IVec3::new(5, 8, 7),
+                IVec3::new(1, 5, 6),
+                IVec3::new(1, 6, 2),
+                IVec3::new(2, 6, 7),
+                IVec3::new(2, 7, 3),
+                IVec3::new(3, 7, 8),
+                IVec3::new(3, 8, 4),
+                IVec3::new(4, 8, 5),
+                IVec3::new(4, 5, 1),
+            ],
+            aabb: (DVec3::ZERO, DVec3::splat(0.75)),
+            size: DVec3::splat(0.75),
+        }
+    }
+
+    #[test]
+    fn immediate_voxelize_builds_and_consumes_its_internal_schedule() {
+        let mut voxelizer = Voxelizer::empty(MaxDepth::new(3), 1.0, cube_mesh(), 64 * 1024 * 1024);
+
+        voxelizer.voxelize();
+
+        assert_eq!(voxelizer.model.chunks.len(), 1);
+        assert!(
+            voxelizer
+                .model
+                .chunks
+                .values()
+                .all(|chunk| !chunk.is_empty())
         );
     }
 }

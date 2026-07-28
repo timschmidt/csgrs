@@ -24,3 +24,7 @@ indicatif.workspace = true
 rayon.workspace = true
 rustc-hash.workspace = true
 tracy-client = { workspace = true, optional = true }
+
+[[bench]]
+name = "voxelize"
+harness = false
