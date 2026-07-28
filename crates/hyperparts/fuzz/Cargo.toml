@@ -10,10 +10,18 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperparts = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
 
 [[bin]]
 name = "eda_authoring_intake"
 path = "fuzz_targets/eda_authoring_intake.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
 test = false
 doc = false
 bench = false
