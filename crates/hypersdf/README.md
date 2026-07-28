@@ -251,7 +251,7 @@ boundaries; it does not imply source-code derivation.
 
 ## License and contributing
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under Apache-2.0, as declared in [`Cargo.toml`](Cargo.toml).
 
 Bug reports should include the smallest expression, exact query point or cell,
 enabled features, and all returned statuses. Before proposing a change, run
