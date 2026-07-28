@@ -84,8 +84,8 @@ pub use orient::{
 };
 pub use plane::{
     OrientedPlane3Evidence, Plane3, Plane3Evidence, PlaneAabbReport,
-    PlaneAabbReportValidationError, TrianglePlaneClassification, TrianglePlaneRelation,
-    TrianglePlaneValidationError, classify_plane_aabb3, classify_plane_aabb3_report,
+    PlaneAabbReportValidationError, TrianglePlaneRelation, TrianglePlaneReport,
+    TrianglePlaneReportValidationError, classify_plane_aabb3, classify_plane_aabb3_report,
     classify_plane_segment, classify_plane_triangle, classify_point_oriented_plane,
     classify_point_oriented_plane_with_evidence,
     classify_point_oriented_plane_with_evidence_and_policy, classify_point_plane,

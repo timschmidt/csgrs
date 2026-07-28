@@ -22,7 +22,8 @@ use hyperlimit::{
     classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
     classify_segment_intersection_with_facts, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_report, classify_segment3_intersection,
-    classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
+    classify_sphere3_intersection, classify_triangle_against_oriented_plane,
+    classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
     compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
     incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
@@ -676,6 +677,23 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 SegmentPlaneRelation::Unknown => -1,
                 SegmentPlaneRelation::ConstructionFailed => -2,
             })
+        });
+    });
+    group.bench_function("triangle_plane/report_replay", |bench| {
+        bench.iter(|| {
+            let report = classify_triangle_against_oriented_plane(
+                [
+                    black_box(&points[0]),
+                    black_box(&points[1]),
+                    black_box(&points[2]),
+                ],
+                [
+                    black_box(&points[3]),
+                    black_box(&points[4]),
+                    black_box(&points[5]),
+                ],
+            );
+            black_box((report.relation, report.vertex_sides))
         });
     });
     group.bench_function("coplanar_triangles/projected_overlap", |bench| {

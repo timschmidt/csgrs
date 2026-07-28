@@ -27,8 +27,9 @@ than inventing a float decision.
 
 - `Point2`, `Point3`, point facts, shared-scale point views, `HomogeneousPoint3`, and
   `HomogeneousLine3` are predicate-facing re-exports of lattice-owned object carriers.
-- `Plane3`, `Plane3Facts`, `Plane3Evidence`, and homogeneous plane-incidence helpers
-  keep 3D sidedness and projective incidence under strict predicates.
+- `Plane3`, `Plane3Facts`, `Plane3Evidence`, `TrianglePlaneReport`,
+  `PlaneAabbReport`, and homogeneous plane-incidence helpers keep 3D sidedness
+  and projective incidence under strict predicates.
 - `PredicateOutcome<T>`, `PredicateReport<T>`, `PredicateCertificate`, `Certainty`,
   `Escalation`, `PredicatePrecisionStage`, and `PredicateApiSemantics` describe what was
   decided and how.
@@ -48,9 +49,6 @@ than inventing a float decision.
 - `HalfspaceFeasibilityReport` records exact 3D halfspace feasibility witnesses,
   active plane sets, and Farkas-style infeasibility certificates for replayable
   convex-kernel prechecks.
-- Session types such as `ExactGeometrySession`, `ConstructionCertificate`,
-  `VersionedFacts`, and `VersionedPrepared` track cache freshness and construction
-  provenance.
 
 ## Precision Model
 
@@ -109,8 +107,7 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
   classifiers with explicit reusable facts and evidence;
 - `PredicateOutcome`, `PredicateReport`, `PredicateCertificate`, certainty,
   precision-stage, and API-semantics types;
-- versioned sessions, construction certificates, cached approximate-view labels, and
-  optional parallel batch APIs.
+- optional parallel batch APIs and dispatch tracing for performance audits.
 
 Known limits: `hyperlimit` intentionally stops at reusable predicates and small
 classifiers. It does not store curves, triangulations, meshes, solver active sets, or

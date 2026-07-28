@@ -95,7 +95,7 @@ pub enum TrianglePlaneRelation {
 
 /// Structural inconsistency in a retained triangle/plane report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TrianglePlaneValidationError {
+pub enum TrianglePlaneReportValidationError {
     /// The retained vertex sides do not derive the retained relation.
     RelationMismatch,
     /// Recomputing the classifier from supplied source geometry did not
@@ -105,20 +105,20 @@ pub enum TrianglePlaneValidationError {
 
 /// Report-bearing triangle/plane classification with retained side facts.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TrianglePlaneClassification {
+pub struct TrianglePlaneReport {
     /// Coarse relation.
     pub relation: TrianglePlaneRelation,
     /// Per-query-vertex side, or `None` when the predicate was undecided.
     pub vertex_sides: [Option<PlaneSide>; 3],
 }
 
-impl TrianglePlaneClassification {
+impl TrianglePlaneReport {
     /// Validate that retained vertex side facts imply the reported relation.
-    pub fn validate(&self) -> Result<(), TrianglePlaneValidationError> {
+    pub fn validate(&self) -> Result<(), TrianglePlaneReportValidationError> {
         if triangle_plane_relation_from_sides(self.vertex_sides) == self.relation {
             Ok(())
         } else {
-            Err(TrianglePlaneValidationError::RelationMismatch)
+            Err(TrianglePlaneReportValidationError::RelationMismatch)
         }
     }
 
@@ -128,13 +128,13 @@ impl TrianglePlaneClassification {
         plane: [&Point3; 3],
         query: [&Point3; 3],
         policy: PredicatePolicy,
-    ) -> Result<(), TrianglePlaneValidationError> {
+    ) -> Result<(), TrianglePlaneReportValidationError> {
         self.validate()?;
         let replay = classify_triangle_against_oriented_plane_with_policy(plane, query, policy);
         if self == &replay {
             Ok(())
         } else {
-            Err(TrianglePlaneValidationError::SourceReplayMismatch)
+            Err(TrianglePlaneReportValidationError::SourceReplayMismatch)
         }
     }
 
@@ -144,10 +144,10 @@ impl TrianglePlaneClassification {
         points: &[Point3],
         face: [usize; 3],
         query: [usize; 3],
-    ) -> Result<(), TrianglePlaneValidationError> {
+    ) -> Result<(), TrianglePlaneReportValidationError> {
         self.validate()?;
         if !triangle_indices_in_range(points, face) || !triangle_indices_in_range(points, query) {
-            return Err(TrianglePlaneValidationError::SourceReplayMismatch);
+            return Err(TrianglePlaneReportValidationError::SourceReplayMismatch);
         }
         let replay = classify_triangle_against_oriented_plane(
             [&points[face[0]], &points[face[1]], &points[face[2]]],
@@ -156,7 +156,7 @@ impl TrianglePlaneClassification {
         if self == &replay {
             Ok(())
         } else {
-            Err(TrianglePlaneValidationError::SourceReplayMismatch)
+            Err(TrianglePlaneReportValidationError::SourceReplayMismatch)
         }
     }
 }
@@ -701,7 +701,7 @@ pub(crate) fn classify_plane_triangle_with_policy(
 pub fn classify_triangle_against_oriented_plane(
     plane: [&Point3; 3],
     query: [&Point3; 3],
-) -> TrianglePlaneClassification {
+) -> TrianglePlaneReport {
     classify_triangle_against_oriented_plane_with_policy(plane, query, PredicatePolicy)
 }
 
@@ -711,7 +711,7 @@ pub(crate) fn classify_triangle_against_oriented_plane_with_policy(
     plane: [&Point3; 3],
     query: [&Point3; 3],
     policy: PredicatePolicy,
-) -> TrianglePlaneClassification {
+) -> TrianglePlaneReport {
     let outcomes = [
         orient3d_with_policy(plane[0], plane[1], plane[2], query[0], policy),
         orient3d_with_policy(plane[0], plane[1], plane[2], query[1], policy),
@@ -723,7 +723,7 @@ pub(crate) fn classify_triangle_against_oriented_plane_with_policy(
         sides[index] = outcome.value().map(PlaneSide::from);
     }
 
-    TrianglePlaneClassification {
+    TrianglePlaneReport {
         relation: triangle_plane_relation_from_sides(sides),
         vertex_sides: sides,
     }

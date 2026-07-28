@@ -3,7 +3,7 @@
 pub use crate::geometry::Plane3;
 pub use crate::geometry::plane::{
     OrientedPlane3Evidence, Plane3Evidence, PlaneAabbReport, PlaneAabbReportValidationError,
-    TrianglePlaneClassification, TrianglePlaneRelation, TrianglePlaneValidationError,
+    TrianglePlaneRelation, TrianglePlaneReport, TrianglePlaneReportValidationError,
     classify_plane_aabb3, classify_plane_aabb3_report, classify_plane_segment,
     classify_plane_triangle, classify_point_oriented_plane,
     classify_point_oriented_plane_with_evidence,

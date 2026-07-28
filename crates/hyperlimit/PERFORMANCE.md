@@ -274,6 +274,19 @@ removes the former handle-call overhead. Criterion classified both positive
 derivation movements as within its noise threshold and found no regression.
 HyperBrep and HyperGraphics consumer gates are recorded in those crates.
 
+### Normalize triangle/plane reports
+
+The replayable triangle/plane result now follows the same public vocabulary as
+`PlaneAabbReport`: `TrianglePlaneReport` retains the coarse relation and three
+vertex sides, while `TrianglePlaneReportValidationError` describes structural
+or source-replay mismatches. Obsolete README claims for removed versioned
+prepared/session types were deleted.
+
+The dedicated `hypermesh_port_helpers/triangle_plane/report_replay` sentinel
+measured 899.03 ns before and 898.88 ns after the type-only normalization.
+Criterion detected no performance change (`p = 0.13`, 95% interval -0.93% to
++0.07%).
+
 ### Use immediate checked-word `orient3`
 
 Exact-rational one-shot orientation now tries Hyperreal's checked homogeneous
