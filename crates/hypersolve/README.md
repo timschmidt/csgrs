@@ -15,7 +15,7 @@ dense floating-point proposal loop a source of topology truth.
 Domain geometry remains owned by Hyperlimit, Hypercurve, Hypertri, and their
 consumers. Hypersolve owns reusable equation structure and certification.
 
-This README describes crate version `0.3.0`.
+This README describes crate version `0.3.1`.
 
 ## Primary types
 
@@ -35,7 +35,7 @@ This README describes crate version `0.3.0`.
 
 ```toml
 [dependencies]
-hypersolve = "0.3.0"
+hypersolve = "0.3.1"
 ```
 
 Hypersolve has no default features. `dispatch-trace` is for exact-dispatch

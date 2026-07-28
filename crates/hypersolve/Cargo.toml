@@ -1,6 +1,6 @@
 [package]
 name = "hypersolve"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2024"
 description = "Hyperreal-backed nonlinear solving and constraint evaluation"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -14,8 +14,8 @@ categories = ["mathematics", "science", "algorithms"]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice", default-features = false }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice", default-features = false }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 [dev-dependencies]
 criterion = "0.5"
