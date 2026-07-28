@@ -95,7 +95,7 @@ dependencies = [
 
 [[package]]
 name = "hypercurve"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "hyperlimit",
  "hyperreal",
@@ -105,14 +105,14 @@ dependencies = [
 
 [[package]]
 name = "hyperlattice"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "hyperreal",
 ]
 
 [[package]]
 name = "hyperlimit"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "hyperlattice",
  "hyperreal",
@@ -147,7 +147,7 @@ dependencies = [
 
 [[package]]
 name = "hypersolve"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "hyperlattice",
  "hyperlimit",

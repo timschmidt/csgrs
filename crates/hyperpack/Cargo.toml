@@ -16,7 +16,7 @@ dispatch-trace = ["hyperreal/dispatch-trace"]
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hypercurve = { version = "0.3.0", path = "../hypercurve" }
+hypercurve = { version = "0.3.1", path = "../hypercurve" }
 hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
 
 # Keep transitive sibling crates unified while using local path development mode.
