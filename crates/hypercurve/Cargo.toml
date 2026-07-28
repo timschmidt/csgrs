@@ -14,16 +14,10 @@ categories = ["mathematics", "graphics", "algorithms"]
 all-features = true
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Release mode uses crates.io version lines. For local development, comment those and uncomment the path lines.
-# hyperreal = { path = "../hyperreal", default-features = false }
-# hypersolve = { path = "../hypersolve", default-features = false }
-# hyperlimit = { path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
-# hypertri = { path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
-hyperreal = { version = "0.13.1", default-features = false }
-hypersolve = { version = "0.3.0", default-features = false }
-hyperlimit = { version = "0.4.0", default-features = false, features = ["std"], optional = true }
-hypertri = { version = "0.4.0", default-features = false, features = ["earcut"], optional = true }
+hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
+hypersolve = { version = "0.3.0", path = "../hypersolve", default-features = false }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
 cavalier_contours = { version = "0.7.0", optional = true }
 curvo = { version = "0.1.91", optional = true }
