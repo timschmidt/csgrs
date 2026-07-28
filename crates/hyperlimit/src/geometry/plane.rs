@@ -40,7 +40,7 @@ pub struct Plane3Facts {
     pub coefficient_exact: RealExactSetFacts,
     /// Union of scalar symbolic dependency families for normal coordinates plus offset.
     ///
-    /// Prepared plane queries can carry this scheduling fact next to exact-set
+    /// Plane evidence can carry this scheduling fact next to exact-set
     /// and sparse coefficient facts without inspecting `Real` internals. It is
     /// not a side classification certificate; point-plane sidedness still comes
     /// from exact sign resolution.
@@ -282,232 +282,93 @@ impl Plane3 {
     pub fn structural_facts(&self) -> Plane3Facts {
         plane3_facts(self)
     }
-
-    /// Prepare this plane for repeated point classification.
-    pub fn prepare(&self) -> PreparedPlane3<'_> {
-        PreparedPlane3::new(self)
-    }
 }
 
-/// Reusable point-plane classifier for a fixed plane.
+/// Reusable exact-predicate evidence for a fixed explicit plane.
+///
+/// This value owns coefficient facts and the certified dyadic filter, but not
+/// the plane. Retain it alongside the source plane when classifying many
+/// points against the same plane.
 #[derive(Clone, Copy, Debug)]
-pub struct PreparedPlane3<'a> {
-    plane: &'a Plane3,
+pub struct Plane3Evidence {
     facts: Plane3Facts,
     filter: Option<PreparedLinearForm3Filter>,
 }
 
-impl<'a> PreparedPlane3<'a> {
-    /// Prepare a plane for repeated point classification.
-    ///
-    /// Exact dyadic coefficients automatically receive a cached certified
-    /// linear-form filter; callers use [`Self::classify_point`] normally.
-    pub fn new(plane: &'a Plane3) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_plane3", "new");
-        let filter = Real::prepare_linear_form3_filter([
-            &plane.normal.x,
-            &plane.normal.y,
-            &plane.normal.z,
-            &plane.offset,
-        ]);
-        Self {
-            plane,
-            facts: plane.structural_facts(),
-            filter,
-        }
-    }
-
-    /// Return the borrowed plane.
-    pub fn plane(&self) -> &'a Plane3 {
-        self.plane
-    }
-
-    /// Return cached structural facts for this prepared plane.
-    pub fn facts(&self) -> Plane3Facts {
+impl Plane3Evidence {
+    /// Return structural facts for the source plane.
+    pub const fn facts(&self) -> Plane3Facts {
         self.facts
-    }
-
-    /// Classify a point using the default predicate policy.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PlaneSide> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
-    /// Classify a point using an explicit predicate policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneSide> {
-        if let Some(sign) = self
-            .filter
-            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
-        {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "classify_point_plane",
-                "prepared-certified-linear-form3-filter"
-            );
-            return PredicateOutcome::decided(
-                PlaneSide::from(crate::real::map_real_sign(sign)),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        classify_point_plane_prepared(point, self.plane, self.facts, policy)
-    }
-
-    /// Classify a closed segment relative to this plane using the default
-    /// predicate policy.
-    pub fn classify_segment(
-        &self,
-        start: &Point3,
-        end: &Point3,
-    ) -> PredicateOutcome<PlaneSegmentRelation> {
-        self.classify_segment_with_policy(start, end, PredicatePolicy)
-    }
-
-    /// Classify a closed segment relative to this plane using an explicit
-    /// predicate policy.
-    pub(crate) fn classify_segment_with_policy(
-        &self,
-        start: &Point3,
-        end: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneSegmentRelation> {
-        classify_plane_segment_with_policy(self.plane, start, end, policy)
-    }
-
-    /// Classify a triangle relative to this plane using the default predicate
-    /// policy.
-    pub fn classify_triangle(
-        &self,
-        a: &Point3,
-        b: &Point3,
-        c: &Point3,
-    ) -> PredicateOutcome<PlaneTriangleRelation> {
-        self.classify_triangle_with_policy(a, b, c, PredicatePolicy)
-    }
-
-    /// Classify a triangle relative to this plane using an explicit predicate
-    /// policy.
-    pub(crate) fn classify_triangle_with_policy(
-        &self,
-        a: &Point3,
-        b: &Point3,
-        c: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneTriangleRelation> {
-        classify_plane_triangle_with_policy(self.plane, a, b, c, policy)
-    }
-
-    /// Classify a closed 3D AABB relative to this plane using the default
-    /// predicate policy.
-    pub fn classify_aabb3(
-        &self,
-        min: &Point3,
-        max: &Point3,
-    ) -> PredicateOutcome<PlaneAabbRelation> {
-        self.classify_aabb3_with_policy(min, max, PredicatePolicy)
-    }
-
-    /// Classify a closed 3D AABB relative to this plane using an explicit
-    /// predicate policy.
-    pub(crate) fn classify_aabb3_with_policy(
-        &self,
-        min: &Point3,
-        max: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneAabbRelation> {
-        classify_plane_aabb3_with_policy(self.plane, min, max, policy)
-    }
-
-    /// Classify a closed 3D AABB and retain exact support-extrema evidence.
-    pub fn classify_aabb3_report(
-        &self,
-        min: &Point3,
-        max: &Point3,
-    ) -> PredicateOutcome<PlaneAabbReport> {
-        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy)
-    }
-
-    /// Classify a closed 3D AABB with an explicit policy and retain exact
-    /// support-extrema evidence.
-    pub(crate) fn classify_aabb3_report_with_policy(
-        &self,
-        min: &Point3,
-        max: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneAabbReport> {
-        classify_plane_aabb3_report_with_policy(self.plane, min, max, policy)
     }
 }
 
-/// Reusable oriented-plane classifier for a fixed triangle plane.
+/// Derive reusable exact-predicate evidence for an explicit plane.
+pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
+    crate::trace_dispatch!("hyperlimit", "plane3_evidence", "derive");
+    let filter = Real::prepare_linear_form3_filter([
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]);
+    Plane3Evidence {
+        facts: plane.structural_facts(),
+        filter,
+    }
+}
+
+/// Classify a point against an explicit plane using retained evidence.
+#[inline]
+pub fn classify_point_plane_with_evidence(
+    point: &Point3,
+    plane: &Plane3,
+    evidence: &Plane3Evidence,
+) -> PredicateOutcome<PlaneSide> {
+    classify_point_plane_with_evidence_and_policy(point, plane, evidence, PredicatePolicy)
+}
+
+/// Classify a point using retained explicit-plane evidence and a policy.
+///
+/// `evidence` must have been derived from `plane` with [`plane3_evidence`].
+#[inline]
+pub fn classify_point_plane_with_evidence_and_policy(
+    point: &Point3,
+    plane: &Plane3,
+    evidence: &Plane3Evidence,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
+    if let Some(sign) = evidence
+        .filter
+        .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "classify_point_plane",
+            "evidence-certified-linear-form3-filter"
+        );
+        return PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    classify_point_plane_with_facts(point, plane, evidence.facts, policy)
+}
+
+/// Reusable exact-predicate evidence for a fixed oriented triangle plane.
 ///
 /// This reduces the oriented plane through `a`, `b`, and `c` once into an exact
-/// explicit plane. Repeated point queries can then share the same prepared
-/// point-plane path instead of rebuilding the `orient3d` determinant.
+/// explicit plane. Repeated point queries can then share the same retained
+/// point-plane evidence instead of rebuilding the `orient3d` determinant.
 #[derive(Clone, Debug)]
-pub struct PreparedOrientedPlane3 {
+pub struct OrientedPlane3Evidence {
     filter: Option<PreparedAffineDet3Filter>,
     exact_word_filter: Option<Box<PreparedAffineDet3ExactWordFilter>>,
     plane: Plane3,
     facts: Plane3Facts,
 }
 
-impl PreparedOrientedPlane3 {
-    /// Prepare the oriented plane through `a`, `b`, and `c`.
-    ///
-    /// Exact dyadic inputs automatically receive a cached certified filter;
-    /// callers use [`Self::classify_point`] normally in every case.
-    pub fn new(a: &Point3, b: &Point3, c: &Point3) -> Self {
-        crate::trace_dispatch!("hyperlimit", "prepared_oriented_plane3", "new");
-        let abx = sub(&b.x, &a.x);
-        let aby = sub(&b.y, &a.y);
-        let abz = sub(&b.z, &a.z);
-        let acx = sub(&c.x, &a.x);
-        let acy = sub(&c.y, &a.y);
-        let acz = sub(&c.z, &a.z);
-
-        let cross_x = sub(&mul(&aby, &acz), &mul(&abz, &acy));
-        let cross_y = sub(&mul(&abz, &acx), &mul(&abx, &acz));
-        let cross_z = sub(&mul(&abx, &acy), &mul(&aby, &acx));
-
-        let nx_ax = mul(&cross_x, &a.x);
-        let ny_ay = mul(&cross_y, &a.y);
-        let nz_az = mul(&cross_z, &a.z);
-        let nxy_a = add(&nx_ax, &ny_ay);
-        let dot_a = add(&nxy_a, &nz_az);
-        let zero = sub(&a.x, &a.x);
-        let nx = sub(&zero, &cross_x);
-        let ny = sub(&zero, &cross_y);
-        let nz = sub(&zero, &cross_z);
-
-        let plane = Plane3::new(Point3::new(nx, ny, nz), dot_a);
-        let facts = plane.structural_facts();
-        let filter = Real::prepare_affine_det3_filter(
-            [&a.x, &a.y, &a.z],
-            [&b.x, &b.y, &b.z],
-            [&c.x, &c.y, &c.z],
-        );
-        let exact_word_filter = if filter.is_none() {
-            Real::prepare_affine_det3_exact_word_filter(
-                [&a.x, &a.y, &a.z],
-                [&b.x, &b.y, &b.z],
-                [&c.x, &c.y, &c.z],
-            )
-            .map(Box::new)
-        } else {
-            None
-        };
-        Self {
-            filter,
-            exact_word_filter,
-            plane,
-            facts,
-        }
-    }
-
+impl OrientedPlane3Evidence {
     /// Return the explicit plane built from the oriented point triple.
     pub fn plane(&self) -> &Plane3 {
         &self.plane
@@ -517,68 +378,122 @@ impl PreparedOrientedPlane3 {
     pub fn facts(&self) -> Plane3Facts {
         self.facts
     }
+}
 
-    /// Classify a point using the default predicate policy.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<PlaneSide> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
+/// Derive reusable evidence for the oriented plane through `a`, `b`, and `c`.
+pub fn oriented_plane3_evidence(a: &Point3, b: &Point3, c: &Point3) -> OrientedPlane3Evidence {
+    crate::trace_dispatch!("hyperlimit", "oriented_plane3_evidence", "derive");
+    let abx = sub(&b.x, &a.x);
+    let aby = sub(&b.y, &a.y);
+    let abz = sub(&b.z, &a.z);
+    let acx = sub(&c.x, &a.x);
+    let acy = sub(&c.y, &a.y);
+    let acz = sub(&c.z, &a.z);
 
-    /// Classify a point using an explicit predicate policy.
-    pub(crate) fn classify_point_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneSide> {
-        if let Some(sign) = self
-            .filter
-            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
-        {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "prepared_oriented_plane3",
-                "certified-real-det3-filter"
-            );
-            return PredicateOutcome::decided(
-                PlaneSide::from(crate::real::map_real_sign(sign)),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        if self.exact_word_filter.is_some() {
-            return self.classify_point_exact_word_with_policy(point, policy);
-        }
-        classify_point_plane_prepared(point, &self.plane, self.facts, policy)
-    }
+    let cross_x = sub(&mul(&aby, &acz), &mul(&abz, &acy));
+    let cross_y = sub(&mul(&abz, &acx), &mul(&abx, &acz));
+    let cross_z = sub(&mul(&abx, &acy), &mul(&aby, &acx));
 
-    #[cold]
-    #[inline(never)]
-    fn classify_point_exact_word_with_policy(
-        &self,
-        point: &Point3,
-        policy: PredicatePolicy,
-    ) -> PredicateOutcome<PlaneSide> {
-        if let Some(sign) = self
-            .exact_word_filter
-            .as_deref()
-            .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
-        {
-            crate::trace_dispatch!(
-                "hyperlimit",
-                "prepared_oriented_plane3",
-                "exact-word-homogeneous-det3"
-            );
-            return PredicateOutcome::decided(
-                PlaneSide::from(crate::real::map_real_sign(sign)),
-                Certainty::Exact,
-                Escalation::Exact,
-            );
-        }
-        classify_point_plane_prepared(point, &self.plane, self.facts, policy)
+    let nx_ax = mul(&cross_x, &a.x);
+    let ny_ay = mul(&cross_y, &a.y);
+    let nz_az = mul(&cross_z, &a.z);
+    let nxy_a = add(&nx_ax, &ny_ay);
+    let dot_a = add(&nxy_a, &nz_az);
+    let zero = sub(&a.x, &a.x);
+    let nx = sub(&zero, &cross_x);
+    let ny = sub(&zero, &cross_y);
+    let nz = sub(&zero, &cross_z);
+
+    let plane = Plane3::new(Point3::new(nx, ny, nz), dot_a);
+    let facts = plane.structural_facts();
+    let filter = Real::prepare_affine_det3_filter(
+        [&a.x, &a.y, &a.z],
+        [&b.x, &b.y, &b.z],
+        [&c.x, &c.y, &c.z],
+    );
+    let exact_word_filter = if filter.is_none() {
+        Real::prepare_affine_det3_exact_word_filter(
+            [&a.x, &a.y, &a.z],
+            [&b.x, &b.y, &b.z],
+            [&c.x, &c.y, &c.z],
+        )
+        .map(Box::new)
+    } else {
+        None
+    };
+    OrientedPlane3Evidence {
+        filter,
+        exact_word_filter,
+        plane,
+        facts,
     }
 }
 
+/// Classify a point using retained oriented-plane evidence.
+#[inline]
+pub fn classify_point_oriented_plane_with_evidence(
+    point: &Point3,
+    evidence: &OrientedPlane3Evidence,
+) -> PredicateOutcome<PlaneSide> {
+    classify_point_oriented_plane_with_evidence_and_policy(point, evidence, PredicatePolicy)
+}
+
+/// Classify a point using retained oriented-plane evidence and a policy.
+#[inline]
+pub fn classify_point_oriented_plane_with_evidence_and_policy(
+    point: &Point3,
+    evidence: &OrientedPlane3Evidence,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
+    if let Some(sign) = evidence
+        .filter
+        .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "oriented_plane3_evidence",
+            "certified-real-det3-filter"
+        );
+        return PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    if evidence.exact_word_filter.is_some() {
+        return classify_point_oriented_plane_exact_word(point, evidence, policy);
+    }
+    classify_point_plane_with_facts(point, &evidence.plane, evidence.facts, policy)
+}
+
+#[cold]
+#[inline(never)]
+fn classify_point_oriented_plane_exact_word(
+    point: &Point3,
+    evidence: &OrientedPlane3Evidence,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<PlaneSide> {
+    if let Some(sign) = evidence
+        .exact_word_filter
+        .as_deref()
+        .and_then(|filter| filter.sign([&point.x, &point.y, &point.z]))
+    {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "oriented_plane3_evidence",
+            "exact-word-homogeneous-det3"
+        );
+        return PredicateOutcome::decided(
+            PlaneSide::from(crate::real::map_real_sign(sign)),
+            Certainty::Exact,
+            Escalation::Exact,
+        );
+    }
+    classify_point_plane_with_facts(point, &evidence.plane, evidence.facts, policy)
+}
+
 #[inline(always)]
-fn classify_point_plane_prepared(
+fn classify_point_plane_with_facts(
     point: &Point3,
     plane: &Plane3,
     facts: Plane3Facts,
@@ -636,7 +551,7 @@ pub(crate) fn classify_point_plane_without_filter_with_policy(
 }
 
 #[inline(always)]
-fn classify_point_plane_with_prepared_filter(
+fn classify_point_plane_with_filter(
     filter: Option<PreparedLinearForm3Filter>,
     point: &Point3,
     plane: &Plane3,
@@ -646,7 +561,7 @@ fn classify_point_plane_with_prepared_filter(
         crate::trace_dispatch!(
             "hyperlimit",
             "classify_point_plane",
-            "locally-prepared-certified-linear-form3-filter"
+            "local-certified-linear-form3-filter"
         );
         return PredicateOutcome::decided(
             PlaneSide::from(crate::real::map_real_sign(sign)),
@@ -739,9 +654,9 @@ pub(crate) fn classify_plane_triangle_with_policy(
         &plane.offset,
     ]);
     let outcomes = [
-        classify_point_plane_with_prepared_filter(filter, a, plane, policy),
-        classify_point_plane_with_prepared_filter(filter, b, plane, policy),
-        classify_point_plane_with_prepared_filter(filter, c, plane, policy),
+        classify_point_plane_with_filter(filter, a, plane, policy),
+        classify_point_plane_with_filter(filter, b, plane, policy),
+        classify_point_plane_with_filter(filter, c, plane, policy),
     ];
     let mut certainty = Certainty::Exact;
     let mut stage = Escalation::Structural;
@@ -1071,7 +986,7 @@ fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
 /// Build `normal . point + offset` as one fixed product-sum when the object
 /// facts make that route valid.
 ///
-/// Prepared planes carry coefficient exactness and sparse-support facts beside
+/// Plane evidence carries coefficient exactness and sparse-support facts beside
 /// the plane rather than forcing every query to rediscover them. This helper
 /// consumes those facts at the predicate-object boundary and passes the whole
 /// point-plane polynomial to `hyperreal` before scalar expansion. The
@@ -1107,7 +1022,7 @@ fn point_plane_expression_from_coords(
     if let Some(plane_facts) = plane_facts {
         let coordinate_exact = Real::exact_set_facts(coordinates);
         if plane_facts.coefficient_exact.all_exact_rational && coordinate_exact.all_exact_rational {
-            crate::trace_dispatch!("hyperlimit", trace_operation, "prepared-exact-product-sum");
+            crate::trace_dispatch!("hyperlimit", trace_operation, "evidence-exact-product-sum");
             return Real::exact_rational_signed_product_sum_known_exact([true; 4], terms);
         }
     }
@@ -1296,10 +1211,7 @@ mod tests {
             Some(PlaneSegmentRelation::Crossing)
         );
         assert_eq!(
-            plane
-                .prepare()
-                .classify_segment(&p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0))
-                .value(),
+            classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0)).value(),
             Some(PlaneSegmentRelation::EndpointTouch)
         );
     }
@@ -1349,10 +1261,13 @@ mod tests {
             Some(PlaneTriangleRelation::Split)
         );
         assert_eq!(
-            plane
-                .prepare()
-                .classify_triangle(&p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0), &p3(0.0, 1.0, 3.0))
-                .value(),
+            classify_plane_triangle(
+                &plane,
+                &p3(0.0, 0.0, 2.0),
+                &p3(1.0, 0.0, 3.0),
+                &p3(0.0, 1.0, 3.0),
+            )
+            .value(),
             Some(PlaneTriangleRelation::BoundaryTouch)
         );
     }
@@ -1374,10 +1289,7 @@ mod tests {
             Some(PlaneAabbRelation::Intersecting)
         );
         assert_eq!(
-            plane
-                .prepare()
-                .classify_aabb3(&p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
-                .value(),
+            classify_plane_aabb3(&plane, &p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0)).value(),
             Some(PlaneAabbRelation::Below)
         );
     }
@@ -1416,9 +1328,7 @@ mod tests {
         let above = classify_plane_aabb3_report(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0))
             .value()
             .expect("above box should decide");
-        let reversed = plane
-            .prepare()
-            .classify_aabb3_report(&p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
+        let reversed = classify_plane_aabb3_report(&plane, &p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
             .value()
             .expect("reversed caller bounds should preserve endpoint set");
 
@@ -1452,7 +1362,7 @@ mod tests {
     }
 
     #[test]
-    fn plane_facts_preserve_coefficient_structure_for_prepared_queries() {
+    fn plane_evidence_preserves_coefficient_structure() {
         let plane = Plane3::new(
             Point3::new(Real::from(0), Real::from(3), Real::from(0)),
             Real::from(-6),
@@ -1471,23 +1381,22 @@ mod tests {
         assert!(facts.has_shared_denominator_schedule());
         assert!(facts.coefficient_symbolic_dependencies.is_empty());
 
-        let prepared = plane.prepare();
-        assert_eq!(prepared.plane(), &plane);
-        assert_eq!(prepared.facts(), facts);
+        let evidence = plane3_evidence(&plane);
+        assert_eq!(evidence.facts(), facts);
         let point = Point3::new(0.into(), 3.into(), 0.into());
         assert_eq!(
-            prepared.classify_point(&point).value(),
+            classify_point_plane_with_evidence(&point, &plane, &evidence).value(),
             classify_point_plane(&point, &plane).value()
         );
     }
 
     #[test]
-    fn prepared_oriented_plane_matches_orient3d_side() {
+    fn oriented_plane_evidence_matches_orient3d_side() {
         let a = p3(-0.85, -0.7, -0.25);
         let b = p3(0.9, -0.35, 0.35);
         let c = p3(-0.35, 0.85, 0.05);
-        let prepared = PreparedOrientedPlane3::new(&a, &b, &c);
-        assert_eq!(prepared.facts(), prepared.plane().structural_facts());
+        let evidence = oriented_plane3_evidence(&a, &b, &c);
+        assert_eq!(evidence.facts(), evidence.plane().structural_facts());
 
         for point in [
             p3(0.2, -0.1, 0.8),
@@ -1495,7 +1404,7 @@ mod tests {
             p3(0.1, 0.2, 0.38 * 0.1 + 0.24 * 0.2),
         ] {
             assert_eq!(
-                prepared.classify_point(&point).value(),
+                classify_point_oriented_plane_with_evidence(&point, &evidence).value(),
                 classify_point_oriented_plane(&a, &b, &c, &point).value()
             );
         }
@@ -1515,7 +1424,7 @@ mod tests {
     }
 
     #[test]
-    fn plane_facts_summarize_symbolic_dependencies_for_prepared_queries() {
+    fn plane_evidence_summarizes_symbolic_dependencies() {
         let trig = (Real::from(hyperreal::Rational::fraction(1, 5).unwrap()) * Real::pi()).sin();
         let plane = Plane3::new(Point3::new(Real::pi(), trig, 0.into()), Real::e());
         let facts = plane.structural_facts();
@@ -1536,27 +1445,32 @@ mod tests {
                 .contains(RealSymbolicDependencyMask::EXP)
         );
 
-        let prepared = plane.prepare();
+        let evidence = plane3_evidence(&plane);
         assert_eq!(
-            prepared.facts().coefficient_symbolic_dependencies,
+            evidence.facts().coefficient_symbolic_dependencies,
             facts.coefficient_symbolic_dependencies
         );
     }
 
     #[cfg(feature = "dispatch-trace")]
     #[test]
-    fn prepared_point_plane_reuses_coefficients_for_one_exact_product_sum() {
+    fn point_plane_evidence_reuses_coefficients_for_one_exact_product_sum() {
         let _trace_lock = dispatch_trace_test_lock()
             .lock()
             .expect("dispatch trace test lock poisoned");
         let fifth = |value| Real::from(Rational::fraction(value, 5).unwrap());
         let plane = Plane3::new(Point3::new(fifth(2), fifth(-3), fifth(4)), fifth(-6));
         let point = Point3::new(fifth(5), fifth(5), fifth(5));
-        let prepared = plane.prepare();
+        let evidence = plane3_evidence(&plane);
 
         hyperreal::dispatch_trace::reset();
         let outcome = hyperreal::dispatch_trace::with_recording(|| {
-            prepared.classify_point_with_policy(&point, PredicatePolicy::STRICT)
+            classify_point_plane_with_evidence_and_policy(
+                &point,
+                &plane,
+                &evidence,
+                PredicatePolicy::STRICT,
+            )
         });
 
         assert_eq!(outcome.value(), Some(PlaneSide::Below));
@@ -1565,7 +1479,7 @@ mod tests {
             trace.path_count(
                 "hyperlimit",
                 "classify_point_plane",
-                "prepared-exact-product-sum"
+                "evidence-exact-product-sum"
             ),
             1
         );

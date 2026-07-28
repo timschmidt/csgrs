@@ -78,11 +78,14 @@ pub use orient::{
     line2_orientation, line2_orientation_with_facts, orient2d, orient2d_with_policy, orient3d,
 };
 pub use plane::{
-    Plane3, PlaneAabbReport, PlaneAabbReportValidationError, PreparedOrientedPlane3,
-    PreparedPlane3, TrianglePlaneClassification, TrianglePlaneRelation,
+    OrientedPlane3Evidence, Plane3, Plane3Evidence, PlaneAabbReport,
+    PlaneAabbReportValidationError, TrianglePlaneClassification, TrianglePlaneRelation,
     TrianglePlaneValidationError, classify_plane_aabb3, classify_plane_aabb3_report,
     classify_plane_segment, classify_plane_triangle, classify_point_oriented_plane,
-    classify_point_plane, classify_triangle_against_oriented_plane,
+    classify_point_oriented_plane_with_evidence,
+    classify_point_oriented_plane_with_evidence_and_policy, classify_point_plane,
+    classify_point_plane_with_evidence, classify_point_plane_with_evidence_and_policy,
+    classify_triangle_against_oriented_plane, oriented_plane3_evidence, plane3_evidence,
     triangle_plane_relation_from_sides,
 };
 pub use predicate::{

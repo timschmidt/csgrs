@@ -560,7 +560,7 @@ fn classify_segment_triangle3_intersection_from_sides(
     c: &Point3,
     p_side: Sign,
     q_side: Sign,
-    prepared_plane: Option<&Plane3>,
+    retained_plane: Option<&Plane3>,
     policy: PredicatePolicy,
     certainty: Certainty,
     stage: Escalation,
@@ -580,7 +580,7 @@ fn classify_segment_triangle3_intersection_from_sides(
     }
 
     let owned_plane;
-    let plane = if let Some(plane) = prepared_plane {
+    let plane = if let Some(plane) = retained_plane {
         plane
     } else {
         owned_plane = triangle_support_plane(a, b, c);

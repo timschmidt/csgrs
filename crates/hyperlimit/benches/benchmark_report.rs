@@ -153,7 +153,7 @@ fn compare_rows(left: &Row, right: &Row) -> Ordering {
 fn row_is_current_real_benchmark(row: &Row) -> bool {
     matches!(
         row.function_id.as_str(),
-        "hyperreal" | "hyperreal_prepared" | "robust"
+        "hyperreal" | "hyperreal_evidence" | "hyperreal_oriented" | "robust"
     )
 }
 

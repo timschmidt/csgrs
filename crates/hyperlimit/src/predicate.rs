@@ -106,9 +106,9 @@ pub enum ExactPredicateKernel {
     Insphere3dRationalLiftedDet4,
 }
 
-/// Advisory determinant schedule selected from prepared geometric facts.
+/// Advisory determinant schedule selected from retained geometric facts.
 ///
-/// This is a schedule hint, not a correctness certificate. It lets prepared
+/// This is a schedule hint, not a correctness certificate. It lets retained
 /// predicates and higher crates reuse object-level facts such as sparse support,
 /// dyadic coordinates, or shared denominators before constructing generic
 /// `Real` expressions. The exact predicate report remains the certificate for
@@ -148,7 +148,7 @@ pub enum DeterminantScheduleHint {
         /// Exact predicate kernel shape that would consume the schedule.
         kernel: ExactPredicateKernel,
     },
-    /// The prepared facts do not certify a fixed exact-rational determinant
+    /// The retained facts do not certify a fixed exact-rational determinant
     /// schedule; the generic `Real` predicate path is the honest fallback.
     GenericRealFallback,
 }

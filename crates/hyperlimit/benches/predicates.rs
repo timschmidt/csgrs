@@ -7,15 +7,16 @@ use criterion::{BenchmarkId, Criterion, black_box};
 use dispatch_trace::{begin_dispatch_trace_run, trace_dispatch_cases, write_dispatch_trace_report};
 use hyperlimit::{
     CoplanarProjection, CoplanarTriangleRelation, LineSide, Plane3, PlaneSide, Point2, Point3,
-    PredicateOutcome, PreparedOrientedPlane3, Segment3Intersection, SegmentPlaneRelation, Sign,
-    SupportDopRelation, TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts,
-    affine_independent_d, certified_ball_sign, classify_aabb2_intersection_with_facts,
-    classify_aabb3_intersection, classify_aabb3_sphere_intersection, classify_circle_line2,
-    classify_circle_segment2, classify_coplanar_triangles, classify_halfspace_feasibility3,
-    classify_homogeneous_point_plane, classify_plane_aabb3_report, classify_plane_segment,
-    classify_plane_triangle, classify_point_aabb3, classify_point_convex_planes3,
-    classify_point_convex_polygon2, classify_point_line, classify_point_line_with_orientation,
-    classify_point_oriented_plane, classify_point_plane, classify_point_ring_even_odd_report,
+    PredicateOutcome, Segment3Intersection, SegmentPlaneRelation, Sign, SupportDopRelation,
+    TriangleDegeneracy, TriangleTriangleIntersection, aabb2_facts, affine_independent_d,
+    certified_ball_sign, classify_aabb2_intersection_with_facts, classify_aabb3_intersection,
+    classify_aabb3_sphere_intersection, classify_circle_line2, classify_circle_segment2,
+    classify_coplanar_triangles, classify_halfspace_feasibility3, classify_homogeneous_point_plane,
+    classify_plane_aabb3_report, classify_plane_segment, classify_plane_triangle,
+    classify_point_aabb3, classify_point_convex_planes3, classify_point_convex_polygon2,
+    classify_point_line, classify_point_line_with_orientation, classify_point_oriented_plane,
+    classify_point_oriented_plane_with_evidence, classify_point_plane,
+    classify_point_plane_with_evidence, classify_point_ring_even_odd_report,
     classify_point_segment_with_facts, classify_point_segment3, classify_point_sphere3,
     classify_point_triangle_with_orientation, classify_point_triangle3_with_orientation,
     classify_ray_triangle3_intersection, classify_ray_triangle3_intersection_report,
@@ -26,8 +27,9 @@ use hyperlimit::{
     compare_point_segment3_distance_squared, incircle2_evidence, incircle2d,
     incircle2d_with_evidence, insphere_d, insphere3_evidence, insphere3d, insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    line2_orientation, orient_d, orient2d, orient3d, projected_line_parameter3,
-    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
+    line2_orientation, orient_d, orient2d, orient3d, oriented_plane3_evidence, plane3_evidence,
+    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
+    support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -77,7 +79,7 @@ fn bench_predicates(c: &mut Criterion) {
     bench_robust_predicates(c);
     bench_filter_cost_breakdown(c);
     bench_certified_filters(c);
-    bench_prepared_construction(c);
+    bench_evidence_derivation(c);
     bench_plane_composition_filters(c);
     bench_exact_rational_kernels(c);
     bench_nd_symbolic_scale(c);
@@ -868,8 +870,8 @@ fn bench_certified_filters(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_prepared_construction(c: &mut Criterion) {
-    let mut group = c.benchmark_group("prepared_construction");
+fn bench_evidence_derivation(c: &mut Criterion) {
+    let mut group = c.benchmark_group("evidence_derivation");
     let line_a = point2(-1.0, -1.0, hyperreal_real);
     let line_b = point2(1.0, 1.0, hyperreal_real);
     group.bench_function("affine_det2_filter_only", |bench| {
@@ -923,7 +925,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
     });
     group.bench_function("oriented_plane3/dyadic_filter", |bench| {
         bench.iter(|| {
-            PreparedOrientedPlane3::new(
+            oriented_plane3_evidence(
                 black_box(&plane_a),
                 black_box(&plane_b),
                 black_box(&plane_c),
@@ -956,7 +958,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
     });
     group.bench_function("oriented_plane3/exact_rational_word_filter", |bench| {
         bench.iter(|| {
-            PreparedOrientedPlane3::new(
+            oriented_plane3_evidence(
                 black_box(&rational_plane_a),
                 black_box(&rational_plane_b),
                 black_box(&rational_plane_c),
@@ -982,7 +984,7 @@ fn bench_prepared_construction(c: &mut Criterion) {
         })
     });
     group.bench_function("plane3/dyadic_filter", |bench| {
-        bench.iter(|| black_box(&explicit_plane).prepare())
+        bench.iter(|| plane3_evidence(black_box(&explicit_plane)))
     });
 
     let circle_a = point2(1.0, 0.0, hyperreal_real);
@@ -1440,7 +1442,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
     });
 
     // These rows keep the intentionally generic D-dimensional predicate
-    // boundary visible before `hypertri` or mesh crates add prepared
+    // boundary visible before `hypertri` or mesh crates add retained
     // common-scale schedules.
     let orient_d_cases = exact_rational_orient_d_cases();
     group.bench_function("orient_d/4d_common_denominator", |b| {
@@ -1629,21 +1631,27 @@ fn bench_transformed_predicates(c: &mut Criterion) {
 
     let oriented_plane_cases = transformed_oriented_plane_cases();
     if let Some((a, b, c, _)) = oriented_plane_cases.first() {
-        let prepared = PreparedOrientedPlane3::new(a, b, c);
+        let evidence = oriented_plane3_evidence(a, b, c);
         trace_dispatch_cases(
-            "transformed_predicates/classify_point_oriented_plane/prepared_exact_rational_affine",
+            "transformed_predicates/classify_point_oriented_plane/evidence_exact_rational_affine",
             &oriented_plane_cases,
             |(_, _, _, point)| {
-                black_box(plane_score(prepared.classify_point(point)));
+                black_box(plane_score(classify_point_oriented_plane_with_evidence(
+                    point, &evidence,
+                )));
             },
         );
         group.bench_function(
-            "classify_point_oriented_plane/prepared_exact_rational_affine",
+            "classify_point_oriented_plane/evidence_exact_rational_affine",
             |bench| {
                 bench.iter(|| {
                     let mut score = 0_i64;
                     for (_, _, _, point) in &oriented_plane_cases {
-                        score += plane_score(black_box(prepared.classify_point(black_box(point))));
+                        score +=
+                            plane_score(black_box(classify_point_oriented_plane_with_evidence(
+                                black_box(point),
+                                &evidence,
+                            )));
                     }
                     black_box(score)
                 });
@@ -1899,23 +1907,28 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
             },
         );
         if let Some((_, plane)) = cases.first() {
-            let prepared = plane.prepare();
+            let evidence = plane3_evidence(plane);
             trace_dispatch_cases(
-                format!("classify_point_plane/{label}_prepared/{}", workload.name()),
+                format!("classify_point_plane/{label}_evidence/{}", workload.name()),
                 &cases,
                 |(point, _)| {
-                    black_box(plane_score(prepared.classify_point(point)));
+                    black_box(plane_score(classify_point_plane_with_evidence(
+                        point, plane, &evidence,
+                    )));
                 },
             );
             group.bench_with_input(
-                BenchmarkId::new(format!("{label}_prepared"), workload.name()),
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
                 &cases,
                 |b, cases| {
                     b.iter(|| {
                         let mut score = 0_i64;
                         for (point, _) in cases {
-                            score +=
-                                plane_score(black_box(prepared.classify_point(black_box(point))));
+                            score += plane_score(black_box(classify_point_plane_with_evidence(
+                                black_box(point),
+                                plane,
+                                &evidence,
+                            )));
                         }
                         black_box(score)
                     });
@@ -1956,26 +1969,32 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
             },
         );
         if let Some((a, b, c, _)) = cases.first() {
-            let prepared = PreparedOrientedPlane3::new(a, b, c);
+            let evidence = oriented_plane3_evidence(a, b, c);
             trace_dispatch_cases(
                 format!(
-                    "classify_point_oriented_plane/{label}_prepared/{}",
+                    "classify_point_oriented_plane/{label}_evidence/{}",
                     workload.name()
                 ),
                 &cases,
                 |(_, _, _, point)| {
-                    black_box(plane_score(prepared.classify_point(point)));
+                    black_box(plane_score(classify_point_oriented_plane_with_evidence(
+                        point, &evidence,
+                    )));
                 },
             );
             group.bench_with_input(
-                BenchmarkId::new(format!("{label}_prepared"), workload.name()),
+                BenchmarkId::new(format!("{label}_evidence"), workload.name()),
                 &cases,
                 |b, cases| {
                     b.iter(|| {
                         let mut score = 0_i64;
                         for (_, _, _, point) in cases {
-                            score +=
-                                plane_score(black_box(prepared.classify_point(black_box(point))));
+                            score += plane_score(black_box(
+                                classify_point_oriented_plane_with_evidence(
+                                    black_box(point),
+                                    &evidence,
+                                ),
+                            ));
                         }
                         black_box(score)
                     });

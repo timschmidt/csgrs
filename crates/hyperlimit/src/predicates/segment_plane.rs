@@ -7,9 +7,9 @@
 //! combinatorics, and constructions preserve the arithmetic structure needed by
 //! later predicates.
 
-use crate::PreparedOrientedPlane3;
 use crate::classify::PlaneSide;
 use crate::geometry::{Plane3, Point3};
+use crate::oriented_plane3_evidence;
 use crate::predicates::order::compare_reals;
 use crate::predicates::orient::orient3d;
 use hyperreal::Real;
@@ -284,9 +284,9 @@ pub fn intersect_segment_with_oriented_plane(
         outcomes[1].value().map(PlaneSide::from),
     ];
 
-    let prepared = PreparedOrientedPlane3::new(a, b, c);
-    let d0 = point_plane_value(prepared.plane(), p0);
-    let d1 = point_plane_value(prepared.plane(), p1);
+    let evidence = oriented_plane3_evidence(a, b, c);
+    let d0 = point_plane_value(evidence.plane(), p0);
+    let d1 = point_plane_value(evidence.plane(), p1);
     intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides)
 }
 

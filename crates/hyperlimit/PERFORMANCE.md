@@ -145,10 +145,10 @@ classifier recomputed the two endpoint `orient3d` signs, so each retained vertex
 side was evaluated twice more. The Guigue--Devillers orientation decomposition
 supports carrying those signs forward: the implementation now keeps both
 three-element side arrays, passes each edge's certified endpoint pair into the
-unchanged segment/triangle tail, and reuses the already prepared supporting
+unchanged segment/triangle tail, and reuses the retained supporting
 plane for the exact crossing construction.
 
-The same prepared oriented-plane filters also replace a redundant second linear-
+The same retained oriented-plane filters also replace a redundant second linear-
 form preparation during the initial plane tests. Both coplanar and non-coplanar
 sentinels improved:
 
@@ -232,6 +232,34 @@ The transition improved slightly more than its same-run control in both cases.
 Construction also loses the unused per-plane allocation and structural-fact
 scan.
 
+### Replace prepared planes with immediate evidence
+
+`PreparedPlane3` mixed a borrowed source with coefficient facts and one
+certified filter, while its segment, triangle, and AABB methods merely
+forwarded to existing immediate functions. `PreparedOrientedPlane3` owned
+useful derived state but exposed it through the same lifecycle abstraction.
+They are replaced by `Plane3Evidence`, `OrientedPlane3Evidence`, evidence
+derivation functions, and immediate point classifiers. Non-point queries use
+their existing immediate APIs directly.
+
+Serialized 100-sample Criterion comparisons retained the old benchmark ids
+only for the paired gate:
+
+| Plane row | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| Explicit plane, easy batch | 13.767 us | 8.836 us | -35.82% |
+| Explicit plane, near-degenerate batch | 12.797 us | 7.420 us | -42.02% |
+| Oriented plane, easy batch | 19.980 us | 19.021 us | -4.80% |
+| Oriented plane, near-degenerate batch | 20.345 us | 19.359 us | -4.85% |
+| Explicit-plane evidence derivation | 798.89 ns | 816.58 ns | +2.21% |
+| Dyadic oriented-plane evidence derivation | 1.362 us | 1.369 us | +0.54% |
+| Rational oriented-plane evidence derivation | 1.660 us | 1.618 us | -2.53% |
+
+The immediate evidence classifiers are inline at cross-crate boundaries, which
+removes the former handle-call overhead. Criterion classified both positive
+derivation movements as within its noise threshold and found no regression.
+HyperBrep and HyperGraphics consumer gates are recorded in those crates.
+
 ## Rejected experiments
 
 ### Search short Farkas certificates before active sets
@@ -265,7 +293,7 @@ introduced.
 | Bareiss, integer-preserving elimination | Fraction-free cubic determinant evaluation with controlled intermediate growth. | Already used by the exact-rational `orient_d` and `insphere_d` paths. |
 | Bentley--Ottmann, geometric intersections | Event queue plus ordered sweep status gives output-sensitive batch segment intersection. | This crate supplies the exact segment predicates needed by a sweep. Arrangement/event ownership belongs in `hypercurve` or `hypertri`, not a per-pair predicate API. |
 | de Berg et al., *Computational Geometry* | Robust plane sweep, randomized low-dimensional LP, convex hull, point location, and ownership-aware planar subdivisions. | Confirms the separation between exact primitive decisions here and topology/data structures in higher crates. The randomized LP alternative is covered below. |
-| Ericson, *Real-Time Collision Detection* | Prepared bounding volumes, separating axes, early rejection, degeneracy handling, and robustness. | Prepared lines, planes, segments, circles, spheres, DOPs, and exact interval/SAT-style predicates already implement these principles without epsilon decisions. |
+| Ericson, *Real-Time Collision Detection* | Prepared bounding volumes, separating axes, early rejection, degeneracy handling, and robustness. | Explicit evidence for lines and planes, immediate segment/circle/sphere predicates, DOPs, and exact interval/SAT-style predicates implement these principles without epsilon decisions. |
 | Guigue--Devillers, triangle overlap | Boolean triangle overlap using orientation signs only, minimizing intermediate constructions and `orient3d` calls. | The public triangle/triangle report cannot adopt the paper's boolean-only output, but it now reuses the six initial vertex/plane signs across all edge reports, producing the 21.62% non-coplanar improvement above without discarding evidence. |
 | Gustavson, sparse matrix algorithms | Row-wise sparse multiplication through an unordered accumulator/merge. | Hyperlimit determinants are tiny dense matrices with structural sparse-coordinate schedules, not general SpGEMM. Introducing sparse matrix storage would add overhead at present dimensions. |
 | Hormann--Agathos, point in polygon | Half-open y-straddles, determinant-based crossings, integrated boundary handling, and cheap rejection before division. | Half-open straddles and exact orientation crossings were already present. Reusing the retained edge orientation produced the measured 20.41% improvement above. |
@@ -275,7 +303,7 @@ introduced.
 | Seidel, low-dimensional LP | Randomized incremental LP with recursive boundary subproblems and expected linear time for fixed dimension. | Current feasibility reports are deterministic and preserve exact witnesses or Farkas certificates. Seidel requires canonical lexicographic degeneracy handling and randomized scheduling; its paper also notes the implementation is not necessarily practical. No workload currently justifies replacing the exact active-set solver. |
 | Schrijver, linear/integer programming | Polyhedral feasibility, duality, and Farkas certificates. | Infeasible 3D halfspace reports search support sets of at most four planes and replay exact nonnegative multiplier certificates. The attempted certificate reschedule regressed and was removed. |
 | Shewchuk, adaptive robust predicates | Fast filters followed by exact/adaptive stages, with degeneracy decided exactly. | Dispatch tracing sends the standard 512-case easy and near-degenerate `orient2d`, `orient3d`, `incircle2d`, and `insphere3d` workloads through the certified Real filter with no fallback traffic. An additional expansion stage is not supported by current traces. |
-| Yap, exact geometric computation | Separate combinatorial decisions from numeric approximation and refine only when certification requires it. | `PredicateOutcome`, certainty/escalation metadata, prepared exact objects, and replayable reports follow this architecture throughout the crate. |
+| Yap, exact geometric computation | Separate combinatorial decisions from numeric approximation and refine only when certification requires it. | `PredicateOutcome`, certainty/escalation metadata, retained exact evidence, and replayable reports follow this architecture throughout the crate. |
 
 ## Trace evidence
 

@@ -13,7 +13,10 @@ use crate::classify::{
     TriangleTriangleIntersection,
 };
 use crate::geometry::Point3;
-use crate::geometry::plane::PreparedOrientedPlane3;
+use crate::geometry::plane::{
+    OrientedPlane3Evidence, classify_point_oriented_plane_with_evidence_and_policy,
+    oriented_plane3_evidence,
+};
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::coplanar::{
@@ -207,15 +210,15 @@ pub fn classify_triangle_triangle3_points_with_policy(
         });
     }
 
-    let left_plane = PreparedOrientedPlane3::new(left[0], left[1], left[2]);
-    let right_plane = PreparedOrientedPlane3::new(right[0], right[1], right[2]);
+    let left_plane = oriented_plane3_evidence(left[0], left[1], left[2]);
+    let right_plane = oriented_plane3_evidence(right[0], right[1], right[2]);
     let (right_against_left_plane, right_against_left_sides) =
-        match classify_triangle_against_prepared_plane(&left_plane, right, policy) {
+        match classify_triangle_against_plane_evidence(&left_plane, right, policy) {
             Ok(classification) => classification,
             Err(unknown) => return unknown,
         };
     let (left_against_right_plane, left_against_right_sides) =
-        match classify_triangle_against_prepared_plane(&right_plane, left, policy) {
+        match classify_triangle_against_plane_evidence(&right_plane, left, policy) {
             Ok(classification) => classification,
             Err(unknown) => return unknown,
         };
@@ -349,20 +352,21 @@ fn edge_against_triangle(
     }
 }
 
-fn classify_triangle_against_prepared_plane(
-    plane: &PreparedOrientedPlane3,
+fn classify_triangle_against_plane_evidence(
+    plane: &OrientedPlane3Evidence,
     triangle: [&Point3; 3],
     policy: PredicatePolicy,
 ) -> Result<(PlaneTriangleRelation, [PlaneSide; 3]), PredicateOutcome<TriangleTriangleClassification>>
 {
     let mut sides = [PlaneSide::On; 3];
     for (index, point) in triangle.into_iter().enumerate() {
-        sides[index] = match plane.classify_point_with_policy(point, policy) {
-            PredicateOutcome::Decided { value, .. } => value,
-            PredicateOutcome::Unknown { needed, stage } => {
-                return Err(PredicateOutcome::unknown(needed, stage));
-            }
-        };
+        sides[index] =
+            match classify_point_oriented_plane_with_evidence_and_policy(point, plane, policy) {
+                PredicateOutcome::Decided { value, .. } => value,
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return Err(PredicateOutcome::unknown(needed, stage));
+                }
+            };
     }
 
     let below = sides

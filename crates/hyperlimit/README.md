@@ -27,7 +27,7 @@ than inventing a float decision.
 
 - `Point2`, `Point3`, point facts, shared-scale point views, `HomogeneousPoint3`, and
   `HomogeneousLine3` are predicate-facing re-exports of lattice-owned object carriers.
-- `Plane3`, `Plane3Facts`, `PreparedPlane3`, and homogeneous plane-incidence helpers
+- `Plane3`, `Plane3Facts`, `Plane3Evidence`, and homogeneous plane-incidence helpers
   keep 3D sidedness and projective incidence under strict predicates.
 - `PredicateOutcome<T>`, `PredicateReport<T>`, `PredicateCertificate`, `Certainty`,
   `Escalation`, `PredicatePrecisionStage`, and `PredicateApiSemantics` describe what was
@@ -87,7 +87,7 @@ Version `0.4.0` is an early but usable predicate crate. It currently includes:
 
 - predicate-facing re-exports of lattice-owned `Point2`, `Point3`, shared-scale point
   facts, homogeneous points, and Pluecker lines;
-- `Plane3`, prepared plane facts, homogeneous point/plane incidence classification,
+- `Plane3`, retained plane evidence, homogeneous point/plane incidence classification,
   exact two-plane/three-plane intersection wrappers, and report-bearing
   plane/AABB support-extrema classification;
 - exact real and point ordering, squared-distance comparison, interval, AABB, segment,
