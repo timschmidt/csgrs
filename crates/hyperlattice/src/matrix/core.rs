@@ -532,7 +532,7 @@ pub struct Matrix3StructuralFacts {
     pub exact: ExactRealSetFacts,
     /// Union of scalar symbolic dependency families across all entries.
     ///
-    /// This gives matrix, transform, and prepared-divisor code a stable
+    /// This gives matrix, transform, and cached-divisor code a stable
     /// object-level scheduling fact for recognized symbolic constant families
     /// without exposing `Real`'s private representation or constructing a
     /// general expression graph. The abstraction boundary follows the
@@ -727,7 +727,7 @@ pub struct Matrix4StructuralFacts {
     ///
     /// This avoids the hidden generic equality checks that previously made
     /// adjacent diagonal paths less flat. Callers with symbolic uniform-scale
-    /// provenance should retain that fact at construction or in a prepared
+    /// provenance should retain that fact at construction or in a cached
     /// object instead.
     pub is_exact_rational_uniform_scale: bool,
     /// Whether all entries below the diagonal are structurally zero.
@@ -871,7 +871,7 @@ impl Matrix4StructuralFacts {
     ///
     /// This is the 4x4 analogue of
     /// [`Matrix3StructuralFacts::determinant_schedule_hint`]. It is suitable
-    /// for prepared transform and right-divisor handles, but final
+    /// for cached transform and right-divisor handles, but final
     /// singularity decisions must still inspect the exact determinant.
     pub fn determinant_schedule_hint(self) -> MatrixDeterminantScheduleHint {
         matrix_determinant_schedule_hint::<4>(
@@ -885,29 +885,29 @@ impl Matrix4StructuralFacts {
     }
 }
 
-/// Prepared handle for repeated use of a borrowed [`Matrix3`].
+/// Cached handle for repeated use of a borrowed [`Matrix3`].
 ///
 /// This is the matrix-level cache boundary for workloads that repeatedly ask
 /// for structural facts, determinant-derived inverses, reciprocals, or right
 /// division by the same 3x3 matrix. It deliberately reuses
-/// [`PreparedRightDivisor3`] internally so the existing adjugate and determinant
+/// [`RightDivisor3`] internally so the existing adjugate and determinant
 /// cache remains the single implementation of those exact kernels. This handle
 /// preserves object structure and moves preprocessing to a stable boundary for
 /// reusable 3x3 linear maps.
 #[derive(Debug, Clone)]
-pub struct PreparedMatrix3<'a> {
-    right_divisor: PreparedRightDivisor3<'a>,
+pub struct CachedMatrix3<'a> {
+    right_divisor: RightDivisor3<'a>,
 }
 
-/// Prepared handle for repeated use of a borrowed [`Matrix4`].
+/// Cached handle for repeated use of a borrowed [`Matrix4`].
 ///
-/// The 4x4 handle mirrors [`PreparedMatrix3`] and is aimed at transform stacks,
+/// The 4x4 handle mirrors [`CachedMatrix3`] and is aimed at transform stacks,
 /// projective geometry, and solver blocks that reuse one matrix across many
 /// exact operations. Cached structural facts stay at the matrix layer while
 /// scalar numerator/denominator storage remains owned by `hyperreal`.
 #[derive(Debug, Clone)]
-pub struct PreparedMatrix4<'a> {
-    right_divisor: PreparedRightDivisor4<'a>,
+pub struct CachedMatrix4<'a> {
+    right_divisor: RightDivisor4<'a>,
 }
 
 /// Cached structural and exact-structure metadata for repeated right-division
@@ -918,7 +918,7 @@ pub struct PreparedMatrix4<'a> {
 /// tuned to keep fast-path checks cheap and defer shared-scale inversion until
 /// the first call that benefits.
 #[derive(Debug, Clone)]
-pub struct PreparedRightDivisor3<'a> {
+pub struct RightDivisor3<'a> {
     divisor: &'a Matrix3,
     facts: Matrix3Facts,
     right_exact_rational_kind: ExactRationalKind,
@@ -932,12 +932,12 @@ pub struct PreparedRightDivisor3<'a> {
 /// Cached structural and exact-structure metadata for repeated right-division
 /// by the same 4×4 divisor.
 ///
-/// This mirrors `PreparedRightDivisor3` and additionally retains the fixed-
+/// This mirrors `RightDivisor3` and additionally retains the fixed-
 /// minor factors used by the existing cofactor inverse schedule. The extra
 /// cache lets repeated divisions skip recomputing `(s, c)` and the shared
 /// determinant path when it is beneficial.
 #[derive(Debug, Clone)]
-pub struct PreparedRightDivisor4<'a> {
+pub struct RightDivisor4<'a> {
     divisor: &'a Matrix4,
     facts: Matrix4Facts,
     right_exact_rational_kind: ExactRationalKind,
@@ -949,7 +949,7 @@ pub struct PreparedRightDivisor4<'a> {
     inverse: Option<Matrix4>,
 }
 
-/// Public cache-state summary for prepared matrix handles.
+/// Public cache-state summary for cached matrix handles.
 ///
 /// This type exposes cache availability without exposing cached determinant,
 /// reciprocal, factor, adjugate, or inverse storage. That keeps the
@@ -958,14 +958,14 @@ pub struct PreparedRightDivisor4<'a> {
 /// owns the cached arithmetic values. Structural work stays at stable geometric
 /// objects without leaking scalar representation details.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct MatrixPreparedCacheState {
+pub struct MatrixCacheState {
     /// Whether a determinant has been computed and retained.
     pub determinant: bool,
     /// Whether the reciprocal determinant has been computed and retained.
     pub reciprocal_determinant: bool,
     /// Whether 4x4 minor factors have been computed and retained.
     ///
-    /// This is always `false` for 3x3 prepared handles because their adjugate
+    /// This is always `false` for 3x3 cached handles because their adjugate
     /// path does not use a separate factor cache.
     pub minor_factors: bool,
     /// Whether an unscaled adjugate has been computed and retained.
@@ -974,7 +974,7 @@ pub struct MatrixPreparedCacheState {
     pub inverse: bool,
 }
 
-impl MatrixPreparedCacheState {
+impl MatrixCacheState {
     /// Return whether no expensive derived matrix cache is currently warm.
     pub const fn is_cold(self) -> bool {
         !self.determinant
@@ -1081,23 +1081,23 @@ fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactR
     kind
 }
 
-impl<'a> PreparedMatrix3<'a> {
-    /// Builds a reusable prepared handle for this matrix.
+impl<'a> CachedMatrix3<'a> {
+    /// Builds a reusable cached handle for this matrix.
     pub fn new(matrix: &'a Matrix3) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "prepared-matrix3-new");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix3-new");
         Self {
-            right_divisor: PreparedRightDivisor3::new(matrix),
+            right_divisor: RightDivisor3::new(matrix),
         }
     }
 
-    /// Borrows the prepared matrix.
+    /// Borrows the cached matrix.
     pub fn matrix(&self) -> &Matrix3 {
         self.right_divisor.divisor()
     }
 
-    /// Returns cached structural facts for the prepared matrix.
+    /// Returns cached structural facts for the cached matrix.
     ///
-    /// The facts are computed during preparation and then reused without
+    /// The facts are computed during cache construction and then reused without
     /// rescanning scalar entries. This follows the object-level exactness
     /// guidance: carry cheap geometric structure to the next algorithm choice
     /// instead of rediscovering it lane by lane.
@@ -1105,45 +1105,37 @@ impl<'a> PreparedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "query",
-            "prepared-matrix3-structural-facts"
+            "cached-matrix3-structural-facts"
         );
         self.right_divisor.facts.public
     }
 
     /// Returns cached exact-rational set facts for all entries.
     pub fn exact_facts(&self) -> ExactRealSetFacts {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "query",
-            "prepared-matrix3-exact-facts"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "query", "cached-matrix3-exact-facts");
         self.right_divisor.facts.exact
     }
 
-    /// Returns the retained determinant schedule hint for this prepared matrix.
+    /// Returns the retained determinant schedule hint for this cached matrix.
     pub fn determinant_schedule_hint(&self) -> MatrixDeterminantScheduleHint {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "query",
-            "prepared-matrix3-determinant-schedule"
+            "cached-matrix3-determinant-schedule"
         );
         self.right_divisor.determinant_schedule_hint()
     }
 
-    /// Return which determinant/adjugate caches are warm on this prepared
+    /// Return which determinant/adjugate caches are warm on this cached
     /// matrix.
-    pub fn cache_state(&self) -> MatrixPreparedCacheState {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "query",
-            "prepared-matrix3-cache-state"
-        );
+    pub fn cache_state(&self) -> MatrixCacheState {
+        crate::trace_dispatch!("hyperlattice_matrix", "query", "cached-matrix3-cache-state");
         self.right_divisor.cache_state()
     }
 
-    /// Returns the determinant using the prepared determinant cache.
+    /// Returns the determinant using the cached determinant cache.
     ///
-    /// This keeps determinant reuse on the prepared matrix object instead of
+    /// This keeps determinant reuse on the cached matrix object instead of
     /// asking callers to remember whether an inverse or right-division already
     /// materialized the determinant. The cache boundary follows the
     /// object-package guidance: retain exact facts and derived certificates at
@@ -1153,74 +1145,74 @@ impl<'a> PreparedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-determinant"
+            "cached-matrix3-determinant"
         );
         self.right_divisor.determinant()
     }
 
-    /// Returns a mutable prepared right-divisor view of the same matrix.
+    /// Returns a mutable cached right-divisor view of the same matrix.
     ///
     /// This exposes the existing repeated right-division cache without building
     /// a second handle. The method is mutable because right division may cache
     /// determinant, reciprocal, and adjugate data.
-    pub fn right_divisor(&mut self) -> &mut PreparedRightDivisor3<'a> {
+    pub fn right_divisor(&mut self) -> &mut RightDivisor3<'a> {
         &mut self.right_divisor
     }
 
-    /// Returns a retained transform handle using this prepared matrix's cached
+    /// Returns a retained transform handle using this cached matrix's cached
     /// structural facts.
     ///
-    /// This is the transform-side counterpart to [`PreparedMatrix3::inverse`]
-    /// and [`PreparedMatrix3::divide_left`]: geometry code that already keeps a
-    /// prepared matrix can reuse the same object-fact scan for repeated vector
+    /// This is the transform-side counterpart to [`CachedMatrix3::inverse`]
+    /// and [`CachedMatrix3::divide_left`]: geometry code that already keeps a
+    /// cached matrix can reuse the same object-fact scan for repeated vector
     /// transforms instead of constructing a separate transform handle. Facts
     /// stay on the reusable geometric object and select arithmetic kernels.
     pub fn transform_vec3_handle(&self) -> TransformedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-transform-handle"
+            "cached-matrix3-transform-handle"
         );
         TransformedMatrix3::new_with_facts(self.right_divisor.divisor, self.right_divisor.facts)
     }
 
-    /// Transforms one 3D vector using cached prepared-matrix facts.
+    /// Transforms one 3D vector using cached matrix facts.
     pub fn transform_vector(&self, rhs: &Vector3) -> Vector3 {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-transform-vector"
+            "cached-matrix3-transform-vector"
         );
         self.transform_vec3_handle().transform_vector(rhs)
     }
 
-    /// Transforms a batch of 3D vectors using cached prepared-matrix facts.
+    /// Transforms a batch of 3D vectors using cached matrix facts.
     pub fn transform_vector_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-transform-vector-batch"
+            "cached-matrix3-transform-vector-batch"
         );
         self.transform_vec3_handle().transform_vector_batch(rhs)
     }
 
-    /// Returns the inverse using the prepared determinant/adjugate cache.
+    /// Returns the inverse using the cached determinant/adjugate cache.
     pub fn inverse(&mut self) -> BlasResult<Matrix3> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "prepared-matrix3-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix3-inverse");
         self.right_divisor.inverse()
     }
 
-    /// Checked inverse using the prepared determinant/adjugate cache.
+    /// Checked inverse using the cached determinant/adjugate cache.
     pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-inverse-checked"
+            "cached-matrix3-inverse-checked"
         );
         self.right_divisor.inverse_checked()
     }
 
-    /// Abort-aware checked inverse using the prepared determinant/adjugate cache.
+    /// Abort-aware checked inverse using the cached determinant/adjugate cache.
     pub fn inverse_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1228,32 +1220,28 @@ impl<'a> PreparedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-inverse-checked-abort"
+            "cached-matrix3-inverse-checked-abort"
         );
         self.right_divisor.inverse_checked_with_abort(signal)
     }
 
-    /// Reciprocal matrix using the prepared inverse cache.
+    /// Reciprocal matrix using the cached inverse cache.
     pub fn reciprocal(&mut self) -> BlasResult<Matrix3> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "prepared-matrix3-reciprocal"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix3-reciprocal");
         self.right_divisor.reciprocal()
     }
 
-    /// Checked reciprocal matrix using the prepared inverse cache.
+    /// Checked reciprocal matrix using the cached inverse cache.
     pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-reciprocal-checked"
+            "cached-matrix3-reciprocal-checked"
         );
         self.right_divisor.reciprocal_checked()
     }
 
-    /// Abort-aware checked reciprocal matrix using the prepared inverse cache.
+    /// Abort-aware checked reciprocal matrix using the cached inverse cache.
     pub fn reciprocal_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1261,32 +1249,32 @@ impl<'a> PreparedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-reciprocal-checked-abort"
+            "cached-matrix3-reciprocal-checked-abort"
         );
         self.right_divisor.reciprocal_checked_with_abort(signal)
     }
 
-    /// Divides `left` by the prepared matrix.
+    /// Divides `left` by the cached matrix.
     pub fn divide_left(&mut self, left: Matrix3) -> BlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-divide-left"
+            "cached-matrix3-divide-left"
         );
         Ok(Matrix3(self.right_divisor.divide(left.0)?))
     }
 
-    /// Checked right-division of `left` by the prepared matrix.
+    /// Checked right-division of `left` by the cached matrix.
     pub fn divide_left_checked(&mut self, left: Matrix3) -> CheckedBlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-divide-left-checked"
+            "cached-matrix3-divide-left-checked"
         );
         Ok(Matrix3(self.right_divisor.divide_checked(left.0)?))
     }
 
-    /// Abort-aware checked right-division of `left` by the prepared matrix.
+    /// Abort-aware checked right-division of `left` by the cached matrix.
     pub fn divide_left_checked_with_abort(
         &mut self,
         left: Matrix3,
@@ -1295,7 +1283,7 @@ impl<'a> PreparedMatrix3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix3-divide-left-checked-abort"
+            "cached-matrix3-divide-left-checked-abort"
         );
         Ok(Matrix3(
             self.right_divisor
@@ -1304,21 +1292,21 @@ impl<'a> PreparedMatrix3<'a> {
     }
 }
 
-impl<'a> PreparedMatrix4<'a> {
-    /// Builds a reusable prepared handle for this matrix.
+impl<'a> CachedMatrix4<'a> {
+    /// Builds a reusable cached handle for this matrix.
     pub fn new(matrix: &'a Matrix4) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "prepared-matrix4-new");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix4-new");
         Self {
-            right_divisor: PreparedRightDivisor4::new(matrix),
+            right_divisor: RightDivisor4::new(matrix),
         }
     }
 
-    /// Borrows the prepared matrix.
+    /// Borrows the cached matrix.
     pub fn matrix(&self) -> &Matrix4 {
         self.right_divisor.divisor()
     }
 
-    /// Returns cached structural facts for the prepared matrix.
+    /// Returns cached structural facts for the cached matrix.
     ///
     /// These facts include homogeneous affine and direction shortcuts, so
     /// transform-heavy callers can select exact fast paths from one retained
@@ -1328,65 +1316,57 @@ impl<'a> PreparedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "query",
-            "prepared-matrix4-structural-facts"
+            "cached-matrix4-structural-facts"
         );
         self.right_divisor.facts.public
     }
 
     /// Returns cached exact-rational set facts for all entries.
     pub fn exact_facts(&self) -> ExactRealSetFacts {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "query",
-            "prepared-matrix4-exact-facts"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "query", "cached-matrix4-exact-facts");
         self.right_divisor.facts.exact
     }
 
-    /// Returns the retained determinant schedule hint for this prepared matrix.
+    /// Returns the retained determinant schedule hint for this cached matrix.
     pub fn determinant_schedule_hint(&self) -> MatrixDeterminantScheduleHint {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "query",
-            "prepared-matrix4-determinant-schedule"
+            "cached-matrix4-determinant-schedule"
         );
         self.right_divisor.determinant_schedule_hint()
     }
 
     /// Return which determinant/factor/adjugate caches are warm on this
-    /// prepared matrix.
-    pub fn cache_state(&self) -> MatrixPreparedCacheState {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "query",
-            "prepared-matrix4-cache-state"
-        );
+    /// cached matrix.
+    pub fn cache_state(&self) -> MatrixCacheState {
+        crate::trace_dispatch!("hyperlattice_matrix", "query", "cached-matrix4-cache-state");
         self.right_divisor.cache_state()
     }
 
-    /// Returns the determinant using the prepared determinant/factor cache.
+    /// Returns the determinant using the cached determinant/factor cache.
     ///
     /// For 4x4 matrices this may reuse the same fixed minor factors used by the
-    /// prepared adjugate path, keeping determinant, inverse, and right-division
+    /// cached adjugate path, keeping determinant, inverse, and right-division
     /// workloads on one cached object boundary.
     pub fn determinant(&mut self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-determinant"
+            "cached-matrix4-determinant"
         );
         self.right_divisor.determinant()
     }
 
-    /// Returns a mutable prepared right-divisor view of the same matrix.
-    pub fn right_divisor(&mut self) -> &mut PreparedRightDivisor4<'a> {
+    /// Returns a mutable cached right-divisor view of the same matrix.
+    pub fn right_divisor(&mut self) -> &mut RightDivisor4<'a> {
         &mut self.right_divisor
     }
 
-    /// Returns a retained transform handle using this prepared matrix's cached
+    /// Returns a retained transform handle using this cached matrix's cached
     /// structural facts.
     ///
-    /// Reusing the same prepared object for matrix-vector transforms,
+    /// Reusing the same cached object for matrix-vector transforms,
     /// determinant queries, inverse construction, and right division keeps
     /// affine/homogeneous facts in one semantic cache. The arithmetic kernels
     /// remain owned by the retained transform handle; this method only prevents
@@ -1396,61 +1376,61 @@ impl<'a> PreparedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-handle"
+            "cached-matrix4-transform-handle"
         );
         TransformedMatrix4::new_with_facts(self.right_divisor.divisor, self.right_divisor.facts)
     }
 
-    /// Transforms one 4D homogeneous vector using cached prepared-matrix facts.
+    /// Transforms one 4D homogeneous vector using cached matrix facts.
     pub fn transform_vector(&self, rhs: &Vector4) -> Vector4 {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-vector"
+            "cached-matrix4-transform-vector"
         );
         self.transform_vec4_handle().transform_vector(rhs)
     }
 
-    /// Transforms a batch of 4D homogeneous vectors using cached prepared-matrix
+    /// Transforms a batch of 4D homogeneous vectors using cached matrix
     /// facts.
     pub fn transform_vector_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-vector-batch"
+            "cached-matrix4-transform-vector-batch"
         );
         self.transform_vec4_handle().transform_vector_batch(rhs)
     }
 
     /// Transforms one caller-certified homogeneous direction (`w = 0`) using
-    /// cached prepared-matrix facts.
+    /// cached matrix facts.
     pub fn transform_direction_vector(&self, rhs: &Vector4) -> Vector4 {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-direction-vector"
+            "cached-matrix4-transform-direction-vector"
         );
         self.transform_vec4_handle().transform_direction_vector(rhs)
     }
 
     /// Transforms a batch of caller-certified homogeneous directions (`w = 0`)
-    /// using cached prepared-matrix facts.
+    /// using cached matrix facts.
     pub fn transform_direction_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-direction-batch"
+            "cached-matrix4-transform-direction-batch"
         );
         self.transform_vec4_handle().transform_direction_batch(rhs)
     }
 
     /// Transforms one caller-certified homogeneous point (`w = 1`) using cached
-    /// prepared-matrix facts.
+    /// cached matrix facts.
     pub fn transform_point_vector(&self, rhs: &Vector4) -> Vector4 {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-point-vector"
+            "cached-matrix4-transform-point-vector"
         );
         self.transform_vec4_handle().transform_point_vector(rhs)
     }
@@ -1488,33 +1468,33 @@ impl<'a> PreparedMatrix4<'a> {
     }
 
     /// Transforms a batch of caller-certified homogeneous points (`w = 1`) using
-    /// cached prepared-matrix facts.
+    /// cached matrix facts.
     pub fn transform_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-transform-point-batch"
+            "cached-matrix4-transform-point-batch"
         );
         self.transform_vec4_handle().transform_point_batch(rhs)
     }
 
-    /// Returns the inverse using the prepared determinant/adjugate cache.
+    /// Returns the inverse using the cached determinant/adjugate cache.
     pub fn inverse(&mut self) -> BlasResult<Matrix4> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "prepared-matrix4-inverse");
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix4-inverse");
         self.right_divisor.inverse()
     }
 
-    /// Checked inverse using the prepared determinant/adjugate cache.
+    /// Checked inverse using the cached determinant/adjugate cache.
     pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-inverse-checked"
+            "cached-matrix4-inverse-checked"
         );
         self.right_divisor.inverse_checked()
     }
 
-    /// Abort-aware checked inverse using the prepared determinant/adjugate cache.
+    /// Abort-aware checked inverse using the cached determinant/adjugate cache.
     pub fn inverse_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1522,32 +1502,28 @@ impl<'a> PreparedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-inverse-checked-abort"
+            "cached-matrix4-inverse-checked-abort"
         );
         self.right_divisor.inverse_checked_with_abort(signal)
     }
 
-    /// Reciprocal matrix using the prepared inverse cache.
+    /// Reciprocal matrix using the cached inverse cache.
     pub fn reciprocal(&mut self) -> BlasResult<Matrix4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "prepared-matrix4-reciprocal"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-matrix4-reciprocal");
         self.right_divisor.reciprocal()
     }
 
-    /// Checked reciprocal matrix using the prepared inverse cache.
+    /// Checked reciprocal matrix using the cached inverse cache.
     pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-reciprocal-checked"
+            "cached-matrix4-reciprocal-checked"
         );
         self.right_divisor.reciprocal_checked()
     }
 
-    /// Abort-aware checked reciprocal matrix using the prepared inverse cache.
+    /// Abort-aware checked reciprocal matrix using the cached inverse cache.
     pub fn reciprocal_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1555,48 +1531,48 @@ impl<'a> PreparedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-reciprocal-checked-abort"
+            "cached-matrix4-reciprocal-checked-abort"
         );
         self.right_divisor.reciprocal_checked_with_abort(signal)
     }
 
-    /// Divides `left` by the prepared matrix.
+    /// Divides `left` by the cached matrix.
     pub fn divide_left(&mut self, left: Matrix4) -> BlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-divide-left"
+            "cached-matrix4-divide-left"
         );
         Ok(Matrix4(self.right_divisor.divide(left.0)?))
     }
 
-    /// Divides a caller-certified exact-rational `left` by the prepared matrix.
+    /// Divides a caller-certified exact-rational `left` by the cached matrix.
     ///
     /// This retains the existing exact-rational-left optimization exposed by
-    /// [`Matrix4::div_exact_rational_matrix_with_prepared`] while placing it on
-    /// the broader prepared-matrix handle.
+    /// [`Matrix4::div_exact_rational_matrix_with_divisor`] while placing it on
+    /// the broader cached-matrix handle.
     pub fn divide_exact_rational_left(&mut self, left: Matrix4) -> BlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-divide-exact-rational-left"
+            "cached-matrix4-divide-exact-rational-left"
         );
         Ok(Matrix4(
             self.right_divisor.divide_exact_rational_left(left.0)?,
         ))
     }
 
-    /// Checked right-division of `left` by the prepared matrix.
+    /// Checked right-division of `left` by the cached matrix.
     pub fn divide_left_checked(&mut self, left: Matrix4) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-divide-left-checked"
+            "cached-matrix4-divide-left-checked"
         );
         Ok(Matrix4(self.right_divisor.divide_checked(left.0)?))
     }
 
-    /// Abort-aware checked right-division of `left` by the prepared matrix.
+    /// Abort-aware checked right-division of `left` by the cached matrix.
     pub fn divide_left_checked_with_abort(
         &mut self,
         left: Matrix4,
@@ -1605,7 +1581,7 @@ impl<'a> PreparedMatrix4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-matrix4-divide-left-checked-abort"
+            "cached-matrix4-divide-left-checked-abort"
         );
         Ok(Matrix4(
             self.right_divisor
@@ -1614,14 +1590,10 @@ impl<'a> PreparedMatrix4<'a> {
     }
 }
 
-impl<'a> PreparedRightDivisor3<'a> {
+impl<'a> RightDivisor3<'a> {
     /// Build a reusable cache for repeated right-division against this divisor.
     pub fn new(divisor: &'a Matrix3) -> Self {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "prepared-right-divisor3-new"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-right-divisor3-new");
         let facts = matrix3_facts(&divisor.0);
         let right_exact_rational_kind = matrix3_exact_rational_kind(&divisor.0);
         Self {
@@ -1645,14 +1617,14 @@ impl<'a> PreparedRightDivisor3<'a> {
         self.divisor
     }
 
-    /// Returns cached structural facts for the prepared divisor.
+    /// Returns cached structural facts for the cached divisor.
     pub fn structural_facts(&self) -> Matrix3StructuralFacts {
         self.facts.public
     }
 
-    /// Returns the retained determinant schedule hint for this prepared divisor.
+    /// Returns the retained determinant schedule hint for this cached divisor.
     ///
-    /// The hint is computed from cached facts gathered at preparation time, so
+    /// The hint is computed from facts gathered at cache construction, so
     /// repeated solve and inverse code can choose a determinant route without
     /// rescanning scalar entries. The hint remains advisory; exact determinant
     /// evaluation and checked inverse paths still decide singularity.
@@ -1660,13 +1632,13 @@ impl<'a> PreparedRightDivisor3<'a> {
         self.facts.public.determinant_schedule_hint()
     }
 
-    /// Return which determinant/adjugate caches are warm on this prepared
+    /// Return which determinant/adjugate caches are warm on this cached
     /// divisor.
     ///
     /// The returned summary is diagnostic scheduling metadata only. Missing
     /// cache entries must affect performance, not exact algebra semantics.
-    pub fn cache_state(&self) -> MatrixPreparedCacheState {
-        MatrixPreparedCacheState {
+    pub fn cache_state(&self) -> MatrixCacheState {
+        MatrixCacheState {
             determinant: self.determinant.is_some(),
             reciprocal_determinant: self.reciprocal_determinant.is_some(),
             minor_factors: false,
@@ -1675,7 +1647,7 @@ impl<'a> PreparedRightDivisor3<'a> {
         }
     }
 
-    /// Returns the determinant of the prepared divisor.
+    /// Returns the determinant of the cached divisor.
     ///
     /// The first call computes and stores the determinant. Later calls, and any
     /// inverse or shared-adjugate path that has already computed it, reuse the
@@ -1686,13 +1658,13 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-determinant"
+            "cached-right-divisor3-determinant"
         );
         if let Some(determinant) = &self.determinant {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-determinant-cache-hit"
+                "cached-right-divisor3-determinant-cache-hit"
             );
             return determinant.clone();
         }
@@ -1717,12 +1689,12 @@ impl<'a> PreparedRightDivisor3<'a> {
         }
     }
 
-    fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Real; 3]; 3]> {
+    fn ensure_shared_adjugate(&mut self) -> BlasResult<&[[Real; 3]; 3]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-cache-shared-adjugate"
+                "cached-right-divisor3-cache-shared-adjugate"
             );
             let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
             let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
@@ -1747,12 +1719,12 @@ impl<'a> PreparedRightDivisor3<'a> {
             .expect("adjugate cache must be present"))
     }
 
-    fn prepare_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Real; 3]; 3]> {
+    fn ensure_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Real; 3]; 3]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-cache-shared-adjugate-checked"
+                "cached-right-divisor3-cache-shared-adjugate-checked"
             );
             let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
             let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
@@ -1778,7 +1750,7 @@ impl<'a> PreparedRightDivisor3<'a> {
             .expect("adjugate cache must be present"))
     }
 
-    fn prepare_shared_adjugate_checked_with_abort(
+    fn ensure_shared_adjugate_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
     ) -> CheckedBlasResult<&[[Real; 3]; 3]> {
@@ -1786,7 +1758,7 @@ impl<'a> PreparedRightDivisor3<'a> {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-cache-shared-adjugate-checked-abort"
+                "cached-right-divisor3-cache-shared-adjugate-checked-abort"
             );
             let known_rational = self.right_exact_rational_kind == ExactRationalKind::ExactRational;
             let (adjugate, determinant) = if self.is_definitely_dense_for_inverse && known_rational
@@ -1807,7 +1779,7 @@ impl<'a> PreparedRightDivisor3<'a> {
             // Keep the shared determinant cache exact for future abort-aware or
             // checked calls; this aligns with the repeated-object reuse
             // guidance by avoiding unnecessary recomputation on subsequent
-            // prepared-path uses.
+            // cached-path uses.
             self.determinant = Some(determinant);
             self.reciprocal_determinant = Some(reciprocal_determinant);
         }
@@ -1828,9 +1800,9 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-divide"
+            "cached-right-divisor3-divide"
         );
-        right_divide_matrix3_prepared(left, self)
+        right_divide_matrix3_cached(left, self)
     }
 
     /// Divides with checked zero-determinant behavior using cached factors.
@@ -1842,9 +1814,9 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-divide-checked"
+            "cached-right-divisor3-divide-checked"
         );
-        right_divide_matrix3_prepared_checked(left, self)
+        right_divide_matrix3_cached_checked(left, self)
     }
 
     /// Divides with checked abort-aware semantics using cached factors.
@@ -1860,28 +1832,28 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-divide-checked-abort"
+            "cached-right-divisor3-divide-checked-abort"
         );
-        right_divide_matrix3_prepared_checked_with_abort(left, self, signal)
+        right_divide_matrix3_cached_checked_with_abort(left, self, signal)
     }
 
-    /// Returns the inverse of the prepared divisor using its cached adjugate
+    /// Returns the inverse of the cached divisor using its cached adjugate
     /// and reciprocal determinant.
     pub fn inverse(&mut self) -> BlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-inverse"
+            "cached-right-divisor3-inverse"
         );
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-inverse-cache-hit"
+                "cached-right-divisor3-inverse-cache-hit"
             );
             return Ok(inverse.clone());
         }
-        let _ = self.prepare_shared_adjugate()?;
+        let _ = self.ensure_shared_adjugate()?;
         let inv_det = self
             .reciprocal_determinant
             .as_ref()
@@ -1896,19 +1868,19 @@ impl<'a> PreparedRightDivisor3<'a> {
         Ok(inverse)
     }
 
-    /// Checked inverse of the prepared divisor using cached factors.
+    /// Checked inverse of the cached divisor using cached factors.
     pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-inverse-checked"
+            "cached-right-divisor3-inverse-checked"
         );
-        let _ = self.prepare_shared_adjugate_checked()?;
+        let _ = self.ensure_shared_adjugate_checked()?;
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-inverse-checked-cache-hit"
+                "cached-right-divisor3-inverse-checked-cache-hit"
             );
             return Ok(inverse.clone());
         }
@@ -1926,7 +1898,7 @@ impl<'a> PreparedRightDivisor3<'a> {
         Ok(inverse)
     }
 
-    /// Abort-aware checked inverse of the prepared divisor using cached factors.
+    /// Abort-aware checked inverse of the cached divisor using cached factors.
     pub fn inverse_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1934,14 +1906,14 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-inverse-checked-abort"
+            "cached-right-divisor3-inverse-checked-abort"
         );
-        let _ = self.prepare_shared_adjugate_checked_with_abort(signal)?;
+        let _ = self.ensure_shared_adjugate_checked_with_abort(signal)?;
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor3-inverse-checked-abort-cache-hit"
+                "cached-right-divisor3-inverse-checked-abort-cache-hit"
             );
             return Ok(inverse.clone());
         }
@@ -1959,27 +1931,27 @@ impl<'a> PreparedRightDivisor3<'a> {
         Ok(inverse)
     }
 
-    /// Returns the reciprocal matrix of the prepared divisor.
+    /// Returns the reciprocal matrix of the cached divisor.
     pub fn reciprocal(&mut self) -> BlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-reciprocal"
+            "cached-right-divisor3-reciprocal"
         );
         self.inverse()
     }
 
-    /// Checked reciprocal matrix of the prepared divisor.
+    /// Checked reciprocal matrix of the cached divisor.
     pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix3> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-reciprocal-checked"
+            "cached-right-divisor3-reciprocal-checked"
         );
         self.inverse_checked()
     }
 
-    /// Abort-aware checked reciprocal matrix of the prepared divisor.
+    /// Abort-aware checked reciprocal matrix of the cached divisor.
     pub fn reciprocal_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -1987,20 +1959,16 @@ impl<'a> PreparedRightDivisor3<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor3-reciprocal-checked-abort"
+            "cached-right-divisor3-reciprocal-checked-abort"
         );
         self.inverse_checked_with_abort(signal)
     }
 }
 
-impl<'a> PreparedRightDivisor4<'a> {
+impl<'a> RightDivisor4<'a> {
     /// Build a reusable cache for repeated right-division against this divisor.
     pub fn new(divisor: &'a Matrix4) -> Self {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "prepared-right-divisor4-new"
-        );
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "cached-right-divisor4-new");
         let facts = matrix4_facts(&divisor.0);
         let right_exact_rational_kind = matrix4_exact_rational_kind(&divisor.0);
         Self {
@@ -2024,27 +1992,27 @@ impl<'a> PreparedRightDivisor4<'a> {
         self.divisor
     }
 
-    /// Returns cached structural facts for the prepared divisor.
+    /// Returns cached structural facts for the cached divisor.
     pub fn structural_facts(&self) -> Matrix4StructuralFacts {
         self.facts.public
     }
 
-    /// Returns the retained determinant schedule hint for this prepared divisor.
+    /// Returns the retained determinant schedule hint for this cached divisor.
     ///
-    /// This mirrors [`PreparedRightDivisor3::determinant_schedule_hint`] for
+    /// This mirrors [`RightDivisor3::determinant_schedule_hint`] for
     /// transform-heavy 4x4 workloads.
     pub fn determinant_schedule_hint(&self) -> MatrixDeterminantScheduleHint {
         self.facts.public.determinant_schedule_hint()
     }
 
     /// Return which determinant/factor/adjugate caches are warm on this
-    /// prepared divisor.
+    /// cached divisor.
     ///
     /// The factor flag exposes only availability of the retained fixed-minor
     /// package, not the factors themselves. This keeps exact scalar storage and
     /// cofactor layouts private to the matrix kernel.
-    pub fn cache_state(&self) -> MatrixPreparedCacheState {
-        MatrixPreparedCacheState {
+    pub fn cache_state(&self) -> MatrixCacheState {
+        MatrixCacheState {
             determinant: self.determinant.is_some(),
             reciprocal_determinant: self.reciprocal_determinant.is_some(),
             minor_factors: self.factors.is_some(),
@@ -2053,22 +2021,22 @@ impl<'a> PreparedRightDivisor4<'a> {
         }
     }
 
-    /// Returns the determinant of the prepared divisor.
+    /// Returns the determinant of the cached divisor.
     ///
     /// The 4x4 determinant uses the same cached six-minor factorization as the
-    /// prepared shared-adjugate path when available. Derive expensive exact
+    /// cached shared-adjugate path when available. Derive expensive exact
     /// structure once, then reuse it for the kernels that need it.
     pub fn determinant(&mut self) -> Real {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-determinant"
+            "cached-right-divisor4-determinant"
         );
         if let Some(determinant) = &self.determinant {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-determinant-cache-hit"
+                "cached-right-divisor4-determinant-cache-hit"
             );
             return determinant.clone();
         }
@@ -2098,7 +2066,7 @@ impl<'a> PreparedRightDivisor4<'a> {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "prepared-right-divisor4-exact-right-skip-left-kind"
+                "cached-right-divisor4-exact-right-skip-left-kind"
             );
             return true;
         }
@@ -2118,17 +2086,17 @@ impl<'a> PreparedRightDivisor4<'a> {
         }
     }
 
-    fn prepare_shared_adjugate(&mut self) -> BlasResult<&[[Real; 4]; 4]> {
+    fn ensure_shared_adjugate(&mut self) -> BlasResult<&[[Real; 4]; 4]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-cache-shared-adjugate"
+                "cached-right-divisor4-cache-shared-adjugate"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
             let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
-                // Cache the six fixed 4×4 minors once for all prepared
+                // Cache the six fixed 4×4 minors once for all cached
                 // applications. Reusing the same cache lets repeated
                 // right-divisions avoid re-materializing minors while still
                 // delaying scalar canonicalization until the final shared
@@ -2168,17 +2136,17 @@ impl<'a> PreparedRightDivisor4<'a> {
             .expect("adjugate cache must be present"))
     }
 
-    fn prepare_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Real; 4]; 4]> {
+    fn ensure_shared_adjugate_checked(&mut self) -> CheckedBlasResult<&[[Real; 4]; 4]> {
         if self.adjugate.is_none() {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-cache-shared-adjugate-checked"
+                "cached-right-divisor4-cache-shared-adjugate-checked"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
             let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
-                // Keep the cached factors in the prepared handle so checked and
+                // Keep the cached factors in the cached handle so checked and
                 // abort-aware division variants can share the exact same
                 // structural work in each pass. This is a direct application
                 // of object-level reuse for repeated geometry
@@ -2219,7 +2187,7 @@ impl<'a> PreparedRightDivisor4<'a> {
             .expect("adjugate cache must be present"))
     }
 
-    fn prepare_shared_adjugate_checked_with_abort(
+    fn ensure_shared_adjugate_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
     ) -> CheckedBlasResult<&[[Real; 4]; 4]> {
@@ -2227,13 +2195,13 @@ impl<'a> PreparedRightDivisor4<'a> {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-cache-shared-adjugate-checked-abort"
+                "cached-right-divisor4-cache-shared-adjugate-checked-abort"
             );
             let dense_exact = self.is_definitely_dense_for_inverse;
             let known_rational = self.right_exact_rational_kind != ExactRationalKind::NonRational;
             let factors = self.factors.get_or_insert_with(|| {
                 // Keep this branch aligned with the checked variant so only one
-                // factorization runs for a prepared divisor, then every abort-aware
+                // factorization runs for a cached divisor, then every abort-aware
                 // caller shares that cache.
                 if dense_exact && known_rational {
                     matrix4_factors_dense_exact_known_rational(&self.divisor.0)
@@ -2285,16 +2253,16 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-divide"
+            "cached-right-divisor4-divide"
         );
-        right_divide_matrix4_prepared(left, self)
+        right_divide_matrix4_cached(left, self)
     }
 
-    /// Divides a caller-certified exact-rational left operand by this prepared
+    /// Divides a caller-certified exact-rational left operand by this cached
     /// divisor.
     ///
     /// This is intentionally an explicit API: generic callers still use
-    /// [`PreparedRightDivisor4::divide`], while solver/geometry code that
+    /// [`RightDivisor4::divide`], while solver/geometry code that
     /// already carries an exact-rational matrix certificate can avoid rescanning
     /// the left matrix before selecting the known-rational multiply schedule.
     pub fn divide_exact_rational_left(
@@ -2304,9 +2272,9 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-divide-exact-rational-left"
+            "cached-right-divisor4-divide-exact-rational-left"
         );
-        right_divide_matrix4_prepared_exact_rational_left(left, self)
+        right_divide_matrix4_cached_exact_rational_left(left, self)
     }
 
     /// Divides with checked zero-determinant behavior using cached factors.
@@ -2318,9 +2286,9 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-divide-checked"
+            "cached-right-divisor4-divide-checked"
         );
-        right_divide_matrix4_prepared_checked(left, self)
+        right_divide_matrix4_cached_checked(left, self)
     }
 
     /// Divides with checked abort-aware semantics using cached factors.
@@ -2336,31 +2304,31 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-divide-checked-abort"
+            "cached-right-divisor4-divide-checked-abort"
         );
-        right_divide_matrix4_prepared_checked_with_abort(left, self, signal)
+        right_divide_matrix4_cached_checked_with_abort(left, self, signal)
     }
 
-    /// Returns the inverse of the prepared divisor using its cached adjugate
+    /// Returns the inverse of the cached divisor using its cached adjugate
     /// and reciprocal determinant.
     ///
-    /// This exposes the same object-level cache used by prepared right-division
+    /// This exposes the same object-level cache used by cached right-division
     /// to callers that repeatedly need the inverse matrix itself.
     pub fn inverse(&mut self) -> BlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-inverse"
+            "cached-right-divisor4-inverse"
         );
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-inverse-cache-hit"
+                "cached-right-divisor4-inverse-cache-hit"
             );
             return Ok(inverse.clone());
         }
-        let _ = self.prepare_shared_adjugate()?;
+        let _ = self.ensure_shared_adjugate()?;
         let inv_det = self
             .reciprocal_determinant
             .as_ref()
@@ -2375,19 +2343,19 @@ impl<'a> PreparedRightDivisor4<'a> {
         Ok(inverse)
     }
 
-    /// Checked inverse of the prepared divisor using cached factors.
+    /// Checked inverse of the cached divisor using cached factors.
     pub fn inverse_checked(&mut self) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-inverse-checked"
+            "cached-right-divisor4-inverse-checked"
         );
-        let _ = self.prepare_shared_adjugate_checked()?;
+        let _ = self.ensure_shared_adjugate_checked()?;
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-inverse-checked-cache-hit"
+                "cached-right-divisor4-inverse-checked-cache-hit"
             );
             return Ok(inverse.clone());
         }
@@ -2405,7 +2373,7 @@ impl<'a> PreparedRightDivisor4<'a> {
         Ok(inverse)
     }
 
-    /// Abort-aware checked inverse of the prepared divisor using cached factors.
+    /// Abort-aware checked inverse of the cached divisor using cached factors.
     pub fn inverse_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -2413,14 +2381,14 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-inverse-checked-abort"
+            "cached-right-divisor4-inverse-checked-abort"
         );
-        let _ = self.prepare_shared_adjugate_checked_with_abort(signal)?;
+        let _ = self.ensure_shared_adjugate_checked_with_abort(signal)?;
         if let Some(inverse) = &self.inverse {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "method",
-                "prepared-right-divisor4-inverse-checked-abort-cache-hit"
+                "cached-right-divisor4-inverse-checked-abort-cache-hit"
             );
             return Ok(inverse.clone());
         }
@@ -2438,32 +2406,32 @@ impl<'a> PreparedRightDivisor4<'a> {
         Ok(inverse)
     }
 
-    /// Returns the reciprocal matrix of the prepared divisor.
+    /// Returns the reciprocal matrix of the cached divisor.
     ///
     /// This is an explicit reciprocal-family spelling for callers that have
-    /// prepared the divisor object. It reuses the same cached scaled inverse as
-    /// [`PreparedRightDivisor4::inverse`] instead of falling back to generic
+    /// retained the divisor object. It reuses the same cached scaled inverse as
+    /// [`RightDivisor4::inverse`] instead of falling back to generic
     /// `Matrix4::reciprocal`.
     pub fn reciprocal(&mut self) -> BlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-reciprocal"
+            "cached-right-divisor4-reciprocal"
         );
         self.inverse()
     }
 
-    /// Checked reciprocal matrix of the prepared divisor.
+    /// Checked reciprocal matrix of the cached divisor.
     pub fn reciprocal_checked(&mut self) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-reciprocal-checked"
+            "cached-right-divisor4-reciprocal-checked"
         );
         self.inverse_checked()
     }
 
-    /// Abort-aware checked reciprocal matrix of the prepared divisor.
+    /// Abort-aware checked reciprocal matrix of the cached divisor.
     pub fn reciprocal_checked_with_abort(
         &mut self,
         signal: &AbortSignal,
@@ -2471,28 +2439,24 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-reciprocal-checked-abort"
+            "cached-right-divisor4-reciprocal-checked-abort"
         );
         self.inverse_checked_with_abort(signal)
     }
 
-    /// Raises the prepared divisor to an integer power.
+    /// Raises the cached divisor to an integer power.
     ///
-    /// Negative powers reuse the cached prepared inverse, so repeated
+    /// Negative powers reuse the cached inverse, so repeated
     /// `A^-k` workloads pay determinant/cofactor setup once at this object
     /// boundary instead of once per power call.
     pub fn powi(&mut self, exponent: i32) -> BlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-powi"
+            "cached-right-divisor4-powi"
         );
         if exponent == -1 {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "powi",
-                "prepared-negative-one-inverse"
-            );
+            crate::trace_dispatch!("hyperlattice_matrix", "powi", "cached-negative-one-inverse");
             return self.inverse();
         }
         let base = if exponent < 0 {
@@ -2508,18 +2472,18 @@ impl<'a> PreparedRightDivisor4<'a> {
         Ok(Matrix4(power))
     }
 
-    /// Checked integer power of the prepared divisor.
+    /// Checked integer power of the cached divisor.
     pub fn powi_checked(&mut self, exponent: i32) -> CheckedBlasResult<Matrix4> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-powi-checked"
+            "cached-right-divisor4-powi-checked"
         );
         if exponent == -1 {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "powi",
-                "prepared-negative-one-inverse-checked"
+                "cached-negative-one-inverse-checked"
             );
             return self.inverse_checked();
         }
@@ -2536,7 +2500,7 @@ impl<'a> PreparedRightDivisor4<'a> {
         Ok(Matrix4(power))
     }
 
-    /// Abort-aware checked integer power of the prepared divisor.
+    /// Abort-aware checked integer power of the cached divisor.
     pub fn powi_checked_with_abort(
         &mut self,
         exponent: i32,
@@ -2545,13 +2509,13 @@ impl<'a> PreparedRightDivisor4<'a> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "prepared-right-divisor4-powi-checked-abort"
+            "cached-right-divisor4-powi-checked-abort"
         );
         if exponent == -1 {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "powi",
-                "prepared-negative-one-inverse-checked-abort"
+                "cached-negative-one-inverse-checked-abort"
             );
             return self.inverse_checked_with_abort(signal);
         }
@@ -3535,9 +3499,9 @@ fn matrix4_direction_linear_kind(matrix: &[[Real; 4]; 4]) -> Matrix4DirectionLin
 fn matrix4_affine_linear_is_diagonal(matrix: &[[Real; 4]; 4]) -> bool {
     // Narrow one-shot point predicate: this is cheaper than `matrix4_facts`
     // when the caller only needs the affine-linear-diagonal fast path. Keep it
-    // out of prepared paths, where retained `Matrix4Facts` are already
+    // out of cached paths, where retained `Matrix4Facts` are already
     // available. Targeted sentinel runs showed the public point transform
-    // regressed after broad fact collection, while prepared handles stayed flat.
+    // regressed after broad fact collection, while cached handles stayed flat.
     // the exact object-structure policy
     matrix[0][1].definitely_zero()
         && matrix[0][2].definitely_zero()
@@ -7913,17 +7877,17 @@ fn right_divide_matrix3_checked_with_abort(
     ))
 }
 
-fn right_divide_matrix3_prepared(
+fn right_divide_matrix3_cached(
     left: [[Real; 3]; 3],
-    prepared: &mut PreparedRightDivisor3,
+    cached: &mut RightDivisor3,
 ) -> BlasResult<[[Real; 3]; 3]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-identity"
+            "right-divide3-cached-identity"
         );
         return Ok(left);
     }
@@ -7931,9 +7895,9 @@ fn right_divide_matrix3_prepared(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-diagonal"
+            "right-divide3-cached-diagonal"
         );
-        return divide_matrix3_by_diagonal(left, &prepared.divisor.0);
+        return divide_matrix3_by_diagonal(left, &cached.divisor.0);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
@@ -7941,16 +7905,16 @@ fn right_divide_matrix3_prepared(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-affine-left-affine-translation"
+                "right-divide3-cached-affine-left-affine-translation"
             );
-            return divide_matrix3_affine_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine_translation(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-affine-by-translation"
+            "right-divide3-cached-affine-by-translation"
         );
-        return divide_matrix3_by_affine_translation(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_translation(left, &cached.divisor.0);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular {
         let left_facts = matrix3_facts(&left);
@@ -7958,35 +7922,35 @@ fn right_divide_matrix3_prepared(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-affine-left-affine-upper-triangular"
+                "right-divide3-cached-affine-left-affine-upper-triangular"
             );
-            return divide_matrix3_affine_by_affine_upper_triangular(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine_upper_triangular(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-affine-upper-triangular"
+            "right-divide3-cached-affine-upper-triangular"
         );
-        return divide_matrix3_by_affine_upper_triangular(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_upper_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-upper-triangular"
+            "right-divide3-cached-upper-triangular"
         );
-        return divide_matrix3_by_upper_triangular(left, &prepared.divisor.0);
+        return divide_matrix3_by_upper_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-lower-triangular"
+            "right-divide3-cached-lower-triangular"
         );
-        return divide_matrix3_by_lower_triangular(left, &prepared.divisor.0);
+        return divide_matrix3_by_lower_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_affine {
-        // Prepared handles already cache right-side facts, so we only compute
+        // cached handles already cache right-side facts, so we only compute
         // left-side facts when affine dispatch is selected.
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
@@ -7995,58 +7959,58 @@ fn right_divide_matrix3_prepared(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-affine"
+            "right-divide3-cached-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide3-prepared-affine-left-affine-translation"
+                    "right-divide3-cached-affine-left-affine-translation"
                 );
-                return divide_matrix3_affine_by_affine_translation(left, &prepared.divisor.0);
+                return divide_matrix3_affine_by_affine_translation(left, &cached.divisor.0);
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide3-prepared-affine-left-affine-linear-diagonal"
+                    "right-divide3-cached-affine-left-affine-linear-diagonal"
                 );
-                return divide_matrix3_affine_by_affine_linear_diagonal(left, &prepared.divisor.0);
+                return divide_matrix3_affine_by_affine_linear_diagonal(left, &cached.divisor.0);
             }
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-affine-left-affine"
+                "right-divide3-cached-affine-left-affine"
             );
-            return divide_matrix3_affine_by_affine(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine(left, &cached.divisor.0);
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-affine-by-translation"
+                "right-divide3-cached-affine-by-translation"
             );
-            return divide_matrix3_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix3_by_affine_translation(left, &cached.divisor.0);
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-affine-linear-diagonal"
+                "right-divide3-cached-affine-linear-diagonal"
             );
-            return divide_matrix3_by_affine_linear_diagonal(left, &prepared.divisor.0);
+            return divide_matrix3_by_affine_linear_diagonal(left, &cached.divisor.0);
         }
-        return divide_matrix3_by_affine(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine(left, &cached.divisor.0);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-gauss-jordan"
+            "right-divide3-cached-gauss-jordan"
         );
         return Ok(transpose_array3(solve_left_system3(
-            transpose_array3_ref(&prepared.divisor.0),
+            transpose_array3_ref(&cached.divisor.0),
             transpose_array3(left),
         )?));
     }
@@ -8058,14 +8022,14 @@ fn right_divide_matrix3_prepared(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide3-prepared-shared-adjugate"
+        "right-divide3-cached-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate()?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate()?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
@@ -8075,17 +8039,17 @@ fn right_divide_matrix3_prepared(
     ))
 }
 
-fn right_divide_matrix3_prepared_checked(
+fn right_divide_matrix3_cached_checked(
     left: [[Real; 3]; 3],
-    prepared: &mut PreparedRightDivisor3,
+    cached: &mut RightDivisor3,
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-identity"
+            "right-divide3-cached-checked-identity"
         );
         return Ok(left);
     }
@@ -8093,9 +8057,9 @@ fn right_divide_matrix3_prepared_checked(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-diagonal"
+            "right-divide3-cached-checked-diagonal"
         );
-        return divide_matrix3_by_diagonal_checked(left, &prepared.divisor.0);
+        return divide_matrix3_by_diagonal_checked(left, &cached.divisor.0);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
@@ -8103,16 +8067,16 @@ fn right_divide_matrix3_prepared_checked(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-affine-left-affine-translation"
+                "right-divide3-cached-checked-affine-left-affine-translation"
             );
-            return divide_matrix3_affine_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine_translation(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-affine-by-translation"
+            "right-divide3-cached-checked-affine-by-translation"
         );
-        return divide_matrix3_by_affine_translation(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_translation(left, &cached.divisor.0);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular {
         let left_facts = matrix3_facts(&left);
@@ -8120,38 +8084,38 @@ fn right_divide_matrix3_prepared_checked(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-affine-left-affine-upper-triangular"
+                "right-divide3-cached-checked-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular_checked(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-affine-upper-triangular"
+            "right-divide3-cached-checked-affine-upper-triangular"
         );
-        return divide_matrix3_by_affine_upper_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_upper_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-upper-triangular"
+            "right-divide3-cached-checked-upper-triangular"
         );
-        return divide_matrix3_by_upper_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix3_by_upper_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-lower-triangular"
+            "right-divide3-cached-checked-lower-triangular"
         );
-        return divide_matrix3_by_lower_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix3_by_lower_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_affine {
-        // Keep checked prepared dispatch deterministic by computing left
+        // Keep checked cached dispatch deterministic by computing left
         // structure only when required for affine fast paths.
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
@@ -8159,45 +8123,45 @@ fn right_divide_matrix3_prepared_checked(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-affine"
+            "right-divide3-cached-checked-affine"
         );
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide3-prepared-checked-affine-left-affine-linear-diagonal"
+                    "right-divide3-cached-checked-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal_checked(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                 );
             }
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-affine-left-affine"
+                "right-divide3-cached-checked-affine-left-affine"
             );
-            return divide_matrix3_affine_by_affine_checked(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine_checked(left, &cached.divisor.0);
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-affine-linear-diagonal"
+                "right-divide3-cached-checked-affine-linear-diagonal"
             );
-            return divide_matrix3_by_affine_linear_diagonal_checked(left, &prepared.divisor.0);
+            return divide_matrix3_by_affine_linear_diagonal_checked(left, &cached.divisor.0);
         }
-        return divide_matrix3_by_affine_checked(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_checked(left, &cached.divisor.0);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-gauss-jordan"
+            "right-divide3-cached-checked-gauss-jordan"
         );
         return Ok(transpose_array3(solve_left_system3_checked(
-            transpose_array3_ref(&prepared.divisor.0),
+            transpose_array3_ref(&cached.divisor.0),
             transpose_array3(left),
         )?));
     }
@@ -8205,14 +8169,14 @@ fn right_divide_matrix3_prepared_checked(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide3-prepared-checked-shared-adjugate"
+        "right-divide3-cached-checked-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate_checked()?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate_checked()?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
@@ -8222,18 +8186,18 @@ fn right_divide_matrix3_prepared_checked(
     ))
 }
 
-fn right_divide_matrix3_prepared_checked_with_abort(
+fn right_divide_matrix3_cached_checked_with_abort(
     left: [[Real; 3]; 3],
-    prepared: &mut PreparedRightDivisor3,
+    cached: &mut RightDivisor3,
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-identity"
+            "right-divide3-cached-checked-abort-identity"
         );
         return Ok(left);
     }
@@ -8241,9 +8205,9 @@ fn right_divide_matrix3_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-diagonal"
+            "right-divide3-cached-checked-abort-diagonal"
         );
-        return divide_matrix3_by_diagonal_checked_with_abort(left, &prepared.divisor.0, signal);
+        return divide_matrix3_by_diagonal_checked_with_abort(left, &cached.divisor.0, signal);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
@@ -8251,16 +8215,16 @@ fn right_divide_matrix3_prepared_checked_with_abort(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-abort-affine-left-affine-translation"
+                "right-divide3-cached-checked-abort-affine-left-affine-translation"
             );
-            return divide_matrix3_affine_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix3_affine_by_affine_translation(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-affine-by-translation"
+            "right-divide3-cached-checked-abort-affine-by-translation"
         );
-        return divide_matrix3_by_affine_translation(left, &prepared.divisor.0);
+        return divide_matrix3_by_affine_translation(left, &cached.divisor.0);
     }
     if true && right_facts.is_affine && right_facts.is_upper_triangular {
         let left_facts = matrix3_facts(&left);
@@ -8268,22 +8232,22 @@ fn right_divide_matrix3_prepared_checked_with_abort(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-abort-affine-left-affine-upper-triangular"
+                "right-divide3-cached-checked-abort-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-affine-upper-triangular"
+            "right-divide3-cached-checked-abort-affine-upper-triangular"
         );
         return divide_matrix3_by_affine_upper_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
@@ -8291,11 +8255,11 @@ fn right_divide_matrix3_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-upper-triangular"
+            "right-divide3-cached-checked-abort-upper-triangular"
         );
         return divide_matrix3_by_upper_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
@@ -8303,16 +8267,16 @@ fn right_divide_matrix3_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-lower-triangular"
+            "right-divide3-cached-checked-abort-lower-triangular"
         );
         return divide_matrix3_by_lower_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
     if right_facts.is_affine {
-        // Abort-aware prepared dispatch also reuses the same deferred probe
+        // Abort-aware cached dispatch also reuses the same deferred probe
         // policy to avoid wasting structural queries for rows that already
         // match non-affine branches.
         let left_facts = matrix3_facts(&left);
@@ -8321,29 +8285,29 @@ fn right_divide_matrix3_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-affine"
+            "right-divide3-cached-checked-abort-affine"
         );
         if left_is_affine {
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide3-prepared-checked-abort-affine-left-affine-linear-diagonal"
+                    "right-divide3-cached-checked-abort-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal_checked_with_abort(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                     signal,
                 );
             }
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-abort-affine-left-affine"
+                "right-divide3-cached-checked-abort-affine-left-affine"
             );
             return divide_matrix3_affine_by_affine_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
@@ -8351,24 +8315,24 @@ fn right_divide_matrix3_prepared_checked_with_abort(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide3-prepared-checked-abort-affine-linear-diagonal"
+                "right-divide3-cached-checked-abort-affine-linear-diagonal"
             );
             return divide_matrix3_by_affine_linear_diagonal_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
-        return divide_matrix3_by_affine_checked_with_abort(left, &prepared.divisor.0, signal);
+        return divide_matrix3_by_affine_checked_with_abort(left, &cached.divisor.0, signal);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide3-prepared-checked-abort-gauss-jordan"
+            "right-divide3-cached-checked-abort-gauss-jordan"
         );
         return Ok(transpose_array3(solve_left_system3_checked_with_abort(
-            transpose_array3_ref(&prepared.divisor.0),
+            transpose_array3_ref(&cached.divisor.0),
             transpose_array3(left),
             signal,
         )?));
@@ -8377,14 +8341,14 @@ fn right_divide_matrix3_prepared_checked_with_abort(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide3-prepared-checked-abort-shared-adjugate"
+        "right-divide3-cached-checked-abort-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate_checked_with_abort(signal)?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate_checked_with_abort(signal)?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
@@ -8629,17 +8593,17 @@ fn right_divide_matrix4_dense_exact_shared_checked_with_abort(
     Ok(scale_matrix4(product, &inv_det))
 }
 
-fn right_divide_matrix4_prepared(
+fn right_divide_matrix4_cached(
     left: [[Real; 4]; 4],
-    prepared: &mut PreparedRightDivisor4,
+    cached: &mut RightDivisor4,
 ) -> BlasResult<[[Real; 4]; 4]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-identity"
+            "right-divide4-cached-identity"
         );
         return Ok(left);
     }
@@ -8647,9 +8611,9 @@ fn right_divide_matrix4_prepared(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-diagonal"
+            "right-divide4-cached-diagonal"
         );
-        return divide_matrix4_by_diagonal(left, &prepared.divisor.0);
+        return divide_matrix4_by_diagonal(left, &cached.divisor.0);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
@@ -8657,16 +8621,16 @@ fn right_divide_matrix4_prepared(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-affine-left-affine-translation"
+                "right-divide4-cached-affine-left-affine-translation"
             );
-            return divide_matrix4_affine_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix4_affine_by_affine_translation(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-affine-by-translation"
+            "right-divide4-cached-affine-by-translation"
         );
-        return divide_matrix4_by_affine_translation(left, &prepared.divisor.0);
+        return divide_matrix4_by_affine_translation(left, &cached.divisor.0);
     }
     if true && right_facts.is_affine && right_facts.is_upper_triangular {
         let left_facts = matrix4_facts(&left);
@@ -8674,35 +8638,35 @@ fn right_divide_matrix4_prepared(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-affine-left-affine-upper-triangular"
+                "right-divide4-cached-affine-left-affine-upper-triangular"
             );
-            return divide_matrix4_affine_by_affine_upper_triangular(left, &prepared.divisor.0);
+            return divide_matrix4_affine_by_affine_upper_triangular(left, &cached.divisor.0);
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-affine-upper-triangular"
+            "right-divide4-cached-affine-upper-triangular"
         );
-        return divide_matrix4_by_affine_upper_triangular(left, &prepared.divisor.0);
+        return divide_matrix4_by_affine_upper_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-upper-triangular"
+            "right-divide4-cached-upper-triangular"
         );
-        return divide_matrix4_by_upper_triangular(left, &prepared.divisor.0);
+        return divide_matrix4_by_upper_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-lower-triangular"
+            "right-divide4-cached-lower-triangular"
         );
-        return divide_matrix4_by_lower_triangular(left, &prepared.divisor.0);
+        return divide_matrix4_by_lower_triangular(left, &cached.divisor.0);
     }
     if right_facts.is_affine {
-        // Prepared right facts already include all divisor structure, so defer
+        // cached right facts already include all divisor structure, so defer
         // left-structure extraction until this branch.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
@@ -8711,61 +8675,61 @@ fn right_divide_matrix4_prepared(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-affine"
+            "right-divide4-cached-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide4-prepared-affine-left-affine-translation"
+                    "right-divide4-cached-affine-left-affine-translation"
                 );
-                return divide_matrix4_affine_by_affine_translation(left, &prepared.divisor.0);
+                return divide_matrix4_affine_by_affine_translation(left, &cached.divisor.0);
             }
             if right_linear_is_diagonal {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide4-prepared-affine-left-affine-linear-diagonal"
+                    "right-divide4-cached-affine-left-affine-linear-diagonal"
                 );
-                return divide_matrix4_affine_by_affine_linear_diagonal(left, &prepared.divisor.0);
+                return divide_matrix4_affine_by_affine_linear_diagonal(left, &cached.divisor.0);
             }
-            return divide_matrix4_affine_by_affine_no_translation(left, &prepared.divisor.0);
+            return divide_matrix4_affine_by_affine_no_translation(left, &cached.divisor.0);
         }
         if right_is_affine_translation {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-affine-by-translation"
+                "right-divide4-cached-affine-by-translation"
             );
-            return divide_matrix4_by_affine_translation(left, &prepared.divisor.0);
+            return divide_matrix4_by_affine_translation(left, &cached.divisor.0);
         }
         if right_linear_is_diagonal {
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-affine-linear-diagonal"
+                "right-divide4-cached-affine-linear-diagonal"
             );
             if right_facts.affine_linear_diagonal_is_definitely_nonzero {
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide4-prepared-affine-linear-diagonal-known-nonzero"
+                    "right-divide4-cached-affine-linear-diagonal-known-nonzero"
                 );
-                return divide_matrix4_by_affine_linear_diagonal(left, &prepared.divisor.0);
+                return divide_matrix4_by_affine_linear_diagonal(left, &cached.divisor.0);
             }
-            return divide_matrix4_by_affine_linear_diagonal_checked(left, &prepared.divisor.0);
+            return divide_matrix4_by_affine_linear_diagonal_checked(left, &cached.divisor.0);
         }
-        return divide_matrix4_by_affine_no_translation(left, &prepared.divisor.0);
+        return divide_matrix4_by_affine_no_translation(left, &cached.divisor.0);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-gauss-jordan"
+            "right-divide4-cached-gauss-jordan"
         );
         return Ok(transpose_array4(solve_left_system4(
-            transpose_array4_ref(&prepared.divisor.0),
+            transpose_array4_ref(&cached.divisor.0),
             transpose_array4(left),
         )?));
     }
@@ -8776,18 +8740,18 @@ fn right_divide_matrix4_prepared(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide4-prepared-shared-adjugate"
+        "right-divide4-cached-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate()?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate()?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+    let product = if cached.right_exact_rational_kind != ExactRationalKind::NonRational
         && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
     {
         multiply_arrays4_dense_known_rational_ref(&left, adjugate)
@@ -8797,22 +8761,22 @@ fn right_divide_matrix4_prepared(
     Ok(scale_matrix4(product, inv_det))
 }
 
-fn right_divide_matrix4_prepared_exact_rational_left(
+fn right_divide_matrix4_cached_exact_rational_left(
     left: [[Real; 4]; 4],
-    prepared: &mut PreparedRightDivisor4,
+    cached: &mut RightDivisor4,
 ) -> BlasResult<[[Real; 4]; 4]> {
-    if true && prepared.right_exact_rational_kind != ExactRationalKind::NonRational {
+    if true && cached.right_exact_rational_kind != ExactRationalKind::NonRational {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-certified-left-exact-shared-adjugate"
+            "right-divide4-cached-certified-left-exact-shared-adjugate"
         );
-        let _ = prepared.prepare_shared_adjugate()?;
-        let inv_det = prepared
+        let _ = cached.ensure_shared_adjugate()?;
+        let inv_det = cached
             .reciprocal_determinant
             .as_ref()
             .expect("reciprocal determinant cache should be present");
-        let adjugate = prepared
+        let adjugate = cached
             .adjugate
             .as_ref()
             .expect("adjugate cache should be present");
@@ -8820,20 +8784,20 @@ fn right_divide_matrix4_prepared_exact_rational_left(
         return Ok(scale_matrix4(product, inv_det));
     }
 
-    right_divide_matrix4_prepared(left, prepared)
+    right_divide_matrix4_cached(left, cached)
 }
 
-fn right_divide_matrix4_prepared_checked(
+fn right_divide_matrix4_cached_checked(
     left: [[Real; 4]; 4],
-    prepared: &mut PreparedRightDivisor4,
+    cached: &mut RightDivisor4,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-identity"
+            "right-divide4-cached-checked-identity"
         );
         return Ok(left);
     }
@@ -8841,9 +8805,9 @@ fn right_divide_matrix4_prepared_checked(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-diagonal"
+            "right-divide4-cached-checked-diagonal"
         );
-        return divide_matrix4_by_diagonal_checked(left, &prepared.divisor.0);
+        return divide_matrix4_by_diagonal_checked(left, &cached.divisor.0);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
@@ -8851,21 +8815,21 @@ fn right_divide_matrix4_prepared_checked(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-checked-affine-left-affine-translation"
+                "right-divide4-cached-checked-affine-left-affine-translation"
             );
             return divide_matrix4_affine_by_affine_checked_assumed_affine_translation(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-affine-by-translation"
+            "right-divide4-cached-checked-affine-by-translation"
         );
         return divide_matrix4_by_affine_checked_assumed_affine_translation(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
         );
     }
     if true && right_facts.is_affine && right_facts.is_upper_triangular {
@@ -8874,38 +8838,38 @@ fn right_divide_matrix4_prepared_checked(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-checked-affine-left-affine-upper-triangular"
+                "right-divide4-cached-checked-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular_checked(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-affine-upper-triangular"
+            "right-divide4-cached-checked-affine-upper-triangular"
         );
-        return divide_matrix4_by_affine_upper_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix4_by_affine_upper_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_upper_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-upper-triangular"
+            "right-divide4-cached-checked-upper-triangular"
         );
-        return divide_matrix4_by_upper_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix4_by_upper_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_lower_triangular {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-lower-triangular"
+            "right-divide4-cached-checked-lower-triangular"
         );
-        return divide_matrix4_by_lower_triangular_checked(left, &prepared.divisor.0);
+        return divide_matrix4_by_lower_triangular_checked(left, &cached.divisor.0);
     }
     if right_facts.is_affine {
-        // Keep checked prepared division factored, probing left-side affine
+        // Keep checked cached division factored, probing left-side affine
         // structure only where it changes dispatch.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
@@ -8914,13 +8878,13 @@ fn right_divide_matrix4_prepared_checked(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-affine"
+            "right-divide4-cached-checked-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 return divide_matrix4_affine_by_affine_checked_assumed_affine_translation(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                 );
             }
             if right_linear_is_diagonal {
@@ -8928,24 +8892,24 @@ fn right_divide_matrix4_prepared_checked(
                     crate::trace_dispatch!(
                         "hyperlattice_matrix",
                         "helper",
-                        "right-divide4-prepared-checked-affine-left-affine-linear-diagonal-known-nonzero"
+                        "right-divide4-cached-checked-affine-left-affine-linear-diagonal-known-nonzero"
                     );
                     return divide_matrix4_affine_by_affine_linear_diagonal(
                         left,
-                        &prepared.divisor.0,
+                        &cached.divisor.0,
                     );
                 }
                 return divide_matrix4_affine_by_affine_linear_diagonal_checked(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                 );
             }
-            return divide_matrix4_affine_by_affine_checked(left, &prepared.divisor.0);
+            return divide_matrix4_affine_by_affine_checked(left, &cached.divisor.0);
         }
         if right_is_affine_translation {
             return divide_matrix4_by_affine_checked_assumed_affine_translation(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
             );
         }
         if right_linear_is_diagonal {
@@ -8953,22 +8917,22 @@ fn right_divide_matrix4_prepared_checked(
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide4-prepared-checked-affine-linear-diagonal-known-nonzero"
+                    "right-divide4-cached-checked-affine-linear-diagonal-known-nonzero"
                 );
-                return divide_matrix4_by_affine_linear_diagonal(left, &prepared.divisor.0);
+                return divide_matrix4_by_affine_linear_diagonal(left, &cached.divisor.0);
             }
-            return divide_matrix4_by_affine_linear_diagonal_checked(left, &prepared.divisor.0);
+            return divide_matrix4_by_affine_linear_diagonal_checked(left, &cached.divisor.0);
         }
-        return divide_matrix4_by_affine_checked(left, &prepared.divisor.0);
+        return divide_matrix4_by_affine_checked(left, &cached.divisor.0);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-gauss-jordan"
+            "right-divide4-cached-checked-gauss-jordan"
         );
         return Ok(transpose_array4(solve_left_system4_checked(
-            transpose_array4_ref(&prepared.divisor.0),
+            transpose_array4_ref(&cached.divisor.0),
             transpose_array4(left),
         )?));
     }
@@ -8976,18 +8940,18 @@ fn right_divide_matrix4_prepared_checked(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide4-prepared-checked-shared-adjugate"
+        "right-divide4-cached-checked-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate_checked()?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate_checked()?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+    let product = if cached.right_exact_rational_kind != ExactRationalKind::NonRational
         && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
     {
         multiply_arrays4_dense_known_rational_ref(&left, adjugate)
@@ -8997,18 +8961,18 @@ fn right_divide_matrix4_prepared_checked(
     Ok(scale_matrix4(product, inv_det))
 }
 
-fn right_divide_matrix4_prepared_checked_with_abort(
+fn right_divide_matrix4_cached_checked_with_abort(
     left: [[Real; 4]; 4],
-    prepared: &mut PreparedRightDivisor4,
+    cached: &mut RightDivisor4,
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
-    let right_facts = prepared.facts;
+    let right_facts = cached.facts;
 
     if right_facts.is_identity {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-identity"
+            "right-divide4-cached-checked-abort-identity"
         );
         return Ok(left);
     }
@@ -9016,9 +8980,9 @@ fn right_divide_matrix4_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-diagonal"
+            "right-divide4-cached-checked-abort-diagonal"
         );
-        return divide_matrix4_by_diagonal_checked_with_abort(left, &prepared.divisor.0, signal);
+        return divide_matrix4_by_diagonal_checked_with_abort(left, &cached.divisor.0, signal);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
@@ -9026,22 +8990,22 @@ fn right_divide_matrix4_prepared_checked_with_abort(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-checked-abort-affine-left-affine-translation"
+                "right-divide4-cached-checked-abort-affine-left-affine-translation"
             );
             return divide_matrix4_affine_by_affine_checked_with_abort_assumed_affine_translation(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-affine-by-translation"
+            "right-divide4-cached-checked-abort-affine-by-translation"
         );
         return divide_matrix4_by_affine_checked_with_abort_assumed_affine_translation(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
@@ -9051,22 +9015,22 @@ fn right_divide_matrix4_prepared_checked_with_abort(
             crate::trace_dispatch!(
                 "hyperlattice_matrix",
                 "helper",
-                "right-divide4-prepared-checked-abort-affine-left-affine-upper-triangular"
+                "right-divide4-cached-checked-abort-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-affine-upper-triangular"
+            "right-divide4-cached-checked-abort-affine-upper-triangular"
         );
         return divide_matrix4_by_affine_upper_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
@@ -9074,11 +9038,11 @@ fn right_divide_matrix4_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-upper-triangular"
+            "right-divide4-cached-checked-abort-upper-triangular"
         );
         return divide_matrix4_by_upper_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
@@ -9086,17 +9050,17 @@ fn right_divide_matrix4_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-lower-triangular"
+            "right-divide4-cached-checked-abort-lower-triangular"
         );
         return divide_matrix4_by_lower_triangular_checked_with_abort(
             left,
-            &prepared.divisor.0,
+            &cached.divisor.0,
             signal,
         );
     }
     if right_facts.is_affine {
-        // Abort-aware prepared paths preserve the same fact-on-demand dispatch
-        // policy as unchecked prepared division.
+        // Abort-aware cached paths preserve the same fact-on-demand dispatch
+        // policy as unchecked cached division.
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
@@ -9104,13 +9068,13 @@ fn right_divide_matrix4_prepared_checked_with_abort(
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-affine"
+            "right-divide4-cached-checked-abort-affine"
         );
         if left_is_affine {
             if right_is_affine_translation {
                 return divide_matrix4_affine_by_affine_checked_with_abort_assumed_affine_translation(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                     signal,
                 );
             }
@@ -9119,29 +9083,29 @@ fn right_divide_matrix4_prepared_checked_with_abort(
                     crate::trace_dispatch!(
                         "hyperlattice_matrix",
                         "helper",
-                        "right-divide4-prepared-checked-abort-affine-left-affine-linear-diagonal-known-nonzero"
+                        "right-divide4-cached-checked-abort-affine-left-affine-linear-diagonal-known-nonzero"
                     );
                     return divide_matrix4_affine_by_affine_linear_diagonal(
                         left,
-                        &prepared.divisor.0,
+                        &cached.divisor.0,
                     );
                 }
                 return divide_matrix4_affine_by_affine_linear_diagonal_checked_with_abort(
                     left,
-                    &prepared.divisor.0,
+                    &cached.divisor.0,
                     signal,
                 );
             }
             return divide_matrix4_affine_by_affine_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
         if right_is_affine_translation {
             return divide_matrix4_by_affine_checked_with_abort_assumed_affine_translation(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
@@ -9150,26 +9114,26 @@ fn right_divide_matrix4_prepared_checked_with_abort(
                 crate::trace_dispatch!(
                     "hyperlattice_matrix",
                     "helper",
-                    "right-divide4-prepared-checked-abort-affine-linear-diagonal-known-nonzero"
+                    "right-divide4-cached-checked-abort-affine-linear-diagonal-known-nonzero"
                 );
-                return divide_matrix4_by_affine_linear_diagonal(left, &prepared.divisor.0);
+                return divide_matrix4_by_affine_linear_diagonal(left, &cached.divisor.0);
             }
             return divide_matrix4_by_affine_linear_diagonal_checked_with_abort(
                 left,
-                &prepared.divisor.0,
+                &cached.divisor.0,
                 signal,
             );
         }
-        return divide_matrix4_by_affine_checked_with_abort(left, &prepared.divisor.0, signal);
+        return divide_matrix4_by_affine_checked_with_abort(left, &cached.divisor.0, signal);
     }
-    if !prepared.can_use_shared_adjugate(&left) {
+    if !cached.can_use_shared_adjugate(&left) {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "helper",
-            "right-divide4-prepared-checked-abort-gauss-jordan"
+            "right-divide4-cached-checked-abort-gauss-jordan"
         );
         return Ok(transpose_array4(solve_left_system4_checked_with_abort(
-            transpose_array4_ref(&prepared.divisor.0),
+            transpose_array4_ref(&cached.divisor.0),
             transpose_array4(left),
             signal,
         )?));
@@ -9178,18 +9142,18 @@ fn right_divide_matrix4_prepared_checked_with_abort(
     crate::trace_dispatch!(
         "hyperlattice_matrix",
         "helper",
-        "right-divide4-prepared-checked-abort-shared-adjugate"
+        "right-divide4-cached-checked-abort-shared-adjugate"
     );
-    let _ = prepared.prepare_shared_adjugate_checked_with_abort(signal)?;
-    let inv_det = prepared
+    let _ = cached.ensure_shared_adjugate_checked_with_abort(signal)?;
+    let inv_det = cached
         .reciprocal_determinant
         .as_ref()
         .expect("reciprocal determinant cache should be present");
-    let adjugate = prepared
+    let adjugate = cached
         .adjugate
         .as_ref()
         .expect("adjugate cache should be present");
-    let product = if prepared.right_exact_rational_kind != ExactRationalKind::NonRational
+    let product = if cached.right_exact_rational_kind != ExactRationalKind::NonRational
         && matrix4_exact_rational_kind(&left) != ExactRationalKind::NonRational
     {
         multiply_arrays4_dense_known_rational_ref(&left, adjugate)
@@ -10245,7 +10209,7 @@ fn matrix_identity_diagonal_facts<const N: usize>(
 #[inline]
 fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 3] {
     // One-shot multiplication consumes only identity and diagonal facts. Full
-    // structural reports remain at explicit query/prepared boundaries.
+    // structural reports remain at explicit query/cached boundaries.
     let left_facts = matrix_identity_diagonal_facts(&left);
     let right_facts = matrix_identity_diagonal_facts(&right);
     if left_facts.is_identity {
@@ -10528,7 +10492,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
     if N == 4 {
         // Probe only the identity, diagonal, affine, and translation facts read
         // below. Full public matrix reports are intentionally left to explicit
-        // `structural_facts` and prepared-handle boundaries.
+        // `structural_facts` and cached-handle boundaries.
         let left_facts = matrix4_transform_dispatch_facts(left);
         if left_facts.is_identity {
             crate::trace_dispatch!(
@@ -11055,7 +11019,7 @@ fn transform_vector4_rhs_point_ref_cached(
     // Keep point transforms on the 3-term linear form and only add offsets
     // when needed according to cached structural translation facts. Callers
     // enter this helper after retained matrix facts have already ruled out
-    // identity and diagonal transforms; rechecking them here made prepared
+    // identity and diagonal transforms; rechecking them here made cached
     // point and mixed-batch paths pay a second full matrix probe.
     // the exact object-structure policy
     crate::trace_dispatch!(
@@ -11336,7 +11300,7 @@ impl<'a> TransformedMatrix4<'a> {
             // The handle already paid to classify the matrix, so cloning the
             // point preserves all exact/symbolic scalar structure and avoids
             // three identity multiplies plus three zero translations. This is
-            // Use geometric facts before scalar arithmetic at the prepared-kernel
+            // Use geometric facts before scalar arithmetic at the cached-kernel
             // boundary.
             return rhs.clone();
         }
@@ -11622,7 +11586,7 @@ impl<'a> TransformedMatrix4<'a> {
 
     /// Transforms a batch whose inputs are known homogeneous directions.
     ///
-    /// This is the static prepared-kernel form of the generic batch transform:
+    /// This is the static cached-kernel form of the generic batch transform:
     /// callers that already know `w = 0` can avoid the batch classification pass
     /// and keep dispatch deterministic across every lane. The optimization is
     /// intentionally handle-scoped rather than stored on every vector or matrix,
@@ -11640,7 +11604,7 @@ impl<'a> TransformedMatrix4<'a> {
                 "helper",
                 "transform-vector4-direction-batch-identity-assumed"
             );
-            // Prepared handles already retain the exact identity fact. Use it
+            // cached handles already retain the exact identity fact. Use it
             // before the diagonal direction kernel so known directions under an
             // identity transform are cloned rather than multiplied by three
             // structural ones. This is the cheapest object-level reduction in
@@ -11658,7 +11622,7 @@ impl<'a> TransformedMatrix4<'a> {
     /// Transforms a batch whose inputs are known homogeneous points.
     ///
     /// This skips the generic point/direction/unknown classification pass and
-    /// keeps all lanes on the same prepared point schedule. The method is
+    /// keeps all lanes on the same cached point schedule. The method is
     /// deliberately opt-in: ordinary `transform_vector_batch` remains thin, and
     /// only geometry code with object-level point facts pays for the specialized
     /// API surface.
@@ -11688,7 +11652,7 @@ impl<'a> TransformedMatrix4<'a> {
                 "helper",
                 "transform-vector4-point-batch-affine-linear-diagonal-assumed"
             );
-            // Keep this hot affine point-batch loop local to the prepared
+            // Keep this hot affine point-batch loop local to the cached
             // handle. If a future exact-Real kernel run shows a stable hyperreal
             // win from a different shape, gate it behind a structural Real kernel
             // capability. Exploit retained point facts, but do not introduce
@@ -14049,15 +14013,15 @@ impl Matrix3 {
         matrix3_facts(&self.0).public
     }
 
-    /// Prepares this matrix for repeated structural queries, inversion, and
-    /// right-division use.
+    /// Returns a cached view for repeated structural queries, inversion, and
+    /// right-division.
     ///
-    /// Preparation computes the matrix-level facts once and then reuses the
-    /// same determinant/adjugate cache as [`PreparedRightDivisor3`]. This keeps
+    /// Cache construction computes the matrix-level facts once and then reuses
+    /// the same determinant/adjugate cache as [`RightDivisor3`]. This keeps
     /// the one-shot API thin while giving higher-level geometry objects a stable
     /// cache boundary.
-    pub fn prepare(&self) -> PreparedMatrix3<'_> {
-        PreparedMatrix3::new(self)
+    pub fn cached(&self) -> CachedMatrix3<'_> {
+        CachedMatrix3::new(self)
     }
 
     /// Constructs a 3x3 diagonal matrix from known diagonal entries.
@@ -14301,56 +14265,53 @@ impl Matrix3 {
         Ok(Vector3(mapped))
     }
 
-    /// Returns a prepared right-divisor handle for repeated division by this matrix.
+    /// Returns a cached right-divisor handle for repeated division by this matrix.
     ///
     /// This avoids re-deriving structural facts, cofactors, and determinant
     /// inverses for hot geometric pipelines where the same divisor is reused.
     /// The optimization follows the exact object-structure policy,
     /// which advises moving expensive object-level preprocessing to stable object
     /// boundaries.
-    pub fn prepare_right_divisor(&self) -> PreparedRightDivisor3<'_> {
-        PreparedRightDivisor3::new(self)
+    pub fn right_divisor(&self) -> RightDivisor3<'_> {
+        RightDivisor3::new(self)
     }
 
-    /// Divides this matrix by a prepared right divisor.
+    /// Divides this matrix by a cached right divisor.
     ///
     /// This is the same exact result as `self / divisor` but keeps repeated right-side
     /// preprocessing materialized in `divisor`, matching the object-level cache
     /// strategy in exact geometry engines.
-    pub fn div_matrix_with_prepared(
-        self,
-        divisor: &mut PreparedRightDivisor3<'_>,
-    ) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-prepared");
+    pub fn div_matrix_with_divisor(self, divisor: &mut RightDivisor3<'_>) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-cached");
         Ok(Self(divisor.divide(self.0)?))
     }
 
-    /// Divides by a prepared right divisor with checked determinant validation.
+    /// Divides by a cached right divisor with checked determinant validation.
     ///
     /// The divisor cache is reused, but the known-nonzero requirement is still
     /// enforced at every call site before any reciprocal of the cached determinant.
-    pub fn div_matrix_checked_with_prepared(
+    pub fn div_matrix_checked_with_divisor(
         self,
-        divisor: &mut PreparedRightDivisor3<'_>,
+        divisor: &mut RightDivisor3<'_>,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "div-matrix-checked-with-prepared"
+            "div-matrix-checked-with-cached"
         );
         Ok(Self(divisor.divide_checked(self.0)?))
     }
 
-    /// Divides by a prepared right divisor with abort-aware checked semantics.
-    pub fn div_matrix_checked_with_prepared_with_abort(
+    /// Divides by a cached right divisor with abort-aware checked semantics.
+    pub fn div_matrix_checked_with_divisor_and_abort(
         self,
-        divisor: &mut PreparedRightDivisor3<'_>,
+        divisor: &mut RightDivisor3<'_>,
         signal: &AbortSignal,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "div-matrix-checked-with-prepared-with-abort"
+            "div-matrix-checked-with-cached-with-abort"
         );
         Ok(Self(divisor.divide_checked_with_abort(self.0, signal)?))
     }
@@ -14560,15 +14521,15 @@ impl Matrix4 {
         matrix4_facts(&self.0).public
     }
 
-    /// Prepares this matrix for repeated structural queries, inversion,
-    /// transform-stack use, and right-division use.
+    /// Returns a cached view for repeated structural queries, inversion,
+    /// transforms, and right-division.
     ///
-    /// The prepared handle carries affine/homogeneous matrix facts and reuses
+    /// The cached handle carries affine/homogeneous matrix facts and reuses
     /// the existing 4x4 determinant, adjugate, factor, and inverse caches.
     /// Keeping this explicit preserves predictable one-shot behavior while
     /// exposing object preprocessing for reusable transforms.
-    pub fn prepare(&self) -> PreparedMatrix4<'_> {
-        PreparedMatrix4::new(self)
+    pub fn cached(&self) -> CachedMatrix4<'_> {
+        CachedMatrix4::new(self)
     }
 
     /// Constructs a 4x4 affine translation matrix from known x/y/z offsets.
@@ -15342,74 +15303,71 @@ impl Matrix4 {
         )))
     }
 
-    /// Returns a prepared right-divisor handle for repeated division by this matrix.
+    /// Returns a cached right-divisor handle for repeated division by this matrix.
     ///
     /// This avoids re-deriving structural facts, cofactors, and determinant
     /// inverses for hot geometric pipelines where the same divisor is reused.
     /// The optimization follows the exact object-structure policy,
     /// which advises moving expensive object-level preprocessing to stable object
     /// boundaries.
-    pub fn prepare_right_divisor(&self) -> PreparedRightDivisor4<'_> {
-        PreparedRightDivisor4::new(self)
+    pub fn right_divisor(&self) -> RightDivisor4<'_> {
+        RightDivisor4::new(self)
     }
 
-    /// Divides this matrix by a prepared right divisor.
+    /// Divides this matrix by a cached right divisor.
     ///
     /// This is the same exact result as `self / divisor` but keeps repeated right-side
     /// preprocessing materialized in `divisor`, matching the object-level cache
     /// strategy in exact geometry engines.
-    pub fn div_matrix_with_prepared(
-        self,
-        divisor: &mut PreparedRightDivisor4<'_>,
-    ) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-prepared");
+    pub fn div_matrix_with_divisor(self, divisor: &mut RightDivisor4<'_>) -> BlasResult<Self> {
+        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-with-cached");
         Ok(Self(divisor.divide(self.0)?))
     }
 
-    /// Divides this caller-certified exact-rational matrix by a prepared right
+    /// Divides this caller-certified exact-rational matrix by a cached right
     /// divisor.
     ///
     /// Use this only when the caller already retains the exact-rational fact for
-    /// `self`. It exposes the prepared/shared-adjugate fast path without paying a
+    /// `self`. It exposes the cached/shared-adjugate fast path without paying a
     /// second 16-lane exact-rational-kind scan in the hot loop.
-    pub fn div_exact_rational_matrix_with_prepared(
+    pub fn div_exact_rational_matrix_with_divisor(
         self,
-        divisor: &mut PreparedRightDivisor4<'_>,
+        divisor: &mut RightDivisor4<'_>,
     ) -> BlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "div-exact-rational-matrix-with-prepared"
+            "div-exact-rational-matrix-with-cached"
         );
         Ok(Self(divisor.divide_exact_rational_left(self.0)?))
     }
 
-    /// Divides by a prepared right divisor with checked determinant validation.
+    /// Divides by a cached right divisor with checked determinant validation.
     ///
     /// The divisor cache is reused, but the known-nonzero requirement is still
     /// enforced at every call site before any reciprocal of the cached determinant.
-    pub fn div_matrix_checked_with_prepared(
+    pub fn div_matrix_checked_with_divisor(
         self,
-        divisor: &mut PreparedRightDivisor4<'_>,
+        divisor: &mut RightDivisor4<'_>,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "div-matrix-checked-with-prepared"
+            "div-matrix-checked-with-cached"
         );
         Ok(Self(divisor.divide_checked(self.0)?))
     }
 
-    /// Divides by a prepared right divisor with abort-aware checked semantics.
-    pub fn div_matrix_checked_with_prepared_with_abort(
+    /// Divides by a cached right divisor with abort-aware checked semantics.
+    pub fn div_matrix_checked_with_divisor_and_abort(
         self,
-        divisor: &mut PreparedRightDivisor4<'_>,
+        divisor: &mut RightDivisor4<'_>,
         signal: &AbortSignal,
     ) -> CheckedBlasResult<Self> {
         crate::trace_dispatch!(
             "hyperlattice_matrix",
             "method",
-            "div-matrix-checked-with-prepared-with-abort"
+            "div-matrix-checked-with-cached-with-abort"
         );
         Ok(Self(divisor.divide_checked_with_abort(self.0, signal)?))
     }
@@ -15559,7 +15517,7 @@ impl Matrix4 {
         // One-shot direction batches do not need the full Matrix4 handle fact
         // scan. The only matrix fact required for the fastest direction kernel
         // is whether the 3x3 linear block is diagonal while the bottom spatial
-        // row is zero. That keeps this convenience API thinner than a prepared
+        // row is zero. That keeps this convenience API thinner than a cached
         // handle, while repeated callers can still build the handle once. The
         // distinction follows the exact-geometry package advice: retain and
         // reuse object facts when they exist, but do not make isolated arithmetic

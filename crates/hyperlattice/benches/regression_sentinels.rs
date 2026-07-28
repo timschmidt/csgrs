@@ -112,15 +112,15 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         b.iter(|| black_box(black_box(&left) * black_box(&right)))
     });
 
-    c.bench_function("sentinel/matrix3/prepared_inverse_fractional", |b| {
+    c.bench_function("sentinel/matrix3/cached_inverse_fractional", |b| {
         let matrix = Matrix3::new([
             [frac(9, 8), frac(3, 16), frac(-5, 8)],
             [frac(7, 4), frac(-11, 8), frac(13, 16)],
             [frac(5, 8), frac(17, 16), frac(19, 8)],
         ]);
         b.iter_batched(
-            || matrix.prepare(),
-            |mut prepared| prepared.inverse_checked().unwrap(),
+            || matrix.cached(),
+            |mut cached| cached.inverse_checked().unwrap(),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -209,7 +209,7 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         b.iter(|| black_box(black_box(&left) * black_box(&right)))
     });
 
-    c.bench_function("sentinel/matrix4/prepared_division_fractional", |b| {
+    c.bench_function("sentinel/matrix4/cached_division_fractional", |b| {
         let numerator = Matrix4::identity();
         let divisor = Matrix4::new([
             [frac(11, 10), frac(2, 10), frac(3, 10), frac(4, 10)],
@@ -218,8 +218,8 @@ fn bench_regression_sentinels(c: &mut Criterion) {
             [frac(-13, 10), frac(14, 10), frac(-15, 10), frac(19, 10)],
         ]);
         b.iter_batched(
-            || divisor.prepare(),
-            |mut prepared| prepared.divide_left_checked(numerator.clone()).unwrap(),
+            || divisor.cached(),
+            |mut cached| cached.divide_left_checked(numerator.clone()).unwrap(),
             criterion::BatchSize::SmallInput,
         )
     });

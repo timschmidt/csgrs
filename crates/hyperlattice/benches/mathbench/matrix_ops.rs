@@ -286,27 +286,27 @@ fn bench_matrix_operations_for<F>(
                 }
             },
         );
-        trace_matrix_profile_row("mat3", "prepared_div_matrix", input, lhs3_cases.len(), || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat3", "cached_div_matrix", input, lhs3_cases.len(), || {
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for index in 0..lhs3_cases.len() {
                 black_box(
                     black_box(lhs3_cases[index].clone())
-                        .div_matrix_with_prepared(&mut prepared)
+                        .div_matrix_with_divisor(&mut cached)
                         .unwrap(),
                 );
             }
         });
         trace_matrix_profile_row(
             "mat3",
-            "prepared_div_matrix_checked",
+            "cached_div_matrix_checked",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for index in 0..lhs3_cases.len() {
                     black_box(
                         black_box(lhs3_cases[index].clone())
-                            .div_matrix_checked_with_prepared(&mut prepared)
+                            .div_matrix_checked_with_divisor(&mut cached)
                             .unwrap(),
                     );
                 }
@@ -314,16 +314,16 @@ fn bench_matrix_operations_for<F>(
         );
         trace_matrix_profile_row(
             "mat3",
-            "prepared_div_matrix_checked_abort",
+            "cached_div_matrix_checked_abort",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for index in 0..lhs3_cases.len() {
                     black_box(
                         black_box(lhs3_cases[index].clone())
-                            .div_matrix_checked_with_prepared_with_abort(
-                                &mut prepared,
+                            .div_matrix_checked_with_divisor_and_abort(
+                                &mut cached,
                                 &signal,
                             )
                             .unwrap(),
@@ -331,63 +331,63 @@ fn bench_matrix_operations_for<F>(
                 }
             },
         );
-        trace_matrix_profile_row("mat3", "prepared_inverse", input, lhs3_cases.len(), || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat3", "cached_inverse", input, lhs3_cases.len(), || {
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for _ in 0..lhs3_cases.len() {
-                black_box(prepared.inverse().unwrap());
+                black_box(cached.inverse().unwrap());
             }
         });
-        trace_matrix_profile_row("mat3", "prepared_reciprocal", input, lhs3_cases.len(), || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat3", "cached_reciprocal", input, lhs3_cases.len(), || {
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for _ in 0..lhs3_cases.len() {
-                black_box(prepared.reciprocal().unwrap());
+                black_box(cached.reciprocal().unwrap());
             }
         });
         trace_matrix_profile_row(
             "mat3",
-            "prepared_inverse_checked",
+            "cached_inverse_checked",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for _ in 0..lhs3_cases.len() {
-                    black_box(prepared.inverse_checked().unwrap());
+                    black_box(cached.inverse_checked().unwrap());
                 }
             },
         );
         trace_matrix_profile_row(
             "mat3",
-            "prepared_reciprocal_checked",
+            "cached_reciprocal_checked",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for _ in 0..lhs3_cases.len() {
-                    black_box(prepared.reciprocal_checked().unwrap());
+                    black_box(cached.reciprocal_checked().unwrap());
                 }
             },
         );
         trace_matrix_profile_row(
             "mat3",
-            "prepared_inverse_checked_abort",
+            "cached_inverse_checked_abort",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for _ in 0..lhs3_cases.len() {
-                    black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+                    black_box(cached.inverse_checked_with_abort(&signal).unwrap());
                 }
             },
         );
         trace_matrix_profile_row(
             "mat3",
-            "prepared_reciprocal_checked_abort",
+            "cached_reciprocal_checked_abort",
             input,
             lhs3_cases.len(),
             || {
-                let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs3_cases[0].right_divisor());
                 for _ in 0..lhs3_cases.len() {
-                    black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+                    black_box(cached.reciprocal_checked_with_abort(&signal).unwrap());
                 }
             },
         );
@@ -760,27 +760,27 @@ fn bench_matrix_operations_for<F>(
                 }
             },
         );
-        trace_matrix_profile_row("mat4", "prepared_div_matrix", input, lhs4_cases.len(), || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat4", "cached_div_matrix", input, lhs4_cases.len(), || {
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for index in 0..lhs4_cases.len() {
                 black_box(
                     black_box(lhs4_cases[index].clone())
-                        .div_matrix_with_prepared(&mut prepared)
+                        .div_matrix_with_divisor(&mut cached)
                         .unwrap(),
                 );
             }
         });
         trace_matrix_profile_row(
             "mat4",
-            "prepared_div_matrix_checked",
+            "cached_div_matrix_checked",
             input,
             lhs4_cases.len(),
             || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
                 for index in 0..lhs4_cases.len() {
                     black_box(
                         black_box(lhs4_cases[index].clone())
-                            .div_matrix_checked_with_prepared(&mut prepared)
+                            .div_matrix_checked_with_divisor(&mut cached)
                             .unwrap(),
                     );
                 }
@@ -788,16 +788,16 @@ fn bench_matrix_operations_for<F>(
         );
         trace_matrix_profile_row(
             "mat4",
-            "prepared_div_matrix_checked_abort",
+            "cached_div_matrix_checked_abort",
             input,
             lhs4_cases.len(),
             || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
                 for index in 0..lhs4_cases.len() {
                     black_box(
                         black_box(lhs4_cases[index].clone())
-                            .div_matrix_checked_with_prepared_with_abort(
-                                &mut prepared,
+                            .div_matrix_checked_with_divisor_and_abort(
+                                &mut cached,
                                 &signal,
                             )
                             .unwrap(),
@@ -805,81 +805,81 @@ fn bench_matrix_operations_for<F>(
                 }
             },
         );
-        trace_matrix_profile_row("mat4", "prepared_inverse", input, lhs4_cases.len(), || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat4", "cached_inverse", input, lhs4_cases.len(), || {
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.inverse().unwrap());
+                black_box(cached.inverse().unwrap());
             }
         });
-        trace_matrix_profile_row("mat4", "prepared_reciprocal", input, lhs4_cases.len(), || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+        trace_matrix_profile_row("mat4", "cached_reciprocal", input, lhs4_cases.len(), || {
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.reciprocal().unwrap());
-            }
-        });
-        trace_matrix_profile_row(
-            "mat4",
-            "prepared_inverse_checked",
-            input,
-            lhs4_cases.len(),
-            || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
-                for _ in 0..lhs4_cases.len() {
-                    black_box(prepared.inverse_checked().unwrap());
-                }
-            },
-        );
-        trace_matrix_profile_row(
-            "mat4",
-            "prepared_reciprocal_checked",
-            input,
-            lhs4_cases.len(),
-            || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
-                for _ in 0..lhs4_cases.len() {
-                    black_box(prepared.reciprocal_checked().unwrap());
-                }
-            },
-        );
-        trace_matrix_profile_row(
-            "mat4",
-            "prepared_inverse_checked_abort",
-            input,
-            lhs4_cases.len(),
-            || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
-                for _ in 0..lhs4_cases.len() {
-                    black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
-                }
-            },
-        );
-        trace_matrix_profile_row(
-            "mat4",
-            "prepared_reciprocal_checked_abort",
-            input,
-            lhs4_cases.len(),
-            || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
-                for _ in 0..lhs4_cases.len() {
-                    black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
-                }
-            },
-        );
-        trace_matrix_profile_row("mat4", "prepared_powi_negative", input, lhs4_cases.len(), || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
-            for _ in 0..lhs4_cases.len() {
-                black_box(prepared.powi(-2).unwrap());
+                black_box(cached.reciprocal().unwrap());
             }
         });
         trace_matrix_profile_row(
             "mat4",
-            "prepared_powi_negative_one",
+            "cached_inverse_checked",
             input,
             lhs4_cases.len(),
             || {
-                let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
                 for _ in 0..lhs4_cases.len() {
-                    black_box(prepared.powi(-1).unwrap());
+                    black_box(cached.inverse_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "cached_reciprocal_checked",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(cached.reciprocal_checked().unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "cached_inverse_checked_abort",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(cached.inverse_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row(
+            "mat4",
+            "cached_reciprocal_checked_abort",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(cached.reciprocal_checked_with_abort(&signal).unwrap());
+                }
+            },
+        );
+        trace_matrix_profile_row("mat4", "cached_powi_negative", input, lhs4_cases.len(), || {
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
+            for _ in 0..lhs4_cases.len() {
+                black_box(cached.powi(-2).unwrap());
+            }
+        });
+        trace_matrix_profile_row(
+            "mat4",
+            "cached_powi_negative_one",
+            input,
+            lhs4_cases.len(),
+            || {
+                let mut cached = black_box(rhs4_cases[0].right_divisor());
+                for _ in 0..lhs4_cases.len() {
+                    black_box(cached.powi(-1).unwrap());
                 }
             },
         );
@@ -1400,80 +1400,80 @@ fn bench_matrix_operations_for<F>(
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_div_matrix"), || {
-        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 cached_div_matrix"), || {
+        let mut cached = black_box(rhs3_cases[0].right_divisor());
         for index in 0..lhs3_cases.len() {
             black_box(
                 black_box(lhs3_cases[index].clone())
-                    .div_matrix_with_prepared(&mut prepared)
+                    .div_matrix_with_divisor(&mut cached)
                     .unwrap(),
             );
         }
     });
-    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_inverse"), || {
-        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 cached_inverse"), || {
+        let mut cached = black_box(rhs3_cases[0].right_divisor());
         for _ in 0..lhs3_cases.len() {
-            black_box(prepared.inverse().unwrap());
+            black_box(cached.inverse().unwrap());
         }
     });
-    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_reciprocal"), || {
-        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 cached_reciprocal"), || {
+        let mut cached = black_box(rhs3_cases[0].right_divisor());
         for _ in 0..lhs3_cases.len() {
-            black_box(prepared.reciprocal().unwrap());
+            black_box(cached.reciprocal().unwrap());
         }
     });
-    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_inverse_checked"), || {
-        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 cached_inverse_checked"), || {
+        let mut cached = black_box(rhs3_cases[0].right_divisor());
         for _ in 0..lhs3_cases.len() {
-            black_box(prepared.inverse_checked().unwrap());
+            black_box(cached.inverse_checked().unwrap());
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat3 prepared_reciprocal_checked"),
+        format!("matrix_ops/{label}/mat3 cached_reciprocal_checked"),
         || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for _ in 0..lhs3_cases.len() {
-                black_box(prepared.reciprocal_checked().unwrap());
+                black_box(cached.reciprocal_checked().unwrap());
             }
         },
     );
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat3 prepared_inverse_checked_abort"),
+        format!("matrix_ops/{label}/mat3 cached_inverse_checked_abort"),
         || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for _ in 0..lhs3_cases.len() {
-                black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+                black_box(cached.inverse_checked_with_abort(&signal).unwrap());
             }
         },
     );
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat3 prepared_reciprocal_checked_abort"),
+        format!("matrix_ops/{label}/mat3 cached_reciprocal_checked_abort"),
         || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for _ in 0..lhs3_cases.len() {
-                black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+                black_box(cached.reciprocal_checked_with_abort(&signal).unwrap());
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat3 prepared_div_matrix_checked"), || {
-        let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat3 cached_div_matrix_checked"), || {
+        let mut cached = black_box(rhs3_cases[0].right_divisor());
         for index in 0..lhs3_cases.len() {
             black_box(
                 black_box(lhs3_cases[index].clone())
-                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .div_matrix_checked_with_divisor(&mut cached)
                     .unwrap(),
             );
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat3 prepared_div_matrix_checked_abort"),
+        format!("matrix_ops/{label}/mat3 cached_div_matrix_checked_abort"),
         || {
-            let mut prepared = black_box(rhs3_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs3_cases[0].right_divisor());
             for index in 0..lhs3_cases.len() {
                 black_box(
                     black_box(lhs3_cases[index].clone())
-                        .div_matrix_checked_with_prepared_with_abort(
-                            &mut prepared,
+                        .div_matrix_checked_with_divisor_and_abort(
+                            &mut cached,
                             &signal,
                         )
                         .unwrap(),
@@ -1827,48 +1827,48 @@ fn bench_matrix_operations_for<F>(
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_div_matrix"), || {
-        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 cached_div_matrix"), || {
+        let mut cached = black_box(rhs4_cases[0].right_divisor());
         for index in 0..lhs4_cases.len() {
             black_box(
                 black_box(lhs4_cases[index].clone())
-                    .div_matrix_with_prepared(&mut prepared)
+                    .div_matrix_with_divisor(&mut cached)
                     .unwrap(),
             );
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_div_matrix_exact_left"),
+        format!("matrix_ops/{label}/mat4 cached_div_matrix_exact_left"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for index in 0..lhs4_cases.len() {
                 black_box(
                     black_box(lhs4_cases[index].clone())
-                        .div_exact_rational_matrix_with_prepared(&mut prepared)
+                        .div_exact_rational_matrix_with_divisor(&mut cached)
                         .unwrap(),
                 );
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_div_matrix_checked"), || {
-        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 cached_div_matrix_checked"), || {
+        let mut cached = black_box(rhs4_cases[0].right_divisor());
         for index in 0..lhs4_cases.len() {
             black_box(
                 black_box(lhs4_cases[index].clone())
-                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .div_matrix_checked_with_divisor(&mut cached)
                     .unwrap(),
             );
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_div_matrix_checked_abort"),
+        format!("matrix_ops/{label}/mat4 cached_div_matrix_checked_abort"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for index in 0..lhs4_cases.len() {
                 black_box(
                     black_box(lhs4_cases[index].clone())
-                        .div_matrix_checked_with_prepared_with_abort(
-                            &mut prepared,
+                        .div_matrix_checked_with_divisor_and_abort(
+                            &mut cached,
                             &signal,
                         )
                         .unwrap(),
@@ -1876,66 +1876,66 @@ fn bench_matrix_operations_for<F>(
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_inverse"), || {
-        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 cached_inverse"), || {
+        let mut cached = black_box(rhs4_cases[0].right_divisor());
         for _ in 0..lhs4_cases.len() {
-            black_box(prepared.inverse().unwrap());
+            black_box(cached.inverse().unwrap());
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_reciprocal"),
+        format!("matrix_ops/{label}/mat4 cached_reciprocal"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.reciprocal().unwrap());
+                black_box(cached.reciprocal().unwrap());
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_inverse_checked"), || {
-        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 cached_inverse_checked"), || {
+        let mut cached = black_box(rhs4_cases[0].right_divisor());
         for _ in 0..lhs4_cases.len() {
-            black_box(prepared.inverse_checked().unwrap());
+            black_box(cached.inverse_checked().unwrap());
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_reciprocal_checked"),
+        format!("matrix_ops/{label}/mat4 cached_reciprocal_checked"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.reciprocal_checked().unwrap());
+                black_box(cached.reciprocal_checked().unwrap());
             }
         },
     );
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_inverse_checked_abort"),
+        format!("matrix_ops/{label}/mat4 cached_inverse_checked_abort"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.inverse_checked_with_abort(&signal).unwrap());
+                black_box(cached.inverse_checked_with_abort(&signal).unwrap());
             }
         },
     );
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_reciprocal_checked_abort"),
+        format!("matrix_ops/{label}/mat4 cached_reciprocal_checked_abort"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap());
+                black_box(cached.reciprocal_checked_with_abort(&signal).unwrap());
             }
         },
     );
-    trace_dispatch_row(format!("matrix_ops/{label}/mat4 prepared_powi_negative"), || {
-        let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+    trace_dispatch_row(format!("matrix_ops/{label}/mat4 cached_powi_negative"), || {
+        let mut cached = black_box(rhs4_cases[0].right_divisor());
         for _ in 0..lhs4_cases.len() {
-            black_box(prepared.powi(-2).unwrap());
+            black_box(cached.powi(-2).unwrap());
         }
     });
     trace_dispatch_row(
-        format!("matrix_ops/{label}/mat4 prepared_powi_negative_one"),
+        format!("matrix_ops/{label}/mat4 cached_powi_negative_one"),
         || {
-            let mut prepared = black_box(rhs4_cases[0].prepare_right_divisor());
+            let mut cached = black_box(rhs4_cases[0].right_divisor());
             for _ in 0..lhs4_cases.len() {
-                black_box(prepared.powi(-1).unwrap());
+                black_box(cached.powi(-1).unwrap());
             }
         },
     );
@@ -2476,42 +2476,42 @@ fn bench_matrix_operations_for<F>(
             )
         })
     });
-    group.bench_function(format!("{label}/mat3 prepared_div_matrix"), |b| {
+    group.bench_function(format!("{label}/mat3 cached_div_matrix"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        let mut cached = rhs3_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs3_cases.len());
             black_box(
                 black_box(lhs3_cases[index].clone())
-                    .div_matrix_with_prepared(&mut prepared)
+                    .div_matrix_with_divisor(&mut cached)
                     .unwrap(),
             )
         })
     });
-    group.bench_function(format!("{label}/mat3 prepared_div_matrix_checked"), |b| {
+    group.bench_function(format!("{label}/mat3 cached_div_matrix_checked"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        let mut cached = rhs3_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs3_cases.len());
             black_box(
                 black_box(lhs3_cases[index].clone())
-                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .div_matrix_checked_with_divisor(&mut cached)
                     .unwrap(),
             )
         })
     });
-    group.bench_function(format!("{label}/mat3 prepared_div_matrix_checked_abort"), |b| {
+    group.bench_function(format!("{label}/mat3 cached_div_matrix_checked_abort"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs3_cases[0].prepare_right_divisor();
+        let mut cached = rhs3_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs3_cases.len());
             black_box(
                 black_box(lhs3_cases[index].clone())
-                    .div_matrix_checked_with_prepared_with_abort(
-                        &mut prepared,
+                    .div_matrix_checked_with_divisor_and_abort(
+                        &mut cached,
                         &signal,
                     )
                     .unwrap(),
@@ -3188,98 +3188,98 @@ fn bench_matrix_operations_for<F>(
             )
         })
     });
-    group.bench_function(format!("{label}/mat4 prepared_div_matrix"), |b| {
+    group.bench_function(format!("{label}/mat4 cached_div_matrix"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        let mut cached = rhs4_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs4_cases.len());
             black_box(
                 black_box(lhs4_cases[index].clone())
-                    .div_matrix_with_prepared(&mut prepared)
+                    .div_matrix_with_divisor(&mut cached)
                     .unwrap(),
             )
         })
     });
     group.bench_function(
-        format!("{label}/mat4 prepared_div_matrix_exact_left"),
+        format!("{label}/mat4 cached_div_matrix_exact_left"),
         |b| {
             let cursor = Cell::new(0);
-            let mut prepared = rhs4_cases[0].prepare_right_divisor();
+            let mut cached = rhs4_cases[0].right_divisor();
             b.iter(|| {
                 let index = cursor.get();
                 cursor.set((index + 1) % lhs4_cases.len());
                 black_box(
                     black_box(lhs4_cases[index].clone())
-                        .div_exact_rational_matrix_with_prepared(&mut prepared)
+                        .div_exact_rational_matrix_with_divisor(&mut cached)
                         .unwrap(),
                 )
             })
         },
     );
-    group.bench_function(format!("{label}/mat4 prepared_div_matrix_checked"), |b| {
+    group.bench_function(format!("{label}/mat4 cached_div_matrix_checked"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        let mut cached = rhs4_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs4_cases.len());
             black_box(
                 black_box(lhs4_cases[index].clone())
-                    .div_matrix_checked_with_prepared(&mut prepared)
+                    .div_matrix_checked_with_divisor(&mut cached)
                     .unwrap(),
             )
         })
     });
-    group.bench_function(format!("{label}/mat4 prepared_div_matrix_checked_abort"), |b| {
+    group.bench_function(format!("{label}/mat4 cached_div_matrix_checked_abort"), |b| {
         let cursor = Cell::new(0);
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
+        let mut cached = rhs4_cases[0].right_divisor();
         b.iter(|| {
             let index = cursor.get();
             cursor.set((index + 1) % lhs4_cases.len());
             black_box(
                 black_box(lhs4_cases[index].clone())
-                    .div_matrix_checked_with_prepared_with_abort(
-                        &mut prepared,
+                    .div_matrix_checked_with_divisor_and_abort(
+                        &mut cached,
                         &signal,
                     )
                     .unwrap(),
             )
         })
     });
-    group.bench_function(format!("{label}/mat4 prepared_inverse"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.inverse().unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_inverse"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.inverse().unwrap()))
     });
-    group.bench_function(format!("{label}/mat4 prepared_reciprocal"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.reciprocal().unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_reciprocal"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.reciprocal().unwrap()))
     });
-    group.bench_function(format!("{label}/mat4 prepared_inverse_checked"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.inverse_checked().unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_inverse_checked"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.inverse_checked().unwrap()))
     });
-    group.bench_function(format!("{label}/mat4 prepared_reciprocal_checked"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.reciprocal_checked().unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_reciprocal_checked"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.reciprocal_checked().unwrap()))
     });
-    group.bench_function(format!("{label}/mat4 prepared_inverse_checked_abort"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.inverse_checked_with_abort(&signal).unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_inverse_checked_abort"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.inverse_checked_with_abort(&signal).unwrap()))
     });
     group.bench_function(
-        format!("{label}/mat4 prepared_reciprocal_checked_abort"),
+        format!("{label}/mat4 cached_reciprocal_checked_abort"),
         |b| {
-            let mut prepared = rhs4_cases[0].prepare_right_divisor();
-            b.iter(|| black_box(prepared.reciprocal_checked_with_abort(&signal).unwrap()))
+            let mut cached = rhs4_cases[0].right_divisor();
+            b.iter(|| black_box(cached.reciprocal_checked_with_abort(&signal).unwrap()))
         },
     );
-    group.bench_function(format!("{label}/mat4 prepared_powi_negative"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.powi(-2).unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_powi_negative"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.powi(-2).unwrap()))
     });
-    group.bench_function(format!("{label}/mat4 prepared_powi_negative_one"), |b| {
-        let mut prepared = rhs4_cases[0].prepare_right_divisor();
-        b.iter(|| black_box(prepared.powi(-1).unwrap()))
+    group.bench_function(format!("{label}/mat4 cached_powi_negative_one"), |b| {
+        let mut cached = rhs4_cases[0].right_divisor();
+        b.iter(|| black_box(cached.powi(-1).unwrap()))
     });
     group.bench_function(
         format!("{label}/mat4 translated_diagonal_direction_transform"),

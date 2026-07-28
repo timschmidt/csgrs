@@ -14,7 +14,7 @@ use std::sync::{Arc, atomic::AtomicBool};
 use arbitrary::Arbitrary;
 use hyperlattice::{
     Matrix3, Matrix3StructuralFacts, Matrix3TransformKind, Matrix4, Matrix4StructuralFacts,
-    Matrix4TransformKind, MatrixPreparedCacheState, Real, Vector3, Vector4, ZeroStatus,
+    Matrix4TransformKind, MatrixCacheState, Real, Vector3, Vector4, ZeroStatus,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -116,34 +116,34 @@ fn matrix_fuzz(input: Input) {
     let _ = m3a
         .clone()
         .div_scalar_checked_with_abort(m3b[0][0].clone(), &signal);
-    let mut prepared3 = m3b.prepare();
-    let facts3 = prepared3.structural_facts();
+    let mut cached3 = m3b.cached();
+    let facts3 = cached3.structural_facts();
     assert_matrix3_fact_helpers(facts3);
     assert_eq!(
-        prepared3.determinant_schedule_hint(),
+        cached3.determinant_schedule_hint(),
         facts3.determinant_schedule_hint(),
-        "PreparedMatrix3 must reuse the same determinant schedule hint as its cached facts"
+        "CachedMatrix3 must reuse the same determinant schedule hint as its cached facts"
     );
-    let _ = prepared3.exact_facts();
-    let _ = prepared3.right_divisor().determinant_schedule_hint();
-    assert_prepared_matrix3_cache_progress(&mut prepared3, "generated Matrix3");
+    let _ = cached3.exact_facts();
+    let _ = cached3.right_divisor().determinant_schedule_hint();
+    assert_cached_matrix3_cache_progress(&mut cached3, "generated Matrix3");
     assert_eq!(
-        prepared3.transform_vector(&v3),
+        cached3.transform_vector(&v3),
         m3b.transform_vec3_handle().transform_vector(&v3),
-        "PreparedMatrix3 transform_vector must match the retained transform handle"
+        "CachedMatrix3 transform_vector must match the retained transform handle"
     );
     assert_eq!(
-        prepared3.transform_vector_batch(std::slice::from_ref(&v3)),
+        cached3.transform_vector_batch(std::slice::from_ref(&v3)),
         m3b.transform_vec3_handle()
             .transform_vector_batch(std::slice::from_ref(&v3)),
-        "PreparedMatrix3 transform_vector_batch must match the retained transform handle"
+        "CachedMatrix3 transform_vector_batch must match the retained transform handle"
     );
-    let _ = prepared3.inverse();
-    let _ = prepared3.inverse_checked();
-    let _ = prepared3.inverse_checked_with_abort(&signal);
-    let _ = prepared3.divide_left(m3a.clone());
-    let _ = prepared3.divide_left_checked(m3a.clone());
-    let _ = prepared3.divide_left_checked_with_abort(m3a.clone(), &signal);
+    let _ = cached3.inverse();
+    let _ = cached3.inverse_checked();
+    let _ = cached3.inverse_checked_with_abort(&signal);
+    let _ = cached3.divide_left(m3a.clone());
+    let _ = cached3.divide_left_checked(m3a.clone());
+    let _ = cached3.divide_left_checked_with_abort(m3a.clone(), &signal);
 
     // ── Matrix3: no-panic — ^ (BitXor) operator ──────────────────────────────
     let _ = m3a.clone() ^ 0_i32;
@@ -207,57 +207,57 @@ fn matrix_fuzz(input: Input) {
     let _ = m4a
         .clone()
         .div_scalar_checked_with_abort(m4b[0][0].clone(), &signal);
-    let mut prepared4 = m4b.prepare();
-    let facts4 = prepared4.structural_facts();
+    let mut cached4 = m4b.cached();
+    let facts4 = cached4.structural_facts();
     assert_matrix4_fact_helpers(facts4);
     assert_eq!(
-        prepared4.determinant_schedule_hint(),
+        cached4.determinant_schedule_hint(),
         facts4.determinant_schedule_hint(),
-        "PreparedMatrix4 must reuse the same determinant schedule hint as its cached facts"
+        "CachedMatrix4 must reuse the same determinant schedule hint as its cached facts"
     );
-    let _ = prepared4.exact_facts();
-    let _ = prepared4.right_divisor().determinant_schedule_hint();
-    assert_prepared_matrix4_cache_progress(&mut prepared4, "generated Matrix4");
+    let _ = cached4.exact_facts();
+    let _ = cached4.right_divisor().determinant_schedule_hint();
+    assert_cached_matrix4_cache_progress(&mut cached4, "generated Matrix4");
     assert_eq!(
-        prepared4.transform_vector(&v4),
+        cached4.transform_vector(&v4),
         m4b.transform_vec4_handle().transform_vector(&v4),
-        "PreparedMatrix4 transform_vector must match the retained transform handle"
+        "CachedMatrix4 transform_vector must match the retained transform handle"
     );
     assert_eq!(
-        prepared4.transform_vector_batch(std::slice::from_ref(&v4)),
+        cached4.transform_vector_batch(std::slice::from_ref(&v4)),
         m4b.transform_vec4_handle()
             .transform_vector_batch(std::slice::from_ref(&v4)),
-        "PreparedMatrix4 transform_vector_batch must match the retained transform handle"
+        "CachedMatrix4 transform_vector_batch must match the retained transform handle"
     );
     assert_eq!(
-        prepared4.transform_direction_vector(&v4),
+        cached4.transform_direction_vector(&v4),
         m4b.transform_vec4_handle().transform_direction_vector(&v4),
-        "PreparedMatrix4 transform_direction_vector must match the retained transform handle"
+        "CachedMatrix4 transform_direction_vector must match the retained transform handle"
     );
     assert_eq!(
-        prepared4.transform_direction_batch(std::slice::from_ref(&v4)),
+        cached4.transform_direction_batch(std::slice::from_ref(&v4)),
         m4b.transform_vec4_handle()
             .transform_direction_batch(std::slice::from_ref(&v4)),
-        "PreparedMatrix4 transform_direction_batch must match the retained transform handle"
+        "CachedMatrix4 transform_direction_batch must match the retained transform handle"
     );
     assert_eq!(
-        prepared4.transform_point_vector(&v4),
+        cached4.transform_point_vector(&v4),
         m4b.transform_vec4_handle().transform_point_vector(&v4),
-        "PreparedMatrix4 transform_point_vector must match the retained transform handle"
+        "CachedMatrix4 transform_point_vector must match the retained transform handle"
     );
     assert_eq!(
-        prepared4.transform_point_batch(std::slice::from_ref(&v4)),
+        cached4.transform_point_batch(std::slice::from_ref(&v4)),
         m4b.transform_vec4_handle()
             .transform_point_batch(std::slice::from_ref(&v4)),
-        "PreparedMatrix4 transform_point_batch must match the retained transform handle"
+        "CachedMatrix4 transform_point_batch must match the retained transform handle"
     );
-    let _ = prepared4.inverse();
-    let _ = prepared4.inverse_checked();
-    let _ = prepared4.inverse_checked_with_abort(&signal);
-    let _ = prepared4.divide_left(m4a.clone());
-    let _ = prepared4.divide_exact_rational_left(m4a.clone());
-    let _ = prepared4.divide_left_checked(m4a.clone());
-    let _ = prepared4.divide_left_checked_with_abort(m4a.clone(), &signal);
+    let _ = cached4.inverse();
+    let _ = cached4.inverse_checked();
+    let _ = cached4.inverse_checked_with_abort(&signal);
+    let _ = cached4.divide_left(m4a.clone());
+    let _ = cached4.divide_exact_rational_left(m4a.clone());
+    let _ = cached4.divide_left_checked(m4a.clone());
+    let _ = cached4.divide_left_checked_with_abort(m4a.clone(), &signal);
 
     // ── Matrix4: no-panic — ^ (BitXor) operator ──────────────────────────────
     let _ = m4a.clone() ^ 0_i32;
@@ -340,19 +340,19 @@ fn matrix_fuzz(input: Input) {
         one.clone(),
         "det(I₃) must equal 1"
     );
-    let mut prepared_i3 = i3.prepare();
-    assert_prepared_matrix3_cache_progress(&mut prepared_i3, "identity Matrix3");
+    let mut cached_i3 = i3.cached();
+    assert_cached_matrix3_cache_progress(&mut cached_i3, "identity Matrix3");
     assert!(
-        prepared_i3.inverse().is_ok(),
-        "prepared identity Matrix3 inverse must succeed"
+        cached_i3.inverse().is_ok(),
+        "cached identity Matrix3 inverse must succeed"
     );
     assert!(
-        prepared_i3.cache_state().has_shared_adjugate_path(),
-        "prepared identity Matrix3 inverse must warm the shared adjugate path"
+        cached_i3.cache_state().has_shared_adjugate_path(),
+        "cached identity Matrix3 inverse must warm the shared adjugate path"
     );
     assert!(
-        prepared_i3.cache_state().inverse,
-        "prepared identity Matrix3 inverse must retain the scaled inverse cache"
+        cached_i3.cache_state().inverse,
+        "cached identity Matrix3 inverse must retain the scaled inverse cache"
     );
 
     // M · 0_vector == 0_vector: every dot product with a zero right-hand side
@@ -444,24 +444,24 @@ fn matrix_fuzz(input: Input) {
         one.clone(),
         "det(I₄) must equal 1"
     );
-    let mut prepared_i4 = i4.prepare();
-    assert_prepared_matrix4_cache_progress(&mut prepared_i4, "identity Matrix4");
+    let mut cached_i4 = i4.cached();
+    assert_cached_matrix4_cache_progress(&mut cached_i4, "identity Matrix4");
     assert!(
-        prepared_i4.inverse().is_ok(),
-        "prepared identity Matrix4 inverse must succeed"
+        cached_i4.inverse().is_ok(),
+        "cached identity Matrix4 inverse must succeed"
     );
-    let identity4_state = prepared_i4.cache_state();
+    let identity4_state = cached_i4.cache_state();
     assert!(
         identity4_state.has_shared_adjugate_path(),
-        "prepared identity Matrix4 inverse must warm the shared adjugate path"
+        "cached identity Matrix4 inverse must warm the shared adjugate path"
     );
     assert!(
         identity4_state.minor_factors,
-        "prepared identity Matrix4 inverse must retain the shared six-minor factor cache"
+        "cached identity Matrix4 inverse must retain the shared six-minor factor cache"
     );
     assert!(
         identity4_state.inverse,
-        "prepared identity Matrix4 inverse must retain the scaled inverse cache"
+        "cached identity Matrix4 inverse must retain the scaled inverse cache"
     );
 
     let zero_v4 = Vector4::zero();
@@ -482,25 +482,25 @@ fn matrix_fuzz(input: Input) {
     );
 }
 
-fn assert_prepared_matrix3_cache_progress(
-    prepared: &mut hyperlattice::PreparedMatrix3<'_>,
+fn assert_cached_matrix3_cache_progress(
+    cached: &mut hyperlattice::CachedMatrix3<'_>,
     label: &str,
 ) {
-    let cold = prepared.cache_state();
+    let cold = cached.cache_state();
     assert!(
         cold.is_cold(),
-        "{label}: freshly prepared Matrix3 handles must start with cold determinant/adjugate caches"
+        "{label}: freshly cached Matrix3 handles must start with cold determinant/adjugate caches"
     );
 
-    let _ = prepared.determinant();
-    let determinant_state = prepared.cache_state();
+    let _ = cached.determinant();
+    let determinant_state = cached.cache_state();
     assert!(
         determinant_state.determinant,
         "{label}: determinant() must retain the exact determinant cache"
     );
     assert!(
         determinant_state.is_warm(),
-        "{label}: determinant() must make the prepared Matrix3 cache observably warm"
+        "{label}: determinant() must make the cached Matrix3 cache observably warm"
     );
     assert!(
         !determinant_state.minor_factors,
@@ -509,18 +509,18 @@ fn assert_prepared_matrix3_cache_progress(
     assert_cache_state_monotonic(cold, determinant_state, label);
 }
 
-fn assert_prepared_matrix4_cache_progress(
-    prepared: &mut hyperlattice::PreparedMatrix4<'_>,
+fn assert_cached_matrix4_cache_progress(
+    cached: &mut hyperlattice::CachedMatrix4<'_>,
     label: &str,
 ) {
-    let cold = prepared.cache_state();
+    let cold = cached.cache_state();
     assert!(
         cold.is_cold(),
-        "{label}: freshly prepared Matrix4 handles must start with cold determinant/factor/adjugate caches"
+        "{label}: freshly cached Matrix4 handles must start with cold determinant/factor/adjugate caches"
     );
 
-    let _ = prepared.determinant();
-    let determinant_state = prepared.cache_state();
+    let _ = cached.determinant();
+    let determinant_state = cached.cache_state();
     assert!(
         determinant_state.determinant,
         "{label}: determinant() must retain the exact determinant cache"
@@ -531,17 +531,17 @@ fn assert_prepared_matrix4_cache_progress(
     );
     assert!(
         determinant_state.is_warm(),
-        "{label}: determinant() must make the prepared Matrix4 cache observably warm"
+        "{label}: determinant() must make the cached Matrix4 cache observably warm"
     );
     assert_cache_state_monotonic(cold, determinant_state, label);
 }
 
 fn assert_cache_state_monotonic(
-    before: MatrixPreparedCacheState,
-    after: MatrixPreparedCacheState,
+    before: MatrixCacheState,
+    after: MatrixCacheState,
     label: &str,
 ) {
-    // Yap's exact-geometric-computation model treats prepared objects as the
+    // Yap's exact-geometric-computation model treats cached objects as the
     // validity boundary for derived algebraic facts. A later kernel may add
     // determinant, reciprocal, adjugate, factor, or inverse facts, but it must
     // not silently discard a fact that was already valid for the same borrowed

@@ -2,9 +2,9 @@ mod common;
 
 use common::{abort_signal, frac, r, unknown_zero};
 use hyperlattice::{
-    Matrix3, Matrix3TransformKind, Matrix4, Matrix4TransformKind, MatrixDeterminantScheduleHint,
-    MatrixPreparedCacheState, Problem, Real, RealSign, RealSymbolicDependencyMask, SignedAxis4,
-    Vector3, Vector4, ZeroStatus, zero,
+    Matrix3, Matrix3TransformKind, Matrix4, Matrix4TransformKind, MatrixCacheState,
+    MatrixDeterminantScheduleHint, Problem, Real, RealSign, RealSymbolicDependencyMask,
+    SignedAxis4, Vector3, Vector4, ZeroStatus, zero,
 };
 
 fn assert_singular_error<T: std::fmt::Debug>(result: Result<T, Problem>) {
@@ -354,9 +354,9 @@ fn matrix_structural_facts_summarize_symbolic_dependencies() {
             .contains(RealSymbolicDependencyMask::EXP)
     );
 
-    let prepared = matrix4.prepare();
+    let cached = matrix4.cached();
     assert_eq!(
-        prepared.structural_facts().symbolic_dependencies,
+        cached.structural_facts().symbolic_dependencies,
         facts4.symbolic_dependencies
     );
 }
@@ -462,72 +462,72 @@ fn matrix_structural_facts_select_advisory_determinant_schedules() {
 }
 
 #[test]
-fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
+fn cached_matrix_handles_reuse_facts_inverse_and_division_semantics() {
     let divisor3 = Matrix3::new([[r(2), r(1), r(0)], [r(0), r(3), r(1)], [r(0), r(0), r(5)]]);
     let left3 = Matrix3::new([
         [r(7), r(11), r(13)],
         [r(17), r(19), r(23)],
         [r(29), r(31), r(37)],
     ]);
-    let mut prepared3 = divisor3.prepare();
+    let mut cached3 = divisor3.cached();
 
-    assert_eq!(prepared3.matrix(), &divisor3);
-    assert_eq!(prepared3.structural_facts(), divisor3.structural_facts());
-    assert_eq!(prepared3.exact_facts(), divisor3.exact_facts());
-    assert_eq!(prepared3.cache_state(), MatrixPreparedCacheState::default());
-    assert!(prepared3.cache_state().is_cold());
+    assert_eq!(cached3.matrix(), &divisor3);
+    assert_eq!(cached3.structural_facts(), divisor3.structural_facts());
+    assert_eq!(cached3.exact_facts(), divisor3.exact_facts());
+    assert_eq!(cached3.cache_state(), MatrixCacheState::default());
+    assert!(cached3.cache_state().is_cold());
     assert_eq!(
-        prepared3.determinant_schedule_hint(),
+        cached3.determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
     );
     assert_eq!(
-        prepared3.right_divisor().structural_facts(),
+        cached3.right_divisor().structural_facts(),
         divisor3.structural_facts()
     );
     assert_eq!(
-        prepared3.right_divisor().determinant_schedule_hint(),
+        cached3.right_divisor().determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
     );
-    assert_eq!(prepared3.determinant(), divisor3.determinant());
+    assert_eq!(cached3.determinant(), divisor3.determinant());
     assert_eq!(
-        prepared3.cache_state(),
-        MatrixPreparedCacheState {
+        cached3.cache_state(),
+        MatrixCacheState {
             determinant: true,
-            ..MatrixPreparedCacheState::default()
+            ..MatrixCacheState::default()
         }
     );
-    assert!(prepared3.cache_state().is_warm());
-    assert!(!prepared3.cache_state().has_determinant_scale());
-    assert_eq!(prepared3.determinant(), divisor3.determinant());
+    assert!(cached3.cache_state().is_warm());
+    assert!(!cached3.cache_state().has_determinant_scale());
+    assert_eq!(cached3.determinant(), divisor3.determinant());
     assert_eq!(
-        prepared3.inverse().unwrap(),
+        cached3.inverse().unwrap(),
         divisor3.clone().inverse().unwrap()
     );
     assert_eq!(
-        prepared3.cache_state(),
-        MatrixPreparedCacheState {
+        cached3.cache_state(),
+        MatrixCacheState {
             determinant: true,
             reciprocal_determinant: true,
             adjugate: true,
             inverse: true,
-            ..MatrixPreparedCacheState::default()
+            ..MatrixCacheState::default()
         }
     );
-    assert!(prepared3.cache_state().has_determinant_scale());
-    assert!(prepared3.cache_state().has_shared_adjugate_path());
-    assert_eq!(prepared3.determinant(), divisor3.determinant());
+    assert!(cached3.cache_state().has_determinant_scale());
+    assert!(cached3.cache_state().has_shared_adjugate_path());
+    assert_eq!(cached3.determinant(), divisor3.determinant());
     assert_eq!(
-        prepared3.reciprocal_checked().unwrap(),
+        cached3.reciprocal_checked().unwrap(),
         divisor3.clone().reciprocal_checked().unwrap()
     );
     assert_eq!(
-        prepared3.divide_left(left3.clone()).unwrap(),
+        cached3.divide_left(left3.clone()).unwrap(),
         (left3.clone() / divisor3.clone()).unwrap()
     );
 
     let signal = abort_signal();
     assert_eq!(
-        prepared3
+        cached3
             .divide_left_checked_with_abort(left3.clone(), &signal)
             .unwrap(),
         left3
@@ -547,41 +547,41 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
         [r(9), r(10), r(11), r(12)],
         [r(13), r(14), r(15), r(16)],
     ]);
-    let mut prepared4 = divisor4.prepare();
+    let mut cached4 = divisor4.cached();
 
-    assert_eq!(prepared4.matrix(), &divisor4);
-    assert_eq!(prepared4.structural_facts(), divisor4.structural_facts());
-    assert_eq!(prepared4.exact_facts(), divisor4.exact_facts());
-    assert!(prepared4.cache_state().is_cold());
+    assert_eq!(cached4.matrix(), &divisor4);
+    assert_eq!(cached4.structural_facts(), divisor4.structural_facts());
+    assert_eq!(cached4.exact_facts(), divisor4.exact_facts());
+    assert!(cached4.cache_state().is_cold());
     assert_eq!(
-        prepared4.determinant_schedule_hint(),
+        cached4.determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
     );
     assert_eq!(
-        prepared4.right_divisor().structural_facts(),
+        cached4.right_divisor().structural_facts(),
         divisor4.structural_facts()
     );
     assert_eq!(
-        prepared4.right_divisor().determinant_schedule_hint(),
+        cached4.right_divisor().determinant_schedule_hint(),
         MatrixDeterminantScheduleHint::Triangular
     );
-    assert_eq!(prepared4.determinant(), divisor4.determinant());
+    assert_eq!(cached4.determinant(), divisor4.determinant());
     assert_eq!(
-        prepared4.cache_state(),
-        MatrixPreparedCacheState {
+        cached4.cache_state(),
+        MatrixCacheState {
             determinant: true,
             minor_factors: true,
-            ..MatrixPreparedCacheState::default()
+            ..MatrixCacheState::default()
         }
     );
-    assert_eq!(prepared4.determinant(), divisor4.determinant());
+    assert_eq!(cached4.determinant(), divisor4.determinant());
     assert_eq!(
-        prepared4.inverse_checked().unwrap(),
+        cached4.inverse_checked().unwrap(),
         divisor4.clone().inverse_checked().unwrap()
     );
     assert_eq!(
-        prepared4.cache_state(),
-        MatrixPreparedCacheState {
+        cached4.cache_state(),
+        MatrixCacheState {
             determinant: true,
             reciprocal_determinant: true,
             minor_factors: true,
@@ -589,19 +589,19 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
             inverse: true,
         }
     );
-    assert!(prepared4.cache_state().has_determinant_scale());
-    assert!(prepared4.cache_state().has_shared_adjugate_path());
-    assert_eq!(prepared4.determinant(), divisor4.determinant());
+    assert!(cached4.cache_state().has_determinant_scale());
+    assert!(cached4.cache_state().has_shared_adjugate_path());
+    assert_eq!(cached4.determinant(), divisor4.determinant());
     assert_eq!(
-        prepared4.divide_left(left4.clone()).unwrap(),
+        cached4.divide_left(left4.clone()).unwrap(),
         (left4.clone() / divisor4.clone()).unwrap()
     );
     assert_eq!(
-        prepared4.divide_exact_rational_left(left4.clone()).unwrap(),
+        cached4.divide_exact_rational_left(left4.clone()).unwrap(),
         (left4.clone() / divisor4.clone()).unwrap()
     );
     assert_eq!(
-        prepared4
+        cached4
             .divide_left_checked_with_abort(left4.clone(), &signal)
             .unwrap(),
         left4
@@ -611,23 +611,23 @@ fn prepared_matrix_handles_reuse_facts_inverse_and_division_semantics() {
 }
 
 #[test]
-fn prepared_right_divisor_cache_state_tracks_shared_adjugate_warmup() {
+fn cached_right_divisor_cache_state_tracks_shared_adjugate_warmup() {
     let divisor3 = Matrix3::new([[r(2), r(1), r(0)], [r(0), r(3), r(1)], [r(0), r(0), r(5)]]);
-    let mut prepared3 = divisor3.prepare_right_divisor();
-    assert!(prepared3.cache_state().is_cold());
-    assert_eq!(prepared3.determinant(), divisor3.determinant());
+    let mut cached3 = divisor3.right_divisor();
+    assert!(cached3.cache_state().is_cold());
+    assert_eq!(cached3.determinant(), divisor3.determinant());
     assert_eq!(
-        prepared3.cache_state(),
-        MatrixPreparedCacheState {
+        cached3.cache_state(),
+        MatrixCacheState {
             determinant: true,
-            ..MatrixPreparedCacheState::default()
+            ..MatrixCacheState::default()
         }
     );
     assert_eq!(
-        prepared3.inverse().unwrap(),
+        cached3.inverse().unwrap(),
         divisor3.clone().inverse().unwrap()
     );
-    let warmed3 = prepared3.cache_state();
+    let warmed3 = cached3.cache_state();
     assert!(warmed3.has_shared_adjugate_path());
     assert!(warmed3.adjugate);
     assert!(!warmed3.minor_factors);
@@ -638,13 +638,13 @@ fn prepared_right_divisor_cache_state_tracks_shared_adjugate_warmup() {
         [r(0), r(0), r(5), r(1)],
         [r(0), r(0), r(0), r(7)],
     ]);
-    let mut prepared4 = divisor4.prepare_right_divisor();
-    assert!(prepared4.cache_state().is_cold());
+    let mut cached4 = divisor4.right_divisor();
+    assert!(cached4.cache_state().is_cold());
     assert_eq!(
-        prepared4.inverse().unwrap(),
+        cached4.inverse().unwrap(),
         divisor4.clone().inverse().unwrap()
     );
-    let warmed4 = prepared4.cache_state();
+    let warmed4 = cached4.cache_state();
     assert!(warmed4.has_shared_adjugate_path());
     assert!(warmed4.minor_factors);
     assert!(warmed4.inverse);
@@ -834,21 +834,21 @@ fn matrix4_assumed_homogeneous_batches_match_single_lane_transforms() {
 }
 
 #[test]
-fn prepared_matrix_transform_methods_reuse_matrix_handle_semantics() {
+fn cached_matrix_transform_methods_reuse_matrix_handle_semantics() {
     let matrix3 = Matrix3::new([[r(2), r(0), r(5)], [r(0), r(3), r(7)], [r(0), r(0), r(1)]]);
     let vectors3 = [
         Vector3::new([r(11), r(13), r(1)]),
         Vector3::new([r(17), r(19), r(1)]),
     ];
-    let prepared3 = matrix3.prepare();
+    let cached3 = matrix3.cached();
     let handle3 = matrix3.transform_vec3_handle();
 
     assert_eq!(
-        prepared3.transform_vector(&vectors3[0]),
+        cached3.transform_vector(&vectors3[0]),
         handle3.transform_vector(&vectors3[0])
     );
     assert_eq!(
-        prepared3.transform_vector_batch(&vectors3),
+        cached3.transform_vector_batch(&vectors3),
         handle3.transform_vector_batch(&vectors3)
     );
 
@@ -871,27 +871,27 @@ fn prepared_matrix_transform_methods_reuse_matrix_handle_semantics() {
         points[0].clone(),
         directions[1].clone(),
     ];
-    let prepared4 = matrix4.prepare();
+    let cached4 = matrix4.cached();
     let handle4 = matrix4.transform_vec4_handle();
 
     assert_eq!(
-        prepared4.transform_direction_vector(&directions[0]),
+        cached4.transform_direction_vector(&directions[0]),
         handle4.transform_direction_vector(&directions[0])
     );
     assert_eq!(
-        prepared4.transform_point_vector(&points[0]),
+        cached4.transform_point_vector(&points[0]),
         handle4.transform_point_vector(&points[0])
     );
     assert_eq!(
-        prepared4.transform_direction_batch(&directions),
+        cached4.transform_direction_batch(&directions),
         handle4.transform_direction_batch(&directions)
     );
     assert_eq!(
-        prepared4.transform_point_batch(&points),
+        cached4.transform_point_batch(&points),
         handle4.transform_point_batch(&points)
     );
     assert_eq!(
-        prepared4.transform_vector_batch(&mixed),
+        cached4.transform_vector_batch(&mixed),
         handle4.transform_vector_batch(&mixed)
     );
 }
@@ -941,7 +941,7 @@ fn matrix4_negative_power_matches_repeated_inverse_product() {
 }
 
 #[test]
-fn matrix4_prepared_negative_power_matches_ordinary_power() {
+fn matrix4_cached_negative_power_matches_ordinary_power() {
     let matrix = Matrix4::new([
         [r(2), r(0), r(1), r(0)],
         [r(1), r(3), r(0), r(1)],
@@ -949,15 +949,15 @@ fn matrix4_prepared_negative_power_matches_ordinary_power() {
         [r(1), r(0), r(0), r(2)],
     ]);
     let signal = abort_signal();
-    let mut prepared = matrix.prepare_right_divisor();
+    let mut cached = matrix.right_divisor();
 
-    assert_eq!(prepared.powi(-2).unwrap(), matrix.clone().powi(-2).unwrap());
+    assert_eq!(cached.powi(-2).unwrap(), matrix.clone().powi(-2).unwrap());
     assert_eq!(
-        prepared.powi_checked(-2).unwrap(),
+        cached.powi_checked(-2).unwrap(),
         matrix.clone().powi_checked(-2).unwrap()
     );
     assert_eq!(
-        prepared.powi_checked_with_abort(-2, &signal).unwrap(),
+        cached.powi_checked_with_abort(-2, &signal).unwrap(),
         matrix.powi_checked_with_abort(-2, &signal).unwrap()
     );
 }
@@ -1544,7 +1544,7 @@ fn matrix4_known_upper_triangular_div_matrix_checked_matches_ordinary() {
 }
 
 #[test]
-fn matrix4_known_upper_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+fn matrix4_known_upper_triangular_div_matrix_checked_with_divisor_matches_ordinary() {
     let numerator = Matrix4::new([
         [r(4), r(2), r(7), r(11)],
         [r(1), r(3), r(0), r(13)],
@@ -1558,27 +1558,27 @@ fn matrix4_known_upper_triangular_div_matrix_checked_with_prepared_matches_ordin
         [r(0), r(0), r(0), r(29)],
     ]);
     let expected = (numerator.clone() / divisor.clone()).unwrap();
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
 
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_with_prepared(&mut prepared)
+            .div_matrix_with_divisor(&mut cached)
             .unwrap(),
         expected
     );
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &abort_signal())
+            .div_matrix_checked_with_divisor_and_abort(&mut cached, &abort_signal())
             .unwrap(),
         expected
     );
 }
 
 #[test]
-fn matrix4_known_lower_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+fn matrix4_known_lower_triangular_div_matrix_checked_with_divisor_matches_ordinary() {
     let numerator = Matrix4::new([
         [r(4), r(2), r(7), r(11)],
         [r(1), r(3), r(0), r(13)],
@@ -1592,20 +1592,20 @@ fn matrix4_known_lower_triangular_div_matrix_checked_with_prepared_matches_ordin
         [r(7), r(17), r(23), r(29)],
     ]);
     let expected = (numerator.clone() / divisor.clone()).unwrap();
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
 
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_with_prepared(&mut prepared)
+            .div_matrix_with_divisor(&mut cached)
             .unwrap(),
         expected
     );
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &abort_signal())
+            .div_matrix_checked_with_divisor_and_abort(&mut cached, &abort_signal())
             .unwrap(),
         expected
     );
@@ -1796,25 +1796,25 @@ fn matrix3_known_upper_triangular_div_matrix_checked_matches_ordinary() {
 }
 
 #[test]
-fn matrix3_known_upper_triangular_div_matrix_checked_with_prepared_matches_ordinary() {
+fn matrix3_known_upper_triangular_div_matrix_checked_with_divisor_matches_ordinary() {
     let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(1), r(3), r(0)], [r(5), r(8), r(6)]]);
     let divisor = Matrix3::new([[r(2), r(3), r(5)], [r(0), r(7), r(11)], [r(0), r(0), r(13)]]);
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     let expected = (numerator.clone() / divisor.clone()).unwrap();
 
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_with_prepared(&mut prepared)
+            .div_matrix_with_divisor(&mut cached)
             .unwrap(),
         expected
     );
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     let signal = abort_signal();
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .div_matrix_checked_with_divisor_and_abort(&mut cached, &signal)
             .unwrap(),
         expected
     );
@@ -1887,26 +1887,26 @@ fn checked_matrix3_division_matches_ordinary_right_division() {
 }
 
 #[test]
-fn matrix3_division_with_prepared_divisor_reuses_cache() {
+fn matrix3_division_with_cached_divisor_reuses_cache() {
     let numerator1 = Matrix3::new([[r(3), r(1), r(4)], [r(1), r(5), r(9)], [r(2), r(6), r(5)]]);
     let numerator2 = Matrix3::new([[r(2), r(7), r(1)], [r(8), r(2), r(8)], [r(1), r(8), r(2)]]);
     let divisor = Matrix3::new([[r(2), r(0), r(1)], [r(1), r(3), r(0)], [r(0), r(2), r(1)]]);
     let expected1 = (numerator1.clone() / divisor.clone()).unwrap();
     let expected2 = (numerator2.clone() / divisor.clone()).unwrap();
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
 
     assert_eq!(
-        numerator1.div_matrix_with_prepared(&mut prepared).unwrap(),
+        numerator1.div_matrix_with_divisor(&mut cached).unwrap(),
         expected1
     );
     assert_eq!(
-        numerator2.div_matrix_with_prepared(&mut prepared).unwrap(),
+        numerator2.div_matrix_with_divisor(&mut cached).unwrap(),
         expected2
     );
 }
 
 #[test]
-fn matrix3_division_checked_and_checked_abort_with_prepared_divisor_match_ordinary() {
+fn matrix3_division_checked_and_checked_abort_with_cached_divisor_match_ordinary() {
     let numerator = Matrix3::new([[r(4), r(2), r(7)], [r(0), r(3), r(1)], [r(5), r(8), r(6)]]);
     let divisor = Matrix3::new([[r(1), r(2), r(0)], [r(0), r(1), r(3)], [r(2), r(0), r(1)]]);
     let signal = abort_signal();
@@ -1917,45 +1917,45 @@ fn matrix3_division_checked_and_checked_abort_with_prepared_divisor_match_ordina
         .unwrap();
     assert_eq!(expected, expected_checked);
 
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared(&mut prepared)
+            .div_matrix_checked_with_divisor(&mut cached)
             .unwrap(),
         expected
     );
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .div_matrix_checked_with_divisor_and_abort(&mut cached, &signal)
             .unwrap(),
         expected_checked
     );
     assert_eq!(
-        prepared.inverse().unwrap(),
+        cached.inverse().unwrap(),
         divisor.clone().inverse().unwrap()
     );
     assert_eq!(
-        prepared.inverse_checked().unwrap(),
+        cached.inverse_checked().unwrap(),
         divisor.clone().inverse_checked().unwrap()
     );
     assert_eq!(
-        prepared.inverse_checked_with_abort(&signal).unwrap(),
+        cached.inverse_checked_with_abort(&signal).unwrap(),
         divisor.clone().inverse_checked_with_abort(&signal).unwrap()
     );
 
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
-        prepared.reciprocal().unwrap(),
+        cached.reciprocal().unwrap(),
         divisor.clone().reciprocal().unwrap()
     );
     assert_eq!(
-        prepared.reciprocal_checked().unwrap(),
+        cached.reciprocal_checked().unwrap(),
         divisor.clone().reciprocal_checked().unwrap()
     );
     assert_eq!(
-        prepared.reciprocal_checked_with_abort(&signal).unwrap(),
+        cached.reciprocal_checked_with_abort(&signal).unwrap(),
         divisor.clone().reciprocal_checked().unwrap()
     );
 }
@@ -1981,7 +1981,7 @@ fn matrix4_division_solves_right_division() {
 }
 
 #[test]
-fn matrix4_division_with_prepared_divisor_reuses_cache() {
+fn matrix4_division_with_cached_divisor_reuses_cache() {
     let numerator1 = Matrix4::new([
         [r(1), r(2), r(3), r(4)],
         [r(5), r(6), r(7), r(8)],
@@ -2002,20 +2002,20 @@ fn matrix4_division_with_prepared_divisor_reuses_cache() {
     ]);
     let expected1 = (numerator1.clone() / divisor.clone()).unwrap();
     let expected2 = (numerator2.clone() / divisor.clone()).unwrap();
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
 
     assert_eq!(
-        numerator1.div_matrix_with_prepared(&mut prepared).unwrap(),
+        numerator1.div_matrix_with_divisor(&mut cached).unwrap(),
         expected1
     );
     assert_eq!(
-        numerator2.div_matrix_with_prepared(&mut prepared).unwrap(),
+        numerator2.div_matrix_with_divisor(&mut cached).unwrap(),
         expected2
     );
 }
 
 #[test]
-fn matrix4_division_checked_and_checked_abort_with_prepared_divisor_match_ordinary() {
+fn matrix4_division_checked_and_checked_abort_with_cached_divisor_match_ordinary() {
     let numerator = Matrix4::new([
         [r(1), r(3), r(5), r(7)],
         [r(2), r(4), r(6), r(8)],
@@ -2036,46 +2036,46 @@ fn matrix4_division_checked_and_checked_abort_with_prepared_divisor_match_ordina
         .unwrap();
     assert_eq!(expected, expected_checked);
 
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared(&mut prepared)
+            .div_matrix_checked_with_divisor(&mut cached)
             .unwrap(),
         expected
     );
     assert_eq!(
         numerator
             .clone()
-            .div_matrix_checked_with_prepared_with_abort(&mut prepared, &signal)
+            .div_matrix_checked_with_divisor_and_abort(&mut cached, &signal)
             .unwrap(),
         expected_checked
     );
 
     assert_eq!(
-        prepared.inverse().unwrap(),
+        cached.inverse().unwrap(),
         divisor.clone().inverse().unwrap()
     );
     assert_eq!(
-        prepared.inverse_checked().unwrap(),
+        cached.inverse_checked().unwrap(),
         divisor.clone().inverse_checked().unwrap()
     );
     assert_eq!(
-        prepared.inverse_checked_with_abort(&signal).unwrap(),
+        cached.inverse_checked_with_abort(&signal).unwrap(),
         divisor.clone().inverse_checked_with_abort(&signal).unwrap()
     );
 
-    let mut prepared = divisor.prepare_right_divisor();
+    let mut cached = divisor.right_divisor();
     assert_eq!(
-        prepared.reciprocal().unwrap(),
+        cached.reciprocal().unwrap(),
         divisor.clone().reciprocal().unwrap()
     );
     assert_eq!(
-        prepared.reciprocal_checked().unwrap(),
+        cached.reciprocal_checked().unwrap(),
         divisor.clone().reciprocal_checked().unwrap()
     );
     assert_eq!(
-        prepared.reciprocal_checked_with_abort(&signal).unwrap(),
+        cached.reciprocal_checked_with_abort(&signal).unwrap(),
         divisor.inverse_checked_with_abort(&signal).unwrap()
     );
 }

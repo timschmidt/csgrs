@@ -19,7 +19,7 @@ before a caller knows whether a cheap structural fact was enough.
 
 `hyperlattice` keeps objects small and facts local. Zero masks, homogeneous
 point/direction tags, determinant schedule hints, sparse support, shared-scale views,
-and prepared matrix cache summaries let callers skip known-zero work, choose exact
+and matrix cache summaries let callers skip known-zero work, choose exact
 reducers, and delay scalar canonicalization until a result is needed.
 
 ## Main Types
@@ -34,8 +34,8 @@ reducers, and delay scalar canonicalization until a result is needed.
   `intersect_two_planes`, `intersect_three_planes`, and
   `intersect_homogeneous_line_plane` keep exact 3D plane intersections in homogeneous
   form so affine division is delayed until a caller proves the point is finite.
-- `Matrix3`, `Matrix4`, transform handles, transformed-vector/matrix views, prepared
-  matrix handles, and prepared right-divisor handles describe small exact matrices.
+- `Matrix3`, `Matrix4`, transform handles, transformed-vector/matrix views, cached
+  matrix handles, and cached right-divisor handles describe small exact matrices.
 - `Matrix3StructuralFacts`, `Matrix4StructuralFacts`, transform-kind enums, determinant
   schedule hints, and cache summaries preserve matrix structure.
 - `Displacement2Facts`, `ProductTerm2Facts`, `ProductSum2Facts`, and `Orient2Facts`
@@ -52,7 +52,7 @@ rounding through a singular path.
 
 `hyperlattice` preserves object facts that `hyperreal` cannot know by itself: coordinate
 zero masks, homogeneous shape, shared scale, affine/translation/diagonal/projective
-transform kind, determinant schedule, and prepared cache availability.
+transform kind, determinant schedule, and cache availability.
 Point and projective carriers live here rather than in `hyperlimit` so predicate
 policy can classify them without becoming the storage owner.
 
@@ -60,7 +60,7 @@ policy can classify them without becoming the storage owner.
 
 `hyperlattice` combats numerical explosion by keeping object-level facts beside exact
 scalars. Zero masks, one-hot coordinates, determinant schedules, shared scales,
-homogeneous facts, and prepared matrix caches let callers avoid expanding matrix,
+homogeneous facts, and cached matrix caches let callers avoid expanding matrix,
 projective, and transform expressions until an exact predicate or solve actually needs
 the scalar terms.
 
@@ -73,11 +73,11 @@ operations reuse the consumed left carrier, and fixed-size matrix clones expose
 their lanes directly. Fixed-size negation kernels expose every lane to the retained
 exact sign-pair path. Product-sum reducers preserve rational structure. Repeated
 exact scalar products and sign flips use bounded retention, while borrowed linear
-operations adapt after observing reuse without allocating on first use. Prepared matrix and
-right-divisor handles let callers reuse determinant,
-adjugate, reciprocal, minor, and inverse work without exposing internal cache storage.
+operations adapt after observing reuse without allocating on first use. Cached
+matrix and right-divisor handles reuse determinant, adjugate, reciprocal, minor,
+and inverse work without exposing internal cache storage.
 
-Benchmarks track scalar, vector, matrix, prepared-cache, and dispatch-trace behavior so
+Benchmarks track scalar, vector, matrix, matrix-cache, and dispatch-trace behavior so
 shortcuts can be accepted only when they help the target surface without destabilizing
 nearby Hyper predicate paths.
 
@@ -99,7 +99,7 @@ Implemented today:
 - exact 2D algebra helpers and facts for displacement, wedge/dot, product sums, and
   orientation expressions;
 - `Matrix3`, `Matrix4`, determinant, inverse, transpose, multiplication, powers, checked
-  paths, transform handles, prepared matrix/right-divisor handles, and structural facts;
+  paths, transform handles, cached matrix/right-divisor handles, and structural facts;
 - `RealFacts`, sign/magnitude facts, abort signals, `arbitrary` support, regression
   sentinels, and benchmark hooks.
 
