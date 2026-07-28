@@ -990,28 +990,30 @@ Clippy, warning-denied rustdoc, benchmark and fuzz-target builds, locked release
 WebAssembly build, and 369-case AddressSanitizer Boolean pipeline, followed by
 CSGRS's 370-test all-feature library gate and every integration suite.
 
-### Prepared projected rational point queries
+### Retained projected rational point queries
 
-Certified 2D line filters can now consume a `PreparedRationalPoint3Query` and
+Certified 2D line filters can consume a `RationalPoint3Query` and
 select two coordinate axes without reconverting the same arbitrary-precision
 rationals. Fixed line endpoints can be projected from the same retained
 value/error intervals. Invalid projections and intervals that cannot certify a
 sign still return `None`; the caller's exact predicate remains authoritative.
-The existing affine four-term query constructor retains its direct conversion
-path so unrelated point-plane predicates do not pay for the new abstraction.
+One-shot callers use the immediate certified line-sign API; repeated callers
+construct the point query and line filter directly. The affine four-term query
+constructor retains its own conversion path so unrelated point-plane predicates
+do not pay for this abstraction.
 
 Eight alternating counter runs each performed 500 fresh, globally shifted
 sphere/box operations through downstream CSGRS:
 
-| exact Boolean | repeated-conversion instructions | prepared-point instructions | instruction result | cycle result |
+| exact Boolean | repeated-conversion instructions | retained-point instructions | instruction result | cycle result |
 | --- | ---: | ---: | ---: | ---: |
 | union | 9,955,432,140 | 9,516,772,993 | 4.41% fewer | 4.04% fewer |
 | difference | 8,488,857,196 | 8,487,528,295 | 0.02% fewer | neutral |
 
 In the union profile, `Rational::to_f64_lossy` fell from 4.91% to 2.09% self
 time. Heap profiles added only 45 allocations over 50 unions (0.9 per
-operation) for the prepared-query vector. A focused regression compares direct
-and prepared positive, negative, and uncertain line signs and rejects invalid
+operation) for the retained-query vector. A focused regression compares direct
+and retained positive, negative, and uncertain line signs and rejects invalid
 axis projections.
 
 Validation passed the complete default and all-feature test suites, all targets,
@@ -1022,6 +1024,12 @@ ASAN campaigns completed 505,059 `rational_arithmetic` executions and 92,851
 test/build/lint/documentation/benchmark/WASM matrix plus 365 ASAN Boolean-pipeline
 executions, and downstream CSGRS passed all 370 library tests and every integration
 test.
+
+The 2026-07-27 migration from preparation methods to direct point-query and
+line-filter constructors preserved these retained intervals and the exact
+fallback. Downstream Hypermesh's serialized triangle-output gate reported no
+Criterion regression across all four cube operations; the larger YeahRight
+union measured 10.356 ms versus the 10.302 ms baseline.
 
 ### Canonical primitive small integers
 

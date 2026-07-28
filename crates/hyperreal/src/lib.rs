@@ -40,9 +40,9 @@ mod real;
 pub use crate::real::{
     AffineDet2ExactWordFilter, AffineDet2Filter, AffineDet2PairFilter, AffineDet3ExactWordFilter,
     AffineDet3Filter, LinearForm3Filter, PreparedIncircle2dFilter, PreparedInsphere3dFilter,
-    PreparedRationalLine2Filter, PreparedRationalPoint3Query, RationalLinearForm4Filter,
-    RationalLinearForm4Query, Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
-    RealExactSetFacts, RealExactSetSignPattern,
+    RationalLine2Filter, RationalLinearForm4Filter, RationalLinearForm4Query, RationalPoint3Query,
+    Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,
+    RealExactSetSignPattern,
 };
 
 #[cfg(feature = "simple")]

@@ -776,59 +776,60 @@ mod tests {
     }
 
     #[test]
-    fn prepared_rational_line2_filter_preserves_exact_signs() {
+    fn rational_line2_filter_preserves_exact_signs() {
         let zero = Rational::zero();
         let third = Rational::fraction(1, 3).unwrap();
         let two_thirds = Rational::fraction(2, 3).unwrap();
-        let line = Real::prepare_rational_line2_filter(
+        let line = RationalLine2Filter::from_rationals(
             [&zero, &zero],
             [&third, &two_thirds],
         )
-        .expect("finite rational line should prepare");
+        .expect("finite rational line should construct");
         let one = Rational::one();
         let two = Rational::new(2);
         let three = Rational::new(3);
         assert_eq!(
-            line.sign_rational([&one, &three]),
+            line.sign_rationals([&one, &three]),
             Some(RealSign::Positive),
         );
         assert_eq!(
-            line.sign_rational([&two, &three]),
+            line.sign_rationals([&two, &three]),
             Some(RealSign::Negative),
         );
-        assert_eq!(line.sign_rational([&one, &two]), None);
+        assert_eq!(line.sign_rationals([&one, &two]), None);
+        assert_eq!(
+            Real::certified_rational_line2_sign(
+                [&zero, &zero],
+                [&third, &two_thirds],
+                [&one, &three],
+            ),
+            Some(RealSign::Positive),
+        );
 
         let height = Rational::new(9);
-        let from = Real::prepare_rational_point3_query([&zero, &zero, &height])
-            .expect("finite rational point should prepare");
-        let to = Real::prepare_rational_point3_query([&third, &two_thirds, &height])
-            .expect("finite rational point should prepare");
-        let projected = Real::prepare_rational_line2_filter_from_prepared_point3(
-            &from,
-            &to,
-            [0, 1],
-        )
-        .expect("distinct valid axes should prepare");
-        let positive = Real::prepare_rational_point3_query([&one, &three, &height])
-            .expect("finite rational point should prepare");
-        let negative = Real::prepare_rational_point3_query([&two, &three, &height])
-            .expect("finite rational point should prepare");
-        let boundary = Real::prepare_rational_point3_query([&one, &two, &height])
-            .expect("finite rational point should prepare");
+        let from = RationalPoint3Query::from_rationals([&zero, &zero, &height])
+            .expect("finite rational point should construct");
+        let to = RationalPoint3Query::from_rationals([&third, &two_thirds, &height])
+            .expect("finite rational point should construct");
+        let projected = RationalLine2Filter::from_point3(&from, &to, [0, 1])
+            .expect("distinct valid axes should construct");
+        let positive = RationalPoint3Query::from_rationals([&one, &three, &height])
+            .expect("finite rational point should construct");
+        let negative = RationalPoint3Query::from_rationals([&two, &three, &height])
+            .expect("finite rational point should construct");
+        let boundary = RationalPoint3Query::from_rationals([&one, &two, &height])
+            .expect("finite rational point should construct");
         assert_eq!(
-            projected.sign_prepared_point3(&positive, [0, 1]),
+            projected.sign_point3(&positive, [0, 1]),
             Some(RealSign::Positive),
         );
         assert_eq!(
-            projected.sign_prepared_point3(&negative, [0, 1]),
+            projected.sign_point3(&negative, [0, 1]),
             Some(RealSign::Negative),
         );
-        assert_eq!(projected.sign_prepared_point3(&boundary, [0, 1]), None);
-        assert!(
-            Real::prepare_rational_line2_filter_from_prepared_point3(&from, &to, [1, 1])
-                .is_none()
-        );
-        assert!(projected.sign_prepared_point3(&positive, [0, 3]).is_none());
+        assert_eq!(projected.sign_point3(&boundary, [0, 1]), None);
+        assert!(RationalLine2Filter::from_point3(&from, &to, [1, 1]).is_none());
+        assert!(projected.sign_point3(&positive, [0, 3]).is_none());
     }
 
     #[test]
