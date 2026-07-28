@@ -9,6 +9,7 @@
 //! Combinatorial acceptance is based on exact containment, no-overlap, and
 //! support checks or explicit unknowns.
 
+pub mod analysis;
 pub mod bounds;
 pub mod clearance;
 pub mod domain;
@@ -22,7 +23,6 @@ pub mod multibin;
 pub mod objective;
 pub mod orientation;
 pub mod portfolio;
-pub mod prepared;
 pub mod replay;
 pub mod search;
 pub mod sheet;
@@ -31,6 +31,10 @@ pub mod solver;
 pub mod stock;
 pub mod support;
 
+pub use analysis::{
+    DemandClass3, PackingAnalysis3, PackingAnalysisMetadata3, PackingDimensionFacts3,
+    PackingGridFacts3, PlacementOrder3, analyze_packing_3d, order_placements_3d,
+};
 pub use bounds::{
     CapacityBoundReport2, CapacityBoundReport3, CapacityBoundStatus, PairIncompatibility2,
     PairIncompatibility3, PairIncompatibilityReport2, PairIncompatibilityReport3,
@@ -96,11 +100,6 @@ pub use portfolio::{
     CuboidPortfolioBudget3, CuboidPortfolioReport3, CuboidPortfolioStatus3, SheetPortfolioBudget2,
     SheetPortfolioReport2, SheetPortfolioStatus2, auto_cuboid_portfolio_3d,
     auto_sheet_portfolio_2d,
-};
-pub use prepared::{
-    PreparedCacheMetadata3, PreparedDemandClass3, PreparedDimensionFacts3, PreparedGridSummary3,
-    PreparedPacking3, PreparedPlacements3, prepare_packing_3d, prepare_placements_3d,
-    replay_prepared_packing_3d,
 };
 pub use replay::{
     FeasibilityReplay3, FeasibilityStatus, ObjectiveReport3, PackingVerification3,

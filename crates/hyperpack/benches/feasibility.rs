@@ -8,27 +8,28 @@ use hyperpack::{
     ObjectiveTerm3, Orientation2, Orientation3, OrientedItem3, OrientedPlacement3,
     OrientedSheetItem2, OrientedSheetPlacement2, Placement3, Real, Rect2, ReinsertUnplacedConfig3,
     SheetBin2, SheetItem2, SheetPlacement2, SheetPortfolioBudget2, StockBin1, StockItem1,
-    StockPlacement1, SupportPolicy3, TabuSearchConfig3, auto_cuboid_portfolio_3d,
-    auto_sheet_portfolio_2d, branch_and_bound_one_bin_3d, capacity_bounds_2d, capacity_bounds_3d,
-    compare_objectives_3d, cuboid_best_fit_decreasing_footprint_area_3d,
-    cuboid_best_fit_decreasing_max_side_3d, cuboid_best_fit_decreasing_volume_3d,
-    cuboid_extreme_point_decreasing_volume_3d, cuboid_first_fit_decreasing_footprint_area_3d,
-    cuboid_first_fit_decreasing_max_side_3d, cuboid_first_fit_decreasing_volume_3d,
-    cuboid_guillotine_best_volume_fit_3d, cuboid_laff_largest_area_fit_first_3d,
-    cuboid_maximal_space_decreasing_volume_3d, empty_bins_3d, export_no_overlap_model_2d,
-    export_no_overlap_model_3d, guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
+    StockPlacement1, SupportPolicy3, TabuSearchConfig3, analyze_packing_3d,
+    auto_cuboid_portfolio_3d, auto_sheet_portfolio_2d, branch_and_bound_one_bin_3d,
+    capacity_bounds_2d, capacity_bounds_3d, compare_objectives_3d,
+    cuboid_best_fit_decreasing_footprint_area_3d, cuboid_best_fit_decreasing_max_side_3d,
+    cuboid_best_fit_decreasing_volume_3d, cuboid_extreme_point_decreasing_volume_3d,
+    cuboid_first_fit_decreasing_footprint_area_3d, cuboid_first_fit_decreasing_max_side_3d,
+    cuboid_first_fit_decreasing_volume_3d, cuboid_guillotine_best_volume_fit_3d,
+    cuboid_laff_largest_area_fit_first_3d, cuboid_maximal_space_decreasing_volume_3d,
+    empty_bins_3d, export_no_overlap_model_2d, export_no_overlap_model_3d,
+    guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
     guillotine_best_short_side_fit_2d, height_objective_3d, import_domain_items_3d,
     local_search_order_3d, maxrects_best_area_fit_2d, maxrects_best_long_side_fit_2d,
     maxrects_best_short_side_fit_2d, maxrects_bottom_left_2d, maxrects_contact_point_2d,
-    multistart_order_3d, pair_incompatibilities_2d, pair_incompatibilities_3d, prepare_packing_3d,
-    prepare_placements_3d, reinsert_unplaced_order_3d, replay_prepared_packing_3d,
-    shelf_best_fit_decreasing_height_2d, shelf_first_fit_decreasing_height_2d,
-    shelf_next_fit_decreasing_height_2d, skyline_bottom_left_2d, skyline_minimum_waste_2d,
-    snapshot_packing_3d_binary, snapshot_packing_3d_text, snapshot_sheet_2d_binary,
-    snapshot_sheet_2d_text, snapshot_stock_1d_binary, snapshot_stock_1d_text, tabu_search_order_3d,
-    verify_clearance_2d, verify_clearance_3d, verify_direct_stack_load_3d,
-    verify_multi_bin_packing_3d, verify_oriented_packing_2d, verify_oriented_packing_3d,
-    verify_packing_1d, verify_packing_2d, verify_packing_3d, verify_support_3d,
+    multistart_order_3d, order_placements_3d, pair_incompatibilities_2d, pair_incompatibilities_3d,
+    reinsert_unplaced_order_3d, shelf_best_fit_decreasing_height_2d,
+    shelf_first_fit_decreasing_height_2d, shelf_next_fit_decreasing_height_2d,
+    skyline_bottom_left_2d, skyline_minimum_waste_2d, snapshot_packing_3d_binary,
+    snapshot_packing_3d_text, snapshot_sheet_2d_binary, snapshot_sheet_2d_text,
+    snapshot_stock_1d_binary, snapshot_stock_1d_text, tabu_search_order_3d, verify_clearance_2d,
+    verify_clearance_3d, verify_direct_stack_load_3d, verify_multi_bin_packing_3d,
+    verify_oriented_packing_2d, verify_oriented_packing_3d, verify_packing_1d, verify_packing_2d,
+    verify_packing_3d, verify_support_3d,
 };
 
 fn r(value: i32) -> Real {
@@ -159,13 +160,12 @@ fn main() {
         let replay = FeasibilityReplay3::replay(black_box(&bin), &items, &placements).unwrap();
         checks ^= replay.containment_checks;
         checks ^= replay.no_overlap_checks;
-        let prepared = prepare_placements_3d(&placements);
-        let prepared_replay =
-            replay_prepared_packing_3d(black_box(&bin), &items, &prepared).unwrap();
-        checks ^= prepared_replay.feasibility.no_overlap_checks;
-        let prepared_problem = prepare_packing_3d(black_box(&bin), &items);
-        checks ^= prepared_problem.demand_classes.len();
-        checks ^= prepared_problem.cache.scalar_values;
+        let order = order_placements_3d(&placements);
+        let ordered_replay = verify_packing_3d(black_box(&bin), &items, &order.placements).unwrap();
+        checks ^= ordered_replay.feasibility.no_overlap_checks;
+        let analysis = analyze_packing_3d(black_box(&bin), &items);
+        checks ^= analysis.demand_classes.len();
+        checks ^= analysis.metadata.scalar_values;
         let verification = verify_packing_3d(black_box(&bin), &items, &placements).unwrap();
         if verification.objective.unplaced_items == 0 {
             waste_seen ^= verification.objective.placed_items;

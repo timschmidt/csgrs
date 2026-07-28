@@ -1,24 +1,23 @@
-//! Prepared placement batches for deterministic exact replay.
+//! Packing analysis and deterministic placement ordering.
 //!
-//! Prepared layouts are a normalization layer, not a new feasibility checker.
-//! They canonicalize placement record order and preserve evidence about any
-//! uncertified ordering comparisons. Acceptance still comes from exact replay:
-//! preprocessing may organize combinatorial data, but geometric decisions stay
-//! certified or explicitly reported as unknown.
+//! Placement ordering is a normalization report, not a new feasibility
+//! checker. It canonicalizes record order and preserves evidence about any
+//! uncertified comparisons. Acceptance still comes from the immediate exact
+//! verifier: analysis may organize combinatorial data, but geometric decisions
+//! stay certified or explicitly reported as unknown.
 
 use std::cmp::Ordering;
 
 use hyperreal::{Real, RealExactSetFacts, RealSign};
 
 use crate::{
-    AxisBox3, Bin3, CapacityBoundReport3, FreeBox3, Item3, ItemId, PackResult,
-    PackingVerification3, PairIncompatibilityReport3, Placement3, capacity_bounds_3d,
-    pair_incompatibilities_3d, verify_packing_3d,
+    AxisBox3, Bin3, CapacityBoundReport3, FreeBox3, Item3, ItemId, PairIncompatibilityReport3,
+    Placement3, capacity_bounds_3d, pair_incompatibilities_3d,
 };
 
 /// Exact demand class for items with the same certified dimensions.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedDemandClass3 {
+pub struct DemandClass3 {
     /// Representative exact dimensions for this class.
     pub size: AxisBox3,
     /// Item ids assigned to this class in deterministic order.
@@ -29,9 +28,9 @@ pub struct PreparedDemandClass3 {
     pub total_volume: Real,
 }
 
-/// Exact dimensional summary retained by a prepared packing problem.
+/// Exact dimensional summary for a packing problem.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedDimensionFacts3 {
+pub struct PackingDimensionFacts3 {
     /// Number of item records summarized.
     pub item_count: usize,
     /// Exact total volume of all items.
@@ -48,9 +47,9 @@ pub struct PreparedDimensionFacts3 {
     pub unknown_max_comparisons: usize,
 }
 
-/// Common-scale and grid facts for a prepared packing problem.
+/// Common-scale and grid facts for a packing problem.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedGridSummary3 {
+pub struct PackingGridFacts3 {
     /// Coarse exact-rational facts for bin and item dimensions.
     pub scalar_facts: RealExactSetFacts,
     /// Whether all dimension scalars are exact rational integers.
@@ -63,9 +62,9 @@ pub struct PreparedGridSummary3 {
     pub facts: Vec<String>,
 }
 
-/// Cache-payoff metadata for prepared problem reuse.
+/// Work and reuse metadata for a packing analysis.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PreparedCacheMetadata3 {
+pub struct PackingAnalysisMetadata3 {
     /// Number of scalar dimension values scanned for grid facts.
     pub scalar_values: usize,
     /// Number of item records avoided by demand-class collapsing.
@@ -80,23 +79,21 @@ pub struct PreparedCacheMetadata3 {
     pub pair_bound_cached: bool,
 }
 
-/// Prepared 3D packing problem.
+/// Exact structural analysis of a 3D packing problem.
 ///
-/// This is the problem-side counterpart to [`PreparedPlacements3`]. It stores
-/// exact demand classes, common-scale facts, lower-bound reports, and initial
-/// free-space cache state so proposal engines do not repeatedly rediscover the
-/// same structure. The cached data remains advisory: every accepted layout must
-/// still pass exact replay instead of trusting preprocessing.
+/// It stores exact demand classes, common-scale facts, lower-bound reports, and
+/// initial free-space state. The analysis remains advisory: every accepted
+/// layout must still pass [`crate::verify_packing_3d`] instead of trusting summaries.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedPacking3 {
+pub struct PackingAnalysis3 {
     /// Exact bin dimensions.
     pub bin: Bin3,
     /// Demand classes sorted by their first item id.
-    pub demand_classes: Vec<PreparedDemandClass3>,
+    pub demand_classes: Vec<DemandClass3>,
     /// Exact dimensional facts.
-    pub dimensions: PreparedDimensionFacts3,
+    pub dimensions: PackingDimensionFacts3,
     /// Common-scale/grid facts over all bin and item dimensions.
-    pub grid: PreparedGridSummary3,
+    pub grid: PackingGridFacts3,
     /// Initial exact free-space cache. This starts with the whole bin.
     pub initial_free_boxes: Vec<FreeBox3>,
     /// Cached necessary total-volume and max-dimension lower bounds.
@@ -104,34 +101,34 @@ pub struct PreparedPacking3 {
     /// Cached necessary pair-incompatibility lower bounds.
     pub pair_bound: PairIncompatibilityReport3,
     /// Cache payoff and replay-cost metadata.
-    pub cache: PreparedCacheMetadata3,
-    /// Human-readable preparation facts.
+    pub metadata: PackingAnalysisMetadata3,
+    /// Human-readable analysis facts.
     pub facts: Vec<String>,
 }
 
-/// Prepared 3D placement batch.
+/// Deterministic 3D placement order and its exact comparison evidence.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PreparedPlacements3 {
+pub struct PlacementOrder3 {
     /// Placements sorted into deterministic replay order when comparisons certify.
     pub placements: Vec<Placement3>,
     /// Number of input placement records.
     pub input_placements: usize,
-    /// Exact coordinate comparisons performed while preparing.
+    /// Exact coordinate comparisons performed while ordering.
     pub exact_comparisons: usize,
     /// Number of ordering comparisons that could not be certified.
     pub unknown_orderings: usize,
-    /// Human-readable preparation facts.
+    /// Human-readable ordering facts.
     pub facts: Vec<String>,
 }
 
-/// Prepares a 3D packing problem for exact-aware proposal engines.
+/// Analyze a 3D packing problem for exact-aware proposal engines.
 ///
-/// The preparation pass collapses equal-dimension demand classes, scans
+/// The analysis pass collapses equal-dimension demand classes, scans
 /// dimension scalars through [`Real::exact_set_facts`] for common-scale
 /// scheduling evidence, caches necessary lower bounds, and records the initial
 /// full-bin free-space frontier. It deliberately does not certify feasibility;
-/// proposed placements still return through [`verify_packing_3d`].
-pub fn prepare_packing_3d(bin: &Bin3, items: &[Item3]) -> PreparedPacking3 {
+/// proposed placements still return through [`crate::verify_packing_3d`].
+pub fn analyze_packing_3d(bin: &Bin3, items: &[Item3]) -> PackingAnalysis3 {
     let mut demand_classes = demand_classes_3d(items);
     demand_classes.sort_by(|left, right| left.item_ids[0].cmp(&right.item_ids[0]));
 
@@ -169,9 +166,9 @@ pub fn prepare_packing_3d(bin: &Bin3, items: &[Item3]) -> PreparedPacking3 {
         facts.push("at least one dimension scalar is not an exact rational".into());
     }
 
-    PreparedPacking3 {
+    PackingAnalysis3 {
         bin: bin.clone(),
-        cache: PreparedCacheMetadata3 {
+        metadata: PackingAnalysisMetadata3 {
             scalar_values: scalar_facts.len,
             demand_class_reduction: items.len().saturating_sub(demand_classes.len()),
             initial_free_boxes: initial_free_boxes.len(),
@@ -189,12 +186,12 @@ pub fn prepare_packing_3d(bin: &Bin3, items: &[Item3]) -> PreparedPacking3 {
     }
 }
 
-/// Prepares placement records for deterministic replay.
+/// Order placement records for deterministic replay.
 ///
 /// Sorting is by item id, then exact `z`, `y`, and `x` coordinates. If a
 /// coordinate ordering cannot be certified, the original relative order is
 /// retained for that comparison and the report records an unknown ordering.
-pub fn prepare_placements_3d(placements: &[Placement3]) -> PreparedPlacements3 {
+pub fn order_placements_3d(placements: &[Placement3]) -> PlacementOrder3 {
     let mut indexed = placements
         .iter()
         .cloned()
@@ -240,7 +237,7 @@ pub fn prepare_placements_3d(placements: &[Placement3]) -> PreparedPlacements3 {
             "{unknown_orderings} placement order comparisons were unknown"
         ));
     }
-    PreparedPlacements3 {
+    PlacementOrder3 {
         placements: indexed
             .into_iter()
             .map(|(_, placement)| placement)
@@ -250,15 +247,6 @@ pub fn prepare_placements_3d(placements: &[Placement3]) -> PreparedPlacements3 {
         unknown_orderings,
         facts,
     }
-}
-
-/// Replays a prepared 3D placement batch with the exact verifier.
-pub fn replay_prepared_packing_3d(
-    bin: &Bin3,
-    items: &[crate::Item3],
-    prepared: &PreparedPlacements3,
-) -> PackResult<PackingVerification3> {
-    verify_packing_3d(bin, items, &prepared.placements)
 }
 
 fn compare_real(
@@ -279,8 +267,8 @@ fn compare_real(
     }
 }
 
-fn demand_classes_3d(items: &[Item3]) -> Vec<PreparedDemandClass3> {
-    let mut classes = Vec::<PreparedDemandClass3>::new();
+fn demand_classes_3d(items: &[Item3]) -> Vec<DemandClass3> {
+    let mut classes = Vec::<DemandClass3>::new();
     for item in items {
         if let Some(class) = classes.iter_mut().find(|class| class.size == item.size) {
             class.item_ids.push(item.id.clone());
@@ -289,7 +277,7 @@ fn demand_classes_3d(items: &[Item3]) -> Vec<PreparedDemandClass3> {
             class.total_volume = class.total_volume.clone() + item.size.volume();
             continue;
         }
-        classes.push(PreparedDemandClass3 {
+        classes.push(DemandClass3 {
             size: item.size.clone(),
             item_ids: vec![item.id.clone()],
             count: 1,
@@ -299,7 +287,7 @@ fn demand_classes_3d(items: &[Item3]) -> Vec<PreparedDemandClass3> {
     classes
 }
 
-fn dimension_facts_3d(items: &[Item3]) -> PreparedDimensionFacts3 {
+fn dimension_facts_3d(items: &[Item3]) -> PackingDimensionFacts3 {
     let mut total_item_volume = Real::zero();
     let mut max_item_x = None::<Real>;
     let mut max_item_y = None::<Real>;
@@ -329,7 +317,7 @@ fn dimension_facts_3d(items: &[Item3]) -> PreparedDimensionFacts3 {
         );
     }
 
-    PreparedDimensionFacts3 {
+    PackingDimensionFacts3 {
         item_count: items.len(),
         total_item_volume,
         max_item_x,
@@ -362,7 +350,7 @@ fn update_max(
     }
 }
 
-fn grid_summary_3d(scalar_facts: RealExactSetFacts) -> PreparedGridSummary3 {
+fn grid_summary_3d(scalar_facts: RealExactSetFacts) -> PackingGridFacts3 {
     let integer_grid = scalar_facts.has_integer_grid_schedule();
     let dyadic_schedule = scalar_facts.has_dyadic_schedule();
     let shared_denominator_schedule = scalar_facts.has_shared_denominator_schedule();
@@ -379,7 +367,7 @@ fn grid_summary_3d(scalar_facts: RealExactSetFacts) -> PreparedGridSummary3 {
         facts.push("dimension scalar set includes non-rational exact values".into());
     }
 
-    PreparedGridSummary3 {
+    PackingGridFacts3 {
         scalar_facts,
         integer_grid,
         dyadic_schedule,

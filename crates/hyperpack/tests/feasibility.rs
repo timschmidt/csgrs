@@ -5,24 +5,25 @@ use hyperpack::{
     FeasibilityReplay3, FeasibilityStatus, FreeSpaceReport3, HeuristicFamily, Item3, ItemId,
     LowerBoundReport, ModelExportStatus2, ModelExportStatus3, MultiBinPlacement3,
     NoOverlapDisjunct2, NoOverlapDisjunct3, ObjectiveTerm3, PackError, PackingReport3, Placement3,
-    Real, SheetHeuristic2, SheetPortfolioBudget2, SheetPortfolioStatus2, auto_cuboid_portfolio_3d,
-    auto_sheet_portfolio_2d, branch_and_bound_one_bin_3d, capacity_bounds_2d, capacity_bounds_3d,
-    compare_objectives_3d, cuboid_best_fit_decreasing_footprint_area_3d,
-    cuboid_best_fit_decreasing_max_side_3d, cuboid_best_fit_decreasing_volume_3d,
-    cuboid_extreme_point_decreasing_volume_3d, cuboid_first_fit_decreasing_footprint_area_3d,
-    cuboid_first_fit_decreasing_max_side_3d, cuboid_first_fit_decreasing_volume_3d,
-    cuboid_guillotine_best_volume_fit_3d, cuboid_laff_largest_area_fit_first_3d,
-    cuboid_maximal_space_decreasing_volume_3d, empty_bins_3d, export_no_overlap_model_2d,
-    export_no_overlap_model_3d, guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
+    Real, SheetHeuristic2, SheetPortfolioBudget2, SheetPortfolioStatus2, analyze_packing_3d,
+    auto_cuboid_portfolio_3d, auto_sheet_portfolio_2d, branch_and_bound_one_bin_3d,
+    capacity_bounds_2d, capacity_bounds_3d, compare_objectives_3d,
+    cuboid_best_fit_decreasing_footprint_area_3d, cuboid_best_fit_decreasing_max_side_3d,
+    cuboid_best_fit_decreasing_volume_3d, cuboid_extreme_point_decreasing_volume_3d,
+    cuboid_first_fit_decreasing_footprint_area_3d, cuboid_first_fit_decreasing_max_side_3d,
+    cuboid_first_fit_decreasing_volume_3d, cuboid_guillotine_best_volume_fit_3d,
+    cuboid_laff_largest_area_fit_first_3d, cuboid_maximal_space_decreasing_volume_3d,
+    empty_bins_3d, export_no_overlap_model_2d, export_no_overlap_model_3d,
+    guillotine_best_area_fit_2d, guillotine_best_long_side_fit_2d,
     guillotine_best_short_side_fit_2d, height_objective_3d, import_domain_bin_3d,
     import_domain_items_3d, local_search_order_3d, maxrects_best_area_fit_2d,
     maxrects_best_long_side_fit_2d, maxrects_best_short_side_fit_2d, maxrects_bottom_left_2d,
-    maxrects_contact_point_2d, pair_incompatibilities_2d, pair_incompatibilities_3d,
-    prepare_packing_3d, prepare_placements_3d, replay_prepared_packing_3d,
-    shelf_best_fit_decreasing_height_2d, shelf_first_fit_decreasing_height_2d,
-    shelf_next_fit_decreasing_height_2d, skyline_bottom_left_2d, skyline_minimum_waste_2d,
-    summarize_domain_handoffs, verify_clearance_2d, verify_clearance_3d,
-    verify_multi_bin_packing_3d, verify_packing_3d, verify_support_3d,
+    maxrects_contact_point_2d, order_placements_3d, pair_incompatibilities_2d,
+    pair_incompatibilities_3d, shelf_best_fit_decreasing_height_2d,
+    shelf_first_fit_decreasing_height_2d, shelf_next_fit_decreasing_height_2d,
+    skyline_bottom_left_2d, skyline_minimum_waste_2d, summarize_domain_handoffs,
+    verify_clearance_2d, verify_clearance_3d, verify_multi_bin_packing_3d, verify_packing_3d,
+    verify_support_3d,
 };
 use hyperpack::{BinEmptyingConfig3, BinEmptyingStatus3};
 use hyperpack::{ExactSearchLimit3, ExactSearchStatus3};
@@ -1044,7 +1045,7 @@ fn clearance_replay_rejects_negative_clearance() {
 }
 
 #[test]
-fn prepared_3d_replay_agrees_with_raw_replay_for_permuted_layouts() {
+fn ordered_3d_replay_agrees_with_input_order_for_permuted_layouts() {
     let bin = Bin3 {
         size: AxisBox3::new(r(4), r(2), r(1)).unwrap(),
     };
@@ -1052,19 +1053,19 @@ fn prepared_3d_replay_agrees_with_raw_replay_for_permuted_layouts() {
     let placements = [placement("b", 2, 0, 0), placement("a", 0, 0, 0)];
 
     let raw = verify_packing_3d(&bin, &items, &placements).unwrap();
-    let prepared = prepare_placements_3d(&placements);
-    let replay = replay_prepared_packing_3d(&bin, &items, &prepared).unwrap();
+    let order = order_placements_3d(&placements);
+    let replay = verify_packing_3d(&bin, &items, &order.placements).unwrap();
 
-    assert_eq!(prepared.input_placements, 2);
-    assert_eq!(prepared.placements[0].item.as_str(), "a");
-    assert_eq!(prepared.unknown_orderings, 0);
+    assert_eq!(order.input_placements, 2);
+    assert_eq!(order.placements[0].item.as_str(), "a");
+    assert_eq!(order.unknown_orderings, 0);
     assert_eq!(replay.feasibility.status, raw.feasibility.status);
     assert_eq!(replay.objective.used_volume, raw.objective.used_volume);
     assert_eq!(replay.objective.waste_volume, raw.objective.waste_volume);
 }
 
 #[test]
-fn prepared_packing_3d_collapses_demand_and_caches_exact_problem_facts() {
+fn packing_analysis_3d_collapses_demand_and_caches_exact_problem_facts() {
     let bin = Bin3 {
         size: AxisBox3::new(q(30, 3), q(15, 3), q(6, 3)).unwrap(),
     };
@@ -1083,56 +1084,56 @@ fn prepared_packing_3d_collapses_demand_and_caches_exact_problem_facts() {
         },
     ];
 
-    let prepared = prepare_packing_3d(&bin, &items);
+    let analysis = analyze_packing_3d(&bin, &items);
 
-    assert_eq!(prepared.demand_classes.len(), 2);
-    assert_eq!(prepared.demand_classes[0].item_ids[0].as_str(), "a");
-    assert_eq!(prepared.demand_classes[0].count, 2);
-    assert_eq!(prepared.demand_classes[0].total_volume, r(4));
-    assert_eq!(prepared.dimensions.item_count, 3);
-    assert_eq!(prepared.dimensions.total_item_volume, r(5));
-    assert_eq!(prepared.dimensions.max_item_x, Some(r(2)));
-    assert!(prepared.grid.scalar_facts.all_exact_rational);
-    assert!(prepared.grid.shared_denominator_schedule);
-    assert_eq!(prepared.cache.scalar_values, 12);
-    assert_eq!(prepared.cache.demand_class_reduction, 1);
-    assert_eq!(prepared.cache.initial_free_boxes, 1);
-    assert_eq!(prepared.cache.expected_replay_pair_checks, 3);
+    assert_eq!(analysis.demand_classes.len(), 2);
+    assert_eq!(analysis.demand_classes[0].item_ids[0].as_str(), "a");
+    assert_eq!(analysis.demand_classes[0].count, 2);
+    assert_eq!(analysis.demand_classes[0].total_volume, r(4));
+    assert_eq!(analysis.dimensions.item_count, 3);
+    assert_eq!(analysis.dimensions.total_item_volume, r(5));
+    assert_eq!(analysis.dimensions.max_item_x, Some(r(2)));
+    assert!(analysis.grid.scalar_facts.all_exact_rational);
+    assert!(analysis.grid.shared_denominator_schedule);
+    assert_eq!(analysis.metadata.scalar_values, 12);
+    assert_eq!(analysis.metadata.demand_class_reduction, 1);
+    assert_eq!(analysis.metadata.initial_free_boxes, 1);
+    assert_eq!(analysis.metadata.expected_replay_pair_checks, 3);
     assert_eq!(
-        prepared.capacity_bound.status,
+        analysis.capacity_bound.status,
         CapacityBoundStatus::Satisfied
     );
-    assert!(prepared.pair_bound.incompatible_pairs.is_empty());
+    assert!(analysis.pair_bound.incompatible_pairs.is_empty());
     assert_eq!(
-        prepared.initial_free_boxes[0].size.volume(),
+        analysis.initial_free_boxes[0].size.volume(),
         bin.size.volume()
     );
-    assert!(prepared.facts.iter().any(|fact| fact.contains("collapsed")));
+    assert!(analysis.facts.iter().any(|fact| fact.contains("collapsed")));
 }
 
 #[test]
-fn prepared_packing_3d_preserves_lower_bound_violations() {
+fn packing_analysis_3d_preserves_lower_bound_violations() {
     let bin = Bin3 {
         size: AxisBox3::new(r(2), r(2), r(2)).unwrap(),
     };
     let items = [item("wide", 3, 1, 1), item("tall", 1, 1, 3)];
 
-    let prepared = prepare_packing_3d(&bin, &items);
+    let analysis = analyze_packing_3d(&bin, &items);
 
     assert_eq!(
-        prepared.capacity_bound.status,
+        analysis.capacity_bound.status,
         CapacityBoundStatus::Violated
     );
-    assert!(prepared.capacity_bound.proves_infeasible());
+    assert!(analysis.capacity_bound.proves_infeasible());
     assert!(
-        prepared
+        analysis
             .capacity_bound
             .facts
             .iter()
             .any(|fact| fact.contains("exceeds bin"))
     );
-    assert!(prepared.cache.capacity_bound_cached);
-    assert!(prepared.cache.pair_bound_cached);
+    assert!(analysis.metadata.capacity_bound_cached);
+    assert!(analysis.metadata.pair_bound_cached);
 }
 
 #[test]
@@ -2789,7 +2790,7 @@ proptest! {
     }
 
     #[test]
-    fn generated_prepared_replay_agrees_with_raw_replay_for_two_cuboids(
+    fn generated_ordered_replay_agrees_with_input_order_for_two_cuboids(
         left_x in 1_i32..=20,
         right_x in 1_i32..=20,
         y in 1_i32..=20,
@@ -2806,17 +2807,17 @@ proptest! {
         ];
 
         let raw = verify_packing_3d(&bin, &items, &placements).unwrap();
-        let prepared = prepare_placements_3d(&placements);
-        let replay = replay_prepared_packing_3d(&bin, &items, &prepared).unwrap();
+        let order = order_placements_3d(&placements);
+        let replay = verify_packing_3d(&bin, &items, &order.placements).unwrap();
 
         prop_assert_eq!(replay.feasibility.status, raw.feasibility.status);
         prop_assert_eq!(replay.objective.used_volume, raw.objective.used_volume);
         prop_assert_eq!(replay.objective.waste_volume, raw.objective.waste_volume);
-        prop_assert_eq!(prepared.input_placements, placements.len());
+        prop_assert_eq!(order.input_placements, placements.len());
     }
 
     #[test]
-    fn generated_prepared_problem_summarizes_single_exact_item(
+    fn generated_packing_analysis_summarizes_single_exact_item(
         item_x in 1_i32..=20,
         item_y in 1_i32..=20,
         item_z in 1_i32..=20,
@@ -2829,15 +2830,15 @@ proptest! {
         };
         let items = [item("only", item_x, item_y, item_z)];
 
-        let prepared = prepare_packing_3d(&bin, &items);
+        let analysis = analyze_packing_3d(&bin, &items);
 
-        prop_assert_eq!(prepared.demand_classes.len(), 1);
-        prop_assert_eq!(prepared.demand_classes[0].count, 1);
-        prop_assert_eq!(prepared.dimensions.total_item_volume, r(item_x * item_y * item_z));
-        prop_assert!(prepared.grid.integer_grid);
-        prop_assert_eq!(prepared.capacity_bound.status, CapacityBoundStatus::Satisfied);
-        prop_assert_eq!(prepared.cache.expected_replay_pair_checks, 0);
-        prop_assert_eq!(&prepared.initial_free_boxes[0].size, &bin.size);
+        prop_assert_eq!(analysis.demand_classes.len(), 1);
+        prop_assert_eq!(analysis.demand_classes[0].count, 1);
+        prop_assert_eq!(analysis.dimensions.total_item_volume, r(item_x * item_y * item_z));
+        prop_assert!(analysis.grid.integer_grid);
+        prop_assert_eq!(analysis.capacity_bound.status, CapacityBoundStatus::Satisfied);
+        prop_assert_eq!(analysis.metadata.expected_replay_pair_checks, 0);
+        prop_assert_eq!(&analysis.initial_free_boxes[0].size, &bin.size);
     }
 
     #[test]

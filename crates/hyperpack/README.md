@@ -95,9 +95,10 @@ The proposal surface includes:
   small one-bin instances.
 
 Proposal reports include trace counters, rejected items, retained free-space
-state, and exact replay. `PreparedPacking3` caches exact demand classes, grid
-facts, lower bounds, initial free space, and deterministic order for repeated
-search. Prepared data is advisory; replay remains authoritative.
+state, and exact replay. `PackingAnalysis3` caches exact demand classes, grid
+facts, lower bounds, initial free space, and reuse metadata for repeated search.
+`PlacementOrder3` separately reports deterministic ordering evidence. Both are
+advisory; `verify_packing_3d` remains the immediate authoritative query.
 
 `PreparedIrregularPacking2` owns a stable item inventory and caches one exact
 Hypercurve no-fit region per unordered convex-item pair. Cache blockers are

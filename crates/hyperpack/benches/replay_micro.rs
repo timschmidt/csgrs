@@ -4,7 +4,7 @@ use std::time::Instant;
 use hyperpack::{
     AxisBox3, Bin3, ExactSearchLimit3, FeasibilityReplay3, Item3, ItemId, Placement3, Real, Rect2,
     SheetBin2, SheetItem2, SheetPlacement2, StockBin1, StockItem1, StockPlacement1,
-    branch_and_bound_one_bin_3d, prepare_packing_3d, verify_clearance_3d, verify_packing_1d,
+    analyze_packing_3d, branch_and_bound_one_bin_3d, verify_clearance_3d, verify_packing_1d,
     verify_packing_2d,
 };
 
@@ -131,27 +131,27 @@ fn main() {
             size: AxisBox3::new(r(index), r(index + 1), r(index + 2)).unwrap(),
         })
         .collect::<Vec<_>>();
-    let prepare_iterations = if cfg!(debug_assertions) { 1 } else { 1_000 };
+    let analysis_iterations = if cfg!(debug_assertions) { 1 } else { 1_000 };
     let started = Instant::now();
-    for _ in 0..prepare_iterations {
-        let prepared = prepare_packing_3d(black_box(&bin), black_box(&unique_items));
-        checksum ^= prepared.demand_classes.len();
+    for _ in 0..analysis_iterations {
+        let analysis = analyze_packing_3d(black_box(&bin), black_box(&unique_items));
+        checksum ^= analysis.demand_classes.len();
     }
     let elapsed = started.elapsed();
     println!(
-        "prepare_100_unique: {prepare_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
-        elapsed / prepare_iterations
+        "analyze_100_unique: {analysis_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / analysis_iterations
     );
 
     let started = Instant::now();
-    for _ in 0..prepare_iterations {
-        let prepared = prepare_packing_3d(black_box(&bin), black_box(&items));
-        checksum ^= prepared.demand_classes.len();
+    for _ in 0..analysis_iterations {
+        let analysis = analyze_packing_3d(black_box(&bin), black_box(&items));
+        checksum ^= analysis.demand_classes.len();
     }
     let elapsed = started.elapsed();
     println!(
-        "prepare_100_repeated: {prepare_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
-        elapsed / prepare_iterations
+        "analyze_100_repeated: {analysis_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / analysis_iterations
     );
 
     let search_bin = Bin3 {
