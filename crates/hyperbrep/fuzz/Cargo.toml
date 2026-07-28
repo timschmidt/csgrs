@@ -15,6 +15,7 @@ libfuzzer-sys = "0.4"
 # Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
 hyperbrep = { path = ".." }
 hypercurve = { path = "../../hypercurve" }
+hyperlimit = { path = "../../hyperlimit" }
 hyperreal = { path = "../../hyperreal" }
 hypervoxel = { path = "../../hypervoxel" }
 # hyperbrep = "0.2.0"
@@ -38,6 +39,13 @@ bench = false
 [[bin]]
 name = "planar_pcurve"
 path = "fuzz_targets/planar_pcurve.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
 test = false
 doc = false
 bench = false
