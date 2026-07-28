@@ -22,10 +22,16 @@ pub struct DemandClass3 {
     pub size: AxisBox3,
     /// Item ids assigned to this class in deterministic order.
     pub item_ids: Vec<ItemId>,
-    /// Number of items in the class.
-    pub count: usize,
     /// Exact total class volume.
     pub total_volume: Real,
+}
+
+impl DemandClass3 {
+    /// Number of items in this demand class.
+    #[must_use]
+    pub fn count(&self) -> usize {
+        self.item_ids.len()
+    }
 }
 
 /// Exact dimensional summary for a packing problem.
@@ -62,23 +68,6 @@ pub struct PackingGridFacts3 {
     pub facts: Vec<String>,
 }
 
-/// Work and reuse metadata for a packing analysis.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PackingAnalysisMetadata3 {
-    /// Number of scalar dimension values scanned for grid facts.
-    pub scalar_values: usize,
-    /// Number of item records avoided by demand-class collapsing.
-    pub demand_class_reduction: usize,
-    /// Number of initial free-space records retained.
-    pub initial_free_boxes: usize,
-    /// Pair checks a raw replay would perform for one placement per item.
-    pub expected_replay_pair_checks: usize,
-    /// Whether total/max-dimension lower bounds were cached.
-    pub capacity_bound_cached: bool,
-    /// Whether pair-incompatibility lower bounds were cached.
-    pub pair_bound_cached: bool,
-}
-
 /// Exact structural analysis of a 3D packing problem.
 ///
 /// It stores exact demand classes, common-scale facts, lower-bound reports, and
@@ -100,10 +89,33 @@ pub struct PackingAnalysis3 {
     pub capacity_bound: CapacityBoundReport3,
     /// Cached necessary pair-incompatibility lower bounds.
     pub pair_bound: PairIncompatibilityReport3,
-    /// Cache payoff and replay-cost metadata.
-    pub metadata: PackingAnalysisMetadata3,
     /// Human-readable analysis facts.
     pub facts: Vec<String>,
+}
+
+impl PackingAnalysis3 {
+    /// Number of dimension scalars included in the common-scale analysis.
+    #[must_use]
+    pub fn scalar_value_count(&self) -> usize {
+        self.grid.scalar_facts.len
+    }
+
+    /// Number of item records collapsed by grouping equal dimensions.
+    #[must_use]
+    pub fn demand_class_reduction(&self) -> usize {
+        self.dimensions
+            .item_count
+            .saturating_sub(self.demand_classes.len())
+    }
+
+    /// Pair checks required by a complete raw replay with one placement per item.
+    #[must_use]
+    pub fn expected_replay_pair_checks(&self) -> usize {
+        self.dimensions
+            .item_count
+            .saturating_mul(self.dimensions.item_count.saturating_sub(1))
+            / 2
+    }
 }
 
 /// Deterministic 3D placement order and its exact comparison evidence.
@@ -132,13 +144,17 @@ pub fn analyze_packing_3d(bin: &Bin3, items: &[Item3]) -> PackingAnalysis3 {
     let mut demand_classes = demand_classes_3d(items);
     demand_classes.sort_by(|left, right| left.item_ids[0].cmp(&right.item_ids[0]));
 
-    let mut scalars = vec![&bin.size.x, &bin.size.y, &bin.size.z];
-    for item in items {
-        scalars.extend([&item.size.x, &item.size.y, &item.size.z]);
-    }
-    let scalar_facts = Real::exact_set_facts(scalars.iter().copied());
+    let scalars = [&bin.size.x, &bin.size.y, &bin.size.z].into_iter().chain(
+        items
+            .iter()
+            .flat_map(|item| [&item.size.x, &item.size.y, &item.size.z]),
+    );
+    let scalar_facts = Real::exact_set_facts(scalars);
     let grid = grid_summary_3d(scalar_facts);
-    let dimensions = dimension_facts_3d(items);
+    let total_item_volume = demand_classes.iter().fold(Real::zero(), |total, class| {
+        total + class.total_volume.clone()
+    });
+    let dimensions = dimension_facts_3d(items, total_item_volume);
     let capacity_bound = capacity_bounds_3d(bin, items);
     let pair_bound = pair_incompatibilities_3d(bin, items);
     let initial_free_boxes = vec![FreeBox3 {
@@ -147,7 +163,6 @@ pub fn analyze_packing_3d(bin: &Bin3, items: &[Item3]) -> PackingAnalysis3 {
         z: Real::zero(),
         size: bin.size.clone(),
     }];
-    let expected_replay_pair_checks = items.len().saturating_mul(items.len().saturating_sub(1)) / 2;
     let mut facts = Vec::new();
     if !items.is_empty() && demand_classes.len() < items.len() {
         facts.push(format!(
@@ -168,14 +183,6 @@ pub fn analyze_packing_3d(bin: &Bin3, items: &[Item3]) -> PackingAnalysis3 {
 
     PackingAnalysis3 {
         bin: bin.clone(),
-        metadata: PackingAnalysisMetadata3 {
-            scalar_values: scalar_facts.len,
-            demand_class_reduction: items.len().saturating_sub(demand_classes.len()),
-            initial_free_boxes: initial_free_boxes.len(),
-            expected_replay_pair_checks,
-            capacity_bound_cached: true,
-            pair_bound_cached: true,
-        },
         demand_classes,
         dimensions,
         grid,
@@ -273,22 +280,19 @@ fn demand_classes_3d(items: &[Item3]) -> Vec<DemandClass3> {
         if let Some(class) = classes.iter_mut().find(|class| class.size == item.size) {
             class.item_ids.push(item.id.clone());
             class.item_ids.sort();
-            class.count += 1;
             class.total_volume = class.total_volume.clone() + item.size.volume();
             continue;
         }
         classes.push(DemandClass3 {
             size: item.size.clone(),
             item_ids: vec![item.id.clone()],
-            count: 1,
             total_volume: item.size.volume(),
         });
     }
     classes
 }
 
-fn dimension_facts_3d(items: &[Item3]) -> PackingDimensionFacts3 {
-    let mut total_item_volume = Real::zero();
+fn dimension_facts_3d(items: &[Item3], total_item_volume: Real) -> PackingDimensionFacts3 {
     let mut max_item_x = None::<Real>;
     let mut max_item_y = None::<Real>;
     let mut max_item_z = None::<Real>;
@@ -296,7 +300,6 @@ fn dimension_facts_3d(items: &[Item3]) -> PackingDimensionFacts3 {
     let mut unknown_max_comparisons = 0_usize;
 
     for item in items {
-        total_item_volume += item.size.volume();
         update_max(
             &mut max_item_x,
             &item.size.x,

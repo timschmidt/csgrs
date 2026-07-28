@@ -32,8 +32,8 @@ pub mod stock;
 pub mod support;
 
 pub use analysis::{
-    DemandClass3, PackingAnalysis3, PackingAnalysisMetadata3, PackingDimensionFacts3,
-    PackingGridFacts3, PlacementOrder3, analyze_packing_3d, order_placements_3d,
+    DemandClass3, PackingAnalysis3, PackingDimensionFacts3, PackingGridFacts3, PlacementOrder3,
+    analyze_packing_3d, order_placements_3d,
 };
 pub use bounds::{
     CapacityBoundReport2, CapacityBoundReport3, CapacityBoundStatus, PairIncompatibility2,

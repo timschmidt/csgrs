@@ -1065,7 +1065,7 @@ fn ordered_3d_replay_agrees_with_input_order_for_permuted_layouts() {
 }
 
 #[test]
-fn packing_analysis_3d_collapses_demand_and_caches_exact_problem_facts() {
+fn packing_analysis_3d_collapses_demand_and_summarizes_exact_problem_facts() {
     let bin = Bin3 {
         size: AxisBox3::new(q(30, 3), q(15, 3), q(6, 3)).unwrap(),
     };
@@ -1088,17 +1088,17 @@ fn packing_analysis_3d_collapses_demand_and_caches_exact_problem_facts() {
 
     assert_eq!(analysis.demand_classes.len(), 2);
     assert_eq!(analysis.demand_classes[0].item_ids[0].as_str(), "a");
-    assert_eq!(analysis.demand_classes[0].count, 2);
+    assert_eq!(analysis.demand_classes[0].count(), 2);
     assert_eq!(analysis.demand_classes[0].total_volume, r(4));
     assert_eq!(analysis.dimensions.item_count, 3);
     assert_eq!(analysis.dimensions.total_item_volume, r(5));
     assert_eq!(analysis.dimensions.max_item_x, Some(r(2)));
     assert!(analysis.grid.scalar_facts.all_exact_rational);
     assert!(analysis.grid.shared_denominator_schedule);
-    assert_eq!(analysis.metadata.scalar_values, 12);
-    assert_eq!(analysis.metadata.demand_class_reduction, 1);
-    assert_eq!(analysis.metadata.initial_free_boxes, 1);
-    assert_eq!(analysis.metadata.expected_replay_pair_checks, 3);
+    assert_eq!(analysis.scalar_value_count(), 12);
+    assert_eq!(analysis.demand_class_reduction(), 1);
+    assert_eq!(analysis.initial_free_boxes.len(), 1);
+    assert_eq!(analysis.expected_replay_pair_checks(), 3);
     assert_eq!(
         analysis.capacity_bound.status,
         CapacityBoundStatus::Satisfied
@@ -1132,8 +1132,7 @@ fn packing_analysis_3d_preserves_lower_bound_violations() {
             .iter()
             .any(|fact| fact.contains("exceeds bin"))
     );
-    assert!(analysis.metadata.capacity_bound_cached);
-    assert!(analysis.metadata.pair_bound_cached);
+    assert!(analysis.pair_bound.incompatible_pairs.is_empty());
 }
 
 #[test]
@@ -2833,11 +2832,14 @@ proptest! {
         let analysis = analyze_packing_3d(&bin, &items);
 
         prop_assert_eq!(analysis.demand_classes.len(), 1);
-        prop_assert_eq!(analysis.demand_classes[0].count, 1);
-        prop_assert_eq!(analysis.dimensions.total_item_volume, r(item_x * item_y * item_z));
+        prop_assert_eq!(analysis.demand_classes[0].count(), 1);
+        prop_assert_eq!(
+            &analysis.dimensions.total_item_volume,
+            &r(item_x * item_y * item_z)
+        );
         prop_assert!(analysis.grid.integer_grid);
         prop_assert_eq!(analysis.capacity_bound.status, CapacityBoundStatus::Satisfied);
-        prop_assert_eq!(analysis.metadata.expected_replay_pair_checks, 0);
+        prop_assert_eq!(analysis.expected_replay_pair_checks(), 0);
         prop_assert_eq!(&analysis.initial_free_boxes[0].size, &bin.size);
     }
 

@@ -71,6 +71,21 @@ All movements are within run-to-run noise. The immediate entry points are
 explicitly inlined across the crate boundary, while the retained cache and
 exact replay implementation are unchanged.
 
+## Derived Analysis Summary Gate
+
+The 2026-07-28 analysis normalization removes `PackingAnalysisMetadata3`.
+Scalar counts, demand-class reduction, and expected replay pairs are immediate
+constant-time queries over the retained analysis facts. Demand-class cardinality
+likewise comes directly from its retained item identifiers. The analysis pass
+streams dimension references into common-scale classification and reuses demand
+class volume totals instead of allocating a reference buffer and recomputing
+every item volume.
+
+| Workload | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Analyze 100 unique demand classes | 781.471 us | 777.493 us | 0.5% faster |
+| Analyze 100 repeated-size items | 358.303 us | 349.649 us | 2.4% faster |
+
 ## Exactness Check
 
 With `dispatch-trace` enabled, `tests/dispatch_trace.rs` exercises exact

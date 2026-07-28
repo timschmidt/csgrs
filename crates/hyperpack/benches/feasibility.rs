@@ -165,7 +165,7 @@ fn main() {
         checks ^= ordered_replay.feasibility.no_overlap_checks;
         let analysis = analyze_packing_3d(black_box(&bin), &items);
         checks ^= analysis.demand_classes.len();
-        checks ^= analysis.metadata.scalar_values;
+        checks ^= analysis.scalar_value_count();
         let verification = verify_packing_3d(black_box(&bin), &items, &placements).unwrap();
         if verification.objective.unplaced_items == 0 {
             waste_seen ^= verification.objective.placed_items;
