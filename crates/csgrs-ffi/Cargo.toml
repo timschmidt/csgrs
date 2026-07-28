@@ -14,7 +14,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 csgrs = { version = "0.23.0", path = "../csgrs", default-features = false, features = ["sketch"] }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
 
 [patch.crates-io]
