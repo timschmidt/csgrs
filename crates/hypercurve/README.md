@@ -15,7 +15,7 @@ revolve, sweep, and loft belong in
 [CSGRS](https://github.com/timschmidt/csgrs), while triangle-mesh Boolean work
 belongs in [Hypermesh](https://github.com/timschmidt/hypermesh).
 
-This README describes crate version `0.3.0`.
+This README describes crate version `0.3.1`.
 
 ## Primary types
 
@@ -38,7 +38,7 @@ should use `CurveRegion2`.
 
 ```toml
 [dependencies]
-hypercurve = "0.3.0"
+hypercurve = "0.3.1"
 ```
 
 The default `predicates` feature enables Hyperlimit-backed certified predicate
