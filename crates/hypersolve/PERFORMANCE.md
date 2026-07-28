@@ -78,6 +78,23 @@ assembly and replay moved from 658.98 ns to 653.20 ns (-0.99%, within
 Criterion's noise threshold, 95% interval -1.40% to -0.60%). The retained
 benchmark is now `sparse_linear_batch_replay`.
 
+## Rational-image context API gate
+
+Reusable algebraic transforms now describe their retained mathematical role:
+`AlgebraicRootRationalImageContext` shares one denominator evaluation across
+several numerator images, and `AlgebraicRootRationalMap` shares one exact map
+across roots of its source polynomial. The immediate
+`transform_algebraic_root_rational_image` functions remain the ordinary
+one-shot surface.
+
+Serialized 100-sample comparisons found no regression. The small immediate
+rational image moved from 5.0899 us to 5.0823 us (Criterion change -0.32%,
+`p = 0.25`, 95% interval -0.85% to +0.22%). The degree-12 cubic-map sentinel
+moved from 1.7491 ms to 1.7548 ms (Criterion change +0.19%, `p = 0.55`, 95%
+interval -0.43% to +0.77%). Retaining the private direct-map builder as a free
+function preserved the former code layout; an associated-constructor
+experiment regressed the small transform and was rejected.
+
 ## Retained measurements
 
 The timings below are paired Criterion release runs on the same machine. They
@@ -440,7 +457,7 @@ WASM library builds passed. The AddressSanitizer region-Boolean replay
 completed all 2,509 executions at 5,899 coverage points and 19,166 feature
 edges with no finding; LeakSanitizer alone remained disabled under ptrace.
 
-### Prepared shared-denominator rational images
+### Shared-denominator rational-image context
 
 Projective point and derivative coordinates transform several rational
 expressions at the same represented root with one homogeneous denominator.
@@ -448,7 +465,7 @@ Independent calls formerly repeated the denominator polynomial evaluation and
 the source-polynomial rational-to-primitive-integer conversion before building
 each coordinate's distinct exact resultant.
 
-`PreparedAlgebraicRootRationalImage` now evaluates and retains the denominator
+`AlgebraicRootRationalImageContext` evaluates and retains the denominator
 certificate once. Its sequential `transform` calls preserve the complete
 per-coordinate reports and existing short-circuit boundary, while lazily
 converting and retaining the common source polynomial only when the direct
@@ -476,8 +493,8 @@ with no finding; LeakSanitizer remained disabled under ptrace.
 
 #### Retention gate
 
-A July 2026 experiment replaced
-`PreparedAlgebraicRootRationalImage` with an immediate two-numerator transform
+A July 2026 experiment replaced the shared-denominator context with an
+immediate two-numerator transform
 that preserved shared denominator evaluation, lazy source-polynomial reuse,
 complete coordinate reports, and the first-coordinate short circuit. The best
 return-by-value form increased the complete algebraic-parameter benchmark from
@@ -496,7 +513,7 @@ and representative executed performance tests for every `hyper*` crate in the
 workspace, followed by relevant sanitizer-backed fuzz targets. Compile-only
 bench checks do not satisfy the performance tier.
 
-### Prepared rational maps across source roots
+### Rational maps across source roots
 
 Several represented roots of one polynomial can be transported through the
 same rational map. The defining polynomial and rational-map coefficients
@@ -504,7 +521,7 @@ determine the direct resultant; the selected isolating interval determines
 which real root of that resultant is retained. Independent transformations
 formerly rebuilt the identical elimination for every source root.
 
-`PreparedAlgebraicRootRationalMap` now retains the primitive source polynomial
+`AlgebraicRootRationalMap` retains the primitive source polynomial
 and direct resultant lazily across those transformations. Each call still
 performs its own numerator and denominator evaluations, denominator-domain
 proof, local monotonicity proof, rational image interval, target rejection,
