@@ -13,7 +13,9 @@ use std::fmt;
 use std::num::NonZeroU64;
 use std::rc::Rc;
 
-use hyperreal::{ExactDyadicLineParameters2, ExactDyadicWideLineParameters2, Real};
+use hyperreal::{
+    ExactDyadicLine2, ExactDyadicLineParameters2, ExactDyadicWideLineParameters2, Real,
+};
 
 use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_contour_aabb, decided_segment_aabb};
 use crate::classify::{
@@ -927,8 +929,8 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
     let mut events = Vec::with_capacity(if POINT_ONLY { 0 } else { candidates.len() });
     let mut crossings = Vec::with_capacity(if POINT_ONLY { candidates.len() } else { 0 });
     let retain_crossing_signs = candidates.len() < 64;
-    let mut prepared_a_segment_index = None;
-    let mut prepared_a_line = None;
+    let mut retained_a_segment_index = None;
+    let mut retained_a_line = None;
     for candidate in candidates {
         let a_segment_index_u16 = candidate.a_segment_index();
         let b_segment_index_u16 = candidate.b_segment_index();
@@ -940,69 +942,63 @@ fn intersect_contours_with_retained_line_candidates<const POINT_ONLY: bool>(
             unreachable!("exact dyadic line bounds contain only line segments");
         };
         if POINT_ONLY {
-            if prepared_a_segment_index != Some(a_segment_index_u16) {
+            if retained_a_segment_index != Some(a_segment_index_u16) {
                 let a_endpoints = a_boxes.segment_endpoints(a_segment_index);
-                prepared_a_line =
-                    Real::prepare_exact_dyadic_f64_line2(a_endpoints[0], a_endpoints[1]);
-                prepared_a_segment_index = Some(a_segment_index_u16);
+                retained_a_line = ExactDyadicLine2::from_f64(a_endpoints[0], a_endpoints[1]);
+                retained_a_segment_index = Some(a_segment_index_u16);
             }
-            let Some(prepared_a_line) = prepared_a_line.as_ref() else {
+            let Some(retained_a_line) = retained_a_line.as_ref() else {
                 return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
                     a, b, a_boxes, b_boxes, policy,
                 );
             };
             let b_endpoints = b_boxes.segment_endpoints(b_segment_index);
-            let crossing =
-                match Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-                    prepared_a_line,
-                    b_endpoints[0],
-                    b_endpoints[1],
-                ) {
-                    Some((parameters, point)) => CertifiedLineCrossingEvent::new_exact_dyadic(
-                        a_segment_index_u16,
-                        b_segment_index_u16,
-                        Point2::from_exact_dyadic_line_point(point),
-                        parameters,
-                    ),
-                    None => {
-                        match Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
-                            prepared_a_line,
-                            b_endpoints[0],
-                            b_endpoints[1],
-                        ) {
-                            Some((parameters, point)) => {
-                                CertifiedLineCrossingEvent::new_exact_dyadic_wide(
-                                    a_segment_index_u16,
-                                    b_segment_index_u16,
-                                    Point2::from_exact_dyadic_wide_line_point(point),
-                                    parameters,
-                                )
-                            }
-                            None => {
-                                let LineLineIntersection::Point {
-                                    point,
-                                    a_param,
-                                    b_param,
-                                    ..
-                                } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
-                                    b_line, policy,
-                                )?
-                                else {
-                                    return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
-                                        a, b, a_boxes, b_boxes, policy,
-                                    );
-                                };
-                                CertifiedLineCrossingEvent::new_materialized(
-                                    a_segment_index_u16,
-                                    b_segment_index_u16,
-                                    point,
-                                    a_param,
-                                    b_param,
-                                )
-                            }
+            let crossing = match retained_a_line
+                .retained_intersection_point_f64(b_endpoints[0], b_endpoints[1])
+            {
+                Some((parameters, point)) => CertifiedLineCrossingEvent::new_exact_dyadic(
+                    a_segment_index_u16,
+                    b_segment_index_u16,
+                    Point2::from_exact_dyadic_line_point(point),
+                    parameters,
+                ),
+                None => {
+                    match retained_a_line
+                        .wide_retained_intersection_point_f64(b_endpoints[0], b_endpoints[1])
+                    {
+                        Some((parameters, point)) => {
+                            CertifiedLineCrossingEvent::new_exact_dyadic_wide(
+                                a_segment_index_u16,
+                                b_segment_index_u16,
+                                Point2::from_exact_dyadic_wide_line_point(point),
+                                parameters,
+                            )
+                        }
+                        None => {
+                            let LineLineIntersection::Point {
+                                point,
+                                a_param,
+                                b_param,
+                                ..
+                            } = a_line.intersect_line_with_certified_exact_dyadic_proper_crossing(
+                                b_line, policy,
+                            )?
+                            else {
+                                return intersect_contours_with_unreserved_exact_dyadic_line_aabbs(
+                                    a, b, a_boxes, b_boxes, policy,
+                                );
+                            };
+                            CertifiedLineCrossingEvent::new_materialized(
+                                a_segment_index_u16,
+                                b_segment_index_u16,
+                                point,
+                                a_param,
+                                b_param,
+                            )
                         }
                     }
-                };
+                }
+            };
             crossings.push(crossing);
         } else {
             let LineLineIntersection::Point {

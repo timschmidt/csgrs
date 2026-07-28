@@ -3,6 +3,8 @@
 use hyperreal::{
     ExactDyadicLinePoint2, ExactDyadicWideLinePoint2, Real, ZeroKnowledge as ZeroStatus,
 };
+#[cfg(test)]
+use hyperreal::ExactDyadicLine2;
 use std::{
     fmt,
     ptr::NonNull,
@@ -321,13 +323,9 @@ mod tests {
 
     #[test]
     fn exact_line_coordinates_materialize_on_first_observation() {
-        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
-        let (_, retained) =
-            Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-                &prepared,
-                [0.0, 2.0],
-                [2.0, 0.0],
-            )
+        let line = ExactDyadicLine2::from_f64([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let (_, retained) = line
+            .retained_intersection_point_f64([0.0, 2.0], [2.0, 0.0])
             .unwrap();
         let point = Point2::from_exact_dyadic_line_point(retained);
         // SAFETY: the constructor above assigns this exact tag/type pair.
@@ -358,14 +356,10 @@ mod tests {
         };
         assert_eq!(materialized, Point2::from_values(7_i8, -9_i8));
 
-        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let line = ExactDyadicLine2::from_f64([0.0, 0.0], [2.0, 2.0]).unwrap();
         let deferred = {
-            let (_, retained) =
-                Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-                    &prepared,
-                    [0.0, 2.0],
-                    [2.0, 0.0],
-                )
+            let (_, retained) = line
+                .retained_intersection_point_f64([0.0, 2.0], [2.0, 0.0])
                 .unwrap();
             Point2::from_exact_dyadic_line_point(retained).clone()
         };
@@ -376,14 +370,9 @@ mod tests {
     fn wide_deferred_point_materializes_and_drops() {
         let extent = 2_f64.powi(100);
         let near_extent = f64::from_bits(extent.to_bits() - 1);
-        let prepared =
-            Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [extent, near_extent]).unwrap();
-        let (_, retained) =
-            Real::exact_dyadic_f64_line_intersection2_retained_point_wide_with_prepared_first(
-                &prepared,
-                [0.0, near_extent],
-                [extent, 0.0],
-            )
+        let line = ExactDyadicLine2::from_f64([0.0, 0.0], [extent, near_extent]).unwrap();
+        let (_, retained) = line
+            .wide_retained_intersection_point_f64([0.0, near_extent], [extent, 0.0])
             .unwrap();
         let point = Point2::from_exact_dyadic_wide_line_point(retained);
 
@@ -394,13 +383,9 @@ mod tests {
 
     #[test]
     fn deferred_point_can_materialize_from_another_thread() {
-        let prepared = Real::prepare_exact_dyadic_f64_line2([0.0, 0.0], [2.0, 2.0]).unwrap();
-        let (_, retained) =
-            Real::exact_dyadic_f64_line_intersection2_retained_point_with_prepared_first(
-                &prepared,
-                [0.0, 2.0],
-                [2.0, 0.0],
-            )
+        let line = ExactDyadicLine2::from_f64([0.0, 0.0], [2.0, 2.0]).unwrap();
+        let (_, retained) = line
+            .retained_intersection_point_f64([0.0, 2.0], [2.0, 0.0])
             .unwrap();
         let point = Point2::from_exact_dyadic_line_point(retained);
         let clone = point.clone();
