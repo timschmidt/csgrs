@@ -5924,6 +5924,41 @@ variation:
 | 64-point batched sparse region | 830.291--845.751 us | 825.186--830.554 us |
 | Sparse-region filled area | 13.538--14.050 us | 14.054--14.240 us |
 
+### Immediate arrangement reports
+
+The unordered line/arc arrangement API now returns an immediate
+`RegionArrangement2` with a semantic `RegionArrangementReport2`. Public
+`ExactCurveArrangement*Cache2`, bucket, reference, and fact carriers, along
+with cache-returning accessors, are gone from the crate root and generated
+documentation. The result and report expose output, blocker, count, and
+provenance facts directly; private caches remain an implementation detail.
+`CurveRegionArrangement2` follows the same `report()` vocabulary.
+
+The first pre-change serialized editing run measured 21.046 us for the line
+arrangement, 21.473 us for the native line/arc arrangement, and 3 ns for report
+replay. Candidate wall-clock samples varied enough to make a comparison
+against that one run ambiguous, so the committed pre-change tree was built in
+an isolated sibling checkout. Five pre-change runs and then five candidate
+runs used their already-built release executables serially in the same
+session. Medians were:
+
+| Editing case | Pre-change | Immediate report | Change |
+| --- | ---: | ---: | ---: |
+| Boundary-contour control | 15.446 us | 15.257 us | -1.2% |
+| Unordered line arrangement | 21.697 us | 21.428 us | -1.2% |
+| Unordered native line/arc arrangement | 22.015 us | 22.385 us | +1.7% |
+| Arrangement report replay | 274.292 us / 100k | 279.281 us / 100k | +1.8% |
+
+Checksums and observed fact totals were unchanged. The immediate surface
+therefore introduces no repeatable performance regression: both affected
+increases remain below 2%, and every five-run candidate range overlaps its
+pre-change range.
+
+Correctness validation covered all all-feature Hypercurve tests, including
+the retired curved-region Boolean corpus and pathological workload, strict
+all-target Clippy, warning-free rustdoc, the focused immediate arrangement
+tests, and compilation of every fuzz target.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

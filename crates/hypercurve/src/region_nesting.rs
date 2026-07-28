@@ -3,7 +3,6 @@
 //! This module turns already-closed boundary contours into the signed contour
 //! bins used by [`crate::LineArcRegion2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
-
 use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
 
 use hyperreal::{Real, RealSign};
@@ -46,7 +45,7 @@ pub(crate) struct ExactCurveWorkspace2 {
 
 /// Source segment fact retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceSegmentFact2 {
+pub(crate) struct ExactCurveArrangementSourceSegmentFact2 {
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
     source_start_point: Point2,
@@ -56,7 +55,7 @@ pub struct ExactCurveArrangementSourceSegmentFact2 {
 
 /// AABB certification status retained for one source segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCurveArrangementSourceAabbStatus2 {
+pub(crate) enum ExactCurveArrangementSourceAabbStatus2 {
     /// The source segment box was certified during workspace construction.
     Decided,
     /// The source segment box stayed uncertain during workspace construction.
@@ -65,20 +64,20 @@ pub enum ExactCurveArrangementSourceAabbStatus2 {
 
 /// Reference to a retained source segment AABB fact.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceAabbRef2 {
+pub(crate) struct ExactCurveArrangementSourceAabbRef2 {
     source_segment_index: usize,
 }
 
 /// Source segment bucket grouped by retained AABB certification status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceAabbBucket2 {
+pub(crate) struct ExactCurveArrangementSourceAabbBucket2 {
     aabb_status: ExactCurveArrangementSourceAabbStatus2,
     source_refs: Vec<ExactCurveArrangementSourceAabbRef2>,
 }
 
 /// Source segment AABB buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceAabbBucketCache2 {
+pub(crate) struct ExactCurveArrangementSourceAabbBucketCache2 {
     bucket_count: usize,
     source_ref_count: usize,
     decided_source_ref_count: usize,
@@ -89,20 +88,20 @@ pub struct ExactCurveArrangementSourceAabbBucketCache2 {
 
 /// Reference to a retained source segment fact inside a primitive-family bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceSegmentKindRef2 {
+pub(crate) struct ExactCurveArrangementSourceSegmentKindRef2 {
     source_segment_index: usize,
 }
 
 /// Source segment bucket grouped by retained primitive family.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceSegmentKindBucket2 {
+pub(crate) struct ExactCurveArrangementSourceSegmentKindBucket2 {
     source_segment_kind: SegmentKind,
     source_refs: Vec<ExactCurveArrangementSourceSegmentKindRef2>,
 }
 
 /// Source segment primitive-family buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
+pub(crate) struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
     bucket_count: usize,
     source_segment_ref_count: usize,
     line_segment_ref_count: usize,
@@ -113,7 +112,7 @@ pub struct ExactCurveArrangementSourceSegmentKindBucketCache2 {
 
 /// Source segment fact cache retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceSegmentCache2 {
+pub(crate) struct ExactCurveArrangementSourceSegmentCache2 {
     source_segment_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
     decided_source_segment_aabb_count: usize,
@@ -126,7 +125,7 @@ pub struct ExactCurveArrangementSourceSegmentCache2 {
 
 /// Source endpoint of a retained exact arrangement input segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCurveArrangementSourceEndpoint2 {
+pub(crate) enum ExactCurveArrangementSourceEndpoint2 {
     /// Start point of the source segment.
     Start,
     /// End point of the source segment.
@@ -135,21 +134,21 @@ pub enum ExactCurveArrangementSourceEndpoint2 {
 
 /// Source-segment endpoint reference retained in a source endpoint bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceEndpointRef2 {
+pub(crate) struct ExactCurveArrangementSourceEndpointRef2 {
     source_segment_index: usize,
     endpoint: ExactCurveArrangementSourceEndpoint2,
 }
 
 /// Exact structural source endpoint bucket retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceEndpointBucket2 {
+pub(crate) struct ExactCurveArrangementSourceEndpointBucket2 {
     point: Point2,
     endpoints: Vec<ExactCurveArrangementSourceEndpointRef2>,
 }
 
 /// Exact structural source endpoint buckets retained during workspace construction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSourceEndpointBucketCache2 {
+pub(crate) struct ExactCurveArrangementSourceEndpointBucketCache2 {
     endpoint_count: usize,
     bucket_count: usize,
     singleton_bucket_count: usize,
@@ -159,7 +158,7 @@ pub struct ExactCurveArrangementSourceEndpointBucketCache2 {
 
 /// AABB pruning status retained for one scheduled source split candidate pair.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCurveArrangementSplitCandidateAabbStatus2 {
+pub(crate) enum ExactCurveArrangementSplitCandidateAabbStatus2 {
     /// The source boxes were both decided and certified disjoint.
     DecidedDisjoint,
     /// The source boxes were both decided and not certified disjoint.
@@ -170,7 +169,7 @@ pub enum ExactCurveArrangementSplitCandidateAabbStatus2 {
 
 /// Source segment pair scheduled for exact split predicate evaluation or AABB pruning.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitCandidatePair2 {
+pub(crate) struct ExactCurveArrangementSplitCandidatePair2 {
     first_source_segment_index: usize,
     second_source_segment_index: usize,
     aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2,
@@ -178,20 +177,20 @@ pub struct ExactCurveArrangementSplitCandidatePair2 {
 
 /// Reference to a retained scheduled split candidate pair.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitScheduleRef2 {
+pub(crate) struct ExactCurveArrangementSplitScheduleRef2 {
     candidate_pair_index: usize,
 }
 
 /// Scheduled split candidate bucket grouped by retained AABB pruning status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitScheduleBucket2 {
+pub(crate) struct ExactCurveArrangementSplitScheduleBucket2 {
     aabb_status: ExactCurveArrangementSplitCandidateAabbStatus2,
     candidate_refs: Vec<ExactCurveArrangementSplitScheduleRef2>,
 }
 
 /// Scheduled split candidate buckets grouped by retained AABB pruning status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitScheduleBucketCache2 {
+pub(crate) struct ExactCurveArrangementSplitScheduleBucketCache2 {
     bucket_count: usize,
     candidate_ref_count: usize,
     max_bucket_size: usize,
@@ -200,7 +199,7 @@ pub struct ExactCurveArrangementSplitScheduleBucketCache2 {
 
 /// Retained exact source-pair schedule used before split predicate evaluation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitScheduleCache2 {
+pub(crate) struct ExactCurveArrangementSplitScheduleCache2 {
     candidate_pair_count: usize,
     decided_disjoint_pair_count: usize,
     predicate_candidate_pair_count: usize,
@@ -211,7 +210,7 @@ pub struct ExactCurveArrangementSplitScheduleCache2 {
 
 /// Retained exact split evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitCache2 {
+pub(crate) struct ExactCurveArrangementSplitCache2 {
     predicate_path: Option<RegionLineSegmentSplitPredicatePath2>,
     candidate_pair_count: usize,
     skipped_aabb_pair_count: usize,
@@ -231,7 +230,7 @@ pub struct ExactCurveArrangementSplitCache2 {
 
 /// Retained source-pair blocker evidence from exact split arrangement.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitBlockerCache2 {
+pub(crate) struct ExactCurveArrangementSplitBlockerCache2 {
     first_source_segment_index: usize,
     first_source_segment_kind: SegmentKind,
     first_source_start_point: Point2,
@@ -245,7 +244,7 @@ pub struct ExactCurveArrangementSplitBlockerCache2 {
 
 /// Retained split-stage relation class.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCurveArrangementSplitRelationClass2 {
+pub(crate) enum ExactCurveArrangementSplitRelationClass2 {
     /// Source pair relation produced exact point-intersection evidence.
     Point,
     /// Source pair relation produced exact overlap evidence.
@@ -256,14 +255,14 @@ pub enum ExactCurveArrangementSplitRelationClass2 {
 
 /// Retained split-stage relation bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitRelationBucket2 {
+pub(crate) struct ExactCurveArrangementSplitRelationBucket2 {
     relation: ExactCurveArrangementSplitRelationClass2,
     relation_count: usize,
 }
 
 /// Retained split-stage relation buckets.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitRelationBucketCache2 {
+pub(crate) struct ExactCurveArrangementSplitRelationBucketCache2 {
     bucket_count: usize,
     relation_count: usize,
     point_relation_count: usize,
@@ -275,20 +274,20 @@ pub struct ExactCurveArrangementSplitRelationBucketCache2 {
 
 /// Reference to a retained split-intersection evidence inside an exact point bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitIntersectionRef2 {
+pub(crate) struct ExactCurveArrangementSplitIntersectionRef2 {
     intersection_evidence_index: usize,
 }
 
 /// Exact structural split-intersection bucket retained by an evaluated workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitIntersectionBucket2 {
+pub(crate) struct ExactCurveArrangementSplitIntersectionBucket2 {
     point: Point2,
     intersections: Vec<ExactCurveArrangementSplitIntersectionRef2>,
 }
 
 /// Exact structural split-intersection buckets retained by an evaluated workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitIntersectionBucketCache2 {
+pub(crate) struct ExactCurveArrangementSplitIntersectionBucketCache2 {
     intersection_event_count: usize,
     bucket_count: usize,
     singleton_bucket_count: usize,
@@ -298,7 +297,7 @@ pub struct ExactCurveArrangementSplitIntersectionBucketCache2 {
 
 /// Exact source-parameter evidence retained for one split intersection.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitIntersectionParameterRef2 {
+pub(crate) struct ExactCurveArrangementSplitIntersectionParameterRef2 {
     intersection_evidence_index: usize,
     first_source_segment_index: usize,
     first_source_param: Real,
@@ -309,7 +308,7 @@ pub struct ExactCurveArrangementSplitIntersectionParameterRef2 {
 
 /// Exact source-parameter evidence retained for split intersections.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSplitIntersectionParameterCache2 {
+pub(crate) struct ExactCurveArrangementSplitIntersectionParameterCache2 {
     intersection_event_count: usize,
     source_parameter_ref_count: usize,
     parameters: Vec<ExactCurveArrangementSplitIntersectionParameterRef2>,
@@ -317,7 +316,7 @@ pub struct ExactCurveArrangementSplitIntersectionParameterCache2 {
 
 /// Retained exact endpoint-bucket evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementEndpointGraphCache2 {
+pub(crate) struct ExactCurveArrangementEndpointGraphCache2 {
     predicate_path: RegionLineSegmentEndpointGraphPredicatePath2,
     endpoint_count: usize,
     structural_bucket_count: usize,
@@ -336,7 +335,7 @@ pub struct ExactCurveArrangementEndpointGraphCache2 {
 
 /// Retained arranged endpoint structural degree.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ExactCurveArrangementArrangedEndpointDegree2 {
+pub(crate) enum ExactCurveArrangementArrangedEndpointDegree2 {
     /// One arranged endpoint occupies the structural point.
     Dangling,
     /// Two arranged endpoints occupy the structural point and form a chain connection.
@@ -347,7 +346,7 @@ pub enum ExactCurveArrangementArrangedEndpointDegree2 {
 
 /// Reference to a structural arranged endpoint bucket classified by degree.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointDegreeRef2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointDegreeRef2 {
     structural_bucket_index: usize,
     endpoint_ref_count: usize,
     point: Point2,
@@ -355,14 +354,14 @@ pub struct ExactCurveArrangementArrangedEndpointDegreeRef2 {
 
 /// Structural arranged endpoint buckets grouped by retained degree.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointDegreeBucket2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointDegreeBucket2 {
     degree: ExactCurveArrangementArrangedEndpointDegree2,
     endpoint_buckets: Vec<ExactCurveArrangementArrangedEndpointDegreeRef2>,
 }
 
 /// Arranged endpoint structural degree buckets retained by endpoint-graph validation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
     bucket_count: usize,
     structural_bucket_ref_count: usize,
     dangling_structural_bucket_count: usize,
@@ -374,21 +373,21 @@ pub struct ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
 
 /// Arranged fragment endpoint reference retained in an exact endpoint bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointRef2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointRef2 {
     arranged_segment_index: usize,
     endpoint: RegionLineSegmentArrangedEndpoint2,
 }
 
 /// Arranged endpoint bucket grouped by retained endpoint side.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointSideBucket2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointSideBucket2 {
     endpoint: RegionLineSegmentArrangedEndpoint2,
     endpoints: Vec<ExactCurveArrangementArrangedEndpointRef2>,
 }
 
 /// Arranged endpoint side buckets retained by endpoint-graph validation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointSideBucketCache2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointSideBucketCache2 {
     bucket_count: usize,
     endpoint_ref_count: usize,
     start_endpoint_ref_count: usize,
@@ -399,14 +398,14 @@ pub struct ExactCurveArrangementArrangedEndpointSideBucketCache2 {
 
 /// Exact structural arranged endpoint bucket retained by endpoint-graph validation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointBucket2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointBucket2 {
     point: Point2,
     endpoints: Vec<ExactCurveArrangementArrangedEndpointRef2>,
 }
 
 /// Exact structural arranged endpoint buckets retained by endpoint-graph validation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointBucketCache2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointBucketCache2 {
     endpoint_count: usize,
     bucket_count: usize,
     singleton_bucket_count: usize,
@@ -416,7 +415,7 @@ pub struct ExactCurveArrangementArrangedEndpointBucketCache2 {
 
 /// Exact endpoints retained for one arranged fragment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointPointRef2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointPointRef2 {
     arranged_segment_index: usize,
     output_start_point: Point2,
     output_end_point: Point2,
@@ -424,7 +423,7 @@ pub struct ExactCurveArrangementArrangedEndpointPointRef2 {
 
 /// Exact arranged endpoint records retained by endpoint-graph validation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedEndpointPointCache2 {
+pub(crate) struct ExactCurveArrangementArrangedEndpointPointCache2 {
     arranged_fragment_ref_count: usize,
     endpoint_ref_count: usize,
     endpoints: Vec<ExactCurveArrangementArrangedEndpointPointRef2>,
@@ -432,7 +431,7 @@ pub struct ExactCurveArrangementArrangedEndpointPointCache2 {
 
 /// Source provenance retained for one arranged fragment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentSourceRef2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentSourceRef2 {
     arranged_source_evidence_index: usize,
     source_segment_index: usize,
     source_segment_kind: SegmentKind,
@@ -442,7 +441,7 @@ pub struct ExactCurveArrangementArrangedFragmentSourceRef2 {
 
 /// Arranged fragment provenance retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragment2 {
+pub(crate) struct ExactCurveArrangementArrangedFragment2 {
     arranged_segment_index: usize,
     arranged_segment_kind: SegmentKind,
     output_start_point: Point2,
@@ -452,13 +451,13 @@ pub struct ExactCurveArrangementArrangedFragment2 {
 
 /// Reference to a retained arranged fragment fact.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentRef2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentRef2 {
     arranged_fragment_index: usize,
 }
 
 /// Reference to retained arranged fragment source evidence inside a status bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentStatusRef2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentStatusRef2 {
     arranged_fragment_index: usize,
     source_ref_index: usize,
     arranged_source_evidence_index: usize,
@@ -466,21 +465,21 @@ pub struct ExactCurveArrangementArrangedFragmentStatusRef2 {
 
 /// Arranged fragment bucket grouped by retained primitive family.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentKindBucket2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentKindBucket2 {
     arranged_segment_kind: SegmentKind,
     fragment_refs: Vec<ExactCurveArrangementArrangedFragmentRef2>,
 }
 
 /// Arranged fragment source-provenance bucket grouped by retained topology status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentStatusBucket2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentStatusBucket2 {
     status: RetainedTopologyStatus,
     source_refs: Vec<ExactCurveArrangementArrangedFragmentStatusRef2>,
 }
 
 /// Arranged fragment primitive-family buckets retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentKindBucketCache2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentKindBucketCache2 {
     bucket_count: usize,
     arranged_fragment_ref_count: usize,
     line_fragment_ref_count: usize,
@@ -491,7 +490,7 @@ pub struct ExactCurveArrangementArrangedFragmentKindBucketCache2 {
 
 /// Arranged fragment topology-status buckets retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
     bucket_count: usize,
     source_ref_count: usize,
     native_exact_ref_count: usize,
@@ -506,7 +505,7 @@ pub struct ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
 
 /// Arranged fragment source-parameter range retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
     arranged_source_evidence_index: usize,
     source_segment_index: usize,
     source_range: ParamRange,
@@ -515,7 +514,7 @@ pub struct ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
 
 /// Arranged fragment source-parameter ranges retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
     source_ref_count: usize,
     full_source_range_ref_count: usize,
     partial_source_range_ref_count: usize,
@@ -524,7 +523,7 @@ pub struct ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
 
 /// Arranged fragment provenance cache retained after exact splitting.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementArrangedFragmentCache2 {
+pub(crate) struct ExactCurveArrangementArrangedFragmentCache2 {
     arranged_fragment_count: usize,
     source_ref_count: usize,
     source_segment_kind_counts: SegmentKindCounts,
@@ -538,7 +537,7 @@ pub struct ExactCurveArrangementArrangedFragmentCache2 {
 
 /// Output segment provenance retained for one assembled ring bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRingSegmentRef2 {
+pub(crate) struct ExactCurveArrangementOutputRingSegmentRef2 {
     source_evidence_index: usize,
     output_segment_index: usize,
     reversed: bool,
@@ -546,14 +545,14 @@ pub struct ExactCurveArrangementOutputRingSegmentRef2 {
 
 /// Output ring bucket retained by exact ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRingBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRingBucket2 {
     output_ring_index: usize,
     segments: Vec<ExactCurveArrangementOutputRingSegmentRef2>,
 }
 
 /// Output ring buckets retained by exact ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRingBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputRingBucketCache2 {
     ring_count: usize,
     segment_ref_count: usize,
     max_ring_segment_count: usize,
@@ -562,7 +561,7 @@ pub struct ExactCurveArrangementOutputRingBucketCache2 {
 
 /// Output segment reference retained in a primitive-family bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentKindRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentKindRef2 {
     source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -570,14 +569,14 @@ pub struct ExactCurveArrangementOutputSegmentKindRef2 {
 
 /// Output segment bucket grouped by retained primitive family.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentKindBucket2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentKindBucket2 {
     output_segment_kind: SegmentKind,
     segment_refs: Vec<ExactCurveArrangementOutputSegmentKindRef2>,
 }
 
 /// Output segment primitive-family buckets retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentKindBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentKindBucketCache2 {
     bucket_count: usize,
     output_segment_ref_count: usize,
     line_segment_ref_count: usize,
@@ -588,7 +587,7 @@ pub struct ExactCurveArrangementOutputSegmentKindBucketCache2 {
 
 /// Output segment reference retained in a source-segment bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentSourceRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentSourceRef2 {
     source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -596,14 +595,14 @@ pub struct ExactCurveArrangementOutputSegmentSourceRef2 {
 
 /// Output segment bucket grouped by retained source segment index.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentSourceBucket2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentSourceBucket2 {
     source_segment_index: usize,
     segment_refs: Vec<ExactCurveArrangementOutputSegmentSourceRef2>,
 }
 
 /// Output segment source-segment buckets retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentSourceBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentSourceBucketCache2 {
     source_segment_bucket_count: usize,
     output_segment_ref_count: usize,
     max_bucket_size: usize,
@@ -612,7 +611,7 @@ pub struct ExactCurveArrangementOutputSegmentSourceBucketCache2 {
 
 /// Output segment source-parameter range retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentSourceRangeRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentSourceRangeRef2 {
     source_evidence_index: usize,
     source_segment_index: usize,
     source_range: ParamRange,
@@ -622,7 +621,7 @@ pub struct ExactCurveArrangementOutputSegmentSourceRangeRef2 {
 
 /// Output segment source-parameter ranges retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
     output_segment_ref_count: usize,
     full_source_range_ref_count: usize,
     partial_source_range_ref_count: usize,
@@ -631,7 +630,7 @@ pub struct ExactCurveArrangementOutputSegmentSourceRangeCache2 {
 
 /// Output segment exact endpoints retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentEndpointRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentEndpointRef2 {
     source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -641,7 +640,7 @@ pub struct ExactCurveArrangementOutputSegmentEndpointRef2 {
 
 /// Output segment endpoint cache retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentEndpointCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentEndpointCache2 {
     output_segment_ref_count: usize,
     output_endpoint_ref_count: usize,
     segments: Vec<ExactCurveArrangementOutputSegmentEndpointRef2>,
@@ -649,7 +648,7 @@ pub struct ExactCurveArrangementOutputSegmentEndpointCache2 {
 
 /// Exact endpoint continuity retained between adjacent output ring segments.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRingContinuityRef2 {
+pub(crate) struct ExactCurveArrangementOutputRingContinuityRef2 {
     source_evidence_index: usize,
     next_source_evidence_index: usize,
     output_ring_index: usize,
@@ -661,7 +660,7 @@ pub struct ExactCurveArrangementOutputRingContinuityRef2 {
 
 /// Output ring continuity cache retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRingContinuityCache2 {
+pub(crate) struct ExactCurveArrangementOutputRingContinuityCache2 {
     output_ring_ref_count: usize,
     output_connection_ref_count: usize,
     max_ring_connection_count: usize,
@@ -670,7 +669,7 @@ pub struct ExactCurveArrangementOutputRingContinuityCache2 {
 
 /// Output segment reference retained in a topology-status bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentStatusRef2 {
     source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -678,14 +677,14 @@ pub struct ExactCurveArrangementOutputSegmentStatusRef2 {
 
 /// Output segment bucket grouped by retained topology status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentStatusBucket2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentStatusBucket2 {
     status: RetainedTopologyStatus,
     segment_refs: Vec<ExactCurveArrangementOutputSegmentStatusRef2>,
 }
 
 /// Output segment topology-status buckets retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
     bucket_count: usize,
     output_segment_ref_count: usize,
     native_exact_ref_count: usize,
@@ -700,7 +699,7 @@ pub struct ExactCurveArrangementOutputSegmentStatusBucketCache2 {
 
 /// Output segment reference retained in a traversal-direction bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentDirectionRef2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentDirectionRef2 {
     source_evidence_index: usize,
     output_ring_index: usize,
     output_segment_index: usize,
@@ -708,14 +707,14 @@ pub struct ExactCurveArrangementOutputSegmentDirectionRef2 {
 
 /// Output segment bucket grouped by whether ring traversal reversed the source segment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentDirectionBucket2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentDirectionBucket2 {
     reversed: bool,
     segment_refs: Vec<ExactCurveArrangementOutputSegmentDirectionRef2>,
 }
 
 /// Output segment traversal-direction buckets retained after ring assembly.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
     bucket_count: usize,
     output_segment_ref_count: usize,
     forward_segment_ref_count: usize,
@@ -726,7 +725,7 @@ pub struct ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
 
 /// Output role assignment evidence retained for one boundary contour.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleAssignment2 {
+pub(crate) struct ExactCurveArrangementOutputRoleAssignment2 {
     role_evidence_index: usize,
     source_contour_index: usize,
     source_segment_count: usize,
@@ -740,7 +739,7 @@ pub struct ExactCurveArrangementOutputRoleAssignment2 {
 
 /// Reference to a retained output role assignment inside a status bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleStatusRef2 {
+pub(crate) struct ExactCurveArrangementOutputRoleStatusRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
     role_evidence_index: usize,
@@ -748,21 +747,21 @@ pub struct ExactCurveArrangementOutputRoleStatusRef2 {
 
 /// Output role bucket retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRoleBucket2 {
     role: RegionBoundaryContourRole2,
     assignments: Vec<ExactCurveArrangementOutputRoleAssignment2>,
 }
 
 /// Output role assignment bucket grouped by retained topology status.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleStatusBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRoleStatusBucket2 {
     status: RetainedTopologyStatus,
     assignments: Vec<ExactCurveArrangementOutputRoleStatusRef2>,
 }
 
 /// Output role assignment topology-status buckets retained after role assignment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleStatusBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputRoleStatusBucketCache2 {
     bucket_count: usize,
     assignment_ref_count: usize,
     native_exact_ref_count: usize,
@@ -777,7 +776,7 @@ pub struct ExactCurveArrangementOutputRoleStatusBucketCache2 {
 
 /// Reference to a retained output role assignment inside a source-contour bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleSourceContourRef2 {
+pub(crate) struct ExactCurveArrangementOutputRoleSourceContourRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
     role_evidence_index: usize,
@@ -786,14 +785,14 @@ pub struct ExactCurveArrangementOutputRoleSourceContourRef2 {
 
 /// Output role assignment bucket grouped by retained source contour identity.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleSourceContourBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRoleSourceContourBucket2 {
     source_contour_index: usize,
     assignments: Vec<ExactCurveArrangementOutputRoleSourceContourRef2>,
 }
 
 /// Output role assignments grouped by retained source contour identity.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
     source_contour_bucket_count: usize,
     assignment_ref_count: usize,
     max_bucket_size: usize,
@@ -802,7 +801,7 @@ pub struct ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
 
 /// Reference to a retained output role assignment inside a nesting-depth bucket.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleNestingDepthRef2 {
+pub(crate) struct ExactCurveArrangementOutputRoleNestingDepthRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
     role_evidence_index: usize,
@@ -812,14 +811,14 @@ pub struct ExactCurveArrangementOutputRoleNestingDepthRef2 {
 
 /// Output role assignment bucket grouped by exact nesting depth.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleNestingDepthBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRoleNestingDepthBucket2 {
     nesting_depth: usize,
     assignments: Vec<ExactCurveArrangementOutputRoleNestingDepthRef2>,
 }
 
 /// Output role assignments grouped by retained exact nesting depth.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
     nesting_depth_bucket_count: usize,
     assignment_ref_count: usize,
     max_bucket_size: usize,
@@ -828,7 +827,7 @@ pub struct ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
 
 /// Reference to retained containment evidence for one output role assignment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleContainmentRef2 {
+pub(crate) struct ExactCurveArrangementOutputRoleContainmentRef2 {
     role: RegionBoundaryContourRole2,
     assignment_index: usize,
     role_evidence_index: usize,
@@ -840,14 +839,14 @@ pub struct ExactCurveArrangementOutputRoleContainmentRef2 {
 
 /// Output role containment bucket grouped by exact containing source contour.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleContainmentBucket2 {
+pub(crate) struct ExactCurveArrangementOutputRoleContainmentBucket2 {
     containing_contour_index: usize,
     containments: Vec<ExactCurveArrangementOutputRoleContainmentRef2>,
 }
 
 /// Output role containment evidence grouped by exact containing source contour.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleContainmentBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputRoleContainmentBucketCache2 {
     containing_contour_bucket_count: usize,
     containment_ref_count: usize,
     uncontained_assignment_ref_count: usize,
@@ -857,7 +856,7 @@ pub struct ExactCurveArrangementOutputRoleContainmentBucketCache2 {
 
 /// Output material/hole role buckets retained after boundary contour role assignment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputRoleCache2 {
+pub(crate) struct ExactCurveArrangementOutputRoleCache2 {
     role_evidence_count: usize,
     material_contour_count: usize,
     hole_contour_count: usize,
@@ -872,7 +871,7 @@ pub struct ExactCurveArrangementOutputRoleCache2 {
 
 /// Final boundary output counts for one material/hole role.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputBoundaryRoleBucket2 {
+pub(crate) struct ExactCurveArrangementOutputBoundaryRoleBucket2 {
     role: RegionBoundaryContourRole2,
     output_contour_count: usize,
     output_segment_count: usize,
@@ -880,7 +879,7 @@ pub struct ExactCurveArrangementOutputBoundaryRoleBucket2 {
 
 /// Final boundary output counts grouped by material/hole role.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
+pub(crate) struct ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
     bucket_count: usize,
     output_contour_count: usize,
     output_segment_count: usize,
@@ -890,7 +889,7 @@ pub struct ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
 
 /// Final boundary output summary retained by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputBoundaryCache2 {
+pub(crate) struct ExactCurveArrangementOutputBoundaryCache2 {
     output_contour_count: usize,
     output_segment_count: usize,
     output_segment_kind_counts: SegmentKindCounts,
@@ -903,7 +902,7 @@ pub struct ExactCurveArrangementOutputBoundaryCache2 {
 
 /// Retained exact ring-traversal evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementRingAssemblyCache2 {
+pub(crate) struct ExactCurveArrangementRingAssemblyCache2 {
     predicate_path: RegionLineSegmentRingAssemblyPredicatePath2,
     attempted_endpoint_connection_count: usize,
     exact_endpoint_connection_count: usize,
@@ -928,7 +927,7 @@ pub struct ExactCurveArrangementRingAssemblyCache2 {
 
 /// Retained final output evidence cached by an evaluated arrangement workspace.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementOutputCache2 {
+pub(crate) struct ExactCurveArrangementOutputCache2 {
     materialized_region: bool,
     boundary_build_evidence: Option<RegionBoundaryContourBuildEvidence2>,
     boundary_output_cache: Option<ExactCurveArrangementOutputBoundaryCache2>,
@@ -938,9 +937,9 @@ pub struct ExactCurveArrangementOutputCache2 {
     blocker: Option<UncertaintyReason>,
 }
 
-/// Final retained evaluation facts derived from arrangement caches.
+/// Final semantic facts from an immediate arrangement evaluation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExactCurveArrangementSummary2 {
+pub struct RegionArrangementSummary2 {
     evaluated_output: bool,
     materialized_region: Option<bool>,
     stage: Option<RegionLineSegmentRegionBuildStage2>,
@@ -953,26 +952,26 @@ pub struct ExactCurveArrangementSummary2 {
     output_segment_count: Option<usize>,
 }
 
-/// Retained result of arranging unordered exact boundaries into a [`LineArcRegion2`].
+/// Immediate result of arranging unordered exact boundaries into a [`LineArcRegion2`].
 ///
 /// This is the domain-level arrangement carrier returned by the
 /// [`LineArcRegion2::arrange_unordered_segments`] family. It retains the certified
 /// facts, blocker evidence, derived evidence, and optional materialized region so
-/// repeated inspection does not rerun topology.
+/// repeated report inspection does not rerun topology.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionArrangement2 {
-    evidence: RegionArrangementEvidence2,
+    report: RegionArrangementReport2,
     region: Option<LineArcRegion2>,
 }
 
-/// Retained facts and diagnostics for an unordered region arrangement.
+/// Semantic facts and diagnostics from an unordered region arrangement.
 ///
 /// Clones share the immutable arrangement workspace. Reading or cloning this
-/// evidence does not recompute topology or deep-copy retained geometric facts.
+/// report does not recompute topology or deep-copy retained geometric facts.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RegionArrangementEvidence2 {
+pub struct RegionArrangementReport2 {
     workspace: Rc<ExactCurveWorkspace2>,
-    summary_cache: ExactCurveArrangementSummary2,
+    summary: RegionArrangementSummary2,
 }
 
 /// Material/hole role assigned to one closed boundary contour.
@@ -1917,41 +1916,11 @@ impl ExactCurveArrangementSourceSegmentFact2 {
     pub const fn source_segment_kind(&self) -> SegmentKind {
         self.source_segment_kind
     }
-
-    /// Returns the exact source segment start point.
-    pub const fn source_start_point(&self) -> &Point2 {
-        &self.source_start_point
-    }
-
-    /// Returns the exact source segment end point.
-    pub const fn source_end_point(&self) -> &Point2 {
-        &self.source_end_point
-    }
-
-    /// Returns the certified source segment AABB when available.
-    pub const fn source_aabb(&self) -> Option<&Aabb2> {
-        self.source_aabb.as_ref()
-    }
 }
 
-impl ExactCurveArrangementSourceAabbRef2 {
-    /// Returns the index into [`ExactCurveArrangementSourceSegmentCache2::segments`].
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-}
+impl ExactCurveArrangementSourceAabbRef2 {}
 
-impl ExactCurveArrangementSourceAabbBucket2 {
-    /// Returns the retained AABB certification status represented by this bucket.
-    pub const fn aabb_status(&self) -> ExactCurveArrangementSourceAabbStatus2 {
-        self.aabb_status
-    }
-
-    /// Returns source segment references with this retained AABB status.
-    pub fn source_refs(&self) -> &[ExactCurveArrangementSourceAabbRef2] {
-        &self.source_refs
-    }
-}
+impl ExactCurveArrangementSourceAabbBucket2 {}
 
 impl ExactCurveArrangementSourceAabbBucketCache2 {
     fn from_source_aabbs(source_segment_aabbs: &[Option<Aabb2>]) -> Self {
@@ -2022,31 +1991,11 @@ impl ExactCurveArrangementSourceAabbBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns source AABB buckets in stable status order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSourceAabbBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementSourceSegmentKindRef2 {
-    /// Returns the index into [`ExactCurveArrangementSourceSegmentCache2::segments`].
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-}
+impl ExactCurveArrangementSourceSegmentKindRef2 {}
 
-impl ExactCurveArrangementSourceSegmentKindBucket2 {
-    /// Returns the retained primitive family represented by this bucket.
-    pub const fn source_segment_kind(&self) -> SegmentKind {
-        self.source_segment_kind
-    }
-
-    /// Returns source segment references with this retained primitive family.
-    pub fn source_refs(&self) -> &[ExactCurveArrangementSourceSegmentKindRef2] {
-        &self.source_refs
-    }
-}
+impl ExactCurveArrangementSourceSegmentKindBucket2 {}
 
 impl ExactCurveArrangementSourceSegmentKindBucketCache2 {
     fn from_segments(segments: &[ExactCurveArrangementSourceSegmentFact2]) -> Self {
@@ -2115,11 +2064,6 @@ impl ExactCurveArrangementSourceSegmentKindBucketCache2 {
     /// Returns the largest primitive-family bucket size.
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
-    }
-
-    /// Returns source segment primitive-family buckets in stable kind order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSourceSegmentKindBucket2] {
-        &self.buckets
     }
 }
 
@@ -2192,20 +2136,17 @@ impl ExactCurveArrangementSourceSegmentCache2 {
     }
 
     /// Returns retained source AABB buckets grouped by certification status.
-    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+    pub(crate) const fn source_aabb_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceAabbBucketCache2 {
         &self.source_aabb_bucket_cache
     }
 
     /// Returns retained source segment buckets grouped by primitive family.
-    pub const fn source_segment_kind_bucket_cache(
+    pub(crate) const fn source_segment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         &self.source_segment_kind_bucket_cache
-    }
-
-    /// Returns source segment facts in request order.
-    pub fn segments(&self) -> &[ExactCurveArrangementSourceSegmentFact2] {
-        &self.segments
     }
 }
 
@@ -2294,12 +2235,14 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns source segment facts retained before split scheduling.
-    pub const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+    pub(crate) const fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         &self.source_segment_cache
     }
 
     /// Returns retained source AABB buckets grouped by certification status.
-    pub const fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
+    pub(crate) const fn source_aabb_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSourceAabbBucketCache2 {
         self.source_segment_cache().source_aabb_bucket_cache()
     }
 
@@ -2329,7 +2272,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained source segment buckets grouped by primitive family.
-    pub const fn source_segment_kind_bucket_cache(
+    pub(crate) const fn source_segment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
         self.source_segment_cache()
@@ -2365,7 +2308,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact source endpoint buckets retained during workspace construction.
-    pub const fn source_endpoint_bucket_cache(
+    pub(crate) const fn source_endpoint_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
         &self.source_endpoint_bucket_cache
@@ -2392,12 +2335,12 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns the source-pair schedule retained before split predicates run.
-    pub const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
+    pub(crate) const fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
         &self.split_schedule_cache
     }
 
     /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub const fn split_schedule_bucket_cache(
+    pub(crate) const fn split_schedule_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
         self.split_schedule_cache().bucket_cache()
@@ -2439,7 +2382,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact split evidence retained from the evaluated arrangement.
-    pub const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
+    pub(crate) const fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
         self.split_cache.as_ref()
     }
 
@@ -2508,7 +2451,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained split-stage relation buckets.
-    pub const fn split_relation_bucket_cache(
+    pub(crate) const fn split_relation_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
         match self.split_cache() {
@@ -2542,7 +2485,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact split-intersection point buckets.
-    pub const fn split_intersection_bucket_cache(
+    pub(crate) const fn split_intersection_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
         match self.split_cache() {
@@ -2590,7 +2533,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
-    pub const fn split_intersection_parameter_cache(
+    pub(crate) const fn split_intersection_parameter_cache(
         &self,
     ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
         match self.split_cache() {
@@ -2616,7 +2559,9 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub const fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+    pub(crate) const fn split_blocker_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
         match self.split_cache() {
             Some(split_cache) => split_cache.blocker_cache(),
             None => None,
@@ -2688,7 +2633,9 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub const fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
+    pub(crate) const fn endpoint_graph_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
         self.endpoint_graph_cache.as_ref()
     }
 
@@ -2777,7 +2724,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub const fn arranged_endpoint_bucket_cache(
+    pub(crate) const fn arranged_endpoint_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
         match self.endpoint_graph_cache() {
@@ -2819,7 +2766,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
-    pub const fn arranged_endpoint_side_bucket_cache(
+    pub(crate) const fn arranged_endpoint_side_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
         match self.endpoint_graph_cache() {
@@ -2869,7 +2816,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact endpoint records for arranged fragments.
-    pub const fn arranged_endpoint_point_cache(
+    pub(crate) const fn arranged_endpoint_point_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
         match self.endpoint_graph_cache() {
@@ -2895,7 +2842,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.
-    pub const fn arranged_endpoint_degree_bucket_cache(
+    pub(crate) const fn arranged_endpoint_degree_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
         match self.endpoint_graph_cache() {
@@ -2953,7 +2900,9 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub const fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
+    pub(crate) const fn ring_assembly_cache(
+        &self,
+    ) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
         self.ring_assembly_cache.as_ref()
     }
 
@@ -3036,7 +2985,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
-    pub const fn arranged_fragment_cache(
+    pub(crate) const fn arranged_fragment_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
         match self.ring_assembly_cache() {
@@ -3062,7 +3011,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns arranged fragments grouped by primitive family.
-    pub const fn arranged_fragment_kind_bucket_cache(
+    pub(crate) const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
         match self.arranged_fragment_cache() {
@@ -3112,7 +3061,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns arranged fragment source records grouped by retained topology status.
-    pub const fn arranged_fragment_status_bucket_cache(
+    pub(crate) const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
         match self.arranged_fragment_cache() {
@@ -3194,7 +3143,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns arranged fragment source parameter ranges.
-    pub const fn arranged_fragment_source_range_cache(
+    pub(crate) const fn arranged_fragment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
         match self.arranged_fragment_cache() {
@@ -3228,7 +3177,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns per-output-ring source provenance buckets.
-    pub const fn output_ring_bucket_cache(
+    pub(crate) const fn output_ring_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
         match self.ring_assembly_cache() {
@@ -3286,7 +3235,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment buckets grouped by primitive family.
-    pub const fn output_segment_kind_bucket_cache(
+    pub(crate) const fn output_segment_kind_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
         match self.ring_assembly_cache() {
@@ -3336,7 +3285,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment buckets grouped by source segment.
-    pub const fn output_segment_source_bucket_cache(
+    pub(crate) const fn output_segment_source_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
         match self.ring_assembly_cache() {
@@ -3370,7 +3319,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment source parameter ranges.
-    pub const fn output_segment_source_range_cache(
+    pub(crate) const fn output_segment_source_range_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
         match self.ring_assembly_cache() {
@@ -3404,7 +3353,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment exact endpoint records.
-    pub const fn output_segment_endpoint_cache(
+    pub(crate) const fn output_segment_endpoint_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
         match self.ring_assembly_cache() {
@@ -3430,7 +3379,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
-    pub const fn output_ring_continuity_cache(
+    pub(crate) const fn output_ring_continuity_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
         match self.ring_assembly_cache() {
@@ -3464,7 +3413,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment buckets grouped by topology status.
-    pub const fn output_segment_status_bucket_cache(
+    pub(crate) const fn output_segment_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
         match self.ring_assembly_cache() {
@@ -3546,7 +3495,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
-    pub const fn output_segment_direction_bucket_cache(
+    pub(crate) const fn output_segment_direction_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
         match self.ring_assembly_cache() {
@@ -3596,7 +3545,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns final output evidence retained from the evaluated arrangement.
-    pub const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
+    pub(crate) const fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
         self.output_cache.as_ref()
     }
 
@@ -3744,7 +3693,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns final boundary output summary when role assignment materialized output.
-    pub const fn boundary_output_cache(
+    pub(crate) const fn boundary_output_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
         match self.output_cache() {
@@ -3754,7 +3703,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns final boundary output counts grouped by material/hole role.
-    pub const fn boundary_output_role_bucket_cache(
+    pub(crate) const fn boundary_output_role_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
         match self.boundary_output_cache() {
@@ -3852,7 +3801,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns output role assignment buckets retained after boundary role assignment.
-    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+    pub(crate) const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         match self.output_cache() {
             Some(output_cache) => output_cache.role_cache(),
             None => None,
@@ -3867,12 +3816,6 @@ impl ExactCurveWorkspace2 {
         }
     }
 
-    /// Returns material and hole role buckets in stable order.
-    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.role_cache()
-            .map(ExactCurveArrangementOutputRoleCache2::buckets)
-    }
-
     /// Returns retained output role evidence when role assignment was reached.
     pub fn role_evidence(&self) -> Option<&[RegionBoundaryContourRoleEvidence2]> {
         self.boundary_build_evidence()
@@ -3880,7 +3823,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns output role assignment buckets grouped by topology status.
-    pub const fn role_status_bucket_cache(
+    pub(crate) const fn role_status_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
         match self.role_cache() {
@@ -3962,7 +3905,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns output role assignment buckets grouped by source contour identity.
-    pub const fn role_source_contour_bucket_cache(
+    pub(crate) const fn role_source_contour_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
         match self.role_cache() {
@@ -3996,7 +3939,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub const fn role_nesting_depth_bucket_cache(
+    pub(crate) const fn role_nesting_depth_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
         match self.role_cache() {
@@ -4030,7 +3973,7 @@ impl ExactCurveWorkspace2 {
     }
 
     /// Returns output role containment evidence grouped by containing source contour.
-    pub const fn role_containment_bucket_cache(
+    pub(crate) const fn role_containment_bucket_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
         match self.role_cache() {
@@ -4072,27 +4015,12 @@ impl ExactCurveWorkspace2 {
     }
 }
 
-impl ExactCurveArrangementSourceEndpointRef2 {
-    /// Returns the source segment index that owns this endpoint.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns which source endpoint this reference points at.
-    pub const fn endpoint(&self) -> ExactCurveArrangementSourceEndpoint2 {
-        self.endpoint
-    }
-}
+impl ExactCurveArrangementSourceEndpointRef2 {}
 
 impl ExactCurveArrangementSourceEndpointBucket2 {
     /// Returns the exact structural point shared by this source endpoint bucket.
     pub const fn point(&self) -> &Point2 {
         &self.point
-    }
-
-    /// Returns source endpoints in request encounter order.
-    pub fn endpoints(&self) -> &[ExactCurveArrangementSourceEndpointRef2] {
-        &self.endpoints
     }
 }
 
@@ -4116,48 +4044,18 @@ impl ExactCurveArrangementSourceEndpointBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns exact structural source endpoint buckets in encounter order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSourceEndpointBucket2] {
-        &self.buckets
-    }
 }
 
 impl ExactCurveArrangementSplitCandidatePair2 {
-    /// Returns the first source segment index in this scheduled pair.
-    pub const fn first_source_segment_index(&self) -> usize {
-        self.first_source_segment_index
-    }
-
-    /// Returns the second source segment index in this scheduled pair.
-    pub const fn second_source_segment_index(&self) -> usize {
-        self.second_source_segment_index
-    }
-
     /// Returns the retained AABB pruning status for this scheduled pair.
     pub const fn aabb_status(&self) -> ExactCurveArrangementSplitCandidateAabbStatus2 {
         self.aabb_status
     }
 }
 
-impl ExactCurveArrangementSplitScheduleRef2 {
-    /// Returns the index into [`ExactCurveArrangementSplitScheduleCache2::candidate_pairs`].
-    pub const fn candidate_pair_index(&self) -> usize {
-        self.candidate_pair_index
-    }
-}
+impl ExactCurveArrangementSplitScheduleRef2 {}
 
-impl ExactCurveArrangementSplitScheduleBucket2 {
-    /// Returns the retained AABB pruning status represented by this bucket.
-    pub const fn aabb_status(&self) -> ExactCurveArrangementSplitCandidateAabbStatus2 {
-        self.aabb_status
-    }
-
-    /// Returns scheduled candidate pair references with this AABB status.
-    pub fn candidate_refs(&self) -> &[ExactCurveArrangementSplitScheduleRef2] {
-        &self.candidate_refs
-    }
-}
+impl ExactCurveArrangementSplitScheduleBucket2 {}
 
 impl ExactCurveArrangementSplitScheduleBucketCache2 {
     fn from_candidate_pairs(candidate_pairs: &[ExactCurveArrangementSplitCandidatePair2]) -> Self {
@@ -4225,11 +4123,6 @@ impl ExactCurveArrangementSplitScheduleBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns AABB-status buckets in stable status order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSplitScheduleBucket2] {
-        &self.buckets
-    }
 }
 
 impl ExactCurveArrangementSplitScheduleCache2 {
@@ -4254,13 +4147,8 @@ impl ExactCurveArrangementSplitScheduleCache2 {
     }
 
     /// Returns scheduled split candidate buckets grouped by retained AABB pruning status.
-    pub const fn bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
+    pub(crate) const fn bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
         &self.bucket_cache
-    }
-
-    /// Returns scheduled source segment pairs in canonical `i < j` order.
-    pub fn candidate_pairs(&self) -> &[ExactCurveArrangementSplitCandidatePair2] {
-        &self.candidate_pairs
     }
 }
 
@@ -4354,26 +4242,28 @@ impl ExactCurveArrangementSplitCache2 {
     }
 
     /// Returns retained split-stage relation buckets.
-    pub const fn relation_bucket_cache(&self) -> &ExactCurveArrangementSplitRelationBucketCache2 {
+    pub(crate) const fn relation_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementSplitRelationBucketCache2 {
         &self.relation_bucket_cache
     }
 
     /// Returns exact split-intersection point buckets derived from retained split evidence.
-    pub const fn intersection_bucket_cache(
+    pub(crate) const fn intersection_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementSplitIntersectionBucketCache2 {
         &self.intersection_bucket_cache
     }
 
     /// Returns exact source-parameter evidence for retained split intersections.
-    pub const fn intersection_parameter_cache(
+    pub(crate) const fn intersection_parameter_cache(
         &self,
     ) -> &ExactCurveArrangementSplitIntersectionParameterCache2 {
         &self.intersection_parameter_cache
     }
 
     /// Returns split-stage blocker source-pair evidence, when split arrangement blocked.
-    pub const fn blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
+    pub(crate) const fn blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
         self.blocker_cache.as_ref()
     }
 
@@ -4439,24 +4329,9 @@ impl ExactCurveArrangementSplitBlockerCache2 {
     pub const fn second_source_end_point(&self) -> &Point2 {
         &self.second_source_end_point
     }
-
-    /// Returns the retained blocker reason reported for this split blocker pair.
-    pub const fn blocker(&self) -> Option<UncertaintyReason> {
-        self.blocker
-    }
 }
 
-impl ExactCurveArrangementSplitRelationBucket2 {
-    /// Returns the retained split-stage relation represented by this bucket.
-    pub const fn relation(&self) -> ExactCurveArrangementSplitRelationClass2 {
-        self.relation
-    }
-
-    /// Returns the number of split-stage relations in this bucket.
-    pub const fn relation_count(&self) -> usize {
-        self.relation_count
-    }
-}
+impl ExactCurveArrangementSplitRelationBucket2 {}
 
 impl ExactCurveArrangementSplitRelationBucketCache2 {
     fn from_counts(
@@ -4508,57 +4383,22 @@ impl ExactCurveArrangementSplitRelationBucketCache2 {
         self.relation_count
     }
 
-    /// Returns source-pair relations classified as point intersections.
-    pub const fn point_relation_count(&self) -> usize {
-        self.point_relation_count
-    }
-
-    /// Returns source-pair relations classified as overlaps.
-    pub const fn overlap_relation_count(&self) -> usize {
-        self.overlap_relation_count
-    }
-
-    /// Returns source-pair relations that remained uncertain.
-    pub const fn uncertain_relation_count(&self) -> usize {
-        self.uncertain_relation_count
-    }
-
     /// Returns the largest relation bucket size.
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns split-stage relation buckets in stable relation order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSplitRelationBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementSplitIntersectionRef2 {
-    /// Returns the index into [`ExactCurveArrangementSplitCache2::intersection_evidence`].
-    pub const fn intersection_evidence_index(&self) -> usize {
-        self.intersection_evidence_index
-    }
-}
+impl ExactCurveArrangementSplitIntersectionRef2 {}
 
 impl ExactCurveArrangementSplitIntersectionBucket2 {
     /// Returns the exact structural point shared by this split-intersection bucket.
     pub const fn point(&self) -> &Point2 {
         &self.point
     }
-
-    /// Returns retained split-intersection evidence references in evidence order.
-    pub fn intersections(&self) -> &[ExactCurveArrangementSplitIntersectionRef2] {
-        &self.intersections
-    }
 }
 
 impl ExactCurveArrangementSplitIntersectionBucketCache2 {
-    /// Returns the number of retained split-intersection events bucketed.
-    pub const fn intersection_event_count(&self) -> usize {
-        self.intersection_event_count
-    }
-
     /// Returns the number of exact structural split-intersection buckets.
     pub const fn bucket_count(&self) -> usize {
         self.bucket_count
@@ -4573,44 +4413,9 @@ impl ExactCurveArrangementSplitIntersectionBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns exact structural split-intersection buckets in evidence encounter order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementSplitIntersectionBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementSplitIntersectionParameterRef2 {
-    /// Returns the retained split-intersection evidence index.
-    pub const fn intersection_evidence_index(&self) -> usize {
-        self.intersection_evidence_index
-    }
-
-    /// Returns the first source segment index for this split event.
-    pub const fn first_source_segment_index(&self) -> usize {
-        self.first_source_segment_index
-    }
-
-    /// Returns the retained local parameter on the first source segment.
-    pub const fn first_source_param(&self) -> &Real {
-        &self.first_source_param
-    }
-
-    /// Returns the second source segment index for this split event.
-    pub const fn second_source_segment_index(&self) -> usize {
-        self.second_source_segment_index
-    }
-
-    /// Returns the retained local parameter on the second source segment.
-    pub const fn second_source_param(&self) -> &Real {
-        &self.second_source_param
-    }
-
-    /// Returns the exact point shared by both source parameters.
-    pub const fn point(&self) -> &Point2 {
-        &self.point
-    }
-}
+impl ExactCurveArrangementSplitIntersectionParameterRef2 {}
 
 impl ExactCurveArrangementSplitIntersectionParameterCache2 {
     fn from_intersection_evidence(
@@ -4636,19 +4441,9 @@ impl ExactCurveArrangementSplitIntersectionParameterCache2 {
         }
     }
 
-    /// Returns the number of retained split-intersection events.
-    pub const fn intersection_event_count(&self) -> usize {
-        self.intersection_event_count
-    }
-
     /// Returns the number of retained source parameter references.
     pub const fn source_parameter_ref_count(&self) -> usize {
         self.source_parameter_ref_count
-    }
-
-    /// Returns retained split-intersection source parameters in evidence order.
-    pub fn parameters(&self) -> &[ExactCurveArrangementSplitIntersectionParameterRef2] {
-        &self.parameters
     }
 }
 
@@ -4727,26 +4522,28 @@ impl ExactCurveArrangementEndpointGraphCache2 {
     }
 
     /// Returns exact arranged endpoint buckets derived from retained arranged source evidence.
-    pub const fn endpoint_bucket_cache(
+    pub(crate) const fn endpoint_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedEndpointBucketCache2 {
         &self.endpoint_bucket_cache
     }
 
     /// Returns arranged endpoints grouped by retained endpoint side.
-    pub const fn endpoint_side_bucket_cache(
+    pub(crate) const fn endpoint_side_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedEndpointSideBucketCache2 {
         &self.endpoint_side_bucket_cache
     }
 
     /// Returns exact endpoint records for arranged fragments.
-    pub const fn endpoint_point_cache(&self) -> &ExactCurveArrangementArrangedEndpointPointCache2 {
+    pub(crate) const fn endpoint_point_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedEndpointPointCache2 {
         &self.endpoint_point_cache
     }
 
     /// Returns structural arranged endpoints grouped by retained degree.
-    pub const fn endpoint_degree_bucket_cache(
+    pub(crate) const fn endpoint_degree_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
         &self.endpoint_degree_bucket_cache
@@ -4778,34 +4575,9 @@ impl ExactCurveArrangementEndpointGraphCache2 {
     }
 }
 
-impl ExactCurveArrangementArrangedEndpointDegreeRef2 {
-    /// Returns the index into [`ExactCurveArrangementArrangedEndpointBucketCache2::buckets`].
-    pub const fn structural_bucket_index(&self) -> usize {
-        self.structural_bucket_index
-    }
+impl ExactCurveArrangementArrangedEndpointDegreeRef2 {}
 
-    /// Returns the number of arranged endpoint references in the structural bucket.
-    pub const fn endpoint_ref_count(&self) -> usize {
-        self.endpoint_ref_count
-    }
-
-    /// Returns the exact structural endpoint point for this bucket.
-    pub const fn point(&self) -> &Point2 {
-        &self.point
-    }
-}
-
-impl ExactCurveArrangementArrangedEndpointDegreeBucket2 {
-    /// Returns the structural endpoint degree represented by this bucket.
-    pub const fn degree(&self) -> ExactCurveArrangementArrangedEndpointDegree2 {
-        self.degree
-    }
-
-    /// Returns structural endpoint buckets with this retained degree.
-    pub fn endpoint_buckets(&self) -> &[ExactCurveArrangementArrangedEndpointDegreeRef2] {
-        &self.endpoint_buckets
-    }
-}
+impl ExactCurveArrangementArrangedEndpointDegreeBucket2 {}
 
 impl ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
     fn from_endpoint_bucket_cache(
@@ -4893,36 +4665,11 @@ impl ExactCurveArrangementArrangedEndpointDegreeBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns endpoint degree buckets in stable dangling/chain/branch order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedEndpointDegreeBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementArrangedEndpointRef2 {
-    /// Returns the arranged fragment index that owns this endpoint.
-    pub const fn arranged_segment_index(&self) -> usize {
-        self.arranged_segment_index
-    }
+impl ExactCurveArrangementArrangedEndpointRef2 {}
 
-    /// Returns which arranged fragment endpoint this reference points at.
-    pub const fn endpoint(&self) -> RegionLineSegmentArrangedEndpoint2 {
-        self.endpoint
-    }
-}
-
-impl ExactCurveArrangementArrangedEndpointSideBucket2 {
-    /// Returns the arranged endpoint side represented by this bucket.
-    pub const fn endpoint(&self) -> RegionLineSegmentArrangedEndpoint2 {
-        self.endpoint
-    }
-
-    /// Returns arranged endpoint references with this retained endpoint side.
-    pub fn endpoints(&self) -> &[ExactCurveArrangementArrangedEndpointRef2] {
-        &self.endpoints
-    }
-}
+impl ExactCurveArrangementArrangedEndpointSideBucket2 {}
 
 impl ExactCurveArrangementArrangedEndpointSideBucketCache2 {
     fn from_arranged_source_evidence(
@@ -4996,11 +4743,6 @@ impl ExactCurveArrangementArrangedEndpointSideBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns endpoint-side buckets in stable start/end order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedEndpointSideBucket2] {
-        &self.buckets
-    }
 }
 
 impl ExactCurveArrangementArrangedEndpointBucket2 {
@@ -5042,22 +4784,7 @@ impl ExactCurveArrangementArrangedEndpointBucketCache2 {
     }
 }
 
-impl ExactCurveArrangementArrangedEndpointPointRef2 {
-    /// Returns the arranged fragment index after exact splitting.
-    pub const fn arranged_segment_index(&self) -> usize {
-        self.arranged_segment_index
-    }
-
-    /// Returns the exact arranged fragment start point.
-    pub const fn output_start_point(&self) -> &Point2 {
-        &self.output_start_point
-    }
-
-    /// Returns the exact arranged fragment end point.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
-    }
-}
+impl ExactCurveArrangementArrangedEndpointPointRef2 {}
 
 impl ExactCurveArrangementArrangedEndpointPointCache2 {
     fn from_arranged_source_evidence(
@@ -5099,32 +4826,12 @@ impl ExactCurveArrangementArrangedEndpointPointCache2 {
     pub const fn endpoint_ref_count(&self) -> usize {
         self.endpoint_ref_count
     }
-
-    /// Returns exact arranged endpoint records in arranged segment order.
-    pub fn endpoints(&self) -> &[ExactCurveArrangementArrangedEndpointPointRef2] {
-        &self.endpoints
-    }
 }
 
 impl ExactCurveArrangementArrangedFragmentSourceRef2 {
     /// Returns the retained arranged source evidence index.
     pub const fn arranged_source_evidence_index(&self) -> usize {
         self.arranged_source_evidence_index
-    }
-
-    /// Returns the source segment index used by this arranged fragment.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns the primitive family of the source segment.
-    pub const fn source_segment_kind(&self) -> SegmentKind {
-        self.source_segment_kind
-    }
-
-    /// Returns the retained parameter range on the source segment.
-    pub const fn source_range(&self) -> &ParamRange {
-        &self.source_range
     }
 
     /// Returns retained topology status for this source-to-fragment mapping.
@@ -5134,24 +4841,9 @@ impl ExactCurveArrangementArrangedFragmentSourceRef2 {
 }
 
 impl ExactCurveArrangementArrangedFragment2 {
-    /// Returns the arranged fragment index after exact splitting.
-    pub const fn arranged_segment_index(&self) -> usize {
-        self.arranged_segment_index
-    }
-
     /// Returns the primitive family of the arranged fragment.
     pub const fn arranged_segment_kind(&self) -> SegmentKind {
         self.arranged_segment_kind
-    }
-
-    /// Returns the arranged fragment start point.
-    pub const fn output_start_point(&self) -> &Point2 {
-        &self.output_start_point
-    }
-
-    /// Returns the arranged fragment end point.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
     }
 
     /// Returns retained source provenance references for this arranged fragment.
@@ -5160,53 +4852,13 @@ impl ExactCurveArrangementArrangedFragment2 {
     }
 }
 
-impl ExactCurveArrangementArrangedFragmentRef2 {
-    /// Returns the index into [`ExactCurveArrangementArrangedFragmentCache2::fragments`].
-    pub const fn arranged_fragment_index(&self) -> usize {
-        self.arranged_fragment_index
-    }
-}
+impl ExactCurveArrangementArrangedFragmentRef2 {}
 
-impl ExactCurveArrangementArrangedFragmentStatusRef2 {
-    /// Returns the index into [`ExactCurveArrangementArrangedFragmentCache2::fragments`].
-    pub const fn arranged_fragment_index(&self) -> usize {
-        self.arranged_fragment_index
-    }
+impl ExactCurveArrangementArrangedFragmentStatusRef2 {}
 
-    /// Returns the source reference index inside the retained arranged fragment.
-    pub const fn source_ref_index(&self) -> usize {
-        self.source_ref_index
-    }
+impl ExactCurveArrangementArrangedFragmentKindBucket2 {}
 
-    /// Returns the retained arranged source evidence index.
-    pub const fn arranged_source_evidence_index(&self) -> usize {
-        self.arranged_source_evidence_index
-    }
-}
-
-impl ExactCurveArrangementArrangedFragmentKindBucket2 {
-    /// Returns the retained primitive family represented by this bucket.
-    pub const fn arranged_segment_kind(&self) -> SegmentKind {
-        self.arranged_segment_kind
-    }
-
-    /// Returns arranged fragment references with this retained primitive family.
-    pub fn fragment_refs(&self) -> &[ExactCurveArrangementArrangedFragmentRef2] {
-        &self.fragment_refs
-    }
-}
-
-impl ExactCurveArrangementArrangedFragmentStatusBucket2 {
-    /// Returns the retained topology status represented by this bucket.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns arranged fragment source references with this retained topology status.
-    pub fn source_refs(&self) -> &[ExactCurveArrangementArrangedFragmentStatusRef2] {
-        &self.source_refs
-    }
-}
+impl ExactCurveArrangementArrangedFragmentStatusBucket2 {}
 
 impl ExactCurveArrangementArrangedFragmentKindBucketCache2 {
     fn from_fragments(fragments: &[ExactCurveArrangementArrangedFragment2]) -> Self {
@@ -5275,11 +4927,6 @@ impl ExactCurveArrangementArrangedFragmentKindBucketCache2 {
     /// Returns the largest primitive-family bucket size.
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
-    }
-
-    /// Returns arranged fragment primitive-family buckets in stable kind order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedFragmentKindBucket2] {
-        &self.buckets
     }
 }
 
@@ -5414,39 +5061,9 @@ impl ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns arranged fragment status buckets in stable status order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementArrangedFragmentStatusBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementArrangedFragmentSourceRangeRef2 {
-    /// Returns the retained arranged source evidence index.
-    pub const fn arranged_source_evidence_index(&self) -> usize {
-        self.arranged_source_evidence_index
-    }
-
-    /// Returns the source segment index used by this arranged fragment.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns the exact retained source parameter range.
-    pub const fn source_range(&self) -> &ParamRange {
-        &self.source_range
-    }
-
-    /// Returns the arranged fragment index after exact splitting.
-    pub const fn arranged_segment_index(&self) -> usize {
-        self.arranged_segment_index
-    }
-
-    /// Returns whether this arranged fragment covers the complete source parameter range.
-    pub fn covers_full_source_range(&self) -> bool {
-        source_range_is_full(&self.source_range)
-    }
-}
+impl ExactCurveArrangementArrangedFragmentSourceRangeRef2 {}
 
 impl ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
     fn from_arranged_source_evidence(
@@ -5501,11 +5118,6 @@ impl ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
     /// Returns the number of arranged fragments covering a proper source subrange.
     pub const fn partial_source_range_ref_count(&self) -> usize {
         self.partial_source_range_ref_count
-    }
-
-    /// Returns arranged fragment source ranges in arranged fragment order.
-    pub fn ranges(&self) -> &[ExactCurveArrangementArrangedFragmentSourceRangeRef2] {
-        &self.ranges
     }
 }
 
@@ -5591,81 +5203,36 @@ impl ExactCurveArrangementArrangedFragmentCache2 {
         self.arranged_fragment_count
     }
 
-    /// Returns the number of retained source provenance references.
-    pub const fn source_ref_count(&self) -> usize {
-        self.source_ref_count
-    }
-
-    /// Returns source primitive-family counts for retained source references.
-    pub const fn source_segment_kind_counts(&self) -> SegmentKindCounts {
-        self.source_segment_kind_counts
-    }
-
     /// Returns arranged fragment primitive-family counts after exact splitting.
     pub const fn arranged_segment_kind_counts(&self) -> SegmentKindCounts {
         self.arranged_segment_kind_counts
     }
 
     /// Returns retained arranged fragment buckets grouped by primitive family.
-    pub const fn arranged_fragment_kind_bucket_cache(
+    pub(crate) const fn arranged_fragment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedFragmentKindBucketCache2 {
         &self.arranged_fragment_kind_bucket_cache
     }
 
     /// Returns retained arranged fragment source buckets grouped by topology status.
-    pub const fn arranged_fragment_status_bucket_cache(
+    pub(crate) const fn arranged_fragment_status_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedFragmentStatusBucketCache2 {
         &self.arranged_fragment_status_bucket_cache
     }
 
     /// Returns retained arranged fragment source-parameter range records.
-    pub const fn arranged_fragment_source_range_cache(
+    pub(crate) const fn arranged_fragment_source_range_cache(
         &self,
     ) -> &ExactCurveArrangementArrangedFragmentSourceRangeCache2 {
         &self.arranged_fragment_source_range_cache
     }
-
-    /// Returns the largest source reference count for one arranged fragment.
-    pub const fn max_source_ref_count(&self) -> usize {
-        self.max_source_ref_count
-    }
-
-    /// Returns arranged fragments in arranged segment index order.
-    pub fn fragments(&self) -> &[ExactCurveArrangementArrangedFragment2] {
-        &self.fragments
-    }
 }
 
-impl ExactCurveArrangementOutputRingSegmentRef2 {
-    /// Returns the retained source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
+impl ExactCurveArrangementOutputRingSegmentRef2 {}
 
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns whether the source segment was reversed for ring traversal.
-    pub const fn reversed(&self) -> bool {
-        self.reversed
-    }
-}
-
-impl ExactCurveArrangementOutputRingBucket2 {
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns output segment references in ring traversal order.
-    pub fn segments(&self) -> &[ExactCurveArrangementOutputRingSegmentRef2] {
-        &self.segments
-    }
-}
+impl ExactCurveArrangementOutputRingBucket2 {}
 
 impl ExactCurveArrangementOutputRingBucketCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -5727,41 +5294,11 @@ impl ExactCurveArrangementOutputRingBucketCache2 {
     pub const fn max_ring_segment_count(&self) -> usize {
         self.max_ring_segment_count
     }
-
-    /// Returns output ring buckets in output ring index order.
-    pub fn rings(&self) -> &[ExactCurveArrangementOutputRingBucket2] {
-        &self.rings
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentKindRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
+impl ExactCurveArrangementOutputSegmentKindRef2 {}
 
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-}
-
-impl ExactCurveArrangementOutputSegmentKindBucket2 {
-    /// Returns the retained primitive family represented by this bucket.
-    pub const fn output_segment_kind(&self) -> SegmentKind {
-        self.output_segment_kind
-    }
-
-    /// Returns output segment references with this retained primitive family.
-    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentKindRef2] {
-        &self.segment_refs
-    }
-}
+impl ExactCurveArrangementOutputSegmentKindBucket2 {}
 
 impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -5833,41 +5370,11 @@ impl ExactCurveArrangementOutputSegmentKindBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns output segment primitive-family buckets in stable kind order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentKindBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentSourceRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
+impl ExactCurveArrangementOutputSegmentSourceRef2 {}
 
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-}
-
-impl ExactCurveArrangementOutputSegmentSourceBucket2 {
-    /// Returns the retained source segment index represented by this bucket.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns output segment references emitted from this source segment.
-    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentSourceRef2] {
-        &self.segment_refs
-    }
-}
+impl ExactCurveArrangementOutputSegmentSourceBucket2 {}
 
 impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -5934,44 +5441,9 @@ impl ExactCurveArrangementOutputSegmentSourceBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns output segment source buckets in source segment index order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentSourceBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentSourceRangeRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
-
-    /// Returns the source segment index used by this output segment.
-    pub const fn source_segment_index(&self) -> usize {
-        self.source_segment_index
-    }
-
-    /// Returns the exact retained source parameter range.
-    pub const fn source_range(&self) -> &ParamRange {
-        &self.source_range
-    }
-
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns whether this output segment covers the complete source parameter range.
-    pub fn covers_full_source_range(&self) -> bool {
-        source_range_is_full(&self.source_range)
-    }
-}
+impl ExactCurveArrangementOutputSegmentSourceRangeRef2 {}
 
 impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -6025,39 +5497,9 @@ impl ExactCurveArrangementOutputSegmentSourceRangeCache2 {
     pub const fn partial_source_range_ref_count(&self) -> usize {
         self.partial_source_range_ref_count
     }
-
-    /// Returns output segment source ranges in output traversal order.
-    pub fn ranges(&self) -> &[ExactCurveArrangementOutputSegmentSourceRangeRef2] {
-        &self.ranges
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentEndpointRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
-
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns the exact emitted segment start point.
-    pub const fn output_start_point(&self) -> &Point2 {
-        &self.output_start_point
-    }
-
-    /// Returns the exact emitted segment end point.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
-    }
-}
+impl ExactCurveArrangementOutputSegmentEndpointRef2 {}
 
 impl ExactCurveArrangementOutputSegmentEndpointCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -6097,49 +5539,9 @@ impl ExactCurveArrangementOutputSegmentEndpointCache2 {
     pub const fn output_endpoint_ref_count(&self) -> usize {
         self.output_endpoint_ref_count
     }
-
-    /// Returns output segment endpoint records in output traversal order.
-    pub fn segments(&self) -> &[ExactCurveArrangementOutputSegmentEndpointRef2] {
-        &self.segments
-    }
 }
 
-impl ExactCurveArrangementOutputRingContinuityRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
-
-    /// Returns the retained ring source evidence index for the next output segment.
-    pub const fn next_source_evidence_index(&self) -> usize {
-        self.next_source_evidence_index
-    }
-
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-
-    /// Returns the following output segment index inside the same ring.
-    pub const fn next_output_segment_index(&self) -> usize {
-        self.next_output_segment_index
-    }
-
-    /// Returns the exact end point of the current output segment.
-    pub const fn output_end_point(&self) -> &Point2 {
-        &self.output_end_point
-    }
-
-    /// Returns the exact start point of the following output segment.
-    pub const fn next_output_start_point(&self) -> &Point2 {
-        &self.next_output_start_point
-    }
-}
+impl ExactCurveArrangementOutputRingContinuityRef2 {}
 
 impl ExactCurveArrangementOutputRingContinuityCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -6212,41 +5614,11 @@ impl ExactCurveArrangementOutputRingContinuityCache2 {
     pub const fn max_ring_connection_count(&self) -> usize {
         self.max_ring_connection_count
     }
-
-    /// Returns output ring continuity records in output traversal order.
-    pub fn connections(&self) -> &[ExactCurveArrangementOutputRingContinuityRef2] {
-        &self.connections
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentStatusRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
+impl ExactCurveArrangementOutputSegmentStatusRef2 {}
 
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-}
-
-impl ExactCurveArrangementOutputSegmentStatusBucket2 {
-    /// Returns the retained topology status represented by this bucket.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns output segment references with this retained topology status.
-    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentStatusRef2] {
-        &self.segment_refs
-    }
-}
+impl ExactCurveArrangementOutputSegmentStatusBucket2 {}
 
 impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -6372,41 +5744,11 @@ impl ExactCurveArrangementOutputSegmentStatusBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns output segment status buckets in stable status order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentStatusBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputSegmentDirectionRef2 {
-    /// Returns the retained ring source evidence index for this output segment.
-    pub const fn source_evidence_index(&self) -> usize {
-        self.source_evidence_index
-    }
+impl ExactCurveArrangementOutputSegmentDirectionRef2 {}
 
-    /// Returns the output ring index.
-    pub const fn output_ring_index(&self) -> usize {
-        self.output_ring_index
-    }
-
-    /// Returns the output segment index inside its ring.
-    pub const fn output_segment_index(&self) -> usize {
-        self.output_segment_index
-    }
-}
-
-impl ExactCurveArrangementOutputSegmentDirectionBucket2 {
-    /// Returns whether this bucket contains source segments reversed for ring traversal.
-    pub const fn reversed(&self) -> bool {
-        self.reversed
-    }
-
-    /// Returns output segment references with this retained traversal direction.
-    pub fn segment_refs(&self) -> &[ExactCurveArrangementOutputSegmentDirectionRef2] {
-        &self.segment_refs
-    }
-}
+impl ExactCurveArrangementOutputSegmentDirectionBucket2 {}
 
 impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
     fn from_source_evidence(source_evidence: &[RegionLineSegmentRingSourceEvidence2]) -> Self {
@@ -6479,11 +5821,6 @@ impl ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns output segment direction buckets in stable forward/reversed order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputSegmentDirectionBucket2] {
-        &self.buckets
-    }
 }
 
 impl ExactCurveArrangementOutputRoleAssignment2 {
@@ -6500,16 +5837,6 @@ impl ExactCurveArrangementOutputRoleAssignment2 {
     /// Returns the source contour segment count captured before role binning.
     pub const fn source_segment_count(&self) -> usize {
         self.source_segment_count
-    }
-
-    /// Returns the source contour fill rule captured before role binning.
-    pub const fn source_fill_rule(&self) -> FillRule {
-        self.source_fill_rule
-    }
-
-    /// Returns the exact source point used for containment classification.
-    pub const fn nesting_sample_point(&self) -> &Point2 {
-        &self.nesting_sample_point
     }
 
     /// Returns source contour indices that exactly contained the sample point.
@@ -6533,46 +5860,11 @@ impl ExactCurveArrangementOutputRoleAssignment2 {
     }
 }
 
-impl ExactCurveArrangementOutputRoleStatusRef2 {
-    /// Returns the role bucket containing this assignment.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
+impl ExactCurveArrangementOutputRoleStatusRef2 {}
 
-    /// Returns the assignment index inside the retained role bucket.
-    pub const fn assignment_index(&self) -> usize {
-        self.assignment_index
-    }
+impl ExactCurveArrangementOutputRoleBucket2 {}
 
-    /// Returns the retained boundary role evidence index.
-    pub const fn role_evidence_index(&self) -> usize {
-        self.role_evidence_index
-    }
-}
-
-impl ExactCurveArrangementOutputRoleBucket2 {
-    /// Returns the material/hole role represented by this bucket.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
-
-    /// Returns role assignments in output role index order.
-    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleAssignment2] {
-        &self.assignments
-    }
-}
-
-impl ExactCurveArrangementOutputRoleStatusBucket2 {
-    /// Returns the retained topology status represented by this bucket.
-    pub const fn status(&self) -> RetainedTopologyStatus {
-        self.status
-    }
-
-    /// Returns output role assignment references with this retained topology status.
-    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleStatusRef2] {
-        &self.assignments
-    }
-}
+impl ExactCurveArrangementOutputRoleStatusBucket2 {}
 
 impl ExactCurveArrangementOutputRoleStatusBucketCache2 {
     fn from_role_assignments(
@@ -6710,46 +6002,11 @@ impl ExactCurveArrangementOutputRoleStatusBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns output role assignment status buckets in stable status order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleStatusBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputRoleSourceContourRef2 {
-    /// Returns the role bucket containing this assignment.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
+impl ExactCurveArrangementOutputRoleSourceContourRef2 {}
 
-    /// Returns the assignment index inside the retained role bucket.
-    pub const fn assignment_index(&self) -> usize {
-        self.assignment_index
-    }
-
-    /// Returns the retained boundary role evidence index.
-    pub const fn role_evidence_index(&self) -> usize {
-        self.role_evidence_index
-    }
-
-    /// Returns this contour's index inside its output role bin.
-    pub const fn output_role_index(&self) -> usize {
-        self.output_role_index
-    }
-}
-
-impl ExactCurveArrangementOutputRoleSourceContourBucket2 {
-    /// Returns the retained source contour index represented by this bucket.
-    pub const fn source_contour_index(&self) -> usize {
-        self.source_contour_index
-    }
-
-    /// Returns retained role assignments emitted from this source contour.
-    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleSourceContourRef2] {
-        &self.assignments
-    }
-}
+impl ExactCurveArrangementOutputRoleSourceContourBucket2 {}
 
 impl ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
     fn from_role_assignments(
@@ -6827,51 +6084,11 @@ impl ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns source-contour buckets in source contour index order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleSourceContourBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputRoleNestingDepthRef2 {
-    /// Returns the role bucket containing this assignment.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
+impl ExactCurveArrangementOutputRoleNestingDepthRef2 {}
 
-    /// Returns the assignment index inside the retained role bucket.
-    pub const fn assignment_index(&self) -> usize {
-        self.assignment_index
-    }
-
-    /// Returns the retained boundary role evidence index.
-    pub const fn role_evidence_index(&self) -> usize {
-        self.role_evidence_index
-    }
-
-    /// Returns the source contour index assigned by this evidence.
-    pub const fn source_contour_index(&self) -> usize {
-        self.source_contour_index
-    }
-
-    /// Returns this contour's index inside its output role bin.
-    pub const fn output_role_index(&self) -> usize {
-        self.output_role_index
-    }
-}
-
-impl ExactCurveArrangementOutputRoleNestingDepthBucket2 {
-    /// Returns the exact containment depth represented by this bucket.
-    pub const fn nesting_depth(&self) -> usize {
-        self.nesting_depth
-    }
-
-    /// Returns retained role assignments with this exact nesting depth.
-    pub fn assignments(&self) -> &[ExactCurveArrangementOutputRoleNestingDepthRef2] {
-        &self.assignments
-    }
-}
+impl ExactCurveArrangementOutputRoleNestingDepthBucket2 {}
 
 impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
     fn from_role_assignments(
@@ -6951,61 +6168,11 @@ impl ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns nesting-depth buckets in increasing depth order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleNestingDepthBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputRoleContainmentRef2 {
-    /// Returns the role bucket containing this assignment.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
+impl ExactCurveArrangementOutputRoleContainmentRef2 {}
 
-    /// Returns the assignment index inside the retained role bucket.
-    pub const fn assignment_index(&self) -> usize {
-        self.assignment_index
-    }
-
-    /// Returns the retained boundary role evidence index.
-    pub const fn role_evidence_index(&self) -> usize {
-        self.role_evidence_index
-    }
-
-    /// Returns the source contour whose nesting evidence is retained.
-    pub const fn source_contour_index(&self) -> usize {
-        self.source_contour_index
-    }
-
-    /// Returns the exact source contour that contained the assignment sample point.
-    pub const fn containing_contour_index(&self) -> usize {
-        self.containing_contour_index
-    }
-
-    /// Returns the index inside the assignment's retained containing-contour list.
-    pub const fn containing_contour_ref_index(&self) -> usize {
-        self.containing_contour_ref_index
-    }
-
-    /// Returns this contour's index inside its output role bin.
-    pub const fn output_role_index(&self) -> usize {
-        self.output_role_index
-    }
-}
-
-impl ExactCurveArrangementOutputRoleContainmentBucket2 {
-    /// Returns the retained source contour that contains these assignments.
-    pub const fn containing_contour_index(&self) -> usize {
-        self.containing_contour_index
-    }
-
-    /// Returns retained containment references for this containing contour.
-    pub fn containments(&self) -> &[ExactCurveArrangementOutputRoleContainmentRef2] {
-        &self.containments
-    }
-}
+impl ExactCurveArrangementOutputRoleContainmentBucket2 {}
 
 impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
     fn from_role_assignments(
@@ -7103,11 +6270,6 @@ impl ExactCurveArrangementOutputRoleContainmentBucketCache2 {
     pub const fn max_bucket_size(&self) -> usize {
         self.max_bucket_size
     }
-
-    /// Returns containment buckets in containing source contour order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleContainmentBucket2] {
-        &self.buckets
-    }
 }
 
 impl ExactCurveArrangementOutputRoleCache2 {
@@ -7200,57 +6362,32 @@ impl ExactCurveArrangementOutputRoleCache2 {
         self.role_evidence_count
     }
 
-    /// Returns the number of material contours.
-    pub const fn material_contour_count(&self) -> usize {
-        self.material_contour_count
-    }
-
-    /// Returns the number of hole contours.
-    pub const fn hole_contour_count(&self) -> usize {
-        self.hole_contour_count
-    }
-
-    /// Returns the number of material boundary segments.
-    pub const fn material_segment_count(&self) -> usize {
-        self.material_segment_count
-    }
-
-    /// Returns the number of hole boundary segments.
-    pub const fn hole_segment_count(&self) -> usize {
-        self.hole_segment_count
-    }
-
     /// Returns output role assignment buckets grouped by topology status.
-    pub const fn role_status_bucket_cache(
+    pub(crate) const fn role_status_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputRoleStatusBucketCache2 {
         &self.role_status_bucket_cache
     }
 
     /// Returns output role assignment buckets grouped by source contour identity.
-    pub const fn role_source_contour_bucket_cache(
+    pub(crate) const fn role_source_contour_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputRoleSourceContourBucketCache2 {
         &self.role_source_contour_bucket_cache
     }
 
     /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub const fn role_nesting_depth_bucket_cache(
+    pub(crate) const fn role_nesting_depth_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputRoleNestingDepthBucketCache2 {
         &self.role_nesting_depth_bucket_cache
     }
 
     /// Returns output role containment evidence grouped by containing source contour.
-    pub const fn role_containment_bucket_cache(
+    pub(crate) const fn role_containment_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputRoleContainmentBucketCache2 {
         &self.role_containment_bucket_cache
-    }
-
-    /// Returns material and hole role buckets in stable order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputRoleBucket2] {
-        &self.buckets
     }
 }
 
@@ -7343,7 +6480,9 @@ impl ExactCurveArrangementOutputBoundaryCache2 {
     }
 
     /// Returns final boundary output counts grouped by material/hole role.
-    pub const fn role_bucket_cache(&self) -> &ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
+    pub(crate) const fn role_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
         &self.role_bucket_cache
     }
 }
@@ -7398,29 +6537,9 @@ impl ExactCurveArrangementOutputBoundaryRoleBucketCache2 {
     pub const fn max_segment_count(&self) -> usize {
         self.max_segment_count
     }
-
-    /// Returns role buckets in stable material, then hole order.
-    pub fn buckets(&self) -> &[ExactCurveArrangementOutputBoundaryRoleBucket2] {
-        &self.buckets
-    }
 }
 
-impl ExactCurveArrangementOutputBoundaryRoleBucket2 {
-    /// Returns the boundary contour role represented by this bucket.
-    pub const fn role(&self) -> RegionBoundaryContourRole2 {
-        self.role
-    }
-
-    /// Returns output contour count for this role.
-    pub const fn output_contour_count(&self) -> usize {
-        self.output_contour_count
-    }
-
-    /// Returns output segment count for this role.
-    pub const fn output_segment_count(&self) -> usize {
-        self.output_segment_count
-    }
-}
+impl ExactCurveArrangementOutputBoundaryRoleBucket2 {}
 
 impl ExactCurveArrangementRingAssemblyCache2 {
     fn from_region_build_evidence(
@@ -7551,59 +6670,63 @@ impl ExactCurveArrangementRingAssemblyCache2 {
     }
 
     /// Returns per-arranged-fragment source provenance buckets.
-    pub const fn arranged_fragment_cache(&self) -> &ExactCurveArrangementArrangedFragmentCache2 {
+    pub(crate) const fn arranged_fragment_cache(
+        &self,
+    ) -> &ExactCurveArrangementArrangedFragmentCache2 {
         &self.arranged_fragment_cache
     }
 
     /// Returns per-output-ring source provenance buckets.
-    pub const fn output_ring_bucket_cache(&self) -> &ExactCurveArrangementOutputRingBucketCache2 {
+    pub(crate) const fn output_ring_bucket_cache(
+        &self,
+    ) -> &ExactCurveArrangementOutputRingBucketCache2 {
         &self.output_ring_bucket_cache
     }
 
     /// Returns retained output segment buckets grouped by primitive family.
-    pub const fn output_segment_kind_bucket_cache(
+    pub(crate) const fn output_segment_kind_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentKindBucketCache2 {
         &self.output_segment_kind_bucket_cache
     }
 
     /// Returns retained output segment buckets grouped by source segment.
-    pub const fn output_segment_source_bucket_cache(
+    pub(crate) const fn output_segment_source_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentSourceBucketCache2 {
         &self.output_segment_source_bucket_cache
     }
 
     /// Returns retained output segment source parameter ranges.
-    pub const fn output_segment_source_range_cache(
+    pub(crate) const fn output_segment_source_range_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentSourceRangeCache2 {
         &self.output_segment_source_range_cache
     }
 
     /// Returns retained output segment exact endpoint records.
-    pub const fn output_segment_endpoint_cache(
+    pub(crate) const fn output_segment_endpoint_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentEndpointCache2 {
         &self.output_segment_endpoint_cache
     }
 
     /// Returns retained exact continuity records between adjacent output segments.
-    pub const fn output_ring_continuity_cache(
+    pub(crate) const fn output_ring_continuity_cache(
         &self,
     ) -> &ExactCurveArrangementOutputRingContinuityCache2 {
         &self.output_ring_continuity_cache
     }
 
     /// Returns retained output segment buckets grouped by topology status.
-    pub const fn output_segment_status_bucket_cache(
+    pub(crate) const fn output_segment_status_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentStatusBucketCache2 {
         &self.output_segment_status_bucket_cache
     }
 
     /// Returns retained output segment buckets grouped by traversal direction.
-    pub const fn output_segment_direction_bucket_cache(
+    pub(crate) const fn output_segment_direction_bucket_cache(
         &self,
     ) -> &ExactCurveArrangementOutputSegmentDirectionBucketCache2 {
         &self.output_segment_direction_bucket_cache
@@ -7741,14 +6864,14 @@ impl ExactCurveArrangementOutputCache2 {
     }
 
     /// Returns retained final boundary output summary when available.
-    pub const fn boundary_output_cache(
+    pub(crate) const fn boundary_output_cache(
         &self,
     ) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
         self.boundary_output_cache.as_ref()
     }
 
     /// Returns retained material/hole role buckets when role assignment was reached.
-    pub const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
+    pub(crate) const fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
         self.role_cache.as_ref()
     }
 
@@ -7768,7 +6891,7 @@ impl ExactCurveArrangementOutputCache2 {
     }
 }
 
-impl ExactCurveArrangementSummary2 {
+impl RegionArrangementSummary2 {
     fn from_workspace(workspace: &ExactCurveWorkspace2) -> Self {
         let output_cache = workspace.output_cache();
         let ring_cache = workspace.ring_assembly_cache();
@@ -7861,22 +6984,22 @@ fn evaluate_exact_curve_arrangement(
     let workspace = ExactCurveWorkspace2::from_request(request, policy)?
         .with_region_build_evidence(staging_result.evidence(), staging_result.region().is_some());
     let region = staging_result.region().cloned();
-    let summary_cache = ExactCurveArrangementSummary2::from_workspace(&workspace);
-    let evidence = RegionArrangementEvidence2 {
+    let summary = RegionArrangementSummary2::from_workspace(&workspace);
+    let report = RegionArrangementReport2 {
         workspace: Rc::new(workspace),
-        summary_cache,
+        summary,
     };
-    Ok(RegionArrangement2 { evidence, region })
+    Ok(RegionArrangement2 { report, region })
 }
 
 impl RegionArrangement2 {
-    /// Consumes this result and returns its retained arrangement evidence.
-    pub fn into_evidence(self) -> RegionArrangementEvidence2 {
-        self.evidence
+    /// Consumes this result and returns its semantic arrangement report.
+    pub fn into_report(self) -> RegionArrangementReport2 {
+        self.report
     }
 
     fn facts(&self) -> &ExactCurveWorkspace2 {
-        self.evidence.facts()
+        self.report.facts()
     }
 
     /// Returns the source segments supplied to the retained arrangement request.
@@ -7922,24 +7045,6 @@ impl RegionArrangement2 {
     /// Returns the number of source segment boxes that stayed uncertain.
     pub fn undecided_source_segment_aabb_count(&self) -> usize {
         self.facts().undecided_source_segment_aabb_count()
-    }
-
-    /// Returns source segment facts retained before split scheduling.
-    pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
-        self.facts().source_segment_cache()
-    }
-
-    /// Returns retained source AABB buckets grouped by certification status.
-    pub fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
-        self.source_segment_cache().source_aabb_bucket_cache()
-    }
-
-    /// Returns retained source segment buckets grouped by primitive family.
-    pub fn source_segment_kind_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
-        self.source_segment_cache()
-            .source_segment_kind_bucket_cache()
     }
 
     /// Returns retained source AABB-status bucket count.
@@ -7992,11 +7097,6 @@ impl RegionArrangement2 {
         self.facts().source_segment_kind_max_bucket_size()
     }
 
-    /// Returns exact source endpoint buckets retained during workspace construction.
-    pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        self.facts().source_endpoint_bucket_cache()
-    }
-
     /// Returns source endpoints retained in exact structural endpoint buckets.
     pub fn source_endpoint_count(&self) -> usize {
         self.facts().source_endpoint_count()
@@ -8015,16 +7115,6 @@ impl RegionArrangement2 {
     /// Returns the largest exact structural source endpoint bucket size.
     pub fn source_endpoint_max_bucket_size(&self) -> usize {
         self.facts().source_endpoint_max_bucket_size()
-    }
-
-    /// Returns the source-pair schedule retained before split predicates run.
-    pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        self.facts().split_schedule_cache()
-    }
-
-    /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub fn split_schedule_bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
-        self.facts().split_schedule_bucket_cache()
     }
 
     /// Returns source segment pairs scheduled before retained split predicates run.
@@ -8060,11 +7150,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained split schedule AABB-status bucket size.
     pub fn split_schedule_max_bucket_size(&self) -> usize {
         self.facts().split_schedule_max_bucket_size()
-    }
-
-    /// Returns exact split evidence retained from the evaluated arrangement.
-    pub fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.facts().split_cache()
     }
 
     /// Returns the exact predicate family used by retained split evaluation.
@@ -8119,27 +7204,6 @@ impl RegionArrangement2 {
         self.facts().split_intersection_evidence()
     }
 
-    /// Returns retained split-stage relation buckets.
-    pub fn split_relation_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        self.facts().split_relation_bucket_cache()
-    }
-
-    /// Returns exact split-intersection point buckets.
-    pub fn split_intersection_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        self.facts().split_intersection_bucket_cache()
-    }
-
-    /// Returns exact source-parameter evidence for retained split intersections.
-    pub fn split_intersection_parameter_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        self.facts().split_intersection_parameter_cache()
-    }
-
     /// Returns retained split-stage relation bucket count.
     pub fn split_relation_bucket_count(&self) -> Option<usize> {
         self.facts().split_relation_bucket_count()
@@ -8173,11 +7237,6 @@ impl RegionArrangement2 {
     /// Returns retained source-parameter references for split intersections.
     pub fn split_intersection_source_parameter_ref_count(&self) -> Option<usize> {
         self.facts().split_intersection_source_parameter_ref_count()
-    }
-
-    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
-        self.facts().split_blocker_cache()
     }
 
     /// Returns the first source segment in a split-stage blocker, when known.
@@ -8225,11 +7284,6 @@ impl RegionArrangement2 {
         self.facts().split_output_segment_count()
     }
 
-    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.facts().endpoint_graph_cache()
-    }
-
     /// Returns the exact predicate family used by retained endpoint-graph validation.
     pub fn endpoint_graph_predicate_path(
         &self,
@@ -8258,13 +7312,6 @@ impl RegionArrangement2 {
         self.facts().endpoint_graph_max_structural_bucket_size()
     }
 
-    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub fn arranged_endpoint_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        self.facts().arranged_endpoint_bucket_cache()
-    }
-
     /// Returns retained arranged endpoint references in structural buckets.
     pub fn arranged_endpoint_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_ref_count()
@@ -8283,13 +7330,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained arranged endpoint structural bucket size.
     pub fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
         self.facts().arranged_endpoint_max_bucket_size()
-    }
-
-    /// Returns arranged endpoints grouped by retained endpoint side.
-    pub fn arranged_endpoint_side_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        self.facts().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
@@ -8317,13 +7357,6 @@ impl RegionArrangement2 {
         self.facts().arranged_endpoint_side_max_bucket_size()
     }
 
-    /// Returns exact endpoint records for arranged fragments.
-    pub fn arranged_endpoint_point_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        self.facts().arranged_endpoint_point_cache()
-    }
-
     /// Returns retained arranged fragment endpoint records.
     pub fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_point_fragment_ref_count()
@@ -8332,13 +7365,6 @@ impl RegionArrangement2 {
     /// Returns retained arranged endpoint point references.
     pub fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_point_ref_count()
-    }
-
-    /// Returns structural arranged endpoints grouped by retained degree.
-    pub fn arranged_endpoint_degree_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        self.facts().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
@@ -8400,11 +7426,6 @@ impl RegionArrangement2 {
         self.facts().endpoint_graph_blocker_point()
     }
 
-    /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.facts().ring_assembly_cache()
-    }
-
     /// Returns the exact predicate family used by retained ring traversal.
     pub fn ring_assembly_predicate_path(
         &self,
@@ -8457,11 +7478,6 @@ impl RegionArrangement2 {
         self.facts().source_evidence_count()
     }
 
-    /// Returns per-arranged-fragment source provenance buckets.
-    pub fn arranged_fragment_cache(&self) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        self.facts().arranged_fragment_cache()
-    }
-
     /// Returns arranged fragment count retained after exact splitting, when available.
     pub fn arranged_segment_count(&self) -> Option<usize> {
         self.facts().arranged_segment_count()
@@ -8470,13 +7486,6 @@ impl RegionArrangement2 {
     /// Returns arranged fragment primitive-family counts retained after exact splitting.
     pub fn arranged_segment_kind_counts(&self) -> Option<SegmentKindCounts> {
         self.facts().arranged_segment_kind_counts()
-    }
-
-    /// Returns arranged fragments grouped by primitive family.
-    pub fn arranged_fragment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        self.facts().arranged_fragment_kind_bucket_cache()
     }
 
     /// Returns retained arranged fragment primitive-family bucket count.
@@ -8502,13 +7511,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained arranged fragment primitive-family bucket size.
     pub fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
         self.facts().arranged_fragment_kind_max_bucket_size()
-    }
-
-    /// Returns arranged fragment source records grouped by retained topology status.
-    pub fn arranged_fragment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        self.facts().arranged_fragment_status_bucket_cache()
     }
 
     /// Returns retained arranged fragment topology-status bucket count.
@@ -8557,13 +7559,6 @@ impl RegionArrangement2 {
         self.facts().arranged_fragment_status_max_bucket_size()
     }
 
-    /// Returns arranged fragment source parameter ranges.
-    pub fn arranged_fragment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        self.facts().arranged_fragment_source_range_cache()
-    }
-
     /// Returns retained arranged fragment source range references.
     pub fn arranged_fragment_source_range_ref_count(&self) -> Option<usize> {
         self.facts().arranged_fragment_source_range_ref_count()
@@ -8580,11 +7575,6 @@ impl RegionArrangement2 {
             .arranged_fragment_partial_source_range_ref_count()
     }
 
-    /// Returns per-output-ring source provenance buckets.
-    pub fn output_ring_bucket_cache(&self) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        self.facts().output_ring_bucket_cache()
-    }
-
     /// Returns retained output ring provenance bucket count.
     pub fn output_ring_bucket_count(&self) -> Option<usize> {
         self.facts().output_ring_bucket_count()
@@ -8598,13 +7588,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained output ring segment count.
     pub fn output_ring_max_segment_count(&self) -> Option<usize> {
         self.facts().output_ring_max_segment_count()
-    }
-
-    /// Returns retained output segment buckets grouped by primitive family.
-    pub fn output_segment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        self.facts().output_segment_kind_bucket_cache()
     }
 
     /// Returns retained output segment primitive-family bucket count.
@@ -8632,13 +7615,6 @@ impl RegionArrangement2 {
         self.facts().output_segment_kind_max_bucket_size()
     }
 
-    /// Returns retained output segment buckets grouped by source segment.
-    pub fn output_segment_source_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        self.facts().output_segment_source_bucket_cache()
-    }
-
     /// Returns retained source-segment bucket count for output segments.
     pub fn output_segment_source_bucket_count(&self) -> Option<usize> {
         self.facts().output_segment_source_bucket_count()
@@ -8652,13 +7628,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained source-segment output bucket size.
     pub fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
         self.facts().output_segment_source_max_bucket_size()
-    }
-
-    /// Returns retained output segment source parameter ranges.
-    pub fn output_segment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        self.facts().output_segment_source_range_cache()
     }
 
     /// Returns retained output segment source-range references.
@@ -8676,13 +7645,6 @@ impl RegionArrangement2 {
         self.facts().output_partial_source_range_ref_count()
     }
 
-    /// Returns retained output segment exact endpoint records.
-    pub fn output_segment_endpoint_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        self.facts().output_segment_endpoint_cache()
-    }
-
     /// Returns retained output segment endpoint records.
     pub fn output_segment_endpoint_record_count(&self) -> Option<usize> {
         self.facts().output_segment_endpoint_record_count()
@@ -8691,13 +7653,6 @@ impl RegionArrangement2 {
     /// Returns retained exact output endpoint references.
     pub fn output_endpoint_ref_count(&self) -> Option<usize> {
         self.facts().output_endpoint_ref_count()
-    }
-
-    /// Returns retained exact continuity records between adjacent output segments.
-    pub fn output_ring_continuity_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        self.facts().output_ring_continuity_cache()
     }
 
     /// Returns output rings with retained continuity evidence.
@@ -8713,13 +7668,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained continuity connection count for one output ring.
     pub fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
         self.facts().output_ring_continuity_max_connection_count()
-    }
-
-    /// Returns retained output segment buckets grouped by topology status.
-    pub fn output_segment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        self.facts().output_segment_status_bucket_cache()
     }
 
     /// Returns retained topology-status bucket count for output segments.
@@ -8768,13 +7716,6 @@ impl RegionArrangement2 {
         self.facts().output_segment_status_max_bucket_size()
     }
 
-    /// Returns retained output segment buckets grouped by traversal direction.
-    pub fn output_segment_direction_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        self.facts().output_segment_direction_bucket_cache()
-    }
-
     /// Returns retained traversal-direction bucket count for output segments.
     pub fn output_segment_direction_bucket_count(&self) -> Option<usize> {
         self.facts().output_segment_direction_bucket_count()
@@ -8798,11 +7739,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained traversal-direction output bucket size.
     pub fn output_segment_direction_max_bucket_size(&self) -> Option<usize> {
         self.facts().output_segment_direction_max_bucket_size()
-    }
-
-    /// Returns final output evidence retained from the evaluated arrangement.
-    pub fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.facts().output_cache()
     }
 
     /// Returns delegated boundary-contour role assignment evidence, when output reached it.
@@ -8874,18 +7810,6 @@ impl RegionArrangement2 {
         self.facts().boundary_build_blocker_second_contour_index()
     }
 
-    /// Returns retained final boundary output summary when role assignment materialized.
-    pub fn boundary_output_cache(&self) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        self.facts().boundary_output_cache()
-    }
-
-    /// Returns final boundary output counts grouped by material/hole role.
-    pub fn boundary_output_role_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        self.facts().boundary_output_role_bucket_cache()
-    }
-
     /// Returns retained final boundary role bucket count.
     pub fn boundary_output_role_bucket_count(&self) -> Option<usize> {
         self.facts().boundary_output_role_bucket_count()
@@ -8904,11 +7828,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained output segment count for one boundary role.
     pub fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
         self.facts().boundary_output_role_max_segment_count()
-    }
-
-    /// Returns retained material/hole role buckets when role assignment was reached.
-    pub fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        self.facts().role_cache()
     }
 
     /// Returns output boundary primitive-family counts after role assignment.
@@ -8939,13 +7858,6 @@ impl RegionArrangement2 {
     /// Returns retained output role evidence count when role assignment was reached.
     pub fn role_evidence_count(&self) -> Option<usize> {
         self.facts().role_evidence_count()
-    }
-
-    /// Returns output role assignment buckets grouped by topology status.
-    pub fn role_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        self.facts().role_status_bucket_cache()
     }
 
     /// Returns retained output role topology-status bucket count.
@@ -8994,13 +7906,6 @@ impl RegionArrangement2 {
         self.facts().role_status_max_bucket_size()
     }
 
-    /// Returns output role assignment buckets grouped by source contour identity.
-    pub fn role_source_contour_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        self.facts().role_source_contour_bucket_cache()
-    }
-
     /// Returns retained output role source-contour bucket count.
     pub fn role_source_contour_bucket_count(&self) -> Option<usize> {
         self.facts().role_source_contour_bucket_count()
@@ -9016,13 +7921,6 @@ impl RegionArrangement2 {
         self.facts().role_source_contour_max_bucket_size()
     }
 
-    /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub fn role_nesting_depth_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        self.facts().role_nesting_depth_bucket_cache()
-    }
-
     /// Returns retained output role nesting-depth bucket count.
     pub fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
         self.facts().role_nesting_depth_bucket_count()
@@ -9036,13 +7934,6 @@ impl RegionArrangement2 {
     /// Returns the largest retained nesting-depth output role bucket size.
     pub fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
         self.facts().role_nesting_depth_max_bucket_size()
-    }
-
-    /// Returns output role containment evidence grouped by containing source contour.
-    pub fn role_containment_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        self.facts().role_containment_bucket_cache()
     }
 
     /// Returns retained output role containing-contour bucket count.
@@ -9065,24 +7956,19 @@ impl RegionArrangement2 {
         self.facts().role_containment_max_bucket_size()
     }
 
-    /// Returns material and hole role buckets in stable order.
-    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.facts().role_buckets()
-    }
-
     /// Returns retained output role evidence when role assignment was reached.
     pub fn role_evidence(&self) -> Option<&[RegionBoundaryContourRoleEvidence2]> {
         self.facts().role_evidence()
     }
 
-    /// Returns the retained arrangement evidence without copying its facts.
-    pub fn evidence(&self) -> &RegionArrangementEvidence2 {
-        &self.evidence
+    /// Returns the arrangement report without copying its facts.
+    pub fn report(&self) -> &RegionArrangementReport2 {
+        &self.report
     }
 
-    /// Returns final retained evaluation facts derived from workspace caches.
-    pub fn summary(&self) -> &ExactCurveArrangementSummary2 {
-        self.evidence.summary()
+    /// Returns final semantic facts derived from the evaluation.
+    pub fn summary(&self) -> &RegionArrangementSummary2 {
+        self.report.summary()
     }
 
     /// Returns whether final output evaluation facts were retained.
@@ -9165,14 +8051,14 @@ impl RegionArrangement2 {
         }
     }
 
-    /// Consumes this result and returns the materialized region with a derived arrangement evidence.
+    /// Consumes this result and returns the materialized region with its report.
     ///
-    /// This keeps owned output and its retained diagnostic evidence together.
-    pub(crate) fn into_region_with_evidence(
+    /// This keeps owned output and its diagnostics together.
+    pub(crate) fn into_region_with_report(
         self,
-    ) -> (Option<LineArcRegion2>, RegionArrangementEvidence2) {
-        let Self { evidence, region } = self;
-        (region, evidence)
+    ) -> (Option<LineArcRegion2>, RegionArrangementReport2) {
+        let Self { report, region } = self;
+        (region, report)
     }
 
     /// Consumes this result and returns the materialized region, if any.
@@ -9805,7 +8691,7 @@ impl RegionLineSegmentSplitIntersectionEvidence2 {
     }
 }
 
-impl RegionArrangementEvidence2 {
+impl RegionArrangementReport2 {
     fn facts(&self) -> &ExactCurveWorkspace2 {
         &self.workspace
     }
@@ -9826,21 +8712,8 @@ impl RegionArrangementEvidence2 {
     }
 
     /// Returns source segment facts retained before split scheduling.
-    pub fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
+    pub(crate) fn source_segment_cache(&self) -> &ExactCurveArrangementSourceSegmentCache2 {
         self.facts().source_segment_cache()
-    }
-
-    /// Returns retained source AABB buckets grouped by certification status.
-    pub fn source_aabb_bucket_cache(&self) -> &ExactCurveArrangementSourceAabbBucketCache2 {
-        self.source_segment_cache().source_aabb_bucket_cache()
-    }
-
-    /// Returns retained source segment buckets grouped by primitive family.
-    pub fn source_segment_kind_bucket_cache(
-        &self,
-    ) -> &ExactCurveArrangementSourceSegmentKindBucketCache2 {
-        self.source_segment_cache()
-            .source_segment_kind_bucket_cache()
     }
 
     /// Returns retained source AABB-status bucket count.
@@ -9893,11 +8766,6 @@ impl RegionArrangementEvidence2 {
         self.facts().source_segment_kind_max_bucket_size()
     }
 
-    /// Returns exact source endpoint buckets retained during workspace construction.
-    pub fn source_endpoint_bucket_cache(&self) -> &ExactCurveArrangementSourceEndpointBucketCache2 {
-        self.facts().source_endpoint_bucket_cache()
-    }
-
     /// Returns source endpoints retained in exact structural endpoint buckets.
     pub fn source_endpoint_count(&self) -> usize {
         self.facts().source_endpoint_count()
@@ -9916,16 +8784,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest exact structural source endpoint bucket size.
     pub fn source_endpoint_max_bucket_size(&self) -> usize {
         self.facts().source_endpoint_max_bucket_size()
-    }
-
-    /// Returns the source-pair schedule retained before split predicates run.
-    pub fn split_schedule_cache(&self) -> &ExactCurveArrangementSplitScheduleCache2 {
-        self.facts().split_schedule_cache()
-    }
-
-    /// Returns retained split schedule buckets grouped by AABB pruning status.
-    pub fn split_schedule_bucket_cache(&self) -> &ExactCurveArrangementSplitScheduleBucketCache2 {
-        self.facts().split_schedule_bucket_cache()
     }
 
     /// Returns source segment pairs scheduled before retained split predicates run.
@@ -9963,32 +8821,6 @@ impl RegionArrangementEvidence2 {
         self.facts().split_schedule_max_bucket_size()
     }
 
-    /// Returns exact split evidence retained from the evaluated arrangement.
-    pub fn split_cache(&self) -> Option<&ExactCurveArrangementSplitCache2> {
-        self.facts().split_cache()
-    }
-
-    /// Returns retained split-stage relation buckets.
-    pub fn split_relation_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitRelationBucketCache2> {
-        self.facts().split_relation_bucket_cache()
-    }
-
-    /// Returns exact split-intersection point buckets.
-    pub fn split_intersection_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionBucketCache2> {
-        self.facts().split_intersection_bucket_cache()
-    }
-
-    /// Returns exact source-parameter evidence for retained split intersections.
-    pub fn split_intersection_parameter_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementSplitIntersectionParameterCache2> {
-        self.facts().split_intersection_parameter_cache()
-    }
-
     /// Returns retained split-stage relation bucket count.
     pub fn split_relation_bucket_count(&self) -> Option<usize> {
         self.facts().split_relation_bucket_count()
@@ -10024,23 +8856,6 @@ impl RegionArrangementEvidence2 {
         self.facts().split_intersection_source_parameter_ref_count()
     }
 
-    /// Returns split-stage blocker source-pair evidence, when split evaluation blocked.
-    pub fn split_blocker_cache(&self) -> Option<&ExactCurveArrangementSplitBlockerCache2> {
-        self.facts().split_blocker_cache()
-    }
-
-    /// Returns exact endpoint-bucket evidence retained from the evaluated arrangement.
-    pub fn endpoint_graph_cache(&self) -> Option<&ExactCurveArrangementEndpointGraphCache2> {
-        self.facts().endpoint_graph_cache()
-    }
-
-    /// Returns exact arranged endpoint buckets retained by endpoint-graph validation.
-    pub fn arranged_endpoint_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointBucketCache2> {
-        self.facts().arranged_endpoint_bucket_cache()
-    }
-
     /// Returns retained arranged endpoint references in structural buckets.
     pub fn arranged_endpoint_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_ref_count()
@@ -10059,13 +8874,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained arranged endpoint structural bucket size.
     pub fn arranged_endpoint_max_bucket_size(&self) -> Option<usize> {
         self.facts().arranged_endpoint_max_bucket_size()
-    }
-
-    /// Returns arranged endpoints grouped by retained endpoint side.
-    pub fn arranged_endpoint_side_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointSideBucketCache2> {
-        self.facts().arranged_endpoint_side_bucket_cache()
     }
 
     /// Returns retained arranged endpoint side bucket count.
@@ -10093,13 +8901,6 @@ impl RegionArrangementEvidence2 {
         self.facts().arranged_endpoint_side_max_bucket_size()
     }
 
-    /// Returns exact endpoint records for arranged fragments.
-    pub fn arranged_endpoint_point_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointPointCache2> {
-        self.facts().arranged_endpoint_point_cache()
-    }
-
     /// Returns retained arranged fragment endpoint records.
     pub fn arranged_endpoint_point_fragment_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_point_fragment_ref_count()
@@ -10108,13 +8909,6 @@ impl RegionArrangementEvidence2 {
     /// Returns retained arranged endpoint point references.
     pub fn arranged_endpoint_point_ref_count(&self) -> Option<usize> {
         self.facts().arranged_endpoint_point_ref_count()
-    }
-
-    /// Returns structural arranged endpoints grouped by retained degree.
-    pub fn arranged_endpoint_degree_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedEndpointDegreeBucketCache2> {
-        self.facts().arranged_endpoint_degree_bucket_cache()
     }
 
     /// Returns retained arranged endpoint degree bucket count.
@@ -10151,19 +8945,9 @@ impl RegionArrangementEvidence2 {
         self.facts().arranged_endpoint_degree_max_bucket_size()
     }
 
-    /// Returns exact ring-traversal evidence retained from the evaluated arrangement.
-    pub fn ring_assembly_cache(&self) -> Option<&ExactCurveArrangementRingAssemblyCache2> {
-        self.facts().ring_assembly_cache()
-    }
-
-    /// Returns final output evidence retained from the evaluated arrangement.
-    pub fn output_cache(&self) -> Option<&ExactCurveArrangementOutputCache2> {
-        self.facts().output_cache()
-    }
-
-    /// Returns final retained evaluation facts derived from workspace caches.
-    pub fn summary(&self) -> &ExactCurveArrangementSummary2 {
-        &self.summary_cache
+    /// Returns final semantic facts derived from the evaluation.
+    pub fn summary(&self) -> &RegionArrangementSummary2 {
+        &self.summary
     }
 
     /// Returns retained source segment count.
@@ -10390,18 +9174,6 @@ impl RegionArrangementEvidence2 {
         self.facts().arranged_segment_kind_counts()
     }
 
-    /// Returns per-arranged-fragment source provenance buckets.
-    pub fn arranged_fragment_cache(&self) -> Option<&ExactCurveArrangementArrangedFragmentCache2> {
-        self.facts().arranged_fragment_cache()
-    }
-
-    /// Returns arranged fragments grouped by primitive family.
-    pub fn arranged_fragment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentKindBucketCache2> {
-        self.facts().arranged_fragment_kind_bucket_cache()
-    }
-
     /// Returns retained arranged fragment primitive-family bucket count.
     pub fn arranged_fragment_kind_bucket_count(&self) -> Option<usize> {
         self.facts().arranged_fragment_kind_bucket_count()
@@ -10425,13 +9197,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained arranged fragment primitive-family bucket size.
     pub fn arranged_fragment_kind_max_bucket_size(&self) -> Option<usize> {
         self.facts().arranged_fragment_kind_max_bucket_size()
-    }
-
-    /// Returns arranged fragment source records grouped by retained topology status.
-    pub fn arranged_fragment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentStatusBucketCache2> {
-        self.facts().arranged_fragment_status_bucket_cache()
     }
 
     /// Returns retained arranged fragment topology-status bucket count.
@@ -10478,13 +9243,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained arranged fragment topology-status bucket size.
     pub fn arranged_fragment_status_max_bucket_size(&self) -> Option<usize> {
         self.facts().arranged_fragment_status_max_bucket_size()
-    }
-
-    /// Returns arranged fragment source parameter ranges.
-    pub fn arranged_fragment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementArrangedFragmentSourceRangeCache2> {
-        self.facts().arranged_fragment_source_range_cache()
     }
 
     /// Returns retained arranged fragment source range references.
@@ -10553,11 +9311,6 @@ impl RegionArrangementEvidence2 {
         self.facts().output_segment_kind_counts()
     }
 
-    /// Returns per-output-ring source provenance buckets.
-    pub fn output_ring_bucket_cache(&self) -> Option<&ExactCurveArrangementOutputRingBucketCache2> {
-        self.facts().output_ring_bucket_cache()
-    }
-
     /// Returns retained output ring provenance bucket count.
     pub fn output_ring_bucket_count(&self) -> Option<usize> {
         self.facts().output_ring_bucket_count()
@@ -10571,13 +9324,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained output ring segment count.
     pub fn output_ring_max_segment_count(&self) -> Option<usize> {
         self.facts().output_ring_max_segment_count()
-    }
-
-    /// Returns retained output segment buckets grouped by primitive family.
-    pub fn output_segment_kind_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentKindBucketCache2> {
-        self.facts().output_segment_kind_bucket_cache()
     }
 
     /// Returns retained output segment primitive-family bucket count.
@@ -10605,13 +9351,6 @@ impl RegionArrangementEvidence2 {
         self.facts().output_segment_kind_max_bucket_size()
     }
 
-    /// Returns retained output segment buckets grouped by source segment.
-    pub fn output_segment_source_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceBucketCache2> {
-        self.facts().output_segment_source_bucket_cache()
-    }
-
     /// Returns retained source-segment bucket count for output segments.
     pub fn output_segment_source_bucket_count(&self) -> Option<usize> {
         self.facts().output_segment_source_bucket_count()
@@ -10625,13 +9364,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained source-segment output bucket size.
     pub fn output_segment_source_max_bucket_size(&self) -> Option<usize> {
         self.facts().output_segment_source_max_bucket_size()
-    }
-
-    /// Returns retained output segment source parameter ranges.
-    pub fn output_segment_source_range_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentSourceRangeCache2> {
-        self.facts().output_segment_source_range_cache()
     }
 
     /// Returns retained output segment source-range references.
@@ -10649,13 +9381,6 @@ impl RegionArrangementEvidence2 {
         self.facts().output_partial_source_range_ref_count()
     }
 
-    /// Returns retained output segment exact endpoint records.
-    pub fn output_segment_endpoint_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentEndpointCache2> {
-        self.facts().output_segment_endpoint_cache()
-    }
-
     /// Returns retained output segment endpoint records.
     pub fn output_segment_endpoint_record_count(&self) -> Option<usize> {
         self.facts().output_segment_endpoint_record_count()
@@ -10664,13 +9389,6 @@ impl RegionArrangementEvidence2 {
     /// Returns retained exact output endpoint references.
     pub fn output_endpoint_ref_count(&self) -> Option<usize> {
         self.facts().output_endpoint_ref_count()
-    }
-
-    /// Returns retained exact continuity records between adjacent output segments.
-    pub fn output_ring_continuity_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRingContinuityCache2> {
-        self.facts().output_ring_continuity_cache()
     }
 
     /// Returns output rings with retained continuity evidence.
@@ -10686,13 +9404,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained continuity connection count for one output ring.
     pub fn output_ring_continuity_max_connection_count(&self) -> Option<usize> {
         self.facts().output_ring_continuity_max_connection_count()
-    }
-
-    /// Returns retained output segment buckets grouped by topology status.
-    pub fn output_segment_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentStatusBucketCache2> {
-        self.facts().output_segment_status_bucket_cache()
     }
 
     /// Returns retained topology-status bucket count for output segments.
@@ -10741,13 +9452,6 @@ impl RegionArrangementEvidence2 {
         self.facts().output_segment_status_max_bucket_size()
     }
 
-    /// Returns retained output segment buckets grouped by traversal direction.
-    pub fn output_segment_direction_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputSegmentDirectionBucketCache2> {
-        self.facts().output_segment_direction_bucket_cache()
-    }
-
     /// Returns retained traversal-direction bucket count for output segments.
     pub fn output_segment_direction_bucket_count(&self) -> Option<usize> {
         self.facts().output_segment_direction_bucket_count()
@@ -10773,18 +9477,6 @@ impl RegionArrangementEvidence2 {
         self.facts().output_segment_direction_max_bucket_size()
     }
 
-    /// Returns retained final boundary output summary when role assignment materialized.
-    pub fn boundary_output_cache(&self) -> Option<&ExactCurveArrangementOutputBoundaryCache2> {
-        self.facts().boundary_output_cache()
-    }
-
-    /// Returns final boundary output counts grouped by material/hole role.
-    pub fn boundary_output_role_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputBoundaryRoleBucketCache2> {
-        self.facts().boundary_output_role_bucket_cache()
-    }
-
     /// Returns retained final boundary role bucket count.
     pub fn boundary_output_role_bucket_count(&self) -> Option<usize> {
         self.facts().boundary_output_role_bucket_count()
@@ -10803,18 +9495,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained output segment count for one boundary role.
     pub fn boundary_output_role_max_segment_count(&self) -> Option<usize> {
         self.facts().boundary_output_role_max_segment_count()
-    }
-
-    /// Returns retained material/hole role buckets when role assignment was reached.
-    pub fn role_cache(&self) -> Option<&ExactCurveArrangementOutputRoleCache2> {
-        self.facts().role_cache()
-    }
-
-    /// Returns output role assignment buckets grouped by topology status.
-    pub fn role_status_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleStatusBucketCache2> {
-        self.facts().role_status_bucket_cache()
     }
 
     /// Returns retained output role topology-status bucket count.
@@ -10863,13 +9543,6 @@ impl RegionArrangementEvidence2 {
         self.facts().role_status_max_bucket_size()
     }
 
-    /// Returns output role assignment buckets grouped by source contour identity.
-    pub fn role_source_contour_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleSourceContourBucketCache2> {
-        self.facts().role_source_contour_bucket_cache()
-    }
-
     /// Returns retained output role source-contour bucket count.
     pub fn role_source_contour_bucket_count(&self) -> Option<usize> {
         self.facts().role_source_contour_bucket_count()
@@ -10885,13 +9558,6 @@ impl RegionArrangementEvidence2 {
         self.facts().role_source_contour_max_bucket_size()
     }
 
-    /// Returns output role assignment buckets grouped by exact nesting depth.
-    pub fn role_nesting_depth_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleNestingDepthBucketCache2> {
-        self.facts().role_nesting_depth_bucket_cache()
-    }
-
     /// Returns retained output role nesting-depth bucket count.
     pub fn role_nesting_depth_bucket_count(&self) -> Option<usize> {
         self.facts().role_nesting_depth_bucket_count()
@@ -10905,13 +9571,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained nesting-depth output role bucket size.
     pub fn role_nesting_depth_max_bucket_size(&self) -> Option<usize> {
         self.facts().role_nesting_depth_max_bucket_size()
-    }
-
-    /// Returns output role containment evidence grouped by containing source contour.
-    pub fn role_containment_bucket_cache(
-        &self,
-    ) -> Option<&ExactCurveArrangementOutputRoleContainmentBucketCache2> {
-        self.facts().role_containment_bucket_cache()
     }
 
     /// Returns retained output role containing-contour bucket count.
@@ -10932,11 +9591,6 @@ impl RegionArrangementEvidence2 {
     /// Returns the largest retained containing-contour bucket size.
     pub fn role_containment_max_bucket_size(&self) -> Option<usize> {
         self.facts().role_containment_max_bucket_size()
-    }
-
-    /// Returns material and hole role buckets in stable order.
-    pub fn role_buckets(&self) -> Option<&[ExactCurveArrangementOutputRoleBucket2]> {
-        self.facts().role_buckets()
     }
 
     /// Returns material contour count after output role assignment.

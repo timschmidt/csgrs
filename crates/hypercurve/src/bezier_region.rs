@@ -37,7 +37,7 @@ use crate::{
     CurveIntersectionPairBlockerKind2, CurveOperation2, CurvePath2, CurvePathIntersectionContact2,
     CurvePolicy, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineArcRegion2,
     LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementEvidence2, RegionPointLocation,
+    RationalQuadraticBezier2, RegionArrangement2, RegionArrangementReport2, RegionPointLocation,
     Segment2, UncertaintyReason,
 };
 
@@ -179,11 +179,11 @@ impl<'a> CurveRegionNativeContourView2<'a> {
     }
 }
 
-/// Retained native line/arc arrangement evidence with unified curved output.
+/// Immediate native line/arc arrangement with a unified curved output report.
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
-    evidence: RegionArrangementEvidence2,
+    report: RegionArrangementReport2,
 }
 
 /// Evidence-bearing native contour nesting with authoritative unified output.
@@ -283,16 +283,16 @@ impl CurveRegionArrangement2 {
         match self.region() {
             Some(region) => Classification::Decided(region),
             None => Classification::Uncertain(
-                self.evidence
+                self.report
                     .blocker()
                     .unwrap_or(UncertaintyReason::Unsupported),
             ),
         }
     }
 
-    /// Returns the complete native arrangement evidence retained during promotion.
-    pub const fn evidence(&self) -> &RegionArrangementEvidence2 {
-        &self.evidence
+    /// Returns the complete native arrangement report retained during promotion.
+    pub const fn report(&self) -> &RegionArrangementReport2 {
+        &self.report
     }
 
     /// Consumes the result and returns its unified region, if materialized.
@@ -300,9 +300,9 @@ impl CurveRegionArrangement2 {
         self.region
     }
 
-    /// Consumes the result and preserves both output and arrangement evidence.
-    pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementEvidence2) {
-        (self.region, self.evidence)
+    /// Consumes the result and preserves both output and its arrangement report.
+    pub fn into_parts(self) -> (Option<CurveRegion2>, RegionArrangementReport2) {
+        (self.region, self.report)
     }
 }
 
@@ -1799,12 +1799,12 @@ fn promote_native_region_arrangement(
     arrangement: RegionArrangement2,
     policy: &CurvePolicy,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    let (region, evidence) = arrangement.into_region_with_evidence();
+    let (region, report) = arrangement.into_region_with_report();
     let region = region
         .as_ref()
         .map(|region| CurveRegion2::try_from_line_arc_region(region, policy))
         .transpose()?;
-    Ok(CurveRegionArrangement2 { region, evidence })
+    Ok(CurveRegionArrangement2 { region, report })
 }
 
 fn curve_region_edit_error(operation: CurveOperation2, cause: CurveError) -> ExactCurveError {

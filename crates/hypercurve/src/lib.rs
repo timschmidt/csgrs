@@ -250,19 +250,14 @@ pub use region_events::{
 };
 pub use region_fragments::{RegionContourFragments, RegionFragmentSet};
 pub use region_nesting::{
-    ExactCurveArrangementArrangedEndpointDegree2, ExactCurveArrangementArrangedFragment2,
-    ExactCurveArrangementOutputRoleAssignment2, ExactCurveArrangementSourceAabbStatus2,
-    ExactCurveArrangementSourceEndpoint2, ExactCurveArrangementSourceSegmentFact2,
-    ExactCurveArrangementSplitCandidateAabbStatus2, ExactCurveArrangementSplitCandidatePair2,
-    ExactCurveArrangementSplitRelationClass2, ExactCurveArrangementSummary2, RegionArrangement2,
-    RegionArrangementEvidence2, RegionBoundaryContourBuildEvidence2,
-    RegionBoundaryContourBuildPredicatePath2, RegionBoundaryContourBuildResult2,
-    RegionBoundaryContourBuildStage2, RegionBoundaryContourRole2,
-    RegionBoundaryContourRoleEvidence2, RegionLineSegmentArrangedEndpoint2,
-    RegionLineSegmentArrangedSourceEvidence2, RegionLineSegmentEndpointGraphPredicatePath2,
-    RegionLineSegmentRegionBuildStage2, RegionLineSegmentRingAssemblyPredicatePath2,
-    RegionLineSegmentRingSourceEvidence2, RegionLineSegmentSplitIntersectionEvidence2,
-    RegionLineSegmentSplitPredicatePath2,
+    RegionArrangement2, RegionArrangementReport2, RegionArrangementSummary2,
+    RegionBoundaryContourBuildEvidence2, RegionBoundaryContourBuildPredicatePath2,
+    RegionBoundaryContourBuildResult2, RegionBoundaryContourBuildStage2,
+    RegionBoundaryContourRole2, RegionBoundaryContourRoleEvidence2,
+    RegionLineSegmentArrangedEndpoint2, RegionLineSegmentArrangedSourceEvidence2,
+    RegionLineSegmentEndpointGraphPredicatePath2, RegionLineSegmentRegionBuildStage2,
+    RegionLineSegmentRingAssemblyPredicatePath2, RegionLineSegmentRingSourceEvidence2,
+    RegionLineSegmentSplitIntersectionEvidence2, RegionLineSegmentSplitPredicatePath2,
 };
 pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};

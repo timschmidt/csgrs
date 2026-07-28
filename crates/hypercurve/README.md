@@ -582,12 +582,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 For unordered exact line/arc input, arrange through `CurveRegion2` and read output
-and blockers from the retained result. The runnable
-[`arrangement_evidence`](examples/arrangement_evidence.rs) example demonstrates the
-arrangement, classification, and evidence workflow.
+and blockers from the immediate result. The runnable
+[`arrangement_report`](examples/arrangement_report.rs) example demonstrates the
+arrangement, classification, and report workflow.
 
-`CurveRegionArrangement2` retains one canonical evaluation and optional unified
-region without duplicating evidence-shaped state.
+`CurveRegionArrangement2` returns one canonical evaluation with its optional unified
+region and semantic report. Cache and bucket carriers remain private implementation
+details.
 
 ## Exact curve-region Boolean fuzzing
 
@@ -665,7 +666,7 @@ cargo clippy --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 cargo check --benches --all-features
 cargo run --example basic
-cargo run --example arrangement_evidence
+cargo run --example arrangement_report
 cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
 cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
 ```
