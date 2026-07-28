@@ -298,7 +298,7 @@ fn bench_matrix3(c: &mut Criterion) {
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3", || {
             black_box(black_box(rational_lhs.clone()) * black_box(rational_vector.clone()));
         });
-        // Shared-matrix batch path is routed through TransformedMatrix3 handle
+        // Shared-matrix batch path retains matrix facts for this invocation.
         // creation, so translation-only checks are shared for each input vector.
         trace_dispatch_row("matrix3/hyperreal-rational/mat3 transform vec3 batch", || {
             black_box(

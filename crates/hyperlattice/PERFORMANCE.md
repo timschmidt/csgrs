@@ -14,22 +14,21 @@ complete dispatch trace so future changes have a reproducible guardrail.
 | Berkowitz (1984) | A division-free characteristic-polynomial algorithm over arbitrary commutative rings, expressed as a balanced product of lower-triangular Toeplitz matrices for low parallel depth. | Not adopted. The crate has only fixed 3x3/4x4 determinant and power APIs, not a characteristic-polynomial API. At these sizes the required submatrix powers and Toeplitz products do substantially more sequential work than the existing explicit determinant schedules. Its asymptotic parallel-depth advantage does not apply to these scalar kernels. |
 | Gustavson (1978) | Sparse multiplication should schedule work from known nonzero structure instead of forming every nominal product. | Already represented by exact zero probing, per-cell active-lane counts, unrolled 0-4-term reducers, and identity/diagonal/affine shortcuts. Reusing the public structural zero masks was tested and rejected because mask indexing cost more than the scalar's cached zero query. The new sparse sentinels cover this decision. |
 | Hou (1998) | The Leverrier-Faddeev recurrence derives characteristic-polynomial coefficients from matrix products and traces, and can produce adjugate/inverse information. | Not adopted for determinant-only or small-power operations. It requires repeated full matrix multiplications plus traces and division by the recurrence index. The source already records benchmark rejection of Cayley-Hamilton/Faddeev-LeVerrier and Berkowitz-style power routes in favor of direct small exponents and exponentiation by squaring. Reconsider only if a caller needs the characteristic polynomial and adjugate together. |
-| Yap (1997) | Exact geometric computation benefits from separating combinatorial decisions from numerical realization, filtering easy cases, and delaying exact expansion/division. | Already represented by `Real`-backed structural facts, zero/support masks, cached matrix handles, shared-scale views, homogeneous/projective carriers, and delayed affine division. These facts let downstream predicates choose a small certified route without giving up exact fallback. |
+| Yap (1997) | Exact geometric computation benefits from separating combinatorial decisions from numerical realization, filtering easy cases, and delaying exact expansion/division. | Already represented by `Real`-backed structural facts, zero/support masks, immediate matrix dispatch, shared-scale views, homogeneous/projective carriers, and delayed affine division. These facts let downstream predicates choose a small certified route without giving up exact fallback. |
 
-## Immediate cached-matrix API gate
+## Immediate matrix API gate
 
-Reusable matrix state is now named for what it retains:
-`CachedMatrix3`/`CachedMatrix4`, `RightDivisor3`/`RightDivisor4`, and
-`MatrixCacheState`. `Matrix3::cached`, `Matrix4::cached`, and
-`right_divisor` replace preparation verbs while preserving the same lazy
-determinant, minor, adjugate, reciprocal, and inverse caches.
+The public matrix API no longer exposes cache, right-divisor, transformed-value,
+or materialization lifecycles. `Matrix3` and `Matrix4` now own immediate inverse,
+division, scalar transform, and batch-transform dispatch. Batch calls may retain
+facts inside one invocation, but that implementation detail does not escape as a
+caller-managed object.
 
-Serialized 100-sample comparisons found no performance change. The mat3
-fractional inverse moved from 2.4292 us to 2.4322 us (+0.18%, `p = 0.67`,
-95% interval -0.57% to +0.93%); mat4 fractional right division moved from
-7.6008 us to 7.6351 us (+0.61%, `p = 0.07`, 95% interval -0.07% to
-+1.22%). The retained `cached_*` sentinels subsequently measured 2.4362 us
-and 7.7035 us. No arithmetic kernel, cache layout, or exactness gate changed.
+The serialized pre-change gate measured the public dense Matrix3 batch transform
+at 3.2248 us, the public Matrix4 direction batch at 2.3223 us, and direct checked
+Matrix4 division at 7.6979 us. The matching post-change medians were 1.8641 us
+(42.2% faster), 2.3565 us (no statistically detectable change), and 7.8231 us
+(within Criterion's 2% noise threshold), respectively.
 
 ## Retained dense exact-rational determinant dispatch
 
@@ -292,8 +291,8 @@ Direct matrix-vector multiplication formerly built the complete public matrix
 fact report before reading only identity, diagonal, affine, and translation
 flags. That report scans exact-set structure, masks, symbolic dependencies,
 uniform scales, triangularity, and signed permutations; those facts remain
-appropriate for explicit `structural_facts` queries and reusable cached
-handles, but were dead work for a one-shot transform.
+appropriate for explicit `structural_facts` queries and internal batch dispatch,
+but were dead work for a one-shot transform.
 
 The const-generic direct transform bridge now short-circuits over only the facts
 its branches consume. Six bridge-only mask/dependency/uniform-scale helpers were
@@ -310,10 +309,9 @@ Matched medians measured:
 | borrowed mat3 transform | 2.081 us | 603.61 ns | - | 71.0% faster than before |
 | borrowed mat4 transform | 3.213 us | 869.60 ns | - | 72.9% faster than before |
 
-Cached mat3 arithmetic remains about 400 ns after its facts are retained.
 Identity, diagonal, translated point/direction, dense, projective, symbolic,
-owned/borrowed, batch, and cached-handle equivalence tests protect the same
-exact dispatch decisions. No approximation or new cache is involved.
+owned/borrowed, and batch equivalence tests protect the same exact dispatch
+decisions. No approximation or new public lifecycle is involved.
 
 ## Scalar-owned dense 4x4 inverse
 
@@ -374,8 +372,8 @@ discarded exact-set and scalar fact construction.
 One const-generic short-circuit probe now serves those wrappers and the direct
 mat3 transform path. It checks only off-diagonal zeros and, when diagonal, the
 diagonal ones. Removing the older mat3-only probe leaves
-`src/matrix/core.rs` thirteen lines smaller; public structural facts and cached
-handles are unchanged.
+`src/matrix/core.rs` thirteen lines smaller; public structural facts and scalar
+arithmetic internals are unchanged.
 
 Fresh matched medians measured:
 
@@ -732,7 +730,7 @@ exact-rational public determinant workloads enter
 `matrix4-factors-dense-exact-known-rational` and
 `determinant4-from-factors-known-rational`, while sparse rational determinant rows
 retain `matrix4-factors` and zero pruning. Dense and sparse multiplication, inverse,
-affine, diagonal, matrix-cache, and transform paths remain separately observable.
+affine, diagonal, batch, and transform paths remain separately observable.
 The trace is diagnostic rather than timing evidence because tracing hooks are compiled
 into that build.
 
