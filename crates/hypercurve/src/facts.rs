@@ -353,6 +353,10 @@ pub(crate) fn compute_line_segment_facts(line: &LineSeg2) -> LineSeg2Facts {
 
 /// Collect structural facts for a circular arc.
 pub fn circular_arc_facts(arc: &CircularArc2) -> CircularArc2Facts {
+    arc.structural_facts()
+}
+
+pub(crate) fn compute_circular_arc_facts(arc: &CircularArc2) -> CircularArc2Facts {
     let mut scalars = vec![
         arc.start().x(),
         arc.start().y(),

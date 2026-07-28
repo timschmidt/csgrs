@@ -6137,6 +6137,33 @@ versus 1.192 us, algebraic classification at 27.333--28.293 us versus
 27.703 us, and algebraic line-role evidence at 58.883--60.406 us versus
 59.425 us.
 
+### Retained structural-fact collapse
+
+Circular arcs now retain `CircularArc2Facts` lazily in their existing shared
+geometry allocation. The one-word `CircularArc2` handle and 48-byte
+`Segment2` ceiling are unchanged, and the fact packet allocates only after a
+caller requests it. A permanent replay row improved from 470 ns to 3--5 ns per
+query, about 117x.
+
+Prepared line and arc query objects no longer duplicate
+`LineSeg2Facts`/`CircularArc2Facts` solely for equality. Their Hyperlimit
+orientation evidence already retains the fixed-input facts and filters used by
+classification. Curve-string and exact-region evidence paths that only need a
+segment family now call the constant-time `Segment2::kind()` discriminator
+instead of scanning every scalar into a complete fact packet.
+
+The serialized neighboring rows remained stable after the collapse: major arc
+containment 9.35 us, top-level evaluation 7.19 us, inverse-witness replay
+1.56 us, 256-arc sparse path intersection 1.11 ms, and 256-arc region
+containment 0.992 ms.
+
+Point and line fact caches were rejected because they would violate the
+one-pointer point layout or consume the 48-byte line/segment budget. Inline
+Bezier caches were also rejected because the workspace call graph found no
+production repeated-fact consumer; general rational Bezier, spline, NURBS,
+top-level curve/path, and curved-region owners already retain the expensive
+derived evidence their algorithms use.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

@@ -434,6 +434,7 @@ pub(crate) struct CircularArcRetainedFacts2 {
     endpoints_on_stored_circle: bool,
     clockwise: bool,
     source_bulge: Option<Real>,
+    structural_facts: OnceCell<Box<crate::CircularArc2Facts>>,
     pub(crate) sweep_kind: OnceCell<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
     pub(crate) bezier_decomposition:
         OnceCell<crate::ExactCurveResult<crate::CircularArcBezierDecomposition2>>,
@@ -462,6 +463,7 @@ impl CircularArcRetainedFacts2 {
             endpoints_on_stored_circle,
             clockwise,
             source_bulge,
+            structural_facts: OnceCell::new(),
             sweep_kind: OnceCell::new(),
             bezier_decomposition: OnceCell::new(),
             representative_point: OnceCell::new(),
@@ -752,7 +754,10 @@ impl CircularArc2 {
     /// These facts can schedule future circle/arc exact kernels while leaving
     /// topological decisions to certified predicates and exact sign queries.
     pub fn structural_facts(&self) -> crate::CircularArc2Facts {
-        crate::facts::circular_arc_facts(self)
+        **self
+            .retained_facts
+            .structural_facts
+            .get_or_init(|| Box::new(crate::facts::compute_circular_arc_facts(self)))
     }
 
     /// Returns a point in the interior of this arc's supported sweep.

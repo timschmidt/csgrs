@@ -15,24 +15,24 @@ use crate::bbox::{
 use crate::events::SegmentAabbXIndex;
 use crate::facts::{CurveStringFacts, RegionFacts};
 use crate::{
-    CircularArc2, CircularArc2Facts, Classification, Contour2, ContourPointLocation, CurvePolicy,
-    CurveString2, FillRule, LineSeg2, LineSeg2Facts, LineSide, Point2, RegionPointLocation,
-    RegionView2, Segment2, UncertaintyReason,
+    CircularArc2, Classification, Contour2, ContourPointLocation, CurvePolicy, CurveString2,
+    FillRule, LineSeg2, LineSide, Point2, RegionPointLocation, RegionView2, Segment2,
+    UncertaintyReason,
 };
 
 /// Retained point-line classifier for a fixed [`LineSeg2`].
 ///
-/// This view caches the segment's structural facts and, when the `predicates`
-/// feature is enabled, the converted `hyperlimit` endpoints used by repeated
-/// orientation tests. It deliberately does not own finite-segment containment
-/// semantics: those remain on [`LineSeg2`], while this type accelerates the
-/// exact supporting-line predicate. That split follows the exactness model's EGC model of
-/// carrying object structure forward without moving combinatorial decisions
-/// out of the predicate layer.
+/// When the `predicates` feature is enabled, this view retains the converted
+/// `hyperlimit` endpoints and orientation evidence used by repeated orientation
+/// tests. It deliberately does not duplicate structural facts already implied
+/// by the borrowed source segment, or own finite-segment containment semantics:
+/// those remain on [`LineSeg2`], while this type accelerates the exact
+/// supporting-line predicate. That split follows the exactness model's EGC
+/// model of carrying object structure forward without moving combinatorial
+/// decisions out of the predicate layer.
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedLineSeg2<'a> {
     line: &'a LineSeg2,
-    facts: LineSeg2Facts,
     #[cfg(feature = "predicates")]
     predicate_start: hyperlimit::Point2,
     #[cfg(feature = "predicates")]
@@ -43,7 +43,7 @@ pub(crate) struct PreparedLineSeg2<'a> {
 
 impl PartialEq for PreparedLineSeg2<'_> {
     fn eq(&self, other: &Self) -> bool {
-        if self.line != other.line || self.facts != other.facts {
+        if self.line != other.line {
             return false;
         }
         #[cfg(feature = "predicates")]
@@ -61,7 +61,6 @@ impl PartialEq for PreparedLineSeg2<'_> {
 impl<'a> PreparedLineSeg2<'a> {
     /// Builds a borrowed query for a line segment.
     pub fn from_line_segment(line: &'a LineSeg2) -> Self {
-        let facts = line.structural_facts();
         #[cfg(feature = "predicates")]
         {
             let predicate_start = predicate_point(line.start());
@@ -70,7 +69,6 @@ impl<'a> PreparedLineSeg2<'a> {
                 hyperlimit::line2_orientation(&predicate_start, &predicate_end);
             Self {
                 line,
-                facts,
                 predicate_start,
                 predicate_end,
                 predicate_orientation,
@@ -79,7 +77,7 @@ impl<'a> PreparedLineSeg2<'a> {
 
         #[cfg(not(feature = "predicates"))]
         {
-            Self { line, facts }
+            Self { line }
         }
     }
 
@@ -122,7 +120,6 @@ impl<'a> PreparedLineSeg2<'a> {
 #[derive(Clone, Debug)]
 pub(crate) struct PreparedCircularArc2<'a> {
     arc: &'a CircularArc2,
-    facts: CircularArc2Facts,
     #[cfg(feature = "predicates")]
     predicate_center: hyperlimit::Point2,
     #[cfg(feature = "predicates")]
@@ -137,7 +134,7 @@ pub(crate) struct PreparedCircularArc2<'a> {
 
 impl PartialEq for PreparedCircularArc2<'_> {
     fn eq(&self, other: &Self) -> bool {
-        if self.arc != other.arc || self.facts != other.facts {
+        if self.arc != other.arc {
             return false;
         }
         #[cfg(feature = "predicates")]
@@ -156,7 +153,6 @@ impl PartialEq for PreparedCircularArc2<'_> {
 impl<'a> PreparedCircularArc2<'a> {
     /// Builds a borrowed query for a circular arc.
     pub fn from_circular_arc(arc: &'a CircularArc2) -> Self {
-        let facts = arc.structural_facts();
         #[cfg(feature = "predicates")]
         {
             let predicate_center = predicate_point(arc.center());
@@ -168,7 +164,6 @@ impl<'a> PreparedCircularArc2<'a> {
                 hyperlimit::line2_orientation(&predicate_center, &predicate_end);
             Self {
                 arc,
-                facts,
                 predicate_center,
                 predicate_start,
                 predicate_end,
@@ -179,7 +174,7 @@ impl<'a> PreparedCircularArc2<'a> {
 
         #[cfg(not(feature = "predicates"))]
         {
-            Self { arc, facts }
+            Self { arc }
         }
     }
 

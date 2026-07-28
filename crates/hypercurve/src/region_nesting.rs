@@ -2065,7 +2065,7 @@ impl ExactCurveArrangementSourceSegmentCache2 {
             .map(|(source_segment_index, (source_segment, source_aabb))| {
                 ExactCurveArrangementSourceSegmentFact2 {
                     source_segment_index,
-                    source_segment_kind: source_segment.structural_facts().kind,
+                    source_segment_kind: source_segment.kind(),
                     source_start_point: source_segment.start().clone(),
                     source_end_point: source_segment.end().clone(),
                     source_aabb: source_aabb.clone(),
@@ -9314,12 +9314,12 @@ fn arrange_native_segments_at_point_intersections(
                         evidence.intersection_evidence.push(
                             RegionLineSegmentSplitIntersectionEvidence2 {
                                 first_source_segment_index: first_index,
-                                first_source_segment_kind: first.structural_facts().kind,
+                                first_source_segment_kind: first.kind(),
                                 first_source_segment_start_point: first.start().clone(),
                                 first_source_segment_end_point: first.end().clone(),
                                 first_source_param: point.first_param.clone(),
                                 second_source_segment_index: second_index,
-                                second_source_segment_kind: second.structural_facts().kind,
+                                second_source_segment_kind: second.kind(),
                                 second_source_segment_start_point: second.start().clone(),
                                 second_source_segment_end_point: second.end().clone(),
                                 second_source_param: point.second_param.clone(),
@@ -9348,11 +9348,11 @@ fn arrange_native_segments_at_point_intersections(
                             set_split_blocker_pair(
                                 &mut evidence,
                                 first_index,
-                                first.structural_facts().kind,
+                                first.kind(),
                                 first.start(),
                                 first.end(),
                                 second_index,
-                                second.structural_facts().kind,
+                                second.kind(),
                                 second.start(),
                                 second.end(),
                             );
@@ -9365,11 +9365,11 @@ fn arrange_native_segments_at_point_intersections(
                     set_split_blocker_pair(
                         &mut evidence,
                         first_index,
-                        first.structural_facts().kind,
+                        first.kind(),
                         first.start(),
                         first.end(),
                         second_index,
-                        second.structural_facts().kind,
+                        second.kind(),
                         second.start(),
                         second.end(),
                     );
@@ -9380,11 +9380,11 @@ fn arrange_native_segments_at_point_intersections(
                     set_split_blocker_pair(
                         &mut evidence,
                         first_index,
-                        first.structural_facts().kind,
+                        first.kind(),
                         first.start(),
                         first.end(),
                         second_index,
-                        second.structural_facts().kind,
+                        second.kind(),
                         second.start(),
                         second.end(),
                     );
@@ -10003,13 +10003,13 @@ fn append_native_segment_ring_source_evidence(
 ) {
     source_evidence.push(RegionLineSegmentRingSourceEvidence2 {
         source_segment_index: segment.source_segment_index,
-        source_segment_kind: segment.segment.structural_facts().kind,
+        source_segment_kind: segment.segment.kind(),
         source_segment_start_point: segment.source_segment_start_point.clone(),
         source_segment_end_point: segment.source_segment_end_point.clone(),
         source_range: segment.source_range.clone(),
         output_ring_index,
         output_segment_index,
-        output_segment_kind: segment.segment.structural_facts().kind,
+        output_segment_kind: segment.segment.kind(),
         reversed,
         output_start_point: segment.segment.start().clone(),
         output_end_point: segment.segment.end().clone(),
@@ -10050,9 +10050,7 @@ fn native_arranged_source_evidence(
         .map(
             |(arranged_segment_index, segment)| RegionLineSegmentArrangedSourceEvidence2 {
                 source_segment_index: segment.source_segment_index,
-                source_segment_kind: source_segments[segment.source_segment_index]
-                    .structural_facts()
-                    .kind,
+                source_segment_kind: source_segments[segment.source_segment_index].kind(),
                 source_segment_start_point: source_segments[segment.source_segment_index]
                     .start()
                     .clone(),
@@ -10061,7 +10059,7 @@ fn native_arranged_source_evidence(
                     .clone(),
                 source_range: segment.source_range.clone(),
                 arranged_segment_index,
-                arranged_segment_kind: segment.segment.structural_facts().kind,
+                arranged_segment_kind: segment.segment.kind(),
                 output_start_point: segment.segment.start().clone(),
                 output_end_point: segment.segment.end().clone(),
                 status: RetainedTopologyStatus::NativeExact,

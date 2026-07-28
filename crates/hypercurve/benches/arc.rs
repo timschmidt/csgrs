@@ -162,6 +162,19 @@ fn main() {
         elapsed / iterations
     );
 
+    let started = Instant::now();
+    let mut facts_checksum = 0_usize;
+    for _ in 0..iterations {
+        let facts = black_box(&arc).structural_facts();
+        facts_checksum ^= facts.scalar_exact.exact_rational_count;
+        facts_checksum ^= facts.scalar_exact.exact_power_of_two_count.rotate_left(7);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "arc_structural_facts_replay: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={facts_checksum}",
+        elapsed / iterations
+    );
+
     let major_start = p(4, 0);
     let major_end = p(0, 4);
     let major = Contour2::try_new(vec![
