@@ -126,6 +126,7 @@ name = "hypercurve-fuzz"
 version = "0.0.0"
 dependencies = [
  "hypercurve",
+ "hyperreal",
  "libfuzzer-sys",
 ]
 

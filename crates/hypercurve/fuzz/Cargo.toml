@@ -10,6 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 hypercurve = { path = "..", features = ["svg"] }
+hyperreal = { path = "../../hyperreal" }
 
 [[bin]]
 name = "bezier_algebraic_parameter"
@@ -91,6 +92,13 @@ bench = false
 [[bin]]
 name = "svg"
 path = "fuzz_targets/svg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
 test = false
 doc = false
 bench = false
