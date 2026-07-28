@@ -11,12 +11,8 @@ keywords = ["exact", "geometric", "predicates", "boundary", "orientation"]
 categories = ["mathematics", "games", "simulation"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path lines. For release, comment those and uncomment the crates.io lines.
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-#hyperreal = { version = "0.13.0" }
-#hyperlattice = { version = "0.6.0" }
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
 rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
