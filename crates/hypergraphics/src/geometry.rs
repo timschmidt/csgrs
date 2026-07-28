@@ -9,7 +9,7 @@ use std::sync::{
 use hyperlattice::Point3;
 use hyperlimit::{
     Certainty, OrientedPlane3Evidence, PlaneSide, PredicateOutcome, Sign,
-    classify_point_oriented_plane_with_evidence, orient3d, oriented_plane3_evidence,
+    classify_point_oriented_plane_with_evidence, orient3, oriented_plane3_evidence,
 };
 
 use crate::error::{Error, Result};
@@ -144,7 +144,7 @@ impl TriangleOrientationCache {
             return orientation;
         }
         if slot.orientation.get().is_some() {
-            return TriangleOrientation::from_outcome(orient3d(
+            return TriangleOrientation::from_outcome(orient3(
                 triangle[0],
                 triangle[1],
                 triangle[2],
@@ -153,7 +153,7 @@ impl TriangleOrientationCache {
         }
         let previous = slot.last_query.swap(triangle_index, Ordering::Relaxed);
         if previous != triangle_index {
-            return TriangleOrientation::from_outcome(orient3d(
+            return TriangleOrientation::from_outcome(orient3(
                 triangle[0],
                 triangle[1],
                 triangle[2],
@@ -397,7 +397,7 @@ mod tests {
         for query in [p(0, 0, 1), p(0, 0, -1), p(0, 0, 0)] {
             assert_eq!(
                 mesh.triangle_orientation_against(0, &query).unwrap(),
-                TriangleOrientation::from_outcome(orient3d(
+                TriangleOrientation::from_outcome(orient3(
                     &mesh.vertices()[0].position,
                     &mesh.vertices()[1].position,
                     &mesh.vertices()[2].position,

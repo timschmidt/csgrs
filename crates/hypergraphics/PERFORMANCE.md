@@ -79,7 +79,7 @@ so the cache was removed.
 
 ## Shewchuk, adaptive robust predicates
 
-The first orientation delegates to HyperLimit's exact/adaptive `orient3d`
+The first orientation delegates to HyperLimit's exact/adaptive `orient3`
 ladder. Repeated fixed-triangle queries use an internal oriented plane retaining
 the certified determinant filter and exact fallback representation. The one
 public immediate method maps both routes into the same `TriangleOrientation`;
