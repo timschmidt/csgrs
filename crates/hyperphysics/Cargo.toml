@@ -22,11 +22,11 @@ dispatch-trace = [
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../hypermesh" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hypersolve = { version = "0.3.0", path = "../hypersolve" }
+hypersolve = { version = "0.3.1", path = "../hypersolve" }
 
 # Keep transitive sibling crates unified while using local path development mode.
 [patch.crates-io]
