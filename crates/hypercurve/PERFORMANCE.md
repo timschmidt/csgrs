@@ -10,12 +10,18 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
-## Rational-image context API gate
+## Rational-image batch API gate
 
-HyperSolve's retained rational-image carriers are now consumed as
-`AlgebraicRootRationalImageContext` and `AlgebraicRootRationalMap`. HyperCurve's
-private conic carrier is correspondingly a `ConicParameterCandidate2`; no
-preparation lifecycle remains in this boundary.
+HyperSolve's shared-denominator transform is now consumed through the immediate
+`transform_algebraic_root_rational_images` operation. Its
+`AlgebraicRootRationalMap` remains a mathematical map reused across separately
+discovered roots. HyperCurve's private conic carrier is correspondingly a
+`ConicParameterCandidate2`; no preparation lifecycle remains at this boundary.
+
+Three serialized 20,000-iteration runs gated the immediate batch migration.
+The rational Bezier algebraic point-and-tangent image median moved from
+6.132 us to 6.123 us per iteration (-0.15%), and every run retained all 40,000
+expected transformed coordinate images.
 
 Three serialized optimized runs compared the live code with archived
 pre-change HyperSolve and HyperCurve sources. The 20,000-iteration rational

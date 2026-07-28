@@ -19,9 +19,10 @@ use hypersolve::{
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
-    AlgebraicRootRationalImageContext, AlgebraicRootRationalImageStatus,
-    AlgebraicRootRefinementComparisonConfig, compare_algebraic_root_representations_by_difference,
-    transform_algebraic_root_polynomial_image, validate_algebraic_root_representation,
+    AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_by_difference,
+    transform_algebraic_root_polynomial_image, transform_algebraic_root_rational_images,
+    validate_algebraic_root_representation,
 };
 
 use crate::classify::compare_reals;
@@ -1020,17 +1021,18 @@ fn rational_coordinate_image_pair(
     Option<BezierAlgebraicRationalCoordinateImage>,
     Option<BezierAlgebraicRationalCoordinateImage>,
 ) {
-    let context = AlgebraicRootRationalImageContext::new(
+    let [first_evidence, second_evidence] = transform_algebraic_root_rational_images(
         parameter,
+        [
+            first_numerator_coefficients.as_slice(),
+            second_numerator_coefficients.as_slice(),
+        ],
         &denominator_coefficients,
         policy.predicate_policy,
     );
-    let first_evidence = context.transform(&first_numerator_coefficients);
     if first_evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return (None, None);
     }
-    let second_evidence = context.transform(&second_numerator_coefficients);
-    drop(context);
     let first = BezierAlgebraicRationalCoordinateImage {
         numerator_coefficients: first_numerator_coefficients,
         denominator_coefficients: denominator_coefficients.clone(),
