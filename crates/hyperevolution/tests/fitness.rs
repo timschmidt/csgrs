@@ -8,7 +8,7 @@ use hyperevolution::{
     SurrogateScreenReport, SurrogateStage, VariationError, classify_simulated_annealing_neighbor,
     crossover_one_point, domain_replay_manifest, eval_gp_batch, evaluate_candidate_with_oracle,
     exact_structural_diversity, hill_climb_exact, mutate_exact_delta, select_exact_best,
-    select_tournament_by_indices, surrogate_allows_archive_promotion,
+    select_tournament_by_indices,
 };
 use proptest::prelude::*;
 use std::collections::HashMap;
@@ -472,7 +472,7 @@ fn black_box_oracle_reports_cache_cost_dependencies_and_replay_hooks() {
 }
 
 #[test]
-fn surrogate_screening_is_never_archive_promotion_by_itself() {
+fn surrogate_screening_promotes_only_to_replay() {
     let report = SurrogateScreenReport {
         candidate: "candidate".into(),
         stage: SurrogateStage {
@@ -483,7 +483,8 @@ fn surrogate_screening_is_never_archive_promotion_by_itself() {
         cache_key: Some(EvaluationCacheKey("surrogate:candidate".into())),
     };
 
-    assert!(!surrogate_allows_archive_promotion(&report));
+    assert_eq!(report.decision, SurrogateDecision::PromoteToReplay);
+    assert!(report.stage.lossy);
 }
 
 #[test]

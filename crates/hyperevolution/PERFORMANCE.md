@@ -55,6 +55,14 @@ archive admission unconditionally requires accepted replay evidence. Removing
 it eliminates an impossible opt-out state while variation and hill-climbing
 continue to preserve reproducibility.
 
+Surrogate reports are structurally separate from archive fitness reports, so
+the former `surrogate_allows_archive_promotion` helper could only return
+`false`. It has been removed in favor of the report's immediate
+`PromoteToReplay`, `ProposalOnly`, or `Reject` decision. Serialized candidate
+runs bracketed the aggregate baseline at 3.823--4.011 us versus 3.868 us;
+interval comparison remained 61--63 ns versus 62 ns and GP validation measured
+15 ns versus 17 ns.
+
 ### Moore, Kearfott, and Cloud, Introduction to Interval Analysis
 
 Fitness intervals validate both enclosures before comparison and classify
@@ -112,6 +120,10 @@ archives were not copied into this crate.
 
 ## Considered but not retained
 
+- Replacing `evaluate_candidate_with_oracle` with a direct trait call moved the
+  aggregate benchmark from 3.868 us to 4.054--4.095 us (4.8--5.9% slower).
+  Restoring the forwarding boundary returned the next run to 3.823 us, so that
+  otherwise redundant-looking helper remains under the performance gate.
 - One lazy neighbor iterator for both first and best improvement made the
   best-improvement-heavy aggregate about 5% slower. Lazy generation is retained
   only for first improvement; best improvement uses its measured eager path.

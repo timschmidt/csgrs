@@ -32,7 +32,7 @@ pub use identity::CandidateId;
 pub use oracle::{
     BlackBoxEvaluationReport, ConstructionDependency, EvaluationCacheKey, EvaluationCost,
     FitnessOracle, ReplayHook, SurrogateDecision, SurrogateScreen, SurrogateScreenReport,
-    SurrogateStage, evaluate_candidate_with_oracle, surrogate_allows_archive_promotion,
+    SurrogateStage, evaluate_candidate_with_oracle,
 };
 pub use search::{
     AnnealingAcceptance, Archive, Candidate, CrossoverPolicy, DiversityRelation, DiversityReport,

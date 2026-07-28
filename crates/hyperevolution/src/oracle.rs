@@ -126,12 +126,3 @@ pub fn evaluate_candidate_with_oracle<O: FitnessOracle>(
 ) -> BlackBoxEvaluationReport {
     oracle.evaluate(candidate)
 }
-
-/// Returns whether a surrogate-screened candidate may enter an accepted archive.
-///
-/// Surrogate output alone is never promotable. Even `PromoteToReplay` only
-/// means the candidate should be sent to exact/domain replay next.
-pub fn surrogate_allows_archive_promotion(report: &SurrogateScreenReport) -> bool {
-    let _ = report;
-    false
-}
