@@ -421,19 +421,19 @@ Sampled call stacks for the 192-triangle-per-mesh subdivided-cube union showed
 that exact point/plane classification was the largest named function and that
 rational magnitude detection plus conversion to conservative `f64` intervals
 accounted for another substantial share. Dispatch tracing recorded 211,430
-prepared affine points feeding 265,416 exact-rational classifications: the
+retained affine point queries feeding 265,416 exact-rational classifications: the
 same point was commonly tested against a support plane and several edge
 planes, but its three coordinates and homogeneous weight were converted again
 for every filter attempt.
 
-`hyperreal` now exposes a hidden prepared rational linear-form query carrying
-four approximate values and their certified error radii. `PreparedPoint3`
+`hyperreal` exposes a hidden rational linear-form query carrying four
+approximate values and their certified error radii. `Point3PredicateEvidence`
 constructs the affine form once, uses an exact `1.0` homogeneous weight with
 zero error, and reuses it across every plane classification. Inconclusive
 filters still execute the same exact rational signed-product-sum ordering.
 
 Matched release A/B runs used identical code and settings except for retaining
-the prepared query:
+the query:
 
 | workload | repeated conversion | retained query | result |
 | --- | ---: | ---: | ---: |
@@ -490,7 +490,7 @@ Status: **kept**
 The two-convex classifier already caches the certified sign of each exact
 source point against each opposing support plane. It still rebuilt the same
 four-value floating filter query separately for every previously unseen
-point/plane pair. The cache now retains one prepared query per unique source
+point/plane pair. The cache now retains one normalized query per unique source
 point alongside its plane-indexed signs. Only conservative approximate values
 and their certified error radii are retained; uncertain filters continue to
 use the unchanged exact rational signed-product-sum ordering.
@@ -523,7 +523,7 @@ ignored), the no-default-feature check, warning-denied Clippy and rustdoc,
 benchmark and fuzz-target builds, and the release WASM demo. A 20-second ASAN
 campaign completed 371 `boolean_pipeline` executions without failure.
 
-## 2026-07-19: prepare projective points once for plane recertification
+## 2026-07-19: retain projective point evidence for plane recertification
 
 Status: **kept**
 
@@ -531,7 +531,7 @@ The two-convex path first uses an inexact clip only to propose a smaller set of
 active opposing planes, then certifies the resulting homogeneous cycle against
 every exact candidate plane. That certification previously converted the same
 four exact projective coordinates into conservative floating intervals once
-per point/plane pair. `PreparedProjectivePoint3` now retains those intervals
+per point/plane pair. `ProjectivePoint3PredicateEvidence` retains those intervals
 once per cycle point while visiting the candidate planes. The traversal remains
 fully certified: inconclusive filters evaluate the unchanged exact rational
 four-term signed product sum, and non-rational coordinates retain the general
@@ -540,7 +540,7 @@ four-term signed product sum, and non-rational coordinates retain the general
 Both release binaries were preserved and alternated for 101 fresh processes
 per side. Output sizes and checksums matched for every sample.
 
-| operation | repeated projective query | prepared projective query | cold result |
+| operation | repeated projective query | retained projective query | cold result |
 | --- | ---: | ---: | ---: |
 | difference | 2.540766 ms | 2.415564 ms | 4.93% faster |
 | intersection | 1.914299 ms | 1.786318 ms | 6.69% faster |
@@ -1050,6 +1050,25 @@ ASAN `boolean_pipeline` campaign completed 380 executions without failure. All
 nine downstream CSGRS exact Hypermesh adapter and differential tests passed.
 The concurrent CSGRS sketch conversion edit left the broader downstream run at
 389/390; its sole curved-region failure is outside this subdivision change.
+
+## 2026-07-27: direct rational predicate evidence APIs
+
+Status: **kept**
+
+The exact-rational plane filter and homogeneous query retain only the compact
+values needed for repeated classification, but callers now construct those
+values directly instead of entering a prepared-object lifecycle. Internal
+point and plane wrappers are named for the predicate evidence they carry.
+One-shot callers use the immediate certified-sign API, while the existing
+bounded caches continue to reuse filters and queries where measurement
+previously established a benefit.
+
+The serialized subdivided-cube union gate measured 80.350 ms versus the
+80.657 ms baseline. An accepted repeat of the four cube operations reported
+no Criterion regression: union 2.284 ms, intersection 2.191 ms, difference
+2.239 ms, and symmetric difference 2.373 ms. The first repeat drifted upward
+across all four operations; the already-built binary returned to the baseline
+range on the next serialized run.
 
 ## Completed reference disposition
 

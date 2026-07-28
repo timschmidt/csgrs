@@ -20,7 +20,8 @@ use super::path::{
 use super::{CrossingEvent, InteriorLeafPoint, LeafWitnessSeedFamilies};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, PreparedPoint3, axis_mut, axis_ref, classify_real, compare_real,
+    Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_real,
+    compare_real,
 };
 use crate::polygon::ConvexPolygon;
 use crate::winding::WindingNumberTransitionVector;
@@ -65,7 +66,7 @@ pub(super) fn classify_point_in_polygon(
     point: &Point3,
     polygon: &ConvexPolygon,
 ) -> HypermeshResult<PolygonPointLocation> {
-    let point = PreparedPoint3::new(point);
+    let point = Point3PredicateEvidence::new(point);
     if point.classify(&polygon.support)? != Classification::On {
         return Ok(PolygonPointLocation::Outside);
     }

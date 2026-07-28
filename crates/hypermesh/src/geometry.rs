@@ -8,7 +8,7 @@ use crate::error::HypermeshResult;
 pub use crate::predicate::{
     Classification, classify_point, classify_projective_point, compare_real,
 };
-pub(crate) use crate::predicate::{PreparedPoint3, classify_real};
+pub(crate) use crate::predicate::{Point3PredicateEvidence, classify_real};
 
 /// Exact plane `normal . point + offset = 0`.
 #[derive(Clone, Debug, PartialEq)]

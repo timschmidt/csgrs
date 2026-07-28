@@ -43,7 +43,7 @@ use super::{
 };
 use crate::bvh::bounds_overlap;
 use crate::error::{HypermeshError, HypermeshResult};
-use crate::geometry::{Aabb, Classification, Plane, PreparedPoint3, classify_point};
+use crate::geometry::{Aabb, Classification, Plane, Point3PredicateEvidence, classify_point};
 use crate::polygon::{ApproxBounds, ConvexPolygon};
 use hyperlattice::Point3;
 
@@ -480,8 +480,8 @@ pub(super) fn probe_reaches_adjacent_cell(
 
     let segment_bounds = bounds_between_points(start, probe)?;
     let segment_bounds = ApproxBounds::new(segment_bounds.min, segment_bounds.max);
-    let start_prepared = PreparedPoint3::new(start);
-    let probe_prepared = PreparedPoint3::new(probe);
+    let start_evidence = Point3PredicateEvidence::new(start);
+    let probe_evidence = Point3PredicateEvidence::new(probe);
     for polygon in polygons {
         if polygon.mesh_index < 0 {
             continue;
@@ -493,8 +493,8 @@ pub(super) fn probe_reaches_adjacent_cell(
             continue;
         }
 
-        let start_class = start_prepared.classify(&polygon.support)?;
-        let probe_class = probe_prepared.classify(&polygon.support)?;
+        let start_class = start_evidence.classify(&polygon.support)?;
+        let probe_class = probe_evidence.classify(&polygon.support)?;
 
         if start_class == Classification::On {
             if planes_are_coplanar(&polygon.support, host_support)? {

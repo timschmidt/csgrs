@@ -6,7 +6,7 @@ use hyperlattice::{
     HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression,
     intersect_three_planes,
 };
-use hyperreal::PreparedRationalLinearForm4Query;
+use hyperreal::RationalLinearForm4Query;
 
 use crate::error::HypermeshResult;
 use crate::geometry::{
@@ -23,7 +23,7 @@ use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
     InputTrianglePlanes, KnownEdgeIdentityCycle, edge_plane,
 };
-use crate::predicate::{PreparedProjectivePoint3, PreparedRationalPlane4};
+use crate::predicate::{ProjectivePoint3PredicateEvidence, RationalPlane4PredicateEvidence};
 use crate::storage_hash::StorageHashMap;
 use crate::subdivision::{SubdivisionConfig, SubdivisionTask};
 use crate::winding::{BooleanOp, WindingPair, make_indicator};
@@ -379,7 +379,7 @@ struct ProjectiveBoundaryEntry {
     // point and outgoing edge evidence together also makes length skew between
     // parallel identity arrays unrepresentable.
     point_index: usize,
-    preparation: ProjectivePointPreparation,
+    evidence: ProjectivePointEvidence,
     point_identity: ConstructionVertexIdentity,
     // Exact edge planes are single-owned by the computation arena. Moving an
     // index with its identity preserves the complete oriented incidence record.
@@ -388,9 +388,9 @@ struct ProjectiveBoundaryEntry {
 }
 
 #[derive(Clone, Copy)]
-struct ProjectivePointPreparation {
+struct ProjectivePointEvidence {
     approximate: Option<[f64; 3]>,
-    rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+    rational_filter_query: Option<RationalLinearForm4Query>,
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -419,7 +419,7 @@ impl ProjectiveBoundary {
     fn push(
         &mut self,
         point_index: usize,
-        preparation: ProjectivePointPreparation,
+        evidence: ProjectivePointEvidence,
         point_identity: ConstructionVertexIdentity,
         edge_index: usize,
         edge_identity: ConstructionEdgeIdentity,
@@ -431,8 +431,8 @@ impl ProjectiveBoundary {
         let approximations_differ = self
             .entries
             .last()
-            .and_then(|last| last.preparation.approximate)
-            .zip(preparation.approximate)
+            .and_then(|last| last.evidence.approximate)
+            .zip(evidence.approximate)
             .is_some_and(|(last, current)| last != current);
         if !approximations_differ
             && self.entries.last().is_some_and(|last| {
@@ -449,7 +449,7 @@ impl ProjectiveBoundary {
         }
         self.entries.push(ProjectiveBoundaryEntry {
             point_index,
-            preparation,
+            evidence,
             point_identity,
             edge_index,
             edge_identity,
@@ -1122,14 +1122,14 @@ struct PointClassificationKey([usize; 3]);
 
 #[derive(Default)]
 struct PointPlaneClassificationCache {
-    source_queries: Vec<Option<Option<PreparedRationalLinearForm4Query>>>,
+    source_queries: Vec<Option<Option<RationalLinearForm4Query>>>,
     source_classifications: Vec<Option<Classification>>,
     source_plane_count: Option<usize>,
     points: StorageHashMap<PointClassificationKey, CachedPointPlaneClassifications>,
 }
 
 struct CachedPointPlaneClassifications {
-    prepared_query: Option<PreparedRationalLinearForm4Query>,
+    rational_query: Option<RationalLinearForm4Query>,
     classifications: Vec<Option<Classification>>,
 }
 
@@ -1204,7 +1204,7 @@ impl PointPlaneClassificationCache {
             return classify_point(point, plane);
         };
         let make_cached = || CachedPointPlaneClassifications {
-            prepared_query: Real::prepare_rational_affine_point3_query([x, y, z]),
+            rational_query: RationalLinearForm4Query::from_affine_point3([x, y, z]),
             classifications: vec![None; plane_count],
         };
         if let Some(source_vertex) = source_vertex {
@@ -1232,12 +1232,12 @@ impl PointPlaneClassificationCache {
             if let Some(classification) = self.source_classifications[classification_index] {
                 return Ok(classification);
             }
-            let prepared_query = *self.source_queries[source_vertex]
-                .get_or_insert_with(|| Real::prepare_rational_affine_point3_query([x, y, z]));
-            let classification = crate::predicate::classify_point_with_prepared_query(
+            let rational_query = *self.source_queries[source_vertex]
+                .get_or_insert_with(|| RationalLinearForm4Query::from_affine_point3([x, y, z]));
+            let classification = crate::predicate::classify_point_with_rational_query(
                 point,
                 plane,
-                prepared_query.as_ref(),
+                rational_query.as_ref(),
             )?;
             self.source_classifications[classification_index] = Some(classification);
             return Ok(classification);
@@ -1248,10 +1248,10 @@ impl PointPlaneClassificationCache {
         if let Some(classification) = cached.classifications[plane_index] {
             return Ok(classification);
         }
-        let classification = crate::predicate::classify_point_with_prepared_query(
+        let classification = crate::predicate::classify_point_with_rational_query(
             point,
             plane,
-            cached.prepared_query.as_ref(),
+            cached.rational_query.as_ref(),
         )?;
         cached.classifications[plane_index] = Some(classification);
         Ok(classification)
@@ -1321,7 +1321,7 @@ impl ProjectiveCycle {
                     if planes.contains(&plane_identity)
             )
         }) || (self.boundary[point_index]
-            .preparation
+            .evidence
             .approximate
             .is_none_or(|point| normalized_point_plane_may_be_on(point, plane_f64))
             && crate::intersection::four_plane_determinant(
@@ -1386,9 +1386,9 @@ impl ProjectiveCycle {
             let edge_index = point_cache.boundary_plane_index(source_plane, &edge_identity, edge);
             boundary.push(ProjectiveBoundaryEntry {
                 point_index: projective_point_index,
-                preparation: ProjectivePointPreparation {
+                evidence: ProjectivePointEvidence {
                     approximate,
-                    // Retain prepared queries only for constructed crossings that
+                    // Retain filter queries only for constructed crossings that
                     // survive into later clips; source vertices use the one-shot path.
                     rational_filter_query: None,
                 },
@@ -1414,7 +1414,7 @@ impl ProjectiveCycle {
     ) -> Vec<(
         usize,
         usize,
-        ProjectivePointPreparation,
+        ProjectivePointEvidence,
         ConstructionVertexIdentity,
     )> {
         let mut crossings = Vec::with_capacity(2);
@@ -1435,11 +1435,12 @@ impl ProjectiveCycle {
                     point_cache,
                 );
                 let rational_filter_query =
-                    PreparedProjectivePoint3::new(point_cache.point(point)).rational_filter_query();
+                    ProjectivePoint3PredicateEvidence::new(point_cache.point(point))
+                        .rational_filter_query();
                 crossings.push((
                     index,
                     point,
-                    ProjectivePointPreparation {
+                    ProjectivePointEvidence {
                         approximate: approximate_point,
                         rational_filter_query,
                     },
@@ -1458,7 +1459,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let prepared_plane = PreparedRationalPlane4::new(plane);
+        let plane_evidence = RationalPlane4PredicateEvidence::new(plane);
         let classifications = self
             .boundary
             .iter()
@@ -1473,17 +1474,18 @@ impl ProjectiveCycle {
                     point_cache,
                 ) {
                     Ok(Classification::On)
-                } else if let Some(plane_filter) = &prepared_plane {
-                    let prepared = PreparedProjectivePoint3::with_rational_filter_query(
+                } else if let Some(plane_filter) = &plane_evidence {
+                    let point_evidence =
+                        ProjectivePoint3PredicateEvidence::with_rational_filter_query(
                         point,
-                        entry.preparation.rational_filter_query,
+                        entry.evidence.rational_filter_query,
                     );
-                    match prepared
+                    match point_evidence
                         .classify_rational_plane_filter(plane_filter)
-                        .or_else(|| prepared.classify_rational_plane_exact(plane_filter))
+                        .or_else(|| point_evidence.classify_rational_plane_exact(plane_filter))
                     {
                         Some(classification) => Ok(classification),
-                        None => prepared.classify(plane),
+                        None => point_evidence.classify(plane),
                     }
                 } else {
                     classify_projective_point(point, plane).inspect_err(|_error| {
@@ -1554,7 +1556,7 @@ impl ProjectiveCycle {
         for (index, entry) in boundary.into_iter().enumerate() {
             let ProjectiveBoundaryEntry {
                 point_index: point,
-                preparation: point_preparation,
+                evidence: point_evidence,
                 point_identity,
                 edge_index,
                 edge_identity,
@@ -1566,7 +1568,7 @@ impl ProjectiveCycle {
                 (Classification::Negative, Classification::Negative | Classification::On) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1585,7 +1587,7 @@ impl ProjectiveCycle {
                     debug_assert_eq!(crossing_index, index);
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity.clone(),
@@ -1611,7 +1613,7 @@ impl ProjectiveCycle {
                 (Classification::On, Classification::Negative) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity.clone(),
                         edge_index,
                         edge_identity,
@@ -1619,7 +1621,7 @@ impl ProjectiveCycle {
                     );
                     positive.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         inverted_plane_index,
                         split_identity.clone(),
@@ -1629,7 +1631,7 @@ impl ProjectiveCycle {
                 (Classification::On, Classification::On) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity.clone(),
                         edge_index,
                         edge_identity.clone(),
@@ -1637,7 +1639,7 @@ impl ProjectiveCycle {
                     );
                     positive.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1647,7 +1649,7 @@ impl ProjectiveCycle {
                 (Classification::On, Classification::Positive) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity.clone(),
                         clipping_plane_index,
                         split_identity.clone(),
@@ -1655,7 +1657,7 @@ impl ProjectiveCycle {
                     );
                     positive.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1682,7 +1684,7 @@ impl ProjectiveCycle {
                     );
                     positive.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1700,7 +1702,7 @@ impl ProjectiveCycle {
                 (Classification::Positive, Classification::On | Classification::Positive) => {
                     positive.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1725,7 +1727,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let prepared_plane = PreparedRationalPlane4::new(plane);
+        let plane_evidence = RationalPlane4PredicateEvidence::new(plane);
         let classifications = self
             .boundary
             .iter()
@@ -1740,17 +1742,18 @@ impl ProjectiveCycle {
                     point_cache,
                 ) {
                     Ok(Classification::On)
-                } else if let Some(plane_filter) = &prepared_plane {
-                    let prepared = PreparedProjectivePoint3::with_rational_filter_query(
+                } else if let Some(plane_filter) = &plane_evidence {
+                    let point_evidence =
+                        ProjectivePoint3PredicateEvidence::with_rational_filter_query(
                         point,
-                        entry.preparation.rational_filter_query,
+                        entry.evidence.rational_filter_query,
                     );
-                    match prepared
+                    match point_evidence
                         .classify_rational_plane_filter(plane_filter)
-                        .or_else(|| prepared.classify_rational_plane_exact(plane_filter))
+                        .or_else(|| point_evidence.classify_rational_plane_exact(plane_filter))
                     {
                         Some(classification) => Ok(classification),
-                        None => prepared.classify(plane),
+                        None => point_evidence.classify(plane),
                     }
                 } else {
                     classify_projective_point(point, plane).inspect_err(|_error| {
@@ -1830,7 +1833,7 @@ impl ProjectiveCycle {
         for (index, entry) in boundary.into_iter().enumerate() {
             let ProjectiveBoundaryEntry {
                 point_index: point,
-                preparation: point_preparation,
+                evidence: point_evidence,
                 point_identity,
                 edge_index,
                 edge_identity,
@@ -1845,7 +1848,7 @@ impl ProjectiveCycle {
                 ) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1864,7 +1867,7 @@ impl ProjectiveCycle {
                     debug_assert_eq!(crossing_index, index);
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         edge_index,
                         edge_identity,
@@ -1882,7 +1885,7 @@ impl ProjectiveCycle {
                 (Classification::On, Classification::Positive) => {
                     negative.push(
                         point,
-                        point_preparation,
+                        point_evidence,
                         point_identity,
                         clipping_plane_index,
                         split_identity.clone(),
@@ -2237,7 +2240,7 @@ fn compute_two_convex_inputs_projectively(
             }
         }
     }
-    let mut prepared_verification_planes = Vec::new();
+    let mut verification_plane_evidence = Vec::new();
     let mut candidate_planes = Vec::new();
     let mut on_source_vertices = Vec::new();
     let mut active_plane_proposal_scratch = ActivePlaneProposalScratch::default();
@@ -2361,7 +2364,7 @@ fn compute_two_convex_inputs_projectively(
             &candidate_planes,
             other,
             emit_outside,
-            &mut prepared_verification_planes,
+            &mut verification_plane_evidence,
             &mut active_plane_proposal_scratch,
             &mut projective_point_cache,
         )
@@ -3352,7 +3355,7 @@ fn exact_inside_and_outside_cycles<'a>(
     candidate_planes: &[usize],
     support_plane_mesh: usize,
     retain_outside: bool,
-    prepared_verification_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
+    verification_plane_evidence: &mut Vec<(usize, Option<RationalPlane4PredicateEvidence<'a>>)>,
     active_plane_proposal_scratch: &mut ActivePlaneProposalScratch,
     point_cache: &mut ProjectivePointCache,
 ) -> HypermeshResult<Option<(ProjectiveCycle, Option<Vec<ProjectiveCycle>>)>> {
@@ -3394,7 +3397,7 @@ fn exact_inside_and_outside_cycles<'a>(
             candidate_planes,
             proposed_planes,
             support_plane_mesh,
-            prepared_verification_planes,
+            verification_plane_evidence,
             point_cache,
         )
         .inspect_err(|_error| {
@@ -3542,12 +3545,12 @@ fn cycle_satisfies_planes<'a>(
     plane_indices: &[usize],
     excluded_planes: &[usize],
     support_plane_mesh: usize,
-    prepared_planes: &mut Vec<(usize, Option<PreparedRationalPlane4<'a>>)>,
+    rational_plane_evidence: &mut Vec<(usize, Option<RationalPlane4PredicateEvidence<'a>>)>,
     point_cache: &ProjectivePointCache,
 ) -> HypermeshResult<bool> {
     debug_assert!(plane_indices.is_sorted());
     debug_assert!(excluded_planes.is_sorted());
-    prepared_planes.clear();
+    rational_plane_evidence.clear();
     let mut excluded_index = 0;
     for &plane_index in plane_indices {
         while excluded_planes
@@ -3560,19 +3563,19 @@ fn cycle_satisfies_planes<'a>(
             excluded_index += 1;
             continue;
         }
-        prepared_planes.push((
+        rational_plane_evidence.push((
             plane_index,
-            PreparedRationalPlane4::new(support_planes[plane_index]),
+            RationalPlane4PredicateEvidence::new(support_planes[plane_index]),
         ));
     }
     for entry in &cycle.boundary {
-        let prepared = PreparedProjectivePoint3::with_rational_filter_query(
+        let point_evidence = ProjectivePoint3PredicateEvidence::with_rational_filter_query(
             point_cache.point(entry.point_index),
-            entry.preparation.rational_filter_query,
+            entry.evidence.rational_filter_query,
         );
-        for (plane_index, prepared_plane) in prepared_planes.iter() {
-            let classification = match prepared_plane {
-                Some(plane) => match prepared.classify_rational_plane_filter(plane) {
+        for (plane_index, plane_evidence) in rational_plane_evidence.iter() {
+            let classification = match plane_evidence {
+                Some(plane) => match point_evidence.classify_rational_plane_filter(plane) {
                     Some(classification) => classification,
                     None if point_cache.has_incidence(
                         &entry.point_identity,
@@ -3584,12 +3587,12 @@ fn cycle_satisfies_planes<'a>(
                     {
                         Classification::On
                     }
-                    None => match prepared.classify_rational_plane_exact(plane) {
+                    None => match point_evidence.classify_rational_plane_exact(plane) {
                         Some(classification) => classification,
-                        None => prepared.classify(support_planes[*plane_index])?,
+                        None => point_evidence.classify(support_planes[*plane_index])?,
                     },
                 },
-                None => prepared.classify(support_planes[*plane_index])?,
+                None => point_evidence.classify(support_planes[*plane_index])?,
             };
             if classification.is_positive() {
                 return Ok(false);
@@ -3615,7 +3618,7 @@ fn propose_active_planes_f64<'a>(
 ) -> Option<&'a [usize]> {
     scratch.cycle.clear();
     for entry in &source.boundary {
-        scratch.cycle.push(entry.preparation.approximate?);
+        scratch.cycle.push(entry.evidence.approximate?);
     }
     scratch.crossed_planes.clear();
     scratch.active.clear();
@@ -4177,13 +4180,13 @@ mod tests {
         );
         assert!(
             split.negative.boundary[1]
-                .preparation
+                .evidence
                 .rational_filter_query
                 .is_some()
         );
         assert!(
             split.positive.boundary[0]
-                .preparation
+                .evidence
                 .rational_filter_query
                 .is_some()
         );
@@ -4538,7 +4541,7 @@ mod tests {
             );
         }
 
-        let mut prepared_planes = Vec::new();
+        let mut rational_plane_evidence = Vec::new();
         assert!(
             cycle_satisfies_planes(
                 &cycle,
@@ -4546,7 +4549,7 @@ mod tests {
                 &[0],
                 &[],
                 0,
-                &mut prepared_planes,
+                &mut rational_plane_evidence,
                 &point_cache,
             )
             .unwrap()

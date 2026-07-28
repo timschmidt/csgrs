@@ -26,8 +26,8 @@ use super::{
 use crate::bvh::bounds_overlap;
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
-    Aabb, Classification, Plane, PreparedPoint3, axis_mut, axis_ref, classify_point, classify_real,
-    compare_real,
+    Aabb, Classification, Plane, Point3PredicateEvidence, axis_mut, axis_ref, classify_point,
+    classify_real, compare_real,
 };
 use crate::halfspace::aabb_core_halfspaces;
 use crate::polygon::{ApproxBounds, ConvexPolygon};
@@ -88,7 +88,7 @@ pub(super) fn detour_arrangement_cell(
     point: &Point3,
     arrangement_planes: &[Plane],
 ) -> HypermeshResult<Vec<Classification>> {
-    let point = PreparedPoint3::new(point);
+    let point = Point3PredicateEvidence::new(point);
     arrangement_planes
         .iter()
         .map(|plane| point.classify(plane))
@@ -289,8 +289,8 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
     }
 
     let dir_sign = if direction.is_gt() { 1 } else { -1 };
-    let start_prepared = PreparedPoint3::new(start);
-    let end_prepared = PreparedPoint3::new(end);
+    let start_evidence = Point3PredicateEvidence::new(start);
+    let end_evidence = Point3PredicateEvidence::new(end);
     let mut events = Vec::new();
     for polygon in polygons {
         if polygon.mesh_index < 0 || ignored_mesh == Some(polygon.mesh_index) {
@@ -305,7 +305,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
 
         let normal_axis = axis_ref(&polygon.support.normal, axis);
         if normal_axis.definitely_zero() {
-            if start_prepared.classify(&polygon.support)? == Classification::On
+            if start_evidence.classify(&polygon.support)? == Classification::On
                 && segment_has_coplanar_polygon_contact_before_end(start, end, polygon)?
             {
                 return Err(HypermeshError::UnknownClassification);
@@ -313,8 +313,8 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
             continue;
         }
 
-        let start_class = start_prepared.classify(&polygon.support)?;
-        let end_class = end_prepared.classify(&polygon.support)?;
+        let start_class = start_evidence.classify(&polygon.support)?;
+        let end_class = end_evidence.classify(&polygon.support)?;
         if start_class == Classification::On {
             match classify_point_in_polygon(start, polygon)? {
                 PolygonPointLocation::Outside => {}
@@ -724,8 +724,8 @@ pub(super) fn points_share_open_traced_cell(
         *axis_mut(&mut max, axis) = upper.clone();
     }
     let segment_bounds = ApproxBounds::new(min, max);
-    let start = PreparedPoint3::new(start);
-    let end = PreparedPoint3::new(end);
+    let start = Point3PredicateEvidence::new(start);
+    let end = Point3PredicateEvidence::new(end);
 
     for polygon in polygons {
         if polygon.mesh_index < 0 {
@@ -3999,7 +3999,7 @@ pub(super) fn point_lies_on_traced_surface(
     point: &Point3,
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<bool> {
-    let prepared_point = PreparedPoint3::new(point);
+    let point_evidence = Point3PredicateEvidence::new(point);
     for polygon in polygons {
         if polygon.mesh_index < 0 {
             continue;
@@ -4011,14 +4011,14 @@ pub(super) fn point_lies_on_traced_surface(
             continue;
         }
 
-        if prepared_point.classify(&polygon.support)? != Classification::On {
+        if point_evidence.classify(&polygon.support)? != Classification::On {
             continue;
         }
 
         let mut inside_polygon = true;
         let mut on_edge = false;
         for edge in polygon.edges.iter() {
-            match prepared_point.classify(edge)? {
+            match point_evidence.classify(edge)? {
                 Classification::Positive => {
                     inside_polygon = false;
                     break;

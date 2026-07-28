@@ -5,40 +5,44 @@ use std::cmp::Ordering;
 
 use hyperlattice::{HomogeneousPoint3, Point3, Rational, Real, homogeneous_point_plane_expression};
 use hyperlimit::{PredicateOutcome, Sign, classify_real_sign};
-use hyperreal::{PreparedRationalLinearForm4Filter, PreparedRationalLinearForm4Query, RealSign};
+use hyperreal::{RationalLinearForm4Filter, RationalLinearForm4Query, RealSign};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Plane;
 
-const LINEAR_FORM_FILTER_CACHE_CAPACITY: usize = 8_192;
-const LINEAR_FORM_FILTER_SLOT_CAPACITY: usize = LINEAR_FORM_FILTER_CACHE_CAPACITY * 2;
-const INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY: usize = 16;
-const EMPTY_LINEAR_FORM_FILTER_SLOT: u16 = u16::MAX;
+const RATIONAL_LINEAR_FORM4_FILTER_CACHE_CAPACITY: usize = 8_192;
+const RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY: usize =
+    RATIONAL_LINEAR_FORM4_FILTER_CACHE_CAPACITY * 2;
+const INITIAL_RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY: usize = 16;
+const EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT: u16 = u16::MAX;
 
-struct CachedLinearForm3Filter {
+struct CachedRationalLinearForm4Filter {
     fingerprint: u64,
     owners: [Rational; 4],
-    filter: Option<PreparedRationalLinearForm4Filter>,
+    filter: Option<RationalLinearForm4Filter>,
 }
 
-struct LinearForm3FilterCache {
+struct RationalLinearForm4FilterCache {
     /// Open-addressed slots contain compact indices into `entries`. Keeping
     /// storage owners only in the dense entry array avoids duplicating four
     /// pointers in every hash-table entry.
     slots: Vec<u16>,
-    entries: Vec<CachedLinearForm3Filter>,
+    entries: Vec<CachedRationalLinearForm4Filter>,
 }
 
-impl Default for LinearForm3FilterCache {
+impl Default for RationalLinearForm4FilterCache {
     fn default() -> Self {
         Self {
-            slots: vec![EMPTY_LINEAR_FORM_FILTER_SLOT; INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY],
+            slots: vec![
+                EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT;
+                INITIAL_RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY
+            ],
             entries: Vec::new(),
         }
     }
 }
 
-impl LinearForm3FilterCache {
+impl RationalLinearForm4FilterCache {
     #[inline]
     fn fingerprint(key: [usize; 4]) -> u64 {
         let mut mixed = 4_u64.wrapping_mul(0x517c_c1b7_2722_0a95);
@@ -51,7 +55,7 @@ impl LinearForm3FilterCache {
     }
 
     #[inline]
-    fn entry_matches(entry: &CachedLinearForm3Filter, key: [usize; 4]) -> bool {
+    fn entry_matches(entry: &CachedRationalLinearForm4Filter, key: [usize; 4]) -> bool {
         entry
             .owners
             .iter()
@@ -60,12 +64,12 @@ impl LinearForm3FilterCache {
     }
 
     #[inline]
-    fn find(&self, key: [usize; 4]) -> Option<Option<PreparedRationalLinearForm4Filter>> {
+    fn find(&self, key: [usize; 4]) -> Option<Option<RationalLinearForm4Filter>> {
         let fingerprint = Self::fingerprint(key);
         let mut slot = fingerprint as usize & (self.slots.len() - 1);
         loop {
             let entry_index = self.slots[slot];
-            if entry_index == EMPTY_LINEAR_FORM_FILTER_SLOT {
+            if entry_index == EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT {
                 return None;
             }
             let entry = &self.entries[usize::from(entry_index)];
@@ -77,12 +81,12 @@ impl LinearForm3FilterCache {
     }
 
     fn grow_slots(&mut self) {
-        let new_capacity = (self.slots.len() * 2).min(LINEAR_FORM_FILTER_SLOT_CAPACITY);
+        let new_capacity = (self.slots.len() * 2).min(RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY);
         debug_assert!(new_capacity > self.slots.len());
-        self.slots = vec![EMPTY_LINEAR_FORM_FILTER_SLOT; new_capacity];
+        self.slots = vec![EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT; new_capacity];
         for (entry_index, entry) in self.entries.iter().enumerate() {
             let mut slot = entry.fingerprint as usize & (new_capacity - 1);
-            while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
+            while self.slots[slot] != EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT {
                 slot = (slot + 1) & (new_capacity - 1);
             }
             self.slots[slot] = entry_index as u16;
@@ -90,47 +94,47 @@ impl LinearForm3FilterCache {
     }
 
     #[inline]
-    fn insert(&mut self, entry: CachedLinearForm3Filter) {
-        if self.entries.len() >= LINEAR_FORM_FILTER_CACHE_CAPACITY {
+    fn insert(&mut self, entry: CachedRationalLinearForm4Filter) {
+        if self.entries.len() >= RATIONAL_LINEAR_FORM4_FILTER_CACHE_CAPACITY {
             self.entries.clear();
-            self.slots.fill(EMPTY_LINEAR_FORM_FILTER_SLOT);
+            self.slots.fill(EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT);
         }
         if self.entries.len() >= self.slots.len() / 2 {
             self.grow_slots();
         }
         let mut slot = entry.fingerprint as usize & (self.slots.len() - 1);
-        while self.slots[slot] != EMPTY_LINEAR_FORM_FILTER_SLOT {
+        while self.slots[slot] != EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT {
             slot = (slot + 1) & (self.slots.len() - 1);
         }
         let entry_index = self.entries.len();
-        debug_assert!(entry_index < usize::from(EMPTY_LINEAR_FORM_FILTER_SLOT));
+        debug_assert!(entry_index < usize::from(EMPTY_RATIONAL_LINEAR_FORM4_FILTER_SLOT));
         self.entries.push(entry);
         self.slots[slot] = entry_index as u16;
     }
 }
 
 thread_local! {
-    static LINEAR_FORM_FILTERS: RefCell<LinearForm3FilterCache> =
-        RefCell::new(LinearForm3FilterCache::default());
+    static RATIONAL_LINEAR_FORM4_FILTERS: RefCell<RationalLinearForm4FilterCache> =
+        RefCell::new(RationalLinearForm4FilterCache::default());
 }
 
-fn prepared_linear_form3_filter(
+fn rational_linear_form4_filter(
     plane: &Plane,
     coefficients: [&Rational; 4],
-) -> Option<PreparedRationalLinearForm4Filter> {
+) -> Option<RationalLinearForm4Filter> {
     let key = coefficients.map(Rational::storage_identity);
-    LINEAR_FORM_FILTERS.with_borrow_mut(|cache| {
+    RATIONAL_LINEAR_FORM4_FILTERS.with_borrow_mut(|cache| {
         if let Some(filter) = cache.find(key) {
             return filter;
         }
-        let filter = Real::prepare_rational_linear_form4_filter([
+        let filter = RationalLinearForm4Filter::from_reals([
             &plane.normal.x,
             &plane.normal.y,
             &plane.normal.z,
             &plane.offset,
         ]);
-        cache.insert(CachedLinearForm3Filter {
-            fingerprint: LinearForm3FilterCache::fingerprint(key),
+        cache.insert(CachedRationalLinearForm4Filter {
+            fingerprint: RationalLinearForm4FilterCache::fingerprint(key),
             owners: coefficients.map(Clone::clone),
             filter,
         });
@@ -173,18 +177,18 @@ impl Classification {
 
 /// Classifies an affine point against a plane.
 pub fn classify_point(point: &Point3, plane: &Plane) -> HypermeshResult<Classification> {
-    PreparedPoint3::new(point).classify(plane)
+    Point3PredicateEvidence::new(point).classify(plane)
 }
 
 /// Borrowed point coordinates cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct PreparedPoint3<'a> {
+pub(crate) struct Point3PredicateEvidence<'a> {
     point: &'a Point3,
     exact_coordinates: Option<[&'a Rational; 3]>,
-    rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+    rational_filter_query: Option<RationalLinearForm4Query>,
 }
 
-impl<'a> PreparedPoint3<'a> {
+impl<'a> Point3PredicateEvidence<'a> {
     /// Retains exact-rational coordinate facts without cloning scalar storage.
     pub(crate) fn new(point: &'a Point3) -> Self {
         let exact_coordinates = match (
@@ -196,7 +200,7 @@ impl<'a> PreparedPoint3<'a> {
             _ => None,
         };
         crate::trace_dispatch!(
-            "prepared-point3",
+            "point3-evidence",
             if exact_coordinates.is_some() {
                 "exact-rational"
             } else {
@@ -204,9 +208,9 @@ impl<'a> PreparedPoint3<'a> {
             }
         );
         let rational_filter_query =
-            exact_coordinates.and_then(Real::prepare_rational_affine_point3_query);
+            exact_coordinates.and_then(RationalLinearForm4Query::from_affine_point3);
         if rational_filter_query.is_some() {
-            crate::trace_dispatch!("prepared-point3", "rational-filter-query");
+            crate::trace_dispatch!("point3-evidence", "rational-filter-query");
         }
         Self {
             point,
@@ -234,10 +238,10 @@ impl<'a> PreparedPoint3<'a> {
     }
 }
 
-pub(crate) fn classify_point_with_prepared_query(
+pub(crate) fn classify_point_with_rational_query(
     point: &Point3,
     plane: &Plane,
-    rational_filter_query: Option<&PreparedRationalLinearForm4Query>,
+    rational_filter_query: Option<&RationalLinearForm4Query>,
 ) -> HypermeshResult<Classification> {
     let exact_coordinates = match (
         point.x.exact_rational_ref(),
@@ -247,7 +251,7 @@ pub(crate) fn classify_point_with_prepared_query(
         (Some(x), Some(y), Some(z)) => Some([x, y, z]),
         _ => None,
     };
-    PreparedPoint3 {
+    Point3PredicateEvidence {
         point,
         exact_coordinates,
         rational_filter_query: rational_filter_query.copied(),
@@ -273,19 +277,19 @@ pub fn classify_projective_point(
 
 /// Borrowed homogeneous coordinates cached for repeated plane predicates.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct PreparedProjectivePoint3<'a> {
+pub(crate) struct ProjectivePoint3PredicateEvidence<'a> {
     point: &'a HomogeneousPoint3,
     exact_coordinates: Option<[&'a Rational; 4]>,
-    rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+    rational_filter_query: Option<RationalLinearForm4Query>,
 }
 
 #[derive(Clone, Copy)]
-pub(crate) struct PreparedRationalPlane4<'a> {
+pub(crate) struct RationalPlane4PredicateEvidence<'a> {
     coefficients: [&'a Rational; 4],
-    filter: Option<PreparedRationalLinearForm4Filter>,
+    filter: Option<RationalLinearForm4Filter>,
 }
 
-impl<'a> PreparedRationalPlane4<'a> {
+impl<'a> RationalPlane4PredicateEvidence<'a> {
     pub(crate) fn new(plane: &'a Plane) -> Option<Self> {
         let [Some(a), Some(b), Some(c), Some(d)] = [
             &plane.normal.x,
@@ -299,23 +303,23 @@ impl<'a> PreparedRationalPlane4<'a> {
         let coefficients = [a, b, c, d];
         Some(Self {
             coefficients,
-            filter: prepared_linear_form3_filter(plane, coefficients),
+            filter: rational_linear_form4_filter(plane, coefficients),
         })
     }
 }
 
-impl<'a> PreparedProjectivePoint3<'a> {
+impl<'a> ProjectivePoint3PredicateEvidence<'a> {
     pub(crate) fn new(point: &'a HomogeneousPoint3) -> Self {
-        let mut prepared = Self::with_rational_filter_query(point, None);
-        prepared.rational_filter_query = prepared
+        let mut evidence = Self::with_rational_filter_query(point, None);
+        evidence.rational_filter_query = evidence
             .exact_coordinates
-            .and_then(Real::prepare_rational_linear_form4_query);
-        prepared
+            .and_then(RationalLinearForm4Query::from_rationals);
+        evidence
     }
 
     pub(crate) fn with_rational_filter_query(
         point: &'a HomogeneousPoint3,
-        rational_filter_query: Option<PreparedRationalLinearForm4Query>,
+        rational_filter_query: Option<RationalLinearForm4Query>,
     ) -> Self {
         let exact_coordinates = match (
             point.x.exact_rational_ref(),
@@ -333,7 +337,7 @@ impl<'a> PreparedProjectivePoint3<'a> {
         }
     }
 
-    pub(crate) fn rational_filter_query(&self) -> Option<PreparedRationalLinearForm4Query> {
+    pub(crate) fn rational_filter_query(&self) -> Option<RationalLinearForm4Query> {
         self.rational_filter_query
     }
 
@@ -356,14 +360,14 @@ impl<'a> PreparedProjectivePoint3<'a> {
     #[inline]
     pub(crate) fn classify_rational_plane_filter(
         &self,
-        plane: &PreparedRationalPlane4<'_>,
+        plane: &RationalPlane4PredicateEvidence<'_>,
     ) -> Option<Classification> {
         let [x, y, z, weight] = self.exact_coordinates?;
         let sign = plane
             .filter
             .and_then(|filter| match &self.rational_filter_query {
-                Some(query) => filter.sign_prepared(query),
-                None => filter.sign_rational([x, y, z, weight]),
+                Some(query) => filter.sign(query),
+                None => filter.sign_rationals([x, y, z, weight]),
             })?;
         crate::trace_dispatch!("classify-point", "projective-rational-floating-filter");
         crate::trace_dispatch!("classify-point", "projective-exact-rational");
@@ -376,7 +380,7 @@ impl<'a> PreparedProjectivePoint3<'a> {
 
     pub(crate) fn classify_rational_plane_exact(
         &self,
-        plane: &PreparedRationalPlane4<'_>,
+        plane: &RationalPlane4PredicateEvidence<'_>,
     ) -> Option<Classification> {
         let [x, y, z, weight] = self.exact_coordinates?;
         let [a, b, c, d] = plane.coefficients;
@@ -414,7 +418,7 @@ fn classify_exact_rational_coordinates(
     plane: &Plane,
     [x, y, z]: [&Rational; 3],
     homogeneous_weight: &Rational,
-    prepared_query: Option<&PreparedRationalLinearForm4Query>,
+    rational_query: Option<&RationalLinearForm4Query>,
 ) -> Option<Classification> {
     let [Some(a), Some(b), Some(c), Some(d)] = [
         &plane.normal.x,
@@ -429,8 +433,8 @@ fn classify_exact_rational_coordinates(
         [a, b, c, d],
         [x, y, z],
         homogeneous_weight,
-        prepared_query,
-        prepared_linear_form3_filter(plane, [a, b, c, d]),
+        rational_query,
+        rational_linear_form4_filter(plane, [a, b, c, d]),
     ))
 }
 
@@ -438,12 +442,12 @@ fn classify_exact_rational_coordinates_with_filter(
     [a, b, c, d]: [&Rational; 4],
     [x, y, z]: [&Rational; 3],
     homogeneous_weight: &Rational,
-    prepared_query: Option<&PreparedRationalLinearForm4Query>,
-    filter: Option<PreparedRationalLinearForm4Filter>,
+    rational_query: Option<&RationalLinearForm4Query>,
+    filter: Option<RationalLinearForm4Filter>,
 ) -> Classification {
-    let filtered_sign = filter.and_then(|filter| match prepared_query {
-        Some(query) => filter.sign_prepared(query),
-        None => filter.sign_rational([x, y, z, homogeneous_weight]),
+    let filtered_sign = filter.and_then(|filter| match rational_query {
+        Some(query) => filter.sign(query),
+        None => filter.sign_rationals([x, y, z, homogeneous_weight]),
     });
     if let Some(sign) = filtered_sign {
         crate::trace_dispatch!(
@@ -514,14 +518,14 @@ mod tests {
 
     #[test]
     fn linear_form_filter_cache_retains_owners_and_probes_collisions() {
-        let mut cache = LinearForm3FilterCache::default();
+        let mut cache = RationalLinearForm4FilterCache::default();
         let mut first_by_slot = std::collections::HashMap::new();
         let (first, second) = (1_i64..20_000)
             .find_map(|value| {
                 let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
                 let key = owners.each_ref().map(|owner| owner.storage_identity());
-                let slot = LinearForm3FilterCache::fingerprint(key) as usize
-                    & (LINEAR_FORM_FILTER_SLOT_CAPACITY - 1);
+                let slot = RationalLinearForm4FilterCache::fingerprint(key) as usize
+                    & (RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY - 1);
                 if let Some(first) = first_by_slot.remove(&slot) {
                     Some((first, (key, owners)))
                 } else {
@@ -533,13 +537,13 @@ mod tests {
 
         let (first_key, first_owners) = first;
         let (second_key, second_owners) = second;
-        cache.insert(CachedLinearForm3Filter {
-            fingerprint: LinearForm3FilterCache::fingerprint(first_key),
+        cache.insert(CachedRationalLinearForm4Filter {
+            fingerprint: RationalLinearForm4FilterCache::fingerprint(first_key),
             owners: first_owners,
             filter: None,
         });
-        cache.insert(CachedLinearForm3Filter {
-            fingerprint: LinearForm3FilterCache::fingerprint(second_key),
+        cache.insert(CachedRationalLinearForm4Filter {
+            fingerprint: RationalLinearForm4FilterCache::fingerprint(second_key),
             owners: second_owners,
             filter: None,
         });
@@ -552,14 +556,14 @@ mod tests {
         for value in 30_000_i64..30_512 {
             let owners = std::array::from_fn(|offset| Rational::new(value + offset as i64));
             let key = owners.each_ref().map(|owner| owner.storage_identity());
-            cache.insert(CachedLinearForm3Filter {
-                fingerprint: LinearForm3FilterCache::fingerprint(key),
+            cache.insert(CachedRationalLinearForm4Filter {
+                fingerprint: RationalLinearForm4FilterCache::fingerprint(key),
                 owners,
                 filter: None,
             });
             grown_keys.push(key);
         }
-        assert!(cache.slots.len() > INITIAL_LINEAR_FORM_FILTER_SLOT_CAPACITY);
+        assert!(cache.slots.len() > INITIAL_RATIONAL_LINEAR_FORM4_FILTER_SLOT_CAPACITY);
         assert!(
             grown_keys
                 .into_iter()
@@ -568,21 +572,21 @@ mod tests {
     }
 
     #[test]
-    fn prepared_point_matches_direct_exact_classification() {
+    fn point_evidence_matches_direct_exact_classification() {
         let point = point(Real::from(2), Real::from(3), Real::from(5));
-        let prepared = PreparedPoint3::new(&point);
+        let evidence = Point3PredicateEvidence::new(&point);
         let planes = [
             Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::from(-2)),
             Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::from(-4)),
         ];
 
-        assert_eq!(prepared.classify(&planes[0]).unwrap(), Classification::On);
+        assert_eq!(evidence.classify(&planes[0]).unwrap(), Classification::On);
         assert_eq!(
-            prepared.classify(&planes[1]).unwrap(),
+            evidence.classify(&planes[1]).unwrap(),
             Classification::Negative
         );
         for plane in &planes {
-            assert_eq!(prepared.classify(plane), classify_point(&point, plane));
+            assert_eq!(evidence.classify(plane), classify_point(&point, plane));
         }
     }
 
@@ -597,7 +601,9 @@ mod tests {
             Classification::Positive
         );
         assert_eq!(
-            PreparedPoint3::new(&point).classify(&plane).unwrap(),
+            Point3PredicateEvidence::new(&point)
+                .classify(&plane)
+                .unwrap(),
             Classification::Positive
         );
     }
@@ -615,42 +621,42 @@ mod tests {
     }
 
     #[test]
-    fn prepared_projective_point_matches_repeated_plane_classification() {
+    fn projective_point_evidence_matches_repeated_plane_classification() {
         let point =
             HomogeneousPoint3::new(Real::from(6), Real::from(3), Real::zero(), Real::from(3));
-        let prepared = PreparedProjectivePoint3::new(&point);
+        let evidence = ProjectivePoint3PredicateEvidence::new(&point);
         let planes = [
             Plane::from_coefficients(Real::one(), Real::zero(), Real::zero(), Real::from(-2)),
             Plane::from_coefficients(Real::zero(), Real::one(), Real::zero(), Real::from(-2)),
             Plane::from_coefficients(Real::pi(), Real::zero(), Real::zero(), Real::from(-3)),
         ];
 
-        assert_eq!(prepared.classify(&planes[0]).unwrap(), Classification::On);
+        assert_eq!(evidence.classify(&planes[0]).unwrap(), Classification::On);
         assert_eq!(
-            prepared.classify(&planes[1]).unwrap(),
+            evidence.classify(&planes[1]).unwrap(),
             Classification::Negative
         );
         assert_eq!(
-            prepared.classify(&planes[2]).unwrap(),
+            evidence.classify(&planes[2]).unwrap(),
             Classification::Positive
         );
         for plane in &planes {
             assert_eq!(
-                prepared.classify(plane),
+                evidence.classify(plane),
                 classify_projective_point(&point, plane)
             );
         }
         for plane in &planes[..2] {
-            let prepared_plane =
-                PreparedRationalPlane4::new(plane).expect("integer plane is exactly rational");
+            let plane_evidence = RationalPlane4PredicateEvidence::new(plane)
+                .expect("integer plane is exactly rational");
             assert_eq!(
-                prepared
-                    .classify_rational_plane_filter(&prepared_plane)
-                    .or_else(|| prepared.classify_rational_plane_exact(&prepared_plane)),
-                Some(prepared.classify(plane).unwrap()),
+                evidence
+                    .classify_rational_plane_filter(&plane_evidence)
+                    .or_else(|| evidence.classify_rational_plane_exact(&plane_evidence)),
+                Some(evidence.classify(plane).unwrap()),
             );
         }
-        assert!(PreparedRationalPlane4::new(&planes[2]).is_none());
+        assert!(RationalPlane4PredicateEvidence::new(&planes[2]).is_none());
     }
 
     #[test]
