@@ -1,6 +1,6 @@
 [package]
 name = "hypertri"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 description = "Hyperreal-backed triangulation algorithms with exact geometric predicates"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
@@ -24,7 +24,7 @@ serde = ["dep:serde", "hyperreal/serde"]
 # Cargo uses the path in this workspace and retains the version requirement in
 # the published manifest.
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"] }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"] }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 
 [dev-dependencies]

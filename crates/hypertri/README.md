@@ -70,7 +70,7 @@ Equivalent manifest entry:
 
 ```toml
 [dependencies]
-hypertri = { version = "0.4.0", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.4.1", default-features = false, features = ["earcut"] }
 ```
 
 Replace `src/main.rs` with:
