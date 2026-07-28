@@ -117,8 +117,6 @@ const NO_GMP_ANALOG: &[&str] = &[
     "materialize_second_parameter",
     "intersection_point",
     "intersection_point_f64",
-    "prepare_incircle2d_filter",
-    "prepare_insphere3d_filter",
     "from_point3",
     "second_signs",
     "signs_exact_dyadic_f64",

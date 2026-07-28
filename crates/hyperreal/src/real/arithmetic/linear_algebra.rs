@@ -526,13 +526,29 @@ impl RationalLinearForm4Filter {
 /// checks, and the conservative in-circle error bound remain per call.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedIncircle2dFilter {
+pub struct Incircle2Filter {
     a: [f64; 2],
     b: [f64; 2],
     c: [f64; 2],
 }
 
-impl PreparedIncircle2dFilter {
+impl Incircle2Filter {
+    /// Construct a reusable filter from three exact-dyadic points.
+    #[inline]
+    pub fn from_reals(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+    ) -> Option<Self> {
+        let [ax, ay, bx, by, cx, cy] =
+            Real::exact_dyadic_f64([a[0], a[1], b[0], b[1], c[0], c[1]])?;
+        Some(Self {
+            a: [ax, ay],
+            b: [bx, by],
+            c: [cx, cy],
+        })
+    }
+
     /// Try to certify the in-circle sign for query point `d`.
     #[inline]
     pub fn sign(&self, d: [&Real; 2]) -> Option<RealSign> {
@@ -548,14 +564,33 @@ impl PreparedIncircle2dFilter {
 /// be returned.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedInsphere3dFilter {
+pub struct Insphere3Filter {
     a: [f64; 3],
     b: [f64; 3],
     c: [f64; 3],
     d: [f64; 3],
 }
 
-impl PreparedInsphere3dFilter {
+impl Insphere3Filter {
+    /// Construct a reusable filter from four exact-dyadic points.
+    #[inline]
+    pub fn from_reals(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+    ) -> Option<Self> {
+        let [ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz] = Real::exact_dyadic_f64([
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
+        ])?;
+        Some(Self {
+            a: [ax, ay, az],
+            b: [bx, by, bz],
+            c: [cx, cy, cz],
+            d: [dx, dy, dz],
+        })
+    }
+
     /// Try to certify the in-sphere sign for query point `e`.
     #[inline]
     pub fn sign(&self, e: [&Real; 3]) -> Option<RealSign> {
@@ -741,45 +776,6 @@ impl Real {
             .checked_sub(negative_a)?
             .checked_sub(negative_b)?
             .checked_sub(negative_c)
-    }
-
-    /// Prepare a certified 2D in-circle filter for fixed points `a`, `b`, and
-    /// `c`.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_incircle2d_filter(
-        a: [&Real; 2],
-        b: [&Real; 2],
-        c: [&Real; 2],
-    ) -> Option<PreparedIncircle2dFilter> {
-        let [ax, ay, bx, by, cx, cy] =
-            Self::exact_dyadic_f64([a[0], a[1], b[0], b[1], c[0], c[1]])?;
-        Some(PreparedIncircle2dFilter {
-            a: [ax, ay],
-            b: [bx, by],
-            c: [cx, cy],
-        })
-    }
-
-    /// Prepare a certified 3D in-sphere filter for fixed points `a`, `b`, `c`,
-    /// and `d`.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_insphere3d_filter(
-        a: [&Real; 3],
-        b: [&Real; 3],
-        c: [&Real; 3],
-        d: [&Real; 3],
-    ) -> Option<PreparedInsphere3dFilter> {
-        let [ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz] = Self::exact_dyadic_f64([
-            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2], d[0], d[1], d[2],
-        ])?;
-        Some(PreparedInsphere3dFilter {
-            a: [ax, ay, az],
-            b: [bx, by, bz],
-            c: [cx, cy, cz],
-            d: [dx, dy, dz],
-        })
     }
 
     #[inline]

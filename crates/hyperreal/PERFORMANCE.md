@@ -57,7 +57,7 @@ The standalone `fuzz` workspace covers four runtime-bearing public families:
 | Target | Exactness and API boundary |
 | --- | --- |
 | `rational_arithmetic` | Rational construction, every core arithmetic ownership path, inverse/powers, truncation/fraction decomposition, and exact dyadic conversion |
-| `real_exact` | Exact Real arithmetic, fused dot/product-sum and dyadic line-intersection kernels, lazy-coordinate canonical boundaries, prepared determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
+| `real_exact` | Exact Real arithmetic, fused dot/product-sum and dyadic line-intersection kernels, lazy-coordinate canonical boundaries, retained determinant filters, certified facts/comparisons, exact conversion, and serde round trips |
 | `real_elementary` | Domain-bearing roots, logarithms, powers, trigonometric, inverse/hyperbolic, normal, error, and gamma-family construction with forced lazy evaluation |
 | `computable_approximation` | Direct Computable graph construction, transcendental dispatch, repeatable multi-precision approximation, structural facts, and bounded sign refinement |
 
@@ -524,7 +524,7 @@ benchmark, and correctness test supported it.
 | Middeke--Jeffrey--Koutschan (2021) | Predict systematic common row/column factors in fraction-free matrix decompositions. | No LU/QR decomposition exists here on which to attach the three-entry factor predictor.  Rational aggregation already shares denominators and strips dyadic/common factors. |
 | Odrzywolek (2026) | Lower elementary expressions to the binary `exp(x)-ln(y)` operator. | Rejected for this runtime: lowering expands the graph and imports complex principal-branch and infinity semantics absent from this real-only API. |
 | Payne--Hanek (1983) | Reduce huge trig arguments using only the quotient bits and residual bits that affect the result. | Retained as an exact narrow-sector certificate for the promoted tangent tail; measured result below. |
-| Shewchuk (1997) | Floating filters followed by adaptive nonoverlapping expansions and exact fallback. | Conservative f64 filters plus prepared exact-word and arbitrary-precision fallbacks already provide the profitable first and final stages.  Expansion stages remain a cross-stack candidate only if near-degenerate traces show exact fallback dominates. |
+| Shewchuk (1997) | Floating filters followed by adaptive nonoverlapping expansions and exact fallback. | Conservative f64 filters plus retained exact-word and arbitrary-precision fallbacks already provide the profitable first and final stages.  Expansion stages remain a cross-stack candidate only if near-degenerate traces show exact fallback dominates. |
 | Smith--Powell (2011) | Avoid pivot normalization until the end of Gauss--Jordan elimination. | Consistent with delayed division, but the crate has no row-reduction API.  Adding one would be a new subsystem, not a local optimization. |
 | Yap (1997) | Exact decisions may use approximations; compile recurring expressions, carry error bounds, and drive precision from the root. | This is the architecture of `Real`/`Computable` structural graphs, certified approximations, and predicate filters.  Algebraic root isolation and geometric-object packages belong above this scalar substrate. |
 
@@ -1887,6 +1887,19 @@ and the release WASM demo build. AddressSanitizer completed 2,509
 edges. The downstream `region_boolean` replay completed 2,706 executions at
 5,989 coverage points and 19,320 feature edges. Neither found an error;
 LeakSanitizer alone remained disabled under ptrace.
+
+### Direct lifted determinant filters
+
+Reusable in-circle and in-sphere filters now use `Incircle2Filter::from_reals`
+and `Insphere3Filter::from_reals`, matching the other determinant filters.
+Immediate callers retain `Real::certified_incircle2d_sign` and
+`Real::certified_insphere3d_sign`; no preparation lifecycle remains.
+
+The downstream Hyperlimit gate preserved the filter layout, query path, and
+exact fallback. Retained-query medians improved from 35.430 to 34.545 ns for
+in-circle and from 77.820 to 76.003 ns for in-sphere. Full evidence derivation
+measured 1.716 us versus the 1.736 us baseline for in-circle and 3.433 us
+versus 3.399 us for in-sphere; Criterion reported no regression.
 
 ### Architecture and measurement triggers
 

@@ -1442,16 +1442,16 @@ mod tests {
     }
 
     #[test]
-    fn prepared_incircle2d_filter_matches_one_shot_filter() {
+    fn incircle2_filter_matches_one_shot_filter() {
         let a = [Real::one(), Real::zero()];
         let b = [Real::zero(), Real::one()];
         let c = [Real::from(-1_i32), Real::zero()];
-        let prepared = Real::prepare_incircle2d_filter(
+        let filter = Incircle2Filter::from_reals(
             [&a[0], &a[1]],
             [&b[0], &b[1]],
             [&c[0], &c[1]],
         )
-        .expect("dyadic fixed points should prepare");
+        .expect("dyadic fixed points should construct a filter");
 
         for d in [
             [Real::zero(), Real::zero()],
@@ -1459,7 +1459,7 @@ mod tests {
             [Real::one(), Real::zero()],
         ] {
             assert_eq!(
-                prepared.sign([&d[0], &d[1]]),
+                filter.sign([&d[0], &d[1]]),
                 Real::certified_incircle2d_sign(
                     [&a[0], &a[1]],
                     [&b[0], &b[1]],
@@ -1558,18 +1558,18 @@ mod tests {
     }
 
     #[test]
-    fn prepared_insphere3d_filter_matches_one_shot_filter() {
+    fn insphere3_filter_matches_one_shot_filter() {
         let a = [Real::one(), Real::zero(), Real::zero()];
         let b = [Real::zero(), Real::one(), Real::zero()];
         let c = [Real::zero(), Real::zero(), Real::one()];
         let d = [Real::from(-1_i32), Real::zero(), Real::zero()];
-        let prepared = Real::prepare_insphere3d_filter(
+        let filter = Insphere3Filter::from_reals(
             [&a[0], &a[1], &a[2]],
             [&b[0], &b[1], &b[2]],
             [&c[0], &c[1], &c[2]],
             [&d[0], &d[1], &d[2]],
         )
-        .expect("dyadic fixed points should prepare");
+        .expect("dyadic fixed points should construct a filter");
 
         for e in [
             [Real::zero(), Real::zero(), Real::zero()],
@@ -1577,7 +1577,7 @@ mod tests {
             [Real::one(), Real::zero(), Real::zero()],
         ] {
             assert_eq!(
-                prepared.sign([&e[0], &e[1], &e[2]]),
+                filter.sign([&e[0], &e[1], &e[2]]),
                 Real::certified_insphere3d_sign(
                     [&a[0], &a[1], &a[2]],
                     [&b[0], &b[1], &b[2]],
