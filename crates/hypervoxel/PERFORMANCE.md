@@ -90,6 +90,17 @@ from 0.978 to 1.218 ms per iteration with a 1.089 ms median. Three immediate-onl
 samples ranged from 1.007 to 1.043 ms with a 1.040 ms median, 4.5% faster. The
 ranges overlap and all checksums remained ten.
 
+Cell predicate outcomes are now consistently named `*Classification`; the
+former `*Classifier` names described agents even though the values were
+returned results. `TriangleSolidCellReport::classification` follows the same
+distinction, while functions and internal algorithms retain classifier
+terminology.
+
+Serialized 100-sample gates found no exact-box change: its median moved from
+146.56 ms to 146.66 ms (`p = 0.85`). Exact triangle-solid voxelization improved
+from 5.4436 ms to 5.3229 ms. The rename changes no representation, branch, or
+predicate behavior.
+
 ## Exactness and Scope Checks
 
 `tests/dispatch_trace.rs` exercises a fractional exact box and requires nonzero

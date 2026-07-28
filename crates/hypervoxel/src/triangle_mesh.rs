@@ -188,7 +188,7 @@ pub struct ExactTriangleSolidMeshReport {
 
 /// Classification of one cell against a retained triangle surface.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VoxelTriangleMeshClassifier {
+pub enum VoxelTriangleMeshClassification {
     /// Cell AABB is disjoint from all retained triangles.
     Outside,
     /// Cell AABB intersects one or more retained triangles.
@@ -199,7 +199,7 @@ pub enum VoxelTriangleMeshClassifier {
 
 /// Classification of one cell against a retained closed triangle solid.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VoxelTriangleSolidClassifier {
+pub enum VoxelTriangleSolidClassification {
     /// Cell AABB is outside the solid and disjoint from its boundary.
     Outside,
     /// Cell center is inside the solid and the cell AABB is disjoint from the
@@ -216,22 +216,22 @@ pub fn classify_cell_against_triangle_surface_mesh(
     address: VoxelAddress,
     frame: &GridFrame,
     mesh: &ExactTriangleSurfaceMesh,
-) -> HypervoxelResult<VoxelTriangleMeshClassifier> {
+) -> HypervoxelResult<VoxelTriangleMeshClassification> {
     let bounds = address.bounds(frame)?;
     let mut saw_unknown = false;
     for triangle in &mesh.triangles {
         match triangle_intersects_cell(triangle, &bounds)? {
             TriangleCellIntersection::Intersects => {
-                return Ok(VoxelTriangleMeshClassifier::Boundary);
+                return Ok(VoxelTriangleMeshClassification::Boundary);
             }
             TriangleCellIntersection::Disjoint => {}
             TriangleCellIntersection::Unknown => saw_unknown = true,
         }
     }
     Ok(if saw_unknown {
-        VoxelTriangleMeshClassifier::Unknown
+        VoxelTriangleMeshClassification::Unknown
     } else {
-        VoxelTriangleMeshClassifier::Outside
+        VoxelTriangleMeshClassification::Outside
     })
 }
 
@@ -241,7 +241,7 @@ pub fn classify_cell_against_triangle_surface_mesh(
 /// Non-boundary cells are classified by exact ray-parity queries from the exact
 /// cell center. Proper ray/triangle intersections are counted by unique exact
 /// ray parameter; boundary touches and coplanar ray events cause that ray to be
-/// skipped, and the classifier returns [`VoxelTriangleSolidClassifier::Unknown`]
+/// skipped, and the classifier returns [`VoxelTriangleSolidClassification::Unknown`]
 /// only when every configured exact rational ray is ambiguous. This is an exact
 /// parity point-in-polyhedron test using the Möller–Trumbore ray/triangle
 /// decomposition; ambiguous events remain explicit instead of being repaired
@@ -250,18 +250,22 @@ pub fn classify_cell_against_triangle_solid_mesh(
     address: VoxelAddress,
     frame: &GridFrame,
     mesh: &ExactTriangleSolidMesh,
-) -> HypervoxelResult<VoxelTriangleSolidClassifier> {
+) -> HypervoxelResult<VoxelTriangleSolidClassification> {
     match classify_cell_against_triangle_surface_mesh(address, frame, &mesh.surface)? {
-        VoxelTriangleMeshClassifier::Boundary => return Ok(VoxelTriangleSolidClassifier::Boundary),
-        VoxelTriangleMeshClassifier::Unknown => return Ok(VoxelTriangleSolidClassifier::Unknown),
-        VoxelTriangleMeshClassifier::Outside => {}
+        VoxelTriangleMeshClassification::Boundary => {
+            return Ok(VoxelTriangleSolidClassification::Boundary);
+        }
+        VoxelTriangleMeshClassification::Unknown => {
+            return Ok(VoxelTriangleSolidClassification::Unknown);
+        }
+        VoxelTriangleMeshClassification::Outside => {}
     }
 
     let bounds = address.bounds(frame)?;
     match classify_point_against_triangle_solid_by_ray(&bounds.center(), mesh)? {
-        RayParityPointClassification::Outside => Ok(VoxelTriangleSolidClassifier::Outside),
-        RayParityPointClassification::Inside => Ok(VoxelTriangleSolidClassifier::Inside),
-        RayParityPointClassification::Unknown => Ok(VoxelTriangleSolidClassifier::Unknown),
+        RayParityPointClassification::Outside => Ok(VoxelTriangleSolidClassification::Outside),
+        RayParityPointClassification::Inside => Ok(VoxelTriangleSolidClassification::Inside),
+        RayParityPointClassification::Unknown => Ok(VoxelTriangleSolidClassification::Unknown),
     }
 }
 
@@ -305,26 +309,26 @@ pub fn voxelize_exact_triangle_surface_mesh(
                         Ok(classifier) => classifier,
                         Err(HypervoxelError::UnknownOrdering { .. })
                         | Err(HypervoxelError::UnknownScalarOrdering { .. }) => {
-                            VoxelTriangleMeshClassifier::Unknown
+                            VoxelTriangleMeshClassification::Unknown
                         }
                         Err(err) => return Err(err),
                     };
                 match classifier {
-                    VoxelTriangleMeshClassifier::Outside => outside_cells += 1,
-                    VoxelTriangleMeshClassifier::Boundary => predicate_boundary_cells += 1,
-                    VoxelTriangleMeshClassifier::Unknown => predicate_unknown_cells += 1,
+                    VoxelTriangleMeshClassification::Outside => outside_cells += 1,
+                    VoxelTriangleMeshClassification::Boundary => predicate_boundary_cells += 1,
+                    VoxelTriangleMeshClassification::Unknown => predicate_unknown_cells += 1,
                 }
 
                 let cell = match (policy.quantization, policy.boundary, classifier) {
-                    (_, _, VoxelTriangleMeshClassifier::Outside) => VoxelCell::empty(),
-                    (_, _, VoxelTriangleMeshClassifier::Unknown) => {
+                    (_, _, VoxelTriangleMeshClassification::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelTriangleMeshClassification::Unknown) => {
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
                     (
                         QuantizationPolicy::ConservativeInterior,
                         _,
-                        VoxelTriangleMeshClassifier::Boundary,
+                        VoxelTriangleMeshClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         match policy.boundary {
@@ -338,20 +342,28 @@ pub fn voxelize_exact_triangle_surface_mesh(
                     (
                         _,
                         BoundaryPolicy::BoundaryAsUnknown,
-                        VoxelTriangleMeshClassifier::Boundary,
+                        VoxelTriangleMeshClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
-                    (_, BoundaryPolicy::LossySideChoice, VoxelTriangleMeshClassifier::Boundary) => {
+                    (
+                        _,
+                        BoundaryPolicy::LossySideChoice,
+                        VoxelTriangleMeshClassification::Boundary,
+                    ) => {
                         boundary_cells += 1;
                         VoxelCell {
                             occupancy: OccupancyState::LossyAdapterValue,
                             payload: VoxelPayload::LossyAdapterValue(material.0),
                         }
                     }
-                    (_, BoundaryPolicy::KeepBoundary, VoxelTriangleMeshClassifier::Boundary) => {
+                    (
+                        _,
+                        BoundaryPolicy::KeepBoundary,
+                        VoxelTriangleMeshClassification::Boundary,
+                    ) => {
                         boundary_cells += 1;
                         VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
                     }
@@ -419,28 +431,30 @@ pub fn voxelize_exact_triangle_solid_mesh(
                         Ok(classifier) => classifier,
                         Err(HypervoxelError::UnknownOrdering { .. })
                         | Err(HypervoxelError::UnknownScalarOrdering { .. }) => {
-                            VoxelTriangleSolidClassifier::Unknown
+                            VoxelTriangleSolidClassification::Unknown
                         }
                         Err(err) => return Err(err),
                     };
                 match classifier {
-                    VoxelTriangleSolidClassifier::Inside => inside_cells += 1,
-                    VoxelTriangleSolidClassifier::Outside => outside_cells += 1,
-                    VoxelTriangleSolidClassifier::Boundary => predicate_boundary_cells += 1,
-                    VoxelTriangleSolidClassifier::Unknown => predicate_unknown_cells += 1,
+                    VoxelTriangleSolidClassification::Inside => inside_cells += 1,
+                    VoxelTriangleSolidClassification::Outside => outside_cells += 1,
+                    VoxelTriangleSolidClassification::Boundary => predicate_boundary_cells += 1,
+                    VoxelTriangleSolidClassification::Unknown => predicate_unknown_cells += 1,
                 }
 
                 let cell = match (policy.quantization, policy.boundary, classifier) {
-                    (_, _, VoxelTriangleSolidClassifier::Outside) => VoxelCell::empty(),
-                    (_, _, VoxelTriangleSolidClassifier::Unknown) => {
+                    (_, _, VoxelTriangleSolidClassification::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelTriangleSolidClassification::Unknown) => {
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
-                    (_, _, VoxelTriangleSolidClassifier::Inside) => VoxelCell::material(material),
+                    (_, _, VoxelTriangleSolidClassification::Inside) => {
+                        VoxelCell::material(material)
+                    }
                     (
                         QuantizationPolicy::ConservativeInterior,
                         _,
-                        VoxelTriangleSolidClassifier::Boundary,
+                        VoxelTriangleSolidClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         match policy.boundary {
@@ -454,7 +468,7 @@ pub fn voxelize_exact_triangle_solid_mesh(
                     (
                         _,
                         BoundaryPolicy::BoundaryAsUnknown,
-                        VoxelTriangleSolidClassifier::Boundary,
+                        VoxelTriangleSolidClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         unknown_cells += 1;
@@ -463,7 +477,7 @@ pub fn voxelize_exact_triangle_solid_mesh(
                     (
                         _,
                         BoundaryPolicy::LossySideChoice,
-                        VoxelTriangleSolidClassifier::Boundary,
+                        VoxelTriangleSolidClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         VoxelCell {
@@ -471,7 +485,11 @@ pub fn voxelize_exact_triangle_solid_mesh(
                             payload: VoxelPayload::LossyAdapterValue(material.0),
                         }
                     }
-                    (_, BoundaryPolicy::KeepBoundary, VoxelTriangleSolidClassifier::Boundary) => {
+                    (
+                        _,
+                        BoundaryPolicy::KeepBoundary,
+                        VoxelTriangleSolidClassification::Boundary,
+                    ) => {
                         boundary_cells += 1;
                         VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
                     }

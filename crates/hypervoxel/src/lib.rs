@@ -98,7 +98,7 @@ pub use field::{
 };
 pub use frame::{GridFrame, GridFrameFacts, LengthUnit};
 pub use halfspace::{
-    ExactHalfSpace, ExactHalfSpaceReport, VoxelHalfSpaceClassifier,
+    ExactHalfSpace, ExactHalfSpaceReport, VoxelHalfSpaceClassification,
     classify_cell_against_halfspace, voxelize_exact_halfspace,
 };
 #[cfg(feature = "hypermesh-adapter")]
@@ -131,7 +131,7 @@ pub use side_table::{
     FieldSampleRecord, MaterialRegionRecord, ProcessStateRecord, VoxelSideTables,
 };
 pub use solid::{
-    ExactConvexHalfSpaceSet, ExactConvexHalfSpaceSetReport, VoxelConvexClassifier,
+    ExactConvexHalfSpaceSet, ExactConvexHalfSpaceSetReport, VoxelConvexClassification,
     classify_cell_against_convex_halfspace_set, voxelize_exact_convex_halfspace_set,
 };
 pub use sparse_surface_mesh::sparse_exact_surface_triangle_mesh;
@@ -151,8 +151,8 @@ pub use svo_surface::{extract_svo_exposed_faces, svo_exact_surface_triangle_mesh
 pub use transform::{AxisPermutationTransform, SignedAxis};
 pub use triangle_mesh::{
     ExactTriangle3, ExactTriangle3Report, ExactTriangleSolidMesh, ExactTriangleSolidMeshReport,
-    ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport, VoxelTriangleMeshClassifier,
-    VoxelTriangleSolidClassifier, classify_cell_against_triangle_solid_mesh,
+    ExactTriangleSurfaceMesh, ExactTriangleSurfaceMeshReport, VoxelTriangleMeshClassification,
+    VoxelTriangleSolidClassification, classify_cell_against_triangle_solid_mesh,
     classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid_mesh,
     voxelize_exact_triangle_surface_mesh,
 };
@@ -175,4 +175,4 @@ pub use voxelis_adapter::{
     materialize_legacy_voxelis_u8_chunk_paged_storage,
     materialize_legacy_voxelis_u8_exact_surface_triangle_mesh,
 };
-pub use voxelize::{ExactBox, ExactBoxReport, VoxelBoxClassifier, voxelize_exact_box};
+pub use voxelize::{ExactBox, ExactBoxReport, VoxelBoxClassification, voxelize_exact_box};

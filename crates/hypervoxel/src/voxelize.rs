@@ -92,7 +92,7 @@ impl ExactBox {
 
 /// Classification of one cell against an exact box.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VoxelBoxClassifier {
+pub enum VoxelBoxClassification {
     /// Cell is outside the box.
     Outside,
     /// Cell is fully inside the box.
@@ -124,15 +124,15 @@ pub fn classify_cell_against_box(
     address: VoxelAddress,
     frame: &GridFrame,
     exact_box: &ExactBox,
-) -> HypervoxelResult<VoxelBoxClassifier> {
+) -> HypervoxelResult<VoxelBoxClassification> {
     let bounds = address.bounds(frame)?;
     let mut fully_inside = true;
     for axis in 0..3 {
         if certified_cmp(&bounds.max[axis], &exact_box.min[axis], axis)? != Ordering::Greater {
-            return Ok(VoxelBoxClassifier::Outside);
+            return Ok(VoxelBoxClassification::Outside);
         }
         if certified_cmp(&bounds.min[axis], &exact_box.max[axis], axis)? != Ordering::Less {
-            return Ok(VoxelBoxClassifier::Outside);
+            return Ok(VoxelBoxClassification::Outside);
         }
         if certified_cmp(&bounds.min[axis], &exact_box.min[axis], axis)? == Ordering::Less
             || certified_cmp(&bounds.max[axis], &exact_box.max[axis], axis)? == Ordering::Greater
@@ -142,9 +142,9 @@ pub fn classify_cell_against_box(
     }
 
     if fully_inside {
-        Ok(VoxelBoxClassifier::Inside)
+        Ok(VoxelBoxClassification::Inside)
     } else {
-        Ok(VoxelBoxClassifier::Boundary)
+        Ok(VoxelBoxClassification::Boundary)
     }
 }
 
@@ -182,23 +182,27 @@ pub fn voxelize_exact_box(
                 let address = VoxelAddress::new(frame.depth(), [x, y, z])?;
                 let classifier = match classify_cell_against_box(address, &frame, exact_box) {
                     Ok(classifier) => classifier,
-                    Err(HypervoxelError::UnknownOrdering { .. }) => VoxelBoxClassifier::Unknown,
+                    Err(HypervoxelError::UnknownOrdering { .. }) => VoxelBoxClassification::Unknown,
                     Err(err) => return Err(err),
                 };
                 match classifier {
-                    VoxelBoxClassifier::Inside => inside_cells += 1,
-                    VoxelBoxClassifier::Outside => outside_cells += 1,
-                    VoxelBoxClassifier::Boundary => predicate_boundary_cells += 1,
-                    VoxelBoxClassifier::Unknown => predicate_unknown_cells += 1,
+                    VoxelBoxClassification::Inside => inside_cells += 1,
+                    VoxelBoxClassification::Outside => outside_cells += 1,
+                    VoxelBoxClassification::Boundary => predicate_boundary_cells += 1,
+                    VoxelBoxClassification::Unknown => predicate_unknown_cells += 1,
                 }
 
                 let cell = match (policy.quantization, policy.boundary, classifier) {
-                    (_, _, VoxelBoxClassifier::Outside) => VoxelCell::empty(),
-                    (_, _, VoxelBoxClassifier::Unknown) => {
+                    (_, _, VoxelBoxClassification::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelBoxClassification::Unknown) => {
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
-                    (QuantizationPolicy::ConservativeInterior, _, VoxelBoxClassifier::Boundary) => {
+                    (
+                        QuantizationPolicy::ConservativeInterior,
+                        _,
+                        VoxelBoxClassification::Boundary,
+                    ) => {
                         boundary_cells += 1;
                         match policy.boundary {
                             BoundaryPolicy::BoundaryAsUnknown => {
@@ -208,20 +212,20 @@ pub fn voxelize_exact_box(
                             _ => VoxelCell::empty(),
                         }
                     }
-                    (_, _, VoxelBoxClassifier::Inside) => VoxelCell::material(material),
-                    (_, BoundaryPolicy::BoundaryAsUnknown, VoxelBoxClassifier::Boundary) => {
+                    (_, _, VoxelBoxClassification::Inside) => VoxelCell::material(material),
+                    (_, BoundaryPolicy::BoundaryAsUnknown, VoxelBoxClassification::Boundary) => {
                         boundary_cells += 1;
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
-                    (_, BoundaryPolicy::LossySideChoice, VoxelBoxClassifier::Boundary) => {
+                    (_, BoundaryPolicy::LossySideChoice, VoxelBoxClassification::Boundary) => {
                         boundary_cells += 1;
                         VoxelCell {
                             occupancy: OccupancyState::LossyAdapterValue,
                             payload: VoxelPayload::LossyAdapterValue(material.0),
                         }
                     }
-                    (_, BoundaryPolicy::KeepBoundary, VoxelBoxClassifier::Boundary) => {
+                    (_, BoundaryPolicy::KeepBoundary, VoxelBoxClassification::Boundary) => {
                         boundary_cells += 1;
                         VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
                     }

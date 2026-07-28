@@ -2,7 +2,7 @@ use hyperreal::{Rational, Real};
 use hypervoxel::{
     ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
     GridFrame, HypervoxelError, MaterialRegionId, OccupancyState, VoxelAddress,
-    VoxelTriangleMeshClassifier, VoxelTriangleSolidClassifier, VoxelizationPolicy,
+    VoxelTriangleMeshClassification, VoxelTriangleSolidClassification, VoxelizationPolicy,
     classify_cell_against_exact_triangle_solid, classify_cell_against_triangle_solid_mesh,
     classify_cell_against_triangle_surface_mesh, voxelize_exact_triangle_solid,
     voxelize_exact_triangle_solid_by_adaptive_axis_sweeps,
@@ -138,7 +138,7 @@ fn exact_triangle_surface_classifies_boundary_without_float_tolerances() {
     let address = VoxelAddress::new(1, [0, 0, 0]).unwrap();
     assert_eq!(
         classify_cell_against_triangle_surface_mesh(address, &frame, &mesh).unwrap(),
-        VoxelTriangleMeshClassifier::Boundary
+        VoxelTriangleMeshClassification::Boundary
     );
 
     let (grid, report) = voxelize_exact_triangle_surface_mesh(
@@ -191,15 +191,15 @@ fn exact_triangle_solid_classifies_boundary_inside_and_outside() {
     let outside = VoxelAddress::new(3, [0, 0, 0]).unwrap();
     assert_eq!(
         classify_cell_against_triangle_solid_mesh(boundary, &frame, &solid).unwrap(),
-        VoxelTriangleSolidClassifier::Boundary
+        VoxelTriangleSolidClassification::Boundary
     );
     assert_eq!(
         classify_cell_against_triangle_solid_mesh(inside, &frame, &solid).unwrap(),
-        VoxelTriangleSolidClassifier::Inside
+        VoxelTriangleSolidClassification::Inside
     );
     assert_eq!(
         classify_cell_against_triangle_solid_mesh(outside, &frame, &solid).unwrap(),
-        VoxelTriangleSolidClassifier::Outside
+        VoxelTriangleSolidClassification::Outside
     );
 }
 
@@ -311,7 +311,10 @@ fn classifier_reuses_exact_schedule() {
     let (frame, solid) = exact_cube(3, 2, 6);
     let inside = VoxelAddress::new(3, [3, 3, 3]).unwrap();
     let report = classify_cell_against_exact_triangle_solid(inside, &frame, &solid).unwrap();
-    assert_eq!(report.classifier, VoxelTriangleSolidClassifier::Inside);
+    assert_eq!(
+        report.classification,
+        VoxelTriangleSolidClassification::Inside
+    );
     assert!(report.boundary_aabb_rejections > 0);
 }
 

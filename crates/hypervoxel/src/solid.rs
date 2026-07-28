@@ -10,7 +10,7 @@
 use crate::{
     BoundaryPolicy, ExactHalfSpace, GridFrame, HypervoxelError, HypervoxelResult, MaterialRegionId,
     OccupancyState, QuantizationPolicy, SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts,
-    VoxelCell, VoxelHalfSpaceClassifier, VoxelPayload, VoxelPredicateCertificateReport,
+    VoxelCell, VoxelHalfSpaceClassification, VoxelPayload, VoxelPredicateCertificateReport,
     VoxelizationPolicy, VoxelizationReport, classify_cell_against_halfspace,
 };
 
@@ -77,7 +77,7 @@ impl ExactConvexHalfSpaceSet {
 
 /// Classification of one cell against an exact convex half-space set.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VoxelConvexClassifier {
+pub enum VoxelConvexClassification {
     /// Cell is entirely outside at least one half-space.
     Outside,
     /// Cell is entirely inside every half-space.
@@ -93,20 +93,20 @@ pub fn classify_cell_against_convex_halfspace_set(
     address: VoxelAddress,
     frame: &GridFrame,
     solid: &ExactConvexHalfSpaceSet,
-) -> HypervoxelResult<VoxelConvexClassifier> {
+) -> HypervoxelResult<VoxelConvexClassification> {
     let mut touched_boundary = false;
     for halfspace in &solid.halfspaces {
         match classify_cell_against_halfspace(address, frame, halfspace)? {
-            VoxelHalfSpaceClassifier::Outside => return Ok(VoxelConvexClassifier::Outside),
-            VoxelHalfSpaceClassifier::Inside => {}
-            VoxelHalfSpaceClassifier::Boundary => touched_boundary = true,
-            VoxelHalfSpaceClassifier::Unknown => return Ok(VoxelConvexClassifier::Unknown),
+            VoxelHalfSpaceClassification::Outside => return Ok(VoxelConvexClassification::Outside),
+            VoxelHalfSpaceClassification::Inside => {}
+            VoxelHalfSpaceClassification::Boundary => touched_boundary = true,
+            VoxelHalfSpaceClassification::Unknown => return Ok(VoxelConvexClassification::Unknown),
         }
     }
     Ok(if touched_boundary {
-        VoxelConvexClassifier::Boundary
+        VoxelConvexClassification::Boundary
     } else {
-        VoxelConvexClassifier::Inside
+        VoxelConvexClassification::Inside
     })
 }
 
@@ -147,27 +147,27 @@ pub fn voxelize_exact_convex_halfspace_set(
                         Ok(classifier) => classifier,
                         Err(HypervoxelError::UnknownOrdering { .. })
                         | Err(HypervoxelError::UnknownScalarOrdering { .. }) => {
-                            VoxelConvexClassifier::Unknown
+                            VoxelConvexClassification::Unknown
                         }
                         Err(err) => return Err(err),
                     };
                 match classifier {
-                    VoxelConvexClassifier::Inside => inside_cells += 1,
-                    VoxelConvexClassifier::Outside => outside_cells += 1,
-                    VoxelConvexClassifier::Boundary => predicate_boundary_cells += 1,
-                    VoxelConvexClassifier::Unknown => predicate_unknown_cells += 1,
+                    VoxelConvexClassification::Inside => inside_cells += 1,
+                    VoxelConvexClassification::Outside => outside_cells += 1,
+                    VoxelConvexClassification::Boundary => predicate_boundary_cells += 1,
+                    VoxelConvexClassification::Unknown => predicate_unknown_cells += 1,
                 }
 
                 let cell = match (policy.quantization, policy.boundary, classifier) {
-                    (_, _, VoxelConvexClassifier::Outside) => VoxelCell::empty(),
-                    (_, _, VoxelConvexClassifier::Unknown) => {
+                    (_, _, VoxelConvexClassification::Outside) => VoxelCell::empty(),
+                    (_, _, VoxelConvexClassification::Unknown) => {
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
                     (
                         QuantizationPolicy::ConservativeInterior,
                         _,
-                        VoxelConvexClassifier::Boundary,
+                        VoxelConvexClassification::Boundary,
                     ) => {
                         boundary_cells += 1;
                         match policy.boundary {
@@ -178,20 +178,20 @@ pub fn voxelize_exact_convex_halfspace_set(
                             _ => VoxelCell::empty(),
                         }
                     }
-                    (_, _, VoxelConvexClassifier::Inside) => VoxelCell::material(material),
-                    (_, BoundaryPolicy::BoundaryAsUnknown, VoxelConvexClassifier::Boundary) => {
+                    (_, _, VoxelConvexClassification::Inside) => VoxelCell::material(material),
+                    (_, BoundaryPolicy::BoundaryAsUnknown, VoxelConvexClassification::Boundary) => {
                         boundary_cells += 1;
                         unknown_cells += 1;
                         VoxelCell::unknown()
                     }
-                    (_, BoundaryPolicy::LossySideChoice, VoxelConvexClassifier::Boundary) => {
+                    (_, BoundaryPolicy::LossySideChoice, VoxelConvexClassification::Boundary) => {
                         boundary_cells += 1;
                         VoxelCell {
                             occupancy: OccupancyState::LossyAdapterValue,
                             payload: VoxelPayload::LossyAdapterValue(material.0),
                         }
                     }
-                    (_, BoundaryPolicy::KeepBoundary, VoxelConvexClassifier::Boundary) => {
+                    (_, BoundaryPolicy::KeepBoundary, VoxelConvexClassification::Boundary) => {
                         boundary_cells += 1;
                         VoxelCell::boundary(VoxelPayload::MaterialRegion(material))
                     }
