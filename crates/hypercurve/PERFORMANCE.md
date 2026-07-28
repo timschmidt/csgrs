@@ -10,6 +10,21 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## Rational-image context API gate
+
+HyperSolve's retained rational-image carriers are now consumed as
+`AlgebraicRootRationalImageContext` and `AlgebraicRootRationalMap`. HyperCurve's
+private conic carrier is correspondingly a `ConicParameterCandidate2`; no
+preparation lifecycle remains in this boundary.
+
+Three serialized optimized runs compared the live code with archived
+pre-change HyperSolve and HyperCurve sources. The 20,000-iteration rational
+Bezier algebraic point-and-tangent image row moved from a 5.317 us median to
+5.315 us per iteration (-0.04%). The 100-iteration irrational-weight
+conic/cubic contact row improved from a 736.837 us median to 732.518 us per
+query (-0.59%). Every run retained its expected transformed-image and contact
+checksums.
+
 ## Runtime path tracing
 
 Coverage is audited by executable public family, not by assigning artificial
@@ -4997,14 +5012,14 @@ LeakSanitizer alone remained disabled under ptrace.
 
 ### Lazy exact conic image fallback
 
-Implicit conic contact preparation built the real-coefficient algebraic image
-polynomial for every prepared parameter map. Constructing that fallback
+Implicit conic contact analysis built the real-coefficient algebraic image
+polynomial for every parameter map. Constructing that fallback
 evaluates one resultant per source-polynomial sample, interpolates those exact
 `Real` values, certifies the resulting degree, and later isolates its roots.
-The primary `PreparedAlgebraicRootRationalMap` transform usually decides the
+The primary `AlgebraicRootRationalMap` transform usually decides the
 same parameter directly, so most of this symbolic algebra was never read.
 
-The prepared candidate now retains an empty `OnceCell` for the fallback image
+The parameter candidate now retains an empty `OnceCell` for the fallback image
 polynomial. Only an uncertain primary transform constructs it, deriving the
 source polynomial from the already-retained algebraic parameter; its exact
 polynomial and isolated image roots remain cached for subsequent refinement.

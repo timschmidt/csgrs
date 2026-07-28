@@ -19,8 +19,8 @@ use hypersolve::{
 };
 #[cfg(feature = "predicates")]
 use hypersolve::{
-    AlgebraicRootRationalImageStatus, AlgebraicRootRefinementComparisonConfig,
-    PreparedAlgebraicRootRationalImage, compare_algebraic_root_representations_by_difference,
+    AlgebraicRootRationalImageContext, AlgebraicRootRationalImageStatus,
+    AlgebraicRootRefinementComparisonConfig, compare_algebraic_root_representations_by_difference,
     transform_algebraic_root_polynomial_image, validate_algebraic_root_representation,
 };
 
@@ -1020,17 +1020,17 @@ fn rational_coordinate_image_pair(
     Option<BezierAlgebraicRationalCoordinateImage>,
     Option<BezierAlgebraicRationalCoordinateImage>,
 ) {
-    let prepared = PreparedAlgebraicRootRationalImage::new(
+    let context = AlgebraicRootRationalImageContext::new(
         parameter,
         &denominator_coefficients,
         policy.predicate_policy,
     );
-    let first_evidence = prepared.transform(&first_numerator_coefficients);
+    let first_evidence = context.transform(&first_numerator_coefficients);
     if first_evidence.status != AlgebraicRootRationalImageStatus::Transformed {
         return (None, None);
     }
-    let second_evidence = prepared.transform(&second_numerator_coefficients);
-    drop(prepared);
+    let second_evidence = context.transform(&second_numerator_coefficients);
+    drop(context);
     let first = BezierAlgebraicRationalCoordinateImage {
         numerator_coefficients: first_numerator_coefficients,
         denominator_coefficients: denominator_coefficients.clone(),
