@@ -11,7 +11,7 @@ use hyperreal::{Real, RealSign};
 
 use crate::bezier_parameter::bernstein_to_power_coefficients;
 use crate::classify::{
-    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2d_real_expr,
+    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
     real_sign,
 };
 use crate::{
@@ -2965,7 +2965,7 @@ fn relation_to_line(
 
     let distances = controls
         .iter()
-        .map(|point| orient2d_real_expr(line.start(), line.end(), point))
+        .map(|point| orient2_real_expr(line.start(), line.end(), point))
         .collect::<Vec<_>>();
     let roots = match distances.as_slice() {
         [d0, d1, d2] => {
@@ -3038,7 +3038,7 @@ fn relation_to_line_with_contacts(
 
     let distances = controls
         .iter()
-        .map(|point| orient2d_real_expr(line.start(), line.end(), point))
+        .map(|point| orient2_real_expr(line.start(), line.end(), point))
         .collect::<Vec<_>>();
     exact_line_contact_relation_from_bernstein_distances(distances, policy)
 }

@@ -17,7 +17,7 @@ use crate::bezier_parameter::subdivide_scalar_bernstein_half;
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::bezier_topology::polynomial_roots_in_unit_interval_with_endpoints;
 use crate::classify::{
-    classify_oriented_line, compare_reals, is_zero, orient2d_real_expr, real_sign,
+    classify_oriented_line, compare_reals, is_zero, orient2_real_expr, real_sign,
 };
 use crate::{
     Aabb2, Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,
@@ -434,7 +434,7 @@ impl RationalQuadraticBezier2 {
         let weighted_distances = controls
             .iter()
             .zip(weights)
-            .map(|(point, weight)| orient2d_real_expr(line.start(), line.end(), point) * weight)
+            .map(|(point, weight)| orient2_real_expr(line.start(), line.end(), point) * weight)
             .collect::<Vec<_>>();
 
         if weighted_distances
@@ -1014,9 +1014,9 @@ impl RationalQuadraticBezier2 {
         let controls = self.control_points();
         let weights = self.weights();
         [
-            orient2d_real_expr(line.start(), line.end(), controls[0]) * weights[0],
-            orient2d_real_expr(line.start(), line.end(), controls[1]) * weights[1],
-            orient2d_real_expr(line.start(), line.end(), controls[2]) * weights[2],
+            orient2_real_expr(line.start(), line.end(), controls[0]) * weights[0],
+            orient2_real_expr(line.start(), line.end(), controls[1]) * weights[1],
+            orient2_real_expr(line.start(), line.end(), controls[2]) * weights[2],
         ]
     }
 

@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
-use crate::classify::{compare_reals, is_zero, orient2d_real_expr, real_sign};
+use crate::classify::{compare_reals, is_zero, orient2_real_expr, real_sign};
 use crate::{
     BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveError, CurvePath2, CurvePolicy,
     CurveResult, ExactCurveResult, Point2, QuadraticBezier2, UncertaintyReason,
@@ -411,7 +411,7 @@ where
     let chord_length_squared = curve.start().distance_squared(curve.end());
     let threshold = max_error_squared * &chord_length_squared;
     for point in curve.controls().into_iter().skip(1).rev().skip(1) {
-        let signed_area = orient2d_real_expr(curve.start(), curve.end(), point);
+        let signed_area = orient2_real_expr(curve.start(), curve.end(), point);
         let area_squared = &signed_area * &signed_area;
         match compare_reals(&area_squared, &threshold, policy) {
             Some(Ordering::Less | Ordering::Equal) => {}

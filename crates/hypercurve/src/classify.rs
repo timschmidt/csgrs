@@ -102,7 +102,7 @@ pub(crate) fn classify_oriented_line(
         // expressions into the certified predicate path, otherwise arc sweep
         // checks can reject legitimate preview intersections before the exact
         // segment relation has a chance to retain them as candidates.
-        let det = orient2d_real_expr(from, to, point);
+        let det = orient2_real_expr(from, to, point);
         return real_sign(&det, policy)
             .map(LineSide::from_real_sign)
             .map(Classification::Decided)
@@ -116,7 +116,7 @@ pub(crate) fn classify_oriented_line(
         // certified predicate path rather than comparing approximate floats,
         // matching robust-predicate practice for topology
         // branches.
-        let predicate_outcome = hyperlimit::orient2d_with_policy(
+        let predicate_outcome = hyperlimit::orient2_with_policy(
             &predicate_point(from),
             &predicate_point(to),
             &predicate_point(point),
@@ -127,7 +127,7 @@ pub(crate) fn classify_oriented_line(
                 Classification::Decided(LineSide::from_predicate_sign(value))
             }
             hyperlimit::PredicateOutcome::Unknown { .. } => {
-                let det = orient2d_real_expr(from, to, point);
+                let det = orient2_real_expr(from, to, point);
                 real_sign(&det, policy)
                     .map(LineSide::from_real_sign)
                     .map(Classification::Decided)
@@ -138,7 +138,7 @@ pub(crate) fn classify_oriented_line(
 
     #[cfg(not(feature = "predicates"))]
     {
-        let det = orient2d_real_expr(from, to, point);
+        let det = orient2_real_expr(from, to, point);
         real_sign(&det, policy)
             .map(LineSide::from_real_sign)
             .map(Classification::Decided)
@@ -146,7 +146,7 @@ pub(crate) fn classify_oriented_line(
     }
 }
 
-pub(crate) fn orient2d_real_expr(from: &Point2, to: &Point2, point: &Point2) -> Real {
+pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> Real {
     let abx = to.x() - from.x();
     let aby = to.y() - from.y();
     let acx = point.x() - from.x();

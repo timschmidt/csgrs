@@ -30,7 +30,7 @@ use crate::bezier_topology::{
     polynomial_roots_in_unit_interval_with_endpoints,
 };
 use crate::classify::{
-    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2d_real_expr,
+    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
     real_sign,
 };
 use crate::intersect::oriented_param_range_overlap;
@@ -1308,7 +1308,7 @@ impl RationalBezier2 {
                 {
                     Real::zero()
                 } else {
-                    orient2d_real_expr(line.start(), line.end(), point) * weight
+                    orient2_real_expr(line.start(), line.end(), point) * weight
                 }
             })
             .collect::<Vec<_>>();
