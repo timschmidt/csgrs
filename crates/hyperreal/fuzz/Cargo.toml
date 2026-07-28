@@ -38,3 +38,9 @@ name = "computable_approximation"
 path = "fuzz_targets/computable_approximation.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "structural_representations"
+path = "fuzz_targets/structural_representations.rs"
+test = false
+doc = false

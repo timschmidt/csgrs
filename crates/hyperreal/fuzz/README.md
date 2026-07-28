@@ -18,7 +18,12 @@ cargo +nightly fuzz run rational_arithmetic --fuzz-dir fuzz -- -max_total_time=3
 cargo +nightly fuzz run real_exact --fuzz-dir fuzz -- -max_total_time=30
 cargo +nightly fuzz run real_elementary --fuzz-dir fuzz -- -max_total_time=30
 cargo +nightly fuzz run computable_approximation --fuzz-dir fuzz -- -max_total_time=30
+cargo +nightly fuzz run structural_representations --fuzz-dir fuzz -- -max_total_time=30
 ```
 
 Long-running campaigns should retain each target's corpus separately. A crash
 is a semantic regression until minimized and promoted to a deterministic test.
+
+`structural_representations` exhaustively crosses all eight public
+`StructuralKind` representations through arithmetic, comparison, bounded
+512-bit certification, and elementary-function dispatch.
