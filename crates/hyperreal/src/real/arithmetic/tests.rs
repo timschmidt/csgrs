@@ -1259,16 +1259,16 @@ mod tests {
     }
 
     #[test]
-    fn prepared_affine_det3_filter_matches_one_shot_filter() {
+    fn affine_det3_filter_matches_one_shot_filter() {
         let a = [Real::zero(), Real::zero(), Real::zero()];
         let b = [Real::one(), Real::zero(), Real::zero()];
         let c = [Real::zero(), Real::one(), Real::zero()];
-        let prepared = Real::prepare_affine_det3_filter(
+        let filter = AffineDet3Filter::from_reals(
             [&a[0], &a[1], &a[2]],
             [&b[0], &b[1], &b[2]],
             [&c[0], &c[1], &c[2]],
         )
-        .expect("dyadic fixed points should prepare");
+        .expect("dyadic fixed points should fit");
 
         for d in [
             [Real::zero(), Real::zero(), Real::one()],
@@ -1276,7 +1276,7 @@ mod tests {
             [Real::zero(), Real::zero(), Real::from(-1_i32)],
         ] {
             assert_eq!(
-                prepared.sign([&d[0], &d[1], &d[2]]),
+                filter.sign([&d[0], &d[1], &d[2]]),
                 Real::certified_affine_det3_sign(
                     [&a[0], &a[1], &a[2]],
                     [&b[0], &b[1], &b[2]],
@@ -1329,7 +1329,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_affine_det3_exact_word_filter_matches_randomized_rationals() {
+    fn affine_det3_exact_word_filter_matches_randomized_rationals() {
         let mut state = 0xa54f_f53a_5f1d_36f1_u64;
         for _ in 0..10_000 {
             let mut values = Vec::with_capacity(12);
@@ -1347,10 +1347,15 @@ mod tests {
             let b = [&values[3], &values[4], &values[5]];
             let c = [&values[6], &values[7], &values[8]];
             let d = [&values[9], &values[10], &values[11]];
-            let prepared = Real::prepare_affine_det3_exact_word_filter(a, b, c)
+            let filter = AffineDet3ExactWordFilter::from_reals(a, b, c)
                 .expect("small randomized rationals should fit the word filter");
             assert_eq!(
-                prepared.sign(d),
+                filter.sign(d),
+                Some(exact_affine_det3_sign(a, b, c, d)),
+                "values={values:?}",
+            );
+            assert_eq!(
+                Real::exact_rational_affine_det3_word_sign(a, b, c, d),
                 Some(exact_affine_det3_sign(a, b, c, d)),
                 "values={values:?}",
             );

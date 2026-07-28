@@ -172,7 +172,7 @@ impl AffineDet2PairFilter {
 /// `None` for exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedAffineDet3Filter {
+pub struct AffineDet3Filter {
     a: [f64; 3],
     b: [f64; 3],
     c: [f64; 3],
@@ -185,11 +185,52 @@ pub struct PreparedAffineDet3Filter {
 /// returns `None` whenever conversion or an operation would overflow.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedAffineDet3ExactWordFilter {
+pub struct AffineDet3ExactWordFilter {
     plane: [i128; 4],
 }
 
-impl PreparedAffineDet3ExactWordFilter {
+impl AffineDet3ExactWordFilter {
+    /// Construct a checked word-sized plane filter from exact-rational points.
+    ///
+    /// Each point may use unrelated coordinate denominators. Values that do
+    /// not fit the homogeneous `i128` representation return `None`.
+    #[inline]
+    pub fn from_reals(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3]) -> Option<Self> {
+        let [ax, ay, az, aw] = Real::exact_rational_homogeneous_point3_i128(a)?;
+        let [bx, by, bz, bw] = Real::exact_rational_homogeneous_point3_i128(b)?;
+        let [cx, cy, cz, cw] = Real::exact_rational_homogeneous_point3_i128(c)?;
+        let x_coefficient = Real::checked_det3_i128([
+            [ay, az, aw],
+            [by, bz, bw],
+            [cy, cz, cw],
+        ])?
+        .checked_neg()?;
+        let y_coefficient = Real::checked_det3_i128([
+            [ax, az, aw],
+            [bx, bz, bw],
+            [cx, cz, cw],
+        ])?;
+        let z_coefficient = Real::checked_det3_i128([
+            [ax, ay, aw],
+            [bx, by, bw],
+            [cx, cy, cw],
+        ])?
+        .checked_neg()?;
+        let w_coefficient = Real::checked_det3_i128([
+            [ax, ay, az],
+            [bx, by, bz],
+            [cx, cy, cz],
+        ])?;
+        Some(Self {
+            plane: [
+                x_coefficient,
+                y_coefficient,
+                z_coefficient,
+                w_coefficient,
+            ],
+        })
+    }
+
     /// Try to decide the exact determinant sign for query point `d`.
     #[inline]
     pub fn sign(&self, d: [&Real; 3]) -> Option<RealSign> {
@@ -206,7 +247,20 @@ impl PreparedAffineDet3ExactWordFilter {
     }
 }
 
-impl PreparedAffineDet3Filter {
+impl AffineDet3Filter {
+    /// Construct a reusable determinant filter from exact-dyadic real points.
+    #[inline]
+    pub fn from_reals(a: [&Real; 3], b: [&Real; 3], c: [&Real; 3]) -> Option<Self> {
+        let [ax, ay, az, bx, by, bz, cx, cy, cz] = Real::exact_dyadic_f64([
+            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2],
+        ])?;
+        Some(Self {
+            a: [ax, ay, az],
+            b: [bx, by, bz],
+            c: [cx, cy, cz],
+        })
+    }
+
     /// Try to certify the determinant sign for query point `d`.
     #[inline]
     pub fn sign(&self, d: [&Real; 3]) -> Option<RealSign> {
@@ -478,47 +532,20 @@ impl Real {
         AffineDet2ExactWordFilter::from_reals(a, b)?.sign(c)
     }
 
-    /// Prepare an exact word-sized affine 3D determinant filter.
+    /// Try to decide an affine 3D determinant sign with checked word arithmetic.
+    ///
+    /// Each exact-rational point may use unrelated coordinate denominators.
+    /// Values that do not fit the homogeneous `i128` representation return
+    /// `None` for the arbitrary-precision fallback.
     #[inline]
     #[doc(hidden)]
-    pub fn prepare_affine_det3_exact_word_filter(
+    pub fn exact_rational_affine_det3_word_sign(
         a: [&Real; 3],
         b: [&Real; 3],
         c: [&Real; 3],
-    ) -> Option<PreparedAffineDet3ExactWordFilter> {
-        let [ax, ay, az, aw] = Self::exact_rational_homogeneous_point3_i128(a)?;
-        let [bx, by, bz, bw] = Self::exact_rational_homogeneous_point3_i128(b)?;
-        let [cx, cy, cz, cw] = Self::exact_rational_homogeneous_point3_i128(c)?;
-        let x_coefficient = Self::checked_det3_i128([
-            [ay, az, aw],
-            [by, bz, bw],
-            [cy, cz, cw],
-        ])?
-        .checked_neg()?;
-        let y_coefficient = Self::checked_det3_i128([
-            [ax, az, aw],
-            [bx, bz, bw],
-            [cx, cz, cw],
-        ])?;
-        let z_coefficient = Self::checked_det3_i128([
-            [ax, ay, aw],
-            [bx, by, bw],
-            [cx, cy, cw],
-        ])?
-        .checked_neg()?;
-        let w_coefficient = Self::checked_det3_i128([
-            [ax, ay, az],
-            [bx, by, bz],
-            [cx, cy, cz],
-        ])?;
-        Some(PreparedAffineDet3ExactWordFilter {
-            plane: [
-                x_coefficient,
-                y_coefficient,
-                z_coefficient,
-                w_coefficient,
-            ],
-        })
+        d: [&Real; 3],
+    ) -> Option<RealSign> {
+        AffineDet3ExactWordFilter::from_reals(a, b, c)?.sign(d)
     }
 
     /// Try to certify the sign of `a*x + b*y + c*z + d` without constructing
@@ -737,25 +764,6 @@ impl Real {
             .checked_sub(negative_a)?
             .checked_sub(negative_b)?
             .checked_sub(negative_c)
-    }
-
-    /// Prepare a certified affine 3D determinant filter for fixed points `a`,
-    /// `b`, and `c`.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_affine_det3_filter(
-        a: [&Real; 3],
-        b: [&Real; 3],
-        c: [&Real; 3],
-    ) -> Option<PreparedAffineDet3Filter> {
-        let [ax, ay, az, bx, by, bz, cx, cy, cz] = Self::exact_dyadic_f64([
-            a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2],
-        ])?;
-        Some(PreparedAffineDet3Filter {
-            a: [ax, ay, az],
-            b: [bx, by, bz],
-            c: [cx, cy, cz],
-        })
     }
 
     /// Prepare a certified 2D in-circle filter for fixed points `a`, `b`, and
