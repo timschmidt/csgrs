@@ -29,10 +29,7 @@ trace_greedy_timings = []
 tracy = ["dep:tracy-client"]
 
 [dependencies]
-# The local path supports workspace development; the commented version records
-# the upstream release coordinate.
-voxelis-memory = { path = "../voxelis-memory" }
-# voxelis-memory = "25.5.0"
+voxelis-memory = { version = "25.5.0", path = "../voxelis-memory" }
 fastnoise-lite.workspace = true
 glam.workspace = true
 parking_lot.workspace = true

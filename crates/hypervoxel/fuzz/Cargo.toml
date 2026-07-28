@@ -13,16 +13,11 @@ cargo-fuzz = true
 [dependencies]
 arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
-# Local paths fuzz the complete development stack; the commented versions
-# record the corresponding release coordinates.
-hypervoxel = { path = "..", features = ["hypermesh-adapter", "legacy-voxelis"] }
-hyperreal = { path = "../../hyperreal" }
-hypermesh = { path = "../../hypermesh" }
-voxelis = { path = "../voxelis" }
+hypervoxel = { version = "0.3.0", path = "..", features = ["hypermesh-adapter", "legacy-voxelis"] }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+hypermesh = { version = "0.1.0", path = "../../hypermesh" }
+voxelis = { version = "25.5.0", path = "../voxelis" }
 glam = "0.29"
-# hypervoxel = "0.3.0"
-# hyperreal = "0.13.0"
-# hypermesh = "0.3.0"
 
 [[bin]]
 name = "grid_address"

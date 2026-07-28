@@ -81,16 +81,10 @@ categories = [
 rust-version = "1.88"
 
 [workspace.dependencies]
-# Local paths support monorepo-style development; the commented versions
-# record upstream release coordinates.
-voxelis = { path = "voxelis" }
-voxelis-math = { path = "voxelis-math" }
-voxelis-voxelize = { path = "voxelis-voxelize" }
-voxelis-bevy = { path = "voxelis-bevy" }
-# voxelis = { version = "25.5.0" }
-# voxelis-math = { version = "25.5.0" }
-# voxelis-voxelize = { version = "25.5.0" }
-# voxelis-bevy = { version = "25.5.0" }
+voxelis = { version = "25.5.0", path = "voxelis" }
+voxelis-math = { version = "25.5.0", path = "voxelis-math" }
+voxelis-voxelize = { version = "25.5.0", path = "voxelis-voxelize" }
+voxelis-bevy = { version = "25.5.0", path = "voxelis-bevy" }
 
 ahash = "0.8"
 bitflags = "2.9"
