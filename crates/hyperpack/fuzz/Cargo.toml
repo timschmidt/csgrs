@@ -1,0 +1,28 @@
+[package]
+name = "hyperpack-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+
+[dependencies]
+hyperpack = { path = ".." }
+hyperreal = { path = "../../hyperreal" }
+libfuzzer-sys = "0.4"
+
+[patch.crates-io]
+hyperreal = { path = "../../hyperreal" }
+hyperlattice = { path = "../../hyperlattice" }
+hyperlimit = { path = "../../hyperlimit" }
+hypersolve = { path = "../../hypersolve" }
+
+[[bin]]
+name = "packing_invariants"
+path = "fuzz_targets/packing_invariants.rs"
+test = false
+doc = false
+bench = false
