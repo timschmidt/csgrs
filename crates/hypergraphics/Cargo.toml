@@ -17,9 +17,9 @@ dispatch-trace = ["exact", "hyperlimit/dispatch-trace", "hyperreal/dispatch-trac
 
 [dependencies]
 hyperreal = { version = "0.13.1", path = "../hyperreal", optional = true }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice", optional = true }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
-hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice", optional = true }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false, features = ["std"], optional = true }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 
 bytemuck = "1.23"
 glow = "0.16"
