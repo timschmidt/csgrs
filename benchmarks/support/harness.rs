@@ -1,4 +1,4 @@
-//! Small dependency-free benchmark harness shared by the benchmark binaries.
+//! Small dependency-free harness shared by the Rust benchmark binaries.
 
 use std::hint::black_box;
 use std::time::{Duration, Instant};

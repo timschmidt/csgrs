@@ -1,4 +1,4 @@
-//! Compile-time benchmark target for part blueprint extraction.
+//! Part blueprint extraction benchmark.
 //!
 //! This uses a simple wall-clock loop instead of an external benchmark
 //! dependency so the bench target remains available in minimal checkouts.

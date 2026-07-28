@@ -1,4 +1,4 @@
-#[path = "../competitive/support.rs"]
+#[path = "../benchmarks/support/competitive.rs"]
 mod support;
 
 use csgrs::csg::CSG;

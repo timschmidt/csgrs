@@ -1,7 +1,8 @@
+#[path = "../support/harness.rs"]
 #[allow(dead_code)]
 mod support;
 
-#[path = "../competitive/support.rs"]
+#[path = "../support/competitive.rs"]
 #[allow(dead_code)]
 mod competitive_support;
 

@@ -1,3 +1,5 @@
+//! Shared competitive correctness corpus and engine adapters.
+
 use std::{collections::BTreeMap, num::NonZeroU32};
 
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
@@ -148,9 +150,8 @@ pub fn large_boolean_case() -> Case {
 }
 
 pub fn yeahright_boolean_case() -> MeshPair {
-    let base = parse_triangle_obj(include_str!(
-        "../benchmarks/data/yeahright/yeahright_boolean_hull.obj"
-    ));
+    let base =
+        parse_triangle_obj(include_str!("../data/yeahright/yeahright_boolean_hull.obj"));
     assert_eq!(base.positions.len(), 566);
     assert_eq!(base.triangles.len(), YEAHRIGHT_BASE_TRIANGLES);
     let left = subdivide(&base, YEAHRIGHT_SUBDIVISIONS);
@@ -163,8 +164,7 @@ pub fn yeahright_boolean_case() -> MeshPair {
 }
 
 pub fn yeahright_control_mesh() -> RawMesh {
-    let mesh =
-        parse_triangle_obj(include_str!("../benchmarks/data/yeahright/controlmesh.obj"));
+    let mesh = parse_triangle_obj(include_str!("../data/yeahright/controlmesh.obj"));
     assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
     assert_eq!(mesh.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
     mesh
@@ -183,9 +183,8 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> Prepared {
 }
 
 pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
-    let base = parse_triangle_obj(include_str!(
-        "../benchmarks/data/yeahright/yeahright_boolean_hull.obj"
-    ));
+    let base =
+        parse_triangle_obj(include_str!("../data/yeahright/yeahright_boolean_hull.obj"));
     let mut exact_hull = to_convex_csgrs(&base);
     for _ in 0..YEAHRIGHT_SUBDIVISIONS.ilog2() {
         exact_hull =
