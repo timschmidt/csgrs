@@ -39,6 +39,10 @@ name = "graphics"
 harness = false
 required-features = ["exact"]
 
+[[example]]
+name = "readme_quickstart"
+required-features = ["exact"]
+
 # Keep transitive Hyper crates unified while using sibling path dependencies.
 [patch.crates-io]
 hyperreal = { path = "../hyperreal" }

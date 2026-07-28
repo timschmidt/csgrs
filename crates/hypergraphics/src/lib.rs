@@ -31,9 +31,11 @@ pub use error::{Error, Result};
 #[cfg(feature = "exact")]
 pub use geometry::{ExactMesh, ExactVertex, TriangleOrientation};
 #[cfg(feature = "exact")]
-pub use hyperlattice::{Point2, Point3, Vector2, Vector3};
+pub use hyperlattice::{Point3, Vector2, Vector3};
 #[cfg(feature = "exact")]
 pub use hyperreal::{Rational, Real};
+#[cfg(feature = "exact")]
+pub use hypertri::Point2;
 pub use render::{Color3, Primitive, RenderVertex64};
 #[cfg(feature = "exact")]
 pub use scene::{axes_mesh, grid_mesh, polygon_surface_mesh};
