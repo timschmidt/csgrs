@@ -1,54 +1,59 @@
 <h1>
-  hyperpack
-  <img src="./doc/hyperpack.png" alt="hyperpack logo" width="144" align="right">
+  Hyperpack
+  <img src="./doc/hyperpack.png" alt="Hyperpack logo" width="144" align="right">
 </h1>
 
-`hyperpack` provides exact-aware packing models, proposal algorithms, and
-feasibility replay over [`hyperreal::Real`](https://github.com/timschmidt/hyperreal).
-It covers stock cutting, rectangular and convex-irregular sheet packing, cuboid
-packing, cardinal orientations, multi-bin assignment, constraints, local
-search, and bounded exact search.
+Exact-aware packing models, heuristic proposals, bounded search, and
+authoritative feasibility replay for the Hyper ecosystem.
 
-The central rule is simple: a heuristic proposes coordinates; replay decides
-whether those coordinates satisfy the modeled constraints. Unsupported or
-uncertified constraints remain explicit instead of being rounded into success.
+Hyperpack covers one-dimensional stock cutting, rectangular and convex
+irregular sheet packing, cuboid packing, cardinal orientations, multi-bin
+assignment, clearances, support/load policies, local search, and bounded exact
+search. The governing rule is simple: an algorithm proposes coordinates;
+replay decides whether those coordinates satisfy the modeled constraints.
 
-## Installation
+This README describes crate version `0.3.0`.
+
+## Primary types
+
+| Type | Role |
+| --- | --- |
+| `StockBin1`, `StockItem1`, `StockPlacement1` | Exact one-dimensional stock model |
+| `SheetBin2`, `SheetItem2`, `SheetPlacement2`, `Rect2` | Fixed-orientation sheet model |
+| `OrientedSheetItem2`, `OrientedSheetPlacement2` | Cardinally oriented sheet items |
+| `Bin3`, `Item3`, `Placement3`, `AxisBox3` | Exact cuboid model |
+| `OrientedItem3`, `OrientedPlacement3`, `Orientation3` | Six cardinal cuboid permutations |
+| `BinInstance3`, `MultiBinPlacement3` | Named-bin assignment and cost |
+| `IrregularPacking2`, `IrregularSheetItem2` | Convex line-contour sheet packing |
+| `FeasibilityStatus`, verification/report types | Feasible, infeasible, or unknown replay evidence |
+| `PackingAnalysis3`, `PlacementOrder3` | Reusable demand, grid, lower-bound, and ordering facts |
+
+## Install
 
 ```toml
 [dependencies]
 hyperpack = "0.3.0"
 ```
 
-For a sibling checkout:
+There are no default features. `dispatch-trace` forwards Hyperreal’s
+exact-dispatch instrumentation.
 
-```toml
-[dependencies]
-hyperpack = { path = "../hyperpack" }
-```
+## Quick start
 
-## Quick Start
+Every heuristic report contains exact replay. This checked example packs two
+fixed-orientation rectangles with MaxRects and verifies the result.
 
-Every proposal report includes its exact replay. This example packs two
-fixed-orientation rectangles with MaxRects and checks the result:
-
+<!-- quickstart:start -->
 ```rust
 use hyperpack::{
-    FeasibilityStatus, ItemId, Real, Rect2, SheetBin2, SheetItem2,
-    maxrects_best_short_side_fit_2d,
+    FeasibilityStatus, ItemId, Real, Rect2, SheetBin2, SheetItem2, maxrects_best_short_side_fit_2d,
 };
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> hyperpack::PackResult<()> {
     let bin = SheetBin2::new(Rect2::new(Real::from(10), Real::from(10))?);
     let items = vec![
-        SheetItem2::new(
-            ItemId::new("a")?,
-            Rect2::new(Real::from(4), Real::from(4))?,
-        ),
-        SheetItem2::new(
-            ItemId::new("b")?,
-            Rect2::new(Real::from(6), Real::from(3))?,
-        ),
+        SheetItem2::new(ItemId::new("a")?, Rect2::new(Real::from(4), Real::from(4))?),
+        SheetItem2::new(ItemId::new("b")?, Rect2::new(Real::from(6), Real::from(3))?),
     ];
 
     let report = maxrects_best_short_side_fit_2d(&bin, &items)?;
@@ -57,197 +62,221 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+<!-- quickstart:end -->
 
-For coordinates supplied by another algorithm, construct `StockPlacement1`,
-`SheetPlacement2`, or `Placement3` values and call `verify_packing_1d`,
-`verify_packing_2d`, or `verify_packing_3d` directly.
+Run it with:
 
-## Model and Reports
+```sh
+cargo run --example basic
+```
 
-The principal input types are:
+For placements supplied by another optimizer, construct `StockPlacement1`,
+`SheetPlacement2`, or `Placement3` values and call the corresponding
+`verify_packing_*` function directly.
 
-- `StockBin1` and `StockItem1` for exact intervals;
-- `SheetBin2`, `SheetItem2`, and `Rect2` for exact rectangles;
-- `Bin3`, `Item3`, and `AxisBox3` for exact axis-aligned cuboids;
-- `OrientedSheetItem2` and `OrientedItem3` for allowed cardinal dimension
-  permutations; and
-- `BinInstance3` and `MultiBinPlacement3` for named-bin assignment and cost.
+## Proposal and replay model
 
-`FeasibilityStatus` distinguishes `Feasible`, `Infeasible`, and `Unknown`.
-Verification reports retain exact objective values, item accounting, check
-counts, and human-readable evidence. Orientation, clearance, support, load,
-multi-bin, and domain handoff checks have separate reports so a geometric pass
-cannot accidentally imply that an unmodeled policy also passed.
-Declared item identifiers must be unique; replay returns
-`PackError::DuplicateItem` instead of silently choosing one of two conflicting
-item definitions. Multi-bin and direct-load replay apply the same rule to bin
-IDs, weight evidence, and load limits.
+```text
+bin + items + policy
+         │
+ analysis / heuristic / local or bounded search
+         │
+    placement proposal
+         │ exact replay
+ containment + overlap + accounting + policy
+         │
+ feasible / infeasible / unknown
+```
 
-## Proposal and Search Algorithms
+`FeasibilityStatus::Unknown` preserves an uncertified comparison, unsupported
+constraint, or exhausted proof budget. Objective scores and lower bounds never
+turn an unverified proposal into a feasible packing.
 
-The proposal surface includes:
+## API guide
 
-- 2D shelf (NFDH, FFDH, BFDH), skyline, MaxRects, and guillotine variants;
-- 3D corner-point, extreme-point, maximal-space, guillotine, and LAFF variants;
-- deterministic portfolios, order local search, tabu search, seeded multistart,
-  reinsertion repair, and bin-emptying repair; and
-- `branch_and_bound_one_bin_3d`, a limit-bearing fixed-orientation solver for
-  small one-bin instances.
+### Models and authoritative replay
 
-Proposal reports include trace counters, rejected items, retained free-space
-state, and exact replay. `PackingAnalysis3` retains exact demand classes, grid
-facts, lower bounds, and initial free space for repeated search; cheap work
-counts are derived directly from those facts. `PlacementOrder3` separately
-reports deterministic ordering evidence. Both are advisory;
-`verify_packing_3d` remains the immediate authoritative query.
+- `ItemId::new`, `Rect2::new`, and `AxisBox3::new` validate identifiers and
+  positive exact dimensions.
+- `StockBin1::new`, `StockItem1::new`, and `verify_packing_1d` cover stock
+  intervals.
+- `SheetBin2::new`, `SheetItem2::new`, and `verify_packing_2d` cover exact
+  rectangles.
+- `OrientedSheetItem2::new`, `Orientation2::apply`, and
+  `verify_oriented_packing_2d` cover cardinal sheet rotations.
+- `Bin3`, `Item3`, `Placement3`, and `verify_packing_3d` cover fixed-orientation
+  cuboids; `PackingVerification3::replay` is the associated constructor.
+- `OrientedItem3::new`, `Orientation3::apply`, and
+  `verify_oriented_packing_3d` cover six dimension permutations.
+- `BinId::new`, `BinInstance3::new`, and
+  `verify_multi_bin_packing_3d` check named-bin assignment, uniqueness, capacity,
+  and exact cost.
 
-`IrregularPacking2::new` owns a stable item inventory and caches one exact
-Hypercurve no-fit region per unordered convex-item pair. Cache blockers remain
-data, while `.verify` immediately replays sheet containment, pair
-contact/overlap, and accounting without introducing an epsilon. Boundary
-contact is feasible; an unavailable no-fit region produces `Unknown`.
-`.bottom_left` deterministically proposes translations from the sheet corner
-and cached no-fit boundary vertices, then attaches authoritative replay to the
-proposal report.
+All replay paths reject duplicate item or bin identifiers rather than choosing
+one conflicting definition.
 
-The bounded solver returns `Unknown` when its item or node limit prevents an
-exhaustive result. A feasible replay proves feasibility, while objective values,
-lower bounds, and heuristic rankings do not by themselves prove global
-optimality.
+### Bounds, objectives, clearance, support, and handoffs
 
-## Exactness Boundary
+- `capacity_bounds_2d`, `capacity_bounds_3d`,
+  `pair_incompatibilities_2d`, and `pair_incompatibilities_3d` provide exact
+  necessary infeasibility evidence.
+- `analyze_packing_3d` retains demand classes, dimension/grid facts, initial
+  free space, and lower bounds; `order_placements_3d` records deterministic
+  order evidence.
+- `height_objective_3d` and `compare_objectives_3d` provide exact objective
+  values and lexicographic comparisons.
+- `verify_clearance_2d` and `verify_clearance_3d` enforce positive exact
+  kerf/clearance separation.
+- `verify_support_3d` supports full-base, area-ratio, and footprint-center
+  policies. `verify_direct_stack_load_3d` uses caller-supplied `ItemWeight3`
+  and `LoadLimit3` evidence.
+- `import_domain_items_3d`, `import_domain_bin_3d`, and
+  `summarize_domain_handoffs` keep geometry/manufacturing/physics constraints
+  explicit.
+- `export_no_overlap_model_2d` and `export_no_overlap_model_3d` retain exact
+  placement domains and pairwise axis-separation disjunctions for solver
+  adapters.
 
-Dimensions, positions, lengths, areas, volumes, costs, weights, and bounds use
-`Real`. The implemented interval, rectangle, and cuboid containment and
-no-overlap tests use certified sign queries. Uncertified comparisons propagate
-as `Unknown`; the crate does not introduce an epsilon or silently lower a
-decision to `f64`.
+### Two-dimensional proposals
 
-Exact replay currently covers:
+- Shelf proposals:
+  `shelf_next_fit_decreasing_height_2d`,
+  `shelf_first_fit_decreasing_height_2d`, and
+  `shelf_best_fit_decreasing_height_2d`.
+- Skyline proposals: `skyline_bottom_left_2d` and
+  `skyline_minimum_waste_2d`.
+- MaxRects proposals: best-short-side, best-long-side, best-area,
+  bottom-left, and contact-point functions.
+- Guillotine proposals: best-area, best-short-side, and best-long-side
+  functions.
+- `auto_sheet_portfolio_2d` runs a deterministic, budgeted portfolio and
+  retains each evaluation and authoritative replay.
 
-- 1D, fixed-orientation 2D, cardinally oriented 2D, fixed-orientation 3D, and
-  six-permutation oriented 3D geometry;
-- translation-only convex line-contour sheet geometry through exact no-fit
-  regions;
-- one-placement-per-item accounting and multi-bin assignment;
-- exact used space, waste, height, cost, and lexicographic objective comparison;
-- capacity and pair-incompatibility necessary bounds;
-- positive kerf/clearance separation;
-- full-base, area-ratio, and footprint-center support policies; and
-- direct top-face load limits with caller-supplied exact weights.
+Each `SheetHeuristicReport2` retains placed/rejected items, free rectangles,
+trace counts, objective, and replay.
 
-Snapshot helpers preserve rational text or full `hyperreal` structural JSON.
-The binary format uses length-prefixed UTF-8 fields rather than primitive-float
-encodings. No-overlap model exports preserve exact coordinate domains and
-pairwise axis-separation disjunctions for solver adapters.
+### Three-dimensional proposals and search
 
-## Limitations
+- Cuboid heuristics include first/best fit by volume, maximum side, or footprint
+  area; extreme-point; maximal-space; guillotine best-volume; and LAFF.
+- `auto_cuboid_portfolio_3d` evaluates a deterministic budgeted portfolio.
+- `local_search_order_3d`, `tabu_search_order_3d`,
+  `multistart_order_3d`, `reinsert_unplaced_order_3d`, and `empty_bins_3d`
+  expose bounded neighborhood search and reproducible termination reports.
+- `branch_and_bound_one_bin_3d` is a limit-bearing fixed-orientation solver for
+  small one-bin instances. `ExactSearchStatus3::Unknown` means an item or node
+  limit prevented exhaustive proof.
 
-- Orientations are cardinal dimension permutations, not arbitrary rotations.
-- Irregular no-fit caching currently accepts simple convex line contours;
-  concave shapes explicitly report that convex decomposition is required, and
-  native curves remain unsupported by this cache surface.
-- `CenterOfMassProjection` checks the geometric footprint center, not a mass
-  distribution supplied by a physics model.
-- Support and direct-load reports do not model friction, deformation, dynamics,
-  or transitive load propagation.
-- Routing, manufacturing-process, and richer physical constraints require
-  certified domain handoffs.
-- The bounded 3D branch-and-bound backend is intentionally for small,
-  fixed-orientation, one-bin instances; the crate is not a general
-  optimality-proving optimizer.
+### Irregular convex sheets
 
-## Development
+- `IrregularPacking2::new` owns a stable inventory and caches one exact
+  Hypercurve translation obstacle (no-fit region) per unordered item pair.
+- `IrregularPacking2::verify` replays sheet containment, pair contact/overlap,
+  and accounting.
+- `IrregularPacking2::bottom_left` proposes translations from the sheet corner
+  and cached no-fit boundaries, then attaches authoritative replay.
+
+Boundary contact is feasible. The current cache accepts simple convex
+line-contour items; concave input reports that decomposition is required, and
+native curved contours are unsupported on this surface.
+
+### Snapshots
+
+- `snapshot_stock_1d_text`, `snapshot_sheet_2d_text`, and
+  `snapshot_packing_3d_text` preserve exact rational/Hyperreal structure.
+- The corresponding `*_binary` functions use length-prefixed UTF-8 fields,
+  not primitive-float coordinate encodings.
+
+## Guarantees and boundaries
+
+- Dimensions, positions, lengths, areas, volumes, costs, weights, and bounds
+  use `hyperreal::Real`.
+- Containment, non-overlap, support, load, and objective decisions use
+  certified signs or return `Unknown`; no epsilon is introduced.
+- A heuristic replay can prove feasibility, but a good objective does not prove
+  global optimality.
+- Orientations are cardinal permutations, not arbitrary rotations.
+- Footprint-center support is geometric and does not infer a physical mass
+  distribution.
+- Support/load reports omit friction, deformation, dynamics, and transitive
+  load propagation.
+- Routing, manufacturing-process, and richer physical rules require explicit
+  domain handoffs.
+
+## Feature flags
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `dispatch-trace` | no | Hyperreal exact-dispatch instrumentation |
+
+## Validation and performance
 
 ```sh
 cargo fmt --all -- --check
-cargo test --locked
-cargo check --benches --locked
-cargo clippy --all-targets --locked -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
-cargo test --all-features --test dispatch_trace
-cargo bench --bench feasibility
-cargo bench --bench replay_micro
+cargo test --all-features --locked
+cargo clippy --all-targets --all-features --locked -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features --locked
+cargo check --benches --all-features
 ```
 
-The optional `dispatch-trace` feature forwards `hyperreal`'s exact-dispatch
-instrumentation. The targeted integration test verifies that representative
-rational replay and pair-bound workloads request neither approximation nor an
-unknown-fact fallback. Benchmark baselines, retained changes, and rejected
-experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-## Reference-Guided Design
-
-The references are used as design constraints rather than as a claim that every
-algorithm in each source is implemented:
-
-- Yap motivates the proposal/replay boundary, certified sign decisions, and
-  explicit `Unknown` outcomes.
-- Dyckhoff's typology motivates separate stock, sheet, cuboid, and multi-bin
-  carriers instead of one ambiguous packing interface.
-- Martello and Toth, and Martello–Pisinger–Vigo, motivate exact capacity and
-  incompatibility bounds plus limit-bearing branch-and-bound for small 3D
-  instances.
-- Lodi–Martello–Vigo motivates keeping constructive 3D heuristics subordinate
-  to exact replay and combining them with bounded tabu improvement.
-- Crainic–Perboli–Tadei motivates the extreme-point proposal surface and its
-  retained candidate-point trace.
-- Jylänki motivates the explicit shelf, skyline, MaxRects, and guillotine 2D
-  families and their alternative scoring rules.
-- Iori and coauthors motivate keeping 2D problem structure, no-overlap model
-  exports, necessary bounds, and proof status explicit for future exact solver
-  adapters.
-- Bortfeldt and Wäscher motivate separate orientation, clearance, support,
-  load, assignment, cost, and domain-handoff reports for practical container
-  constraints.
-- Glover motivates explicit tenure and evaluation budgets in tabu search.
-- Wolpert and Macready motivate problem-specific deterministic portfolios,
-  with no heuristic presented as universally best.
-- Hoos and Stützle motivate seeded multistart, bounded neighborhoods, explicit
-  termination status, and reproducible local-search traces.
+Benchmark definitions, baselines, retained optimizations, and rejected
+experiments are in [PERFORMANCE.md](PERFORMANCE.md). Fuzz ownership and replay
+instructions live in [fuzz/README.md](fuzz/README.md).
 
 ## References
 
-- Chee K. Yap, [“Towards Exact Geometric Computation”](https://doi.org/10.1016/0925-7721(95)00040-2),
-  *Computational Geometry* 7(1–2), 1997.
-- Harald Dyckhoff, [“A Typology of Cutting and Packing Problems”](https://doi.org/10.1016/0377-2217(90)90350-K),
+These sources describe the cutting/packing taxonomy, proposal algorithms,
+bounded search, and exact-replay boundary relevant to Hyperpack:
+
+- Yap, C. K. “Towards Exact Geometric Computation.” *Computational Geometry*
+  7(1–2), 1997.
+  [DOI: 10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
+- Dyckhoff, H. “A Typology of Cutting and Packing Problems.”
   *European Journal of Operational Research* 44(2), 1990.
-- Silvano Martello and Paolo Toth, [*Knapsack Problems: Algorithms and Computer
-  Implementations*](https://books.google.com/books?id=0dhQAAAAMAAJ), Wiley, 1990.
-- Silvano Martello, David Pisinger, and Daniele Vigo, [“The Three-Dimensional Bin
-  Packing Problem”](https://doi.org/10.1287/opre.48.2.256.12386), *Operations
-  Research* 48(2), 2000.
-- Andrea Lodi, Silvano Martello, and Daniele Vigo, [“Heuristic Algorithms for the
-  Three-Dimensional Bin Packing Problem”](https://doi.org/10.1016/S0377-2217(02)00134-0),
-  *European Journal of Operational Research* 141(2), 2002.
-- Teodor Gabriel Crainic, Guido Perboli, and Roberto Tadei, [“Extreme Point-Based
-  Heuristics for Three-Dimensional Bin Packing”](https://doi.org/10.1287/ijoc.1070.0250),
-  *INFORMS Journal on Computing* 20(3), 2008.
-- Jukka Jylänki, [“A Thousand Ways to Pack the Bin—A Practical Approach to
-  Two-Dimensional Rectangle Bin Packing”](https://trszdev.github.io/maxrects-bssf-global-demo/RectangleBinPack.pdf),
-  2010.
-- Manuel Iori, Vinícius L. de Lima, Silvano Martello, Flávio K. Miyazawa, and
-  Michele Monaci, [“Exact Solution Techniques for Two-Dimensional Cutting and
-  Packing”](https://doi.org/10.1016/j.ejor.2020.06.050), *European Journal of
-  Operational Research* 289(2), 2021.
-- Andreas Bortfeldt and Gerhard Wäscher, [“Constraints in Container Loading—A
-  State-of-the-Art Review”](https://doi.org/10.1016/j.ejor.2012.12.006),
-  *European Journal of Operational Research* 229(1), 2013.
-- Fred Glover, [“Tabu Search—Part I”](https://doi.org/10.1287/ijoc.1.3.190),
-  *ORSA Journal on Computing* 1(3), 1989.
-- David H. Wolpert and William G. Macready, [“No Free Lunch Theorems for
-  Optimization”](https://doi.org/10.1109/4235.585893), *IEEE Transactions on
-  Evolutionary Computation* 1(1), 1997.
-- Holger H. Hoos and Thomas Stützle, [*Stochastic Local Search: Foundations and
-  Applications*](https://www.cs.ubc.ca/~hoos/SLS-Book/), Morgan Kaufmann, 2004.
+  [DOI: 10.1016/0377-2217(90)90350-K](https://doi.org/10.1016/0377-2217(90)90350-K).
+- Martello, S., Pisinger, D., and Vigo, D. “The Three-Dimensional Bin Packing
+  Problem.” *Operations Research* 48(2), 2000.
+  [DOI: 10.1287/opre.48.2.256.12386](https://doi.org/10.1287/opre.48.2.256.12386).
+- Lodi, A., Martello, S., and Vigo, D. “Heuristic Algorithms for the
+  Three-Dimensional Bin Packing Problem.” *European Journal of Operational
+  Research* 141(2), 2002.
+  [DOI: 10.1016/S0377-2217(02)00134-0](https://doi.org/10.1016/S0377-2217(02)00134-0).
+- Crainic, T. G., Perboli, G., and Tadei, R. “Extreme Point-Based Heuristics
+  for Three-Dimensional Bin Packing.” *INFORMS Journal on Computing* 20(3),
+  2008. [DOI: 10.1287/ijoc.1070.0250](https://doi.org/10.1287/ijoc.1070.0250).
+- Jylänki, J. “A Thousand Ways to Pack the Bin—A Practical Approach to
+  Two-Dimensional Rectangle Bin Packing.” 2010.
+  [Report](https://trszdev.github.io/maxrects-bssf-global-demo/RectangleBinPack.pdf).
+- Iori, M., de Lima, V. L., Martello, S., Miyazawa, F. K., and Monaci, M.
+  “Exact Solution Techniques for Two-Dimensional Cutting and Packing.”
+  *European Journal of Operational Research* 289(2), 2021.
+  [DOI: 10.1016/j.ejor.2020.06.050](https://doi.org/10.1016/j.ejor.2020.06.050).
+- Bortfeldt, A., and Wäscher, G. “Constraints in Container Loading—A
+  State-of-the-Art Review.” *European Journal of Operational Research* 229(1),
+  2013. [DOI: 10.1016/j.ejor.2012.12.006](https://doi.org/10.1016/j.ejor.2012.12.006).
+- Glover, F. “Tabu Search—Part I.” *ORSA Journal on Computing* 1(3), 1989.
+  [DOI: 10.1287/ijoc.1.3.190](https://doi.org/10.1287/ijoc.1.3.190).
+- Wolpert, D. H., and Macready, W. G. “No Free Lunch Theorems for
+  Optimization.” *IEEE Transactions on Evolutionary Computation* 1(1), 1997.
+  [DOI: 10.1109/4235.585893](https://doi.org/10.1109/4235.585893).
+- Hoos, H. H., and Stützle, T. *Stochastic Local Search: Foundations and
+  Applications*. Morgan Kaufmann, 2004.
+  [Companion site](https://www.cs.ubc.ca/~hoos/SLS-Book/).
 
-## Hyper Ecosystem
+## Acknowledgements
 
-`hyperpack` uses [hyperreal](https://github.com/timschmidt/hyperreal) for exact
-scalars. Related geometry, manufacturing, search, and integration crates include
-[hyperparts](https://github.com/timschmidt/hyperparts),
-[hyperphysics](https://github.com/timschmidt/hyperphysics),
-[hyperpath](https://github.com/timschmidt/hyperpath),
-[hyperdrc](https://github.com/timschmidt/hyperdrc),
-[hypersolve](https://github.com/timschmidt/hypersolve), and
-[hyperevolution](https://github.com/timschmidt/hyperevolution).
+Hyperpack builds on
+[Hyperreal](https://github.com/timschmidt/hyperreal) and
+[Hypercurve](https://github.com/timschmidt/hypercurve). Related constraint,
+physical, manufacturing, and search semantics remain in Hypersolve,
+Hyperphysics, Hyperpath, Hyperdrc, and Hyperevolution. The research cited above
+informs algorithms and report boundaries without implying source-code
+derivation.
+
+## License and contributing
+
+Licensed under Apache-2.0 as declared in [Cargo.toml](Cargo.toml).
+
+Bug reports should include exact bins/items/placements, policy inputs, enabled
+features, and full replay. Before proposing a change, run formatting, the
+focused regression, all-feature tests, and strict Clippy.

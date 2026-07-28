@@ -14,12 +14,10 @@ default = []
 dispatch-trace = ["hyperreal/dispatch-trace"]
 
 [dependencies]
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
-hypercurve = { path = "../hypercurve" }
-hyperreal = { path = "../hyperreal", features = ["serde"] }
-# hypercurve = { version = "0.3.0" }
-# hyperreal = { version = "0.13.1", features = ["serde"] }
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hypercurve = { version = "0.3.0", path = "../hypercurve" }
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
 
 # Keep transitive sibling crates unified while using local path development mode.
 [patch.crates-io]
