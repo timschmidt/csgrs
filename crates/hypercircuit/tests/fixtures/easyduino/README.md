@@ -35,7 +35,7 @@ an exact blocker:
 cargo bench --bench easyduino_full_pipeline --features "drc interchange"
 ```
 
-An unfiltered full-pipeline run compares ordinary `prepare_release` coverage,
+An unfiltered full-pipeline run compares ordinary `release_report` coverage,
 finding counts, typed blockers, and independent round-trip dispositions against
 `ordinary-release.json`. Regenerate it only after reviewing an intentional
 release-policy or geometry change:

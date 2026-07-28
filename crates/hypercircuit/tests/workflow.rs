@@ -5,8 +5,7 @@ use hypercircuit::{
     Footprint, LandPatternBody, LandPatternPad, LayoutTransform, MaterializationOptions, NetClass,
     NetClassId, PCB_LOSS_TANGENT_PROPERTY, PCB_RELATIVE_PERMITTIVITY_PROPERTY, PadId, PadShape,
     Part, PcbMaterialPropertyIssue, PcbMaterialPropertyLibrary, PlacementRule, Plating,
-    PortDirection, Real, ReleaseBlocker, ReleasePreparationOptions, Route, Via, ViaMaskIntent,
-    parts, pin,
+    PortDirection, Real, ReleaseBlocker, ReleaseOptions, Route, Via, ViaMaskIntent, parts, pin,
 };
 #[cfg(feature = "interchange")]
 use hypercircuit::{
@@ -362,7 +361,7 @@ fn hierarchical_release_project() -> CheckedProject {
 }
 
 #[test]
-fn checked_fluent_design_prepares_cohesive_release_evidence() {
+fn checked_fluent_design_reports_cohesive_release_evidence() {
     let checked = fluent_release_design();
     let dc = checked
         .circuit
@@ -374,9 +373,9 @@ fn checked_fluent_design_prepares_cohesive_release_evidence() {
     assert_eq!(dc.candidate[0], Real::from(5));
 
     let report = checked
-        .prepare_release(ReleasePreparationOptions {
+        .release_report(ReleaseOptions {
             materialization: MaterializationOptions::default(),
-            ..ReleasePreparationOptions::default()
+            ..ReleaseOptions::default()
         })
         .unwrap();
 
@@ -461,9 +460,7 @@ fn semantic_release_preserves_authored_intent_and_source_spans_in_drc_handoff() 
         .with_design_intent(intent)
         .unwrap();
 
-    let report = document
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let report = document.release_report(ReleaseOptions::default()).unwrap();
 
     let authored = report
         .drc_handoff
@@ -517,10 +514,10 @@ fn default_manufacturing_release_is_unsigned_deterministic_and_self_verifying() 
     let options = ManufacturingReleaseOptions::for_document(&document);
 
     let left = document
-        .build_manufacturing_release(options.clone(), ReleasePreparationOptions::default())
+        .build_manufacturing_release(options.clone(), ReleaseOptions::default())
         .unwrap();
     let right = document
-        .build_manufacturing_release(options, ReleasePreparationOptions::default())
+        .build_manufacturing_release(options, ReleaseOptions::default())
         .unwrap();
 
     left.verify().unwrap();
@@ -725,7 +722,7 @@ fn panel_release_expands_components_and_test_access_without_losing_child_identit
     let bundle = document
         .build_manufacturing_release(
             ManufacturingReleaseOptions::for_document(&document),
-            ReleasePreparationOptions::default(),
+            ReleaseOptions::default(),
         )
         .unwrap();
     bundle.verify().unwrap();
@@ -762,9 +759,7 @@ fn ordinary_release_runs_native_dft_requirements_with_source_evidence() {
         source: Some(source.clone()),
     });
 
-    let report = document
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let report = document.release_report(ReleaseOptions::default()).unwrap();
     let finding = report
         .drc
         .violations
@@ -795,9 +790,7 @@ fn ordinary_release_runs_native_dft_requirements_with_source_evidence() {
             covered_targets: vec![document.test_intent.requirements[0].target.clone()],
             instruction_register_length: None,
         });
-    let covered = document
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let covered = document.release_report(ReleaseOptions::default()).unwrap();
     assert!(matches!(
         covered.drc.test_coverage.records[0].status,
         hyperdrc::NativeTestCoverageStatus::BoundaryScan { ref chain } if chain == "chain-a"
@@ -809,9 +802,7 @@ fn release_rule_failures_remain_inspectable_reports() {
     let mut checked = fluent_release_design();
     checked.layout.land_patterns[0].body = None;
 
-    let report = checked
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let report = checked.release_report(ReleaseOptions::default()).unwrap();
 
     assert!(report.drc_handoff.omissions.iter().any(|omission| {
         matches!(omission, DrcHandoffOmission::MissingComponentEnvelope(instance) if instance == "V1")
@@ -848,9 +839,7 @@ fn release_resolves_controlled_impedance_materials_through_hyperphysics() {
         requires_reference_plane: true,
     });
 
-    let unresolved = checked
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let unresolved = checked.release_report(ReleaseOptions::default()).unwrap();
     assert_eq!(
         unresolved
             .drc_handoff
@@ -872,10 +861,10 @@ fn release_resolves_controlled_impedance_materials_through_hyperphysics() {
     )));
 
     let resolved = checked
-        .prepare_release(ReleasePreparationOptions {
+        .release_report(ReleaseOptions {
             pcb_materials: PcbMaterialPropertyLibrary::default()
                 .with_material("hyperphysics:FR4", fr4_properties()),
-            ..ReleasePreparationOptions::default()
+            ..ReleaseOptions::default()
         })
         .unwrap();
     assert!(resolved.drc_handoff.omissions.is_empty());
@@ -914,7 +903,7 @@ fn release_resolves_controlled_impedance_materials_through_hyperphysics() {
 #[test]
 fn centered_pad_materialization_avoids_spurious_offset_uncertainty() {
     let report = offset_uncertain_release_design()
-        .prepare_release(ReleasePreparationOptions::default())
+        .release_report(ReleaseOptions::default())
         .unwrap();
 
     assert!(
@@ -928,7 +917,7 @@ fn centered_pad_materialization_avoids_spurious_offset_uncertainty() {
 }
 
 #[test]
-fn checked_hierarchy_prepares_release_from_its_path_qualified_flat_view() {
+fn checked_hierarchy_reports_release_from_its_path_qualified_flat_view() {
     let project = hierarchical_release_project();
     let simulation = project
         .composed
@@ -939,9 +928,7 @@ fn checked_hierarchy_prepares_release_from_its_path_qualified_flat_view() {
         .unwrap();
     assert!(simulation.replay.accepted);
 
-    let report = project
-        .prepare_release(ReleasePreparationOptions::default())
-        .unwrap();
+    let report = project.release_report(ReleaseOptions::default()).unwrap();
 
     assert!(
         report

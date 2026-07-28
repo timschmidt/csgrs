@@ -8,15 +8,14 @@ use std::process::{Command, ExitCode};
 use hypercircuit::{
     AssemblyOutputs, Ed25519ReleaseSigner, KiCadExportOptions, ManufacturingReleaseBundle,
     ManufacturingReleaseDifference, ManufacturingReleaseOptions, PcbSvgOptions,
-    ProjectDesignProvider, ProjectManifest, ProjectProviderKind, ReleasePreparationOptions,
-    SemanticDocument,
+    ProjectDesignProvider, ProjectManifest, ProjectProviderKind, ReleaseOptions, SemanticDocument,
 };
 
 const PROJECT_MANIFEST_NAME: &str = "hypercircuit.toml";
 
 struct LoadedDesign {
     document: SemanticDocument,
-    release_options: ReleasePreparationOptions,
+    release_options: ReleaseOptions,
 }
 
 const USAGE: &str = "\
@@ -256,7 +255,7 @@ fn load_document(path: &Path) -> Result<LoadedDesign, String> {
         .map_err(|error| format!("cannot load {}: {error}", path.display()))?;
     Ok(LoadedDesign {
         document,
-        release_options: ReleasePreparationOptions::default(),
+        release_options: ReleaseOptions::default(),
     })
 }
 
@@ -285,9 +284,9 @@ fn load_project_document(design: Option<&str>) -> Result<LoadedDesign, String> {
         .map_err(|error| format!("cannot resolve project PCB materials: {error}"))?;
     Ok(LoadedDesign {
         document,
-        release_options: ReleasePreparationOptions {
+        release_options: ReleaseOptions {
             pcb_materials,
-            ..ReleasePreparationOptions::default()
+            ..ReleaseOptions::default()
         },
     })
 }
@@ -413,7 +412,7 @@ fn check(loaded: &LoadedDesign) -> Result<bool, String> {
 
     let report = loaded
         .document
-        .prepare_release(loaded.release_options.clone())
+        .release_report(loaded.release_options.clone())
         .map_err(|error| format!("cannot construct release evidence: {error}"))?;
     let blockers = report.release_blockers();
     println!(

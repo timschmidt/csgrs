@@ -10,8 +10,7 @@ use std::time::Instant;
 use std::{collections::BTreeMap, fs, path::Path};
 
 use hypercircuit::{
-    AssemblyOutputs, FabricationPackage, HyperDrcHandoff, ReleasePreparationOptions,
-    SemanticDocument,
+    AssemblyOutputs, FabricationPackage, HyperDrcHandoff, ReleaseOptions, SemanticDocument,
 };
 use hyperdrc::PcbSketchExt;
 
@@ -63,7 +62,7 @@ fn main() {
         println!("easyduino-full-pipeline/{slug}: starting");
         let started = Instant::now();
         if profile_stages || profile_cam {
-            let options = ReleasePreparationOptions::default();
+            let options = ReleaseOptions::default();
             let mut layout = document
                 .pcb
                 .clone()
@@ -205,10 +204,7 @@ fn main() {
                 "Easyduino {slug} placement is not satisfied"
             );
             layout.placements.clone_from(&placement.placements);
-            match layout.materialize(
-                &document.circuit,
-                ReleasePreparationOptions::default().materialization,
-            ) {
+            match layout.materialize(&document.circuit, ReleaseOptions::default().materialization) {
                 Ok(report) => {
                     let mut aggregate_blockers = 0;
                     for image in &report.copper_layers {
@@ -249,7 +245,7 @@ fn main() {
             }
             continue;
         }
-        match document.prepare_release(ReleasePreparationOptions::default()) {
+        match document.release_report(ReleaseOptions::default()) {
             Ok(report) => {
                 completed += 1;
                 let mut finding_counts = BTreeMap::<String, usize>::new();

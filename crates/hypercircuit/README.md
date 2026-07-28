@@ -135,7 +135,7 @@ printing it. `bom` resolves retained placement constraints before deriving
 assembly rows. Optional `[[pcb-materials]]` entries use exact decimal or
 rational strings and required source provenance. `check` and `release` resolve
 them into the same HyperPhysics property graphs accepted by
-`ReleasePreparationOptions::pcb_materials`; duplicate handles, empty
+`ReleaseOptions::pcb_materials`; duplicate handles, empty
 provenance, nonpositive relative permittivity and negative loss tangent fail
 manifest loading. Direct JSON paths intentionally receive no implicit material
 catalog.
@@ -419,8 +419,8 @@ intent. `ViaStyleHandle`, `NetClassHandle`, and
 rule validation rejects inheritance, geometry, duplicated-net, and pair errors
 before mutation.
 
-With the `drc` feature, `CheckedDesign::prepare_release` and
-`CheckedProject::prepare_release` are the cohesive
+With the `drc` feature, `CheckedDesign::release_report` and
+`CheckedProject::release_report` are the cohesive
 verification/manufacturing handoffs for flat and compiled hierarchical work.
 They resolve retained placement constraints, apply the solution to a reviewable
 `resolved_layout`, and compose the existing authoritative ERC, csgrs
@@ -428,10 +428,10 @@ materialization, HyperDRC, fabrication, CAM re-import, BOM/pick-and-place, and
 assembly CSV audit APIs. Hierarchical projects use their validated
 path-qualified composed `Circuit`/`PcbLayout` while retaining reusable
 definitions, schematics, scope maps, and source maps beside the report. The
-resulting `ReleasePreparationReport` preserves every intermediate artifact and
+resulting `ReleaseReport` preserves every intermediate artifact and
 reports typed `ReleaseBlocker`s; rule failures therefore remain inspectable
 reports, while only unsatisfied placement or an impossible
-materialization/fabrication stage returns `ReleasePreparationError`. This is
+materialization/fabrication stage returns `ReleaseError`. This is
 orchestration over retained containers, not another circuit or board IR.
 
 `DesignModule` wraps a `CheckedDesign` as a reusable circuit/PCB definition.
@@ -633,7 +633,7 @@ model, while `DrcDielectricMaterialEvidence` retains each successful layer,
 exact value and contributing `SourceSpec`. Missing handles,
 unknown/interval/proposal/conflicting values, invalid units or signs, and
 heterogeneous layer values remain typed `DrcHandoffOmission`s.
-`ReleasePreparationOptions::pcb_materials` carries the same library into the
+`ReleaseOptions::pcb_materials` carries the same library into the
 cohesive release path, so incomplete controlled-impedance material evidence is
 a release blocker instead of an implicit FR-4 default.
 `run_readiness` invokes HyperDRC's stackup, net constraint, native-authoring,
@@ -654,9 +654,9 @@ remain explicit future boundaries. Error-severity findings block
 `is_release_clean`. HyperDRC profile offsets are fallible at this boundary:
 exact topology indeterminacy becomes an error-severity
 `geometry-uncertainty` finding that names the requested check and source
-layers. Release preparation therefore remains inspectable instead of unwinding
+layers. Release reporting therefore remains inspectable instead of unwinding
 or substituting approximate geometry.
-`CheckedDesign::prepare_release` carries resolved placement through this
+`CheckedDesign::release_report` carries resolved placement through this
 handoff, fabrication generation, and both CAM and assembly re-import audits.
 Its report's `is_release_clean` requires clean ERC, lossless DRC/fabrication
 handoffs, error-free HyperDRC, byte-integrity, CAM, connectivity, and assembly
@@ -813,8 +813,8 @@ across exact simulation/ERC, schematic and PCB SVG, hyperpath routing handoff,
 csgrs materialization and 3D stackup review, native HyperDRC, fabrication and
 assembly outputs, semantic JSON, and KiCad re-import.
 The `workflow` integration test begins at the concise fluent `Design` and
-`DesignModule` APIs and proves both `CheckedDesign::prepare_release` and
-`CheckedProject::prepare_release` through exact simulation, resolved placement,
+`DesignModule` APIs and proves both `CheckedDesign::release_report` and
+`CheckedProject::release_report` through exact simulation, resolved placement,
 path-qualified source identity, csgrs/HyperDRC, manufacturing package re-import,
 and assembly reconciliation. It also proves release-rule failures remain typed,
 inspectable evidence rather than construction errors.

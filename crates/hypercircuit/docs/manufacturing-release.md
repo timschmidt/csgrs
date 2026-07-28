@@ -4,7 +4,7 @@
 point. Its defaults deliberately require no signing key, vendor profile, panel,
 DFT plan, or proprietary adapter:
 
-- the generic prototype HyperDRC profile is selected by release preparation;
+- the generic prototype HyperDRC profile is selected by release reporting;
 - absent panel and DFT intent is explicitly `not_required`;
 - the unsigned core and artifact catalog are deterministic;
 - a path ending in `.zip` selects deterministic ZIP output, while every other

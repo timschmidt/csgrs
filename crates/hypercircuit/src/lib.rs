@@ -432,6 +432,4 @@ pub use tscircuit_routing::{
     TscircuitRoutingProjection, TscircuitSimpleRouteJsonReport,
 };
 #[cfg(feature = "drc")]
-pub use workflow::{
-    ReleaseBlocker, ReleasePreparationError, ReleasePreparationOptions, ReleasePreparationReport,
-};
+pub use workflow::{ReleaseBlocker, ReleaseError, ReleaseOptions, ReleaseReport};

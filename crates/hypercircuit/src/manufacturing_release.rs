@@ -13,7 +13,7 @@ use crate::{
     ArtifactCatalog, ArtifactCatalogError, AssemblyCsvDocument, CoordinateFrame2,
     FabricationCamRoundTripReport, FabricationFile, FabricationFileKind, FabricationManifest,
     PackageDigest, PortableArtifactPath, ReleaseArtifactDescriptor, ReleaseArtifactRole,
-    ReleasePreparationError, ReleasePreparationOptions, ReleasePreparationReport, SemanticDocument,
+    ReleaseError, ReleaseOptions, ReleaseReport, SemanticDocument,
 };
 
 /// Stable manufacturing-release manifest schema.
@@ -299,7 +299,7 @@ pub enum ManufacturingReleaseDifference {
 /// Failure to construct, verify, or write a release.
 #[derive(Debug)]
 pub enum ManufacturingReleaseError {
-    Preparation(ReleasePreparationError),
+    Release(ReleaseError),
     Catalog(ArtifactCatalogError),
     MissingArtifact(String),
     UnexpectedArtifact(String),
@@ -322,9 +322,9 @@ impl Display for ManufacturingReleaseError {
 
 impl std::error::Error for ManufacturingReleaseError {}
 
-impl From<ReleasePreparationError> for ManufacturingReleaseError {
-    fn from(value: ReleasePreparationError) -> Self {
-        Self::Preparation(value)
+impl From<ReleaseError> for ManufacturingReleaseError {
+    fn from(value: ReleaseError) -> Self {
+        Self::Release(value)
     }
 }
 
@@ -339,9 +339,9 @@ impl SemanticDocument {
     pub fn build_manufacturing_release(
         &self,
         release: ManufacturingReleaseOptions,
-        preparation: ReleasePreparationOptions,
+        reporting: ReleaseOptions,
     ) -> Result<ManufacturingReleaseBundle, ManufacturingReleaseError> {
-        let report = self.prepare_release(preparation)?;
+        let report = self.release_report(reporting)?;
         ManufacturingReleaseBundle::from_report(self, &report, release)
     }
 }
@@ -386,10 +386,10 @@ impl ManufacturingReleaseBundle {
         }
     }
 
-    /// Packages one already-prepared release report without rerunning geometry.
+    /// Packages one existing release report without rerunning geometry.
     pub fn from_report(
         document: &SemanticDocument,
-        report: &ReleasePreparationReport,
+        report: &ReleaseReport,
         mut options: ManufacturingReleaseOptions,
     ) -> Result<Self, ManufacturingReleaseError> {
         options.coordinate_frame.validate().map_err(|error| {
@@ -493,7 +493,7 @@ impl ManufacturingReleaseBundle {
             let board = &document
                 .pcb
                 .as_ref()
-                .expect("release preparation requires PCB layout")
+                .expect("release reporting requires PCB layout")
                 .id;
             report
                 .assembly

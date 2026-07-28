@@ -372,10 +372,10 @@ fn cubic_board_profile_requires_an_explicit_cam_projection_policy() {
                 .finish()
                 .unwrap();
         let release = checked
-            .prepare_release(hypercircuit::ReleasePreparationOptions {
+            .release_report(hypercircuit::ReleaseOptions {
                 fabrication: FabricationExportOptions::millimeters()
                     .with_cubic_contour_chord_error(0.01),
-                ..hypercircuit::ReleasePreparationOptions::default()
+                ..hypercircuit::ReleaseOptions::default()
             })
             .unwrap();
         assert_eq!(

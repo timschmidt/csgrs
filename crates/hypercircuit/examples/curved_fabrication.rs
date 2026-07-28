@@ -3,8 +3,8 @@
 
 use hypercircuit::{
     AdapterKind, BoardContour, BoardId, BoardOutline, CircuitId, Design, FabricationExportOptions,
-    MaterializationProjection, PcbDesignRules, PcbLayout, PcbStackup, Real,
-    ReleasePreparationOptions, StackupLayer, StackupLayerKind, TransientPolicy,
+    MaterializationProjection, PcbDesignRules, PcbLayout, PcbStackup, Real, ReleaseOptions,
+    StackupLayer, StackupLayerKind, TransientPolicy,
 };
 use hyperlattice::Point2;
 use hyperpath::{CubicBezier, LinePathSegment, TraceLayer};
@@ -55,10 +55,10 @@ fn main() {
         .finish()
         .unwrap();
     let release = checked
-        .prepare_release(ReleasePreparationOptions {
+        .release_report(ReleaseOptions {
             fabrication: FabricationExportOptions::millimeters()
                 .with_cubic_contour_chord_error(0.01),
-            ..ReleasePreparationOptions::default()
+            ..ReleaseOptions::default()
         })
         .unwrap();
 
