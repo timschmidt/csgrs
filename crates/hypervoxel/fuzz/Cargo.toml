@@ -58,3 +58,10 @@ path = "fuzz_targets/hypermesh_adapter.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false

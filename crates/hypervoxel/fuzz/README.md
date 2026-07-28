@@ -27,6 +27,9 @@ versions.
 - `triangle_solid_voxelization` covers reusable exact geometry and
   row caches.
 - `hypermesh_adapter` covers retained-mesh validation and conversion.
+- `hyperreal_representations` crosses every pair of the eight public Hyperreal
+  structural kinds through grid frames, address bounds, exact boxes, bounded
+  sign certification, and voxelization.
 
 ## References
 
