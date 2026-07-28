@@ -22,6 +22,7 @@ cargo bench -p hypervoxel --bench grid_frame --all-features -- <benchmark-name>
 | `grid_frame_construction` | 258.52 ns | 220.67 ns | 14.6% faster |
 | `exact_cell_bounds` | 1.0300 µs | 1.0316 µs | 0.2% slower (noise) |
 | `exact_box_voxelization` | 149.20 ms | 142.67 ms | 4.4% faster |
+| `greedy_face_patches` | 65.493 µs | 62.988 µs | 3.8% faster |
 
 ## Retained Changes
 
@@ -69,6 +70,13 @@ axis objects were removed; validated pitches are retained directly by the
 frame. The construction sentinel improved while exact bounds and box
 voxelization preserved or improved their established performance.
 
+Greedy face merging now returns `Vec<GreedyFacePatch>` immediately. The public
+`GreedyFacePatchPlan` wrapper and sparse/chunk-paged `*_plan` lifecycle names
+were removed: the wrapper retained only the completed patch vector and a
+redundant copy of the input face count. The same 2,304-face exact box shell was
+measured serially with 100 Criterion samples before and after; its interval
+improved from 65.298--65.719 µs to 62.882--63.116 µs.
+
 ## Exactness and Scope Checks
 
 `tests/dispatch_trace.rs` exercises a fractional exact box and requires nonzero
@@ -97,7 +105,7 @@ sources. Each distinct nested reference has the following disposition:
 | Guigue–Devillers, *Fast and Robust Triangle-Triangle Overlap Test Using Orientation Predicates* | `voxelis-math` | Retained as determinant-sign guidance in the exact root handoff; the legacy math crate remains explicitly tolerance-based and non-certifying. |
 | Kämpe–Sintorn–Assarsson, *High Resolution Sparse Voxel DAGs* | `voxelis`, `voxelis-voxelize`, `vtm-voxelize` | Existing bottom-up subtree interning and replay are retained. The root audit keeps compression evidence separate from geometry truth. |
 | Laine–Karras, *Efficient Sparse Voxel Octrees* | `voxelis` | Existing sparse octree traversal, child masks, and compact nodes are retained; exact root APIs replay addresses before certifying geometry. |
-| Lysenko, *Meshing in a Minecraft Game* | `voxelis`, `voxelis-bevy`, `vtm-export`, `vtm-viewer` | Existing greedy render meshes remain preview output. The root exact-face patch plan expands and compares the compressed cover against the exact shell. |
+| Lysenko, *Meshing in a Minecraft Game* | `voxelis`, `voxelis-bevy`, `vtm-export`, `vtm-viewer` | Existing greedy render meshes remain preview output. The root exact-face patches expand and compare the compressed cover against the exact shell. |
 | Bevy 0.16 documentation | `voxelis-bevy`, `vtm-viewer` | Adapter and renderer API guidance only; it does not own topology or a computational kernel. |
 | Wavefront OBJ format description | `vtm-export` | Interchange syntax guidance only. OBJ output remains a named lossy adapter, not exact source evidence. |
 

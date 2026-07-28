@@ -96,15 +96,6 @@ pub struct GreedyFacePatch {
     pub v_max: u64,
 }
 
-/// Greedy combinatorial face-patch plan.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct GreedyFacePatchPlan {
-    /// Number of exact faces consumed.
-    pub exact_faces: usize,
-    /// Greedy patches in deterministic order.
-    pub patches: Vec<GreedyFacePatch>,
-}
-
 /// Lowers exact exposed faces to a primitive-float quad-per-face mesh.
 ///
 /// The function is deliberately named as a lossy adapter. Exact combinatorial
@@ -166,14 +157,14 @@ pub fn lossy_obj_from_quad_mesh(mesh: &LossyQuadMesh) -> LossyObjExport {
     }
 }
 
-/// Builds a deterministic greedy face-patch plan from exact exposed faces.
+/// Returns deterministic greedy patches over exact exposed faces.
 ///
-/// This is intentionally a patch plan, not a claim that greedy meshing is exact
-/// source geometry. The maximal rectangles are exact combinatorial facts over
-/// equal-depth voxel faces; any normals, colors, or primitive-float vertices
-/// remain lossy adapter products. Greedy rectangle merging runs over exact
-/// grid-address facts rather than display coordinates.
-pub fn greedy_face_patch_plan(faces: &[ExactVoxelFace]) -> GreedyFacePatchPlan {
+/// The maximal rectangles are exact combinatorial facts over equal-depth voxel
+/// faces, not a claim that a display mesh is exact source geometry. Any
+/// normals, colors, or primitive-float vertices remain lossy adapter products.
+/// Greedy rectangle merging runs over exact grid-address facts rather than
+/// display coordinates.
+pub fn greedy_face_patches(faces: &[ExactVoxelFace]) -> Vec<GreedyFacePatch> {
     let mut buckets =
         std::collections::BTreeMap::<(VoxelFaceSide, u8, u64), Vec<(u64, u64)>>::new();
     for face in faces {
@@ -220,10 +211,7 @@ pub fn greedy_face_patch_plan(faces: &[ExactVoxelFace]) -> GreedyFacePatchPlan {
         }
     }
 
-    GreedyFacePatchPlan {
-        exact_faces: faces.len(),
-        patches,
-    }
+    patches
 }
 
 /// Extracts exact exposed faces from explicitly stored non-empty sparse cells.

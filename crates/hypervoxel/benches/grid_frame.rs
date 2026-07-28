@@ -4,7 +4,7 @@ use hypervoxel::{
     ExactBox, ExactTriangle3, ExactTriangleSolid, ExactTriangleSolidMesh, ExactTriangleSurfaceMesh,
     GridFrame, LengthUnit, MaterialRegionId, QueryRegion, SparseVoxelGrid, SvoVoxelGrid,
     VoxelAddress, VoxelCell, VoxelizationPolicy, exact_voxel_surface_triangle_mesh_from_faces,
-    extract_exposed_faces, lossy_quad_mesh_from_faces, voxelize_exact_box,
+    extract_exposed_faces, greedy_face_patches, lossy_quad_mesh_from_faces, voxelize_exact_box,
     voxelize_exact_triangle_solid,
 };
 
@@ -142,6 +142,9 @@ fn bench_surface_paths(c: &mut Criterion) {
     });
 
     let faces = extract_exposed_faces(&grid).unwrap();
+    c.bench_function("greedy_face_patches", |b| {
+        b.iter(|| greedy_face_patches(black_box(&faces)))
+    });
     c.bench_function("exact_surface_triangle_mesh", |b| {
         b.iter(|| exact_voxel_surface_triangle_mesh_from_faces(black_box(&faces)).unwrap())
     });

@@ -4,7 +4,7 @@ use hypervoxel::{
     BoundaryPolicy, ExactAabb3, ExactBox, ExactConvexHalfSpaceSet, ExactHalfSpace, GridFrame,
     HypervoxelError, MaterialRegionId, OccupancyState, QuantizationPolicy, QueryRegion,
     SparseVoxelGrid, VoxelAddress, VoxelCell, VoxelPayload, VoxelizationPolicy,
-    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces, greedy_face_patch_plan,
+    exact_voxel_surface_triangle_mesh_from_faces, extract_exposed_faces, greedy_face_patches,
     lossy_obj_from_quad_mesh, lossy_quad_mesh_from_faces, voxel_neighbors6, voxelize_exact_box,
     voxelize_exact_convex_halfspace_set, voxelize_exact_halfspace,
 };
@@ -226,9 +226,8 @@ fn exposed_faces_feed_direct_lossy_and_exact_mesh_paths() {
     assert_eq!(obj.vertex_records, preview.vertices.len());
     assert_eq!(obj.face_records, preview.triangles.len());
 
-    let patches = greedy_face_patch_plan(&faces);
-    assert_eq!(patches.exact_faces, 24);
-    assert!(patches.patches.len() < faces.len());
+    let patches = greedy_face_patches(&faces);
+    assert!(patches.len() < faces.len());
 
     let exact = exact_voxel_surface_triangle_mesh_from_faces(&faces).unwrap();
     assert_eq!(exact.triangles.len(), 48);

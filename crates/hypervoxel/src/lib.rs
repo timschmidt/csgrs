@@ -75,7 +75,7 @@ pub use cell::{
 };
 pub use chunk::{ChunkAddress, ChunkLocalAddress, ChunkPageSummary, ChunkShape};
 pub use chunk_diff::{ChunkPagedSparseGridDiffReport, diff_chunk_paged_sparse_grids};
-pub use chunk_faces::{chunk_paged_greedy_face_patch_plan, extract_chunk_paged_exposed_faces};
+pub use chunk_faces::{chunk_paged_greedy_face_patches, extract_chunk_paged_exposed_faces};
 pub use chunk_storage::{
     ChunkPagedAabbBroadPhaseReport, ChunkPagedConnectedComponentReport,
     ChunkPagedManhattanBandReport, ChunkPagedRegionAggregateReport, ChunkPagedSparseGrid,
@@ -110,8 +110,8 @@ pub use material::{
     lookup_material_display_colors, query_material_regions,
 };
 pub use mesh::{
-    ExactVoxelFace, GreedyFacePatch, GreedyFacePatchPlan, LossyObjExport, LossyQuadMesh,
-    VoxelFaceSide, extract_exposed_faces, greedy_face_patch_plan, lossy_obj_from_quad_mesh,
+    ExactVoxelFace, GreedyFacePatch, LossyObjExport, LossyQuadMesh, VoxelFaceSide,
+    extract_exposed_faces, greedy_face_patches, lossy_obj_from_quad_mesh,
     lossy_quad_mesh_from_faces,
 };
 pub use path::{

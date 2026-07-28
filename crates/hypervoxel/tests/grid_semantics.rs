@@ -3,8 +3,8 @@ use hypervoxel::{
     AggregateCertainty, ChunkAddress, ChunkPageSummary, ChunkPagedSparseGrid, ChunkShape,
     GridFrame, HypervoxelError, LengthUnit, MaterialRegionId, OccupancyState, QueryRegion,
     SparseVoxelGrid, VoxelAddress, VoxelAggregateFacts, VoxelCell, VoxelPayload,
-    VoxelSpatialAggregateFacts, chunk_paged_greedy_face_patch_plan,
-    extract_chunk_paged_exposed_faces, extract_exposed_faces,
+    VoxelSpatialAggregateFacts, chunk_paged_greedy_face_patches, extract_chunk_paged_exposed_faces,
+    extract_exposed_faces,
 };
 
 use hypervoxel::SvoVoxelGrid;
@@ -296,9 +296,8 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     let sparse_shell = extract_exposed_faces(&component_grid).unwrap();
     assert_eq!(paged_shell.len(), 20);
     assert_eq!(paged_shell, sparse_shell);
-    let paged_patches = chunk_paged_greedy_face_patch_plan(&component_pages).unwrap();
-    assert_eq!(paged_patches.exact_faces, paged_shell.len());
-    assert!(paged_patches.patches.len() < paged_shell.len());
+    let paged_patches = chunk_paged_greedy_face_patches(&component_pages).unwrap();
+    assert!(paged_patches.len() < paged_shell.len());
 
     let empty_component = component_pages
         .query_connected_component(VoxelAddress::new(4, [0, 0, 0]).unwrap())
@@ -321,7 +320,7 @@ fn chunk_paged_sparse_storage_replays_exact_addresses_and_payload_blockers() {
     assert!(blocked_band.has_unknown);
     assert!(!blocked_band.exact_distance_band_ready);
     assert!(extract_chunk_paged_exposed_faces(&blocked_component_pages).is_err());
-    assert!(chunk_paged_greedy_face_patch_plan(&blocked_component_pages).is_err());
+    assert!(chunk_paged_greedy_face_patches(&blocked_component_pages).is_err());
 }
 
 #[test]

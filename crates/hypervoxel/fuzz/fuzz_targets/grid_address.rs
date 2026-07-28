@@ -6,7 +6,7 @@ use hypervoxel::{
     ExactBox, GridFrame, MaterialRegionId, SparseVoxelGrid, SvoVoxelGrid, VoxelAddress, VoxelCell,
     VoxelEditBatch, VoxelizationPolicy,
     continuous_field_address, exact_voxel_surface_triangle_mesh_from_faces,
-    extract_chunk_paged_exposed_faces, extract_exposed_faces, greedy_face_patch_plan,
+    extract_chunk_paged_exposed_faces, extract_exposed_faces, greedy_face_patches,
     lossy_quad_mesh_from_faces, voxelize_exact_box,
 };
 use libfuzzer_sys::fuzz_target;
@@ -58,7 +58,7 @@ fuzz_target!(|data: (u8, u64, u64, u64)| {
     let faces = extract_exposed_faces(&sparse).unwrap();
     assert_eq!(faces.len(), 6);
     assert_eq!(extract_chunk_paged_exposed_faces(&paged).unwrap(), faces);
-    assert_eq!(greedy_face_patch_plan(&faces).exact_faces, 6);
+    assert!(!greedy_face_patches(&faces).is_empty());
     assert_eq!(
         lossy_quad_mesh_from_faces(&faces).unwrap().triangles.len(),
         12

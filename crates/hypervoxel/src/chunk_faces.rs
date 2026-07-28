@@ -1,8 +1,8 @@
 //! Exact exposed-face extraction over chunk-paged sparse storage.
 
 use crate::{
-    ChunkPagedSparseGrid, ExactVoxelFace, GreedyFacePatchPlan, HypervoxelError, HypervoxelResult,
-    OccupancyState, VoxelAddress, VoxelFaceSide, greedy_face_patch_plan,
+    ChunkPagedSparseGrid, ExactVoxelFace, GreedyFacePatch, HypervoxelError, HypervoxelResult,
+    OccupancyState, VoxelAddress, VoxelFaceSide, greedy_face_patches,
 };
 
 /// Extracts exact exposed faces from a chunk-paged sparse grid.
@@ -51,12 +51,12 @@ pub fn extract_chunk_paged_exposed_faces(
     Ok(faces)
 }
 
-/// Builds a deterministic greedy patch plan from a chunk-paged grid shell.
-pub fn chunk_paged_greedy_face_patch_plan(
+/// Returns deterministic greedy patches over a chunk-paged grid shell.
+pub fn chunk_paged_greedy_face_patches(
     grid: &ChunkPagedSparseGrid,
-) -> HypervoxelResult<GreedyFacePatchPlan> {
+) -> HypervoxelResult<Vec<GreedyFacePatch>> {
     let faces = extract_chunk_paged_exposed_faces(grid)?;
-    Ok(greedy_face_patch_plan(&faces))
+    Ok(greedy_face_patches(&faces))
 }
 
 const FACE_SIDES: [VoxelFaceSide; 6] = [
