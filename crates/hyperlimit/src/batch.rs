@@ -22,17 +22,21 @@ use crate::predicates::triangle::{
 };
 use hyperreal::Real;
 
-/// Case tuple accepted by [`orient2d_batch`] and, with the `parallel` feature,
-/// `orient2d_batch_parallel`.
+/// Case tuple exported as [`crate::Orient2Case`] and accepted by
+/// [`crate::orient2_batch`] and, with the `parallel` feature,
+/// `crate::orient2_batch_parallel`.
 pub type Orient2dCase = (Point2, Point2, Point2);
-/// Case tuple accepted by [`orient3d_batch`] and, with the `parallel` feature,
-/// `orient3d_batch_parallel`.
+/// Case tuple exported as [`crate::Orient3Case`] and accepted by
+/// [`crate::orient3_batch`] and, with the `parallel` feature,
+/// `crate::orient3_batch_parallel`.
 pub type Orient3dCase = (Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`incircle2d_batch`] and, with the `parallel`
-/// feature, `incircle2d_batch_parallel`.
+/// Case tuple exported as [`crate::Incircle2Case`] and accepted by
+/// [`crate::incircle2_batch`] and, with the `parallel` feature,
+/// `crate::incircle2_batch_parallel`.
 pub type Incircle2dCase = (Point2, Point2, Point2, Point2);
-/// Case tuple accepted by [`insphere3d_batch`] and, with the `parallel`
-/// feature, `insphere3d_batch_parallel`.
+/// Case tuple exported as [`crate::Insphere3Case`] and accepted by
+/// [`crate::insphere3_batch`] and, with the `parallel` feature,
+/// `crate::insphere3_batch_parallel`.
 pub type Insphere3dCase = (Point3, Point3, Point3, Point3, Point3);
 /// Case tuple accepted by [`classify_point_plane_batch`] and
 /// `classify_point_plane_batch_parallel` when the `parallel` feature is

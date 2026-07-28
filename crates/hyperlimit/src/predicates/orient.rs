@@ -55,7 +55,7 @@ pub fn orient2d_with_policy(
     // affine-transform conditioning, or dyadic denominator facts, this
     // predicate can choose a faster exact determinant expansion before building
     // the generic Real expression tree.
-    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
+    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2RationalDet2, || {
         super::exact::orient2d(a, b, c)
     }) {
         return outcome;
@@ -132,7 +132,7 @@ pub(crate) fn orient3d_with_policy(
         );
     }
 
-    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient3dRationalDet3, || {
+    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient3RationalDet3, || {
         super::exact::orient3d(a, b, c, d)
     }) {
         return outcome;
@@ -323,20 +323,17 @@ impl PredicateFacts {
     }
 
     fn line2(from: &Point2, to: &Point2) -> Self {
-        fixed_point_facts_2([from, to], ExactPredicateKernel::Orient2dRationalDet2)
+        fixed_point_facts_2([from, to], ExactPredicateKernel::Orient2RationalDet2)
     }
 
     fn incircle2(a: &Point2, b: &Point2, c: &Point2) -> Self {
-        fixed_point_facts_2(
-            [a, b, c],
-            ExactPredicateKernel::Incircle2dRationalLiftedDet3,
-        )
+        fixed_point_facts_2([a, b, c], ExactPredicateKernel::Incircle2RationalLiftedDet3)
     }
 
     fn insphere3(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Self {
         fixed_point_facts_3(
             [a, b, c, d],
-            ExactPredicateKernel::Insphere3dRationalLiftedDet4,
+            ExactPredicateKernel::Insphere3RationalLiftedDet4,
         )
     }
 }
@@ -527,7 +524,7 @@ pub fn classify_point_line_with_orientation_and_policy(
         );
     }
 
-    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2dRationalDet2, || {
+    if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2RationalDet2, || {
         super::exact::orient2d(from, to, point)
     }) {
         return map_outcome(outcome, LineSide::from);
@@ -553,7 +550,7 @@ pub(crate) fn incircle2d_with_policy(
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
     if let Some(sign) =
-        Real::certified_incircle2d_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], [&d.x, &d.y])
+        Real::certified_incircle2_sign([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y], [&d.x, &d.y])
     {
         crate::trace_dispatch!(
             "hyperlimit",
@@ -569,7 +566,7 @@ pub(crate) fn incircle2d_with_policy(
 
     if let Some(outcome) = exact_outcome(
         policy,
-        ExactPredicateKernel::Incircle2dRationalLiftedDet3,
+        ExactPredicateKernel::Incircle2RationalLiftedDet3,
         || super::exact::incircle2d(a, b, c, d),
     ) {
         return outcome;
@@ -733,7 +730,7 @@ pub fn incircle2d_with_evidence_and_policy(
 
     if let Some(outcome) = exact_outcome(
         policy,
-        ExactPredicateKernel::Incircle2dRationalLiftedDet3,
+        ExactPredicateKernel::Incircle2RationalLiftedDet3,
         || super::exact::incircle2d(a, b, c, point),
     ) {
         return outcome;
@@ -781,7 +778,7 @@ pub(crate) fn insphere3d_with_policy(
     e: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    if let Some(sign) = Real::certified_insphere3d_sign(
+    if let Some(sign) = Real::certified_insphere3_sign(
         [&a.x, &a.y, &a.z],
         [&b.x, &b.y, &b.z],
         [&c.x, &c.y, &c.z],
@@ -802,7 +799,7 @@ pub(crate) fn insphere3d_with_policy(
 
     if let Some(outcome) = exact_outcome(
         policy,
-        ExactPredicateKernel::Insphere3dRationalLiftedDet4,
+        ExactPredicateKernel::Insphere3RationalLiftedDet4,
         || super::exact::insphere3d(a, b, c, d, e),
     ) {
         return outcome;
@@ -1065,7 +1062,7 @@ pub fn insphere3d_with_evidence_and_policy(
 
     if let Some(outcome) = exact_outcome(
         policy,
-        ExactPredicateKernel::Insphere3dRationalLiftedDet4,
+        ExactPredicateKernel::Insphere3RationalLiftedDet4,
         || super::exact::insphere3d(a, b, c, d, point),
     ) {
         return outcome;
@@ -1700,7 +1697,7 @@ mod tests {
         let orientation = line2_orientation(&a, &b);
         assert_eq!(
             orientation.facts().exact_kernel_hint,
-            Some(ExactPredicateKernel::Orient2dRationalDet2)
+            Some(ExactPredicateKernel::Orient2RationalDet2)
         );
         assert!(orientation.facts().fixed_coordinates_shared_denominator);
         for point in [p2(-0.75, -0.5), p2(0.5, 0.25), p2(0.125, 0.125)] {
@@ -1905,7 +1902,7 @@ mod tests {
         let evidence = incircle2_evidence(&a, &b, &c);
         assert_eq!(
             evidence.facts().exact_kernel_hint,
-            Some(ExactPredicateKernel::Incircle2dRationalLiftedDet3)
+            Some(ExactPredicateKernel::Incircle2RationalLiftedDet3)
         );
         for point in [p2(0.2, 0.1), p2(0.95, 0.0), p2(0.82, 0.0)] {
             assert_eq!(
@@ -1924,7 +1921,7 @@ mod tests {
         let evidence = insphere3_evidence(&a, &b, &c, &d);
         assert_eq!(
             evidence.facts().exact_kernel_hint,
-            Some(ExactPredicateKernel::Insphere3dRationalLiftedDet4)
+            Some(ExactPredicateKernel::Insphere3RationalLiftedDet4)
         );
         for point in [p3(0.1, 0.1, 0.1), p3(1.1, 0.0, 0.0), p3(0.82, 0.0, 0.0)] {
             assert_eq!(

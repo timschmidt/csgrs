@@ -49,7 +49,7 @@ performance change (`p = 0.20`).
 `PreparedTriangle2` retained three borrowed vertices, structural facts, and a
 fixed orientation. Repeated queries only consume the orientation, so
 `classify_point_triangle_with_orientation` now accepts that exact outcome
-directly. Callers can compute it once with `orient2d` and keep point
+directly. Callers can compute it once with `orient2` and keep point
 classification immediate.
 
 The paired baseline measured 73.093 ns through the former carrier and
@@ -109,7 +109,7 @@ refined decisions and two explicit unknown outcomes.
 
 ### Reuse point/ring edge orientations
 
-`classify_point_ring_even_odd_report` formerly evaluated `orient2d(a, b,
+`classify_point_ring_even_odd_report` formerly evaluated `orient2(a, b,
 point)` once while classifying the point against every edge, then evaluated the
 same determinant again for each y-straddling edge. The report requires the full
 `OffLine` versus `CollinearOutside` distinction, so the Hormann--Agathos idea of
@@ -141,7 +141,7 @@ indexed topology, repeated closing vertices, source replay, and the retained
 The 3D triangle/triangle classifier first certifies all three vertices of each
 triangle against the opposite supporting plane. Its non-coplanar path then
 classifies all six edges against the opposite triangle. Previously every edge
-classifier recomputed the two endpoint `orient3d` signs, so each retained vertex
+classifier recomputed the two endpoint `orient3` signs, so each retained vertex
 side was evaluated twice more. The Guigue--Devillers orientation decomposition
 supports carrying those signs forward: the implementation now keeps both
 three-element side arrays, passes each edge's certified endpoint pair into the
@@ -274,7 +274,7 @@ removes the former handle-call overhead. Criterion classified both positive
 derivation movements as within its noise threshold and found no regression.
 HyperBrep and HyperGraphics consumer gates are recorded in those crates.
 
-### Use immediate checked-word `orient3d`
+### Use immediate checked-word `orient3`
 
 Exact-rational one-shot orientation now tries Hyperreal's checked homogeneous
 `i128` determinant before constructing arbitrary-precision rational
@@ -286,7 +286,7 @@ Serialized 100-sample Criterion gates found no regression:
 
 | Workload | Before | After | Change |
 | --- | ---: | ---: | ---: |
-| Exact-rational `orient3d`, common denominator | 237.34 us | 139.99 us | -41.01% |
+| Exact-rational `orient3`, common denominator | 237.34 us | 139.99 us | -41.01% |
 | Dyadic affine-det3 filter construction | 24.234 ns | 22.021 ns | -9.13% |
 | Exact-word affine-det3 filter construction | 190.40 ns | 188.98 ns | -0.75% |
 | Dyadic oriented-plane evidence | 1.3791 us | 1.3608 us | -1.33% |
@@ -362,7 +362,7 @@ introduced.
 | Bentley--Ottmann, geometric intersections | Event queue plus ordered sweep status gives output-sensitive batch segment intersection. | This crate supplies the exact segment predicates needed by a sweep. Arrangement/event ownership belongs in `hypercurve` or `hypertri`, not a per-pair predicate API. |
 | de Berg et al., *Computational Geometry* | Robust plane sweep, randomized low-dimensional LP, convex hull, point location, and ownership-aware planar subdivisions. | Confirms the separation between exact primitive decisions here and topology/data structures in higher crates. The randomized LP alternative is covered below. |
 | Ericson, *Real-Time Collision Detection* | Prepared bounding volumes, separating axes, early rejection, degeneracy handling, and robustness. | Explicit evidence for lines and planes, immediate segment/circle/sphere predicates, DOPs, and exact interval/SAT-style predicates implement these principles without epsilon decisions. |
-| Guigue--Devillers, triangle overlap | Boolean triangle overlap using orientation signs only, minimizing intermediate constructions and `orient3d` calls. | The public triangle/triangle report cannot adopt the paper's boolean-only output, but it now reuses the six initial vertex/plane signs across all edge reports, producing the 21.62% non-coplanar improvement above without discarding evidence. |
+| Guigue--Devillers, triangle overlap | Boolean triangle overlap using orientation signs only, minimizing intermediate constructions and `orient3` calls. | The public triangle/triangle report cannot adopt the paper's boolean-only output, but it now reuses the six initial vertex/plane signs across all edge reports, producing the 21.62% non-coplanar improvement above without discarding evidence. |
 | Gustavson, sparse matrix algorithms | Row-wise sparse multiplication through an unordered accumulator/merge. | Hyperlimit determinants are tiny dense matrices with structural sparse-coordinate schedules, not general SpGEMM. Introducing sparse matrix storage would add overhead at present dimensions. |
 | Hormann--Agathos, point in polygon | Half-open y-straddles, determinant-based crossings, integrated boundary handling, and cheap rejection before division. | Half-open straddles and exact orientation crossings were already present. Reusing the retained edge orientation produced the measured 20.41% improvement above. |
 | Moore, *Interval Analysis* | Inclusion-preserving interval enclosures can certify results that exclude zero. | `certified_interval_sign`, certified balls, and determinant filters already use enclosures only as proofs; intervals crossing zero escalate rather than guess. |

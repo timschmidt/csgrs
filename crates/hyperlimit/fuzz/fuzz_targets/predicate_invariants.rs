@@ -28,10 +28,12 @@ use hyperlimit::{
     classify_segment3_intersection_batch, classify_sphere3_intersection,
     classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2_evidence, incircle2d,
-    incircle2d_with_evidence, insphere3_evidence, insphere3d, insphere3d_with_evidence,
-    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes, orient2d,
-    orient2d_batch, projected_line_parameter3, projected_segment_parameter3,
+    compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
+    incircle2_with_evidence as incircle2d_with_evidence, insphere3 as insphere3d,
+    insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
+    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
+    orient2 as orient2d, orient2_batch as orient2d_batch, projected_line_parameter3,
+    projected_segment_parameter3,
 };
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
@@ -255,8 +257,8 @@ fn predicate_invariants(input: Input) {
     let common_b = common_scale_point3(input.q.x_num, input.q.y_num, input.q.z_num);
     let common_c = common_scale_point3(input.r.x_num, input.r.y_num, input.r.z_num);
     let common_d = common_scale_point3(input.s.x_num, input.s.y_num, input.s.z_num);
-    let common = hyperlimit::orient3d(&common_a, &common_b, &common_c, &common_d);
-    let swapped = hyperlimit::orient3d(&common_b, &common_a, &common_c, &common_d);
+    let common = hyperlimit::orient3(&common_a, &common_b, &common_c, &common_d);
+    let swapped = hyperlimit::orient3(&common_b, &common_a, &common_c, &common_d);
     if let (Some(sign), Some(swapped)) = (common.value(), swapped.value()) {
         // These generated points all use one unreduced prime denominator, so
         // they cover the common-scale rational-vector regime before scalar

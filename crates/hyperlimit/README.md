@@ -142,7 +142,7 @@ let a = Point2::new(Real::from(0), Real::from(0));
 let b = Point2::new(Real::from(1), Real::from(0));
 let c = Point2::new(Real::from(0), Real::from(1));
 
-assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
+assert_eq!(orient2(&a, &b, &c).value(), Some(Sign::Positive));
 
 let px = Plane3::new(Point3::new(Real::from(1), Real::from(0), Real::from(0)), Real::from(-1));
 let py = Plane3::new(Point3::new(Real::from(0), Real::from(1), Real::from(0)), Real::from(-2));

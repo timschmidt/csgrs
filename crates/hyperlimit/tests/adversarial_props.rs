@@ -7,8 +7,8 @@ use hyperlimit::{
     classify_ray_triangle3_intersection, classify_segment_triangle3_intersection,
     classify_segment3_intersection, classify_sphere3_intersection,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2d, intersect_three_planes,
-    intersect_two_planes, orient2d, orient2d_batch, orient3d,
+    compare_point_segment3_distance_squared, incircle2, intersect_three_planes,
+    intersect_two_planes, orient2, orient2_batch, orient3,
 };
 use proptest::prelude::*;
 
@@ -66,9 +66,9 @@ proptest! {
 
     #[test]
     fn orient2d_is_cyclic_and_reverses_on_swap(a in point2(), b in point2(), c in point2()) {
-        let abc = value(orient2d(&a, &b, &c));
-        let bca = value(orient2d(&b, &c, &a));
-        let acb = value(orient2d(&a, &c, &b));
+        let abc = value(orient2(&a, &b, &c));
+        let bca = value(orient2(&b, &c, &a));
+        let acb = value(orient2(&a, &c, &b));
 
         prop_assert_eq!(abc, bca);
         if let (Some(sign), Some(swapped)) = (abc, acb) {
@@ -78,7 +78,7 @@ proptest! {
 
     #[test]
     fn classify_point_line_matches_orient2d_sign(a in point2(), b in point2(), c in point2()) {
-        let orient = value(orient2d(&a, &b, &c));
+        let orient = value(orient2(&a, &b, &c));
         let side = value(classify_point_line(&a, &b, &c));
 
         if let Some(sign) = orient {
@@ -89,18 +89,18 @@ proptest! {
     #[test]
     fn orient2d_batch_matches_scalar_for_generated_cases(cases in prop::collection::vec((point2(), point2(), point2()), 0..64)) {
         prop_assert_eq!(
-            orient2d_batch(&cases),
+            orient2_batch(&cases),
             cases
                 .iter()
-                .map(|(a, b, c)| orient2d(a, b, c))
+                .map(|(a, b, c)| orient2(a, b, c))
                 .collect::<Vec<_>>()
         );
     }
 
     #[test]
     fn orient3d_reverses_when_two_vertices_swap(a in point3(), b in point3(), c in point3(), d in point3()) {
-        let abcd = value(orient3d(&a, &b, &c, &d));
-        let bacd = value(orient3d(&b, &a, &c, &d));
+        let abcd = value(orient3(&a, &b, &c, &d));
+        let bacd = value(orient3(&b, &a, &c, &d));
 
         if let (Some(sign), Some(swapped)) = (abcd, bacd) {
             prop_assert_eq!(sign.reversed(), swapped);
@@ -128,7 +128,7 @@ proptest! {
         let b = p2((x0 + dx) as f64, (y0 + dy) as f64);
         let c = p2((x0 + t * dx) as f64, (y0 + t * dy) as f64);
 
-        if let Some(sign) = value(orient2d(&a, &b, &c)) {
+        if let Some(sign) = value(orient2(&a, &b, &c)) {
             prop_assert_eq!(sign, Sign::Zero);
         }
     }
@@ -140,7 +140,7 @@ proptest! {
         let c = p3(0.0, 1.0, 0.0);
         let d = p3(x, y, 0.0);
 
-        if let Some(sign) = value(orient3d(&a, &b, &c, &d)) {
+        if let Some(sign) = value(orient3(&a, &b, &c, &d)) {
             prop_assert_eq!(sign, Sign::Zero);
         }
     }
@@ -346,7 +346,7 @@ proptest! {
             Sign::Zero
         };
 
-        if let Some(sign) = value(incircle2d(&a, &b, &c, &d)) {
+        if let Some(sign) = value(incircle2(&a, &b, &c, &d)) {
             prop_assert_eq!(sign, expected);
         }
     }
@@ -370,14 +370,14 @@ proptest! {
             scale2i(&c, scale),
         );
         prop_assert_eq!(
-            value(orient2d(&a, &b, &c)),
-            value(orient2d(&scaled.0, &scaled.1, &scaled.2))
+            value(orient2(&a, &b, &c)),
+            value(orient2(&scaled.0, &scaled.1, &scaled.2))
         );
 
         let reflected = (reflect_x(&a), reflect_x(&b), reflect_x(&c));
         if let (Some(sign), Some(reflected_sign)) = (
-            value(orient2d(&a, &b, &c)),
-            value(orient2d(&reflected.0, &reflected.1, &reflected.2)),
+            value(orient2(&a, &b, &c)),
+            value(orient2(&reflected.0, &reflected.1, &reflected.2)),
         ) {
             prop_assert_eq!(sign.reversed(), reflected_sign);
         }
@@ -404,8 +404,8 @@ proptest! {
         );
 
         prop_assert_eq!(
-            value(incircle2d(&a, &b, &c, &d)),
-            value(incircle2d(
+            value(incircle2(&a, &b, &c, &d)),
+            value(incircle2(
                 &moved_scaled.0,
                 &moved_scaled.1,
                 &moved_scaled.2,

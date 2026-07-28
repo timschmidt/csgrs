@@ -24,12 +24,13 @@ use hyperlimit::{
     classify_segment_triangle3_intersection_report, classify_segment3_intersection,
     classify_sphere3_intersection, classify_triangle_triangle3, classify_triangle3_degeneracy,
     compare_point_line3_distance_squared, compare_point_plane_distance_squared,
-    compare_point_segment3_distance_squared, incircle2_evidence, incircle2d,
-    incircle2d_with_evidence, insphere_d, insphere3_evidence, insphere3d, insphere3d_with_evidence,
+    compare_point_segment3_distance_squared, incircle2 as incircle2d, incircle2_evidence,
+    incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
+    insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    line2_orientation, orient_d, orient2d, orient3d, oriented_plane3_evidence, plane3_evidence,
-    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
-    support_dop3_from_points, triangle3_orientation,
+    line2_orientation, orient_d, orient2 as orient2d, orient3 as orient3d,
+    oriented_plane3_evidence, plane3_evidence, projected_line_parameter3,
+    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 

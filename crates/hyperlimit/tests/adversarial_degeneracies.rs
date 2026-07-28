@@ -1,7 +1,6 @@
 use hyperlimit::{
     LineSide, Plane3, PlaneSide, Point2, Point3, PredicateOutcome, Sign, classify_point_line,
-    classify_point_oriented_plane, classify_point_plane, incircle2d, insphere3d, orient2d,
-    orient3d,
+    classify_point_oriented_plane, classify_point_plane, incircle2, insphere3, orient2, orient3,
 };
 
 type Real = hyperreal::Real;
@@ -42,13 +41,13 @@ fn orient2d_translation_and_scaling_invariance_on_near_collinear_rows() {
     let c = p2(0.0, 1.0e-6);
     let offset = p2(4096.0, -8192.0);
 
-    let sign = decided(orient2d(&a, &b, &c));
-    let translated = decided(orient2d(
+    let sign = decided(orient2(&a, &b, &c));
+    let translated = decided(orient2(
         &add2(&a, &offset),
         &add2(&b, &offset),
         &add2(&c, &offset),
     ));
-    let scaled = decided(orient2d(
+    let scaled = decided(orient2(
         &scale2(&a, 8.0),
         &scale2(&b, 8.0),
         &scale2(&c, 8.0),
@@ -72,7 +71,7 @@ fn finite_f64_subnormal_import_remains_exact_dyadic_predicate_input() {
     // keeps the predicate decision on the exact-computation side of the boundary.
     let primitive_det = (tiny - 0.0) * (tiny - 0.0);
     assert_eq!(primitive_det, 0.0);
-    assert_eq!(decided(orient2d(&a, &b, &c)), Sign::Positive);
+    assert_eq!(decided(orient2(&a, &b, &c)), Sign::Positive);
     assert!(a.x.exact_rational().is_some());
     assert!(b.x.exact_rational().is_some());
     assert!(c.y.exact_rational().is_some());
@@ -96,14 +95,14 @@ fn orient3d_translation_invariance_and_swap_reversal_on_small_height() {
     let d = p3(0.25e6, 0.25e6, 1.0e-6);
     let offset = p3(4096.0, -8192.0, 16384.0);
 
-    let sign = decided(orient3d(&a, &b, &c, &d));
-    let translated = decided(orient3d(
+    let sign = decided(orient3(&a, &b, &c, &d));
+    let translated = decided(orient3(
         &add3(&a, &offset),
         &add3(&b, &offset),
         &add3(&c, &offset),
         &add3(&d, &offset),
     ));
-    let swapped = decided(orient3d(&b, &a, &c, &d));
+    let swapped = decided(orient3(&b, &a, &c, &d));
 
     assert_eq!(translated, sign);
     assert_eq!(swapped, sign.reversed());
@@ -142,13 +141,13 @@ fn circle_and_sphere_predicates_distinguish_on_boundary_from_tiny_offsets() {
     let b = p2(0.0, 1.0);
     let c = p2(-1.0, 0.0);
 
-    assert_eq!(decided(incircle2d(&a, &b, &c, &p2(0.0, -1.0))), Sign::Zero);
+    assert_eq!(decided(incircle2(&a, &b, &c, &p2(0.0, -1.0))), Sign::Zero);
     assert_eq!(
-        decided(incircle2d(&a, &b, &c, &p2(0.0, -1.0 + 1.0e-6))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, -1.0 + 1.0e-6))),
         Sign::Positive
     );
     assert_eq!(
-        decided(incircle2d(&a, &b, &c, &p2(0.0, -1.0 - 1.0e-6))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, -1.0 - 1.0e-6))),
         Sign::Negative
     );
 
@@ -157,7 +156,7 @@ fn circle_and_sphere_predicates_distinguish_on_boundary_from_tiny_offsets() {
     let s2 = p3(0.0, 1.0, 0.0);
     let s3 = p3(0.0, 0.0, 1.0);
     assert_eq!(
-        decided(insphere3d(&s0, &s1, &s2, &s3, &p3(0.0, 0.0, 0.0))),
+        decided(insphere3(&s0, &s1, &s2, &s3, &p3(0.0, 0.0, 0.0))),
         Sign::Positive
     );
 }

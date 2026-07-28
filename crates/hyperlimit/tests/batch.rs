@@ -5,8 +5,8 @@ use hyperlimit::{
     classify_point_plane, classify_point_plane_batch, classify_ray_triangle3_intersection,
     classify_ray_triangle3_intersection_batch, classify_segment_triangle3_intersection,
     classify_segment_triangle3_intersection_batch, classify_segment3_intersection,
-    classify_segment3_intersection_batch, incircle2d, incircle2d_batch, insphere3d,
-    insphere3d_batch, orient2d, orient2d_batch, orient3d, orient3d_batch,
+    classify_segment3_intersection_batch, incircle2, incircle2_batch, insphere3, insphere3_batch,
+    orient2, orient2_batch, orient3, orient3_batch,
 };
 
 type Real = hyperreal::Real;
@@ -40,10 +40,10 @@ fn sequential_batches_match_scalar_predicates() {
         (p2(0.0, 0.0), p2(0.0, 1.0), p2(1.0, 0.0)),
     ];
     assert_eq!(
-        orient2d_batch(&orient2_cases),
+        orient2_batch(&orient2_cases),
         orient2_cases
             .iter()
-            .map(|(a, b, c)| orient2d(a, b, c))
+            .map(|(a, b, c)| orient2(a, b, c))
             .collect::<Vec<_>>()
     );
     assert_eq!(
@@ -69,10 +69,10 @@ fn sequential_batches_match_scalar_predicates() {
         ),
     ];
     assert_eq!(
-        orient3d_batch(&orient3_cases),
+        orient3_batch(&orient3_cases),
         orient3_cases
             .iter()
-            .map(|(a, b, c, d)| orient3d(a, b, c, d))
+            .map(|(a, b, c, d)| orient3(a, b, c, d))
             .collect::<Vec<_>>()
     );
     assert_eq!(
@@ -103,10 +103,10 @@ fn sequential_batches_match_scalar_predicates() {
 
     let incircle_cases = vec![(p2(1.0, 0.0), p2(0.0, 1.0), p2(-1.0, 0.0), p2(0.0, 0.0))];
     assert_eq!(
-        incircle2d_batch(&incircle_cases),
+        incircle2_batch(&incircle_cases),
         incircle_cases
             .iter()
-            .map(|(a, b, c, d)| incircle2d(a, b, c, d))
+            .map(|(a, b, c, d)| incircle2(a, b, c, d))
             .collect::<Vec<_>>()
     );
 
@@ -118,10 +118,10 @@ fn sequential_batches_match_scalar_predicates() {
         p3(0.0, 0.0, 0.0),
     )];
     assert_eq!(
-        insphere3d_batch(&insphere_cases),
+        insphere3_batch(&insphere_cases),
         insphere_cases
             .iter()
-            .map(|(a, b, c, d, e)| insphere3d(a, b, c, d, e))
+            .map(|(a, b, c, d, e)| insphere3(a, b, c, d, e))
             .collect::<Vec<_>>()
     );
 
@@ -197,8 +197,8 @@ fn batch_uses_the_strict_scalar_path_for_each_case() {
     let cases = vec![(p2(0.0, 0.0), p2(1.0, 0.0), p2(0.0, 1.0))];
 
     assert_eq!(
-        hyperlimit::orient2d_batch(&cases),
-        vec![hyperlimit::orient2d(&cases[0].0, &cases[0].1, &cases[0].2,)]
+        hyperlimit::orient2_batch(&cases),
+        vec![hyperlimit::orient2(&cases[0].0, &cases[0].1, &cases[0].2,)]
     );
 }
 
@@ -213,8 +213,8 @@ fn parallel_batches_match_sequential_batches() {
         })
         .collect::<Vec<_>>();
     assert_eq!(
-        orient2d_batch(&orient2_cases),
-        hyperlimit::orient2d_batch_parallel(&orient2_cases)
+        orient2_batch(&orient2_cases),
+        hyperlimit::orient2_batch_parallel(&orient2_cases)
     );
 
     let orient3_cases = (0..2048)
@@ -225,7 +225,7 @@ fn parallel_batches_match_sequential_batches() {
         })
         .collect::<Vec<_>>();
     assert_eq!(
-        orient3d_batch(&orient3_cases),
-        hyperlimit::orient3d_batch_parallel(&orient3_cases)
+        orient3_batch(&orient3_cases),
+        hyperlimit::orient3_batch_parallel(&orient3_cases)
     );
 }

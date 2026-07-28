@@ -97,13 +97,13 @@ pub enum Escalation {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExactPredicateKernel {
     /// Rational 2x2 determinant for 2D orientation.
-    Orient2dRationalDet2,
+    Orient2RationalDet2,
     /// Rational translated 3x3 determinant for 3D orientation.
-    Orient3dRationalDet3,
+    Orient3RationalDet3,
     /// Rational lifted 3x3 determinant for the 2D in-circle predicate.
-    Incircle2dRationalLiftedDet3,
+    Incircle2RationalLiftedDet3,
     /// Rational lifted 4x4 determinant for the 3D in-sphere predicate.
-    Insphere3dRationalLiftedDet4,
+    Insphere3RationalLiftedDet4,
 }
 
 /// Advisory determinant schedule selected from retained geometric facts.

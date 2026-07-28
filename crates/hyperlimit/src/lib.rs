@@ -35,13 +35,15 @@ pub use hyperreal::{
 };
 
 pub use batch::{
-    CircleLine2Case, CircleSegment2Case, Incircle2dCase, Insphere3dCase, Orient2dCase,
-    Orient3dCase, PointPlaneCase, RayTriangle3IntersectionCase, Segment3IntersectionCase,
+    CircleLine2Case, CircleSegment2Case, Incircle2dCase as Incircle2Case,
+    Insphere3dCase as Insphere3Case, Orient2dCase as Orient2Case, Orient3dCase as Orient3Case,
+    PointPlaneCase, RayTriangle3IntersectionCase, Segment3IntersectionCase,
     SegmentTriangle3IntersectionCase, classify_circle_line2_batch, classify_circle_segment2_batch,
     classify_point_line_batch, classify_point_oriented_plane_batch, classify_point_plane_batch,
     classify_ray_triangle3_intersection_batch, classify_segment_triangle3_intersection_batch,
-    classify_segment3_intersection_batch, incircle2d_batch, insphere3d_batch, orient2d_batch,
-    orient3d_batch,
+    classify_segment3_intersection_batch, incircle2d_batch as incircle2_batch,
+    insphere3d_batch as insphere3_batch, orient2d_batch as orient2_batch,
+    orient3d_batch as orient3_batch,
 };
 #[cfg(feature = "parallel")]
 pub use batch::{
@@ -49,8 +51,11 @@ pub use batch::{
     classify_point_line_batch_parallel, classify_point_oriented_plane_batch_parallel,
     classify_point_plane_batch_parallel, classify_ray_triangle3_intersection_batch_parallel,
     classify_segment_triangle3_intersection_batch_parallel,
-    classify_segment3_intersection_batch_parallel, incircle2d_batch_parallel,
-    insphere3d_batch_parallel, orient2d_batch_parallel, orient3d_batch_parallel,
+    classify_segment3_intersection_batch_parallel,
+    incircle2d_batch_parallel as incircle2_batch_parallel,
+    insphere3d_batch_parallel as insphere3_batch_parallel,
+    orient2d_batch_parallel as orient2_batch_parallel,
+    orient3d_batch_parallel as orient3_batch_parallel,
 };
 pub use classify::{
     Aabb2Intersection, Aabb2PointLocation, Aabb3Intersection, Aabb3PointLocation,
@@ -73,9 +78,9 @@ pub use orient::{
     Circle2Polynomial, Incircle2Evidence, Insphere3Evidence, LiftedPolynomialFacts,
     Line2Orientation, Point2, Point3, PredicateFacts, Sphere3Polynomial, classify_point_line,
     classify_point_line_with_orientation, classify_point_line_with_orientation_and_policy,
-    incircle2_evidence, incircle2d, incircle2d_with_evidence, incircle2d_with_evidence_and_policy,
-    insphere3_evidence, insphere3d, insphere3d_with_evidence, insphere3d_with_evidence_and_policy,
-    line2_orientation, line2_orientation_with_facts, orient2d, orient2d_with_policy, orient3d,
+    incircle2, incircle2_evidence, incircle2_with_evidence, incircle2_with_evidence_and_policy,
+    insphere3, insphere3_evidence, insphere3_with_evidence, insphere3_with_evidence_and_policy,
+    line2_orientation, line2_orientation_with_facts, orient2, orient2_with_policy, orient3,
 };
 pub use plane::{
     OrientedPlane3Evidence, Plane3, Plane3Evidence, PlaneAabbReport,

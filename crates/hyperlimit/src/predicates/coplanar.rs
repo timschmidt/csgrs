@@ -460,7 +460,7 @@ pub fn intersect_segment_with_projected_line3(
 /// Return the exact signed 2D orientation determinant.
 ///
 /// This is the raw determinant value behind the orientation predicate. Callers
-/// must still use [`crate::orient2d`] or another certified sign classifier for
+/// must still use [`crate::orient2`] or another certified sign classifier for
 /// topology decisions; the value helper exists for exact construction
 /// parameters that are consumed only after predicates have selected the
 /// combinatorial case, preserving the predicate/construction boundary.

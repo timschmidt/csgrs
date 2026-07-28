@@ -1,4 +1,4 @@
-use hyperlimit::{Point2, Point3, Sign, incircle2d, insphere3d, orient2d, orient3d};
+use hyperlimit::{Point2, Point3, Sign, incircle2, insphere3, orient2, orient3};
 use proptest::prelude::*;
 use robust::{Coord, Coord3D};
 
@@ -50,7 +50,7 @@ proptest! {
             coord2(&coordinates[2..4]),
             coord2(&coordinates[4..6]),
         ));
-        prop_assert_eq!(orient2d(&a, &b, &c).value(), Some(expected));
+        prop_assert_eq!(orient2(&a, &b, &c).value(), Some(expected));
     }
 
     #[test]
@@ -67,7 +67,7 @@ proptest! {
             coord3(&coordinates[6..9]),
             coord3(&coordinates[9..12]),
         ));
-        prop_assert_eq!(orient3d(&a, &b, &c, &d).value(), Some(expected));
+        prop_assert_eq!(orient3(&a, &b, &c, &d).value(), Some(expected));
     }
 
     #[test]
@@ -84,7 +84,7 @@ proptest! {
             coord2(&coordinates[4..6]),
             coord2(&coordinates[6..8]),
         ));
-        prop_assert_eq!(incircle2d(&a, &b, &c, &d).value(), Some(expected));
+        prop_assert_eq!(incircle2(&a, &b, &c, &d).value(), Some(expected));
     }
 
     #[test]
@@ -103,6 +103,6 @@ proptest! {
             coord3(&coordinates[9..12]),
             coord3(&coordinates[12..15]),
         ));
-        prop_assert_eq!(insphere3d(&a, &b, &c, &d, &e).value(), Some(expected));
+        prop_assert_eq!(insphere3(&a, &b, &c, &d, &e).value(), Some(expected));
     }
 }

@@ -965,7 +965,7 @@ pub fn classify_point_triangle_with_facts(
 
 /// Classify `point` relative to triangle `abc` using a retained orientation.
 ///
-/// `orientation` must be the exact [`crate::orient2d`] outcome for the same
+/// `orientation` must be the exact [`crate::orient2`] outcome for the same
 /// ordered vertices `a`, `b`, and `c`. Retaining that compact outcome avoids
 /// recomputing the triangle's fixed orientation across repeated point queries
 /// while keeping the query itself immediate.
@@ -2183,7 +2183,7 @@ mod tests {
         let inside = p2(1.0, 1.0);
         let outside = p2(3.0, 3.0);
 
-        let orientation = crate::orient2d(&a, &b, &c);
+        let orientation = crate::orient2(&a, &b, &c);
         assert_eq!(orientation.value(), Some(Sign::Positive));
         assert_eq!(
             crate::geometry::triangle2_facts(&a, &b, &c).known_non_degenerate(),

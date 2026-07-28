@@ -3,7 +3,7 @@ use hyperlimit::{
     PredicateOutcome, RationalStorageClass, RealExactSetDenominatorKind,
     RealExactSetDyadicExponentClass, RealExactSetSignPattern, RealSymbolicDependencyMask, Sign,
     classify_point_line, classify_point_oriented_plane, classify_point_plane, classify_real_sign,
-    compare_reals, incircle2d, orient2d, orient2d_batch, orient3d,
+    compare_reals, incircle2, orient2, orient2_batch, orient3,
 };
 
 type Real = hyperreal::Real;
@@ -333,7 +333,7 @@ fn predicate_facts_select_advisory_determinant_schedule_hints() {
     assert_eq!(
         sparse.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::SparseSupportCandidate {
-            kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            kernel: ExactPredicateKernel::Orient2RationalDet2,
             fixed_sparse_points: 2,
         }
     );
@@ -344,7 +344,7 @@ fn predicate_facts_select_advisory_determinant_schedule_hints() {
     assert_eq!(
         shared.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::SharedDenominatorCandidate {
-            kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            kernel: ExactPredicateKernel::Orient2RationalDet2,
         }
     );
 
@@ -354,7 +354,7 @@ fn predicate_facts_select_advisory_determinant_schedule_hints() {
     assert_eq!(
         dyadic.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::DyadicCandidate {
-            kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            kernel: ExactPredicateKernel::Orient2RationalDet2,
         }
     );
 
@@ -364,7 +364,7 @@ fn predicate_facts_select_advisory_determinant_schedule_hints() {
     assert_eq!(
         exact.facts().determinant_schedule_hint(),
         DeterminantScheduleHint::ExactRationalKernel {
-            kernel: ExactPredicateKernel::Orient2dRationalDet2,
+            kernel: ExactPredicateKernel::Orient2RationalDet2,
         }
     );
 
@@ -381,11 +381,11 @@ fn orient2d_handles_exact_degenerate_and_near_degenerate_cases() {
     let a = p2(0.0, 0.0);
     let b = p2(1.0, 0.0);
 
-    assert_eq!(decided(orient2d(&a, &b, &p2(0.0, 1.0))), Sign::Positive);
-    assert_eq!(decided(orient2d(&a, &b, &p2(0.0, -1.0))), Sign::Negative);
-    assert_eq!(decided(orient2d(&a, &b, &p2(0.5, 0.0))), Sign::Zero);
+    assert_eq!(decided(orient2(&a, &b, &p2(0.0, 1.0))), Sign::Positive);
+    assert_eq!(decided(orient2(&a, &b, &p2(0.0, -1.0))), Sign::Negative);
+    assert_eq!(decided(orient2(&a, &b, &p2(0.5, 0.0))), Sign::Zero);
     assert_eq!(
-        decided(orient2d(
+        decided(orient2(
             &a,
             &b,
             &Point2::new(real(0.5), real(f64::from_bits(1))),
@@ -400,10 +400,10 @@ fn orientation_sign_changes_under_coordinate_permutation() {
     let b = p2(5.0, -7.0);
     let c = p2(11.0, 13.0);
 
-    assert_eq!(decided(orient2d(&a, &b, &c)), decided(orient2d(&b, &c, &a)));
+    assert_eq!(decided(orient2(&a, &b, &c)), decided(orient2(&b, &c, &a)));
     assert_eq!(
-        decided(orient2d(&a, &b, &c)).reversed(),
-        decided(orient2d(&a, &c, &b))
+        decided(orient2(&a, &b, &c)).reversed(),
+        decided(orient2(&a, &c, &b))
     );
     assert_eq!(decided(classify_point_line(&a, &b, &c)), LineSide::Left);
 }
@@ -421,10 +421,10 @@ fn batch_predicates_match_scalar_predicates_on_hostile_rows() {
     ];
 
     assert_eq!(
-        orient2d_batch(&cases),
+        orient2_batch(&cases),
         cases
             .iter()
-            .map(|(a, b, c)| orient2d(a, b, c))
+            .map(|(a, b, c)| orient2(a, b, c))
             .collect::<Vec<_>>()
     );
 }
@@ -436,15 +436,15 @@ fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
     let c = p3(0.0, 1.0, 0.0);
 
     assert_eq!(
-        decided(orient3d(&a, &b, &c, &p3(0.0, 0.0, 1.0))),
+        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, 1.0))),
         Sign::Negative
     );
     assert_eq!(
-        decided(orient3d(&a, &b, &c, &p3(0.0, 0.0, -1.0))),
+        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, -1.0))),
         Sign::Positive
     );
     assert_eq!(
-        decided(orient3d(&a, &b, &c, &p3(0.25, 0.25, 0.0))),
+        decided(orient3(&a, &b, &c, &p3(0.25, 0.25, 0.0))),
         Sign::Zero
     );
 
@@ -473,12 +473,12 @@ fn incircle_detects_inside_outside_and_on_circle_cases() {
     let c = p2(-1.0, 0.0);
 
     assert_eq!(
-        decided(incircle2d(&a, &b, &c, &p2(0.0, 0.0))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, 0.0))),
         Sign::Positive
     );
     assert_eq!(
-        decided(incircle2d(&a, &b, &c, &p2(0.0, 2.0))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, 2.0))),
         Sign::Negative
     );
-    assert_eq!(decided(incircle2d(&a, &b, &c, &p2(0.0, -1.0))), Sign::Zero);
+    assert_eq!(decided(incircle2(&a, &b, &c, &p2(0.0, -1.0))), Sign::Zero);
 }
