@@ -115,7 +115,6 @@ const NO_GMP_ANALOG: &[&str] = &[
     "intersection_point_f64",
     "prepare_incircle2d_filter",
     "prepare_insphere3d_filter",
-    "prepare_linear_form3_filter",
     "prepare_rational_affine_point3_query",
     "prepare_rational_line2_filter",
     "prepare_rational_line2_filter_from_prepared_point3",

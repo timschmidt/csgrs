@@ -277,41 +277,25 @@ impl AffineDet3Filter {
 /// results return `None` for the caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedLinearForm3Filter {
+pub struct LinearForm3Filter {
     coefficients: [f64; 4],
 }
 
-impl PreparedLinearForm3Filter {
-    /// Try to certify the linear-form sign for a query point.
+impl LinearForm3Filter {
+    /// Construct a reusable filter from exact-dyadic coefficients.
+    #[inline]
+    pub fn from_reals(coefficients: [&Real; 4]) -> Option<Self> {
+        Some(Self {
+            coefficients: Real::exact_dyadic_f64(coefficients)?,
+        })
+    }
+
+    /// Try to certify the linear-form sign for an exact-dyadic query point.
     #[inline]
     pub fn sign(&self, point: [&Real; 3]) -> Option<RealSign> {
         let point = Real::exact_dyadic_f64(point)?;
         Real::certified_linear_form3_sign_f64(self.coefficients, point)
     }
-
-    /// Try to certify the linear-form sign for arbitrary exact-rational query
-    /// coordinates.
-    ///
-    /// Each rational conversion carries an explicit conservative error radius.
-    /// Queries whose conversion or accumulated interval can touch zero return
-    /// `None` for the caller's exact fallback.
-    #[inline]
-    pub fn sign_rational(&self, point: [&Rational; 3]) -> Option<RealSign> {
-        let [
-            Some((x, x_error)),
-            Some((y, y_error)),
-            Some((z, z_error)),
-        ] = point.map(Real::rational_f64_with_error)
-        else {
-            return None;
-        };
-        Real::certified_linear_form3_sign_f64_with_input_error(
-            self.coefficients,
-            [x, y, z],
-            [x_error, y_error, z_error],
-        )
-    }
-
 }
 
 /// Certified floating filter for repeated signs of a homogeneous
@@ -551,10 +535,10 @@ impl Real {
     /// Try to certify the sign of `a*x + b*y + c*z + d` without constructing
     /// an exact expression tree.
     ///
-    /// This one-shot counterpart to [`Self::prepare_linear_form3_filter`]
-    /// succeeds only when every coefficient and point coordinate has an exact
-    /// dyadic `f64` view and the conservative floating error bound separates
-    /// the result from zero. All other cases return `None` for exact fallback.
+    /// This succeeds only when every coefficient and point coordinate has an
+    /// exact dyadic `f64` view and the conservative floating error bound
+    /// separates the result from zero. All other cases return `None` for exact
+    /// fallback.
     #[inline]
     pub fn certified_linear_form3_sign(
         coefficients: [&Real; 4],
@@ -566,18 +550,6 @@ impl Real {
         let [x, y, z] = Self::exact_dyadic_f64(point)?;
         let [a, b, c, d] = Self::exact_dyadic_f64(coefficients)?;
         Self::certified_linear_form3_sign_f64([a, b, c, d], [x, y, z])
-    }
-
-    /// Prepare a certified three-variable linear-form filter with one constant
-    /// coefficient.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_linear_form3_filter(
-        coefficients: [&Real; 4],
-    ) -> Option<PreparedLinearForm3Filter> {
-        Some(PreparedLinearForm3Filter {
-            coefficients: Self::exact_dyadic_f64(coefficients)?,
-        })
     }
 
     /// Prepare a certified homogeneous linear-form filter from exact-rational

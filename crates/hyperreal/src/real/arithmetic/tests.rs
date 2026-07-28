@@ -559,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_linear_form3_filter_only_returns_exact_signs() {
+    fn linear_form3_filter_only_returns_exact_signs() {
         let coefficients = [
             Real::from(2_i32),
             Real::from(-3_i32),
@@ -575,23 +575,23 @@ mod tests {
             &coefficients[2],
             &coefficients[3],
         ];
-        let prepared = Real::prepare_linear_form3_filter(coefficient_refs)
-            .expect("dyadic coefficients should prepare");
+        let filter =
+            LinearForm3Filter::from_reals(coefficient_refs).expect("dyadic coefficients should fit");
         for point in [&positive, &negative] {
             let point_refs = [&point[0], &point[1], &point[2]];
             assert_eq!(
-                prepared.sign(point_refs),
+                filter.sign(point_refs),
                 Some(exact_linear_form3_sign(coefficient_refs, point_refs)),
             );
         }
         assert_eq!(
-            prepared.sign([&boundary[0], &boundary[1], &boundary[2]]),
+            filter.sign([&boundary[0], &boundary[1], &boundary[2]]),
             None,
         );
 
         let third = Real::new(Rational::fraction(1, 3).unwrap());
         assert!(
-            Real::prepare_linear_form3_filter([
+            LinearForm3Filter::from_reals([
                 &third,
                 &coefficients[1],
                 &coefficients[2],
@@ -600,53 +600,20 @@ mod tests {
             .is_none(),
         );
         assert_eq!(
-            prepared.sign([&Real::pi(), &positive[1], &positive[2]]),
+            filter.sign([&Real::pi(), &positive[1], &positive[2]]),
             None,
         );
 
         let huge = Real::try_from(f64::MAX).unwrap();
-        let huge_filter = Real::prepare_linear_form3_filter([
+        let huge_filter = LinearForm3Filter::from_reals([
             &huge,
             &coefficients[1],
             &coefficients[2],
             &coefficients[3],
         ])
-        .expect("finite dyadic coefficients should prepare");
+        .expect("finite dyadic coefficients should fit");
         assert_eq!(
             huge_filter.sign([&huge, &positive[1], &positive[2]]),
-            None,
-        );
-    }
-
-    #[test]
-    fn prepared_linear_form3_filter_certifies_non_dyadic_rational_queries() {
-        let coefficients = [
-            Real::from(2_i32),
-            Real::from(-3_i32),
-            Real::from(5_i32),
-            Real::from(-7_i32),
-        ];
-        let prepared = Real::prepare_linear_form3_filter([
-            &coefficients[0],
-            &coefficients[1],
-            &coefficients[2],
-            &coefficients[3],
-        ])
-        .expect("dyadic coefficients should prepare");
-        let positive = Rational::fraction(11, 3).unwrap();
-        let negative = Rational::fraction(10, 3).unwrap();
-        let boundary = Rational::fraction(7, 2).unwrap();
-        let zero = Rational::zero();
-        assert_eq!(
-            prepared.sign_rational([&positive, &zero, &zero]),
-            Some(RealSign::Positive),
-        );
-        assert_eq!(
-            prepared.sign_rational([&negative, &zero, &zero]),
-            Some(RealSign::Negative),
-        );
-        assert_eq!(
-            prepared.sign_rational([&boundary, &zero, &zero]),
             None,
         );
     }
@@ -901,7 +868,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_linear_form3_filter_matches_exact_randomized_values() {
+    fn linear_form3_filter_matches_exact_randomized_values() {
         let mut state = 0xbb67_ae85_84ca_a73b_u64;
         let mut certified = 0_u32;
 
@@ -917,9 +884,9 @@ mod tests {
             let values = coordinates.map(|value| Real::try_from(value).unwrap());
             let coefficients = [&values[0], &values[1], &values[2], &values[3]];
             let point = [&values[4], &values[5], &values[6]];
-            let prepared = Real::prepare_linear_form3_filter(coefficients)
-                .expect("finite dyadic coefficients should prepare");
-            if let Some(filtered) = prepared.sign(point) {
+            let filter = LinearForm3Filter::from_reals(coefficients)
+                .expect("finite dyadic coefficients should fit");
+            if let Some(filtered) = filter.sign(point) {
                 assert_eq!(
                     filtered,
                     exact_linear_form3_sign(coefficients, point),
