@@ -1,10 +1,13 @@
 #[path = "../competitive/support.rs"]
 mod support;
 
+use csgrs::csg::CSG;
 use support::{
-    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_TRIANGLES, assert_close, assert_output,
-    corpus, large_boolean_case, prepare, prepare_meshes, run_boolmesh, run_csgrs,
-    run_manifold, summarize, validate_with_tri_mesh, yeahright_boolean_case,
+    LARGE_TRIANGLES_PER_MESH, Operation, YEAHRIGHT_CONTROL_TRIANGLES,
+    YEAHRIGHT_CONTROL_VERTICES, YEAHRIGHT_TRIANGLES, assert_close, assert_output, corpus,
+    large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_csgrs, run_manifold,
+    summarize, to_csgrs, validate_with_tri_mesh, yeahright_boolean_case,
+    yeahright_control_mesh,
 };
 
 #[test]
@@ -155,7 +158,7 @@ fn yeahright_benchmark_inputs_reach_every_competitor() {
         assert_eq!(faces, summary.triangles, "tri-mesh {side} face count");
     }
 
-    let prepared = prepare_meshes(&case.left, &case.right);
+    let prepared = prepare_yeahright(&case);
     assert!(prepared.csgrs.iter().all(|mesh| mesh.is_manifold()));
     assert!(prepared.boolmesh.iter().all(|mesh| mesh.is_manifold()));
     assert_eq!(
@@ -163,10 +166,52 @@ fn yeahright_benchmark_inputs_reach_every_competitor() {
         YEAHRIGHT_TRIANGLES,
         "Manifold did not receive the subdivided YeahRight hull"
     );
-    assert!(
-        prepared.csgrs[0].triangles().len() >= YEAHRIGHT_TRIANGLES,
-        "csgrs did not receive a large certified YeahRight hull"
+    assert_eq!(
+        prepared.csgrs[0].triangles().len(),
+        YEAHRIGHT_TRIANGLES,
+        "csgrs did not receive the exact subdivided YeahRight hull"
     );
+}
+
+#[test]
+fn full_resolution_yeahright_reaches_the_csgrs_and_hypermesh_carriers() {
+    let raw = yeahright_control_mesh();
+    let summary = summarize(&raw);
+    assert_eq!(raw.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(summary.triangles, YEAHRIGHT_CONTROL_TRIANGLES);
+    assert!(summary.closed);
+    assert!(summary.finite);
+    assert!(summary.nondegenerate);
+
+    let mesh = to_csgrs(&raw);
+    assert_eq!(mesh.triangles().len(), YEAHRIGHT_CONTROL_TRIANGLES);
+    assert!(mesh.is_manifold());
+    let exact = mesh
+        .to_hypermesh_triangle_mesh()
+        .expect("full-resolution YeahRight must reach Hypermesh exactly");
+    assert_eq!(exact.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
+    assert_eq!(exact.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
+}
+
+#[test]
+#[ignore = "manual 11,894-by-11,894 triangle memory-ceiling test; previously reached about 116 GiB RSS"]
+fn full_resolution_yeahright_rotated_intersection_remains_a_hard_test() {
+    let source = to_csgrs(&yeahright_control_mesh());
+    let rotated = source
+        .rotate(
+            csgrs::Real::zero(),
+            csgrs::Real::from(90_u8),
+            csgrs::Real::zero(),
+        )
+        .translate(
+            csgrs::Real::one(),
+            csgrs::Real::from(12_u8),
+            csgrs::Real::one(),
+        );
+    let output = source
+        .try_intersection(&rotated)
+        .expect("full-resolution YeahRight intersection must remain valid");
+    assert!(!output.triangles().is_empty());
 }
 
 fn operation_index(operation: Operation) -> usize {

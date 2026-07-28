@@ -731,6 +731,12 @@ impl<M: Clone> MeshPolygons<M> {
         })
     }
 
+    pub(crate) fn retained_exact_supports(
+        &self,
+    ) -> Option<&Arc<Vec<::hypermesh::InputTrianglePlanes>>> {
+        self.0.exact_supports.get()
+    }
+
     fn retain_exact_supports(&self, supports: Arc<Vec<::hypermesh::InputTrianglePlanes>>) {
         debug_assert_eq!(supports.len(), self.0.polygons.len());
         let _ = self.0.exact_supports.set(supports);

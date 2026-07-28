@@ -10,7 +10,9 @@ The cross-kernel benchmark uses:
 - `controlmesh.obj` for exact OBJ ingestion, winding normalization, transforms,
   bounds, graphics buffers, connectivity, and manifold validation. It contains
   5,687 vertices and 5,845 arbitrary polygon faces, which triangulate to 11,894
-  faces.
+  faces. The competitive harness also uses it as an always-on full-resolution
+  import row and the competitive test verifies its exact handoff through CSGRS
+  into Hypermesh.
 - `yeahright_boolean_hull.obj` for the portable combined clipping-box Boolean
   row. It is the convex hull of the 188,672-triangle tessellation and contains
   566 vertices, 1,692 edges, and 1,128 triangles.

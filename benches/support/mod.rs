@@ -69,7 +69,12 @@ impl Config {
             .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
         let (samples, warmup) = if matches!(
             suite,
-            "corpus" | "stress" | "dangerous" | "competitive-large" | "competitive-yeahright"
+            "corpus"
+                | "stress"
+                | "dangerous"
+                | "competitive-large"
+                | "competitive-yeahright"
+                | "competitive-full"
         ) {
             (self.stress_samples, self.stress_warmup)
         } else {

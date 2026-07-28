@@ -630,3 +630,55 @@ GCDs. Replacing these with primitive-float topology decisions, skipping offset
 self-contact validation, or changing the smoothing stencil would change quality
 or exactness rather than optimize the same result, so those substitutions were
 not attempted.
+
+## 2026-07-28: thin retained-evidence handoff and full-resolution gate
+
+CSGRS now forwards transform-derived exact support planes only when they are
+already retained. An ordinary first Boolean no longer scans every polygon to
+construct a complete Hypermesh `InputTrianglePlanes` array. If exactly one
+operand has retained plane evidence, the missing aligned side is derived so
+the plane-aware Hypermesh contract remains complete; if neither does, CSGRS
+calls the ordinary certified-convex Hypermesh entry point.
+
+The competitive YeahRight row also now constructs the exact 4,512-triangle
+subdivision from the certified 1,128-triangle hull. The former harness parsed a
+serialized subdivided mesh and rebuilt a convex hull from rounded coordinates,
+creating a much harder arrangement than the native Hypermesh row. Output
+conversion now exports positions and indices directly instead of computing
+exact unit normals that no peer output contract required.
+
+These staged fixes changed the false 18.3-second CSGRS row to:
+
+| operation | fresh first call | repeated CSGRS | native Hypermesh |
+| --- | ---: | ---: | ---: |
+| union | 21.20 ms | 13.79 ms | 10.30--10.70 ms |
+| intersection | 11.43 ms | - | - |
+| difference | 12.84 ms | - | - |
+
+Before the lazy plane-evidence handoff, the corrected fixture still measured
+77.66/28.34/29.44 ms for union/intersection/difference. After that handoff and
+before the output-contract change it measured 39.17/21.15/23.13 ms.
+
+The final full serialized competitive run covered 54 portable workloads in
+each of CSGRS, CGAL EPECK, and tight-tolerance OpenCascade. CSGRS won 46/54
+against CGAL and 53/54 against OpenCascade. Across the 125 CSGRS rows shared
+with the pre-change full run, geometric-mean runtime was 0.789x baseline. The
+final one-sample 4,512-triangle rows were 20.45/11.89/12.58 ms for
+union/intersection/difference, versus 18.50/17.72/18.00 seconds before the
+fixture and handoff corrections.
+
+The Rust competitive matrix exposes the scale crossover. CSGRS won all three
+3,072-triangle subdivided-box Booleans at 3.32/2.95/2.92 ms, but lost the
+4,512-triangle YeahRight Booleans to boolmesh and manifold-rust, whose rows
+were 2.70--3.70 ms. On the 12 small Boolean cases, CSGRS won only the three
+disjoint-box operations; the exact general path remains the principal
+small-overlap deficit.
+
+The original genus-131 control mesh is now an always-on hard carrier/import
+row at both CSGRS and Hypermesh: 5,687 vertices, 5,845 source polygons, and
+11,894 fan triangles. In the final full run, CSGRS import measured 16.72 ms
+versus 5.75 ms for boolmesh, 5.17 ms for manifold-rust, and 1.54 ms for
+tri-mesh. Both layers also
+retain an ignored rotated-copy intersection as the explicit memory-ceiling
+test; it is not run routinely because the earlier CSGRS workload reached about
+116 GiB RSS.
