@@ -77,7 +77,9 @@ dependencies = [
 name = "hypermesh-fuzz"
 version = "0.1.0"
 dependencies = [
+ "hyperlattice",
  "hypermesh",
+ "hyperreal",
  "libfuzzer-sys",
 ]
 

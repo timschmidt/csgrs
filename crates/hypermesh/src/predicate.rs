@@ -483,6 +483,10 @@ pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
             .partial_cmp(right)
             .expect("exact rationals are totally ordered"));
     }
+    #[cfg(feature = "fuzz-bounded-campaign")]
+    if let Some(ordering) = fuzz_bounded_approximate_ordering(left, right) {
+        return Ok(ordering);
+    }
     crate::trace_dispatch!("compare-real", "hyperlimit");
     match hyperlimit::compare_reals(left, right) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
@@ -490,7 +494,34 @@ pub fn compare_real(left: &Real, right: &Real) -> HypermeshResult<Ordering> {
     }
 }
 
+#[cfg(feature = "fuzz-bounded-campaign")]
+fn fuzz_bounded_approximate_ordering(left: &Real, right: &Real) -> Option<Ordering> {
+    const PRECISION: i32 = -512;
+
+    if left == right {
+        crate::trace_dispatch!("compare-real", "fuzz-structural-equality");
+        return Some(Ordering::Equal);
+    }
+    let difference = left - right;
+    let [lower, upper] = difference.certified_dyadic_interval(PRECISION)?;
+    let zero = hyperreal::Rational::zero();
+    if upper < zero {
+        crate::trace_dispatch!("compare-real", "fuzz-certified-less");
+        Some(Ordering::Less)
+    } else if lower > zero {
+        crate::trace_dispatch!("compare-real", "fuzz-certified-greater");
+        Some(Ordering::Greater)
+    } else {
+        crate::trace_dispatch!("compare-real", "fuzz-bounded-approx-equal");
+        Some(Ordering::Equal)
+    }
+}
+
 pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
+    #[cfg(feature = "fuzz-bounded-campaign")]
+    if let Some(classification) = fuzz_bounded_approximate_zero_classification(value) {
+        return Ok(classification);
+    }
     crate::trace_dispatch!("classify-real", "hyperlimit");
     match classify_real_sign(value) {
         PredicateOutcome::Decided {
@@ -505,6 +536,24 @@ pub(crate) fn classify_real(value: &Real) -> HypermeshResult<Classification> {
             ..
         } => Ok(Classification::Positive),
         PredicateOutcome::Unknown { .. } => Err(HypermeshError::UnknownClassification),
+    }
+}
+
+#[cfg(feature = "fuzz-bounded-campaign")]
+fn fuzz_bounded_approximate_zero_classification(value: &Real) -> Option<Classification> {
+    const PRECISION: i32 = -512;
+
+    let [lower, upper] = value.certified_dyadic_interval(PRECISION)?;
+    let zero = hyperreal::Rational::zero();
+    if upper < zero {
+        crate::trace_dispatch!("classify-real", "fuzz-certified-negative");
+        Some(Classification::Negative)
+    } else if lower > zero {
+        crate::trace_dispatch!("classify-real", "fuzz-certified-positive");
+        Some(Classification::Positive)
+    } else {
+        crate::trace_dispatch!("classify-real", "fuzz-bounded-approx-zero");
+        Some(Classification::On)
     }
 }
 
@@ -668,6 +717,31 @@ mod tests {
         assert_eq!(
             compare_real(&Real::from(5), &Real::from(5)).unwrap(),
             Ordering::Equal,
+        );
+    }
+
+    #[cfg(feature = "fuzz-bounded-campaign")]
+    #[test]
+    fn fuzz_campaign_uses_bounded_symbolic_comparison_and_zero_classification() {
+        assert_eq!(
+            fuzz_bounded_approximate_ordering(&Real::e(), &Real::pi()),
+            Some(Ordering::Less),
+        );
+        assert_eq!(
+            fuzz_bounded_approximate_ordering(&Real::pi(), &Real::pi()),
+            Some(Ordering::Equal),
+        );
+        assert_eq!(
+            fuzz_bounded_approximate_zero_classification(&Real::pi()),
+            Some(Classification::Positive),
+        );
+        assert_eq!(
+            fuzz_bounded_approximate_zero_classification(&-Real::pi()),
+            Some(Classification::Negative),
+        );
+        assert_eq!(
+            fuzz_bounded_approximate_zero_classification(&Real::zero()),
+            Some(Classification::On),
         );
     }
 }

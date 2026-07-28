@@ -20,6 +20,7 @@ tri-mesh = "=0.6.1"
 
 [features]
 default = []
+fuzz-bounded-campaign = []
 dispatch-trace = [
     "hyperreal/dispatch-trace",
     "hyperlattice/hyperreal-dispatch-trace",

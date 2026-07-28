@@ -11,7 +11,9 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-hypermesh = { path = ".." }
+hypermesh = { path = "..", features = ["fuzz-bounded-campaign"] }
+hyperlattice = { path = "../../hyperlattice" }
+hyperreal = { path = "../../hyperreal" }
 
 [[bin]]
 name = "polygon_predicates"
@@ -34,5 +36,29 @@ doc = false
 [[bin]]
 name = "boolean_pipeline"
 path = "fuzz_targets/boolean_pipeline.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "boolean_box_oracle"
+path = "fuzz_targets/boolean_box_oracle.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "boolean_input_validation"
+path = "fuzz_targets/boolean_input_validation.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "boolean_hyperreal_representations"
+path = "fuzz_targets/boolean_hyperreal_representations.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "boolean_transformations"
+path = "fuzz_targets/boolean_transformations.rs"
 test = false
 doc = false

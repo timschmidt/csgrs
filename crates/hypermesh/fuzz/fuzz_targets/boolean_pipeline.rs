@@ -1,114 +1,166 @@
 #![no_main]
 
+mod support;
+
 use hypermesh::{
-    BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, boolean_difference,
-    boolean_intersection, boolean_operation, boolean_operation_with_certified_convex_inputs,
+    BooleanOp, EmberConfig, HypermeshError, boolean_difference, boolean_intersection,
+    boolean_operation, boolean_operation_with_certified_convex_inputs,
     boolean_symmetric_difference, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs, boolean_union,
-    certify_output_polygon_closure, triangulate_and_resolve_certified,
+    boolean_triangle_soup_with_certified_convex_inputs, boolean_union, certify_convex_mesh,
 };
 use libfuzzer_sys::fuzz_target;
+use support::{
+    Bytes, combine_meshes, convex_mesh, operation, subdivide_once, validate_result, validate_soup,
+    volume_numerator,
+};
 
-fn r(value: i64) -> Real {
-    Real::from(value)
+fn require_result(
+    meshes: &[hypermesh::MeshRef<'_>],
+    operation: BooleanOp,
+) -> hypermesh::TriangleSoup {
+    let result = boolean_operation(meshes, operation, EmberConfig::default())
+        .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
+    validate_result(&result, operation, meshes.len())
 }
 
-fn p(x: i64, y: i64, z: i64) -> Point3 {
-    Point3::new(r(x), r(y), r(z))
+fn require_soup(
+    meshes: &[hypermesh::MeshRef<'_>],
+    operation: BooleanOp,
+) -> hypermesh::TriangleSoup {
+    let soup =
+        boolean_triangle_soup(meshes, operation, EmberConfig::default()).unwrap_or_else(|error| {
+            panic!("supported exact immediate Boolean input failed: {error:?}")
+        });
+    validate_soup(&soup);
+    soup
 }
 
-fn cube(center: [i64; 3], half_extent: i64) -> InputMesh {
-    let [cx, cy, cz] = center;
-    let min = [cx - half_extent, cy - half_extent, cz - half_extent];
-    let max = [cx + half_extent, cy + half_extent, cz + half_extent];
-    InputMesh::new(
-        vec![
-            p(min[0], min[1], min[2]),
-            p(max[0], min[1], min[2]),
-            p(max[0], max[1], min[2]),
-            p(min[0], max[1], min[2]),
-            p(min[0], min[1], max[2]),
-            p(max[0], min[1], max[2]),
-            p(max[0], max[1], max[2]),
-            p(min[0], max[1], max[2]),
-        ],
-        vec![
-            Triangle::new(4, 5, 6),
-            Triangle::new(4, 6, 7),
-            Triangle::new(0, 3, 2),
-            Triangle::new(0, 2, 1),
-            Triangle::new(1, 2, 6),
-            Triangle::new(1, 6, 5),
-            Triangle::new(0, 4, 7),
-            Triangle::new(0, 7, 3),
-            Triangle::new(3, 7, 6),
-            Triangle::new(3, 6, 2),
-            Triangle::new(0, 1, 5),
-            Triangle::new(0, 5, 4),
-        ],
-    )
-}
+fuzz_target!(|data: [u8; 48]| {
+    let mut bytes = Bytes::new(&data);
+    let mode = bytes.next() % 9;
+    let op = operation(bytes.next());
+    let mesh_count = 2 + usize::from(bytes.next() % 2);
+    let mut meshes = (0..mesh_count)
+        .map(|_| convex_mesh(&mut bytes))
+        .collect::<Vec<_>>();
 
-fn validate(result: &hypermesh::BooleanResult) {
-    let closure = certify_output_polygon_closure(result).unwrap();
-    assert!(closure.has_no_boundary());
-    let soup = triangulate_and_resolve_certified(result).unwrap();
-    assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
-}
+    if bytes.next() & 3 == 0 {
+        meshes[0] = subdivide_once(meshes[0].clone());
+    }
+    if bytes.next() & 7 == 0 {
+        let component = convex_mesh(&mut bytes);
+        meshes[0] = combine_meshes(&[meshes[0].clone(), component]);
+    }
 
-fuzz_target!(|data: [u8; 4]| {
-    let shift = i64::from(data[0] % 7) - 3;
-    let left = cube([0, 0, 0], 2);
-    let right = cube([shift, i64::from(data[1] % 3) - 1, 0], 2);
-    let refs = [left.as_ref(), right.as_ref()];
-    let op = match data[2] % 4 {
-        0 => BooleanOp::Union,
-        1 => BooleanOp::Intersection,
-        2 => BooleanOp::Difference,
-        _ => BooleanOp::SymmetricDifference,
-    };
-    let config = EmberConfig::default();
-
-    match data[3] % 4 {
+    let refs = meshes.iter().map(|mesh| mesh.as_ref()).collect::<Vec<_>>();
+    match mode {
         0 => {
-            if let Ok(result) = boolean_operation(&refs, op, config) {
-                validate(&result);
-            }
+            require_result(&refs, op);
         }
         1 => {
-            if let Ok(soup) = boolean_triangle_soup(&refs, op, config) {
-                assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
-            }
+            require_soup(&refs, op);
         }
         2 => {
-            if let Ok(result) = boolean_operation_with_certified_convex_inputs(
-                &refs,
+            let polygon_soup = require_result(&refs, op);
+            let immediate_soup = require_soup(&refs, op);
+            assert_eq!(
+                volume_numerator(&polygon_soup),
+                volume_numerator(&immediate_soup),
+            );
+        }
+        3 => {
+            let pair = [convex_mesh(&mut bytes), convex_mesh(&mut bytes)];
+            for mesh in &pair {
+                certify_convex_mesh(mesh.as_ref()).unwrap();
+            }
+            let pair_refs = [pair[0].as_ref(), pair[1].as_ref()];
+            let generic = require_result(&pair_refs, op);
+            let certified = boolean_operation_with_certified_convex_inputs(
+                &pair_refs,
                 op,
                 &[true, true],
-                config,
-            ) {
-                validate(&result);
-                let soup = boolean_triangle_soup_with_certified_convex_inputs(
-                    &refs,
-                    op,
-                    &[true, true],
-                    config,
-                )
-                .unwrap();
-                assert!(hypermesh::triangle_soup_closure_evidence(&soup).has_no_boundary());
+                EmberConfig::default(),
+            )
+            .unwrap_or_else(|error| panic!("certified-convex Boolean failed: {error:?}"));
+            let certified_soup = validate_result(&certified, op, 2);
+            let immediate = boolean_triangle_soup_with_certified_convex_inputs(
+                &pair_refs,
+                op,
+                &[true, true],
+                EmberConfig::default(),
+            )
+            .unwrap_or_else(|error| panic!("certified-convex immediate Boolean failed: {error:?}"));
+            validate_soup(&immediate);
+            assert_eq!(
+                volume_numerator(&generic),
+                volume_numerator(&certified_soup)
+            );
+            assert_eq!(volume_numerator(&generic), volume_numerator(&immediate));
+        }
+        4 => {
+            let pair_refs = [refs[0], refs[1]];
+            let generic = require_result(&pair_refs, op);
+            let wrapper = match op {
+                BooleanOp::Union => {
+                    boolean_union(pair_refs[0], pair_refs[1], EmberConfig::default())
+                }
+                BooleanOp::Intersection => {
+                    boolean_intersection(pair_refs[0], pair_refs[1], EmberConfig::default())
+                }
+                BooleanOp::Difference => {
+                    boolean_difference(pair_refs[0], pair_refs[1], EmberConfig::default())
+                }
+                BooleanOp::SymmetricDifference => {
+                    boolean_symmetric_difference(pair_refs[0], pair_refs[1], EmberConfig::default())
+                }
+            }
+            .unwrap_or_else(|error| panic!("Boolean convenience wrapper failed: {error:?}"));
+            let wrapper = validate_result(&wrapper, op, 2);
+            assert_eq!(volume_numerator(&generic), volume_numerator(&wrapper));
+        }
+        5 => {
+            let commutative = match bytes.next() % 3 {
+                0 => BooleanOp::Union,
+                1 => BooleanOp::Intersection,
+                _ => BooleanOp::SymmetricDifference,
+            };
+            let forward = require_soup(&refs, commutative);
+            let reversed_refs = refs.iter().rev().copied().collect::<Vec<_>>();
+            let reversed = require_soup(&reversed_refs, commutative);
+            assert_eq!(volume_numerator(&forward), volume_numerator(&reversed));
+        }
+        6 => {
+            let repeated = [refs[0], refs[0]];
+            let result = require_soup(&repeated, op);
+            let source = require_soup(&[refs[0]], BooleanOp::Union);
+            let expected = match op {
+                BooleanOp::Union | BooleanOp::Intersection => volume_numerator(&source),
+                BooleanOp::Difference | BooleanOp::SymmetricDifference => hypermesh::Real::zero(),
+            };
+            assert_eq!(volume_numerator(&result), expected);
+        }
+        7 => {
+            let config = EmberConfig {
+                max_depth: usize::from(bytes.next() % 3),
+            };
+            match boolean_operation(&refs, op, config) {
+                Ok(result) => {
+                    validate_result(&result, op, refs.len());
+                }
+                Err(HypermeshError::SubdivisionDepthLimit { depth, .. }) => {
+                    assert!(depth <= config.max_depth);
+                }
+                Err(error) => panic!("bounded exact Boolean returned unexpected error: {error:?}"),
             }
         }
         _ => {
-            let result = match op {
-                BooleanOp::Union => boolean_union(refs[0], refs[1], config),
-                BooleanOp::Intersection => boolean_intersection(refs[0], refs[1], config),
-                BooleanOp::Difference => boolean_difference(refs[0], refs[1], config),
-                BooleanOp::SymmetricDifference => {
-                    boolean_symmetric_difference(refs[0], refs[1], config)
-                }
-            };
-            if let Ok(result) = result {
-                validate(&result);
+            for candidate in [
+                BooleanOp::Union,
+                BooleanOp::Intersection,
+                BooleanOp::Difference,
+                BooleanOp::SymmetricDifference,
+            ] {
+                require_soup(&refs, candidate);
             }
         }
     }
