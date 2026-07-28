@@ -52,10 +52,10 @@ pub trait Kernel {
     }
 
     /// Decide the orientation of three 2D points.
-    fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>;
+    fn orient2(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>;
 
     /// Decide the in-circle relation of four 2D points.
-    fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign>;
+    fn incircle2(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign>;
 
     /// Classify a point relative to a triangle.
     fn classify_point_triangle(
@@ -124,7 +124,7 @@ impl Kernel for ExactKernel {
         })
     }
 
-    fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign> {
+    fn orient2(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign> {
         // Triangulation topology consumes `hyperlimit`'s certified predicate
         // pipeline rather than rebuilding a private determinant expression.
         // Keeping the determinant owner in the predicate crate separates
@@ -132,28 +132,28 @@ impl Kernel for ExactKernel {
         // implementation keeps robust-orientation logic and exact
         // rational/common-scale schedules near their use.
         decide_hyperlimit_sign(
-            hyperlimit::orient2d(
+            hyperlimit::orient2(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
             ),
-            "orient2d",
+            "orient2",
         )
     }
 
-    fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign> {
+    fn incircle2(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign> {
         // In-circle legality is the CDT edge-flip predicate. Route it through
-        // `hyperlimit` so exact lifted-determinant certificates and future
-        // prepared in-circle facts remain centralized. Hypertri consumes only
-        // the certified empty-circle result.
+        // `hyperlimit` so exact lifted-determinant certificates remain
+        // centralized. Hypertri consumes only the certified empty-circle
+        // result.
         decide_hyperlimit_sign(
-            hyperlimit::incircle2d(
+            hyperlimit::incircle2(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
                 &predicate_point(d),
             ),
-            "incircle2d",
+            "incircle2",
         )
     }
 
@@ -176,7 +176,7 @@ fn classify_point_triangle<K>(
 where
     K: Kernel,
 {
-    let orientation = K::orient2d(a, b, c)?;
+    let orientation = K::orient2(a, b, c)?;
     if orientation == Sign::Zero {
         return Ok(TriangleLocation::Degenerate);
     }
@@ -185,9 +185,9 @@ where
         return Ok(TriangleLocation::OnVertex);
     }
 
-    let ab = K::orient2d(a, b, point)?;
-    let bc = K::orient2d(b, c, point)?;
-    let ca = K::orient2d(c, a, point)?;
+    let ab = K::orient2(a, b, point)?;
+    let bc = K::orient2(b, c, point)?;
+    let ca = K::orient2(c, a, point)?;
     let signs = [ab, bc, ca];
 
     let has_negative = signs.contains(&Sign::Negative);
@@ -243,11 +243,11 @@ mod tests {
     #[test]
     fn exact_kernel_routes_orientation_through_predicate_layer() {
         assert_eq!(
-            ExactKernel::orient2d(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
+            ExactKernel::orient2(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
             Sign::Positive
         );
         assert_eq!(
-            ExactKernel::orient2d(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
+            ExactKernel::orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
             Sign::Zero
         );
     }
@@ -258,15 +258,15 @@ mod tests {
         let b = p(2, 0);
         let c = p(0, 2);
         assert_eq!(
-            ExactKernel::incircle2d(&a, &b, &c, &p(1, 1)).unwrap(),
+            ExactKernel::incircle2(&a, &b, &c, &p(1, 1)).unwrap(),
             Sign::Positive
         );
         assert_eq!(
-            ExactKernel::incircle2d(&a, &b, &c, &p(2, 2)).unwrap(),
+            ExactKernel::incircle2(&a, &b, &c, &p(2, 2)).unwrap(),
             Sign::Zero
         );
         assert_eq!(
-            ExactKernel::incircle2d(&a, &b, &c, &p(3, 3)).unwrap(),
+            ExactKernel::incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
             Sign::Negative
         );
     }

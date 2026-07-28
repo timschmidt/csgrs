@@ -375,7 +375,7 @@ where
         return Ok(false);
     }
 
-    let orientation = predicates::orient2d::<K>(
+    let orientation = predicates::orient2::<K>(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -384,7 +384,7 @@ where
         return Ok(false);
     }
 
-    let incircle = K::incircle2d(
+    let incircle = K::incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -432,22 +432,22 @@ where
         return Ok(false);
     }
 
-    let first_side = predicates::orient2d::<K>(
+    let first_side = predicates::orient2::<K>(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
     )?;
-    let second_side = predicates::orient2d::<K>(
+    let second_side = predicates::orient2::<K>(
         &points[edge.from],
         &points[edge.to],
         &points[second_opposite],
     )?;
-    let opposite_edge_side = predicates::orient2d::<K>(
+    let opposite_edge_side = predicates::orient2::<K>(
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.from],
     )?;
-    let opposite_other_side = predicates::orient2d::<K>(
+    let opposite_other_side = predicates::orient2::<K>(
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.to],
@@ -539,7 +539,7 @@ fn make_oriented<K>(points: &[Point2], mut triangle: Triangle) -> Result<Triangl
 where
     K: Kernel,
 {
-    let sign = predicates::orient2d::<K>(
+    let sign = predicates::orient2::<K>(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],

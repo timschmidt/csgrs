@@ -356,7 +356,7 @@ fn triangle_if_not_degenerate<K>(points: &[Point2], triangle: Triangle) -> Resul
 where
     K: Kernel,
 {
-    let sign = predicates::orient2d::<K>(
+    let sign = predicates::orient2::<K>(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -374,8 +374,8 @@ where
 
     for diagonal in [(0, 1, 2, 3), (0, 2, 1, 3), (0, 3, 1, 2)] {
         let (a, b, c, d) = diagonal;
-        let ac = predicates::orient2d::<K>(&points[a], &points[b], &points[c])?;
-        let ad = predicates::orient2d::<K>(&points[a], &points[b], &points[d])?;
+        let ac = predicates::orient2::<K>(&points[a], &points[b], &points[c])?;
+        let ad = predicates::orient2::<K>(&points[a], &points[b], &points[d])?;
         if !opposite_sides(ac, ad) {
             continue;
         }
@@ -466,8 +466,8 @@ fn diagonal_is_delaunay<K>(
 where
     K: Kernel,
 {
-    let abc = predicates::orient2d::<K>(&points[a], &points[b], &points[c])?;
-    let abd = predicates::orient2d::<K>(&points[a], &points[b], &points[d])?;
+    let abc = predicates::orient2::<K>(&points[a], &points[b], &points[c])?;
+    let abd = predicates::orient2::<K>(&points[a], &points[b], &points[d])?;
     let d_in_abc = incircle_inside::<K>(points, [a, b, c], d, abc)?;
     let c_in_abd = incircle_inside::<K>(points, [a, d, b], c, abd.reversed())?;
     Ok(!d_in_abc && !c_in_abd)
@@ -482,7 +482,7 @@ fn incircle_inside<K>(
 where
     K: Kernel,
 {
-    let sign = K::incircle2d(
+    let sign = K::incircle2(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -507,7 +507,7 @@ where
     // certified positive-orientation invariant. Reuse that object fact rather
     // than evaluating the orientation determinant again for every candidate
     // point/circumcircle pair.
-    let sign = K::incircle2d(
+    let sign = K::incircle2(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -805,7 +805,7 @@ where
         .into_iter()
         .enumerate()
         {
-            if predicates::orient2d::<K>(&points[from], &points[to], &points[point])?
+            if predicates::orient2::<K>(&points[from], &points[to], &points[point])?
                 == Sign::Negative
             {
                 crossed_edge = true;
@@ -926,7 +926,7 @@ fn make_oriented<K>(points: &[Point2], triangle: Triangle) -> Result<Triangle>
 where
     K: Kernel,
 {
-    let sign = predicates::orient2d::<K>(
+    let sign = predicates::orient2::<K>(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],

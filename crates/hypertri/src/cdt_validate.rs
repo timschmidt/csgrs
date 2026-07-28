@@ -83,7 +83,7 @@ fn validate_triangles(points: &[ExactPoint], triangles: &[Triangle]) -> Result<(
                 reason: "triangle index out of bounds",
             });
         }
-        if predicates::orient2d::<ExactKernel>(
+        if predicates::orient2::<ExactKernel>(
             &points[triangle[0]],
             &points[triangle[1]],
             &points[triangle[2]],
@@ -154,7 +154,7 @@ fn edge_is_illegal(
     first_opposite: usize,
     second_opposite: usize,
 ) -> Result<bool> {
-    let orientation = predicates::orient2d::<ExactKernel>(
+    let orientation = predicates::orient2::<ExactKernel>(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -163,7 +163,7 @@ fn edge_is_illegal(
         return Ok(false);
     }
 
-    let sign = ExactKernel::incircle2d(
+    let sign = ExactKernel::incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -182,9 +182,9 @@ fn opposite_sides_of_edge(
     second: usize,
 ) -> Result<bool> {
     let first_side =
-        predicates::orient2d::<ExactKernel>(&points[edge.from], &points[edge.to], &points[first])?;
+        predicates::orient2::<ExactKernel>(&points[edge.from], &points[edge.to], &points[first])?;
     let second_side =
-        predicates::orient2d::<ExactKernel>(&points[edge.from], &points[edge.to], &points[second])?;
+        predicates::orient2::<ExactKernel>(&points[edge.from], &points[edge.to], &points[second])?;
     Ok(signs_strictly_differ(first_side, second_side))
 }
 

@@ -35,7 +35,7 @@ permutation and index retention; exact validation, an `f64` lifting test, and a
 `incremental_delaunay` creates both the super-triangle and every cavity replacement
 with `make_oriented`. Active triangles therefore carry a certified positive-orientation
 invariant. The in-circle cavity test now consumes that invariant directly instead of
-re-evaluating `orient2d` for every triangle/query pair. Exact `incircle2d` still makes
+re-evaluating `orient2` for every triangle/query pair. Exact `incircle2` still makes
 the topology decision and cospherical points remain in the cavity.
 
 On `exact_delaunay_400_located_insertions`:

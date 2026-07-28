@@ -16,11 +16,11 @@ use hyperlimit::PredicateOutcome;
 pub use hyperlimit::SegmentIntersection;
 
 /// Decide the orientation of three points.
-pub(crate) fn orient2d<K>(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>
+pub(crate) fn orient2<K>(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>
 where
     K: Kernel,
 {
-    K::orient2d(a, b, c)
+    K::orient2(a, b, c)
 }
 
 /// Decide whether `point` lies inside or on the boundary of `abc`.

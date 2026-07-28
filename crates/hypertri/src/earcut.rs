@@ -691,7 +691,7 @@ where
             let duplicate = points_equal(&vertices[curr], &vertices[next])
                 || points_equal(&vertices[prev], &vertices[curr]);
             let collinear =
-                predicates::orient2d::<K>(&vertices[prev], &vertices[curr], &vertices[next])?
+                predicates::orient2::<K>(&vertices[prev], &vertices[curr], &vertices[next])?
                     == Sign::Zero;
 
             if duplicate || (collinear && ring.len() > 3) {
@@ -704,7 +704,7 @@ where
     }
 
     if ring.len() == 3
-        && predicates::orient2d::<K>(&vertices[ring[0]], &vertices[ring[1]], &vertices[ring[2]])?
+        && predicates::orient2::<K>(&vertices[ring[0]], &vertices[ring[1]], &vertices[ring[2]])?
             == Sign::Zero
     {
         ring.clear();
@@ -820,7 +820,7 @@ where
         }
     }
 
-    let sign = K::orient2d(&vertices[ring[0]], &vertices[ring[1]], &vertices[ring[2]])?;
+    let sign = K::orient2(&vertices[ring[0]], &vertices[ring[1]], &vertices[ring[2]])?;
     if sign != Sign::Zero {
         push_triangle(&mut triangles, ring[0], ring[1], ring[2], sign);
         diagnostics.emitted_triangles += 1;
@@ -860,7 +860,7 @@ where
             // orientation tests replace earcutr's floating-point tests.
             remove_adjacent_positions(&mut cured_ring, p_pos, q_pos);
 
-            let sign = predicates::orient2d::<K>(&vertices[a], &vertices[p], &vertices[b])?;
+            let sign = predicates::orient2::<K>(&vertices[a], &vertices[p], &vertices[b])?;
             if sign == Sign::Zero {
                 return Ok((ring, TriangleIndices::new(), false));
             }
@@ -900,7 +900,7 @@ where
         return Ok(false);
     }
 
-    if predicates::orient2d::<K>(&vertices[a], &vertices[p], &vertices[b])? == Sign::Zero {
+    if predicates::orient2::<K>(&vertices[a], &vertices[p], &vertices[b])? == Sign::Zero {
         return Ok(false);
     }
 
@@ -1197,7 +1197,7 @@ where
     let prev = ring[(cursor + len - 1) % len];
     let curr = ring[cursor];
     let next = ring[(cursor + 1) % len];
-    Ok(predicates::orient2d::<K>(&vertices[prev], &vertices[curr], &vertices[next])? == winding)
+    Ok(predicates::orient2::<K>(&vertices[prev], &vertices[curr], &vertices[next])? == winding)
 }
 
 fn point_in_triangle_bbox(a: &Point2, b: &Point2, c: &Point2, point: &Point2) -> Result<bool> {
