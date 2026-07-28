@@ -1,172 +1,165 @@
 <h1>
-  hyperdrc
-  <img src="./docs/hyperdrc.png" alt="hyperdrc logo" width="144" align="right">
+  HyperDRC
+  <img src="./docs/hyperdrc.png" alt="HyperDRC logo" width="144" align="right">
 </h1>
 
-`hyperdrc` is a Rust library and thin command line tool for PCB design-readiness review.
-It loads Gerber, KiCad, Excellon, IPC-D-356, package sidecars, and converted handoff
-artifacts, then emits evidence-rich findings for local review and CI.
+HyperDRC is a Rust library and command-line design-readiness reviewer for
+printed-circuit-board release packages. It loads Gerber, KiCad, Excellon,
+IPC-D-356, archives, and manufacturing sidecars; runs an explicit set of
+fabrication, assembly, test, package, and policy checks; and emits
+evidence-rich findings for local review or CI.
 
-The project is a readiness reviewer, not a fabricator-certified CAM engine. Its job is
-to make release-package risk visible before upload and to preserve the evidence behind
-each finding.
+It answers a broader question than polygon clearance alone: “Does this release
+package contain coherent, reviewable evidence for the board we intend to
+manufacture?”
 
-## Typical PCB Readiness Problems
+HyperDRC is not a fabricator-certified CAM engine and does not claim that a
+passing report guarantees manufacturability. It is a preflight layer that keeps
+parser assumptions, source grids, conversion provenance, rule policy,
+uncertainty, waivers, and baselines visible.
 
-PCB release packages are not just copper polygons. Boards fail review because layer
-roles are ambiguous, drill and test files disagree, stackup evidence is incomplete,
-sidecars are stale or malformed, generated outputs do not match source intent, or
-CAD-only assumptions disappear in Gerber handoff. Traditional tools often collapse
-parser assumptions, CAM polygon approximations, rule policy, and manufacturing evidence
-into one report.
+## What HyperDRC is for
 
-`hyperdrc` treats readiness as evidence preservation. Inputs, parser diagnostics, source
-grids, conversion history, waivers, baselines, rule configuration, and report formats
-are first-class data. Geometry findings are conservative review prompts, not fabricator
-guarantees, and lossy adapter status remains visible until exact Hyper geometry covers
-more of the CAM pipeline.
+A PCB handoff can fail even when its copper looks plausible. Layer roles may be
+ambiguous, drill and netlist files may disagree, stackup evidence may be
+missing, generated files may be stale, or assembly intent may have disappeared
+between the authoring tool and Gerber.
 
-## Main Types And Surfaces
+HyperDRC treats the release as a set of related evidence:
 
-- The library `run` pipeline returns a serializable `Report` through `RunOutcome`
-  instead of terminating the process.
-- Parser modules load Gerber, KiCad, Excellon, IPC-D-356, sidecar tables, drawings,
-  converter outputs, and handoff artifacts with structured diagnostics.
-- Check modules emit stable finding IDs, severity, source context, messages, geometry,
-  and active/waived status.
-- Rule and policy types cover CLI/config thresholds, package profiles, assembly
-  profiles, stackup metadata, net classes, fabricator capability profiles, waivers, and
-  baselines.
-- `exact_path_rules` owns DRC-facing wrappers over `hyperpath` via and board objects,
-  including exact annular-ring certification and retained drill-intent policy
-  classification.
-- Report writers produce text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations,
-  HTML, JUnit, SQLite, Arrow IPC, Parquet, overlays, and review companions.
-- Repository-local READMEs under `src`, `src/checks`, `src/geometry`, `src/kicad`,
-  `docs`, `examples`, and `benches` document the larger internal map.
+```text
+Gerber / KiCad / drills / IPC-D-356 / sidecars / archives
+                              │
+                              ▼
+                 parsers + source provenance
+                              │
+                              ▼
+          rules + capabilities + readiness check plan
+                              │
+                              ▼
+          Report + coverage + diagnostics + findings
+              │            │             │
+              ▼            ▼             ▼
+        text / JSON      SARIF / CI   review artifacts
+```
 
-## Precision Model
+Every selected check receives an explicit execution status. A check may pass,
+fail, be inapplicable, remain uncertain, or be skipped by policy; it does not
+silently disappear because an adapter lacked data.
 
-`hyperdrc` currently combines exact-aware metadata with pragmatic CAM adapters.
-Parser diagnostics preserve source units, grid declarations, file roles, X2 attributes,
-sidecar schema evidence, and converter provenance. Geometry checks are conservative
-review prompts, not proof that a board is manufacturable.
+## Primary types
 
-Where exact Hyper geometry is not yet wired through the full CAM path, the README and
-reports should keep that boundary visible. Decimal/source-grid facts should be retained
-at import, finite geometry should be lifted into Hyper crates where practical, and
-lossy `geo`/`csgrs` adapters should remain explicit.
-
-`PcbSketch::offset` returns `PcbGeometryUncertainty` when the geometry engine cannot
-certify exact profile topology. Readiness checks convert that result into an
-error-severity `geometry-uncertainty` finding carrying the requested check and source
-layers. They do not unwind, silently skip the rule, or substitute an approximate
-offset; callers can inspect the completed report while release remains blocked.
-
-Numerical explosion is controlled by carrying source-grid facts, parser diagnostics,
-file-role evidence, hashes, waiver state, baselines, and sidecar provenance instead of
-eagerly expanding every CAM primitive into exact booleans. Exact comparisons are
-introduced at decision boundaries through `hyperreal`, `hyperlattice`, `hyperlimit`,
-and `hyperpath`, while lossy polygon adapters remain named so reports can distinguish
-certified decisions from review prompts.
-
-## Performance Model
-
-The crate is intended to run in local preflight and CI. It keeps the CLI thin over the
-library pipeline, streams progress for long-running checks to stderr, and supports
-machine-readable output formats for downstream tooling. Rule configuration, sidecar
-discovery, parser diagnostics, baselines, and waivers are resolved once and then reused
-by checks and reports.
-
-Performance work should keep expensive geometry checks observable, avoid hiding parser
-or adapter costs, and prefer reusable source/provenance records over reparsing release
-packages for each output format.
-
-The measured reference audit, including retained and rejected broad-phase experiments,
-is recorded in [PERFORMANCE.md](PERFORMANCE.md).
-
-Report sinks share the same `Report` model, so text, JSON, SARIF, SQLite, Arrow, Parquet,
-and overlays do not force independent analysis passes. Geometry hashes, baselines,
-waivers, parser summaries, and sidecar indexes let repeated CI runs compare evidence
-without rebuilding every derived artifact.
-
-## Current Status
-
-`hyperdrc` is an active prototype with broad regression coverage. Implemented today:
-
-- Gerber directory/package loading, KiCad board parsing, Excellon sidecars, IPC-D-356
-  sidecars, package archives, common manufacturing sidecars, and converter output
-  discovery;
-- parser diagnostics for Gerber/X2, KiCad, Excellon, IPC-D-356, BOM/centroid/netlist
-  tables, spreadsheets, drawings, IPC-2581, ODB++, STEP/mesh/image/test artifacts, and
-  converter manifests;
-- readiness checks for copper/layer geometry, board outline, mask/paste/silkscreen,
-  drills, IPC-D-356, KiCad net/board context, stackup/net-class policies, assembly/test
-  features, generated-output freshness, package completeness, and waiver governance;
-- exact path-rule wrappers for `hyperpath` via drill intent, drill diameter, and
-  annular-ring certification;
-- JSON rule configuration, CLI overrides, package/assembly/fabricator profiles, stackup
-  metadata, net-class constraints, waivers, baselines, and baseline diffs;
-- reports in text, JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit,
-  SQLite, Arrow IPC, and Parquet;
-- review overlays and companions for SVG, Gerber, Excellon, DXF, PDF, KiCad marker
-  boards/rules, IPC-D-356, GenCAD, and IPC-2581.
-
-Known limits: findings are conservative preflight evidence, not a replacement for a
-fabricator DFM/DRC pass. Native authoring handoffs retain exact routed-slot
-centerlines/widths plus side-aware component courtyard/body envelopes for
-coverage, collision, and component-keepout readiness; full ODB++/IPC-2581 import,
-glyph-accurate text, custom pad booleans, general field solving beyond the
-audited single-ended/equal-width edge-coupled impedance screens, and several
-format-specific dialects remain incomplete.
+- `Cli` is the reusable command-line configuration model.
+- `run(Cli) -> Result<RunOutcome>` executes the same loading, checking,
+  waiver, reporting, and side-artifact pipeline as the binary without exiting
+  the process.
+- `RunOutcome` contains the completed `Report` and elapsed time.
+- `Report` contains source records, parser diagnostics, check coverage,
+  active findings, waived findings, and aggregate counts.
+- `Violation` is one stable finding with severity, evidence identity, source
+  layers, geometry, locations, semantic subjects, and an optional message.
+- `Check` identifies a registered readiness check.
+- `ReadinessRunner` executes an ordered native check plan and produces
+  `CheckCoverage`.
+- `CheckExecutionRecord` and `CheckExecutionStatus` preserve whether each
+  selected check passed, failed, was inapplicable, uncertain, or skipped.
+- `RuleConfig`, `EffectiveRules`, `CapabilityProfile`, `Waiver`, and
+  `BaselineFile` describe policy and review state.
+- `PcbSketch` is the current exact-aware profile compatibility carrier.
+  `PcbGeometryUncertainty` is returned when a geometry decision cannot be
+  certified.
+- `Scalar` is `hyperreal::Real`, used for exact finite rule values.
 
 ## Installation
 
-`hyperdrc` is primarily used from a checkout while the Hyper crates are developed
-together:
+Install the command-line tool:
 
 ```sh
-cargo run -- --help
+cargo install hyperdrc --version 0.3.0
+hyperdrc --help
 ```
 
-As a library dependency from sibling checkouts:
+Or add the library to a Rust project:
 
 ```toml
 [dependencies]
-hyperdrc = { path = "../hyperdrc" }
+hyperdrc = "0.3.0"
 ```
 
-## Library And CLI
+## Quick start
 
-The reusable API lives in `src/lib.rs` and exposes parser modules, checks, report types,
-policies, and the `run` pipeline. The binary in `src/main.rs` parses CLI flags, calls
-the library, and maps active findings to process status. Use `--allow-findings` for
-report-only automation.
+This native example plans two checks and records why one does not apply. It
+shows the coverage contract without requiring a board file.
 
-## Quick Start
+<!-- quickstart:start -->
+```rust
+use hyperdrc::{Check, CheckExecutionStatus, CheckRunDisposition, ReadinessRunner};
 
-Run default checks over files or a Gerber package directory:
+fn main() {
+    let runner = ReadinessRunner::new([Check::StackupReadiness, Check::TestpointCoverageReadiness]);
+    let mut findings = Vec::new();
+    let coverage = runner
+        .run(&mut findings, |check, _| {
+            Ok::<_, std::convert::Infallible>(match check {
+                Check::StackupReadiness => CheckRunDisposition::Executed,
+                _ => {
+                    CheckRunDisposition::NotApplicable("design declares no testpoint intent".into())
+                }
+            })
+        })
+        .expect("infallible readiness adapter");
+
+    assert!(coverage.is_complete());
+    assert_eq!(coverage.checks[0].status, CheckExecutionStatus::Passed);
+    assert_eq!(
+        coverage.checks[1].status,
+        CheckExecutionStatus::NotApplicable
+    );
+}
+```
+<!-- quickstart:end -->
+
+Run the repository copy with:
 
 ```sh
-cargo run -- path/to/top.gbr path/to/bottom.gbr
-cargo run -- --gerber-dir path/to/gerber-package
+cargo run --example basic
 ```
 
-Run KiCad-aware checks with a config file and sidecars:
+Native authoring systems can use `ReadinessRunner` to share the same coverage
+accounting while supplying richer geometry and semantic identities than a
+file-only pipeline can recover.
+
+## Command-line use
+
+Review one or more Gerber layers:
 
 ```sh
-cargo run -- \
+hyperdrc board-F_Cu.gbr board-B_Cu.gbr
+hyperdrc --gerber-dir release/gerbers
+```
+
+Review a manufacturing archive and emit JSON:
+
+```sh
+hyperdrc --package-archive release-board.zip --format json
+```
+
+Combine KiCad and manufacturing sidecars with a rule configuration:
+
+```sh
+hyperdrc \
   --config examples/hyperdrc-config.json \
   --kicad-pcb board.kicad_pcb \
   --excellon board.drl \
   --ipc356 board.ipc \
-  --format geojson
+  --format sarif
 ```
 
-Generate review artifacts without failing the surrounding shell recipe:
+Generate review artifacts without turning active findings into a failing
+process status:
 
 ```sh
-cargo run -- \
+hyperdrc \
   --allow-findings \
   --kicad-pcb board.kicad_pcb \
   --format html \
@@ -174,189 +167,227 @@ cargo run -- \
   --summary-file summary.json
 ```
 
-Useful converter entry points include `--converter kicad-cli`, `--convert-input`,
-`--conversion-output-dir`, and sidecar export flags for handoff/review artifacts.
+The binary maps malformed input or impossible evidence construction to exit
+status 1 and active findings to status 2. `--allow-findings` retains the report
+but suppresses the latter status for exploratory automation.
 
-The library entry point accepts the same `Cli` model and returns a `RunOutcome`
-instead of exiting the process:
+Use `--check` to select check families, `--config` and rule flags to resolve
+policy, `--waiver-file` and baseline options to govern known findings, and
+`--help` for the complete generated option list. Converter entry points include
+`--convert-input`, `--converter`, `--conversion-output-dir`, and the
+tool-specific handoff/review export flags.
 
-```rust,no_run
-use clap::Parser;
-use hyperdrc::{Cli, run};
+## Inputs and outputs
 
-fn main() -> anyhow::Result<()> {
-    let cli = Cli::try_parse_from([
-        "hyperdrc",
-        "release-package.zip",
-        "--format",
-        "json",
-    ])?;
-    let outcome = run(cli)?;
-    println!("{} active finding(s)", outcome.report.violation_count);
-    Ok(())
-}
-```
+The file-oriented pipeline recognizes:
 
-## Readiness Coverage
+- Gerber Layer Format and X2/X3 metadata;
+- KiCad board S-expressions and native rule context;
+- Excellon drill programs and IPC-D-356 electrical test data;
+- ZIP, TAR, TAR.GZ, and TGZ release packages;
+- BOM, centroid, netlist, stackup, material, drawing, and manifest sidecars;
+- converter manifests and generated handoff artifacts.
 
-The default suite covers five broad surfaces:
+All report sinks consume the same `Report`. Supported outputs include text,
+JSON, JSON Lines, GeoJSON, SARIF, GitHub annotations, HTML, JUnit, SQLite,
+Arrow IPC, and Parquet. Review companions include SVG, Gerber, Excellon, DXF,
+PDF, KiCad markers/rules, IPC-D-356, GenCAD, and IPC-2581 projections.
 
-- layer geometry: copper overlap, edge clearance, mask/paste alignment, silkscreen
-  clearance, feature width, acid traps, copper balance, density, and outline sanity;
-- drills and fabrication context: annular ring, drill spacing/clearance, routed-slot
-  readiness, castellation intent, aspect ratio, Excellon evidence, and cross-source
-  drill consistency;
-- KiCad board context: net intent, high-speed/current/RF/ESD/thermal heuristics,
-  differential-pair review, panelization, keepouts, grounding, stackup and net-class
-  constraints;
-- assembly and test readiness: component clearances, fiducials, tooling holes, mouse
-  bites, testpoint coverage/accessibility, selective/wave/press-fit/conformal-coating
-  evidence, and IPC-D-356 coverage;
-- package readiness: required artifacts, sidecar discovery, BOM/centroid/netlist
-  structure, drawings, generated-date freshness, polarity/MSL/surface-finish handoff
-  notes, overlays, waivers, and baselines.
+## Useful API
 
-The check ownership map is in [src/checks](src/checks/README.md), and the long-form
-roadmap remains in [docs/design-readiness-plan.md](docs/design-readiness-plan.md).
+The generated Rust documentation contains full signatures. These groups cover
+the useful public entry points and modules.
 
-## Repository Map
+### Complete runs and check planning
 
-- [src](src/README.md): library structure, runtime pipeline, parsers, reports,
-  configuration, and modules.
-- [src/checks](src/checks/README.md): readiness checks grouped by ownership.
-- [src/geometry](src/geometry/README.md): polygon construction and geometry-test
-  expectations.
-- [src/kicad](src/kicad/README.md): KiCad model and parser scope.
-- [docs](docs/README.md): roadmap and visual assets.
-- [docs/testing.md](docs/testing.md): test-suite guide.
-- [examples](examples/README.md): runnable configuration examples.
-- [benches](benches/README.md): benchmark and smoke-performance entry points.
-- [proptest-regressions](proptest-regressions/README.md): persisted property-test
-  regression seeds.
+- `run`, `run_cli`, `Cli`, `OutputFormat`, `RunOutcome`;
+- `default_checks`, `ReadinessRunner`, `ReadinessContext`;
+- `CheckCoverage`, `CheckExecutionRecord`, `CheckExecutionStatus`, and
+  `CheckRunDisposition`.
 
-## Exact Path Rule Handoff
+Call `run` when an embedder wants CLI-compatible discovery, parsing, policy,
+waivers, baselines, reports, and side artifacts. Call `ReadinessRunner`
+directly when a native authoring system already owns the input model.
 
-`hyperdrc::exact_path_rules` keeps fabrication policy labels in this crate while
-delegating exact path geometry to `hyperpath`:
+### Reports and evidence
 
-```rust,ignore
-use hyperdrc::exact_path_rules::{classify_via_drill_policy, AnnularRingStatus};
-use hyperlimit::{Point2, PredicatePolicy};
-use hyperpath::{NetId, PcbViaStack, TraceLayer, ViaDrillIntent};
-use hyperreal::{Rational, Real};
+- `report`: `Report`, `Violation`, `Severity`, `Diagnostic`,
+  `EvidenceContext`, `FindingSubject`, `FindingSourceSpan`,
+  `FindingSourcePosition`, `report_summary`, `report_to_geojson`;
+- `baseline`: `report_to_baseline`, `load_baseline`, `compare_baselines`,
+  `report_to_waiver_stubs`;
+- `waiver`: `load_waivers`, `apply_waivers`, `governance_violations`;
+- report modules: `sarif`, `jsonl`, `html_report`, `junit`,
+  `github_annotations`, `sqlite_report`, `arrow_report`,
+  `parquet_report`;
+- review modules: `svg_overlay`, `gerber_overlay`, `excellon_overlay`,
+  `dxf_overlay`, `pdf_overlay`, `kicad_markers`, `ipc356_review`,
+  `gencad_review`, `ipc2581_review`.
 
-fn r(value: i64) -> Real {
-    Real::new(Rational::new(value))
-}
+`Violation::new`, `with_subjects`, and `with_evidence_context` build durable
+findings for native adapters.
 
-fn p(x: i64, y: i64) -> Point2 {
-    Point2::new(r(x), r(y))
-}
+### Rules, profiles, and capabilities
 
-let via = PcbViaStack::with_drill_intent(
-    NetId(1),
-    TraceLayer(0),
-    TraceLayer(2),
-    p(0, 0),
-    r(10),
-    r(4),
-    ViaDrillIntent::Plated,
-)?;
+- `config`: `RuleConfig::load`, `RuleOverrides`, `effective_rules`,
+  `EffectiveRules`;
+- `assembly_policy`, `constraint_policy`, and `package_policy` resolve
+  assembly, electrical, and artifact requirements;
+- `CapabilityProfile`, `CapabilityProfileClass`, `DrillCapability`,
+  `ImagingCapability`, `PanelAssemblyCapability`;
+- `opinionated_prototype_profile`, `mainstream_profile`, `hdi_profile`.
 
-let report = classify_via_drill_policy(&via, &r(3), PredicatePolicy::STRICT);
-assert_eq!(report.annular_ring, Some(AnnularRingStatus::Certified));
-```
+Capability profiles validate and digest the process envelope so release
+evidence can name the exact policy it used.
 
-That split keeps DRC policy semantics close to reports and waivers, while `hyperpath`
-continues to own path construction, clearance predicates, drill geometry, and retained
-source provenance.
+### Parsers and source records
+
+- `gerber_metadata` parses image setup, units, coordinate grids, aperture
+  macros/uses, interpolation, polarity, transforms, regions,
+  step-and-repeat, and X2/X3 attributes;
+- `kicad::load_kicad_pcb` returns `BoardModel` with copper and drill features;
+- `excellon` and `ipc356` parse drill and test data;
+- `io`: `SourceRecord`, `DiscoveredFile`, `discover_gerber_dir`,
+  `discover_gerber_tree_from_archive`, sidecar discovery helpers, and
+  `is_gerber_path`;
+- `package_archive::ExtractedPackages` safely stages supported archives;
+- `conversion::convert` executes an explicit `ConversionRequest` and returns
+  provenance-bearing `ConversionOutput`.
+
+### Geometry and exact path handoffs
+
+- `PcbSketch::new`, `from_gerber`, `offset`, `try_union`,
+  `try_difference`, `try_intersection`, `try_xor`, `metadata`;
+- `PcbSketchExt` supplies conversions used by geometry checks;
+- `exact_path_rules::certify_annular_ring` and
+  `classify_via_drill_policy` delegate via geometry to Hyperpath while keeping
+  DRC policy labels in HyperDRC;
+- `geometry` exposes source-unit/grid facts, primitive construction, and
+  report-shape projections.
+
+An uncertain certified offset becomes `PcbGeometryUncertainty` and then an
+error-severity `geometry-uncertainty` finding. The pipeline does not silently
+replace it with an approximate result.
+
+### Check families
+
+The `checks` module groups the executable policy surface:
+
+- board outline, layer, copper, mask, paste, silkscreen, stencil, and drill;
+- continuity, annular ring, routed-slot, castellation, via-in-pad, and
+  package manifests;
+- controlled impedance, differential pairs, return paths, RF, power,
+  high-current, safety, and grounding;
+- assembly spacing, dense-pad escape, thermal, mechanical, panelization,
+  fiducials, tooling, mouse bites, and coatings;
+- testpoint and IPC-D-356 coverage.
+
+The check ownership map is maintained in
+[src/checks/README.md](src/checks/README.md). `Check` and `hyperdrc --help`
+remain the authoritative enumerations.
+
+## Guarantees and boundaries
+
+- A `Report` preserves every selected check's coverage status, including
+  uncertainty and policy skips.
+- Exact decimal rule values are promoted to `Scalar`; source units, grids,
+  hashes, transformations, parser diagnostics, waivers, and conversion
+  provenance remain attached to evidence.
+- Geometry adapters are mixed-mode today. Hyperreal, Hyperlimit, Hypercurve,
+  and Hyperpath provide exact-aware decisions where wired; finite `geo` and
+  CSGRS CAM projections remain named adapter boundaries.
+- Findings are conservative release-review evidence, not a substitute for a
+  board fabricator's DFM/DRC pass or process warranty.
+- Full ODB++ and IPC-2581 import, glyph-accurate text, general custom-pad
+  Booleans, and broad electromagnetic/thermal field solving are outside the
+  current certified surface.
+- Report formats do not rerun analysis. They project one completed `Report`.
+- External converters are explicit subprocess adapters. Their executable
+  identity, arguments, outputs, and diagnostics must remain reviewable.
+
+Measured implementation work and rejected optimization experiments are kept in
+[PERFORMANCE.md](PERFORMANCE.md), not presented here as timeless throughput
+claims.
+
+## Repository guides
+
+- [src](src/README.md) maps the library and runtime pipeline.
+- [checks](src/checks/README.md) assigns check ownership.
+- [geometry](src/geometry/README.md) explains geometry-test expectations.
+- [KiCad](src/kicad/README.md) documents parser/model scope.
+- [examples](examples/README.md) explains the sample configuration.
+- [benchmarks](benches/README.md) defines the smoke and spatial-index audits.
+- [testing](docs/testing.md) describes the test suite.
+
+## References
+
+Normative format and reporting sources:
+
+- Ucamco,
+  [*Gerber Layer Format Specification*, revision 2026.05](https://www.ucamco.com/en/gerber/downloads).
+- IPC, [IPC-D-356B: Bare Substrate Electrical Test Data Format](https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only).
+- IPC, [IPC-2221B: Generic Standard on Printed Board Design](https://www.ipc.org/TOC/IPC-2221B.pdf).
+- IPC, [IPC-2152: Current Carrying Capacity in Printed Board Design](https://shop.ipc.org/ipc-2152/ipc-2152-standard-only).
+- IPC, [IPC-7351B: Land Pattern Standard](https://shop.ipc.org/ipc-7351/ipc-7351-standard-only).
+- IPC, [IPC-7525B: Stencil Design Guidelines](https://www.ipc.org/TOC/IPC-7525B.pdf).
+- IPC, [IPC-2581C manufacturing description and transfer standard](https://shop.ipc.org/ipc-2581/ipc-2581-standard-only).
+- KiCad,
+  [S-expression file-format documentation](https://dev-docs.kicad.org/en/file-formats/sexpr-intro/).
+- OASIS,
+  [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html).
+- Apache Software Foundation,
+  [Arrow Columnar Format](https://arrow.apache.org/docs/format/Columnar.html)
+  and [Parquet](https://parquet.apache.org/docs/).
+
+Geometry and electrical-model sources:
+
+- Chee K. Yap, [“Towards Exact Geometric Computation”](https://doi.org/10.1016/0925-7721(95)00040-2),
+  *Computational Geometry* 7, 1997, pp. 3–23.
+- Jon Louis Bentley,
+  [“Multidimensional Binary Search Trees Used for Associative Searching”](https://doi.org/10.1145/361002.361007),
+  *Communications of the ACM* 18(9), 1975.
+- Matthias Teschner et al.,
+  [“Optimized Spatial Hashing for Collision Detection of Deformable Objects”](http://hdl.handle.net/20.500.11850/52292),
+  VMV 2003.
+- E. Hammerstad and O. Jensen,
+  [“Accurate Models for Microstrip Computer-Aided Design”](https://doi.org/10.1109/MWSYM.1980.1124303),
+  IEEE MTT-S, 1980.
+- M. Kirschning and R. H. Jansen,
+  [“Accurate Wide-Range Design Equations for Parallel Coupled Microstrip Lines”](https://doi.org/10.1109/TMTT.1984.1132616),
+  *IEEE Transactions on Microwave Theory and Techniques* 32(1), 1984.
+- STMicroelectronics,
+  [AN576: Influence of PCB Layout on ESD Protection](https://www.st.com/resource/en/application_note/an576-pcb-layout-optimisation-stmicroelectronics.pdf).
+
+These references define inputs, evidence formats, or the limited analytical
+models used by checks. They do not turn heuristic readiness findings into
+standards-conformance certification.
+
+## Acknowledgements
+
+HyperDRC builds on the Gerber, KiCad, IPC, OASIS, Arrow, Parquet, SQLite, Rust,
+and Hyper geometry ecosystems. CSGRS currently supplies CAM profile adapters;
+Hyperreal, Hyperlattice, Hyperlimit, Hypercurve, and Hyperpath supply
+exact-aware scalar, predicate, curve, and routed-path handoffs. Hypercircuit
+and Hyperphysics supply native semantic and material context where available.
+
+Thanks are due to the authors and maintainers of those specifications,
+libraries, and public technical sources, and to contributors who supplied
+reproducible release-package fixtures and review cases.
 
 ## Development
 
 ```sh
 cargo fmt --all -- --check
-cargo test --locked
-cargo check --benches --locked
-cargo clippy --all-targets --locked -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
-cargo bench --bench parser_geometry_smoke
-cargo bench --bench fixture_smoke
+cargo test --all-targets
+cargo check --benches
+cargo clippy --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 ```
 
-## References
+The detailed design history remains in
+[docs/design-readiness-plan.md](docs/design-readiness-plan.md); it is not the
+public support contract.
 
-These standards and research sources inform the parser, geometry, reporting,
-and readiness models. They are consolidated here so implementation comments can
-stay focused on local behavior and evidence boundaries.
+## License
 
-- Areny, F. A., et al. "A Study of SnAgCu Solder Paste Transfer Efficiency and Effects of Optimal Reflow Profile on Solder Deposits." *Microelectronic Engineering*, 2011, https://doi.org/10.1016/j.mee.2011.02.104.
-- Andrew, A. M. "Another Efficient Algorithm for Convex Hulls in Two Dimensions." *Information Processing Letters*, vol. 9, no. 5, 1979, pp. 216-219, https://doi.org/10.1016/0020-0190(79)90072-3.
-- Apache Software Foundation. "Apache Arrow Columnar Format." *Apache Arrow Documentation*, https://arrow.apache.org/docs/format/Columnar.html. Accessed 20 May 2026.
-- Apache Software Foundation. "Apache Parquet." *Apache Parquet Documentation*, https://parquet.apache.org/docs/. Accessed 20 May 2026.
-- Becerra, Jose, Dennis Willie, and Murad Kurwa. "Press Fit Technology Roadmap and Control Parameters for a High Performance Process." *IPC APEX EXPO Conference Proceedings*, Flextronics, https://www.circuitinsight.com/pdf/press_fit_technology_roadmap_control_parameters_ipc.pdf. Accessed 14 May 2026.
-- Bentley, Jon Louis. "Multidimensional Binary Search Trees Used for Associative Searching." *Communications of the ACM*, vol. 18, no. 9, 1975, pp. 509-517, https://doi.org/10.1145/361002.361007.
-- Bhargava, Ankit, et al. "DC-DC Buck Converter EMI Reduction Using PCB Layout Modification." *IEEE Transactions on Electromagnetic Compatibility*, vol. 53, no. 3, 2011, pp. 806-813, https://doi.org/10.1109/TEMC.2011.2145421.
-- Black, J. R. "Electromigration--A Brief Survey and Some Recent Results." *IEEE Transactions on Electron Devices*, vol. 16, no. 4, 1969, pp. 338-347, https://doi.org/10.1109/T-ED.1969.16754.
-- Chen, Fen, and Ning-Cheng Lee. "A Novel Solution for No-Clean Flux Not Fully Dried Under Component Terminations." *Indium Corporation Technical Paper*, 2015, https://www.electronics.org/system/files/technical_resource/E39%26S13_03%20-%20Ning%20C.%20Lee.pdf. Accessed 14 May 2026.
-- Chesser, Kevin, and May Porley. "What Are the Basic Guidelines for Layout Design of Mixed-Signal PCBs?" *Analog Dialogue*, vol. 56, no. 3, 2022, https://www.analog.com/en/resources/analog-dialogue/articles/what-are-the-basic-guidelines-for-layout-design-of-mixed-signal-pcbs.html. Accessed 14 May 2026.
-- Cohn, S. B. "Characteristic Impedance of the Shielded-Strip Transmission Line." *IRE Transactions on Microwave Theory and Techniques*, vol. MTT-2, no. 2, 1954, pp. 52-57, https://doi.org/10.1109/TMTT.1954.1124875.
-- Eurocircuits. "Tombstoning." *Eurocircuits Technical Guidelines*, https://www.eurocircuits.com/technical-guidelines/pcb-assembly-guidelines/tombstoning/. Accessed 13 May 2026.
-- Ericson, Christer. *Real-Time Collision Detection*. CRC Press, 2005.
-- Farin, Gerald. *Curves and Surfaces for CAGD: A Practical Guide*. 5th ed., Academic Press, 2002.
-- FixturFab. "Design for Test: How to Design Test Points for PCB Testing." *FixturFab Resources*, https://fixturfab.com/resources/how-to-test/design-for-test. Accessed 13 May 2026.
-- GitHub. "Workflow Commands for GitHub Actions." *GitHub Docs*, https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands. Accessed 13 May 2026.
-- Hammerstad, E., and O. Jensen. "Accurate Models for Microstrip Computer-Aided Design." *1980 IEEE MTT-S International Microwave Symposium Digest*, 1980, pp. 407-409, https://doi.org/10.1109/MWSYM.1980.1124303.
-- Harter, Stefan, et al. "The Effect of Area Shape and Area Ratio on Solder Paste Printing Performance." *SMTA International*, 2016, https://www.circuitnet.com/programs/55115.html.
-- Hinnant, Howard. "chrono-Compatible Low-Level Date Algorithms." *Howard Hinnant's Date Algorithms*, https://howardhinnant.github.io/date_algorithms.html. Accessed 13 May 2026.
-- Hollstein, K., X. Yang, and K. Weide-Zaage. "Thermal Analysis of the Design Parameters of a QFN Package Soldered on a PCB Using a Simulation Approach." *Microelectronics Reliability*, vol. 120, 2021, article 114118, https://doi.org/10.1016/j.microrel.2021.114118.
-- IPC. *Generic Standard on Printed Board Design: IPC-2221B*. IPC, https://www.ipc.org/TOC/IPC-2221B.pdf. Accessed 13 May 2026.
-- IPC. *Standard for Determining Current Carrying Capacity in Printed Board Design: IPC-2152*. IPC, 2009, https://shop.ipc.org/ipc-2152/ipc-2152-standard-only.
-- IPC. *Bare Substrate Electrical Test Data Format: IPC-D-356B*. IPC, 1 Oct. 2002, https://shop.electronics.org/ipc-d-356/ipc-d-356-standard-only.
-- IPC. *Computer Numerical Control Formatting for Drillers and Routers: IPC-NC-349*. IPC, 1985, https://www.electronics.org/TOC/IPC-NC-349.pdf. Accessed 16 May 2026.
-- IPC. *Generic Requirements for Surface Mount Design and Land Pattern Standard: IPC-7351B*. IPC, 2010, https://shop.ipc.org/ipc-7351/ipc-7351-standard-only.
-- IPC. *IPC-2581C: Generic Requirements for Printed Board Assembly Products Manufacturing Description Data and Transfer Methodology*. IPC, 2020, https://shop.ipc.org/ipc-2581/ipc-2581-standard-only.
-- KiCad. "S-Expression Format." *KiCad Developer Documentation*, https://dev-docs.kicad.org/en/file-formats/sexpr-intro/. Accessed 15 May 2026.
-- IEC. *IEC 60352-5: Solderless Connections, Part 5: Press-In Connections, General Requirements, Test Methods and Practical Guidance*. International Electrotechnical Commission, https://webstore.iec.ch/publication/23286.
-- IEC. *IEC 61000-4-5: Electromagnetic Compatibility (EMC), Part 4-5: Testing and Measurement Techniques, Surge Immunity Test*. International Electrotechnical Commission, https://webstore.iec.ch/publication/4184.
-- IEEE. *IEEE Standard for Configuration Management in Systems and Software Engineering: IEEE Std 828-2012*. IEEE, 2012, https://doi.org/10.1109/IEEESTD.2012.6170935.
-- IPC. *Press-Fit Standard for Automotive Requirements and Other High-Reliability Applications: IPC-9797*. IPC, May 2020, https://www.ipc.org/TOC/IPC-9797-toc.pdf.
-- IPC. *Requirements for Soldered Electrical and Electronic Assemblies: IPC J-STD-001H*. IPC, Sept. 2020, https://shop.ipc.org/ipc-j-std-001/ipc-j-std-001-standard-only.
-- IPC. *Requirements for Electrical Testing of Unpopulated Printed Boards: IPC-9252B*. IPC, 2016, https://shop.ipc.org/ipc-9252/ipc-9252-standard-only.
-- IPC. *Guidelines for Temperature Profiling for Mass Soldering Processes (Reflow and Wave): IPC-7530*. IPC, https://shop.ipc.org/ipc-7530/ipc-7530-standard-only.
-- IPC. *Performance Specification for Electroless Nickel/Immersion Gold (ENIG) Plating for Printed Boards: IPC-4552B*. IPC, Apr. 2021, https://www.ipc.org/TOC/IPC-4552B-toc.pdf.
-- IPC. *Qualification and Performance Specification for Rigid Printed Boards: IPC-6012D*. IPC, https://www.ipc.org/TOC/IPC-6012D.pdf. Accessed 13 May 2026.
-- IPC. *Specification for Electroless Nickel/Electroless Palladium/Immersion Gold (ENEPIG) Plating for Printed Circuit Boards: IPC-4556*. IPC, 5 Feb. 2013, https://shop.electronics.org/ipc-4556/ipc-4556-standard-only/Revision-0/english.
-- Ucamco. *The Gerber Layer Format Specification, Revision 2024.05*. Ucamco NV, 2024, https://www.ucamco.com/en/gerber/downloads. Accessed 16 May 2026.
-- IPC. *Specification for Immersion Silver Plating for Printed Boards: IPC-4553A*. IPC, 16 June 2009, https://webstore.ansi.org/standards/ipc/ipc4553a2009.
-- IPC. *Stencil Design Guidelines: IPC-7525B*. IPC, https://www.ipc.org/TOC/IPC-7525B.pdf. Accessed 13 May 2026.
-- Kirschning, M., and R. H. Jansen. "Accurate Wide-Range Design Equations for the Frequency-Dependent Characteristic of Parallel Coupled Microstrip Lines." *IEEE Transactions on Microwave Theory and Techniques*, vol. 32, no. 1, 1984, pp. 83-90, https://doi.org/10.1109/TMTT.1984.1132616.
-- Oezkoek, Mustafa, Joe McGurran, Dieter Metzger, and Hugh Roberts. "Wire Bonding and Soldering on ENEPIG and ENEP Surface Finishes with Pure Pd-Layers." *IPC Technical Resource*, Atotech, https://www.ipc.org/system/files/technical_resource/E5%26S34_01.pdf. Accessed 15 May 2026.
-- Parnas, D. L. "On the Criteria To Be Used in Decomposing Systems into Modules." *Communications of the ACM*, vol. 15, no. 12, 1972, pp. 1053-1058, https://doi.org/10.1145/361598.361623.
-- Paterson, Donald G., and Miles A. Tinker. "Studies of Typographical Factors Influencing Speed of Reading. II. Size of Type." *Journal of Applied Psychology*, vol. 13, no. 2, 1929, pp. 120-130, https://doi.org/10.1037/h0074167.
-- Chin, Cheng-Hao, and Gnyaneshwar Ramakrishna. "Impact of BGA Escape Trace Design on Performance of Solder Joint." *SMTA International*, Cisco Systems, https://www.circuitnet.com/programs/56311.html. Accessed 14 May 2026.
-- Jonnalagadda, K. "Reliability of Via-in-Pad Structures in Mechanical Cycling Fatigue." *Microelectronics Reliability*, vol. 42, no. 2, 2002, pp. 253-258, https://doi.org/10.1016/S0026-2714(01)00136-6.
-- Lee, Jae-Hun, et al. "Effect of Pulse-Reverse Plating on Copper: Thermal Mechanical Properties and Microstructure Relationship." *Microelectronics Reliability*, vols. 100-101, 2019, article 113383, https://doi.org/10.1016/j.microrel.2019.06.062.
-- Lee, D. T., and Franco P. Preparata. "Computational Geometry - A Survey." *IEEE Transactions on Computers*, vol. C-33, no. 12, 1984, pp. 1072-1101, https://doi.org/10.1109/TC.1984.1676388.
-- Lin, Ming C., and John F. Canny. "A Fast Algorithm for Incremental Distance Calculation." *Proceedings. 1991 IEEE International Conference on Robotics and Automation*, 1991, pp. 1008-1014, https://doi.org/10.1109/ROBOT.1991.131723.
-- OASIS. *Static Analysis Results Interchange Format (SARIF) Version 2.1.0*. Edited by Michael C. Fanning and Laurence J. Golding, OASIS Committee Specification 01, 23 July 2019, https://docs.oasis-open.org/sarif/sarif/v2.1.0/cs01/sarif-v2.1.0-cs01.html.
-- STMicroelectronics. *AN576: Influence of the PCB Layout on the ESD Protection*. STMicroelectronics, DocID3588 Rev. 3, https://www.st.com/resource/en/application_note/an576-pcb-layout-optimisation-stmicroelectronics.pdf. Accessed 14 May 2026.
-- Sun, Yanhui, et al. "Multi-Physics Coupling Aid Uniformity Improvement in Pattern Plating." *Applied Thermal Engineering*, vol. 108, 2016, pp. 1197-1206, https://doi.org/10.1016/j.applthermaleng.2016.07.182.
-- Tang, Yinggang, et al. "Study on Wet Chemical Etching of Flexible Printed Circuit Board with 16-um Line Pitch." *Journal of Electronic Materials*, vol. 52, 2023, pp. 4030-4036, https://doi.org/10.1007/s11664-023-10368-z.
-- Teschner, Matthias, et al. "Optimized Spatial Hashing for Collision Detection of Deformable Objects." *Vision, Modeling, and Visualization 2003*, 2003, pp. 47-54, http://hdl.handle.net/20.500.11850/52292.
-- Toussaint, Godfried T. "Solving Geometric Problems with the Rotating Calipers." *Proceedings of IEEE MELECON '83*, 1983.
-- Wilcoxon, Ross, Tim Pearson, and David Hillman. "Modeling the Effects of Thermal Pad Voiding on Quad Flatpack No-Lead (QFN) Components." *Journal of Surface Mount Technology*, vol. 36, no. 2, 2023, https://doi.org/10.37665/smt.v36i2.37.
-- Wheeler, H. A. "Transmission-Line Properties of a Stripline Between Parallel Planes." *IEEE Transactions on Microwave Theory and Techniques*, vol. 26, no. 11, 1978, pp. 866-876, https://doi.org/10.1109/TMTT.1978.1129505.
-- Wong, Hang, et al. "Small Antennas in Wireless Communications." *Proceedings of the IEEE*, vol. 100, no. 7, 2012, pp. 2109-2121, https://doi.org/10.1109/JPROC.2012.2188089.
-- Xu, Jun, and Shuo Wang. "Investigating a Guard Trace Ring to Suppress the Crosstalk Due to a Clock Trace on a Power Electronics DSP Control Board." *IEEE Transactions on Electromagnetic Compatibility*, vol. 57, no. 3, 2015, pp. 546-554, https://doi.org/10.1109/TEMC.2015.2403289.
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23, https://doi.org/10.1016/0925-7721(95)00040-2.
-
-## Hyper Ecosystem
-
-`hyperdrc` uses [csgrs](https://github.com/timschmidt/csgrs) for current CAM
-polygon adapters and [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlimit](https://github.com/timschmidt/hyperlimit), and
-[hyperpath](https://github.com/timschmidt/hyperpath) for exact-aware rule
-handoffs. Related domain integrations include
-[hyperparts](https://github.com/timschmidt/hyperparts),
-[hypercircuit](https://github.com/timschmidt/hypercircuit), and
-[hyperphysics](https://github.com/timschmidt/hyperphysics).
+HyperDRC is available under the [MIT License](LICENSE).
