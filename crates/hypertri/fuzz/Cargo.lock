@@ -99,6 +99,7 @@ name = "hypertri-fuzz"
 version = "0.1.0"
 dependencies = [
  "arbitrary",
+ "hyperreal",
  "hypertri",
  "libfuzzer-sys",
 ]
