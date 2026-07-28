@@ -253,9 +253,31 @@ compatible carriers without constructing a throwaway `Mesh`.
 - `to_bevy_mesh` is available through `bevymesh`.
 - The `wasm` feature exposes JavaScript-facing point, vector, plane, profile,
   mesh, and matrix wrappers.
-- Primitive-scalar Rust adapters live in [adapters](adapters/README.md).
+- `adapter::{RawReal, F32, F64, I128}` selects a Rust boundary scalar policy;
+  `adapter::Mesh` and `adapter::Profile` forward construction, transforms,
+  Booleans, bounds, projection, and profile-to-solid operations to the exact
+  core.
+- `adapter::{GraphicsMesh, IndexedMeshBuffers, RegionProfile, Aabb3}` converts
+  explicit result carriers at API egress. Float output is lossy and fallible;
+  integer output requires an exact in-range integer.
 - C ABI and packaging layers live in [bindings](bindings/README.md) and
   [ffi](ffi/README.md).
+
+The primitive facade is namespaced so exact and boundary types cannot be
+confused:
+
+```rust
+use csgrs::adapter::{F64, Mesh};
+
+fn main() -> Result<(), csgrs::adapter::AdapterError> {
+    let cube = Mesh::<F64, ()>::cube(2.0, ())?;
+    let shifted = cube.translate(1.0, 0.0, 0.0)?;
+    assert_eq!(shifted.bounding_box()?.maxs, [3.0, 2.0, 2.0]);
+    Ok(())
+}
+```
+
+Run the complete example with `cargo run --example scalar_adapter`.
 
 ## Features
 
@@ -356,10 +378,10 @@ benchmarks/run.sh
 
 ## Examples
 
-The `examples` directory includes primitives, profile extrusion, 2D shapes and
-offsets, Booleans, transformations, convex hull, Minkowski sum, multi-format
-export, adjacency inspection, and README render generation. The WebAssembly
-Nuxt demo is documented separately in
+The `examples` directory includes primitives, the primitive-scalar facade,
+profile extrusion, 2D shapes and offsets, Booleans, transformations, convex
+hull, Minkowski sum, multi-format export, adjacency inspection, and README
+render generation. The WebAssembly Nuxt demo is documented separately in
 [examples/wasm-nuxt4](examples/wasm-nuxt4/README.md).
 
 Community integrations include:
@@ -425,9 +447,12 @@ Before submitting changes, run:
 
 ```sh
 cargo fmt --all -- --check
-cargo test --all-features --all-targets
-cargo clippy --all-features --all-targets -- -D warnings
+cargo test --all-features
+cargo test --all-features --examples
+cargo test -p csgrs-ffi
+cargo clippy --workspace --all-features --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+cargo check --all-features --benches
 ```
 
 ## License

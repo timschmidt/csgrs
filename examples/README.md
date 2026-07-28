@@ -14,6 +14,8 @@ without digging through a large demo binary.
 - `convex_hull.rs`: convex hull over a boolean model.
 - `minkowski_sum.rs`: Minkowski sum for a rounded-cube style result.
 - `extrude.rs`: extrude, vector extrude, revolve, sweep, and loft.
+- `scalar_adapter.rs`: use the namespaced `f64` facade without changing exact
+  core geometry.
 
 ## Utility Examples
 
@@ -29,6 +31,7 @@ cargo run --example basic
 cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
+cargo run --example scalar_adapter
 cargo run --example readme_renders --features mesh,sketch,image-io,truetype-text,metaballs,sdf,offset
 ```
 

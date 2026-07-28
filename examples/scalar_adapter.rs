@@ -1,8 +1,8 @@
-use csgrs_adapter::{F64, Mesh};
+use csgrs::adapter::{F64, Mesh};
 
 type MeshF64 = Mesh<F64, ()>;
 
-fn main() -> Result<(), csgrs_adapter::AdapterError> {
+fn main() -> Result<(), csgrs::adapter::AdapterError> {
     let cube = MeshF64::cube(2.0, ())?;
     let shifted = cube.translate(1.0, 0.0, 0.0)?;
     let bounds = shifted.bounding_box()?;

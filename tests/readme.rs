@@ -34,4 +34,7 @@ fn readme_release_metadata_matches_the_manifest() {
     }
     assert!(!README.contains("\n## Roadmap"));
     assert!(!README.contains("\n## Todo"));
+    assert!(README.contains("csgrs::adapter"));
+    assert!(!README.contains(concat!("csgrs", "-adapter")));
+    assert!(!README.contains("[adapters]"));
 }

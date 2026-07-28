@@ -19,6 +19,8 @@ jobs:
             command: cargo check --locked
           - name: all-features
             command: cargo check --locked --all-features
+          - name: ffi
+            command: cargo check --locked -p csgrs-ffi
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/hyper-workspace
@@ -37,6 +39,8 @@ jobs:
             command: cargo test --locked
           - name: all-features
             command: cargo test --locked --all-features
+          - name: ffi
+            command: cargo test --locked -p csgrs-ffi
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/hyper-workspace
@@ -64,7 +68,7 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo clippy --locked --all-targets --all-features -- -D warnings
+      - run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
 
   spelling:
     name: Spelling

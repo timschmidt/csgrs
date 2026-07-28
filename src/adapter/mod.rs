@@ -1,10 +1,6 @@
-#![forbid(unsafe_code)]
-#![deny(unused)]
-#![warn(clippy::missing_const_for_fn, clippy::approx_constant, clippy::all)]
-
-//! Scalar adapter facade for the hyperreal-backed `csgrs` core.
+//! Primitive-scalar facade for the Hyperreal-backed CSGRS core.
 //!
-//! This crate keeps primitive scalar types at the API boundary. Geometry stored
+//! This module keeps primitive scalar types at the API boundary. Geometry stored
 //! in the wrapped `Mesh` and `Profile` values remains the raw `hyperreal::Real`
 //! representation owned by `csgrs`, `hyperlattice`, `hypercurve`, and
 //! `hypermesh`.
@@ -14,7 +10,6 @@ pub mod mesh;
 pub mod profile;
 pub mod scalar;
 
-pub use csgrs as core;
 pub use hyperreal::Real;
 pub use mesh::{
     GraphicsMesh, IndexedMeshBuffers, Mesh, MeshF32, MeshF64, MeshI128, MeshVertex, RawMesh,
@@ -32,7 +27,9 @@ pub struct Aabb3<S> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{AdapterError, F32, F64, I128, Mesh, Profile, RawReal, ScalarAdapter};
+    #[cfg(feature = "sketch")]
+    use crate::adapter::Profile;
+    use crate::adapter::{AdapterError, F32, F64, I128, Mesh, RawReal, ScalarAdapter};
     use hyperreal::Real;
 
     #[test]
@@ -53,6 +50,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "sketch")]
     fn raw_real_profile_stays_exact_at_boundary() {
         let width = Real::from(3_i128);
         let profile = Profile::<RawReal>::square(width.clone()).unwrap();

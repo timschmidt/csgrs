@@ -1131,6 +1131,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "csgrs-ffi"
+version = "0.1.0"
+dependencies = [
+ "csgrs",
+ "hyperlattice",
+ "hyperreal",
+]
+
+[[package]]
 name = "ctrlc"
 version = "3.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

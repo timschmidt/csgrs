@@ -1,12 +1,12 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use csgrs_adapter::{F32, F64, GraphicsMesh, Mesh, RawReal, Real};
+use csgrs::adapter::{F32, F64, GraphicsMesh, Mesh, RawReal, Real};
 
 const SAMPLES: usize = 10;
 const WARMUP: usize = 2;
 
-fn separate_then_merge_f32(mesh: &csgrs_adapter::core::mesh::Mesh<()>) -> GraphicsMesh<f32> {
+fn separate_then_merge_f32(mesh: &csgrs::mesh::Mesh<()>) -> GraphicsMesh<f32> {
     let buffers = mesh.try_to_gpu_mesh_f32().unwrap();
     GraphicsMesh {
         vertices: buffers.positions.into_iter().zip(buffers.normals).collect(),
@@ -14,7 +14,7 @@ fn separate_then_merge_f32(mesh: &csgrs_adapter::core::mesh::Mesh<()>) -> Graphi
     }
 }
 
-fn separate_then_merge_f64(mesh: &csgrs_adapter::core::mesh::Mesh<()>) -> GraphicsMesh<f64> {
+fn separate_then_merge_f64(mesh: &csgrs::mesh::Mesh<()>) -> GraphicsMesh<f64> {
     let buffers = mesh.try_to_gpu_mesh_f64().unwrap();
     GraphicsMesh {
         vertices: buffers.positions.into_iter().zip(buffers.normals).collect(),

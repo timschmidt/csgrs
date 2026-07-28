@@ -1,11 +1,11 @@
-use crate::Aabb3;
-use crate::mesh::Mesh;
-use crate::scalar::{
+use super::Aabb3;
+use super::mesh::Mesh;
+use super::scalar::{
     AdapterError, AdapterResult, F32, F64, I128, RawReal, ScalarAdapter, real2_to_scalar,
     scalar2_to_real, scalar3_to_real,
 };
-use csgrs::csg::CSG;
-use csgrs::profile::Profile as CoreProfile;
+use crate::csg::CSG;
+use crate::profile::Profile as CoreProfile;
 use hyperlattice::{Matrix4, Vector3};
 use hyperreal::Real;
 use std::fmt::Debug;

@@ -1,8 +1,8 @@
 # csgrs FFI
 
-`csgrs-ffi` exposes the Rust scalar adapter facade through a C ABI. It is the
-shared binding spine for C, C++, Go, Python, and native JavaScript/TypeScript
-loaders.
+`csgrs-ffi` exposes the integrated `csgrs::adapter` scalar facade through a C
+ABI. It is the shared binding spine for C, C++, Go, Python, and native
+JavaScript/TypeScript loaders.
 
 The ABI uses opaque handles for meshes, profiles, and raw hyperreals. Scalar
 families are selected by function prefix:
