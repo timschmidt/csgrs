@@ -6049,6 +6049,19 @@ Serialized `bspline` runs measured cold batch insertion at 5.268 us before and
 before and 78.746 us in the confirming candidate run. Retained operations
 remained 3--34 ns.
 
+### Spline representation cache-state boundary
+
+Polynomial splines and NURBS now expose their immediate Bezier decomposition
+and exact evaluation results without public decomposition or rational-span
+cache-state probes. Decompositions remain clone-shared borrowed values, and
+tests verify identity or repeated exact evaluation directly.
+
+The serialized `bspline` baseline/candidate measured polynomial retained
+decomposition at 2/2 ns, general rational evaluation at 962/936 ns, its first
+derivative at 2.950/2.866 us, and derivatives one through three at
+10.648/9.997 us. The 256-control NURBS cold decomposition measured
+1.912/1.907 ms and retained evaluation measured 9.840/9.790 us.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

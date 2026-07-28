@@ -54,11 +54,9 @@ fn polynomial_spline_clones_share_one_decomposition() {
     let curve = two_span_cubic();
     let clone = curve.clone();
 
-    assert!(!curve.is_bezier_decomposition_cached());
     let first = curve.bezier_decomposition().unwrap();
     let second = clone.bezier_decomposition().unwrap();
 
-    assert!(curve.is_bezier_decomposition_cached());
     assert!(std::ptr::eq(first, second));
     assert_eq!(first.spans().len(), 2);
     assert_eq!(first.intervals(), &[(r(0), r(1)), (r(1), r(2))]);
@@ -92,9 +90,11 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
     assert!(span.weights().iter().all(|weight| *weight == r(1)));
 
     let clone = curve.clone();
-    assert!(!curve.is_rational_span_cache_cached());
     let derivatives = clone.derivatives_at(&(r(1) / r(2)).unwrap(), 4).unwrap();
-    assert!(curve.is_rational_span_cache_cached());
+    assert_eq!(
+        curve.derivatives_at(&(r(1) / r(2)).unwrap(), 4).unwrap(),
+        derivatives
+    );
     assert_eq!((derivatives[0].dx(), derivatives[0].dy()), (&r(4), &r(0)));
     assert_eq!((derivatives[1].dx(), derivatives[1].dy()), (&r(0), &r(0)));
     assert_eq!((derivatives[2].dx(), derivatives[2].dy()), (&r(0), &r(0)));
@@ -118,7 +118,6 @@ fn unclamped_polynomial_spline_retains_exact_active_domain_endpoints() {
     assert_eq!(curve.end(), &Point2::new(r(5), r(2)));
     assert_eq!(curve.point_at(&r(2)).unwrap(), curve.start().clone());
     assert_eq!(curve.point_at(&r(4)).unwrap(), curve.end().clone());
-    assert!(curve.is_bezier_decomposition_cached());
 
     let reversed = curve.reversed().unwrap();
     assert_eq!(reversed.start(), curve.end());

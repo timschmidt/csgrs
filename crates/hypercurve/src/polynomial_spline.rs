@@ -322,16 +322,6 @@ impl PolynomialSplineCurve2 {
         .map_err(|error| remap_spline_operation(error, CurveOperation2::Transformation))
     }
 
-    /// Returns whether exact Bezier decomposition has already been retained.
-    pub fn is_bezier_decomposition_cached(&self) -> bool {
-        self.data.decomposition.get().is_some()
-    }
-
-    /// Returns whether reusable rational span evaluators are retained.
-    pub fn is_rational_span_cache_cached(&self) -> bool {
-        self.data.rational_spans.get().is_some()
-    }
-
     /// Returns the shared exact Bezier decomposition and source intervals.
     pub fn bezier_decomposition(&self) -> ExactCurveResult<&PolynomialSplineBezierDecomposition2> {
         cached_result(&self.data.decomposition, || {

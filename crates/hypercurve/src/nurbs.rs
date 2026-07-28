@@ -743,16 +743,6 @@ impl NurbsCurve2 {
         }
     }
 
-    /// Returns whether exact Bezier decomposition has already been retained.
-    pub fn is_bezier_decomposition_cached(&self) -> bool {
-        self.data.decomposition.get().is_some()
-    }
-
-    /// Returns whether reusable general-rational span evaluators are retained.
-    pub fn is_rational_span_cache_cached(&self) -> bool {
-        self.data.rational_spans.get().is_some()
-    }
-
     /// Returns the shared exact homogeneous Bezier decomposition.
     pub fn bezier_decomposition(&self) -> ExactCurveResult<&NurbsBezierDecomposition2> {
         cached_result(&self.data.decomposition, || {

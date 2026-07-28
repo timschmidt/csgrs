@@ -38,13 +38,11 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
 
     assert_eq!(curve.degree(), 1);
     assert_eq!(curve.parameter_domain(), (&r(0), &r(1)));
-    assert!(!curve.is_rational_span_cache_cached());
     assert_eq!(curve.point_at(&half).unwrap(), p(3, 0));
-    assert!(curve.is_rational_span_cache_cached());
     let derivative = curve.derivative_at(&half).unwrap();
     assert_eq!(derivative.dx(), &r(3));
     assert_eq!(derivative.dy(), &r(0));
-    assert!(curve.is_rational_span_cache_cached());
+    assert_eq!(curve.derivative_at(&half).unwrap(), derivative);
     let spans = curve.native_spans().unwrap().collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().knot_interval(), (&r(0), &r(1)));
@@ -60,7 +58,7 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
 }
 
 #[test]
-fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_cache() {
+fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_evaluators() {
     let curve = NurbsCurve2::try_new(
         1,
         vec![p(0, 0), p(4, 8)],
@@ -74,7 +72,6 @@ fn nurbs_derivative_uses_authored_knot_parameter_and_shared_span_cache() {
     let derivative = curve.derivative_at(&r(3)).unwrap();
     assert_eq!(derivative.dx(), &r(1));
     assert_eq!(derivative.dy(), &r(2));
-    assert!(clone.is_rational_span_cache_cached());
     assert_eq!(clone.derivative_at(&r(5)).unwrap(), derivative);
 }
 
@@ -596,12 +593,10 @@ fn top_level_nurbs_retains_source_and_exact_geometry_without_policy() {
 fn nurbs_clones_share_one_retained_bezier_decomposition() {
     let curve = quadratic_nurbs();
     let clone = curve.clone();
-    assert!(!curve.is_bezier_decomposition_cached());
 
     let first = curve.bezier_decomposition().unwrap();
     let second = clone.bezier_decomposition().unwrap();
 
-    assert!(curve.is_bezier_decomposition_cached());
     assert!(std::ptr::eq(first, second));
     assert_eq!(first.spans().len(), 2);
     assert_eq!(first.inserted_knot_count(), 1);
@@ -652,7 +647,7 @@ fn nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates() {
     assert_eq!(join.x(), &(Real::from(10) / Real::from(3)).unwrap());
     assert_eq!(join.y(), &r(4));
     assert_eq!(curve.point_at(&r(2)).unwrap(), p(6, 0));
-    assert!(curve.is_bezier_decomposition_cached());
+    assert_eq!(curve.point_at(&r(1)).unwrap(), join);
 }
 
 #[test]
@@ -733,12 +728,10 @@ fn unclamped_nurbs_retains_active_endpoints_and_exact_editing() {
     assert_eq!(curve.start(), &Point2::new(r(1), r(2)));
     assert_eq!(curve.end(), &Point2::new(r(5), r(2)));
     assert_eq!(curve.point_at(&r(3)).unwrap(), p(3, 4));
-    assert!(curve.is_bezier_decomposition_cached());
 
     let inserted = curve.insert_knot(r(3)).unwrap();
     assert_eq!(inserted.start(), curve.start());
     assert_eq!(inserted.end(), curve.end());
-    assert!(!inserted.is_bezier_decomposition_cached());
     assert_eq!(inserted.point_at(&r(3)).unwrap(), p(3, 4));
 
     let (left, right) = curve.split_at(r(3)).unwrap();

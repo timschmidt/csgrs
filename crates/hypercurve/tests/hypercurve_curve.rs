@@ -259,11 +259,13 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let CurveGeometry2::PolynomialBSpline(retained_spline) = spline.geometry() else {
         panic!("top-level polynomial constructor returned another family");
     };
-    assert!(!retained_spline.is_rational_span_cache_cached());
     let spline_derivative = spline.derivative_at(&r(1)).unwrap();
     assert_eq!(spline_derivative.dx(), &r(1));
     assert_eq!(spline_derivative.dy(), &r(0));
-    assert!(retained_spline.is_rational_span_cache_cached());
+    assert_eq!(
+        retained_spline.derivative_at(&r(1)).unwrap(),
+        spline_derivative
+    );
     assert!(!spline.is_rational_evaluator_cache_cached());
 }
 
