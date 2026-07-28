@@ -107,6 +107,29 @@ overlap the 14.733--14.927 ms/op control range. The final trace contains 141,208
 events, 64,967 fewer than the original 206,175, while retaining the same 7,251
 refined decisions and two explicit unknown outcomes.
 
+### Use canonical scalar fact queries
+
+The predicate boundary no longer defines `RealFacts` and `RealZeroKnowledge`
+compatibility aliases for Hyperreal's `RealStructuralFacts` and
+`ZeroKnowledge`. Evidence and geometry fact packets name the scalar-owned types
+directly. `RealPredicateExt` now contains only predicate-specific sign mapping
+and bounded refinement; its duplicate `real_facts` and `zero_knowledge` methods
+were removed in favor of `Real::structural_facts` and `Real::zero_status`.
+
+The zero-only displacement cascade benefits from the narrower inherent query:
+two coordinate differences are classified without constructing full sign and
+magnitude packets. The 40-sample `evidence_derivation/point2/displacement_facts`
+sentinel improved from 134.77 ns to 110.92 ns, a 17.93% mean reduction with
+Criterion's 95% change interval of -18.99% to -17.03%. The retained
+`Point2DisplacementFacts` packet and every downstream segment, triangle, and
+AABB filter remain unchanged.
+
+```sh
+cargo bench --bench predicates -- \
+  'evidence_derivation/point2/displacement_facts' \
+  --warm-up-time 1 --measurement-time 3 --sample-size 40
+```
+
 ### Reuse point/ring edge orientations
 
 `classify_point_ring_even_odd_report` formerly evaluated `orient2(a, b,

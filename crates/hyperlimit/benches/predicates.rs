@@ -30,8 +30,9 @@ use hyperlimit::{
     insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
     intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
     line2_orientation, orient_d, orient2 as orient2d, orient3 as orient3d,
-    oriented_plane3_evidence, plane3_evidence, projected_line_parameter3,
-    projected_segment_parameter3, segment2_facts, support_dop3_from_points, triangle3_orientation,
+    oriented_plane3_evidence, plane3_evidence, point2_displacement_facts,
+    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
+    support_dop3_from_points, triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -893,6 +894,9 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let mut group = c.benchmark_group("evidence_derivation");
     let line_a = point2(-1.0, -1.0, hyperreal_real);
     let line_b = point2(1.0, 1.0, hyperreal_real);
+    group.bench_function("point2/displacement_facts", |bench| {
+        bench.iter(|| point2_displacement_facts(black_box(&line_a), black_box(&line_b)))
+    });
     group.bench_function("affine_det2_filter_only", |bench| {
         bench.iter(|| {
             hyperreal::AffineDet2Filter::from_reals(

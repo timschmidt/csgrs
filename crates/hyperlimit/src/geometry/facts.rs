@@ -5,7 +5,8 @@
 //! without letting those hints replace certified predicates.
 
 use crate::geometry::Point2;
-use crate::real::{RealPredicateExt, RealZeroKnowledge, sub_ref};
+use crate::real::sub_ref;
+use hyperreal::ZeroKnowledge;
 
 /// Coordinate axis in a 2D predicate object.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -41,7 +42,7 @@ impl CoordinateAxis2 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Point2DisplacementFacts {
     /// Zero knowledge for `[dx, dy]`.
-    pub component_zero: [RealZeroKnowledge; 2],
+    pub component_zero: [ZeroKnowledge; 2],
     /// Axis occupied by a known nonzero component when the other component is
     /// known zero.
     pub known_axis: Option<CoordinateAxis2>,
@@ -56,14 +57,11 @@ impl Point2DisplacementFacts {
     /// their cheap zero masks when selecting exact kernels, exploiting geometric
     /// object structure before Real refinement.
     pub fn from_deltas(dx: &hyperreal::Real, dy: &hyperreal::Real) -> Self {
-        let component_zero = [dx.zero_knowledge(), dy.zero_knowledge()];
-        let known_zero = matches!(
-            component_zero,
-            [RealZeroKnowledge::Zero, RealZeroKnowledge::Zero]
-        );
+        let component_zero = [dx.zero_status(), dy.zero_status()];
+        let known_zero = matches!(component_zero, [ZeroKnowledge::Zero, ZeroKnowledge::Zero]);
         let known_axis = match component_zero {
-            [RealZeroKnowledge::NonZero, RealZeroKnowledge::Zero] => Some(CoordinateAxis2::X),
-            [RealZeroKnowledge::Zero, RealZeroKnowledge::NonZero] => Some(CoordinateAxis2::Y),
+            [ZeroKnowledge::NonZero, ZeroKnowledge::Zero] => Some(CoordinateAxis2::X),
+            [ZeroKnowledge::Zero, ZeroKnowledge::NonZero] => Some(CoordinateAxis2::Y),
             _ => None,
         };
 
@@ -75,7 +73,7 @@ impl Point2DisplacementFacts {
     }
 
     /// Return zero knowledge for one displacement component.
-    pub fn component_zero(self, axis: CoordinateAxis2) -> RealZeroKnowledge {
+    pub fn component_zero(self, axis: CoordinateAxis2) -> ZeroKnowledge {
         self.component_zero[axis.index()]
     }
 
@@ -215,7 +213,7 @@ pub struct Triangle2Facts {
     pub edges: [Segment2Facts; 3],
     /// Zero knowledge for the two orientation product terms:
     /// `(b.x - a.x) * (c.y - a.y)` and `(b.y - a.y) * (c.x - a.x)`.
-    pub determinant_term_zero: [RealZeroKnowledge; 2],
+    pub determinant_term_zero: [ZeroKnowledge; 2],
     /// Whether determinant zero/nonzero status is known structurally.
     ///
     /// `Some(true)` means the triangle is known degenerate. `Some(false)` means
@@ -325,7 +323,7 @@ impl Triangle2Facts {
     /// # Panics
     ///
     /// Panics when `index >= 2`.
-    pub const fn determinant_term_zero(self, index: usize) -> RealZeroKnowledge {
+    pub const fn determinant_term_zero(self, index: usize) -> ZeroKnowledge {
         self.determinant_term_zero[index]
     }
 
@@ -346,17 +344,17 @@ impl Triangle2Facts {
 
     /// Return a bit mask of determinant product terms known to be zero.
     pub fn determinant_known_zero_mask(self) -> u8 {
-        determinant_term_mask(self.determinant_term_zero, RealZeroKnowledge::Zero)
+        determinant_term_mask(self.determinant_term_zero, ZeroKnowledge::Zero)
     }
 
     /// Return a bit mask of determinant product terms known to be nonzero.
     pub fn determinant_known_nonzero_mask(self) -> u8 {
-        determinant_term_mask(self.determinant_term_zero, RealZeroKnowledge::NonZero)
+        determinant_term_mask(self.determinant_term_zero, ZeroKnowledge::NonZero)
     }
 
     /// Return a bit mask of determinant product terms with unknown zero status.
     pub fn determinant_unknown_zero_mask(self) -> u8 {
-        determinant_term_mask(self.determinant_term_zero, RealZeroKnowledge::Unknown)
+        determinant_term_mask(self.determinant_term_zero, ZeroKnowledge::Unknown)
     }
 
     /// Count determinant product terms known to be exactly zero.
@@ -476,17 +474,17 @@ impl Aabb2Facts {
     }
 }
 
-fn product_zero_knowledge(factors: [RealZeroKnowledge; 2]) -> RealZeroKnowledge {
+fn product_zero_knowledge(factors: [ZeroKnowledge; 2]) -> ZeroKnowledge {
     if zero_knowledge_is_zero(factors[0]) || zero_knowledge_is_zero(factors[1]) {
-        RealZeroKnowledge::Zero
+        ZeroKnowledge::Zero
     } else if zero_knowledge_is_nonzero(factors[0]) && zero_knowledge_is_nonzero(factors[1]) {
-        RealZeroKnowledge::NonZero
+        ZeroKnowledge::NonZero
     } else {
-        RealZeroKnowledge::Unknown
+        ZeroKnowledge::Unknown
     }
 }
 
-fn triangle_degenerate_from_terms(terms: [RealZeroKnowledge; 2]) -> Option<bool> {
+fn triangle_degenerate_from_terms(terms: [ZeroKnowledge; 2]) -> Option<bool> {
     let zero_count = terms
         .into_iter()
         .filter(|knowledge| zero_knowledge_is_zero(*knowledge))
@@ -505,7 +503,7 @@ fn triangle_degenerate_from_terms(terms: [RealZeroKnowledge; 2]) -> Option<bool>
     }
 }
 
-fn determinant_term_mask(statuses: [RealZeroKnowledge; 2], needle: RealZeroKnowledge) -> u8 {
+fn determinant_term_mask(statuses: [ZeroKnowledge; 2], needle: ZeroKnowledge) -> u8 {
     let mut mask = 0;
     for (index, status) in statuses.into_iter().enumerate() {
         if status == needle {
@@ -515,16 +513,16 @@ fn determinant_term_mask(statuses: [RealZeroKnowledge; 2], needle: RealZeroKnowl
     mask
 }
 
-const fn zero_knowledge_is_zero(knowledge: RealZeroKnowledge) -> bool {
-    matches!(knowledge, RealZeroKnowledge::Zero)
+const fn zero_knowledge_is_zero(knowledge: ZeroKnowledge) -> bool {
+    matches!(knowledge, ZeroKnowledge::Zero)
 }
 
-const fn zero_knowledge_is_nonzero(knowledge: RealZeroKnowledge) -> bool {
-    matches!(knowledge, RealZeroKnowledge::NonZero)
+const fn zero_knowledge_is_nonzero(knowledge: ZeroKnowledge) -> bool {
+    matches!(knowledge, ZeroKnowledge::NonZero)
 }
 
-const fn zero_knowledge_is_unknown(knowledge: RealZeroKnowledge) -> bool {
-    matches!(knowledge, RealZeroKnowledge::Unknown)
+const fn zero_knowledge_is_unknown(knowledge: ZeroKnowledge) -> bool {
+    matches!(knowledge, ZeroKnowledge::Unknown)
 }
 
 /// Return structural facts about the displacement `to - from`.

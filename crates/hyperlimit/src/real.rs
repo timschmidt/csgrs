@@ -4,26 +4,14 @@ use hyperreal::{CertifiedRealSign, Real, RealSign, RealStructuralFacts, ZeroKnow
 
 use crate::predicate::{Sign, SignKnowledge};
 
-/// Structural facts attached to the primary predicate Real.
-pub type RealFacts = RealStructuralFacts;
-
-/// Cheap zero/nonzero knowledge exposed by [`Real`].
-pub type RealZeroKnowledge = ZeroKnowledge;
-
 /// Real-specific helpers for predicate code.
 ///
-/// The extension trait keeps call sites readable without reintroducing a
-/// generic numeric abstraction. All information comes directly from
-/// `hyperreal::Real::structural_facts`; no primitive-float filter is consulted.
+/// The extension trait keeps predicate-specific sign conversion and bounded
+/// refinement readable without reintroducing a generic numeric abstraction.
+/// Scalar structural and zero facts use `Real`'s inherent APIs directly.
 pub trait RealPredicateExt {
-    /// Return cheap exact structural facts for this value.
-    fn real_facts(&self) -> RealFacts;
-
     /// Return known sign information without forcing full predicate evaluation.
     fn known_sign(&self) -> SignKnowledge;
-
-    /// Return cheap zero/nonzero knowledge for this value.
-    fn zero_knowledge(&self) -> RealZeroKnowledge;
 
     /// Refine the sign through `hyperreal`'s exact/computable machinery.
     fn refine_sign_knowledge_until(&self, min_precision: i32) -> SignKnowledge;
@@ -31,21 +19,9 @@ pub trait RealPredicateExt {
 
 impl RealPredicateExt for Real {
     #[inline(always)]
-    fn real_facts(&self) -> RealFacts {
-        crate::trace_dispatch!("hyperlimit", "real", "structural-facts");
-        self.structural_facts()
-    }
-
-    #[inline(always)]
     fn known_sign(&self) -> SignKnowledge {
         crate::trace_dispatch!("hyperlimit", "real", "known-sign");
         sign_knowledge_from_real_facts(self.structural_facts())
-    }
-
-    #[inline(always)]
-    fn zero_knowledge(&self) -> RealZeroKnowledge {
-        crate::trace_dispatch!("hyperlimit", "real", "zero-knowledge");
-        self.structural_facts().zero
     }
 
     #[inline(always)]
@@ -75,7 +51,7 @@ pub fn map_real_sign(sign: RealSign) -> Sign {
 
 /// Convert structural Real facts into predicate sign knowledge.
 #[inline(always)]
-pub fn sign_knowledge_from_real_facts(facts: RealFacts) -> SignKnowledge {
+pub fn sign_knowledge_from_real_facts(facts: RealStructuralFacts) -> SignKnowledge {
     if let Some(sign) = facts.sign {
         SignKnowledge::exact(map_real_sign(sign))
     } else if matches!(facts.zero, ZeroKnowledge::Zero) {

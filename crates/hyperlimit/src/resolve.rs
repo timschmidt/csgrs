@@ -192,7 +192,7 @@ fn signed_term_filter_dynamic(terms: &[(&Real, Sign)]) -> Option<PredicateOutcom
 
 #[inline(always)]
 fn signed_nonzero_term(term: &Real, multiplier: Sign) -> Option<Option<Sign>> {
-    let facts = term.real_facts();
+    let facts = term.structural_facts();
     if matches!(facts.zero, ZeroKnowledge::Zero) {
         crate::trace_dispatch!("hyperlimit", "signed_term_filter", "zero-term");
         return Some(None);

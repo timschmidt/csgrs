@@ -176,4 +176,4 @@ pub use predicates::triangle_triangle::{
     TriangleTriangleClassification, TriangleTriangleValidationError, classify_triangle_triangle3,
     classify_triangle_triangle3_points_with_policy, classify_triangle_triangle3_with_policy,
 };
-pub use real::{RealFacts, RealPredicateExt, RealZeroKnowledge};
+pub use real::RealPredicateExt;
