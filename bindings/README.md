@@ -5,7 +5,8 @@ the maintenance shape flat:
 
 - Rust users choose exact core types or the namespaced `csgrs::adapter` scalar
   families from the same crate.
-- C users include `../ffi/include/csgrs.h` and link `csgrs-ffi`.
+- C users include the sibling `csgrs-ffi/include/csgrs.h` header and link
+  `csgrs-ffi`.
 - C++ uses `cpp/csgrs.hpp`, a RAII wrapper over the C ABI.
 - Python uses `python/csgrs.py`, a `ctypes` wrapper over the C ABI.
 - Go uses `go/csgrs.go`, a `cgo` wrapper over the C ABI.
@@ -28,14 +29,14 @@ language wrappers. Do not put geometry logic in language bindings.
 Build the ABI once before running native wrappers:
 
 ```sh
-cargo build --release --manifest-path ../ffi/Cargo.toml
+cargo build --release --manifest-path ../../csgrs-ffi/Cargo.toml
 ```
 
 Then validate the wrapper you ship:
 
 - C++: include `cpp/csgrs.hpp`, point the compiler at
-  `../ffi/include`, link `csgrs_ffi`, and compile a program that constructs and
-  frees at least one object;
+  `../../csgrs-ffi/include`, link `csgrs_ffi`, and compile a program that
+  constructs and frees at least one object;
 - Python: set `CSGRS_LIBRARY` or pass the built library path to `load()`, then
   run a small construction/operation/free cycle;
 - Go: make the header and library visible to cgo, add the package to a Go

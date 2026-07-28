@@ -15,12 +15,6 @@ keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
 autobenches = false
 
-[workspace]
-members = ["ffi"]
-default-members = ["."]
-exclude = ["fuzz"]
-resolver = "3"
-
 [package.metadata.docs.rs]
 no-default-features = true
 features = [

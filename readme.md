@@ -260,8 +260,9 @@ compatible carriers without constructing a throwaway `Mesh`.
 - `adapter::{GraphicsMesh, IndexedMeshBuffers, RegionProfile, Aabb3}` converts
   explicit result carriers at API egress. Float output is lossy and fallible;
   integer output requires an exact in-range integer.
-- C ABI and packaging layers live in [bindings](bindings/README.md) and
-  [ffi](ffi/README.md).
+- Language wrappers live in [bindings](bindings/README.md); the C ABI and
+  native packaging layer is the separate
+  [`csgrs-ffi`](https://github.com/timschmidt/csgrs-ffi) crate.
 
 The primitive facade is namespaced so exact and boundary types cannot be
 confused:
@@ -449,8 +450,7 @@ Before submitting changes, run:
 cargo fmt --all -- --check
 cargo test --all-features
 cargo test --all-features --examples
-cargo test -p csgrs-ffi
-cargo clippy --workspace --all-features --all-targets -- -D warnings
+cargo clippy --all-features --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
 cargo check --all-features --benches
 ```

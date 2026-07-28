@@ -1,7 +1,7 @@
 package csgrs
 
 /*
-#cgo CFLAGS: -I../../ffi/include
+#cgo CFLAGS: -I../../../csgrs-ffi/include
 #include "csgrs.h"
 */
 import "C"
