@@ -238,11 +238,10 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let half = (r(1) / r(2)).unwrap();
     let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let line_clone = line.clone();
-    assert!(!line.is_rational_evaluator_cache_cached());
     let line_derivative = line.as_view().derivative_at(&half).unwrap();
     assert_eq!(line_derivative.dx(), &r(2));
     assert_eq!(line_derivative.dy(), &r(0));
-    assert!(line_clone.is_rational_evaluator_cache_cached());
+    assert_eq!(line_clone.derivative_at(&half).unwrap(), line_derivative);
 
     let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)));
     let quadratic_derivative = quadratic.derivative_at(&half).unwrap();
@@ -255,7 +254,6 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         vec![r(0), r(0), r(0), r(2), r(2), r(2)],
     )
     .unwrap();
-    assert!(!spline.is_rational_evaluator_cache_cached());
     let CurveGeometry2::PolynomialBSpline(retained_spline) = spline.geometry() else {
         panic!("top-level polynomial constructor returned another family");
     };
@@ -266,7 +264,7 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         retained_spline.derivative_at(&r(1)).unwrap(),
         spline_derivative
     );
-    assert!(!spline.is_rational_evaluator_cache_cached());
+    assert_eq!(spline.derivative_at(&r(1)).unwrap(), spline_derivative);
 }
 
 #[test]

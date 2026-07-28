@@ -6062,6 +6062,19 @@ derivative at 2.950/2.866 us, and derivatives one through three at
 10.648/9.997 us. The 256-control NURBS cold decomposition measured
 1.912/1.907 ms and retained evaluation measured 9.840/9.790 us.
 
+### Curve and path result cache-state boundary
+
+Top-level curves and paths now expose bounds, native fragments, closed Bezier
+boundaries, and exact derivatives directly without public cache-state probes.
+Borrowed result lifetimes and private clone sharing are unchanged; tests
+verify repeated exact derivatives instead of cache transitions.
+
+Serialized `arc` baseline/candidate runs measured retained native promotion at
+2/2 ns, top-level evaluation at 7.398/7.380 us, 256-arc cold native promotion
+at 1.506/1.401 ms, and its retained replay at 8/7 ns. Serialized `curve_path`
+runs kept retained path promotion at 2/2 ns and immediate topology at
+21.073/20.836 us.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

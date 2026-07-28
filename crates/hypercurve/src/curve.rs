@@ -977,16 +977,6 @@ impl Curve2 {
             .collect())
     }
 
-    /// Returns whether reusable promoted rational evaluators have been retained.
-    pub fn is_rational_evaluator_cache_cached(&self) -> bool {
-        self.data.rational_evaluators.get().is_some()
-    }
-
-    /// Returns whether conservative exact bounds have already been retained.
-    pub fn is_bounds_cached(&self) -> bool {
-        self.data.bounds.get().is_some()
-    }
-
     /// Borrows conservative exact bounds computed once for this shared curve.
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
         match self.data.bounds.get_or_init(|| compute_curve_bounds(self)) {
@@ -1464,11 +1454,6 @@ impl CurvePath2 {
         Self::try_new(curves).map_err(|error| remap_operation(error, operation))
     }
 
-    /// Returns whether aggregate path bounds have already been retained.
-    pub fn is_bounds_cached(&self) -> bool {
-        self.data.bounds.get().is_some()
-    }
-
     /// Borrows conservative exact bounds computed once across all path curves.
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
         match self.data.bounds.get_or_init(|| {
@@ -1528,11 +1513,6 @@ impl CurvePath2 {
             })
     }
 
-    /// Returns whether exact native promotion has already been retained.
-    pub fn is_native_bezier_fragments_cached(&self) -> bool {
-        self.data.native_bezier_fragments.get().is_some()
-    }
-
     /// Promotes this path once and borrows exact native Bezier fragments in traversal order.
     pub fn native_bezier_fragments(&self) -> ExactCurveResult<&[NativeBezierFragment2]> {
         match self.data.native_bezier_fragments.get_or_init(|| {
@@ -1550,11 +1530,6 @@ impl CurvePath2 {
             Ok(fragments) => Ok(fragments),
             Err(error) => Err(error.clone()),
         }
-    }
-
-    /// Returns whether closed boundary construction has already been retained.
-    pub fn is_bezier_boundary_loop_cached(&self) -> bool {
-        self.data.bezier_boundary_loop.get().is_some()
     }
 
     /// Builds a closed native Bezier boundary once and borrows the retained result.
