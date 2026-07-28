@@ -51,9 +51,9 @@ use hyperpath::{
     offset_cardinal_arc, offset_cubic_bezier_sample, offset_explicit_arc,
     offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, rectangular_bead_plan, rectangular_pocket_link_graph,
-    rectangular_pocket_plan, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
-    rectangular_support_plan, serialize_specctra_grid_arc_wire_records,
+    parse_specctra_grid_trace_records, rectangular_beads, rectangular_pocket_link_graph,
+    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
     serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
     serialize_specctra_grid_trace_records, serialize_specctra_grid_via_records,
     single_detour_meander, specctra_grid_arc_wire_record, specctra_grid_keepout_record,
@@ -2084,16 +2084,28 @@ fn path_predicates(c: &mut Criterion) {
     });
     let pocket = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_pocket_offset_ring_schedule", |b| {
-        b.iter(|| rectangular_pocket_plan(pocket.clone(), r(125), r(250), 128, PredicatePolicy))
+        b.iter(|| rectangular_pocket_rings(&pocket, r(125), r(250), 128, PredicatePolicy))
     });
-    let pocket_plan =
-        rectangular_pocket_plan(pocket.clone(), r(125), r(250), 24, PredicatePolicy).unwrap();
-    c.bench_function("rectangular_pocket_link_graph", |b| {
-        b.iter(|| rectangular_pocket_link_graph(pocket_plan.clone(), PredicatePolicy))
+    c.bench_function("rectangular_pocket_link_graph_immediate", |b| {
+        b.iter(|| {
+            rectangular_pocket_link_graph(pocket.clone(), r(125), r(250), 24, PredicatePolicy)
+        })
     });
     c.bench_function("rectangular_additive_bead_schedule", |b| {
         b.iter(|| {
-            rectangular_bead_plan(
+            rectangular_beads(
+                &pocket,
+                BeadFillAxis::Horizontal,
+                r(400),
+                r(350),
+                256,
+                PredicatePolicy,
+            )
+        })
+    });
+    c.bench_function("rectangular_serpentine_infill_graph_immediate", |b| {
+        b.iter(|| {
+            rectangular_serpentine_infill_graph(
                 pocket.clone(),
                 BeadFillAxis::Horizontal,
                 r(400),
@@ -2103,23 +2115,11 @@ fn path_predicates(c: &mut Criterion) {
             )
         })
     });
-    let bead_plan = rectangular_bead_plan(
-        pocket.clone(),
-        BeadFillAxis::Horizontal,
-        r(400),
-        r(350),
-        256,
-        PredicatePolicy,
-    )
-    .unwrap();
-    c.bench_function("rectangular_serpentine_infill_graph", |b| {
-        b.iter(|| rectangular_serpentine_infill_graph(bead_plan.clone(), PredicatePolicy))
-    });
     let support_overhang = RectangularPocket::new(p(1_000, 1_000), p(3_000, 2_000)).unwrap();
     let support_base = RectangularPocket::new(p(0, 0), p(10_000, 6_000)).unwrap();
     c.bench_function("rectangular_support_footprint_plan", |b| {
         b.iter(|| {
-            rectangular_support_plan(
+            rectangular_support_footprint(
                 support_overhang.clone(),
                 support_base.clone(),
                 r(125),

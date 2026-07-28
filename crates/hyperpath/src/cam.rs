@@ -1,13 +1,12 @@
-//! Exact CAM planning scaffolds.
+//! Exact CAM path and geometry reports.
 //!
-//! Subtractive CAM planners commonly generate contour-parallel pocket passes
-//! by repeatedly offsetting a source boundary and then cleaning the resulting
-//! arrangements. This module starts only the exact scheduling layer for
-//! axis-aligned rectangular pockets. It follows Yap, "Towards Exact Geometric
-//! Computation," by retaining exact objects and refusing to imply that a
-//! scheduled ring is valid output until later arrangement, gouge, and linking
-//! predicates certify it. The staged split mirrors CGAL-style offset pipelines
-//! and the pair-wise offset literature used by contour-parallel machining.
+//! Subtractive CAM commonly generates contour-parallel pocket passes by
+//! repeatedly offsetting a source boundary and cleaning the resulting
+//! arrangements. This module returns exact rectangular rings and beads
+//! immediately, and constructs link graphs directly from source geometry and
+//! process parameters. It follows Yap, "Towards Exact Geometric Computation,"
+//! by retaining exact candidate objects without implying they are accepted
+//! output before arrangement, gouge, and process predicates certify them.
 
 use std::cmp::Ordering;
 
@@ -51,37 +50,36 @@ pub struct PocketOffsetRing {
     pub max: Point2,
 }
 
-/// Reason contour-parallel ring scheduling stopped.
+/// Reason rectangular ring or bead generation stopped.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PocketPlanStopReason {
-    /// The requested maximum ring count was reached before geometric exhaustion.
-    MaxRingsReached,
-    /// The next inset would collapse at least one rectangle axis.
+pub enum RectangularScheduleStop {
+    /// The requested item limit was reached before geometric exhaustion.
+    LimitReached,
+    /// The next ring or bead would exceed the rectangular region.
     GeometryExhausted,
-    /// Exact comparison could not certify whether the next ring is valid.
+    /// Exact comparison could not certify whether the next item is valid.
     Unknown,
 }
 
-/// Exact contour-parallel pocket schedule.
+/// Immediate contour-parallel pocket-ring result.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RectangularPocketPlan {
-    /// Source pocket boundary.
-    pub pocket: RectangularPocket,
-    /// Exact tool radius used for the first inset.
-    pub tool_radius: Real,
-    /// Exact stepover added between successive rings.
-    pub stepover: Real,
-    /// Scheduled rings in construction order.
+pub struct PocketRingReport {
+    /// Rings in construction order.
     pub rings: Vec<PocketOffsetRing>,
-    /// Why scheduling stopped.
-    pub stop_reason: PocketPlanStopReason,
+    /// Why ring generation stopped.
+    pub stop: RectangularScheduleStop,
 }
 
-/// Errors while constructing exact rectangular pocket schedules.
+/// Errors while constructing exact rectangular pockets.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PocketPlanError {
+pub enum RectangularPocketError {
     /// Pocket bounds were not exactly ordered.
     UnorderedBounds,
+}
+
+/// Errors while generating exact rectangular pocket rings.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PocketRingError {
     /// Tool radius was structurally negative.
     NegativeToolRadius,
     /// Stepover was not certified strictly positive.
@@ -115,28 +113,18 @@ pub struct AdditiveBeadLine {
     pub pitch_position: Real,
 }
 
-/// Exact rectangular additive bead schedule.
+/// Immediate rectangular additive-bead result.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RectangularBeadPlan {
-    /// Source rectangular region.
-    pub region: RectangularPocket,
-    /// Fill direction.
-    pub axis: BeadFillAxis,
-    /// Exact bead width.
-    pub bead_width: Real,
-    /// Exact centerline pitch.
-    pub spacing: Real,
-    /// Scheduled bead centerlines.
+pub struct RectangularBeadReport {
+    /// Bead centerlines in construction order.
     pub beads: Vec<AdditiveBeadLine>,
-    /// Why scheduling stopped.
-    pub stop_reason: PocketPlanStopReason,
+    /// Why bead generation stopped.
+    pub stop: RectangularScheduleStop,
 }
 
-/// Errors while constructing exact additive bead schedules.
+/// Errors while generating exact additive beads.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BeadPlanError {
-    /// Region bounds were not exactly ordered.
-    UnorderedBounds,
+pub enum RectangularBeadError {
     /// Bead width was not certified strictly positive.
     NonPositiveBeadWidth,
     /// Spacing was not certified strictly positive.
@@ -172,8 +160,18 @@ pub struct AdditiveInfillLink {
 /// thermal constraints are later certifications.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RectangularInfillGraph {
-    /// Source bead schedule.
-    pub plan: RectangularBeadPlan,
+    /// Source rectangular region.
+    pub region: RectangularPocket,
+    /// Fill direction.
+    pub axis: BeadFillAxis,
+    /// Exact bead width.
+    pub bead_width: Real,
+    /// Exact centerline pitch.
+    pub spacing: Real,
+    /// Generated bead centerlines.
+    pub beads: Vec<AdditiveBeadLine>,
+    /// Why bead generation stopped.
+    pub stop: RectangularScheduleStop,
     /// Bead centerlines oriented in serpentine traversal order.
     pub deposition_segments: Vec<crate::segment::LinePathSegment>,
     /// Exact connector edges between adjacent deposition segments.
@@ -183,8 +181,10 @@ pub struct RectangularInfillGraph {
 /// Errors while constructing exact additive infill graphs.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum InfillGraphError {
+    /// Bead generation failed.
+    Beads(RectangularBeadError),
     /// No bead centerlines were available to graph.
-    EmptyBeadPlan,
+    EmptyBeads,
     /// A generated connector endpoint failed exact equality validation.
     InvalidConnectorEndpoint,
 }
@@ -200,7 +200,7 @@ pub enum SupportFootprintStatus {
     Unknown,
 }
 
-/// Exact rectangular additive support footprint.
+/// Exact rectangular additive support-footprint report.
 ///
 /// Support generation is usually implemented as an image/slice heuristic. This
 /// carrier keeps the construction in Yap's exact object layer: derive a
@@ -210,7 +210,7 @@ pub enum SupportFootprintStatus {
 /// Kulkarni, Marsan, and Dutta, "A review of process planning techniques in
 /// layered manufacturing", while avoiding tolerance-only geometry decisions.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RectangularSupportPlan {
+pub struct RectangularSupportReport {
     /// Overhang region that requested support.
     pub overhang: RectangularPocket,
     /// Base/build envelope used to validate the support footprint.
@@ -225,7 +225,7 @@ pub struct RectangularSupportPlan {
 
 /// Errors while constructing exact rectangular support footprints.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SupportPlanError {
+pub enum SupportFootprintError {
     /// XY margin was structurally negative.
     NegativeMargin,
     /// Expanded support footprint bounds were not exactly ordered.
@@ -296,9 +296,9 @@ pub enum RegionBooleanError {
 
 impl RectangularPocket {
     /// Construct an exact rectangular pocket.
-    pub fn new(min: Point2, max: Point2) -> Result<Self, PocketPlanError> {
+    pub fn new(min: Point2, max: Point2) -> Result<Self, RectangularPocketError> {
         if !ordered_closed(&min.x, &max.x) || !ordered_closed(&min.y, &max.y) {
-            return Err(PocketPlanError::UnorderedBounds);
+            return Err(RectangularPocketError::UnorderedBounds);
         }
         let exact = Real::exact_set_facts([&min.x, &min.y, &max.x, &max.y]);
         Ok(Self { min, max, exact })
@@ -330,43 +330,43 @@ impl RectangularPocket {
     }
 }
 
-/// Create an exact rectangular contour-parallel pocket schedule.
+/// Returns exact contour-parallel rings for a rectangular pocket.
 ///
 /// The first ring is inset by `tool_radius`; each next ring is inset by one
 /// additional `stepover`. The function stops before emitting a ring whose
 /// bounds cannot be certified as ordered. This is only the pocket/rest graph
 /// skeleton: no path linking, cutter engagement, corner cleanup, or rest
 /// material decision is accepted here.
-pub fn rectangular_pocket_plan(
-    pocket: RectangularPocket,
+pub fn rectangular_pocket_rings(
+    pocket: &RectangularPocket,
     tool_radius: Real,
     stepover: Real,
     max_rings: usize,
     policy: PredicatePolicy,
-) -> Result<RectangularPocketPlan, PocketPlanError> {
+) -> Result<PocketRingReport, PocketRingError> {
     if max_rings == 0 {
-        return Err(PocketPlanError::ZeroMaxRings);
+        return Err(PocketRingError::ZeroMaxRings);
     }
     if tool_radius.structural_facts().sign == Some(RealSign::Negative) {
-        return Err(PocketPlanError::NegativeToolRadius);
+        return Err(PocketRingError::NegativeToolRadius);
     }
     if compare_reals_with_policy(&stepover, &Real::zero(), policy).value()
         != Some(Ordering::Greater)
     {
-        return Err(PocketPlanError::NonPositiveStepover);
+        return Err(PocketRingError::NonPositiveStepover);
     }
 
     let mut rings = Vec::new();
     let mut inset = tool_radius.clone();
     let stop_reason = loop {
         if rings.len() == max_rings {
-            break PocketPlanStopReason::MaxRingsReached;
+            break RectangularScheduleStop::LimitReached;
         }
-        let Some((min, max)) = inset_rect(&pocket, &inset, policy) else {
-            break PocketPlanStopReason::Unknown;
+        let Some((min, max)) = inset_rect(pocket, &inset, policy) else {
+            break RectangularScheduleStop::Unknown;
         };
         if min.is_none() {
-            break PocketPlanStopReason::GeometryExhausted;
+            break RectangularScheduleStop::GeometryExhausted;
         }
         rings.push(PocketOffsetRing {
             index: rings.len(),
@@ -377,16 +377,13 @@ pub fn rectangular_pocket_plan(
         inset += stepover.clone();
     };
 
-    Ok(RectangularPocketPlan {
-        pocket,
-        tool_radius,
-        stepover,
+    Ok(PocketRingReport {
         rings,
-        stop_reason,
+        stop: stop_reason,
     })
 }
 
-/// Create an exact rectangular additive bead schedule.
+/// Returns exact additive bead centerlines for a rectangular region.
 ///
 /// The first bead centerline is inset by `bead_width / 2` from the low side of
 /// the pitch axis, and later beads advance by `spacing`. This is the additive
@@ -394,34 +391,28 @@ pub fn rectangular_pocket_plan(
 /// centerlines for infill/skin planning while leaving region set algebra,
 /// supports, corner starts/stops, and process validation to downstream exact
 /// predicates.
-pub fn rectangular_bead_plan(
-    region: RectangularPocket,
+pub fn rectangular_beads(
+    region: &RectangularPocket,
     axis: BeadFillAxis,
     bead_width: Real,
     spacing: Real,
     max_beads: usize,
     policy: PredicatePolicy,
-) -> Result<RectangularBeadPlan, BeadPlanError> {
+) -> Result<RectangularBeadReport, RectangularBeadError> {
     if max_beads == 0 {
-        return Err(BeadPlanError::ZeroMaxBeads);
+        return Err(RectangularBeadError::ZeroMaxBeads);
     }
     if compare_reals_with_policy(&bead_width, &Real::zero(), policy).value()
         != Some(Ordering::Greater)
     {
-        return Err(BeadPlanError::NonPositiveBeadWidth);
+        return Err(RectangularBeadError::NonPositiveBeadWidth);
     }
     if compare_reals_with_policy(&spacing, &Real::zero(), policy).value() != Some(Ordering::Greater)
     {
-        return Err(BeadPlanError::NonPositiveSpacing);
+        return Err(RectangularBeadError::NonPositiveSpacing);
     }
-    if !ordered_closed(&region.min.x, &region.max.x)
-        || !ordered_closed(&region.min.y, &region.max.y)
-    {
-        return Err(BeadPlanError::UnorderedBounds);
-    }
-
-    let half_width =
-        (bead_width.clone() / Real::from(2)).map_err(|_| BeadPlanError::NonPositiveBeadWidth)?;
+    let half_width = (bead_width.clone() / Real::from(2))
+        .map_err(|_| RectangularBeadError::NonPositiveBeadWidth)?;
     let mut beads = Vec::new();
     let mut pitch_position = match axis {
         BeadFillAxis::Horizontal => region.min.y.clone() + half_width.clone(),
@@ -429,7 +420,7 @@ pub fn rectangular_bead_plan(
     };
     let stop_reason = loop {
         if beads.len() == max_beads {
-            break PocketPlanStopReason::MaxRingsReached;
+            break RectangularScheduleStop::LimitReached;
         }
         let limit = match axis {
             BeadFillAxis::Horizontal => region.max.y.clone() - half_width.clone(),
@@ -437,10 +428,10 @@ pub fn rectangular_bead_plan(
         };
         let Some(ordering) = compare_reals_with_policy(&pitch_position, &limit, policy).value()
         else {
-            break PocketPlanStopReason::Unknown;
+            break RectangularScheduleStop::Unknown;
         };
         if ordering == Ordering::Greater {
-            break PocketPlanStopReason::GeometryExhausted;
+            break RectangularScheduleStop::GeometryExhausted;
         }
 
         let segment = match axis {
@@ -461,17 +452,13 @@ pub fn rectangular_bead_plan(
         pitch_position += spacing.clone();
     };
 
-    Ok(RectangularBeadPlan {
-        region,
-        axis,
-        bead_width,
-        spacing,
+    Ok(RectangularBeadReport {
         beads,
-        stop_reason,
+        stop: stop_reason,
     })
 }
 
-/// Create an exact serpentine infill graph from a rectangular bead plan.
+/// Returns an exact serpentine infill graph for a rectangular region.
 ///
 /// The graph alternates bead direction, then inserts exact straight connectors
 /// between consecutive oriented bead centerlines. It validates every generated
@@ -479,14 +466,27 @@ pub fn rectangular_bead_plan(
 /// identity, preserving the Yap-style separation between construction and
 /// predicate certification.
 pub fn rectangular_serpentine_infill_graph(
-    plan: RectangularBeadPlan,
+    region: RectangularPocket,
+    axis: BeadFillAxis,
+    bead_width: Real,
+    spacing: Real,
+    max_beads: usize,
     policy: PredicatePolicy,
 ) -> Result<RectangularInfillGraph, InfillGraphError> {
-    if plan.beads.is_empty() {
-        return Err(InfillGraphError::EmptyBeadPlan);
+    let report = rectangular_beads(
+        &region,
+        axis,
+        bead_width.clone(),
+        spacing.clone(),
+        max_beads,
+        policy,
+    )
+    .map_err(InfillGraphError::Beads)?;
+    if report.beads.is_empty() {
+        return Err(InfillGraphError::EmptyBeads);
     }
 
-    let deposition_segments: Vec<_> = plan
+    let deposition_segments: Vec<_> = report
         .beads
         .iter()
         .enumerate()
@@ -521,7 +521,12 @@ pub fn rectangular_serpentine_infill_graph(
     }
 
     Ok(RectangularInfillGraph {
-        plan,
+        region,
+        axis,
+        bead_width,
+        spacing,
+        beads: report.beads,
+        stop: report.stop,
         deposition_segments,
         links,
     })
@@ -534,15 +539,15 @@ pub fn rectangular_serpentine_infill_graph(
 /// or mesh-domain operation and should be represented explicitly later.
 /// Instead, this returns the exact expanded footprint plus a containment
 /// status.
-pub fn rectangular_support_plan(
+pub fn rectangular_support_footprint(
     overhang: RectangularPocket,
     base: RectangularPocket,
     xy_margin: Real,
     policy: PredicatePolicy,
-) -> Result<RectangularSupportPlan, SupportPlanError> {
+) -> Result<RectangularSupportReport, SupportFootprintError> {
     if compare_reals_with_policy(&xy_margin, &Real::zero(), policy).value() == Some(Ordering::Less)
     {
-        return Err(SupportPlanError::NegativeMargin);
+        return Err(SupportFootprintError::NegativeMargin);
     }
 
     let footprint_min = Point2::new(
@@ -554,10 +559,10 @@ pub fn rectangular_support_plan(
         overhang.max.y.clone() + xy_margin.clone(),
     );
     let footprint = RectangularPocket::new(footprint_min, footprint_max)
-        .map_err(|_| SupportPlanError::InvalidFootprint)?;
+        .map_err(|_| SupportFootprintError::InvalidFootprint)?;
     let status = classify_rect_containment(&footprint, &base, policy);
 
-    Ok(RectangularSupportPlan {
+    Ok(RectangularSupportReport {
         overhang,
         base,
         xy_margin,

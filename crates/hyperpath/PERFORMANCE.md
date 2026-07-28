@@ -7,12 +7,39 @@ their target benchmark improved statistically.
 
 ## Retained result
 
+The 2026-07-28 immediate CAM result migration removed the public
+`RectangularPocketPlan`, `RectangularBeadPlan`, and `RectangularSupportPlan`
+staging types. Pocket rings and additive beads are now returned as concise
+reports over borrowed source regions, while pocket and infill graphs accept
+source geometry and process parameters directly. Graph results expose their
+rings, beads, stop reason, and source facts without embedding a mutable plan.
+The shared stop enum now uses the accurate `LimitReached` variant instead of
+reporting `MaxRingsReached` for additive beads.
+
+The affected paths were measured serially with 100 Criterion samples. The two
+graph sentinels include both generation and graph construction on both sides:
+
+| Benchmark | Before | After | Midpoint change |
+| --- | ---: | ---: | ---: |
+| `rectangular_pocket_offset_ring_schedule` | `[5.2305 us, 5.2417 us, 5.2549 us]` | `[5.1080 us, 5.1290 us, 5.1514 us]` | -2.15% |
+| `rectangular_pocket_link_graph_immediate` | `[67.540 us, 67.853 us, 68.237 us]` | `[66.222 us, 66.448 us, 66.738 us]` | -2.07% |
+| `rectangular_additive_bead_schedule` | `[15.906 us, 15.936 us, 15.969 us]` | `[15.684 us, 15.718 us, 15.759 us]` | -1.37% |
+| `rectangular_serpentine_infill_graph_immediate` | `[32.817 us, 32.930 us, 33.076 us]` | `[32.863 us, 33.047 us, 33.292 us]` | +0.36% |
+| `rectangular_support_footprint_plan` | `[1.1720 us, 1.1775 us, 1.1842 us]` | `[1.1767 us, 1.1805 us, 1.1848 us]` | +0.25% |
+
+The infill before/after confidence intervals overlap and its final confirmation
+remained within Criterion's noise threshold; support also showed no significant
+change (`p = 0.11`). The other three paths improved. Historical `schedule` and
+`plan` benchmark identifiers remain stable for comparison continuity and are
+not public API names.
+
 The 2026-07-28 immediate-construction API migration removed the redundant
 `build_` prefix from 16 public CAM, routing, and tangent functions. These
-functions already return completed plans, graphs, meanders, or solver problems;
-there is no prepared object or deferred execution phase. The implementation is
-unchanged, and the affected paths were measured serially with 100 Criterion
-samples before and after the rename:
+functions already returned completed values, so the implementation stayed
+unchanged. The later CAM migration above finished the lifecycle cleanup by
+removing the plan carriers that this naming pass deliberately had not changed.
+The affected paths were measured serially with 100 Criterion samples before
+and after the rename:
 
 | Benchmark | Before | After | Midpoint change |
 | --- | ---: | ---: | ---: |

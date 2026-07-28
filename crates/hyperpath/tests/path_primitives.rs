@@ -1,7 +1,7 @@
 use hyperlimit::{Point2, PredicatePolicy, SegmentIntersection, compare_reals_with_policy};
 use hyperpath::{
     AccelerationLimitedFeedProfileClass, ArcDirection, ArcOffsetError, Axis, BeadFillAxis,
-    BeadPlanError, BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
+    BezierOffsetError, BezierParameter, BezierParameterError, BoardContourError,
     BoardContourOrientation, CardinalPoint, CardinalRotation, CircularArc, CircularArcError,
     ClearanceStatus, CornerLookaheadJoinClass, CubicBezier, CubicPythagoreanHodograph,
     CurveArrangementCellEdgeKind, CurveArrangementCellFaceClass, CurveArrangementLoopRoleBlocker,
@@ -39,20 +39,22 @@ use hyperpath::{
     PcbCircularBoardOutline, PcbCircularPad, PcbConvexBoardOutline, PcbConvexPad,
     PcbObroundBoardOutline, PcbObroundPad, PcbOrientedRectPad, PcbOrthogonalBoardOutline,
     PcbOrthogonalPad, PcbRectPad, PcbRoundedRectPad, PcbTrace, PcbViaStack, PhCurveError,
-    PocketLinkGraphError, PocketPlanError, PocketPlanStopReason, PocketRingSide, QuadraticBezier,
+    PocketLinkGraphError, PocketRingError, PocketRingSide, QuadraticBezier,
     QuinticPythagoreanHodograph, RationalQuadraticBezier, RationalQuadraticBezierError,
-    RectangularPocket, RectangularRegionRelation, RectangularRestMaterialError,
-    RouteCertificationError, SegmentParameterOrder, SpecctraGridArcWireRecord,
-    SpecctraGridKeepoutRecord, SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord,
-    SpecctraGridTraceRecord, SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias,
-    SpecctraNetAlias, SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
+    RectangularBeadError, RectangularPocket, RectangularPocketError, RectangularRegionRelation,
+    RectangularRestMaterialError, RectangularScheduleStop, RouteCertificationError,
+    SegmentParameterOrder, SpecctraGridArcWireRecord, SpecctraGridKeepoutRecord,
+    SpecctraGridKeepoutShape, SpecctraGridRouteRuleRecord, SpecctraGridTraceRecord,
+    SpecctraGridViaRecord, SpecctraImportError, SpecctraLayerAlias, SpecctraNetAlias,
+    SpecctraParseError, SpecctraRouteRuleAuditError, SpecctraRouteRuleItemKind,
     SpecctraRouteRuleScopeClass, SpecctraRouteRuleTraceClearanceStatus,
-    SpecctraRouteRuleWidthStatus, SpecctraTraceRecord, SupportFootprintStatus, SupportPlanError,
-    SweptLineSegment, TangentAlignment, TangentJoinClass, TangentJoinReport, TangentSpan,
-    TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport, ViaDrillIntent, ViaDrillPolicyClass,
-    ViaFabricationAcceptance, ViaFabricationError, ViaFabricationPolicy, ViaLayerSpanRelation,
-    ViaLayerTransitionClass, alternating_detour_meander, arrange_cubic_beziers,
-    arrange_explicit_arcs, arrange_line_segments, arrange_line_segments_with_cubic_beziers,
+    SpecctraRouteRuleWidthStatus, SpecctraTraceRecord, SupportFootprintError,
+    SupportFootprintStatus, SweptLineSegment, TangentAlignment, TangentJoinClass,
+    TangentJoinReport, TangentSpan, TraceLayer, ViaAnnularRingReport, ViaAspectRatioReport,
+    ViaDrillIntent, ViaDrillPolicyClass, ViaFabricationAcceptance, ViaFabricationError,
+    ViaFabricationPolicy, ViaLayerSpanRelation, ViaLayerTransitionClass,
+    alternating_detour_meander, arrange_cubic_beziers, arrange_explicit_arcs,
+    arrange_line_segments, arrange_line_segments_with_cubic_beziers,
     arrange_line_segments_with_explicit_arcs, arrange_line_segments_with_mixed_beziers,
     arrange_line_segments_with_mixed_curves, arrange_line_segments_with_quadratic_beziers,
     arrange_line_segments_with_rational_quadratic_beziers, arrange_quadratic_beziers,
@@ -93,9 +95,9 @@ use hyperpath::{
     offset_axis_aligned_segment, offset_cardinal_arc, offset_cubic_bezier_sample,
     offset_explicit_arc, offset_higher_order_bezier_sample, offset_quadratic_bezier_sample,
     oriented_tangent_alignment_problem, parse_specctra_grid_route_records,
-    parse_specctra_grid_trace_records, rectangular_bead_plan, rectangular_pocket_link_graph,
-    rectangular_pocket_plan, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
-    rectangular_support_plan, serialize_specctra_grid_arc_wire_records,
+    parse_specctra_grid_trace_records, rectangular_beads, rectangular_pocket_link_graph,
+    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_footprint, serialize_specctra_grid_arc_wire_records,
     serialize_specctra_grid_keepout_records, serialize_specctra_grid_route_records,
     serialize_specctra_grid_route_rule_records, serialize_specctra_grid_trace_records,
     serialize_specctra_grid_via_records, single_detour_meander, specctra_grid_arc_wire_record,
@@ -6705,57 +6707,58 @@ fn bezier_offset_samples_reject_invalid_inputs() {
 }
 
 #[test]
-fn rectangular_pocket_plan_schedules_exact_inset_rings() {
+fn rectangular_pocket_rings_returns_exact_insets() {
     let pocket = RectangularPocket::new(p(0, 0), p(20, 12)).unwrap();
-    let plan = rectangular_pocket_plan(pocket.clone(), r(2), r(3), 8, PredicatePolicy).unwrap();
+    let report = rectangular_pocket_rings(&pocket, r(2), r(3), 8, PredicatePolicy).unwrap();
 
-    assert_eq!(plan.pocket, pocket);
-    assert_eq!(plan.rings.len(), 2);
-    assert_eq!(plan.stop_reason, PocketPlanStopReason::GeometryExhausted);
-    assert_eq!(plan.rings[0].index, 0);
-    assert_eq!(plan.rings[0].inset, r(2));
-    assert_eq!(plan.rings[0].min, p(2, 2));
-    assert_eq!(plan.rings[0].max, p(18, 10));
-    assert_eq!(plan.rings[1].index, 1);
-    assert_eq!(plan.rings[1].inset, r(5));
-    assert_eq!(plan.rings[1].min, p(5, 5));
-    assert_eq!(plan.rings[1].max, p(15, 7));
-    assert_eq!(plan.pocket.width(), r(20));
-    assert_eq!(plan.pocket.height(), r(12));
-    assert!(plan.pocket.exact_facts().all_exact_rational);
+    assert_eq!(report.rings.len(), 2);
+    assert_eq!(report.stop, RectangularScheduleStop::GeometryExhausted);
+    assert_eq!(report.rings[0].index, 0);
+    assert_eq!(report.rings[0].inset, r(2));
+    assert_eq!(report.rings[0].min, p(2, 2));
+    assert_eq!(report.rings[0].max, p(18, 10));
+    assert_eq!(report.rings[1].index, 1);
+    assert_eq!(report.rings[1].inset, r(5));
+    assert_eq!(report.rings[1].min, p(5, 5));
+    assert_eq!(report.rings[1].max, p(15, 7));
+    assert_eq!(pocket.width(), r(20));
+    assert_eq!(pocket.height(), r(12));
+    assert!(pocket.exact_facts().all_exact_rational);
 }
 
 #[test]
-fn rectangular_pocket_plan_rejects_invalid_inputs_and_respects_ring_limit() {
+fn rectangular_pocket_rings_rejects_invalid_inputs_and_respects_limit() {
     assert_eq!(
         RectangularPocket::new(p(10, 0), p(0, 10)).unwrap_err(),
-        PocketPlanError::UnorderedBounds
+        RectangularPocketError::UnorderedBounds
     );
     let pocket = RectangularPocket::new(p(0, 0), p(100, 100)).unwrap();
     assert_eq!(
-        rectangular_pocket_plan(pocket.clone(), r(-1), r(1), 1, PredicatePolicy).unwrap_err(),
-        PocketPlanError::NegativeToolRadius
+        rectangular_pocket_rings(&pocket, r(-1), r(1), 1, PredicatePolicy).unwrap_err(),
+        PocketRingError::NegativeToolRadius
     );
     assert_eq!(
-        rectangular_pocket_plan(pocket.clone(), r(1), r(0), 1, PredicatePolicy).unwrap_err(),
-        PocketPlanError::NonPositiveStepover
+        rectangular_pocket_rings(&pocket, r(1), r(0), 1, PredicatePolicy).unwrap_err(),
+        PocketRingError::NonPositiveStepover
     );
     assert_eq!(
-        rectangular_pocket_plan(pocket.clone(), r(1), r(1), 0, PredicatePolicy).unwrap_err(),
-        PocketPlanError::ZeroMaxRings
+        rectangular_pocket_rings(&pocket, r(1), r(1), 0, PredicatePolicy).unwrap_err(),
+        PocketRingError::ZeroMaxRings
     );
-    let limited = rectangular_pocket_plan(pocket, r(1), r(1), 2, PredicatePolicy).unwrap();
+    let limited = rectangular_pocket_rings(&pocket, r(1), r(1), 2, PredicatePolicy).unwrap();
     assert_eq!(limited.rings.len(), 2);
-    assert_eq!(limited.stop_reason, PocketPlanStopReason::MaxRingsReached);
+    assert_eq!(limited.stop, RectangularScheduleStop::LimitReached);
 }
 
 #[test]
 fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
     let pocket = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
-    let plan = rectangular_pocket_plan(pocket, r(1), r(2), 2, PredicatePolicy).unwrap();
-    let graph = rectangular_pocket_link_graph(plan.clone(), PredicatePolicy).unwrap();
+    let graph =
+        rectangular_pocket_link_graph(pocket.clone(), r(1), r(2), 2, PredicatePolicy).unwrap();
 
-    assert_eq!(graph.plan, plan);
+    assert_eq!(graph.pocket, pocket);
+    assert_eq!(graph.rings.len(), 2);
+    assert_eq!(graph.stop, RectangularScheduleStop::LimitReached);
     assert_eq!(graph.ring_segments.len(), 8);
     assert_eq!(graph.links.len(), 2);
     assert_eq!(graph.ring_segments[0].ring_index, 0);
@@ -6783,69 +6786,52 @@ fn rectangular_pocket_link_graph_emits_retained_ring_segments_and_doglegs() {
 }
 
 #[test]
-fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_ring_plans() {
-    let empty = rectangular_pocket_plan(
-        RectangularPocket::new(p(0, 0), p(2, 2)).unwrap(),
-        r(2),
-        r(1),
-        4,
-        PredicatePolicy,
-    )
-    .unwrap();
-    assert!(empty.rings.is_empty());
+fn rectangular_pocket_link_graph_rejects_empty_and_collapsed_rings() {
     assert_eq!(
-        rectangular_pocket_link_graph(empty, PredicatePolicy).unwrap_err(),
-        PocketLinkGraphError::EmptyPlan
+        rectangular_pocket_link_graph(
+            RectangularPocket::new(p(0, 0), p(2, 2)).unwrap(),
+            r(2),
+            r(1),
+            4,
+            PredicatePolicy,
+        )
+        .unwrap_err(),
+        PocketLinkGraphError::EmptyRings
     );
 
-    let collapsed = rectangular_pocket_plan(
-        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
-        r(5),
-        r(1),
-        1,
-        PredicatePolicy,
-    )
-    .unwrap();
-    assert_eq!(collapsed.rings[0].min, collapsed.rings[0].max);
     assert_eq!(
-        rectangular_pocket_link_graph(collapsed, PredicatePolicy).unwrap_err(),
+        rectangular_pocket_link_graph(
+            RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
+            r(5),
+            r(1),
+            1,
+            PredicatePolicy,
+        )
+        .unwrap_err(),
         PocketLinkGraphError::DegenerateRing
-    );
-
-    let mut bad_index = rectangular_pocket_plan(
-        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
-        r(1),
-        r(2),
-        2,
-        PredicatePolicy,
-    )
-    .unwrap();
-    bad_index.rings[1].index = 4;
-    assert_eq!(
-        rectangular_pocket_link_graph(bad_index, PredicatePolicy).unwrap_err(),
-        PocketLinkGraphError::InvalidRingIndex
-    );
-
-    let mut non_nested = rectangular_pocket_plan(
-        RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
-        r(1),
-        r(2),
-        2,
-        PredicatePolicy,
-    )
-    .unwrap();
-    non_nested.rings[1].min = p(0, 3);
-    assert_eq!(
-        rectangular_pocket_link_graph(non_nested, PredicatePolicy).unwrap_err(),
-        PocketLinkGraphError::NonNestedRings
     );
 }
 
 #[test]
-fn rectangular_bead_plan_schedules_exact_centerlines() {
+fn rectangular_pocket_link_graph_reports_ring_input_errors() {
+    assert_eq!(
+        rectangular_pocket_link_graph(
+            RectangularPocket::new(p(0, 0), p(2, 2)).unwrap(),
+            r(-1),
+            r(1),
+            4,
+            PredicatePolicy,
+        )
+        .unwrap_err(),
+        PocketLinkGraphError::Rings(PocketRingError::NegativeToolRadius)
+    );
+}
+
+#[test]
+fn rectangular_beads_returns_exact_centerlines() {
     let region = RectangularPocket::new(p(0, 0), p(10, 6)).unwrap();
-    let plan = rectangular_bead_plan(
-        region.clone(),
+    let report = rectangular_beads(
+        &region,
         BeadFillAxis::Horizontal,
         r(2),
         r(2),
@@ -6854,18 +6840,18 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
     )
     .unwrap();
 
-    assert_eq!(plan.region, region);
-    assert_eq!(plan.beads.len(), 3);
-    assert_eq!(plan.stop_reason, PocketPlanStopReason::GeometryExhausted);
-    assert_eq!(plan.beads[0].index, 0);
-    assert_eq!(plan.beads[0].pitch_position, r(1));
-    assert_eq!(plan.beads[0].segment.start(), &p(0, 1));
-    assert_eq!(plan.beads[0].segment.end(), &p(10, 1));
-    assert_eq!(plan.beads[1].pitch_position, r(3));
-    assert_eq!(plan.beads[2].pitch_position, r(5));
+    assert_eq!(report.beads.len(), 3);
+    assert_eq!(report.stop, RectangularScheduleStop::GeometryExhausted);
+    assert_eq!(report.beads[0].index, 0);
+    assert_eq!(report.beads[0].pitch_position, r(1));
+    assert_eq!(report.beads[0].segment.start(), &p(0, 1));
+    assert_eq!(report.beads[0].segment.end(), &p(10, 1));
+    assert_eq!(report.beads[1].pitch_position, r(3));
+    assert_eq!(report.beads[2].pitch_position, r(5));
 
-    let vertical = rectangular_bead_plan(
-        RectangularPocket::new(p(0, 0), p(10, 6)).unwrap(),
+    let vertical_region = RectangularPocket::new(p(0, 0), p(10, 6)).unwrap();
+    let vertical = rectangular_beads(
+        &vertical_region,
         BeadFillAxis::Vertical,
         r(2),
         r(4),
@@ -6879,11 +6865,11 @@ fn rectangular_bead_plan_schedules_exact_centerlines() {
 }
 
 #[test]
-fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
+fn rectangular_beads_rejects_invalid_inputs_and_respects_limit() {
     let region = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
     assert_eq!(
-        rectangular_bead_plan(
-            region.clone(),
+        rectangular_beads(
+            &region,
             BeadFillAxis::Horizontal,
             r(0),
             r(1),
@@ -6891,11 +6877,11 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             PredicatePolicy
         )
         .unwrap_err(),
-        BeadPlanError::NonPositiveBeadWidth
+        RectangularBeadError::NonPositiveBeadWidth
     );
     assert_eq!(
-        rectangular_bead_plan(
-            region.clone(),
+        rectangular_beads(
+            &region,
             BeadFillAxis::Horizontal,
             r(1),
             r(0),
@@ -6903,11 +6889,11 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             PredicatePolicy
         )
         .unwrap_err(),
-        BeadPlanError::NonPositiveSpacing
+        RectangularBeadError::NonPositiveSpacing
     );
     assert_eq!(
-        rectangular_bead_plan(
-            region.clone(),
+        rectangular_beads(
+            &region,
             BeadFillAxis::Horizontal,
             r(1),
             r(1),
@@ -6915,10 +6901,10 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
             PredicatePolicy
         )
         .unwrap_err(),
-        BeadPlanError::ZeroMaxBeads
+        RectangularBeadError::ZeroMaxBeads
     );
-    let limited = rectangular_bead_plan(
-        region,
+    let limited = rectangular_beads(
+        &region,
         BeadFillAxis::Horizontal,
         r(2),
         r(1),
@@ -6927,13 +6913,14 @@ fn rectangular_bead_plan_rejects_invalid_inputs_and_respects_limit() {
     )
     .unwrap();
     assert_eq!(limited.beads.len(), 2);
-    assert_eq!(limited.stop_reason, PocketPlanStopReason::MaxRingsReached);
+    assert_eq!(limited.stop, RectangularScheduleStop::LimitReached);
 }
 
 #[test]
 fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
-    let plan = rectangular_bead_plan(
-        RectangularPocket::new(p(0, 0), p(10, 6)).unwrap(),
+    let region = RectangularPocket::new(p(0, 0), p(10, 6)).unwrap();
+    let graph = rectangular_serpentine_infill_graph(
+        region.clone(),
         BeadFillAxis::Horizontal,
         r(2),
         r(2),
@@ -6941,9 +6928,10 @@ fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
         PredicatePolicy,
     )
     .unwrap();
-    let graph = rectangular_serpentine_infill_graph(plan.clone(), PredicatePolicy).unwrap();
 
-    assert_eq!(graph.plan, plan);
+    assert_eq!(graph.region, region);
+    assert_eq!(graph.beads.len(), 3);
+    assert_eq!(graph.stop, RectangularScheduleStop::GeometryExhausted);
     assert_eq!(graph.deposition_segments.len(), 3);
     assert_eq!(graph.links.len(), 2);
     assert_eq!(graph.deposition_segments[0].start(), &p(0, 1));
@@ -6961,39 +6949,37 @@ fn rectangular_serpentine_infill_graph_links_exact_bead_endpoints() {
 }
 
 #[test]
-fn rectangular_serpentine_infill_graph_rejects_empty_bead_plans() {
-    let plan = rectangular_bead_plan(
-        RectangularPocket::new(p(0, 0), p(10, 1)).unwrap(),
-        BeadFillAxis::Horizontal,
-        r(2),
-        r(2),
-        8,
-        PredicatePolicy,
-    )
-    .unwrap();
-
-    assert!(plan.beads.is_empty());
+fn rectangular_serpentine_infill_graph_rejects_empty_beads() {
     assert_eq!(
-        rectangular_serpentine_infill_graph(plan, PredicatePolicy).unwrap_err(),
-        InfillGraphError::EmptyBeadPlan
+        rectangular_serpentine_infill_graph(
+            RectangularPocket::new(p(0, 0), p(10, 1)).unwrap(),
+            BeadFillAxis::Horizontal,
+            r(2),
+            r(2),
+            8,
+            PredicatePolicy,
+        )
+        .unwrap_err(),
+        InfillGraphError::EmptyBeads
     );
 }
 
 #[test]
-fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
+fn rectangular_support_footprint_expands_and_classifies_exactly() {
     let overhang = RectangularPocket::new(p(4, 4), p(6, 6)).unwrap();
     let base = RectangularPocket::new(p(0, 0), p(10, 10)).unwrap();
-    let plan =
-        rectangular_support_plan(overhang.clone(), base.clone(), r(1), PredicatePolicy).unwrap();
+    let report =
+        rectangular_support_footprint(overhang.clone(), base.clone(), r(1), PredicatePolicy)
+            .unwrap();
 
-    assert_eq!(plan.overhang, overhang);
-    assert_eq!(plan.base, base);
-    assert_eq!(plan.xy_margin, r(1));
-    assert_eq!(plan.footprint.min(), &p(3, 3));
-    assert_eq!(plan.footprint.max(), &p(7, 7));
-    assert_eq!(plan.status, SupportFootprintStatus::ContainedInBase);
+    assert_eq!(report.overhang, overhang);
+    assert_eq!(report.base, base);
+    assert_eq!(report.xy_margin, r(1));
+    assert_eq!(report.footprint.min(), &p(3, 3));
+    assert_eq!(report.footprint.max(), &p(7, 7));
+    assert_eq!(report.status, SupportFootprintStatus::ContainedInBase);
 
-    let outside = rectangular_support_plan(
+    let outside = rectangular_support_footprint(
         RectangularPocket::new(p(1, 1), p(3, 3)).unwrap(),
         RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
         r(2),
@@ -7005,16 +6991,16 @@ fn rectangular_support_plan_expands_and_classifies_exact_footprints() {
 }
 
 #[test]
-fn rectangular_support_plan_rejects_negative_margin() {
+fn rectangular_support_footprint_rejects_negative_margin() {
     assert_eq!(
-        rectangular_support_plan(
+        rectangular_support_footprint(
             RectangularPocket::new(p(4, 4), p(6, 6)).unwrap(),
             RectangularPocket::new(p(0, 0), p(10, 10)).unwrap(),
             r(-1),
             PredicatePolicy
         )
         .unwrap_err(),
-        SupportPlanError::NegativeMargin
+        SupportFootprintError::NegativeMargin
     );
 }
 
@@ -10732,15 +10718,15 @@ proptest! {
     }
 
     #[test]
-    fn rectangular_pocket_plan_generated_square_ring_count_matches_exact_half_width(
+    fn rectangular_pocket_rings_generated_square_count_matches_exact_half_width(
         size in 2_i16..=100,
         stepover in 1_i16..=20,
     ) {
         let size = i64::from(size);
         let stepover = i64::from(stepover);
         let pocket = RectangularPocket::new(p(0, 0), p(size, size)).unwrap();
-        let plan = rectangular_pocket_plan(
-            pocket,
+        let report = rectangular_pocket_rings(
+            &pocket,
             r(0),
             r(stepover),
             128,
@@ -10748,9 +10734,9 @@ proptest! {
         ).unwrap();
         let expected = (size / (2 * stepover) + 1) as usize;
 
-        prop_assert_eq!(plan.rings.len(), expected);
-        prop_assert_eq!(plan.stop_reason, PocketPlanStopReason::GeometryExhausted);
-        for ring in &plan.rings {
+        prop_assert_eq!(report.rings.len(), expected);
+        prop_assert_eq!(report.stop, RectangularScheduleStop::GeometryExhausted);
+        for ring in &report.rings {
             prop_assert_eq!(ring.min.x.clone(), ring.inset.clone());
             prop_assert_eq!(ring.min.y.clone(), ring.inset.clone());
             prop_assert_eq!(ring.max.x.clone(), r(size) - ring.inset.clone());
@@ -10767,36 +10753,48 @@ proptest! {
         let size = i64::from(size);
         let stepover = i64::from(stepover);
         let pocket = RectangularPocket::new(p(0, 0), p(size, size)).unwrap();
-        let plan = rectangular_pocket_plan(
+        let report = rectangular_pocket_rings(
+            &pocket,
+            r(1),
+            r(stepover),
+            max_rings,
+            PredicatePolicy,
+        ).unwrap();
+        let positive_rings = report.rings.iter().take_while(|ring| {
+            ring.min.x != ring.max.x && ring.min.y != ring.max.y
+        }).count();
+
+        if positive_rings == 0 || positive_rings != report.rings.len() {
+            prop_assert!(rectangular_pocket_link_graph(
+                pocket,
+                r(1),
+                r(stepover),
+                max_rings,
+                PredicatePolicy,
+            ).is_err());
+            return Ok(());
+        }
+
+        let graph = rectangular_pocket_link_graph(
             pocket,
             r(1),
             r(stepover),
             max_rings,
             PredicatePolicy,
         ).unwrap();
-        let positive_rings = plan.rings.iter().take_while(|ring| {
-            ring.min.x != ring.max.x && ring.min.y != ring.max.y
-        }).count();
-
-        if positive_rings == 0 || positive_rings != plan.rings.len() {
-            prop_assert!(rectangular_pocket_link_graph(plan, PredicatePolicy).is_err());
-            return Ok(());
-        }
-
-        let graph = rectangular_pocket_link_graph(plan, PredicatePolicy).unwrap();
-        prop_assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
+        prop_assert_eq!(graph.ring_segments.len(), graph.rings.len() * 4);
         prop_assert_eq!(
             graph.links.len(),
-            graph.plan.rings.len().saturating_sub(1) * 2
+            graph.rings.len().saturating_sub(1) * 2
         );
-        for (ring, sides) in graph.plan.rings.iter().zip(graph.ring_segments.chunks(4)) {
+        for (ring, sides) in graph.rings.iter().zip(graph.ring_segments.chunks(4)) {
             prop_assert_eq!(sides[0].segment.start(), &ring.min);
             prop_assert_eq!(
                 sides[3].segment.end(),
                 &ring.min
             );
         }
-        for (index, pair) in graph.plan.rings.windows(2).enumerate() {
+        for (index, pair) in graph.rings.windows(2).enumerate() {
             let first = &graph.links[index * 2];
             let second = &graph.links[index * 2 + 1];
             prop_assert_eq!(first.segment.start(), &pair[0].min);
@@ -10806,15 +10804,15 @@ proptest! {
     }
 
     #[test]
-    fn rectangular_bead_plan_generated_horizontal_count_matches_exact_pitch(
+    fn rectangular_beads_generated_horizontal_count_matches_exact_pitch(
         height in 2_i16..=100,
         spacing in 1_i16..=20,
     ) {
         let height = i64::from(height);
         let spacing = i64::from(spacing);
         let region = RectangularPocket::new(p(0, 0), p(10, height)).unwrap();
-        let plan = rectangular_bead_plan(
-            region,
+        let report = rectangular_beads(
+            &region,
             BeadFillAxis::Horizontal,
             r(2),
             r(spacing),
@@ -10827,9 +10825,9 @@ proptest! {
             ((height - 2) / spacing + 1) as usize
         };
 
-        prop_assert_eq!(plan.beads.len(), expected);
-        prop_assert_eq!(plan.stop_reason, PocketPlanStopReason::GeometryExhausted);
-        for bead in &plan.beads {
+        prop_assert_eq!(report.beads.len(), expected);
+        prop_assert_eq!(report.stop, RectangularScheduleStop::GeometryExhausted);
+        for bead in &report.beads {
             prop_assert_eq!(bead.segment.start().x.clone(), r(0));
             prop_assert_eq!(bead.segment.end().x.clone(), r(10));
             prop_assert_eq!(bead.segment.start().y.clone(), bead.pitch_position.clone());
@@ -10844,23 +10842,28 @@ proptest! {
     ) {
         let height = i64::from(height);
         let spacing = i64::from(spacing);
-        let plan = rectangular_bead_plan(
-            RectangularPocket::new(p(0, 0), p(10, height)).unwrap(),
+        let region = RectangularPocket::new(p(0, 0), p(10, height)).unwrap();
+        let report = rectangular_beads(
+            &region,
             BeadFillAxis::Horizontal,
             r(2),
             r(spacing),
             128,
             PredicatePolicy,
         ).unwrap();
-        prop_assume!(!plan.beads.is_empty());
-        let expected_links = plan.beads.len().saturating_sub(1);
+        prop_assume!(!report.beads.is_empty());
+        let expected_links = report.beads.len().saturating_sub(1);
         let graph = rectangular_serpentine_infill_graph(
-            plan,
+            region,
+            BeadFillAxis::Horizontal,
+            r(2),
+            r(spacing),
+            128,
             PredicatePolicy,
         ).unwrap();
 
         prop_assert_eq!(graph.links.len(), expected_links);
-        prop_assert_eq!(graph.deposition_segments.len(), graph.plan.beads.len());
+        prop_assert_eq!(graph.deposition_segments.len(), graph.beads.len());
         for (index, link) in graph.links.iter().enumerate() {
             prop_assert_eq!(link.from_bead, index);
             prop_assert_eq!(link.to_bead, index + 1);
@@ -10876,7 +10879,7 @@ proptest! {
     }
 
     #[test]
-    fn rectangular_support_plan_generated_margin_matches_exact_footprint(
+    fn rectangular_support_footprint_generated_margin_is_exact(
         x0 in 0_i16..=40,
         y0 in 0_i16..=40,
         width in 0_i16..=20,
@@ -10893,16 +10896,16 @@ proptest! {
             p(x0 + width, y0 + height),
         ).unwrap();
         let base = RectangularPocket::new(p(-20, -20), p(80, 80)).unwrap();
-        let plan = rectangular_support_plan(
+        let report = rectangular_support_footprint(
             overhang,
             base,
             r(margin),
             PredicatePolicy,
         ).unwrap();
 
-        prop_assert_eq!(plan.footprint.min(), &p(x0 - margin, y0 - margin));
-        prop_assert_eq!(plan.footprint.max(), &p(x0 + width + margin, y0 + height + margin));
-        prop_assert_eq!(plan.status, SupportFootprintStatus::ContainedInBase);
+        prop_assert_eq!(report.footprint.min(), &p(x0 - margin, y0 - margin));
+        prop_assert_eq!(report.footprint.max(), &p(x0 + width + margin, y0 + height + margin));
+        prop_assert_eq!(report.status, SupportFootprintStatus::ContainedInBase);
     }
 
     #[test]

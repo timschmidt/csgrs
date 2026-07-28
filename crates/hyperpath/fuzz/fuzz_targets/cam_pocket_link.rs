@@ -1,10 +1,7 @@
 #![no_main]
 
 use hyperlimit::{Point2, PredicatePolicy};
-use hyperpath::{
-    PocketLinkGraphError, RectangularPocket, rectangular_pocket_link_graph,
-    rectangular_pocket_plan,
-};
+use hyperpath::{PocketLinkGraphError, RectangularPocket, rectangular_pocket_link_graph};
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
 
@@ -30,19 +27,15 @@ fuzz_target!(|data: &[u8]| {
     let stepover = positive(data[2], 16);
     let max_rings = usize::from(data[3] % 24) + 1;
     let pocket = RectangularPocket::new(p(0, 0), p(width, height)).unwrap();
-    let plan = rectangular_pocket_plan(
+    match rectangular_pocket_link_graph(
         pocket,
         r(1),
         r(stepover),
         max_rings,
         PredicatePolicy::default(),
-    )
-    .unwrap();
-
-    match rectangular_pocket_link_graph(plan.clone(), PredicatePolicy::default()) {
+    ) {
         Ok(graph) => {
-            assert_eq!(graph.ring_segments.len(), graph.plan.rings.len() * 4);
-            assert_eq!(graph.plan, plan);
+            assert_eq!(graph.ring_segments.len(), graph.rings.len() * 4);
             assert!(
                 graph
                     .links
@@ -52,11 +45,11 @@ fuzz_target!(|data: &[u8]| {
             for segment in &graph.ring_segments {
                 assert_eq!(
                     segment.ring_index,
-                    graph.plan.rings[segment.ring_index].index
+                    graph.rings[segment.ring_index].index
                 );
             }
         }
-        Err(PocketLinkGraphError::EmptyPlan | PocketLinkGraphError::DegenerateRing) => {}
+        Err(PocketLinkGraphError::EmptyRings | PocketLinkGraphError::DegenerateRing) => {}
         Err(error) => panic!("unexpected pocket link graph error: {error:?}"),
     }
 });

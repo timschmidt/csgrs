@@ -81,16 +81,17 @@ pub use bezier_arrangement::{
     intersect_line_quadratic_bezier, intersect_line_rational_quadratic_bezier,
 };
 pub use cam::{
-    AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, BeadPlanError, InfillGraphError,
-    PocketLinkGraphError, PocketLinkSegment, PocketOffsetRing, PocketPlanError,
-    PocketPlanStopReason, PocketRingSegment, PocketRingSide, RectangularBeadPlan,
-    RectangularInfillGraph, RectangularPocket, RectangularPocketLinkGraph, RectangularPocketPlan,
+    AdditiveBeadLine, AdditiveInfillLink, BeadFillAxis, InfillGraphError, PocketLinkGraphError,
+    PocketLinkSegment, PocketOffsetRing, PocketRingError, PocketRingReport, PocketRingSegment,
+    PocketRingSide, RectangularBeadError, RectangularBeadReport, RectangularInfillGraph,
+    RectangularPocket, RectangularPocketError, RectangularPocketLinkGraph,
     RectangularRegionDifference, RectangularRegionIntersection, RectangularRegionRelation,
     RectangularRestCutRecord, RectangularRestMaterialError, RectangularRestMaterialGraph,
-    RectangularRestMaterialStage, RectangularSupportPlan, RegionBooleanError,
-    SupportFootprintStatus, SupportPlanError, intersect_rectangular_regions, rectangular_bead_plan,
-    rectangular_pocket_link_graph, rectangular_pocket_plan, rectangular_rest_material_graph,
-    rectangular_serpentine_infill_graph, rectangular_support_plan, subtract_rectangular_region,
+    RectangularRestMaterialStage, RectangularScheduleStop, RectangularSupportReport,
+    RegionBooleanError, SupportFootprintError, SupportFootprintStatus,
+    intersect_rectangular_regions, rectangular_beads, rectangular_pocket_link_graph,
+    rectangular_pocket_rings, rectangular_rest_material_graph, rectangular_serpentine_infill_graph,
+    rectangular_support_footprint, subtract_rectangular_region,
 };
 pub use curve_cell::{
     CurveArrangementCellEdge, CurveArrangementCellEdgeKind, CurveArrangementCellError,

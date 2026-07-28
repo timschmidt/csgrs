@@ -1,8 +1,8 @@
-//! Exact retained link graph for rectangular pocket schedules.
+//! Exact retained link graphs for rectangular pockets.
 //!
 //! This module stays deliberately on the path side of the Hyper split. It
-//! turns a retained contour-parallel rectangular pocket schedule into exact
-//! boundary segments plus exact connector candidates, but it does not perform
+//! turns source geometry and process parameters directly into exact boundary
+//! segments plus exact connector candidates, but it does not perform
 //! stock clipping, cutter engagement analysis, gouge detection, or mesh/solid
 //! materialization. The distinction follows Yap, "Towards Exact Geometric
 //! Computation," *Computational Geometry* 7.1-2 (1997): construct exact
@@ -17,7 +17,10 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
-use crate::cam::{PocketOffsetRing, RectangularPocketPlan};
+use crate::cam::{
+    PocketOffsetRing, PocketRingError, RectangularPocket, RectangularScheduleStop,
+    rectangular_pocket_rings,
+};
 use crate::segment::LinePathSegment;
 
 /// Axis-aligned side of a retained rectangular pocket ring.
@@ -66,7 +69,7 @@ pub struct PocketLinkSegment {
     pub segment: LinePathSegment,
 }
 
-/// Exact retained link graph over a rectangular pocket schedule.
+/// Exact retained link graph over rectangular pocket rings.
 ///
 /// `ring_segments` contains four oriented side segments for every positive-area
 /// ring. `links` contains exact connector legs between adjacent rings. The
@@ -75,8 +78,16 @@ pub struct PocketLinkSegment {
 /// and mesh-domain intake decide whether and how these retained paths are used.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RectangularPocketLinkGraph {
-    /// Source pocket schedule.
-    pub plan: RectangularPocketPlan,
+    /// Source pocket boundary.
+    pub pocket: RectangularPocket,
+    /// Exact tool radius used for the first inset.
+    pub tool_radius: Real,
+    /// Exact stepover added between successive rings.
+    pub stepover: Real,
+    /// Generated contour-parallel rings.
+    pub rings: Vec<PocketOffsetRing>,
+    /// Why ring generation stopped.
+    pub stop: RectangularScheduleStop,
     /// Exact boundary segments for every scheduled ring.
     pub ring_segments: Vec<PocketRingSegment>,
     /// Exact connector legs between adjacent rings.
@@ -86,21 +97,19 @@ pub struct RectangularPocketLinkGraph {
 /// Errors while constructing retained rectangular pocket link graphs.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PocketLinkGraphError {
+    /// Ring generation failed.
+    Rings(PocketRingError),
     /// No ring was available to link.
-    EmptyPlan,
-    /// A scheduled ring index did not match its position in the plan.
-    InvalidRingIndex,
+    EmptyRings,
     /// A scheduled ring did not have positive area.
     DegenerateRing,
-    /// Adjacent rings were not exactly certified as nested.
-    NonNestedRings,
     /// Exact comparison could not decide a required predicate.
     UnknownComparison,
     /// A generated connector endpoint failed exact equality validation.
     InvalidConnectorEndpoint,
 }
 
-/// Create an exact retained link graph from a rectangular pocket schedule.
+/// Returns an exact retained link graph for a rectangular pocket.
 ///
 /// The function validates that every scheduled ring has positive extent and
 /// that each adjacent pair is exactly nested. It then emits four exact
@@ -111,35 +120,44 @@ pub enum PocketLinkGraphError {
 /// This is not a pocketing executor. It is the path-domain graph carrier that a
 /// later arrangement or hypermesh intake can certify, reject, or transform.
 pub fn rectangular_pocket_link_graph(
-    plan: RectangularPocketPlan,
+    pocket: RectangularPocket,
+    tool_radius: Real,
+    stepover: Real,
+    max_rings: usize,
     policy: PredicatePolicy,
 ) -> Result<RectangularPocketLinkGraph, PocketLinkGraphError> {
-    if plan.rings.is_empty() {
-        return Err(PocketLinkGraphError::EmptyPlan);
+    let report = rectangular_pocket_rings(
+        &pocket,
+        tool_radius.clone(),
+        stepover.clone(),
+        max_rings,
+        policy,
+    )
+    .map_err(PocketLinkGraphError::Rings)?;
+    if report.rings.is_empty() {
+        return Err(PocketLinkGraphError::EmptyRings);
     }
 
-    for (expected, ring) in plan.rings.iter().enumerate() {
-        if ring.index != expected {
-            return Err(PocketLinkGraphError::InvalidRingIndex);
-        }
+    for ring in &report.rings {
         validate_positive_ring(ring, policy)?;
     }
-    for pair in plan.rings.windows(2) {
-        validate_nested_rings(&pair[0], &pair[1], policy)?;
-    }
 
-    let mut ring_segments = Vec::with_capacity(plan.rings.len() * 4);
-    for ring in &plan.rings {
+    let mut ring_segments = Vec::with_capacity(report.rings.len() * 4);
+    for ring in &report.rings {
         ring_segments.extend(ring_boundary_segments(ring));
     }
 
     let mut links = Vec::new();
-    for pair in plan.rings.windows(2) {
+    for pair in report.rings.windows(2) {
         links.extend(lower_left_dogleg(&pair[0], &pair[1], policy)?);
     }
 
     Ok(RectangularPocketLinkGraph {
-        plan,
+        pocket,
+        tool_radius,
+        stepover,
+        rings: report.rings,
+        stop: report.stop,
         ring_segments,
         links,
     })
@@ -248,27 +266,6 @@ fn validate_positive_ring(
         return Err(PocketLinkGraphError::DegenerateRing);
     }
     Ok(())
-}
-
-fn validate_nested_rings(
-    outer: &PocketOffsetRing,
-    inner: &PocketOffsetRing,
-    policy: PredicatePolicy,
-) -> Result<(), PocketLinkGraphError> {
-    let nested = [
-        compare(&outer.min.x, &inner.min.x, policy)?,
-        compare(&outer.min.y, &inner.min.y, policy)?,
-        compare(&inner.max.x, &outer.max.x, policy)?,
-        compare(&inner.max.y, &outer.max.y, policy)?,
-    ];
-    if nested
-        .into_iter()
-        .all(|ordering| matches!(ordering, Ordering::Less | Ordering::Equal))
-    {
-        Ok(())
-    } else {
-        Err(PocketLinkGraphError::NonNestedRings)
-    }
 }
 
 fn same_axis(

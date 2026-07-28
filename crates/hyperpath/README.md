@@ -169,10 +169,11 @@ let mut toolpath = ToolpathConstraintSet::default();
 toolpath.push(rectangular_region_area_equation("pocket area", pocket, Real::from(50)));
 ```
 
-For CAM use `RectangularPocket`, bead/infill/support planners, and rectangular-region
-set-algebra reports. For PCB use trace, pad, via, board-outline, clearance,
-annular-ring, layer-span, and Specctra route records. For smooth paths use tangent and
-G1 chain certification helpers.
+For CAM use `RectangularPocket`, direct ring/bead/link-graph functions, support
+footprint reports, and rectangular-region set-algebra reports. For PCB use
+trace, pad, via, board-outline, clearance, annular-ring, layer-span, and
+Specctra route records. For smooth paths use tangent and G1 chain certification
+helpers.
 
 ## References
 
