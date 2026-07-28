@@ -68,7 +68,7 @@ Equivalent manifest entry:
 
 ```toml
 [dependencies]
-hyperlimit = "0.4.0"
+hyperlimit = "0.4.1"
 ```
 
 Replace `src/main.rs` with:
