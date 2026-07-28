@@ -684,7 +684,7 @@ fn point_bvh_halfspace_candidates_match_bruteforce() {
 }
 
 #[test]
-fn point_bvh_oriented_plane_candidates_match_orient3d() {
+fn point_bvh_oriented_plane_candidates_match_orient3() {
     let points = (-3..=3)
         .flat_map(|x| (-3..=3).flat_map(move |y| (-3..=3).map(move |z| p(x, y, z))))
         .collect::<Vec<_>>();
@@ -707,7 +707,7 @@ fn point_bvh_oriented_plane_candidates_match_orient3d() {
             .iter()
             .enumerate()
             .filter_map(|(index, point)| {
-                (hyperlimit::orient3d(&a, &b, &c, point).value() == Some(sign)).then_some(index)
+                (hyperlimit::orient3(&a, &b, &c, point).value() == Some(sign)).then_some(index)
             })
             .collect::<Vec<_>>()
     };

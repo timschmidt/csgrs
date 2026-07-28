@@ -47,7 +47,7 @@ pub fn convex_hull(input: &[Point3]) -> HypermeshResult<InputMesh> {
 /// Computes an exact convex hull while retaining certified source coplanarity.
 ///
 /// Each group contains input point indices known to lie on one common plane.
-/// These facts are consulted only when the general `orient3d` predicate is
+/// These facts are consulted only when the general `orient3` predicate is
 /// undecidable, preserving transformed polygon structure without sampling.
 pub fn convex_hull_with_coplanar_groups(
     input: &[Point3],
@@ -446,8 +446,7 @@ fn orientation(
     face: [usize; 3],
     point: &Point3,
 ) -> HypermeshResult<Classification> {
-    match hyperlimit::orient3d(&points[face[0]], &points[face[1]], &points[face[2]], point).value()
-    {
+    match hyperlimit::orient3(&points[face[0]], &points[face[1]], &points[face[2]], point).value() {
         Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
         Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
         Some(hyperlimit::Sign::Positive) => Ok(Classification::Positive),
@@ -574,7 +573,7 @@ mod tests {
     }
 
     #[test]
-    fn orient3d_sign_is_opposite_hull_plane_expression() {
+    fn orient3_sign_is_opposite_hull_plane_expression() {
         let points = vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)];
         let plane = Plane::from_points(&points[0], &points[1], &points[2]);
         assert_eq!(

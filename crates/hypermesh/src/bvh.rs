@@ -336,12 +336,12 @@ impl ExactPointBvh {
     }
 
     /// Reports every point strictly on the positive side of the oriented plane
-    /// through `a`, `b`, and `c` using the specialized exact `orient3d`
+    /// through `a`, `b`, and `c` using the specialized exact `orient3`
     /// predicate.
     ///
     /// Generic plane/AABB classification is used only for pruning. If that
     /// proposal is undecidable, the query descends and certifies points with
-    /// `orient3d` instead.
+    /// `orient3` instead.
     pub fn query_positive_oriented_plane<F>(
         &self,
         points: &[Point3],
@@ -353,7 +353,7 @@ impl ExactPointBvh {
     where
         F: FnMut(usize),
     {
-        // hyperlimit::orient3d uses the opposite sign convention from the
+        // hyperlimit::orient3 uses the opposite sign convention from the
         // cross-product expression returned by Plane::from_points.
         let plane = Plane::from_points(a, b, c).inverted();
         self.query_positive_with(
@@ -361,14 +361,14 @@ impl ExactPointBvh {
             &plane,
             |point| match classify_point(point, &plane) {
                 Ok(classification) => Ok(classification),
-                Err(HypermeshError::UnknownClassification) => orient3d(a, b, c, point),
+                Err(HypermeshError::UnknownClassification) => orient3(a, b, c, point),
                 Err(error) => Err(error),
             },
             callback,
         )
     }
 
-    /// Reports every point strictly on the negative `orient3d` side of the
+    /// Reports every point strictly on the negative `orient3` side of the
     /// plane through `a`, `b`, and `c`.
     ///
     /// This is the positive side of [`Plane::from_points`], so its exact AABB
@@ -391,7 +391,7 @@ impl ExactPointBvh {
             &plane,
             |point| match classify_point(point, &plane) {
                 Ok(classification) => Ok(classification),
-                Err(HypermeshError::UnknownClassification) => Ok(match orient3d(a, b, c, point)? {
+                Err(HypermeshError::UnknownClassification) => Ok(match orient3(a, b, c, point)? {
                     Classification::Negative => Classification::Positive,
                     Classification::On => Classification::On,
                     Classification::Positive => Classification::Negative,
@@ -460,8 +460,8 @@ impl ExactPointBvh {
     }
 }
 
-fn orient3d(a: &Point3, b: &Point3, c: &Point3, point: &Point3) -> HypermeshResult<Classification> {
-    match hyperlimit::orient3d(a, b, c, point).value() {
+fn orient3(a: &Point3, b: &Point3, c: &Point3, point: &Point3) -> HypermeshResult<Classification> {
+    match hyperlimit::orient3(a, b, c, point).value() {
         Some(hyperlimit::Sign::Negative) => Ok(Classification::Negative),
         Some(hyperlimit::Sign::Zero) => Ok(Classification::On),
         Some(hyperlimit::Sign::Positive) => Ok(Classification::Positive),
