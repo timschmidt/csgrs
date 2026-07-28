@@ -25,18 +25,13 @@ members = [
 default-members = ["voxelis", "voxelis-memory"]
 
 [dependencies]
-# Local paths support ecosystem development; the commented versions record
-# the crates.io coordinates used for releases.
-hyperreal = { path = "../hyperreal" }
-hyperlattice = { path = "../hyperlattice" }
-hyperlimit = { path = "../hyperlimit" }
-hypermesh = { path = "../hypermesh", optional = true }
-# hyperreal = { version = "0.13.0" }
-# hyperlattice = { version = "0.6.0" }
-# hyperlimit = { version = "0.4.0" }
-# hypermesh = { version = "0.3.0", optional = true }
-voxelis = { path = "voxelis", optional = true }
-# voxelis = { version = "25.5.0", optional = true }
+# Cargo uses these paths in the workspace and retains the version requirements
+# in the published manifest.
+hyperreal = { version = "0.13.1", path = "../hyperreal" }
+hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hypermesh = { version = "0.1.0", path = "../hypermesh", optional = true }
+voxelis = { version = "25.5.0", path = "voxelis", optional = true }
 glam = { workspace = true, optional = true }
 rustc-hash = { workspace = true }
 
