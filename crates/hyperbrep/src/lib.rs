@@ -69,9 +69,9 @@ pub use physics::{
     BrepPhysicsShapeBlocker, BrepPhysicsShapeHandoffReport,
 };
 pub use query::{
-    BrepFacePlanePreflightBlocker, BrepFacePlanePreflightReport, BrepPointFacePlaneBlocker,
-    BrepPointFacePlaneReport, BrepPreparedFaceQueryBatchReport, BrepPreparedFaceQueryBlocker,
-    BrepSegmentFacePlaneBlocker, BrepSegmentFacePlaneReport, PreparedBrepFaceQuery,
+    BrepFacePlanePreflightBlocker, BrepFacePlanePreflightReport, BrepFaceQueryBatchReport,
+    BrepFaceQueryEvidence, BrepFaceQueryEvidenceBlocker, BrepPointFacePlaneBlocker,
+    BrepPointFacePlaneReport, BrepSegmentFacePlaneBlocker, BrepSegmentFacePlaneReport,
 };
 pub use report::{
     BrepShellBlocker, BrepShellClosureReport, BrepSurfaceInventoryReport, BrepTopologyCounts,
@@ -79,8 +79,9 @@ pub use report::{
 };
 pub use solid::{BrepSolidReadinessBlocker, BrepSolidReadinessReport};
 pub use surface::{
-    BrepSurface, BrepSurfaceBlocker, BrepSurfaceFacts, BrepSurfaceId, BrepSurfaceKind,
-    BrepSurfacePointReport, PreparedBrepSurface,
+    BrepSurface, BrepSurfaceBlocker, BrepSurfaceEvidence, BrepSurfaceFacts, BrepSurfaceId,
+    BrepSurfaceKind, BrepSurfacePointReport, classify_plane_surface_point_with_evidence,
+    classify_surface_point_with_evidence,
 };
 pub use surface_intersection::{
     BrepCurveSurfaceBlocker, BrepCurveSurfaceIntersectionRelation,
@@ -927,15 +928,15 @@ mod tests {
     }
 
     #[test]
-    fn prepared_plane_surface_classifies_points_with_exact_replay() {
+    fn plane_surface_evidence_classifies_points_with_exact_replay() {
         let surface = plane(10, 0, 0, 1, -2);
-        let prepared = surface.prepare();
-        assert!(prepared.exact_replay_ready());
-        assert!(prepared.facts().dyadic_schedule);
+        let evidence = surface.evidence();
+        assert!(evidence.exact_replay_ready());
+        assert!(evidence.facts().dyadic_schedule);
 
-        let below = prepared.classify_point(&p(0, 0, 1));
-        let on = prepared.classify_point(&p(0, 0, 2));
-        let above = prepared.classify_point(&p(0, 0, 3));
+        let below = classify_surface_point_with_evidence(&surface, &p(0, 0, 1), &evidence);
+        let on = classify_surface_point_with_evidence(&surface, &p(0, 0, 2), &evidence);
+        let above = classify_surface_point_with_evidence(&surface, &p(0, 0, 3), &evidence);
 
         assert_eq!(below.side, Some(hyperlimit::PlaneSide::Below));
         assert_eq!(on.side, Some(hyperlimit::PlaneSide::On));
@@ -945,22 +946,20 @@ mod tests {
     }
 
     #[test]
-    fn prepared_surface_blocks_unsupported_or_zero_normal_surfaces() {
+    fn surface_evidence_blocks_unsupported_or_zero_normal_surfaces() {
         let unsupported_surface = BrepSurface::unsupported(BrepSurfaceId(12), "nurbs");
-        let unsupported = unsupported_surface.prepare();
+        let unsupported = unsupported_surface.evidence();
         assert!(
-            unsupported
-                .classify_point(&p(0, 0, 0))
+            classify_surface_point_with_evidence(&unsupported_surface, &p(0, 0, 0), &unsupported)
                 .blockers
                 .contains(&BrepSurfaceBlocker::UnsupportedFamily)
         );
 
         let zero_normal_surface =
             BrepSurface::plane(BrepSurfaceId(13), Plane3::new(p(0, 0, 0), r(0)));
-        let zero_normal = zero_normal_surface.prepare();
+        let zero_normal = zero_normal_surface.evidence();
         assert!(
-            zero_normal
-                .classify_point(&p(0, 0, 0))
+            classify_surface_point_with_evidence(&zero_normal_surface, &p(0, 0, 0), &zero_normal)
                 .blockers
                 .contains(&BrepSurfaceBlocker::ZeroNormal)
         );
@@ -1374,30 +1373,30 @@ mod tests {
     }
 
     #[test]
-    fn prepared_face_query_reuses_surface_and_bounds_evidence() {
+    fn face_query_evidence_reuses_surface_and_bounds() {
         let shell = cube_shell();
-        let prepared = shell.prepare_face_query(BrepFaceId(0));
+        let evidence = shell.face_query_evidence(BrepFaceId(0));
 
-        assert!(prepared.prepared_query_ready);
-        assert!(prepared.bounds.exact_bounds_ready);
-        assert!(prepared.surface.as_ref().unwrap().exact_replay_ready());
-        assert!(prepared.blockers.is_empty());
+        assert!(evidence.query_ready);
+        assert!(evidence.bounds.exact_bounds_ready);
+        assert!(evidence.surface.as_ref().unwrap().exact_replay_ready());
+        assert!(evidence.blockers.is_empty());
 
         let direct_point = shell.point_face_plane_preflight(BrepFaceId(0), &p(0, 0, 1));
-        let prepared_point = prepared.point_face_plane_preflight(&p(0, 0, 1));
-        assert_eq!(prepared_point, direct_point);
-        assert!(prepared_point.certified_off_support_plane);
+        let evidence_point = evidence.point_face_plane_preflight(&p(0, 0, 1));
+        assert_eq!(evidence_point, direct_point);
+        assert!(evidence_point.certified_off_support_plane);
 
         let direct_segment =
             shell.segment_face_plane_preflight(BrepFaceId(0), &p(0, 0, -1), &p(0, 0, 1));
-        let prepared_segment = prepared.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1));
-        assert_eq!(prepared_segment, direct_segment);
-        assert!(prepared_segment.requires_narrow_phase);
+        let evidence_segment = evidence.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1));
+        assert_eq!(evidence_segment, direct_segment);
+        assert!(evidence_segment.requires_narrow_phase);
 
         let plane = Plane3::new(p(0, 0, 1), r(-2));
         let direct_plane = shell.face_plane_preflight(BrepFaceId(0), &plane);
-        let prepared_plane = prepared.face_plane_preflight(&plane);
-        assert_eq!(prepared_plane, direct_plane);
+        let evidence_plane = evidence.face_plane_preflight(&plane);
+        assert_eq!(evidence_plane, direct_plane);
 
         let point_queries = vec![p(0, 0, 0), p(0, 0, 1)];
         let segment_start = p(0, 0, -1);
@@ -1405,8 +1404,8 @@ mod tests {
         let above_start = p(0, 0, -2);
         let above_end = p(1, 0, -2);
         let segments = vec![(&segment_start, &segment_end), (&above_start, &above_end)];
-        let batch = prepared.batch_report(&point_queries, &segments);
-        assert!(batch.prepared_query_ready);
+        let batch = evidence.batch_report(&point_queries, &segments);
+        assert!(batch.query_ready);
         assert_eq!(batch.point_query_count, 2);
         assert_eq!(batch.segment_query_count, 2);
         assert_eq!(batch.certified_rejection_count, 2);
@@ -1415,36 +1414,36 @@ mod tests {
     }
 
     #[test]
-    fn prepared_face_query_reports_missing_and_unready_contexts() {
+    fn face_query_evidence_reports_missing_and_unready_sources() {
         let shell = cube_shell();
-        let missing = shell.prepare_face_query(BrepFaceId(999));
-        assert!(!missing.prepared_query_ready);
+        let missing = shell.face_query_evidence(BrepFaceId(999));
+        assert!(!missing.query_ready);
         assert!(
             missing
                 .blockers
-                .contains(&BrepPreparedFaceQueryBlocker::MissingFace)
+                .contains(&BrepFaceQueryEvidenceBlocker::MissingFace)
         );
         assert!(
             missing
                 .blockers
-                .contains(&BrepPreparedFaceQueryBlocker::FaceBoundsNotReady)
+                .contains(&BrepFaceQueryEvidenceBlocker::FaceBoundsNotReady)
         );
 
         let mut unsupported = cube_shell();
         unsupported.surfaces[0] = BrepSurface::unsupported(BrepSurfaceId(0), "nurbs");
-        let prepared = unsupported.prepare_face_query(BrepFaceId(0));
-        assert!(!prepared.prepared_query_ready);
+        let evidence = unsupported.face_query_evidence(BrepFaceId(0));
+        assert!(!evidence.query_ready);
         assert!(
-            prepared
+            evidence
                 .blockers
-                .contains(&BrepPreparedFaceQueryBlocker::SurfaceNotReady)
+                .contains(&BrepFaceQueryEvidenceBlocker::SurfaceNotReady)
         );
         assert!(
-            prepared
+            evidence
                 .blockers
-                .contains(&BrepPreparedFaceQueryBlocker::UnsupportedSurface)
+                .contains(&BrepFaceQueryEvidenceBlocker::UnsupportedSurface)
         );
-        let point = prepared.point_face_plane_preflight(&p(0, 0, 0));
+        let point = evidence.point_face_plane_preflight(&p(0, 0, 0));
         assert!(!point.preflight_ready);
         assert!(
             point

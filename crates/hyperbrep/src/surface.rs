@@ -2,7 +2,10 @@
 //!
 //! Surface records retain analytic geometry needed by faces.
 
-use hyperlimit::{Escalation, Plane3, PlaneSide, Point3, PredicateOutcome, PreparedPlane3};
+use hyperlimit::{
+    Escalation, Plane3, Plane3Evidence, PlaneSide, Point3, PredicateOutcome,
+    classify_point_plane_with_evidence, plane3_evidence,
+};
 
 /// Stable identifier for a retained surface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -41,7 +44,7 @@ pub struct BrepSurface {
     pub kind: BrepSurfaceKind,
 }
 
-/// Prepared facts for a retained BREP surface.
+/// Structural facts for a retained BREP surface.
 ///
 /// This is scheduling and readiness evidence, not a face/trim validity claim.
 /// The first exact surface family is planar because `hyperlimit::Plane3`
@@ -66,7 +69,7 @@ pub struct BrepSurfaceFacts {
     pub exact_replay_ready: bool,
 }
 
-/// Explicit blocker for surface preparation or evaluation.
+/// Explicit blocker for surface evidence or evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum BrepSurfaceBlocker {
     /// Surface family is unsupported by the current exact core.
@@ -75,17 +78,17 @@ pub enum BrepSurfaceBlocker {
     ZeroNormal,
 }
 
-/// Prepared retained surface.
+/// Reusable exact-query evidence for a retained surface.
 #[derive(Clone, Debug)]
-pub enum PreparedBrepSurface<'a> {
-    /// Prepared exact plane surface.
+pub enum BrepSurfaceEvidence {
+    /// Evidence for an exact plane surface.
     Plane {
         /// Retained surface id.
         surface: BrepSurfaceId,
-        /// Cached surface facts.
+        /// Retained surface facts.
         facts: BrepSurfaceFacts,
-        /// Prepared `hyperlimit` plane classifier.
-        prepared: Box<PreparedPlane3<'a>>,
+        /// Retained `hyperlimit` plane evidence.
+        plane: Box<Plane3Evidence>,
     },
     /// Unsupported or blocked surface.
     Blocked {
@@ -168,24 +171,24 @@ impl BrepSurface {
         }
     }
 
-    /// Prepare this surface for repeated exact point classification.
+    /// Derive evidence for repeated exact point classification.
     ///
-    /// This wraps `hyperlimit::PreparedPlane3` for planes and returns explicit
-    /// blockers for unsupported surfaces. Prepared predicate state
-    /// does not imply face-topology or trim validity.
-    pub fn prepare(&self) -> PreparedBrepSurface<'_> {
+    /// Plane evidence retains coefficient facts and a certified filter.
+    /// Unsupported surfaces retain explicit blockers. Query evidence does not
+    /// imply face-topology or trim validity.
+    pub fn evidence(&self) -> BrepSurfaceEvidence {
         let facts = self.facts();
         let blockers = self.blockers_from_facts(&facts);
         if blockers.is_empty()
             && let BrepSurfaceKind::Plane(plane) = &self.kind
         {
-            return PreparedBrepSurface::Plane {
+            return BrepSurfaceEvidence::Plane {
                 surface: self.id,
                 facts,
-                prepared: Box::new(plane.prepare()),
+                plane: Box::new(plane3_evidence(plane)),
             };
         }
-        PreparedBrepSurface::Blocked {
+        BrepSurfaceEvidence::Blocked {
             surface: self.id,
             facts,
             blockers,
@@ -204,52 +207,95 @@ impl BrepSurface {
     }
 }
 
-impl<'a> PreparedBrepSurface<'a> {
-    /// Return cached surface facts.
+impl BrepSurfaceEvidence {
+    /// Return retained surface facts.
     pub const fn facts(&self) -> &BrepSurfaceFacts {
         match self {
             Self::Plane { facts, .. } | Self::Blocked { facts, .. } => facts,
         }
     }
 
-    /// Return whether this prepared surface can replay exact point predicates.
+    /// Return whether this evidence can replay exact point predicates.
     pub const fn exact_replay_ready(&self) -> bool {
         self.facts().exact_replay_ready
     }
 
-    /// Classify a point against this surface.
-    pub fn classify_point(&self, point: &Point3) -> BrepSurfacePointReport {
+    /// Return retained plane evidence for a supported planar surface.
+    pub fn plane_evidence(&self) -> Option<&Plane3Evidence> {
         match self {
-            Self::Plane {
-                surface, prepared, ..
-            } => match prepared.classify_point(point) {
-                PredicateOutcome::Decided { value, stage, .. } => BrepSurfacePointReport {
-                    surface: *surface,
-                    side: Some(value),
-                    stage: Some(stage),
-                    exact_replay: true,
-                    on_surface: value == PlaneSide::On,
-                    blockers: Vec::new(),
-                },
-                PredicateOutcome::Unknown { stage, .. } => BrepSurfacePointReport {
-                    surface: *surface,
+            Self::Plane { plane, .. } => Some(plane),
+            Self::Blocked { .. } => None,
+        }
+    }
+}
+
+/// Classify a point against a known planar surface using retained evidence.
+///
+/// `evidence` must have been derived from `plane` as part of the surface's
+/// [`BrepSurfaceEvidence`].
+#[inline]
+pub fn classify_plane_surface_point_with_evidence(
+    surface: BrepSurfaceId,
+    plane: &Plane3,
+    point: &Point3,
+    evidence: &Plane3Evidence,
+) -> BrepSurfacePointReport {
+    match classify_point_plane_with_evidence(point, plane, evidence) {
+        PredicateOutcome::Decided { value, stage, .. } => BrepSurfacePointReport {
+            surface,
+            side: Some(value),
+            stage: Some(stage),
+            exact_replay: true,
+            on_surface: value == PlaneSide::On,
+            blockers: Vec::new(),
+        },
+        PredicateOutcome::Unknown { stage, .. } => BrepSurfacePointReport {
+            surface,
+            side: None,
+            stage: Some(stage),
+            exact_replay: false,
+            on_surface: false,
+            blockers: Vec::new(),
+        },
+    }
+}
+
+/// Classify a point against a retained surface using derived evidence.
+///
+/// `evidence` must have been derived from `surface` with
+/// [`BrepSurface::evidence`].
+pub fn classify_surface_point_with_evidence(
+    surface: &BrepSurface,
+    point: &Point3,
+    evidence: &BrepSurfaceEvidence,
+) -> BrepSurfacePointReport {
+    match evidence {
+        BrepSurfaceEvidence::Plane {
+            surface: surface_id,
+            plane: plane_evidence,
+            ..
+        } => {
+            let BrepSurfaceKind::Plane(plane) = &surface.kind else {
+                return BrepSurfacePointReport {
+                    surface: *surface_id,
                     side: None,
-                    stage: Some(stage),
+                    stage: None,
                     exact_replay: false,
                     on_surface: false,
-                    blockers: Vec::new(),
-                },
-            },
-            Self::Blocked {
-                surface, blockers, ..
-            } => BrepSurfacePointReport {
-                surface: *surface,
-                side: None,
-                stage: None,
-                exact_replay: false,
-                on_surface: false,
-                blockers: blockers.clone(),
-            },
+                    blockers: vec![BrepSurfaceBlocker::UnsupportedFamily],
+                };
+            };
+            classify_plane_surface_point_with_evidence(*surface_id, plane, point, plane_evidence)
         }
+        BrepSurfaceEvidence::Blocked {
+            surface, blockers, ..
+        } => BrepSurfacePointReport {
+            surface: *surface,
+            side: None,
+            stage: None,
+            exact_replay: false,
+            on_surface: false,
+            blockers: blockers.clone(),
+        },
     }
 }

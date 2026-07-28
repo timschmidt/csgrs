@@ -107,7 +107,7 @@ entry points on `BrepShell` are:
   `face_validation_report`, and `shell_validation_report`;
 - `face_bounds_report`, `shell_bounds_report`, `face_area_report`, and
   `shell_volume_report`;
-- `prepare_face_query`, `face_aabb_preflight`, `face_plane_preflight`,
+- `face_query_evidence`, `face_aabb_preflight`, `face_plane_preflight`,
   `segment_face_plane_preflight`, and `point_face_plane_preflight`;
 - `solid_readiness_report`, `exact_surface_handoff`, and
   `exact_solid_handoff`;
@@ -120,7 +120,7 @@ false; the blocker is part of the API contract, not ancillary logging.
 ## Construction and derived output
 
 `BrepPlanarRegionConstruction::from_region_on_surface` constructs a retained
-planar face from a line-only exact `hypercurve::CurveRegion2` and a prepared
+planar face from a line-only exact `hypercurve::CurveRegion2` and a derived
 surface frame. `BrepPlanarExtrusionConstruction::vertical_prism_from_region` constructs
 a closed vertical prism with analytic side planes. Both return the shell and a
 fresh construction manifest only after their validation gates pass.
@@ -141,7 +141,7 @@ planes, AABBs, and predicates. Unknown orderings or signs become blockers
 instead of epsilon comparisons. Broad-phase reports may reject work only after
 certifying disjointness; overlap or contact remains a narrow-phase candidate.
 
-Prepared surfaces and face queries, retained bounds, planar regions, and cached
+Surface and face-query evidence, retained bounds, planar regions, and cached
 homogeneous control nets amortize repeated work. The curve and pcurve cache
 carriers use `Rc` and `OnceCell`, so they are currently intended for
 thread-local ownership, not shared cross-thread mutation.

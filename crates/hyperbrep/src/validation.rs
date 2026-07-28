@@ -5,7 +5,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{PlaneSide, PredicateOutcome};
+use hyperlimit::{
+    PlaneSide, PredicateOutcome, classify_point_plane_with_evidence, plane3_evidence,
+};
 
 use crate::adjacency::BrepShellEdgeAgreementReport;
 use crate::bounds::{BrepFaceBoundsReport, BrepShellBoundsReport};
@@ -112,7 +114,7 @@ pub struct BrepFaceValidationReport {
     pub face: BrepFaceId,
     /// Whether the face exists in the shell.
     pub face_found: bool,
-    /// Prepared exact-core surface facts, when the face surface exists.
+    /// Retained exact-core surface facts, when the face surface exists.
     pub surface_facts: Option<BrepSurfaceFacts>,
     /// Surface-preparation blockers, when the face surface exists but is not ready.
     pub surface_blockers: Vec<BrepSurfaceBlocker>,
@@ -270,10 +272,10 @@ impl BrepFaceValidationReport {
             .find(|surface| surface.id == source_face.surface)
             .map(|surface| {
                 let facts = surface.facts();
-                let prepared = surface.prepare();
-                let blockers = match prepared {
-                    crate::surface::PreparedBrepSurface::Plane { .. } => Vec::new(),
-                    crate::surface::PreparedBrepSurface::Blocked { blockers, .. } => blockers,
+                let evidence = surface.evidence();
+                let blockers = match evidence {
+                    crate::surface::BrepSurfaceEvidence::Plane { .. } => Vec::new(),
+                    crate::surface::BrepSurfaceEvidence::Blocked { blockers, .. } => blockers,
                 };
                 let ready = facts.exact_replay_ready && blockers.is_empty();
                 (Some(facts), blockers, ready)
@@ -331,7 +333,7 @@ impl BrepGeometryValidationReport {
     /// This is a first exact planar consistency report. It checks retained edge
     /// and vertex references, reuses trim-loop readiness, and certifies every
     /// boundary vertex against the face's support plane through
-    /// `hyperlimit::PreparedPlane3`. Unsupported surfaces and unknown
+    /// reusable HyperLimit plane evidence. Unsupported surfaces and unknown
     /// point/plane relations remain explicit blockers. Full pcurve image
     /// equality and adjacent-face curve agreement remain future reports.
     pub fn from_shell_face(shell: &BrepShell, face: BrepFaceId) -> Self {
@@ -417,14 +419,14 @@ impl BrepGeometryValidationReport {
         let mut unknown_vertex_surface_count = 0;
         if let BrepSurfaceKind::Plane(plane) = &surface.kind {
             if surface.facts().exact_replay_ready {
-                let prepared = plane.prepare();
+                let evidence = plane3_evidence(plane);
                 for vertex_id in &boundary_vertices {
                     let Some(vertex) = vertex_by_id.get(vertex_id) else {
                         missing_vertex_count += 1;
                         blockers.push(BrepGeometryValidationBlocker::MissingVertex);
                         continue;
                     };
-                    match prepared.classify_point(&vertex.point) {
+                    match classify_point_plane_with_evidence(&vertex.point, plane, &evidence) {
                         PredicateOutcome::Decided { value, .. } => {
                             if value == PlaneSide::On {
                                 on_surface_vertex_count += 1;

@@ -47,7 +47,7 @@ pub enum BrepFaceUvBoundsBlocker {
     MissingFace,
     /// Face references a surface id not present in the shell.
     MissingSurface,
-    /// Retained surface frame could not be prepared.
+    /// Retained surface frame could not be derived.
     FrameNotReady,
     /// The face has no coedges from which vertices can be projected.
     EmptyBoundary,
@@ -62,7 +62,7 @@ pub enum BrepFaceUvBoundsBlocker {
     UnknownCoordinateOrdering,
 }
 
-/// Prepared exact UV frame for one retained surface.
+/// Derived exact UV frame for one retained surface.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BrepSurfaceFrameReport {
     /// Retained surface id.
@@ -358,10 +358,10 @@ impl BrepShell {
 }
 
 fn surface_blockers(surface: &BrepSurface) -> Vec<BrepSurfaceBlocker> {
-    let prepared = surface.prepare();
-    match prepared {
-        crate::surface::PreparedBrepSurface::Plane { .. } => Vec::new(),
-        crate::surface::PreparedBrepSurface::Blocked { blockers, .. } => blockers,
+    let evidence = surface.evidence();
+    match evidence {
+        crate::surface::BrepSurfaceEvidence::Plane { .. } => Vec::new(),
+        crate::surface::BrepSurfaceEvidence::Blocked { blockers, .. } => blockers,
     }
 }
 

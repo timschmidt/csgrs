@@ -6,6 +6,7 @@ use hyperbrep::{
     BrepPlanarRegionConstructionBlocker, BrepShell, BrepShellBlocker, BrepShellVolumeBlocker,
     BrepSurface, BrepSurfaceId, BrepSurfaceIntersectionRelation, BrepTopologyValidationBlocker,
     BrepTriangleMeshBlocker, BrepTrimLoopBlocker, BrepVertex, BrepVertexId,
+    classify_surface_point_with_evidence,
 };
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, PlaneSide, Point2, Point3, classify_point_plane};
@@ -312,18 +313,18 @@ proptest! {
     }
 
      #[test]
-    fn generated_prepared_plane_surface_matches_hyperlimit_classifier(a in -8_i32..=8, b in -8_i32..=8, c in 1_i32..=8, d in -16_i32..=16, x in -8_i32..=8, y in -8_i32..=8, z in -8_i32..=8) {
+    fn generated_plane_surface_evidence_matches_hyperlimit_classifier(a in -8_i32..=8, b in -8_i32..=8, c in 1_i32..=8, d in -16_i32..=16, x in -8_i32..=8, y in -8_i32..=8, z in -8_i32..=8) {
         let plane = Plane3::new(p(a, b, c), r(d));
         let surface = BrepSurface::plane(
             BrepSurfaceId(500),
             plane.clone(),
         );
-        let prepared = surface.prepare();
+        let evidence = surface.evidence();
         let point = p(x, y, z);
-        let report = prepared.classify_point(&point);
+        let report = classify_surface_point_with_evidence(&surface, &point, &evidence);
         let expected = classify_point_plane(&point, &plane).value();
 
-        prop_assert!(prepared.exact_replay_ready());
+        prop_assert!(evidence.exact_replay_ready());
         prop_assert_eq!(report.side, expected);
         prop_assert_eq!(report.on_surface, expected == Some(PlaneSide::On));
         prop_assert!(report.exact_replay);
@@ -550,25 +551,25 @@ proptest! {
         prop_assert!(point_preflight.preflight_ready);
         prop_assert_eq!(point_preflight.side, Some(hyperlimit::PlaneSide::On));
         prop_assert!(point_preflight.requires_trim_replay);
-        let prepared = shell.prepare_face_query(BrepFaceId(0));
-        prop_assert!(prepared.prepared_query_ready);
+        let evidence = shell.face_query_evidence(BrepFaceId(0));
+        prop_assert!(evidence.query_ready);
         prop_assert_eq!(
-            prepared.face_plane_preflight(&Plane3::new(p(0, 0, 1), r(0))),
+            evidence.face_plane_preflight(&Plane3::new(p(0, 0, 1), r(0))),
             plane_preflight
         );
         prop_assert_eq!(
-            prepared.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1)),
+            evidence.segment_face_plane_preflight(&p(0, 0, -1), &p(0, 0, 1)),
             segment_preflight
         );
         prop_assert_eq!(
-            prepared.point_face_plane_preflight(&p(0, 0, 0)),
+            evidence.point_face_plane_preflight(&p(0, 0, 0)),
             point_preflight
         );
         let points = vec![p(0, 0, 0), p(0, 0, 1)];
         let segment_start = p(0, 0, -1);
         let segment_end = p(0, 0, 1);
         let segments = vec![(&segment_start, &segment_end)];
-        let batch = prepared.batch_report(&points, &segments);
+        let batch = evidence.batch_report(&points, &segments);
         prop_assert_eq!(batch.point_query_count, 2);
         prop_assert_eq!(batch.segment_query_count, 1);
         prop_assert_eq!(batch.certified_rejection_count, 1);

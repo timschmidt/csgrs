@@ -6,7 +6,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperlimit::{PlaneSide, PredicateOutcome};
+use hyperlimit::{
+    Plane3, Plane3Evidence, PlaneSide, Point3, PredicateOutcome,
+    classify_point_plane_with_evidence, plane3_evidence,
+};
 
 use crate::surface::{BrepSurface, BrepSurfaceId, BrepSurfaceKind};
 use crate::topology::{
@@ -253,11 +256,15 @@ impl BrepEdgeAgreementReport {
                         }
                         match &surface.kind {
                             BrepSurfaceKind::Plane(plane) if surface.facts().exact_replay_ready => {
-                                let prepared = plane.prepare();
-                                let start_on =
-                                    classify_endpoint(&prepared, &start.point, &mut blockers);
+                                let evidence = plane3_evidence(plane);
+                                let start_on = classify_endpoint(
+                                    plane,
+                                    &evidence,
+                                    &start.point,
+                                    &mut blockers,
+                                );
                                 let end_on =
-                                    classify_endpoint(&prepared, &end.point, &mut blockers);
+                                    classify_endpoint(plane, &evidence, &end.point, &mut blockers);
                                 endpoints_on_surface = start_on && end_on;
                             }
                             BrepSurfaceKind::Plane(_) => {}
@@ -357,11 +364,12 @@ struct RawEdgeUse {
 }
 
 fn classify_endpoint(
-    plane: &hyperlimit::PreparedPlane3<'_>,
-    point: &hyperlimit::Point3,
+    plane: &Plane3,
+    evidence: &Plane3Evidence,
+    point: &Point3,
     blockers: &mut BTreeSet<BrepEdgeAgreementBlocker>,
 ) -> bool {
-    match plane.classify_point(point) {
+    match classify_point_plane_with_evidence(point, plane, evidence) {
         PredicateOutcome::Decided {
             value: PlaneSide::On,
             ..

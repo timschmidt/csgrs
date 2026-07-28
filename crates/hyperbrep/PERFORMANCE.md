@@ -44,6 +44,29 @@ after. Criterion found no performance change (`p = 0.91`), with a
 -0.37% to +0.35% confidence interval. Exact reports, blockers, and
 narrow-phase scheduling rules are unchanged.
 
+## Immediate plane-evidence API gate
+
+Surface and face-query reuse now retains `Plane3Evidence` and calls HyperLimit's
+immediate classifiers. `BrepSurfaceEvidence` and `BrepFaceQueryEvidence`
+describe the reusable data directly; the old prepared wrappers, readiness
+names, and forwarding plane methods are gone.
+
+The old face-query source was reconstructed from the committed revisions in an
+isolated sibling tree so the serialized 100-sample Criterion comparison used a
+genuine pre-change implementation:
+
+| Benchmark | Before median | After median | Change |
+| --- | ---: | ---: | ---: |
+| Face-query evidence derivation | 207.01 us | 207.06 us | +0.02% |
+| 1,024 point plus 128 segment face-query batch | 188.25 us | 166.73 us | -11.43% |
+| 1,024 plane-surface point reports | 28.980 us | 15.654 us | -45.98% |
+
+Criterion found no construction change and measured both query improvements as
+significant. The planar hot path resolves the surface family once and inlines
+the evidence classifier across the crate boundary; the generic function still
+preserves explicit unsupported surface reports. Exact report contents,
+blockers, and narrow-phase rules remain unchanged.
+
 ## Reference disposition
 
 ### Yap: exact geometric computation

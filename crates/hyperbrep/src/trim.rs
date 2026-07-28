@@ -2,7 +2,7 @@
 //!
 //! This module starts the shared curve-on-surface layer with topology-only trim
 //! evidence. It validates ordered coedge chains against retained BREP edges and
-//! prepared surface facts, but deliberately does not claim UV containment,
+//! retained surface facts, but deliberately does not claim UV containment,
 //! curve-on-surface image equality, or self-intersection freedom. Those remain
 //! separate predicate/report surfaces.
 

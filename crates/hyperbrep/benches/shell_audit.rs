@@ -3,7 +3,8 @@ use hyperbrep::{
     BrepCoedge, BrepEdge, BrepEdgeId, BrepEdgeOrientation, BrepFace, BrepFaceId, BrepLoop,
     BrepLoopId, BrepNurbsCurve3, BrepPcurve, BrepPlanarExtrusionConstruction, BrepPlanarFaceRegion,
     BrepPlanarRegionConstruction, BrepPlanarTrimLoop, BrepRationalBezier3, BrepShell, BrepSurface,
-    BrepSurfaceId, BrepVertex, BrepVertexId,
+    BrepSurfaceId, BrepSurfaceKind, BrepVertex, BrepVertexId,
+    classify_plane_surface_point_with_evidence,
 };
 use hypercurve::{Contour2, Curve2, CurvePath2, CurvePolicy, CurveRegion2, LineSeg2, Segment2};
 use hyperlimit::{Plane3, Point2, Point3};
@@ -350,15 +351,18 @@ fn bench_shell_audit(c: &mut Criterion) {
     c.bench_function("hyperbrep point face-plane preflight report", |b| {
         b.iter(|| trim_shell.point_face_plane_preflight(BrepFaceId(0), &query_point))
     });
-    let prepared_query = trim_shell.prepare_face_query(BrepFaceId(0));
+    c.bench_function("hyperbrep face query evidence derivation", |b| {
+        b.iter(|| trim_shell.face_query_evidence(BrepFaceId(0)))
+    });
+    let query_evidence = trim_shell.face_query_evidence(BrepFaceId(0));
     let query_points = (0..1024).map(|i| p(i % 17, i % 31, 0)).collect::<Vec<_>>();
     let query_segments = query_points
         .iter()
         .take(128)
         .map(|point| (point, &segment_end))
         .collect::<Vec<_>>();
-    c.bench_function("hyperbrep prepared face query batch report", |b| {
-        b.iter(|| prepared_query.batch_report(&query_points, &query_segments))
+    c.bench_function("hyperbrep face query evidence batch report", |b| {
+        b.iter(|| query_evidence.batch_report(&query_points, &query_segments))
     });
     c.bench_function("hyperbrep face validation report", |b| {
         b.iter(|| trim_shell.face_validation_report(BrepFaceId(0)))
@@ -438,7 +442,13 @@ fn bench_shell_audit(c: &mut Criterion) {
         })
     });
     let plane_surface = BrepSurface::plane(BrepSurfaceId(99), Plane3::new(p(0, 0, 1), r(-512)));
-    let prepared_surface = plane_surface.prepare();
+    let surface_evidence = plane_surface.evidence();
+    let BrepSurfaceKind::Plane(surface_plane) = &plane_surface.kind else {
+        unreachable!("constructed plane surface")
+    };
+    let plane_evidence = surface_evidence
+        .plane_evidence()
+        .expect("constructed plane evidence");
     let surface_query_points = (0..1024).map(|i| p(i % 17, i % 31, i)).collect::<Vec<_>>();
     let surface_uvs = (0..1024)
         .map(|i| Point2::new(r(i % 17), r(i % 31)))
@@ -452,11 +462,18 @@ fn bench_shell_audit(c: &mut Criterion) {
                 .collect::<Vec<_>>()
         })
     });
-    c.bench_function("hyperbrep prepared plane surface point reports", |b| {
+    c.bench_function("hyperbrep plane surface evidence point reports", |b| {
         b.iter(|| {
             surface_query_points
                 .iter()
-                .map(|point| prepared_surface.classify_point(point))
+                .map(|point| {
+                    classify_plane_surface_point_with_evidence(
+                        plane_surface.id,
+                        surface_plane,
+                        point,
+                        plane_evidence,
+                    )
+                })
                 .collect::<Vec<_>>()
         })
     });
