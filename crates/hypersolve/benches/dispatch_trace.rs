@@ -7,9 +7,9 @@ use hyperreal::{Rational, Real};
 use hypersolve::{
     BatchPredicateScheduleConfig, BezierPowerBasisSubstitutionConfig, Constraint,
     CurveIntersectionResultantConfig, CurveResultantParameter, Expr,
-    IntervalBoxCertificationPackage, PolynomialCurvePoint2, PolynomialParametricCurve2,
-    PreparedProblem, Problem, ProposalEngineKind, RootIsolationConfig, SolverConfig, SolverState,
-    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank, audit_active_set,
+    IntervalBoxCertificationPackage, PolynomialCurvePoint2, PolynomialParametricCurve2, Problem,
+    ProposalEngineKind, RootIsolationConfig, SolverConfig, SolverState, SparseResidualTerm,
+    SymbolId, VariableBall, analyze_exact_affine_rank, audit_active_set,
     certify_affine_krawczyk_box, certify_candidate, certify_candidate_batch,
     certify_candidate_domains, certify_interval_box_candidate, certify_sketch_construction,
     context_from_problem, determinant_bareiss, diagnose_failed_constraints,
@@ -118,9 +118,9 @@ fn trace_sketch_lowering() -> hyperreal::dispatch_trace::TraceSnapshot {
         black_box(preflight_sketch_degeneracies(&sketch));
         black_box(certify_sketch_construction(&sketch));
         let lowering = sketch.lower_to_problem();
-        let prepared = PreparedProblem::new(&lowering.problem);
+        let analysis = lowering.problem.analyze();
         black_box(certify_candidate(
-            &prepared,
+            &analysis,
             &context_from_problem(&lowering.problem),
         ));
     })
@@ -129,16 +129,16 @@ fn trace_sketch_lowering() -> hyperreal::dispatch_trace::TraceSnapshot {
 fn trace_candidate_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
     trace_case("candidate_batch_and_active_set", || {
         let problem = affine_problem(8);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let context = context_from_problem(&problem);
-        black_box(certify_candidate(&prepared, &context));
+        black_box(certify_candidate(&analysis, &context));
         black_box(certify_candidate_batch(
-            &prepared,
+            &analysis,
             &[context.clone(), context.clone(), context.clone()],
         ));
         black_box(
             schedule_candidate_batch_predicates(
-                &prepared,
+                &analysis,
                 3,
                 BatchPredicateScheduleConfig {
                     max_rows_per_work_item: 2,
@@ -147,20 +147,20 @@ fn trace_candidate_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
             .expect("trace batch schedule should be valid"),
         );
         black_box(audit_active_set(
-            &prepared,
+            &analysis,
             &context,
             hypersolve::CandidateCertificationConfig::default(),
         ));
-        black_box(diagnose_failed_constraints(&prepared, &context));
+        black_box(diagnose_failed_constraints(&analysis, &context));
     })
 }
 
 fn trace_direct_and_fraction_free_linear() -> hyperreal::dispatch_trace::TraceSnapshot {
     trace_case("direct_and_fraction_free_linear", || {
         let problem = affine_krawczyk_problem();
-        let prepared = PreparedProblem::new(&problem);
-        black_box(solve_direct_affine_system(&prepared));
-        black_box(analyze_exact_affine_rank(&prepared, -64));
+        let analysis = problem.analyze();
+        black_box(solve_direct_affine_system(&analysis));
+        black_box(analyze_exact_affine_rank(&analysis, -64));
         black_box(
             determinant_bareiss(&[vec![r(2), r(1)], vec![r(1), r(-1)]], -64)
                 .expect("trace matrix should have a determinant"),
@@ -245,18 +245,18 @@ fn trace_resultants_and_curves() -> hyperreal::dispatch_trace::TraceSnapshot {
 fn trace_roots_and_interval_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
     trace_case("roots_and_interval_certification", || {
         let problem = quadratic_problem();
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let context = context_from_problem(&problem);
         black_box(isolate_univariate_polynomial_roots(
-            &prepared,
+            &analysis,
             hyperlimit::PredicatePolicy,
         ));
         black_box(represent_univariate_algebraic_roots(
-            &prepared,
+            &analysis,
             RootIsolationConfig::default(),
         ));
         black_box(certify_interval_box_candidate(
-            &prepared,
+            &analysis,
             &context,
             &[VariableBall {
                 symbol: SymbolId(0),
@@ -271,10 +271,10 @@ fn trace_roots_and_interval_certification() -> hyperreal::dispatch_trace::TraceS
 fn trace_krawczyk_certification() -> hyperreal::dispatch_trace::TraceSnapshot {
     trace_case("affine_krawczyk_certification", || {
         let problem = affine_krawczyk_problem();
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let context = context_from_problem(&problem);
         black_box(certify_affine_krawczyk_box(
-            &prepared,
+            &analysis,
             &context,
             &[
                 VariableBall {

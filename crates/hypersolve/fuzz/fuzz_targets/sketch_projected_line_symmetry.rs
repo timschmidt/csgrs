@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    certify_candidate, context_from_problem, PreparedProblem, SketchGeneratedRowStatus,
+    certify_candidate, context_from_problem, SketchGeneratedRowStatus,
     SketchResidualStrategy, SketchSolveProblem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -110,7 +110,7 @@ fuzz_target!(|data: &[u8]| {
             && row.strategy == Some(SketchResidualStrategy::ProjectedLineSymmetryPolynomial)
     }));
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     match mode {

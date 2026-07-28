@@ -1,7 +1,5 @@
 use hyperreal::Real;
-use hypersolve::{
-    Constraint, Expr, PreparedProblem, Problem, certify_candidate, context_from_problem,
-};
+use hypersolve::{Constraint, Expr, Problem, certify_candidate, context_from_problem};
 
 fn main() {
     let mut problem = Problem::default();
@@ -12,9 +10,9 @@ fn main() {
         x_expr.clone() * x_expr - Expr::real(Real::from(4)),
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let candidate = context_from_problem(&problem);
-    let certification = certify_candidate(&prepared, &candidate);
+    let certification = certify_candidate(&analysis, &candidate);
 
     assert_eq!(certification.certified_satisfied_rows, 1);
     assert!(!certification.has_certified_violation());

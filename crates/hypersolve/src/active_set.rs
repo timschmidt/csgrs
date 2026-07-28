@@ -12,6 +12,7 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::CandidateCertificationConfig;
 use crate::direct::{
     DirectAffineSystemReport, DirectAffineSystemStatus, DirectQuadraticSolution, DirectSolveError,
@@ -19,7 +20,6 @@ use crate::direct::{
 };
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 /// Certified relationship between one constraint and the supplied active mask.
@@ -429,11 +429,11 @@ impl ActiveSetAuditReport {
 /// terminology in standard nonlinear-optimization methods, while following the exact-geometric-computation model
 /// rule that only certified residual signs may drive branching.
 pub fn propose_active_set_update(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> ActiveSetUpdateReport {
-    let audit = audit_active_set(prepared, context, config);
+    let audit = audit_active_set(analysis, context, config);
     active_set_update_report_from_audit(audit)
 }
 
@@ -447,12 +447,12 @@ pub fn propose_active_set_update(
 /// follows the active-set/KKT iteration idea described by standard nonlinear-optimization methods, while preserving the exact-geometric-computation model boundary that exact reports, not
 /// floating tolerances, drive every branch.
 pub fn run_active_set_update_loop(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     initial_mask: &[bool],
     config: ActiveSetLoopConfig,
 ) -> ActiveSetLoopReport {
-    if initial_mask.len() != prepared.problem().constraints.len() {
+    if initial_mask.len() != analysis.problem().constraints.len() {
         return ActiveSetLoopReport {
             status: ActiveSetLoopStatus::InvalidInitialMask,
             iterations: Vec::new(),
@@ -463,7 +463,7 @@ pub fn run_active_set_update_loop(
     let mut mask = initial_mask.to_vec();
     let mut iterations = Vec::new();
     for iteration in 0..config.max_iterations {
-        let update = propose_active_mask_update(prepared, context, &mask, config.certification);
+        let update = propose_active_mask_update(analysis, context, &mask, config.certification);
         let next_mask = update.proposed_active_mask.clone();
         let status = if update.rejected_rows > 0 {
             Some(ActiveSetLoopStatus::RejectedCandidate)
@@ -527,11 +527,11 @@ pub fn run_active_set_update_loop(
 /// can be reported as certified. Proposal mechanics remain separate from exact
 /// predicate replay.
 pub fn regenerate_active_set_affine_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     active_mask: &[bool],
     config: CandidateCertificationConfig,
 ) -> ActiveSetAffineRegenerationReport {
-    if active_mask.len() != prepared.problem().constraints.len() {
+    if active_mask.len() != analysis.problem().constraints.len() {
         return ActiveSetAffineRegenerationReport {
             status: ActiveSetAffineRegenerationStatus::InvalidActiveMask,
             active_mask: active_mask.to_vec(),
@@ -541,12 +541,12 @@ pub fn regenerate_active_set_affine_candidate(
         };
     }
 
-    let mut masked_problem = prepared.problem().clone();
+    let mut masked_problem = analysis.problem().clone();
     for (constraint, active) in masked_problem.constraints.iter_mut().zip(active_mask) {
         constraint.active = *active;
     }
-    let masked_prepared = PreparedProblem::new(&masked_problem);
-    let direct_solve = solve_direct_affine_system(&masked_prepared);
+    let masked_analysis = masked_problem.analyze();
+    let direct_solve = solve_direct_affine_system(&masked_analysis);
     if direct_solve.status != DirectAffineSystemStatus::Solved {
         return ActiveSetAffineRegenerationReport {
             status: ActiveSetAffineRegenerationStatus::DirectSolveFailed,
@@ -561,7 +561,7 @@ pub fn regenerate_active_set_affine_candidate(
     for assignment in &direct_solve.assignments {
         candidate.bind(assignment.symbol, assignment.value.clone());
     }
-    let audit = audit_active_mask(prepared, &candidate, active_mask, config);
+    let audit = audit_active_mask(analysis, &candidate, active_mask, config);
     let status = if audit.violation_rows > 0 {
         ActiveSetAffineRegenerationStatus::RejectedCandidate
     } else if audit.domain_failure_rows > 0 {
@@ -596,12 +596,12 @@ pub fn regenerate_active_set_affine_candidate(
 /// construction is only proposal evidence until replay certifies it.
 /// the exact-geometric-computation model, and standard nonlinear-optimization methods, for the active-set/proposal boundary.
 pub fn regenerate_active_set_quadratic_candidates(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     active_mask: &[bool],
     config: ActiveSetQuadraticRegenerationConfig,
 ) -> ActiveSetQuadraticRegenerationReport {
-    if active_mask.len() != prepared.problem().constraints.len() {
+    if active_mask.len() != analysis.problem().constraints.len() {
         return ActiveSetQuadraticRegenerationReport {
             status: ActiveSetQuadraticRegenerationStatus::InvalidActiveMask,
             active_mask: active_mask.to_vec(),
@@ -611,12 +611,12 @@ pub fn regenerate_active_set_quadratic_candidates(
         };
     }
 
-    let mut masked_problem = prepared.problem().clone();
+    let mut masked_problem = analysis.problem().clone();
     for (constraint, active) in masked_problem.constraints.iter_mut().zip(active_mask) {
         constraint.active = *active;
     }
-    let masked_prepared = PreparedProblem::new(&masked_problem);
-    let direct_solutions = match solve_direct_univariate_quadratic_equalities(&masked_prepared) {
+    let masked_analysis = masked_problem.analyze();
+    let direct_solutions = match solve_direct_univariate_quadratic_equalities(&masked_analysis) {
         Ok(solutions) => solutions,
         Err(error) => {
             return ActiveSetQuadraticRegenerationReport {
@@ -656,7 +656,7 @@ pub fn regenerate_active_set_quadratic_candidates(
 
     let mut candidates = Vec::new();
     enumerate_quadratic_candidate_assignments(
-        prepared,
+        analysis,
         base_context,
         active_mask,
         config.certification,
@@ -700,17 +700,17 @@ pub fn regenerate_active_set_quadratic_candidates(
 /// exact residual replay certifies whether the mask is consistent, mismatched,
 /// violated, or undecidable.
 pub fn audit_active_set(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> ActiveSetAuditReport {
-    let active_mask = prepared
+    let active_mask = analysis
         .problem()
         .constraints
         .iter()
         .map(|constraint| constraint.active)
         .collect::<Vec<_>>();
-    audit_active_mask(prepared, context, &active_mask, config)
+    audit_active_mask(analysis, context, &active_mask, config)
 }
 
 /// Audit every source constraint against an explicit active mask.
@@ -720,14 +720,14 @@ pub fn audit_active_set(
 /// reported as a domain failure because no exact row-to-mask relationship can
 /// be established.
 pub fn audit_active_mask(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     active_mask: &[bool],
     config: CandidateCertificationConfig,
 ) -> ActiveSetAuditReport {
-    if active_mask.len() != prepared.problem().constraints.len() {
+    if active_mask.len() != analysis.problem().constraints.len() {
         return ActiveSetAuditReport {
-            rows: prepared
+            rows: analysis
                 .problem()
                 .constraints
                 .iter()
@@ -747,14 +747,14 @@ pub fn audit_active_mask(
             mask_mismatch_rows: 0,
             violation_rows: 0,
             unknown_rows: 0,
-            domain_failure_rows: prepared.problem().constraints.len(),
+            domain_failure_rows: analysis.problem().constraints.len(),
         };
     }
 
-    let mut rows = Vec::with_capacity(prepared.problem().constraints.len());
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    let mut rows = Vec::with_capacity(analysis.problem().constraints.len());
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         let active = active_mask[constraint_index];
-        let row = match prepared.evaluate_constraint_residual(constraint_index, context) {
+        let row = match analysis.evaluate_constraint_residual(constraint_index, context) {
             Ok(value) => {
                 let signed_residual = normalize_residual(value, constraint.kind);
                 let status =
@@ -805,18 +805,18 @@ pub fn audit_active_mask(
 }
 
 fn propose_active_mask_update(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     active_mask: &[bool],
     config: CandidateCertificationConfig,
 ) -> ActiveSetUpdateReport {
-    let audit = audit_active_mask(prepared, context, active_mask, config);
+    let audit = audit_active_mask(analysis, context, active_mask, config);
     active_set_update_report_from_audit(audit)
 }
 
 #[allow(clippy::too_many_arguments)]
 fn enumerate_quadratic_candidate_assignments(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     active_mask: &[bool],
     certification: CandidateCertificationConfig,
@@ -830,7 +830,7 @@ fn enumerate_quadratic_candidate_assignments(
         for assignment in &assignments {
             candidate.bind(assignment.symbol, assignment.value.clone());
         }
-        let audit = audit_active_mask(prepared, &candidate, active_mask, certification);
+        let audit = audit_active_mask(analysis, &candidate, active_mask, certification);
         let status = if audit.all_consistent() {
             ActiveSetQuadraticCandidateStatus::Certified
         } else if audit.domain_failure_rows > 0 {
@@ -859,7 +859,7 @@ fn enumerate_quadratic_candidate_assignments(
             value: root.clone(),
         });
         enumerate_quadratic_candidate_assignments(
-            prepared,
+            analysis,
             base_context,
             active_mask,
             certification,
@@ -1020,7 +1020,7 @@ mod tests {
         problem.add_constraint(inactive);
 
         let report = audit_active_set(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &crate::eval::context_from_problem(&problem),
             CandidateCertificationConfig::default(),
         );
@@ -1059,7 +1059,7 @@ mod tests {
         problem.add_constraint(violation);
 
         let report = audit_active_set(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &crate::eval::context_from_problem(&problem),
             CandidateCertificationConfig::default(),
         );
@@ -1103,7 +1103,7 @@ mod tests {
         problem.add_constraint(keep);
 
         let report = propose_active_set_update(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &crate::eval::context_from_problem(&problem),
             CandidateCertificationConfig::default(),
         );
@@ -1127,7 +1127,7 @@ mod tests {
         problem.add_constraint(violated);
 
         let report = propose_active_set_update(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &crate::eval::context_from_problem(&problem),
             CandidateCertificationConfig::default(),
         );
@@ -1155,7 +1155,7 @@ mod tests {
         problem.add_constraint(strict);
 
         let report = run_active_set_update_loop(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &crate::eval::context_from_problem(&problem),
             &[false, true],
             ActiveSetLoopConfig::default(),
@@ -1177,16 +1177,16 @@ mod tests {
         violated.kind = ConstraintKind::GreaterOrEqual;
         violated.active = true;
         problem.add_constraint(violated);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let context = crate::eval::context_from_problem(&problem);
 
         let invalid =
-            run_active_set_update_loop(&prepared, &context, &[], ActiveSetLoopConfig::default());
+            run_active_set_update_loop(&analysis, &context, &[], ActiveSetLoopConfig::default());
         assert_eq!(invalid.status, ActiveSetLoopStatus::InvalidInitialMask);
         assert_eq!(invalid.final_mask, None);
 
         let rejected = run_active_set_update_loop(
-            &prepared,
+            &analysis,
             &context,
             &[true],
             ActiveSetLoopConfig::default(),
@@ -1214,10 +1214,10 @@ mod tests {
         upper.kind = ConstraintKind::LessOrEqual;
         upper.active = false;
         problem.add_constraint(upper);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
 
         let report = regenerate_active_set_affine_candidate(
-            &prepared,
+            &analysis,
             &[true, true, false],
             CandidateCertificationConfig::default(),
         );
@@ -1239,10 +1239,10 @@ mod tests {
         let mut inequality = Constraint::equality("bound", x - Expr::int(2));
         inequality.kind = ConstraintKind::LessOrEqual;
         problem.add_constraint(inequality);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
 
         let invalid = regenerate_active_set_affine_candidate(
-            &prepared,
+            &analysis,
             &[true],
             CandidateCertificationConfig::default(),
         );
@@ -1252,7 +1252,7 @@ mod tests {
         );
 
         let failed = regenerate_active_set_affine_candidate(
-            &prepared,
+            &analysis,
             &[true, true],
             CandidateCertificationConfig::default(),
         );
@@ -1281,10 +1281,10 @@ mod tests {
         nonnegative.kind = ConstraintKind::GreaterOrEqual;
         nonnegative.active = false;
         problem.add_constraint(nonnegative);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
 
         let report = regenerate_active_set_quadratic_candidates(
-            &prepared,
+            &analysis,
             &EvaluationContext::default(),
             &[true, false],
             ActiveSetQuadraticRegenerationConfig::default(),
@@ -1322,10 +1322,10 @@ mod tests {
             "no real roots",
             x.clone() * x.clone() + Expr::int(1),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
 
         let invalid = regenerate_active_set_quadratic_candidates(
-            &prepared,
+            &analysis,
             &EvaluationContext::default(),
             &[],
             ActiveSetQuadraticRegenerationConfig::default(),
@@ -1336,7 +1336,7 @@ mod tests {
         );
 
         let no_roots = regenerate_active_set_quadratic_candidates(
-            &prepared,
+            &analysis,
             &EvaluationContext::default(),
             &[true],
             ActiveSetQuadraticRegenerationConfig::default(),
@@ -1359,9 +1359,9 @@ mod tests {
             "y roots",
             y.clone() * y - Expr::int(4),
         ));
-        let prepared = PreparedProblem::new(&two_quadratics);
+        let analysis = two_quadratics.analyze();
         let limited = regenerate_active_set_quadratic_candidates(
-            &prepared,
+            &analysis,
             &EvaluationContext::default(),
             &[true, true],
             ActiveSetQuadraticRegenerationConfig {
@@ -1390,7 +1390,7 @@ mod tests {
             problem.add_constraint(constraint);
 
             let report = audit_active_set(
-                &PreparedProblem::new(&problem),
+                &problem.analyze(),
                 &crate::eval::context_from_problem(&problem),
                 CandidateCertificationConfig::default(),
             );
@@ -1435,10 +1435,10 @@ mod tests {
                 "y row",
                 y - Expr::int(y_value),
             ));
-            let prepared = PreparedProblem::new(&problem);
+            let analysis = problem.analyze();
 
             let report = regenerate_active_set_affine_candidate(
-                &prepared,
+                &analysis,
                 &[true, true],
                 CandidateCertificationConfig::default(),
             );
@@ -1466,10 +1466,10 @@ mod tests {
             nonnegative.kind = ConstraintKind::GreaterOrEqual;
             nonnegative.active = false;
             problem.add_constraint(nonnegative);
-            let prepared = PreparedProblem::new(&problem);
+            let analysis = problem.analyze();
 
             let report = regenerate_active_set_quadratic_candidates(
-                &prepared,
+                &analysis,
                 &EvaluationContext::default(),
                 &[true, false],
                 ActiveSetQuadraticRegenerationConfig::default(),

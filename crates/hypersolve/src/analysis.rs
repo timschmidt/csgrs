@@ -1,6 +1,6 @@
-//! Prepared solver metadata for repeated residual and Jacobian work.
+//! Solver analysis for repeated residual and Jacobian work.
 //!
-//! The prepared types in this module cache structural facts about constraints
+//! The analysis types in this module cache structural facts about constraints
 //! and residual expressions without evaluating variables or exporting to
 //! primitive floats. They are advisory scheduling data: a dense f64 linear
 //! adapter may consume the sparsity map, while a future exact/hyperlattice
@@ -18,7 +18,7 @@ use hyperreal::RealSign;
 
 /// Cached structural facts for one active or inactive constraint.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PreparedConstraintFacts {
+pub struct ConstraintFacts {
     /// Constraint name copied from the source problem for diagnostics.
     pub name: String,
     /// Constraint kind.
@@ -41,7 +41,7 @@ pub struct PreparedConstraintFacts {
     pub dependent_columns: Vec<usize>,
 }
 
-impl PreparedConstraintFacts {
+impl ConstraintFacts {
     /// Returns whether the residual is structurally affine in solve variables.
     pub fn is_affine_row(&self) -> bool {
         self.residual.degree == ExprDegree::Polynomial(1)
@@ -77,9 +77,9 @@ impl PreparedConstraintFacts {
     }
 }
 
-/// Prepared problem-wide facts for solver strategy selection.
+/// Problem-wide facts for solver strategy selection.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PreparedProblemFacts {
+pub struct ProblemFacts {
     /// Number of variables in the source problem.
     pub variable_count: usize,
     /// Number of constraints in the source problem.
@@ -110,7 +110,7 @@ pub struct PreparedProblemFacts {
     pub structural_jacobian_nonzeros: usize,
 }
 
-impl PreparedProblemFacts {
+impl ProblemFacts {
     /// Returns whether every active row is structurally affine.
     pub fn all_active_rows_affine(&self) -> bool {
         self.active_constraint_count > 0 && self.affine_active_rows == self.active_constraint_count
@@ -138,22 +138,22 @@ impl PreparedProblemFacts {
     }
 }
 
-/// Borrowed prepared view of a [`Problem`].
+/// Borrowed analysis view of a [`Problem`].
 #[derive(Clone, Debug)]
-pub struct PreparedProblem<'a> {
+pub struct ProblemAnalysis<'a> {
     problem: &'a Problem,
-    constraints: Vec<PreparedConstraintFacts>,
+    constraints: Vec<ConstraintFacts>,
     affine_residuals: Vec<Option<AffineResidual>>,
     univariate_quadratic_residuals: Vec<Option<UnivariateQuadraticResidual>>,
     quadratic_residuals: Vec<Option<QuadraticResidual>>,
-    facts: PreparedProblemFacts,
+    facts: ProblemFacts,
     jacobian_sparsity: Vec<Vec<bool>>,
 }
 
-impl<'a> PreparedProblem<'a> {
-    /// Prepare solver metadata from a borrowed problem.
+impl<'a> ProblemAnalysis<'a> {
+    /// Analyze a borrowed problem for repeated solver work.
     ///
-    /// Preparation walks each residual expression once, preserving dependency
+    /// Analysis walks each residual expression once, preserving dependency
     /// and degree facts near the model layer rather than rediscovering them
     /// inside dense linear-solver loops. This is a cache-populating API, not an
     /// evaluation API: variable values and inequality activation are still
@@ -231,7 +231,7 @@ impl<'a> PreparedProblem<'a> {
                 }
             }
 
-            constraints.push(PreparedConstraintFacts {
+            constraints.push(ConstraintFacts {
                 name: constraint.name.clone(),
                 kind: constraint.kind,
                 active: constraint.active,
@@ -245,7 +245,7 @@ impl<'a> PreparedProblem<'a> {
             quadratic_residuals.push(quadratic_residual);
         }
 
-        let facts = PreparedProblemFacts {
+        let facts = ProblemFacts {
             variable_count: problem.variables.len(),
             constraint_count: problem.constraints.len(),
             active_constraint_count,
@@ -278,12 +278,12 @@ impl<'a> PreparedProblem<'a> {
     }
 
     /// Returns cached problem-wide facts.
-    pub const fn facts(&self) -> &PreparedProblemFacts {
+    pub const fn facts(&self) -> &ProblemFacts {
         &self.facts
     }
 
     /// Returns cached per-constraint facts.
-    pub fn constraints(&self) -> &[PreparedConstraintFacts] {
+    pub fn constraints(&self) -> &[ConstraintFacts] {
         &self.constraints
     }
 
@@ -341,9 +341,9 @@ impl<'a> PreparedProblem<'a> {
 
     /// Evaluate residuals against a context using the source problem.
     ///
-    /// The prepared metadata is intentionally not required for correctness;
-    /// stale or missing preparation should be a performance miss rather than a
-    /// semantic change. Callers that cache a `PreparedProblem` can use this
+    /// The analysis metadata is intentionally not required for correctness;
+    /// stale or missing analysis should be a performance miss rather than a
+    /// semantic change. Callers that cache a `ProblemAnalysis` can use this
     /// helper to keep evaluation and metadata ownership adjacent.
     pub fn evaluate_residuals(
         &self,

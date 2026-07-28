@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    CertifiedCandidateStatus, PreparedProblem, SketchEntityHandle, SketchGeneratedRowStatus,
+    CertifiedCandidateStatus, SketchEntityHandle, SketchGeneratedRowStatus,
     SketchResidualStrategy, SketchSolveProblem, certify_candidate, context_from_problem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -97,7 +97,7 @@ fuzz_target!(|data: &[u8]| {
                     && row.strategy == Some(SketchResidualStrategy::OrientedAngleEquality)
             }));
             let certification = certify_candidate(
-                &PreparedProblem::new(&lowered.problem),
+                &lowered.problem.analyze(),
                 &context_from_problem(&lowered.problem),
             );
             match mode {

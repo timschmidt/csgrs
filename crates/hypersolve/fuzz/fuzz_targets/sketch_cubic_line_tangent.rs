@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    PreparedProblem, SketchLineEndpoint, SketchResidualFormKind, SketchResidualFormsStatus,
+    SketchLineEndpoint, SketchResidualFormKind, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchSolveProblem, certify_candidate, context_from_problem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -46,7 +46,7 @@ fuzz_target!(|data: [i16; 6]| {
         row.strategy == Some(SketchResidualStrategy::CubicLineTangent)
     }));
     let context = context_from_problem(&lowered.problem);
-    assert!(certify_candidate(&PreparedProblem::new(&lowered.problem), &context).all_satisfied());
+    assert!(certify_candidate(&lowered.problem.analyze(), &context).all_satisfied());
 
     let forms = sketch.residual_forms_for_constraint(handle);
     assert_eq!(forms.status, SketchResidualFormsStatus::Generated);

@@ -14,11 +14,10 @@ use crate::direct::{
 };
 use crate::eval::context_from_problem;
 use crate::jacobian::{
-    FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_prepared,
+    FiniteDifferenceConfig, finite_difference_jacobian, symbolic_jacobian_with_analysis,
 };
 use crate::linalg::{DenseLinearBackend, LinearBackend};
 use crate::model::{Problem, Variable, VariableId};
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 #[derive(Clone, Debug)]
@@ -129,9 +128,9 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
     let mut previous_gradient: Option<Vec<f64>> = None;
 
     for iteration in 0..state.config.max_iterations {
-        let prepared = PreparedProblem::new(&state.problem);
+        let analysis = state.problem.analyze();
         let context = context_from_problem(&state.problem);
-        let Ok(residuals) = prepared.evaluate_residuals(&context) else {
+        let Ok(residuals) = analysis.evaluate_residuals(&context) else {
             return SolveReport {
                 reason: ConvergenceReason::EvaluationFailed,
                 iterations: iteration,
@@ -164,7 +163,7 @@ pub fn solve_damped_least_squares(mut state: SolverState) -> SolveReport {
             };
         }
 
-        let mut jacobian = match symbolic_jacobian_prepared(&prepared, &context) {
+        let mut jacobian = match symbolic_jacobian_with_analysis(&analysis, &context) {
             Ok(jacobian) => jacobian,
             Err(_) => {
                 let Ok(jacobian) = finite_difference_jacobian(
@@ -301,8 +300,8 @@ fn proposal_preprocessing_report(
         return ProposalPreprocessingReport::not_requested();
     }
     let dragged_rows = dragged_parameter_dense_rows(problem, config);
-    let prepared = PreparedProblem::new(problem);
-    let substitutions = match find_equality_substitutions(&prepared) {
+    let analysis = problem.analyze();
+    let substitutions = match find_equality_substitutions(&analysis) {
         Ok(substitutions) => substitutions.len(),
         Err(_) => {
             return ProposalPreprocessingReport {
@@ -323,7 +322,7 @@ fn proposal_preprocessing_report(
             };
         }
     };
-    let affine_soluble = match solve_direct_affine_equalities(&prepared) {
+    let affine_soluble = match solve_direct_affine_equalities(&analysis) {
         Ok(solutions) => solutions.len(),
         Err(_) => {
             return ProposalPreprocessingReport {
@@ -344,7 +343,7 @@ fn proposal_preprocessing_report(
             };
         }
     };
-    let quadratic_soluble = match solve_direct_univariate_quadratic_equalities(&prepared) {
+    let quadratic_soluble = match solve_direct_univariate_quadratic_equalities(&analysis) {
         Ok(solutions) => solutions.len(),
         Err(_) => {
             return ProposalPreprocessingReport {
@@ -393,8 +392,8 @@ fn apply_modified_newton_affine_seeds(
         return seeded;
     }
     let solutions = {
-        let prepared = PreparedProblem::new(problem);
-        solve_direct_affine_equalities(&prepared)
+        let analysis = problem.analyze();
+        solve_direct_affine_equalities(&analysis)
     };
     let Ok(solutions) = solutions else {
         return seeded;
@@ -436,8 +435,8 @@ fn apply_modified_newton_quadratic_seeds(
         return;
     }
     let solutions = {
-        let prepared = PreparedProblem::new(problem);
-        solve_direct_univariate_quadratic_equalities(&prepared)
+        let analysis = problem.analyze();
+        solve_direct_univariate_quadratic_equalities(&analysis)
     };
     let Ok(solutions) = solutions else {
         return;
@@ -501,8 +500,8 @@ fn apply_modified_newton_substitution_seeds(
         return;
     }
     let classes = {
-        let prepared = PreparedProblem::new(problem);
-        let Ok(substitutions) = find_equality_substitutions(&prepared) else {
+        let analysis = problem.analyze();
+        let Ok(substitutions) = find_equality_substitutions(&analysis) else {
             return;
         };
         let Ok(classes) = build_equality_substitution_classes(&substitutions) else {

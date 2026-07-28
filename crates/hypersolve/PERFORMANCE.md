@@ -10,7 +10,7 @@ boundary, but no optimization may turn such a proposal into proof.
 | Reference | Applied finding and disposition |
 | --- | --- |
 | Bareiss, integer-preserving Gaussian elimination | The exact dense and sparse direct solvers use the fraction-free recurrence and certified pivots. The dense solver formerly evaluated one Bareiss determinant for the matrix and one per Cramer numerator. It now eliminates the augmented system once, retains the same determinant/numerator/replay report, and falls back to the former Cramer construction if an augmented exact division is not representable. This is the largest retained optimization below. |
-| Bouma et al., geometric constraint solving | Graph reduction and directed algebraic decomposition correspond to prepared dependency facts, equality-substitution classes, affine row elimination, solver blocks, and sketch lowering. These exact/direct passes remain ahead of the nonlinear proposal loop; solution choice and interactive dragging are reported rather than hidden. |
+| Bouma et al., geometric constraint solving | Graph reduction and directed algebraic decomposition correspond to analyzed dependency facts, equality-substitution classes, affine row elimination, solver blocks, and sketch lowering. These exact/direct passes remain ahead of the nonlinear proposal loop; solution choice and interactive dragging are reported rather than hidden. |
 | Collins, subresultants and reduced polynomial remainder sequences | `resultant` exposes exact Sylvester resultants and a fraction-free pseudo-remainder chain for common-factor evidence. It does not claim the complete multivariate reduced-PRS system from the paper. The audit retained binary powering for the constant-polynomial resultant case. |
 | Collins and Loos, real zeros of polynomials | `root_isolation` extracts exact-rational univariate rows, performs square-free reduction, constructs Sturm evidence, isolates distinct roots, refines bounded intervals, and replays rational witnesses. Unsupported coefficients and incomplete refinement remain explicit statuses. |
 | Descartes, *La Geometrie* | Power-basis sign variation provides exact positive-root count bounds after certified degree trimming. The bound is used as a filter/report and is not treated as an exact root count when the parity gap remains. |
@@ -28,7 +28,7 @@ boundary, but no optimization may turn such a proposal into proof.
 | Sturm, numerical equations | Exact Sturm sequences count distinct roots over rational intervals and guide isolation/refinement. Endpoint roots and multiplicities are handled through square-free and replay evidence instead of floating tolerances. |
 | Sylvester, syzygetic relations and resultants | The coefficient matrix of the two-polynomial elimination map is constructed explicitly and its determinant is evaluated by Bareiss. Constant-polynomial conventions bypass artificial zero-dimensional determinants. |
 | Tinney and Walker, optimally ordered sparse factorization | Symbolic fill is audited separately from numeric fraction-free updates, with certified-zero cancellation and conservative unknown entries. A retained opt-in symmetric minimum-degree solver now records both permutations, performs exact sparse Bareiss elimination in the reordered system, restores source variable order, and exactly replays the source system. The authored-order API remains unchanged because already-good orderings are faster without the extra analysis. |
-| Yap, exact geometric computation | Exact expressions, prepared object facts, certified signs, algebraic intervals, and named lossy adapters enforce the construction/proof boundary throughout the crate. Every retained optimization reuses exact evidence or changes only the construction schedule; none changes a branch criterion. |
+| Yap, exact geometric computation | Exact expressions, analyzed object facts, certified signs, algebraic intervals, and named lossy adapters enforce the construction/proof boundary throughout the crate. Every retained optimization reuses exact evidence or changes only the construction schedule; none changes a branch criterion. |
 
 ## Immediate residual-form API gate
 
@@ -45,6 +45,22 @@ multivariate equivalent improved from 35.860 us to 34.955 us (-2.88%,
 `p < 0.05`, 95% interval -3.84% to -2.08%). The parsing and evaluation
 kernels are unchanged; the improvement is consistent with code layout. The
 renamed retained sentinels subsequently measured 48.200 us and 35.011 us.
+
+## Problem-analysis API gate
+
+The central reusable solver state is now `ProblemAnalysis`, available directly
+through `Problem::analyze`. Its public summaries are `ProblemFacts`,
+`ConstraintFacts`, `SolverBlock`, and `SolverBlockFacts`; the module is
+`analysis`. This retains the one-time dependency, row-form, and Jacobian work
+without exposing a preparation lifecycle.
+
+Serialized 100-sample comparisons found no regression. Analysis of the 16-row
+univariate quadratic problem improved from 46.159 us to 44.460 us (-3.68%,
+`p < 0.05`, 95% interval -4.17% to -3.24%). Exact affine candidate
+certification moved from 2.5113 us to 2.5168 us (+0.63%, within Criterion's
+noise threshold, 95% interval +0.03% to +1.19%). The report now reserves its
+known active-row capacity, and the cross-crate `analyze` accessor is inline;
+arithmetic and certification criteria are unchanged.
 
 ## Retained measurements
 
@@ -64,7 +80,7 @@ are regression evidence for these workloads, not portable absolute claims.
 | Exact roots of `x^2 - 2`, Hypersolve versus CGAL 6.0.3 | 428.90 ns CGAL median | 270.97 ns Hypersolve estimate | 36.8% faster |
 | Hypercurve all-family exact Boolean instructions | 320,660,631 | 189,533,986 | 40.9% fewer |
 
-The exact-quadratic competitor row compares Hypersolve's public prepared-row
+The exact-quadratic competitor row compares Hypersolve's public row-form
 solver with CGAL's exact `Gmpq`
 [`compute_roots_of_2`](https://doc.cgal.org/latest/Number_types/group__nt__ralgebraic.html)
 API. Both construct both irrational roots of `x^2 - 2`; the Hypersolve result
@@ -575,7 +591,7 @@ large-input gains from hiding an immediate-API or downstream regression.
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate
 `dispatch_trace.md`. The diagnostic harness pairs major families from the timed
 `certification` benchmark with the shared `hyperreal` trace recorder. It covers
-sketch lowering and preflight, prepared candidate/batch/active-set work,
+sketch lowering and preflight, analyzed candidate/batch/active-set work,
 direct and fraction-free linear algebra, resultants and curve substitution,
 root isolation and interval proof, affine Krawczyk proof, domain proof, and the
 named lossy-proposal/exact-replay boundary. Every row contains a Hypersolve

@@ -27,9 +27,9 @@ fuzz_target!(|data: [i16; 2]| {
     lower.active = false;
     problem.add_constraint(lower);
 
-    let prepared = hypersolve::PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let report = regenerate_active_set_quadratic_candidates(
-        &prepared,
+        &analysis,
         &EvaluationContext::default(),
         &[true, false],
         ActiveSetQuadraticRegenerationConfig::default(),

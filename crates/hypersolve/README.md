@@ -4,7 +4,7 @@
 </h1>
 
 `hypersolve` is the experimental exact-aware solver layer for the Hyper stack. It models
-variables, constraints, symbolic residuals, preparation facts, interval and candidate
+variables, constraints, symbolic residuals, problem analysis, interval and candidate
 certification, direct equality helpers, and lossy dense-solver adapters while keeping
 `hyperreal::Real` values visible.
 
@@ -21,7 +21,7 @@ Jacobian structure, a lossy adapter, a wrong active set, or a genuinely discrete
 topology rule.
 
 `hypersolve` separates those layers. Expressions carry dependency and degree facts;
-prepared problems retain row and Jacobian structure; direct and interval helpers expose
+problem analyses retain row and Jacobian structure; direct and interval helpers expose
 certificates; dense primitive linear solving is a named adapter with diagnostics rather
 than internal truth.
 
@@ -31,7 +31,7 @@ than internal truth.
   expressions over `Real`.
 - `Problem`, `Variable`, `VariableId`, `Constraint`, and `ConstraintKind` describe the
   solver model.
-- `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and prepared problem
+- `EvaluationContext`, `ResidualEvaluation`, Jacobian helpers, and problem-analysis
   types evaluate residuals and preserve structure.
 - `AffineResidual`, polynomial residual types, solver-block facts, equality
   substitution classes, class-application reports, affine-row elimination reports,
@@ -71,7 +71,7 @@ work into named proposal adapters whose outputs must be certified before accepta
 ## Performance Model
 
 `hypersolve` works to keep expensive solving out of cases where structure already gives
-an answer. Prepared facts record constant rows, affine rows, polynomial rows,
+an answer. Problem facts record constant rows, affine rows, polynomial rows,
 dependency masks, sparse Jacobian structure, and affine residual reuse. Direct equality
 substitution, substitution-class candidate propagation, substitution-class affine row
 elimination, univariate quadratic helpers, and Sturm root isolation handle small exact
@@ -96,7 +96,7 @@ Implemented today:
 
 - symbolic expressions, simplification, structural facts, and differentiation;
 - exact residual evaluation contexts and finite-difference/symbolic Jacobian builders;
-- prepared problem, affine, polynomial, and solver-block fact records;
+- problem analysis, affine and polynomial forms, and solver-block facts;
 - direct one-row and square-system affine helpers, univariate-quadratic equality
   helpers with full-candidate replay reports, equality-substitution analysis,
   exact substitution-class construction, class-based candidate propagation, and
@@ -142,7 +142,7 @@ trusting a proposal loop by itself:
 
 ```rust
 use hypersolve::{
-    Constraint, Expr, PreparedProblem, Problem, certify_candidate, context_from_problem,
+    Constraint, Expr, ProblemAnalysis, Problem, certify_candidate, context_from_problem,
 };
 use hyperreal::Real;
 
@@ -154,9 +154,9 @@ problem.add_constraint(Constraint::equality(
     x_expr.clone() * x_expr - Expr::real(Real::from(4)),
 ));
 
-let prepared = PreparedProblem::new(&problem);
+let analysis = problem.analyze();
 let candidate = context_from_problem(&problem);
-let certification = certify_candidate(&prepared, &candidate);
+let certification = certify_candidate(&analysis, &candidate);
 
 assert_eq!(certification.certified_satisfied_rows, 1);
 assert!(!certification.has_certified_violation());

@@ -13,6 +13,7 @@ pub mod algebraic_mobius;
 pub mod algebraic_polynomial_image;
 pub mod algebraic_rational_image;
 pub mod alpha;
+pub mod analysis;
 pub mod bareiss;
 pub mod batch;
 pub mod branches;
@@ -32,7 +33,6 @@ pub mod linalg;
 pub mod model;
 pub mod polynomial;
 pub mod predicates;
-pub mod prepared;
 pub mod rank;
 pub mod residual_replay;
 pub mod resultant;
@@ -110,6 +110,7 @@ pub use alpha::{
     UnivariateQuadraticAlphaReport, UnivariateQuadraticAlphaRow, UnivariateQuadraticAlphaStatus,
     certify_univariate_quadratic_alpha,
 };
+pub use analysis::{ConstraintFacts, ProblemAnalysis, ProblemFacts, facts_depend_on_symbol};
 pub use bareiss::{
     BareissDeterminantReport, BareissError, BareissMultiRhsSolveReport, BareissPivot,
     BareissSolveReport, SparseBareissError, SparseBareissSolveReport,
@@ -217,9 +218,6 @@ pub use polynomial::{
     QuadraticLinearTerm, QuadraticResidual, QuadraticTerm, UnivariateQuadraticResidual,
 };
 pub use predicates::{Classification, PredicateBackend, PredicateReport};
-pub use prepared::{
-    PreparedConstraintFacts, PreparedProblem, PreparedProblemFacts, facts_depend_on_symbol,
-};
 pub use rank::{ExactAffineRankReport, ExactAffineRankStatus, analyze_exact_affine_rank};
 pub use residual_replay::{
     DenseResidualReplayError, DenseResidualReplayReport, PreparedSparseLinearSystem,
@@ -316,9 +314,7 @@ pub use sketch_workplanes::{
     project_sketch_point3_to_workplane2_with_policy,
 };
 pub use solver::{DraggedParameterWeight, SolverConfig, SolverState, solve_damped_least_squares};
-pub use solver_block::{
-    PreparedSolverBlock, PreparedSolverBlockFacts, SolverBlockRow, SolverBlockRowKind,
-};
+pub use solver_block::{SolverBlock, SolverBlockFacts, SolverBlockRow, SolverBlockRowKind};
 pub use sparse_pattern::{
     SparsePatternEntry, SparsePatternEntryStatus, SparsePatternError,
     SymbolicSparseEliminationStep, SymbolicSparseFactorizationReport,

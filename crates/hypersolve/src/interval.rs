@@ -18,12 +18,12 @@ use std::collections::HashMap;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::{Real, RealSign};
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateResidualBall, certify_candidate, certify_candidate_with_residual_balls,
 };
 use crate::eval::EvaluationContext;
 use crate::polynomial::QuadraticResidual;
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 /// Exact radius around one solver variable.
@@ -460,7 +460,7 @@ impl MultivariateQuadraticKrawczykReport {
 /// `hyperlimit` to certify the whole ball sign. Missing variable radii are
 /// treated as exact zero-radius variables.
 pub fn certify_affine_interval_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
@@ -469,14 +469,14 @@ pub fn certify_affine_interval_candidate(
     let mut residual_balls = Vec::new();
     let mut active_row = 0_usize;
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
-        if let Some(affine) = &prepared.affine_residuals()[constraint_index] {
+        if let Some(affine) = &analysis.affine_residuals()[constraint_index] {
             let mut radius = Real::zero();
             for (column, coefficient) in affine.coefficients().iter().enumerate() {
-                let variable = &prepared.problem().variables[column];
+                let variable = &analysis.problem().variables[column];
                 let Some(variable_radius) = radius_by_symbol.get(&variable.symbol) else {
                     continue;
                 };
@@ -493,10 +493,10 @@ pub fn certify_affine_interval_candidate(
     }
 
     if residual_balls.is_empty() {
-        return Ok(certify_candidate(prepared, context));
+        return Ok(certify_candidate(analysis, context));
     }
     Ok(certify_candidate_with_residual_balls(
-        prepared,
+        analysis,
         context,
         &residual_balls,
         policy,
@@ -510,7 +510,7 @@ pub fn certify_affine_interval_candidate(
 /// radii, missing candidate bindings, and undecided magnitudes become explicit
 /// `InvalidInput` reports rather than panics or primitive-float fallbacks.
 pub fn certify_interval_box_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     package: IntervalBoxCertificationPackage,
@@ -518,16 +518,16 @@ pub fn certify_interval_box_candidate(
 ) -> IntervalBoxCertificationReport {
     let result = match package {
         IntervalBoxCertificationPackage::Affine => {
-            certify_affine_interval_candidate(prepared, context, variable_balls, policy)
+            certify_affine_interval_candidate(analysis, context, variable_balls, policy)
                 .map_err(interval_box_affine_error_message)
         }
         IntervalBoxCertificationPackage::UnivariateQuadratic => {
-            certify_quadratic_interval_candidate(prepared, context, variable_balls, policy)
+            certify_quadratic_interval_candidate(analysis, context, variable_balls, policy)
                 .map_err(interval_box_quadratic_error_message)
         }
         IntervalBoxCertificationPackage::MultivariateQuadratic => {
             certify_multivariate_quadratic_interval_candidate(
-                prepared,
+                analysis,
                 context,
                 variable_balls,
                 policy,
@@ -570,16 +570,16 @@ pub fn certify_interval_box_candidate(
 /// `|step_i| <= radius_i` for every variable. A successful report therefore
 /// proves that the unique affine root is inside the caller's box.
 pub fn certify_affine_krawczyk_box(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> AffineKrawczykReport {
-    let variable_count = prepared.problem().variables.len();
+    let variable_count = analysis.problem().variables.len();
     let mut matrix = Vec::new();
     let mut rhs = Vec::new();
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -591,7 +591,7 @@ pub fn certify_affine_krawczyk_box(
                 Vec::new(),
             );
         }
-        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+        let Some(affine) = &analysis.affine_residuals()[constraint_index] else {
             return affine_krawczyk_report(
                 AffineKrawczykStatus::NonAffineRow { constraint_index },
                 variable_count,
@@ -600,7 +600,7 @@ pub fn certify_affine_krawczyk_box(
             );
         };
         let residual =
-            match affine.eval_real(prepared.problem().variables.as_slice(), context.bindings()) {
+            match affine.eval_real(analysis.problem().variables.as_slice(), context.bindings()) {
                 Ok(value) => value,
                 Err(error) => {
                     let symbol = match error {
@@ -660,7 +660,7 @@ pub fn certify_affine_krawczyk_box(
     };
 
     let mut steps = Vec::with_capacity(variable_count);
-    for (variable, step) in prepared.problem().variables.iter().zip(step) {
+    for (variable, step) in analysis.problem().variables.iter().zip(step) {
         let Some(candidate) = context.bindings().get(&variable.symbol) else {
             return affine_krawczyk_report(
                 AffineKrawczykStatus::UnboundCandidateSymbol {
@@ -750,7 +750,7 @@ pub fn certify_affine_krawczyk_box(
 /// `hyperlimit`'s exact policy surface. This provides the first nonlinear
 /// interval-Newton/Krawczyk proof operator for retained solver structure.
 pub fn certify_univariate_quadratic_krawczyk_box(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
@@ -780,7 +780,7 @@ pub fn certify_univariate_quadratic_krawczyk_box(
     };
     let mut rows = Vec::new();
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -792,7 +792,7 @@ pub fn certify_univariate_quadratic_krawczyk_box(
             ));
             continue;
         }
-        let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
+        let Some(quadratic) = &analysis.univariate_quadratic_residuals()[constraint_index] else {
             rows.push(quadratic_krawczyk_empty_row(
                 constraint_index,
                 SymbolId(0),
@@ -822,7 +822,7 @@ pub fn certify_univariate_quadratic_krawczyk_box(
             continue;
         };
         let residual = match quadratic
-            .eval_real(prepared.problem().variables.as_slice(), context.bindings())
+            .eval_real(analysis.problem().variables.as_slice(), context.bindings())
         {
             Ok(value) => value,
             Err(_) => {
@@ -881,12 +881,12 @@ pub fn certify_univariate_quadratic_krawczyk_box(
 /// only to retained quadratic packages and certified through exact `Real`
 /// comparisons under the exact-decision discipline.
 pub fn certify_multivariate_quadratic_krawczyk_box(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
 ) -> MultivariateQuadraticKrawczykReport {
-    let variable_count = prepared.problem().variables.len();
+    let variable_count = analysis.problem().variables.len();
     let radius_by_symbol =
         match validate_multivariate_quadratic_krawczyk_variable_balls(variable_balls, policy) {
             Ok(radii) => radii,
@@ -902,7 +902,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         };
     let mut rows = Vec::new();
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -915,7 +915,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
                 Vec::new(),
             );
         }
-        let Some(quadratic) = &prepared.quadratic_residuals()[constraint_index] else {
+        let Some(quadratic) = &analysis.quadratic_residuals()[constraint_index] else {
             return multivariate_quadratic_krawczyk_report(
                 MultivariateQuadraticKrawczykStatus::NonQuadraticRow { constraint_index },
                 variable_count,
@@ -940,7 +940,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         );
     }
 
-    for variable in &prepared.problem().variables {
+    for variable in &analysis.problem().variables {
         if !context.bindings().contains_key(&variable.symbol) {
             return multivariate_quadratic_krawczyk_report(
                 MultivariateQuadraticKrawczykStatus::UnboundCandidateSymbol {
@@ -971,7 +971,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
     let mut derivative_variation = Vec::with_capacity(variable_count);
     for (constraint_index, quadratic) in &rows {
         let residual = match quadratic
-            .eval_real(prepared.problem().variables.as_slice(), context.bindings())
+            .eval_real(analysis.problem().variables.as_slice(), context.bindings())
         {
             Ok(value) => value,
             Err(crate::symbolic::ExprEvalError::UnboundSymbol(symbol)) => {
@@ -1000,7 +1000,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         residual_values.push(residual);
         jacobian.push(quadratic_gradient(
             quadratic,
-            prepared.problem().variables.as_slice(),
+            analysis.problem().variables.as_slice(),
             context,
         ));
         let Some(remainder_radius) = quadratic_remainder_radius(quadratic, &radius_by_symbol)
@@ -1016,7 +1016,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         remainder_radii.push(remainder_radius);
         let Some(variation) = quadratic_derivative_variation(
             quadratic,
-            prepared.problem().variables.as_slice(),
+            analysis.problem().variables.as_slice(),
             &radius_by_symbol,
         ) else {
             return multivariate_quadratic_krawczyk_report(
@@ -1056,7 +1056,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         .collect::<Vec<_>>();
 
     let mut variables = Vec::with_capacity(variable_count);
-    for (variable_index, variable) in prepared.problem().variables.iter().enumerate() {
+    for (variable_index, variable) in analysis.problem().variables.iter().enumerate() {
         let step = negative_matrix_vector_entry(&inverse[variable_index], &residual_values);
         let Some(step_abs) = abs_real(&step) else {
             return multivariate_quadratic_krawczyk_report(
@@ -1082,7 +1082,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
         let Some(contraction_bound) = contraction_row_bound(
             &inverse[variable_index],
             &derivative_variation,
-            prepared.problem().variables.as_slice(),
+            analysis.problem().variables.as_slice(),
             &radius_by_symbol,
         ) else {
             return multivariate_quadratic_krawczyk_report(
@@ -1184,7 +1184,7 @@ pub fn certify_multivariate_quadratic_krawczyk_box(
 /// treated as zero-radius variables, so callers can use this as a strict point
 /// replay with optional local proof radii.
 pub fn certify_quadratic_interval_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
@@ -1201,11 +1201,11 @@ pub fn certify_quadratic_interval_candidate(
     let mut residual_balls = Vec::new();
     let mut active_row = 0_usize;
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
-        if let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] {
+        if let Some(quadratic) = &analysis.univariate_quadratic_residuals()[constraint_index] {
             let variable_radius = radius_by_symbol
                 .get(&quadratic.symbol())
                 .cloned()
@@ -1229,10 +1229,10 @@ pub fn certify_quadratic_interval_candidate(
     }
 
     if residual_balls.is_empty() {
-        return Ok(certify_candidate(prepared, context));
+        return Ok(certify_candidate(analysis, context));
     }
     Ok(certify_candidate_with_residual_balls(
-        prepared,
+        analysis,
         context,
         &residual_balls,
         policy,
@@ -1254,7 +1254,7 @@ pub fn certify_quadratic_interval_candidate(
 /// package; it does not certify uniqueness of a nonlinear root. That later
 /// step belongs to interval Newton/Krawczyk proof operators.
 pub fn certify_multivariate_quadratic_interval_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     variable_balls: &[VariableBall],
     policy: PredicatePolicy,
@@ -1271,11 +1271,11 @@ pub fn certify_multivariate_quadratic_interval_candidate(
     let mut residual_balls = Vec::new();
     let mut active_row = 0_usize;
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
-        if let Some(quadratic) = &prepared.quadratic_residuals()[constraint_index] {
+        if let Some(quadratic) = &analysis.quadratic_residuals()[constraint_index] {
             let mut gradients: HashMap<SymbolId, Real> = HashMap::new();
             for term in quadratic.linear_terms() {
                 gradients.insert(term.symbol, term.coefficient.clone());
@@ -1334,10 +1334,10 @@ pub fn certify_multivariate_quadratic_interval_candidate(
     }
 
     if residual_balls.is_empty() {
-        return Ok(certify_candidate(prepared, context));
+        return Ok(certify_candidate(analysis, context));
     }
     Ok(certify_candidate_with_residual_balls(
-        prepared,
+        analysis,
         context,
         &residual_balls,
         policy,

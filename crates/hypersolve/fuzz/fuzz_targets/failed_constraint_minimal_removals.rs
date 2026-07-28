@@ -3,7 +3,7 @@
 use hyperreal::Real;
 use hypersolve::{
     context_from_problem, search_failed_constraint_minimal_removals, Constraint, Expr,
-    FailedConstraintRemovalStatus, PreparedProblem, Problem, SymbolId,
+    FailedConstraintRemovalStatus, Problem, SymbolId,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -36,7 +36,7 @@ fuzz_target!(|data: [i16; 4]| {
     ));
 
     let pair_bound = search_failed_constraint_minimal_removals(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &context_from_problem(&problem),
         2,
     );
@@ -46,7 +46,7 @@ fuzz_target!(|data: [i16; 4]| {
     assert_eq!(pair_bound.clearing_removals, 0);
 
     let triple_bound = search_failed_constraint_minimal_removals(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &context_from_problem(&problem),
         3,
     );

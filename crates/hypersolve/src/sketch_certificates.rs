@@ -11,7 +11,6 @@
 
 use crate::certification::{CandidateCertificationReport, certify_candidate};
 use crate::eval::context_from_problem;
-use crate::prepared::PreparedProblem;
 use crate::sketch::{
     SketchConstraintHandle, SketchEntityHandle, SketchGeneratedRowStatus, SketchLoweringReport,
     SketchParameterHandle, SketchRoundTripMetadata, SketchSolveProblem,
@@ -106,8 +105,8 @@ pub fn certify_sketch_construction(sketch: &SketchSolveProblem) -> SketchConstru
     let entity_domains = preflight_sketch_entity_domains(sketch);
     let lowering = sketch.lower_to_problem();
     let context = context_from_problem(&lowering.problem);
-    let prepared = PreparedProblem::new(&lowering.problem);
-    let residual_replay = certify_candidate(&prepared, &context);
+    let analysis = lowering.problem.analyze();
+    let residual_replay = certify_candidate(&analysis, &context);
     let provenance = collect_provenance(sketch);
     let traces = SketchConstructionTraceCounts {
         lossy_adapter_metadata_rows: provenance

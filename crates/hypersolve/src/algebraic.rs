@@ -14,8 +14,8 @@ use std::collections::HashMap;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
+use crate::analysis::ProblemAnalysis;
 use crate::model::{ConstraintKind, Problem};
-use crate::prepared::PreparedProblem;
 use crate::root_isolation::{
     IsolatedRootInterval, IsolatedRootRefinementReport, IsolatedRootRefinementStatus,
     RootIsolationConfig, RootIsolationStatus, UnivariateRootIsolationReport,
@@ -420,11 +420,11 @@ pub struct AlgebraicRootRepresentationReport {
 /// algebraic object but are not yet implementing arithmetic on algebraic
 /// numbers.
 pub fn represent_univariate_algebraic_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     config: RootIsolationConfig,
 ) -> Vec<AlgebraicRootRepresentationReport> {
-    let reports = isolate_univariate_polynomial_roots_with_config(prepared, config.clone());
-    represent_univariate_algebraic_roots_from_reports(prepared, &reports, config.policy)
+    let reports = isolate_univariate_polynomial_roots_with_config(analysis, config.clone());
+    represent_univariate_algebraic_roots_from_reports(analysis, &reports, config.policy)
 }
 
 /// Build represented algebraic roots from existing isolation reports.
@@ -434,13 +434,13 @@ pub fn represent_univariate_algebraic_roots(
 /// Reports are matched by `constraint_index`; inactive and non-equality rows
 /// are rejected by construction rather than guessed from residual text.
 pub fn represent_univariate_algebraic_roots_from_reports(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     reports: &[UnivariateRootIsolationReport],
     policy: PredicatePolicy,
 ) -> Vec<AlgebraicRootRepresentationReport> {
     reports
         .iter()
-        .map(|report| represent_one_report(prepared.problem(), report, policy))
+        .map(|report| represent_one_report(analysis.problem(), report, policy))
         .collect()
 }
 
@@ -1853,7 +1853,7 @@ fn represent_one_report(
             Some(symbol),
             AlgebraicRootRepresentationStatus::MissingPolynomial,
             Vec::new(),
-            Some("constraint index is outside the prepared problem".to_owned()),
+            Some("constraint index is outside the analysis problem".to_owned()),
         );
     };
     if !constraint.active || constraint.kind != ConstraintKind::Equality {
@@ -2528,7 +2528,7 @@ mod tests {
             x.clone().powi(2) - Expr::int(2),
         ));
         let reports = represent_univariate_algebraic_roots(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             RootIsolationConfig::default(),
         );
 
@@ -2566,7 +2566,7 @@ mod tests {
             x.clone().powi(2) - Expr::int(1),
         ));
         let reports = represent_univariate_algebraic_roots(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             RootIsolationConfig {
                 max_interval_width: Some(Real::one()),
                 max_refinement_steps: 8,
@@ -3407,7 +3407,7 @@ mod tests {
             ));
 
             let reports = represent_univariate_algebraic_roots(
-                &PreparedProblem::new(&problem),
+                &problem.analyze(),
                 RootIsolationConfig::default(),
             );
 

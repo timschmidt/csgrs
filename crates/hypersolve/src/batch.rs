@@ -9,12 +9,12 @@
 //! parallelized, but certified residual facts decide acceptance.
 //! the exact-geometric-computation model.
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CertifiedCandidateStatus,
     certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
-use crate::prepared::PreparedProblem;
 
 /// Error returned while building a deterministic batch predicate schedule.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -134,11 +134,11 @@ impl BatchCandidateCertificationReport {
 /// Certify candidate contexts in deterministic input order with the default
 /// replay policy.
 pub fn certify_candidate_batch(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     candidates: &[EvaluationContext],
 ) -> BatchCandidateCertificationReport {
     certify_candidate_batch_with_config(
-        prepared,
+        analysis,
         candidates,
         CandidateCertificationConfig::default(),
     )
@@ -152,7 +152,7 @@ pub fn certify_candidate_batch(
 /// can split the same independent candidate work, but they must preserve this
 /// stable output order and the failed-row probes.
 pub fn certify_candidate_batch_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     candidates: &[EvaluationContext],
     config: CandidateCertificationConfig,
 ) -> BatchCandidateCertificationReport {
@@ -160,7 +160,7 @@ pub fn certify_candidate_batch_with_config(
         .iter()
         .enumerate()
         .map(|(candidate_index, context)| {
-            let certification = certify_candidate_with_config(prepared, context, config);
+            let certification = certify_candidate_with_config(analysis, context, config);
             replay_from_certification(candidate_index, certification)
         })
         .collect::<Vec<_>>();
@@ -199,7 +199,7 @@ pub fn certify_candidate_batch_with_config(
 /// parallel backend can consume the same stable work list without changing the
 /// certification report shape or using primitive-float acceptance shortcuts.
 pub fn schedule_candidate_batch_predicates(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     candidate_count: usize,
     config: BatchPredicateScheduleConfig,
 ) -> Result<BatchPredicateScheduleReport, BatchPredicateScheduleError> {
@@ -207,7 +207,7 @@ pub fn schedule_candidate_batch_predicates(
         return Err(BatchPredicateScheduleError::ZeroRowsPerWorkItem);
     }
 
-    let active_rows = prepared
+    let active_rows = analysis
         .constraints()
         .iter()
         .enumerate()
@@ -313,9 +313,9 @@ mod tests {
     #[test]
     fn predicate_schedule_chunks_active_rows_deterministically() {
         let problem = problem_with_rows(5);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let schedule = schedule_candidate_batch_predicates(
-            &prepared,
+            &analysis,
             2,
             BatchPredicateScheduleConfig {
                 max_rows_per_work_item: 2,
@@ -336,11 +336,11 @@ mod tests {
     #[test]
     fn predicate_schedule_rejects_zero_sized_chunks() {
         let problem = problem_with_rows(1);
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
 
         assert_eq!(
             schedule_candidate_batch_predicates(
-                &prepared,
+                &analysis,
                 1,
                 BatchPredicateScheduleConfig {
                     max_rows_per_work_item: 0,
@@ -359,13 +359,13 @@ mod tests {
             chunk in 1_usize..8,
         ) {
             let problem = problem_with_rows(row_count);
-            let prepared = PreparedProblem::new(&problem);
+            let analysis = problem.analyze();
             let schedule = schedule_candidate_batch_predicates(
-                &prepared,
+                &analysis,
                 candidate_count,
                 BatchPredicateScheduleConfig { max_rows_per_work_item: chunk },
             ).unwrap();
-            let active_rows = prepared
+            let active_rows = analysis
                 .constraints()
                 .iter()
                 .enumerate()

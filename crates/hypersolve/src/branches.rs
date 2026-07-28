@@ -9,13 +9,13 @@
 
 use hyperreal::Real;
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
 use crate::direct::{DirectQuadraticRootError, direct_quadratic_roots};
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 /// Branch-level status for one direct univariate quadratic row or root.
@@ -88,11 +88,11 @@ impl ExactBranchEnumerationReport {
 /// boundary follows the exact-geometric-computation model rather than a
 /// primitive floating acceptance threshold.
 pub fn enumerate_direct_univariate_quadratic_branches(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
 ) -> ExactBranchEnumerationReport {
     enumerate_direct_univariate_quadratic_branches_with_config(
-        prepared,
+        analysis,
         base_context,
         CandidateCertificationConfig::default(),
     )
@@ -106,7 +106,7 @@ pub fn enumerate_direct_univariate_quadratic_branches(
 /// can distinguish "no real root", "not handled by this brancher", and
 /// "candidate rejected by exact residual replay".
 pub fn enumerate_direct_univariate_quadratic_branches_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> ExactBranchEnumerationReport {
@@ -118,11 +118,11 @@ pub fn enumerate_direct_univariate_quadratic_branches_with_config(
         no_real_root_rows: 0,
     };
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
+        let Some(quadratic) = &analysis.univariate_quadratic_residuals()[constraint_index] else {
             report.unsupported_rows += 1;
             report.branches.push(ExactSolutionBranch {
                 constraint_index,
@@ -183,7 +183,7 @@ pub fn enumerate_direct_univariate_quadratic_branches_with_config(
         for (root_index, root) in roots.into_iter().enumerate() {
             let mut candidate = base_context.clone();
             candidate.bind(quadratic.symbol(), root.clone());
-            let certification = certify_candidate_with_config(prepared, &candidate, config);
+            let certification = certify_candidate_with_config(analysis, &candidate, config);
             let status = if certification.all_satisfied() {
                 report.certified_branches += 1;
                 ExactBranchStatus::ReplayCertified

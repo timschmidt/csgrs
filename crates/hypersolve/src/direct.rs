@@ -12,12 +12,12 @@
 use hyperreal::{Real, RealSign};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 /// Exact direct solution for one affine equality row.
@@ -478,13 +478,13 @@ pub(crate) fn direct_quadratic_roots(
 /// `A*x = -c` directly from retained affine coefficients and solves with
 /// certified nonzero pivots. The returned assignments are proposal values that
 /// should be replayed through [`crate::certify_candidate`] before trust.
-pub fn solve_direct_affine_system(prepared: &PreparedProblem<'_>) -> DirectAffineSystemReport {
-    let variable_count = prepared.problem().variables.len();
+pub fn solve_direct_affine_system(analysis: &ProblemAnalysis<'_>) -> DirectAffineSystemReport {
+    let variable_count = analysis.problem().variables.len();
     let mut matrix = Vec::new();
     let mut rhs = Vec::new();
     let mut constraint_indices = Vec::new();
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -497,7 +497,7 @@ pub fn solve_direct_affine_system(prepared: &PreparedProblem<'_>) -> DirectAffin
                 Vec::new(),
             );
         }
-        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+        let Some(affine) = &analysis.affine_residuals()[constraint_index] else {
             return direct_affine_system_report(
                 DirectAffineSystemStatus::NonAffineRow { constraint_index },
                 variable_count,
@@ -536,7 +536,7 @@ pub fn solve_direct_affine_system(prepared: &PreparedProblem<'_>) -> DirectAffin
             );
         }
     };
-    let assignments = prepared
+    let assignments = analysis
         .problem()
         .variables
         .iter()
@@ -561,14 +561,14 @@ pub fn solve_direct_affine_system(prepared: &PreparedProblem<'_>) -> DirectAffin
 /// nonzero coefficients, non-equality kinds, unknown coefficient signs, or
 /// unsupported exact division are not silently approximated.
 pub fn solve_direct_affine_equalities(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
 ) -> Result<Vec<DirectAffineSolution>, DirectSolveError> {
     let mut solutions = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+        let Some(affine) = &analysis.affine_residuals()[constraint_index] else {
             continue;
         };
         let mut nonzero = None;
@@ -596,7 +596,7 @@ pub fn solve_direct_affine_equalities(
             .map_err(|_| DirectSolveError::UnsupportedDivision { constraint_index })?;
         solutions.push(DirectAffineSolution {
             constraint_index,
-            symbol: prepared.problem().variables[column].symbol,
+            symbol: analysis.problem().variables[column].symbol,
             value,
         });
     }
@@ -674,14 +674,14 @@ fn direct_affine_system_report(
 /// exact division. Callers must still replay the full problem with ordinary
 /// certification before trusting a root candidate.
 pub fn solve_direct_univariate_quadratic_equalities(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
 ) -> Result<Vec<DirectQuadraticSolution>, DirectSolveError> {
-    let mut solutions = Vec::with_capacity(prepared.facts().univariate_quadratic_form_active_rows);
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    let mut solutions = Vec::with_capacity(analysis.facts().univariate_quadratic_form_active_rows);
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
+        let Some(quadratic) = &analysis.univariate_quadratic_residuals()[constraint_index] else {
             continue;
         };
         let roots = match direct_quadratic_roots(
@@ -694,7 +694,7 @@ pub fn solve_direct_univariate_quadratic_equalities(
             Err(DirectQuadraticRootError::UnknownQuadraticSign) => {
                 return Err(DirectSolveError::UnknownCoefficientSign {
                     constraint_index,
-                    variable_column: prepared
+                    variable_column: analysis
                         .problem()
                         .variables
                         .iter()
@@ -723,16 +723,16 @@ pub fn solve_direct_univariate_quadratic_equalities(
 /// This is a convenience bridge between the exact soluble-alone pass and the
 /// ordinary candidate certification boundary. Each root from
 /// [`solve_direct_univariate_quadratic_equalities`] is bound into a cloned
-/// [`EvaluationContext`] and replayed against the full prepared problem. The
+/// [`EvaluationContext`] and replayed against the full analysis problem. The
 /// helper follows SolveSpace's direct-solve-before-Newton pattern while making
 /// the exact construction/proof split explicit: exact roots are still only
 /// proposals until residual replay certifies them.
 pub fn certify_direct_univariate_quadratic_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
 ) -> Result<Vec<DirectQuadraticCandidateReport>, DirectSolveError> {
     certify_direct_univariate_quadratic_roots_with_config(
-        prepared,
+        analysis,
         base_context,
         CandidateCertificationConfig::default(),
     )
@@ -745,11 +745,11 @@ pub fn certify_direct_univariate_quadratic_roots(
 /// threshold is introduced here; unresolved replay remains an explicit
 /// rejected/uncertain certification report.
 pub fn certify_direct_univariate_quadratic_roots_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> Result<Vec<DirectQuadraticCandidateReport>, DirectSolveError> {
-    let solutions = solve_direct_univariate_quadratic_equalities(prepared)?;
+    let solutions = solve_direct_univariate_quadratic_equalities(analysis)?;
     let mut reports = Vec::new();
     for solution in solutions {
         if solution.roots.is_empty() {
@@ -767,7 +767,7 @@ pub fn certify_direct_univariate_quadratic_roots_with_config(
         for (root_index, root) in solution.roots.into_iter().enumerate() {
             let mut candidate = base_context.clone();
             candidate.bind(solution.symbol, root.clone());
-            let certification = certify_candidate_with_config(prepared, &candidate, config);
+            let certification = certify_candidate_with_config(analysis, &candidate, config);
             let status = if certification.all_satisfied() {
                 DirectQuadraticCandidateStatus::ReplayCertified
             } else {
@@ -793,14 +793,14 @@ pub fn certify_direct_univariate_quadratic_roots_with_config(
 /// and exact equality rows, so this pass cannot silently turn approximate
 /// algebra into solver topology.
 pub fn find_equality_substitutions(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
 ) -> Result<Vec<EqualitySubstitution>, DirectSolveError> {
     let mut substitutions = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+        let Some(affine) = &analysis.affine_residuals()[constraint_index] else {
             continue;
         };
         let mut positive = None;
@@ -834,8 +834,8 @@ pub fn find_equality_substitutions(
         };
         substitutions.push(EqualitySubstitution {
             constraint_index,
-            left: prepared.problem().variables[left_column].symbol,
-            right: prepared.problem().variables[right_column].symbol,
+            left: analysis.problem().variables[left_column].symbol,
+            right: analysis.problem().variables[right_column].symbol,
             offset: -affine.constant().clone(),
         });
     }
@@ -1123,7 +1123,7 @@ pub fn apply_equality_substitution_classes(
 /// elimination payload; callers must still certify candidates with
 /// `certify_candidate` before accepting a solution.
 pub fn eliminate_affine_rows_with_substitution_classes(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     classes: &[EqualitySubstitutionClass],
 ) -> EqualitySubstitutionEliminationReport {
     let mut substitutions = BTreeMap::new();
@@ -1145,11 +1145,11 @@ pub fn eliminate_affine_rows_with_substitution_classes(
     let mut reduced_zero_rows = 0;
     let mut reduced_contradiction_rows = 0;
     let mut reduced_unknown_constant_rows = 0;
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
-        let Some(affine) = &prepared.affine_residuals()[constraint_index] else {
+        let Some(affine) = &analysis.affine_residuals()[constraint_index] else {
             continue;
         };
         affine_rows_considered += 1;
@@ -1159,7 +1159,7 @@ pub fn eliminate_affine_rows_with_substitution_classes(
             if coefficient.structural_facts().sign == Some(RealSign::Zero) {
                 continue;
             }
-            let symbol = prepared.problem().variables[column].symbol;
+            let symbol = analysis.problem().variables[column].symbol;
             let (target, offset) = substitutions
                 .get(&symbol)
                 .cloned()

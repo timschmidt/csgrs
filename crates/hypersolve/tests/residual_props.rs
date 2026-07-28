@@ -3,26 +3,25 @@ use hypersolve::{
     BatchCandidateStatus, CertifiedCandidateStatus, Constraint, ConvergenceReason, DomainCheckKind,
     DomainCheckStatus, DraggedParameterWeight, EqualitySubstitution, EqualitySubstitutionProblem,
     Expr, FailedConstraintRemovalStatus, FailedConstraintStatus, IntervalBoxCertificationPackage,
-    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, PreparedProblem,
-    PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    ProposalEngineReport, RootIsolationStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcPointSweep, SketchArcTangencyBranch, SketchCircleTangencyBranch,
-    SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
-    SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
+    IntervalBoxCertificationStatus, MultivariateQuadraticKrawczykStatus, Problem,
+    ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport, RootIsolationStatus,
+    SketchArcEndpoint, SketchArcLengthSweep, SketchArcPointSweep, SketchArcTangencyBranch,
+    SketchCircleTangencyBranch, SketchConstructionCertificateStatus, SketchDegeneracyKind,
+    SketchDegeneracyStatus, SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus,
     SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
     SketchParameterDomain, SketchParameterDomainStatus, SketchResidualFormKind,
     SketchResidualFormRole, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchRoundTripMetadata, SketchSolveProblem, SketchTangentOrientation,
-    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlockRowKind, SolverConfig,
-    SolverPoint2, SolverState, SymbolId, VariableBall, apply_equality_substitution_classes,
-    audit_sketch_unit_tolerances, certify_affine_krawczyk_box, certify_candidate,
-    certify_candidate_batch, certify_candidate_domains, certify_direct_univariate_quadratic_roots,
-    certify_interval_box_candidate, certify_multivariate_quadratic_interval_candidate,
-    certify_multivariate_quadratic_krawczyk_box, certify_quadratic_interval_candidate,
-    certify_sketch_construction, certify_univariate_quadratic_alpha,
-    certify_univariate_quadratic_krawczyk_box, context_from_problem, determinant_bareiss,
-    diagnose_failed_constraints, diagnose_sketch_failed_constraints,
-    eliminate_affine_rows_with_substitution_classes,
+    SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlock, SolverBlockRowKind,
+    SolverConfig, SolverPoint2, SolverState, SymbolId, VariableBall,
+    apply_equality_substitution_classes, audit_sketch_unit_tolerances, certify_affine_krawczyk_box,
+    certify_candidate, certify_candidate_batch, certify_candidate_domains,
+    certify_direct_univariate_quadratic_roots, certify_interval_box_candidate,
+    certify_multivariate_quadratic_interval_candidate, certify_multivariate_quadratic_krawczyk_box,
+    certify_quadratic_interval_candidate, certify_sketch_construction,
+    certify_univariate_quadratic_alpha, certify_univariate_quadratic_krawczyk_box,
+    context_from_problem, determinant_bareiss, diagnose_failed_constraints,
+    diagnose_sketch_failed_constraints, eliminate_affine_rows_with_substitution_classes,
     enumerate_direct_univariate_quadratic_branches, isolate_univariate_polynomial_roots,
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
@@ -48,7 +47,7 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(256))]
 
     #[test]
-    fn prepared_problem_constant_residual_sign_counts_are_exact(
+    fn problem_analysis_constant_residual_sign_counts_are_exact(
         constants in prop::collection::vec(-32_i16..=32, 1..24),
     ) {
         let mut problem = Problem::default();
@@ -60,7 +59,7 @@ proptest! {
             ));
         }
 
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let facts = prepared.facts();
         let expected_zero = constants.iter().filter(|value| **value == 0).count();
         let expected_nonzero = constants.len() - expected_zero;
@@ -85,7 +84,7 @@ proptest! {
     }
 
     #[test]
-    fn prepared_problem_variable_rows_do_not_get_constant_residual_signs(
+    fn problem_analysis_variable_rows_do_not_get_constant_residual_signs(
         coefficients in prop::collection::vec(-16_i16..=16, 1..24),
     ) {
         let x = Expr::symbol(SymbolId(0), "x");
@@ -98,7 +97,7 @@ proptest! {
             ));
         }
 
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
 
         prop_assert_eq!(prepared.facts().active_constraint_count, coefficients.len());
         prop_assert_eq!(prepared.facts().affine_form_active_rows, coefficients.len());
@@ -130,7 +129,7 @@ proptest! {
             x * Expr::int(i64::from(a)) + y * Expr::int(i64::from(b)) + Expr::int(i64::from(c)),
         ));
         let context = context_from_problem(&problem);
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let affine = prepared.affine_residuals()[0]
             .as_ref()
             .expect("generated affine row should prepare");
@@ -160,7 +159,7 @@ proptest! {
             "generated affine candidate",
             x * Expr::int(i64::from(a)) - Expr::int(i64::from(a) * i64::from(x_value)),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report = certify_candidate(&prepared, &context_from_problem(&problem));
 
         prop_assert_eq!(report.rows.len(), 1);
@@ -181,7 +180,7 @@ proptest! {
         let mut problem = Problem::default();
         problem.add_variable("x", Real::from(0));
         problem.add_constraint(Constraint::equality("generated batch target", x - Expr::int(target)));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let candidates = values
             .iter()
             .map(|value| {
@@ -237,7 +236,7 @@ proptest! {
         );
         prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::SquaredDistance));
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let certified_zero = matches!(
@@ -274,7 +273,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -314,7 +313,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -346,7 +345,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -388,7 +387,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows[0].strategy, Some(SketchResidualStrategy::Concentricity));
@@ -457,7 +456,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -500,7 +499,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -534,7 +533,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -574,7 +573,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -618,7 +617,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -659,7 +658,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -698,7 +697,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -743,7 +742,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -785,7 +784,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -860,7 +859,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -913,7 +912,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -982,7 +981,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -1037,7 +1036,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 5);
@@ -1113,7 +1112,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 6);
@@ -1180,7 +1179,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 5);
@@ -1276,7 +1275,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 6);
@@ -1375,7 +1374,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 7);
@@ -1454,7 +1453,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 6);
@@ -1527,7 +1526,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 6);
@@ -1669,7 +1668,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 1);
@@ -1773,7 +1772,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 3);
@@ -1870,7 +1869,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 3);
@@ -1938,7 +1937,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 4);
@@ -2018,7 +2017,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 5);
@@ -2134,7 +2133,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 5);
@@ -2267,7 +2266,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 5);
@@ -2398,7 +2397,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 7);
@@ -2485,7 +2484,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 7);
@@ -2563,7 +2562,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 4);
@@ -2617,7 +2616,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 6);
@@ -2674,7 +2673,7 @@ proptest! {
         let lowered = sketch.lower_to_problem();
         let forms = sketch.residual_forms_for_constraint(handle);
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
         prop_assert!(lowered.all_generated());
         prop_assert_eq!(lowered.problem.constraints.len(), 6);
@@ -2733,7 +2732,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -2787,7 +2786,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 2);
@@ -2836,7 +2835,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -2884,7 +2883,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -2936,7 +2935,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -3014,7 +3013,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 3);
@@ -3070,7 +3069,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 5);
@@ -3143,7 +3142,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -3170,7 +3169,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -3206,7 +3205,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -3382,7 +3381,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
 
@@ -3441,7 +3440,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3507,7 +3506,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3605,7 +3604,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3679,7 +3678,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3754,7 +3753,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3841,7 +3840,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let forms = sketch.residual_forms_for_constraint(handle);
 
         prop_assert_eq!(lowered.rows.len(), 2);
@@ -3916,7 +3915,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -3993,7 +3992,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let context = context_from_problem(&lowered.problem);
-        let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+        let certification = certify_candidate(&lowered.problem.analyze(), &context);
         let external_forms = sketch.residual_forms_for_constraint(external_handle);
         let internal_forms = sketch.residual_forms_for_constraint(internal_handle);
 
@@ -4059,7 +4058,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4131,7 +4130,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4195,7 +4194,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4265,7 +4264,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4339,7 +4338,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4400,7 +4399,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4466,7 +4465,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4538,7 +4537,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4614,7 +4613,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4676,7 +4675,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4737,7 +4736,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4796,7 +4795,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4860,7 +4859,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4922,7 +4921,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -4986,7 +4985,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -5051,7 +5050,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let forms = sketch.residual_forms_for_constraint(handle);
@@ -5132,7 +5131,7 @@ proptest! {
 
         let lowered = sketch.lower_to_problem();
         let certification = certify_candidate(
-            &PreparedProblem::new(&lowered.problem),
+            &lowered.problem.analyze(),
             &context_from_problem(&lowered.problem),
         );
         let parallel_forms = sketch.residual_forms_for_constraint(parallel);
@@ -5235,7 +5234,7 @@ proptest! {
         ));
 
         let report = diagnose_failed_constraints(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
         );
 
@@ -5303,7 +5302,7 @@ proptest! {
         ));
 
         let report = search_failed_constraint_single_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
         );
 
@@ -5340,7 +5339,7 @@ proptest! {
         ));
 
         let report = search_failed_constraint_pair_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
         );
 
@@ -5384,7 +5383,7 @@ proptest! {
         ));
 
         let pair_bounded = search_failed_constraint_set_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             2,
         );
@@ -5393,7 +5392,7 @@ proptest! {
         prop_assert_eq!(pair_bounded.clearing_removals, 0);
 
         let triple_bounded = search_failed_constraint_set_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             3,
         );
@@ -5434,7 +5433,7 @@ proptest! {
         ));
 
         let pair_bound = search_failed_constraint_minimal_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             2,
         );
@@ -5444,7 +5443,7 @@ proptest! {
         prop_assert_eq!(pair_bound.clearing_removals, 0);
 
         let triple_bound = search_failed_constraint_minimal_removals(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             3,
         );
@@ -5476,8 +5475,8 @@ proptest! {
             ));
         }
 
-        let prepared = PreparedProblem::new(&problem);
-        let block = PreparedSolverBlock::new(&prepared);
+        let prepared = problem.analyze();
+        let block = SolverBlock::new(&prepared);
         let expected_contradictions = constants.iter().filter(|value| **value != 0).count();
 
         prop_assert_eq!(block.facts().constant_row_count, constants.len());
@@ -5505,7 +5504,7 @@ proptest! {
             constraint.active = active;
             problem.add_constraint(constraint);
         }
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report = report_lossy_adapter_only_candidate(
             &prepared,
             ProposalEngineReport {
@@ -5843,8 +5842,8 @@ proptest! {
                 + x * Expr::int(i64::from(b))
                 + Expr::int(i64::from(c)),
         ));
-        let prepared = PreparedProblem::new(&problem);
-        let block = PreparedSolverBlock::new(&prepared);
+        let prepared = problem.analyze();
+        let block = SolverBlock::new(&prepared);
         let quadratic = prepared.univariate_quadratic_residuals()[0]
             .as_ref()
             .expect("generated univariate quadratic should prepare");
@@ -5891,8 +5890,8 @@ proptest! {
                 + y * Expr::int(i64::from(ey))
                 + Expr::int(i64::from(f)),
         ));
-        let prepared = PreparedProblem::new(&problem);
-        let block = PreparedSolverBlock::new(&prepared);
+        let prepared = problem.analyze();
+        let block = SolverBlock::new(&prepared);
         let quadratic = prepared.quadratic_residuals()[0]
             .as_ref()
             .expect("generated multivariate quadratic should prepare");
@@ -5947,7 +5946,7 @@ proptest! {
                 + y * Expr::int(i64::from(ey))
                 - Expr::int(expected),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let context = context_from_problem(&problem);
         let report = certify_candidate(&prepared, &context);
 
@@ -5978,7 +5977,7 @@ proptest! {
                 + Expr::int(first * second))
                 * Expr::int(scale),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let solutions = solve_direct_univariate_quadratic_equalities(&prepared).unwrap();
 
         prop_assert_eq!(solutions.len(), 1);
@@ -6018,7 +6017,7 @@ proptest! {
             "select generated root",
             x - Expr::int(selected),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let reports =
             certify_direct_univariate_quadratic_roots(&prepared, &context_from_problem(&problem))
                 .unwrap();
@@ -6063,7 +6062,7 @@ proptest! {
         ));
 
         let reports = isolate_univariate_polynomial_roots(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             hyperlimit::PredicatePolicy,
         );
 
@@ -6112,7 +6111,7 @@ proptest! {
                 - x.clone() * Expr::int(first + second)
                 + Expr::int(first * second),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report =
             enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
 
@@ -6150,7 +6149,7 @@ proptest! {
                 * Expr::int(scale),
         ));
         let report = certify_univariate_quadratic_alpha(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             hyperlimit::PredicatePolicy,
         );
@@ -6181,7 +6180,7 @@ proptest! {
                 + Expr::int(root * other_root),
         ));
         let report = certify_univariate_quadratic_krawczyk_box(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             &[VariableBall {
                 symbol: SymbolId(0),
@@ -6222,7 +6221,7 @@ proptest! {
         ));
 
         let report = certify_multivariate_quadratic_krawczyk_box(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             &[
                 VariableBall {
@@ -6266,7 +6265,7 @@ proptest! {
             x.clone().powi(2) - Expr::int(center * center + offset),
         ));
         let report = certify_univariate_quadratic_alpha(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             hyperlimit::PredicatePolicy,
         );
@@ -6455,7 +6454,7 @@ proptest! {
             "generated positive quadratic ball",
             x.clone() * x * Expr::int(i64::from(a)),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report = certify_quadratic_interval_candidate(
             &prepared,
             &context_from_problem(&problem),
@@ -6490,7 +6489,7 @@ proptest! {
         problem.add_variable("x", Real::from(center));
         problem.add_constraint(Constraint::equality("generated affine box", x - Expr::int(target)));
         let report = certify_interval_box_candidate(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             &[VariableBall {
                 symbol: SymbolId(0),
@@ -6541,7 +6540,7 @@ proptest! {
         let x_radius = i64::from(x_step).abs() + i64::from(x_extra_radius);
         let y_radius = i64::from(y_step).abs() + i64::from(y_extra_radius);
         let report = certify_affine_krawczyk_box(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             &context_from_problem(&problem),
             &[
                 VariableBall {
@@ -6585,7 +6584,7 @@ proptest! {
             y - Expr::int(i64::from(y_root)),
         ));
 
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report = solve_direct_affine_system(&prepared);
 
         prop_assert!(report.solved());
@@ -6616,7 +6615,7 @@ proptest! {
             "generated positive cross term ball",
             x * y,
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let report = certify_multivariate_quadratic_interval_candidate(
             &prepared,
             &context_from_problem(&problem),
@@ -6715,7 +6714,7 @@ proptest! {
                 + Expr::int(i64::from(row_constant)),
         ));
 
-        let prepared = PreparedProblem::new(&problem);
+        let prepared = problem.analyze();
         let substitutions = hypersolve::find_equality_substitutions(&prepared).unwrap();
         let classes = hypersolve::build_equality_substitution_classes(&substitutions).unwrap();
         let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
@@ -6821,7 +6820,7 @@ proptest! {
         ));
 
         prop_assert!(
-            certify_candidate(&PreparedProblem::new(&problem), &context_from_problem(&problem))
+            certify_candidate(&problem.analyze(), &context_from_problem(&problem))
                 .all_satisfied()
         );
     }

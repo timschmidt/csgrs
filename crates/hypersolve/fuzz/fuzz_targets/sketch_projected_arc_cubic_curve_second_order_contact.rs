@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    certify_candidate, context_from_problem, CertifiedCandidateStatus, PreparedProblem,
+    certify_candidate, context_from_problem, CertifiedCandidateStatus,
     SketchArcEndpoint, SketchGeneratedRowStatus, SketchResidualFormKind, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchSolveProblem, SketchTangentOrientation,
 };
@@ -131,7 +131,7 @@ fuzz_target!(|data: &[u8]| {
                 == Some(SketchResidualStrategy::ProjectedArcCubicCurveSecondOrderContact)
     }));
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     match mode {

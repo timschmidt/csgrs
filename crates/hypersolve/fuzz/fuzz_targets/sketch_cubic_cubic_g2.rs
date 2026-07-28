@@ -2,7 +2,7 @@
 
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    PreparedProblem, SketchResidualFormKind, SketchResidualFormsStatus, SketchResidualStrategy,
+    SketchResidualFormKind, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchSolveProblem, certify_candidate, context_from_problem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -43,7 +43,7 @@ fuzz_target!(|data: [i16; 4]| {
         row.strategy == Some(SketchResidualStrategy::CubicCubicG2Continuity)
     }));
     let context = context_from_problem(&lowered.problem);
-    assert!(certify_candidate(&PreparedProblem::new(&lowered.problem), &context).all_satisfied());
+    assert!(certify_candidate(&lowered.problem.analyze(), &context).all_satisfied());
 
     let forms = sketch.residual_forms_for_constraint(handle);
     assert_eq!(forms.status, SketchResidualFormsStatus::Generated);

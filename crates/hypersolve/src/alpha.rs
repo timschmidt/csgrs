@@ -15,9 +15,9 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
+use crate::analysis::ProblemAnalysis;
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 use crate::symbolic::SymbolId;
 
 /// Result of an alpha-theory proof attempt for one quadratic row.
@@ -105,17 +105,17 @@ impl UnivariateQuadraticAlphaReport {
 /// policy. It is a local Newton-basin certificate, not a replacement for
 /// ordinary residual replay or domain-specific geometry predicates.
 pub fn certify_univariate_quadratic_alpha(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     policy: PredicatePolicy,
 ) -> UnivariateQuadraticAlphaReport {
     let mut rows = Vec::new();
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
-        let Some(quadratic) = &prepared.univariate_quadratic_residuals()[constraint_index] else {
+        let Some(quadratic) = &analysis.univariate_quadratic_residuals()[constraint_index] else {
             continue;
         };
         let Some(candidate) = context.bindings().get(&quadratic.symbol()) else {
@@ -135,7 +135,7 @@ pub fn certify_univariate_quadratic_alpha(
         };
 
         let residual = quadratic
-            .eval_real(prepared.problem().variables.as_slice(), context.bindings())
+            .eval_real(analysis.problem().variables.as_slice(), context.bindings())
             .unwrap_or_else(|_| Real::zero());
         let derivative = quadratic.quadratic().clone() * Real::from(2) * candidate.clone()
             + quadratic.linear().clone();

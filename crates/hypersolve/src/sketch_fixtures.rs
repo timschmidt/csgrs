@@ -12,7 +12,6 @@
 
 use crate::certification::{CandidateCertificationReport, certify_candidate};
 use crate::eval::context_from_problem;
-use crate::prepared::PreparedProblem;
 use crate::sketch::{
     SketchArcEndpoint, SketchEntityKind, SketchGeneratedRowStatus, SketchLineEndpoint,
     SketchLoweringReport, SketchSolveProblem, SketchTangentOrientation,
@@ -101,9 +100,9 @@ pub fn replay_sketch_compatibility_fixture(
 ) -> SketchCompatibilityReplayReport {
     let lowering = fixture.sketch.lower_to_problem();
     let certification = {
-        let prepared = PreparedProblem::new(&lowering.problem);
+        let analysis = lowering.problem.analyze();
         let context = context_from_problem(&lowering.problem);
-        certify_candidate(&prepared, &context)
+        certify_candidate(&analysis, &context)
     };
     SketchCompatibilityReplayReport {
         name: fixture.name,

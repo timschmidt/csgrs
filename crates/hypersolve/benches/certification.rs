@@ -6,10 +6,10 @@ use hypersolve::{
     BatchPredicateScheduleConfig, BsplineKnotSpanSubstitutionConfig, Constraint,
     CurveResultantParameter, DraggedParameterWeight, EqualitySubstitution, Expr,
     IntervalBoxCertificationPackage, IsolatedRootInterval, PolynomialCurvePoint2,
-    PolynomialParametricCurve2, PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind,
-    ProposalEnginePrecision, ProposalEngineReport, RationalCurveControlPoint2,
-    RationalParametricCurve2, SolverConfig, SolverPoint2, SolverState, SparseResidualTerm,
-    SymbolId, UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
+    PolynomialParametricCurve2, Problem, ProposalEngineKind, ProposalEnginePrecision,
+    ProposalEngineReport, RationalCurveControlPoint2, RationalParametricCurve2, SolverBlock,
+    SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
+    UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
     analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
     arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
     build_equality_substitution_classes, certify_affine_krawczyk_box, certify_candidate,
@@ -2545,11 +2545,11 @@ fn unary_endpoint_expression(row_count: usize) -> Expr {
 
 fn certification(c: &mut Criterion) {
     let problem = affine_problem(16);
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
 
-    c.bench_function("prepared_solver_block_affine_rows", |b| {
-        b.iter(|| PreparedSolverBlock::new(&prepared))
+    c.bench_function("solver_block_affine_rows", |b| {
+        b.iter(|| SolverBlock::new(&analysis))
     });
     let sketch = sketch_problem(16);
     c.bench_function("sketch_lower_to_problem", |b| {
@@ -4001,12 +4001,12 @@ fn certification(c: &mut Criterion) {
         })
     });
     let krawczyk_problem = affine_krawczyk_problem();
-    let krawczyk_prepared = PreparedProblem::new(&krawczyk_problem);
+    let krawczyk_analysis = krawczyk_problem.analyze();
     let krawczyk_context = context_from_problem(&krawczyk_problem);
     c.bench_function("certify_affine_krawczyk_box", |b| {
         b.iter(|| {
             certify_affine_krawczyk_box(
-                &krawczyk_prepared,
+                &krawczyk_analysis,
                 &krawczyk_context,
                 &[
                     VariableBall {
@@ -4023,10 +4023,10 @@ fn certification(c: &mut Criterion) {
         })
     });
     c.bench_function("solve_direct_affine_system", |b| {
-        b.iter(|| solve_direct_affine_system(&krawczyk_prepared))
+        b.iter(|| solve_direct_affine_system(&krawczyk_analysis))
     });
     c.bench_function("analyze_exact_affine_rank", |b| {
-        b.iter(|| analyze_exact_affine_rank(&krawczyk_prepared, -64))
+        b.iter(|| analyze_exact_affine_rank(&krawczyk_analysis, -64))
     });
     c.bench_function("determinant_bareiss", |b| {
         b.iter(|| determinant_bareiss(&[vec![r(2), r(1)], vec![r(1), r(-1)]], -64))
@@ -4518,7 +4518,7 @@ fn certification(c: &mut Criterion) {
         b.iter(|| sparse_batch_system.replay_batch(&sparse_batch_candidates, -64))
     });
     let elimination_problem = substitution_elimination_problem(16);
-    let elimination_prepared = PreparedProblem::new(&elimination_problem);
+    let elimination_analysis = elimination_problem.analyze();
     let substitutions = vec![
         EqualitySubstitution {
             constraint_index: 0,
@@ -4537,7 +4537,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("eliminate_affine_rows_with_substitution_classes", |b| {
         b.iter(|| {
             eliminate_affine_rows_with_substitution_classes(
-                &elimination_prepared,
+                &elimination_analysis,
                 &substitution_classes,
             )
         })
@@ -4551,43 +4551,43 @@ fn certification(c: &mut Criterion) {
     });
     let quadratic_problem = univariate_quadratic_problem(16);
     c.bench_function("univariate_quadratic_row_forms", |b| {
-        b.iter(|| PreparedProblem::new(&quadratic_problem))
+        b.iter(|| quadratic_problem.analyze())
     });
     let multivariate_quadratic = multivariate_quadratic_problem(16);
     c.bench_function("multivariate_quadratic_row_forms", |b| {
-        b.iter(|| PreparedProblem::new(&multivariate_quadratic))
+        b.iter(|| multivariate_quadratic.analyze())
     });
-    let prepared_multivariate_quadratic = PreparedProblem::new(&multivariate_quadratic);
+    let multivariate_quadratic_analysis = multivariate_quadratic.analyze();
     let multivariate_quadratic_context = context_from_problem(&multivariate_quadratic);
-    let prepared_quadratic = PreparedProblem::new(&quadratic_problem);
+    let quadratic_analysis = quadratic_problem.analyze();
     let quadratic_context = context_from_problem(&quadratic_problem);
     c.bench_function("solve_direct_univariate_quadratic_rows", |b| {
-        b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_quadratic))
+        b.iter(|| solve_direct_univariate_quadratic_equalities(&quadratic_analysis))
     });
     let sqrt_two_problem = sqrt_two_quadratic_problem();
-    let prepared_sqrt_two = PreparedProblem::new(&sqrt_two_problem);
+    let sqrt_two_analysis = sqrt_two_problem.analyze();
     c.bench_function("competitor_exact_quadratic_roots/hypersolve", |b| {
-        b.iter(|| solve_direct_univariate_quadratic_equalities(&prepared_sqrt_two))
+        b.iter(|| solve_direct_univariate_quadratic_equalities(&sqrt_two_analysis))
     });
     c.bench_function("certify_direct_univariate_quadratic_roots", |b| {
         b.iter(|| {
-            certify_direct_univariate_quadratic_roots(&prepared_quadratic, &quadratic_context)
+            certify_direct_univariate_quadratic_roots(&quadratic_analysis, &quadratic_context)
         })
     });
     c.bench_function("enumerate_direct_univariate_quadratic_branches", |b| {
         b.iter(|| {
-            enumerate_direct_univariate_quadratic_branches(&prepared_quadratic, &quadratic_context)
+            enumerate_direct_univariate_quadratic_branches(&quadratic_analysis, &quadratic_context)
         })
     });
     c.bench_function("isolate_univariate_polynomial_roots_sturm", |b| {
         b.iter(|| {
-            isolate_univariate_polynomial_roots(&prepared_quadratic, hyperlimit::PredicatePolicy)
+            isolate_univariate_polynomial_roots(&quadratic_analysis, hyperlimit::PredicatePolicy)
         })
     });
     c.bench_function("represent_univariate_algebraic_roots", |b| {
         b.iter(|| {
             represent_univariate_algebraic_roots(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 hypersolve::RootIsolationConfig::default(),
             )
         })
@@ -4806,7 +4806,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("count_descartes_univariate_polynomial_roots", |b| {
         b.iter(|| {
             count_descartes_univariate_polynomial_roots(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 hyperlimit::PredicatePolicy,
             )
         })
@@ -4816,7 +4816,7 @@ fn certification(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 count_bernstein_univariate_polynomial_interval_roots(
-                    &prepared_quadratic,
+                    &quadratic_analysis,
                     r(0),
                     r(4),
                     hyperlimit::PredicatePolicy,
@@ -4829,7 +4829,7 @@ fn certification(c: &mut Criterion) {
         |b| {
             b.iter(|| {
                 subdivide_bernstein_univariate_polynomial_interval_roots(
-                    &prepared_quadratic,
+                    &quadratic_analysis,
                     r(0),
                     r(4),
                     hypersolve::BernsteinSubdivisionConfig {
@@ -4843,7 +4843,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_quadratic_interval_rows", |b| {
         b.iter(|| {
             certify_quadratic_interval_candidate(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 &quadratic_context,
                 &[VariableBall {
                     symbol: SymbolId(0),
@@ -4856,7 +4856,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_interval_box_candidate_report", |b| {
         b.iter(|| {
             certify_interval_box_candidate(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 &quadratic_context,
                 &[VariableBall {
                     symbol: SymbolId(0),
@@ -4870,7 +4870,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_univariate_quadratic_alpha_rows", |b| {
         b.iter(|| {
             certify_univariate_quadratic_alpha(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 &quadratic_context,
                 hyperlimit::PredicatePolicy,
             )
@@ -4879,7 +4879,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_univariate_quadratic_krawczyk_rows", |b| {
         b.iter(|| {
             certify_univariate_quadratic_krawczyk_box(
-                &prepared_quadratic,
+                &quadratic_analysis,
                 &quadratic_context,
                 &[VariableBall {
                     symbol: SymbolId(0),
@@ -4892,7 +4892,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_multivariate_quadratic_interval_rows", |b| {
         b.iter(|| {
             certify_multivariate_quadratic_interval_candidate(
-                &prepared_multivariate_quadratic,
+                &multivariate_quadratic_analysis,
                 &multivariate_quadratic_context,
                 &[
                     VariableBall {
@@ -4911,7 +4911,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("certify_multivariate_quadratic_krawczyk_rows", |b| {
         b.iter(|| {
             certify_multivariate_quadratic_krawczyk_box(
-                &prepared_multivariate_quadratic,
+                &multivariate_quadratic_analysis,
                 &multivariate_quadratic_context,
                 &[
                     VariableBall {
@@ -4929,21 +4929,21 @@ fn certification(c: &mut Criterion) {
     });
     c.bench_function("quadratic_form_candidate_replay", |b| {
         b.iter(|| {
-            for row in 0..prepared_multivariate_quadratic.problem().constraints.len() {
-                let _ = prepared_multivariate_quadratic
+            for row in 0..multivariate_quadratic_analysis.problem().constraints.len() {
+                let _ = multivariate_quadratic_analysis
                     .evaluate_constraint_residual(row, &multivariate_quadratic_context);
             }
         })
     });
     c.bench_function("certify_affine_candidate_exact", |b| {
-        b.iter(|| certify_candidate(&prepared, &context))
+        b.iter(|| certify_candidate(&analysis, &context))
     });
     let batch_contexts = (0..16).map(|_| context.clone()).collect::<Vec<_>>();
     c.bench_function("certify_candidate_batch_affine", |b| {
-        b.iter(|| certify_candidate_batch(&prepared, &batch_contexts))
+        b.iter(|| certify_candidate_batch(&analysis, &batch_contexts))
     });
     c.bench_function("diagnose_failed_constraints_affine", |b| {
-        b.iter(|| diagnose_failed_constraints(&prepared, &context))
+        b.iter(|| diagnose_failed_constraints(&analysis, &context))
     });
     let sketch_failed_problem = {
         let mut sketch = hypersolve::SketchSolveProblem::new();
@@ -4971,12 +4971,12 @@ fn certification(c: &mut Criterion) {
         problem.add_constraint(Constraint::equality("x equals one", x - Expr::int(1)));
         problem
     };
-    let failed_search_prepared = PreparedProblem::new(&failed_search_problem);
+    let failed_search_analysis = failed_search_problem.analyze();
     let failed_search_context = context_from_problem(&failed_search_problem);
     c.bench_function("search_failed_constraint_single_removals", |b| {
         b.iter(|| {
             search_failed_constraint_single_removals(
-                &failed_search_prepared,
+                &failed_search_analysis,
                 &failed_search_context,
             )
         })
@@ -4992,12 +4992,12 @@ fn certification(c: &mut Criterion) {
         problem.add_constraint(Constraint::equality("x equals two", x - Expr::int(2)));
         problem
     };
-    let failed_pair_search_prepared = PreparedProblem::new(&failed_pair_search_problem);
+    let failed_pair_search_analysis = failed_pair_search_problem.analyze();
     let failed_pair_search_context = context_from_problem(&failed_pair_search_problem);
     c.bench_function("search_failed_constraint_pair_removals", |b| {
         b.iter(|| {
             search_failed_constraint_pair_removals(
-                &failed_pair_search_prepared,
+                &failed_pair_search_analysis,
                 &failed_pair_search_context,
             )
         })
@@ -5017,12 +5017,12 @@ fn certification(c: &mut Criterion) {
         problem.add_constraint(Constraint::equality("x equals three", x - Expr::int(3)));
         problem
     };
-    let failed_set_search_prepared = PreparedProblem::new(&failed_set_search_problem);
+    let failed_set_search_analysis = failed_set_search_problem.analyze();
     let failed_set_search_context = context_from_problem(&failed_set_search_problem);
     c.bench_function("search_failed_constraint_set_removals", |b| {
         b.iter(|| {
             search_failed_constraint_set_removals(
-                &failed_set_search_prepared,
+                &failed_set_search_analysis,
                 &failed_set_search_context,
                 3,
             )
@@ -5031,7 +5031,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("search_failed_constraint_minimal_removals", |b| {
         b.iter(|| {
             search_failed_constraint_minimal_removals(
-                &failed_set_search_prepared,
+                &failed_set_search_analysis,
                 &failed_set_search_context,
                 3,
             )
@@ -5040,7 +5040,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("schedule_candidate_batch_predicates", |b| {
         b.iter(|| {
             schedule_candidate_batch_predicates(
-                &prepared,
+                &analysis,
                 16,
                 BatchPredicateScheduleConfig {
                     max_rows_per_work_item: 4,
@@ -5051,7 +5051,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("audit_active_set", |b| {
         b.iter(|| {
             audit_active_set(
-                &prepared,
+                &analysis,
                 &context,
                 hypersolve::CandidateCertificationConfig::default(),
             )
@@ -5060,13 +5060,13 @@ fn certification(c: &mut Criterion) {
     c.bench_function("propose_active_set_update", |b| {
         b.iter(|| {
             propose_active_set_update(
-                &prepared,
+                &analysis,
                 &context,
                 hypersolve::CandidateCertificationConfig::default(),
             )
         })
     });
-    let active_mask = prepared
+    let active_mask = analysis
         .problem()
         .constraints
         .iter()
@@ -5075,14 +5075,14 @@ fn certification(c: &mut Criterion) {
     c.bench_function("run_active_set_update_loop", |b| {
         b.iter(|| {
             run_active_set_update_loop(
-                &prepared,
+                &analysis,
                 &context,
                 &active_mask,
                 hypersolve::ActiveSetLoopConfig::default(),
             )
         })
     });
-    let krawczyk_active_mask = krawczyk_prepared
+    let krawczyk_active_mask = krawczyk_analysis
         .problem()
         .constraints
         .iter()
@@ -5091,7 +5091,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("regenerate_active_set_affine_candidate", |b| {
         b.iter(|| {
             regenerate_active_set_affine_candidate(
-                &krawczyk_prepared,
+                &krawczyk_analysis,
                 &krawczyk_active_mask,
                 hypersolve::CandidateCertificationConfig::default(),
             )
@@ -5108,11 +5108,11 @@ fn certification(c: &mut Criterion) {
     quadratic_bound.kind = hypersolve::ConstraintKind::GreaterOrEqual;
     quadratic_bound.active = false;
     quadratic_regeneration_problem.add_constraint(quadratic_bound);
-    let quadratic_regeneration_prepared = PreparedProblem::new(&quadratic_regeneration_problem);
+    let quadratic_regeneration_analysis = quadratic_regeneration_problem.analyze();
     c.bench_function("regenerate_active_set_quadratic_candidates", |b| {
         b.iter(|| {
             regenerate_active_set_quadratic_candidates(
-                &quadratic_regeneration_prepared,
+                &quadratic_regeneration_analysis,
                 &hypersolve::EvaluationContext::default(),
                 &[true, false],
                 hypersolve::ActiveSetQuadraticRegenerationConfig::default(),
@@ -5122,7 +5122,7 @@ fn certification(c: &mut Criterion) {
     c.bench_function("report_lossy_adapter_only_candidate", |b| {
         b.iter(|| {
             report_lossy_adapter_only_candidate(
-                &prepared,
+                &analysis,
                 ProposalEngineReport {
                     requested: ProposalEngineKind::DampedLeastSquares,
                     used: Some(ProposalEngineKind::DampedLeastSquares),

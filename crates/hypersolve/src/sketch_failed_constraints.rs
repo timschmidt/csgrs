@@ -18,7 +18,6 @@ use crate::failed_constraints::{
     FailedConstraintReport, FailedConstraintRow, FailedConstraintStatus,
     diagnose_failed_constraints_from_certification,
 };
-use crate::prepared::PreparedProblem;
 use crate::sketch::{
     SketchConstraintHandle, SketchGeneratedRow, SketchGeneratedRowStatus, SketchLoweringReport,
     SketchSolveProblem,
@@ -119,11 +118,11 @@ pub fn diagnose_sketch_failed_constraints_with_config(
     rank_min_precision: i32,
 ) -> SketchFailedConstraintReport {
     let lowering = sketch.lower_to_problem();
-    let prepared = PreparedProblem::new(&lowering.problem);
+    let analysis = lowering.problem.analyze();
     let context = context_from_problem(&lowering.problem);
-    let certification = certify_candidate_with_config(&prepared, &context, certification_config);
+    let certification = certify_candidate_with_config(&analysis, &context, certification_config);
     let exact = diagnose_failed_constraints_from_certification(
-        &prepared,
+        &analysis,
         certification,
         rank_min_precision,
     );

@@ -1,5 +1,5 @@
 use hyperreal::{Rational, Real, SymbolicDependencyMask};
-use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_prepared};
+use hypersolve::jacobian::{symbolic_jacobian, symbolic_jacobian_with_analysis};
 use hypersolve::{
     ActiveSetAffineRegenerationStatus, BatchCandidateStatus, BatchPredicateScheduleConfig,
     BatchPredicateScheduleError, CandidateCertificationConfig, CandidateResidualBall,
@@ -8,16 +8,16 @@ use hypersolve::{
     ExactAffineRankStatus, ExactBranchStatus, Expr, ExprDegree, FailedConstraintRemovalStatus,
     FailedConstraintStatus, IntervalBoxCertificationPackage, IntervalBoxCertificationStatus,
     LinearAdapterKind, LinearAdapterPrecision, LinearBackend, MultivariateQuadraticKrawczykStatus,
-    PreparedProblem, PreparedSolverBlock, Problem, ProposalEngineKind, ProposalEnginePrecision,
-    RootIsolationStatus, RootMultiplicityStatus, SketchArcEndpoint, SketchArcLengthSweep,
-    SketchArcPointSweep, SketchArcTangencyBranch, SketchCircleTangencyBranch, SketchConstraintKind,
+    Problem, ProposalEngineKind, ProposalEnginePrecision, RootIsolationStatus,
+    RootMultiplicityStatus, SketchArcEndpoint, SketchArcLengthSweep, SketchArcPointSweep,
+    SketchArcTangencyBranch, SketchCircleTangencyBranch, SketchConstraintKind,
     SketchConstructionCertificateStatus, SketchDegeneracyKind, SketchDegeneracyStatus,
     SketchEntityDomain, SketchEntityDomainKind, SketchEntityDomainStatus, SketchEntityHandle,
     SketchEntityKind, SketchFailedConstraintStatus, SketchGeneratedRowStatus, SketchLineEndpoint,
     SketchParameterDomain, SketchParameterDomainKind, SketchParameterDomainStatus,
     SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
-    SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus,
+    SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlock,
     SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
     SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
     apply_equality_substitution_classes, apply_equality_substitutions,
@@ -96,7 +96,7 @@ fn sketch_problem_lowers_semantic_constraints_to_exact_replay_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -252,7 +252,7 @@ fn sketch_family_builders_report_strategy_and_lower_to_matching_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -438,7 +438,7 @@ fn sketch_point_on_line_replays_unnormalized_collinearity_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -592,7 +592,7 @@ fn sketch_projected_point_on_cubic_replays_workplane_and_bernstein_rows() {
     let lowered = sketch.lower_to_problem();
     let forms = sketch.residual_forms_for_constraint(valid.handle);
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let context = context_from_problem(&lowered.problem);
@@ -695,7 +695,7 @@ fn sketch_projected_point_on_cubic_curve3_replays_projected_control_net_rows() {
     let lowered = sketch.lower_to_problem();
     let forms = sketch.residual_forms_for_constraint(valid.handle);
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
 
     assert_eq!(lowered.problem.constraints.len(), 6);
     assert_eq!(lowered.rows.len(), 7);
@@ -780,7 +780,7 @@ fn sketch_cubic_line_tangent_lowers_exact_derivative_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -898,7 +898,7 @@ fn sketch_projected_cubic_line_tangent_replays_workplane_endpoint_and_branch_row
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 10);
@@ -1024,7 +1024,7 @@ fn sketch_projected_cubic_curve_line_tangent_replays_projected_control_net_and_b
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 10);
@@ -1146,7 +1146,7 @@ fn sketch_projected_cubic_curve_cubic_curve_tangent_replays_projected_control_ne
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 10);
@@ -1267,7 +1267,7 @@ fn sketch_projected_cubic_curve_cubic_curve_c2_replays_projected_second_derivati
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 14);
@@ -1387,7 +1387,7 @@ fn sketch_projected_cubic_curve_cubic_curve_g2_replays_projected_curvature_rows(
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 14);
@@ -1501,7 +1501,7 @@ fn sketch_cubic_cubic_tangent_lowers_exact_derivative_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -1605,7 +1605,7 @@ fn sketch_arc_cubic_tangent_lowers_exact_derivative_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -1726,7 +1726,7 @@ fn sketch_projected_arc_cubic_curve_tangent_replays_projected_control_net_and_br
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 12);
@@ -1854,7 +1854,7 @@ fn sketch_projected_arc_cubic_curve_second_order_contact_replays_projected_circl
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 14);
@@ -1961,7 +1961,7 @@ fn sketch_cubic_cubic_g2_lowers_exact_curvature_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -2068,7 +2068,7 @@ fn sketch_arc_cubic_second_order_contact_lowers_exact_curvature_row() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -2194,7 +2194,7 @@ fn sketch_arc_arc_tangent_lowers_exact_radius_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -2294,7 +2294,7 @@ fn sketch_cubic_cubic_c2_lowers_exact_second_derivative_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -2908,7 +2908,7 @@ fn sketch_range_and_soft_objective_builders_lower_to_exact_row_kinds() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -2937,7 +2937,7 @@ fn sketch_parameter_ordering_reports_violations_and_stale_parameters_explicitly(
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -2988,7 +2988,7 @@ fn sketch_parameter_margins_validate_exact_inputs_and_replay_candidates() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3070,7 +3070,7 @@ fn sketch_line_orientation_relations_lower_to_exact_dot_and_cross_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3151,7 +3151,7 @@ fn sketch_same_direction_relations_lower_to_parallel_and_orientation_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3236,7 +3236,7 @@ fn sketch_tangent_same_direction_relations_lower_to_g1_predicate_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3356,7 +3356,7 @@ fn sketch_arc_line_tangent_relations_lower_endpoint_radius_and_orientation_rows(
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3482,7 +3482,7 @@ fn sketch_projected_arc_line_tangent_replays_workplane_endpoint_and_orientation_
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(certification.rows[..6].iter().all(|row| {
@@ -3552,7 +3552,7 @@ fn sketch_arc_line_tangent_supports_end_endpoint_and_line_end_orientation() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(handle);
@@ -3676,7 +3676,7 @@ fn sketch_arc_line_tangent_rejects_inconsistent_arc_radius() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3727,7 +3727,7 @@ fn sketch_equal_angle_relations_lower_to_exact_squared_cosine_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3795,7 +3795,7 @@ fn sketch_oriented_angle_relations_lower_to_exact_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -3933,7 +3933,7 @@ fn sketch_midpoint_relations_lower_to_exact_linear_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4035,7 +4035,7 @@ fn sketch_axis_symmetry_relations_lower_to_exact_linear_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4126,7 +4126,7 @@ fn sketch_line_symmetry_relations_lower_to_exact_polynomial_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4235,7 +4235,7 @@ fn sketch_projected_line_symmetry_replays_workplane_midpoint_and_perpendicular_r
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     let forms = sketch.residual_forms_for_constraint(valid.handle);
@@ -4313,7 +4313,7 @@ fn sketch_workplane_symmetry_relations_lower_to_exact_polynomial_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4431,7 +4431,7 @@ fn sketch_workplane_symmetry_keeps_nonunit_frame_as_proof_row() {
         Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
     );
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -4478,7 +4478,7 @@ fn sketch_point_distance_ranges_lower_to_exact_squared_inequalities() {
     }));
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4571,7 +4571,7 @@ fn sketch_equal_length_and_radius_relations_lower_to_exact_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4624,7 +4624,7 @@ fn sketch_concentric_relations_lower_to_exact_center_rows() {
 
     let lowered = sketch.lower_to_problem();
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     let forms = sketch.residual_forms_for_constraint(valid.handle);
 
     assert_eq!(lowered.problem.constraints.len(), 4);
@@ -4781,7 +4781,7 @@ fn sketch_length_ratio_and_point_line_distance_lower_to_exact_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -4907,7 +4907,7 @@ fn sketch_length_difference_relations_lower_to_exact_polynomial_and_branch_rows(
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -5033,7 +5033,7 @@ fn sketch_equal_point_line_distance_relations_lower_to_exact_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -5377,7 +5377,7 @@ fn sketch_projected_distance_lowers_unit_guard_and_exact_projection_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(certification.all_satisfied());
@@ -5457,7 +5457,7 @@ fn sketch_projected_equal_point_point_distances3_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -5547,7 +5547,7 @@ fn sketch_projected_point_radius_equality_lowers_exact_workplane_rows() {
 
     let report = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
 
@@ -5654,7 +5654,7 @@ fn sketch_projected_distance_ranges_lower_to_exact_squared_inequalities() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -5761,7 +5761,7 @@ fn sketch_projected_distance_reports_bad_workplanes_and_nonunit_frames() {
         Some(SketchResidualStrategy::WorkplaneUnitQuaternion)
     );
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -5843,7 +5843,7 @@ fn sketch_projected_point_line_distance_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -5951,7 +5951,7 @@ fn sketch_projected_point_line_radius_equality_lowers_exact_workplane_rows() {
 
     let report = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
 
@@ -6059,7 +6059,7 @@ fn sketch_projected_point_line_distance_ranges_lower_to_exact_inequalities() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6193,7 +6193,7 @@ fn sketch_projected_equal_length_lines3_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6284,7 +6284,7 @@ fn sketch_projected_line_radius_equality_lowers_exact_workplane_rows() {
 
     let report = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
 
@@ -6395,7 +6395,7 @@ fn sketch_projected_line_length_ranges_lower_to_exact_inequalities() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6545,7 +6545,7 @@ fn sketch_projected_length_ratio_lines3_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6648,7 +6648,7 @@ fn sketch_projected_point_distance_ratio3_lowers_exact_workplane_rows() {
     assert_eq!(report.rows[5].constraint, wrong);
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6726,7 +6726,7 @@ fn sketch_projected_length_difference_lines3_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6812,7 +6812,7 @@ fn sketch_projected_point_distance_difference3_lowers_exact_workplane_rows() {
 
     let report = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
 
@@ -6916,7 +6916,7 @@ fn sketch_projected_equal_length_point_line_distance3_lowers_exact_workplane_row
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -6995,7 +6995,7 @@ fn sketch_projected_equal_point_distance_point_line_distance3_lowers_exact_workp
 
     let report = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
 
@@ -7091,7 +7091,7 @@ fn sketch_projected_equal_point_line_distances3_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -7174,7 +7174,7 @@ fn sketch_projected_oriented_angle_lowers_exact_workplane_branch_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -7320,7 +7320,7 @@ fn sketch_projected_line_orientation_lowers_exact_workplane_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&report.problem),
+        &report.problem.analyze(),
         &context_from_problem(&report.problem),
     );
     assert!(matches!(
@@ -7447,7 +7447,7 @@ fn sketch_line_arc_length_replays_endpoint_radius_and_transcendental_length() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -7543,7 +7543,7 @@ fn sketch_line_arc_sweep_length_replays_major_minor_orientation_branches() {
     }));
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -7651,7 +7651,7 @@ fn sketch_projected_line_arc_sweep_length_replays_workplane_and_branch_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -7743,7 +7743,7 @@ fn sketch_projected_point_on_circle_replays_workplane_and_incidence_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -7828,7 +7828,7 @@ fn sketch_projected_point_concentric_replays_workplane_and_center_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -7923,7 +7923,7 @@ fn sketch_projected_point_on_line_replays_workplane_and_collinearity_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
 
@@ -8032,7 +8032,7 @@ fn sketch_projected_line_circle_tangent_replays_workplane_and_tangency_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -8101,7 +8101,7 @@ fn sketch_circle_circle_tangent_replays_internal_external_branch_rows() {
 
     let lowered = sketch.lower_to_problem();
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert_eq!(lowered.problem.constraints.len(), 3);
@@ -8203,7 +8203,7 @@ fn sketch_point_on_arc_replays_radius_and_branch_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -8306,7 +8306,7 @@ fn sketch_projected_point_on_arc_replays_radius_and_branch_rows() {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
@@ -9299,7 +9299,7 @@ fn lossy_adapter_only_report_preserves_proposal_boundary_without_exact_replay() 
     ));
     problem.add_constraint(Constraint::equality("inactive", x - Expr::int(2)));
     problem.constraints[1].active = false;
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
 
     let report = report_lossy_adapter_only_candidate(
         &prepared,
@@ -9338,10 +9338,8 @@ fn failed_constraint_diagnostics_classify_contradictions_violations_and_redundan
         x.clone() - Expr::int(1),
     ));
 
-    let failed_report = diagnose_failed_constraints(
-        &PreparedProblem::new(&failed),
-        &context_from_problem(&failed),
-    );
+    let failed_report =
+        diagnose_failed_constraints(&failed.analyze(), &context_from_problem(&failed));
 
     assert!(failed_report.has_blocking_rows());
     assert_eq!(failed_report.blocking_rows, 2);
@@ -9368,10 +9366,8 @@ fn failed_constraint_diagnostics_classify_contradictions_violations_and_redundan
         rx * Expr::int(2) - Expr::int(4),
     ));
 
-    let redundant_report = diagnose_failed_constraints(
-        &PreparedProblem::new(&redundant),
-        &context_from_problem(&redundant),
-    );
+    let redundant_report =
+        diagnose_failed_constraints(&redundant.analyze(), &context_from_problem(&redundant));
 
     assert!(!redundant_report.has_blocking_rows());
     assert!(redundant_report.only_rank_redundancy());
@@ -9387,7 +9383,7 @@ fn failed_constraint_diagnostics_preserve_lossy_proposal_only_rows() {
     let mut problem = Problem::default();
     problem.add_variable("x", real(2));
     problem.add_constraint(Constraint::equality("x squared", x.powi(2) - Expr::int(4)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let proposal_only = report_lossy_adapter_only_candidate(
         &prepared,
         hypersolve::ProposalEngineReport {
@@ -9418,10 +9414,8 @@ fn failed_constraint_single_removal_search_reports_clearing_and_still_blocking_r
         x.clone() - Expr::int(1),
     ));
 
-    let single_search = search_failed_constraint_single_removals(
-        &PreparedProblem::new(&single),
-        &context_from_problem(&single),
-    );
+    let single_search =
+        search_failed_constraint_single_removals(&single.analyze(), &context_from_problem(&single));
 
     assert!(single_search.has_single_removal_resolution());
     assert_eq!(single_search.original.blocking_rows, 1);
@@ -9444,10 +9438,8 @@ fn failed_constraint_single_removal_search_reports_clearing_and_still_blocking_r
         y - Expr::int(2),
     ));
 
-    let paired_search = search_failed_constraint_single_removals(
-        &PreparedProblem::new(&paired),
-        &context_from_problem(&paired),
-    );
+    let paired_search =
+        search_failed_constraint_single_removals(&paired.analyze(), &context_from_problem(&paired));
 
     assert!(!paired_search.has_single_removal_resolution());
     assert_eq!(paired_search.original.blocking_rows, 2);
@@ -9473,10 +9465,8 @@ fn failed_constraint_pair_removal_search_reports_bounded_two_row_resolutions() {
         x.clone() - Expr::int(2),
     ));
 
-    let paired_search = search_failed_constraint_pair_removals(
-        &PreparedProblem::new(&paired),
-        &context_from_problem(&paired),
-    );
+    let paired_search =
+        search_failed_constraint_pair_removals(&paired.analyze(), &context_from_problem(&paired));
 
     assert!(paired_search.has_pair_removal_resolution());
     assert_eq!(paired_search.original.blocking_rows, 2);
@@ -9500,10 +9490,8 @@ fn failed_constraint_pair_removal_search_reports_bounded_two_row_resolutions() {
     ));
     triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
 
-    let triple_search = search_failed_constraint_pair_removals(
-        &PreparedProblem::new(&triple),
-        &context_from_problem(&triple),
-    );
+    let triple_search =
+        search_failed_constraint_pair_removals(&triple.analyze(), &context_from_problem(&triple));
 
     assert!(!triple_search.has_pair_removal_resolution());
     assert_eq!(triple_search.original.blocking_rows, 3);
@@ -9528,30 +9516,21 @@ fn failed_constraint_set_removal_search_reports_bounded_cardinality_resolutions(
     ));
     triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
 
-    let zero_search = search_failed_constraint_set_removals(
-        &PreparedProblem::new(&triple),
-        &context_from_problem(&triple),
-        0,
-    );
+    let zero_search =
+        search_failed_constraint_set_removals(&triple.analyze(), &context_from_problem(&triple), 0);
     assert_eq!(zero_search.original.blocking_rows, 3);
     assert!(zero_search.probes.is_empty());
     assert!(!zero_search.has_removal_resolution());
 
-    let pair_bounded_search = search_failed_constraint_set_removals(
-        &PreparedProblem::new(&triple),
-        &context_from_problem(&triple),
-        2,
-    );
+    let pair_bounded_search =
+        search_failed_constraint_set_removals(&triple.analyze(), &context_from_problem(&triple), 2);
     assert_eq!(pair_bounded_search.original.blocking_rows, 3);
     assert_eq!(pair_bounded_search.probes.len(), 6);
     assert_eq!(pair_bounded_search.clearing_removals, 0);
     assert!(!pair_bounded_search.has_removal_resolution());
 
-    let triple_search = search_failed_constraint_set_removals(
-        &PreparedProblem::new(&triple),
-        &context_from_problem(&triple),
-        3,
-    );
+    let triple_search =
+        search_failed_constraint_set_removals(&triple.analyze(), &context_from_problem(&triple), 3);
     assert_eq!(triple_search.original.blocking_rows, 3);
     assert_eq!(triple_search.max_cardinality, 3);
     assert_eq!(triple_search.probes.len(), 7);
@@ -9583,7 +9562,7 @@ fn failed_constraint_minimal_removal_search_reports_first_clearing_cardinality()
     triple.add_constraint(Constraint::equality("third triple miss", y - Expr::int(3)));
 
     let pair_bound = search_failed_constraint_minimal_removals(
-        &PreparedProblem::new(&triple),
+        &triple.analyze(),
         &context_from_problem(&triple),
         2,
     );
@@ -9595,7 +9574,7 @@ fn failed_constraint_minimal_removal_search_reports_first_clearing_cardinality()
     assert!(!pair_bound.has_minimal_removal_resolution());
 
     let triple_bound = search_failed_constraint_minimal_removals(
-        &PreparedProblem::new(&triple),
+        &triple.analyze(),
         &context_from_problem(&triple),
         3,
     );
@@ -9719,7 +9698,7 @@ fn candidate_batch_certification_reports_deterministic_failed_row_probes() {
         weight: real(1),
         active: true,
     });
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let mut certified = context_from_problem(&problem);
     certified.bind(SymbolId(0), real(2));
     let mut rejected = context_from_problem(&problem);
@@ -9759,7 +9738,7 @@ fn candidate_batch_predicate_schedule_chunks_active_rows_deterministically() {
     problem.add_constraint(inactive);
     problem.add_constraint(Constraint::equality("active 2", x.clone()));
     problem.add_constraint(Constraint::equality("active 3", x));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
 
     let schedule = schedule_candidate_batch_predicates(
         &prepared,
@@ -9903,7 +9882,7 @@ fn simplify_folds_exact_unary_endpoints_without_hiding_invalid_domains() {
 }
 
 #[test]
-fn prepared_problem_caches_residual_dependency_and_sparsity_facts() {
+fn problem_analysis_caches_residual_dependency_and_sparsity_facts() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -9919,7 +9898,7 @@ fn prepared_problem_caches_residual_dependency_and_sparsity_facts() {
     ));
     problem.add_constraint(Constraint::equality("constant", Expr::int(7)));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let facts = prepared.facts();
 
     assert_eq!(facts.variable_count, 2);
@@ -9962,7 +9941,7 @@ fn prepared_problem_caches_residual_dependency_and_sparsity_facts() {
 }
 
 #[test]
-fn prepared_problem_extracts_multivariate_quadratic_residuals() {
+fn problem_analysis_extracts_multivariate_quadratic_residuals() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -9974,8 +9953,8 @@ fn prepared_problem_extracts_multivariate_quadratic_residuals() {
             - y.clone() * Expr::int(7)
             + Expr::int(11),
     ));
-    let prepared = PreparedProblem::new(&problem);
-    let block = PreparedSolverBlock::new(&prepared);
+    let prepared = problem.analyze();
+    let block = SolverBlock::new(&prepared);
     let quadratic = prepared.quadratic_residuals()[0]
         .as_ref()
         .expect("mixed quadratic row should be prepared");
@@ -10011,7 +9990,7 @@ fn candidate_replay_uses_quadratic_residual_forms() {
         x.clone().powi(2) + x.clone() * y.clone() * Expr::int(2) + y.clone().powi(2)
             - Expr::int(49),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     assert!(prepared.quadratic_residuals()[0].is_some());
@@ -10045,7 +10024,7 @@ fn geometry_domain_builds_exact_distance_and_tangent_residuals() {
         b,
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     assert_eq!(prepared.facts().polynomial_active_rows, 3);
     assert_eq!(prepared.facts().non_polynomial_active_rows, 0);
     assert!(certify_candidate(&prepared, &context_from_problem(&problem)).all_satisfied());
@@ -10061,11 +10040,8 @@ fn geometry_domain_builds_exact_distance_and_tangent_residuals() {
         SolverPoint2::new(dx, dy),
     ));
     assert!(
-        certify_candidate(
-            &PreparedProblem::new(&reversed),
-            &context_from_problem(&reversed)
-        )
-        .has_certified_violation()
+        certify_candidate(&reversed.analyze(), &context_from_problem(&reversed))
+            .has_certified_violation()
     );
 }
 
@@ -10085,7 +10061,7 @@ fn geometry_domain_keeps_point_coincidence_affine_rows_split() {
         problem.add_constraint(constraint);
     }
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     assert_eq!(prepared.facts().affine_active_rows, 2);
     assert_eq!(prepared.affine_residuals().len(), 2);
     assert!(prepared.affine_residuals().iter().all(Option::is_some));
@@ -10104,7 +10080,7 @@ fn affine_residual_preserves_coefficients_and_exact_product_sum_eval() {
         x.clone() * Expr::int(2) - y.clone() * Expr::int(3) + Expr::int(11),
     ));
     let context = context_from_problem(&problem);
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let affine = prepared.affine_residuals()[0]
         .as_ref()
         .expect("affine row should be prepared");
@@ -10137,7 +10113,7 @@ fn affine_residual_rejects_stale_model_shape() {
     let mut problem = Problem::default();
     problem.add_variable("x", real(5));
     problem.add_constraint(Constraint::equality("affine block", x + Expr::int(1)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let affine = prepared.affine_residuals()[0]
         .as_ref()
         .expect("affine row should be prepared");
@@ -10159,7 +10135,7 @@ fn affine_residual_rejects_stale_model_shape() {
 }
 
 #[test]
-fn prepared_problem_classifies_constant_residual_signs_without_evaluation() {
+fn problem_analysis_classifies_constant_residual_signs_without_evaluation() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
     problem.add_variable("x", real(0));
@@ -10171,7 +10147,7 @@ fn prepared_problem_classifies_constant_residual_signs_without_evaluation() {
     ));
     problem.add_constraint(Constraint::equality("variable row", x - Expr::int(1)));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let facts = prepared.facts();
 
     assert_eq!(facts.active_constraint_count, 4);
@@ -10193,7 +10169,7 @@ fn prepared_problem_classifies_constant_residual_signs_without_evaluation() {
 }
 
 #[test]
-fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
+fn solver_block_analysis_partitions_direct_affine_and_nonlinear_rows() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -10211,8 +10187,8 @@ fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
         active: true,
     });
 
-    let prepared = PreparedProblem::new(&problem);
-    let block = PreparedSolverBlock::new(&prepared);
+    let prepared = problem.analyze();
+    let block = SolverBlock::new(&prepared);
     let facts = block.facts();
 
     assert_eq!(facts.row_count, 5);
@@ -10241,7 +10217,7 @@ fn prepared_solver_block_partitions_direct_affine_and_nonlinear_rows() {
 }
 
 #[test]
-fn prepared_problem_extracts_univariate_quadratic_residuals() {
+fn problem_analysis_extracts_univariate_quadratic_residuals() {
     let x = Expr::symbol(SymbolId(0), "x");
     let y = Expr::symbol(SymbolId(1), "y");
     let mut problem = Problem::default();
@@ -10257,8 +10233,8 @@ fn prepared_problem_extracts_univariate_quadratic_residuals() {
         x.clone().powi(2) - Expr::int(9),
     ));
 
-    let prepared = PreparedProblem::new(&problem);
-    let block = PreparedSolverBlock::new(&prepared);
+    let prepared = problem.analyze();
+    let block = SolverBlock::new(&prepared);
     let first = prepared.univariate_quadratic_residuals()[0]
         .as_ref()
         .expect("univariate quadratic row should be prepared");
@@ -10304,7 +10280,7 @@ fn univariate_quadratic_alpha_certifies_exact_simple_root_and_nearby_basin() {
         x.clone().powi(2) - Expr::int(4),
     ));
     let exact_report = certify_univariate_quadratic_alpha(
-        &PreparedProblem::new(&exact_root),
+        &exact_root.analyze(),
         &context_from_problem(&exact_root),
         hyperlimit::PredicatePolicy,
     );
@@ -10323,7 +10299,7 @@ fn univariate_quadratic_alpha_certifies_exact_simple_root_and_nearby_basin() {
         x.clone().powi(2) - Expr::int(24),
     ));
     let near_report = certify_univariate_quadratic_alpha(
-        &PreparedProblem::new(&near),
+        &near.analyze(),
         &context_from_problem(&near),
         hyperlimit::PredicatePolicy,
     );
@@ -10344,7 +10320,7 @@ fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
     multiple.add_variable("x", real(0));
     multiple.add_constraint(Constraint::equality("multiple root", x.clone().powi(2)));
     let multiple_report = certify_univariate_quadratic_alpha(
-        &PreparedProblem::new(&multiple),
+        &multiple.analyze(),
         &context_from_problem(&multiple),
         hyperlimit::PredicatePolicy,
     );
@@ -10361,7 +10337,7 @@ fn univariate_quadratic_alpha_reports_multiple_root_and_failed_bound() {
         x.clone().powi(2) - Expr::int(100),
     ));
     let far_report = certify_univariate_quadratic_alpha(
-        &PreparedProblem::new(&far),
+        &far.analyze(),
         &context_from_problem(&far),
         hyperlimit::PredicatePolicy,
     );
@@ -10382,7 +10358,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
     ));
 
     let report = certify_univariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &context_from_problem(&problem),
         &[VariableBall {
             symbol: SymbolId(0),
@@ -10408,7 +10384,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
     singular.add_variable("x", real(0));
     singular.add_constraint(Constraint::equality("singular center", x.clone().powi(2)));
     let singular_report = certify_univariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&singular),
+        &singular.analyze(),
         &context_from_problem(&singular),
         &[VariableBall {
             symbol: SymbolId(0),
@@ -10428,7 +10404,7 @@ fn univariate_quadratic_krawczyk_certifies_unique_root_and_reports_failures() {
         x.clone().powi(2) - Expr::int(4),
     ));
     let far_report = certify_univariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&far),
+        &far.analyze(),
         &context_from_problem(&far),
         &[VariableBall {
             symbol: SymbolId(0),
@@ -10459,7 +10435,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
     ));
 
     let report = certify_multivariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &context_from_problem(&problem),
         &[
             VariableBall {
@@ -10490,7 +10466,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
     }));
 
     let tiny_box = certify_multivariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &context_from_problem(&problem),
         &[
             VariableBall {
@@ -10515,7 +10491,7 @@ fn multivariate_quadratic_krawczyk_certifies_coupled_square_system() {
     singular.add_constraint(Constraint::equality("x squared", x.clone().powi(2)));
     singular.add_constraint(Constraint::equality("y squared", y.clone().powi(2)));
     let singular_report = certify_multivariate_quadratic_krawczyk_box(
-        &PreparedProblem::new(&singular),
+        &singular.analyze(),
         &context_from_problem(&singular),
         &[
             VariableBall {
@@ -10553,7 +10529,7 @@ fn direct_quadratic_solver_returns_exact_root_candidates() {
         x.clone().powi(2) + Expr::int(1),
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let solutions = solve_direct_univariate_quadratic_equalities(&prepared).unwrap();
 
     assert_eq!(solutions.len(), 3);
@@ -10573,7 +10549,7 @@ fn direct_quadratic_root_candidates_replay_full_problem_exactly() {
         x.clone().powi(2) - Expr::int(5) * x.clone() + Expr::int(6),
     ));
     problem.add_constraint(Constraint::equality("select root two", x - Expr::int(2)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let base = context_from_problem(&problem);
 
     let reports = certify_direct_univariate_quadratic_roots(&prepared, &base).unwrap();
@@ -10622,7 +10598,7 @@ fn exact_quadratic_branch_enumeration_reports_rejected_empty_and_unsupported_bra
         "unsupported affine row",
         y - Expr::int(2),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let report =
         enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
 
@@ -10656,7 +10632,7 @@ fn exact_quadratic_branch_enumeration_keeps_double_roots_as_one_branch() {
         "double branch",
         x.clone().powi(2) - Expr::int(4) * x + Expr::int(4),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let report =
         enumerate_direct_univariate_quadratic_branches(&prepared, &context_from_problem(&problem));
 
@@ -10693,10 +10669,8 @@ fn root_isolation_sturm_reports_distinct_repeated_and_unsupported_rows() {
     ));
     problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
 
-    let reports = isolate_univariate_polynomial_roots(
-        &PreparedProblem::new(&problem),
-        hyperlimit::PredicatePolicy,
-    );
+    let reports =
+        isolate_univariate_polynomial_roots(&problem.analyze(), hyperlimit::PredicatePolicy);
 
     assert_eq!(reports.len(), 4);
     assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
@@ -10742,7 +10716,7 @@ fn candidate_certification_replays_affine_rows_exactly() {
     ));
     problem.add_constraint(Constraint::equality("x minus three", x - Expr::int(3)));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let report = certify_candidate(&prepared, &context_from_problem(&problem));
 
     assert_eq!(report.rows.len(), 2);
@@ -10780,7 +10754,7 @@ fn candidate_certification_handles_inequality_active_sets_exactly() {
         active: true,
     });
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let report = certify_candidate_with_config(
         &prepared,
         &context_from_problem(&problem),
@@ -10808,7 +10782,7 @@ fn residual_ball_certification_uses_hyperlimit_filter_boundary() {
     problem.add_variable("x", real(10));
     problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
     let report = certify_candidate_with_residual_balls(
         &prepared,
@@ -10835,7 +10809,7 @@ fn residual_ball_certification_rejects_negative_radius() {
     problem.add_variable("x", real(0));
     problem.add_constraint(Constraint::equality("zero", Expr::zero()));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
     let report = certify_candidate_with_residual_balls(
         &prepared,
@@ -10859,7 +10833,7 @@ fn affine_interval_candidate_certifies_box_away_from_zero() {
     let mut problem = Problem::default();
     problem.add_variable("x", real(10));
     problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_affine_interval_candidate(
@@ -10888,7 +10862,7 @@ fn affine_interval_candidate_rejects_negative_variable_radius() {
     let mut problem = Problem::default();
     problem.add_variable("x", real(10));
     problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let error = certify_affine_interval_candidate(
@@ -10925,7 +10899,7 @@ fn affine_krawczyk_box_certifies_unique_root_inside_exact_box() {
         "x minus y minus one",
         x - y - Expr::int(1),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_affine_krawczyk_box(
@@ -10972,7 +10946,7 @@ fn affine_krawczyk_box_reports_outside_and_singular_cases() {
         x.clone() - y.clone() - Expr::int(1),
     ));
     let outside_report = certify_affine_krawczyk_box(
-        &PreparedProblem::new(&outside),
+        &outside.analyze(),
         &context_from_problem(&outside),
         &[
             VariableBall {
@@ -10999,7 +10973,7 @@ fn affine_krawczyk_box_reports_outside_and_singular_cases() {
     singular.add_constraint(Constraint::equality("x plus y", x.clone() + y.clone()));
     singular.add_constraint(Constraint::equality("duplicate x plus y", x + y));
     let singular_report = certify_affine_krawczyk_box(
-        &PreparedProblem::new(&singular),
+        &singular.analyze(),
         &context_from_problem(&singular),
         &[
             VariableBall {
@@ -11028,7 +11002,7 @@ fn quadratic_interval_candidate_certifies_taylor_ball_away_from_zero() {
         "unit quadratic below zero",
         (x.clone() * x) - Expr::int(100),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_quadratic_interval_candidate(
@@ -11060,7 +11034,7 @@ fn quadratic_interval_candidate_certifies_zero_radius_root() {
         "quadratic root",
         (x.clone() * x) - Expr::int(9),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_quadratic_interval_candidate(
@@ -11094,7 +11068,7 @@ fn multivariate_quadratic_interval_candidate_certifies_cross_term_ball() {
         "cross term positive",
         x.clone() * y.clone() - Expr::int(50),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_multivariate_quadratic_interval_candidate(
@@ -11131,7 +11105,7 @@ fn multivariate_quadratic_interval_candidate_rejects_missing_binding() {
     problem.add_variable("x", real(10));
     problem.add_variable("y", real(10));
     problem.add_constraint(Constraint::equality("cross term", x * y));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let mut context = hypersolve::EvaluationContext::default();
     context.bind(SymbolId(0), real(10));
 
@@ -11163,7 +11137,7 @@ fn quadratic_interval_candidate_rejects_invalid_inputs() {
         "quadratic root",
         (x.clone() * x) - Expr::int(9),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let negative_radius = certify_quadratic_interval_candidate(
@@ -11214,7 +11188,7 @@ fn direct_affine_solver_isolates_one_variable_exactly() {
     ));
     problem.add_constraint(Constraint::equality("coupled", x + y));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let solutions = solve_direct_affine_equalities(&prepared).unwrap();
 
     assert_eq!(solutions.len(), 1);
@@ -11229,7 +11203,7 @@ fn interval_box_report_retains_payload_and_status() {
     let mut problem = Problem::default();
     problem.add_variable("x", real(10));
     problem.add_constraint(Constraint::equality("x minus seven", x - Expr::int(7)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let context = context_from_problem(&problem);
 
     let report = certify_interval_box_candidate(
@@ -11278,7 +11252,7 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
         x - y - Expr::int(1),
     ));
 
-    let report = solve_direct_affine_system(&PreparedProblem::new(&problem));
+    let report = solve_direct_affine_system(&problem.analyze());
 
     assert_eq!(report.status, DirectAffineSystemStatus::Solved);
     assert!(report.solved());
@@ -11295,7 +11269,7 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
     for assignment in &report.assignments {
         candidate.bind(assignment.symbol, assignment.value.clone());
     }
-    let certification = certify_candidate(&PreparedProblem::new(&problem), &candidate);
+    let certification = certify_candidate(&problem.analyze(), &candidate);
     assert!(certification.all_satisfied());
 
     let mut underdetermined = Problem::default();
@@ -11305,7 +11279,7 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
         "only one row",
         Expr::symbol(SymbolId(0), "x") - Expr::int(2),
     ));
-    let shape = solve_direct_affine_system(&PreparedProblem::new(&underdetermined));
+    let shape = solve_direct_affine_system(&underdetermined.analyze());
     assert_eq!(
         shape.status,
         DirectAffineSystemStatus::ShapeMismatch {
@@ -11321,7 +11295,7 @@ fn direct_affine_system_solves_square_rows_and_replays_exactly() {
     singular.add_variable("y", real(0));
     singular.add_constraint(Constraint::equality("x plus y", sx.clone() + sy.clone()));
     singular.add_constraint(Constraint::equality("duplicate", sx + sy));
-    let singular_report = solve_direct_affine_system(&PreparedProblem::new(&singular));
+    let singular_report = solve_direct_affine_system(&singular.analyze());
     assert_eq!(
         singular_report.status,
         DirectAffineSystemStatus::SingularOrUnsupportedPivot { pivot: 1 }
@@ -11349,7 +11323,7 @@ fn affine_active_set_regeneration_solves_masked_rows_and_audits_source_problem()
     problem.add_constraint(inactive_bound);
 
     let report = regenerate_active_set_affine_candidate(
-        &PreparedProblem::new(&problem),
+        &problem.analyze(),
         &[true, true, false],
         CandidateCertificationConfig::default(),
     );
@@ -11369,7 +11343,7 @@ fn exact_affine_rank_reports_dof_and_inconsistency_without_lossy_rank_hints() {
     underconstrained.add_variable("x", real(0));
     underconstrained.add_variable("y", real(0));
     underconstrained.add_constraint(Constraint::equality("x", x.clone()));
-    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&underconstrained), -64);
+    let rank = analyze_exact_affine_rank(&underconstrained.analyze(), -64);
     assert_eq!(rank.status, ExactAffineRankStatus::Certified);
     assert_eq!(rank.coefficient_rank, Some(1));
     assert_eq!(rank.augmented_rank, Some(1));
@@ -11380,7 +11354,7 @@ fn exact_affine_rank_reports_dof_and_inconsistency_without_lossy_rank_hints() {
     inconsistent.add_variable("y", real(0));
     inconsistent.add_constraint(Constraint::equality("x", x.clone()));
     inconsistent.add_constraint(Constraint::equality("x plus one", x.clone() + Expr::int(1)));
-    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&inconsistent), -64);
+    let rank = analyze_exact_affine_rank(&inconsistent.analyze(), -64);
     assert_eq!(rank.status, ExactAffineRankStatus::Inconsistent);
     assert_eq!(rank.coefficient_rank, Some(1));
     assert_eq!(rank.augmented_rank, Some(2));
@@ -11391,7 +11365,7 @@ fn exact_affine_rank_reports_dof_and_inconsistency_without_lossy_rank_hints() {
     square.add_variable("y", real(0));
     square.add_constraint(Constraint::equality("x", x));
     square.add_constraint(Constraint::equality("y", y));
-    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&square), -64);
+    let rank = analyze_exact_affine_rank(&square.analyze(), -64);
     assert_eq!(rank.status, ExactAffineRankStatus::Certified);
     assert_eq!(rank.coefficient_rank, Some(2));
     assert_eq!(rank.augmented_rank, Some(2));
@@ -11408,7 +11382,7 @@ fn exact_affine_rank_reports_unsupported_nonlinear_rows_and_skips_inequalities()
     inequality.kind = ConstraintKind::LessOrEqual;
     problem.add_constraint(inequality);
 
-    let rank = analyze_exact_affine_rank(&PreparedProblem::new(&problem), -64);
+    let rank = analyze_exact_affine_rank(&problem.analyze(), -64);
 
     assert_eq!(rank.status, ExactAffineRankStatus::UnsupportedNonAffineRows);
     assert_eq!(rank.unsupported_rows, vec![0]);
@@ -11425,7 +11399,7 @@ fn equality_substitution_finds_unit_difference_rows() {
     problem.add_variable("y", real(0));
     problem.add_constraint(Constraint::equality("x - y + 3", x - y + Expr::int(3)));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let substitutions = find_equality_substitutions(&prepared).unwrap();
 
     assert_eq!(substitutions.len(), 1);
@@ -11442,7 +11416,7 @@ fn equality_substitution_updates_candidate_context_exactly() {
     problem.add_variable("x", real(0));
     problem.add_variable("y", real(10));
     problem.add_constraint(Constraint::equality("x - y + 3", x - y + Expr::int(3)));
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let substitutions = find_equality_substitutions(&prepared).unwrap();
     let mut context = context_from_problem(&problem);
 
@@ -11625,7 +11599,7 @@ fn equality_substitution_elimination_carries_exact_offsets_into_affine_rows() {
         z * Expr::int(2) + y + Expr::int(5),
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let substitutions = find_equality_substitutions(&prepared).unwrap();
     let classes = build_equality_substitution_classes(&substitutions).unwrap();
     let report = eliminate_affine_rows_with_substitution_classes(&prepared, &classes);
@@ -11664,7 +11638,7 @@ fn equality_substitution_elimination_classifies_reduced_constant_rows() {
         y - x - Expr::int(4),
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
     let substitutions = vec![hypersolve::EqualitySubstitution {
         constraint_index: 0,
         left: SymbolId(1),
@@ -11684,13 +11658,13 @@ fn equality_substitution_elimination_classifies_reduced_constant_rows() {
 }
 
 #[test]
-fn prepared_problem_evaluates_through_source_problem_without_float_topology() {
+fn problem_analysis_evaluates_through_source_problem_without_float_topology() {
     let x = Expr::symbol(SymbolId(0), "x");
     let mut problem = Problem::default();
     problem.add_variable("x", real(3));
     problem.add_constraint(Constraint::equality("x minus three", x - Expr::int(3)));
     let context = context_from_problem(&problem);
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
 
     let residuals = prepared.evaluate_residuals(&context).unwrap();
 
@@ -11712,10 +11686,10 @@ fn prepared_symbolic_jacobian_consumes_structural_sparsity() {
     ));
     problem.add_constraint(Constraint::equality("coupled row", x.clone() * y.clone()));
     let context = context_from_problem(&problem);
-    let prepared = PreparedProblem::new(&problem);
+    let prepared = problem.analyze();
 
     let plain = symbolic_jacobian(&problem, &context).unwrap();
-    let sparse = symbolic_jacobian_prepared(&prepared, &context).unwrap();
+    let sparse = symbolic_jacobian_with_analysis(&prepared, &context).unwrap();
 
     assert_eq!(sparse, plain);
     assert_eq!(prepared.jacobian_sparsity()[0], vec![true, false]);

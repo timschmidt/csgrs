@@ -2,7 +2,7 @@
 //!
 //! Numeric nonlinear methods are useful proposal engines, but in an exact
 //! geometry stack the proposed coordinates are not a proof. This module replays
-//! residuals through prepared exact solver structure and asks `hyperreal` for
+//! residuals through analysis exact solver structure and asks `hyperreal` for
 //! certified signs before accepting or rejecting each row. Combinatorial
 //! decisions should consume exact or certified information
 //! or return explicit uncertainty, not primitive-float tolerances. The
@@ -13,10 +13,10 @@
 use hyperlimit::{PredicatePolicy, Sign, classify_ball_sign_with_policy};
 use hyperreal::{CertifiedRealSign, Real, RealSign, RealSignCertificate};
 
+use crate::analysis::ProblemAnalysis;
 use crate::diagnostics::{ProposalEngineKind, ProposalEnginePrecision, ProposalEngineReport};
 use crate::eval::{EvaluationContext, positive_part};
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 
 /// Certification policy for replaying one candidate solution.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -144,7 +144,7 @@ pub struct CertifiedCandidateRow {
     pub status: CertifiedCandidateStatus,
 }
 
-/// Report for replaying a candidate solution against a prepared problem.
+/// Report for replaying a candidate solution against a analysis problem.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CandidateCertificationReport {
     /// Per-active-row certification results.
@@ -191,25 +191,25 @@ impl CandidateCertificationReport {
 
 /// Replay and certify a candidate using the default bounded sign policy.
 pub fn certify_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
 ) -> CandidateCertificationReport {
-    certify_candidate_with_config(prepared, context, CandidateCertificationConfig::default())
+    certify_candidate_with_config(analysis, context, CandidateCertificationConfig::default())
 }
 
 /// Replay and certify a candidate with an explicit bounded sign policy.
 pub fn certify_candidate_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     config: CandidateCertificationConfig,
 ) -> CandidateCertificationReport {
-    let mut rows = Vec::new();
+    let mut rows = Vec::with_capacity(analysis.facts().active_constraint_count);
 
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
-        let replayed = prepared.evaluate_constraint_residual(constraint_index, context);
+        let replayed = analysis.evaluate_constraint_residual(constraint_index, context);
         let row = match replayed {
             Ok(value) => {
                 let signed = normalize_residual(value, constraint.kind);
@@ -272,10 +272,10 @@ pub fn certify_candidate_with_config(
 /// replay through [`certify_candidate`] or a stronger interval/alpha proof
 /// remains mandatory before trusting the candidate.
 pub fn report_lossy_adapter_only_candidate(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     proposal_engine: ProposalEngineReport,
 ) -> CandidateCertificationReport {
-    let rows = prepared
+    let rows = analysis
         .problem()
         .constraints
         .iter()
@@ -310,12 +310,12 @@ pub fn report_lossy_adapter_only_candidate(
 /// accepted when `hyperlimit` can certify the sign of the whole ball. This is
 /// the proof-producing filter layer required at the exactness boundary, not a tolerance test.
 pub fn certify_candidate_with_residual_balls(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     balls: &[CandidateResidualBall],
     policy: PredicatePolicy,
 ) -> CandidateCertificationReport {
-    let mut report = certify_candidate(prepared, context);
+    let mut report = certify_candidate(analysis, context);
     for ball in balls {
         let Some(row) = report.rows.get_mut(ball.active_row) else {
             continue;

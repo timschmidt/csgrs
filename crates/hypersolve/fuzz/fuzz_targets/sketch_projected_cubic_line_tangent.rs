@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    certify_candidate, context_from_problem, PreparedProblem, SketchGeneratedRowStatus,
+    certify_candidate, context_from_problem, SketchGeneratedRowStatus,
     SketchLineEndpoint, SketchResidualFormKind, SketchResidualFormsStatus, SketchResidualStrategy,
     SketchSolveProblem,
 };
@@ -109,7 +109,7 @@ fuzz_target!(|data: &[u8]| {
             && row.status == SketchGeneratedRowStatus::Generated
     }));
     let context = context_from_problem(&lowered.problem);
-    let certification = certify_candidate(&PreparedProblem::new(&lowered.problem), &context);
+    let certification = certify_candidate(&lowered.problem.analyze(), &context);
     if mode == 0 {
         assert!(certification.all_satisfied());
     } else {

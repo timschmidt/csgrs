@@ -1,6 +1,6 @@
-//! Prepared nonlinear solver blocks.
+//! Nonlinear solver-block analysis.
 //!
-//! `PreparedProblem` records row facts close to the model. `PreparedSolverBlock`
+//! `ProblemAnalysis` records row facts close to the model. `SolverBlock`
 //! is the next scheduling layer: it partitions active rows into the categories
 //! a nonlinear backend needs before it decides whether to run substitution,
 //! affine elimination, polynomial handling, or an external numeric proposal
@@ -9,7 +9,7 @@
 //! explicit substitution/soluble-equation/Jacobian passes while keeping
 //! primitive numeric iteration outside the proof boundary.
 
-use crate::prepared::{PreparedConstraintFacts, PreparedProblem};
+use crate::analysis::{ConstraintFacts, ProblemAnalysis};
 use crate::symbolic::ExprDegree;
 
 /// Solver scheduling class for one source constraint row.
@@ -26,7 +26,7 @@ pub enum SolverBlockRowKind {
     /// Active affine row with an extracted coefficient form.
     AffineForm,
     /// Active affine row that was recognized but not extracted.
-    AffineUnprepared,
+    AffineWithoutForm,
     /// Active polynomial row of degree at least two.
     Polynomial,
     /// Active non-polynomial row.
@@ -43,7 +43,7 @@ impl SolverBlockRowKind {
                 | Self::ConstantCertifiedContradiction
                 | Self::ConstantUnknown
                 | Self::AffineForm
-                | Self::AffineUnprepared
+                | Self::AffineWithoutForm
         )
     }
 
@@ -53,7 +53,7 @@ impl SolverBlockRowKind {
     }
 }
 
-/// Prepared scheduling metadata for one row.
+/// Scheduling metadata for one analyzed row.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SolverBlockRow {
     /// Source constraint index.
@@ -68,7 +68,7 @@ pub struct SolverBlockRow {
 
 /// Problem-wide solver-block summary.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PreparedSolverBlockFacts {
+pub struct SolverBlockFacts {
     /// Total source constraints.
     pub row_count: usize,
     /// Active source constraints.
@@ -85,7 +85,7 @@ pub struct PreparedSolverBlockFacts {
     pub polynomial_nonlinear_row_count: usize,
     /// Active polynomial rows with univariate quadratic coefficient forms.
     pub univariate_quadratic_form_row_count: usize,
-    /// Active polynomial rows with prepared degree-at-most-two coefficient blocks.
+    /// Active polynomial rows with degree-at-most-two coefficient forms.
     pub quadratic_form_row_count: usize,
     /// Active non-polynomial rows.
     pub non_polynomial_row_count: usize,
@@ -95,8 +95,8 @@ pub struct PreparedSolverBlockFacts {
     pub structural_jacobian_nonzeros: usize,
 }
 
-impl PreparedSolverBlockFacts {
-    /// Returns whether the active problem is purely affine after preparation.
+impl SolverBlockFacts {
+    /// Returns whether the active problem is purely affine after analysis.
     pub fn all_active_rows_affine_or_constant(&self) -> bool {
         self.active_row_count > 0
             && self.nonlinear_proposal_row_count == 0
@@ -109,17 +109,17 @@ impl PreparedSolverBlockFacts {
     }
 }
 
-/// Solver scheduling layer built from a prepared problem.
+/// Solver scheduling layer built from a problem analysis.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PreparedSolverBlock {
+pub struct SolverBlock {
     rows: Vec<SolverBlockRow>,
-    facts: PreparedSolverBlockFacts,
+    facts: SolverBlockFacts,
 }
 
-impl PreparedSolverBlock {
-    /// Build solver-block scheduling metadata from a prepared problem.
-    pub fn new(prepared: &PreparedProblem<'_>) -> Self {
-        let mut rows = Vec::with_capacity(prepared.constraints().len());
+impl SolverBlock {
+    /// Build solver-block scheduling metadata from a problem analysis.
+    pub fn new(analysis: &ProblemAnalysis<'_>) -> Self {
+        let mut rows = Vec::with_capacity(analysis.constraints().len());
         let mut inactive_row_count = 0;
         let mut constant_row_count = 0;
         let mut constant_contradiction_count = 0;
@@ -131,10 +131,10 @@ impl PreparedSolverBlock {
         let mut nonlinear_proposal_row_count = 0;
         let mut structural_jacobian_nonzeros = 0;
 
-        for (constraint_index, facts) in prepared.constraints().iter().enumerate() {
+        for (constraint_index, facts) in analysis.constraints().iter().enumerate() {
             let kind = classify_row(
                 facts,
-                prepared.affine_residuals()[constraint_index].is_some(),
+                analysis.affine_residuals()[constraint_index].is_some(),
             );
             if !facts.active {
                 inactive_row_count += 1;
@@ -147,15 +147,15 @@ impl PreparedSolverBlock {
                     SolverBlockRowKind::AffineForm => affine_form_row_count += 1,
                     SolverBlockRowKind::Polynomial => {
                         polynomial_nonlinear_row_count += 1;
-                        if prepared.univariate_quadratic_residuals()[constraint_index].is_some() {
+                        if analysis.univariate_quadratic_residuals()[constraint_index].is_some() {
                             univariate_quadratic_form_row_count += 1;
                         }
-                        if prepared.quadratic_residuals()[constraint_index].is_some() {
+                        if analysis.quadratic_residuals()[constraint_index].is_some() {
                             quadratic_form_row_count += 1;
                         }
                     }
                     SolverBlockRowKind::NonPolynomial => non_polynomial_row_count += 1,
-                    SolverBlockRowKind::Inactive | SolverBlockRowKind::AffineUnprepared => {}
+                    SolverBlockRowKind::Inactive | SolverBlockRowKind::AffineWithoutForm => {}
                 }
                 if kind == SolverBlockRowKind::ConstantCertifiedContradiction {
                     constant_contradiction_count += 1;
@@ -172,9 +172,9 @@ impl PreparedSolverBlock {
             });
         }
 
-        let facts = PreparedSolverBlockFacts {
+        let facts = SolverBlockFacts {
             row_count: rows.len(),
-            active_row_count: prepared.facts().active_constraint_count,
+            active_row_count: analysis.facts().active_constraint_count,
             inactive_row_count,
             constant_row_count,
             constant_contradiction_count,
@@ -196,12 +196,12 @@ impl PreparedSolverBlock {
     }
 
     /// Return problem-wide scheduling facts.
-    pub const fn facts(&self) -> &PreparedSolverBlockFacts {
+    pub const fn facts(&self) -> &SolverBlockFacts {
         &self.facts
     }
 }
 
-fn classify_row(facts: &PreparedConstraintFacts, has_affine_form: bool) -> SolverBlockRowKind {
+fn classify_row(facts: &ConstraintFacts, has_affine_form: bool) -> SolverBlockRowKind {
     if !facts.active {
         return SolverBlockRowKind::Inactive;
     }
@@ -218,7 +218,7 @@ fn classify_row(facts: &PreparedConstraintFacts, has_affine_form: bool) -> Solve
         return if has_affine_form {
             SolverBlockRowKind::AffineForm
         } else {
-            SolverBlockRowKind::AffineUnprepared
+            SolverBlockRowKind::AffineWithoutForm
         };
     }
     match facts.residual.degree {

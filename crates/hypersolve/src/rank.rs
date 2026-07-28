@@ -9,9 +9,9 @@
 
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
+use crate::analysis::ProblemAnalysis;
 use crate::bareiss::{BareissError, determinant_bareiss};
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 
 /// Status for exact affine rank diagnostics.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -49,14 +49,14 @@ pub struct ExactAffineRankReport {
     pub error: Option<BareissError>,
 }
 
-/// Compute exact affine coefficient/augmented ranks for a prepared problem.
+/// Compute exact affine coefficient/augmented ranks for a analysis problem.
 ///
 /// Active equality and soft rows are treated as equality-like equations.
 /// Active inequalities are skipped because their rank contribution depends on
 /// active-set certification. Non-affine equality rows are reported explicitly
 /// rather than lowered through a lossy Jacobian rank hint.
 pub fn analyze_exact_affine_rank(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     min_precision: i32,
 ) -> ExactAffineRankReport {
     let mut coefficients = Vec::new();
@@ -64,7 +64,7 @@ pub fn analyze_exact_affine_rank(
     let mut unsupported_rows = Vec::new();
     let mut skipped_non_equality_rows = 0_usize;
 
-    for (row_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (row_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -75,7 +75,7 @@ pub fn analyze_exact_affine_rank(
             skipped_non_equality_rows += 1;
             continue;
         }
-        let Some(affine) = &prepared.affine_residuals()[row_index] else {
+        let Some(affine) = &analysis.affine_residuals()[row_index] else {
             unsupported_rows.push(row_index);
             continue;
         };
@@ -89,7 +89,7 @@ pub fn analyze_exact_affine_rank(
     if !unsupported_rows.is_empty() {
         return ExactAffineRankReport {
             status: ExactAffineRankStatus::UnsupportedNonAffineRows,
-            variable_count: prepared.problem().variables.len(),
+            variable_count: analysis.problem().variables.len(),
             equality_row_count: coefficients.len(),
             skipped_non_equality_rows,
             unsupported_rows,
@@ -104,7 +104,7 @@ pub fn analyze_exact_affine_rank(
         Ok(rank) => rank,
         Err(error) => {
             return undecided_report(
-                prepared,
+                analysis,
                 coefficients.len(),
                 skipped_non_equality_rows,
                 error,
@@ -115,14 +115,14 @@ pub fn analyze_exact_affine_rank(
         Ok(rank) => rank,
         Err(error) => {
             return undecided_report(
-                prepared,
+                analysis,
                 coefficients.len(),
                 skipped_non_equality_rows,
                 error,
             );
         }
     };
-    let degrees_of_freedom = prepared
+    let degrees_of_freedom = analysis
         .problem()
         .variables
         .len()
@@ -133,7 +133,7 @@ pub fn analyze_exact_affine_rank(
         } else {
             ExactAffineRankStatus::Certified
         },
-        variable_count: prepared.problem().variables.len(),
+        variable_count: analysis.problem().variables.len(),
         equality_row_count: coefficients.len(),
         skipped_non_equality_rows,
         unsupported_rows,
@@ -145,14 +145,14 @@ pub fn analyze_exact_affine_rank(
 }
 
 fn undecided_report(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     equality_row_count: usize,
     skipped_non_equality_rows: usize,
     error: BareissError,
 ) -> ExactAffineRankReport {
     ExactAffineRankReport {
         status: ExactAffineRankStatus::Undecided,
-        variable_count: prepared.problem().variables.len(),
+        variable_count: analysis.problem().variables.len(),
         equality_row_count,
         skipped_non_equality_rows,
         unsupported_rows: Vec::new(),

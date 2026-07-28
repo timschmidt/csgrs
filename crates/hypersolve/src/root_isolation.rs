@@ -13,13 +13,13 @@ use std::collections::HashMap;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
 use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::model::{ConstraintKind, Problem};
-use crate::prepared::PreparedProblem;
 use crate::symbolic::{Expr, SymbolId};
 
 /// Multiplicity evidence found before Sturm isolation.
@@ -360,11 +360,11 @@ pub struct BernsteinSubdivisionReport {
 /// non-equality, multivariate, transcendental, and non-exact-rational rows
 /// instead of hiding them behind primitive floating-point estimates.
 pub fn isolate_univariate_polynomial_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     policy: PredicatePolicy,
 ) -> Vec<UnivariateRootIsolationReport> {
     isolate_univariate_polynomial_roots_with_config(
-        prepared,
+        analysis,
         RootIsolationConfig {
             policy,
             ..RootIsolationConfig::default()
@@ -374,11 +374,11 @@ pub fn isolate_univariate_polynomial_roots(
 
 /// Isolate distinct real roots with explicit bounded-refinement controls.
 pub fn isolate_univariate_polynomial_roots_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     config: RootIsolationConfig,
 ) -> Vec<UnivariateRootIsolationReport> {
     let mut reports = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active {
             continue;
         }
@@ -388,7 +388,7 @@ pub fn isolate_univariate_polynomial_roots_with_config(
         reports.push(isolate_univariate_polynomial_expr_with_config(
             constraint_index,
             &constraint.residual,
-            prepared.problem(),
+            analysis.problem(),
             config.clone(),
         ));
     }
@@ -805,18 +805,18 @@ pub fn refine_isolated_univariate_polynomial_interval(
 ///
 /// Sturm isolation usually returns intervals, not concrete algebraic numbers.
 /// When subdivision lands on a rational root exactly, this helper binds that
-/// witness into a cloned candidate context and replays the full prepared
+/// witness into a cloned candidate context and replays the full analysis
 /// problem. Non-rational intervals are reported as explicit non-witnesses
 /// rather than approximated. This follows the standard real-root isolation model and
 /// the exact-decision rule that constructed algebraic evidence still needs exact replay
 /// before becoming a solver decision.
 pub fn certify_isolated_rational_root_witnesses(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     reports: &[UnivariateRootIsolationReport],
 ) -> Vec<AlgebraicRootCandidateReport> {
     certify_isolated_rational_root_witnesses_with_config(
-        prepared,
+        analysis,
         base_context,
         reports,
         CandidateCertificationConfig::default(),
@@ -825,7 +825,7 @@ pub fn certify_isolated_rational_root_witnesses(
 
 /// Replay exact rational root witnesses with a candidate-certification policy.
 pub fn certify_isolated_rational_root_witnesses_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     base_context: &EvaluationContext,
     reports: &[UnivariateRootIsolationReport],
     certification_config: CandidateCertificationConfig,
@@ -858,7 +858,7 @@ pub fn certify_isolated_rational_root_witnesses_with_config(
             let mut candidate = base_context.clone();
             candidate.bind(symbol, root.clone());
             let certification =
-                certify_candidate_with_config(prepared, &candidate, certification_config);
+                certify_candidate_with_config(analysis, &candidate, certification_config);
             let status = if certification.all_satisfied() {
                 AlgebraicRootCandidateStatus::ReplayCertified
             } else {
@@ -884,18 +884,18 @@ pub fn certify_isolated_rational_root_witnesses_with_config(
 /// exact-rational univariate polynomials. It deliberately does not estimate
 /// roots numerically or certify a candidate solution.
 pub fn count_descartes_univariate_polynomial_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     policy: PredicatePolicy,
 ) -> Vec<DescartesRootCountReport> {
     let mut reports = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
         reports.push(count_descartes_univariate_polynomial_expr(
             constraint_index,
             &constraint.residual,
-            prepared.problem(),
+            analysis.problem(),
             policy,
         ));
     }
@@ -1051,20 +1051,20 @@ pub fn count_descartes_univariate_polynomial_expr(
 /// true count. Endpoint roots are reported separately so callers can keep open
 /// and closed interval policy outside this algebraic filter.
 pub fn count_bernstein_univariate_polynomial_interval_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     lower: Real,
     upper: Real,
     policy: PredicatePolicy,
 ) -> Vec<BernsteinRootCountReport> {
     let mut reports = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
         reports.push(count_bernstein_univariate_polynomial_interval_expr(
             constraint_index,
             &constraint.residual,
-            prepared.problem(),
+            analysis.problem(),
             lower.clone(),
             upper.clone(),
             policy,
@@ -1306,20 +1306,20 @@ pub fn count_bernstein_univariate_polynomial_interval_expr(
 /// interval. It is useful as a finite-interval algebraic filter before a
 /// stronger Sturm proof or future algebraic-number construction.
 pub fn subdivide_bernstein_univariate_polynomial_interval_roots(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     lower: Real,
     upper: Real,
     config: BernsteinSubdivisionConfig,
 ) -> Vec<BernsteinSubdivisionReport> {
     let mut reports = Vec::new();
-    for (constraint_index, constraint) in prepared.problem().constraints.iter().enumerate() {
+    for (constraint_index, constraint) in analysis.problem().constraints.iter().enumerate() {
         if !constraint.active || constraint.kind != ConstraintKind::Equality {
             continue;
         }
         reports.push(subdivide_bernstein_univariate_polynomial_interval_expr(
             constraint_index,
             &constraint.residual,
-            prepared.problem(),
+            analysis.problem(),
             lower.clone(),
             upper.clone(),
             config,
@@ -2216,8 +2216,7 @@ mod tests {
             x.powi(2) + Expr::int(1),
         ));
 
-        let reports =
-            isolate_univariate_polynomial_roots(&PreparedProblem::new(&problem), PredicatePolicy);
+        let reports = isolate_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
 
         assert_eq!(reports.len(), 3);
         assert_eq!(reports[0].status, RootIsolationStatus::Isolated);
@@ -2245,8 +2244,7 @@ mod tests {
         problem.add_variable("y", real(0));
         problem.add_constraint(Constraint::equality("xy", x * y));
 
-        let reports =
-            isolate_univariate_polynomial_roots(&PreparedProblem::new(&problem), PredicatePolicy);
+        let reports = isolate_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
 
         assert_eq!(reports.len(), 1);
         assert_eq!(
@@ -2266,9 +2264,9 @@ mod tests {
             x.clone().powi(2) - Expr::int(1),
         ));
         problem.add_constraint(Constraint::equality("select root one", x - Expr::int(1)));
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let reports = isolate_univariate_polynomial_roots_with_config(
-            &prepared,
+            &analysis,
             RootIsolationConfig {
                 policy: PredicatePolicy,
                 max_interval_width: Some(Real::one()),
@@ -2284,7 +2282,7 @@ mod tests {
                 .any(|interval| interval.exact_root == Some(real(1)))
         );
         let candidates = certify_isolated_rational_root_witnesses(
-            &prepared,
+            &analysis,
             &context_from_problem(&problem),
             &reports,
         );
@@ -2374,10 +2372,8 @@ mod tests {
         ));
         problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
 
-        let reports = count_descartes_univariate_polynomial_roots(
-            &PreparedProblem::new(&problem),
-            PredicatePolicy,
-        );
+        let reports =
+            count_descartes_univariate_polynomial_roots(&problem.analyze(), PredicatePolicy);
 
         assert_eq!(reports.len(), 3);
         assert_eq!(reports[0].status, DescartesRootCountStatus::Counted);
@@ -2417,7 +2413,7 @@ mod tests {
         problem.add_constraint(Constraint::equality("multivariate unsupported", x * y));
 
         let reports = count_bernstein_univariate_polynomial_interval_roots(
-            &PreparedProblem::new(&problem),
+            &problem.analyze(),
             real(0),
             real(2),
             PredicatePolicy,
@@ -2456,9 +2452,9 @@ mod tests {
             "empty interval",
             x.clone().powi(2) + Expr::int(1),
         ));
-        let prepared = PreparedProblem::new(&problem);
+        let analysis = problem.analyze();
         let complete = subdivide_bernstein_univariate_polynomial_interval_roots(
-            &prepared,
+            &analysis,
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
@@ -2487,7 +2483,7 @@ mod tests {
         );
 
         let depth_limited = subdivide_bernstein_univariate_polynomial_interval_roots(
-            &prepared,
+            &analysis,
             real(0),
             real(4),
             BernsteinSubdivisionConfig {
@@ -2523,7 +2519,7 @@ mod tests {
             ));
 
             let reports = count_bernstein_univariate_polynomial_interval_roots(
-                &PreparedProblem::new(&problem),
+                &problem.analyze(),
                 real(root - 1),
                 real(root + 1),
                 PredicatePolicy,

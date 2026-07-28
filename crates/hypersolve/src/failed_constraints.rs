@@ -10,13 +10,13 @@
 //! be certified or explicitly undecided. The rank
 //! redundancy test uses Bareiss-backed affine rank reports; see fraction-free elimination.
 
+use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, CertifiedCandidateRow,
     CertifiedCandidateStatus, certify_candidate_with_config,
 };
 use crate::eval::EvaluationContext;
 use crate::model::ConstraintKind;
-use crate::prepared::PreparedProblem;
 use crate::rank::{ExactAffineRankReport, ExactAffineRankStatus, analyze_exact_affine_rank};
 
 /// Per-source-row diagnostic status for failed-constraint reporting.
@@ -82,7 +82,7 @@ pub struct FailedConstraintReport {
     pub rows: Vec<FailedConstraintRow>,
     /// Candidate certification consumed by the diagnostic pass.
     pub certification: CandidateCertificationReport,
-    /// Exact affine rank of the original prepared problem.
+    /// Exact affine rank of the original analysis problem.
     pub affine_rank: ExactAffineRankReport,
     /// Number of rows that block accepting the current candidate.
     pub blocking_rows: usize,
@@ -266,11 +266,11 @@ impl FailedConstraintMinimalRemovalSearchReport {
 
 /// Certify a candidate and emit exact failed-constraint diagnostics.
 pub fn diagnose_failed_constraints(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
 ) -> FailedConstraintReport {
     diagnose_failed_constraints_with_config(
-        prepared,
+        analysis,
         context,
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
@@ -285,11 +285,11 @@ pub fn diagnose_failed_constraints(
 /// bounded multi-row minimization is handled by
 /// [`search_failed_constraint_minimal_removals`].
 pub fn search_failed_constraint_single_removals(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
 ) -> FailedConstraintRemovalSearchReport {
     search_failed_constraint_single_removals_with_config(
-        prepared,
+        analysis,
         context,
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
@@ -303,11 +303,11 @@ pub fn search_failed_constraint_single_removals(
 /// finite and report-bearing rather than a general minimal unsat-core
 /// extractor; each pair is replayed through exact diagnostics following the exact-geometric-computation model.
 pub fn search_failed_constraint_pair_removals(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
 ) -> FailedConstraintPairRemovalSearchReport {
     search_failed_constraint_pair_removals_with_config(
-        prepared,
+        analysis,
         context,
         CandidateCertificationConfig::default(),
         CandidateCertificationConfig::default().min_precision,
@@ -320,12 +320,12 @@ pub fn search_failed_constraint_pair_removals(
 /// explicitly bounded. `max_cardinality == 0` returns the original diagnostic
 /// report with no probes.
 pub fn search_failed_constraint_set_removals(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     max_cardinality: usize,
 ) -> FailedConstraintSetRemovalSearchReport {
     search_failed_constraint_set_removals_with_config(
-        prepared,
+        analysis,
         context,
         max_cardinality,
         CandidateCertificationConfig::default(),
@@ -341,12 +341,12 @@ pub fn search_failed_constraint_set_removals(
 /// `None`. If a clearing set exists, only probes at the first clearing
 /// cardinality are retained in the final report.
 pub fn search_failed_constraint_minimal_removals(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     max_cardinality: usize,
 ) -> FailedConstraintMinimalRemovalSearchReport {
     search_failed_constraint_minimal_removals_with_config(
-        prepared,
+        analysis,
         context,
         max_cardinality,
         CandidateCertificationConfig::default(),
@@ -357,14 +357,14 @@ pub fn search_failed_constraint_minimal_removals(
 /// Search for minimal clearing blocking-row sets with explicit certification
 /// and rank policies.
 pub fn search_failed_constraint_minimal_removals_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     max_cardinality: usize,
     certification_config: CandidateCertificationConfig,
     rank_min_precision: i32,
 ) -> FailedConstraintMinimalRemovalSearchReport {
     let original = diagnose_failed_constraints_with_config(
-        prepared,
+        analysis,
         context,
         certification_config,
         rank_min_precision,
@@ -381,7 +381,7 @@ pub fn search_failed_constraint_minimal_removals_with_config(
         let mut cardinality_probes = Vec::new();
         let mut clearing_removals = 0;
         collect_failed_constraint_set_removal_probes(
-            prepared,
+            analysis,
             context,
             &blocking,
             size,
@@ -415,14 +415,14 @@ pub fn search_failed_constraint_minimal_removals_with_config(
 /// Probe bounded blocking-row sets with explicit certification and rank
 /// policies.
 pub fn search_failed_constraint_set_removals_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     max_cardinality: usize,
     certification_config: CandidateCertificationConfig,
     rank_min_precision: i32,
 ) -> FailedConstraintSetRemovalSearchReport {
     let original = diagnose_failed_constraints_with_config(
-        prepared,
+        analysis,
         context,
         certification_config,
         rank_min_precision,
@@ -438,7 +438,7 @@ pub fn search_failed_constraint_set_removals_with_config(
     for size in 1..=capped_cardinality {
         let mut selected = Vec::with_capacity(size);
         collect_failed_constraint_set_removal_probes(
-            prepared,
+            analysis,
             context,
             &blocking,
             size,
@@ -460,13 +460,13 @@ pub fn search_failed_constraint_set_removals_with_config(
 
 /// Probe every blocking-row pair with explicit certification and rank policies.
 pub fn search_failed_constraint_pair_removals_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     certification_config: CandidateCertificationConfig,
     rank_min_precision: i32,
 ) -> FailedConstraintPairRemovalSearchReport {
     let original = diagnose_failed_constraints_with_config(
-        prepared,
+        analysis,
         context,
         certification_config,
         rank_min_precision,
@@ -482,16 +482,16 @@ pub fn search_failed_constraint_pair_removals_with_config(
         for second in (first + 1)..blocking.len() {
             let first_row = blocking[first];
             let second_row = blocking[second];
-            let mut reduced = prepared.problem().clone();
+            let mut reduced = analysis.problem().clone();
             if let Some(constraint) = reduced.constraints.get_mut(first_row.constraint_index) {
                 constraint.active = false;
             }
             if let Some(constraint) = reduced.constraints.get_mut(second_row.constraint_index) {
                 constraint.active = false;
             }
-            let reduced_prepared = PreparedProblem::new(&reduced);
+            let reduced_analysis = reduced.analyze();
             let reduced_report = diagnose_failed_constraints_with_config(
-                &reduced_prepared,
+                &reduced_analysis,
                 context,
                 certification_config,
                 rank_min_precision,
@@ -522,13 +522,13 @@ pub fn search_failed_constraint_pair_removals_with_config(
 
 /// Probe each blocking row with explicit certification and rank policies.
 pub fn search_failed_constraint_single_removals_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     certification_config: CandidateCertificationConfig,
     rank_min_precision: i32,
 ) -> FailedConstraintRemovalSearchReport {
     let original = diagnose_failed_constraints_with_config(
-        prepared,
+        analysis,
         context,
         certification_config,
         rank_min_precision,
@@ -540,13 +540,13 @@ pub fn search_failed_constraint_single_removals_with_config(
         .iter()
         .filter(|row| row.status.blocks_candidate_acceptance())
     {
-        let mut reduced = prepared.problem().clone();
+        let mut reduced = analysis.problem().clone();
         if let Some(constraint) = reduced.constraints.get_mut(row.constraint_index) {
             constraint.active = false;
         }
-        let reduced_prepared = PreparedProblem::new(&reduced);
+        let reduced_analysis = reduced.analyze();
         let reduced_report = diagnose_failed_constraints_with_config(
-            &reduced_prepared,
+            &reduced_analysis,
             context,
             certification_config,
             rank_min_precision,
@@ -575,7 +575,7 @@ pub fn search_failed_constraint_single_removals_with_config(
 
 #[allow(clippy::too_many_arguments)]
 fn collect_failed_constraint_set_removal_probes(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     blocking: &[&FailedConstraintRow],
     target_size: usize,
@@ -591,15 +591,15 @@ fn collect_failed_constraint_set_removal_probes(
             .iter()
             .map(|index| blocking[*index])
             .collect::<Vec<_>>();
-        let mut reduced = prepared.problem().clone();
+        let mut reduced = analysis.problem().clone();
         for row in &selected_rows {
             if let Some(constraint) = reduced.constraints.get_mut(row.constraint_index) {
                 constraint.active = false;
             }
         }
-        let reduced_prepared = PreparedProblem::new(&reduced);
+        let reduced_analysis = reduced.analyze();
         let reduced_report = diagnose_failed_constraints_with_config(
-            &reduced_prepared,
+            &reduced_analysis,
             context,
             certification_config,
             rank_min_precision,
@@ -628,7 +628,7 @@ fn collect_failed_constraint_set_removal_probes(
     for index in start..=last_start {
         selected.push(index);
         collect_failed_constraint_set_removal_probes(
-            prepared,
+            analysis,
             context,
             blocking,
             target_size,
@@ -646,13 +646,13 @@ fn collect_failed_constraint_set_removal_probes(
 /// Certify a candidate and emit exact failed-constraint diagnostics with an
 /// explicit residual-sign and affine-rank policy.
 pub fn diagnose_failed_constraints_with_config(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
     certification_config: CandidateCertificationConfig,
     rank_min_precision: i32,
 ) -> FailedConstraintReport {
-    let certification = certify_candidate_with_config(prepared, context, certification_config);
-    diagnose_failed_constraints_from_certification(prepared, certification, rank_min_precision)
+    let certification = certify_candidate_with_config(analysis, context, certification_config);
+    diagnose_failed_constraints_from_certification(analysis, certification, rank_min_precision)
 }
 
 /// Emit failed-constraint diagnostics from an already-built certification
@@ -662,15 +662,15 @@ pub fn diagnose_failed_constraints_with_config(
 /// [`crate::report_lossy_adapter_only_candidate`], while still getting the same
 /// source-row diagnostic shape used by exact replay.
 pub fn diagnose_failed_constraints_from_certification(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     certification: CandidateCertificationReport,
     rank_min_precision: i32,
 ) -> FailedConstraintReport {
-    let affine_rank = analyze_exact_affine_rank(prepared, rank_min_precision);
+    let affine_rank = analyze_exact_affine_rank(analysis, rank_min_precision);
     let mut rows = Vec::new();
 
     for certification_row in &certification.rows {
-        if let Some(status) = failure_status(prepared, certification_row) {
+        if let Some(status) = failure_status(analysis, certification_row) {
             rows.push(FailedConstraintRow {
                 constraint_index: certification_row.constraint_index,
                 name: certification_row.name.clone(),
@@ -700,7 +700,7 @@ pub fn diagnose_failed_constraints_from_certification(
                 continue;
             }
             let Some(rank_without_row) = rank_without_source_row(
-                prepared,
+                analysis,
                 certification_row.constraint_index,
                 rank_min_precision,
             ) else {
@@ -727,12 +727,12 @@ pub fn diagnose_failed_constraints_from_certification(
 }
 
 fn failure_status(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     row: &CertifiedCandidateRow,
 ) -> Option<FailedConstraintStatus> {
     match &row.status {
         status if status.is_certified_violation() => {
-            if prepared
+            if analysis
                 .constraints()
                 .get(row.constraint_index)
                 .is_some_and(|facts| facts.is_constant_row())
@@ -757,24 +757,24 @@ fn failure_status(
 }
 
 fn rank_without_source_row(
-    prepared: &PreparedProblem<'_>,
+    analysis: &ProblemAnalysis<'_>,
     constraint_index: usize,
     min_precision: i32,
 ) -> Option<ExactAffineRankReport> {
-    let constraint = prepared.problem().constraints.get(constraint_index)?;
+    let constraint = analysis.problem().constraints.get(constraint_index)?;
     if !constraint.active
         || !matches!(
             constraint.kind,
             ConstraintKind::Equality | ConstraintKind::Soft
         )
-        || prepared.affine_residuals().get(constraint_index)?.is_none()
+        || analysis.affine_residuals().get(constraint_index)?.is_none()
     {
         return None;
     }
-    let mut reduced = prepared.problem().clone();
+    let mut reduced = analysis.problem().clone();
     reduced.constraints[constraint_index].active = false;
-    let reduced_prepared = PreparedProblem::new(&reduced);
-    Some(analyze_exact_affine_rank(&reduced_prepared, min_precision))
+    let reduced_analysis = reduced.analyze();
+    Some(analyze_exact_affine_rank(&reduced_analysis, min_precision))
 }
 
 fn build_report(

@@ -1,5 +1,6 @@
 use hyperreal::Real;
 
+use crate::analysis::ProblemAnalysis;
 use crate::symbolic::{Expr, SymbolId};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -74,6 +75,12 @@ pub struct Problem {
 }
 
 impl Problem {
+    /// Analyze this problem for repeated exact replay and solver scheduling.
+    #[inline]
+    pub fn analyze(&self) -> ProblemAnalysis<'_> {
+        ProblemAnalysis::new(self)
+    }
+
     pub fn add_variable(&mut self, name: impl Into<String>, value: Real) -> VariableId {
         let id = VariableId(self.variables.len() as u32);
         self.variables.push(Variable::new(id, name, value));

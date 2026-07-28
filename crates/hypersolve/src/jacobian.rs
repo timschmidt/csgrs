@@ -1,8 +1,8 @@
 use hyperreal::{Real, RealSign};
 
+use crate::analysis::ProblemAnalysis;
 use crate::eval::{EvalError, EvaluationContext};
 use crate::model::{ConstraintKind, Problem};
-use crate::prepared::PreparedProblem;
 
 #[derive(Clone, Debug)]
 pub struct FiniteDifferenceConfig {
@@ -65,18 +65,18 @@ pub fn symbolic_jacobian(
 ///
 /// The returned matrix is still the dense `f64` adapter shape required by the
 /// current normal-equation backend. The difference is semantic ownership:
-/// structural zero columns are selected from [`PreparedProblem`] facts instead
+/// structural zero columns are selected from [`ProblemAnalysis`] facts instead
 /// of rediscovered by differentiating every variable in every row. That follows
 /// the exact-geometric-computation split between preserved object structure
 /// and approximate arithmetic adapters; see the exact-geometric-computation model.
-pub fn symbolic_jacobian_prepared(
-    prepared: &PreparedProblem<'_>,
+pub fn symbolic_jacobian_with_analysis(
+    analysis: &ProblemAnalysis<'_>,
     context: &EvaluationContext,
 ) -> Result<Vec<Vec<f64>>, EvalError> {
     symbolic_jacobian_with_sparsity(
-        prepared.problem(),
+        analysis.problem(),
         context,
-        Some(prepared.jacobian_sparsity()),
+        Some(analysis.jacobian_sparsity()),
     )
 }
 

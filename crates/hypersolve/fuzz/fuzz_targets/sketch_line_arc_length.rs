@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    certify_candidate, context_from_problem, PreparedProblem, SketchResidualFormKind,
+    certify_candidate, context_from_problem, SketchResidualFormKind,
     SketchResidualFormsStatus, SketchResidualStrategy, SketchSolveProblem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -36,7 +36,7 @@ fuzz_target!(|data: &[u8]| {
         .all(|row| { row.strategy == Some(SketchResidualStrategy::LineArcLength) }));
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(certification.all_satisfied());

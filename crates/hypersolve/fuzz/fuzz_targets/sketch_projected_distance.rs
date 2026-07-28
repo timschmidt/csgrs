@@ -2,7 +2,7 @@
 
 use hyperreal::Real;
 use hypersolve::{
-    CertifiedCandidateStatus, PreparedProblem, SketchResidualStrategy, SketchSolveProblem,
+    CertifiedCandidateStatus, SketchResidualStrategy, SketchSolveProblem,
     certify_candidate, context_from_problem,
 };
 use libfuzzer_sys::fuzz_target;
@@ -46,7 +46,7 @@ fuzz_target!(|data: &[u8]| {
     );
 
     let certification = certify_candidate(
-        &PreparedProblem::new(&lowered.problem),
+        &lowered.problem.analyze(),
         &context_from_problem(&lowered.problem),
     );
     assert!(matches!(
