@@ -992,7 +992,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let circle_c = point2(-1.0, 0.0, hyperreal_real);
     group.bench_function("incircle2d_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_incircle2d_filter(
+            hyperreal::Incircle2Filter::from_reals(
                 [black_box(&circle_a.x), black_box(&circle_a.y)],
                 [black_box(&circle_b.x), black_box(&circle_b.y)],
                 [black_box(&circle_c.x), black_box(&circle_c.y)],
@@ -1015,7 +1015,7 @@ fn bench_evidence_derivation(c: &mut Criterion) {
     let sphere_d = point3(-1.0, 0.0, 0.0, hyperreal_real);
     group.bench_function("insphere3d_filter_only", |bench| {
         bench.iter(|| {
-            hyperreal::Real::prepare_insphere3d_filter(
+            hyperreal::Insphere3Filter::from_reals(
                 [
                     black_box(&sphere_a.x),
                     black_box(&sphere_a.y),

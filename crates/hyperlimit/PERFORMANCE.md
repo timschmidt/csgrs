@@ -210,6 +210,20 @@ normalizing for same-run drift. Evidence construction is the former
 compatibility constructor body without storing the four borrowed source
 references, so the migration also removes handle state without adding work.
 
+The 2026-07-27 substrate cleanup also replaced Hyperreal's remaining
+preparation methods with direct `Incircle2Filter` and `Insphere3Filter`
+constructors. Hyperlimit's evidence layout and immediate query surface are
+unchanged.
+
+| Row | Before median | After median | Result |
+| --- | ---: | ---: | --- |
+| In-circle retained query | 35.430 ns | 34.545 ns | improved |
+| In-sphere retained query | 77.820 ns | 76.003 ns | improved |
+| In-circle filter construction | 15.671 ns | 15.508 ns | no regression |
+| In-sphere filter construction | 32.076 ns | 32.722 ns | within noise |
+| In-circle evidence derivation | 1.736 us | 1.716 us | no regression |
+| In-sphere evidence derivation | 3.399 us | 3.433 us | within noise |
+
 ### Remove the unused prepared halfspace cache
 
 `PreparedHalfspaceSystem3` stored a borrowed plane slice and eagerly allocated

@@ -11,8 +11,8 @@ use crate::predicate::{
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
 use hyperreal::{
-    AffineDet2ExactWordFilter, AffineDet2Filter, PreparedIncircle2dFilter,
-    PreparedInsphere3dFilter, Real, RealExactSetFacts, ZeroKnowledge,
+    AffineDet2ExactWordFilter, AffineDet2Filter, Incircle2Filter, Insphere3Filter, Real,
+    RealExactSetFacts, ZeroKnowledge,
 };
 
 /// Orientation of three 2D points.
@@ -629,7 +629,7 @@ fn incircle2d_real_expr(
 #[derive(Clone, Debug)]
 pub struct Incircle2Evidence {
     facts: PredicateFacts,
-    filter: Option<PreparedIncircle2dFilter>,
+    filter: Option<Incircle2Filter>,
     coefficient_facts: LiftedPolynomialFacts,
     x_coeff: Real,
     y_coeff: Real,
@@ -679,7 +679,7 @@ pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Eviden
     let lift_coeff = neg(&x_y_one);
     let constant = x_y_lift;
     let coefficient_facts = lifted_polynomial_facts([&x_coeff, &y_coeff, &lift_coeff, &constant]);
-    let filter = Real::prepare_incircle2d_filter([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
+    let filter = Incircle2Filter::from_reals([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
 
     Incircle2Evidence {
         facts: PredicateFacts::incircle2(a, b, c),
@@ -925,7 +925,7 @@ fn insphere3d_real_expr(
 /// Reusable exact-predicate evidence for an oriented sphere through four points.
 #[derive(Clone, Debug)]
 pub struct Insphere3Evidence {
-    filter: Option<PreparedInsphere3dFilter>,
+    filter: Option<Insphere3Filter>,
     facts: PredicateFacts,
     coefficient_facts: LiftedPolynomialFacts,
     x_coeff: Real,
@@ -1003,7 +1003,7 @@ pub fn insphere3_evidence(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Ins
     let constant = x_y_z_lift;
     let coefficient_facts =
         lifted_polynomial_facts([&x_coeff, &y_coeff, &z_coeff, &lift_coeff, &constant]);
-    let filter = Real::prepare_insphere3d_filter(
+    let filter = Insphere3Filter::from_reals(
         [&a.x, &a.y, &a.z],
         [&b.x, &b.y, &b.z],
         [&c.x, &c.y, &c.z],
