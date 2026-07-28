@@ -151,14 +151,7 @@ pub struct ProblemAnalysis<'a> {
 }
 
 impl<'a> ProblemAnalysis<'a> {
-    /// Analyze a borrowed problem for repeated solver work.
-    ///
-    /// Analysis walks each residual expression once, preserving dependency
-    /// and degree facts near the model layer rather than rediscovering them
-    /// inside dense linear-solver loops. This is a cache-populating API, not an
-    /// evaluation API: variable values and inequality activation are still
-    /// handled by residual evaluation.
-    pub fn new(problem: &'a Problem) -> Self {
+    pub(crate) fn new(problem: &'a Problem) -> Self {
         let mut constraints = Vec::with_capacity(problem.constraints.len());
         let mut active_constraint_count = 0_usize;
         let mut affine_active_rows = 0_usize;

@@ -649,6 +649,25 @@ resultant kernel, 4,761 instructions end to end, and 7,276 text bytes. Both
 production changes were reverted; the benchmark remains to stop future
 large-input gains from hiding an immediate-API or downstream regression.
 
+### Solver-analysis preparation boundary
+
+`ProblemAnalysis::new` is no longer a second public construction path;
+`Problem::analyze()` is the sole source-associated entry. The retained
+analysis view itself cannot yet be replaced by per-operation immediate
+reconstruction without violating the performance gate: analysis of 16
+univariate quadratic rows measured 47.655--47.833 us, while certification
+against one retained affine analysis measured 2.636--2.663 us.
+
+Rebuilding structural forms inside every immediate certification would
+therefore add roughly 18 times the measured certification cost. Automatic
+retention would first require making `Problem` mutation cache-safe; its
+variables and constraints remain publicly mutable today. The retained view is
+kept as the measured exception rather than hiding that regression behind a
+shorter call. A same-tree visibility A/B also confirmed no regression from
+hiding the duplicate constructor: restored public construction measured
+51.901--52.418 us and the final crate-private build measured
+49.478--49.631 us.
+
 ## Dispatch-path coverage
 
 Run `cargo bench --bench dispatch_trace --features dispatch-trace` to regenerate

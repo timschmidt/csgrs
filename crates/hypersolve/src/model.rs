@@ -75,7 +75,11 @@ pub struct Problem {
 }
 
 impl Problem {
-    /// Analyze this problem for repeated exact replay and solver scheduling.
+    /// Returns structural forms for repeated exact replay and solver work.
+    ///
+    /// This walks every residual once and borrows the source problem. Reuse the
+    /// returned analysis across related operations; rebuilding it per query is
+    /// substantially more expensive than retained certification.
     #[inline]
     pub fn analyze(&self) -> ProblemAnalysis<'_> {
         ProblemAnalysis::new(self)
