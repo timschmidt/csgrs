@@ -1,139 +1,54 @@
-# hypersdf
+# Hypersdf
 
-`hypersdf` provides exact-aware signed-distance and implicit-field carriers for
-the Hyper stack. It retains expression structure, exact parameters, primitive
-object packages, classification reports, preview adapters, solver replay reports,
-and voxel handoff envelopes without turning primitive-float samples into topology
-truth.
+Exact-aware signed-distance and implicit-field carriers for the Hyper geometry
+stack.
 
-The crate is best understood as a continuous-field evidence layer. It answers
-inside/boundary/outside questions through exact or certified predicates where
-available, and it keeps preview sampling, meshing, shader export, and external
-solver proposals explicitly separate from certified geometry.
+Hypersdf retains continuous-field expression structure, exact parameters,
+classification evidence, interval and differential reports, preview adapters,
+solver replay, and voxel handoffs. It can answer inside/boundary/outside
+questions without treating primitive-float samples or a preview mesh as
+topological truth.
 
-## Current Status
+The crate owns implicit fields. Solid-modeling grammar belongs in CSGRS,
+analytic boundary topology belongs in Hyperbrep, exact triangle topology
+belongs in Hypermesh, and sampled hierarchical storage belongs in Hypervoxel.
 
-`hypersdf` is version `0.2.0`. Implemented today:
+This README describes crate version `0.2.0`.
 
-- retained `SdfExpr` expression trees for constants, coordinates, linear fields,
-  primitives, CSG union/intersection/complement, arithmetic, absolute value,
-  square root, trigonometric nodes, offsets, translations, and affine transforms;
-- exact-friendly primitives for planes, spheres, AABBs, rounded AABBs, finite
-  cylinders, capsules, tori, and slabs;
-- `Sdf` fields with cached structural facts, immediate point and conservative
-  cell classification, intervals, gradients, normals, Lipschitz reports,
-  previews, projection replay, and voxel classification;
-- `SdfFacts` summaries for node counts, primitive counts, transform counts,
-  parameter exactness, dyadic/common-denominator schedules, domain status,
-  metric status, gradient status, and Lipschitz status;
-- preview-only point/grid sampling, GLSL export, and Surface Nets mesh diagnostics;
-- exact conservative voxel-cell batches and frame-aware `hypervoxel` lowering;
-- optional `hypervoxel-adapter` feature for materializing continuous-field intake
-  batches into `hypervoxel` storage-facing records.
+## Primary types
 
-The crate does not claim that every expression is a true Euclidean signed distance.
-Many routes are sign-equivalent implicit fields, and that distinction is carried by
-`SdfMetricStatus`. Unsupported trig cell ranges, nonsmooth gradients, invalid
-domains, unsupported voxel frames, and preview-only adapters are explicit report
-states.
+| Type | Role |
+| --- | --- |
+| `SdfExpr` | Retained implicit expression tree |
+| `SdfPrimitive` | Plane, sphere, box, rounded box, cylinder, capsule, torus, or slab |
+| `Sdf` | Expression plus cached structural facts and query API |
+| `SdfFacts` | Node, primitive, transform, exactness, domain, metric, and schedule summary |
+| `SdfPointClassificationReport`, `SdfCellClassificationReport` | Exact/certified location evidence |
+| `SdfIntervalReport`, `SdfGradientReport`, `SdfNormalReport`, `SdfLipschitzReport` | Scalar-range and differential evidence |
+| `SdfPreviewGrid`, `SdfSamplingReport`, `SdfMeshPreviewReport` | Explicitly lossy preview data |
+| `SdfProjectionReplayReport` | Exact replay of an external solver proposal |
+| `SdfVoxelCellGrid`, `SdfVoxelBatch` | Conservative voxel classification |
 
-## Main Types
+## Install
 
-- `SdfExpr` is the retained expression tree. It keeps high-level object structure
-  instead of immediately flattening everything into scalar samples.
-- `SdfPrimitive` owns analytic shape packages: `Plane`, `Sphere`, `Aabb`,
-  `RoundedAabb`, `Cylinder`, `Capsule`, `Torus`, and `Slab`.
-- `SdfCoordinate` identifies coordinate fields and primitive axes.
-- `Sdf` retains an expression, caches `SdfFacts`, and exposes the classification,
-  preview, solver-replay, and voxel APIs directly.
-- `SdfFacts` records structural scheduling data and exact-parameter facts.
-- `SdfPointClassificationReport` and `SdfCellClassificationReport` carry
-  certified or unknown point/cell location evidence.
-- `SdfMetricStatus`, `SdfDomainStatus`, `SdfEvidenceStatus`,
-  `SdfGradientStatus`, `SdfNormalStatus`, and `SdfLipschitzStatus` separate metric
-  claims, domain validity, predicate evidence, and differential support.
-- `SdfIntervalReport`, `SdfGradientReport`, `SdfNormalReport`, and
-  `SdfLipschitzReport` provide exact scalar ranges and differential facts where
-  certified.
-- `Sdf::classify_points` and `Sdf::classify_cells` provide immediate batch
-  queries without changing scalar semantics.
-- `SdfPreviewGrid`, `SdfSamplingReport`, `SdfGridSamplingReport`,
-  `SdfMeshPreviewReport`, and `SdfShaderExportReport` are preview-only adapter
-  reports.
-- `SdfDualContouringReport` and `SdfGradientContourReport` retain proposal rows
-  and derive their counts and validation readiness directly from that evidence.
-- `SdfProjectionProposal` and `SdfProjectionReplayReport` accept or reject external
-  solver candidates by replaying exact boundary classification.
-- `SdfVoxelCellGrid`, `SdfVoxelBatch`, and the optional
-  `continuous_field_batch_from_sdf` adapter bridge continuous fields into voxel
-  consumers.
+```toml
+[dependencies]
+hypersdf = "0.2.0"
+```
 
-## Precision
+There are no default features. Enable `hypervoxel-adapter` only when
+materializing a classified field batch into Hypervoxel records.
 
-`hypersdf` follows Yap's exact-geometric-computation discipline: topology decisions
-are report facts produced from retained objects and exact predicates, not accidental
-consequences of preview samples. Exact scalar values use `hyperreal::Real`, points and
-planes come from `hyperlimit`, and vector/matrix structure comes from `hyperlattice`.
+## Quick start
 
-Several primitives are deliberately square-root-free for classification. Spheres,
-rounded boxes, cylinders, capsules, and tori retain squared-radius or polynomial
-forms so point and cell predicates can compare exact signs without constructing
-unnecessary radicals. Domain checks reject negative squared radii and invalid widths
-as `Unknown` or invalid-domain evidence rather than classifying them as outside.
+This example intersects a sphere with a slab, offsets the result, and performs
+three exact point classifications.
 
-Metric precision is also explicit. `SdfMetricStatus::SignEquivalent` means the zero
-set and sign are useful, but the scalar is not certified as Euclidean distance.
-Preview lowering, shader output, and Surface Nets meshes remain adapter data until a
-consumer replays exact predicates.
-
-## Performance
-
-`Sdf::new` caches structural facts once and the field reuses them across point,
-cell, batch, gradient, interval, preview, and voxel APIs. Batch queries currently
-use scalar replay, leaving room for later vectorized or parallel evaluators without
-changing the report contract.
-
-Point reports carry the scalar produced during classification instead of evaluating the
-expression a second time. Exact affine intervals use per-axis interval accumulation,
-sphere/AABB bounds use separable squared-distance extrema, and regular preview grids
-reuse each exact axis coordinate across the other two dimensions. These are arithmetic
-schedule changes only; classification evidence and preview/topology boundaries are
-unchanged. Reproducible measurements and the reference-by-reference audit are recorded
-in [`PERFORMANCE.md`](PERFORMANCE.md).
-
-Cell classification uses stronger primitive routes where available, including exact
-AABB, plane, sphere, and interval predicates. Exact grid preview points are generated
-from origin, step, and integer indices before lossy lowering. Mesh extraction uses
-`fast-surface-nets` only as a preview proposal engine, while the report keeps crossing
-counts, non-finite output counts, normal provenance, and preview-only topology status.
-
-Criterion coverage in `benches/classification.rs` tracks primitives, CSG, transforms,
-arithmetic, gradients, normals, intervals, Lipschitz bounds, previews, projection
-replay, and voxel-grid classification.
-
-## Numerical Explosion
-
-`hypersdf` combats numerical explosion by keeping object packages intact until a
-specific report needs a decision. A torus stays a torus polynomial, a sphere keeps
-squared radius, an affine transform keeps an exact inverse matrix, and a CSG node
-keeps min/max semantics. The crate does not expand every operation into a giant
-scalar expression just to sample it.
-
-Intervals and Lipschitz bounds are local, report-scoped evidence. Unsupported trig
-cell ranges, nonsmooth CSG ties, ambiguous gradients, invalid domains, and failed
-float lowerings become explicit unknowns. Preview meshes and shaders remain named
-lossy outputs rather than continuous-field evidence. Callers construct a new `Sdf`
-when an expression changes, so cached facts and the retained expression cannot
-diverge.
-
-## Usage
-
-Build primitives and CSG with exact parameters:
-
-```rust,no_run
+<!-- quickstart:start -->
+```rust
 use hyperlimit::{Plane3, Point3};
 use hyperreal::Real;
-use hypersdf::{Sdf, SdfCoordinate, SdfExpr, SdfPointLocation};
+use hypersdf::{Sdf, SdfExpr, SdfPointLocation};
 
 fn r(value: i32) -> Real {
     Real::from(value)
@@ -143,148 +58,202 @@ fn p(x: i32, y: i32, z: i32) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
-let sphere = SdfExpr::sphere(p(0, 0, 0), r(25));
-let slab = SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(3));
-let field = Sdf::new(sphere.intersection(slab).offset(r(1)));
+fn main() {
+    let sphere = SdfExpr::sphere(p(0, 0, 0), r(25));
+    let slab = SdfExpr::slab(Plane3::new(p(0, 0, 1), r(0)), r(3));
+    let field = Sdf::new(sphere.intersection(slab).offset(r(1)));
 
-assert_eq!(field.classify_point(&p(0, 0, 0)).location, SdfPointLocation::Inside);
-assert_eq!(field.classify_point(&p(0, 0, 4)).location, SdfPointLocation::Boundary);
-assert_eq!(field.classify_point(&p(8, 0, 0)).location, SdfPointLocation::Outside);
+    assert_eq!(
+        field.classify_point(&p(0, 0, 0)).location,
+        SdfPointLocation::Inside
+    );
+    assert_eq!(
+        field.classify_point(&p(0, 0, 4)).location,
+        SdfPointLocation::Boundary
+    );
+    assert_eq!(
+        field.classify_point(&p(8, 0, 0)).location,
+        SdfPointLocation::Outside
+    );
+}
+```
+<!-- quickstart:end -->
 
-let cylinder = Sdf::new(SdfExpr::cylinder(
-    SdfCoordinate::Z,
-    p(0, 0, 0),
-    r(25),
-    r(3),
-));
-assert_eq!(cylinder.classify_point(&p(3, 4, 0)).location, SdfPointLocation::Boundary);
+Run the checked copy:
+
+```sh
+cargo run --example basic
 ```
 
-Use linear fields, transforms, batches, intervals, gradients, normals, and Lipschitz
-reports:
+## Field and evidence model
 
-```rust,ignore
-use hyperlattice::{Matrix4, Vector3};
-use hypersdf::{Sdf, SdfExpr};
-
-let linear = Sdf::new(SdfExpr::linear(Vector3([r(2), r(-3), r(5)]), r(-7)));
-
-let points = [p(1, 0, 1), p(1, 1, 1)];
-let batch = linear.classify_points(points.iter());
-assert_eq!(batch.len(), points.len());
-
-let interval = linear
-    .interval_cell(&p(0, 0, 0), &p(1, 1, 1))
-    .interval
-    .expect("linear interval");
-assert_eq!(interval.upper, r(0));
-
-let gradient = linear.gradient_point(&p(1, 0, 1));
-assert!(gradient.is_certified());
-
-let normal = linear.normal_point(&p(1, 0, 1));
-assert!(normal.is_certified_direction());
-
-let lipschitz = linear.lipschitz_cell(&p(0, 0, 0), &p(1, 1, 1));
-assert!(lipschitz.is_certified());
-
-let swap_xy = Matrix4([
-    [r(0), r(1), r(0), r(0)],
-    [r(1), r(0), r(0), r(0)],
-    [r(0), r(0), r(1), r(0)],
-    [r(0), r(0), r(0), r(1)],
-]);
-let transformed = Sdf::new(SdfExpr::x().affine_transform(swap_xy)?);
-assert_eq!(
-    transformed.classify_point(&p(10, 0, 0)).location,
-    SdfPointLocation::Boundary
-);
+```text
+SdfPrimitive / coordinate / constant
+                 │
+              SdfExpr
+      arithmetic / CSG / transform
+                 │
+                Sdf  ── cached SdfFacts
+                 │
+      ┌──────────┼──────────────┐
+ exact reports  preview data  solver/voxel handoffs
 ```
 
-Preview samples, meshes, and shader source without promoting them to topology:
+An `SdfExpr` retains object packages until a query requires a decision. A torus
+stays a torus polynomial, a sphere keeps its squared radius, an affine
+transform keeps its exact inverse matrix, and a CSG node keeps its min/max
+semantics. Construct a new `Sdf` when the expression changes so its cached
+facts cannot diverge.
 
-```rust,ignore
-use hypersdf::{Sdf, SdfPreviewGrid, SdfSampleTopologyStatus, SdfSamplingPrecision};
+“SDF” is the ecosystem term, but not every supported expression is certified
+as a Euclidean signed distance. `SdfMetricStatus::SignEquivalent` means the
+zero set and sign are usable while the scalar distance itself is not a metric
+guarantee.
 
-let sdf = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25)));
-let points = [p(0, 0, 0), p(3, 4, 0), p(8, 0, 0)];
-let samples = sdf.sample_points_preview(points.iter(), SdfSamplingPrecision::F32);
-assert_eq!(samples.topology_status, SdfSampleTopologyStatus::PreviewOnly);
-assert!(samples.is_self_consistent());
+## API guide
 
-let grid = SdfPreviewGrid::new(p(-6, -6, -6), p(3, 3, 3), [5, 5, 5]);
-let mesh = sdf
-    .mesh_preview_from_grid(grid.clone(), SdfSamplingPrecision::F32)
-    .expect("valid preview grid");
-assert_eq!(mesh.topology_status, SdfSampleTopologyStatus::PreviewOnly);
-assert!(mesh.is_self_consistent());
+### Building expressions
 
-let shader = sdf.export_glsl_preview("field", SdfSamplingPrecision::F32);
-assert!(shader.is_complete());
-```
+- `SdfExpr::{constant, x, y, z, linear}` creates scalar coordinate fields.
+- `SdfExpr::{plane, sphere, aabb, rounded_aabb, cylinder, capsule, torus,
+  slab}` creates retained analytic primitives. Radius arguments named
+  `radius_squared` are squared radii.
+- `union`, `intersection`, and `complement` build regularized sign-based CSG.
+- `add_expr`, `sub_expr`, `mul_expr`, `abs`, `sqrt`, `sin`, `cos`, and `tan`
+  build scalar expressions.
+- `offset`, `translate`, and `affine_transform` transform a field.
+- `SdfTransform::{translation, affine, inverse_point, inverse_aabb}` exposes
+  the checked transform package directly.
+- `SdfExpr::metric_status`, `Sdf::metric_status`, and `Sdf::facts` describe
+  what the resulting scalar can certify.
 
-Replay solver proposals and classify an exact voxel grid:
+### Exact and conservative queries
 
-```rust,ignore
-use hypersdf::{
-    Sdf, SdfProjectionProposal, SdfProjectionProposalKind,
-    SdfProjectionReplayStatus, SdfVoxelCellGrid, SdfVoxelLengthUnit,
-};
+- `Sdf::classify_point` returns scalar, location, domain, metric, and evidence
+  status for one exact point; `classify_points` batches the same semantics.
+- `classify_cell` conservatively classifies an exact axis-aligned cell;
+  `classify_cells` is the batch form.
+- `interval_cell` returns the supported exact scalar interval over a cell.
+- `gradient_point` and `normal_point` return differential status and evidence;
+  `gradient_points` and `normal_points` batch them.
+- `lipschitz_cell` reports a supported local Lipschitz bound.
+- `SdfDomainStatus`, `SdfEvidenceStatus`, `SdfMetricStatus`,
+  `SdfGradientStatus`, `SdfNormalStatus`, and `SdfLipschitzStatus` keep
+  independent claims independent.
 
-let sdf = Sdf::new(SdfExpr::sphere(p(0, 0, 0), r(25)));
-let projection = sdf.replay_projection_proposal(SdfProjectionProposal::new(
-    "closest-point-fixture",
-    SdfProjectionProposalKind::ClosestPoint,
-    p(10, 0, 0),
-    p(5, 0, 0),
-));
-assert_eq!(projection.status, SdfProjectionReplayStatus::BoundaryCertified);
+### Preview and proposal APIs
 
-let voxel_grid = SdfVoxelCellGrid::new(p(-4, -4, -4), p(4, 4, 4), [2, 2, 2])
-    .with_units(SdfVoxelLengthUnit::Millimeter);
-let voxel_batch = sdf
-    .classify_voxel_grid(voxel_grid)
-    .expect("valid exact voxel grid");
-assert!(voxel_batch.is_complete());
-```
+- `sample_points_preview` and `sample_grid_preview` lower exact query points to
+  the selected `SdfSamplingPrecision`.
+- `mesh_preview_from_grid` runs Surface Nets diagnostics over a preview grid.
+- `dual_contouring_report_from_grid` and
+  `gradient_contouring_report_from_grid` retain sampled crossings, proposed
+  vertices, connectivity, validation readiness, and blockers.
+- `export_glsl_preview` emits a named GLSL field and an explicit completeness
+  report.
+- `replay_projection_proposal` accepts a proposed surface point from another
+  solver and replays exact boundary classification before certifying it.
 
-With the optional `hypervoxel-adapter` feature,
-`continuous_field_batch_from_sdf` lowers an `SdfVoxelBatch` into
-`hypervoxel` continuous-field intake records.
+These APIs return proposals or display data. None promotes sampled triangles,
+finite gradients, or shader evaluation into exact topology.
 
-## Development
+### Voxel handoff
+
+- `SdfVoxelCellGrid::{new, with_units, cell_count, validate_positive_step}`
+  defines an exact classification grid.
+- `Sdf::classify_voxel_grid` returns one conservative `SdfVoxelCell` per cell
+  in an `SdfVoxelBatch`; `is_complete` and `has_unknown` summarize it.
+- With `hypervoxel-adapter`, `continuous_field_batch_from_sdf` lowers that
+  batch into Hypervoxel’s continuous-field intake records.
+
+## Precision and guarantees
+
+- Scalars use `hyperreal::Real`; points and planes use Hyperlimit; vectors and
+  matrices use Hyperlattice.
+- Point and cell topology comes from retained expressions and exact or
+  certified predicates, not from preview samples.
+- Sphere, rounded-box, cylinder, capsule, and torus classification retains
+  squared-radius or polynomial forms to avoid unnecessary radicals.
+- Invalid domains, unsupported trigonometric cell ranges, nonsmooth CSG ties,
+  ambiguous gradients, and failed finite lowering are explicit statuses or
+  errors.
+- Exact regular preview-grid points are formed from origin, step, and integer
+  indices before any requested finite conversion.
+- `Sdf::new` computes structural facts once; subsequent queries reuse those
+  facts without changing classification semantics.
+
+A supported expression node does not imply every interval, derivative, metric,
+or topology query is certifiable for every `Real` value. Check the report’s
+status rather than interpreting unknown evidence as outside geometry.
+
+## Feature flags
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `dispatch-trace` | no | Hyperreal/Hyperlimit predicate-dispatch instrumentation |
+| `hypervoxel-adapter` | no | Materialize SDF voxel batches into Hypervoxel intake records |
+
+## Validation and performance
 
 ```sh
 cargo fmt --all -- --check
 cargo test --locked
-cargo check --benches --locked
-cargo clippy --all-targets --locked -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
-cargo bench --bench classification
-cargo test --locked --features hypervoxel-adapter
 cargo test --locked --all-features
+cargo clippy --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
+cargo check --benches --all-features
 ```
+
+Reproducible benchmark definitions and the reference-guided performance audit
+live in [PERFORMANCE.md](PERFORMANCE.md). The benchmark suite covers primitive,
+CSG, transform, differential, interval, preview, replay, and voxel queries.
 
 ## References
 
-Implementation comments describe local invariants and evidence boundaries; the
-algorithmic and numerical background is consolidated here.
+These sources describe the exact-computation, interval, implicit-surface, and
+preview-meshing ideas relevant to the crate:
 
-- Gibson, Sarah F. F. "Constrained Elastic Surface Nets: Generating Smooth Surfaces from Binary Segmented Data." *Medical Image Computing and Computer-Assisted Intervention*, 1998, pp. 888-898, https://doi.org/10.1007/BFb0056277.
-- Arvo, James. "Transforming Axis-Aligned Bounding Boxes." *Graphics Gems*, Academic Press, 1990, pp. 548-550.
-- Hart, John C. "Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces." *The Visual Computer*, vol. 12, no. 10, 1996, pp. 527-545, https://doi.org/10.1007/s003710050084.
-- Ju, Tao, et al. "Dual Contouring of Hermite Data." *Proceedings of SIGGRAPH 2002*, 2002, pp. 339-346, https://doi.org/10.1145/566570.566586.
-- Lorensen, William E., and Harvey E. Cline. "Marching Cubes: A High Resolution 3D Surface Construction Algorithm." *Computer Graphics*, vol. 21, no. 4, 1987, pp. 163-169, https://doi.org/10.1145/37402.37422.
-- Moore, Ramon E. *Interval Analysis*. Prentice-Hall, 1966.
-- Frisken, Sarah F., et al. "Adaptively Sampled Distance Fields: A General Representation of Shape for Computer Graphics." *Proceedings of SIGGRAPH 2000*, 2000, pp. 249-254, https://doi.org/10.1145/344779.344899.
-- Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*, vol. 7, nos. 1-2, 1997, pp. 3-23, https://doi.org/10.1016/0925-7721(95)00040-2.
+- Yap, C. K. “Towards Exact Geometric Computation.” *Computational Geometry*
+  7(1–2), 1997, 3–23.
+  [DOI: 10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
+- Moore, R. E. *Interval Analysis*. Prentice-Hall, 1966.
+- Hart, J. C. “Sphere Tracing: A Geometric Method for the Antialiased Ray
+  Tracing of Implicit Surfaces.” *The Visual Computer* 12(10), 1996, 527–545.
+  [DOI: 10.1007/s003710050084](https://doi.org/10.1007/s003710050084).
+- Frisken, S. F., Perry, R. N., Rockwood, A. P., and Jones, T. R.
+  “Adaptively Sampled Distance Fields: A General Representation of Shape for
+  Computer Graphics.” *Proceedings of SIGGRAPH 2000*, 249–254.
+  [DOI: 10.1145/344779.344899](https://doi.org/10.1145/344779.344899).
+- Gibson, S. F. F. “Constrained Elastic Surface Nets: Generating Smooth
+  Surfaces from Binary Segmented Data.” *MICCAI 1998*, 888–898.
+  [DOI: 10.1007/BFb0056277](https://doi.org/10.1007/BFb0056277).
+- Ju, T., Losasso, F., Schaefer, S., and Warren, J. “Dual Contouring of
+  Hermite Data.” *Proceedings of SIGGRAPH 2002*, 339–346.
+  [DOI: 10.1145/566570.566586](https://doi.org/10.1145/566570.566586).
+- Lorensen, W. E., and Cline, H. E. “Marching Cubes: A High Resolution 3D
+  Surface Construction Algorithm.” *Computer Graphics* 21(4), 1987, 163–169.
+  [DOI: 10.1145/37402.37422](https://doi.org/10.1145/37402.37422).
+- Arvo, J. “Transforming Axis-Aligned Bounding Boxes.” In *Graphics Gems*,
+  Academic Press, 1990, 548–550.
 
-## Hyper Ecosystem
+## Acknowledgements
 
-`hypersdf` builds exact fields over [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlattice](https://github.com/timschmidt/hyperlattice), and
-[hyperlimit](https://github.com/timschmidt/hyperlimit). It exchanges solver,
-mesh, and grid evidence with [hypersolve](https://github.com/timschmidt/hypersolve),
-[hypermesh](https://github.com/timschmidt/hypermesh), and
-[hypervoxel](https://github.com/timschmidt/hypervoxel); complementary analytic
-topology lives in [hyperbrep](https://github.com/timschmidt/hyperbrep).
+Hypersdf builds on
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/hyperlimit), with optional
+[Hypervoxel](https://github.com/timschmidt/hypervoxel) integration.
+
+Preview meshing uses the
+[`fast-surface-nets`](https://crates.io/crates/fast-surface-nets) crate as a
+proposal engine. The research cited above informs the evidence and adapter
+boundaries; it does not imply source-code derivation.
+
+## License and contributing
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+Bug reports should include the smallest expression, exact query point or cell,
+enabled features, and all returned statuses. Before proposing a change, run
+formatting, the focused regression, the complete feature suite, and strict
+Clippy.
