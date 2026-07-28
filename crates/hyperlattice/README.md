@@ -68,7 +68,7 @@ Equivalent manifest entry:
 
 ```toml
 [dependencies]
-hyperlattice = "0.6.0"
+hyperlattice = "0.6.1"
 ```
 
 Replace `src/main.rs` with:
