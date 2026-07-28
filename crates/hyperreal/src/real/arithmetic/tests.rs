@@ -1375,14 +1375,14 @@ mod tests {
     }
 
     #[test]
-    fn certified_incircle2d_sign_only_returns_exact_signs() {
+    fn certified_incircle2_sign_only_returns_exact_signs() {
         let a = [Real::one(), Real::zero()];
         let b = [Real::zero(), Real::one()];
         let c = [Real::from(-1_i32), Real::zero()];
         let inside = [Real::zero(), Real::zero()];
         let outside = [Real::zero(), Real::from(-2_i32)];
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&a[0], &a[1]],
                 [&b[0], &b[1]],
                 [&c[0], &c[1]],
@@ -1391,7 +1391,7 @@ mod tests {
             Some(RealSign::Positive),
         );
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&a[0], &a[1]],
                 [&b[0], &b[1]],
                 [&c[0], &c[1]],
@@ -1400,7 +1400,7 @@ mod tests {
             Some(RealSign::Negative),
         );
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&a[0], &a[1]],
                 [&b[0], &b[1]],
                 [&c[0], &c[1]],
@@ -1411,7 +1411,7 @@ mod tests {
 
         let third = Real::new(Rational::fraction(1, 3).unwrap());
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&third, &a[1]],
                 [&b[0], &b[1]],
                 [&c[0], &c[1]],
@@ -1420,7 +1420,7 @@ mod tests {
             None,
         );
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&Real::pi(), &a[1]],
                 [&b[0], &b[1]],
                 [&c[0], &c[1]],
@@ -1431,7 +1431,7 @@ mod tests {
 
         let huge = Real::try_from(f64::MAX).unwrap();
         assert_eq!(
-            Real::certified_incircle2d_sign(
+            Real::certified_incircle2_sign(
                 [&huge, &a[1]],
                 [&b[0], &huge],
                 [&c[0], &c[1]],
@@ -1460,7 +1460,7 @@ mod tests {
         ] {
             assert_eq!(
                 filter.sign([&d[0], &d[1]]),
-                Real::certified_incircle2d_sign(
+                Real::certified_incircle2_sign(
                     [&a[0], &a[1]],
                     [&b[0], &b[1]],
                     [&c[0], &c[1]],
@@ -1471,7 +1471,7 @@ mod tests {
     }
 
     #[test]
-    fn certified_incircle2d_sign_matches_exact_randomized_determinants() {
+    fn certified_incircle2_sign_matches_exact_randomized_determinants() {
         let mut state = 0xa54f_f53a_5f1d_36f1_u64;
         let mut certified = 0_u32;
 
@@ -1489,7 +1489,7 @@ mod tests {
             let b = [&values[2], &values[3]];
             let c = [&values[4], &values[5]];
             let d = [&values[6], &values[7]];
-            if let Some(filtered) = Real::certified_incircle2d_sign(a, b, c, d) {
+            if let Some(filtered) = Real::certified_incircle2_sign(a, b, c, d) {
                 assert_eq!(
                     filtered,
                     exact_incircle2d_sign(a, b, c, d),
@@ -1503,7 +1503,7 @@ mod tests {
     }
 
     #[test]
-    fn certified_insphere3d_sign_only_returns_exact_signs() {
+    fn certified_insphere3_sign_only_returns_exact_signs() {
         let a = [Real::one(), Real::zero(), Real::zero()];
         let b = [Real::zero(), Real::one(), Real::zero()];
         let c = [Real::zero(), Real::zero(), Real::one()];
@@ -1517,14 +1517,14 @@ mod tests {
             let d_refs = [&d[0], &d[1], &d[2]];
             let point_refs = [&point[0], &point[1], &point[2]];
             assert_eq!(
-                Real::certified_insphere3d_sign(a_refs, b_refs, c_refs, d_refs, point_refs),
+                Real::certified_insphere3_sign(a_refs, b_refs, c_refs, d_refs, point_refs),
                 Some(exact_insphere3d_sign(
                     a_refs, b_refs, c_refs, d_refs, point_refs,
                 )),
             );
         }
         assert_eq!(
-            Real::certified_insphere3d_sign(
+            Real::certified_insphere3_sign(
                 [&a[0], &a[1], &a[2]],
                 [&b[0], &b[1], &b[2]],
                 [&c[0], &c[1], &c[2]],
@@ -1536,7 +1536,7 @@ mod tests {
 
         let third = Real::new(Rational::fraction(1, 3).unwrap());
         assert_eq!(
-            Real::certified_insphere3d_sign(
+            Real::certified_insphere3_sign(
                 [&third, &a[1], &a[2]],
                 [&b[0], &b[1], &b[2]],
                 [&c[0], &c[1], &c[2]],
@@ -1546,7 +1546,7 @@ mod tests {
             None,
         );
         assert_eq!(
-            Real::certified_insphere3d_sign(
+            Real::certified_insphere3_sign(
                 [&Real::pi(), &a[1], &a[2]],
                 [&b[0], &b[1], &b[2]],
                 [&c[0], &c[1], &c[2]],
@@ -1578,7 +1578,7 @@ mod tests {
         ] {
             assert_eq!(
                 filter.sign([&e[0], &e[1], &e[2]]),
-                Real::certified_insphere3d_sign(
+                Real::certified_insphere3_sign(
                     [&a[0], &a[1], &a[2]],
                     [&b[0], &b[1], &b[2]],
                     [&c[0], &c[1], &c[2]],
@@ -1590,7 +1590,7 @@ mod tests {
     }
 
     #[test]
-    fn certified_insphere3d_sign_matches_exact_randomized_determinants() {
+    fn certified_insphere3_sign_matches_exact_randomized_determinants() {
         let mut state = 0x510e_527f_ade6_82d1_u64;
         let mut certified = 0_u32;
 
@@ -1609,7 +1609,7 @@ mod tests {
             let c = [&values[6], &values[7], &values[8]];
             let d = [&values[9], &values[10], &values[11]];
             let e = [&values[12], &values[13], &values[14]];
-            if let Some(filtered) = Real::certified_insphere3d_sign(a, b, c, d, e) {
+            if let Some(filtered) = Real::certified_insphere3_sign(a, b, c, d, e) {
                 assert_eq!(
                     filtered,
                     exact_insphere3d_sign(a, b, c, d, e),

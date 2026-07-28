@@ -1287,7 +1287,17 @@ impl Real {
     /// determinant must clear a conservative rounding-error bound. All other
     /// inputs return `None` for the caller's exact fallback.
     #[inline]
-    pub fn certified_incircle2d_sign(
+    pub fn certified_incircle2_sign(
+        a: [&Real; 2],
+        b: [&Real; 2],
+        c: [&Real; 2],
+        d: [&Real; 2],
+    ) -> Option<RealSign> {
+        Self::certified_incircle2d_sign(a, b, c, d)
+    }
+
+    #[inline]
+    fn certified_incircle2d_sign(
         a: [&Real; 2],
         b: [&Real; 2],
         c: [&Real; 2],
@@ -1398,7 +1408,18 @@ impl Real {
     /// range-checked proof shortcut with a conservative rounding-error bound.
     /// Uncertain, non-dyadic, overflowing, and underflowing cases return `None`.
     #[inline]
-    pub fn certified_insphere3d_sign(
+    pub fn certified_insphere3_sign(
+        a: [&Real; 3],
+        b: [&Real; 3],
+        c: [&Real; 3],
+        d: [&Real; 3],
+        e: [&Real; 3],
+    ) -> Option<RealSign> {
+        Self::certified_insphere3d_sign(a, b, c, d, e)
+    }
+
+    #[inline]
+    fn certified_insphere3d_sign(
         a: [&Real; 3],
         b: [&Real; 3],
         c: [&Real; 3],

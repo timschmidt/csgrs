@@ -1892,8 +1892,8 @@ LeakSanitizer alone remained disabled under ptrace.
 
 Reusable in-circle and in-sphere filters now use `Incircle2Filter::from_reals`
 and `Insphere3Filter::from_reals`, matching the other determinant filters.
-Immediate callers retain `Real::certified_incircle2d_sign` and
-`Real::certified_insphere3d_sign`; no preparation lifecycle remains.
+Immediate callers retain `Real::certified_incircle2_sign` and
+`Real::certified_insphere3_sign`; no preparation lifecycle remains.
 
 The downstream Hyperlimit gate preserved the filter layout, query path, and
 exact fallback. Retained-query medians improved from 35.430 to 34.545 ns for
