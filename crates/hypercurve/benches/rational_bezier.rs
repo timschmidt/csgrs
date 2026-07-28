@@ -265,8 +265,6 @@ fn main() {
         }));
     }
     let elapsed = started.elapsed();
-    assert!(!related_first.is_homogeneous_power_basis_cached());
-    assert!(!related_second.is_homogeneous_power_basis_cached());
     println!(
         "rational_bezier_retained_lineage_partial_overlap: {lineage_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={lineage_count}",
         elapsed / lineage_iterations

@@ -116,11 +116,9 @@ fn general_rational_derivative_is_exact_and_reuses_power_basis() {
     let clone = curve.clone();
     let policy = CurvePolicy::certified();
 
-    assert!(!curve.is_homogeneous_power_basis_cached());
     let derivative = curve.derivative_at(&q(1, 2), &policy).unwrap();
     assert_eq!(derivative.dx(), &r(3));
     assert_eq!(derivative.dy(), &r(0));
-    assert!(clone.is_homogeneous_power_basis_cached());
     assert_eq!(clone.derivative_at(&q(1, 2), &policy).unwrap(), derivative);
 }
 
@@ -138,33 +136,27 @@ fn general_rational_derivatives_are_not_truncated_at_bezier_degree() {
 }
 
 #[test]
-fn rational_bezier_clones_share_the_retained_homogeneous_control_net() {
+fn rational_bezier_clones_evaluate_identically() {
     let curve = curve();
     let clone = curve.clone();
     let policy = CurvePolicy::certified();
-    assert!(!curve.is_homogeneous_control_net_cached());
-
-    clone.point_at(&q(1, 2), &policy).unwrap();
-
-    assert!(curve.is_homogeneous_control_net_cached());
-    assert!(clone.is_homogeneous_control_net_cached());
+    assert_eq!(
+        clone.point_at(&q(1, 2), &policy).unwrap(),
+        curve.point_at(&q(1, 2), &policy).unwrap()
+    );
 }
 
 #[test]
-fn rational_bezier_clones_share_the_retained_homogeneous_power_basis() {
+fn rational_bezier_clones_have_identical_point_incidence() {
     let curve = curve();
     let clone = curve.clone();
     let policy = CurvePolicy::certified();
-    assert!(!curve.is_homogeneous_power_basis_cached());
-
-    assert!(
-        clone
-            .contains_point(&Point2::new(q(49, 20), q(9, 4)), &policy)
-            .unwrap()
+    let point = Point2::new(q(49, 20), q(9, 4));
+    assert!(clone.contains_point(&point, &policy).unwrap());
+    assert_eq!(
+        clone.contains_point(&point, &policy).unwrap(),
+        curve.contains_point(&point, &policy).unwrap()
     );
-
-    assert!(curve.is_homogeneous_power_basis_cached());
-    assert!(clone.is_homogeneous_power_basis_cached());
 }
 
 #[test]
@@ -542,7 +534,7 @@ fn general_rational_contacts_reject_disjoint_control_hulls() {
 }
 
 #[test]
-fn direct_disjoint_conic_cubic_skips_implicit_solver() {
+fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
     let policy = CurvePolicy::certified();
     let conic =
         RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)]).unwrap();
@@ -561,10 +553,6 @@ fn direct_disjoint_conic_cubic_skips_implicit_solver() {
             .intersection_contacts(&disjoint_cubic, &policy)
             .unwrap(),
         RationalBezierIntersectionContacts2::NoIntersection
-    );
-    assert!(
-        !disjoint_cubic.is_homogeneous_power_basis_cached(),
-        "certified disjoint bounds must reject direct contacts before implicit substitution"
     );
 }
 

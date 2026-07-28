@@ -735,16 +735,6 @@ impl RationalBezier2 {
         )
     }
 
-    /// Returns whether the clone-shared homogeneous control net has been computed.
-    pub fn is_homogeneous_control_net_cached(&self) -> bool {
-        self.data.homogeneous_controls.get().is_some()
-    }
-
-    /// Returns whether the clone-shared homogeneous power basis has been computed.
-    pub fn is_homogeneous_power_basis_cached(&self) -> bool {
-        self.data.homogeneous_power_basis.get().is_some()
-    }
-
     /// Returns the exact start point.
     pub fn start(&self) -> &Point2 {
         &self.control_points()[0]

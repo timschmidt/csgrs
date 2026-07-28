@@ -223,10 +223,14 @@ fn top_level_curve_reuses_retained_native_endpoints() {
     let rational =
         RationalBezier2::try_new(vec![p(0, 0), p(1, 2), p(2, 0)], vec![r(1), r(2), r(3)]).unwrap();
     let top_level = Curve2::from(rational.clone());
-    assert!(!rational.is_homogeneous_power_basis_cached());
     assert_eq!(top_level.point_at(&r(0)).unwrap(), p(0, 0));
     assert_eq!(top_level.point_at(&r(1)).unwrap(), p(2, 0));
-    assert!(!rational.is_homogeneous_power_basis_cached());
+    assert_eq!(
+        top_level.point_at(&(r(1) / r(2)).unwrap()).unwrap(),
+        rational
+            .point_at(&(r(1) / r(2)).unwrap(), &CurvePolicy::certified())
+            .unwrap()
+    );
 }
 
 #[test]

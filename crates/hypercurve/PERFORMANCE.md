@@ -5973,6 +5973,22 @@ before the rename. Two post-change runs measured 647.987 and
 straddles the baseline and the confirmation is 7.3% faster, so this
 terminology-only API change introduces no measurable regression.
 
+### General-rational cache-state boundary
+
+`RationalBezier2` now exposes exact evaluation, derivative, containment,
+intersection, and elevation results without exposing whether its private
+homogeneous control or power-basis cells are populated. Clone-sharing and lazy
+retention are unchanged; tests compare the repeated exact results instead of
+observing representation state.
+
+The full serialized rational-Bezier benchmark showed stable or improved core
+paths. Because its default 64-control sentinel runs only ten iterations, the
+committed pre-change tree and candidate were also built in isolated sibling
+directories and run alternately for 1,000 iterations. Pre-change/candidate
+times were 484.376/477.364 us for cold evaluation, 8.115/8.009 us for retained
+evaluation, and 628.701/619.791 us for exact splitting. Checksums were
+unchanged, and each candidate result is about 1.3--1.4% faster.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full
