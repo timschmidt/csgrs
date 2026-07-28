@@ -1,783 +1,364 @@
-<h1>
-  hypercurve
-  <img src="./doc/hypercurve.png" alt="Hyper, a clever mathematician" width="144" align="right">
-</h1>
+# Hypercurve
 
-`hypercurve` is the planar curved-topology crate for the Hyper geometry stack. It owns
-line, circular-arc, polynomial Bezier, rational-conic, contour, region,
-boolean-boundary, offset, fitting, flattening, and repeated-query surfaces over
-`hyperreal::Real` values. Its geometry is strictly 2D; spatial curves and their
-3D parameterizations belong to `hyperbrep`.
+Exact, evidence-carrying planar curves, paths, contours, and regions for CAD
+topology.
 
-The crate provides exact mixed-family curve/path intersection and regularized region
-Booleans for its supported topology. Unsupported implicit branch correspondence and
-free-form offset trimming remain typed blockers instead of being hidden by display
-polylines.
+Hypercurve is the two-dimensional curve kernel in the Hyper geometry stack. It
+models lines, circular arcs, Bézier curves, B-splines, and NURBS with
+[`hyperreal::Real`](https://docs.rs/hyperreal) coordinates, then builds
+intersection, classification, regularized Boolean, offset, reconstruction, and
+finite-projection operations on those carriers.
 
-## Core API
+The crate owns planar curve geometry and topology. It deliberately does not own
+solid modeling or mesh topology: CSG grammar and operations such as extrusion,
+revolve, sweep, and loft belong in
+[CSGRS](https://github.com/timschmidt/csgrs), while triangle-mesh Boolean work
+belongs in [Hypermesh](https://github.com/timschmidt/hypermesh).
 
-`CurveRegion2` is the exact mixed-family region type. It accepts closed `CurvePath2`
-boundaries containing any public curve family and preserves exact source, path, curve,
-promoted-span, split-range, operand, and reversal provenance on every emitted fragment.
-It classifies points directly against native polynomial/rational boundaries with
-even-odd fill semantics, retaining native loop, decided AABB, and exact signed-area
-facts across clones. Exact line-image algebraic carriers are lowered once to a
-clone-shared native line region; nonlinear algebraic carriers filter exact source-curve
-incidence to their represented parameter ranges. Only non-line carriers lacking retained
-source-curve provenance remain explicit classification blockers.
-`CurvePath2::boolean_region` computes an immediate union, intersection, difference, or
-XOR. `CurvePath2::boolean_selections` immediately completes all four exact regions for
-one side policy while sharing path-pair intersection and split topology within the call.
-`CurveRegion2::boolean_region` accepts those exact results directly, including
-nonlinear algebraic endpoint carriers, nested holes, and prior Boolean output.
-`CurveRegion2::boolean_regions` immediately computes all four regularized results
-while sharing cross-region carrier intersections, split topology, and fragment
-classifications within the call. Certified loop-junction vertex identity prevents
-independently represented algebraic endpoint images from being reclassified.
+This README describes crate version `0.3.0`.
 
-`CurveRegion2` is the sole general owned region carrier. Native line/circular-arc
-topology is retained internally as a specialized accelerator. Its public
-classification and signed-depth surface is immediate; clone-shared bounds,
-evaluators, and native conversion stay behind the region instead of escaping in
-a retained query facade. Borrowed native contour views remain available without
-copying contours. `Contour2` owns a closed line/arc boundary, while
-`CurveString2` owns an open or closed ordered line/arc path.
+## Primary types
 
-`Curve2` is the immutable shared carrier for lines, circular arcs, quadratic and
-cubic Beziers, arbitrary-degree rational Beziers, polynomial B-splines, and NURBS.
-`CurveView2<'_>` and `CurvePathView2<'_>` provide borrowed traversal without
-copying geometry. `CurveParameterDomain2` gives every family a uniform exact
-public domain: native curves use `[0, 1]`, while splines retain `[U[p], U[n+1]]`.
-`PolynomialSplineCurve2` and `NurbsCurve2` accept exact controls, weights, and
-knots without a runtime policy, support clamped and non-clamped finite active
-domains plus explicit periodic one-period carriers, retain optional `CurveSource2`
-provenance, and share exact Bezier
-decompositions across clones. Their borrowed span views preserve source identity,
-source span index, and knot interval through topology promotion. Exact point and
-derivative evaluation accepts explicit left/right knot-side selection; automatic
-selection certifies that both sides agree. `ExactCurveError` evidence the operation,
-curve family, source version, and blocking predicate or invariant. Curves and
-connected paths reverse or undergo exact planar similarity transforms without
-changing their public parameter domains, families, or provenance. `Curve2::split_at`
-and `Curve2::subcurve` dispatch exact trimming across every family while retaining
-family and provenance; spline results also retain their selected authored domains.
-`CurvePath2::chamfer_vertex_by_parameters` and
-`CurvePath2::fillet_vertex_by_parameters` apply that exact trimming uniformly to
-mixed-family vertices. They accept each curve's native `Real` parameter domain,
-support the start/end seam of closed paths, preserve source family and provenance,
-and certify fillet radius, tangency, and traversal direction before inserting a
-native line or circular arc. Edited closed paths remain valid inputs to
-`CurveRegion2::try_from_boundary_paths`.
-Circular arcs promote exactly to one or more rational quadratic spans, including
-minor, semicircular, major, and full-circle sweeps, and share that promotion
-across top-level curve clones.
+| Type | Role |
+| --- | --- |
+| `Point2`, `Aabb2`, `Similarity2` | Exact planar coordinates, bounds, and similarity transforms |
+| `LineSeg2`, `CircularArc2`, `Segment2` | Native line/arc primitives and their common enum |
+| `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, `RationalBezier2` | Polynomial and rational Bézier carriers |
+| `PolynomialSplineCurve2`, `NurbsCurve2` | Validated B-spline and NURBS curves |
+| `Curve2`, `CurveView2` | Unified owned and borrowed curve carriers |
+| `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
+| `CurveRegion2` | Native mixed-family filled planar region |
+| `CurvePolicy`, `Classification<T>` | Predicate policy and decided/uncertain result |
+| `CurveError`, `ExactCurveError` | Construction and exact-topology failure information |
 
-Pipeline evidence, finite projection, reconstruction, and IO are secondary APIs.
-`CurveRegion2::arrange_unordered_segments` and its borrowed variant return a
-retained `CurveRegionArrangement2`; native arrangement machinery and caches stay
-behind that unified result so callers do not manage workspaces or duplicate a
-second owned region representation.
+`LineArcRegion2` remains available for compatibility, but new mixed-curve code
+should use `CurveRegion2`.
 
-`CurveRegion2::segment_certified` emits a line-only unified region whose vertices
-remain exact `Real` values, with per-loop role, fill-rule, source-span, subdivision,
-and chord-error evidence. `segment_to_finite_profiles` is the explicit `f64`
-mesh/extrusion boundary; `recover_from_finite_profiles_with_evidence` mirrors that
-boundary by rebuilding exact-scalar line/arc topology while recording that the
-relationship to the original curves is lossy.
-
-Polynomial Bezier parallels retain the exact analytic expression and exact source/
-offset-cusp isolation. Line images and Pythagorean-hodograph curves materialize exact
-native or rational offsets. Other regular spans use Levien-style cubics and Blend2D
-quadratics only as candidates; a conservative exact-scalar verifier certifies each
-accepted span. `CurvePath2::approximate_parallel_blend2d_certified` assembles smooth
-connected paths, while `CurveRegion2::offset_with_certified_bezier_parallel` adds
-output chord certification and exact line-arrangement regularization. Its evidence
-distinguishes the pre-regularization directed error bound, final-topology guarantees,
-and the weaker source-chord fallback used for corners or unsupported families.
-
-`Contour2::straight_skeleton` implements an exact inward wavefront for simple line
-contours. Unit-normal support lines, vertex trajectories, edge-collapse times,
-generic reflex split events, live-edge validation, simultaneous edge events,
-commuting same-time events at distinct points, terminal vertex/multi-split
-clusters, non-terminal reflex-vertex clusters, collinear support normalization,
-terminal ridges, and source-edge provenance remain exact `Real` evidence in the
-returned graph. Coincident multi-split clusters that also pierce edge interiors
-remain typed blockers; they are never substituted with centroid rays.
-`Contour2::straight_skeleton_vertex_trajectories` already derives exact native
-linear, elliptic, hyperbolic, and parabolic paths for every line/arc vertex from
-the circular-support cone model. Two-edge circular segments (one arc and its
-chord) now schedule their exact terminal tangency and retain both finite
-parabolic branches in the graph. Generic-position strictly convex line/arc
-contours schedule successive native three-support vanish events by solving exact
-quadratic cone sections; line/line/line, line/line/circle,
-line/circle/circle, and three-circle support triples share that event queue.
-Surviving line/circle and circle/circle pairs finish at exact tangency, while
-line pairs retain their terminal ridge. Three-support terminal components use
-one canonical carrier solution for every collapsing edge, avoiding artificial
-ordering uncertainty between algebraically equivalent roots. Circular-radius
-crossings that are not certified apex events and mixed topology classes at one
-exact time remain typed blockers. Smooth co-circular contours also complete
-with their exact collapse time and an empty unextended shape-preserving
-skeleton.
-Certified single-bubble contours now apply the local topology transition when
-the bubble removes the only circular edge, leaves a strictly convex line
-cycle, and no splice, reflex-target contact, or finite edge-interior squeeze
-can precede it. Both
-incoming conic branches terminate at an explicit `BubbleEvent` node, while the
-detached full circle remains represented in the event count and maximum
-wavefront time.
-`Contour2::straight_skeleton_local_arc_events` nevertheless exposes the exact
-three-cone local event queue today, including source-edge evidence and the
-paper's endpoint-convexity distinction between vanish and bubble candidates.
-Every algebraic cone root is checked against the continuously tracked endpoint
-branches and the live signed radius of each circular support, so roots from the
-opposite cone sheet or beyond a radius collapse are not scheduled.
-`Contour2::straight_skeleton_splice_events` likewise predicts the exact first
-future incident-support tangency at every reflex vertex, retaining its source
-vertex, source-edge pair, event time, and point. Each accepted candidate now
-also passes the actual topology insertion: the old incident pair is replaced
-by two vertices around an expanding semicircular support whose signed radius is
-zero at the splice time. `StraightSkeletonSupportProvenance2`, `SpliceEvent`,
-and `GeneratedVertexBisector` retain the resulting non-source provenance. The
-transition terminates the original reflex bisector at the splice node, and the
-shared recorded-support emitter materializes both subsequent parabolic
-generated-support branches without assigning them false source-edge indices.
-The recorded-support event kernel also tracks the expanding side of a generated
-circle through later three-support edge collapses, updates every mutated cycle,
-and emits the exact incident conic branch. `SupportEvent` keeps event-generated
-collapse provenance when no source-edge-only label would be truthful.
-`Contour2::straight_skeleton_global_contact_events` now supplies the global side
-of that queue. It intersects the exact support cones only inside the safe window
-ending at the next local event, replays each vertex branch, and rejects carrier
-contacts outside the strict interior of the finite evolved line or directed
-circular edge. Exact mixed line/arc split and squeeze fixtures cover both global
-event classes. Their topology kernels now materialize the split node and incoming
-reflex branch, duplicate the hit support across the two split cycles, or duplicate
-both contacting supports across the two squeeze cycles and retain an explicit
-`SqueezeEvent`. The staged component worklist now compares exact source-support
-split, squeeze, and splice candidates against its next local edge event, applies the
-earliest topology transition, and requeues every resulting cycle. Its three-support
-solver also handles the fixed-time section formed by two spatially parallel moving
-lines and a circle. A generated splice support can now be the target of a later
-source-reflex split or either side of a squeeze; `SupportSplitEvent` and the existing
-provenance-bearing `SqueezeEvent` retain that event history without false source-edge
-labels. Squeeze children retain an explicit branch sign for each new tangent-born
-support pair, so their two components continue on the correct side after the
-zero-angle contact. The public multi-component construction loop now repeatedly
-selects and applies source and generated-support topology events, including
-expanding-arc squeezes, generated-support collapse, exact two- and three-support
-terminal events, and finite coincident anti-parallel line overlap trimming with a
-terminal ridge. It can carry split and squeeze fixtures through all subsequent
-local collapses in one shared exact graph. It also distinguishes a valid
-circular-edge apex vanish—both tracked endpoints meet the circle center
-exactly—from an unsupported radius-sheet crossing. Reflex vertices incident to
-generated supports can schedule later split and splice events; repeated splices
-retain recursive support provenance, and post-splice circle tangencies select the
-currently live signed-radius sheet. Exact-time split, squeeze, splice, and local
-collapse candidates are collected before mutation; events at distinct points with
-uniquely relocatable support neighborhoods commute through stable support identity,
-including events that share a surviving support. Coincident independent transitions
-reuse one explicit `EventCluster` graph node. Interacting or relocation-ambiguous
-mixed topology clusters remain an explicit integration boundary.
-`CurvePath2::straight_skeleton` dispatches native line/arc carriers without
-flattening. `CurveFamily2::straight_skeleton_support` provides capability discovery for every
-top-level curve family. Polynomial and rational Bezier carriers participate
-when their existing zero-error certificate proves an exact endpoint-line image;
-polynomial spline and same-sign-weight NURBS carriers use an exact control-net
-certificate for the same reduction. Rational quadratics additionally undergo
-exact projective conic recovery and circular-conic spans enter the native arc
-wavefront. General rational Beziers preserve that support when their homogeneous
-control net is a certified quadratic, including exact degree elevations that
-retain their source lineage. A single-span quadratic NURBS receives the same
-exact circular-conic reduction. Other nonlinear inputs return their exact curve
-index and family as a typed blocker.
-
-`translation_obstacle_convex` constructs the exact closed no-fit region
-`fixed + (-moving)` for simple convex line contours. It normalizes orientation,
-removes exact collinear vertices, and merges ordered edge directions in linear
-output work. Concave inputs return a typed convex-decomposition blocker.
-
-## WASM Demo
-
-The deployed WASM app is available at <https://timschmidt.github.io/hypercurve/>.
-
-## Typical Curve Problems
-
-Curved planar geometry combines robust-predicate failures with representation failures:
-tangent contacts, overlapping arcs, nearly coincident boundaries, Bezier roots, offset
-self-intersections, and lossy chordization. Fixed epsilons can make one fixture pass and
-the next fail; eager exact algebra can also expand before broad-phase filters eliminate
-obvious misses.
-
-`hypercurve` stages the work. Native curve objects keep exact control structure,
-internal indexes and boxes reduce candidate sets, low-degree exact cases are promoted
-when available, and unresolved tangent, overlap, root-isolation, trimming, or topology
-cases remain explicit uncertainty instead of being hidden behind display polylines.
-
-## Main Types
-
-- `CurveRegion2` is the exact mixed-family owned region type. `RegionView2` and
-  native-contour views are borrowed acceleration/interchange adapters for exact
-  line/arc topology.
-- `Curve2`, `CurveView2`, `CurvePath2`, and `CurvePathView2` are the primary
-  mixed-family curve and connected-path types.
-- `Curve2::intersect_curve` and `intersection_topology` immediately dispatch top-level
-  curve pairs through native spans, using exact circle predicates before generic rational resultants,
-  deduplicates spline-knot contacts, and evidence exact source/span/parameter provenance
-  plus unresolved pair evidence. Trimmed and reversed curves distinguish their current
-  public parameter ranges from retained root-source ranges, and represented contacts
-  expose both values. The topology entry returns complete evidence with contact-derived
-  span splits and a clone-shared arrangement result.
-- `CurvePath2::intersect_path` and `intersection_topology` are immediate exact
-  path-pair entries. `CurvePath2::boolean_selection` completes one regularized result;
-  `boolean_selections` returns all four completed operation selections while sharing
-  aggregate contacts, overlaps, split topology, and classification work within the call.
-- `CurveRegionBooleanResults2` contains the immediate union, intersection, difference,
-  and XOR returned by `CurveRegion2::boolean_regions`. The batch shares exact
-  carrier-pair evidence across all four operations and preserves algebraic fragment
-  intervals and parent source provenance in chained results.
-- `Contour2`, `CurveString2`, `Point2`, `LineSeg2`, `CircularArc2`, and `Segment2`
-  provide boundary and primitive geometry. `CircularArc2::sweep_fraction` and
-  `point_at_sweep_fraction` are exact inverse directed-angular operations for minor,
-  major, semicircular, and full-circle arcs; `rational_bezier_decomposition` exposes
-  the separate retained piecewise-conic parameterization. `CurveString2` parameter
-  trims use affine line fractions and directed-angular arc fractions and retain the
-  exact evaluated endpoint witnesses. `CurveString2::chamfer_vertex_by_parameters`
-  and its point-bearing counterpart use those same conventions for line-line,
-  line-arc, arc-line, and arc-arc vertices; source segments retain their native
-  families and exact source-range evidence around the inserted line bevel.
-  `CurveString2::fillet_vertex_by_parameters` and its point-bearing counterpart
-  likewise certify exact source/fillet tangency for every native line/arc pairing,
-  preserve trimmed source families, and retain inverse arc-parameter witnesses so
-  parameter-driven edits replay the original exact points across clones.
-  The corresponding `CurvePath2` parameter APIs cover line, circular-arc,
-  quadratic/cubic Bezier, rational quadratic/general Bezier, polynomial B-spline,
-  and NURBS pairings, including closed-path seam vertices. Point-bearing APIs stay
-  on the native line/arc carrier because general algebraic point inversion is not
-  silently approximated.
-- `QuadraticBezier2`, `CubicBezier2`, `RationalQuadraticBezier2`, and their fact,
-  relation, metric, zero-error fitting, exact-parallel/cusp, PH-offset,
-  conservatively verified fitting, staged offset, and flattening APIs represent
-  polynomial and rational curve work.
-- `BezierParameterPolynomial` isolates represented and algebraic roots in `[0, 1]`;
-  `BezierRootIsolationResult2` and `BezierRootIsolationTrace2` expose the ordered
-  exact carriers and certificate-work counts for profiling root-heavy operations.
-- `PolynomialSplineCurve2` and `NurbsCurve2` retain exact spline geometry, source
-  provenance, exact active-domain point and one-sided/certified arbitrary-order
-  derivative evaluation, exact knot insertion, splitting, subcurve extraction,
-  traversal reversal, shared Bezier decomposition, and zero-allocation
-  provenance-bearing span iteration. Periodic constructors accept one period of
-  controls and knot breaks, retain the exact period, and provide certified wrapped
-  point and derivative evaluation without repeated period stepping.
-- `CurveParameterDomain2` and `CurveParameterSide2` provide family-independent
-  parameter-domain and knot-side semantics. `Similarity2` transforms every
-  top-level curve family and connected path without changing its family or source;
-  top-level splitting and subcurve extraction dispatch through the same exact native
-  and spline algorithms.
-- `Aabb2` and segment/region fact types expose conservative structure without
-  requiring callers to manage cache handles. Contours and regions provide
-  immediate batch point classification when index reuse is useful.
-- Boolean, event, fragment, split, and boundary-loop types describe staged region
-  boolean assembly.
-- `ExactCurveError`, `ExactCurveBlocker`, `CurveFamily2`, and `CurveSource2` provide
-  contextual exact-operation errors and provenance.
-- Finite projection, reconstruction, bulge, and display/certified polyline types define
-  IO and display boundaries.
-
-## Precision Model
-
-Native geometry uses `Real` coordinates. Primitive floats appear only in named finite
-projection, reconstruction, test, benchmark, rendering, or IO helpers. Bulge imports,
-flattened polylines, display offsets, and finite projections use explicit types so
-callers can tell whether they are using topology evidence or display geometry.
-
-The crate promotes exact low-degree evidence where it can: line/arc relations, selected
-Bezier roots, retained intersection-region shape/refinement/isolation facts, monotone
-graph ordering, exact area and moment contributions, length intervals, zero-error
-line/arc and Bezier/conic primitive-fit evidence, exact Bezier area/moment
-prefix sums for repeated path-range queries, exact-parameter Bezier/conic
-split materialization, and retained branch-free Bezier/conic arrangement
-traversal with exact tangent-ordered successor selection for simple branch
-vertices. Closed retained traversals can materialize native Bezier/conic
-boundary regions; polynomial Bezier loops and supported rational conics expose
-exact Green-integral signed area. Algebraic split boundaries retain exact point,
-tangent, and higher-order endpoint images when construction is certified instead
-of being rounded into native coordinates. Algebraic carriers reverse without
-demoting their source evidence: endpoint order is swapped, odd derivatives are
-negated, even derivatives are preserved, and exact source boundaries are replayed
-once and reused. Exact partial collinear, same-circle circular-arc, and
-injectively parameterized nonlinear Bezier overlaps retain both source parameter
-ranges, split only at overlap endpoints, and apply operation-aware ownership
-only to the shared fragments. Exact subdivisions of the same certified-injective
-rational Bezier retain their common source interval, so partial overlaps recover
-represented local endpoints such as `1/3` directly and bypass resultants even
-when point-incidence isolation would otherwise return an algebraic carrier.
-For independently constructed curves, exact-rational polynomial coefficients use
-the rational-root denominator bound plus isolator refinement and continued-fraction
-reconstruction; candidates such as `1/3` are promoted only after exact replay.
-Certified injective line images additionally retain irrational algebraic overlap
-endpoints in `BezierParameterRange2`; those boundaries flow through top-level
-splitting, path ownership, retained traversal, and region materialization without
-scalar demotion. Exact polynomial graph certificates extend the same behavior to
-curved nonlinear overlaps with independently parameterized irrational endpoints.
-Cases that require multivalued implicit branch correspondence, bounded higher-order
-fit, or offset trimming return unresolved regions, exact bisection or target-width
-isolation results, or explicit uncertainty.
-
-## Performance Model
-
-`hypercurve` avoids numerical explosion by keeping curve objects native and using
-structure before generic algebra. Bounding boxes, segment kind, endpoint equality,
-monotone spans, material/hole role, internal indexes, low-degree dispatch, dyadic
-candidate promotion, and source metadata all reduce the number of exact predicates and
-root checks.
-
-Immediate curve-string, contour, and region operations construct or reuse conservative
-boxes and predicate indexes internally. `Contour2::classify_points` and
-`LineArcRegion2::classify_points` amortize that setup across a caller-provided batch;
-`structural_facts` exposes scheduling evidence without exposing the cache carrier.
-Retained mixed-family path pairs use clone-shared exact curve bounds as a conservative
-broad phase: only certified AABB misses are removed, and authored versus retained
-candidate-pair counts remain observable. When two candidate boxes intersect at one
-certified point and that point is an exact endpoint of both curves, endpoint topology
-is retained directly without constructing a generic resultant.
-Top-level spline clones share successful decompositions, promoted rational evaluators,
-and contextual blockers. Top-level derivative dispatch reuses those spline-owned facts
-instead of constructing a duplicate `Curve2` evaluator cache.
-Single-span polynomial `Curve2` trims retain a positive source-injectivity certificate
-and exact root parameter ranges. Related trimmed pairs reuse that fact for partial
-overlap dispatch, including reversed ranges, instead of rebuilding resultants.
-General rational Bezier clones also share lazily constructed homogeneous control-net,
-power-basis, coordinate-derivative numerator, and decided axis-monotonicity facts
-across evaluation, subdivision, derivative, incidence, and overlap predicates. Exact
-point, derivative-batch, bounds, monotonicity, incidence, candidate, contact, and
-overlap queries expose `ExactCurveResult`, preserving operation, curve-family, and
-predicate-blocker context instead of leaking an ambiguous public classification.
-Exact
-subdivisions additionally retain
-their source-parameter lineage and a positive source-injectivity certificate, allowing
-related partial-overlap pairs to skip resultant construction. Immediate rational-Bezier
-intersection queries return exact candidates, contacts, or contact-derived split topology
-without exposing a prepared pair handle. Immediate top-level curve queries likewise return
-complete provenance-bearing evidence or topology. Native arc dispatch computes exact circle witnesses,
-recovers represented rational-span parameters by projective inversion, and avoids
-irrelevant span-pair resultants. Curved Boolean arrangements retain certified contact
-vertex identities, so traversal reuses proven connectivity rather than comparing
-independently expanded radical coordinates. Borrowed fact views avoid copying algebraic
-evidence on repeated queries.
-Immediate curved-region batches seed each loop junction as a known topology vertex,
-merge new contacts into those identities, and split only carriers whose source
-intervals contain a contact. Source-curve intersection evidence, classified fragments,
-and topology are shared across the four results only for the duration of the call.
-Degree-aligned shared-component replay elevates only the lower-degree homogeneous
-Bernstein control net and reuses retained elevations, so independently rebuilt exact
-degree elevations do not fall through to an unresolved resultant. Benchmarks track raw
-and retained spline decomposition, cached general-rational evaluation, immediate
-path-pair candidate filtering, and ordinary, retained, and mixed retained paths.
-
-The complete reference-to-implementation audit, retained benchmark results, and
-rejected optimization experiments are recorded in [PERFORMANCE.md](PERFORMANCE.md).
-Cross-crate release benchmarks against `cavalier_contours`, `curvo`, `i_overlay`, and
-`geo`, including equivalent-workload and numeric-model caveats, are documented in
-[COMPARATIVE_BENCHMARKS.md](COMPARATIVE_BENCHMARKS.md).
-Runtime exact-computation paths can be audited with
-`cargo bench --features dispatch-trace --bench dispatch_trace`; the matching
-feature-gated integration test verifies that public curve queries continue to
-emit correlated trace evidence.
-Adapter and authoring surfaces have a separate
-`cargo bench --features triangulation --bench api_surface` lane.
-
-## Current Status
-
-Implemented today:
-
-- exact point, line-segment, circular-arc, bulge, curve-string, contour, region, and
-  bounding-box APIs, including exact rational quadratic decomposition and
-  top-level evaluation for minor, semicircular, major, and full-circle arcs;
-- polynomial quadratic/cubic Bezier, rational quadratic/conic, and arbitrary-degree
-  rational Bezier objects with structural facts, exact homogeneous evaluation and
-  subdivision, certified bounds, one-sign monotonicity fast paths, exact
-  mixed-sign derivative-root monotonicity, complete exact point
-  incidence with represented or isolated algebraic parameters, exact line contacts
-  retaining represented or isolated roots with multiplicity-correct crossing/tangent
-  classification, two-axis homogeneous resultant candidate projections, exact represented/algebraic
-  candidate replay with explicit incomplete evidence, retained exact parameter ranges for
-  full and strict partial rational overlaps, exact algebraic-parameter point and
-  first/second/third derivative images, immediate exact pair contacts and
-  contact-derived algebraic split topology,
-  projective overlap recognition, graph-order
-  predicates, retained intersection-region refinement/isolation helpers, and exact
-  low-degree relation fast paths;
-- exact arbitrary-positive-degree polynomial B-spline and rational B-spline/NURBS
-  carriers over clamped or non-clamped finite active knot domains, with homogeneous
-  Boehm knot insertion, retained rational Bezier spans, exact parameter evaluation,
-  source/version provenance, shared decomposition/native-topology caches, and exact
-  homogeneous degree elevation for linear rational spans, native arbitrary-degree
-  rational Bezier promotion, per-span parameter provenance, exact authored-knot-domain
-  derivatives of arbitrary order, explicit left/right handling for points and
-  derivatives at discontinuous knots, exact subdivision and subcurve extraction,
-  exact traversal reversal, one-pass clone-shared batch knot refinement, exact
-  proof-bearing knot removal by homogeneous inverse insertion, bounded retention of
-  positive and negative editing results, and uniform top-level parameter domains;
-- exact global NURBS interpolation at authored, uniform, chord-length, or centripetal
-  parameters, including fixed rational control weights, averaged clamped knot
-  construction, fraction-free Bareiss/Cramer solve evidence, exact matrix residual
-  and curve-point replay when scalar normalization certifies it, a retained nonzero
-  determinant identity for otherwise unresolved symbolic residuals, stable source
-  provenance, and typed singular, projective, and ordering failure context;
-- exact arbitrary-target rational Bezier degree elevation in homogeneous Bernstein
-  coordinates, retaining root source-parameter lineage and bounded clone-shared
-  intermediate elevations and blockers, composed into source-interval-bearing NURBS
-  span elevation and exact elevated NURBS reconstruction for finite and periodic
-  carriers; elevated carriers align homogeneous span scales and remove extraction
-  knots by certified inverse insertion to preserve the source continuity order;
-- explicit nonuniform periodic polynomial B-spline and NURBS construction from one
-  period of controls and knot breaks, exact cyclic carrier expansion, certified seam
-  closure, arbitrary exact parameter wrapping, side-aware seam derivatives, and
-  retained periodicity through knot insertion, exact knot removal, reversal, and similarities;
-- exact planar similarity transforms for every top-level curve family and connected
-  path, preserving family, parameter domain, connectivity, and source provenance;
-- feature-gated first-class SVG document and path-data support for absolute and
-  relative line, horizontal, vertical, quadratic, smooth-quadratic, cubic,
-  smooth-cubic, circular-arc, and close-path commands; inherited styles and
-  affine transforms; path, circle, ellipse, rectangle, line, polygon, and
-  polyline elements; exact curved-region and higher-order stroke retention; and
-  bounded finite document export. Unsupported paint and viewport behavior
-  remains a typed `SvgError` instead of silently changing topology;
-- intersection surfaces for line/line, line/arc, arc/arc, Bezier contact cases, curve
-  strings, contours, and regions, including top-level
-  native line/line, line/arc, and arc/arc dispatch with exact contact provenance
-  and retained blockers, certified same/reversed full-image overlap orientation
-  plus partial collinear and same-circle arc overlap ranges, algebraic parameter
-  ranges for certified injective line-image and polynomial-graph overlaps, represented exact
-  strict rational-Bezier overlap refinement with same/reversed ownership and retained source
-  provenance, clone-shared path promotion, native-family topology materialization,
-  immediate all-curve path-pair replay, aggregate path splitting, arrangement assembly,
-  operation-aware shared-span ownership from explicit boundary interior sides, exact
-  representative-point classification, retained contact-vertex traversal, and
-  union/intersection/difference/XOR region materialization for supported split topology,
-  including exact algebraic-fragment reversal, endpoint-touching root-isolator
-  refinement, immediate batched region Booleans, nested-hole ownership, and shared
-  topology across each four-operation call; chained retained regions sharing one source
-  parameterization clip full-component overlap evidence to their exact algebraic carrier
-  intervals before ownership classification;
-- signed area, area moment, length interval, flattening, and zero-error primitive
-  fitting for Bezier/conic line and point images;
-- staged Bezier/conic offset candidates that construct exact line-image offsets and
-  leave free-form offsets unresolved until certified trimming/fitting exists;
-- primitive line/arc offsets, checked offsets, cap styles, region event/fragment
-  extraction, boolean-boundary assembly, retained exact unordered line/arc
-  arrangement construction with source/split/endpoint/ring/role/output caches,
-  and conservative unresolved states.
-- exact simple-polygon straight-skeleton wavefront construction with generic reflex
-  split events, independently commuting simultaneous events, terminal vertex events,
-  non-terminal multi-vertex events, one-dimensional terminal wavefronts, and
-  explicit blockers for unresolved coincident edge-interior multi-split clusters.
-
-Known limits: shared components requiring multivalued implicit branch correspondence,
-source curves with neither certified source lineage nor an injective graph axis, generic
-resultants whose scalar signs remain uncertified, and offset self-intersection trimming
-remain explicit blockers. Algebraically isolated split parameters are retained through
-top-level path Booleans when a certified line image or polynomial graph supplies the
-branch correspondence. Chained regions consume shared components whose overlap range is
-contained by both retained carriers; clipping a shared component at a carrier boundary
-is exact when retained identity-parameter evidence certifies the correspondence. A
-carrier boundary under an independently parameterized shared component whose parameter
-correspondence is not yet certified remains an `Unsupported` blocker.
-
-## Installation
+## Install
 
 ```toml
 [dependencies]
 hypercurve = "0.3.0"
 ```
 
-For sibling checkouts:
+The default `predicates` feature enables Hyperlimit-backed certified predicate
+policy. See [Feature flags](#feature-flags) before disabling defaults or
+enabling adapters.
 
-```toml
-[dependencies]
-hypercurve = { path = "../hypercurve" }
-```
+## Quick start
 
-Feature summary:
+This builds a quadratic Bézier, constructs a square region from exact line
+segments, and classifies an interior point.
 
-- `predicates`: default feature enabling `hyperlimit` predicate integration.
-- `svg`: strict SVG document/path import and exact curve-aware document export
-  through `SvgGeometry2`.
-- `triangulation`: finite region triangulation through `hypertri`.
-
-SVG support is independent of CSGRS and owns the complete 2D interchange
-boundary:
-
-```rust
-use hypercurve::{SvgGeometry2, import_svg_document};
-
-let geometry = import_svg_document(
-    r#"<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 C0 2 2 2 2 0 Z"/></svg>"#,
-)?;
-assert!(!geometry.region().is_empty());
-let document = geometry.to_svg()?;
-# Ok::<(), hypercurve::SvgError>(())
-```
-
-Exported stroke paths use native SVG `L`, `A`, `Q`, and `C` commands when
-available. They also carry a bounded, versioned `data-hypercurve-path`
-attribute. Hypercurve uses that extension to round-trip all eight
-`CurveGeometry2` families—including rational quadratics, arbitrary rational
-Beziers, polynomial B-splines, NURBS, periodic splines, and exact non-decimal
-`Real` values—without demoting them to sampled polylines. Ordinary SVG
-renderers ignore the extension and render the finite standard-SVG `d`
-projection.
-
-## Usage
-
-The native API uses `hyperreal::Real` coordinates:
-
-```rust
-use hypercurve::{CurvePolicy, LineSeg2, Point2, Real};
-
-fn main() -> hypercurve::CurveResult<()> {
-    let segment = LineSeg2::try_new(
-        Point2::new(Real::from(0), Real::from(0)),
-        Point2::new(Real::from(1), Real::from(0)),
-    )?;
-
-    let side = segment.classify_point(
-        &Point2::new(Real::from(0), Real::from(1)),
-        &CurvePolicy::certified(),
-    );
-
-    assert!(matches!(side, hypercurve::Classification::Decided(_)));
-    Ok(())
-}
-```
-
-Use native curve objects for Bezier facts, contours, regions, and downstream
-geometry work:
-
+<!-- quickstart:start -->
 ```rust
 use hypercurve::{
-    Contour2, CurvePolicy, CurveRegion2, LineSeg2, Point2, QuadraticBezier2, Segment2,
+    BezierDegree, Classification, Contour2, CurvePolicy, CurveRegion2, LineSeg2, Point2,
+    QuadraticBezier2, Segment2,
 };
 use hyperreal::Real;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let p = |x, y| Point2::new(Real::from(x), Real::from(y));
     let bezier = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
-    let facts = bezier.structural_facts();
-    assert_eq!(facts.degree, hypercurve::BezierDegree::Quadratic);
+    assert_eq!(bezier.structural_facts().degree, BezierDegree::Quadratic);
 
-    let bottom = Segment2::Line(LineSeg2::try_new(p(0, 0), p(2, 0))?);
-    let right = Segment2::Line(LineSeg2::try_new(p(2, 0), p(2, 2))?);
-    let top = Segment2::Line(LineSeg2::try_new(p(2, 2), p(0, 2))?);
-    let left = Segment2::Line(LineSeg2::try_new(p(0, 2), p(0, 0))?);
-    let contour = Contour2::try_new(vec![bottom, right, top, left])?;
+    let boundary = [
+        ((0, 0), (2, 0)),
+        ((2, 0), (2, 2)),
+        ((2, 2), (0, 2)),
+        ((0, 2), (0, 0)),
+    ]
+    .into_iter()
+    .map(|(start, end)| LineSeg2::try_new(p(start.0, start.1), p(end.0, end.1)).map(Segment2::Line))
+    .collect::<hypercurve::CurveResult<Vec<_>>>()?;
+
     let policy = CurvePolicy::certified();
+    let contour = Contour2::try_new(boundary)?;
     let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?;
-
     let location = region.classify_point(&p(1, 1), &policy)?;
-    assert!(matches!(location, hypercurve::Classification::Decided(_)));
+    assert!(matches!(location, Classification::Decided(_)));
     Ok(())
 }
 ```
+<!-- quickstart:end -->
 
-For unordered exact line/arc input, arrange through `CurveRegion2` and read output
-and blockers from the immediate result. The runnable
-[`arrangement`](examples/arrangement.rs) example demonstrates the
-arrangement, classification, and immediate evidence workflow.
-
-`CurveRegionArrangement2` returns one canonical evaluation with its optional unified
-region, summary, and core status evidence directly. Cache and bucket carriers remain
-private implementation details.
-
-## Exact curve-region Boolean fuzzing
-
-The `hypercurve_curve_region_boolean_fuzz` integration test generates closed
-regions across line, arc, polynomial/rational Bezier, polynomial B-spline, and
-NURBS carriers. It requires complete exact intersection evidence, all four
-exact Boolean results, and equality between batched and individual immediate
-calls. No finite projection is used.
-
-Proptest minimizes a failure and appends its seed to
-`tests/hypercurve_curve_region_boolean_fuzz.proptest-regressions`. That file is
-replayed before new cases on every run and should be committed unchanged after
-the blocker is fixed. Fixed categories are also represented in the named
-retired-failure corpus; the test enforces at least one geometry per category.
+Run the checked copy:
 
 ```sh
-# Routine deterministic regression campaign.
-cargo test --all-features --test hypercurve_curve_region_boolean_fuzz
-
-# Extended local/CI campaign; minimized failures persist automatically.
-HYPERCURVE_EXACT_BOOLEAN_FUZZ_CASES=10000 \
-  cargo test --all-features --test hypercurve_curve_region_boolean_fuzz \
-  generated_exact_curve_region_booleans_complete_and_match_immediate_results
-```
-
-## Pathological memory benchmarks
-
-`pathological_regions` builds sharded pairs of retained `CurveRegion2` values.
-Every shard contains line, circular-arc, quadratic/cubic Bezier, rational
-quadratic/general Bezier, polynomial B-spline, and NURBS carriers; it also
-retains rational, primitive-dyadic, multi-limb, symbolic constant/root/log/trig,
-and opaque-computable `Real` samples. Its mate is copied through an exact
-3-4-5 rotation plus rational translation. The same shard also carries a
-finite-polyline `CurveRegion2` projection so all four Boolean operations have a
-decidable stress lane when a higher-order operation correctly evidence an
-unsupported or undecidable exact predicate.
-
-The tier names describe measured release-build native resident-size ranges.
-The benchmark prints both its calibrated estimate and Linux `VmRSS` delta.
-
-```sh
-# Approximately 100 MiB; runs construction, deep rotation, and all Booleans.
-cargo bench --bench pathological_regions
-
-# Run every approximately 100 MiB, 500 MiB, and 1 GiB input.
-HYPERCURVE_PATHOLOGICAL_TIERS=all cargo bench --bench pathological_regions
-
-# Select work, tiers, or a small integration-smoke cell count.
-HYPERCURVE_PATHOLOGICAL_MODE=build HYPERCURVE_PATHOLOGICAL_TIERS=500mb \
-  cargo bench --bench pathological_regions
-HYPERCURVE_PATHOLOGICAL_CELL_LIMIT=1 cargo bench --bench pathological_regions
-```
-
-Cross-suite equivalents are common path samples represented in each peer
-crate's native polygon carrier. They preserve the native tier's geometric cell
-count, rather than padding the smaller floating-point carriers to the same byte
-count:
-
-```sh
-HYPERCURVE_COMPARE_PATHOLOGICAL_TIERS=all HYPERCURVE_COMPARE_ITERS=1 \
-  cargo bench --features comparative-benchmarks --bench comparative
-
-# Isolate one named benchmark group for profiling.
-HYPERCURVE_COMPARE_GROUP=star64 cargo bench --features comparative-benchmarks --bench comparative
-```
-
-## Development
-
-Useful local checks:
-
-```sh
-cargo fmt --all -- --check
-cargo test --all-features
-cargo clippy --all-targets --all-features -- -D warnings
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
-cargo check --benches --all-features
 cargo run --example basic
-cargo run --example arrangement
-cargo run --manifest-path examples/hypercurve_ui/Cargo.toml
-cargo check --manifest-path examples/hypercurve_ui/Cargo.toml --target wasm32-unknown-unknown
 ```
+
+## How the model fits together
+
+```text
+Point2
+  ├─ LineSeg2 / CircularArc2 ── Segment2 ── CurveString2 / Contour2
+  └─ Bézier / B-spline / NURBS ── Curve2 ── CurvePath2
+                                      │
+                     arrange / classify / regularize
+                                      │
+                                CurveRegion2
+                                      │
+                  Boolean / offset / project / triangulate
+```
+
+A `Contour2` is a closed, connected line/arc boundary with a fill rule.
+`CurvePath2` generalizes connected paths to every supported curve family.
+`CurveRegion2` stores filled topology as oriented native Bézier boundary
+fragments and is the main input to mixed-family region operations.
+
+## API guide
+
+The following list covers the useful public front doors. Result and evidence
+types have accessors for inspecting counts, sources, blockers, and retained
+topology; consult [docs.rs](https://docs.rs/hypercurve) for those fields and
+exact signatures.
+
+### Coordinates, primitives, and transforms
+
+- `Point2::{new, from_values, x, y, delta_from, distance_squared, lerp,
+  translated, structural_facts}` creates and inspects exact points.
+- `LineSeg2::{try_new, point_at, reversed, classify_point, contains_point,
+  structural_facts}` covers checked segments and point predicates.
+- `CircularArc2::{try_from_center, from_bulge, contains_point,
+  contains_sweep_point, point_at_sweep_fraction, reversed, structural_facts}`
+  covers directed circular arcs.
+- `Segment2::{from_bulge, kind, point_at, contains_point, reversed,
+  structural_facts}` dispatches over lines and arcs.
+- `Similarity2::{try_from_real_affine, try_from_f64_affine, transform_point,
+  reverses_orientation}` validates exact translation, rotation, reflection,
+  and uniform scale transforms. Curve and region types expose
+  `transform_similarity`; `CurveRegion2` also exposes `transform_affine`.
+
+### Bézier curves
+
+- `QuadraticBezier2::{new, from_line_segment,
+  interpolate_point_at_parameter, interpolate_midpoint, point_at,
+  control_hull_box, endpoint_tangent, structural_facts}`.
+- `CubicBezier2::{new, interpolate_hermite, point_at, control_hull_box,
+  endpoint_tangent, structural_facts}`.
+- `RationalQuadraticBezier2` and `RationalBezier2` provide checked rational
+  construction, evaluation, derivatives, splitting, reversal, transforms, and
+  topology/intersection evidence.
+- `BezierParameter2`, `BezierParameterRange2`, and
+  `BezierRootIsolationResult2` retain exact algebraic parameter information.
+- Bézier analysis includes cusp and inflection classification, monotone spans,
+  line/curve contacts, curve/curve intersection, length bounds, area moments,
+  certified flattening, fitting, and split materialization.
+- Parallel and offset entry points include `parallel_left`, `parallel_right`,
+  `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
+  `approximate_parallel_blend2d_certified`. Their result types retain error and
+  singularity evidence.
+
+### Splines and unified curves
+
+- `PolynomialSplineCurve2::{try_new, try_new_periodic, point_at,
+  derivative_at, insert_knot, split_at, subcurve, reversed,
+  transform_similarity, bezier_decomposition, bezier_spans}`.
+- `NurbsCurve2::{try_new, try_new_periodic, point_at, derivative_at,
+  insert_knot, insert_knots, remove_knot, degree_elevation,
+  elevated_to_degree, split_at, subcurve, reversed, transform_similarity,
+  bezier_decomposition, bezier_spans, native_subcurves}`.
+- Wrapped evaluation and one-sided evaluation are available on periodic spline
+  carriers through the `*_wrapped` and `*_side` method families.
+- `Curve2::{new, try_polynomial_bspline, try_nurbs,
+  try_periodic_polynomial_bspline, try_periodic_nurbs, family, point_at,
+  derivative_at, bounds, split_at, subcurve, reversed,
+  transform_similarity, native_bezier_fragments}` is the common owned carrier.
+  `CurveView2` supplies the borrowed equivalents.
+
+### Strings, paths, contours, and regions
+
+- `CurveString2::{try_new, from_bulge_vertices, link_connected_endpoints,
+  connect_endpoints_with_line, merge_adjacent_collinear_lines,
+  remove_adjacent_reversed_duplicates, trim_between_parameters,
+  trim_between_points, chamfer_vertex_by_parameters,
+  fillet_vertex_by_parameters}` edits connected line/arc strings.
+- `CurvePath2::{try_new, reversed, transform_similarity,
+  chamfer_vertex_by_parameters, fillet_vertex_by_parameters, bounds,
+  classify_point, native_bezier_fragments, bezier_boundary_loop}` handles
+  general connected curves.
+- `Contour2::{try_new, try_new_with_fill_rule, from_bulge_vertices,
+  signed_area, winding_number, classify_point, point_on_boundary,
+  intersect_contour, intersect_self, split_at_intersections,
+  split_at_self_intersections}` handles closed line/arc boundaries.
+- `CurveRegion2::{empty, arrange_unordered_segments,
+  arrange_unordered_line_segments, try_from_native_contours,
+  try_from_native_material_contours, try_from_native_boundary_contours,
+  try_from_boundary_paths, classify_point, signed_depth, signed_area,
+  filled_area, boundary_profiles, materialized_boundary_paths,
+  segment_certified, offset, offset_with_certified_segmentation,
+  offset_with_certified_bezier_parallel}` is the mixed-family region API.
+- `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
+  intersection topology or regularized union, intersection, difference, and
+  xor results. `BooleanOp` selects an operation; batched
+  `CurveRegionBooleanResults2` exposes all four from one evaluation.
+- `CurveRegion2::straight_skeleton` and the
+  `straight_skeleton_*_events` methods expose staged skeleton construction and
+  blockers. `translation_obstacle_convex` constructs the exact translational
+  configuration-space obstacle for supported convex contours.
+
+### Conversion, finite output, and adapters
+
+- `CurveString2::{from_real_line_string, from_finite_line_string,
+  reconstruct_from_polyline}` and
+  `Contour2::{from_real_ring, from_finite_ring,
+  reconstruct_from_closed_polyline}` import or reconstruct line/arc geometry.
+- `CurveRegion2::recover_from_finite_profiles` reconstructs a region from
+  finite material/hole profiles. `PolylineReconstructionOptions` controls the
+  distance tolerance.
+- `project_to_finite_polyline`, `project_to_finite_curve_paths`,
+  `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
+  finite approximations. `FiniteProjectionOptions` makes arc chord error
+  visible at the boundary.
+- With `triangulation`, `FiniteRegionProjection2::triangulate` and
+  `triangulate_finite_rings` produce finite triangles through Hypertri.
+- With `svg`, `SvgGeometry2::{from_svg, from_svg_with_options, to_svg,
+  to_svg_with_options}`, `parse_svg_path_data`, `import_svg_document`, and
+  `export_svg_document` provide SVG exchange. Native `L`, `A`, `Q`, and `C`
+  commands are used where possible; a versioned `data-hypercurve-path`
+  attribute preserves curve families and exact values for Hypercurve
+  round-trips.
+
+## Precision, guarantees, and boundaries
+
+Hypercurve separates exact values from decisions about them:
+
+- Coordinates are `Real` values, not an implicit `f64` tolerance model.
+- Checked constructors reject malformed or structurally invalid input.
+- Topological branches use `CurvePolicy`; `CurvePolicy::certified()` is the
+  normal correctness-first policy.
+- `Classification::Decided(value)` is a supported conclusion.
+  `Classification::Uncertain(reason)` preserves an undecidable or unsupported
+  predicate instead of silently choosing a side.
+- `CurveResult<T>` reports ordinary construction/operation failures.
+  `ExactCurveResult<T>` can additionally report the precise exact-topology
+  blocker.
+- Native output remains exact where the implementation has complete evidence.
+  Projection to `f64`, polyline segmentation, SVG rendering, and triangulation
+  are explicit conversion boundaries with caller-visible options or evidence.
+- Boolean and arrangement result types retain contacts, overlaps, blockers,
+  source provenance, and completeness rather than exposing private caches or
+  sweep internals.
+
+Support is deliberately operation-specific. A curve family being representable
+does not imply that every topology operation is decidable for every symbolic
+input. Inspect returned status and blocker evidence instead of treating
+uncertainty as empty geometry.
+
+## Feature flags
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `predicates` | yes | Hyperlimit-backed certified predicate policy |
+| `dispatch-trace` | no | Hyperreal/Hyperlimit dispatch instrumentation |
+| `triangulation` | no | Finite-region triangulation through Hypertri |
+| `svg` | no | SVG import/export and exact round-trip extension |
+| `comparative-benchmarks` | no | Third-party benchmark adapters only |
+
+Minimal and common configurations:
+
+```sh
+cargo check --no-default-features
+cargo test --all-features
+cargo run --example arrangement
+cargo check --features svg
+```
+
+The browser demo lives in `examples/hypercurve_ui` and is built separately with
+Trunk. It is not part of the library API.
+
+## Validation and performance
+
+The quick start is compiled as `examples/basic.rs` and checked byte-for-byte
+against this README. The test suite also covers adversarial exact predicates,
+mixed-family region Booleans, regression corpora, and finite adapters.
+
+Detailed benchmark definitions and interpretation live in
+[PERFORMANCE.md](PERFORMANCE.md) and
+[COMPARATIVE_BENCHMARKS.md](COMPARATIVE_BENCHMARKS.md). Fuzz target ownership
+and replay instructions live in [fuzz/README.md](fuzz/README.md). These are
+maintainer validation resources, not API guarantees.
 
 ## References
 
-Aichholzer, Oswin, Franz Aurenhammer, David Alberts, and Bernd Gärtner. "A
-Novel Type of Skeleton for Polygons." *Journal of Universal Computer Science*,
-vol. 1, no. 12, 1995, pp. 752-761.
-https://doi.org/10.3217/jucs-001-12-0752.
+These sources describe algorithms or numerical principles used by the crate;
+they are not claims of source-code derivation.
 
-CGAL Project. "2D Regularized Boolean Set Operations" and
-"2D Arrangements" user manuals. https://doc.cgal.org/latest/.
+- Aichholzer, O., Aurenhammer, F., Alberts, D., and Gärtner, B. “A Novel Type
+  of Skeleton for Polygons.” *Journal of Universal Computer Science* 1(12),
+  1995, 752–761. [DOI: 10.3217/jucs-001-12-0752](https://doi.org/10.3217/jucs-001-12-0752).
+- Bentley, J. L., and Ottmann, T. A. “Algorithms for Reporting and Counting
+  Geometric Intersections.” *IEEE Transactions on Computers* C-28(9), 1979,
+  643–647. [DOI: 10.1109/TC.1979.1675432](https://doi.org/10.1109/TC.1979.1675432).
+- Boehm, W. “Inserting New Knots into B-Spline Curves.”
+  *Computer-Aided Design* 12(4), 1980, 199–201.
+  [DOI: 10.1016/0010-4485(80)90154-2](https://doi.org/10.1016/0010-4485(80)90154-2).
+- de Boor, C. *A Practical Guide to Splines*. Springer, 1978.
+  [DOI: 10.1007/978-1-4612-6333-3](https://doi.org/10.1007/978-1-4612-6333-3).
+- de Berg, M., Cheong, O., van Kreveld, M., and Overmars, M.
+  *Computational Geometry: Algorithms and Applications*, 3rd ed. Springer,
+  2008. [DOI: 10.1007/978-3-540-77974-2](https://doi.org/10.1007/978-3-540-77974-2).
+- Farouki, R. T., and Neff, C. A. “Analytic Properties of Plane Offset
+  Curves.” *Computer Aided Geometric Design* 7(1–4), 1990, 83–99.
+  [DOI: 10.1016/0167-8396(90)90002-N](https://doi.org/10.1016/0167-8396(90)90002-N).
+- Farouki, R. T., and Rajan, V. T. “Algorithms for Polynomials in Bernstein
+  Form.” *Computer Aided Geometric Design* 5(1), 1988, 1–26.
+  [DOI: 10.1016/0167-8396(88)90016-7](https://doi.org/10.1016/0167-8396(88)90016-7).
+- Foster, E. L., Hormann, K., and Popa, R. T. “Clipping Simple Polygons with
+  Degenerate Intersections.” *Computers & Graphics: X* 2, 2019, 100007.
+  [DOI: 10.1016/j.cagx.2019.100007](https://doi.org/10.1016/j.cagx.2019.100007).
+- Greiner, G., and Hormann, K. “Efficient Clipping of Arbitrary Polygons.”
+  *ACM Transactions on Graphics* 17(2), 1998, 71–83.
+  [DOI: 10.1145/274363.274364](https://doi.org/10.1145/274363.274364).
+- Hormann, K., and Agathos, A. “The Point in Polygon Problem for Arbitrary
+  Polygons.” *Computational Geometry* 20(3), 2001, 131–144.
+  [DOI: 10.1016/S0925-7721(01)00012-8](https://doi.org/10.1016/S0925-7721(01)00012-8).
+- Martinez, F., Rueda, A. J., and Feito, F. R. “A New Algorithm for Computing
+  Boolean Operations on Polygons.” *Computers & Geosciences* 35(6), 2009,
+  1177–1185. [DOI: 10.1016/j.cageo.2008.08.009](https://doi.org/10.1016/j.cageo.2008.08.009).
+- Patrikalakis, N. M., Maekawa, T., and Cho, W. *Shape Interrogation for
+  Computer Aided Design and Manufacturing*. MIT Hyperbook, 2009.
+  [MIT](https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/).
+- Sederberg, T. W., and Nishita, T. “Curve Intersection Using Bézier
+  Clipping.” *Computer-Aided Design* 22(9), 1990, 538–549.
+  [DOI: 10.1016/0010-4485(90)90039-F](https://doi.org/10.1016/0010-4485(90)90039-F).
+- Shewchuk, J. R. “Adaptive Precision Floating-Point Arithmetic and Fast
+  Robust Geometric Predicates.” *Discrete & Computational Geometry* 18(3),
+  1997, 305–363. [DOI: 10.1007/PL00009321](https://doi.org/10.1007/PL00009321).
+- Tiller, W., and Hanson, E. G. “Offsets of Two-Dimensional Profiles.”
+  *IEEE Computer Graphics and Applications* 4(9), 1984, 36–46.
+  [DOI: 10.1109/MCG.1984.275995](https://doi.org/10.1109/MCG.1984.275995).
+- Vatti, B. R. “A Generic Solution to Polygon Clipping.”
+  *Communications of the ACM* 35(7), 1992, 56–63.
+  [DOI: 10.1145/129902.129906](https://doi.org/10.1145/129902.129906).
+- Weiss, M., Jüttler, B., and Aurenhammer, F. “Mitered Offsets and Skeletons
+  for Circular Arc Polygons.” *Mathematics of Computation* 90, 2021,
+  251–283. [DOI: 10.1090/mcom/3551](https://doi.org/10.1090/mcom/3551).
+- Yap, C. K. “Towards Exact Geometric Computation.” *Computational Geometry*
+  7(1–2), 1997, 3–23.
+  [DOI: 10.1016/0925-7721(95)00040-2](https://doi.org/10.1016/0925-7721(95)00040-2).
 
-CGAL Project. "2D Straight Skeleton and Polygon Offsetting" user manual.
-https://doc.cgal.org/latest/Straight_skeleton_2/index.html.
+## Acknowledgements
 
-Bentley, Jon Louis, and Thomas A. Ottmann. "Algorithms for Reporting and
-Counting Geometric Intersections." *IEEE Transactions on Computers*, vol. C-28,
-no. 9, 1979, pp. 643-647.
-https://doi.org/10.1109/TC.1979.1675432.
+Hypercurve builds on
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[Hyperlimit](https://github.com/timschmidt/hyperlimit), and
+[Hypersolve](https://github.com/timschmidt/hypersolve), with optional
+[Hypertri](https://github.com/timschmidt/hypertri) integration. The wider
+[Hyper ecosystem](https://github.com/timschmidt?tab=repositories&q=hyper&type=source)
+provides the three-dimensional and engineering layers.
 
-de Casteljau, Paul. "Outillage methodes calcul." Andre Citroen Automobiles SA,
-1959.
+The bibliography above acknowledges the research traditions that inform the
+implementation. Optional comparison dependencies are benchmark or validation
+peers and do not provide Hypercurve’s native topology.
 
-de Berg, Mark, et al. *Computational Geometry: Algorithms and Applications*. 3rd
-ed., Springer, 2008. https://doi.org/10.1007/978-3-540-77974-2.
+## License and contributing
 
-Boehm, Wolfgang. "Inserting New Knots into B-Spline Curves." *Computer-Aided
-Design*, vol. 12, no. 4, 1980, pp. 199-201.
-https://doi.org/10.1016/0010-4485(80)90154-2.
+Licensed under the [Apache License 2.0](LICENSE).
 
-de Boor, Carl. *A Practical Guide to Splines*. Springer, 1978.
-https://doi.org/10.1007/978-1-4612-6333-3.
-
-Farouki, Rida T., and C. Andrew Neff. "Analytic Properties of Plane Offset
-Curves." *Computer Aided Geometric Design*, vol. 7, nos. 1-4, 1990, pp. 83-99.
-https://doi.org/10.1016/0167-8396(90)90002-N.
-
-Farouki, Rida T., and V. T. Rajan. "Algorithms for Polynomials in Bernstein
-Form." *Computer Aided Geometric Design*, vol. 5, no. 1, 1988, pp. 1-26.
-https://doi.org/10.1016/0167-8396(88)90016-7.
-
-Farin, Gerald. *Curves and Surfaces for Computer-Aided Geometric Design: A
-Practical Guide*. 5th ed., Morgan Kaufmann, 2002.
-https://doi.org/10.1016/B978-1-55860-737-8.X5000-5.
-
-Foster, Erich L., Kai Hormann, and Romeo Traian Popa. "Clipping Simple Polygons
-with Degenerate Intersections." *Computers & Graphics: X*, vol. 2, 2019,
-article 100007. https://doi.org/10.1016/j.cagx.2019.100007.
-
-Greiner, Gunther, and Kai Hormann. "Efficient Clipping of Arbitrary Polygons."
-*ACM Transactions on Graphics*, vol. 17, no. 2, 1998, pp. 71-83.
-https://doi.org/10.1145/274363.274364.
-
-Hobby, John D. "Practical Segment Intersection with Finite Precision Output."
-*Computational Geometry*, vol. 13, no. 4, 1999, pp. 199-214.
-https://doi.org/10.1016/S0925-7721(99)00021-8.
-
-Hormann, Kai, and Alexander Agathos. "The Point in Polygon Problem for
-Arbitrary Polygons." *Computational Geometry*, vol. 20, no. 3, 2001, pp.
-131-144. https://doi.org/10.1016/S0925-7721(01)00012-8.
-
-Kåsa, I. "A Circle Fitting Procedure and Its Error Analysis." *IEEE
-Transactions on Instrumentation and Measurement*, vol. IM-25, no. 1, Mar.
-1976, pp. 8-14. https://doi.org/10.1109/TIM.1976.6312298.
-
-Martinez, Francisco, Antonio J. Rueda, and Francisco R. Feito. "A New Algorithm
-for Computing Boolean Operations on Polygons." *Computers & Geosciences*,
-vol. 35, no. 6, 2009, pp. 1177-1185.
-https://doi.org/10.1016/j.cageo.2008.08.009.
-
-Menger, K. "Untersuchungen über allgemeine Metrik." *Mathematische Annalen*,
-vol. 100, 1928, pp. 75-163. https://eudml.org/doc/159284.
-
-Patrikalakis, Nicholas M., Takashi Maekawa, and Woojin Cho. *Shape
-Interrogation for Computer Aided Design and Manufacturing*. MIT Hyperbook,
-2009. https://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/.
-
-Schneider, Philip J., and David H. Eberly. *Geometric Tools for Computer
-Graphics*. Morgan Kaufmann, 2002.
-
-Sederberg, Thomas W., and Tomoyuki Nishita. "Curve Intersection Using Bezier
-Clipping." *Computer-Aided Design*, vol. 22, no. 9, 1990, pp. 538-549.
-https://doi.org/10.1016/0010-4485(90)90039-F.
-
-Shewchuk, Jonathan Richard. "Adaptive Precision Floating-Point Arithmetic and
-Fast Robust Geometric Predicates." *Discrete & Computational Geometry*, vol.
-18, no. 3, 1997, pp. 305-363. https://doi.org/10.1007/PL00009321.
-
-Tiller, Wayne, and Eric G. Hanson. "Offsets of Two-Dimensional Profiles." *IEEE
-Computer Graphics and Applications*, vol. 4, no. 9, 1984, pp. 36-46.
-https://doi.org/10.1109/MCG.1984.275995.
-
-Vatti, Bala R. "A Generic Solution to Polygon Clipping." *Communications of the
-ACM*, vol. 35, no. 7, 1992, pp. 56-63.
-https://doi.org/10.1145/129902.129906.
-
-Weiß, Martin, Bert Jüttler, and Franz Aurenhammer. "Mitered Offsets and
-Skeletons for Circular Arc Polygons." *Mathematics of Computation*, 2021.
-https://www.ag.jku.at/pubs/2021wj.pdf.
-
-Yap, Chee K. "Towards Exact Geometric Computation." *Computational Geometry*,
-vol. 7, nos. 1-2, 1997, pp. 3-23.
-https://doi.org/10.1016/0925-7721(95)00040-2.
-
-## Hyper Ecosystem
-
-`hypercurve` uses [hyperreal](https://github.com/timschmidt/hyperreal),
-[hyperlimit](https://github.com/timschmidt/hyperlimit),
-[hypersolve](https://github.com/timschmidt/hypersolve), and optionally
-[hypertri](https://github.com/timschmidt/hypertri). It provides planar curve and
-region topology to the other [Hyper geometry and engineering
-crates](https://github.com/timschmidt?tab=repositories&q=hyper&type=source).
+Bug reports should include the smallest exact input, selected features, policy,
+operation, and returned blocker or uncertainty evidence. Before proposing a
+change, run `cargo fmt --all -- --check`, the relevant focused test, and
+`cargo test --all-features`.
