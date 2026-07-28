@@ -32,6 +32,9 @@ default = []
 hyperreal-dispatch-trace = ["hyperreal/dispatch-trace"]
 arbitrary = ["dep:arbitrary"]
 
+[[example]]
+name = "readme_quickstart"
+
 [[bench]]
 name = "mathbench"
 harness = false
