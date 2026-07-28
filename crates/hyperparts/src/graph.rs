@@ -11,7 +11,7 @@ use crate::{
 };
 
 /// Evidence attached to query results and compatibility edges.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct PartQueryEvidence {
     /// Sources consulted.
     pub sources: Vec<SourceRef>,
@@ -148,14 +148,6 @@ pub struct PartGraph {
 }
 
 impl PartQueryEvidence {
-    /// Creates empty evidence.
-    pub fn empty() -> Self {
-        Self {
-            sources: Vec::new(),
-            facts: Vec::new(),
-        }
-    }
-
     /// Creates evidence from one source and one fact.
     pub fn from_fact(source: SourceRef, fact: impl Into<String>) -> Self {
         Self {
@@ -477,7 +469,7 @@ impl PartGraph {
                     value: family.id.clone(),
                     rank,
                     evidence: QueryEvidence {
-                        evidence: PartQueryEvidence::empty(),
+                        evidence: PartQueryEvidence::default(),
                         status: QueryMatchStatus::ExactMatch,
                         notes,
                     },
@@ -522,7 +514,7 @@ impl PartGraph {
     ) -> PartsResult<PartQueryResult<ConnectionDecision>> {
         let left_terminal = self.lookup_terminal(left)?;
         let right_terminal = self.lookup_terminal(right)?;
-        let mut evidence = PartQueryEvidence::empty();
+        let mut evidence = PartQueryEvidence::default();
         evidence.facts.push(format!(
             "left polarity={:?}, right polarity={:?}",
             left_terminal.polarity(),

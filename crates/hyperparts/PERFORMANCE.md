@@ -22,9 +22,21 @@ and no longer constructs a package `Pinout` vector merely to read its length
 before dropping it. Exact values, evidence, handoff status, and output order are
 unchanged.
 
-An optional `dispatch-trace` regression imports reduced rational and decimal
-circuit parameters. The trace records rational reductions and GCD work with
-zero approximation and unknown-fact events.
+An optional `dispatch-trace` regression imports rational and decimal circuit
+parameters. It verifies accepted exact intake with zero approximation and
+unknown-fact events without coupling the test to a particular internal
+rational-representation path.
+
+## Standard empty query evidence
+
+`PartQueryEvidence` now uses its standard `Default` construction directly
+instead of duplicating it as an `empty` API. Query contents, allocation
+behavior, and result ordering are unchanged.
+
+Serialized baseline/candidate runs measured safe-connection queries at
+110 ns before and 104--115 ns after, general part queries at 77 ns before and
+80--82 ns after, and capability-target queries at 14 ns throughout. The
+generated empty evidence remains the same two empty vectors.
 
 ## Reference mapping
 
