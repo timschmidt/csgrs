@@ -12,11 +12,8 @@ cargo-fuzz = true
 
 [dependencies]
 arbitrary = { version = "1", features = ["derive"] }
-# Hyper sibling dependency switch: keep both local path and crates.io lines; do not remove either.
-# Development mode uses the local path line. For release, comment it and uncomment the crates.io line.
-hypertri = { path = "..", features = ["earcut", "cdt", "nd"] }
-hyperreal = { path = "../../hyperreal" }
-# hypertri = { version = "0.4.0", features = ["earcut", "cdt", "nd"] }
+hypertri = { version = "0.4.0", path = "..", features = ["earcut", "cdt", "nd"] }
+hyperreal = { version = "0.13.1", path = "../../hyperreal" }
 libfuzzer-sys = "0.4"
 
 [[bin]]
