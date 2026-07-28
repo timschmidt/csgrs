@@ -153,3 +153,10 @@ path = "fuzz_targets/pcb_orthogonal_pad.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "hyperreal_representations"
+path = "fuzz_targets/hyperreal_representations.rs"
+test = false
+doc = false
+bench = false
