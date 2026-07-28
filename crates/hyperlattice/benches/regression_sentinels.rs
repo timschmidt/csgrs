@@ -112,6 +112,16 @@ fn bench_regression_sentinels(c: &mut Criterion) {
         b.iter(|| matrix.clone().inverse_checked().unwrap())
     });
 
+    c.bench_function("sentinel/matrix4/exact_facts", |b| {
+        let matrix = Matrix4::new([
+            [frac(9, 8), frac(3, 16), frac(-5, 8), frac(7, 4)],
+            [frac(-11, 8), frac(13, 16), frac(5, 8), frac(17, 16)],
+            [frac(19, 8), frac(-23, 16), frac(29, 8), frac(31, 16)],
+            [frac(37, 8), frac(41, 16), frac(-43, 8), frac(47, 16)],
+        ]);
+        b.iter(|| black_box(&matrix).exact_facts())
+    });
+
     c.bench_function("sentinel/matrix3/sparse_mask_product", |b| {
         let left = Matrix3::new([
             [frac(2, 3), frac(3, 5), r(0)],

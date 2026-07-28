@@ -888,7 +888,6 @@ impl Matrix4StructuralFacts {
 #[derive(Clone, Copy, Debug)]
 struct Matrix3Facts {
     public: Matrix3StructuralFacts,
-    exact: RealExactSetFacts,
     is_identity: bool,
     is_diagonal: bool,
     // Triangular structure is used to select O(n²) triangular inverse kernels
@@ -969,7 +968,6 @@ fn matrix_exact_rational_kind<const N: usize>(matrix: &[[Real; N]; N]) -> ExactR
 #[derive(Clone, Copy, Debug)]
 struct Matrix4Facts {
     public: Matrix4StructuralFacts,
-    exact: RealExactSetFacts,
     is_identity: bool,
     is_diagonal: bool,
     is_upper_triangular: bool,
@@ -1106,13 +1104,6 @@ fn matrix3_facts(matrix: &[[Real; 3]; 3]) -> Matrix3Facts {
 
     Matrix3Facts {
         public,
-        // Retain the exact coordinate-set summary at the matrix object layer.
-        // Future determinant/inverse kernels can route directly to dyadic or
-        // shared-denominator schedules instead of rediscovering scalar
-        // denominators lane by lane. This follows the object-level exactness
-        // guidance while keeping numerator/denominator ownership in
-        // `hyperreal::Rational`.
-        exact,
         is_identity,
         is_diagonal,
         is_upper_triangular,
@@ -1215,10 +1206,6 @@ fn matrix4_facts(matrix: &[[Real; 4]; 4]) -> Matrix4Facts {
 
     Matrix4Facts {
         public,
-        // This is the 4x4 analogue of the 3x3 matrix exactness summary. It is
-        // intentionally stored with the structural matrix facts so immediate
-        // transforms and division kernels can reuse it within one call.
-        exact,
         is_identity,
         is_diagonal,
         is_upper_triangular,
@@ -11134,7 +11121,7 @@ impl Matrix3 {
     /// to choose the exact arithmetic package.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix3-exact-facts");
-        matrix3_facts(&self.0).exact
+        matrix3_facts(&self.0).public.exact
     }
 
     /// Returns structural and exact-rational facts for this matrix.
@@ -11566,7 +11553,7 @@ impl Matrix4 {
     /// for denominator storage and reduction.
     pub fn exact_facts(&self) -> RealExactSetFacts {
         crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix4-exact-facts");
-        matrix4_facts(&self.0).exact
+        matrix4_facts(&self.0).public.exact
     }
 
     /// Returns structural and exact-rational facts for this matrix.
@@ -12585,5 +12572,29 @@ impl Matrix4 {
     pub fn determinant(&self) -> Real {
         crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-determinant");
         determinant4(&self.0)
+    }
+}
+
+#[cfg(test)]
+mod fact_layout_tests {
+    use super::{Matrix3Facts, Matrix3StructuralFacts, Matrix4Facts, Matrix4StructuralFacts};
+    use std::mem::size_of;
+
+    #[test]
+    fn immediate_matrix_facts_retain_one_exact_set_summary() {
+        // Private dispatch packets add only compact booleans and masks to the
+        // public structural packet. A second RealExactSetFacts is 96 bytes on
+        // the validation target, so this budget catches accidental duplicate
+        // retention while leaving room for small scheduling facts.
+        const INTERNAL_SCHEDULING_FACT_BUDGET: usize = 32;
+
+        assert!(
+            size_of::<Matrix3Facts>()
+                <= size_of::<Matrix3StructuralFacts>() + INTERNAL_SCHEDULING_FACT_BUDGET
+        );
+        assert!(
+            size_of::<Matrix4Facts>()
+                <= size_of::<Matrix4StructuralFacts>() + INTERNAL_SCHEDULING_FACT_BUDGET
+        );
     }
 }

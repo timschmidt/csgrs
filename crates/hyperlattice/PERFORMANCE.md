@@ -739,6 +739,19 @@ and retained scheduling behavior are unchanged. Hyperlattice also reexports
 Hyperreal's canonical `RealExactSetFacts` directly rather than maintaining a
 second compatibility type name.
 
+Immediate `Matrix3Facts` and `Matrix4Facts` packets now likewise keep the
+exact-set summary only inside their public structural packet. Their stack
+layouts fell from 224 to 128 bytes and from 240 to 144 bytes, respectively.
+The public `Matrix3::exact_facts` and `Matrix4::exact_facts` queries return that
+retained nested summary directly. A layout test limits private scheduling state
+to 32 bytes beyond the public packet, preventing another 96-byte exact-set copy.
+
+The 40-sample matrix4 exact-fact query measured 2.4440 us before and 2.4517 us
+after consolidation; Criterion detected no change (95% interval -0.23% to
++1.69%). A longer alternating affine point-batch check likewise detected no
+change (95% interval -2.00% to +1.47%) after an initial noisy short run was
+rejected and repeated.
+
 ## Trace evidence
 
 `dispatch_trace.md` was regenerated from the diagnostic build. It confirms that dense
@@ -761,6 +774,7 @@ present workload from being mistaken for executed lattice/dependency work.
 cargo bench --bench regression_sentinels -- 'sentinel/matrix3/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/sparse_mask_product'
 cargo bench --bench regression_sentinels -- 'sentinel/matrix4/determinant_fractional'
+cargo bench --bench regression_sentinels -- 'sentinel/matrix4/exact_facts'
 cargo bench --bench regression_sentinels -- 'sentinel/vector/shared_scale_owned_common_denominator'
 cargo bench --bench mathbench -- scalar_large_integer_exp
 cargo bench --bench mathbench --features hyperreal-dispatch-trace -- --write-dispatch-trace-md
