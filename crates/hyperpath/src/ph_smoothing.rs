@@ -12,8 +12,8 @@
 use hyperlimit::Point2;
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
-    certify_candidate, context_from_problem,
+    CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
+    context_from_problem,
 };
 
 use crate::ph::{PhCurveError, QuinticPythagoreanHodograph};
@@ -92,7 +92,7 @@ pub fn certify_quintic_ph_g1_smoothing(
         &end_tangent,
     );
 
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(QuinticPhG1SmoothingReport {
         curve: curve.clone(),
@@ -102,7 +102,7 @@ pub fn certify_quintic_ph_g1_smoothing(
         end_tangent,
         curve_start_derivative,
         curve_end_derivative,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 

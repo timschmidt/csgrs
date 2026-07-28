@@ -10,7 +10,7 @@
 //! candidates and rest-material state are distinct algorithmic objects.
 
 use hypersolve::{
-    CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, certify_candidate,
+    CandidateCertificationReport, Constraint, Expr, Problem, certify_candidate,
     context_from_problem,
 };
 
@@ -209,9 +209,9 @@ fn certify_area_balance<'a>(
     residual = residual - sum_area_expr(after);
     let mut problem = Problem::default();
     problem.add_constraint(Constraint::equality(name, residual));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 fn sum_area_expr<'a>(regions: impl IntoIterator<Item = &'a RectangularPocket>) -> Expr {

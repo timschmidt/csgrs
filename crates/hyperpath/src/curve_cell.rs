@@ -12,8 +12,8 @@ use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equa
 use hyperreal::Real;
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
-    AlgebraicRootRepresentation, AlgebraicRootRepresentationStatus, Constraint, Expr,
-    PreparedProblem, Problem, RootIsolationConfig, represent_univariate_algebraic_roots,
+    AlgebraicRootRepresentation, AlgebraicRootRepresentationStatus, Constraint, Expr, Problem,
+    RootIsolationConfig, represent_univariate_algebraic_roots,
     transform_algebraic_root_polynomial_image,
 };
 
@@ -2147,9 +2147,9 @@ fn isolate_cubic_ray_roots(
         + Expr::real(b) * t.clone().powi(2)
         + Expr::real(a) * t.powi(3);
     problem.add_constraint(Constraint::equality("cubic ray root", residual));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let reports = represent_univariate_algebraic_roots(
-        &prepared,
+        &analysis,
         RootIsolationConfig {
             policy,
             max_interval_width: Some((Real::one() / Real::from(4096)).ok()?),

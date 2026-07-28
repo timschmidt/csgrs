@@ -16,7 +16,7 @@
 use hyperlimit::Point2;
 use hyperreal::{Real, RealExactSetFacts, RealSign};
 use hypersolve::{
-    CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, certify_candidate,
+    CandidateCertificationReport, Constraint, Expr, Problem, certify_candidate,
     context_from_problem,
 };
 
@@ -312,13 +312,13 @@ pub fn certify_cubic_ph_inverse_length(
             - Expr::real(Real::from(3) * b) * t_expr.clone() * t_expr.clone()
             - Expr::real(Real::from(2) * c) * t_expr.clone() * t_expr.clone() * t_expr,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(CubicPhInverseLengthReport {
         curve: curve.clone(),
         target_length,
         parameter,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -353,13 +353,13 @@ pub fn certify_quintic_ph_inverse_length(
             - Expr::real(Real::from(15) * a3) * t4
             - Expr::real(Real::from(12) * a4) * t5,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(QuinticPhInverseLengthReport {
         curve: curve.clone(),
         target_length,
         parameter,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 

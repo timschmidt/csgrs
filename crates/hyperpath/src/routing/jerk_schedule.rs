@@ -18,8 +18,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
-    certify_candidate, context_from_problem,
+    CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
+    context_from_problem,
 };
 
 use super::RouteCertificationError;
@@ -361,9 +361,9 @@ fn certify_jerk_ramp_span_candidate(
         time,
     ));
 
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 fn certify_phase_length_sum<'a>(
@@ -583,9 +583,9 @@ fn validate_phase(phase: &JerkRampPhaseProposal) -> Result<(), RouteCertificatio
 }
 
 fn certify_problem(problem: Problem) -> CandidateCertificationReport {
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {

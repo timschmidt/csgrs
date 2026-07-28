@@ -14,8 +14,8 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equal};
 use hyperreal::Real;
 use hypersolve::{
-    CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
-    SymbolId, certify_candidate, context_from_problem,
+    CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, SymbolId,
+    certify_candidate, context_from_problem,
 };
 
 use crate::arc::{CircularArc, ExplicitCircularArc};
@@ -511,16 +511,16 @@ fn build_tangent_alignment_problem_with_orientation(
 pub fn certify_tangent_alignment_candidate(
     model: &TangentAlignmentProblem,
 ) -> CandidateCertificationReport {
-    let prepared = PreparedProblem::new(&model.problem);
+    let analysis = model.problem.analyze();
     let context = context_from_problem(&model.problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 /// Certify the current G1 join candidate by exact residual replay.
 pub fn certify_g1_join_candidate(model: &G1JoinProblem) -> CandidateCertificationReport {
-    let prepared = PreparedProblem::new(&model.problem);
+    let analysis = model.problem.analyze();
     let context = context_from_problem(&model.problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 /// Return the exact 2D cross product of two tangent vectors.

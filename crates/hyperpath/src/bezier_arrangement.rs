@@ -13,7 +13,7 @@ use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy, point2_equa
 use hyperreal::{Real, RealExactSetFacts};
 use hypersolve::{
     AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
-    AlgebraicRootRepresentation, Constraint, Expr, PreparedProblem, Problem, RootIsolationConfig,
+    AlgebraicRootRepresentation, Constraint, Expr, Problem, RootIsolationConfig,
     represent_univariate_algebraic_roots, transform_algebraic_root_polynomial_image,
 };
 
@@ -1648,9 +1648,9 @@ fn true_cubic_algebraic_support_report_from_polynomial(
         + Expr::real(b) * t.clone().powi(2)
         + Expr::real(a) * t.powi(3);
     problem.add_constraint(Constraint::equality("line cubic support root", residual));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let roots = represent_univariate_algebraic_roots(
-        &prepared,
+        &analysis,
         RootIsolationConfig {
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
@@ -2702,9 +2702,9 @@ fn represent_cubic_varying_roots(
         "cubic inverse boundary root",
         residual,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     represent_univariate_algebraic_roots(
-        &prepared,
+        &analysis,
         RootIsolationConfig {
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),
@@ -3133,9 +3133,9 @@ fn represent_rational_quadratic_inverse_roots(
         "line rational quadratic inverse root",
         residual,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     represent_univariate_algebraic_roots(
-        &prepared,
+        &analysis,
         RootIsolationConfig {
             policy,
             max_interval_width: Some((Real::one() / Real::from(1024)).expect("nonzero width")),

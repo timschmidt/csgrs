@@ -16,6 +16,14 @@ with saved Criterion baselines. `line_segment_exact_tangent` measured
 views directly to Hyperlimit predicates instead of constructing a public
 prepared wrapper.
 
+HyperSolve's problem-analysis API migration was also gated end to end here.
+`g1_chain_hypersolve_certification` measured
+`[5.0214 us, 5.0639 us, 5.1151 us]` against archived pre-change HyperPath and
+HyperSolve sources, then `[5.0183 us, 5.0323 us, 5.0475 us]` after migration.
+Criterion found no performance change (+0.23%, `p = 0.36`, 95% interval
+-0.27% to +0.73%). HyperPath now calls the immediate `problem.analyze()`
+surface; the inline accessor preserves the former direct construction cost.
+
 The main retained optimization reuses a certified positive axis gap for
 parallel axis-aligned PCB traces. Previously `check_trace_clearance` first ran
 the full exact segment-intersection classifier, then independently computed the

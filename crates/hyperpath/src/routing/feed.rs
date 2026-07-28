@@ -16,8 +16,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
-    certify_candidate, context_from_problem,
+    CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
+    context_from_problem,
 };
 
 use crate::arc::ExplicitCircularArc;
@@ -180,13 +180,13 @@ pub fn certify_constant_feed_time_for_path(
         feed_rate.clone(),
         time,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(ConstantFeedTimeReport {
         path_length,
         feed_rate,
         target_time,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -226,7 +226,7 @@ pub fn certify_acceleration_limited_feed_time_for_path(
         time,
         profile,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(AccelerationLimitedFeedTimeReport {
         path_length,
@@ -234,7 +234,7 @@ pub fn certify_acceleration_limited_feed_time_for_path(
         acceleration,
         target_time,
         profile,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -417,7 +417,7 @@ fn build_jerk_limited_report(
         jerk.clone(),
         time,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
 
     Ok(JerkLimitedFeedTimeReport {
@@ -428,7 +428,7 @@ fn build_jerk_limited_report(
         target_time,
         peak_feed_rate,
         peak_acceleration,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -463,9 +463,9 @@ fn certify_corner_lookahead_join_candidate(
             ));
         }
     }
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 fn route_path_length(

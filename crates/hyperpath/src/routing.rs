@@ -15,7 +15,7 @@ use std::cmp::Ordering;
 use hyperlimit::{Point2, PredicatePolicy, compare_reals_with_policy};
 use hyperreal::Real;
 use hypersolve::{
-    CandidateCertificationReport, Constraint, Expr, PreparedProblem, Problem, SymbolId, VariableId,
+    CandidateCertificationReport, Constraint, Expr, Problem, SymbolId, VariableId,
     certify_candidate, context_from_problem,
 };
 
@@ -79,9 +79,9 @@ pub fn build_length_match_problem(
 
 /// Certify the current extra-length candidate by exact residual replay.
 pub fn certify_length_extension(model: &LengthMatchProblem) -> CandidateCertificationReport {
-    let prepared = PreparedProblem::new(&model.problem);
+    let analysis = model.problem.analyze();
     let context = context_from_problem(&model.problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 /// Exact single-detour meander candidate.
@@ -974,14 +974,14 @@ pub fn certify_differential_pair_skew(
         Expr::real(second_length.clone()),
         target_skew.clone(),
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(DifferentialPairSkewReport {
         first_length,
         second_length,
         actual_skew,
         target_skew,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -1021,13 +1021,13 @@ pub fn certify_constant_feed_time(
         feed_rate.clone(),
         time,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(ConstantFeedTimeReport {
         path_length,
         feed_rate,
         target_time,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 
@@ -1085,7 +1085,7 @@ pub fn certify_acceleration_limited_feed_time(
         time,
         profile,
     ));
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     Ok(AccelerationLimitedFeedTimeReport {
         path_length,
@@ -1093,7 +1093,7 @@ pub fn certify_acceleration_limited_feed_time(
         acceleration,
         target_time,
         profile,
-        certification: certify_candidate(&prepared, &context),
+        certification: certify_candidate(&analysis, &context),
     })
 }
 

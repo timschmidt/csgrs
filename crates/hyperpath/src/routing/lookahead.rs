@@ -18,8 +18,8 @@
 use hyperlimit::PredicatePolicy;
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    CandidateCertificationReport, Constraint, ConstraintKind, Expr, PreparedProblem, Problem,
-    certify_candidate, context_from_problem,
+    CandidateCertificationReport, Constraint, ConstraintKind, Expr, Problem, certify_candidate,
+    context_from_problem,
 };
 
 use crate::tangent::{TangentJoinClass, TangentSpan, classify_tangent_join};
@@ -346,9 +346,9 @@ fn feed_cap_constraint(
 }
 
 fn certify_problem(problem: Problem) -> CandidateCertificationReport {
-    let prepared = PreparedProblem::new(&problem);
+    let analysis = problem.analyze();
     let context = context_from_problem(&problem);
-    certify_candidate(&prepared, &context)
+    certify_candidate(&analysis, &context)
 }
 
 fn require_nonnegative_feed(value: &Real) -> Result<(), RouteCertificationError> {
