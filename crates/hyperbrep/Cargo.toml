@@ -13,11 +13,11 @@ categories = ["mathematics", "graphics", "data-structures"]
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
-hypercurve = { version = "0.3.0", path = "../hypercurve" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
+hypercurve = { version = "0.3.1", path = "../hypercurve" }
 hyperphysics = { version = "0.3.0", path = "../hyperphysics" }
 hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hypertri = { version = "0.4.0", path = "../hypertri", features = ["earcut"] }
+hypertri = { version = "0.4.1", path = "../hypertri", features = ["earcut"] }
 hypervoxel = { version = "0.3.0", path = "../hypervoxel" }
 
 [dev-dependencies]

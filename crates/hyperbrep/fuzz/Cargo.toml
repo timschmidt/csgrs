@@ -12,8 +12,8 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperbrep = { version = "0.2.0", path = ".." }
-hypercurve = { version = "0.3.0", path = "../../hypercurve" }
-hyperlimit = { version = "0.4.0", path = "../../hyperlimit" }
+hypercurve = { version = "0.3.1", path = "../../hypercurve" }
+hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
 hyperreal = { version = "0.13.1", path = "../../hyperreal" }
 hypervoxel = { version = "0.3.0", path = "../../hypervoxel" }
 
