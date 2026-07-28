@@ -13,6 +13,12 @@ readme = "readme.md"
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
+exclude = [
+  "benchmarks/data/yeahright/quads_94336.obj",
+  "benchmarks/data/yeahright/quads_377344.obj",
+  "benchmarks/data/yeahright/tris_188672.obj",
+  "benchmarks/data/yeahright/tris_754688.obj",
+]
 autobenches = false
 
 [package.metadata.docs.rs]
@@ -93,14 +99,14 @@ opt-level = "z"
 [dependencies]
 # geometry
 #alum = "0.6.1"
-hypercurve = { version = "0.3.0", path = "../hypercurve", features = ["triangulation"] }
-hyperlattice = { version = "0.6.0", path = "../hyperlattice" }
-hyperlimit = { version = "0.4.0", path = "../hyperlimit" }
+hypercurve = { version = "0.3.1", path = "../hypercurve", features = ["triangulation"] }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../hypermesh" }
 hyperphysics = { version = "0.3.0", path = "../hyperphysics" }
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false, features = ["cached-f64-approx"] }
 hypersdf = { version = "0.2.0", path = "../hypersdf", optional = true }
-hypertri = { version = "0.4.0", path = "../hypertri", default-features = false, features = ["earcut"] }
+hypertri = { version = "0.4.1", path = "../hypertri", default-features = false, features = ["earcut"] }
 # bevy mesh conversion
 bevy_mesh = { version = "0.18", optional = true }
 bevy_asset = { version = "0.18", optional = true }
