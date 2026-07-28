@@ -251,7 +251,7 @@ derivation.
 
 ## License and contributing
 
-Licensed under the [Apache License 2.0](LICENSE).
+Licensed under Apache-2.0, as declared in [`Cargo.toml`](Cargo.toml).
 
 When reporting a failure, include the smallest retained shell, the operation,
 and the returned blockers. Before proposing a change, run formatting, the
