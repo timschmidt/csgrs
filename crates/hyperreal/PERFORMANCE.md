@@ -274,21 +274,28 @@ Goals:
 - Any new symbolic class must show wins in `scalar_micro`, `hyperlattice`, and
   `hyperlimit`; otherwise keep the representation simpler.
 
-### Prepared rational predicate queries
+### Retained rational predicate queries
 
-Repeated geometric predicates can now prepare the floating interval for an
+Repeated geometric predicates can now retain the floating interval for an
 exact-rational homogeneous point once and reuse its values and conservative
 conversion-error radii across several fixed linear forms. The affine 3D helper
 sets the homogeneous weight to exact `1.0` with zero error instead of
 reconverting the same rational one for every plane test. A filter that cannot
 certify separation still returns `None` and reaches the unchanged arbitrary-
-precision product-sum fallback.
+precision product-sum fallback. One-shot callers use the immediate certified
+sign API; repeated callers construct the filter and query types directly.
 
 The motivating `hypermesh` paths improved by 2.46--3.03% end to end in matched
 on/off release runs. Direct tests cover positive, negative, and boundary-
-inconclusive prepared queries, as well as the affine exact-one specialization.
+inconclusive retained queries, as well as the affine exact-one specialization.
 A 15-second `real_exact` sanitizer campaign completed 63,207 executions without
 a target failure.
+
+The 2026-07-27 migration from lifecycle-named preparation methods to direct
+filter/query constructors preserved the retained representation and exact
+fallback. Its downstream `hypermesh` gate measured subdivided-cube union at
+80.350 ms versus the 80.657 ms baseline; the four cube operations showed no
+Criterion regression in the accepted serialized repeat.
 
 ### Exact-MSD domain certificates
 

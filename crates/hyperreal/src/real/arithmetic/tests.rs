@@ -92,14 +92,14 @@ mod tests {
             size_of::<Rational>()
         );
         assert!(
-            size_of::<PreparedRationalLinearForm4Filter>() <= 32,
-            "PreparedRationalLinearForm4Filter grew to {} bytes",
-            size_of::<PreparedRationalLinearForm4Filter>()
+            size_of::<RationalLinearForm4Filter>() <= 32,
+            "RationalLinearForm4Filter grew to {} bytes",
+            size_of::<RationalLinearForm4Filter>()
         );
         assert!(
-            size_of::<PreparedRationalLinearForm4Query>() <= 32,
-            "PreparedRationalLinearForm4Query grew to {} bytes",
-            size_of::<PreparedRationalLinearForm4Query>()
+            size_of::<RationalLinearForm4Query>() <= 32,
+            "RationalLinearForm4Query grew to {} bytes",
+            size_of::<RationalLinearForm4Query>()
         );
         assert!(
             size_of::<crate::ExactDyadicLineParameters2>() <= 80,
@@ -619,7 +619,7 @@ mod tests {
     }
 
     #[test]
-    fn prepared_rational_linear_form4_filter_preserves_exact_signs() {
+    fn rational_linear_form4_filter_preserves_exact_signs() {
         let third = Rational::fraction(1, 3).unwrap();
         let coefficients = [
             Real::new(third),
@@ -627,20 +627,20 @@ mod tests {
             Real::from(5_i32),
             Real::from(-7_i32),
         ];
-        let prepared = Real::prepare_rational_linear_form4_filter([
+        let filter = RationalLinearForm4Filter::from_reals([
             &coefficients[0],
             &coefficients[1],
             &coefficients[2],
             &coefficients[3],
         ])
-        .expect("finite rational coefficients should prepare");
+        .expect("finite rational coefficients should fit");
         let zero = Rational::zero();
         let three = Rational::new(3);
         let positive = Rational::new(66);
         let negative = Rational::new(60);
         let boundary = Rational::new(63);
         assert_eq!(
-            prepared.sign_rational([
+            filter.sign_rationals([
                 &positive,
                 &zero,
                 &zero,
@@ -649,7 +649,7 @@ mod tests {
             Some(RealSign::Positive),
         );
         assert_eq!(
-            prepared.sign_rational([
+            filter.sign_rationals([
                 &negative,
                 &zero,
                 &zero,
@@ -658,7 +658,7 @@ mod tests {
             Some(RealSign::Negative),
         );
         assert_eq!(
-            prepared.sign_rational([
+            filter.sign_rationals([
                 &boundary,
                 &zero,
                 &zero,
@@ -666,48 +666,60 @@ mod tests {
             ]),
             None,
         );
+        assert_eq!(
+            Real::certified_rational_linear_form4_sign(
+                [
+                    &coefficients[0],
+                    &coefficients[1],
+                    &coefficients[2],
+                    &coefficients[3],
+                ],
+                [&positive, &zero, &zero, &three],
+            ),
+            Some(RealSign::Positive),
+        );
 
         let positive_query =
-            Real::prepare_rational_linear_form4_query([
+            RationalLinearForm4Query::from_rationals([
                 &positive,
                 &zero,
                 &zero,
                 &three,
             ])
-            .expect("finite rational query should prepare");
+            .expect("finite rational query should fit");
         assert_eq!(
-            prepared.sign_prepared(&positive_query),
+            filter.sign(&positive_query),
             Some(RealSign::Positive),
         );
         let negative_query =
-            Real::prepare_rational_linear_form4_query([
+            RationalLinearForm4Query::from_rationals([
                 &negative,
                 &zero,
                 &zero,
                 &three,
             ])
-            .expect("finite rational query should prepare");
+            .expect("finite rational query should fit");
         assert_eq!(
-            prepared.sign_prepared(&negative_query),
+            filter.sign(&negative_query),
             Some(RealSign::Negative),
         );
         let boundary_query =
-            Real::prepare_rational_linear_form4_query([
+            RationalLinearForm4Query::from_rationals([
                 &boundary,
                 &zero,
                 &zero,
                 &three,
             ])
-            .expect("finite rational query should prepare");
-        assert_eq!(prepared.sign_prepared(&boundary_query), None);
+            .expect("finite rational query should fit");
+        assert_eq!(filter.sign(&boundary_query), None);
 
         let affine_query =
-            Real::prepare_rational_affine_point3_query([
+            RationalLinearForm4Query::from_affine_point3([
                 &positive,
                 &zero,
                 &zero,
             ])
-            .expect("finite affine rational query should prepare");
+            .expect("finite affine rational query should fit");
         let affine_coefficients = [
             Real::new(Rational::fraction(1, 3).unwrap()),
             Real::zero(),
@@ -715,15 +727,15 @@ mod tests {
             Real::from(-21_i32),
         ];
         let affine_filter =
-            Real::prepare_rational_linear_form4_filter([
+            RationalLinearForm4Filter::from_reals([
                 &affine_coefficients[0],
                 &affine_coefficients[1],
                 &affine_coefficients[2],
                 &affine_coefficients[3],
             ])
-            .expect("finite affine coefficients should prepare");
+            .expect("finite affine coefficients should fit");
         assert_eq!(
-            affine_filter.sign_prepared(&affine_query),
+            affine_filter.sign(&affine_query),
             Some(RealSign::Positive),
         );
     }

@@ -5,11 +5,11 @@ mod tests {
     use crate::{
         CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, DomainStatus,
         ExactDyadicLine2, ExpressionDegree, MagnitudeBits, PrimitiveFloatStatus, Problem, Rational,
-        RationalStorageClass, Real, RealEqualityCertificate, RealExactSetDenominatorKind,
-        RealExactSetDyadicExponentClass, RealExactSetFacts, RealExactSetSignPattern,
-        RealOrderingCertificate, RealSign, RealSignCertificate, RealStructuralFacts,
-        StructuralComparison, StructuralKind, SymbolicDependencyMask, ZeroKnowledge,
-        ZeroOneMinusOneStatus,
+        RationalLinearForm4Filter, RationalLinearForm4Query, RationalStorageClass, Real,
+        RealEqualityCertificate, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
+        RealExactSetFacts, RealExactSetSignPattern, RealOrderingCertificate, RealSign,
+        RealSignCertificate, RealStructuralFacts, StructuralComparison, StructuralKind,
+        SymbolicDependencyMask, ZeroKnowledge, ZeroOneMinusOneStatus,
     };
 
     #[test]
@@ -48,18 +48,18 @@ mod tests {
             let coefficients: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
             let point: [Rational; 4] = std::array::from_fn(|_| next_rational(&mut state));
             let coefficient_reals = coefficients.clone().map(Real::new);
-            let filter = Real::prepare_rational_linear_form4_filter([
+            let filter = RationalLinearForm4Filter::from_reals([
                 &coefficient_reals[0],
                 &coefficient_reals[1],
                 &coefficient_reals[2],
                 &coefficient_reals[3],
             ])
             .unwrap();
-            let query = Real::prepare_rational_linear_form4_query([
+            let query = RationalLinearForm4Query::from_rationals([
                 &point[0], &point[1], &point[2], &point[3],
             ])
             .unwrap();
-            let Some(actual) = filter.sign_prepared(&query) else {
+            let Some(actual) = filter.sign(&query) else {
                 continue;
             };
             certified += 1;
@@ -98,7 +98,7 @@ mod tests {
             Real::zero(),
             Real::zero(),
         ];
-        let safe_filter = Real::prepare_rational_linear_form4_filter([
+        let safe_filter = RationalLinearForm4Filter::from_reals([
             &safe_coefficients[0],
             &safe_coefficients[1],
             &safe_coefficients[2],
@@ -106,12 +106,9 @@ mod tests {
         ])
         .expect("a 500-bit coefficient span keeps every product normal");
         let safe_query =
-            Real::prepare_rational_linear_form4_query([&one, &minimum_safe, &zero, &zero])
+            RationalLinearForm4Query::from_rationals([&one, &minimum_safe, &zero, &zero])
                 .expect("a 500-bit query span keeps every product normal");
-        assert_eq!(
-            safe_filter.sign_prepared(&safe_query),
-            Some(RealSign::Positive),
-        );
+        assert_eq!(safe_filter.sign(&safe_query), Some(RealSign::Positive),);
 
         let unsafe_coefficients = [
             Real::new(one.clone()),
@@ -120,7 +117,7 @@ mod tests {
             Real::zero(),
         ];
         assert!(
-            Real::prepare_rational_linear_form4_filter([
+            RationalLinearForm4Filter::from_reals([
                 &unsafe_coefficients[0],
                 &unsafe_coefficients[1],
                 &unsafe_coefficients[2],
@@ -129,23 +126,23 @@ mod tests {
             .is_none()
         );
         assert!(
-            Real::prepare_rational_linear_form4_query([&one, &first_unsafe, &zero, &zero,])
+            RationalLinearForm4Query::from_rationals([&one, &first_unsafe, &zero, &zero,])
                 .is_none()
         );
         assert!(
-            Real::prepare_rational_affine_point3_query([&first_unsafe, &zero, &zero,]).is_none()
+            RationalLinearForm4Query::from_affine_point3([&first_unsafe, &zero, &zero,]).is_none()
         );
 
         let largest_power = rational(f64::from_bits(2046_u64 << 52));
         let upper_safe = rational(f64::from_bits((2046_u64 - 500) << 52));
         assert!(
-            Real::prepare_rational_linear_form4_query([&largest_power, &upper_safe, &zero, &zero,])
+            RationalLinearForm4Query::from_rationals([&largest_power, &upper_safe, &zero, &zero,])
                 .is_some(),
             "normalization must also work when its exact reciprocal is subnormal",
         );
         let tiny_but_convertible = rational(f64::from_bits(50_u64 << 52));
         assert!(
-            Real::prepare_rational_linear_form4_query([
+            RationalLinearForm4Query::from_rationals([
                 &largest_power,
                 &tiny_but_convertible,
                 &zero,

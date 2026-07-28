@@ -305,20 +305,20 @@ impl LinearForm3Filter {
 /// the filter. Uncertain results return `None` for the caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedRationalLinearForm4Filter {
+pub struct RationalLinearForm4Filter {
     coefficients: [f64; 4],
 }
 
 /// Certified floating approximation of a reusable exact-rational homogeneous
 /// point query.
 ///
-/// Preparing the query once avoids repeating arbitrary-precision-to-`f64`
+/// Retaining the query avoids repeating arbitrary-precision-to-`f64`
 /// conversion when the same point is classified against several fixed linear
 /// forms. A filter that cannot certify a sign still returns `None` for the
 /// caller's exact fallback.
 #[derive(Clone, Copy, Debug)]
 #[doc(hidden)]
-pub struct PreparedRationalLinearForm4Query {
+pub struct RationalLinearForm4Query {
     values: [f64; 4],
 }
 
@@ -403,23 +403,63 @@ impl PreparedRationalLine2Filter {
     }
 }
 
-impl PreparedRationalLinearForm4Filter {
+impl RationalLinearForm4Query {
+    /// Construct a reusable homogeneous query from exact-rational values.
+    #[inline]
+    pub fn from_rationals(point: [&Rational; 4]) -> Option<Self> {
+        let mut values = [0.0; 4];
+        for (index, coordinate) in point.into_iter().enumerate() {
+            (values[index], _) = Real::rational_f64_with_error(coordinate)?;
+        }
+        Some(Self {
+            values: Real::normalize_rational_linear_form4_values(values)?,
+        })
+    }
+
+    /// Construct a reusable affine 3D query with exact homogeneous weight one.
+    #[inline]
+    pub fn from_affine_point3(point: [&Rational; 3]) -> Option<Self> {
+        let mut values = [0.0; 4];
+        for (index, coordinate) in point.into_iter().enumerate() {
+            (values[index], _) = Real::rational_f64_with_error(coordinate)?;
+        }
+        values[3] = 1.0;
+        Some(Self {
+            values: Real::normalize_rational_linear_form4_values(values)?,
+        })
+    }
+}
+
+impl RationalLinearForm4Filter {
+    /// Construct a reusable filter from exact-rational coefficients.
+    #[inline]
+    pub fn from_reals(coefficients: [&Real; 4]) -> Option<Self> {
+        let mut values = [0.0; 4];
+        for (index, coefficient) in coefficients.into_iter().enumerate() {
+            let (value, _) =
+                Real::rational_f64_with_error(coefficient.exact_rational_ref()?)?;
+            values[index] = value;
+        }
+        Some(Self {
+            coefficients: Real::normalize_rational_linear_form4_values(values)?,
+        })
+    }
+
     /// Try to certify the homogeneous linear-form sign for an exact-rational
     /// query.
     #[inline]
-    pub fn sign_rational(
+    pub fn sign_rationals(
         &self,
         point: [&Rational; 4],
     ) -> Option<RealSign> {
-        let query = Real::prepare_rational_linear_form4_query(point)?;
-        self.sign_prepared(&query)
+        self.sign(&RationalLinearForm4Query::from_rationals(point)?)
     }
 
-    /// Try to certify the sign of a previously prepared rational query.
+    /// Try to certify the sign of a reusable rational query.
     #[inline]
-    pub fn sign_prepared(
+    pub fn sign(
         &self,
-        query: &PreparedRationalLinearForm4Query,
+        query: &RationalLinearForm4Query,
     ) -> Option<RealSign> {
         Real::certified_rational_linear_form4_sign_f64(
             self.coefficients,
@@ -552,58 +592,17 @@ impl Real {
         Self::certified_linear_form3_sign_f64([a, b, c, d], [x, y, z])
     }
 
-    /// Prepare a certified homogeneous linear-form filter from exact-rational
-    /// coefficients, retaining conservative conversion errors.
+    /// Try to certify a rational homogeneous four-term linear-form sign.
+    ///
+    /// Inconclusive conversion or error bounds return `None` for exact
+    /// fallback.
     #[inline]
     #[doc(hidden)]
-    pub fn prepare_rational_linear_form4_filter(
+    pub fn certified_rational_linear_form4_sign(
         coefficients: [&Real; 4],
-    ) -> Option<PreparedRationalLinearForm4Filter> {
-        let mut values = [0.0; 4];
-        for (index, coefficient) in
-            coefficients.into_iter().enumerate()
-        {
-            let (value, _) =
-                Self::rational_f64_with_error(coefficient.exact_rational_ref()?)?;
-            values[index] = value;
-        }
-        Some(PreparedRationalLinearForm4Filter {
-            coefficients: Self::normalize_rational_linear_form4_values(values)?,
-        })
-    }
-
-    /// Prepare a reusable exact-rational homogeneous point for certified
-    /// four-term linear-form filters.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_rational_linear_form4_query(
         point: [&Rational; 4],
-    ) -> Option<PreparedRationalLinearForm4Query> {
-        let mut values = [0.0; 4];
-        for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], _) = Self::rational_f64_with_error(coordinate)?;
-        }
-        Some(PreparedRationalLinearForm4Query {
-            values: Self::normalize_rational_linear_form4_values(values)?,
-        })
-    }
-
-    /// Prepare a reusable affine 3D point for a homogeneous four-term filter.
-    /// The implicit weight is exactly one and therefore carries no conversion
-    /// error.
-    #[inline]
-    #[doc(hidden)]
-    pub fn prepare_rational_affine_point3_query(
-        point: [&Rational; 3],
-    ) -> Option<PreparedRationalLinearForm4Query> {
-        let mut values = [0.0; 4];
-        for (index, coordinate) in point.into_iter().enumerate() {
-            (values[index], _) = Self::rational_f64_with_error(coordinate)?;
-        }
-        values[3] = 1.0;
-        Some(PreparedRationalLinearForm4Query {
-            values: Self::normalize_rational_linear_form4_values(values)?,
-        })
+    ) -> Option<RealSign> {
+        RationalLinearForm4Filter::from_reals(coefficients)?.sign_rationals(point)
     }
 
     /// Prepare reusable conservative floating intervals for one exact-rational
