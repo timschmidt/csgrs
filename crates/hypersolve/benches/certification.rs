@@ -8,7 +8,7 @@ use hypersolve::{
     IntervalBoxCertificationPackage, IsolatedRootInterval, PolynomialCurvePoint2,
     PolynomialParametricCurve2, Problem, ProposalEngineKind, ProposalEnginePrecision,
     ProposalEngineReport, RationalCurveControlPoint2, RationalParametricCurve2, SolverBlock,
-    SolverConfig, SolverPoint2, SolverState, SparseResidualTerm, SymbolId,
+    SolverConfig, SolverPoint2, SolverState, SparseLinearSystem, SparseResidualTerm, SymbolId,
     UnivariateResultantPairInput, VariableBall, analyze_exact_affine_rank,
     analyze_sparse_bareiss_elimination_pattern, apply_equality_substitution_classes,
     arithmetic_algebraic_root_representations, audit_active_set, audit_sketch_unit_tolerances,
@@ -26,8 +26,7 @@ use hypersolve::{
     enumerate_direct_univariate_quadratic_branches, evaluate_polynomial_at_algebraic_root,
     evaluate_rational_expression_at_algebraic_root, isolate_univariate_polynomial_roots,
     lift_sketch_point2_to_workplane3, preflight_sketch_degeneracies,
-    preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, propose_active_set_update,
+    preflight_sketch_entity_domains, preflight_sketch_parameter_domains, propose_active_set_update,
     regenerate_active_set_affine_candidate, regenerate_active_set_quadratic_candidates,
     replay_dense_linear_residuals, replay_sketch_compatibility_fixture,
     replay_sparse_linear_residuals, report_lossy_adapter_only_candidate,
@@ -4512,9 +4511,9 @@ fn certification(c: &mut Criterion) {
         },
     ];
     let sparse_batch_system =
-        prepare_sparse_linear_residual_system(2, 2, &sparse_batch_terms, &[r(5), r(1)]).unwrap();
+        SparseLinearSystem::from_terms(2, 2, &sparse_batch_terms, &[r(5), r(1)]).unwrap();
     let sparse_batch_candidates = (0..16).map(|_| vec![r(2), r(1)]).collect::<Vec<_>>();
-    c.bench_function("prepared_sparse_linear_batch_replay", |b| {
+    c.bench_function("sparse_linear_batch_replay", |b| {
         b.iter(|| sparse_batch_system.replay_batch(&sparse_batch_candidates, -64))
     });
     let elimination_problem = substitution_elimination_problem(16);

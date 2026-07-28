@@ -18,9 +18,9 @@ use hypersolve::{
     SketchResidualFormKind, SketchResidualFormRole, SketchResidualFormsStatus,
     SketchResidualStrategy, SketchRoundTripMetadata, SketchRoundTripRole, SketchSolveProblem,
     SketchTangentOrientation, SketchUnitToleranceStatus, SketchWorkplaneFrameStatus, SolverBlock,
-    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseResidualBatchStatus,
-    SparseResidualTerm, SymbolId, VariableBall, analyze_exact_affine_rank,
-    apply_equality_substitution_classes, apply_equality_substitutions,
+    SolverBlockRowKind, SolverConfig, SolverPoint2, SolverState, SparseLinearSystem,
+    SparseResidualBatchStatus, SparseResidualTerm, SymbolId, VariableBall,
+    analyze_exact_affine_rank, apply_equality_substitution_classes, apply_equality_substitutions,
     audit_sketch_unit_tolerances, build_equality_substitution_classes,
     build_sketch_workplane_frame, certify_affine_interval_candidate, certify_affine_krawczyk_box,
     certify_candidate, certify_candidate_batch, certify_candidate_domains,
@@ -36,18 +36,17 @@ use hypersolve::{
     find_equality_substitutions, isolate_univariate_polynomial_roots,
     lift_sketch_point2_to_workplane3, point_coincidence_equations, preflight_sketch_degeneracies,
     preflight_sketch_entity_domains, preflight_sketch_parameter_domains,
-    prepare_sparse_linear_residual_system, project_sketch_point3_to_workplane2,
-    regenerate_active_set_affine_candidate, replay_sketch_compatibility_fixture,
-    replay_sparse_linear_residual_batch, report_lossy_adapter_only_candidate,
-    schedule_candidate_batch_predicates, search_failed_constraint_minimal_removals,
-    search_failed_constraint_pair_removals, search_failed_constraint_set_removals,
-    search_failed_constraint_single_removals, sketch_angle_builders, sketch_compatibility_fixtures,
-    sketch_distance_builders, sketch_incidence_builders, sketch_objective_builders,
-    sketch_orientation_builders, sketch_range_builders, sketch_symmetry_builders,
-    sketch_tangency_builders, solve_damped_least_squares, solve_direct_affine_equalities,
-    solve_direct_affine_system, solve_direct_univariate_quadratic_equalities,
-    squared_distance_equation, tangent_parallel_equation, tangent_same_direction_constraint,
-    validate_equality_substitutions,
+    project_sketch_point3_to_workplane2, regenerate_active_set_affine_candidate,
+    replay_sketch_compatibility_fixture, replay_sparse_linear_residual_batch,
+    report_lossy_adapter_only_candidate, schedule_candidate_batch_predicates,
+    search_failed_constraint_minimal_removals, search_failed_constraint_pair_removals,
+    search_failed_constraint_set_removals, search_failed_constraint_single_removals,
+    sketch_angle_builders, sketch_compatibility_fixtures, sketch_distance_builders,
+    sketch_incidence_builders, sketch_objective_builders, sketch_orientation_builders,
+    sketch_range_builders, sketch_symmetry_builders, sketch_tangency_builders,
+    solve_damped_least_squares, solve_direct_affine_equalities, solve_direct_affine_system,
+    solve_direct_univariate_quadratic_equalities, squared_distance_equation,
+    tangent_parallel_equation, tangent_same_direction_constraint, validate_equality_substitutions,
 };
 
 fn real(value: i64) -> Real {
@@ -9770,7 +9769,7 @@ fn candidate_batch_predicate_schedule_chunks_active_rows_deterministically() {
 }
 
 #[test]
-fn prepared_sparse_linear_batch_replay_is_public_and_deterministic() {
+fn sparse_linear_batch_replay_is_public_and_deterministic() {
     let terms = vec![
         SparseResidualTerm {
             row: 0,
@@ -9789,11 +9788,11 @@ fn prepared_sparse_linear_batch_replay_is_public_and_deterministic() {
         },
     ];
     let rhs = vec![real(4), real(9)];
-    let prepared = prepare_sparse_linear_residual_system(2, 2, &terms, &rhs).unwrap();
+    let system = SparseLinearSystem::from_terms(2, 2, &terms, &rhs).unwrap();
 
-    assert_eq!(prepared.row_terms()[0], vec![(0, real(2))]);
+    assert_eq!(system.row_terms()[0], vec![(0, real(2))]);
 
-    let report = prepared
+    let report = system
         .replay_batch(&[vec![real(2), real(3)], vec![real(1), real(3)]], -64)
         .unwrap();
     let wrapper_report = replay_sparse_linear_residual_batch(

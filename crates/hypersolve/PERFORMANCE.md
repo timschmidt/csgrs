@@ -62,6 +62,22 @@ noise threshold, 95% interval +0.03% to +1.19%). The report now reserves its
 known active-row capacity, and the cross-crate `analyze` accessor is inline;
 arithmetic and certification criteria are unchanged.
 
+## Sparse replay API gate
+
+The retained exact matrix is now named for what it is:
+`SparseLinearSystem::from_terms` assembles validated row terms, while
+`replay_sparse_linear_residuals` and `replay_sparse_linear_residual_batch`
+remain immediate one-shot operations. The former preparation constructor and
+prepared-batch free function are removed; repeated callers use the system's
+`replay_candidate` and `replay_batch` methods.
+
+Serialized 100-sample comparisons found no regression. Replaying a 16-candidate
+batch through one assembled system improved from 6.3428 us to 6.0008 us
+(-5.76%, `p < 0.05`, 95% interval -6.47% to -5.15%). Immediate one-candidate
+assembly and replay moved from 658.98 ns to 653.20 ns (-0.99%, within
+Criterion's noise threshold, 95% interval -1.40% to -0.60%). The retained
+benchmark is now `sparse_linear_batch_replay`.
+
 ## Retained measurements
 
 The timings below are paired Criterion release runs on the same machine. They
