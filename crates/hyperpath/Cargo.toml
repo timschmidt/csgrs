@@ -17,9 +17,9 @@ dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 [dependencies]
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
-hyperlimit = { version = "0.4.0", path = "../hyperlimit", default-features = false }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit", default-features = false }
 hyperreal = { version = "0.13.1", path = "../hyperreal", default-features = false }
-hypersolve = { version = "0.3.0", path = "../hypersolve", default-features = false }
+hypersolve = { version = "0.3.1", path = "../hypersolve", default-features = false }
 [dev-dependencies]
 criterion = "0.5"
 proptest = "1.7.0"
