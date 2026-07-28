@@ -37,6 +37,9 @@ name = "hyperreal"
 path = "src/main.rs"
 required-features = ["simple"]
 
+[[example]]
+name = "readme_quickstart"
+
 [[bench]]
 name = "borrowed_ops"
 harness = false
