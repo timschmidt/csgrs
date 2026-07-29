@@ -21,7 +21,7 @@
 //! thread.
 
 use csgrs::adapter::{
-    Aabb3, AdapterError, F32, F64, I128, Mesh, Profile, RawReal, Real, ScalarAdapter,
+    Aabb3, AdapterError, F32, F64, I128, RawReal, Real, ScalarAdapter, ScalarCurve, ScalarMesh,
 };
 use hyperlattice::Matrix4;
 use std::cell::RefCell;
@@ -31,8 +31,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::ptr;
 use std::slice;
 
-type MeshOf<F> = Mesh<<F as Family>::Adapter, ()>;
-type ProfileOf<F> = Profile<<F as Family>::Adapter>;
+type TriangleMeshOf<F> = ScalarMesh<<F as Family>::Adapter>;
+type CurveRegionOf<F> = ScalarCurve<<F as Family>::Adapter>;
 type AdapterScalar<F> = <<F as Family>::Adapter as ScalarAdapter>::Scalar;
 
 #[repr(C)]
@@ -237,14 +237,14 @@ macro_rules! define_buffers {
             pub point_len: usize,
             pub ring_offsets: *mut usize,
             pub ring_offset_len: usize,
-            pub profile_offsets: *mut usize,
-            pub profile_offset_len: usize,
+            pub region_offsets: *mut usize,
+            pub region_offset_len: usize,
         }
     };
 }
 
 define_buffers!(
-    CsgrsMeshBuffersF32,
+    CsgrsTriangleMeshBuffersF32,
     CsgrsGraphicsMeshF32,
     CsgrsRegionProfilesF32,
     CsgrsVec2F32,
@@ -252,7 +252,7 @@ define_buffers!(
     CsgrsGraphicsVertexF32
 );
 define_buffers!(
-    CsgrsMeshBuffersF64,
+    CsgrsTriangleMeshBuffersF64,
     CsgrsGraphicsMeshF64,
     CsgrsRegionProfilesF64,
     CsgrsVec2F64,
@@ -260,7 +260,7 @@ define_buffers!(
     CsgrsGraphicsVertexF64
 );
 define_buffers!(
-    CsgrsMeshBuffersI128,
+    CsgrsTriangleMeshBuffersI128,
     CsgrsGraphicsMeshI128,
     CsgrsRegionProfilesI128,
     CsgrsVec2I128,
@@ -268,7 +268,7 @@ define_buffers!(
     CsgrsGraphicsVertexI128
 );
 define_buffers!(
-    CsgrsMeshBuffersReal,
+    CsgrsTriangleMeshBuffersReal,
     CsgrsGraphicsMeshReal,
     CsgrsRegionProfilesReal,
     CsgrsVec2Real,
@@ -280,26 +280,26 @@ pub struct CsgrsReal {
     inner: Real,
 }
 
-pub struct CsgrsMesh {
-    inner: MeshKind,
+pub struct CsgrsTriangleMesh {
+    inner: TriangleMeshKind,
 }
 
-pub struct CsgrsProfile {
-    inner: ProfileKind,
+pub struct CsgrsCurveRegion {
+    inner: CurveRegionKind,
 }
 
-enum MeshKind {
-    F32(Mesh<F32, ()>),
-    F64(Mesh<F64, ()>),
-    I128(Mesh<I128, ()>),
-    Real(Mesh<RawReal, ()>),
+enum TriangleMeshKind {
+    F32(ScalarMesh<F32>),
+    F64(ScalarMesh<F64>),
+    I128(ScalarMesh<I128>),
+    Real(ScalarMesh<RawReal>),
 }
 
-enum ProfileKind {
-    F32(Profile<F32>),
-    F64(Profile<F64>),
-    I128(Profile<I128>),
-    Real(Profile<RawReal>),
+enum CurveRegionKind {
+    F32(ScalarCurve<F32>),
+    F64(ScalarCurve<F64>),
+    I128(ScalarCurve<I128>),
+    Real(ScalarCurve<RawReal>),
 }
 
 #[derive(Debug)]
@@ -355,10 +355,10 @@ trait Family {
         position: [AdapterScalar<Self>; 3],
         normal: [AdapterScalar<Self>; 3],
     ) -> FfiResult<Self::CGraphicsVertex>;
-    fn mesh_kind(mesh: MeshOf<Self>) -> MeshKind;
-    fn profile_kind(profile: ProfileOf<Self>) -> ProfileKind;
-    fn mesh_ref(mesh: &CsgrsMesh) -> FfiResult<&MeshOf<Self>>;
-    fn profile_ref(profile: &CsgrsProfile) -> FfiResult<&ProfileOf<Self>>;
+    fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind;
+    fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind;
+    fn triangle_mesh_ref(mesh: &CsgrsTriangleMesh) -> FfiResult<&TriangleMeshOf<Self>>;
+    fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>>;
     fn mesh_buffers(
         vertices: Vec<Self::CVec3>,
         indices: Vec<CsgrsTriangleU32>,
@@ -370,7 +370,7 @@ trait Family {
     fn region_profiles(
         points: Vec<Self::CVec2>,
         ring_offsets: Vec<usize>,
-        profile_offsets: Vec<usize>,
+        region_offsets: Vec<usize>,
     ) -> Self::CRegionProfiles;
 }
 
@@ -423,7 +423,7 @@ macro_rules! impl_primitive_family {
         $graphics_mesh:ty,
         $region_profiles:ty,
         $mesh_variant:ident,
-        $profile_variant:ident,
+        $region_variant:ident,
         $family_tag:expr,
         $scalar_to_adapter:expr,
         $scalar_from_real:expr,
@@ -505,24 +505,26 @@ macro_rules! impl_primitive_family {
                 ($gvertex_from_parts)(position, normal)
             }
 
-            fn mesh_kind(mesh: MeshOf<Self>) -> MeshKind {
-                MeshKind::$mesh_variant(mesh)
+            fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind {
+                TriangleMeshKind::$mesh_variant(mesh)
             }
 
-            fn profile_kind(profile: ProfileOf<Self>) -> ProfileKind {
-                ProfileKind::$profile_variant(profile)
+            fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind {
+                CurveRegionKind::$region_variant(region)
             }
 
-            fn mesh_ref(mesh: &CsgrsMesh) -> FfiResult<&MeshOf<Self>> {
+            fn triangle_mesh_ref(
+                mesh: &CsgrsTriangleMesh,
+            ) -> FfiResult<&TriangleMeshOf<Self>> {
                 match &mesh.inner {
-                    MeshKind::$mesh_variant(mesh) => Ok(mesh),
+                    TriangleMeshKind::$mesh_variant(mesh) => Ok(mesh),
                     _ => Err(FfiError::WrongScalarFamily),
                 }
             }
 
-            fn profile_ref(profile: &CsgrsProfile) -> FfiResult<&ProfileOf<Self>> {
-                match &profile.inner {
-                    ProfileKind::$profile_variant(profile) => Ok(profile),
+            fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>> {
+                match &region.inner {
+                    CurveRegionKind::$region_variant(region) => Ok(region),
                     _ => Err(FfiError::WrongScalarFamily),
                 }
             }
@@ -548,18 +550,18 @@ macro_rules! impl_primitive_family {
             fn region_profiles(
                 points: Vec<Self::CVec2>,
                 ring_offsets: Vec<usize>,
-                profile_offsets: Vec<usize>,
+                region_offsets: Vec<usize>,
             ) -> Self::CRegionProfiles {
                 let (points, point_len) = boxed_slice_parts(points);
                 let (ring_offsets, ring_offset_len) = boxed_slice_parts(ring_offsets);
-                let (profile_offsets, profile_offset_len) = boxed_slice_parts(profile_offsets);
+                let (region_offsets, region_offset_len) = boxed_slice_parts(region_offsets);
                 <$region_profiles>::new(
                     points,
                     point_len,
                     ring_offsets,
                     ring_offset_len,
-                    profile_offsets,
-                    profile_offset_len,
+                    region_offsets,
+                    region_offset_len,
                 )
             }
         }
@@ -606,16 +608,16 @@ macro_rules! impl_buffer_constructors {
                 point_len: usize,
                 ring_offsets: *mut usize,
                 ring_offset_len: usize,
-                profile_offsets: *mut usize,
-                profile_offset_len: usize,
+                region_offsets: *mut usize,
+                region_offset_len: usize,
             ) -> Self {
                 Self {
                     points,
                     point_len,
                     ring_offsets,
                     ring_offset_len,
-                    profile_offsets,
-                    profile_offset_len,
+                    region_offsets,
+                    region_offset_len,
                 }
             }
         }
@@ -623,7 +625,7 @@ macro_rules! impl_buffer_constructors {
 }
 
 impl_buffer_constructors!(
-    CsgrsMeshBuffersF32,
+    CsgrsTriangleMeshBuffersF32,
     CsgrsGraphicsMeshF32,
     CsgrsRegionProfilesF32,
     CsgrsVec2F32,
@@ -631,7 +633,7 @@ impl_buffer_constructors!(
     CsgrsGraphicsVertexF32
 );
 impl_buffer_constructors!(
-    CsgrsMeshBuffersF64,
+    CsgrsTriangleMeshBuffersF64,
     CsgrsGraphicsMeshF64,
     CsgrsRegionProfilesF64,
     CsgrsVec2F64,
@@ -639,7 +641,7 @@ impl_buffer_constructors!(
     CsgrsGraphicsVertexF64
 );
 impl_buffer_constructors!(
-    CsgrsMeshBuffersI128,
+    CsgrsTriangleMeshBuffersI128,
     CsgrsGraphicsMeshI128,
     CsgrsRegionProfilesI128,
     CsgrsVec2I128,
@@ -647,7 +649,7 @@ impl_buffer_constructors!(
     CsgrsGraphicsVertexI128
 );
 impl_buffer_constructors!(
-    CsgrsMeshBuffersReal,
+    CsgrsTriangleMeshBuffersReal,
     CsgrsGraphicsMeshReal,
     CsgrsRegionProfilesReal,
     CsgrsVec2Real,
@@ -664,7 +666,7 @@ impl_primitive_family!(
     CsgrsMatrix4F32,
     CsgrsAabb3F32,
     CsgrsGraphicsVertexF32,
-    CsgrsMeshBuffersF32,
+    CsgrsTriangleMeshBuffersF32,
     CsgrsGraphicsMeshF32,
     CsgrsRegionProfilesF32,
     F32,
@@ -719,7 +721,7 @@ impl_primitive_family!(
     CsgrsMatrix4F64,
     CsgrsAabb3F64,
     CsgrsGraphicsVertexF64,
-    CsgrsMeshBuffersF64,
+    CsgrsTriangleMeshBuffersF64,
     CsgrsGraphicsMeshF64,
     CsgrsRegionProfilesF64,
     F64,
@@ -774,7 +776,7 @@ impl_primitive_family!(
     CsgrsMatrix4I128,
     CsgrsAabb3I128,
     CsgrsGraphicsVertexI128,
-    CsgrsMeshBuffersI128,
+    CsgrsTriangleMeshBuffersI128,
     CsgrsGraphicsMeshI128,
     CsgrsRegionProfilesI128,
     I128,
@@ -828,7 +830,7 @@ impl Family for RealFamily {
     type CMatrix4 = CsgrsMatrix4Real;
     type CAabb = CsgrsAabb3Real;
     type CGraphicsVertex = CsgrsGraphicsVertexReal;
-    type CMeshBuffers = CsgrsMeshBuffersReal;
+    type CMeshBuffers = CsgrsTriangleMeshBuffersReal;
     type CGraphicsMesh = CsgrsGraphicsMeshReal;
     type CRegionProfiles = CsgrsRegionProfilesReal;
 
@@ -907,24 +909,24 @@ impl Family for RealFamily {
         })
     }
 
-    fn mesh_kind(mesh: MeshOf<Self>) -> MeshKind {
-        MeshKind::Real(mesh)
+    fn triangle_mesh_kind(mesh: TriangleMeshOf<Self>) -> TriangleMeshKind {
+        TriangleMeshKind::Real(mesh)
     }
 
-    fn profile_kind(profile: ProfileOf<Self>) -> ProfileKind {
-        ProfileKind::Real(profile)
+    fn curve_region_kind(region: CurveRegionOf<Self>) -> CurveRegionKind {
+        CurveRegionKind::Real(region)
     }
 
-    fn mesh_ref(mesh: &CsgrsMesh) -> FfiResult<&MeshOf<Self>> {
+    fn triangle_mesh_ref(mesh: &CsgrsTriangleMesh) -> FfiResult<&TriangleMeshOf<Self>> {
         match &mesh.inner {
-            MeshKind::Real(mesh) => Ok(mesh),
+            TriangleMeshKind::Real(mesh) => Ok(mesh),
             _ => Err(FfiError::WrongScalarFamily),
         }
     }
 
-    fn profile_ref(profile: &CsgrsProfile) -> FfiResult<&ProfileOf<Self>> {
-        match &profile.inner {
-            ProfileKind::Real(profile) => Ok(profile),
+    fn curve_region_ref(region: &CsgrsCurveRegion) -> FfiResult<&CurveRegionOf<Self>> {
+        match &region.inner {
+            CurveRegionKind::Real(region) => Ok(region),
             _ => Err(FfiError::WrongScalarFamily),
         }
     }
@@ -935,7 +937,7 @@ impl Family for RealFamily {
     ) -> Self::CMeshBuffers {
         let (vertices, vertex_len) = boxed_slice_parts(vertices);
         let (indices, index_len) = boxed_slice_parts(indices);
-        CsgrsMeshBuffersReal::new(vertices, vertex_len, indices, index_len)
+        CsgrsTriangleMeshBuffersReal::new(vertices, vertex_len, indices, index_len)
     }
 
     fn graphics_mesh(
@@ -950,18 +952,18 @@ impl Family for RealFamily {
     fn region_profiles(
         points: Vec<Self::CVec2>,
         ring_offsets: Vec<usize>,
-        profile_offsets: Vec<usize>,
+        region_offsets: Vec<usize>,
     ) -> Self::CRegionProfiles {
         let (points, point_len) = boxed_slice_parts(points);
         let (ring_offsets, ring_offset_len) = boxed_slice_parts(ring_offsets);
-        let (profile_offsets, profile_offset_len) = boxed_slice_parts(profile_offsets);
+        let (region_offsets, region_offset_len) = boxed_slice_parts(region_offsets);
         CsgrsRegionProfilesReal::new(
             points,
             point_len,
             ring_offsets,
             ring_offset_len,
-            profile_offsets,
-            profile_offset_len,
+            region_offsets,
+            region_offset_len,
         )
     }
 }
@@ -1062,15 +1064,15 @@ fn parse_i128(text: &str) -> FfiResult<i128> {
         .map_err(|err| AdapterError::Validation(err.to_string()).into())
 }
 
-fn mesh_handle<F: Family>(mesh: MeshOf<F>) -> CsgrsMesh {
-    CsgrsMesh {
-        inner: F::mesh_kind(mesh),
+fn triangle_mesh_handle<F: Family>(mesh: TriangleMeshOf<F>) -> CsgrsTriangleMesh {
+    CsgrsTriangleMesh {
+        inner: F::triangle_mesh_kind(mesh),
     }
 }
 
-fn profile_handle<F: Family>(profile: ProfileOf<F>) -> CsgrsProfile {
-    CsgrsProfile {
-        inner: F::profile_kind(profile),
+fn curve_region_handle<F: Family>(region: CurveRegionOf<F>) -> CsgrsCurveRegion {
+    CsgrsCurveRegion {
+        inner: F::curve_region_kind(region),
     }
 }
 
@@ -1095,7 +1097,7 @@ fn build_faces<'a>(offsets: &'a [usize], indices: &'a [usize]) -> FfiResult<Vec<
     Ok(faces)
 }
 
-fn create_mesh_buffers<F: Family>(mesh: &MeshOf<F>) -> FfiResult<F::CMeshBuffers> {
+fn create_mesh_buffers<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CMeshBuffers> {
     let (vertices, indices) = mesh.vertices_and_indices()?;
     let vertices = vertices
         .into_iter()
@@ -1108,41 +1110,44 @@ fn create_mesh_buffers<F: Family>(mesh: &MeshOf<F>) -> FfiResult<F::CMeshBuffers
     Ok(F::mesh_buffers(vertices, indices))
 }
 
-fn create_graphics_mesh<F: Family>(mesh: &MeshOf<F>) -> FfiResult<F::CGraphicsMesh> {
+fn create_graphics_mesh<F: Family>(mesh: &TriangleMeshOf<F>) -> FfiResult<F::CGraphicsMesh> {
     let graphics = mesh.graphics_mesh()?;
     let vertices = graphics
         .vertices
-        .into_iter()
+        .iter()
+        .cloned()
         .map(|(position, normal)| F::graphics_vertex_from_adapter(position, normal))
         .collect::<FfiResult<Vec<_>>>()?;
-    Ok(F::graphics_mesh(vertices, graphics.indices))
+    Ok(F::graphics_mesh(vertices, graphics.indices.to_vec()))
 }
 
-fn create_region_profiles<F: Family>(profile: &ProfileOf<F>) -> FfiResult<F::CRegionProfiles> {
-    let profiles = profile.region_profiles()?;
+fn create_region_profiles<F: Family>(
+    region: &CurveRegionOf<F>,
+) -> FfiResult<F::CRegionProfiles> {
+    let profiles = region.region_profiles()?;
     let mut points = Vec::new();
     let mut ring_offsets = vec![0];
-    let mut profile_offsets = vec![0];
+    let mut region_offsets = vec![0];
     let mut ring_count = 0;
 
-    for profile in profiles {
-        for point in profile.exterior {
+    for region in profiles {
+        for point in region.exterior {
             points.push(F::vec2_from_adapter(point)?);
         }
         ring_count += 1;
         ring_offsets.push(points.len());
 
-        for hole in profile.holes {
+        for hole in region.holes {
             for point in hole {
                 points.push(F::vec2_from_adapter(point)?);
             }
             ring_count += 1;
             ring_offsets.push(points.len());
         }
-        profile_offsets.push(ring_count);
+        region_offsets.push(ring_count);
     }
 
-    Ok(F::region_profiles(points, ring_offsets, profile_offsets))
+    Ok(F::region_profiles(points, ring_offsets, region_offsets))
 }
 
 macro_rules! export_family {
@@ -1169,37 +1174,36 @@ macro_rules! export_family {
             vertices_and_indices: $mesh_vertices_and_indices:ident,
             graphics_mesh: $mesh_graphics_mesh:ident
         },
-        profile: {
-            square: $profile_square:ident,
-            rectangle: $profile_rectangle:ident,
-            circle: $profile_circle:ident,
-            polygon: $profile_polygon:ident,
-            union: $profile_union:ident,
-            difference: $profile_difference:ident,
-            intersection: $profile_intersection:ident,
-            xor: $profile_xor:ident,
-            transform: $profile_transform:ident,
-            translate: $profile_translate:ident,
-            scale: $profile_scale:ident,
-            rotate: $profile_rotate:ident,
-            bounding_box: $profile_bounding_box:ident,
-            extrude: $profile_extrude:ident,
-            extrude_vector: $profile_extrude_vector:ident,
-            revolve: $profile_revolve:ident,
-            region_profiles: $profile_region_profiles:ident
+        region: {
+            square: $region_square:ident,
+            rectangle: $region_rectangle:ident,
+            circle: $region_circle:ident,
+            polygon: $region_polygon:ident,
+            union: $region_union:ident,
+            difference: $region_difference:ident,
+            intersection: $region_intersection:ident,
+            xor: $region_xor:ident,
+            transform: $region_transform:ident,
+            translate: $region_translate:ident,
+            scale: $region_scale:ident,
+            rotate: $region_rotate:ident,
+            bounding_box: $region_bounding_box:ident,
+            extrude: $region_extrude:ident,
+            extrude_vector: $region_extrude_vector:ident,
+            revolve: $region_revolve:ident,
+            region_profiles: $region_region_profiles:ident
         }
     ) => {
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_cube(
             width: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = MeshOf::<$family>::cube(
+                let mesh = TriangleMeshOf::<$family>::cube(
                     <$family as Family>::scalar_to_adapter(width)?,
-                    (),
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
@@ -1208,16 +1212,15 @@ macro_rules! export_family {
             width: <$family as Family>::CScalar,
             length: <$family as Family>::CScalar,
             height: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = MeshOf::<$family>::cuboid(
+                let mesh = TriangleMeshOf::<$family>::cuboid(
                     <$family as Family>::scalar_to_adapter(width)?,
                     <$family as Family>::scalar_to_adapter(length)?,
                     <$family as Family>::scalar_to_adapter(height)?,
-                    (),
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
@@ -1226,16 +1229,15 @@ macro_rules! export_family {
             radius: <$family as Family>::CScalar,
             segments: usize,
             stacks: usize,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = MeshOf::<$family>::sphere(
+                let mesh = TriangleMeshOf::<$family>::sphere(
                     <$family as Family>::scalar_to_adapter(radius)?,
                     segments,
                     stacks,
-                    (),
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
@@ -1244,16 +1246,15 @@ macro_rules! export_family {
             radius: <$family as Family>::CScalar,
             height: <$family as Family>::CScalar,
             segments: usize,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = MeshOf::<$family>::cylinder(
+                let mesh = TriangleMeshOf::<$family>::cylinder(
                     <$family as Family>::scalar_to_adapter(radius)?,
                     <$family as Family>::scalar_to_adapter(height)?,
                     segments,
-                    (),
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
@@ -1265,7 +1266,7 @@ macro_rules! export_family {
             face_index_len: usize,
             face_offsets: *const usize,
             face_offset_len: usize,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let points = unsafe { c_slice(points, point_len) }?
@@ -1276,173 +1277,179 @@ macro_rules! export_family {
                 let face_indices = unsafe { c_slice(face_indices, face_index_len) }?;
                 let face_offsets = unsafe { c_slice(face_offsets, face_offset_len) }?;
                 let faces = build_faces(face_offsets, face_indices)?;
-                let mesh = MeshOf::<$family>::polyhedron(&points, &faces, ())?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                let mesh = TriangleMeshOf::<$family>::polyhedron(&points, &faces)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_union(
-            lhs: *const CsgrsMesh,
-            rhs: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            lhs: *const CsgrsTriangleMesh,
+            rhs: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.union(rhs)?)) }
+                let lhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(lhs.union(rhs)?)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_difference(
-            lhs: *const CsgrsMesh,
-            rhs: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            lhs: *const CsgrsTriangleMesh,
+            rhs: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.difference(rhs)?)) }
+                let lhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe {
+                    out_handle(out, triangle_mesh_handle::<$family>(lhs.difference(rhs)?))
+                }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_intersection(
-            lhs: *const CsgrsMesh,
-            rhs: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            lhs: *const CsgrsTriangleMesh,
+            rhs: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.intersection(rhs)?)) }
+                let lhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe {
+                    out_handle(out, triangle_mesh_handle::<$family>(lhs.intersection(rhs)?))
+                }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_xor(
-            lhs: *const CsgrsMesh,
-            rhs: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            lhs: *const CsgrsTriangleMesh,
+            rhs: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::mesh_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(lhs.xor(rhs)?)) }
+                let lhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(lhs.xor(rhs)?)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_transform(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             matrix: <$family as Family>::CMatrix4,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 let matrix = <$family as Family>::matrix4_to_core(matrix)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh.transform(&matrix))) }
+                unsafe {
+                    out_handle(out, triangle_mesh_handle::<$family>(mesh.transform(&matrix)))
+                }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_translate(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             x: <$family as Family>::CScalar,
             y: <$family as Family>::CScalar,
             z: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 let result = mesh.translate(
                     <$family as Family>::scalar_to_adapter(x)?,
                     <$family as Family>::scalar_to_adapter(y)?,
                     <$family as Family>::scalar_to_adapter(z)?,
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(result)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_scale(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             sx: <$family as Family>::CScalar,
             sy: <$family as Family>::CScalar,
             sz: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 let result = mesh.scale(
                     <$family as Family>::scalar_to_adapter(sx)?,
                     <$family as Family>::scalar_to_adapter(sy)?,
                     <$family as Family>::scalar_to_adapter(sz)?,
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(result)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_rotate(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             x_degrees: <$family as Family>::CScalar,
             y_degrees: <$family as Family>::CScalar,
             z_degrees: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 let result = mesh.rotate(
                     <$family as Family>::scalar_to_adapter(x_degrees)?,
                     <$family as Family>::scalar_to_adapter(y_degrees)?,
                     <$family as Family>::scalar_to_adapter(z_degrees)?,
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(result)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_inverse(
-            mesh: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh.inverse())) }
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh.inverse())) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_center(
-            mesh: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh.center())) }
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh.center())) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_float(
-            mesh: *const CsgrsMesh,
-            out: *mut *mut CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh.float())) }
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh.float())) }
             })
         }
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_bounding_box(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             out: *mut <$family as Family>::CAabb,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 *unsafe { out_ptr(out) }? =
                     <$family as Family>::aabb_from_adapter(mesh.bounding_box()?)?;
                 Ok(())
@@ -1451,11 +1458,11 @@ macro_rules! export_family {
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_vertices_and_indices(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             out: *mut <$family as Family>::CMeshBuffers,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 *unsafe { out_ptr(out) }? = create_mesh_buffers::<$family>(mesh)?;
                 Ok(())
             })
@@ -1463,64 +1470,64 @@ macro_rules! export_family {
 
         #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $mesh_graphics_mesh(
-            mesh: *const CsgrsMesh,
+            mesh: *const CsgrsTriangleMesh,
             out: *mut <$family as Family>::CGraphicsMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let mesh = <$family as Family>::mesh_ref(unsafe { ptr_ref(mesh) }?)?;
+                let mesh = <$family as Family>::triangle_mesh_ref(unsafe { ptr_ref(mesh) }?)?;
                 *unsafe { out_ptr(out) }? = create_graphics_mesh::<$family>(mesh)?;
                 Ok(())
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_square(
+        pub unsafe extern "C" fn $region_square(
             width: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = ProfileOf::<$family>::square(
+                let region = CurveRegionOf::<$family>::square(
                     <$family as Family>::scalar_to_adapter(width)?,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(profile)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(region)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_rectangle(
+        pub unsafe extern "C" fn $region_rectangle(
             width: <$family as Family>::CScalar,
             length: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = ProfileOf::<$family>::rectangle(
+                let region = CurveRegionOf::<$family>::rectangle(
                     <$family as Family>::scalar_to_adapter(width)?,
                     <$family as Family>::scalar_to_adapter(length)?,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(profile)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(region)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_circle(
+        pub unsafe extern "C" fn $region_circle(
             radius: <$family as Family>::CScalar,
             segments: usize,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = ProfileOf::<$family>::circle(
+                let region = CurveRegionOf::<$family>::circle(
                     <$family as Family>::scalar_to_adapter(radius)?,
                     segments,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(profile)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(region)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_polygon(
+        pub unsafe extern "C" fn $region_polygon(
             points: *const <$family as Family>::CVec2,
             point_len: usize,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
                 let points = unsafe { c_slice(points, point_len) }?
@@ -1528,202 +1535,213 @@ macro_rules! export_family {
                     .copied()
                     .map(<$family as Family>::vec2_to_adapter)
                     .collect::<FfiResult<Vec<_>>>()?;
-                let profile = ProfileOf::<$family>::polygon(&points)?;
-                unsafe { out_handle(out, profile_handle::<$family>(profile)) }
+                let region = CurveRegionOf::<$family>::polygon(&points)?;
+                unsafe { out_handle(out, curve_region_handle::<$family>(region)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_union(
-            lhs: *const CsgrsProfile,
-            rhs: *const CsgrsProfile,
-            out: *mut *mut CsgrsProfile,
+        pub unsafe extern "C" fn $region_union(
+            lhs: *const CsgrsCurveRegion,
+            rhs: *const CsgrsCurveRegion,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.union(rhs)?)) }
+                let lhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe { out_handle(out, curve_region_handle::<$family>(lhs.union(rhs)?)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_difference(
-            lhs: *const CsgrsProfile,
-            rhs: *const CsgrsProfile,
-            out: *mut *mut CsgrsProfile,
+        pub unsafe extern "C" fn $region_difference(
+            lhs: *const CsgrsCurveRegion,
+            rhs: *const CsgrsCurveRegion,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.difference(rhs)?)) }
-            })
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_intersection(
-            lhs: *const CsgrsProfile,
-            rhs: *const CsgrsProfile,
-            out: *mut *mut CsgrsProfile,
-        ) -> CsgrsStatus {
-            ffi_status(|| {
-                let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.intersection(rhs)?)) }
-            })
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_xor(
-            lhs: *const CsgrsProfile,
-            rhs: *const CsgrsProfile,
-            out: *mut *mut CsgrsProfile,
-        ) -> CsgrsStatus {
-            ffi_status(|| {
-                let lhs = <$family as Family>::profile_ref(unsafe { ptr_ref(lhs) }?)?;
-                let rhs = <$family as Family>::profile_ref(unsafe { ptr_ref(rhs) }?)?;
-                unsafe { out_handle(out, profile_handle::<$family>(lhs.xor(rhs)?)) }
-            })
-        }
-
-        #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_transform(
-            profile: *const CsgrsProfile,
-            matrix: <$family as Family>::CMatrix4,
-            out: *mut *mut CsgrsProfile,
-        ) -> CsgrsStatus {
-            ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let matrix = <$family as Family>::matrix4_to_core(matrix)?;
+                let lhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(rhs) }?)?;
                 unsafe {
-                    out_handle(out, profile_handle::<$family>(profile.transform(&matrix)))
+                    out_handle(out, curve_region_handle::<$family>(lhs.difference(rhs)?))
                 }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_translate(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_intersection(
+            lhs: *const CsgrsCurveRegion,
+            rhs: *const CsgrsCurveRegion,
+            out: *mut *mut CsgrsCurveRegion,
+        ) -> CsgrsStatus {
+            ffi_status(|| {
+                let lhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe {
+                    out_handle(out, curve_region_handle::<$family>(lhs.intersection(rhs)?))
+                }
+            })
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $region_xor(
+            lhs: *const CsgrsCurveRegion,
+            rhs: *const CsgrsCurveRegion,
+            out: *mut *mut CsgrsCurveRegion,
+        ) -> CsgrsStatus {
+            ffi_status(|| {
+                let lhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(lhs) }?)?;
+                let rhs = <$family as Family>::curve_region_ref(unsafe { ptr_ref(rhs) }?)?;
+                unsafe { out_handle(out, curve_region_handle::<$family>(lhs.xor(rhs)?)) }
+            })
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $region_transform(
+            region: *const CsgrsCurveRegion,
+            matrix: <$family as Family>::CMatrix4,
+            out: *mut *mut CsgrsCurveRegion,
+        ) -> CsgrsStatus {
+            ffi_status(|| {
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let matrix = <$family as Family>::matrix4_to_core(matrix)?;
+                unsafe {
+                    out_handle(out, curve_region_handle::<$family>(region.transform(&matrix)))
+                }
+            })
+        }
+
+        #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $region_translate(
+            region: *const CsgrsCurveRegion,
             x: <$family as Family>::CScalar,
             y: <$family as Family>::CScalar,
             z: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let result = profile.translate(
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let result = region.translate(
                     <$family as Family>::scalar_to_adapter(x)?,
                     <$family as Family>::scalar_to_adapter(y)?,
                     <$family as Family>::scalar_to_adapter(z)?,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(result)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_scale(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_scale(
+            region: *const CsgrsCurveRegion,
             sx: <$family as Family>::CScalar,
             sy: <$family as Family>::CScalar,
             sz: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let result = profile.scale(
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let result = region.scale(
                     <$family as Family>::scalar_to_adapter(sx)?,
                     <$family as Family>::scalar_to_adapter(sy)?,
                     <$family as Family>::scalar_to_adapter(sz)?,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(result)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_rotate(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_rotate(
+            region: *const CsgrsCurveRegion,
             x_degrees: <$family as Family>::CScalar,
             y_degrees: <$family as Family>::CScalar,
             z_degrees: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsProfile,
+            out: *mut *mut CsgrsCurveRegion,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let result = profile.rotate(
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let result = region.rotate(
                     <$family as Family>::scalar_to_adapter(x_degrees)?,
                     <$family as Family>::scalar_to_adapter(y_degrees)?,
                     <$family as Family>::scalar_to_adapter(z_degrees)?,
                 )?;
-                unsafe { out_handle(out, profile_handle::<$family>(result)) }
+                unsafe { out_handle(out, curve_region_handle::<$family>(result)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_bounding_box(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_bounding_box(
+            region: *const CsgrsCurveRegion,
             out: *mut <$family as Family>::CAabb,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
                 *unsafe { out_ptr(out) }? =
-                    <$family as Family>::aabb_from_adapter(profile.bounding_box()?)?;
+                    <$family as Family>::aabb_from_adapter(region.bounding_box()?)?;
                 Ok(())
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_extrude(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_extrude(
+            region: *const CsgrsCurveRegion,
             height: <$family as Family>::CScalar,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let mesh =
-                    profile.extrude(<$family as Family>::scalar_to_adapter(height)?, ())?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let mesh = region.extrude(<$family as Family>::scalar_to_adapter(height)?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_extrude_vector(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_extrude_vector(
+            region: *const CsgrsCurveRegion,
             direction: <$family as Family>::CVec3,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let mesh = profile
-                    .extrude_vector(<$family as Family>::vec3_to_adapter(direction)?, ())?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let mesh =
+                    region.extrude_vector(<$family as Family>::vec3_to_adapter(direction)?)?;
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_revolve(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_revolve(
+            region: *const CsgrsCurveRegion,
             angle_degrees: <$family as Family>::CScalar,
             segments: usize,
-            out: *mut *mut CsgrsMesh,
+            out: *mut *mut CsgrsTriangleMesh,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                let mesh = profile.revolve(
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let mesh = region.revolve(
                     <$family as Family>::scalar_to_adapter(angle_degrees)?,
                     segments,
-                    (),
                 )?;
-                unsafe { out_handle(out, mesh_handle::<$family>(mesh)) }
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
             })
         }
 
         #[unsafe(no_mangle)]
-        pub unsafe extern "C" fn $profile_region_profiles(
-            profile: *const CsgrsProfile,
+        pub unsafe extern "C" fn $region_region_profiles(
+            region: *const CsgrsCurveRegion,
             out: *mut <$family as Family>::CRegionProfiles,
         ) -> CsgrsStatus {
             ffi_status(|| {
-                let profile = <$family as Family>::profile_ref(unsafe { ptr_ref(profile) }?)?;
-                *unsafe { out_ptr(out) }? = create_region_profiles::<$family>(profile)?;
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                *unsafe { out_ptr(out) }? = create_region_profiles::<$family>(region)?;
                 Ok(())
             })
         }
@@ -1733,176 +1751,176 @@ macro_rules! export_family {
 export_family!(
     F32Family,
     mesh: {
-        cube: csgrs_mesh_f32_cube,
-        cuboid: csgrs_mesh_f32_cuboid,
-        sphere: csgrs_mesh_f32_sphere,
-        cylinder: csgrs_mesh_f32_cylinder,
-        polyhedron: csgrs_mesh_f32_polyhedron,
-        union: csgrs_mesh_f32_union,
-        difference: csgrs_mesh_f32_difference,
-        intersection: csgrs_mesh_f32_intersection,
-        xor: csgrs_mesh_f32_xor,
-        transform: csgrs_mesh_f32_transform,
-        translate: csgrs_mesh_f32_translate,
-        scale: csgrs_mesh_f32_scale,
-        rotate: csgrs_mesh_f32_rotate,
-        inverse: csgrs_mesh_f32_inverse,
-        center: csgrs_mesh_f32_center,
-        float: csgrs_mesh_f32_float,
-        bounding_box: csgrs_mesh_f32_bounding_box,
-        vertices_and_indices: csgrs_mesh_f32_vertices_and_indices,
-        graphics_mesh: csgrs_mesh_f32_graphics_mesh
+        cube: csgrs_triangle_mesh_f32_cube,
+        cuboid: csgrs_triangle_mesh_f32_cuboid,
+        sphere: csgrs_triangle_mesh_f32_sphere,
+        cylinder: csgrs_triangle_mesh_f32_cylinder,
+        polyhedron: csgrs_triangle_mesh_f32_polyhedron,
+        union: csgrs_triangle_mesh_f32_union,
+        difference: csgrs_triangle_mesh_f32_difference,
+        intersection: csgrs_triangle_mesh_f32_intersection,
+        xor: csgrs_triangle_mesh_f32_xor,
+        transform: csgrs_triangle_mesh_f32_transform,
+        translate: csgrs_triangle_mesh_f32_translate,
+        scale: csgrs_triangle_mesh_f32_scale,
+        rotate: csgrs_triangle_mesh_f32_rotate,
+        inverse: csgrs_triangle_mesh_f32_inverse,
+        center: csgrs_triangle_mesh_f32_center,
+        float: csgrs_triangle_mesh_f32_float,
+        bounding_box: csgrs_triangle_mesh_f32_bounding_box,
+        vertices_and_indices: csgrs_triangle_mesh_f32_vertices_and_indices,
+        graphics_mesh: csgrs_triangle_mesh_f32_graphics_mesh
     },
-    profile: {
-        square: csgrs_profile_f32_square,
-        rectangle: csgrs_profile_f32_rectangle,
-        circle: csgrs_profile_f32_circle,
-        polygon: csgrs_profile_f32_polygon,
-        union: csgrs_profile_f32_union,
-        difference: csgrs_profile_f32_difference,
-        intersection: csgrs_profile_f32_intersection,
-        xor: csgrs_profile_f32_xor,
-        transform: csgrs_profile_f32_transform,
-        translate: csgrs_profile_f32_translate,
-        scale: csgrs_profile_f32_scale,
-        rotate: csgrs_profile_f32_rotate,
-        bounding_box: csgrs_profile_f32_bounding_box,
-        extrude: csgrs_profile_f32_extrude,
-        extrude_vector: csgrs_profile_f32_extrude_vector,
-        revolve: csgrs_profile_f32_revolve,
-        region_profiles: csgrs_profile_f32_region_profiles
+    region: {
+        square: csgrs_curve_region_f32_square,
+        rectangle: csgrs_curve_region_f32_rectangle,
+        circle: csgrs_curve_region_f32_circle,
+        polygon: csgrs_curve_region_f32_polygon,
+        union: csgrs_curve_region_f32_union,
+        difference: csgrs_curve_region_f32_difference,
+        intersection: csgrs_curve_region_f32_intersection,
+        xor: csgrs_curve_region_f32_xor,
+        transform: csgrs_curve_region_f32_transform,
+        translate: csgrs_curve_region_f32_translate,
+        scale: csgrs_curve_region_f32_scale,
+        rotate: csgrs_curve_region_f32_rotate,
+        bounding_box: csgrs_curve_region_f32_bounding_box,
+        extrude: csgrs_curve_region_f32_extrude,
+        extrude_vector: csgrs_curve_region_f32_extrude_vector,
+        revolve: csgrs_curve_region_f32_revolve,
+        region_profiles: csgrs_curve_region_f32_region_profiles
     }
 );
 
 export_family!(
     F64Family,
     mesh: {
-        cube: csgrs_mesh_f64_cube,
-        cuboid: csgrs_mesh_f64_cuboid,
-        sphere: csgrs_mesh_f64_sphere,
-        cylinder: csgrs_mesh_f64_cylinder,
-        polyhedron: csgrs_mesh_f64_polyhedron,
-        union: csgrs_mesh_f64_union,
-        difference: csgrs_mesh_f64_difference,
-        intersection: csgrs_mesh_f64_intersection,
-        xor: csgrs_mesh_f64_xor,
-        transform: csgrs_mesh_f64_transform,
-        translate: csgrs_mesh_f64_translate,
-        scale: csgrs_mesh_f64_scale,
-        rotate: csgrs_mesh_f64_rotate,
-        inverse: csgrs_mesh_f64_inverse,
-        center: csgrs_mesh_f64_center,
-        float: csgrs_mesh_f64_float,
-        bounding_box: csgrs_mesh_f64_bounding_box,
-        vertices_and_indices: csgrs_mesh_f64_vertices_and_indices,
-        graphics_mesh: csgrs_mesh_f64_graphics_mesh
+        cube: csgrs_triangle_mesh_f64_cube,
+        cuboid: csgrs_triangle_mesh_f64_cuboid,
+        sphere: csgrs_triangle_mesh_f64_sphere,
+        cylinder: csgrs_triangle_mesh_f64_cylinder,
+        polyhedron: csgrs_triangle_mesh_f64_polyhedron,
+        union: csgrs_triangle_mesh_f64_union,
+        difference: csgrs_triangle_mesh_f64_difference,
+        intersection: csgrs_triangle_mesh_f64_intersection,
+        xor: csgrs_triangle_mesh_f64_xor,
+        transform: csgrs_triangle_mesh_f64_transform,
+        translate: csgrs_triangle_mesh_f64_translate,
+        scale: csgrs_triangle_mesh_f64_scale,
+        rotate: csgrs_triangle_mesh_f64_rotate,
+        inverse: csgrs_triangle_mesh_f64_inverse,
+        center: csgrs_triangle_mesh_f64_center,
+        float: csgrs_triangle_mesh_f64_float,
+        bounding_box: csgrs_triangle_mesh_f64_bounding_box,
+        vertices_and_indices: csgrs_triangle_mesh_f64_vertices_and_indices,
+        graphics_mesh: csgrs_triangle_mesh_f64_graphics_mesh
     },
-    profile: {
-        square: csgrs_profile_f64_square,
-        rectangle: csgrs_profile_f64_rectangle,
-        circle: csgrs_profile_f64_circle,
-        polygon: csgrs_profile_f64_polygon,
-        union: csgrs_profile_f64_union,
-        difference: csgrs_profile_f64_difference,
-        intersection: csgrs_profile_f64_intersection,
-        xor: csgrs_profile_f64_xor,
-        transform: csgrs_profile_f64_transform,
-        translate: csgrs_profile_f64_translate,
-        scale: csgrs_profile_f64_scale,
-        rotate: csgrs_profile_f64_rotate,
-        bounding_box: csgrs_profile_f64_bounding_box,
-        extrude: csgrs_profile_f64_extrude,
-        extrude_vector: csgrs_profile_f64_extrude_vector,
-        revolve: csgrs_profile_f64_revolve,
-        region_profiles: csgrs_profile_f64_region_profiles
+    region: {
+        square: csgrs_curve_region_f64_square,
+        rectangle: csgrs_curve_region_f64_rectangle,
+        circle: csgrs_curve_region_f64_circle,
+        polygon: csgrs_curve_region_f64_polygon,
+        union: csgrs_curve_region_f64_union,
+        difference: csgrs_curve_region_f64_difference,
+        intersection: csgrs_curve_region_f64_intersection,
+        xor: csgrs_curve_region_f64_xor,
+        transform: csgrs_curve_region_f64_transform,
+        translate: csgrs_curve_region_f64_translate,
+        scale: csgrs_curve_region_f64_scale,
+        rotate: csgrs_curve_region_f64_rotate,
+        bounding_box: csgrs_curve_region_f64_bounding_box,
+        extrude: csgrs_curve_region_f64_extrude,
+        extrude_vector: csgrs_curve_region_f64_extrude_vector,
+        revolve: csgrs_curve_region_f64_revolve,
+        region_profiles: csgrs_curve_region_f64_region_profiles
     }
 );
 
 export_family!(
     I128Family,
     mesh: {
-        cube: csgrs_mesh_i128_cube,
-        cuboid: csgrs_mesh_i128_cuboid,
-        sphere: csgrs_mesh_i128_sphere,
-        cylinder: csgrs_mesh_i128_cylinder,
-        polyhedron: csgrs_mesh_i128_polyhedron,
-        union: csgrs_mesh_i128_union,
-        difference: csgrs_mesh_i128_difference,
-        intersection: csgrs_mesh_i128_intersection,
-        xor: csgrs_mesh_i128_xor,
-        transform: csgrs_mesh_i128_transform,
-        translate: csgrs_mesh_i128_translate,
-        scale: csgrs_mesh_i128_scale,
-        rotate: csgrs_mesh_i128_rotate,
-        inverse: csgrs_mesh_i128_inverse,
-        center: csgrs_mesh_i128_center,
-        float: csgrs_mesh_i128_float,
-        bounding_box: csgrs_mesh_i128_bounding_box,
-        vertices_and_indices: csgrs_mesh_i128_vertices_and_indices,
-        graphics_mesh: csgrs_mesh_i128_graphics_mesh
+        cube: csgrs_triangle_mesh_i128_cube,
+        cuboid: csgrs_triangle_mesh_i128_cuboid,
+        sphere: csgrs_triangle_mesh_i128_sphere,
+        cylinder: csgrs_triangle_mesh_i128_cylinder,
+        polyhedron: csgrs_triangle_mesh_i128_polyhedron,
+        union: csgrs_triangle_mesh_i128_union,
+        difference: csgrs_triangle_mesh_i128_difference,
+        intersection: csgrs_triangle_mesh_i128_intersection,
+        xor: csgrs_triangle_mesh_i128_xor,
+        transform: csgrs_triangle_mesh_i128_transform,
+        translate: csgrs_triangle_mesh_i128_translate,
+        scale: csgrs_triangle_mesh_i128_scale,
+        rotate: csgrs_triangle_mesh_i128_rotate,
+        inverse: csgrs_triangle_mesh_i128_inverse,
+        center: csgrs_triangle_mesh_i128_center,
+        float: csgrs_triangle_mesh_i128_float,
+        bounding_box: csgrs_triangle_mesh_i128_bounding_box,
+        vertices_and_indices: csgrs_triangle_mesh_i128_vertices_and_indices,
+        graphics_mesh: csgrs_triangle_mesh_i128_graphics_mesh
     },
-    profile: {
-        square: csgrs_profile_i128_square,
-        rectangle: csgrs_profile_i128_rectangle,
-        circle: csgrs_profile_i128_circle,
-        polygon: csgrs_profile_i128_polygon,
-        union: csgrs_profile_i128_union,
-        difference: csgrs_profile_i128_difference,
-        intersection: csgrs_profile_i128_intersection,
-        xor: csgrs_profile_i128_xor,
-        transform: csgrs_profile_i128_transform,
-        translate: csgrs_profile_i128_translate,
-        scale: csgrs_profile_i128_scale,
-        rotate: csgrs_profile_i128_rotate,
-        bounding_box: csgrs_profile_i128_bounding_box,
-        extrude: csgrs_profile_i128_extrude,
-        extrude_vector: csgrs_profile_i128_extrude_vector,
-        revolve: csgrs_profile_i128_revolve,
-        region_profiles: csgrs_profile_i128_region_profiles
+    region: {
+        square: csgrs_curve_region_i128_square,
+        rectangle: csgrs_curve_region_i128_rectangle,
+        circle: csgrs_curve_region_i128_circle,
+        polygon: csgrs_curve_region_i128_polygon,
+        union: csgrs_curve_region_i128_union,
+        difference: csgrs_curve_region_i128_difference,
+        intersection: csgrs_curve_region_i128_intersection,
+        xor: csgrs_curve_region_i128_xor,
+        transform: csgrs_curve_region_i128_transform,
+        translate: csgrs_curve_region_i128_translate,
+        scale: csgrs_curve_region_i128_scale,
+        rotate: csgrs_curve_region_i128_rotate,
+        bounding_box: csgrs_curve_region_i128_bounding_box,
+        extrude: csgrs_curve_region_i128_extrude,
+        extrude_vector: csgrs_curve_region_i128_extrude_vector,
+        revolve: csgrs_curve_region_i128_revolve,
+        region_profiles: csgrs_curve_region_i128_region_profiles
     }
 );
 
 export_family!(
     RealFamily,
     mesh: {
-        cube: csgrs_mesh_real_cube,
-        cuboid: csgrs_mesh_real_cuboid,
-        sphere: csgrs_mesh_real_sphere,
-        cylinder: csgrs_mesh_real_cylinder,
-        polyhedron: csgrs_mesh_real_polyhedron,
-        union: csgrs_mesh_real_union,
-        difference: csgrs_mesh_real_difference,
-        intersection: csgrs_mesh_real_intersection,
-        xor: csgrs_mesh_real_xor,
-        transform: csgrs_mesh_real_transform,
-        translate: csgrs_mesh_real_translate,
-        scale: csgrs_mesh_real_scale,
-        rotate: csgrs_mesh_real_rotate,
-        inverse: csgrs_mesh_real_inverse,
-        center: csgrs_mesh_real_center,
-        float: csgrs_mesh_real_float,
-        bounding_box: csgrs_mesh_real_bounding_box,
-        vertices_and_indices: csgrs_mesh_real_vertices_and_indices,
-        graphics_mesh: csgrs_mesh_real_graphics_mesh
+        cube: csgrs_triangle_mesh_real_cube,
+        cuboid: csgrs_triangle_mesh_real_cuboid,
+        sphere: csgrs_triangle_mesh_real_sphere,
+        cylinder: csgrs_triangle_mesh_real_cylinder,
+        polyhedron: csgrs_triangle_mesh_real_polyhedron,
+        union: csgrs_triangle_mesh_real_union,
+        difference: csgrs_triangle_mesh_real_difference,
+        intersection: csgrs_triangle_mesh_real_intersection,
+        xor: csgrs_triangle_mesh_real_xor,
+        transform: csgrs_triangle_mesh_real_transform,
+        translate: csgrs_triangle_mesh_real_translate,
+        scale: csgrs_triangle_mesh_real_scale,
+        rotate: csgrs_triangle_mesh_real_rotate,
+        inverse: csgrs_triangle_mesh_real_inverse,
+        center: csgrs_triangle_mesh_real_center,
+        float: csgrs_triangle_mesh_real_float,
+        bounding_box: csgrs_triangle_mesh_real_bounding_box,
+        vertices_and_indices: csgrs_triangle_mesh_real_vertices_and_indices,
+        graphics_mesh: csgrs_triangle_mesh_real_graphics_mesh
     },
-    profile: {
-        square: csgrs_profile_real_square,
-        rectangle: csgrs_profile_real_rectangle,
-        circle: csgrs_profile_real_circle,
-        polygon: csgrs_profile_real_polygon,
-        union: csgrs_profile_real_union,
-        difference: csgrs_profile_real_difference,
-        intersection: csgrs_profile_real_intersection,
-        xor: csgrs_profile_real_xor,
-        transform: csgrs_profile_real_transform,
-        translate: csgrs_profile_real_translate,
-        scale: csgrs_profile_real_scale,
-        rotate: csgrs_profile_real_rotate,
-        bounding_box: csgrs_profile_real_bounding_box,
-        extrude: csgrs_profile_real_extrude,
-        extrude_vector: csgrs_profile_real_extrude_vector,
-        revolve: csgrs_profile_real_revolve,
-        region_profiles: csgrs_profile_real_region_profiles
+    region: {
+        square: csgrs_curve_region_real_square,
+        rectangle: csgrs_curve_region_real_rectangle,
+        circle: csgrs_curve_region_real_circle,
+        polygon: csgrs_curve_region_real_polygon,
+        union: csgrs_curve_region_real_union,
+        difference: csgrs_curve_region_real_difference,
+        intersection: csgrs_curve_region_real_intersection,
+        xor: csgrs_curve_region_real_xor,
+        transform: csgrs_curve_region_real_transform,
+        translate: csgrs_curve_region_real_translate,
+        scale: csgrs_curve_region_real_scale,
+        rotate: csgrs_curve_region_real_rotate,
+        bounding_box: csgrs_curve_region_real_bounding_box,
+        extrude: csgrs_curve_region_real_extrude,
+        extrude_vector: csgrs_curve_region_real_extrude_vector,
+        revolve: csgrs_curve_region_real_revolve,
+        region_profiles: csgrs_curve_region_real_region_profiles
     }
 );
 
@@ -2025,7 +2043,7 @@ pub unsafe extern "C" fn csgrs_real_free(value: *mut CsgrsReal) {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn csgrs_mesh_free(value: *mut CsgrsMesh) {
+pub unsafe extern "C" fn csgrs_triangle_mesh_free(value: *mut CsgrsTriangleMesh) {
     if !value.is_null() {
         unsafe {
             drop(Box::from_raw(value));
@@ -2034,7 +2052,7 @@ pub unsafe extern "C" fn csgrs_mesh_free(value: *mut CsgrsMesh) {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn csgrs_profile_free(value: *mut CsgrsProfile) {
+pub unsafe extern "C" fn csgrs_curve_region_free(value: *mut CsgrsCurveRegion) {
     if !value.is_null() {
         unsafe {
             drop(Box::from_raw(value));
@@ -2043,34 +2061,34 @@ pub unsafe extern "C" fn csgrs_profile_free(value: *mut CsgrsProfile) {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn csgrs_mesh_family(
-    value: *const CsgrsMesh,
+pub unsafe extern "C" fn csgrs_triangle_mesh_family(
+    value: *const CsgrsTriangleMesh,
     out: *mut CsgrsScalarFamily,
 ) -> CsgrsStatus {
     ffi_status(|| {
         let value = unsafe { ptr_ref(value) }?;
         *unsafe { out_ptr(out) }? = match value.inner {
-            MeshKind::F32(_) => CsgrsScalarFamily::F32,
-            MeshKind::F64(_) => CsgrsScalarFamily::F64,
-            MeshKind::I128(_) => CsgrsScalarFamily::I128,
-            MeshKind::Real(_) => CsgrsScalarFamily::Real,
+            TriangleMeshKind::F32(_) => CsgrsScalarFamily::F32,
+            TriangleMeshKind::F64(_) => CsgrsScalarFamily::F64,
+            TriangleMeshKind::I128(_) => CsgrsScalarFamily::I128,
+            TriangleMeshKind::Real(_) => CsgrsScalarFamily::Real,
         };
         Ok(())
     })
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn csgrs_profile_family(
-    value: *const CsgrsProfile,
+pub unsafe extern "C" fn csgrs_curve_region_family(
+    value: *const CsgrsCurveRegion,
     out: *mut CsgrsScalarFamily,
 ) -> CsgrsStatus {
     ffi_status(|| {
         let value = unsafe { ptr_ref(value) }?;
         *unsafe { out_ptr(out) }? = match value.inner {
-            ProfileKind::F32(_) => CsgrsScalarFamily::F32,
-            ProfileKind::F64(_) => CsgrsScalarFamily::F64,
-            ProfileKind::I128(_) => CsgrsScalarFamily::I128,
-            ProfileKind::Real(_) => CsgrsScalarFamily::Real,
+            CurveRegionKind::F32(_) => CsgrsScalarFamily::F32,
+            CurveRegionKind::F64(_) => CsgrsScalarFamily::F64,
+            CurveRegionKind::I128(_) => CsgrsScalarFamily::I128,
+            CurveRegionKind::Real(_) => CsgrsScalarFamily::Real,
         };
         Ok(())
     })
@@ -2099,17 +2117,17 @@ macro_rules! export_free_buffers {
             unsafe {
                 free_boxed_slice::<$vec2>(value.points, value.point_len);
                 free_boxed_slice::<usize>(value.ring_offsets, value.ring_offset_len);
-                free_boxed_slice::<usize>(value.profile_offsets, value.profile_offset_len);
+                free_boxed_slice::<usize>(value.region_offsets, value.region_offset_len);
             }
         }
     };
 }
 
 export_free_buffers!(
-    csgrs_mesh_buffers_f32_free,
+    csgrs_triangle_mesh_buffers_f32_free,
     csgrs_graphics_mesh_f32_free,
     csgrs_region_profiles_f32_free,
-    CsgrsMeshBuffersF32,
+    CsgrsTriangleMeshBuffersF32,
     CsgrsGraphicsMeshF32,
     CsgrsRegionProfilesF32,
     CsgrsVec2F32,
@@ -2118,10 +2136,10 @@ export_free_buffers!(
 );
 
 export_free_buffers!(
-    csgrs_mesh_buffers_f64_free,
+    csgrs_triangle_mesh_buffers_f64_free,
     csgrs_graphics_mesh_f64_free,
     csgrs_region_profiles_f64_free,
-    CsgrsMeshBuffersF64,
+    CsgrsTriangleMeshBuffersF64,
     CsgrsGraphicsMeshF64,
     CsgrsRegionProfilesF64,
     CsgrsVec2F64,
@@ -2130,10 +2148,10 @@ export_free_buffers!(
 );
 
 export_free_buffers!(
-    csgrs_mesh_buffers_i128_free,
+    csgrs_triangle_mesh_buffers_i128_free,
     csgrs_graphics_mesh_i128_free,
     csgrs_region_profiles_i128_free,
-    CsgrsMeshBuffersI128,
+    CsgrsTriangleMeshBuffersI128,
     CsgrsGraphicsMeshI128,
     CsgrsRegionProfilesI128,
     CsgrsVec2I128,
@@ -2165,7 +2183,9 @@ pub unsafe extern "C" fn csgrs_aabb3_real_free_values(value: CsgrsAabb3Real) {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn csgrs_mesh_buffers_real_free(value: CsgrsMeshBuffersReal) {
+pub unsafe extern "C" fn csgrs_triangle_mesh_buffers_real_free(
+    value: CsgrsTriangleMeshBuffersReal,
+) {
     unsafe {
         if !value.vertices.is_null() {
             for vertex in slice::from_raw_parts(value.vertices, value.vertex_len) {
@@ -2201,6 +2221,6 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
         }
         free_boxed_slice::<CsgrsVec2Real>(value.points, value.point_len);
         free_boxed_slice::<usize>(value.ring_offsets, value.ring_offset_len);
-        free_boxed_slice::<usize>(value.profile_offsets, value.profile_offset_len);
+        free_boxed_slice::<usize>(value.region_offsets, value.region_offset_len);
     }
 }

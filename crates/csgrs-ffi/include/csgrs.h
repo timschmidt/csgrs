@@ -26,8 +26,8 @@ typedef enum csgrs_scalar_family_t {
 } csgrs_scalar_family_t;
 
 typedef struct csgrs_real_t csgrs_real_t;
-typedef struct csgrs_mesh_t csgrs_mesh_t;
-typedef struct csgrs_profile_t csgrs_profile_t;
+typedef struct csgrs_triangle_mesh_t csgrs_triangle_mesh_t;
+typedef struct csgrs_curve_region_t csgrs_curve_region_t;
 
 typedef struct csgrs_i128_t {
   int64_t hi;
@@ -76,12 +76,12 @@ typedef struct csgrs_graphics_vertex_real_t {
 } csgrs_graphics_vertex_real_t;
 
 #define CSGRS_DECLARE_BUFFERS(Name, Vec2, Vec3, GraphicsVertex) \
-  typedef struct csgrs_mesh_buffers_##Name##_t { \
+  typedef struct csgrs_triangle_mesh_buffers_##Name##_t { \
     Vec3 *vertices; \
     size_t vertex_len; \
     csgrs_triangle_u32_t *indices; \
     size_t index_len; \
-  } csgrs_mesh_buffers_##Name##_t; \
+  } csgrs_triangle_mesh_buffers_##Name##_t; \
   typedef struct csgrs_graphics_mesh_##Name##_t { \
     GraphicsVertex *vertices; \
     size_t vertex_len; \
@@ -93,8 +93,8 @@ typedef struct csgrs_graphics_vertex_real_t {
     size_t point_len; \
     size_t *ring_offsets; \
     size_t ring_offset_len; \
-    size_t *profile_offsets; \
-    size_t profile_offset_len; \
+    size_t *region_offsets; \
+    size_t region_offset_len; \
   } csgrs_region_profiles_##Name##_t;
 
 CSGRS_DECLARE_BUFFERS(f32, csgrs_vec2_f32_t, csgrs_vec3_f32_t, csgrs_graphics_vertex_f32_t)
@@ -114,56 +114,56 @@ csgrs_status_t csgrs_real_to_f64(const csgrs_real_t *value, double *out);
 csgrs_status_t csgrs_real_to_i128(const csgrs_real_t *value, csgrs_i128_t *out);
 void csgrs_real_free(csgrs_real_t *value);
 
-void csgrs_mesh_free(csgrs_mesh_t *value);
-void csgrs_profile_free(csgrs_profile_t *value);
-csgrs_status_t csgrs_mesh_family(const csgrs_mesh_t *value, csgrs_scalar_family_t *out);
-csgrs_status_t csgrs_profile_family(const csgrs_profile_t *value, csgrs_scalar_family_t *out);
+void csgrs_triangle_mesh_free(csgrs_triangle_mesh_t *value);
+void csgrs_curve_region_free(csgrs_curve_region_t *value);
+csgrs_status_t csgrs_triangle_mesh_family(const csgrs_triangle_mesh_t *value, csgrs_scalar_family_t *out);
+csgrs_status_t csgrs_curve_region_family(const csgrs_curve_region_t *value, csgrs_scalar_family_t *out);
 
 #define CSGRS_DECLARE_FAMILY(Name, Scalar, Vec2, Vec3, Matrix4, Aabb3, MeshBuffers, GraphicsMesh, RegionProfiles) \
-  csgrs_status_t csgrs_mesh_##Name##_cube(Scalar width, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_cuboid(Scalar width, Scalar length, Scalar height, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_sphere(Scalar radius, size_t segments, size_t stacks, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_cylinder(Scalar radius, Scalar height, size_t segments, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_polyhedron(const Vec3 *points, size_t point_len, const size_t *face_indices, size_t face_index_len, const size_t *face_offsets, size_t face_offset_len, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_union(const csgrs_mesh_t *lhs, const csgrs_mesh_t *rhs, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_difference(const csgrs_mesh_t *lhs, const csgrs_mesh_t *rhs, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_intersection(const csgrs_mesh_t *lhs, const csgrs_mesh_t *rhs, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_xor(const csgrs_mesh_t *lhs, const csgrs_mesh_t *rhs, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_transform(const csgrs_mesh_t *mesh, Matrix4 matrix, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_translate(const csgrs_mesh_t *mesh, Scalar x, Scalar y, Scalar z, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_scale(const csgrs_mesh_t *mesh, Scalar sx, Scalar sy, Scalar sz, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_rotate(const csgrs_mesh_t *mesh, Scalar x_degrees, Scalar y_degrees, Scalar z_degrees, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_inverse(const csgrs_mesh_t *mesh, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_center(const csgrs_mesh_t *mesh, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_float(const csgrs_mesh_t *mesh, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_mesh_##Name##_bounding_box(const csgrs_mesh_t *mesh, Aabb3 *out); \
-  csgrs_status_t csgrs_mesh_##Name##_vertices_and_indices(const csgrs_mesh_t *mesh, MeshBuffers *out); \
-  csgrs_status_t csgrs_mesh_##Name##_graphics_mesh(const csgrs_mesh_t *mesh, GraphicsMesh *out); \
-  csgrs_status_t csgrs_profile_##Name##_square(Scalar width, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_rectangle(Scalar width, Scalar length, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_circle(Scalar radius, size_t segments, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_polygon(const Vec2 *points, size_t point_len, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_union(const csgrs_profile_t *lhs, const csgrs_profile_t *rhs, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_difference(const csgrs_profile_t *lhs, const csgrs_profile_t *rhs, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_intersection(const csgrs_profile_t *lhs, const csgrs_profile_t *rhs, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_xor(const csgrs_profile_t *lhs, const csgrs_profile_t *rhs, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_transform(const csgrs_profile_t *profile, Matrix4 matrix, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_translate(const csgrs_profile_t *profile, Scalar x, Scalar y, Scalar z, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_scale(const csgrs_profile_t *profile, Scalar sx, Scalar sy, Scalar sz, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_rotate(const csgrs_profile_t *profile, Scalar x_degrees, Scalar y_degrees, Scalar z_degrees, csgrs_profile_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_bounding_box(const csgrs_profile_t *profile, Aabb3 *out); \
-  csgrs_status_t csgrs_profile_##Name##_extrude(const csgrs_profile_t *profile, Scalar height, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_extrude_vector(const csgrs_profile_t *profile, Vec3 direction, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_revolve(const csgrs_profile_t *profile, Scalar angle_degrees, size_t segments, csgrs_mesh_t **out); \
-  csgrs_status_t csgrs_profile_##Name##_region_profiles(const csgrs_profile_t *profile, RegionProfiles *out); \
-  void csgrs_mesh_buffers_##Name##_free(MeshBuffers value); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_cube(Scalar width, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_cuboid(Scalar width, Scalar length, Scalar height, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_sphere(Scalar radius, size_t segments, size_t stacks, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_cylinder(Scalar radius, Scalar height, size_t segments, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_polyhedron(const Vec3 *points, size_t point_len, const size_t *face_indices, size_t face_index_len, const size_t *face_offsets, size_t face_offset_len, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_union(const csgrs_triangle_mesh_t *lhs, const csgrs_triangle_mesh_t *rhs, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_difference(const csgrs_triangle_mesh_t *lhs, const csgrs_triangle_mesh_t *rhs, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_intersection(const csgrs_triangle_mesh_t *lhs, const csgrs_triangle_mesh_t *rhs, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_xor(const csgrs_triangle_mesh_t *lhs, const csgrs_triangle_mesh_t *rhs, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_transform(const csgrs_triangle_mesh_t *mesh, Matrix4 matrix, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_translate(const csgrs_triangle_mesh_t *mesh, Scalar x, Scalar y, Scalar z, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_scale(const csgrs_triangle_mesh_t *mesh, Scalar sx, Scalar sy, Scalar sz, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_rotate(const csgrs_triangle_mesh_t *mesh, Scalar x_degrees, Scalar y_degrees, Scalar z_degrees, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_inverse(const csgrs_triangle_mesh_t *mesh, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_center(const csgrs_triangle_mesh_t *mesh, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_float(const csgrs_triangle_mesh_t *mesh, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_bounding_box(const csgrs_triangle_mesh_t *mesh, Aabb3 *out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_vertices_and_indices(const csgrs_triangle_mesh_t *mesh, MeshBuffers *out); \
+  csgrs_status_t csgrs_triangle_mesh_##Name##_graphics_mesh(const csgrs_triangle_mesh_t *mesh, GraphicsMesh *out); \
+  csgrs_status_t csgrs_curve_region_##Name##_square(Scalar width, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_rectangle(Scalar width, Scalar length, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_circle(Scalar radius, size_t segments, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_polygon(const Vec2 *points, size_t point_len, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_union(const csgrs_curve_region_t *lhs, const csgrs_curve_region_t *rhs, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_difference(const csgrs_curve_region_t *lhs, const csgrs_curve_region_t *rhs, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_intersection(const csgrs_curve_region_t *lhs, const csgrs_curve_region_t *rhs, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_xor(const csgrs_curve_region_t *lhs, const csgrs_curve_region_t *rhs, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_transform(const csgrs_curve_region_t *region, Matrix4 matrix, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_translate(const csgrs_curve_region_t *region, Scalar x, Scalar y, Scalar z, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_scale(const csgrs_curve_region_t *region, Scalar sx, Scalar sy, Scalar sz, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_rotate(const csgrs_curve_region_t *region, Scalar x_degrees, Scalar y_degrees, Scalar z_degrees, csgrs_curve_region_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_bounding_box(const csgrs_curve_region_t *region, Aabb3 *out); \
+  csgrs_status_t csgrs_curve_region_##Name##_extrude(const csgrs_curve_region_t *region, Scalar height, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_extrude_vector(const csgrs_curve_region_t *region, Vec3 direction, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_revolve(const csgrs_curve_region_t *region, Scalar angle_degrees, size_t segments, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_region_profiles(const csgrs_curve_region_t *region, RegionProfiles *out); \
+  void csgrs_triangle_mesh_buffers_##Name##_free(MeshBuffers value); \
   void csgrs_graphics_mesh_##Name##_free(GraphicsMesh value); \
   void csgrs_region_profiles_##Name##_free(RegionProfiles value);
 
-CSGRS_DECLARE_FAMILY(f32, float, csgrs_vec2_f32_t, csgrs_vec3_f32_t, csgrs_matrix4_f32_t, csgrs_aabb3_f32_t, csgrs_mesh_buffers_f32_t, csgrs_graphics_mesh_f32_t, csgrs_region_profiles_f32_t)
-CSGRS_DECLARE_FAMILY(f64, double, csgrs_vec2_f64_t, csgrs_vec3_f64_t, csgrs_matrix4_f64_t, csgrs_aabb3_f64_t, csgrs_mesh_buffers_f64_t, csgrs_graphics_mesh_f64_t, csgrs_region_profiles_f64_t)
-CSGRS_DECLARE_FAMILY(i128, csgrs_i128_t, csgrs_vec2_i128_t, csgrs_vec3_i128_t, csgrs_matrix4_i128_t, csgrs_aabb3_i128_t, csgrs_mesh_buffers_i128_t, csgrs_graphics_mesh_i128_t, csgrs_region_profiles_i128_t)
-CSGRS_DECLARE_FAMILY(real, const csgrs_real_t *, csgrs_vec2_real_t, csgrs_vec3_real_t, csgrs_matrix4_real_t, csgrs_aabb3_real_t, csgrs_mesh_buffers_real_t, csgrs_graphics_mesh_real_t, csgrs_region_profiles_real_t)
+CSGRS_DECLARE_FAMILY(f32, float, csgrs_vec2_f32_t, csgrs_vec3_f32_t, csgrs_matrix4_f32_t, csgrs_aabb3_f32_t, csgrs_triangle_mesh_buffers_f32_t, csgrs_graphics_mesh_f32_t, csgrs_region_profiles_f32_t)
+CSGRS_DECLARE_FAMILY(f64, double, csgrs_vec2_f64_t, csgrs_vec3_f64_t, csgrs_matrix4_f64_t, csgrs_aabb3_f64_t, csgrs_triangle_mesh_buffers_f64_t, csgrs_graphics_mesh_f64_t, csgrs_region_profiles_f64_t)
+CSGRS_DECLARE_FAMILY(i128, csgrs_i128_t, csgrs_vec2_i128_t, csgrs_vec3_i128_t, csgrs_matrix4_i128_t, csgrs_aabb3_i128_t, csgrs_triangle_mesh_buffers_i128_t, csgrs_graphics_mesh_i128_t, csgrs_region_profiles_i128_t)
+CSGRS_DECLARE_FAMILY(real, const csgrs_real_t *, csgrs_vec2_real_t, csgrs_vec3_real_t, csgrs_matrix4_real_t, csgrs_aabb3_real_t, csgrs_triangle_mesh_buffers_real_t, csgrs_graphics_mesh_real_t, csgrs_region_profiles_real_t)
 
 void csgrs_aabb3_real_free_values(csgrs_aabb3_real_t value);
 
