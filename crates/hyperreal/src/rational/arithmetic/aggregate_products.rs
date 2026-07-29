@@ -1135,9 +1135,10 @@ impl Rational {
     ///
     /// Word pairs stay in the native binary reducer. Mixed-width identity and
     /// power-of-two operands resolve structurally; other mixed-width values
-    /// reduce the wide operand modulo the word once to avoid a long BigUint
-    /// subtraction/shift chain. Equal wide operands resolve directly, while
-    /// other balanced wide operands retain BigUint's binary GCD.
+    /// reduce the wide operand modulo the word once. Equal wide operands
+    /// resolve directly. Wider balanced operands use the retained
+    /// Euclidean/Lehmer reducer, avoiding `BigUint`'s subtraction-heavy binary
+    /// GCD on exact-geometry rationals with thousands of bits.
     pub(crate) fn gcd_magnitudes_with_mixed_width_fast_path(
         left: &BigUint,
         right: &BigUint,
@@ -1215,8 +1216,11 @@ impl Rational {
                     crate::trace_dispatch!("rational_algorithm", "gcd", "binary-fixed-512");
                     return divisor;
                 }
-                crate::trace_dispatch!("rational_algorithm", "gcd", "backend-binary");
-                num::Integer::gcd(left, right)
+                let (divisor, algorithm) = Self::gcd_wide_magnitudes(left, right, false);
+                crate::trace_dispatch!("rational_algorithm", "gcd", algorithm);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let _ = algorithm;
+                divisor
             }
         }
     }

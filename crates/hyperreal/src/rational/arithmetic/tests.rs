@@ -1142,7 +1142,7 @@ mod tests {
             "euclidean-wide-word",
             "binary-fixed-256",
             "binary-fixed-512",
-            "backend-binary",
+            "lehmer-leading-limb",
         ] {
             assert_eq!(trace.path_count("rational_algorithm", "gcd", path), 1);
         }
