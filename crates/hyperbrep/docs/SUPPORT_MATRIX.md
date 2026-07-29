@@ -1,0 +1,333 @@
+# HyperBREP Exact Support Matrix
+
+This matrix describes certified behavior in the current clean-break API.
+“Unsupported” means the operation returns a structured error; it never means
+that sampled or tolerance-based geometry is substituted.
+
+## Spatial curve carriers
+
+| Family | Evaluate / derivatives | Bounds | Parameter location | Reverse / split | Persistence |
+| --- | --- | --- | --- | --- | --- |
+| Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
+| Circular arc | Exact angle semantics | Conservative exact | Certified, including seams | Exact | Exact |
+| Elliptic arc | Exact angle semantics | Conservative exact | Certified | Exact | Exact |
+| Rational Bézier | Homogeneous exact | Positive-weight control hull | Certified algebraic decomposition | Exact | Exact |
+| Finite nonperiodic NURBS | Homogeneous de Boor / arbitrary derivatives | Positive-weight control hull | Certified Bézier-span decomposition | Exact knot insertion | Exact |
+
+General isolated algebraic parameters that cannot be represented as
+`hyperreal::Real` return `UnrepresentableParameter`.
+
+## Surface carriers
+
+| Family | Domain / evaluation / partials | Bounds | Supported topology image proof | Transform | Persistence |
+| --- | --- | --- | --- | --- | --- |
+| Plane | Exact | Unbounded | Line and native circular boundary | Affine | Exact |
+| Cylinder | Periodic `u`, unbounded `v` | Unbounded | Axial line and constant-`v` circle | Rigid / reflection | Exact |
+| Sphere | Periodic longitude, closed latitude | Exact cube | Complete closed-surface face without seam/pole edges | Rigid / reflection | Exact |
+| Cone | Periodic `u`, lower-bounded `v` | Unbounded | Generator and constant-`v` circle away from apex | Rigid / reflection | Exact |
+| Ring torus | Periodic `u` and `v` | Exact cube | Both constant-parameter circle families | Rigid / reflection | Exact |
+| Linear extrusion | Profile domain × unbounded | Unbounded | Line/circle profile and extrusion direction | Family-preserving | Exact |
+| Revolution | Periodic × profile domain | Conservative exact | Exact line meridians and latitude circles | Rigid / reflection | Exact |
+| Tensor rational Bézier | Closed × closed | Control hull | Exact iso-boundary rational Bézier curves and subintervals | Affine | Exact |
+| Tensor NURBS | Active closed domains | Control hull | Exact iso-boundary NURBS curves and subintervals | Affine | Exact |
+
+## Standard builders and solid queries
+
+| Builder | Native topology | Exact face area | Exact volume | Exact point classification | Supported transform / persistence |
+| --- | --- | --- | --- | --- | --- |
+| `cuboid` | Shared line edges / planes | Yes | Yes | Yes | Affine / exact |
+| `extrude` / `extrude_region(s)` | Line prisms, holes, components | Yes | Yes | Yes | Affine / exact |
+| `extrude_with_voids` | Nested inward line-prism shells | Yes | Yes | Yes | Affine / exact |
+| `extrude_contour(_regions)` | Native line/arc caps and extrusion sides | Yes | Yes | Yes | Family-preserving / exact |
+| `cylinder` | Circular caps and one cylinder carrier | Yes | `pi*r²*h` | Analytic | Rigid / exact |
+| `sphere` | One boundaryless closed-surface face | `4*pi*r²` | `4*pi*r³/3` | Analytic radial test | Rigid / exact |
+| `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Rigid / exact |
+| `cone_frustum` | Circular caps and one cone carrier | Yes | Truncated-cone formula | Analytic | Rigid / exact |
+| `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Rigid / exact |
+| `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Rigid / exact |
+| `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Rigid / exact |
+| `sweep` / `sweep_region` | Exact affine image of a polygonal linear-path sweep | Yes | Exact determinant-scaled prism volume | Exact inverse-frame profile test | Affine / exact |
+| `sweep_curve` | Fixed-frame polygon swept along an affine-progress rational Bézier path / native tensor translation sides | Caps only | Exact profile area × signed plane progress | Exact progress inversion and profile test | Affine / exact |
+| `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
+| `rational_bezier_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
+| `nurbs_patch` | One trimmed exact tensor patch / open shell | Not yet | N/A | N/A | Affine / exact |
+| `tensor_patch_shell` | Multiple exact rational Bézier/NURBS patches; projectively identical boundaries identity-stitched | Not yet | N/A | N/A | Affine / exact |
+
+Full cones remain absent until the apex singularity has a topological
+representation rather than degenerate tolerance sewing.
+
+Moving-frame curved sweeps remain explicit unsupported work. `sweep_curve`
+instead keeps the profile frame fixed and accepts only rational Bézier paths
+whose complete Bernstein representation proves affine, strictly positive
+progress through the profile plane; lateral curvature is unrestricted.
+Multi-section lofts expose
+identity-shared C⁰ section rings and make no stronger continuity claim.
+Non-homothetic spans are accepted only when the corresponding endpoint
+polygons and their complete linear interpolation pass the exact
+strict-convexity certificate.
+
+## Intersections
+
+| Pair | Exact outcomes |
+| --- | --- |
+| Finite line / plane | None, point, contained |
+| Circular or elliptic arc / plane | None, simple/tangent points with represented seam parameters, contained |
+| Circular arc / sphere | None, simple/tangent points with represented seam parameters, contained |
+| Transverse circular arc / cylinder | None, simple/tangent points with represented seam parameters, contained |
+| Transverse circular arc / cone | Upper-nappe none, simple/tangent points with represented seam parameters, contained |
+| Transverse circular arc / torus | Both radial sections, simple/tangent points with represented seam parameters, contained |
+| Plane / plane | None, coincident, unbounded line |
+| Finite line / sphere | None, tangent/simple points |
+| Finite line / cylinder | None, tangent/simple points |
+| Finite line / cone | None, tangent/simple points, generator overlap; lower nappe rejected |
+| Plane / sphere | None, tangent point, full circle |
+| Sphere / sphere | None, coincident, tangent point, full circle |
+| Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines |
+| Plane / cone | Transverse lower none, apex point, or upper circle |
+| Plane / torus | Transverse none, tangent circle, or two circles |
+| Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
+| Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
+| Coaxial sphere / cylinder | None, tangent circle, or two circles |
+| Plane / linear-extrusion rational Bézier tensor patch | None or one native rational Bézier iso-curve |
+| Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
+| Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
+| Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
+
+Transverse plane/extrusion intersections apply the exact affine projection
+along the authored extrusion direction; named conics whose projection needs a
+new normalized carrier remain unsupported. Parallel extrusion directions lift
+supported exact profile/plane point contacts into unbounded lines and reject
+two-dimensional overlaps explicitly. Finite curve results retain their exact
+model-space `Curve3` plus an evaluable pcurve on each operand. The intersection
+graph clips line and rational-Bézier extrusion sections and generator lines in
+both trimmed parameter regions, retains Hypercurve's top-level source ranges,
+and materializes the matching exact spatial subcurves. NURBS extrusion
+sections are decomposed at their exact knot spans into rational-Bézier pcurve
+graphs; each local trim range maps affinely back to the authoritative NURBS
+parameter interval. `boolean::intersect_faces` exposes this carrier-and-trim
+operation directly for any two validated faces, including rational Bézier and
+NURBS patches in open shells. It returns `None` only for certified broad-phase
+or carrier disjointness; unsupported carrier pairs and supported relations with
+their trim evidence remain explicit. Native finite results use
+`FacePairTrim::SurfaceCurveFragments`: each fragment retains its spatial
+`Curve3`, both exact pcurves, and one shared public parameter domain. Exact
+affine composition reconciles unit-domain rational Bézier fragments with
+native-domain NURBS fragments.
+
+For a tensor iso-section, the two controls on the linear axis must have exactly
+equal weights and one exact common control translation; every profile control
+must have the same plane value. For a translation tensor linear in either
+parameter axis, a transverse plane instead projects the native opposite-axis
+profile along that translation and retains the surface pcurve as the exact
+rational graph `(u(v), v)` or `(u, v(u))`. Positive weights and the
+Bernstein/B-spline convex-hull property certify either that every graph control
+lies in the bounded translation-axis domain or that the complete carrier is
+outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
+represented roots retain one or more exact fragments, while algebraic roots
+that cannot enter `Real` remain explicit. Remaining unsupported work includes
+oblique cone/torus sections and the rest of the analytic/spline pair matrix.
+
+## Booleans
+
+`boolean::{union, intersection, difference}` supports certified global-z
+prisms whose planar boundaries contain exact lines and circular arcs.
+Intersection may use the overlapping z slab; union and difference require
+identical slabs.
+
+Parallel and antiparallel analytic cylinders are reduced through a certified
+orthonormal cylinder-local frame, so the same exact line/arc region kernel is
+available at arbitrary model orientation. Coaxial equal-radius cylinders also
+regularize axial intervals directly: intersection, spanning union, retained
+difference, two-component interior cuts, separated unions, and cap contact are
+all exact.
+
+Coincident truncated cones with the same apex, axis, and semi-angle regularize
+their exact slant-parameter intervals at arbitrary orientation. The result may
+be empty, one spanning/retained frustum, two disconnected frustums after an
+interior cut, or a separated multi-solid union.
+
+Geometrically identical ring tori support union, intersection, and difference
+even when their periodic frames use opposite axis directions.
+
+Coaxial polygonal revolutions reduce exactly to their radial/axial Hypercurve
+regions, including operands whose carrier axes point in opposite directions.
+Union, intersection, and difference reconstruct connected, disconnected, and
+holed profile results as native periodic revolution shells; contained
+subtraction retains inward toroidal-profile cavities that remain valid Boolean
+operands.
+
+Outputs may be empty, connected, disconnected, or holed. Native arcs are
+retained for lenses, annuli, and later Boolean operands. Hypercurve owns planar
+regularization and material/hole roles; HyperBREP owns exact extrusion and
+solid validation.
+
+For any current single-solid analytic family, a strictly separated certified
+model AABB proves the non-contact Boolean directly: intersection is empty,
+difference retains the first model, and union appends both complete topology
+closures into one newly validated model. Touching boxes do not take this path.
+
+Sphere/sphere Booleans additionally support equality, strict containment, and
+strict partial overlap. Contained difference authors an exact inward
+complete-sphere void shell. Partial overlap authors two periodic spherical-cap
+faces stitched across four identity-shared intersection-circle edges, with
+exact cap area, lens volume, classification, transform, and persistence
+certificates. At external tangency, regularized intersection is empty and
+difference retains the first sphere; point-contact union remains unsupported.
+At internal tangency, union/intersection select the outer/inner operand and
+inner-minus-outer is empty; outer-minus-inner remains unsupported because its
+touching cavity boundary is non-manifold.
+
+`boolean::intersection_graph` now builds the common retained face-pair graph
+for any validated solids. It computes each certified face bound once, rejects
+only strictly separated AABBs, retains exact supported complete-carrier
+intersections and coincidence, counts exact carrier-disjoint survivors, and
+keeps unsupported carrier pairs explicit. Transverse plane/plane carrier lines
+are additionally projected into both faces' exact pcurve regions, clipped by
+Hypercurve, and lifted back into exact `Curve3` fragments. A lack of
+positive-length trim interior and an unresolved trim decision have separate
+evidence; isolated contact is not conflated with an empty carrier.
+When both faces are boundaryless complete carriers, the graph certifies the
+entire exact relation directly; sphere/sphere circles and tangent points take
+this route without inventing seam topology.
+Exact isolated carrier points are also classified against planar face trims
+when the opposite face is planar or boundaryless. A tangent point outside the
+trim is retained as certified `NoContact`, not silently promoted to a BREP
+intersection.
+The point inverse extends across plane, cylinder, sphere, cone, and torus
+parameterizations and replays every candidate through exact surface
+evaluation before it may affect trim topology. Full circle and ellipse
+carriers against planar/boundaryless face pairs are decomposed into exact
+rational quadratics, clipped through Hypercurve's complete material/hole
+region, and lifted as exact spatial rational Bézier fragments.
+Graph instrumentation retains candidate, broad-phase rejection, exact
+carrier-disjoint, exact-intersection, unsupported, clipped-fragment, and
+unresolved-trim counts without requiring callers to reconstruct them.
+The graph delegates each surviving candidate to `boolean::intersect_faces`;
+callers working with open shells or individual patches can invoke that same
+exact operation without constructing a placeholder solid.
+
+Exact rational Bézier and NURBS tensor iso-curves can split their owning
+trimmed face through `Model::split_face_by_surface_curve`; the validator
+certifies an interior homogeneous iso-curve or a boundary subrange rather than
+trusting endpoint agreement. A complete rational-Bézier or NURBS
+graph section on a translation tensor linear in either axis has the same topology path:
+validation reconstructs every spatial and pcurve homogeneous control, retains
+the NURBS degree, knots, and native parameter domain, proves curved-loop
+pairwise simplicity, derives orientation from its monotone graph and the
+selected translation-axis domain side, and persists the exact graph pcurve through
+untrusted format version 5 replay. Multi-span graphs retain one exact
+degree-elevated NURBS pcurve assembled from certified rational knot spans.
+Partially trimmed graph sections with represented roots use the same path,
+including same-boundary two-edge descendant faces. All fragments can be
+applied in one call through `Model::split_face_by_surface_curves`; an explicit
+`SurfaceIntersectionOperand` selects the retained pcurve, exact unordered
+endpoint sorting removes caller-order dependence, and each fragment must
+belong to exactly one current descendant. Certified intersections between
+materialized operand pcurves atomize represented transverse crossings and
+reuse one shared crossing vertex; positive-length overlap and unresolved
+algebraic contact are explicit errors. A wholly interior closed curve authors
+two canonical shared edge halves, one inner wire on the surrounding material
+face, and one outer wire on the enclosed descendant. Nested loops, mixed
+boundary-attached traces, exact hole transfer, and caller order/direction
+invariance use the same descendant arrangement. Conic clipping against
+nonplanar bounded faces, curved classification and selection, stitching, and
+general curved regularization remain open.
+
+## Local topology editing
+
+`Model::split_edge` splits a canonical edge and every incident use at an exact
+interior edge parameter. Line and native circular pcurves are retained,
+forward/reversed uses remain ordered, typed IDs for the first half are stable,
+and the result is fully revalidated. The active prism, cylinder, frustum, and
+torus solid certificates accept exact edge subdivisions rather than depending
+on primitive edge counts. Angular correspondences split circular pcurves
+directly in retained root sweep space; nested edits do not round-trip through
+rational-Bézier parameters or accumulate equivalent expression trees.
+
+`Model::split_face` splits a trimmed planar face along an exact line chord
+between nonadjacent outer-boundary vertices. It authors one identity-shared
+edge with opposite uses, retains the first face and outer-wire IDs, reassigns
+holes by certified contour classification, updates the owning shell, and
+revalidates globally. Cap-region certificates accept the resulting internal
+face boundaries for line/arc prisms and native cylinders.
+
+`Model::split_face_by_curve` is the intersection-driven planar entry point.
+For an exact straight `Curve3` fragment, each endpoint either reuses a
+mathematically equal outer-boundary vertex or locates its unique represented
+parameter on a canonical boundary edge and invokes `split_edge`. It then uses
+the same identity-stitched face split and complete revalidation path. Whole
+closed surfaces, nonplanar carriers, curved traces, and inner-wire endpoints
+remain explicit unsupported cases.
+
+`Model::split_face_by_curves` exact-orders straight traces by canonicalized
+endpoints and rejects duplicates and positive-length overlaps. Every later
+trace is split at its exact finite intersections with earlier traces. Attaching
+those arranged segments splits already-shared internal edges, so all incident
+faces reuse one topological intersection vertex. `FacePartition` records final
+descendants and one `FaceTracePartition` per canonical source trace, including
+its exact `Curve3` segments and corresponding local splits. Results are
+byte-identical across caller order and curve direction, including several
+traces concurrent at one point.
+
+`SolidIntersectionGraph::{partition_first_faces, partition_second_faces}`
+groups retained straight and surface-curve fragments by stable source
+`FaceId`, combines planar supports with exact retained pcurves, and drives the
+validated mixed arrangement path for either operand. Plane/extrusion line
+trims retain exact pcurves on both operands. A known carrier relation without a
+transferable face-local curve returns `FacePartitionUnsupported`; unresolved
+trim evidence remains unresolved rather than being skipped. The narrower
+`partition_{first,second}_planar_faces` methods remain available only as
+explicit line-only operations.
+
+Closed rational-Bézier curve sweeps and translated prism shells retain their
+exact solid certificate after
+cap-edge subdivision, coplanar cap-face partition, and rational-tensor
+side-face partition. Certification groups current coplanar caps, cancels their
+internal edges, groups lateral descendants only across identity-shared
+nonstandard partition edges on equivalent supports, and certifies the external
+translated-shell boundary without confusing periodic seam patches. Tensor
+sweeps additionally prove each side group's pcurve boundary tiles the full
+unit rectangle and reconstruct the common translated path/profile directly
+from the resulting BREP.
+
+`SolidIntersectionGraph::{select_first_planar_faces,
+select_second_planar_faces}` retains both immutable operand snapshots, applies
+the partitions, constructs exact parameter-interior witnesses from each
+descendant's native face region, and classifies those witnesses against the
+opposite solid. `BooleanOperation` maps the resulting inside/outside evidence
+to `Keep`, `KeepReversed`, or `Discard`. Coincident planar boundaries are
+overpartitioned by exact straight support arrangements and resolved from the
+two oriented material sides. This includes contained polygon loops; curved
+coplanar splits remain typed errors. `PlanarFaceSelection` reports every
+nonplanar face skipped by this slice.
+
+`SolidIntersectionGraph::stitch_selected_planar_faces` transfers the selected
+faces into one new arena, deduplicates exact vertices and shared straight
+edges across operands, atomizes partial cross-operand edge overlaps, remaps
+differing exact edge domains, reverses pcurves for difference, finds connected
+components, and publishes only fully revalidated shells. Planar prism-family
+results and arbitrary closed straight-planar outer shells are end-to-end
+supported, including strictly contained inward components republished as
+exact planar void shells. Convex polyhedra use an oriented-half-space fast
+certificate. General concave shells use exact pairwise coincident-region,
+boundary-segment, and transverse-line material checks; contacts without the
+corresponding shared topological edge or vertex produce
+`SelfIntersectingSolidShell`. Outer/void and void/void pairs additionally
+require exact non-contact, strict containment, and non-nesting. Curved-face
+transfer and general curved-shell self-intersection certificates remain open.
+
+## Derived adapters
+
+With `--features tessellation`,
+`tessellation::triangulate_planar_face` exactly triangulates validated
+line-bounded planar faces, including holes, through HyperTRI. It returns copied
+exact parameter/model-space vertices and oriented triangle indices.
+
+`tessellation::approximate_tensor_face_chordally` is a separate, visibly lossy
+API for line-trimmed rational Bézier and finite NURBS faces. Its explicit
+`ChordalApproximationPolicy` uses only integer boundary segments and midpoint
+refinement levels; all generated parameters and surface evaluations use
+`hyperreal::Real`. `ChordalTensorFaceApproximation` retains parameters beside
+points and certifies `ExactAtVerticesOnly`. Chord interiors have no claimed
+geometric error bound. Curved pcurve trims, analytic surfaces, and
+surface-error-tolerance requests remain rejected.

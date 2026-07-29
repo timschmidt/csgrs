@@ -1,0 +1,6449 @@
+//! Conventional exact solid constructors.
+
+use std::collections::HashMap;
+use std::fmt;
+
+use hypercurve::{
+    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurvePolicy,
+    LineSeg2, Point2 as CurvePoint2, Segment2,
+};
+use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
+use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
+
+use crate::geometry::Curve3ExactData;
+use crate::model::CertifiedSpherePairKind;
+use crate::{
+    BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError, Model, ModelBuilder, Orientation,
+    ParameterCorrespondence, ParameterDomain, Pcurve, SolidId, Surface, ValidationReport, VertexId,
+};
+
+/// Coordinate axis involved in a construction error.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum Axis {
+    /// Model-space x axis.
+    X,
+    /// Model-space y axis.
+    Y,
+    /// Model-space z axis.
+    Z,
+}
+
+/// Failure while constructing a conventional solid.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ConstructionError {
+    /// A lower bound was not certified strictly below its upper bound.
+    InvalidBounds(Axis),
+    /// A planar extrusion profile has fewer than three vertices.
+    ProfileTooSmall,
+    /// Cone-frustum radii are not strictly positive with base above top.
+    InvalidFrustumRadii,
+    /// A planar extrusion profile has zero certified signed area.
+    DegenerateProfile,
+    /// A radial/axial revolution profile reaches or crosses its axis.
+    ProfileCrossesRevolutionAxis,
+    /// Loft construction requires at least two ordered sections.
+    LoftNeedsAtLeastTwoSections,
+    /// Loft sections do not have a certifiable positive correspondence.
+    IncompatibleLoftSections,
+    /// A curve sweep currently requires a rational Bézier path.
+    UnsupportedSweepPath,
+    /// A curve sweep path is not an exact positive affine graph through the
+    /// fixed profile plane.
+    NonMonotoneSweepPath,
+    /// A tensor patch shell requires at least one face.
+    EmptyPatchShell,
+    /// A planar extrusion profile crosses or overlaps itself.
+    SelfIntersectingProfile,
+    /// A hole is not strictly inside the outer profile.
+    HoleOutside,
+    /// Two region profile loops cross or overlap.
+    IntersectingProfiles,
+    /// Two holes are nested rather than disjoint.
+    NestedHoles,
+    /// Incremental geometry or topology construction failed.
+    Build(BuildError),
+    /// Whole-model validation rejected the completed construction.
+    Validation(ValidationReport),
+}
+
+/// One closed prismatic cavity used by [`extrude_with_voids`].
+#[derive(Clone, Debug)]
+pub struct ExtrusionVoid {
+    /// Counterclockwise or clockwise simple planar cavity profile.
+    pub profile: Vec<Point2>,
+    /// Exact lower z coordinate, strictly inside the outer extrusion.
+    pub z_min: Real,
+    /// Exact upper z coordinate, strictly inside the outer extrusion.
+    pub z_max: Real,
+}
+
+/// One exact spherical cavity used by [`sphere_with_voids`].
+#[derive(Clone, Debug)]
+pub struct SphereVoid {
+    /// Exact cavity center in model space.
+    pub center: Point3,
+    /// Exact positive cavity radius.
+    pub radius: Real,
+}
+
+/// One planar polygon section supplied to [`loft`].
+#[derive(Clone, Debug)]
+pub struct LoftSection {
+    /// Exact simple polygon in the common loft x/y chart.
+    pub profile: Vec<Point2>,
+    /// Exact section height; sections are ordered by increasing height.
+    pub z: Real,
+}
+
+/// One exact tensor patch supplied to [`tensor_patch_shell`].
+#[derive(Clone, Debug)]
+pub enum TensorPatch {
+    /// Tensor-product rational Bézier patch.
+    RationalBezier {
+        /// Rectangular row-major control net.
+        control_points: Vec<Vec<Point3>>,
+        /// Positive projective weight at every control point.
+        weights: Vec<Vec<Real>>,
+    },
+    /// Finite nonperiodic tensor-product NURBS patch.
+    Nurbs {
+        /// Degree in the `u` direction.
+        u_degree: usize,
+        /// Degree in the `v` direction.
+        v_degree: usize,
+        /// Rectangular row-major control net.
+        control_points: Vec<Vec<Point3>>,
+        /// Positive projective weight at every control point.
+        weights: Vec<Vec<Real>>,
+        /// Authored nondecreasing `u` knot vector.
+        u_knots: Vec<Real>,
+        /// Authored nondecreasing `v` knot vector.
+        v_knots: Vec<Real>,
+    },
+}
+
+impl fmt::Display for ConstructionError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidBounds(axis) => {
+                write!(formatter, "{axis:?} bounds are not strictly increasing")
+            }
+            Self::ProfileTooSmall => {
+                formatter.write_str("extrusion profile has fewer than 3 vertices")
+            }
+            Self::InvalidFrustumRadii => {
+                formatter.write_str("frustum requires base_radius > top_radius > 0")
+            }
+            Self::DegenerateProfile => formatter.write_str("extrusion profile has zero area"),
+            Self::ProfileCrossesRevolutionAxis => {
+                formatter.write_str("revolution profile must stay strictly off the axis")
+            }
+            Self::LoftNeedsAtLeastTwoSections => {
+                formatter.write_str("loft requires at least two sections")
+            }
+            Self::IncompatibleLoftSections => formatter
+                .write_str("loft sections require a positive homothetic or convex correspondence"),
+            Self::UnsupportedSweepPath => {
+                formatter.write_str("curve sweep requires a rational Bézier path")
+            }
+            Self::NonMonotoneSweepPath => formatter.write_str(
+                "curve sweep path must advance affinely and positively through the profile plane",
+            ),
+            Self::EmptyPatchShell => {
+                formatter.write_str("tensor patch shell requires at least one patch")
+            }
+            Self::SelfIntersectingProfile => {
+                formatter.write_str("extrusion profile intersects itself")
+            }
+            Self::HoleOutside => formatter.write_str("extrusion hole lies outside its outer loop"),
+            Self::IntersectingProfiles => formatter.write_str("extrusion profile loops intersect"),
+            Self::NestedHoles => formatter.write_str("extrusion holes are nested"),
+            Self::Build(error) => write!(formatter, "solid construction failed: {error}"),
+            Self::Validation(report) => write!(formatter, "solid construction failed: {report}"),
+        }
+    }
+}
+
+impl std::error::Error for ConstructionError {}
+
+impl From<BuildError> for ConstructionError {
+    fn from(value: BuildError) -> Self {
+        Self::Build(value)
+    }
+}
+
+impl From<GeometryError> for ConstructionError {
+    fn from(value: GeometryError) -> Self {
+        Self::Build(BuildError::Geometry(value))
+    }
+}
+
+impl From<ValidationReport> for ConstructionError {
+    fn from(value: ValidationReport) -> Self {
+        Self::Validation(value)
+    }
+}
+
+/// Constructs one exact axis-aligned cuboid as a validated canonical model.
+///
+/// The returned solid is bounded by six outward-oriented parameterized planes.
+/// Its twelve topological edges are shared by twenty-four independent face-local
+/// pcurves.
+pub fn cuboid(min: Point3, max: Point3) -> Result<(Model, SolidId), ConstructionError> {
+    require_increasing(&min.x, &max.x, Axis::X)?;
+    require_increasing(&min.y, &max.y, Axis::Y)?;
+    let profile = [
+        Point2::new(min.x.clone(), min.y.clone()),
+        Point2::new(max.x.clone(), min.y.clone()),
+        Point2::new(max.x, max.y.clone()),
+        Point2::new(min.x, max.y),
+    ];
+    extrude(&profile, min.z, max.z)
+}
+
+/// Constructs one validated trimmed tensor-product rational Bézier patch.
+///
+/// The four boundary edges are exact rational Bézier restrictions of the
+/// surface control net. The returned model contains one open shell and no
+/// solid.
+pub fn rational_bezier_patch(
+    control_points: Vec<Vec<Point3>>,
+    weights: Vec<Vec<Real>>,
+) -> Result<(Model, crate::FaceId), ConstructionError> {
+    let surface = Surface::rational_bezier(control_points.clone(), weights.clone())?;
+    let u_last = control_points[0].len() - 1;
+    let v_last = control_points.len() - 1;
+    let boundaries = [
+        Curve3::rational_bezier(control_points[0].clone(), weights[0].clone())?,
+        Curve3::rational_bezier(
+            control_points
+                .iter()
+                .map(|row| row[u_last].clone())
+                .collect(),
+            weights.iter().map(|row| row[u_last].clone()).collect(),
+        )?,
+        Curve3::rational_bezier(control_points[v_last].clone(), weights[v_last].clone())?,
+        Curve3::rational_bezier(
+            control_points.iter().map(|row| row[0].clone()).collect(),
+            weights.iter().map(|row| row[0].clone()).collect(),
+        )?,
+    ];
+    build_tensor_patch(
+        surface,
+        boundaries,
+        Real::zero(),
+        Real::one(),
+        Real::zero(),
+        Real::one(),
+    )
+}
+
+/// Constructs one validated trimmed finite tensor-product NURBS patch.
+///
+/// Each boundary edge retains the corresponding clamped NURBS row or column,
+/// including its authored degree, knot vector, control points, and weights.
+/// The returned model contains one open shell and no solid.
+#[allow(clippy::too_many_arguments)]
+pub fn nurbs_patch(
+    u_degree: usize,
+    v_degree: usize,
+    control_points: Vec<Vec<Point3>>,
+    weights: Vec<Vec<Real>>,
+    u_knots: Vec<Real>,
+    v_knots: Vec<Real>,
+) -> Result<(Model, crate::FaceId), ConstructionError> {
+    let u_count = control_points.first().map_or(0, Vec::len);
+    let v_count = control_points.len();
+    let surface = Surface::nurbs(
+        u_degree,
+        v_degree,
+        control_points.clone(),
+        weights.clone(),
+        u_knots.clone(),
+        v_knots.clone(),
+    )?;
+    let u_last = u_count - 1;
+    let v_last = v_count - 1;
+    let boundaries = [
+        Curve3::nurbs(
+            u_degree,
+            control_points[0].clone(),
+            weights[0].clone(),
+            u_knots.clone(),
+        )?,
+        Curve3::nurbs(
+            v_degree,
+            control_points
+                .iter()
+                .map(|row| row[u_last].clone())
+                .collect(),
+            weights.iter().map(|row| row[u_last].clone()).collect(),
+            v_knots.clone(),
+        )?,
+        Curve3::nurbs(
+            u_degree,
+            control_points[v_last].clone(),
+            weights[v_last].clone(),
+            u_knots.clone(),
+        )?,
+        Curve3::nurbs(
+            v_degree,
+            control_points.iter().map(|row| row[0].clone()).collect(),
+            weights.iter().map(|row| row[0].clone()).collect(),
+            v_knots.clone(),
+        )?,
+    ];
+    build_tensor_patch(
+        surface,
+        boundaries,
+        u_knots[u_degree].clone(),
+        u_knots[u_count].clone(),
+        v_knots[v_degree].clone(),
+        v_knots[v_count].clone(),
+    )
+}
+
+/// Builds one validated open shell from exact tensor patches.
+///
+/// Boundary curves with the same exact endpoint vertices are stitched only
+/// when their complete homogeneous representations are projectively
+/// identical, including reversed traversal. Every face retains its own
+/// pcurves and parameter correspondence; the shared model edge is authored
+/// once and used in opposite directions by adjacent consistently oriented
+/// patches. Unmatched boundaries remain open-shell boundaries.
+pub fn tensor_patch_shell(
+    patches: Vec<TensorPatch>,
+) -> Result<(Model, Vec<FaceId>), ConstructionError> {
+    if patches.is_empty() {
+        return Err(ConstructionError::EmptyPatchShell);
+    }
+    let patches = patches
+        .into_iter()
+        .map(tensor_patch_build_data)
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut builder = ModelBuilder::new();
+    let mut vertices = Vec::<(Point3, VertexId)>::new();
+    let mut shared_edges = Vec::<StitchedTensorEdge>::new();
+    let mut faces = Vec::with_capacity(patches.len());
+    for patch in patches {
+        let patch_vertices = patch
+            .points
+            .iter()
+            .map(|point| exact_patch_vertex(&mut builder, &mut vertices, point))
+            .collect::<Result<Vec<_>, _>>()?;
+        let surface = builder.surface(patch.surface)?;
+        let natural_endpoints = [(0, 1), (1, 2), (3, 2), (0, 3)];
+        let face_endpoints = [(0, 1), (1, 2), (2, 3), (3, 0)];
+        let mut edges = Vec::with_capacity(4);
+        for (index, curve) in patch.boundaries.into_iter().enumerate() {
+            let (natural_start, natural_end) = natural_endpoints[index];
+            let start = patch_vertices[natural_start];
+            let end = patch_vertices[natural_end];
+            let mut stitched = None;
+            for existing in &shared_edges {
+                let reversed = if existing.start == start && existing.end == end {
+                    false
+                } else if existing.start == end && existing.end == start {
+                    true
+                } else {
+                    continue;
+                };
+                if exact_tensor_boundary_equal(&curve, &existing.curve, reversed)? {
+                    stitched = Some((existing.edge, existing.domain.clone()));
+                    break;
+                }
+            }
+            let (edge, domain) = match stitched {
+                Some(stitched) => stitched,
+                None => {
+                    let domain = curve.domain().clone();
+                    let curve_id = builder.curve(curve.clone())?;
+                    let edge = builder.edge(start, end, curve_id, domain.clone())?;
+                    shared_edges.push(StitchedTensorEdge {
+                        start,
+                        end,
+                        curve,
+                        edge,
+                        domain: domain.clone(),
+                    });
+                    (edge, domain)
+                }
+            };
+            edges.push((edge, domain));
+        }
+
+        let mut uses = Vec::with_capacity(4);
+        for index in 0..4 {
+            let (face_start, face_end) = face_endpoints[index];
+            let desired_start = patch_vertices[face_start];
+            let desired_end = patch_vertices[face_end];
+            let (edge, domain) = &edges[index];
+            let edge_record = shared_edges
+                .iter()
+                .find(|candidate| candidate.edge == *edge)
+                .expect("every stitched edge has one canonical record");
+            let direction = if edge_record.start == desired_start && edge_record.end == desired_end
+            {
+                Direction::Forward
+            } else if edge_record.start == desired_end && edge_record.end == desired_start {
+                Direction::Reversed
+            } else {
+                unreachable!("patch edge endpoints were resolved from the same corners");
+            };
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(
+                    patch.parameters[face_start].clone(),
+                    patch.parameters[face_end].clone(),
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            let correspondence = match direction {
+                Direction::Forward => ParameterCorrespondence::affine(
+                    domain.end() - domain.start(),
+                    domain.start().clone(),
+                )?,
+                Direction::Reversed => ParameterCorrespondence::affine(
+                    domain.start() - domain.end(),
+                    domain.end().clone(),
+                )?,
+            };
+            uses.push(builder.edge_use(*edge, direction, pcurve, correspondence)?);
+        }
+        let wire = builder.wire(uses)?;
+        faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
+    }
+    builder.shell(faces.clone())?;
+    Ok((builder.finish()?, faces))
+}
+
+struct TensorPatchBuildData {
+    surface: Surface,
+    boundaries: [Curve3; 4],
+    parameters: [CurvePoint2; 4],
+    points: [Point3; 4],
+}
+
+struct StitchedTensorEdge {
+    start: VertexId,
+    end: VertexId,
+    curve: Curve3,
+    edge: EdgeId,
+    domain: ParameterDomain,
+}
+
+fn tensor_patch_build_data(patch: TensorPatch) -> Result<TensorPatchBuildData, ConstructionError> {
+    let (surface, boundaries, u_start, u_end, v_start, v_end) = match patch {
+        TensorPatch::RationalBezier {
+            control_points,
+            weights,
+        } => {
+            let surface = Surface::rational_bezier(control_points.clone(), weights.clone())?;
+            let u_last = control_points[0].len() - 1;
+            let v_last = control_points.len() - 1;
+            let boundaries = [
+                Curve3::rational_bezier(control_points[0].clone(), weights[0].clone())?,
+                Curve3::rational_bezier(
+                    control_points
+                        .iter()
+                        .map(|row| row[u_last].clone())
+                        .collect(),
+                    weights.iter().map(|row| row[u_last].clone()).collect(),
+                )?,
+                Curve3::rational_bezier(control_points[v_last].clone(), weights[v_last].clone())?,
+                Curve3::rational_bezier(
+                    control_points.iter().map(|row| row[0].clone()).collect(),
+                    weights.iter().map(|row| row[0].clone()).collect(),
+                )?,
+            ];
+            (
+                surface,
+                boundaries,
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                Real::one(),
+            )
+        }
+        TensorPatch::Nurbs {
+            u_degree,
+            v_degree,
+            control_points,
+            weights,
+            u_knots,
+            v_knots,
+        } => {
+            let u_count = control_points.first().map_or(0, Vec::len);
+            let v_count = control_points.len();
+            let surface = Surface::nurbs(
+                u_degree,
+                v_degree,
+                control_points.clone(),
+                weights.clone(),
+                u_knots.clone(),
+                v_knots.clone(),
+            )?;
+            let u_last = u_count - 1;
+            let v_last = v_count - 1;
+            let boundaries = [
+                Curve3::nurbs(
+                    u_degree,
+                    control_points[0].clone(),
+                    weights[0].clone(),
+                    u_knots.clone(),
+                )?,
+                Curve3::nurbs(
+                    v_degree,
+                    control_points
+                        .iter()
+                        .map(|row| row[u_last].clone())
+                        .collect(),
+                    weights.iter().map(|row| row[u_last].clone()).collect(),
+                    v_knots.clone(),
+                )?,
+                Curve3::nurbs(
+                    u_degree,
+                    control_points[v_last].clone(),
+                    weights[v_last].clone(),
+                    u_knots.clone(),
+                )?,
+                Curve3::nurbs(
+                    v_degree,
+                    control_points.iter().map(|row| row[0].clone()).collect(),
+                    weights.iter().map(|row| row[0].clone()).collect(),
+                    v_knots.clone(),
+                )?,
+            ];
+            (
+                surface,
+                boundaries,
+                u_knots[u_degree].clone(),
+                u_knots[u_count].clone(),
+                v_knots[v_degree].clone(),
+                v_knots[v_count].clone(),
+            )
+        }
+    };
+    let parameters = [
+        CurvePoint2::new(u_start.clone(), v_start.clone()),
+        CurvePoint2::new(u_end.clone(), v_start),
+        CurvePoint2::new(u_end, v_end.clone()),
+        CurvePoint2::new(u_start, v_end),
+    ];
+    let points = parameters
+        .iter()
+        .map(|parameter| {
+            surface.point_at(&Point2::new(parameter.x().clone(), parameter.y().clone()))
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .try_into()
+        .expect("four tensor corners");
+    Ok(TensorPatchBuildData {
+        surface,
+        boundaries,
+        parameters,
+        points,
+    })
+}
+
+fn exact_patch_vertex(
+    builder: &mut ModelBuilder,
+    vertices: &mut Vec<(Point3, VertexId)>,
+    point: &Point3,
+) -> Result<VertexId, ConstructionError> {
+    for (existing, vertex) in vertices.iter() {
+        match point3_equal(existing, point) {
+            PredicateOutcome::Decided { value: true, .. } => return Ok(*vertex),
+            PredicateOutcome::Decided { value: false, .. } => {}
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
+            }
+        }
+    }
+    let vertex = builder.vertex(point.clone())?;
+    vertices.push((point.clone(), vertex));
+    Ok(vertex)
+}
+
+fn exact_tensor_boundary_equal(
+    candidate: &Curve3,
+    existing: &Curve3,
+    reversed: bool,
+) -> Result<bool, ConstructionError> {
+    let candidate = if reversed {
+        candidate.reversed()?
+    } else {
+        candidate.clone()
+    };
+    if !exact_real_equal(candidate.domain().start(), existing.domain().start())?
+        || !exact_real_equal(candidate.domain().end(), existing.domain().end())?
+    {
+        return Ok(false);
+    }
+    let unpack = |curve: &Curve3| match curve.exact_data() {
+        Curve3ExactData::RationalBezier {
+            control_points,
+            weights,
+        } => Some((control_points, weights, None, None)),
+        Curve3ExactData::Nurbs {
+            degree,
+            control_points,
+            weights,
+            knots,
+        } => Some((control_points, weights, Some(degree), Some(knots))),
+        _ => None,
+    };
+    let Some((candidate_points, candidate_weights, candidate_degree, candidate_knots)) =
+        unpack(&candidate)
+    else {
+        return Ok(false);
+    };
+    let Some((existing_points, existing_weights, existing_degree, existing_knots)) =
+        unpack(existing)
+    else {
+        return Ok(false);
+    };
+    if candidate_degree != existing_degree
+        || candidate_points.len() != existing_points.len()
+        || candidate_weights.len() != existing_weights.len()
+    {
+        return Ok(false);
+    }
+    match (candidate_knots.as_ref(), existing_knots.as_ref()) {
+        (Some(candidate), Some(existing)) if candidate.len() == existing.len() => {
+            for (candidate, existing) in candidate.iter().zip(existing) {
+                if !exact_real_equal(candidate, existing)? {
+                    return Ok(false);
+                }
+            }
+        }
+        (None, None) => {}
+        _ => return Ok(false),
+    }
+    for (candidate, existing) in candidate_points.iter().zip(&existing_points) {
+        match point3_equal(candidate, existing) {
+            PredicateOutcome::Decided { value: true, .. } => {}
+            PredicateOutcome::Decided { value: false, .. } => return Ok(false),
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(GeometryError::PredicateUnresolved { needed, stage }.into());
+            }
+        }
+    }
+    let scale = (&candidate_weights[0] / &existing_weights[0])
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    for (candidate, existing) in candidate_weights.iter().zip(&existing_weights) {
+        if !exact_real_equal(candidate, &(existing * &scale))? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn exact_real_equal(left: &Real, right: &Real) -> Result<bool, ConstructionError> {
+    match compare_reals(left, right) {
+        PredicateOutcome::Decided { value, .. } => Ok(value == std::cmp::Ordering::Equal),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(GeometryError::PredicateUnresolved { needed, stage }.into())
+        }
+    }
+}
+
+fn build_tensor_patch(
+    surface: Surface,
+    boundaries: [Curve3; 4],
+    u_start: Real,
+    u_end: Real,
+    v_start: Real,
+    v_end: Real,
+) -> Result<(Model, crate::FaceId), ConstructionError> {
+    let parameters = [
+        CurvePoint2::new(u_start.clone(), v_start.clone()),
+        CurvePoint2::new(u_end.clone(), v_start),
+        CurvePoint2::new(u_end, v_end.clone()),
+        CurvePoint2::new(u_start, v_end),
+    ];
+    let points = parameters
+        .iter()
+        .map(|parameter| {
+            surface
+                .point_at(&Point2::new(parameter.x().clone(), parameter.y().clone()))
+                .map_err(ConstructionError::from)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut builder = ModelBuilder::new();
+    let vertices = points
+        .into_iter()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let surface = builder.surface(surface)?;
+    let mut edges = Vec::with_capacity(4);
+    let mut edge_domains = Vec::with_capacity(4);
+    for (index, curve) in boundaries.into_iter().enumerate() {
+        let (start, end) = match index {
+            0 => (0, 1),
+            1 => (1, 2),
+            2 => (3, 2),
+            3 => (0, 3),
+            _ => unreachable!("four tensor boundaries"),
+        };
+        let domain = curve.domain().clone();
+        let curve = builder.curve(curve)?;
+        edges.push(builder.edge(vertices[start], vertices[end], curve, domain.clone())?);
+        edge_domains.push(domain);
+    }
+    let specs = [
+        (0, edges[0], Direction::Forward, 0, 1),
+        (1, edges[1], Direction::Forward, 1, 2),
+        (2, edges[2], Direction::Reversed, 2, 3),
+        (3, edges[3], Direction::Reversed, 3, 0),
+    ];
+    let mut uses = Vec::with_capacity(4);
+    for (index, edge, direction, start, end) in specs {
+        let edge_domain = &edge_domains[index];
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(parameters[start].clone(), parameters[end].clone())
+                .map_err(GeometryError::from)?,
+        )))?;
+        let correspondence = match direction {
+            Direction::Forward => ParameterCorrespondence::affine(
+                edge_domain.end() - edge_domain.start(),
+                edge_domain.start().clone(),
+            )?,
+            Direction::Reversed => ParameterCorrespondence::affine(
+                edge_domain.start() - edge_domain.end(),
+                edge_domain.end().clone(),
+            )?,
+        };
+        uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+    }
+    let wire = builder.wire(uses)?;
+    let face = builder.face(surface, Orientation::Forward, wire, Vec::new())?;
+    builder.shell(vec![face])?;
+    Ok((builder.finish()?, face))
+}
+
+/// Constructs a right circular cylinder on the positive z axis.
+///
+/// The base center is the model origin. `radius` and `height` must be
+/// certified positive. The result uses four exact quarter-circle edges on
+/// each cap, four axial edges, two planar caps, and four trimmed faces sharing
+/// one native cylindrical surface. No polygonal approximation is introduced.
+pub fn cylinder(radius: Real, height: Real) -> Result<(Model, SolidId), ConstructionError> {
+    require_increasing(&Real::zero(), &height, Axis::Z)?;
+    let mut builder = ModelBuilder::new();
+    let zero = Real::zero();
+    let points_2d = [
+        CurvePoint2::new(radius.clone(), zero.clone()),
+        CurvePoint2::new(zero.clone(), radius.clone()),
+        CurvePoint2::new(-radius.clone(), zero.clone()),
+        CurvePoint2::new(zero.clone(), -radius.clone()),
+    ];
+    let mut points = Vec::with_capacity(8);
+    points.extend(
+        points_2d
+            .iter()
+            .map(|point| Point3::new(point.x().clone(), point.y().clone(), Real::zero())),
+    );
+    points.extend(
+        points_2d
+            .iter()
+            .map(|point| Point3::new(point.x().clone(), point.y().clone(), height.clone())),
+    );
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let half_pi = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let mut bottom_edges = Vec::with_capacity(4);
+    let mut top_edges = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let start_angle = &half_pi * Real::from(index as i32);
+        let end_angle = &half_pi * Real::from(index as i32 + 1);
+        let domain = ParameterDomain::new(start_angle.clone(), end_angle.clone())?;
+        let bottom_curve = builder.curve(Curve3::circle_arc(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            radius.clone(),
+            start_angle.clone(),
+            end_angle.clone(),
+        )?)?;
+        bottom_edges.push(builder.edge(
+            vertices[index],
+            vertices[next],
+            bottom_curve,
+            domain.clone(),
+        )?);
+        let top_curve = builder.curve(Curve3::circle_arc(
+            Point3::new(Real::zero(), Real::zero(), height.clone()),
+            Vector3::x(),
+            Vector3::y(),
+            radius.clone(),
+            start_angle,
+            end_angle,
+        )?)?;
+        top_edges.push(builder.edge(vertices[index + 4], vertices[next + 4], top_curve, domain)?);
+    }
+    let mut axial_edges = Vec::with_capacity(4);
+    for index in 0..4 {
+        let curve = builder.curve(Curve3::line(
+            points[index].clone(),
+            points[index + 4].clone(),
+        )?)?;
+        axial_edges.push(builder.edge(
+            vertices[index],
+            vertices[index + 4],
+            curve,
+            ParameterDomain::unit(),
+        )?);
+    }
+
+    let bottom_surface = builder.surface(Surface::plane(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut bottom_uses = Vec::with_capacity(4);
+    for index in (0..4).rev() {
+        let next = (index + 1) % 4;
+        let arc = CircularArc2::try_from_center(
+            points_2d[next].clone(),
+            points_2d[index].clone(),
+            CurvePoint2::new(Real::zero(), Real::zero()),
+            true,
+        )
+        .map_err(GeometryError::from)?;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
+        bottom_uses.push(builder.edge_use(
+            bottom_edges[index],
+            Direction::Reversed,
+            pcurve,
+            ParameterCorrespondence::angular_sweep(),
+        )?);
+    }
+    let bottom_wire = builder.wire(bottom_uses)?;
+    let bottom_face = builder.face(
+        bottom_surface,
+        Orientation::Reversed,
+        bottom_wire,
+        Vec::new(),
+    )?;
+
+    let top_surface = builder.surface(Surface::plane(
+        Point3::new(Real::zero(), Real::zero(), height.clone()),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut top_uses = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let arc = CircularArc2::try_from_center(
+            points_2d[index].clone(),
+            points_2d[next].clone(),
+            CurvePoint2::new(Real::zero(), Real::zero()),
+            false,
+        )
+        .map_err(GeometryError::from)?;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(arc)))?;
+        top_uses.push(builder.edge_use(
+            top_edges[index],
+            Direction::Forward,
+            pcurve,
+            ParameterCorrespondence::angular_sweep(),
+        )?);
+    }
+    let top_wire = builder.wire(top_uses)?;
+    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
+
+    let cylinder_surface = builder.surface(Surface::cylinder(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        radius,
+    )?)?;
+    let mut side_faces = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let start_angle = &half_pi * Real::from(index as i32);
+        let end_angle = &half_pi * Real::from(index as i32 + 1);
+        let span = &end_angle - &start_angle;
+        let specs = [
+            (
+                bottom_edges[index],
+                Direction::Forward,
+                CurvePoint2::new(start_angle.clone(), Real::zero()),
+                CurvePoint2::new(end_angle.clone(), Real::zero()),
+                ParameterCorrespondence::affine(span.clone(), start_angle.clone())?,
+            ),
+            (
+                axial_edges[next],
+                Direction::Forward,
+                CurvePoint2::new(end_angle.clone(), Real::zero()),
+                CurvePoint2::new(end_angle.clone(), height.clone()),
+                ParameterCorrespondence::identity(),
+            ),
+            (
+                top_edges[index],
+                Direction::Reversed,
+                CurvePoint2::new(end_angle.clone(), height.clone()),
+                CurvePoint2::new(start_angle.clone(), height.clone()),
+                ParameterCorrespondence::affine(-span.clone(), end_angle.clone())?,
+            ),
+            (
+                axial_edges[index],
+                Direction::Reversed,
+                CurvePoint2::new(start_angle.clone(), height.clone()),
+                CurvePoint2::new(start_angle, Real::zero()),
+                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+            ),
+        ];
+        let mut uses = Vec::with_capacity(4);
+        for (edge, direction, start, end, correspondence) in specs {
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+            )))?;
+            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+        }
+        let wire = builder.wire(uses)?;
+        side_faces.push(builder.face(cylinder_surface, Orientation::Forward, wire, Vec::new())?);
+    }
+
+    let mut faces = Vec::with_capacity(6);
+    faces.push(bottom_face);
+    faces.push(top_face);
+    faces.extend(side_faces);
+    let shell = builder.shell(faces)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Constructs one exact sphere centered at the model origin.
+///
+/// The sphere is represented by one complete closed-surface face. No
+/// artificial longitude seam, collapsed pole edge, or tolerance sewing is
+/// introduced.
+pub fn sphere(radius: Real) -> Result<(Model, SolidId), ConstructionError> {
+    sphere_with_voids(radius, &[])
+}
+
+/// Constructs one exact origin-centered sphere with disjoint spherical voids.
+///
+/// Every boundary is one complete closed-surface face. Void faces are
+/// inward-oriented and must be strictly contained and pairwise non-contacting.
+pub fn sphere_with_voids(
+    radius: Real,
+    voids: &[SphereVoid],
+) -> Result<(Model, SolidId), ConstructionError> {
+    let surface = Surface::sphere(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        radius,
+    )?;
+    let mut builder = ModelBuilder::new();
+    let surface = builder.surface(surface)?;
+    let face = builder.whole_face(surface, Orientation::Forward)?;
+    let shell = builder.shell(vec![face])?;
+    let mut void_shells = Vec::with_capacity(voids.len());
+    for void in voids {
+        let surface = builder.surface(Surface::sphere(
+            void.center.clone(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            void.radius.clone(),
+        )?)?;
+        let face = builder.whole_face(surface, Orientation::Reversed)?;
+        void_shells.push(builder.shell(vec![face])?);
+    }
+    let solid = builder.solid(shell, void_shells)?;
+    Ok((builder.finish()?, solid))
+}
+
+pub(crate) fn sphere_pair_boolean(
+    first_center: Point3,
+    first_radius: Real,
+    second_center: Point3,
+    second_radius: Real,
+    kind: CertifiedSpherePairKind,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let displacement = &second_center - &first_center;
+    let distance_squared = displacement.norm_squared();
+    let distance = distance_squared
+        .clone()
+        .sqrt()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let inverse_distance =
+        (Real::one() / &distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let axis = displacement * inverse_distance;
+    let (x, y) = axis
+        .orthonormal_basis_checked()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let first_plane_distance = ((&first_radius * &first_radius - &second_radius * &second_radius
+        + &distance_squared)
+        / (Real::from(2) * &distance))
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let second_plane_distance = &distance - &first_plane_distance;
+    let circle_radius = (&first_radius * &first_radius
+        - &first_plane_distance * &first_plane_distance)
+        .sqrt()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let circle_center = first_center.clone() + axis.clone() * &first_plane_distance;
+    let first_latitude = (first_plane_distance.clone() / &first_radius)
+        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .asin()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let second_latitude = (second_plane_distance / &second_radius)
+        .map_err(|_| GeometryError::ProjectiveDivision)?
+        .asin()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+
+    let mut builder = ModelBuilder::new();
+    let full_circle = Curve3::circle_arc(
+        circle_center,
+        x.clone(),
+        y.clone(),
+        circle_radius,
+        Real::zero(),
+        Real::tau(),
+    )?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let vertices = (0..4)
+        .map(|index| full_circle.point_at(&(&quarter * Real::from(index))))
+        .collect::<Result<Vec<_>, GeometryError>>()?
+        .into_iter()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, BuildError>>()?;
+    let curve = builder.curve(full_circle)?;
+    let edges = (0..4)
+        .map(|index| {
+            let start = &quarter * Real::from(index as i32);
+            let end = &quarter * Real::from(index as i32 + 1);
+            builder.edge(
+                vertices[index],
+                vertices[(index + 1) % 4],
+                curve,
+                ParameterDomain::new(start, end)?,
+            )
+        })
+        .collect::<Result<Vec<_>, BuildError>>()?;
+
+    let (first_upper, first_orientation, second_upper, second_orientation) = match kind {
+        CertifiedSpherePairKind::Union => {
+            (false, Orientation::Forward, false, Orientation::Forward)
+        }
+        CertifiedSpherePairKind::Intersection => {
+            (true, Orientation::Forward, true, Orientation::Forward)
+        }
+        CertifiedSpherePairKind::Difference => {
+            (false, Orientation::Forward, true, Orientation::Reversed)
+        }
+    };
+    let first_surface = builder.surface(Surface::sphere(
+        first_center,
+        x.clone(),
+        y.clone(),
+        axis.clone(),
+        first_radius,
+    )?)?;
+    let second_surface =
+        builder.surface(Surface::sphere(second_center, x, -y, -axis, second_radius)?)?;
+    let first_face = spherical_cap_face(
+        &mut builder,
+        first_surface,
+        &edges,
+        first_latitude,
+        first_upper,
+        first_orientation,
+        1,
+        &quarter,
+    )?;
+    let second_face = spherical_cap_face(
+        &mut builder,
+        second_surface,
+        &edges,
+        second_latitude,
+        second_upper,
+        second_orientation,
+        -1,
+        &quarter,
+    )?;
+    let shell = builder.shell(vec![first_face, second_face])?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn spherical_cap_face(
+    builder: &mut ModelBuilder,
+    surface: crate::SurfaceId,
+    edges: &[EdgeId],
+    latitude: Real,
+    upper: bool,
+    orientation: Orientation,
+    local_to_circle: i32,
+    quarter: &Real,
+) -> Result<crate::FaceId, ConstructionError> {
+    let increasing = match orientation {
+        Orientation::Forward => upper,
+        Orientation::Reversed => !upper,
+    };
+    let circle_increasing = if local_to_circle > 0 {
+        increasing
+    } else {
+        !increasing
+    };
+    let indices = if circle_increasing {
+        vec![0, 1, 2, 3]
+    } else {
+        vec![3, 2, 1, 0]
+    };
+    let mut uses = Vec::with_capacity(4);
+    for index in indices {
+        let (direction, circle_start, circle_end) = if circle_increasing {
+            (
+                Direction::Forward,
+                quarter * Real::from(index as i32),
+                quarter * Real::from(index as i32 + 1),
+            )
+        } else {
+            (
+                Direction::Reversed,
+                quarter * Real::from(index as i32 + 1),
+                quarter * Real::from(index as i32),
+            )
+        };
+        let local_start = Real::from(local_to_circle) * &circle_start;
+        let local_end = Real::from(local_to_circle) * &circle_end;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(local_start, latitude.clone()),
+                CurvePoint2::new(local_end, latitude.clone()),
+            )
+            .map_err(GeometryError::from)?,
+        )))?;
+        let correspondence = match direction {
+            Direction::Forward => ParameterCorrespondence::affine(quarter.clone(), circle_start)?,
+            Direction::Reversed => ParameterCorrespondence::affine(-quarter.clone(), circle_start)?,
+        };
+        uses.push(builder.edge_use(edges[index], direction, pcurve, correspondence)?);
+    }
+    let wire = builder.wire(uses)?;
+    Ok(builder.face(surface, orientation, wire, Vec::new())?)
+}
+
+/// Builds a standard z-axis truncated cone with exact circular caps.
+///
+/// The base lies at `z = 0`, the top at `z = height`, and
+/// `base_radius > top_radius > 0`.
+pub fn cone_frustum(
+    base_radius: Real,
+    top_radius: Real,
+    height: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    require_increasing(&Real::zero(), &height, Axis::Z)?;
+    require_frustum_radii(&base_radius, &top_radius)?;
+    let radial_drop = &base_radius - &top_radius;
+    let apex_height =
+        (&height * &base_radius / &radial_drop).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let semi_angle = radial_drop.clone().atan2(height.clone());
+    let sine = semi_angle.clone().sin();
+    let v_bottom = (&base_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let v_top = (&top_radius / sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let angles = (0..4)
+        .map(|index| &quarter * Real::from(index))
+        .collect::<Vec<_>>();
+    let cone = Surface::cone(
+        Point3::new(Real::zero(), Real::zero(), apex_height),
+        Vector3::x(),
+        -Vector3::y(),
+        -Vector3::z(),
+        semi_angle,
+    )?;
+    let mut builder = ModelBuilder::new();
+    let cone_surface = builder.surface(cone.clone())?;
+    let mut points = Vec::with_capacity(8);
+    for u in &angles {
+        points.push(cone.point_at(&Point2::new(u.clone(), v_bottom.clone()))?);
+    }
+    for u in &angles {
+        points.push(cone.point_at(&Point2::new(u.clone(), v_top.clone()))?);
+    }
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let mut bottom_edges = Vec::with_capacity(4);
+    let mut top_edges = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let start = angles[index].clone();
+        let end = &quarter * Real::from((index + 1) as i32);
+        let bottom_curve = builder.curve(Curve3::circle_arc(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            base_radius.clone(),
+            start.clone(),
+            end.clone(),
+        )?)?;
+        bottom_edges.push(builder.edge(
+            vertices[index],
+            vertices[next],
+            bottom_curve,
+            ParameterDomain::new(start.clone(), end.clone())?,
+        )?);
+        let top_curve = builder.curve(Curve3::circle_arc(
+            Point3::new(Real::zero(), Real::zero(), height.clone()),
+            Vector3::x(),
+            -Vector3::y(),
+            top_radius.clone(),
+            start.clone(),
+            end.clone(),
+        )?)?;
+        top_edges.push(builder.edge(
+            vertices[index + 4],
+            vertices[next + 4],
+            top_curve,
+            ParameterDomain::new(start, end)?,
+        )?);
+    }
+    let mut generators = Vec::with_capacity(4);
+    for index in 0..4 {
+        let curve = builder.curve(Curve3::line(
+            points[index].clone(),
+            points[index + 4].clone(),
+        )?)?;
+        generators.push(builder.edge(
+            vertices[index],
+            vertices[index + 4],
+            curve,
+            ParameterDomain::unit(),
+        )?);
+    }
+
+    let center = CurvePoint2::new(Real::zero(), Real::zero());
+    let bottom_surface = builder.surface(Surface::plane(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut bottom_uses = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            CircularArc2::try_from_center(
+                CurvePoint2::new(points[index].x.clone(), points[index].y.clone()),
+                CurvePoint2::new(points[next].x.clone(), points[next].y.clone()),
+                center.clone(),
+                true,
+            )
+            .map_err(GeometryError::from)?,
+        )))?;
+        bottom_uses.push(builder.edge_use(
+            bottom_edges[index],
+            Direction::Forward,
+            pcurve,
+            ParameterCorrespondence::angular_sweep(),
+        )?);
+    }
+    let bottom_wire = builder.wire(bottom_uses)?;
+    let bottom_face = builder.face(
+        bottom_surface,
+        Orientation::Reversed,
+        bottom_wire,
+        Vec::new(),
+    )?;
+
+    let top_surface = builder.surface(Surface::plane(
+        Point3::new(Real::zero(), Real::zero(), height),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut top_uses = Vec::with_capacity(4);
+    for index in (0..4).rev() {
+        let next = (index + 1) % 4;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            CircularArc2::try_from_center(
+                CurvePoint2::new(points[next + 4].x.clone(), points[next + 4].y.clone()),
+                CurvePoint2::new(points[index + 4].x.clone(), points[index + 4].y.clone()),
+                center.clone(),
+                false,
+            )
+            .map_err(GeometryError::from)?,
+        )))?;
+        top_uses.push(builder.edge_use(
+            top_edges[index],
+            Direction::Reversed,
+            pcurve,
+            ParameterCorrespondence::angular_sweep(),
+        )?);
+    }
+    let top_wire = builder.wire(top_uses)?;
+    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
+
+    let mut side_faces = Vec::with_capacity(4);
+    for index in 0..4 {
+        let next = (index + 1) % 4;
+        let u_start = angles[index].clone();
+        let u_end = &quarter * Real::from((index + 1) as i32);
+        let specs = [
+            (
+                top_edges[index],
+                Direction::Forward,
+                CurvePoint2::new(u_start.clone(), v_top.clone()),
+                CurvePoint2::new(u_end.clone(), v_top.clone()),
+                ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
+            ),
+            (
+                generators[next],
+                Direction::Reversed,
+                CurvePoint2::new(u_end.clone(), v_top.clone()),
+                CurvePoint2::new(u_end.clone(), v_bottom.clone()),
+                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+            ),
+            (
+                bottom_edges[index],
+                Direction::Reversed,
+                CurvePoint2::new(u_end.clone(), v_bottom.clone()),
+                CurvePoint2::new(u_start.clone(), v_bottom.clone()),
+                ParameterCorrespondence::affine(-quarter.clone(), u_end)?,
+            ),
+            (
+                generators[index],
+                Direction::Forward,
+                CurvePoint2::new(u_start.clone(), v_bottom.clone()),
+                CurvePoint2::new(u_start, v_top.clone()),
+                ParameterCorrespondence::identity(),
+            ),
+        ];
+        let mut uses = Vec::with_capacity(4);
+        for (edge, direction, start, end, correspondence) in specs {
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+            )))?;
+            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+        }
+        let wire = builder.wire(uses)?;
+        side_faces.push(builder.face(cone_surface, Orientation::Forward, wire, Vec::new())?);
+    }
+    let mut faces = vec![bottom_face, top_face];
+    faces.extend(side_faces);
+    let shell = builder.shell(faces)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Builds a standard z-axis ring torus centered at the origin.
+///
+/// Sixteen exact parameter patches share 32 native circular edges on one
+/// analytic torus surface. `major_radius` must be strictly greater than the
+/// positive `minor_radius`.
+pub fn torus(
+    major_radius: Real,
+    minor_radius: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let surface = Surface::torus(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        major_radius.clone(),
+        minor_radius.clone(),
+    )?;
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let angles = (0..4)
+        .map(|index| &quarter * Real::from(index))
+        .collect::<Vec<_>>();
+    let mut builder = ModelBuilder::new();
+    let surface_id = builder.surface(surface.clone())?;
+    let mut points = Vec::with_capacity(16);
+    for u in &angles {
+        for v in &angles {
+            points.push(surface.point_at(&Point2::new(u.clone(), v.clone()))?);
+        }
+    }
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let index = |u: usize, v: usize| u * 4 + v;
+
+    let mut u_edges = Vec::with_capacity(16);
+    for u_index in 0..4 {
+        let next_u = (u_index + 1) % 4;
+        let u_start = angles[u_index].clone();
+        let u_end = &quarter * Real::from((u_index + 1) as i32);
+        for (v_index, v) in angles.iter().enumerate() {
+            let center = Point3::origin() + Vector3::z() * (&minor_radius * v.clone().sin());
+            let radius = &major_radius + &minor_radius * v.clone().cos();
+            let curve = builder.curve(Curve3::circle_arc(
+                center,
+                Vector3::x(),
+                Vector3::y(),
+                radius,
+                u_start.clone(),
+                u_end.clone(),
+            )?)?;
+            u_edges.push(builder.edge(
+                vertices[index(u_index, v_index)],
+                vertices[index(next_u, v_index)],
+                curve,
+                ParameterDomain::new(u_start.clone(), u_end.clone())?,
+            )?);
+        }
+    }
+
+    let mut v_edges = Vec::with_capacity(16);
+    for (u_index, u) in angles.iter().enumerate() {
+        let radial = Vector3::x() * u.clone().cos() + Vector3::y() * u.clone().sin();
+        let center = Point3::origin() + radial.clone() * &major_radius;
+        for v_index in 0..4 {
+            let next_v = (v_index + 1) % 4;
+            let v_start = angles[v_index].clone();
+            let v_end = &quarter * Real::from((v_index + 1) as i32);
+            let curve = builder.curve(Curve3::circle_arc(
+                center.clone(),
+                radial.clone(),
+                Vector3::z(),
+                minor_radius.clone(),
+                v_start.clone(),
+                v_end.clone(),
+            )?)?;
+            v_edges.push(builder.edge(
+                vertices[index(u_index, v_index)],
+                vertices[index(u_index, next_v)],
+                curve,
+                ParameterDomain::new(v_start, v_end)?,
+            )?);
+        }
+    }
+
+    let mut faces = Vec::with_capacity(16);
+    for u_index in 0..4 {
+        let next_u = (u_index + 1) % 4;
+        let u_start = angles[u_index].clone();
+        let u_end = &quarter * Real::from((u_index + 1) as i32);
+        for v_index in 0..4 {
+            let next_v = (v_index + 1) % 4;
+            let v_start = angles[v_index].clone();
+            let v_end = &quarter * Real::from((v_index + 1) as i32);
+            let specs = [
+                (
+                    u_edges[index(u_index, v_index)],
+                    Direction::Forward,
+                    CurvePoint2::new(u_start.clone(), v_start.clone()),
+                    CurvePoint2::new(u_end.clone(), v_start.clone()),
+                    ParameterCorrespondence::affine(quarter.clone(), u_start.clone())?,
+                ),
+                (
+                    v_edges[index(next_u, v_index)],
+                    Direction::Forward,
+                    CurvePoint2::new(u_end.clone(), v_start.clone()),
+                    CurvePoint2::new(u_end.clone(), v_end.clone()),
+                    ParameterCorrespondence::affine(quarter.clone(), v_start.clone())?,
+                ),
+                (
+                    u_edges[index(u_index, next_v)],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_end.clone(), v_end.clone()),
+                    CurvePoint2::new(u_start.clone(), v_end.clone()),
+                    ParameterCorrespondence::affine(-quarter.clone(), u_end.clone())?,
+                ),
+                (
+                    v_edges[index(u_index, v_index)],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_start.clone(), v_end.clone()),
+                    CurvePoint2::new(u_start.clone(), v_start.clone()),
+                    ParameterCorrespondence::affine(-quarter.clone(), v_end.clone())?,
+                ),
+            ];
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(surface_id, Orientation::Forward, wire, Vec::new())?);
+        }
+    }
+    let shell = builder.shell(faces)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Extrudes one exact simple line/arc contour between two z coordinates.
+///
+/// Native circular segments remain circular on the caps and generate exact
+/// extrusion surfaces on the sides. The contour is normalized to
+/// counterclockwise orientation; no chords or sampled replacements are
+/// authored.
+pub fn extrude_contour(
+    contour: &Contour2,
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let (model, solids) = extrude_contour_regions(&[(contour.clone(), Vec::new())], z_min, z_max)?;
+    Ok((model, solids[0]))
+}
+
+/// Extrudes disjoint exact line/arc regions into one validated model.
+///
+/// Each tuple contains one material contour and its disjoint hole contours.
+/// Material contours are normalized counterclockwise and holes clockwise while
+/// preserving every native segment family.
+pub fn extrude_contour_regions(
+    regions: &[(Contour2, Vec<Contour2>)],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let normalized = regions
+        .iter()
+        .map(|(outer, holes)| {
+            let outer = normalize_contour(outer, true)?;
+            let holes = holes
+                .iter()
+                .map(|hole| normalize_contour(hole, false))
+                .collect::<Result<Vec<_>, _>>()?;
+            validate_contour_nesting(&outer, &holes)?;
+            Ok((outer, holes))
+        })
+        .collect::<Result<Vec<_>, ConstructionError>>()?;
+    let mut builder = ModelBuilder::new();
+    let mut solids = Vec::with_capacity(normalized.len());
+    for (outer, holes) in normalized {
+        let mut loops = Vec::with_capacity(holes.len() + 1);
+        loops.push(outer);
+        loops.extend(holes);
+        solids.push(add_line_arc_region(
+            &mut builder,
+            &loops,
+            z_min.clone(),
+            z_max.clone(),
+        )?);
+    }
+    Ok((builder.finish()?, solids))
+}
+
+fn normalize_contour(
+    contour: &Contour2,
+    counterclockwise: bool,
+) -> Result<Contour2, ConstructionError> {
+    if contour.segments().len() < 2 {
+        return Err(ConstructionError::ProfileTooSmall);
+    }
+    if !contour
+        .intersect_self(&CurvePolicy::certified())
+        .map_err(GeometryError::from)?
+        .is_empty()
+    {
+        return Err(ConstructionError::SelfIntersectingProfile);
+    }
+    let signed_area = contour
+        .signed_area()
+        .map_err(GeometryError::from)?
+        .ok_or(ConstructionError::DegenerateProfile)?;
+    let reverse = match compare_reals(&signed_area, &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } => counterclockwise,
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => !counterclockwise,
+        PredicateOutcome::Decided { .. } => return Err(ConstructionError::DegenerateProfile),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(
+                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
+            );
+        }
+    };
+    if reverse {
+        Contour2::try_new(
+            contour
+                .segments()
+                .iter()
+                .rev()
+                .map(Segment2::reversed)
+                .collect(),
+        )
+        .map_err(GeometryError::from)
+        .map_err(ConstructionError::from)
+    } else {
+        Ok(contour.clone())
+    }
+}
+
+fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), ConstructionError> {
+    let policy = CurvePolicy::certified();
+    for hole in holes {
+        if !outer
+            .intersect_contour(hole, &policy)
+            .map_err(GeometryError::from)?
+            .is_empty()
+        {
+            return Err(ConstructionError::IntersectingProfiles);
+        }
+        match outer.classify_point(hole.segments()[0].start(), &policy) {
+            Classification::Decided(ContourPointLocation::Inside) => {}
+            Classification::Decided(_) => return Err(ConstructionError::HoleOutside),
+            Classification::Uncertain(reason) => {
+                return Err(
+                    BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason))
+                        .into(),
+                );
+            }
+        }
+    }
+    for first in 0..holes.len() {
+        for second in first + 1..holes.len() {
+            if !holes[first]
+                .intersect_contour(&holes[second], &policy)
+                .map_err(GeometryError::from)?
+                .is_empty()
+            {
+                return Err(ConstructionError::IntersectingProfiles);
+            }
+            for (container, point) in [
+                (&holes[first], holes[second].segments()[0].start()),
+                (&holes[second], holes[first].segments()[0].start()),
+            ] {
+                match container.classify_point(point, &policy) {
+                    Classification::Decided(ContourPointLocation::Inside) => {
+                        return Err(ConstructionError::NestedHoles);
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Err(BuildError::Geometry(
+                            GeometryError::PlanarClassificationUnresolved(reason),
+                        )
+                        .into());
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn add_line_arc_region(
+    builder: &mut ModelBuilder,
+    loops: &[Contour2],
+    z_min: Real,
+    z_max: Real,
+) -> Result<SolidId, ConstructionError> {
+    let loop_offsets = loops
+        .iter()
+        .scan(0_usize, |offset, contour| {
+            let current = *offset;
+            *offset += contour.segments().len();
+            Some(current)
+        })
+        .collect::<Vec<_>>();
+    let count = loops
+        .iter()
+        .map(|contour| contour.segments().len())
+        .sum::<usize>();
+    let mut next_indices = vec![0_usize; count];
+    for (contour, offset) in loops.iter().zip(&loop_offsets) {
+        for local in 0..contour.segments().len() {
+            next_indices[offset + local] = offset + (local + 1) % contour.segments().len();
+        }
+    }
+    let segments = loops
+        .iter()
+        .flat_map(|contour| contour.segments())
+        .cloned()
+        .collect::<Vec<_>>();
+    let points_2d = segments
+        .iter()
+        .map(|segment| segment.start().clone())
+        .collect::<Vec<_>>();
+    let mut points = Vec::with_capacity(points_2d.len() * 2);
+    points.extend(
+        points_2d
+            .iter()
+            .map(|point| Point3::new(point.x().clone(), point.y().clone(), z_min.clone())),
+    );
+    points.extend(
+        points_2d
+            .iter()
+            .map(|point| Point3::new(point.x().clone(), point.y().clone(), z_max.clone())),
+    );
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut bottom_curves = Vec::with_capacity(count);
+    let mut bottom_edges = Vec::with_capacity(count);
+    let mut top_edges = Vec::with_capacity(count);
+    let mut domains = Vec::with_capacity(count);
+    for (index, segment) in segments.iter().enumerate() {
+        let next = next_indices[index];
+        let (bottom_curve, domain) = spatial_segment_curve(segment, &z_min)?;
+        let bottom_curve_id = builder.curve(bottom_curve.clone())?;
+        bottom_edges.push(builder.edge(
+            vertices[index],
+            vertices[next],
+            bottom_curve_id,
+            domain.clone(),
+        )?);
+        let (top_curve, top_domain) = spatial_segment_curve(segment, &z_max)?;
+        let top_curve_id = builder.curve(top_curve)?;
+        top_edges.push(builder.edge(
+            vertices[index + count],
+            vertices[next + count],
+            top_curve_id,
+            top_domain,
+        )?);
+        bottom_curves.push(bottom_curve);
+        domains.push(domain);
+    }
+    let mut axial_edges = Vec::with_capacity(count);
+    for index in 0..count {
+        let curve = builder.curve(Curve3::line(
+            points[index].clone(),
+            points[index + count].clone(),
+        )?)?;
+        axial_edges.push(builder.edge(
+            vertices[index],
+            vertices[index + count],
+            curve,
+            ParameterDomain::unit(),
+        )?);
+    }
+
+    let bottom_surface = builder.surface(Surface::plane(
+        Point3::new(Real::zero(), Real::zero(), z_min.clone()),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut bottom_wires = Vec::with_capacity(loops.len());
+    for (contour, offset) in loops.iter().zip(&loop_offsets) {
+        let mut uses = Vec::with_capacity(contour.segments().len());
+        for local in (0..contour.segments().len()).rev() {
+            let index = offset + local;
+            let reversed = segments[index].reversed();
+            let pcurve = builder.pcurve(Pcurve::new(curve2_from_segment(&reversed)))?;
+            let correspondence = segment_correspondence(&segments[index], Direction::Reversed)?;
+            uses.push(builder.edge_use(
+                bottom_edges[index],
+                Direction::Reversed,
+                pcurve,
+                correspondence,
+            )?);
+        }
+        bottom_wires.push(builder.wire(uses)?);
+    }
+    let bottom_face = builder.face(
+        bottom_surface,
+        Orientation::Reversed,
+        bottom_wires[0],
+        bottom_wires[1..].to_vec(),
+    )?;
+
+    let top_surface = builder.surface(Surface::plane(
+        Point3::new(Real::zero(), Real::zero(), z_max.clone()),
+        Vector3::x(),
+        Vector3::y(),
+    )?)?;
+    let mut top_wires = Vec::with_capacity(loops.len());
+    for (contour, offset) in loops.iter().zip(&loop_offsets) {
+        let mut uses = Vec::with_capacity(contour.segments().len());
+        for local in 0..contour.segments().len() {
+            let index = offset + local;
+            let pcurve = builder.pcurve(Pcurve::new(curve2_from_segment(&segments[index])))?;
+            uses.push(builder.edge_use(
+                top_edges[index],
+                Direction::Forward,
+                pcurve,
+                segment_correspondence(&segments[index], Direction::Forward)?,
+            )?);
+        }
+        top_wires.push(builder.wire(uses)?);
+    }
+    let top_face = builder.face(
+        top_surface,
+        Orientation::Forward,
+        top_wires[0],
+        top_wires[1..].to_vec(),
+    )?;
+
+    let height = &z_max - &z_min;
+    let mut side_faces = Vec::with_capacity(count);
+    for index in 0..count {
+        let next = next_indices[index];
+        let domain = &domains[index];
+        let surface = builder.surface(Surface::extrusion(
+            bottom_curves[index].clone(),
+            Vector3::z(),
+        )?)?;
+        let specs = [
+            (
+                bottom_edges[index],
+                Direction::Forward,
+                CurvePoint2::new(domain.start().clone(), Real::zero()),
+                CurvePoint2::new(domain.end().clone(), Real::zero()),
+                ParameterCorrespondence::affine(
+                    domain.end() - domain.start(),
+                    domain.start().clone(),
+                )?,
+            ),
+            (
+                axial_edges[next],
+                Direction::Forward,
+                CurvePoint2::new(domain.end().clone(), Real::zero()),
+                CurvePoint2::new(domain.end().clone(), height.clone()),
+                ParameterCorrespondence::identity(),
+            ),
+            (
+                top_edges[index],
+                Direction::Reversed,
+                CurvePoint2::new(domain.end().clone(), height.clone()),
+                CurvePoint2::new(domain.start().clone(), height.clone()),
+                ParameterCorrespondence::affine(
+                    domain.start() - domain.end(),
+                    domain.end().clone(),
+                )?,
+            ),
+            (
+                axial_edges[index],
+                Direction::Reversed,
+                CurvePoint2::new(domain.start().clone(), height.clone()),
+                CurvePoint2::new(domain.start().clone(), Real::zero()),
+                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+            ),
+        ];
+        let mut uses = Vec::with_capacity(4);
+        for (edge, direction, start, end, correspondence) in specs {
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+            )))?;
+            uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+        }
+        let wire = builder.wire(uses)?;
+        side_faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
+    }
+    let mut faces = vec![bottom_face, top_face];
+    faces.extend(side_faces);
+    let shell = builder.shell(faces)?;
+    Ok(builder.solid(shell, Vec::new())?)
+}
+
+fn spatial_segment_curve(
+    segment: &Segment2,
+    z: &Real,
+) -> Result<(Curve3, ParameterDomain), ConstructionError> {
+    match segment {
+        Segment2::Line(line) => Ok((
+            Curve3::line(
+                Point3::new(
+                    line.start().x().clone(),
+                    line.start().y().clone(),
+                    z.clone(),
+                ),
+                Point3::new(line.end().x().clone(), line.end().y().clone(), z.clone()),
+            )?,
+            ParameterDomain::unit(),
+        )),
+        Segment2::Arc(arc) => {
+            let radius = arc
+                .radius_squared()
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let radial_x = arc.start().x() - arc.center().x();
+            let radial_y = arc.start().y() - arc.center().y();
+            let x = Vector3::from_xyz(
+                (radial_x.clone() / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                (radial_y.clone() / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                Real::zero(),
+            );
+            let (tangent_x, tangent_y) = if arc.is_clockwise() {
+                (radial_y, -radial_x)
+            } else {
+                (-radial_y, radial_x)
+            };
+            let y = Vector3::from_xyz(
+                (tangent_x / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                (tangent_y / &radius).map_err(|_| GeometryError::ProjectiveDivision)?,
+                Real::zero(),
+            );
+            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
+                Classification::Decided(sweep) => sweep,
+                Classification::Uncertain(reason) => {
+                    return Err(BuildError::Geometry(
+                        GeometryError::PlanarClassificationUnresolved(reason),
+                    )
+                    .into());
+                }
+            };
+            let domain = ParameterDomain::new(Real::zero(), sweep.clone())?;
+            Ok((
+                Curve3::circle_arc(
+                    Point3::new(
+                        arc.center().x().clone(),
+                        arc.center().y().clone(),
+                        z.clone(),
+                    ),
+                    x,
+                    y,
+                    radius,
+                    Real::zero(),
+                    sweep,
+                )?,
+                domain,
+            ))
+        }
+    }
+}
+
+fn curve2_from_segment(segment: &Segment2) -> Curve2 {
+    match segment {
+        Segment2::Line(line) => Curve2::from(line.clone()),
+        Segment2::Arc(arc) => Curve2::from(arc.clone()),
+    }
+}
+
+fn segment_correspondence(
+    segment: &Segment2,
+    direction: Direction,
+) -> Result<ParameterCorrespondence, ConstructionError> {
+    match segment {
+        Segment2::Line(_) => Ok(match direction {
+            Direction::Forward => ParameterCorrespondence::identity(),
+            Direction::Reversed => ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+        }),
+        Segment2::Arc(_) => Ok(ParameterCorrespondence::angular_sweep()),
+    }
+}
+
+/// Revolves one exact simple radial/axial polygon around the z axis.
+///
+/// Profile `x` is radius and must remain strictly positive; profile `y` is
+/// axial position. Clockwise input is normalized. Every line segment owns one
+/// revolution carrier split into four exact angular faces. The periodic seam
+/// shares meridian edges by identity rather than tolerance sewing.
+pub fn revolve(profile: &[Point2]) -> Result<(Model, SolidId), ConstructionError> {
+    let profile = normalize_profile(profile, true)?;
+    validate_revolution_profile_radius(&profile)?;
+    let mut builder = ModelBuilder::new();
+    let shell = add_normalized_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Revolves one exact simple radial/axial region around the z axis.
+///
+/// The outer loop and every hole must stay strictly at positive radius.
+/// Holes become identity-independent inward shells and remain exact material
+/// cavities through measurement, classification, transforms, and persistence.
+pub fn revolve_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+) -> Result<(Model, SolidId), ConstructionError> {
+    let outer = normalize_profile(outer, true)?;
+    let holes = holes
+        .iter()
+        .map(|hole| normalize_profile(hole, true))
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_revolution_profile_radius(&outer)?;
+    for hole in &holes {
+        validate_revolution_profile_radius(hole)?;
+    }
+    validate_profile_nesting(&outer, &holes)?;
+    let mut builder = ModelBuilder::new();
+    let outer_shell =
+        add_normalized_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
+    let voids = holes
+        .iter()
+        .map(|hole| add_normalized_revolution_shell(&mut builder, hole, ShellDirection::Inward))
+        .collect::<Result<Vec<_>, _>>()?;
+    let solid = builder.solid(outer_shell, voids)?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Revolves one exact simple line/arc contour around the z axis.
+///
+/// Profile `x` is radius and the complete contour must remain strictly
+/// positive. Every native line or circular-arc segment owns four periodic
+/// revolution faces. Curved meridians remain native circles; no flattening or
+/// tolerance sewing enters construction.
+pub fn revolve_contour(profile: &Contour2) -> Result<(Model, SolidId), ConstructionError> {
+    let profile = normalize_revolution_contour(profile)?;
+    let mut builder = ModelBuilder::new();
+    let shell =
+        add_normalized_contour_revolution_shell(&mut builder, &profile, ShellDirection::Outward)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Revolves one exact line/arc region with inward profile cavities.
+pub fn revolve_contour_region(
+    outer: &Contour2,
+    holes: &[Contour2],
+) -> Result<(Model, SolidId), ConstructionError> {
+    let outer = normalize_revolution_contour(outer)?;
+    let holes = holes
+        .iter()
+        .map(normalize_revolution_contour)
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_contour_nesting(&outer, &holes)?;
+    let mut builder = ModelBuilder::new();
+    let outer_shell =
+        add_normalized_contour_revolution_shell(&mut builder, &outer, ShellDirection::Outward)?;
+    let voids = holes
+        .iter()
+        .map(|hole| {
+            add_normalized_contour_revolution_shell(&mut builder, hole, ShellDirection::Inward)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let solid = builder.solid(outer_shell, voids)?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Sweeps one exact simple planar polygon along one exact linear path.
+///
+/// `origin + u*x + v*y` embeds the profile in model space and `path` carries
+/// it to the terminal section. The three directions must be linearly
+/// independent; shear and nonuniform scale are retained exactly. This is the
+/// linear-path sweep contract: no implicit moving-frame or corner policy is
+/// invented for a curved path.
+pub fn sweep(
+    profile: &[Point2],
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    path: Vector3,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let (model, solid) = extrude(profile, Real::zero(), Real::one())?;
+    place_linear_sweep(model, solid, origin, u, v, path)
+}
+
+/// Sweeps one exact planar polygonal region with through-holes along a line.
+///
+/// This has the same explicit affine frame and linear-path contract as
+/// [`sweep`]. Hole topology remains part of the swept shell rather than being
+/// approximated or Booleaned after construction.
+pub fn sweep_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    path: Vector3,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let (model, solid) = extrude_region(outer, holes, Real::zero(), Real::one())?;
+    place_linear_sweep(model, solid, origin, u, v, path)
+}
+
+/// Sweeps one exact polygon along a rational Bézier path in a fixed frame.
+///
+/// `path(t) + u*x + v*y` embeds every section. The path is the absolute locus
+/// of the profile origin and must advance affinely and strictly positively
+/// through the oriented profile plane: normalized plane progress is therefore
+/// exactly the path's public parameter. Lateral path curvature is unrestricted.
+/// Side faces are native tensor rational Bézier translation surfaces and no
+/// moving-frame, sampling, or corner policy is inferred.
+pub fn sweep_curve(
+    profile: &[Point2],
+    u: Vector3,
+    v: Vector3,
+    path: Curve3,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let profile = normalize_profile(profile, true)?;
+    let normal = u.cross(&v);
+    if decided_construction_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Err(BuildError::Geometry(GeometryError::DegeneratePlaneBasis).into());
+    }
+    let Curve3ExactData::RationalBezier {
+        control_points: path_controls,
+        weights: path_weights,
+    } = path.exact_data()
+    else {
+        return Err(ConstructionError::UnsupportedSweepPath);
+    };
+    certify_sweep_path_progress(&path_controls, &path_weights, &normal)?;
+
+    let count = profile.len();
+    let path_start = path_controls[0].clone();
+    let path_end = path_controls[path_controls.len() - 1].clone();
+    let offset = |point: &Point2| u.clone() * &point.x + v.clone() * &point.y;
+    let lower_points = profile
+        .iter()
+        .map(|point| path_start.clone() + offset(point))
+        .collect::<Vec<_>>();
+    let upper_points = profile
+        .iter()
+        .map(|point| path_end.clone() + offset(point))
+        .collect::<Vec<_>>();
+
+    let mut builder = ModelBuilder::new();
+    let lower_vertices = lower_points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let upper_vertices = upper_points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut lower_edges = Vec::with_capacity(count);
+    let mut upper_edges = Vec::with_capacity(count);
+    let mut path_edges = Vec::with_capacity(count);
+    for index in 0..count {
+        let next = (index + 1) % count;
+        let lower_curve = builder.curve(Curve3::line(
+            lower_points[index].clone(),
+            lower_points[next].clone(),
+        )?)?;
+        lower_edges.push(builder.edge(
+            lower_vertices[index],
+            lower_vertices[next],
+            lower_curve,
+            ParameterDomain::unit(),
+        )?);
+        let upper_curve = builder.curve(Curve3::line(
+            upper_points[index].clone(),
+            upper_points[next].clone(),
+        )?)?;
+        upper_edges.push(builder.edge(
+            upper_vertices[index],
+            upper_vertices[next],
+            upper_curve,
+            ParameterDomain::unit(),
+        )?);
+        let translated_controls = path_controls
+            .iter()
+            .map(|control| control.clone() + offset(&profile[index]))
+            .collect();
+        let translated_path = builder.curve(Curve3::rational_bezier(
+            translated_controls,
+            path_weights.clone(),
+        )?)?;
+        path_edges.push(builder.edge(
+            lower_vertices[index],
+            upper_vertices[index],
+            translated_path,
+            ParameterDomain::unit(),
+        )?);
+    }
+
+    let lower_surface = builder.surface(Surface::plane(path_start, u.clone(), v.clone())?)?;
+    let mut lower_uses = Vec::with_capacity(count);
+    for index in (0..count).rev() {
+        let next = (index + 1) % count;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(curve_point(&profile[next]), curve_point(&profile[index]))
+                .map_err(GeometryError::from)?,
+        )))?;
+        lower_uses.push(builder.edge_use(
+            lower_edges[index],
+            Direction::Reversed,
+            pcurve,
+            ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+        )?);
+    }
+    let lower_wire = builder.wire(lower_uses)?;
+    let lower_face = builder.face(lower_surface, Orientation::Reversed, lower_wire, Vec::new())?;
+
+    let upper_surface = builder.surface(Surface::plane(path_end, u.clone(), v.clone())?)?;
+    let mut upper_uses = Vec::with_capacity(count);
+    for index in 0..count {
+        let next = (index + 1) % count;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(curve_point(&profile[index]), curve_point(&profile[next]))
+                .map_err(GeometryError::from)?,
+        )))?;
+        upper_uses.push(builder.edge_use(
+            upper_edges[index],
+            Direction::Forward,
+            pcurve,
+            ParameterCorrespondence::identity(),
+        )?);
+    }
+    let upper_wire = builder.wire(upper_uses)?;
+    let upper_face = builder.face(upper_surface, Orientation::Forward, upper_wire, Vec::new())?;
+
+    let parameter_corners = [
+        CurvePoint2::new(Real::zero(), Real::zero()),
+        CurvePoint2::new(Real::one(), Real::zero()),
+        CurvePoint2::new(Real::one(), Real::one()),
+        CurvePoint2::new(Real::zero(), Real::one()),
+    ];
+    let mut faces = vec![lower_face, upper_face];
+    for index in 0..count {
+        let next = (index + 1) % count;
+        let start_offset = offset(&profile[index]);
+        let end_offset = offset(&profile[next]);
+        let surface_controls = path_controls
+            .iter()
+            .map(|control| {
+                vec![
+                    control.clone() + &start_offset,
+                    control.clone() + &end_offset,
+                ]
+            })
+            .collect::<Vec<_>>();
+        let surface_weights = path_weights
+            .iter()
+            .map(|weight| vec![weight.clone(), weight.clone()])
+            .collect::<Vec<_>>();
+        let surface =
+            builder.surface(Surface::rational_bezier(surface_controls, surface_weights)?)?;
+        let specs = [
+            (lower_edges[index], Direction::Forward, 0, 1),
+            (path_edges[next], Direction::Forward, 1, 2),
+            (upper_edges[index], Direction::Reversed, 2, 3),
+            (path_edges[index], Direction::Reversed, 3, 0),
+        ];
+        let mut uses = Vec::with_capacity(4);
+        for (edge, direction, start, end) in specs {
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(
+                    parameter_corners[start].clone(),
+                    parameter_corners[end].clone(),
+                )
+                .map_err(GeometryError::from)?,
+            )))?;
+            uses.push(builder.edge_use(
+                edge,
+                direction,
+                pcurve,
+                match direction {
+                    Direction::Forward => ParameterCorrespondence::identity(),
+                    Direction::Reversed => {
+                        ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                    }
+                },
+            )?);
+        }
+        let wire = builder.wire(uses)?;
+        faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
+    }
+    let shell = builder.shell(faces)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+fn certify_sweep_path_progress(
+    controls: &[Point3],
+    weights: &[Real],
+    normal: &Vector3,
+) -> Result<Real, ConstructionError> {
+    let degree = controls
+        .len()
+        .checked_sub(1)
+        .ok_or(ConstructionError::UnsupportedSweepPath)?;
+    let scalar = |point: &Point3| normal.dot(&Vector3::from(point.clone()));
+    let start = scalar(&controls[0]);
+    let end = scalar(&controls[degree]);
+    let progress = &end - &start;
+    if decided_construction_order(compare_reals(&progress, &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Err(ConstructionError::NonMonotoneSweepPath);
+    }
+    let denominator =
+        Real::from(u128::try_from(degree + 1).expect("usize is representable as u128"));
+    let numerators = controls
+        .iter()
+        .zip(weights)
+        .map(|(control, weight)| weight * scalar(control))
+        .collect::<Vec<_>>();
+    for index in 0..=degree + 1 {
+        let lower_count =
+            Real::from(u128::try_from(degree + 1 - index).expect("usize is representable as u128"));
+        let upper_count =
+            Real::from(u128::try_from(index).expect("usize is representable as u128"));
+        let elevated_numerator = (if index <= degree {
+            &lower_count * &numerators[index]
+        } else {
+            Real::zero()
+        }) + if index > 0 {
+            &upper_count * &numerators[index - 1]
+        } else {
+            Real::zero()
+        };
+        let affine_times_weight = (if index <= degree {
+            &lower_count * &start * &weights[index]
+        } else {
+            Real::zero()
+        }) + if index > 0 {
+            &upper_count * &end * &weights[index - 1]
+        } else {
+            Real::zero()
+        };
+        let difference = (elevated_numerator / &denominator)
+            .map_err(|_| GeometryError::ProjectiveDivision)?
+            - (affine_times_weight / &denominator)
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+        if decided_construction_order(compare_reals(&difference, &Real::zero()))?
+            != std::cmp::Ordering::Equal
+        {
+            return Err(ConstructionError::NonMonotoneSweepPath);
+        }
+    }
+    Ok(progress)
+}
+
+fn place_linear_sweep(
+    model: Model,
+    solid: SolidId,
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    path: Vector3,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let transform = crate::Matrix4::from_row_major([
+        u.0[0].clone(),
+        v.0[0].clone(),
+        path.0[0].clone(),
+        origin.x,
+        u.0[1].clone(),
+        v.0[1].clone(),
+        path.0[1].clone(),
+        origin.y,
+        u.0[2].clone(),
+        v.0[2].clone(),
+        path.0[2].clone(),
+        origin.z,
+        Real::zero(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+    ]);
+    Ok((model.transformed(&transform)?, solid))
+}
+
+/// Lofts two or more exactly corresponding polygon sections.
+///
+/// Sections use one common x/y chart, strictly increasing `z`, and one
+/// vertex-for-vertex correspondence. Every adjacent span is certified
+/// independently. Positive homothetic spans retain planar ruled sides.
+/// Otherwise both endpoints and the complete interpolation must pass the
+/// sufficient exact strictly-convex certificate; each side is then one native
+/// bilinear rational Bézier patch. Intermediate section rings are
+/// identity-shared C⁰ seams, not hidden continuity assumptions. No
+/// nearest-vertex correspondence, sampling, or tolerance sewing is used.
+/// Exact solid volume and classification cover every span; exact area of a
+/// general bilinear side remains unsupported.
+pub fn loft(sections: &[LoftSection]) -> Result<(Model, SolidId), ConstructionError> {
+    if sections.len() < 2 {
+        return Err(ConstructionError::LoftNeedsAtLeastTwoSections);
+    }
+    for pair in sections.windows(2) {
+        require_increasing(&pair[0].z, &pair[1].z, Axis::Z)?;
+    }
+    let profiles = sections
+        .iter()
+        .map(|section| normalize_profile(&section.profile, true))
+        .collect::<Result<Vec<_>, _>>()?;
+    let count = profiles[0].len();
+    if profiles.iter().any(|profile| profile.len() != count) {
+        return Err(ConstructionError::IncompatibleLoftSections);
+    }
+    let span_scales = profiles
+        .windows(2)
+        .map(|pair| match certified_loft_scale(&pair[0], &pair[1]) {
+            Ok(scale) => Ok(Some(scale)),
+            Err(ConstructionError::IncompatibleLoftSections) => {
+                certify_convex_loft_correspondence(&pair[0], &pair[1])?;
+                Ok(None)
+            }
+            Err(error) => Err(error),
+        })
+        .collect::<Result<Vec<_>, ConstructionError>>()?;
+
+    let mut builder = ModelBuilder::new();
+    let mut vertices = Vec::with_capacity(sections.len());
+    for (section, profile) in sections.iter().zip(&profiles) {
+        let mut ring = Vec::with_capacity(count);
+        for point in profile {
+            ring.push(builder.vertex(Point3::new(
+                point.x.clone(),
+                point.y.clone(),
+                section.z.clone(),
+            ))?);
+        }
+        vertices.push(ring);
+    }
+
+    let mut rings = Vec::with_capacity(sections.len());
+    for (section_index, profile) in profiles.iter().enumerate() {
+        let mut ring = Vec::with_capacity(count);
+        for index in 0..count {
+            let next = (index + 1) % count;
+            let curve = builder.curve(Curve3::line(
+                Point3::new(
+                    profile[index].x.clone(),
+                    profile[index].y.clone(),
+                    sections[section_index].z.clone(),
+                ),
+                Point3::new(
+                    profile[next].x.clone(),
+                    profile[next].y.clone(),
+                    sections[section_index].z.clone(),
+                ),
+            )?)?;
+            ring.push(builder.edge(
+                vertices[section_index][index],
+                vertices[section_index][next],
+                curve,
+                ParameterDomain::unit(),
+            )?);
+        }
+        rings.push(ring);
+    }
+
+    let mut connectors = Vec::with_capacity(sections.len() - 1);
+    for span in 0..sections.len() - 1 {
+        let mut span_connectors = Vec::with_capacity(count);
+        for index in 0..count {
+            let curve = builder.curve(Curve3::line(
+                Point3::new(
+                    profiles[span][index].x.clone(),
+                    profiles[span][index].y.clone(),
+                    sections[span].z.clone(),
+                ),
+                Point3::new(
+                    profiles[span + 1][index].x.clone(),
+                    profiles[span + 1][index].y.clone(),
+                    sections[span + 1].z.clone(),
+                ),
+            )?)?;
+            span_connectors.push(builder.edge(
+                vertices[span][index],
+                vertices[span + 1][index],
+                curve,
+                ParameterDomain::unit(),
+            )?);
+        }
+        connectors.push(span_connectors);
+    }
+
+    let cap_surface = |builder: &mut ModelBuilder, z: &Real| {
+        builder.surface(Surface::plane(
+            Point3::new(Real::zero(), Real::zero(), z.clone()),
+            Vector3::x(),
+            Vector3::y(),
+        )?)
+    };
+    let bottom_surface = cap_surface(&mut builder, &sections[0].z)?;
+    let top_surface = cap_surface(&mut builder, &sections[sections.len() - 1].z)?;
+    let mut bottom_uses = Vec::with_capacity(count);
+    for index in (0..count).rev() {
+        let next = (index + 1) % count;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(
+                curve_point(&profiles[0][next]),
+                curve_point(&profiles[0][index]),
+            )
+            .map_err(GeometryError::from)?,
+        )))?;
+        bottom_uses.push(builder.edge_use(
+            rings[0][index],
+            Direction::Reversed,
+            pcurve,
+            ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+        )?);
+    }
+    let bottom_wire = builder.wire(bottom_uses)?;
+    let bottom_face = builder.face(
+        bottom_surface,
+        Orientation::Reversed,
+        bottom_wire,
+        Vec::new(),
+    )?;
+    let mut top_uses = Vec::with_capacity(count);
+    let top = profiles.len() - 1;
+    for index in 0..count {
+        let next = (index + 1) % count;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+            LineSeg2::try_new(
+                curve_point(&profiles[top][index]),
+                curve_point(&profiles[top][next]),
+            )
+            .map_err(GeometryError::from)?,
+        )))?;
+        top_uses.push(builder.edge_use(
+            rings[top][index],
+            Direction::Forward,
+            pcurve,
+            ParameterCorrespondence::identity(),
+        )?);
+    }
+    let top_wire = builder.wire(top_uses)?;
+    let top_face = builder.face(top_surface, Orientation::Forward, top_wire, Vec::new())?;
+
+    let mut faces = vec![bottom_face, top_face];
+    for span in 0..sections.len() - 1 {
+        for index in 0..count {
+            let next = (index + 1) % count;
+            let point = |section: usize, vertex: usize| {
+                Point3::new(
+                    profiles[section][vertex].x.clone(),
+                    profiles[section][vertex].y.clone(),
+                    sections[section].z.clone(),
+                )
+            };
+            let lower_start = point(span, index);
+            let lower_end = point(span, next);
+            let upper_start = point(span + 1, index);
+            let upper_end = point(span + 1, next);
+            let (side_surface, parameter_points) = if let Some(scale) = &span_scales[span] {
+                (
+                    Surface::plane(
+                        lower_start.clone(),
+                        &lower_end - &lower_start,
+                        &upper_start - &lower_start,
+                    )?,
+                    [
+                        CurvePoint2::new(Real::zero(), Real::zero()),
+                        CurvePoint2::new(Real::one(), Real::zero()),
+                        CurvePoint2::new(scale.clone(), Real::one()),
+                        CurvePoint2::new(Real::zero(), Real::one()),
+                    ],
+                )
+            } else {
+                (
+                    Surface::rational_bezier(
+                        vec![vec![lower_start, lower_end], vec![upper_start, upper_end]],
+                        vec![vec![Real::one(), Real::one()]; 2],
+                    )?,
+                    [
+                        CurvePoint2::new(Real::zero(), Real::zero()),
+                        CurvePoint2::new(Real::one(), Real::zero()),
+                        CurvePoint2::new(Real::one(), Real::one()),
+                        CurvePoint2::new(Real::zero(), Real::one()),
+                    ],
+                )
+            };
+            let side_surface = builder.surface(side_surface)?;
+            let side_specs = [
+                (rings[span][index], Direction::Forward, 0, 1),
+                (connectors[span][next], Direction::Forward, 1, 2),
+                (rings[span + 1][index], Direction::Reversed, 2, 3),
+                (connectors[span][index], Direction::Reversed, 3, 0),
+            ];
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end) in side_specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        parameter_points[start].clone(),
+                        parameter_points[end].clone(),
+                    )
+                    .map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(
+                    edge,
+                    direction,
+                    pcurve,
+                    match direction {
+                        Direction::Forward => ParameterCorrespondence::identity(),
+                        Direction::Reversed => {
+                            ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                        }
+                    },
+                )?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(side_surface, Orientation::Forward, wire, Vec::new())?);
+        }
+    }
+    let shell = builder.shell(faces)?;
+    let solid = builder.solid(shell, Vec::new())?;
+    Ok((builder.finish()?, solid))
+}
+
+fn certified_loft_scale(lower: &[Point2], upper: &[Point2]) -> Result<Real, ConstructionError> {
+    if lower.len() != upper.len() {
+        return Err(ConstructionError::IncompatibleLoftSections);
+    }
+    let lower_delta = &lower[1] - &lower[0];
+    let upper_delta = &upper[1] - &upper[0];
+    let lower_x_is_zero = match compare_reals(&lower_delta.0[0], &Real::zero()) {
+        PredicateOutcome::Decided { value, .. } => value == std::cmp::Ordering::Equal,
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(
+                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
+            );
+        }
+    };
+    let scale = if lower_x_is_zero {
+        (&upper_delta.0[1] / &lower_delta.0[1]).map_err(|_| GeometryError::ProjectiveDivision)?
+    } else {
+        (&upper_delta.0[0] / &lower_delta.0[0]).map_err(|_| GeometryError::ProjectiveDivision)?
+    };
+    match compare_reals(&scale, &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => {}
+        PredicateOutcome::Decided { .. } => {
+            return Err(ConstructionError::IncompatibleLoftSections);
+        }
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(
+                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
+            );
+        }
+    }
+    for index in 0..lower.len() {
+        let lower_delta = &lower[index] - &lower[0];
+        let upper_delta = &upper[index] - &upper[0];
+        for (actual, expected) in [
+            (&upper_delta.0[0], &scale * &lower_delta.0[0]),
+            (&upper_delta.0[1], &scale * &lower_delta.0[1]),
+        ] {
+            match compare_reals(actual, &expected) {
+                PredicateOutcome::Decided {
+                    value: std::cmp::Ordering::Equal,
+                    ..
+                } => {}
+                PredicateOutcome::Decided { .. } => {
+                    return Err(ConstructionError::IncompatibleLoftSections);
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    return Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                        needed,
+                        stage,
+                    })
+                    .into());
+                }
+            }
+        }
+    }
+    Ok(scale)
+}
+
+fn certify_convex_loft_correspondence(
+    lower: &[Point2],
+    upper: &[Point2],
+) -> Result<(), ConstructionError> {
+    if lower.len() != upper.len() {
+        return Err(ConstructionError::IncompatibleLoftSections);
+    }
+    let edge =
+        |points: &[Point2], index: usize| &points[(index + 1) % points.len()] - &points[index];
+    let cross =
+        |first: &Vector2, second: &Vector2| &first.0[0] * &second.0[1] - &first.0[1] * &second.0[0];
+    for index in 0..lower.len() {
+        let next = (index + 1) % lower.len();
+        let lower_edge = edge(lower, index);
+        let lower_next = edge(lower, next);
+        let upper_edge = edge(upper, index);
+        let upper_next = edge(upper, next);
+        let lower_turn = cross(&lower_edge, &lower_next);
+        let upper_turn = cross(&upper_edge, &upper_next);
+        let mixed_turn = cross(&lower_edge, &upper_next) + cross(&upper_edge, &lower_next);
+        for turn in [&lower_turn, &upper_turn] {
+            if decided_construction_order(compare_reals(turn, &Real::zero()))?
+                != std::cmp::Ordering::Greater
+            {
+                return Err(ConstructionError::IncompatibleLoftSections);
+            }
+        }
+        if decided_construction_order(compare_reals(&mixed_turn, &Real::zero()))?
+            == std::cmp::Ordering::Less
+        {
+            return Err(ConstructionError::IncompatibleLoftSections);
+        }
+    }
+    Ok(())
+}
+
+fn decided_construction_order(
+    outcome: PredicateOutcome<std::cmp::Ordering>,
+) -> Result<std::cmp::Ordering, ConstructionError> {
+    match outcome {
+        PredicateOutcome::Decided { value, .. } => Ok(value),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
+        }
+    }
+}
+
+fn validate_revolution_profile_radius(profile: &[Point2]) -> Result<(), ConstructionError> {
+    for point in profile {
+        match compare_reals(&point.x, &Real::zero()) {
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Greater,
+                ..
+            } => {}
+            PredicateOutcome::Decided { .. } => {
+                return Err(ConstructionError::ProfileCrossesRevolutionAxis);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                    needed,
+                    stage,
+                })
+                .into());
+            }
+        }
+    }
+    Ok(())
+}
+
+fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, ConstructionError> {
+    let contour = normalize_contour(contour, true)?;
+    let bounds = match Aabb2::from_contour(&contour, &CurvePolicy::certified())
+        .map_err(GeometryError::from)?
+    {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => {
+            return Err(
+                BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into(),
+            );
+        }
+    };
+    match compare_reals(bounds.min_x(), &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } => Ok(contour),
+        PredicateOutcome::Decided { .. } => Err(ConstructionError::ProfileCrossesRevolutionAxis),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
+        }
+    }
+}
+
+fn spatial_revolution_segment(
+    segment: &Segment2,
+    angle: &Real,
+) -> Result<(Curve3, ParameterDomain), ConstructionError> {
+    let radial = Vector3::from_xyz(angle.clone().cos(), angle.clone().sin(), Real::zero());
+    match segment {
+        Segment2::Line(line) => Ok((
+            Curve3::line(
+                Point3::new(
+                    line.start().x() * &radial.0[0],
+                    line.start().x() * &radial.0[1],
+                    line.start().y().clone(),
+                ),
+                Point3::new(
+                    line.end().x() * &radial.0[0],
+                    line.end().x() * &radial.0[1],
+                    line.end().y().clone(),
+                ),
+            )?,
+            ParameterDomain::unit(),
+        )),
+        Segment2::Arc(arc) => {
+            let radius = arc
+                .radius_squared()
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let start_radial = arc.start().x() - arc.center().x();
+            let start_axial = arc.start().y() - arc.center().y();
+            let x = radial.clone()
+                * ((start_radial.clone() / &radius)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?)
+                + Vector3::z()
+                    * ((start_axial.clone() / &radius)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?);
+            let (tangent_radial, tangent_axial) = if arc.is_clockwise() {
+                (start_axial, -start_radial)
+            } else {
+                (-start_axial, start_radial)
+            };
+            let y = radial.clone()
+                * ((tangent_radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?)
+                + Vector3::z()
+                    * ((tangent_axial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?);
+            let sweep = match arc.directed_sweep_angle().map_err(GeometryError::from)? {
+                Classification::Decided(sweep) => sweep,
+                Classification::Uncertain(reason) => {
+                    return Err(BuildError::Geometry(
+                        GeometryError::PlanarClassificationUnresolved(reason),
+                    )
+                    .into());
+                }
+            };
+            let domain = ParameterDomain::new(Real::zero(), sweep.clone())?;
+            Ok((
+                Curve3::circle_arc(
+                    Point3::new(
+                        arc.center().x() * &radial.0[0],
+                        arc.center().x() * &radial.0[1],
+                        arc.center().y().clone(),
+                    ),
+                    x,
+                    y,
+                    radius,
+                    Real::zero(),
+                    sweep,
+                )?,
+                domain,
+            ))
+        }
+    }
+}
+
+fn add_normalized_contour_revolution_shell(
+    builder: &mut ModelBuilder,
+    profile: &Contour2,
+    direction: ShellDirection,
+) -> Result<crate::ShellId, ConstructionError> {
+    let segments = profile.segments();
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let angles = (0..4)
+        .map(|index| &quarter * Real::from(index))
+        .collect::<Vec<_>>();
+    let mut points = Vec::with_capacity(segments.len() * 4);
+    for segment in segments {
+        for angle in &angles {
+            points.push(Point3::new(
+                segment.start().x() * angle.clone().cos(),
+                segment.start().x() * angle.clone().sin(),
+                segment.start().y().clone(),
+            ));
+        }
+    }
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let vertex =
+        |profile_index: usize, angle_index: usize| vertices[profile_index * 4 + angle_index];
+
+    let mut circles = vec![Vec::with_capacity(4); segments.len()];
+    for (profile_index, segment) in segments.iter().enumerate() {
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let start = &quarter * Real::from(angle_index as i32);
+            let end = &quarter * Real::from(angle_index as i32 + 1);
+            let curve = builder.curve(Curve3::circle_arc(
+                Point3::new(Real::zero(), Real::zero(), segment.start().y().clone()),
+                Vector3::x(),
+                Vector3::y(),
+                segment.start().x().clone(),
+                start.clone(),
+                end.clone(),
+            )?)?;
+            circles[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(profile_index, next_angle),
+                curve,
+                ParameterDomain::new(start, end)?,
+            )?);
+        }
+    }
+
+    let mut meridians = vec![Vec::with_capacity(4); segments.len()];
+    let mut profile_curves = Vec::with_capacity(segments.len());
+    let mut domains = Vec::with_capacity(segments.len());
+    for (profile_index, segment) in segments.iter().enumerate() {
+        let next_profile = (profile_index + 1) % segments.len();
+        let (profile_curve, domain) = spatial_revolution_segment(segment, &Real::zero())?;
+        profile_curves.push(profile_curve);
+        domains.push(domain);
+        for (angle_index, angle) in angles.iter().enumerate() {
+            let (curve, curve_domain) = spatial_revolution_segment(segment, angle)?;
+            let curve = builder.curve(curve)?;
+            meridians[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(next_profile, angle_index),
+                curve,
+                curve_domain,
+            )?);
+        }
+    }
+
+    let mut faces = Vec::with_capacity(segments.len() * 4);
+    for profile_index in 0..segments.len() {
+        let next_profile = (profile_index + 1) % segments.len();
+        let surface = builder.surface(Surface::revolution(
+            profile_curves[profile_index].clone(),
+            Point3::origin(),
+            Vector3::z(),
+        )?)?;
+        let domain = &domains[profile_index];
+        let v_min = domain.start();
+        let v_max = domain.end();
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let u_min = &quarter * Real::from(angle_index as i32);
+            let u_max = &quarter * Real::from(angle_index as i32 + 1);
+            let mut specs = vec![
+                (
+                    circles[profile_index][angle_index],
+                    Direction::Forward,
+                    CurvePoint2::new(u_min.clone(), v_min.clone()),
+                    CurvePoint2::new(u_max.clone(), v_min.clone()),
+                    ParameterCorrespondence::affine(&u_max - &u_min, u_min.clone())?,
+                ),
+                (
+                    meridians[profile_index][next_angle],
+                    Direction::Forward,
+                    CurvePoint2::new(u_max.clone(), v_min.clone()),
+                    CurvePoint2::new(u_max.clone(), v_max.clone()),
+                    ParameterCorrespondence::affine(v_max - v_min, v_min.clone())?,
+                ),
+                (
+                    circles[next_profile][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_max.clone(), v_max.clone()),
+                    CurvePoint2::new(u_min.clone(), v_max.clone()),
+                    ParameterCorrespondence::affine(&u_min - &u_max, u_max.clone())?,
+                ),
+                (
+                    meridians[profile_index][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_min.clone(), v_max.clone()),
+                    CurvePoint2::new(u_min, v_min.clone()),
+                    ParameterCorrespondence::affine(v_min - v_max, v_max.clone())?,
+                ),
+            ];
+            if matches!(direction, ShellDirection::Inward) {
+                specs.reverse();
+                for (_, use_direction, start, end, correspondence) in &mut specs {
+                    *use_direction = use_direction.reversed();
+                    std::mem::swap(start, end);
+                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                        unreachable!("revolution pcurves use affine correspondence");
+                    };
+                    *correspondence = ParameterCorrespondence::affine(
+                        -scale.clone(),
+                        scale.clone() + offset.clone(),
+                    )?;
+                }
+            }
+            let mut uses = Vec::with_capacity(4);
+            for (edge, use_direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, use_direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(
+                surface,
+                match direction {
+                    ShellDirection::Outward => Orientation::Forward,
+                    ShellDirection::Inward => Orientation::Reversed,
+                },
+                wire,
+                Vec::new(),
+            )?);
+        }
+    }
+    Ok(builder.shell(faces)?)
+}
+
+fn add_normalized_revolution_shell(
+    builder: &mut ModelBuilder,
+    profile: &[Point2],
+    direction: ShellDirection,
+) -> Result<crate::ShellId, ConstructionError> {
+    let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let angles = (0..4)
+        .map(|index| &quarter * Real::from(index))
+        .collect::<Vec<_>>();
+    let mut points = Vec::with_capacity(profile.len() * 4);
+    for point in profile {
+        for angle in &angles {
+            points.push(Point3::new(
+                &point.x * angle.clone().cos(),
+                &point.x * angle.clone().sin(),
+                point.y.clone(),
+            ));
+        }
+    }
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let vertex =
+        |profile_index: usize, angle_index: usize| vertices[profile_index * 4 + angle_index];
+    let mut circles = vec![Vec::with_capacity(4); profile.len()];
+    for (profile_index, point) in profile.iter().enumerate() {
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let start = &quarter * Real::from(angle_index as i32);
+            let end = &quarter * Real::from(angle_index as i32 + 1);
+            let curve = builder.curve(Curve3::circle_arc(
+                Point3::new(Real::zero(), Real::zero(), point.y.clone()),
+                Vector3::x(),
+                Vector3::y(),
+                point.x.clone(),
+                start.clone(),
+                end.clone(),
+            )?)?;
+            circles[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(profile_index, next_angle),
+                curve,
+                ParameterDomain::new(start, end)?,
+            )?);
+        }
+    }
+
+    let mut meridians = vec![Vec::with_capacity(4); profile.len()];
+    for profile_index in 0..profile.len() {
+        let next_profile = (profile_index + 1) % profile.len();
+        for angle_index in 0..4 {
+            let curve = builder.curve(Curve3::line(
+                points[profile_index * 4 + angle_index].clone(),
+                points[next_profile * 4 + angle_index].clone(),
+            )?)?;
+            meridians[profile_index].push(builder.edge(
+                vertex(profile_index, angle_index),
+                vertex(next_profile, angle_index),
+                curve,
+                ParameterDomain::unit(),
+            )?);
+        }
+    }
+
+    let mut faces = Vec::with_capacity(profile.len() * 4);
+    for profile_index in 0..profile.len() {
+        let next_profile = (profile_index + 1) % profile.len();
+        let profile_curve = Curve3::line(
+            Point3::new(
+                profile[profile_index].x.clone(),
+                Real::zero(),
+                profile[profile_index].y.clone(),
+            ),
+            Point3::new(
+                profile[next_profile].x.clone(),
+                Real::zero(),
+                profile[next_profile].y.clone(),
+            ),
+        )?;
+        let surface = builder.surface(Surface::revolution(
+            profile_curve,
+            Point3::origin(),
+            Vector3::z(),
+        )?)?;
+        for angle_index in 0..4 {
+            let next_angle = (angle_index + 1) % 4;
+            let u_min = &quarter * Real::from(angle_index as i32);
+            let u_max = &quarter * Real::from(angle_index as i32 + 1);
+            let mut specs = vec![
+                (
+                    circles[profile_index][angle_index],
+                    Direction::Forward,
+                    CurvePoint2::new(u_min.clone(), Real::zero()),
+                    CurvePoint2::new(u_max.clone(), Real::zero()),
+                    ParameterCorrespondence::affine(&u_max - &u_min, u_min.clone())?,
+                ),
+                (
+                    meridians[profile_index][next_angle],
+                    Direction::Forward,
+                    CurvePoint2::new(u_max.clone(), Real::zero()),
+                    CurvePoint2::new(u_max.clone(), Real::one()),
+                    ParameterCorrespondence::identity(),
+                ),
+                (
+                    circles[next_profile][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_max.clone(), Real::one()),
+                    CurvePoint2::new(u_min.clone(), Real::one()),
+                    ParameterCorrespondence::affine(&u_min - &u_max, u_max.clone())?,
+                ),
+                (
+                    meridians[profile_index][angle_index],
+                    Direction::Reversed,
+                    CurvePoint2::new(u_min.clone(), Real::one()),
+                    CurvePoint2::new(u_min, Real::zero()),
+                    ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+                ),
+            ];
+            if matches!(direction, ShellDirection::Inward) {
+                specs.reverse();
+                for (_, use_direction, start, end, correspondence) in &mut specs {
+                    *use_direction = use_direction.reversed();
+                    std::mem::swap(start, end);
+                    let ParameterCorrespondence::Affine { scale, offset } = correspondence else {
+                        unreachable!("revolution side pcurves use affine correspondence");
+                    };
+                    *correspondence = ParameterCorrespondence::affine(
+                        -scale.clone(),
+                        scale.clone() + offset.clone(),
+                    )?;
+                }
+            }
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end, correspondence) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(edge, direction, pcurve, correspondence)?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(
+                surface,
+                match direction {
+                    ShellDirection::Outward => Orientation::Forward,
+                    ShellDirection::Inward => Orientation::Reversed,
+                },
+                wire,
+                Vec::new(),
+            )?);
+        }
+    }
+    Ok(builder.shell(faces)?)
+}
+
+/// Extrudes one exact simple polygon between two z coordinates.
+///
+/// Clockwise input is normalized to counterclockwise order. Self-intersections,
+/// repeated adjacent points, zero area, and undecidable ordering are rejected
+/// before any trusted topology is published.
+pub fn extrude(
+    profile: &[Point2],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    extrude_region(profile, &[], z_min, z_max)
+}
+
+/// Extrudes one simple polygon and subtracts closed prismatic cavities.
+///
+/// Every cavity must be strictly contained by the outer extrusion. Cavity
+/// shells are authored inward, retained as [`crate::Solid::voids`], and
+/// certified for exact non-contact and non-overlap before publication.
+pub fn extrude_with_voids(
+    profile: &[Point2],
+    z_min: Real,
+    z_max: Real,
+    voids: &[ExtrusionVoid],
+) -> Result<(Model, SolidId), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let profile = normalize_profile(profile, true)?;
+    let mut builder = ModelBuilder::new();
+    let outer = add_normalized_extrusion_shell(
+        &mut builder,
+        &[profile],
+        z_min,
+        z_max,
+        ShellDirection::Outward,
+    )?;
+    let mut void_shells = Vec::with_capacity(voids.len());
+    for void_region in voids {
+        require_increasing(&void_region.z_min, &void_region.z_max, Axis::Z)?;
+        let profile = normalize_profile(&void_region.profile, true)?;
+        void_shells.push(add_normalized_extrusion_shell(
+            &mut builder,
+            &[profile],
+            void_region.z_min.clone(),
+            void_region.z_max.clone(),
+            ShellDirection::Inward,
+        )?);
+    }
+    let solid = builder.solid(outer, void_shells)?;
+    Ok((builder.finish()?, solid))
+}
+
+/// Extrudes one exact planar region with an outer loop and disjoint holes.
+pub fn extrude_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let profile = normalize_profile(outer, true)?;
+    let holes = holes
+        .iter()
+        .map(|hole| normalize_profile(hole, false))
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_profile_nesting(&profile, &holes)?;
+    let mut loops = Vec::with_capacity(holes.len() + 1);
+    loops.push(profile);
+    loops.extend(holes);
+    extrude_normalized_loops(&loops, z_min, z_max)
+}
+
+/// Extrudes multiple disjoint exact planar regions into one validated model.
+///
+/// Each tuple contains one outer loop and its hole loops. The returned solid
+/// IDs follow input order.
+pub fn extrude_regions(
+    regions: &[(Vec<Point2>, Vec<Vec<Point2>>)],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, Vec<SolidId>), ConstructionError> {
+    require_increasing(&z_min, &z_max, Axis::Z)?;
+    let mut builder = ModelBuilder::new();
+    let mut solids = Vec::with_capacity(regions.len());
+    for (outer, holes) in regions {
+        let outer = normalize_profile(outer, true)?;
+        let holes = holes
+            .iter()
+            .map(|hole| normalize_profile(hole, false))
+            .collect::<Result<Vec<_>, _>>()?;
+        validate_profile_nesting(&outer, &holes)?;
+        let mut loops = Vec::with_capacity(holes.len() + 1);
+        loops.push(outer);
+        loops.extend(holes);
+        solids.push(add_normalized_extrusion(
+            &mut builder,
+            &loops,
+            z_min.clone(),
+            z_max.clone(),
+        )?);
+    }
+    Ok((builder.finish()?, solids))
+}
+
+fn normalize_profile(
+    profile: &[Point2],
+    counterclockwise: bool,
+) -> Result<Vec<Point2>, ConstructionError> {
+    if profile.len() < 3 {
+        return Err(ConstructionError::ProfileTooSmall);
+    }
+    let mut profile = profile.to_vec();
+    let mut contour_segments = Vec::with_capacity(profile.len());
+    for index in 0..profile.len() {
+        let next = (index + 1) % profile.len();
+        contour_segments.push(Segment2::Line(
+            LineSeg2::try_new(curve_point(&profile[index]), curve_point(&profile[next]))
+                .map_err(GeometryError::from)?,
+        ));
+    }
+    let contour = Contour2::try_new(contour_segments).map_err(GeometryError::from)?;
+    if !contour
+        .intersect_self(&CurvePolicy::certified())
+        .map_err(GeometryError::from)?
+        .is_empty()
+    {
+        return Err(ConstructionError::SelfIntersectingProfile);
+    }
+    let signed_area = contour
+        .signed_area()
+        .map_err(GeometryError::from)?
+        .ok_or(ConstructionError::DegenerateProfile)?;
+    match compare_reals(&signed_area, &Real::zero()) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater,
+            ..
+        } if counterclockwise => {}
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } if !counterclockwise => {}
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Greater | std::cmp::Ordering::Less,
+            ..
+        } => profile.reverse(),
+        PredicateOutcome::Decided { .. } => return Err(ConstructionError::DegenerateProfile),
+        PredicateOutcome::Unknown { needed, stage } => {
+            return Err(
+                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
+            );
+        }
+    }
+    Ok(profile)
+}
+
+fn validate_profile_nesting(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+) -> Result<(), ConstructionError> {
+    let policy = CurvePolicy::certified();
+    let outer_contour = contour_from_profile(outer)?;
+    let hole_contours = holes
+        .iter()
+        .map(|hole| contour_from_profile(hole))
+        .collect::<Result<Vec<_>, _>>()?;
+    for (hole, contour) in holes.iter().zip(&hole_contours) {
+        if !outer_contour
+            .intersect_contour(contour, &policy)
+            .map_err(GeometryError::from)?
+            .is_empty()
+        {
+            return Err(ConstructionError::IntersectingProfiles);
+        }
+        match outer_contour.classify_point(&curve_point(&hole[0]), &policy) {
+            Classification::Decided(ContourPointLocation::Inside) => {}
+            Classification::Decided(_) => return Err(ConstructionError::HoleOutside),
+            Classification::Uncertain(reason) => {
+                return Err(
+                    BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason))
+                        .into(),
+                );
+            }
+        }
+    }
+    for first in 0..holes.len() {
+        for second in first + 1..holes.len() {
+            if !hole_contours[first]
+                .intersect_contour(&hole_contours[second], &policy)
+                .map_err(GeometryError::from)?
+                .is_empty()
+            {
+                return Err(ConstructionError::IntersectingProfiles);
+            }
+            for (container, point) in [
+                (&hole_contours[first], &holes[second][0]),
+                (&hole_contours[second], &holes[first][0]),
+            ] {
+                match container.classify_point(&curve_point(point), &policy) {
+                    Classification::Decided(ContourPointLocation::Inside) => {
+                        return Err(ConstructionError::NestedHoles);
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Err(BuildError::Geometry(
+                            GeometryError::PlanarClassificationUnresolved(reason),
+                        )
+                        .into());
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn contour_from_profile(profile: &[Point2]) -> Result<Contour2, ConstructionError> {
+    let mut segments = Vec::with_capacity(profile.len());
+    for index in 0..profile.len() {
+        let next = (index + 1) % profile.len();
+        segments.push(Segment2::Line(
+            LineSeg2::try_new(curve_point(&profile[index]), curve_point(&profile[next]))
+                .map_err(GeometryError::from)?,
+        ));
+    }
+    Ok(Contour2::try_new(segments).map_err(GeometryError::from)?)
+}
+
+fn extrude_normalized_loops(
+    loops: &[Vec<Point2>],
+    z_min: Real,
+    z_max: Real,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let mut builder = ModelBuilder::new();
+    let solid = add_normalized_extrusion(&mut builder, loops, z_min, z_max)?;
+    Ok((builder.finish()?, solid))
+}
+
+fn add_normalized_extrusion(
+    builder: &mut ModelBuilder,
+    loops: &[Vec<Point2>],
+    z_min: Real,
+    z_max: Real,
+) -> Result<SolidId, ConstructionError> {
+    let shell =
+        add_normalized_extrusion_shell(builder, loops, z_min, z_max, ShellDirection::Outward)?;
+    Ok(builder.solid(shell, Vec::new())?)
+}
+
+#[derive(Clone, Copy)]
+enum ShellDirection {
+    Outward,
+    Inward,
+}
+
+fn add_normalized_extrusion_shell(
+    builder: &mut ModelBuilder,
+    loops: &[Vec<Point2>],
+    z_min: Real,
+    z_max: Real,
+    direction: ShellDirection,
+) -> Result<crate::ShellId, ConstructionError> {
+    let count = loops.iter().map(Vec::len).sum::<usize>();
+    let mut loop_offsets = Vec::with_capacity(loops.len());
+    let mut offset = 0;
+    for profile in loops {
+        loop_offsets.push(offset);
+        offset += profile.len();
+    }
+    let mut points = Vec::with_capacity(2 * count);
+    points.extend(loops.iter().flat_map(|profile| {
+        profile
+            .iter()
+            .map(|point| Point3::new(point.x.clone(), point.y.clone(), z_min.clone()))
+    }));
+    points.extend(loops.iter().flat_map(|profile| {
+        profile
+            .iter()
+            .map(|point| Point3::new(point.x.clone(), point.y.clone(), z_max.clone()))
+    }));
+    let vertices = points
+        .iter()
+        .cloned()
+        .map(|point| builder.vertex(point))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut edges = HashMap::<(usize, usize), EdgeId>::new();
+    let mut faces = Vec::with_capacity(count + 2);
+
+    let reverse_bottom = matches!(direction, ShellDirection::Outward);
+    let bottom_loops = loops
+        .iter()
+        .zip(&loop_offsets)
+        .map(|(profile, offset)| {
+            let mut indices = (*offset..(*offset + profile.len())).collect::<Vec<_>>();
+            let mut parameters = profile.iter().map(curve_point).collect::<Vec<_>>();
+            if reverse_bottom {
+                indices.reverse();
+                parameters.reverse();
+            }
+            (indices, parameters)
+        })
+        .collect::<Vec<_>>();
+    faces.push(add_planar_region_face(
+        builder,
+        &points,
+        &vertices,
+        &mut edges,
+        &bottom_loops,
+        Point3::new(Real::zero(), Real::zero(), z_min),
+        Vector3::x(),
+        Vector3::y(),
+        if reverse_bottom {
+            Orientation::Reversed
+        } else {
+            Orientation::Forward
+        },
+    )?);
+
+    let reverse_top = matches!(direction, ShellDirection::Inward);
+    let top_loops = loops
+        .iter()
+        .zip(&loop_offsets)
+        .map(|(profile, offset)| {
+            let mut indices =
+                ((count + offset)..(count + offset + profile.len())).collect::<Vec<_>>();
+            let mut parameters = profile.iter().map(curve_point).collect::<Vec<_>>();
+            if reverse_top {
+                indices.reverse();
+                parameters.reverse();
+            }
+            (indices, parameters)
+        })
+        .collect::<Vec<_>>();
+    faces.push(add_planar_region_face(
+        builder,
+        &points,
+        &vertices,
+        &mut edges,
+        &top_loops,
+        Point3::new(Real::zero(), Real::zero(), z_max),
+        Vector3::x(),
+        Vector3::y(),
+        if reverse_top {
+            Orientation::Reversed
+        } else {
+            Orientation::Forward
+        },
+    )?);
+
+    let unit_square = [
+        CurvePoint2::new(Real::zero(), Real::zero()),
+        CurvePoint2::new(Real::one(), Real::zero()),
+        CurvePoint2::new(Real::one(), Real::one()),
+        CurvePoint2::new(Real::zero(), Real::one()),
+    ];
+    for (profile, offset) in loops.iter().zip(&loop_offsets) {
+        for local in 0..profile.len() {
+            let index = offset + local;
+            let next = offset + (local + 1) % profile.len();
+            let origin = points[index].clone();
+            let (side_loop, u, v) = match direction {
+                ShellDirection::Outward => (
+                    [index, next, count + next, count + index],
+                    &points[next] - &origin,
+                    &points[count + index] - &origin,
+                ),
+                ShellDirection::Inward => (
+                    [index, count + index, count + next, next],
+                    &points[count + index] - &origin,
+                    &points[next] - &origin,
+                ),
+            };
+            faces.push(add_planar_face(
+                builder,
+                &points,
+                &vertices,
+                &mut edges,
+                &side_loop,
+                &unit_square,
+                origin.clone(),
+                u,
+                v,
+                Orientation::Forward,
+            )?);
+        }
+    }
+
+    Ok(builder.shell(faces)?)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_planar_face(
+    builder: &mut ModelBuilder,
+    points: &[Point3],
+    vertices: &[VertexId],
+    edges: &mut HashMap<(usize, usize), EdgeId>,
+    loop_vertices: &[usize],
+    parameter_points: &[CurvePoint2],
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    orientation: Orientation,
+) -> Result<crate::FaceId, ConstructionError> {
+    add_planar_region_face(
+        builder,
+        points,
+        vertices,
+        edges,
+        &[(loop_vertices.to_vec(), parameter_points.to_vec())],
+        origin,
+        u,
+        v,
+        orientation,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn add_planar_region_face(
+    builder: &mut ModelBuilder,
+    points: &[Point3],
+    vertices: &[VertexId],
+    edges: &mut HashMap<(usize, usize), EdgeId>,
+    loops: &[(Vec<usize>, Vec<CurvePoint2>)],
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    orientation: Orientation,
+) -> Result<crate::FaceId, ConstructionError> {
+    let surface = builder.surface(Surface::plane(origin, u, v)?)?;
+    let mut wires = Vec::with_capacity(loops.len());
+    for (loop_vertices, parameter_points) in loops {
+        wires.push(add_planar_wire(
+            builder,
+            points,
+            vertices,
+            edges,
+            loop_vertices,
+            parameter_points,
+        )?);
+    }
+    let outer = wires.remove(0);
+    Ok(builder.face(surface, orientation, outer, wires)?)
+}
+
+fn add_planar_wire(
+    builder: &mut ModelBuilder,
+    points: &[Point3],
+    vertices: &[VertexId],
+    edges: &mut HashMap<(usize, usize), EdgeId>,
+    loop_vertices: &[usize],
+    parameter_points: &[CurvePoint2],
+) -> Result<crate::WireId, ConstructionError> {
+    let mut edge_uses = Vec::with_capacity(loop_vertices.len());
+    for local in 0..loop_vertices.len() {
+        let from = loop_vertices[local];
+        let to = loop_vertices[(local + 1) % loop_vertices.len()];
+        let key = if from < to { (from, to) } else { (to, from) };
+        let edge = if let Some(edge) = edges.get(&key) {
+            *edge
+        } else {
+            let curve =
+                builder.curve(Curve3::line(points[key.0].clone(), points[key.1].clone())?)?;
+            let edge = builder.edge(
+                vertices[key.0],
+                vertices[key.1],
+                curve,
+                ParameterDomain::unit(),
+            )?;
+            edges.insert(key, edge);
+            edge
+        };
+        let direction = if from < to {
+            Direction::Forward
+        } else {
+            Direction::Reversed
+        };
+        let line = LineSeg2::try_new(
+            parameter_points[local].clone(),
+            parameter_points[(local + 1) % parameter_points.len()].clone(),
+        )
+        .map_err(GeometryError::from)?;
+        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(line)))?;
+        let parameter_correspondence = match direction {
+            Direction::Forward => ParameterCorrespondence::identity(),
+            Direction::Reversed => ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+        };
+        edge_uses.push(builder.edge_use(edge, direction, pcurve, parameter_correspondence)?);
+    }
+    Ok(builder.wire(edge_uses)?)
+}
+
+fn curve_point(point: &Point2) -> CurvePoint2 {
+    CurvePoint2::new(point.x.clone(), point.y.clone())
+}
+
+fn require_increasing(min: &Real, max: &Real, axis: Axis) -> Result<(), ConstructionError> {
+    match compare_reals(min, max) {
+        PredicateOutcome::Decided {
+            value: std::cmp::Ordering::Less,
+            ..
+        } => Ok(()),
+        PredicateOutcome::Decided { .. } => Err(ConstructionError::InvalidBounds(axis)),
+        PredicateOutcome::Unknown { needed, stage } => {
+            Err(BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into())
+        }
+    }
+}
+
+fn require_frustum_radii(base_radius: &Real, top_radius: &Real) -> Result<(), ConstructionError> {
+    for (left, right) in [(&Real::zero(), top_radius), (top_radius, base_radius)] {
+        match compare_reals(left, right) {
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Less,
+                ..
+            } => {}
+            PredicateOutcome::Decided { .. } => {
+                return Err(ConstructionError::InvalidFrustumRadii);
+            }
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                    needed,
+                    stage,
+                })
+                .into());
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
+
+    use super::*;
+    use crate::{EdgeUseId, ModelCounts, SolidPointLocation};
+
+    fn r(value: i32) -> Real {
+        Real::from(value)
+    }
+
+    fn p(x: i32, y: i32, z: i32) -> Point3 {
+        Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    fn p2(x: i32, y: i32) -> Point2 {
+        Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn cuboid_uses_shared_edges_and_independent_face_local_pcurves() {
+        let (model, solid) = cuboid(p(-2, -3, -5), p(7, 11, 13)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 12,
+                pcurves: 24,
+                surfaces: 6,
+                edges: 12,
+                edge_uses: 24,
+                wires: 6,
+                faces: 6,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(model.solid(solid).unwrap().voids(), &[]);
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(2_268)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&total_area, &Real::from(1_080)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let bounds = model.bounds().unwrap().unwrap();
+        assert_eq!(
+            point3_equal(&bounds.mins, &p(-2, -3, -5)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point3_equal(&bounds.maxs, &p(7, 11, 13)).value(),
+            Some(true)
+        );
+        for edge_index in 0..model.counts().edges {
+            let uses = model
+                .uses_of_edge(EdgeId::from_index(edge_index).unwrap())
+                .unwrap();
+            assert_eq!(uses.len(), 2);
+            assert_ne!(
+                model.edge_use(uses[0]).unwrap().direction(),
+                model.edge_use(uses[1]).unwrap().direction()
+            );
+        }
+    }
+
+    #[test]
+    fn cylinder_uses_native_shared_circles_and_one_analytic_side_surface() {
+        let (model, solid) = cylinder(r(2), r(3)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 12,
+                pcurves: 24,
+                surfaces: 3,
+                edges: 12,
+                edge_uses: 24,
+                wires: 6,
+                faces: 6,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(model.solid(solid).unwrap().voids(), &[]);
+        assert_eq!(
+            model
+                .surfaces()
+                .filter(|(_, surface)| surface.kind() == crate::SurfaceKind::Cylinder)
+                .count(),
+            1
+        );
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(Real::from(12) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let faces = model.faces().map(|(id, _)| id).collect::<Vec<_>>();
+        assert_eq!(
+            compare_reals(
+                &model.face_area(faces[0]).unwrap(),
+                &(Real::from(4) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &model.face_area(faces[2]).unwrap(),
+                &(Real::from(3) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(0, 0, 1), SolidPointLocation::Inside),
+            (p(2, 0, 1), SolidPointLocation::Boundary),
+            (p(0, 0, 0), SolidPointLocation::Boundary),
+            (p(3, 0, 1), SolidPointLocation::Outside),
+            (p(0, 0, 4), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let translated = model
+            .transformed(&crate::Matrix4::affine_translation([r(3), r(-2), r(5)]))
+            .unwrap();
+        assert_eq!(
+            translated.classify_point(solid, &p(3, -2, 6)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-2, 0, 1)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &(Real::from(12) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn sphere_is_one_exact_closed_face_without_fake_seam_topology() {
+        let (model, solid) = sphere(r(3)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 0,
+                curves: 0,
+                pcurves: 0,
+                surfaces: 1,
+                edges: 0,
+                edge_uses: 0,
+                wires: 0,
+                faces: 1,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        let (face_id, face) = model.faces().next().unwrap();
+        assert!(face.is_whole_surface());
+        assert_eq!(face.outer(), None);
+        assert_eq!(
+            compare_reals(&model.face_area(face_id).unwrap(), &(r(36) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(36) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let bounds = model.bounds().unwrap().unwrap();
+        assert_eq!(
+            point3_equal(&bounds.mins, &p(-3, -3, -3)).value(),
+            Some(true)
+        );
+        assert_eq!(point3_equal(&bounds.maxs, &p(3, 3, 3)).value(), Some(true));
+        for (point, expected) in [
+            (p(0, 0, 0), SolidPointLocation::Inside),
+            (p(3, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, -3), SolidPointLocation::Boundary),
+            (p(4, 0, 0), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let translated = model
+            .transformed(&crate::Matrix4::affine_translation([r(5), r(-2), r(7)]))
+            .unwrap();
+        assert_eq!(
+            translated.classify_point(solid, &p(5, -2, 7)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected = translated
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-8, -2, 7)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(36) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn spherical_void_shells_are_exact_inward_and_strictly_nested() {
+        let (model, solid) = sphere_with_voids(
+            r(5),
+            &[SphereVoid {
+                center: p(1, 0, 0),
+                radius: r(2),
+            }],
+        )
+        .unwrap();
+        assert_eq!(model.counts().faces, 2);
+        assert_eq!(model.counts().shells, 2);
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(156) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(1, 0, 0)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 0, 0)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(-4, 0, 0)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        crate::RawModel::from_json(&model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        assert!(
+            sphere_with_voids(
+                r(5),
+                &[SphereVoid {
+                    center: p(3, 0, 0),
+                    radius: r(2),
+                }],
+            )
+            .is_err()
+        );
+        assert!(
+            sphere_with_voids(
+                r(5),
+                &[
+                    SphereVoid {
+                        center: p(-1, 0, 0),
+                        radius: r(2),
+                    },
+                    SphereVoid {
+                        center: p(1, 0, 0),
+                        radius: r(2),
+                    },
+                ],
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn exact_edge_split_updates_affine_pcurves_and_wire_topology() {
+        let mut builder = ModelBuilder::new();
+        let points = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
+        let vertices = points
+            .iter()
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let mut uses = Vec::new();
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let curve = builder
+                .curve(Curve3::line(points[index].clone(), points[next].clone()).unwrap())
+                .unwrap();
+            let edge = builder
+                .edge(
+                    vertices[index],
+                    vertices[next],
+                    curve,
+                    ParameterDomain::unit(),
+                )
+                .unwrap();
+            let pcurve = builder
+                .pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        CurvePoint2::new(points[index].x.clone(), points[index].y.clone()),
+                        CurvePoint2::new(points[next].x.clone(), points[next].y.clone()),
+                    )
+                    .unwrap(),
+                )))
+                .unwrap();
+            uses.push(
+                builder
+                    .edge_use(
+                        edge,
+                        Direction::Forward,
+                        pcurve,
+                        ParameterCorrespondence::identity(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let wire = builder.wire(uses).unwrap();
+        let surface = builder
+            .surface(Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap())
+            .unwrap();
+        let face = builder
+            .face(surface, Orientation::Forward, wire, Vec::new())
+            .unwrap();
+        builder.shell(vec![face]).unwrap();
+        let model = builder.finish().unwrap();
+
+        let half = (Real::one() / r(2)).unwrap();
+        let (split_model, split) = model
+            .split_edge(EdgeId::from_index(0).unwrap(), half.clone())
+            .unwrap();
+        assert_eq!(split.vertex.index(), 4);
+        assert_eq!(split.first.index(), 0);
+        assert_eq!(split.second.index(), 4);
+        assert_eq!(split.edge_uses.len(), 1);
+        assert_eq!(split_model.wire(wire).unwrap().edge_uses().len(), 5);
+        assert_eq!(
+            compare_reals(
+                &split_model.vertex(split.vertex).unwrap().point().x,
+                &Real::one(),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let (first_use, second_use) = split.edge_uses[0];
+        assert_eq!(
+            compare_reals(
+                &split_model
+                    .edge_parameter_at(first_use, &Real::one())
+                    .unwrap(),
+                &half,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &split_model
+                    .edge_parameter_at(second_use, &Real::zero())
+                    .unwrap(),
+                &half,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&split_model.face_area(face).unwrap(), &r(4)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected
+                .edge_use(EdgeUseId::from_index(0).unwrap())
+                .unwrap()
+                .direction(),
+            Direction::Reversed
+        );
+        let (reversed_split, reversed_ids) = reflected
+            .split_edge(EdgeId::from_index(0).unwrap(), half)
+            .unwrap();
+        assert_eq!(reversed_split.wire(wire).unwrap().edge_uses().len(), 5);
+        assert_eq!(
+            reversed_split
+                .edge_use(reversed_ids.edge_uses[0].0)
+                .unwrap()
+                .edge(),
+            reversed_ids.second
+        );
+        assert_eq!(
+            reversed_split
+                .edge_use(reversed_ids.edge_uses[0].1)
+                .unwrap()
+                .edge(),
+            reversed_ids.first
+        );
+        assert_eq!(
+            compare_reals(&reversed_split.face_area(face).unwrap(), &r(4)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn exact_planar_face_split_authors_one_shared_chord_and_two_valid_faces() {
+        let mut builder = ModelBuilder::new();
+        let points = [p(0, 0, 0), p(2, 0, 0), p(2, 2, 0), p(0, 2, 0)];
+        let vertices = points
+            .iter()
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let mut uses = Vec::new();
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let curve = builder
+                .curve(Curve3::line(points[index].clone(), points[next].clone()).unwrap())
+                .unwrap();
+            let edge = builder
+                .edge(
+                    vertices[index],
+                    vertices[next],
+                    curve,
+                    ParameterDomain::unit(),
+                )
+                .unwrap();
+            let pcurve = builder
+                .pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        CurvePoint2::new(points[index].x.clone(), points[index].y.clone()),
+                        CurvePoint2::new(points[next].x.clone(), points[next].y.clone()),
+                    )
+                    .unwrap(),
+                )))
+                .unwrap();
+            uses.push(
+                builder
+                    .edge_use(
+                        edge,
+                        Direction::Forward,
+                        pcurve,
+                        ParameterCorrespondence::identity(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let wire = builder.wire(uses).unwrap();
+        let surface = builder
+            .surface(Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap())
+            .unwrap();
+        let face = builder
+            .face(surface, Orientation::Forward, wire, Vec::new())
+            .unwrap();
+        let shell = builder.shell(vec![face]).unwrap();
+        let model = builder.finish().unwrap();
+
+        let (split_model, split) = model.split_face(face, vertices[0], vertices[2]).unwrap();
+        assert_eq!(split.first_face, face);
+        assert_eq!(split.first_wire, wire);
+        assert_eq!(split_model.counts().edges, 5);
+        assert_eq!(split_model.counts().edge_uses, 6);
+        assert_eq!(split_model.counts().wires, 2);
+        assert_eq!(split_model.counts().faces, 2);
+        assert_eq!(
+            split_model.shell(shell).unwrap().faces(),
+            &[split.first_face, split.second_face]
+        );
+        assert_eq!(
+            split_model
+                .edge_use(split.edge_uses[0])
+                .unwrap()
+                .direction(),
+            Direction::Reversed
+        );
+        assert_eq!(
+            split_model
+                .edge_use(split.edge_uses[1])
+                .unwrap()
+                .direction(),
+            Direction::Forward
+        );
+        assert_eq!(
+            compare_reals(&split_model.face_area(split.first_face).unwrap(), &r(2)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&split_model.face_area(split.second_face).unwrap(), &r(2)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert!(matches!(
+            model.split_face(face, vertices[0], vertices[1]),
+            Err(crate::TopologyEditError::DegenerateFaceSplit)
+        ));
+        assert_eq!(model.counts().faces, 1);
+    }
+
+    #[test]
+    fn exact_planar_face_split_preserves_certified_prisms_and_cylinders() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let (split_model, split) = model
+            .split_face(
+                face,
+                VertexId::from_index(4).unwrap(),
+                VertexId::from_index(6).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(split_model.counts().faces, 7);
+        assert_eq!(
+            compare_reals(&split_model.solid_volume(solid).unwrap(), &r(8)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &(split_model.face_area(split.first_face).unwrap()
+                    + split_model.face_area(split.second_face).unwrap()),
+                &r(4),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let (cylinder, solid) = cylinder(r(2), r(3)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let (split_cylinder, split) = cylinder
+            .split_face(
+                face,
+                VertexId::from_index(4).unwrap(),
+                VertexId::from_index(6).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(split_cylinder.counts().faces, 7);
+        assert_eq!(
+            compare_reals(
+                &split_cylinder.solid_volume(solid).unwrap(),
+                &(r(12) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &(split_cylinder.face_area(split.first_face).unwrap()
+                    + split_cylinder.face_area(split.second_face).unwrap()),
+                &(r(4) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_cylinder.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let outer =
+            contour_from_profile(&[p2(0, 0), p2(3, 0), p2(6, 0), p2(6, 6), p2(3, 6), p2(0, 6)])
+                .unwrap();
+        let hole = contour_from_profile(&[p2(1, 1), p2(1, 2), p2(2, 2), p2(2, 1)]).unwrap();
+        let (holed, solids) = extrude_contour_regions(&[(outer, vec![hole])], r(0), r(2)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let (split_holed, split) = holed
+            .split_face(
+                face,
+                VertexId::from_index(11).unwrap(),
+                VertexId::from_index(14).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(
+            split_holed.face(split.first_face).unwrap().inner().len()
+                + split_holed.face(split.second_face).unwrap().inner().len(),
+            1
+        );
+        assert_eq!(
+            compare_reals(&split_holed.solid_volume(solids[0]).unwrap(), &r(70)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_holed.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn exact_curve_driven_face_split_attaches_to_boundary_edges_by_identity() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let outer = model.face(face).unwrap().outer().unwrap();
+        let uses = model.wire(outer).unwrap().edge_uses();
+        let directed_start = |use_id| {
+            let edge_use = model.edge_use(use_id).unwrap();
+            let edge = model.edge(edge_use.edge()).unwrap();
+            match edge_use.direction() {
+                Direction::Forward => edge.start(),
+                Direction::Reversed => edge.end(),
+            }
+        };
+        let midpoint = |use_id| {
+            let edge = model.edge(model.edge_use(use_id).unwrap().edge()).unwrap();
+            let parameter = (edge.domain().start() + edge.domain().end()) / r(2);
+            model
+                .curve(edge.curve())
+                .unwrap()
+                .point_at(&parameter.unwrap())
+                .unwrap()
+        };
+        let start = midpoint(uses[0]);
+        let end = midpoint(uses[2]);
+        let fragment = Curve3::line(start.clone(), end.clone()).unwrap();
+
+        let (split_model, split) = model.split_face_by_curve(face, &fragment).unwrap();
+        assert!(split.start_edge.is_some());
+        assert!(split.end_edge.is_some());
+        assert_eq!(split_model.counts().edges, model.counts().edges + 3);
+        assert_eq!(split_model.counts().faces, model.counts().faces + 1);
+        assert_eq!(
+            compare_reals(&split_model.solid_volume(solid).unwrap(), &r(8)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &(split_model.face_area(split.face.first_face).unwrap()
+                    + split_model.face_area(split.face.second_face).unwrap()),
+                &r(4),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let vertex_fragment = Curve3::line(
+            model
+                .vertex(directed_start(uses[0]))
+                .unwrap()
+                .point()
+                .clone(),
+            model
+                .vertex(directed_start(uses[2]))
+                .unwrap()
+                .point()
+                .clone(),
+        )
+        .unwrap();
+        let (_, vertex_split) = model.split_face_by_curve(face, &vertex_fragment).unwrap();
+        assert!(vertex_split.start_edge.is_none());
+        assert!(vertex_split.end_edge.is_none());
+
+        let half = (Real::one() / r(2)).unwrap();
+        let interior = fragment.point_at(&half).unwrap();
+        let invalid = Curve3::line(start.clone(), interior).unwrap();
+        assert!(matches!(
+            model.split_face_by_curve(face, &invalid),
+            Err(
+                crate::TopologyEditError::FaceSplitEndpointNotOnOuterBoundary {
+                    endpoint: crate::Endpoint::End,
+                    ..
+                }
+            )
+        ));
+        let unsupported = Curve3::rational_bezier(
+            vec![start, fragment.point_at(&half).unwrap(), end],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        assert!(matches!(
+            model.split_face_by_curve(face, &unsupported),
+            Err(crate::TopologyEditError::UnsupportedFaceSplitCurve(
+                crate::Curve3Kind::RationalBezier
+            ))
+        ));
+    }
+
+    #[test]
+    fn exact_multi_trace_face_partition_is_order_and_direction_independent() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(3, 3, 2)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let outer = model.face(face).unwrap().outer().unwrap();
+        let uses = model.wire(outer).unwrap().edge_uses();
+        let directed_point = |use_id, fraction: &Real| {
+            let edge_use = model.edge_use(use_id).unwrap();
+            let edge = model.edge(edge_use.edge()).unwrap();
+            let span = edge.domain().end() - edge.domain().start();
+            let parameter = match edge_use.direction() {
+                Direction::Forward => edge.domain().start() + &span * fraction,
+                Direction::Reversed => edge.domain().end() - &span * fraction,
+            };
+            model
+                .curve(edge.curve())
+                .unwrap()
+                .point_at(&parameter)
+                .unwrap()
+        };
+        let trace_at = |numerator: i32| {
+            let fraction = (r(numerator) / r(3)).unwrap();
+            let complement = Real::one() - &fraction;
+            Curve3::line(
+                directed_point(uses[0], &fraction),
+                directed_point(uses[2], &complement),
+            )
+            .unwrap()
+        };
+        let first = trace_at(1);
+        let second = trace_at(2);
+
+        let (forward, partition) = model
+            .split_face_by_curves(face, &[second.clone(), first.clone()])
+            .unwrap();
+        let (reordered, reordered_partition) = model
+            .split_face_by_curves(
+                face,
+                &[first.reversed().unwrap(), second.reversed().unwrap()],
+            )
+            .unwrap();
+
+        assert_eq!(partition.source_face, face);
+        assert_eq!(partition.faces.len(), 3);
+        assert_eq!(
+            partition
+                .traces
+                .iter()
+                .map(|trace| trace.source_index)
+                .collect::<Vec<_>>(),
+            vec![1, 0]
+        );
+        assert_eq!(
+            reordered_partition
+                .traces
+                .iter()
+                .map(|trace| trace.source_index)
+                .collect::<Vec<_>>(),
+            vec![0, 1]
+        );
+        assert!(
+            partition
+                .traces
+                .iter()
+                .all(|trace| trace.segments.len() == 1 && trace.splits.len() == 1)
+        );
+        assert_eq!(forward.to_json().unwrap(), reordered.to_json().unwrap());
+        assert_eq!(forward.counts().faces, model.counts().faces + 2);
+        assert_eq!(forward.counts().edges, model.counts().edges + 6);
+        assert_eq!(
+            compare_reals(&forward.solid_volume(solid).unwrap(), &r(18)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let area = partition
+            .faces
+            .iter()
+            .map(|face| forward.face_area(*face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&area, &r(9)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&forward.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        assert!(matches!(
+            model.split_face_by_curves(face, &[first.clone(), first.reversed().unwrap()]),
+            Err(crate::TopologyEditError::DuplicateFaceSplitTrace { .. })
+        ));
+
+        let directed_vertex = |use_id| {
+            let edge_use = model.edge_use(use_id).unwrap();
+            let edge = model.edge(edge_use.edge()).unwrap();
+            match edge_use.direction() {
+                Direction::Forward => edge.start(),
+                Direction::Reversed => edge.end(),
+            }
+        };
+        let diagonal = |first_use, second_use| {
+            Curve3::line(
+                model
+                    .vertex(directed_vertex(first_use))
+                    .unwrap()
+                    .point()
+                    .clone(),
+                model
+                    .vertex(directed_vertex(second_use))
+                    .unwrap()
+                    .point()
+                    .clone(),
+            )
+            .unwrap()
+        };
+        let diagonals = [diagonal(uses[0], uses[2]), diagonal(uses[1], uses[3])];
+        let (crossed, crossed_partition) = model.split_face_by_curves(face, &diagonals).unwrap();
+        let (crossed_reordered, crossed_reordered_partition) = model
+            .split_face_by_curves(
+                face,
+                &[
+                    diagonals[1].reversed().unwrap(),
+                    diagonals[0].reversed().unwrap(),
+                ],
+            )
+            .unwrap();
+        assert_eq!(
+            crossed.to_json().unwrap(),
+            crossed_reordered.to_json().unwrap()
+        );
+        assert_eq!(crossed_partition.faces.len(), 4);
+        assert_eq!(crossed_reordered_partition.faces.len(), 4);
+        assert_eq!(
+            crossed_partition
+                .traces
+                .iter()
+                .map(|trace| trace.segments.len())
+                .sum::<usize>(),
+            3
+        );
+        assert_eq!(crossed.counts().vertices, model.counts().vertices + 1);
+        assert_eq!(crossed.counts().edges, model.counts().edges + 4);
+        assert_eq!(crossed.counts().faces, model.counts().faces + 3);
+        assert_eq!(
+            compare_reals(&crossed.solid_volume(solid).unwrap(), &r(18)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let crossed_area = crossed_partition
+            .faces
+            .iter()
+            .map(|face| crossed.face_area(*face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&crossed_area, &r(9)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let half = (r(3) / r(2)).unwrap();
+        let center_trace = Curve3::line(
+            Point3::new(half.clone(), r(0), r(2)),
+            Point3::new(half.clone(), r(3), r(2)),
+        )
+        .unwrap();
+        let concurrent = [
+            diagonals[0].clone(),
+            diagonals[1].clone(),
+            center_trace.clone(),
+        ];
+        let (six_way, six_way_partition) = model.split_face_by_curves(face, &concurrent).unwrap();
+        let (six_way_reordered, _) = model
+            .split_face_by_curves(
+                face,
+                &[
+                    center_trace.reversed().unwrap(),
+                    diagonals[1].reversed().unwrap(),
+                    diagonals[0].reversed().unwrap(),
+                ],
+            )
+            .unwrap();
+        assert_eq!(
+            six_way.to_json().unwrap(),
+            six_way_reordered.to_json().unwrap()
+        );
+        assert_eq!(six_way_partition.faces.len(), 6);
+        assert_eq!(
+            six_way_partition
+                .traces
+                .iter()
+                .map(|trace| trace.segments.len())
+                .sum::<usize>(),
+            5
+        );
+        assert_eq!(six_way.counts().vertices, model.counts().vertices + 3);
+        assert_eq!(six_way.counts().edges, model.counts().edges + 8);
+        assert_eq!(six_way.counts().faces, model.counts().faces + 5);
+        assert_eq!(
+            compare_reals(&six_way.solid_volume(solid).unwrap(), &r(18)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let overlapping = [
+            Curve3::line(
+                Point3::new(r(0), half.clone(), r(2)),
+                Point3::new(r(3), half.clone(), r(2)),
+            )
+            .unwrap(),
+            Curve3::line(
+                Point3::new(r(1), half.clone(), r(2)),
+                Point3::new(r(2), half, r(2)),
+            )
+            .unwrap(),
+        ];
+        assert!(matches!(
+            model.split_face_by_curves(face, &overlapping),
+            Err(crate::TopologyEditError::OverlappingFaceSplitTraces { .. })
+        ));
+    }
+
+    #[test]
+    fn nested_angular_pcurve_splits_persist_without_expression_blowup() {
+        let (model, solid) = cylinder(r(65), r(11)).unwrap();
+        let face = crate::FaceId::from_index(1).unwrap();
+        let outer = model.face(face).unwrap().outer().unwrap();
+        let uses = model.wire(outer).unwrap().edge_uses();
+        let directed_point = |use_id, numerator: i32| {
+            let edge_use = model.edge_use(use_id).unwrap();
+            let edge = model.edge(edge_use.edge()).unwrap();
+            let fraction = (r(numerator) / r(3)).unwrap();
+            let span = edge.domain().end() - edge.domain().start();
+            let offset = span * fraction;
+            let parameter = match edge_use.direction() {
+                Direction::Forward => edge.domain().start() + offset,
+                Direction::Reversed => edge.domain().end() - offset,
+            };
+            model
+                .curve(edge.curve())
+                .unwrap()
+                .point_at(&parameter)
+                .unwrap()
+        };
+        let opposite = uses[uses.len() / 2];
+        let trace = |numerator| {
+            Curve3::line(
+                directed_point(uses[0], numerator),
+                directed_point(opposite, 3 - numerator),
+            )
+            .unwrap()
+        };
+        let (edited, partition) = model
+            .split_face_by_curves(face, &[trace(2), trace(1)])
+            .unwrap();
+        assert_eq!(partition.faces.len(), 3);
+        assert_eq!(
+            compare_reals(
+                &edited.solid_volume(solid).unwrap(),
+                &(r(46_475) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let json = edited.to_json().unwrap();
+        assert!(
+            json.len() < 1_048_576,
+            "two exact angular splits must retain a compact root-lineage representation"
+        );
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+    }
+
+    #[test]
+    fn tensor_patch_builders_certify_complete_exact_boundary_images() {
+        let controls = vec![
+            vec![p(0, 0, 0), p(1, 0, 1), p(2, 0, 0)],
+            vec![p(0, 1, 1), p(1, 1, 2), p(2, 1, 1)],
+            vec![p(0, 2, 0), p(1, 2, 1), p(2, 2, 0)],
+        ];
+        let weights = vec![
+            vec![r(1), r(2), r(1)],
+            vec![r(1), r(3), r(1)],
+            vec![r(1), r(2), r(1)],
+        ];
+        let (bezier, face) = rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
+        assert_eq!(
+            bezier.counts(),
+            ModelCounts {
+                vertices: 4,
+                curves: 4,
+                pcurves: 4,
+                surfaces: 1,
+                edges: 4,
+                edge_uses: 4,
+                wires: 1,
+                faces: 1,
+                shells: 1,
+                solids: 0,
+            }
+        );
+        assert_eq!(
+            bezier
+                .surface(bezier.face(face).unwrap().surface())
+                .unwrap()
+                .kind(),
+            crate::SurfaceKind::RationalBezier
+        );
+        crate::RawModel::from_json(&bezier.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let (split_bezier, split) = bezier
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                (Real::one() / r(2)).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(
+            split_bezier
+                .wire(bezier.face(face).unwrap().outer().unwrap())
+                .unwrap()
+                .edge_uses()
+                .len(),
+            5
+        );
+        assert_eq!(split.first, EdgeId::from_index(0).unwrap());
+        crate::RawModel::from_json(&split_bezier.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let transformed_bezier = bezier
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        crate::RawModel::from_json(&transformed_bezier.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let mut forged = bezier.edit();
+        forged
+            .replace_curve(
+                crate::Curve3Id::from_index(0).unwrap(),
+                Curve3::rational_bezier(
+                    vec![p(0, 0, 0), p(1, 0, 9), p(2, 0, 0)],
+                    vec![r(1), r(2), r(1)],
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let crate::EditError::Validation(report) = forged.commit().unwrap_err() else {
+            panic!("forged spline boundary must fail global image validation");
+        };
+        assert!(
+            report
+                .errors()
+                .contains(&BuildError::EdgeUseSupportMismatch)
+        );
+
+        let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
+        let (nurbs, face) = nurbs_patch(2, 2, controls, weights, knots.clone(), knots).unwrap();
+        assert_eq!(
+            nurbs
+                .surface(nurbs.face(face).unwrap().surface())
+                .unwrap()
+                .kind(),
+            crate::SurfaceKind::Nurbs
+        );
+        crate::RawModel::from_json(&nurbs.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let (split_nurbs, _) = nurbs
+            .split_edge(EdgeId::from_index(1).unwrap(), (r(7) / r(2)).unwrap())
+            .unwrap();
+        crate::RawModel::from_json(&split_nurbs.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let transformed_nurbs = nurbs
+            .transformed(&crate::Matrix4::affine_translation([r(7), r(-3), r(5)]))
+            .unwrap();
+        crate::RawModel::from_json(&transformed_nurbs.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let reflected_nurbs = nurbs
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        crate::RawModel::from_json(&reflected_nurbs.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn tensor_patch_shell_identity_stitches_projectively_equal_boundaries() {
+        assert_eq!(
+            tensor_patch_shell(Vec::new()).unwrap_err(),
+            ConstructionError::EmptyPatchShell
+        );
+        let first_controls = vec![vec![p(0, 0, 0), p(1, 0, 0)], vec![p(0, 1, 0), p(1, 1, 1)]];
+        let first_weights = vec![vec![r(1), r(1)], vec![r(1), r(2)]];
+        let second_controls = vec![vec![p(1, 0, 0), p(2, 0, 0)], vec![p(1, 1, 1), p(2, 1, 0)]];
+        let second_weights = vec![vec![r(3), r(1)], vec![r(6), r(1)]];
+        let assert_shell = |model: &Model, faces: &[FaceId], kind| {
+            assert_eq!(faces.len(), 2);
+            assert_eq!(
+                model.counts(),
+                ModelCounts {
+                    vertices: 6,
+                    curves: 7,
+                    pcurves: 8,
+                    surfaces: 2,
+                    edges: 7,
+                    edge_uses: 8,
+                    wires: 2,
+                    faces: 2,
+                    shells: 1,
+                    solids: 0,
+                }
+            );
+            assert!(faces.iter().all(|face| {
+                model
+                    .surface(model.face(*face).unwrap().surface())
+                    .unwrap()
+                    .kind()
+                    == kind
+            }));
+            let shared = model
+                .edges()
+                .find_map(|(edge, _)| {
+                    (model.uses_of_edge(edge).unwrap().len() == 2).then_some(edge)
+                })
+                .expect("two adjacent tensor patches share one exact edge");
+            let uses = model.uses_of_edge(shared).unwrap();
+            assert_ne!(
+                model.edge_use(uses[0]).unwrap().direction(),
+                model.edge_use(uses[1]).unwrap().direction()
+            );
+            crate::RawModel::from_json(&model.to_json().unwrap())
+                .unwrap()
+                .validate()
+                .unwrap();
+        };
+
+        let (bezier, bezier_faces) = tensor_patch_shell(vec![
+            TensorPatch::RationalBezier {
+                control_points: first_controls.clone(),
+                weights: first_weights.clone(),
+            },
+            TensorPatch::RationalBezier {
+                control_points: second_controls.clone(),
+                weights: second_weights.clone(),
+            },
+        ])
+        .unwrap();
+        assert_shell(&bezier, &bezier_faces, crate::SurfaceKind::RationalBezier);
+
+        let knots = vec![r(0), r(0), r(1), r(1)];
+        let (nurbs, nurbs_faces) = tensor_patch_shell(vec![
+            TensorPatch::Nurbs {
+                u_degree: 1,
+                v_degree: 1,
+                control_points: first_controls,
+                weights: first_weights,
+                u_knots: knots.clone(),
+                v_knots: knots.clone(),
+            },
+            TensorPatch::Nurbs {
+                u_degree: 1,
+                v_degree: 1,
+                control_points: second_controls,
+                weights: second_weights,
+                u_knots: knots.clone(),
+                v_knots: knots,
+            },
+        ])
+        .unwrap();
+        assert_shell(&nurbs, &nurbs_faces, crate::SurfaceKind::Nurbs);
+    }
+
+    #[test]
+    fn exact_edge_split_inverts_angular_sweep_without_projection() {
+        let mut builder = ModelBuilder::new();
+        let radius = r(2);
+        let points = [p(2, 0, 0), p(0, 2, 0), p(-2, 0, 0), p(0, -2, 0)];
+        let planar = [
+            CurvePoint2::new(r(2), r(0)),
+            CurvePoint2::new(r(0), r(2)),
+            CurvePoint2::new(r(-2), r(0)),
+            CurvePoint2::new(r(0), r(-2)),
+        ];
+        let vertices = points
+            .iter()
+            .cloned()
+            .map(|point| builder.vertex(point))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let quarter = (Real::pi() / r(2)).unwrap();
+        let mut uses = Vec::new();
+        for index in 0..4 {
+            let next = (index + 1) % 4;
+            let start = &quarter * Real::from(index as i32);
+            let end = &quarter * Real::from(index as i32 + 1);
+            let curve = builder
+                .curve(
+                    Curve3::circle_arc(
+                        Point3::origin(),
+                        Vector3::x(),
+                        Vector3::y(),
+                        radius.clone(),
+                        start.clone(),
+                        end.clone(),
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+            let edge = builder
+                .edge(
+                    vertices[index],
+                    vertices[next],
+                    curve,
+                    ParameterDomain::new(start, end).unwrap(),
+                )
+                .unwrap();
+            let pcurve = builder
+                .pcurve(Pcurve::new(Curve2::from(
+                    CircularArc2::try_from_center(
+                        planar[index].clone(),
+                        planar[next].clone(),
+                        CurvePoint2::new(r(0), r(0)),
+                        false,
+                    )
+                    .unwrap(),
+                )))
+                .unwrap();
+            uses.push(
+                builder
+                    .edge_use(
+                        edge,
+                        Direction::Forward,
+                        pcurve,
+                        ParameterCorrespondence::angular_sweep(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let wire = builder.wire(uses).unwrap();
+        let surface = builder
+            .surface(Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap())
+            .unwrap();
+        let face = builder
+            .face(surface, Orientation::Forward, wire, Vec::new())
+            .unwrap();
+        builder.shell(vec![face]).unwrap();
+        let model = builder.finish().unwrap();
+
+        let split_angle = (Real::pi() / r(4)).unwrap();
+        let source_use = EdgeUseId::from_index(0).unwrap();
+        let rational_parameter = model.pcurve_parameter_at(source_use, &split_angle).unwrap();
+        let source_pcurve = model
+            .pcurve(model.edge_use(source_use).unwrap().pcurve())
+            .unwrap();
+        let split_parameter_point = source_pcurve.point_at(&rational_parameter).unwrap();
+        assert_eq!(
+            compare_reals(&split_parameter_point.x, &(r(2).sqrt().unwrap()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let (split_model, split) = model
+            .split_edge(EdgeId::from_index(0).unwrap(), split_angle)
+            .unwrap();
+        assert_eq!(split_model.wire(wire).unwrap().edge_uses().len(), 5);
+        assert_eq!(
+            compare_reals(&split_model.face_area(face).unwrap(), &(r(4) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(split.edge_uses.len(), 1);
+        crate::RawModel::from_json(&split_model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn exact_edge_split_preserves_a_certified_solid() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(2, 3, 4)).unwrap();
+        let (split, ids) = model
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                (Real::one() / r(2)).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(split.uses_of_edge(ids.first).unwrap().len(), 2);
+        assert_eq!(split.uses_of_edge(ids.second).unwrap().len(), 2);
+        assert_eq!(
+            compare_reals(&split.solid_volume(solid).unwrap(), &r(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            split.classify_point(solid, &p(1, 1, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+
+        let (cylinder_model, cylinder_solid) = cylinder(r(2), r(3)).unwrap();
+        let (split_cylinder, cylinder_ids) = cylinder_model
+            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .unwrap();
+        assert_eq!(
+            split_cylinder
+                .uses_of_edge(cylinder_ids.first)
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            split_cylinder
+                .uses_of_edge(cylinder_ids.second)
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            compare_reals(
+                &split_cylinder.solid_volume(cylinder_solid).unwrap(),
+                &(r(12) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            split_cylinder
+                .classify_point(cylinder_solid, &p(0, 0, 1))
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        crate::RawModel::from_json(&split_cylinder.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+
+        let (frustum_model, frustum_solid) = cone_frustum(r(2), r(1), r(3)).unwrap();
+        let (split_frustum, _) = frustum_model
+            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &split_frustum.solid_volume(frustum_solid).unwrap(),
+                &(r(7) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let (torus_model, torus_solid) = torus(r(3), r(1)).unwrap();
+        let (split_torus, _) = torus_model
+            .split_edge(EdgeId::from_index(0).unwrap(), (Real::pi() / r(4)).unwrap())
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &split_torus.solid_volume(torus_solid).unwrap(),
+                &(r(6) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        crate::RawModel::from_json(&split_torus.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn cone_frustum_retains_native_conic_sides_and_exact_queries() {
+        let (model, solid) = cone_frustum(r(2), r(1), r(3)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 12,
+                pcurves: 24,
+                surfaces: 3,
+                edges: 12,
+                edge_uses: 24,
+                wires: 6,
+                faces: 6,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(7) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let faces = model.faces().map(|(face, _)| face).collect::<Vec<_>>();
+        assert_eq!(
+            compare_reals(&model.face_area(faces[0]).unwrap(), &(r(4) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(&model.face_area(faces[1]).unwrap(), &Real::pi()).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let lateral_quarter = (r(3) * Real::pi() * r(10).sqrt().unwrap() / r(4)).unwrap();
+        assert_eq!(
+            compare_reals(&model.face_area(faces[2]).unwrap(), &lateral_quarter).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(0, 0, 1), SolidPointLocation::Inside),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 3), SolidPointLocation::Boundary),
+            (p(2, 0, 2), SolidPointLocation::Outside),
+            (p(0, 0, 4), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let translated = model
+            .transformed(&crate::Matrix4::affine_translation([r(5), r(-2), r(7)]))
+            .unwrap();
+        assert_eq!(
+            translated.classify_point(solid, &p(5, -2, 8)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-2, 0, 0)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(7) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn torus_uses_native_periodic_patches_and_exact_analytic_queries() {
+        let (model, solid) = torus(r(3), r(1)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 16,
+                curves: 32,
+                pcurves: 64,
+                surfaces: 1,
+                edges: 32,
+                edge_uses: 64,
+                wires: 16,
+                faces: 16,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&total_area, &(r(12) * Real::pi() * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let first_face = crate::FaceId::from_index(0).unwrap();
+        let quarter = (Real::pi() / r(2)).unwrap();
+        let expected_face_area = &quarter * (r(3) * &quarter + Real::one());
+        assert_eq!(
+            compare_reals(&model.face_area(first_face).unwrap(), &expected_face_area).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&total_area, &(r(12) * Real::pi() * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(3, 0, 0), SolidPointLocation::Inside),
+            (p(4, 0, 0), SolidPointLocation::Boundary),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 0), SolidPointLocation::Outside),
+            (p(3, 0, 2), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let translated = model
+            .transformed(&crate::Matrix4::affine_translation([r(5), r(-2), r(7)]))
+            .unwrap();
+        assert_eq!(
+            translated.classify_point(solid, &p(8, -2, 7)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-4, 0, 0)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        let decoded = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn revolution_uses_shared_periodic_topology_and_exact_profile_queries() {
+        let profile = [p2(1, 0), p2(3, 0), p2(3, 2), p2(1, 2)];
+        let (model, solid) = revolve(&profile).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 16,
+                curves: 32,
+                pcurves: 64,
+                surfaces: 4,
+                edges: 32,
+                edge_uses: 64,
+                wires: 16,
+                faces: 16,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(16) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&total_area, &(r(32) * Real::pi())).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(0, 0, 1), SolidPointLocation::Outside),
+            (p(2, 0, 1), SolidPointLocation::Inside),
+            (p(3, 0, 1), SolidPointLocation::Boundary),
+            (p(2, 0, 3), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let reoriented = model
+            .transformed(&crate::Matrix4::from_row_major([
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                r(5),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                r(-3),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                r(7),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reoriented.classify_point(solid, &p(6, -1, 7)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            compare_reals(
+                &reoriented.solid_volume(solid).unwrap(),
+                &(r(16) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let reflected = reoriented
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-6, -1, 7)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let rebuilt = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(16) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            rebuilt.classify_point(solid, &p(-6, -1, 7)).unwrap(),
+            SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn revolution_rejects_axis_contact_and_self_intersection_exactly() {
+        assert!(matches!(
+            revolve(&[p2(0, 0), p2(2, 0), p2(2, 1), p2(0, 1)]),
+            Err(ConstructionError::ProfileCrossesRevolutionAxis)
+        ));
+        assert!(matches!(
+            revolve(&[p2(-1, 0), p2(2, 0), p2(2, 1), p2(-1, 1)]),
+            Err(ConstructionError::ProfileCrossesRevolutionAxis)
+        ));
+        assert!(matches!(
+            revolve(&[p2(1, 0), p2(4, 3), p2(1, 3), p2(3, 0)]),
+            Err(ConstructionError::SelfIntersectingProfile)
+        ));
+    }
+
+    #[test]
+    fn revolution_region_retains_exact_toroidal_profile_cavities() {
+        let outer = [p2(1, 0), p2(5, 0), p2(5, 4), p2(1, 4)];
+        let hole = vec![p2(2, 1), p2(3, 1), p2(3, 2), p2(2, 2)];
+        let (model, solid) = revolve_region(&outer, &[hole]).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 32,
+                curves: 64,
+                pcurves: 128,
+                surfaces: 8,
+                edges: 64,
+                edge_uses: 128,
+                wires: 32,
+                faces: 32,
+                shells: 2,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(91) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(4, 0, 2), SolidPointLocation::Inside),
+            (p(2, 0, 1), SolidPointLocation::Boundary),
+            (
+                Point3::new((r(5) / r(2)).unwrap(), Real::zero(), (r(3) / r(2)).unwrap()),
+                SolidPointLocation::Outside,
+            ),
+            (p(0, 0, 2), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-4, 0, 2)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let rebuilt = crate::RawModel::from_json(&reflected.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(91) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(matches!(
+            revolve_region(&outer, &[vec![p2(5, 1), p2(6, 1), p2(6, 2), p2(5, 2)]],),
+            Err(ConstructionError::IntersectingProfiles)
+        ));
+    }
+
+    #[test]
+    fn line_arc_profile_revolution_retains_native_curved_meridians() {
+        let center = CurvePoint2::new(r(3), Real::zero());
+        let profile = Contour2::try_new(vec![
+            Segment2::Arc(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(r(4), Real::zero()),
+                    CurvePoint2::new(r(2), Real::zero()),
+                    center.clone(),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Segment2::Arc(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(r(2), Real::zero()),
+                    CurvePoint2::new(r(4), Real::zero()),
+                    center,
+                    false,
+                )
+                .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (model, solid) = revolve_contour(&profile).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 16,
+                pcurves: 32,
+                surfaces: 2,
+                edges: 16,
+                edge_uses: 32,
+                wires: 8,
+                faces: 8,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            model
+                .curves()
+                .filter(|(_, curve)| curve.kind() == crate::Curve3Kind::CircleArc)
+                .count(),
+            16
+        );
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(3, 0, 0), SolidPointLocation::Inside),
+            (p(4, 0, 0), SolidPointLocation::Boundary),
+            (p(5, 0, 0), SolidPointLocation::Outside),
+            (p(0, 0, 0), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let reflected = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-3, 0, 0)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let json = reflected.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let circle_profile = |center_x: i32, radius: i32| {
+            let center = CurvePoint2::new(r(center_x), Real::zero());
+            Contour2::try_new(vec![
+                Segment2::Arc(
+                    CircularArc2::try_from_center(
+                        CurvePoint2::new(r(center_x + radius), Real::zero()),
+                        CurvePoint2::new(r(center_x - radius), Real::zero()),
+                        center.clone(),
+                        false,
+                    )
+                    .unwrap(),
+                ),
+                Segment2::Arc(
+                    CircularArc2::try_from_center(
+                        CurvePoint2::new(r(center_x - radius), Real::zero()),
+                        CurvePoint2::new(r(center_x + radius), Real::zero()),
+                        center,
+                        false,
+                    )
+                    .unwrap(),
+                ),
+            ])
+            .unwrap()
+        };
+        let (region, region_solid) =
+            revolve_contour_region(&circle_profile(3, 2), &[circle_profile(3, 1)]).unwrap();
+        assert_eq!(
+            compare_reals(
+                &region.solid_volume(region_solid).unwrap(),
+                &(r(18) * Real::pi() * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            region.classify_point(region_solid, &p(3, 0, 0)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        assert_eq!(
+            region
+                .classify_point(
+                    region_solid,
+                    &Point3::new((r(9) / r(2)).unwrap(), Real::zero(), Real::zero()),
+                )
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            revolve_contour(&circle_profile(1, 1)).unwrap_err(),
+            ConstructionError::ProfileCrossesRevolutionAxis
+        );
+    }
+
+    #[test]
+    fn line_arc_contour_extrusion_retains_curved_caps_and_side_surface() {
+        let contour = Contour2::try_new(vec![
+            Segment2::Arc(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(r(2), r(0)),
+                    CurvePoint2::new(r(0), r(2)),
+                    CurvePoint2::new(r(0), r(0)),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Segment2::Arc(
+                CircularArc2::try_from_center(
+                    CurvePoint2::new(r(0), r(2)),
+                    CurvePoint2::new(r(-2), r(0)),
+                    CurvePoint2::new(r(0), r(0)),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Segment2::Line(
+                LineSeg2::try_new(CurvePoint2::new(r(-2), r(0)), CurvePoint2::new(r(2), r(0)))
+                    .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (model, solid) = extrude_contour(&contour, r(0), r(3)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 6,
+                curves: 9,
+                pcurves: 18,
+                surfaces: 5,
+                edges: 9,
+                edge_uses: 18,
+                wires: 5,
+                faces: 5,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &(r(6) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let faces = model.faces().map(|(id, _)| id).collect::<Vec<_>>();
+        for (face, expected) in [
+            (faces[0], r(2) * Real::pi()),
+            (faces[1], r(2) * Real::pi()),
+            (faces[2], r(3) * Real::pi()),
+            (faces[3], r(3) * Real::pi()),
+            (faces[4], r(12)),
+        ] {
+            assert_eq!(
+                compare_reals(&model.face_area(face).unwrap(), &expected).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+        for (point, expected) in [
+            (p(0, 1, 1), SolidPointLocation::Inside),
+            (p(0, -1, 1), SolidPointLocation::Outside),
+            (p(0, 2, 1), SolidPointLocation::Boundary),
+            (p(0, 1, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let decoded = crate::RawModel::from_json(&model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(6) * Real::pi()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let reoriented = model
+            .transformed(&crate::Matrix4::from_row_major([
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                r(5),
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                r(-3),
+                Real::zero(),
+                Real::one(),
+                Real::zero(),
+                r(7),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &reoriented.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(6, -3, 8), SolidPointLocation::Inside),
+            (p(6, -3, 6), SolidPointLocation::Outside),
+            (p(6, -3, 9), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(reoriented.classify_point(solid, &point).unwrap(), expected);
+        }
+        let decoded_reoriented = crate::RawModel::from_json(&reoriented.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &decoded_reoriented.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            decoded_reoriented
+                .classify_point(solid, &p(6, -3, 8))
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn cuboid_rejects_flat_or_reversed_extents_exactly() {
+        assert_eq!(
+            cuboid(p(0, 0, 0), p(0, 1, 1)).unwrap_err(),
+            ConstructionError::InvalidBounds(Axis::X)
+        );
+        assert_eq!(
+            cuboid(p(0, 2, 0), p(1, 1, 1)).unwrap_err(),
+            ConstructionError::InvalidBounds(Axis::Y)
+        );
+    }
+
+    #[test]
+    fn cuboid_accepts_representation_distinct_certified_bounds() {
+        let two = Real::from(1) + Real::from(1);
+        assert!(matches!(
+            compare_reals(&two, &Real::from(2)),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                ..
+            }
+        ));
+        cuboid(
+            Point3::new(Real::zero(), Real::zero(), Real::zero()),
+            Point3::new(two, Real::from(3), Real::from(4)),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn cuboid_transform_preserves_ids_and_scales_exact_measurements() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(2, 3, 5)).unwrap();
+        let transform = crate::Matrix4::from_row_major([
+            Real::from(2),
+            Real::zero(),
+            Real::zero(),
+            Real::from(7),
+            Real::zero(),
+            Real::from(3),
+            Real::zero(),
+            Real::from(11),
+            Real::zero(),
+            Real::zero(),
+            Real::from(4),
+            Real::from(13),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]);
+        let transformed = model.transformed(&transform).unwrap();
+        assert_eq!(transformed.counts(), model.counts());
+        assert_eq!(
+            compare_reals(&transformed.solid_volume(solid).unwrap(), &Real::from(720)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let bounds = transformed.bounds().unwrap().unwrap();
+        assert_eq!(
+            point3_equal(&bounds.mins, &p(7, 11, 13)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point3_equal(&bounds.maxs, &p(11, 20, 33)).value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn model_transform_rejects_singular_maps_and_repairs_reflected_orientation() {
+        let (model, solid) = cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let singular =
+            crate::Matrix4::affine_nonuniform_scale([Real::one(), Real::zero(), Real::one()]);
+        assert_eq!(
+            model.transformed(&singular).unwrap_err(),
+            GeometryError::SingularTransform
+        );
+        let reflection =
+            crate::Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]);
+        let reflected = model.transformed(&reflection).unwrap();
+        assert_eq!(
+            reflected.classify_point(solid, &p(-1, 1, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &Real::from(8)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn edit_commit_is_transactional_and_preserves_the_source() {
+        let (source, solid) = cuboid(p(0, 0, 0), p(2, 3, 5)).unwrap();
+        let translation =
+            crate::Matrix4::affine_translation([Real::from(7), Real::from(11), Real::from(13)]);
+        let mut edit = source.edit();
+        edit.transform(&translation).unwrap();
+        let edited = edit.commit().unwrap();
+        assert_eq!(
+            point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point3_equal(&edited.bounds().unwrap().unwrap().mins, &p(7, 11, 13)).value(),
+            Some(true)
+        );
+        assert_eq!(
+            compare_reals(
+                &source.solid_volume(solid).unwrap(),
+                &edited.solid_volume(solid).unwrap(),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn edit_replays_replacements_and_rejects_invalid_staged_geometry() {
+        let (source, _) = cuboid(p(0, 0, 0), p(2, 3, 5)).unwrap();
+        let (edge_id, edge) = source.edges().next().unwrap();
+        let start = source.vertex(edge.start()).unwrap().point().clone();
+        let end = source.vertex(edge.end()).unwrap().point().clone();
+        let mut valid = source.edit();
+        valid
+            .replace_curve(edge.curve(), Curve3::line(start, end).unwrap())
+            .unwrap();
+        let edited = valid.commit().unwrap();
+        assert_eq!(edited.counts(), source.counts());
+        assert_eq!(
+            point3_equal(
+                edited
+                    .vertex(edited.edge(edge_id).unwrap().start())
+                    .unwrap()
+                    .point(),
+                source.vertex(edge.start()).unwrap().point(),
+            )
+            .value(),
+            Some(true)
+        );
+
+        let (vertex, _) = source.vertices().next().unwrap();
+        let mut invalid = source.edit();
+        invalid.replace_vertex(vertex, p(100, 100, 100)).unwrap();
+        let error = invalid.commit().unwrap_err();
+        let crate::EditError::Validation(report) = error else {
+            panic!("invalid edit must fail model validation");
+        };
+        assert!(matches!(
+            report.errors().first(),
+            Some(BuildError::EdgeEndpointMismatch { .. })
+        ));
+        assert_eq!(
+            point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn concave_clockwise_profile_builds_an_exact_prism() {
+        let profile = [p2(0, 4), p2(1, 4), p2(1, 1), p2(4, 1), p2(4, 0), p2(0, 0)];
+        let (model, solid) = extrude(&profile, Real::from(2), Real::from(5)).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 12,
+                curves: 18,
+                pcurves: 36,
+                surfaces: 8,
+                edges: 18,
+                edge_uses: 36,
+                wires: 8,
+                faces: 8,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(21)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face| sum + face);
+        assert_eq!(
+            compare_reals(&area, &Real::from(62)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn linear_sweep_retains_exact_affine_frame_and_path() {
+        let profile = [p2(0, 0), p2(1, 0), p2(1, 1), p2(0, 1)];
+        let (model, solid) = sweep(
+            &profile,
+            p(1, 2, 3),
+            Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
+            Vector3::from_xyz(Real::zero(), r(3), Real::zero()),
+            Vector3::from_xyz(Real::one(), Real::zero(), r(4)),
+        )
+        .unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let half = (Real::one() / r(2)).unwrap();
+        assert_eq!(
+            model
+                .classify_point(solid, &Point3::new(r(2) + &half, r(3) + &half, r(5),),)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(1, 2, 3)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(&total_area, &(r(28) + r(6) * r(17).sqrt().unwrap()),).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert!(matches!(
+            sweep(
+                &profile,
+                Point3::origin(),
+                Vector3::x(),
+                Vector3::y(),
+                Vector3::x(),
+            ),
+            Err(ConstructionError::Build(BuildError::Geometry(
+                GeometryError::SingularTransform
+            )))
+        ));
+
+        let region_outer = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let region_hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
+        let (region, region_solid) = sweep_region(
+            &region_outer,
+            &[region_hole],
+            p(1, 2, 3),
+            Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
+            Vector3::from_xyz(Real::zero(), r(3), Real::zero()),
+            Vector3::from_xyz(Real::one(), Real::zero(), r(4)),
+        )
+        .unwrap();
+        assert_eq!(
+            compare_reals(&region.solid_volume(region_solid).unwrap(), &r(288)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            region
+                .classify_point(region_solid, &Point3::new(r(5) + half, r(8), r(5),),)
+                .unwrap(),
+            SolidPointLocation::Outside
+        );
+    }
+
+    #[test]
+    fn curved_sweep_retains_exact_fixed_frame_path_and_certificate() {
+        let profile = [p2(0, 0), p2(2, 0), p2(2, 2), p2(0, 2)];
+        let path = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
+            vec![Real::one(), r(2), r(3)],
+        )
+        .unwrap();
+        let (model, solid) = sweep_curve(&profile, Vector3::x(), Vector3::y(), path).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 12,
+                pcurves: 24,
+                surfaces: 6,
+                edges: 12,
+                edge_uses: 24,
+                wires: 6,
+                faces: 6,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind()
+                        == crate::SurfaceKind::RationalBezier
+                })
+                .count(),
+            4
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(16)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let half = (Real::one() / r(2)).unwrap();
+        for (point, expected) in [
+            (
+                Point3::new(r(1) + &half, Real::one(), r(2)),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(half.clone(), Real::one(), r(2)),
+                SolidPointLocation::Boundary,
+            ),
+            (p(3, 1, 2), SolidPointLocation::Outside),
+            (p(1, 1, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+
+        let scaled = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(384)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            scaled
+                .classify_point(solid, &Point3::new(r(3), r(3), r(8)),)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected = scaled
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &r(384)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = reflected.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(384)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let nonlinear_progress = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
+            vec![Real::one(), Real::one(), Real::one()],
+        )
+        .unwrap();
+        assert_eq!(
+            sweep_curve(&profile, Vector3::x(), Vector3::y(), nonlinear_progress,).unwrap_err(),
+            ConstructionError::NonMonotoneSweepPath
+        );
+        assert_eq!(
+            sweep_curve(
+                &profile,
+                Vector3::x(),
+                Vector3::y(),
+                Curve3::line(p(0, 0, 0), p(0, 0, 4)).unwrap(),
+            )
+            .unwrap_err(),
+            ConstructionError::UnsupportedSweepPath
+        );
+    }
+
+    #[test]
+    fn loft_builds_exact_homothetic_and_convex_corresponding_topology() {
+        let sections = [
+            LoftSection {
+                profile: vec![p2(0, 0), p2(2, 0), p2(2, 2), p2(0, 2)],
+                z: Real::zero(),
+            },
+            LoftSection {
+                profile: vec![p2(1, 1), p2(5, 1), p2(5, 5), p2(1, 5)],
+                z: r(3),
+            },
+        ];
+        let (model, solid) = loft(&sections).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 8,
+                curves: 12,
+                pcurves: 24,
+                surfaces: 6,
+                edges: 12,
+                edge_uses: 24,
+                wires: 6,
+                faces: 6,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(28)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(2, 2, 1), SolidPointLocation::Inside),
+            (p(0, 0, 1), SolidPointLocation::Outside),
+            (p(0, 0, 0), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let total_area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, area| sum + area);
+        assert_eq!(
+            compare_reals(
+                &total_area,
+                &(r(20) + r(6) * r(10).sqrt().unwrap() + r(18) * r(2).sqrt().unwrap()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let scaled = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(672)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            scaled.classify_point(solid, &p(4, 6, 4)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let rebuilt = crate::RawModel::from_json(&scaled.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(672)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let non_homothetic = [
+            sections[0].clone(),
+            LoftSection {
+                profile: vec![p2(1, 1), p2(5, 1), p2(4, 5), p2(1, 5)],
+                z: r(3),
+            },
+        ];
+        let (general, general_solid) = loft(&non_homothetic).unwrap();
+        assert_eq!(
+            general
+                .faces()
+                .filter(|(_, face)| {
+                    general.surface(face.surface()).unwrap().kind()
+                        == crate::SurfaceKind::RationalBezier
+                })
+                .count(),
+            4
+        );
+        assert_eq!(
+            compare_reals(
+                &general.solid_volume(general_solid).unwrap(),
+                &(r(51) / r(2)).unwrap(),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (
+                Point3::new(r(1), r(1), (r(3) / r(2)).unwrap()),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(
+                    (r(7) / r(2)).unwrap(),
+                    (r(1) / r(2)).unwrap(),
+                    (r(3) / r(2)).unwrap(),
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (p(4, 4, 1), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(
+                general.classify_point(general_solid, &point).unwrap(),
+                expected
+            );
+        }
+        let general_json = general.to_json().unwrap();
+        let general_rebuilt = crate::RawModel::from_json(&general_json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(general_rebuilt.to_json().unwrap(), general_json);
+        assert_eq!(
+            compare_reals(
+                &general_rebuilt.solid_volume(general_solid).unwrap(),
+                &(r(51) / r(2)).unwrap(),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let general_scaled = general
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &general_scaled.solid_volume(general_solid).unwrap(),
+                &r(612),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            general_scaled
+                .classify_point(general_solid, &p(2, 3, 6))
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        let incompatible = [
+            sections[0].clone(),
+            LoftSection {
+                profile: vec![p2(1, 1), p2(5, 1), p2(2, 2), p2(1, 5)],
+                z: r(3),
+            },
+        ];
+        assert!(matches!(
+            loft(&incompatible),
+            Err(ConstructionError::IncompatibleLoftSections)
+        ));
+        assert!(matches!(
+            loft(&sections[..1]),
+            Err(ConstructionError::LoftNeedsAtLeastTwoSections)
+        ));
+    }
+
+    #[test]
+    fn multi_section_loft_retains_exact_c0_rings_and_piecewise_certificates() {
+        let sections = [
+            LoftSection {
+                profile: vec![p2(0, 0), p2(2, 0), p2(2, 2), p2(0, 2)],
+                z: Real::zero(),
+            },
+            LoftSection {
+                profile: vec![p2(1, 1), p2(5, 1), p2(5, 5), p2(1, 5)],
+                z: r(2),
+            },
+            LoftSection {
+                profile: vec![p2(0, 0), p2(6, 0), p2(6, 3), p2(0, 3)],
+                z: r(5),
+            },
+        ];
+        let (model, solid) = loft(&sections).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 12,
+                curves: 20,
+                pcurves: 40,
+                surfaces: 10,
+                edges: 20,
+                edge_uses: 40,
+                wires: 10,
+                faces: 10,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind()
+                        == crate::SurfaceKind::RationalBezier
+                })
+                .count(),
+            4
+        );
+        assert_eq!(
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(212) / r(3)).unwrap(),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (point, expected) in [
+            (p(1, 1, 1), SolidPointLocation::Inside),
+            (p(2, 2, 2), SolidPointLocation::Inside),
+            (
+                Point3::new((r(11) / r(2)).unwrap(), r(2), (r(7) / r(2)).unwrap()),
+                SolidPointLocation::Boundary,
+            ),
+            (p(7, 2, 4), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let scaled = model
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1_696)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = scaled.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(1_696)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn extrusion_with_a_through_hole_builds_one_valid_genus_shell() {
+        let outer = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
+        let (model, solid) = extrude_region(&outer, &[hole], Real::zero(), Real::from(2)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model
+                .classify_point(
+                    solid,
+                    &Point3::new(
+                        (Real::one() / Real::from(2)).unwrap(),
+                        (Real::one() / Real::from(2)).unwrap(),
+                        Real::one(),
+                    ),
+                )
+                .unwrap(),
+            crate::SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(2, 2, 1)).unwrap(),
+            crate::SolidPointLocation::Outside
+        );
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 16,
+                curves: 24,
+                pcurves: 48,
+                surfaces: 10,
+                edges: 24,
+                edge_uses: 48,
+                wires: 12,
+                faces: 10,
+                shells: 1,
+                solids: 1,
+            }
+        );
+    }
+
+    #[test]
+    fn extrusion_void_shells_are_nested_inward_and_change_material_queries() {
+        let outer = [p2(0, 0), p2(10, 0), p2(10, 10), p2(0, 10)];
+        let voids = [
+            ExtrusionVoid {
+                profile: vec![p2(2, 2), p2(4, 2), p2(4, 4), p2(2, 4)],
+                z_min: Real::from(2),
+                z_max: Real::from(8),
+            },
+            ExtrusionVoid {
+                profile: vec![p2(6, 6), p2(8, 6), p2(8, 8), p2(6, 8)],
+                z_min: Real::from(3),
+                z_max: Real::from(7),
+            },
+        ];
+        let (model, solid) =
+            extrude_with_voids(&outer, Real::zero(), Real::from(10), &voids).unwrap();
+        assert_eq!(model.solid(solid).unwrap().voids().len(), 2);
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(960)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(1, 1, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 3, 5)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(2, 3, 5)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 3, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+
+        let reflection =
+            crate::Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]);
+        let reflected = model.transformed(&reflection).unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &Real::from(960)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            reflected.classify_point(solid, &p(-3, 3, 5)).unwrap(),
+            SolidPointLocation::Outside
+        );
+    }
+
+    #[test]
+    fn separated_voids_may_share_a_planar_footprint_but_contact_is_rejected() {
+        let outer = [p2(0, 0), p2(10, 0), p2(10, 10), p2(0, 10)];
+        let profile = vec![p2(2, 2), p2(4, 2), p2(4, 4), p2(2, 4)];
+        let separated = [
+            ExtrusionVoid {
+                profile: profile.clone(),
+                z_min: Real::one(),
+                z_max: Real::from(3),
+            },
+            ExtrusionVoid {
+                profile: profile.clone(),
+                z_min: Real::from(4),
+                z_max: Real::from(6),
+            },
+        ];
+        extrude_with_voids(&outer, Real::zero(), Real::from(10), &separated).unwrap();
+
+        let touching = [
+            separated[0].clone(),
+            ExtrusionVoid {
+                profile: profile.clone(),
+                z_min: Real::from(3),
+                z_max: Real::from(6),
+            },
+        ];
+        assert!(matches!(
+            extrude_with_voids(&outer, Real::zero(), Real::from(10), &touching),
+            Err(ConstructionError::Build(
+                BuildError::IntersectingVoidShells { .. }
+            ))
+        ));
+
+        let outside = [ExtrusionVoid {
+            profile,
+            z_min: Real::zero(),
+            z_max: Real::from(3),
+        }];
+        assert!(matches!(
+            extrude_with_voids(&outer, Real::zero(), Real::from(10), &outside),
+            Err(ConstructionError::Build(BuildError::VoidShellOutside(_)))
+        ));
+    }
+
+    #[test]
+    fn prism_rejects_small_and_self_intersecting_profiles() {
+        assert_eq!(
+            extrude(&[p2(0, 0), p2(1, 0)], Real::zero(), Real::one()).unwrap_err(),
+            ConstructionError::ProfileTooSmall
+        );
+        assert_eq!(
+            extrude(
+                &[p2(0, 0), p2(2, 2), p2(0, 2), p2(2, 0)],
+                Real::zero(),
+                Real::one(),
+            )
+            .unwrap_err(),
+            ConstructionError::SelfIntersectingProfile
+        );
+    }
+
+    #[test]
+    fn exact_solid_point_classification_covers_interior_exterior_and_boundary() {
+        let (box_model, box_solid) = cuboid(p(0, 0, 0), p(4, 6, 8)).unwrap();
+        assert_eq!(
+            box_model.classify_point(box_solid, &p(1, 2, 3)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            box_model.classify_point(box_solid, &p(5, 2, 3)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        for boundary in [p(0, 2, 3), p(0, 0, 3), p(0, 0, 0)] {
+            assert_eq!(
+                box_model.classify_point(box_solid, &boundary).unwrap(),
+                SolidPointLocation::Boundary
+            );
+        }
+
+        let profile = [p2(0, 0), p2(8, 0), p2(8, 2), p2(2, 2), p2(2, 8), p2(0, 8)];
+        let (concave, solid) = extrude(&profile, Real::zero(), Real::from(3)).unwrap();
+        assert_eq!(
+            concave.classify_point(solid, &p(1, 6, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            concave.classify_point(solid, &p(6, 6, 1)).unwrap(),
+            SolidPointLocation::Outside
+        );
+    }
+}

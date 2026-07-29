@@ -11,11 +11,10 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-hyperbrep = { version = "0.2.0", path = ".." }
+hyperbrep = { version = "0.2.0", path = "..", features = ["tessellation"] }
 hypercurve = { version = "0.3.1", path = "../../hypercurve" }
 hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
 hyperreal = { version = "0.13.1", path = "../../hyperreal" }
-hypervoxel = { version = "0.3.0", path = "../../hypervoxel" }
 
 [patch.crates-io]
 hyperreal = { path = "../../hyperreal" }
@@ -24,22 +23,22 @@ hyperlimit = { path = "../../hyperlimit" }
 hypersolve = { path = "../../hypersolve" }
 
 [[bin]]
-name = "voxel_handoff"
-path = "fuzz_targets/voxel_handoff.rs"
+name = "model_builder"
+path = "fuzz_targets/model_builder.rs"
 test = false
 doc = false
 bench = false
 
 [[bin]]
-name = "planar_pcurve"
-path = "fuzz_targets/planar_pcurve.rs"
+name = "analytic_solid_roundtrip"
+path = "fuzz_targets/analytic_solid_roundtrip.rs"
 test = false
 doc = false
 bench = false
 
 [[bin]]
-name = "hyperreal_representations"
-path = "fuzz_targets/hyperreal_representations.rs"
+name = "topology_edit_roundtrip"
+path = "fuzz_targets/topology_edit_roundtrip.rs"
 test = false
 doc = false
 bench = false

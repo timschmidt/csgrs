@@ -1,242 +1,192 @@
-# HyperBrep reference and performance audit
+# HyperBREP Performance Contract
 
-This audit maps every item in the README reference list to the retained BREP
-implementation. Optimizations were accepted only when Criterion measurements
-showed a repeatable improvement and the exact report contents and validation
-gates remained unchanged.
+Correctness is exact. Performance determines which certified route reaches the
+answer, not what answer is accepted.
 
-## Retained optimizations
+## Architecture
 
-The measurements below are Criterion steady-state times from the same release
-build and machine. Each row compares the implementation immediately before and
-after the named change.
+- Typed integer IDs provide O(1) arena lookup.
+- `Model` retains vertex/edge, edge/use, use/wire, wire/face, face/shell, and
+  shell/solid ownership indexes.
+- Geometry is immutable and clone-shared through `Arc`.
+- Expensive immutable geometry facts use thread-safe once caches.
+- Ordinary model queries do not rebuild identifier maps.
+- Broad phases may eliminate work only with conservative certified bounds.
+- Numerical solvers may propose candidates only; exact replay decides topology.
 
-| Benchmark | Before | After | Change |
-| --- | ---: | ---: | ---: |
-| 1,024-edge agreement report | 9.680 ms | 3.885 ms | 59.9% faster |
-| 1,024-edge face validation report | 988.1 us | 897.8 us | 9.1% faster |
-| 128-loop trim-set report | 1.109 ms | 25.98 us | 97.7% faster |
-| solid readiness report | 5.075 ms | 3.880 ms | 23.6% faster |
+## Required benchmark cohorts
 
-The edge-agreement report now builds its vertex, face, and surface identity maps
-once per shell report instead of once per edge. Face validation passes its
-already-built trim report into geometry validation. A face trim-set report
-similarly shares one shell lookup across its outer and inner loops. Finally,
-solid readiness passes its closure and face-validation evidence into volume
-replay instead of rebuilding both report families.
+Every established operation will be measured for:
 
-These are evidence-reuse changes, not relaxed checks. The public standalone
-entry points still build the evidence they require, while composed reports can
-reuse immutable evidence from the same shell snapshot. The 128-loop benchmark
-is deliberately a report-pressure sentinel made from many disjoint loops; it
-does not claim that the resulting outer/inner-loop geometry is a valid material
-region.
+- small integers and rationals;
+- large rationals;
+- dyadic values lifted from binary interchange;
+- algebraic values;
+- lazy/computable values;
+- close but unequal values;
+- exact degeneracies;
+- mixed scalar representations;
+- cold and warm caches;
+- increasing topology and candidate-pair counts.
 
-## Immediate AABB API gate
+Operations include geometry construction/evaluation, model commit, adjacency,
+classification, intersections, editing, Booleans, area, volume, and derived
+tessellation as those capabilities land.
 
-Face and shell bounds reports now expose their retained exact corners directly
-through `exact_bounds`. The former prepared bounds wrappers only borrowed those
-same corners and forwarded each query, so face AABB preflight now calls the
-immediate `hyperlimit` predicate without an intermediate carrier.
+## Instrumentation
 
-The focused face-preflight benchmark measured 414.40 us before and 413.79 us
-after. Criterion found no performance change (`p = 0.91`), with a
--0.37% to +0.35% confidence interval. Exact reports, blockers, and
-narrow-phase scheduling rules are unchanged.
+Benchmarks should retain counts for:
 
-## Immediate plane-evidence API gate
+- broad-phase candidates and certified rejections;
+- exact predicate calls and unresolved outcomes;
+- refinement and solver replay;
+- cache hits and misses;
+- allocations;
+- expression-size or exact-arithmetic growth where observable without changing
+  semantics.
 
-Surface and face-query reuse now retains `Plane3Evidence` and calls HyperLimit's
-immediate classifiers. `BrepSurfaceEvidence` and `BrepFaceQueryEvidence`
-describe the reusable data directly; the old prepared wrappers, readiness
-names, and forwarding plane methods are gone.
+The default regression budget is 10% for an established cohort. A deliberate
+regression requires a recorded semantic or architectural reason and a new
+baseline.
 
-The old face-query source was reconstructed from the committed revisions in an
-isolated sibling tree so the serialized 100-sample Criterion comparison used a
-genuine pre-change implementation:
+## Current baseline
 
-| Benchmark | Before median | After median | Change |
-| --- | ---: | ---: | ---: |
-| Face-query evidence derivation | 207.01 us | 207.06 us | +0.02% |
-| 1,024 point plus 128 segment face-query batch | 188.25 us | 166.73 us | -11.43% |
-| 1,024 plane-surface point reports | 28.980 us | 15.654 us | -45.98% |
+`benches/kernel.rs` measures the first stable final-API cohorts: exact cuboid,
+native-cylinder, boundaryless-face sphere, truncated-cone, periodic-patch
+torus, polygonal-revolution, affine linear-sweep, fixed-frame rational
+Bézier curved-sweep, and homothetic-loft
+construction; retained-certificate
+solid-volume evaluation; and exact point classification.
+Every cohort includes semantic assertions so a faster but incorrect path
+cannot become the baseline.
+The editing cohorts separately expose canonical edge attachment, repeated
+whole-model revalidation, deterministic multi-trace partitioning, and retained
+intersection-graph partition dispatch.
 
-Criterion found no construction change and measured both query improvements as
-significant. The planar hot path resolves the surface family once and inlines
-the evidence classifier across the crate boundary; the generic function still
-preserves explicit unsupported surface reports. Exact report contents,
-blockers, and narrow-phase rules remain unchanged.
+The 2026-07-29 optimized baseline on the development workstation is:
 
-## Immediate face-query batch API gate
+The tensor-plane cohort is deliberately rebased from `4.455 us` to
+`5.203 us`: it now constructs and retains exact pcurves on both surface
+operands rather than returning only a spatial curve. That semantic expansion
+is the recorded reason for exceeding the ordinary 10% repeat budget.
 
-The remaining public `BrepFaceQueryEvidence` handle is now internal to one
-completed operation. `face_query_batch_report` resolves support-surface
-evidence once and immediately aggregates point and segment preflights.
-`face_plane_preflight_batch` likewise derives face bounds once per completed
-plane batch. Callers no longer construct, retain, or inspect a partly reusable
-query object.
+Tensor patch validation now derives and compares exact homogeneous iso-curves
+rather than recognizing only stored boundary rows and columns. That stronger
+certificate deliberately rebases rational Bézier patch construction from
+`66.082 us` to `74.365 us` and NURBS patch construction from `286.598 us` to
+`323.509 us`.
 
-Serialized 100-sample Criterion runs compared the new operation with the
-prepared handle's batch replay and retained the individual query benchmarks as
-controls:
+- cuboid build + exact volume + classification: `248.478 us/iteration`;
+- cylinder build + exact volume + classification: `341.097 us/iteration`;
+- sphere build + exact volume + classification: `3.610 us/iteration`;
+- cone-frustum build + exact volume + classification: `4.153020 ms/iteration`;
+- torus build + exact volume + classification: `1.208950 ms/iteration`;
+- revolved polygon build + exact volume + classification:
+  `889.698 us/iteration`;
+- native two-arc circular-profile revolution with eight periodic faces,
+  exact curved face carriers, Pappus volume, and radial/profile
+  classification: `711.462 us/iteration`;
+- affine linear sweep build + exact volume + classification:
+  `307.438 us/iteration`;
+- fixed-frame nonuniform-weight rational Bézier curved sweep with four native
+  tensor translation sides, Bernstein affine-progress certification, exact
+  volume, and exact section classification: `306.620 us/iteration`;
+- homothetic loft build + exact volume + classification:
+  `343.839 us/iteration`;
+- convex corresponding non-homothetic loft with four native bilinear sides,
+  exact quadratic section-area volume, and interpolated-section
+  classification: `230.517 us/iteration`;
+- three-section C⁰ loft with one homothetic span, one convex bilinear span,
+  topology-derived layer recertification, exact piecewise volume, and seam
+  classification: `485.146 us/iteration`;
+- cuboid edge split + full revalidation: `214.314 us/iteration`;
+- cuboid face split + full revalidation: `203.518 us/iteration`;
+- cuboid curve-driven face split, including two exact boundary-edge splits and
+  three full revalidations: `708.639 us/iteration`;
+- cuboid two-trace face partition, including four exact boundary-edge splits,
+  two face splits, and their current full revalidations:
+  `1.596921 ms/iteration`;
+- cuboid two-diagonal arrangement, including one exact shared-chord split,
+  three face splits, and their current full revalidations:
+  `947.797 us/iteration`;
+- rational Bézier patch build + validation: `74.365 us/iteration`;
+- NURBS patch build + validation: `323.509 us/iteration`;
+- two-face rational Bézier patch shell construction with projective boundary
+  matching, identity stitching, and full validation: `76.707 us/iteration`;
+- explicit tensor-face chordal derivation with four exact samples per boundary
+  use, three shared-midpoint refinement levels, 896 output triangles, and
+  exact source-surface evaluation at every retained vertex:
+  `1.361081 ms/iteration`;
+- linear tensor patch / parallel-plane exact native iso-curve and two-pcurve
+  intersection: `4.820 us/iteration`;
+- curved u-linear translation tensor / oblique-plane exact native
+  non-isoparametric curve, rational graph pcurve materialization, and midpoint
+  evaluation: `11.368 us/iteration`;
+- complete non-isoparametric rational tensor section, graph-control
+  recertification, curved-loop validation, identity-shared face split, and full
+  model revalidation: `180.175 us/iteration`;
+- complete single-span non-isoparametric NURBS tensor section with a native
+  `[2,5]` parameter domain, rational graph recertification, identity-shared
+  face split, and full model revalidation: `407.129 us/iteration` for the
+  u-linear layout and `404.990 us/iteration` for the v-linear layout;
+- complete two-span non-isoparametric NURBS tensor section with exact
+  per-span graph elevation, native-domain NURBS pcurve assembly, knot/control
+  recertification, identity-shared split, and full revalidation:
+  `500.329 us/iteration`;
+- two represented partial NURBS graph fragments, exact cross-span carrier
+  merging, deterministic all-fragment descendant partitioning, two
+  identity-shared same-boundary splits, exact Bezier-loop orientation,
+  partial-profile recertification, and full model revalidation:
+  `3.641689 ms/iteration`;
+- two transverse retained tensor iso-curves, certified pcurve intersection,
+  exact crossing atomization, one identity-shared crossing vertex, four
+  descendant faces, and full model revalidation: `1.322209 ms/iteration`;
+- tensor face intersection, exact two-pcurve clipping, canonical boundary
+  attachment, identity-shared iso-curve split, and full revalidation:
+  `340.603 us/iteration`;
+- disjoint cuboid 6×6 face intersection graph with 36 certified broad-phase
+  rejections: `11.423 us/iteration`;
+- overlapping cuboid intersection graph with exact transverse trim clipping
+  and coincident-plane support evidence: `319.782 us/iteration`;
+- retained overlapping-cuboid graph to deterministic transverse and
+  coplanar-support face partitions: `6.389954 ms/iteration`;
+- retained graph partition plus exact planar interior-witness classification
+  and intersection selection: `6.638052 ms/iteration`;
+- retained graph partition, selection, identity transfer, union shell
+  stitching, validation, and exact volume: `15.505052 ms/iteration`;
+- skew-cuboid transverse arrangement, selection, convex-shell stitching,
+  validation, and exact volume: `25.483189 ms/iteration`;
+- skew-cuboid difference through general concave planar-shell pair
+  certification, validation, and exact volume: `31.308049 ms/iteration`;
+- contained skew-cuboid difference through general planar void assignment,
+  strict shell nesting, validation, and exact volume: `3.141293 ms/iteration`;
+- sphere/planar-face graph with exact rational-conic region clipping:
+  `3.091935 ms/iteration`;
+- disjoint sphere union + arena remap + validation: `3.569 us/iteration`;
+- partial sphere intersection + periodic-cap build + exact volume:
+  `152.334 us/iteration`;
+- oriented coaxial cylinder interior cut + two-solid rebuild + exact volume:
+  `1.537104 ms/iteration`;
+- coincident cone-frustum interior cut + two-solid rebuild + exact volume:
+  `2.274817 ms/iteration`.
+- coaxial revolution contained cut + inward-shell rebuild + exact volume:
+  `2.415905 ms/iteration`.
 
-| Benchmark | Before median | After median | Change |
-| --- | ---: | ---: | ---: |
-| 1,024 point plus 128 segment face-query batch | 179.95 us | 163.60 us | -9.09% |
-| Segment/face-plane preflight | 660.31 ns | 665.97 ns | +0.86% |
-| Point/face-plane preflight | 608.90 ns | 587.30 ns | -3.55% |
-| Face/plane AABB preflight | 208.24 us | 210.53 us | +1.10% |
+The cuboid, cylinder, and sphere figures are wall-clock means over 1,000
+semantic-checked iterations. The larger torus, cone-frustum, editing, spline,
+and Boolean cohorts use the iteration counts printed by the benchmark.
 
-Criterion reported no segment change, an improved point preflight, and the
-face/plane movement within its noise threshold. The immediate batch also
-eliminates the prepared handle's separate 209.44 us median derivation cost.
-Aggregate counts, exact classifications, blockers, and narrow-phase scheduling
-semantics are unchanged.
-
-## Immediate voxel-geometry API gate
-
-`BrepShell::voxel_geometry` now constructs HyperVoxel's validated
-`ExactTriangleSolid` directly. The handoff no longer exposes a preparation
-verb, a partly usable triangle wrapper, or a separate readiness report.
-
-The affected HyperVoxel comparisons improved exact-solid construction from
-8.313 us to 7.148 us (14.0%) and depth-three tetrahedron voxelization from
-5.388 ms to 5.298 ms (1.7%). HyperBrep's retained cube sentinels measured
-247.8 us for voxel-geometry construction and 376.4 us for voxel
-materialization after the migration. Exact AABB, triangle-source, policy, and
-predicate-certificate semantics are unchanged.
-
-## Immediate planar-construction API gate
-
-The public planar constructors now return a finished `BrepShell` or a typed
-multi-blocker error. This removes the former construction carriers, which
-combined an optional shell, a redundant readiness boolean, duplicate output
-counts, and blockers in one publicly constructible state.
-
-The existing Criterion construction sentinels were measured serially before
-and after the change. Initial baselines were 28.834--29.043 us for a planar
-face, 136.50--138.34 us for a simple prism, and 300.83--304.06 us for a holed
-prism. Clean post-change runs measured 28.684--28.810, 136.38--136.87, and
-303.02--304.66 us respectively; the holed intervals overlap. A longer,
-immediately sequential old/new A/B confirmation measured 308.56--313.04 us
-for the committed API and 304.41--305.26 us for the immediate API, about 1.9%
-faster at the midpoint. An earlier post-change sample was discarded because
-the host's scheduled rootkit scan was active during that measurement.
-
-## Reference disposition
-
-### Yap: exact geometric computation
-
-Yap's separation between exact decisions and approximation is the crate's
-central contract. Coordinates and determinant-based decisions remain
-`hyperreal::Real`; unknown predicate outcomes become typed blockers. None of
-the retained changes substitutes a float comparison or cached approximate
-answer for exact replay.
-
-### Mantyla: solid modeling and half-edge structure
-
-The stable vertex, edge, coedge, loop, face, and shell identities implement the
-book's incidence-oriented view of a boundary representation. The shared edge
-and trim lookup tables are a direct performance application: incidence is
-indexed once at shell or face scope, then replayed through the existing
-manifold and orientation checks. Mutable Euler operators are not introduced
-because the current API is an immutable retained record with explicit
-construction reports.
-
-### Piegl and Tiller: NURBS
-
-Spatial NURBS already validate knot/control/weight relationships, evaluate in
-homogeneous coordinates, and project only at the end. Homogeneous control nets
-are cached with `OnceCell`. Moving that machinery into topology reports would
-duplicate `BrepCurve3` ownership, so the existing curve-local cache is retained
-unchanged.
-
-### Farin: CAGD curves and surfaces
-
-Bezier and spline evaluation already follows the affine/homogeneous algorithms
-owned by `hypercurve` and the spatial curve module. Native and reversed pcurve
-images are cached at the pcurve carrier. No second BREP-specific evaluator was
-added; keeping one exact curve representation avoids disagreement between
-topology and geometry layers.
-
-The public API exposes the exact operations and their results, not whether an
-internal `OnceCell` happens to be populated. Removing the four cache-state
-queries leaves homogeneous controls, reversed pcurves, and native segment views
-retained exactly as before. Before that API-only change, serialized Criterion
-ranges were 1.6070–1.6548 us for a rational Bezier point, 1.8464–1.8591 us for
-a NURBS point, 288.40–289.52 ns for pcurve image equality, and
-184.65–186.12 ns for a face edge-use query. Final serialized measurements were
-1.5952–1.6087 us, 1.8122–1.8730 us, 285.09–286.30 ns, and
-183.66–184.12 ns respectively. The retained native-segment accessor now takes
-an explicit already-initialized fast path, which preserves lazy first use while
-making the repeated immediate edge-use query slightly faster.
-
-### Meisters: polygon ears
-
-Exact planar tessellation delegates polygon triangulation to `hypertri`, whose
-own reference audit covers ear clipping and exact orientation predicates.
-Duplicating an ear-clipping implementation inside HyperBrep would add a second
-topological decision path without improving the retained representation.
-
-### Mirtich: polyhedral mass properties
-
-HyperBrep certifies closed, oriented, exact planar shells and hands exact
-triangles to `hyperphysics`, the owner of mass-property accumulation. Its local
-volume report keeps exact determinant accumulation as a readiness certificate.
-Higher moments and projection-axis accumulation belong in HyperPhysics and are
-audited there rather than duplicated at the BREP boundary.
-
-### Requicha and Voelcker: representation completeness
-
-The retained BREP remains source truth; tessellations, physics shapes, voxels,
-and exports are derived handoffs with provenance and blockers. This follows the
-reference's distinction between a solid representation and downstream display
-or analysis artifacts. The performance changes preserve that boundary and
-reuse only evidence from the same source snapshot.
-
-### Weiler: topological structures
-
-Weiler's explicit adjacency and radial-incidence model motivates the edge-use
-agreement reports and the shell-scoped identity maps. The retained lookup
-changes remove repeated reconstruction of those incidence indexes. A mutable
-radial-edge structure, non-manifold editing, sewing, and boolean operators are
-larger representation changes and remain deferred until they can carry the
-same exact report and provenance contracts.
-
-## Deferred ideas
-
-- A persistent prepared-shell identity context could share maps across every
-  report family, but it needs an explicit snapshot/freshness API to prevent
-  evidence from being replayed against a different shell value.
-- General analytic surfaces, curved trim-edge reconstruction, periodic NURBS,
-  and geometric equality across differently partitioned pcurves remain named
-  capability gaps rather than approximated operations.
-- Mutable radial-edge editing, Euler operators, sewing, and BREP booleans need
-  transactional topology validation and construction provenance.
-- Cross-thread curve caches would require changing the current `Rc`/`OnceCell`
-  ownership model and have no measured workload justifying that cost.
-- Polyhedral centers of mass and inertia tensors are owned by HyperPhysics;
-  BREP should provide certified geometry and reuse its returned evidence.
-
-No measured local experiment in this audit regressed or failed its semantic
-checks; all four bounded evidence-reuse experiments were retained. Architectural
-ideas without a safe local implementation or representative benchmark were
-deferred rather than treated as optimizations.
-
-## Validation protocol
-
-Run from the crate root:
+Run the core cohorts with:
 
 ```sh
-cargo fmt --all -- --check
-cargo test --all-targets --locked
-cargo clippy --all-targets --locked -- -D warnings
-cargo check --all-targets --locked
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --locked
-cargo bench --bench shell_audit --locked
+cargo bench --bench kernel
 ```
 
-The benchmark targets include the large edge, face, trim-set, and composed
-solid-report sentinels used above. Unit and integration tests cover blocker
-contents as well as readiness booleans, so evidence reuse cannot silently turn
-a previously blocked case into an accepted one.
+Run the derived-output cohort as well with:
+
+```sh
+cargo bench --all-features --bench kernel
+```
+
+The deleted report-oriented benchmark measured the displaced API and is not a
+compatibility target.

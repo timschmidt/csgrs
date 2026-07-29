@@ -2,7 +2,7 @@
 name = "hyperbrep"
 version = "0.2.0"
 edition = "2024"
-description = "Exact-aware boundary-representation evidence carriers for the Hyper ecosystem"
+description = "Hyper-native exact boundary-representation kernel"
 authors = ["Timothy Schmidt <timschmidt@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/timschmidt/hyperbrep"
@@ -10,26 +10,29 @@ readme = "README.md"
 keywords = ["brep", "cad", "geometry", "exact", "topology"]
 categories = ["mathematics", "graphics", "data-structures"]
 
+[features]
+default = []
+tessellation = ["dep:hypertri"]
+
 [dependencies]
-# Cargo uses these paths in the workspace and retains the version requirements
-# in the published manifest.
-hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
 hypercurve = { version = "0.3.1", path = "../hypercurve" }
-hyperphysics = { version = "0.3.0", path = "../hyperphysics" }
-hyperreal = { version = "0.13.1", path = "../hyperreal" }
-hypertri = { version = "0.4.1", path = "../hypertri", features = ["earcut"] }
-hypervoxel = { version = "0.3.0", path = "../hypervoxel" }
+hyperlattice = { version = "0.6.1", path = "../hyperlattice" }
+hyperlimit = { version = "0.4.1", path = "../hyperlimit" }
+hyperreal = { version = "0.13.1", path = "../hyperreal", features = ["serde"] }
+hypersolve = { version = "0.3.1", path = "../hypersolve" }
+hypertri = { version = "0.4.1", path = "../hypertri", optional = true, features = ["earcut"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 
 [dev-dependencies]
-criterion = "0.5"
 proptest = "1.7.0"
-
-[[bench]]
-name = "shell_audit"
-harness = false
 
 [patch.crates-io]
 hyperlattice = { path = "../hyperlattice" }
 hyperlimit = { path = "../hyperlimit" }
 hyperreal = { path = "../hyperreal" }
 hypersolve = { path = "../hypersolve" }
+
+[[bench]]
+name = "kernel"
+harness = false
