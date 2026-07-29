@@ -1,7 +1,7 @@
 //! Top-level exact curve-pair intersection with retained parameter intervals.
 
-use std::cell::OnceCell;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use hyperreal::Real;
 
@@ -71,29 +71,29 @@ pub struct CurveIntersectionPairBlocker2 {
 /// Retained top-level curve intersection result.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionResult2 {
-    data: Rc<CurveIntersectionResultData>,
+    data: Arc<CurveIntersectionResultData>,
 }
 
 /// Clone-shared split and arrangement topology for one complete curve-pair result.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionTopology2 {
-    data: Rc<CurveIntersectionTopologyData>,
+    data: Arc<CurveIntersectionTopologyData>,
 }
 
 #[derive(Debug)]
 struct CurveIntersectionTopologyData {
     result: CurveIntersectionResult2,
-    first: Rc<[BezierSplitMaterialization2]>,
-    second: Rc<[BezierSplitMaterialization2]>,
-    arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
+    first: Arc<[BezierSplitMaterialization2]>,
+    second: Arc<[BezierSplitMaterialization2]>,
+    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
 }
 
 #[derive(Debug)]
 struct CurveIntersectionResultData {
     span_pair_count: usize,
-    contacts: Rc<[CurveIntersectionContact2]>,
-    overlaps: Rc<[CurveIntersectionOverlap2]>,
-    blockers: Rc<[CurveIntersectionPairBlocker2]>,
+    contacts: Arc<[CurveIntersectionContact2]>,
+    overlaps: Arc<[CurveIntersectionOverlap2]>,
+    blockers: Arc<[CurveIntersectionPairBlocker2]>,
 }
 
 #[derive(Debug)]
@@ -108,7 +108,7 @@ struct CurveIntersectionContextData {
     policy: CurvePolicy,
     span_pair_count: usize,
     dispatch: CurveIntersectionDispatch,
-    result: OnceCell<ExactCurveResult<CurveIntersectionResult2>>,
+    result: OnceLock<ExactCurveResult<CurveIntersectionResult2>>,
 }
 
 #[derive(Debug)]
@@ -418,11 +418,11 @@ fn build_native_line_evidence(
         }
     };
     Ok(CurveIntersectionResult2 {
-        data: Rc::new(CurveIntersectionResultData {
+        data: Arc::new(CurveIntersectionResultData {
             span_pair_count,
             contacts: contacts.into(),
             overlaps: overlaps.into(),
-            blockers: Rc::from([]),
+            blockers: Arc::from([]),
         }),
     })
 }
@@ -464,11 +464,11 @@ fn build_native_line_arc_evidence(
         }
     }
     Ok(CurveIntersectionResult2 {
-        data: Rc::new(CurveIntersectionResultData {
+        data: Arc::new(CurveIntersectionResultData {
             span_pair_count,
             contacts: contacts.into(),
-            overlaps: Rc::from([]),
-            blockers: Rc::from([]),
+            overlaps: Arc::from([]),
+            blockers: Arc::from([]),
         }),
     })
 }
@@ -678,11 +678,11 @@ fn build_native_arc_evidence(
         }
     }
     Ok(CurveIntersectionResult2 {
-        data: Rc::new(CurveIntersectionResultData {
+        data: Arc::new(CurveIntersectionResultData {
             span_pair_count,
             contacts: contacts.into(),
-            overlaps: Rc::from([]),
-            blockers: Rc::from([]),
+            overlaps: Arc::from([]),
+            blockers: Arc::from([]),
         }),
     })
 }
@@ -840,11 +840,11 @@ fn build_native_coincident_arc_evidence(
     }
 
     Ok(CurveIntersectionResult2 {
-        data: Rc::new(CurveIntersectionResultData {
+        data: Arc::new(CurveIntersectionResultData {
             span_pair_count,
             contacts: contacts.into(),
             overlaps: overlaps.into(),
-            blockers: Rc::from([]),
+            blockers: Arc::from([]),
         }),
     })
 }
@@ -1112,7 +1112,7 @@ impl CurveIntersectionContext {
                 policy: policy.clone(),
                 span_pair_count,
                 dispatch,
-                result: OnceCell::new(),
+                result: OnceLock::new(),
             },
         })
     }
@@ -1135,11 +1135,11 @@ impl CurveIntersectionContext {
     fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
         if let CurveIntersectionDispatch::CertifiedEndpointContact(contact) = &self.data.dispatch {
             return Ok(CurveIntersectionResult2 {
-                data: Rc::new(CurveIntersectionResultData {
+                data: Arc::new(CurveIntersectionResultData {
                     span_pair_count: self.data.span_pair_count,
-                    contacts: Rc::from([contact.clone()]),
-                    overlaps: Rc::from([]),
-                    blockers: Rc::from([]),
+                    contacts: Arc::from([contact.clone()]),
+                    overlaps: Arc::from([]),
+                    blockers: Arc::from([]),
                 }),
             });
         }
@@ -1298,7 +1298,7 @@ impl CurveIntersectionContext {
             }
         }
         Ok(CurveIntersectionResult2 {
-            data: Rc::new(CurveIntersectionResultData {
+            data: Arc::new(CurveIntersectionResultData {
                 span_pair_count: self.data.span_pair_count,
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
@@ -1368,11 +1368,11 @@ impl CurveIntersectionContext {
             }));
         let second = split_curve_spans(&self.data.second, second_parameters, &self.data.policy)?;
         Ok(CurveIntersectionTopology2 {
-            data: Rc::new(CurveIntersectionTopologyData {
+            data: Arc::new(CurveIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement: OnceCell::new(),
+                arrangement: OnceLock::new(),
             }),
         })
     }

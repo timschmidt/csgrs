@@ -3,7 +3,7 @@
 //! This module turns already-closed boundary contours into the signed contour
 //! bins used by [`crate::LineArcRegion2`]. It assumes intersections and overlaps have
 //! already been resolved by earlier topology stages.
-use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
+use std::{cmp::Ordering, sync::Arc, sync::OnceLock};
 
 use hyperreal::{Real, RealSign};
 
@@ -958,7 +958,7 @@ pub struct RegionArrangementSummary2 {
 /// required.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RegionArrangement2 {
-    workspace: Rc<ExactCurveWorkspace2>,
+    workspace: Arc<ExactCurveWorkspace2>,
     summary: RegionArrangementSummary2,
     region: Option<LineArcRegion2>,
 }
@@ -6950,7 +6950,7 @@ fn evaluate_exact_curve_arrangement(
     let region = staging_result.region().cloned();
     let summary = RegionArrangementSummary2::from_workspace(&workspace);
     Ok(RegionArrangement2 {
-        workspace: Rc::new(workspace),
+        workspace: Arc::new(workspace),
         summary,
         region,
     })
@@ -8010,7 +8010,7 @@ impl RegionArrangement2 {
         self,
     ) -> (
         Option<LineArcRegion2>,
-        Rc<ExactCurveWorkspace2>,
+        Arc<ExactCurveWorkspace2>,
         RegionArrangementSummary2,
     ) {
         let Self {
@@ -10816,10 +10816,10 @@ fn contour_nesting_depths_impl(
         .map(|contour| decided_contour_aabb(contour, policy))
         .collect::<Vec<_>>();
     let segment_boxes = (0..contours.len())
-        .map(|_| OnceCell::<Vec<Option<Aabb2>>>::new())
+        .map(|_| OnceLock::<Vec<Option<Aabb2>>>::new())
         .collect::<Vec<_>>();
     let prepared_contours = (0..contours.len())
-        .map(|_| OnceCell::<crate::prepared::ContourQuery2<'_>>::new())
+        .map(|_| OnceLock::<crate::prepared::ContourQuery2<'_>>::new())
         .collect::<Vec<_>>();
     let aabb_overlap_neighbors = contour_aabb_overlap_neighbors(&contour_boxes, policy);
 

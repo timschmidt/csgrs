@@ -11,7 +11,7 @@
 use hyperreal::{Real, RealSign};
 
 use crate::{
-    CircularArc2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2,
+    CircularArc2, Classification, Contour2, CurveError, CurveFamily2, CurveOperation2, CurvePolicy,
     CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, LineArcRegion2,
     LineSeg2, Point2, Segment2,
 };
@@ -43,10 +43,13 @@ impl Similarity2 {
     ) -> CurveResult<Self> {
         let first_len_squared = a.clone() * a.clone() + d.clone() * d.clone();
         let second_len_squared = b.clone() * b.clone() + e.clone() * e.clone();
-        let equal_scale = (first_len_squared - second_len_squared).refine_sign_until(-128);
-        let orthogonal = (a.clone() * b.clone() + d.clone() * e.clone()).refine_sign_until(-128);
+        let policy = CurvePolicy::certified();
+        let equal_scale =
+            crate::classify::real_sign(&(first_len_squared - second_len_squared), &policy);
+        let orthogonal =
+            crate::classify::real_sign(&(a.clone() * b.clone() + d.clone() * e.clone()), &policy);
         let determinant = a.clone() * e.clone() - b.clone() * d.clone();
-        let determinant_sign = determinant.refine_sign_until(-128);
+        let determinant_sign = crate::classify::real_sign(&determinant, &policy);
 
         if equal_scale != Some(RealSign::Zero)
             || orthogonal != Some(RealSign::Zero)

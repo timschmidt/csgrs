@@ -107,7 +107,11 @@ impl CurveString2 {
                     return Err(CurveError::DisconnectedCurveString);
                 }
                 hyperreal::ZeroKnowledge::Unknown => {
-                    return Err(CurveError::AmbiguousCurveStringConnection);
+                    match is_zero(&distance, &CurvePolicy::certified()) {
+                        Some(true) => {}
+                        Some(false) => return Err(CurveError::DisconnectedCurveString),
+                        None => return Err(CurveError::AmbiguousCurveStringConnection),
+                    }
                 }
             }
         }

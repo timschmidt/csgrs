@@ -35,6 +35,7 @@ predicates = ["dep:hyperlimit"]
 dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit?/dispatch-trace"]
 triangulation = ["dep:hypertri"]
 svg = ["dep:svg", "dep:svgtypes", "hyperreal/serde"]
+hershey = []
 comparative-benchmarks = [
     "dep:cavalier_contours",
     "dep:curvo",

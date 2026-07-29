@@ -9,7 +9,7 @@
 //! treatment in the Bernstein and de Casteljau curve model.
 
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
@@ -47,8 +47,8 @@ pub struct RationalQuadraticBezier2 {
     control_weight: Real,
     end_weight: Real,
     common_weight_sign: Option<RealSign>,
-    implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
-    circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+    implicit_quadratic_conic: Option<Arc<[Real; 6]>>,
+    circular_conic: Option<Arc<RationalQuadraticCircle2>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -123,7 +123,7 @@ impl RationalQuadraticBezier2 {
         radius_squared: Real,
     ) -> Result<Self, CurveError> {
         let two = Real::from(2_i8);
-        let implicit_quadratic_conic = Rc::new([
+        let implicit_quadratic_conic = Arc::new([
             Real::one(),
             Real::zero(),
             Real::one(),
@@ -140,7 +140,7 @@ impl RationalQuadraticBezier2 {
             end_weight,
             None,
             Some(implicit_quadratic_conic),
-            Some(Rc::new(RationalQuadraticCircle2 {
+            Some(Arc::new(RationalQuadraticCircle2 {
                 center,
                 radius_squared,
             })),
@@ -156,8 +156,8 @@ impl RationalQuadraticBezier2 {
         control_weight: Real,
         end_weight: Real,
         retained_common_weight_sign: Option<RealSign>,
-        implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
-        circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+        implicit_quadratic_conic: Option<Arc<[Real; 6]>>,
+        circular_conic: Option<Arc<RationalQuadraticCircle2>>,
     ) -> Result<Self, CurveError> {
         if [
             start_weight.zero_status(),
@@ -191,18 +191,18 @@ impl RationalQuadraticBezier2 {
         })
     }
 
-    pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Rc<[Real; 6]>> {
+    pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Arc<[Real; 6]>> {
         self.implicit_quadratic_conic.as_ref()
     }
 
-    pub(crate) fn retained_circular_conic(&self) -> Option<&Rc<RationalQuadraticCircle2>> {
+    pub(crate) fn retained_circular_conic(&self) -> Option<&Arc<RationalQuadraticCircle2>> {
         self.circular_conic.as_ref()
     }
 
     pub(crate) fn with_retained_conic_provenance(
         mut self,
-        implicit_quadratic_conic: Option<Rc<[Real; 6]>>,
-        circular_conic: Option<Rc<RationalQuadraticCircle2>>,
+        implicit_quadratic_conic: Option<Arc<[Real; 6]>>,
+        circular_conic: Option<Arc<RationalQuadraticCircle2>>,
     ) -> Self {
         self.implicit_quadratic_conic = implicit_quadratic_conic;
         self.circular_conic = circular_conic;

@@ -19,9 +19,9 @@
 //! it keeps the exactness model's construction/decision separation, but it avoids retaining an
 //! algebraic wrapper when the exact root already lives in the scalar tower.
 
-use std::cell::{OnceCell, RefCell};
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::{Mutex, OnceLock};
 
 use hyperreal::{Rational as HyperRational, Real, RealSign};
 #[cfg(feature = "predicates")]
@@ -86,7 +86,7 @@ pub struct BezierParameterInterval {
 /// code can assert that the object was validated as a singleton isolator.
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicParameter2 {
-    data: Rc<BezierAlgebraicParameterData>,
+    data: Arc<BezierAlgebraicParameterData>,
 }
 
 #[derive(Debug)]
@@ -94,22 +94,22 @@ struct BezierAlgebraicParameterData {
     polynomial: BezierParameterPolynomial,
     interval: BezierParameterInterval,
     root_count: usize,
-    shared: Rc<BezierAlgebraicParameterSharedData>,
+    shared: Arc<BezierAlgebraicParameterSharedData>,
 }
 
 #[derive(Debug, Default)]
 struct BezierAlgebraicParameterSharedData {
-    represented_rational_root: OnceCell<Option<Real>>,
-    sturm_sequence: OnceCell<Rc<[Vec<Real>]>>,
-    simple_root: OnceCell<bool>,
-    rational_images: RefCell<Vec<RetainedRationalBezierAlgebraicImages>>,
+    represented_rational_root: OnceLock<Option<Real>>,
+    sturm_sequence: OnceLock<Arc<[Vec<Real>]>>,
+    simple_root: OnceLock<bool>,
+    rational_images: Mutex<Vec<RetainedRationalBezierAlgebraicImages>>,
 }
 
 #[derive(Debug)]
 struct RetainedRationalBezierAlgebraicImages {
     curve: RetainedRationalBezierAlgebraicImageCurve,
     point: Option<crate::RationalBezierAlgebraicPointImage2>,
-    derivatives: Rc<[crate::RationalBezierAlgebraicTangentImage2]>,
+    derivatives: Arc<[crate::RationalBezierAlgebraicTangentImage2]>,
 }
 
 #[derive(Debug)]
@@ -120,7 +120,7 @@ enum RetainedRationalBezierAlgebraicImageCurve {
 
 impl PartialEq for BezierAlgebraicParameter2 {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data, &other.data)
+        Arc::ptr_eq(&self.data, &other.data)
             || (self.data.polynomial == other.data.polynomial
                 && self.data.interval == other.data.interval
                 && self.data.root_count == other.data.root_count)
@@ -723,11 +723,11 @@ impl BezierAlgebraicParameter2 {
         }
 
         Ok(Classification::Decided(Self {
-            data: Rc::new(BezierAlgebraicParameterData {
+            data: Arc::new(BezierAlgebraicParameterData {
                 polynomial,
                 interval,
                 root_count: count,
-                shared: Rc::new(BezierAlgebraicParameterSharedData::default()),
+                shared: Arc::new(BezierAlgebraicParameterSharedData::default()),
             }),
         }))
     }
@@ -737,11 +737,11 @@ impl BezierAlgebraicParameter2 {
         interval: BezierParameterInterval,
     ) -> Self {
         Self {
-            data: Rc::new(BezierAlgebraicParameterData {
+            data: Arc::new(BezierAlgebraicParameterData {
                 polynomial,
                 interval,
                 root_count: 1,
-                shared: Rc::new(BezierAlgebraicParameterSharedData::default()),
+                shared: Arc::new(BezierAlgebraicParameterSharedData::default()),
             }),
         }
     }
@@ -758,7 +758,7 @@ impl BezierAlgebraicParameter2 {
     fn from_certified_singleton_with_sturm_sequence(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
-        sturm_sequence: Rc<[Vec<Real>]>,
+        sturm_sequence: Arc<[Vec<Real>]>,
     ) -> Self {
         let parameter = Self::from_certified_singleton(polynomial, interval);
         let _ = parameter.data.shared.sturm_sequence.set(sturm_sequence);
@@ -768,11 +768,11 @@ impl BezierAlgebraicParameter2 {
     #[cfg(feature = "predicates")]
     fn with_certified_interval(&self, interval: BezierParameterInterval) -> Self {
         Self {
-            data: Rc::new(BezierAlgebraicParameterData {
+            data: Arc::new(BezierAlgebraicParameterData {
                 polynomial: self.data.polynomial.clone(),
                 interval,
                 root_count: self.data.root_count,
-                shared: Rc::clone(&self.data.shared),
+                shared: Arc::clone(&self.data.shared),
             }),
         }
     }
@@ -795,23 +795,23 @@ impl BezierAlgebraicParameter2 {
     fn retained_sturm_sequence(
         &self,
         policy: &CurvePolicy,
-    ) -> CurveResult<Classification<Rc<[Vec<Real>]>>> {
+    ) -> CurveResult<Classification<Arc<[Vec<Real>]>>> {
         if let Some(sequence) = self.data.shared.sturm_sequence.get() {
-            return Ok(Classification::Decided(Rc::clone(sequence)));
+            return Ok(Classification::Decided(Arc::clone(sequence)));
         }
         let sequence = match sturm_sequence(self.polynomial().coefficients(), policy)? {
-            Classification::Decided(sequence) => Rc::<[Vec<Real>]>::from(sequence),
+            Classification::Decided(sequence) => Arc::<[Vec<Real>]>::from(sequence),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let _ = self.data.shared.sturm_sequence.set(Rc::clone(&sequence));
+        let _ = self.data.shared.sturm_sequence.set(Arc::clone(&sequence));
         Ok(Classification::Decided(
             self.data
                 .shared
                 .sturm_sequence
                 .get()
-                .map_or(sequence, Rc::clone),
+                .map_or(sequence, Arc::clone),
         ))
     }
 
@@ -822,7 +822,8 @@ impl BezierAlgebraicParameter2 {
         self.data
             .shared
             .rational_images
-            .borrow()
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned")
             .iter()
             .find(|images| {
                 matches!(
@@ -839,7 +840,12 @@ impl BezierAlgebraicParameter2 {
         curve: &crate::RationalBezier2,
         image: crate::RationalBezierAlgebraicPointImage2,
     ) {
-        let mut cache = self.data.shared.rational_images.borrow_mut();
+        let mut cache = self
+            .data
+            .shared
+            .rational_images
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned");
         if let Some(images) = cache.iter_mut().find(|images| {
             matches!(
                 &images.curve,
@@ -853,7 +859,7 @@ impl BezierAlgebraicParameter2 {
         cache.push(RetainedRationalBezierAlgebraicImages {
             curve: RetainedRationalBezierAlgebraicImageCurve::Rational(curve.clone()),
             point: Some(image),
-            derivatives: Rc::from([]),
+            derivatives: Arc::from([]),
         });
     }
 
@@ -865,7 +871,8 @@ impl BezierAlgebraicParameter2 {
         self.data
             .shared
             .rational_images
-            .borrow()
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned")
             .iter()
             .find(|images| {
                 matches!(
@@ -882,7 +889,12 @@ impl BezierAlgebraicParameter2 {
         curve: &crate::RationalBezier2,
         images: Vec<crate::RationalBezierAlgebraicTangentImage2>,
     ) {
-        let mut cache = self.data.shared.rational_images.borrow_mut();
+        let mut cache = self
+            .data
+            .shared
+            .rational_images
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned");
         if let Some(cached) = cache.iter_mut().find(|cached| {
             matches!(
                 &cached.curve,
@@ -891,14 +903,14 @@ impl BezierAlgebraicParameter2 {
             )
         }) {
             if cached.derivatives.len() < images.len() {
-                cached.derivatives = Rc::from(images);
+                cached.derivatives = Arc::from(images);
             }
             return;
         }
         cache.push(RetainedRationalBezierAlgebraicImages {
             curve: RetainedRationalBezierAlgebraicImageCurve::Rational(curve.clone()),
             point: None,
-            derivatives: Rc::from(images),
+            derivatives: Arc::from(images),
         });
     }
 
@@ -909,7 +921,8 @@ impl BezierAlgebraicParameter2 {
         self.data
             .shared
             .rational_images
-            .borrow()
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned")
             .iter()
             .find(|images| {
                 matches!(
@@ -926,7 +939,12 @@ impl BezierAlgebraicParameter2 {
         curve: &crate::RationalQuadraticBezier2,
         image: crate::RationalBezierAlgebraicPointImage2,
     ) {
-        let mut cache = self.data.shared.rational_images.borrow_mut();
+        let mut cache = self
+            .data
+            .shared
+            .rational_images
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned");
         if let Some(images) = cache.iter_mut().find(|images| {
             matches!(
                 &images.curve,
@@ -940,7 +958,7 @@ impl BezierAlgebraicParameter2 {
         cache.push(RetainedRationalBezierAlgebraicImages {
             curve: RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(curve.clone()),
             point: Some(image),
-            derivatives: Rc::from([]),
+            derivatives: Arc::from([]),
         });
     }
 
@@ -952,7 +970,8 @@ impl BezierAlgebraicParameter2 {
         self.data
             .shared
             .rational_images
-            .borrow()
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned")
             .iter()
             .find(|images| {
                 matches!(
@@ -969,7 +988,12 @@ impl BezierAlgebraicParameter2 {
         curve: &crate::RationalQuadraticBezier2,
         images: Vec<crate::RationalBezierAlgebraicTangentImage2>,
     ) {
-        let mut cache = self.data.shared.rational_images.borrow_mut();
+        let mut cache = self
+            .data
+            .shared
+            .rational_images
+            .lock()
+            .expect("algebraic parameter image cache mutex poisoned");
         if let Some(cached) = cache.iter_mut().find(|cached| {
             matches!(
                 &cached.curve,
@@ -978,14 +1002,14 @@ impl BezierAlgebraicParameter2 {
             )
         }) {
             if cached.derivatives.len() < images.len() {
-                cached.derivatives = Rc::from(images);
+                cached.derivatives = Arc::from(images);
             }
             return;
         }
         cache.push(RetainedRationalBezierAlgebraicImages {
             curve: RetainedRationalBezierAlgebraicImageCurve::RationalQuadratic(curve.clone()),
             point: None,
-            derivatives: Rc::from(images),
+            derivatives: Arc::from(images),
         });
     }
 
@@ -1513,7 +1537,7 @@ impl BezierParameter2 {
             || matches!(
                 (self, other),
                 (Self::Algebraic(left), Self::Algebraic(right))
-                    if Rc::ptr_eq(&left.data.shared, &right.data.shared)
+                    if Arc::ptr_eq(&left.data.shared, &right.data.shared)
             )
         {
             return Ok(Classification::Decided(true));
@@ -1670,7 +1694,7 @@ enum RefinedParameter<'a> {
     Algebraic {
         parameter: &'a BezierAlgebraicParameter2,
         interval: BezierParameterInterval,
-        sturm_sequence: Rc<[Vec<Real>]>,
+        sturm_sequence: Arc<[Vec<Real>]>,
     },
 }
 
@@ -3048,7 +3072,7 @@ fn search_unit_roots(
     trace: &mut BezierRootIsolationTrace2,
 ) -> CurveResult<Classification<UnitRootSearch>> {
     let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
-        Classification::Decided(sequence) => Rc::<[Vec<Real>]>::from(sequence),
+        Classification::Decided(sequence) => Arc::<[Vec<Real>]>::from(sequence),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let rational_root_denominator_bound = rational_root_denominator_bound(polynomial);
@@ -3128,7 +3152,7 @@ fn search_unit_roots(
             let parameter = BezierAlgebraicParameter2::from_certified_singleton_with_sturm_sequence(
                 polynomial.clone(),
                 interval,
-                Rc::clone(&sequence),
+                Arc::clone(&sequence),
             );
             match parameter.represented_rational_root_with_cached_sequence(
                 policy,
@@ -3853,7 +3877,7 @@ mod conversion_tests {
             let source_sequence = source_algebraic.data.shared.sturm_sequence.get();
             let refined_sequence = refined.data.shared.sturm_sequence.get();
             if expects_sturm_fallback {
-                assert!(Rc::ptr_eq(
+                assert!(Arc::ptr_eq(
                     source_sequence.expect("even root refinement retains one Sturm sequence"),
                     refined_sequence.expect("refined clones share retained Sturm work")
                 ));

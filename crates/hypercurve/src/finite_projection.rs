@@ -897,8 +897,7 @@ fn subcurve_has_common_weight_sign(curve: &BezierSubcurve2) -> bool {
     };
     let mut sign = None;
     for weight in weights {
-        let current = weight
-            .refine_sign_until(-128)
+        let current = crate::classify::real_sign(weight, &CurvePolicy::certified())
             .filter(|value| *value != RealSign::Zero);
         match (sign, current) {
             (None, Some(current)) => sign = Some(current),

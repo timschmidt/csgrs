@@ -15,8 +15,8 @@
 //! denominator cases still return `None`
 //! rather than silently sampling.
 
-use std::cell::OnceCell;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use hyperreal::{Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
@@ -114,34 +114,34 @@ impl CurveRegionFragmentSource2 {
 #[derive(Clone)]
 pub struct CurveRegion2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
-    certified_loop_roles: Option<Rc<[CurveRegionLoopRole]>>,
-    certified_loop_fill_rules: Option<Rc<[FillRule]>>,
+    certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
+    certified_loop_fill_rules: Option<Arc<[FillRule]>>,
     signed_loop_composition: bool,
-    filled_side_is_left: Rc<OnceCell<CurveResult<Classification<Rc<[bool]>>>>>,
-    native_boundary_loops: Rc<OnceCell<Option<Rc<[BezierBoundaryLoop2]>>>>,
-    native_boundary_bounds: Rc<OnceCell<Rc<[Aabb2]>>>,
-    line_image_region: Rc<OnceCell<Option<LineArcRegion2>>>,
-    retained_rational_evaluators: Rc<OnceCell<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>>,
-    signed_area_cache: Rc<OnceCell<CurveResult<Option<Real>>>>,
+    filled_side_is_left: Arc<OnceLock<CurveResult<Classification<Arc<[bool]>>>>>,
+    native_boundary_loops: Arc<OnceLock<Option<Arc<[BezierBoundaryLoop2]>>>>,
+    native_boundary_bounds: Arc<OnceLock<Arc<[Aabb2]>>>,
+    line_image_region: Arc<OnceLock<Option<LineArcRegion2>>>,
+    retained_rational_evaluators: Arc<OnceLock<CurveResult<Vec<Vec<Option<RationalBezier2>>>>>>,
+    signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
 }
 
 impl Default for CurveRegion2 {
     fn default() -> Self {
         let region = Self {
             boundary_loops: Vec::new(),
-            certified_loop_roles: Some(Rc::from(Vec::new())),
-            certified_loop_fill_rules: Some(Rc::from(Vec::new())),
+            certified_loop_roles: Some(Arc::from(Vec::new())),
+            certified_loop_fill_rules: Some(Arc::from(Vec::new())),
             signed_loop_composition: false,
-            filled_side_is_left: Rc::new(OnceCell::new()),
-            native_boundary_loops: Rc::new(OnceCell::new()),
-            native_boundary_bounds: Rc::new(OnceCell::new()),
-            line_image_region: Rc::new(OnceCell::new()),
-            retained_rational_evaluators: Rc::new(OnceCell::new()),
-            signed_area_cache: Rc::new(OnceCell::new()),
+            filled_side_is_left: Arc::new(OnceLock::new()),
+            native_boundary_loops: Arc::new(OnceLock::new()),
+            native_boundary_bounds: Arc::new(OnceLock::new()),
+            line_image_region: Arc::new(OnceLock::new()),
+            retained_rational_evaluators: Arc::new(OnceLock::new()),
+            signed_area_cache: Arc::new(OnceLock::new()),
         };
         let _ = region
             .filled_side_is_left
-            .set(Ok(Classification::Decided(Rc::from(Vec::new()))));
+            .set(Ok(Classification::Decided(Arc::from(Vec::new()))));
         let _ = region.line_image_region.set(Some(LineArcRegion2::empty()));
         region
     }
@@ -184,7 +184,7 @@ impl<'a> CurveRegionNativeContourView2<'a> {
 #[derive(Clone, Debug)]
 pub struct CurveRegionArrangement2 {
     region: Option<CurveRegion2>,
-    workspace: Rc<ExactCurveWorkspace2>,
+    workspace: Arc<ExactCurveWorkspace2>,
     summary: RegionArrangementSummary2,
 }
 
@@ -2059,7 +2059,7 @@ impl CurveRegion2 {
             policy,
             None,
         )?;
-        promoted.line_image_region = Rc::new(OnceCell::new());
+        promoted.line_image_region = Arc::new(OnceLock::new());
         let _ = promoted
             .line_image_region
             .set(Some(LineArcRegion2::new(material_contours, hole_contours)));
@@ -2259,8 +2259,8 @@ impl CurveRegion2 {
             ));
         }
         let mut region = Self::try_from_boundary_paths(paths)?;
-        region.certified_loop_roles = Some(Rc::from(roles));
-        region.certified_loop_fill_rules = Some(Rc::from(fill_rules));
+        region.certified_loop_roles = Some(Arc::from(roles));
+        region.certified_loop_fill_rules = Some(Arc::from(fill_rules));
         if let Some(filled_sides) = certified_filled_sides {
             region = region
                 .with_certified_filled_side_is_left(filled_sides)
@@ -2433,12 +2433,12 @@ impl CurveRegion2 {
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
             signed_loop_composition: false,
-            filled_side_is_left: Rc::new(OnceCell::new()),
-            native_boundary_loops: Rc::new(OnceCell::new()),
-            native_boundary_bounds: Rc::new(OnceCell::new()),
-            line_image_region: Rc::new(OnceCell::new()),
-            retained_rational_evaluators: Rc::new(OnceCell::new()),
-            signed_area_cache: Rc::new(OnceCell::new()),
+            filled_side_is_left: Arc::new(OnceLock::new()),
+            native_boundary_loops: Arc::new(OnceLock::new()),
+            native_boundary_bounds: Arc::new(OnceLock::new()),
+            line_image_region: Arc::new(OnceLock::new()),
+            retained_rational_evaluators: Arc::new(OnceLock::new()),
+            signed_area_cache: Arc::new(OnceLock::new()),
         }
     }
 
@@ -2453,7 +2453,7 @@ impl CurveRegion2 {
         }
         let _ = self
             .filled_side_is_left
-            .set(Ok(Classification::Decided(Rc::from(filled_side_is_left))));
+            .set(Ok(Classification::Decided(Arc::from(filled_side_is_left))));
         Ok(self)
     }
 
@@ -2483,7 +2483,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurvePolicy,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
-    ) -> CurveResult<Classification<Rc<[bool]>>> {
+    ) -> CurveResult<Classification<Arc<[bool]>>> {
         if let Some(roles) = self.certified_loop_roles.as_deref() {
             let signed_areas = self
                 .boundary_loops
@@ -2494,7 +2494,7 @@ impl CurveRegion2 {
                 .collect::<Option<Vec<_>>>();
             if let Some(signed_areas) = signed_areas {
                 return filled_sides_from_roles_and_areas(roles, &signed_areas, policy)
-                    .map(|sides| Classification::Decided(Rc::from(sides)));
+                    .map(|sides| Classification::Decided(Arc::from(sides)));
             }
         }
         if self.boundary_loops.len() == 1
@@ -2502,8 +2502,8 @@ impl CurveRegion2 {
                 self.boundary_loops[0].signed_area_with_cache(rational_quadratic_cache)?
         {
             return Ok(match real_sign(&area, policy) {
-                Some(RealSign::Positive) => Classification::Decided(Rc::from([true].as_slice())),
-                Some(RealSign::Negative) => Classification::Decided(Rc::from([false].as_slice())),
+                Some(RealSign::Positive) => Classification::Decided(Arc::from([true].as_slice())),
+                Some(RealSign::Negative) => Classification::Decided(Arc::from([false].as_slice())),
                 Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
                 None => Classification::Uncertain(UncertaintyReason::RealSign),
             });
@@ -2516,7 +2516,7 @@ impl CurveRegion2 {
                     evidence.signed_areas(),
                     policy,
                 )
-                .map(|sides| Classification::Decided(Rc::from(sides)));
+                .map(|sides| Classification::Decided(Arc::from(sides)));
             }
             Classification::Uncertain(UncertaintyReason::Unsupported) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -2532,7 +2532,7 @@ impl CurveRegion2 {
                     areas.push(area);
                 }
                 filled_sides_from_roles_and_areas(evidence.roles(), &areas, policy)
-                    .map(|sides| Classification::Decided(Rc::from(sides)))
+                    .map(|sides| Classification::Decided(Arc::from(sides)))
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
@@ -4402,7 +4402,7 @@ impl CurveRegion2 {
                     .iter()
                     .map(retained_loop_to_native)
                     .collect::<Option<Vec<_>>>()
-                    .map(Rc::from)
+                    .map(Arc::from)
             })
             .as_deref()
     }

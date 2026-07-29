@@ -5,8 +5,8 @@
 //! sweep-line scheduling intersection enumeration work: candidate generation may
 //! be optimized, but topology still depends on the exact segment relation.
 
-use std::cell::OnceCell;
 use std::collections::BTreeMap;
+use std::sync::OnceLock;
 
 use hyperreal::Real;
 
@@ -446,9 +446,9 @@ fn intersect_region_views_impl<const POINT_ONLY: bool>(
 }
 
 struct ContourIntersectionAabbs {
-    exact: Option<std::rc::Rc<crate::contour::ExactDyadicLineAabbs>>,
+    exact: Option<std::sync::Arc<crate::contour::ExactDyadicLineAabbs>>,
     contour: Option<Aabb2>,
-    segments: OnceCell<Vec<Option<Aabb2>>>,
+    segments: OnceLock<Vec<Option<Aabb2>>>,
 }
 
 impl ContourIntersectionAabbs {
@@ -491,7 +491,7 @@ fn contour_intersection_aabbs(
                     .then(|| decided_contour_aabb(contour, policy))
                     .flatten(),
                 exact,
-                segments: OnceCell::new(),
+                segments: OnceLock::new(),
             }
         })
         .collect()

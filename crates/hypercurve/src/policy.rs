@@ -1,10 +1,11 @@
-//! Exact topology and explicit edge-preview policy for curve operations.
+//! Predicate-controlled topology and explicit edge-preview policy.
 
 /// Numeric policy for a curve operation.
 ///
-/// The default and [`CurvePolicy::certified`] policy requires certified
-/// topology decisions. [`CurvePolicy::edge_preview`] is the explicit lossy
-/// boundary for rendering and diagnostics.
+/// The default and [`CurvePolicy::certified`] policy exhaust exact and
+/// certified-refinement stages before applying Hyperlimit's current terminal
+/// predicate policy. [`CurvePolicy::edge_preview`] additionally permits lossy
+/// finite views at rendering and diagnostics boundaries.
 ///
 /// The representation is intentionally closed: callers cannot combine a
 /// certified operation with preview tolerances, request preview behavior
@@ -30,12 +31,12 @@ pub(crate) struct PreviewTolerance {
 }
 
 impl CurvePolicy {
-    /// Conservative topology policy.
+    /// Topology policy backed by the workspace predicate policy.
     pub const fn certified() -> Self {
         Self {
             mode: NumericMode::Certified,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::STRICT,
+            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
             preview_tolerance: None,
         }
     }
@@ -44,13 +45,13 @@ impl CurvePolicy {
     ///
     /// This policy is intentionally not the default. It exists for code that is
     /// already at an IO, rendering, or compatibility boundary. Hyperlimit
-    /// predicates still use the strict exact policy. The tolerances are
-    /// available only to named curve-local preview operations.
+    /// predicates still use the centralized workspace policy. The tolerances
+    /// are available only to named curve-local preview operations.
     pub const fn edge_preview(absolute_tolerance: f64, relative_tolerance: f64) -> Self {
         Self {
             mode: NumericMode::EdgePreview,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::STRICT,
+            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
             preview_tolerance: Some(PreviewTolerance {
                 absolute: absolute_tolerance,
                 relative: relative_tolerance,

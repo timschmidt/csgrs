@@ -255,6 +255,7 @@ uncertainty as empty geometry.
 | `dispatch-trace` | no | Hyperreal/Hyperlimit dispatch instrumentation |
 | `triangulation` | no | Finite-region triangulation through Hypertri |
 | `svg` | no | SVG import/export and exact round-trip extension |
+| `hershey` | no | Compiled Hershey stroke fonts and native curve-string text |
 | `comparative-benchmarks` | no | Third-party benchmark adapters only |
 
 Minimal and common configurations:
@@ -353,6 +354,13 @@ provides the three-dimensional and engineering layers.
 The bibliography above acknowledges the research traditions that inform the
 implementation. Optional comparison dependencies are benchmark or validation
 peers and do not provide Hypercurve’s native topology.
+
+The optional compiled single-stroke font catalog was created by Dr. A. V.
+Hershey at the U.S. National Bureau of Standards. Its source distribution
+format was created by James Hurt of Cognition, Inc.; the integrated Rust
+representation is not the U.S. NTIS distribution format. The complete
+required acknowledgement is available as
+`hypercurve::hershey::FONT_DATA_NOTICE`.
 
 ## License and contributing
 

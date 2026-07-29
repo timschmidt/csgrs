@@ -6,7 +6,7 @@
 //! split-then-classify structure, with explicit uncertainty for ordering or
 //! finite-preview cases that would otherwise create invalid graph topology.
 
-use std::{cmp::Ordering, rc::Rc};
+use std::{cmp::Ordering, sync::Arc};
 
 use hyperreal::Real;
 
@@ -770,7 +770,7 @@ fn build_fragment_segment(
     start: &SegmentSplitMarker,
     end: &SegmentSplitMarker,
     unsplit_source_segment: bool,
-    line_support: Option<&Rc<LineSupport2>>,
+    line_support: Option<&Arc<LineSupport2>>,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Segment2>> {
     // Every ContourSplitMarkers constructor certifies a strict sequence from
@@ -831,7 +831,7 @@ fn radius_delta_is_zero(delta: &Real, radius_squared: &Real, policy: &CurvePolic
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     use super::*;
     use crate::LineSeg2;
@@ -894,11 +894,11 @@ mod tests {
         let first = source.fragment_support();
         let second = source.fragment_support();
 
-        assert!(Rc::ptr_eq(&first, &second));
+        assert!(Arc::ptr_eq(&first, &second));
 
         let reversed = source.into_reversed();
         let reversed_support = reversed.fragment_support();
-        assert!(!Rc::ptr_eq(&first, &reversed_support));
+        assert!(!Arc::ptr_eq(&first, &reversed_support));
         let fragment = reversed.fragment_between_after_distinct_endpoints(
             original_end.clone(),
             point(3),

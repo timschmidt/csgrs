@@ -30,9 +30,9 @@ use crate::{
     Aabb2, BezierAlgebraicParameter2, Classification, CubicBezier2, CurvePolicy, CurveResult,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
 };
-use std::cell::OnceCell;
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 /// Status for a Bezier algebraic point or tangent image.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -233,7 +233,7 @@ pub struct BezierAlgebraicTangentImage2 {
 /// Exact algebraic image of a rational quadratic Bezier affine point.
 #[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicPointImage2 {
-    data: Rc<RationalBezierAlgebraicPointImageData>,
+    data: Arc<RationalBezierAlgebraicPointImageData>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -259,7 +259,7 @@ struct RetainedRationalPointExpression {
 struct RetainedRationalPointParametricSource {
     curve: RationalBezier2,
     parameter: BezierAlgebraicParameter2,
-    resolved: OnceCell<Option<RationalBezierAlgebraicPointImage2>>,
+    resolved: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
 }
 
 impl PartialEq for RetainedRationalPointParametricSource {
@@ -270,7 +270,7 @@ impl PartialEq for RetainedRationalPointParametricSource {
 
 impl PartialEq for RationalBezierAlgebraicPointImage2 {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data, &other.data) || self.data == other.data
+        Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
     }
 }
 
@@ -284,7 +284,7 @@ impl RationalBezierAlgebraicPointImage2 {
         message: Option<String>,
     ) -> Self {
         Self {
-            data: Rc::new(RationalBezierAlgebraicPointImageData {
+            data: Arc::new(RationalBezierAlgebraicPointImageData {
                 status,
                 parameter,
                 x,
@@ -302,7 +302,7 @@ impl RationalBezierAlgebraicPointImage2 {
         policy: &CurvePolicy,
     ) -> Self {
         Self {
-            data: Rc::new(RationalBezierAlgebraicPointImageData {
+            data: Arc::new(RationalBezierAlgebraicPointImageData {
                 status: BezierAlgebraicImageStatus::RetainedRationalExpression,
                 parameter: parameter_representation(&parameter, policy),
                 x: None,
@@ -311,7 +311,7 @@ impl RationalBezierAlgebraicPointImage2 {
                 parametric_source: Some(RetainedRationalPointParametricSource {
                     curve,
                     parameter,
-                    resolved: OnceCell::new(),
+                    resolved: OnceLock::new(),
                 }),
                 message: None,
             }),
@@ -400,7 +400,7 @@ impl RationalBezierAlgebraicPointImage2 {
 /// Exact algebraic image of a rational Bezier derivative vector.
 #[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicTangentImage2 {
-    data: Rc<RationalBezierAlgebraicTangentImageData>,
+    data: Arc<RationalBezierAlgebraicTangentImageData>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -414,7 +414,7 @@ struct RationalBezierAlgebraicTangentImageData {
 
 impl PartialEq for RationalBezierAlgebraicTangentImage2 {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data, &other.data) || self.data == other.data
+        Arc::ptr_eq(&self.data, &other.data) || self.data == other.data
     }
 }
 
@@ -427,7 +427,7 @@ impl RationalBezierAlgebraicTangentImage2 {
         message: Option<String>,
     ) -> Self {
         Self {
-            data: Rc::new(RationalBezierAlgebraicTangentImageData {
+            data: Arc::new(RationalBezierAlgebraicTangentImageData {
                 status,
                 parameter,
                 dx,

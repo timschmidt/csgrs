@@ -1,8 +1,8 @@
 //! Exact rational Bezier curves of arbitrary positive degree.
 
-use std::cell::{OnceCell, RefCell};
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::{Mutex, OnceLock};
 
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 #[cfg(feature = "predicates")]
@@ -51,7 +51,7 @@ use crate::{
 /// higher-degree NURBS spans do not need sampling or degree reduction.
 #[derive(Clone, Debug)]
 pub struct RationalBezier2 {
-    data: Rc<RationalBezierData>,
+    data: Arc<RationalBezierData>,
 }
 
 #[derive(Debug)]
@@ -60,27 +60,27 @@ struct RationalBezierData {
     weights: Vec<Real>,
     exact_line_image: Option<LineSeg2>,
     lineage: RationalBezierLineage,
-    homogeneous_controls: OnceCell<Vec<HomogeneousPoint2>>,
-    homogeneous_power_basis: OnceCell<RationalParametricCurve2>,
-    x_derivative_numerator_bernstein: OnceCell<Option<Vec<Real>>>,
-    y_derivative_numerator_bernstein: OnceCell<Option<Vec<Real>>>,
-    x_axis_monotonicity: OnceCell<bool>,
-    y_axis_monotonicity: OnceCell<bool>,
-    degree_elevations: OnceCell<RefCell<Vec<ExactCurveResult<RationalBezier2>>>>,
+    homogeneous_controls: OnceLock<Vec<HomogeneousPoint2>>,
+    homogeneous_power_basis: OnceLock<RationalParametricCurve2>,
+    x_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
+    y_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
+    x_axis_monotonicity: OnceLock<bool>,
+    y_axis_monotonicity: OnceLock<bool>,
+    degree_elevations: OnceLock<Mutex<Vec<ExactCurveResult<RationalBezier2>>>>,
 }
 
 #[derive(Clone, Debug)]
 struct RationalBezierLineage {
-    root: Rc<RationalBezierLineageRoot>,
+    root: Arc<RationalBezierLineageRoot>,
     range: ParamRange,
 }
 
 #[derive(Debug, Default)]
 struct RationalBezierLineageRoot {
-    image_is_injective: OnceCell<bool>,
-    implicit_quadratic_conic: OnceCell<Rc<[Real; 6]>>,
-    circular_conic: OnceCell<Rc<crate::rational_bezier::RationalQuadraticCircle2>>,
-    quadratic_conic_parameter_frame: OnceCell<Rc<[HomogeneousPoint2; 3]>>,
+    image_is_injective: OnceLock<bool>,
+    implicit_quadratic_conic: OnceLock<Arc<[Real; 6]>>,
+    circular_conic: OnceLock<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
+    quadratic_conic_parameter_frame: OnceLock<Arc<[HomogeneousPoint2; 3]>>,
 }
 
 #[derive(Clone, Debug)]
@@ -105,14 +105,14 @@ impl RationalBezierLineage {
 
     fn subrange(&self, start: &Real, end: &Real) -> Self {
         Self {
-            root: Rc::clone(&self.root),
+            root: Arc::clone(&self.root),
             range: ParamRange::new(self.parameter_at(start), self.parameter_at(end)),
         }
     }
 
     fn reversed(&self) -> Self {
         Self {
-            root: Rc::clone(&self.root),
+            root: Arc::clone(&self.root),
             range: ParamRange::new(self.range.end().clone(), self.range.start().clone()),
         }
     }
@@ -233,7 +233,7 @@ pub enum RationalBezierIntersectionContacts2 {
     /// Replay certified that the finite curve images do not meet.
     NoIntersection,
     /// Every resultant candidate pair was decided and these contacts remain.
-    Contacts(Rc<[RationalBezierIntersectionContact2]>),
+    Contacts(Arc<[RationalBezierIntersectionContact2]>),
     /// Exact shared-component replay certified a positive-length full or
     /// partial shared image and retained both oriented parameter ranges.
     Overlap(RationalBezierIntersectionOverlap2),
@@ -241,7 +241,7 @@ pub enum RationalBezierIntersectionContacts2 {
     /// remained unresolved under the exact algebraic comparison budget.
     Incomplete {
         /// Contacts already certified by exact replay.
-        contacts: Rc<[RationalBezierIntersectionContact2]>,
+        contacts: Arc<[RationalBezierIntersectionContact2]>,
         /// Complete unpaired resultant projections retained for later replay.
         candidates: RationalBezierIntersectionCandidates2,
     },
@@ -264,15 +264,15 @@ enum RationalBezierSharedComponentReplay {
 /// resultants or algebraic point comparison.
 #[derive(Clone, Debug)]
 pub struct RationalBezierIntersectionTopology2 {
-    data: Rc<RationalBezierIntersectionTopologyData>,
+    data: Arc<RationalBezierIntersectionTopologyData>,
 }
 
 #[derive(Debug)]
 struct RationalBezierIntersectionTopologyData {
-    contacts: Rc<[RationalBezierIntersectionContact2]>,
+    contacts: Arc<[RationalBezierIntersectionContact2]>,
     first: BezierSplitMaterialization2,
     second: BezierSplitMaterialization2,
-    arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
+    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
 }
 
 impl RationalBezierIntersectionTopology2 {
@@ -321,7 +321,7 @@ struct RationalBezierIntersectionContextData {
     second: RationalBezier2,
     policy: CurvePolicy,
     candidates: RationalBezierIntersectionCandidates2,
-    contacts: OnceCell<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
+    contacts: OnceLock<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
 }
 
 impl RationalBezierIntersectionContext {
@@ -394,11 +394,11 @@ impl RationalBezierIntersectionContext {
     fn build_topology(&self) -> CurveResult<Classification<RationalBezierIntersectionTopology2>> {
         let contacts = match self.contacts_ref() {
             Ok(Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)) => {
-                Rc::from([])
+                Arc::from([])
             }
             Ok(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
                 contacts,
-            ))) => Rc::clone(contacts),
+            ))) => Arc::clone(contacts),
             Ok(Classification::Decided(RationalBezierIntersectionContacts2::Overlap(_))) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
@@ -443,11 +443,11 @@ impl RationalBezierIntersectionContext {
         };
         Ok(Classification::Decided(
             RationalBezierIntersectionTopology2 {
-                data: Rc::new(RationalBezierIntersectionTopologyData {
+                data: Arc::new(RationalBezierIntersectionTopologyData {
                     contacts,
                     first,
                     second,
-                    arrangement: OnceCell::new(),
+                    arrangement: OnceLock::new(),
                 }),
             },
         ))
@@ -487,7 +487,7 @@ impl RationalBezier2 {
             control_points,
             weights,
             RationalBezierLineage {
-                root: Rc::new(RationalBezierLineageRoot::default()),
+                root: Arc::new(RationalBezierLineageRoot::default()),
                 range: ParamRange::new(Real::zero(), Real::one()),
             },
         )
@@ -502,7 +502,7 @@ impl RationalBezier2 {
             control_points,
             weights,
             RationalBezierLineage {
-                root: Rc::new(RationalBezierLineageRoot::default()),
+                root: Arc::new(RationalBezierLineageRoot::default()),
                 range: ParamRange::new(Real::zero(), Real::one()),
             },
             Some(exact_line_image),
@@ -512,10 +512,10 @@ impl RationalBezier2 {
     pub(crate) fn try_new_with_implicit_quadratic_conic(
         control_points: Vec<Point2>,
         weights: Vec<Real>,
-        implicit_quadratic_conic: Rc<[Real; 6]>,
-        circular_conic: Option<Rc<crate::rational_bezier::RationalQuadraticCircle2>>,
+        implicit_quadratic_conic: Arc<[Real; 6]>,
+        circular_conic: Option<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
     ) -> CurveResult<Self> {
-        let root = Rc::new(RationalBezierLineageRoot::default());
+        let root = Arc::new(RationalBezierLineageRoot::default());
         let _ = root.implicit_quadratic_conic.set(implicit_quadratic_conic);
         if let Some(circular_conic) = circular_conic {
             let _ = root.circular_conic.set(circular_conic);
@@ -554,18 +554,18 @@ impl RationalBezier2 {
             return Err(CurveError::ZeroRationalBezierWeight);
         }
         Ok(Self {
-            data: Rc::new(RationalBezierData {
+            data: Arc::new(RationalBezierData {
                 control_points,
                 weights,
                 exact_line_image,
                 lineage,
-                homogeneous_controls: OnceCell::new(),
-                homogeneous_power_basis: OnceCell::new(),
-                x_derivative_numerator_bernstein: OnceCell::new(),
-                y_derivative_numerator_bernstein: OnceCell::new(),
-                x_axis_monotonicity: OnceCell::new(),
-                y_axis_monotonicity: OnceCell::new(),
-                degree_elevations: OnceCell::new(),
+                homogeneous_controls: OnceLock::new(),
+                homogeneous_power_basis: OnceLock::new(),
+                x_derivative_numerator_bernstein: OnceLock::new(),
+                y_derivative_numerator_bernstein: OnceLock::new(),
+                x_axis_monotonicity: OnceLock::new(),
+                y_axis_monotonicity: OnceLock::new(),
+                degree_elevations: OnceLock::new(),
             }),
         })
     }
@@ -636,10 +636,17 @@ impl RationalBezier2 {
         let elevations = self
             .data
             .degree_elevations
-            .get_or_init(|| RefCell::new(Vec::new()));
-        while elevations.borrow().len() < elevation_count {
+            .get_or_init(|| Mutex::new(Vec::new()));
+        while elevations
+            .lock()
+            .expect("rational Bézier degree elevation cache mutex poisoned")
+            .len()
+            < elevation_count
+        {
             let source = {
-                let retained = elevations.borrow();
+                let retained = elevations
+                    .lock()
+                    .expect("rational Bézier degree elevation cache mutex poisoned");
                 match retained.last() {
                     Some(Ok(curve)) => Ok(curve.clone()),
                     Some(Err(error)) => Err(error.clone()),
@@ -647,9 +654,15 @@ impl RationalBezier2 {
                 }
             };
             let elevated = source.and_then(|curve| curve.elevate_once_uncached());
-            elevations.borrow_mut().push(elevated);
+            elevations
+                .lock()
+                .expect("rational Bézier degree elevation cache mutex poisoned")
+                .push(elevated);
         }
-        elevations.borrow()[elevation_count - 1].clone()
+        elevations
+            .lock()
+            .expect("rational Bézier degree elevation cache mutex poisoned")[elevation_count - 1]
+            .clone()
     }
 
     fn elevate_once_uncached(&self) -> ExactCurveResult<Self> {
@@ -1471,7 +1484,7 @@ impl RationalBezier2 {
             };
             let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1503,7 +1516,7 @@ impl RationalBezier2 {
             };
             let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1516,7 +1529,7 @@ impl RationalBezier2 {
             }));
         }
         if self.certified_bounds_are_disjoint(other, policy) {
-            let contacts = OnceCell::new();
+            let contacts = OnceLock::new();
             let _ = contacts.set(Ok(Classification::Decided(
                 RationalBezierIntersectionContacts2::NoIntersection,
             )));
@@ -1538,7 +1551,7 @@ impl RationalBezier2 {
                 }
             };
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1558,7 +1571,7 @@ impl RationalBezier2 {
                 }
             };
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1575,7 +1588,7 @@ impl RationalBezier2 {
         {
             let contacts = RationalBezierIntersectionContacts2::Overlap(overlap);
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1632,7 +1645,7 @@ impl RationalBezier2 {
             };
         if let Some(Classification::Decided(contacts)) = line_image_contacts {
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1658,7 +1671,7 @@ impl RationalBezier2 {
                 ) => {}
                 Classification::Decided(contacts) => {
                     let candidates = intersection_candidates_from_contacts(&contacts);
-                    let contact_cache = OnceCell::new();
+                    let contact_cache = OnceLock::new();
                     let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
                     return Ok(Classification::Decided(RationalBezierIntersectionContext {
                         data: RationalBezierIntersectionContextData {
@@ -1685,7 +1698,7 @@ impl RationalBezier2 {
             };
         if let Some(Classification::Decided(contacts)) = special {
             let candidates = intersection_candidates_from_contacts(&contacts);
-            let contact_cache = OnceCell::new();
+            let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
             return Ok(Classification::Decided(RationalBezierIntersectionContext {
                 data: RationalBezierIntersectionContextData {
@@ -1708,7 +1721,7 @@ impl RationalBezier2 {
                         second: other.clone(),
                         policy: policy.clone(),
                         candidates,
-                        contacts: OnceCell::new(),
+                        contacts: OnceLock::new(),
                     },
                 }))
             }
@@ -1737,7 +1750,7 @@ impl RationalBezier2 {
                 b_param,
                 kind,
             } => {
-                Classification::Decided(RationalBezierIntersectionContacts2::Contacts(Rc::from([
+                Classification::Decided(RationalBezierIntersectionContacts2::Contacts(Arc::from([
                     RationalBezierIntersectionContact2 {
                         first_parameter: BezierParameter2::Exact(a_param),
                         second_parameter: BezierParameter2::Exact(b_param),
@@ -2136,7 +2149,7 @@ impl RationalBezier2 {
                 {
                     if let [curve_parameter] = curve_parameters.as_slice() {
                         return Ok(Some(Classification::Decided(
-                            RationalBezierIntersectionContacts2::Contacts(Rc::from([
+                            RationalBezierIntersectionContacts2::Contacts(Arc::from([
                                 RationalBezierIntersectionContact2 {
                                     first_parameter: curve_parameter.clone(),
                                     second_parameter: BezierParameter2::Exact(line_parameter),
@@ -3389,7 +3402,7 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> Classification<Option<RationalBezierIntersectionOverlap2>> {
-        if !Rc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root) {
+        if !Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root) {
             return Classification::Decided(None);
         }
         self.retain_root_image_injectivity(policy);
@@ -3907,7 +3920,7 @@ impl RationalBezier2 {
             .lineage
             .root
             .implicit_quadratic_conic
-            .set(Rc::new(coefficients));
+            .set(Arc::new(coefficients));
         Classification::Decided(Some(
             self.data
                 .lineage
@@ -3947,7 +3960,7 @@ impl RationalBezier2 {
                 controls[0].clone(),
             ]
         };
-        let _ = root.quadratic_conic_parameter_frame.set(Rc::new(frame));
+        let _ = root.quadratic_conic_parameter_frame.set(Arc::new(frame));
     }
 
     pub(crate) fn retained_quadratic_representative(
@@ -4330,7 +4343,7 @@ fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousPoin
         .root
         .quadratic_conic_parameter_frame
         .get()
-        .map(Rc::as_ref)
+        .map(Arc::as_ref)
         .unwrap_or_else(|| {
             curve
                 .homogeneous_controls()
@@ -4477,9 +4490,9 @@ struct ConicParameterCandidate2 {
     #[cfg(feature = "predicates")]
     denominator: Vec<Real>,
     #[cfg(feature = "predicates")]
-    image_polynomial: OnceCell<Option<BezierParameterPolynomial>>,
+    image_polynomial: OnceLock<Option<BezierParameterPolynomial>>,
     #[cfg(feature = "predicates")]
-    image_parameters: OnceCell<CurveResult<Classification<Vec<BezierParameter2>>>>,
+    image_parameters: OnceLock<CurveResult<Classification<Vec<BezierParameter2>>>>,
 }
 
 fn conic_parameter_map(
@@ -5157,8 +5170,8 @@ fn conic_parameter_candidate(
             ),
             numerator,
             denominator,
-            image_polynomial: OnceCell::new(),
-            image_parameters: OnceCell::new(),
+            image_polynomial: OnceLock::new(),
+            image_parameters: OnceLock::new(),
         }))
     }
     #[cfg(not(feature = "predicates"))]

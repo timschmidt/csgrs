@@ -7,11 +7,11 @@
 //! boxes only remove pairs whose disjointness is decided; every remaining
 //! candidate goes through the exact segment kernels.
 
-use std::cell::OnceCell;
 use std::cmp::Ordering;
 use std::fmt;
 use std::num::NonZeroU64;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use hyperreal::{
     AffineDet2Filter, ExactDyadicLine2, ExactDyadicLineParameters2, ExactDyadicWideLineParameters2,
@@ -56,8 +56,8 @@ pub struct ContourIntersectionSet {
 enum ContourIntersectionStorage {
     Materialized(Vec<ContourIntersection>),
     CertifiedLineCrossings {
-        crossings: Rc<Vec<CertifiedLineCrossingEvent>>,
-        materialized: OnceCell<Vec<ContourIntersection>>,
+        crossings: Arc<Vec<CertifiedLineCrossingEvent>>,
+        materialized: OnceLock<Vec<ContourIntersection>>,
     },
 }
 
@@ -306,8 +306,8 @@ impl ContourIntersectionSet {
         }
         Self {
             storage: ContourIntersectionStorage::CertifiedLineCrossings {
-                crossings: Rc::new(crossings),
-                materialized: OnceCell::new(),
+                crossings: Arc::new(crossings),
+                materialized: OnceLock::new(),
             },
             certified_positive_line_crossings: positive_crossings,
         }
@@ -315,7 +315,7 @@ impl ContourIntersectionSet {
 
     pub(crate) fn retained_certified_line_crossings(
         &self,
-    ) -> Option<&Rc<Vec<CertifiedLineCrossingEvent>>> {
+    ) -> Option<&Arc<Vec<CertifiedLineCrossingEvent>>> {
         match &self.storage {
             ContourIntersectionStorage::CertifiedLineCrossings { crossings, .. } => Some(crossings),
             ContourIntersectionStorage::Materialized(_) => None,
@@ -1995,32 +1995,19 @@ fn is_contour_connectivity_event(
     second_index: usize,
     policy: &CurvePolicy,
 ) -> bool {
-    let Some(shared_point) = connected_contour_vertex(segments, first_index, second_index) else {
-        return false;
-    };
-
     match event {
         ContourIntersection::Point(point) => {
-            points_match_for_connectivity(&point.point, shared_point, policy)
+            let forward_vertex =
+                (first_index + 1 == second_index).then(|| segments[first_index].end());
+            let closing_vertex = (first_index == 0 && second_index + 1 == segments.len())
+                .then(|| segments[first_index].start());
+            forward_vertex
+                .into_iter()
+                .chain(closing_vertex)
+                .any(|shared| points_match_for_connectivity(&point.point, shared, policy))
         }
         ContourIntersection::Overlap(_) | ContourIntersection::Uncertain(_) => false,
     }
-}
-
-fn connected_contour_vertex(
-    segments: &[Segment2],
-    first_index: usize,
-    second_index: usize,
-) -> Option<&Point2> {
-    if first_index + 1 == second_index {
-        return Some(segments[first_index].end());
-    }
-
-    if first_index == 0 && second_index + 1 == segments.len() {
-        return Some(segments[first_index].start());
-    }
-
-    None
 }
 
 fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &CurvePolicy) -> bool {

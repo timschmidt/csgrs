@@ -28,6 +28,10 @@ use std::fmt::{self, Write};
 
 const EXACT_PATH_ATTRIBUTE: &str = "data-hypercurve-path";
 
+fn svg_real_sign(value: &Real) -> Option<RealSign> {
+    crate::classify::real_sign(value, &CurvePolicy::certified())
+}
+
 /// Error produced by strict SVG geometry import or export.
 #[derive(Debug)]
 pub enum SvgError {
@@ -400,8 +404,8 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                 let rx = real(rx.abs(), "path rx")?;
                 let ry = real(ry.abs(), "path ry")?;
                 let rotation = real(x_axis_rotation, "path rotation")?;
-                if rx.refine_sign_until(-128) == Some(RealSign::Zero)
-                    || ry.refine_sign_until(-128) == Some(RealSign::Zero)
+                if svg_real_sign(&rx) == Some(RealSign::Zero)
+                    || svg_real_sign(&ry) == Some(RealSign::Zero)
                 {
                     push_svg_line(&mut curves, &mut current, end)?;
                     previous_cubic_control = None;
@@ -500,7 +504,7 @@ fn svg_circular_arc(
             "non-circular elliptical path arc".into(),
         ));
     }
-    if rx.refine_sign_until(-128) != Some(RealSign::Positive) {
+    if svg_real_sign(&rx) != Some(RealSign::Positive) {
         return Err(SvgError::MalformedInput(
             "path arc radius must be positive".into(),
         ));
@@ -513,7 +517,7 @@ fn svg_circular_arc(
     let radius_squared = &rx * &rx;
     let quarter_chord_squared = (&chord_squared / &Real::from(4)).map_err(svg_geometry_error)?;
     let center_offset_squared = &radius_squared - quarter_chord_squared;
-    let center_offset_scale = match center_offset_squared.refine_sign_until(-128) {
+    let center_offset_scale = match svg_real_sign(&center_offset_squared) {
         // SVG scales an insufficient radius to the unique half-chord
         // semicircle. The corresponding center offset is exactly zero.
         Some(RealSign::Negative | RealSign::Zero) => Real::zero(),
@@ -545,7 +549,7 @@ fn svg_circular_arc(
         let end_x = end.x() - center.x();
         let end_y = end.y() - center.y();
         let cross = start_x * end_y - start_y * end_x;
-        let cross_sign = cross.refine_sign_until(-128);
+        let cross_sign = svg_real_sign(&cross);
         let is_major = match cross_sign {
             Some(RealSign::Zero) => false,
             Some(RealSign::Positive) => sweep,

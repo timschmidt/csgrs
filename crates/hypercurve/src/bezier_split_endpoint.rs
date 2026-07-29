@@ -11,7 +11,7 @@
 //! exact-computation discipline.  The point/tangent formulas are the standard
 //! polynomial and homogeneous rational Bezier identities from the Bernstein and de Casteljau curve model.
 
-use std::{cell::OnceCell, rc::Rc};
+use std::{sync::Arc, sync::OnceLock};
 
 use crate::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,
@@ -73,7 +73,7 @@ impl BezierEndpointTangentImage2 {
 /// Exact point and tangent images for one algebraic split endpoint.
 #[derive(Clone, Debug)]
 pub struct BezierAlgebraicEndpointImage2 {
-    data: Rc<BezierAlgebraicEndpointImageData>,
+    data: Arc<BezierAlgebraicEndpointImageData>,
 }
 
 #[derive(Clone, Debug)]
@@ -89,14 +89,14 @@ enum BezierAlgebraicEndpointImageData {
         parameter: BezierAlgebraicParameter2,
         curve: Box<BezierSubcurve2>,
         policy: CurvePolicy,
-        point: OnceCell<CurveResult<BezierEndpointPointImage2>>,
-        tangent: OnceCell<CurveResult<BezierEndpointTangentImage2>>,
+        point: OnceLock<CurveResult<BezierEndpointPointImage2>>,
+        tangent: OnceLock<CurveResult<BezierEndpointTangentImage2>>,
     },
 }
 
 impl PartialEq for BezierAlgebraicEndpointImage2 {
     fn eq(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data, &other.data)
+        Arc::ptr_eq(&self.data, &other.data)
             || (self.parameter() == other.parameter()
                 && self.try_point() == other.try_point()
                 && self.try_tangent() == other.try_tangent()
@@ -129,7 +129,7 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::Materialized {
+            data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point: BezierEndpointPointImage2::Polynomial(
                     curve.point_at_algebraic_parameter(parameter, policy)?,
@@ -152,7 +152,7 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::Materialized {
+            data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point: BezierEndpointPointImage2::Polynomial(
                     curve.point_at_algebraic_parameter(parameter, policy)?,
@@ -185,7 +185,7 @@ impl BezierAlgebraicEndpointImage2 {
         let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
         let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::Materialized {
+            data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point: BezierEndpointPointImage2::Rational(
                     curve.point_at_algebraic_parameter(parameter, policy)?,
@@ -203,12 +203,12 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::RationalQuadratic(curve.clone())),
                 policy: policy.clone(),
-                point: OnceCell::new(),
-                tangent: OnceCell::new(),
+                point: OnceLock::new(),
+                tangent: OnceLock::new(),
             }),
         })
     }
@@ -228,7 +228,7 @@ impl BezierAlgebraicEndpointImage2 {
         let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
         let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::Materialized {
+            data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point: BezierEndpointPointImage2::Rational(
                     curve.point_at_algebraic_parameter(parameter, policy)?,
@@ -246,12 +246,12 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Rational(curve.clone())),
                 policy: policy.clone(),
-                point: OnceCell::new(),
-                tangent: OnceCell::new(),
+                point: OnceLock::new(),
+                tangent: OnceLock::new(),
             }),
         })
     }
@@ -262,12 +262,12 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Quadratic(curve.clone())),
                 policy: policy.clone(),
-                point: OnceCell::new(),
-                tangent: OnceCell::new(),
+                point: OnceLock::new(),
+                tangent: OnceLock::new(),
             }),
         })
     }
@@ -278,12 +278,12 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurvePolicy,
     ) -> CurveResult<Self> {
         Ok(Self {
-            data: Rc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
                 parameter: parameter.clone(),
                 curve: Box::new(BezierSubcurve2::Cubic(curve.clone())),
                 policy: policy.clone(),
-                point: OnceCell::new(),
-                tangent: OnceCell::new(),
+                point: OnceLock::new(),
+                tangent: OnceLock::new(),
             }),
         })
     }

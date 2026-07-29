@@ -1,7 +1,7 @@
 //! Policy-free retained NURBS carrier with shared exact decomposition caches.
 
-use std::cell::{OnceCell, RefCell};
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::{Mutex, OnceLock};
 
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
@@ -20,13 +20,13 @@ const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
 struct NurbsData2 {
     retained: RationalBSplineCurve2,
     endpoints: NurbsEndpoints2,
-    decomposition: OnceCell<Cached<NurbsBezierDecomposition2>>,
-    native_subcurves: OnceCell<Cached<Vec<BezierSubcurve2>>>,
-    rational_spans: OnceCell<Cached<Vec<RationalBezier2>>>,
-    knot_refinements: OnceCell<RefCell<Vec<(Vec<Real>, Cached<NurbsCurve2>)>>>,
-    knot_removals: OnceCell<RefCell<Vec<(Real, Cached<Option<NurbsCurve2>>)>>>,
-    degree_elevations: OnceCell<RefCell<Vec<(usize, Cached<NurbsDegreeElevation2>)>>>,
-    elevated_curves: OnceCell<RefCell<Vec<(usize, Cached<NurbsCurve2>)>>>,
+    decomposition: OnceLock<Cached<NurbsBezierDecomposition2>>,
+    native_subcurves: OnceLock<Cached<Vec<BezierSubcurve2>>>,
+    rational_spans: OnceLock<Cached<Vec<RationalBezier2>>>,
+    knot_refinements: OnceLock<Mutex<Vec<(Vec<Real>, Cached<NurbsCurve2>)>>>,
+    knot_removals: OnceLock<Mutex<Vec<(Real, Cached<Option<NurbsCurve2>>)>>>,
+    degree_elevations: OnceLock<Mutex<Vec<(usize, Cached<NurbsDegreeElevation2>)>>>,
+    elevated_curves: OnceLock<Mutex<Vec<(usize, Cached<NurbsCurve2>)>>>,
 }
 
 #[derive(Debug)]
@@ -42,7 +42,7 @@ enum NurbsEndpoints2 {
 /// at most once for one curve object, including when the result is a blocker.
 #[derive(Clone, Debug)]
 pub struct NurbsCurve2 {
-    data: Rc<NurbsData2>,
+    data: Arc<NurbsData2>,
 }
 
 /// Exact homogeneous Bezier decomposition retained by a [`NurbsCurve2`].
@@ -70,7 +70,7 @@ pub struct NurbsNativeSpanView2<'a> {
 pub struct NurbsDegreeElevation2 {
     source_degree: usize,
     target_degree: usize,
-    spans: Rc<[NurbsElevatedBezierSpan2]>,
+    spans: Arc<[NurbsElevatedBezierSpan2]>,
 }
 
 /// One exact elevated rational Bezier span with its original knot interval.
@@ -205,7 +205,7 @@ impl NurbsCurve2 {
         retained: RationalBSplineCurve2,
         preserved_endpoints: Option<(Point2, Point2)>,
     ) -> ExactCurveResult<Self> {
-        let decomposition = OnceCell::new();
+        let decomposition = OnceLock::new();
         let endpoints = if let Some((start, end)) = preserved_endpoints {
             NurbsEndpoints2::Extracted { start, end }
         } else if has_clamped_endpoints(
@@ -237,16 +237,16 @@ impl NurbsCurve2 {
             NurbsEndpoints2::Extracted { start, end }
         };
         let curve = Self {
-            data: Rc::new(NurbsData2 {
+            data: Arc::new(NurbsData2 {
                 retained,
                 endpoints,
                 decomposition,
-                native_subcurves: OnceCell::new(),
-                rational_spans: OnceCell::new(),
-                knot_refinements: OnceCell::new(),
-                knot_removals: OnceCell::new(),
-                degree_elevations: OnceCell::new(),
-                elevated_curves: OnceCell::new(),
+                native_subcurves: OnceLock::new(),
+                rational_spans: OnceLock::new(),
+                knot_refinements: OnceLock::new(),
+                knot_removals: OnceLock::new(),
+                degree_elevations: OnceLock::new(),
+                elevated_curves: OnceLock::new(),
             }),
         };
         curve.validate_periodic_seam()?;
@@ -313,16 +313,19 @@ impl NurbsCurve2 {
         let refinements = self
             .data
             .knot_refinements
-            .get_or_init(|| RefCell::new(Vec::new()));
+            .get_or_init(|| Mutex::new(Vec::new()));
         if let Some((_, result)) = refinements
-            .borrow()
+            .lock()
+            .expect("NURBS knot refinement cache mutex poisoned")
             .iter()
             .find(|(retained_knots, _)| retained_knots == &knots)
         {
             return result.clone();
         }
         let result = self.insert_knots_uncached(knots.clone());
-        let mut refinements = refinements.borrow_mut();
+        let mut refinements = refinements
+            .lock()
+            .expect("NURBS knot refinement cache mutex poisoned");
         if refinements.len() == MAX_RETAINED_KNOT_REFINEMENTS {
             let _ = refinements.remove(0);
         }
@@ -342,16 +345,19 @@ impl NurbsCurve2 {
         let removals = self
             .data
             .knot_removals
-            .get_or_init(|| RefCell::new(Vec::new()));
+            .get_or_init(|| Mutex::new(Vec::new()));
         if let Some((_, result)) = removals
-            .borrow()
+            .lock()
+            .expect("NURBS knot removal cache mutex poisoned")
             .iter()
             .find(|(retained_knot, _)| retained_knot == &knot)
         {
             return result.clone();
         }
         let result = self.remove_knot_uncached(knot.clone());
-        let mut removals = removals.borrow_mut();
+        let mut removals = removals
+            .lock()
+            .expect("NURBS knot removal cache mutex poisoned");
         if removals.len() == MAX_RETAINED_KNOT_REMOVALS {
             let _ = removals.remove(0);
         }
@@ -379,16 +385,19 @@ impl NurbsCurve2 {
         let elevations = self
             .data
             .degree_elevations
-            .get_or_init(|| RefCell::new(Vec::new()));
+            .get_or_init(|| Mutex::new(Vec::new()));
         if let Some((_, result)) = elevations
-            .borrow()
+            .lock()
+            .expect("NURBS degree elevation cache mutex poisoned")
             .iter()
             .find(|(retained_degree, _)| *retained_degree == target_degree)
         {
             return result.clone();
         }
         let result = self.degree_elevation_uncached(target_degree);
-        let mut elevations = elevations.borrow_mut();
+        let mut elevations = elevations
+            .lock()
+            .expect("NURBS degree elevation cache mutex poisoned");
         if elevations.len() == MAX_RETAINED_DEGREE_ELEVATIONS {
             let _ = elevations.remove(0);
         }
@@ -418,16 +427,19 @@ impl NurbsCurve2 {
         let elevated_curves = self
             .data
             .elevated_curves
-            .get_or_init(|| RefCell::new(Vec::new()));
+            .get_or_init(|| Mutex::new(Vec::new()));
         if let Some((_, result)) = elevated_curves
-            .borrow()
+            .lock()
+            .expect("NURBS elevated curve cache mutex poisoned")
             .iter()
             .find(|(retained_degree, _)| *retained_degree == target_degree)
         {
             return result.clone();
         }
         let result = self.elevated_to_degree_uncached(target_degree);
-        let mut elevated_curves = elevated_curves.borrow_mut();
+        let mut elevated_curves = elevated_curves
+            .lock()
+            .expect("NURBS elevated curve cache mutex poisoned");
         if elevated_curves.len() == MAX_RETAINED_DEGREE_ELEVATIONS {
             let _ = elevated_curves.remove(0);
         }
@@ -1246,7 +1258,7 @@ impl NurbsElevatedBezierSpan2 {
 }
 
 fn cached_result<T>(
-    cache: &OnceCell<Cached<T>>,
+    cache: &OnceLock<Cached<T>>,
     initialize: impl FnOnce() -> Cached<T>,
 ) -> ExactCurveResult<&T> {
     match cache.get_or_init(initialize) {

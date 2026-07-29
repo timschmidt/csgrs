@@ -344,7 +344,7 @@ fn contextualize_arc_error(error: ExactCurveError) -> ExactCurveError {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
+    use std::sync::Arc;
 
     use super::CircularArc2;
     use crate::{Point2, Real};
@@ -363,7 +363,7 @@ mod tests {
         assert!(arc.retained_facts.bezier_decomposition.get().is_none());
         arc.rational_bezier_decomposition().unwrap();
 
-        assert!(Rc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
+        assert!(Arc::ptr_eq(&arc.retained_facts, &clone.retained_facts));
         assert!(clone.retained_facts.sweep_kind.get().is_some());
         assert!(clone.retained_facts.bezier_decomposition.get().is_some());
     }

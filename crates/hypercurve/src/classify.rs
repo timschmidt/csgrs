@@ -172,15 +172,22 @@ pub(crate) fn real_sign(value: &Real, policy: &CurvePolicy) -> Option<RealSign> 
         };
     }
 
-    if let Some(sign) = value.structural_facts().sign {
-        return Some(sign);
+    #[cfg(feature = "predicates")]
+    {
+        hyperlimit::classify_real_sign_with_policy(value, policy.predicate_policy)
+            .value()
+            .map(|sign| match sign {
+                hyperlimit::Sign::Negative => RealSign::Negative,
+                hyperlimit::Sign::Zero => RealSign::Zero,
+                hyperlimit::Sign::Positive => RealSign::Positive,
+            })
     }
 
-    if let Some(sign) = value.refine_sign_until(-4096) {
-        return Some(sign);
-    }
-
-    None
+    #[cfg(not(feature = "predicates"))]
+    value
+        .structural_facts()
+        .sign
+        .or_else(|| value.refine_sign_until(-512))
 }
 
 pub(crate) fn is_zero(value: &Real, policy: &CurvePolicy) -> Option<bool> {

@@ -140,6 +140,18 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         minor.sweep_fraction(&minor_midpoint, &policy).unwrap(),
         Classification::Decided(half())
     );
+    let Classification::Decided(minor_parameter) =
+        minor.parameter_at_sweep_fraction(&half(), &policy).unwrap()
+    else {
+        panic!("minor-arc rational parameter was not certified");
+    };
+    let minor_replayed = Curve2::from(minor.clone())
+        .point_at(&minor_parameter)
+        .unwrap();
+    assert_eq!(
+        minor.contains_point(&minor_replayed, &policy),
+        Classification::Decided(true)
+    );
 
     let major = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), true).unwrap();
     for (fraction, expected) in [(q(1, 3), p(0, -1)), (q(2, 3), p(-1, 0))] {
@@ -149,7 +161,18 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         );
         assert_eq!(
             major.sweep_fraction(&expected, &policy).unwrap(),
-            Classification::Decided(fraction)
+            Classification::Decided(fraction.clone())
+        );
+        let Classification::Decided(parameter) = major
+            .parameter_at_sweep_fraction(&fraction, &policy)
+            .unwrap()
+        else {
+            panic!("major-arc rational parameter was not certified");
+        };
+        let replayed = Curve2::from(major.clone()).point_at(&parameter).unwrap();
+        assert_eq!(
+            major.contains_point(&replayed, &policy),
+            Classification::Decided(true)
         );
     }
 
@@ -161,6 +184,11 @@ fn directed_sweep_evaluation_round_trips_minor_major_and_full_arcs() {
         );
         assert_eq!(
             full.sweep_fraction(&expected, &policy).unwrap(),
+            Classification::Decided(fraction.clone())
+        );
+        assert_eq!(
+            full.parameter_at_sweep_fraction(&fraction, &policy)
+                .unwrap(),
             Classification::Decided(fraction)
         );
     }

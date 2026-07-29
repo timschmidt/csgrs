@@ -2,8 +2,8 @@
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 use std::{
-    cell::{OnceCell, RefCell},
-    rc::Rc,
+    sync::Arc,
+    sync::{Mutex, OnceLock},
 };
 
 use crate::classify::{
@@ -18,12 +18,12 @@ pub struct LineSeg2 {
     start: Point2,
     end: Point2,
     endpoints_decided_distinct: bool,
-    support: Option<Rc<LineSupport2>>,
-    fragment_support_cache: OnceCell<Rc<LineSupport2>>,
+    support: OnceLock<Arc<LineSupport2>>,
+    has_retained_support: bool,
     // Shared supports retain source orientation; this bit recovers the
     // fragment's directed tangent without subtracting its wide endpoints.
     support_direction_reversed: bool,
-    offset_provenance: Option<Rc<LineOffsetProvenance2>>,
+    offset_provenance: Option<Arc<LineOffsetProvenance2>>,
 }
 
 impl PartialEq for LineSeg2 {
@@ -40,8 +40,16 @@ pub(crate) struct LineSupport2 {
 
 #[derive(Debug, PartialEq)]
 struct LineOffsetProvenance2 {
-    source: Rc<LineSupport2>,
+    source: Arc<LineSupport2>,
     left_distance: Real,
+}
+
+fn line_support_cell(support: Option<Arc<LineSupport2>>) -> OnceLock<Arc<LineSupport2>> {
+    let cell = OnceLock::new();
+    if let Some(support) = support {
+        let _ = cell.set(support);
+    }
+    cell
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -66,8 +74,8 @@ impl LineSeg2 {
             start,
             end,
             endpoints_decided_distinct,
-            support: None,
-            fragment_support_cache: OnceCell::new(),
+            support: OnceLock::new(),
+            has_retained_support: false,
             support_direction_reversed: false,
             offset_provenance: None,
         })
@@ -79,8 +87,8 @@ impl LineSeg2 {
             start,
             end,
             endpoints_decided_distinct: false,
-            support: None,
-            fragment_support_cache: OnceCell::new(),
+            support: OnceLock::new(),
+            has_retained_support: false,
             support_direction_reversed: false,
             offset_provenance: None,
         }
@@ -102,7 +110,7 @@ impl LineSeg2 {
     }
 
     pub(crate) fn support_delta(&self) -> (Real, Real) {
-        self.support.as_ref().map_or_else(
+        self.support.get().map_or_else(
             || self.delta(),
             |support| support.end.delta_from(&support.start),
         )
@@ -119,7 +127,7 @@ impl LineSeg2 {
     }
 
     pub(crate) const fn has_retained_support(&self) -> bool {
-        self.support.is_some()
+        self.has_retained_support
     }
 
     pub(crate) const fn endpoints_decided_distinct(&self) -> bool {
@@ -128,7 +136,7 @@ impl LineSeg2 {
 
     pub(crate) fn support_start(&self) -> &Point2 {
         self.support
-            .as_ref()
+            .get()
             .map_or(&self.start, |support| &support.start)
     }
 
@@ -145,8 +153,8 @@ impl LineSeg2 {
             start,
             end,
             endpoints_decided_distinct,
-            support: Some(self.fragment_support()),
-            fragment_support_cache: OnceCell::new(),
+            support: line_support_cell(Some(self.fragment_support())),
+            has_retained_support: true,
             support_direction_reversed: self.support_direction_reversed,
             offset_provenance: self.offset_provenance.clone(),
         })
@@ -156,30 +164,28 @@ impl LineSeg2 {
         &self,
         start: Point2,
         end: Point2,
-        support: Rc<LineSupport2>,
+        support: Arc<LineSupport2>,
     ) -> Self {
         Self {
             start,
             end,
             endpoints_decided_distinct: true,
-            support: Some(support),
-            fragment_support_cache: OnceCell::new(),
+            support: line_support_cell(Some(support)),
+            has_retained_support: true,
             support_direction_reversed: self.support_direction_reversed,
             offset_provenance: self.offset_provenance.clone(),
         }
     }
 
-    pub(crate) fn fragment_support(&self) -> Rc<LineSupport2> {
-        self.support.clone().unwrap_or_else(|| {
-            self.fragment_support_cache
-                .get_or_init(|| {
-                    Rc::new(LineSupport2 {
-                        start: self.start.clone(),
-                        end: self.end.clone(),
-                    })
+    pub(crate) fn fragment_support(&self) -> Arc<LineSupport2> {
+        self.support
+            .get_or_init(|| {
+                Arc::new(LineSupport2 {
+                    start: self.start.clone(),
+                    end: self.end.clone(),
                 })
-                .clone()
-        })
+            })
+            .clone()
     }
 
     pub(crate) fn retained_support_intervals_decided_disjoint(
@@ -187,9 +193,12 @@ impl LineSeg2 {
         other: &Self,
         policy: &CurvePolicy,
     ) -> Option<bool> {
-        let first_support = self.support.as_ref()?;
-        let second_support = other.support.as_ref()?;
-        if !Rc::ptr_eq(first_support, second_support) {
+        if !self.has_retained_support || !other.has_retained_support {
+            return None;
+        }
+        let first_support = self.support.get()?;
+        let second_support = other.support.get()?;
+        if !Arc::ptr_eq(first_support, second_support) {
             return None;
         }
         let use_x = match compare_reals(first_support.start.x(), first_support.end.x(), policy) {
@@ -225,7 +234,7 @@ impl LineSeg2 {
                 left_distance: &provenance.left_distance + &distance,
             },
         };
-        offset.offset_provenance = Some(Rc::new(provenance));
+        offset.offset_provenance = Some(Arc::new(provenance));
         Ok(offset)
     }
 
@@ -305,18 +314,22 @@ impl LineSeg2 {
             ZeroStatus::NonZero => true,
             ZeroStatus::Unknown => false,
         };
-        let support = self.support.as_ref().map(|support| {
-            Rc::new(LineSupport2 {
-                start: map(&support.start),
-                end: map(&support.end),
-            })
-        });
+        let support = self
+            .has_retained_support
+            .then(|| self.support.get())
+            .flatten()
+            .map(|support| {
+                Arc::new(LineSupport2 {
+                    start: map(&support.start),
+                    end: map(&support.end),
+                })
+            });
         Ok(Self {
             start,
             end,
             endpoints_decided_distinct,
-            support,
-            fragment_support_cache: OnceCell::new(),
+            support: line_support_cell(support),
+            has_retained_support: self.has_retained_support,
             support_direction_reversed: self.support_direction_reversed,
             // An arbitrary point map need not preserve signed offset distance.
             offset_provenance: None,
@@ -336,8 +349,8 @@ impl LineSeg2 {
     /// Returns this segment with traversal direction reversed.
     pub fn reversed(&self) -> Self {
         let offset_provenance = self.offset_provenance.as_ref().map(|provenance| {
-            Rc::new(LineOffsetProvenance2 {
-                source: Rc::new(LineSupport2 {
+            Arc::new(LineOffsetProvenance2 {
+                source: Arc::new(LineSupport2 {
                     start: provenance.source.end.clone(),
                     end: provenance.source.start.clone(),
                 }),
@@ -348,9 +361,14 @@ impl LineSeg2 {
             start: self.end.clone(),
             end: self.start.clone(),
             endpoints_decided_distinct: self.endpoints_decided_distinct,
-            support: self.support.clone(),
-            fragment_support_cache: OnceCell::new(),
-            support_direction_reversed: self.support.is_some() && !self.support_direction_reversed,
+            support: line_support_cell(
+                self.has_retained_support
+                    .then(|| self.support.get().cloned())
+                    .flatten(),
+            ),
+            has_retained_support: self.has_retained_support,
+            support_direction_reversed: self.has_retained_support
+                && !self.support_direction_reversed,
             offset_provenance,
         }
     }
@@ -360,9 +378,10 @@ impl LineSeg2 {
             return self.reversed();
         }
         std::mem::swap(&mut self.start, &mut self.end);
-        self.fragment_support_cache.take();
-        if self.support.is_some() {
+        if self.has_retained_support {
             self.support_direction_reversed = !self.support_direction_reversed;
+        } else {
+            self.support.take();
         }
         self
     }
@@ -370,10 +389,7 @@ impl LineSeg2 {
     /// Classifies a point relative to this oriented line segment's supporting line.
     pub fn classify_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<LineSide> {
         let support_start = self.support_start();
-        let support_end = self
-            .support
-            .as_ref()
-            .map_or(&self.end, |support| &support.end);
+        let support_end = self.support.get().map_or(&self.end, |support| &support.end);
         classify_oriented_line(support_start, support_end, point, policy)
     }
 
@@ -422,7 +438,7 @@ pub struct CircularArc2 {
     // Geometry and lazy facts share one allocation. Arc clones already share
     // the immutable geometry, while native segment vectors no longer inherit
     // the full inline arc payload for every line element.
-    pub(crate) retained_facts: Rc<CircularArcRetainedFacts2>,
+    pub(crate) retained_facts: Arc<CircularArcRetainedFacts2>,
 }
 
 #[derive(Debug)]
@@ -434,15 +450,15 @@ pub(crate) struct CircularArcRetainedFacts2 {
     endpoints_on_stored_circle: bool,
     clockwise: bool,
     source_bulge: Option<Real>,
-    structural_facts: OnceCell<Box<crate::CircularArc2Facts>>,
-    pub(crate) sweep_kind: OnceCell<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
+    structural_facts: OnceLock<Box<crate::CircularArc2Facts>>,
+    pub(crate) sweep_kind: OnceLock<crate::ExactCurveResult<crate::arc_bezier::ArcSweepKind>>,
     pub(crate) bezier_decomposition:
-        OnceCell<crate::ExactCurveResult<crate::CircularArcBezierDecomposition2>>,
-    representative_point: OnceCell<CurveResult<Classification<Point2>>>,
-    directed_sweep_angle: OnceCell<CurveResult<Classification<Real>>>,
-    parameter_lineage: OnceCell<Box<CircularArcParameterLineage2>>,
-    parameter_witnesses: OnceCell<Box<RefCell<Vec<CircularArcParameterWitness2>>>>,
-    fragments: OnceCell<Box<RefCell<Vec<CircularArcFragmentWitness2>>>>,
+        OnceLock<crate::ExactCurveResult<crate::CircularArcBezierDecomposition2>>,
+    representative_point: OnceLock<CurveResult<Classification<Point2>>>,
+    directed_sweep_angle: OnceLock<CurveResult<Classification<Real>>>,
+    parameter_lineage: OnceLock<Box<CircularArcParameterLineage2>>,
+    parameter_witnesses: OnceLock<Box<Mutex<Vec<CircularArcParameterWitness2>>>>,
+    fragments: OnceLock<Box<Mutex<Vec<CircularArcFragmentWitness2>>>>,
 }
 
 impl CircularArcRetainedFacts2 {
@@ -463,14 +479,14 @@ impl CircularArcRetainedFacts2 {
             endpoints_on_stored_circle,
             clockwise,
             source_bulge,
-            structural_facts: OnceCell::new(),
-            sweep_kind: OnceCell::new(),
-            bezier_decomposition: OnceCell::new(),
-            representative_point: OnceCell::new(),
-            directed_sweep_angle: OnceCell::new(),
-            parameter_lineage: OnceCell::new(),
-            parameter_witnesses: OnceCell::new(),
-            fragments: OnceCell::new(),
+            structural_facts: OnceLock::new(),
+            sweep_kind: OnceLock::new(),
+            bezier_decomposition: OnceLock::new(),
+            representative_point: OnceLock::new(),
+            directed_sweep_angle: OnceLock::new(),
+            parameter_lineage: OnceLock::new(),
+            parameter_witnesses: OnceLock::new(),
+            fragments: OnceLock::new(),
         }
     }
 }
@@ -524,7 +540,7 @@ impl CircularArc2 {
         source_bulge: Option<Real>,
     ) -> Self {
         Self {
-            retained_facts: Rc::new(CircularArcRetainedFacts2::new(
+            retained_facts: Arc::new(CircularArcRetainedFacts2::new(
                 start,
                 end,
                 center,
@@ -597,7 +613,7 @@ impl CircularArc2 {
         bulge: Option<Real>,
     ) -> CurveResult<Self> {
         let mut arc = Self::try_from_center(start, end, center, clockwise)?;
-        Rc::get_mut(&mut arc.retained_facts)
+        Arc::get_mut(&mut arc.retained_facts)
             .expect("new arc retained facts are uniquely owned")
             .source_bulge = bulge;
         Ok(arc)
@@ -627,7 +643,7 @@ impl CircularArc2 {
         );
 
         let mut arc = Self::try_from_center(start, end, center, clockwise)?;
-        Rc::get_mut(&mut arc.retained_facts)
+        Arc::get_mut(&mut arc.retained_facts)
             .expect("new arc retained facts are uniquely owned")
             .source_bulge = Some(bulge);
         Ok(arc)
@@ -899,6 +915,99 @@ impl CircularArc2 {
         )))
     }
 
+    /// Returns the exact piecewise-rational public parameter at a directed
+    /// angular sweep fraction.
+    ///
+    /// This is the parameter-space inverse needed when an angularly
+    /// parameterized owner splits a native circular arc. The angular point is
+    /// constructed exactly, then replayed through the retained rational
+    /// quadratic decomposition's certified point-parameter solvers.
+    pub fn parameter_at_sweep_fraction(
+        &self,
+        fraction: &Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Real>> {
+        match compare_reals(fraction, &Real::zero(), policy) {
+            Some(Ordering::Equal) => return Ok(Classification::Decided(Real::zero())),
+            Some(Ordering::Greater) => {}
+            Some(Ordering::Less) => return Err(CurveError::InvalidCurveParameter),
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Ordering,
+                ));
+            }
+        }
+        match compare_reals(fraction, &Real::one(), policy) {
+            Some(Ordering::Equal) => return Ok(Classification::Decided(Real::one())),
+            Some(Ordering::Less) => {}
+            Some(Ordering::Greater) => return Err(CurveError::InvalidCurveParameter),
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Ordering,
+                ));
+            }
+        }
+        let point = match self.point_at_sweep_fraction(fraction, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let decomposition = match self.rational_bezier_decomposition() {
+            Ok(decomposition) => decomposition,
+            Err(crate::ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+            Err(crate::ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+        };
+        let mut represented = None;
+        for span in decomposition.spans() {
+            let parameters = match span.curve().parameters_for_point(&point, policy) {
+                Classification::Decided(parameters) => parameters,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let (start, end) = span.parameter_range();
+            let width = end - start;
+            for local in parameters {
+                let global = start + &(&width * local);
+                if let Some(existing) = &represented {
+                    match compare_reals(existing, &global, policy) {
+                        Some(Ordering::Equal) => {}
+                        Some(_) => {
+                            return Ok(Classification::Uncertain(
+                                crate::UncertaintyReason::Boundary,
+                            ));
+                        }
+                        None => {
+                            return Ok(Classification::Uncertain(
+                                crate::UncertaintyReason::Ordering,
+                            ));
+                        }
+                    }
+                } else {
+                    represented = Some(global);
+                }
+            }
+        }
+        Ok(represented
+            .map(Classification::Decided)
+            .unwrap_or(Classification::Uncertain(
+                crate::UncertaintyReason::Boundary,
+            )))
+    }
+
+    /// Returns the exact positive angular sweep in traversal order.
+    ///
+    /// Counterclockwise and clockwise arcs both report a positive magnitude;
+    /// orientation remains available through [`CircularArc2::is_clockwise`].
+    /// Full circles report `tau`. The result is retained with the arc and is
+    /// the angular measure used by [`CircularArc2::sweep_fraction`].
+    pub fn directed_sweep_angle(&self) -> CurveResult<Classification<Real>> {
+        self.retained_directed_sweep_angle().clone()
+    }
+
     fn retained_directed_sweep_angle(&self) -> &CurveResult<Classification<Real>> {
         self.retained_facts
             .directed_sweep_angle
@@ -908,7 +1017,8 @@ impl CircularArc2 {
     fn retained_parameter_witness(&self, parameter: &Real) -> Option<Point2> {
         let witnesses = self.retained_facts.parameter_witnesses.get()?;
         witnesses
-            .borrow()
+            .lock()
+            .expect("arc parameter witness cache mutex poisoned")
             .iter()
             .find(|witness| witness.parameter == *parameter)
             .map(|witness| witness.point.clone())
@@ -918,8 +1028,10 @@ impl CircularArc2 {
         let witnesses = self
             .retained_facts
             .parameter_witnesses
-            .get_or_init(|| Box::new(RefCell::new(Vec::new())));
-        let mut witnesses = witnesses.borrow_mut();
+            .get_or_init(|| Box::new(Mutex::new(Vec::new())));
+        let mut witnesses = witnesses
+            .lock()
+            .expect("arc parameter witness cache mutex poisoned");
         if witnesses
             .iter()
             .any(|witness| witness.parameter == *parameter)
@@ -1019,7 +1131,8 @@ impl CircularArc2 {
     ) -> Option<Self> {
         let fragments = self.retained_facts.fragments.get()?;
         fragments
-            .borrow()
+            .lock()
+            .expect("arc fragment cache mutex poisoned")
             .iter()
             .find(|witness| {
                 witness.source_range == *source_range
@@ -1039,8 +1152,8 @@ impl CircularArc2 {
         let fragments = self
             .retained_facts
             .fragments
-            .get_or_init(|| Box::new(RefCell::new(Vec::new())));
-        let mut fragments = fragments.borrow_mut();
+            .get_or_init(|| Box::new(Mutex::new(Vec::new())));
+        let mut fragments = fragments.lock().expect("arc fragment cache mutex poisoned");
         if fragments.len() == MAX_RETAINED_ARC_FRAGMENTS {
             fragments.remove(0);
         }
@@ -1108,7 +1221,7 @@ impl CircularArc2 {
     }
 
     pub(crate) fn into_reversed(self) -> Self {
-        let retained_facts = match Rc::try_unwrap(self.retained_facts) {
+        let retained_facts = match Arc::try_unwrap(self.retained_facts) {
             Ok(retained_facts) => {
                 return Self::from_geometry(
                     retained_facts.end,
@@ -1279,12 +1392,9 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
         };
     }
 
-    // Bulge sign chooses the arc sweep orientation, so it is a topology
-    // decision rather than an IO/display choice. Use bounded exact-real
-    // refinement here instead of a primitive-float fallback, matching the exactness model's
-    // requirement that combinatorial decisions be separated from approximate
-    // views.
-    match bulge.refine_sign_until(-4096) {
+    // Bulge sign chooses the arc sweep orientation, so route it through the
+    // shared predicate policy used by the rest of curve topology.
+    match crate::classify::real_sign(bulge, &CurvePolicy::certified()) {
         Some(RealSign::Negative) => Ok(true),
         Some(RealSign::Positive) => Ok(false),
         Some(RealSign::Zero) => Err(CurveError::AmbiguousBulge),

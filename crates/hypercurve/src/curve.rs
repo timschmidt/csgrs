@@ -1,7 +1,7 @@
 //! Top-level owned and borrowed exact curve carriers.
 
-use std::cell::OnceCell;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use hyperreal::{RealSign, ZeroKnowledge};
 
@@ -131,30 +131,30 @@ pub enum CurveGeometry2 {
 struct CurveData2 {
     geometry: CurveGeometry2,
     lineage: CurveParameterLineage2,
-    parameter_domain: OnceCell<CurveParameterDomain2>,
-    native_bezier_fragments: OnceCell<ExactCurveResult<Vec<NativeBezierFragment2>>>,
-    rational_evaluators: OnceCell<ExactCurveResult<Vec<RationalBezier2>>>,
-    bounds: OnceCell<ExactCurveResult<Aabb2>>,
+    parameter_domain: OnceLock<CurveParameterDomain2>,
+    native_bezier_fragments: OnceLock<ExactCurveResult<Vec<NativeBezierFragment2>>>,
+    rational_evaluators: OnceLock<ExactCurveResult<Vec<RationalBezier2>>>,
+    bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
 #[derive(Clone, Debug)]
 struct CurveParameterLineage2 {
-    root: Rc<CurveParameterLineageRoot2>,
+    root: Arc<CurveParameterLineageRoot2>,
     range: ParamRange,
 }
 
 #[derive(Debug)]
 struct CurveParameterLineageRoot2 {
     domain: ParamRange,
-    image_is_injective: OnceCell<bool>,
+    image_is_injective: OnceLock<bool>,
 }
 
 impl CurveParameterLineage2 {
     fn new(range: ParamRange) -> Self {
         Self {
-            root: Rc::new(CurveParameterLineageRoot2 {
+            root: Arc::new(CurveParameterLineageRoot2 {
                 domain: range.clone(),
-                image_is_injective: OnceCell::new(),
+                image_is_injective: OnceLock::new(),
             }),
             range,
         }
@@ -162,7 +162,7 @@ impl CurveParameterLineage2 {
 
     fn reversed(&self) -> Self {
         Self {
-            root: Rc::clone(&self.root),
+            root: Arc::clone(&self.root),
             range: ParamRange::new(self.range.end().clone(), self.range.start().clone()),
         }
     }
@@ -174,7 +174,7 @@ impl CurveParameterLineage2 {
 /// [`Curve2::as_view`] for borrowed algorithms.
 #[derive(Clone, Debug)]
 pub struct Curve2 {
-    data: Rc<CurveData2>,
+    data: Arc<CurveData2>,
 }
 
 /// Borrowed view of one top-level exact curve.
@@ -186,15 +186,15 @@ pub struct CurveView2<'a> {
 /// Ordered connected sequence of exact curves.
 #[derive(Clone, Debug)]
 pub struct CurvePath2 {
-    data: Rc<CurvePathData2>,
+    data: Arc<CurvePathData2>,
 }
 
 #[derive(Debug)]
 struct CurvePathData2 {
     curves: Vec<Curve2>,
-    native_bezier_fragments: OnceCell<ExactCurveResult<Vec<NativeBezierFragment2>>>,
-    bezier_boundary_loop: OnceCell<ExactCurveResult<NativeBezierBoundaryLoop2>>,
-    bounds: OnceCell<ExactCurveResult<Aabb2>>,
+    native_bezier_fragments: OnceLock<ExactCurveResult<Vec<NativeBezierFragment2>>>,
+    bezier_boundary_loop: OnceLock<ExactCurveResult<NativeBezierBoundaryLoop2>>,
+    bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
 /// Borrowed view of an ordered exact curve path.
@@ -273,13 +273,13 @@ impl Curve2 {
     pub fn new(geometry: CurveGeometry2) -> Self {
         let lineage = CurveParameterLineage2::new(geometry_parameter_range(&geometry));
         Self {
-            data: Rc::new(CurveData2 {
+            data: Arc::new(CurveData2 {
                 geometry,
                 lineage,
-                parameter_domain: OnceCell::new(),
-                native_bezier_fragments: OnceCell::new(),
-                rational_evaluators: OnceCell::new(),
-                bounds: OnceCell::new(),
+                parameter_domain: OnceLock::new(),
+                native_bezier_fragments: OnceLock::new(),
+                rational_evaluators: OnceLock::new(),
+                bounds: OnceLock::new(),
             }),
         }
     }
@@ -667,13 +667,13 @@ impl Curve2 {
         lineage: CurveParameterLineage2,
     ) -> ExactCurveResult<Self> {
         Ok(Self {
-            data: Rc::new(CurveData2 {
+            data: Arc::new(CurveData2 {
                 geometry,
                 lineage,
-                parameter_domain: OnceCell::new(),
-                native_bezier_fragments: OnceCell::new(),
-                rational_evaluators: OnceCell::new(),
-                bounds: OnceCell::new(),
+                parameter_domain: OnceLock::new(),
+                native_bezier_fragments: OnceLock::new(),
+                rational_evaluators: OnceLock::new(),
+                bounds: OnceLock::new(),
             }),
         })
     }
@@ -684,7 +684,7 @@ impl Curve2 {
         end: &Real,
     ) -> ExactCurveResult<CurveParameterLineage2> {
         Ok(CurveParameterLineage2 {
-            root: Rc::clone(&self.data.lineage.root),
+            root: Arc::clone(&self.data.lineage.root),
             range: ParamRange::new(
                 self.lineage_parameter_at(start)?,
                 self.lineage_parameter_at(end)?,
@@ -734,7 +734,7 @@ impl Curve2 {
     }
 
     pub(crate) fn shares_certified_parameter_lineage(&self, other: &Self) -> bool {
-        Rc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
+        Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
             && self.data.lineage.root.image_is_injective.get() == Some(&true)
     }
 
@@ -1214,11 +1214,11 @@ impl CurvePath2 {
             }
         }
         Ok(Self {
-            data: Rc::new(CurvePathData2 {
+            data: Arc::new(CurvePathData2 {
                 curves,
-                native_bezier_fragments: OnceCell::new(),
-                bezier_boundary_loop: OnceCell::new(),
-                bounds: OnceCell::new(),
+                native_bezier_fragments: OnceLock::new(),
+                bezier_boundary_loop: OnceLock::new(),
+                bounds: OnceLock::new(),
             }),
         })
     }

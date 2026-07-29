@@ -1,11 +1,11 @@
 //! Closed contour topology.
 
-use std::{cell::OnceCell, cmp::Ordering, rc::Rc};
+use std::{cmp::Ordering, sync::Arc, sync::OnceLock};
 
 use hyperreal::{Real, RealSign, ZeroKnowledge as ZeroStatus};
 
 use crate::bbox::{Aabb2, aabb_decided_misses_point, decided_contour_aabb, decided_segment_aabb};
-use crate::classify::{classify_oriented_line, compare_reals, real_sign};
+use crate::classify::{classify_oriented_line, compare_reals, is_zero, real_sign};
 use crate::curve_string::merge_adjacent_line_segments;
 use crate::{
     BulgeVertex2, Classification, CurveError, CurvePolicy, CurveResult, CurveString2, LineSeg2,
@@ -37,9 +37,9 @@ pub enum ContourPointLocation {
 pub struct Contour2 {
     curve: CurveString2,
     fill_rule: FillRule,
-    offset_provenance: Option<Rc<ContourOffsetProvenance2>>,
-    signed_area_cache: Rc<OnceCell<CurveResult<Option<Real>>>>,
-    exact_dyadic_line_aabbs_cache: Rc<OnceCell<Option<Rc<ExactDyadicLineAabbs>>>>,
+    offset_provenance: Option<Arc<ContourOffsetProvenance2>>,
+    signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
+    exact_dyadic_line_aabbs_cache: Arc<OnceLock<Option<Arc<ExactDyadicLineAabbs>>>>,
 }
 
 /// Compact line bounds whose binary64 coordinates are lossless exact dyadics.
@@ -126,7 +126,7 @@ struct ContourOffsetSource2 {
 
 #[derive(Debug, PartialEq)]
 struct ContourOffsetProvenance2 {
-    source: Rc<ContourOffsetSource2>,
+    source: Arc<ContourOffsetSource2>,
     left_distance: Real,
 }
 
@@ -161,8 +161,8 @@ impl Contour2 {
             curve,
             fill_rule,
             offset_provenance: None,
-            signed_area_cache: Rc::new(OnceCell::new()),
-            exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
+            signed_area_cache: Arc::new(OnceLock::new()),
+            exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
         })
     }
 
@@ -172,8 +172,8 @@ impl Contour2 {
             curve,
             fill_rule,
             offset_provenance: None,
-            signed_area_cache: Rc::new(OnceCell::new()),
-            exact_dyadic_line_aabbs_cache: Rc::new(OnceCell::new()),
+            signed_area_cache: Arc::new(OnceLock::new()),
+            exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
         }
     }
 
@@ -222,7 +222,7 @@ impl Contour2 {
                     return self;
                 };
                 ContourOffsetProvenance2 {
-                    source: Rc::new(ContourOffsetSource2 {
+                    source: Arc::new(ContourOffsetSource2 {
                         curve: source.curve.clone(),
                         fill_rule: source.fill_rule,
                         orientation,
@@ -235,7 +235,7 @@ impl Contour2 {
                 left_distance: &provenance.left_distance + &distance,
             },
         };
-        self.offset_provenance = Some(Rc::new(provenance));
+        self.offset_provenance = Some(Arc::new(provenance));
         self
     }
 
@@ -549,12 +549,12 @@ impl Contour2 {
     pub(crate) fn exact_dyadic_line_aabbs(
         &self,
         policy: &CurvePolicy,
-    ) -> Option<Rc<ExactDyadicLineAabbs>> {
+    ) -> Option<Arc<ExactDyadicLineAabbs>> {
         if policy != &CurvePolicy::certified() {
             return None;
         }
         self.exact_dyadic_line_aabbs_cache
-            .get_or_init(|| exact_dyadic_line_aabbs(self.segments()).map(Rc::new))
+            .get_or_init(|| exact_dyadic_line_aabbs(self.segments()).map(Arc::new))
             .clone()
     }
 
@@ -1179,7 +1179,11 @@ fn closure_status_from_distance(distance_squared: &Real) -> Classification<()> {
     match distance_squared.zero_status() {
         ZeroStatus::Zero => Classification::Decided(()),
         ZeroStatus::NonZero => Classification::Uncertain(UncertaintyReason::Boundary),
-        ZeroStatus::Unknown => Classification::Uncertain(UncertaintyReason::RealSign),
+        ZeroStatus::Unknown => match is_zero(distance_squared, &CurvePolicy::certified()) {
+            Some(true) => Classification::Decided(()),
+            Some(false) => Classification::Uncertain(UncertaintyReason::Boundary),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        },
     }
 }
 
@@ -1463,6 +1467,33 @@ mod tests {
     }
 
     #[test]
+    fn two_segment_contour_filters_both_ordinary_connectivity_vertices() {
+        for contour in [
+            center_circle(false),
+            Contour2::try_new(vec![
+                Segment2::Arc(
+                    crate::CircularArc2::try_from_center(
+                        point(2, 0),
+                        point(-2, 0),
+                        point(0, 0),
+                        false,
+                    )
+                    .unwrap(),
+                ),
+                Segment2::Line(crate::LineSeg2::try_new(point(-2, 0), point(2, 0)).unwrap()),
+            ])
+            .unwrap(),
+        ] {
+            assert!(
+                contour
+                    .intersect_self(&CurvePolicy::certified())
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+
+    #[test]
     fn line_area_fuses_exact_products_and_preserves_symbolic_operand_order() {
         let exact_start = point(-7, 5);
         let exact_end = point(11, -13);
@@ -1528,7 +1559,7 @@ mod tests {
         .unwrap();
         let clone = contour.clone();
 
-        assert!(Rc::ptr_eq(
+        assert!(Arc::ptr_eq(
             &contour.signed_area_cache,
             &clone.signed_area_cache
         ));
@@ -1570,7 +1601,7 @@ mod tests {
         let replay = clone
             .exact_dyadic_line_aabbs(&CurvePolicy::certified())
             .unwrap();
-        assert!(Rc::ptr_eq(&bounds, &replay));
+        assert!(Arc::ptr_eq(&bounds, &replay));
     }
 
     #[test]

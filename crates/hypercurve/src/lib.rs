@@ -47,6 +47,10 @@ mod events;
 mod facts;
 mod finite_projection;
 mod fragment;
+#[cfg(feature = "hershey")]
+pub mod hershey;
+#[cfg(feature = "hershey")]
+mod hershey_data;
 mod intersect;
 mod nurbs;
 mod nurbs_interpolation;

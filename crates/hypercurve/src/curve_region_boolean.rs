@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
@@ -57,16 +57,16 @@ pub struct CurveRegionIntersectionBlocker2 {
 /// Clone-shared exact contact, overlap, and blocker result for two curved regions.
 #[derive(Clone, Debug)]
 pub struct CurveRegionIntersectionResult2 {
-    data: Rc<CurveRegionIntersectionResultData>,
+    data: Arc<CurveRegionIntersectionResultData>,
 }
 
 #[derive(Debug)]
 struct CurveRegionIntersectionResultData {
     authored_carrier_pair_count: usize,
     candidate_carrier_pair_count: usize,
-    contacts: Rc<[CurveRegionIntersectionContact2]>,
-    overlaps: Rc<[CurveRegionIntersectionOverlap2]>,
-    blockers: Rc<[CurveRegionIntersectionBlocker2]>,
+    contacts: Arc<[CurveRegionIntersectionContact2]>,
+    overlaps: Arc<[CurveRegionIntersectionOverlap2]>,
+    blockers: Arc<[CurveRegionIntersectionBlocker2]>,
 }
 
 /// The four exact regularized Boolean results for one region pair.
@@ -522,7 +522,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         Ok(CurveRegionIntersectionResult2 {
-            data: Rc::new(CurveRegionIntersectionResultData {
+            data: Arc::new(CurveRegionIntersectionResultData {
                 authored_carrier_pair_count: self.data.authored_carrier_pair_count,
                 candidate_carrier_pair_count: self.data.pairs.len(),
                 contacts: contacts.into(),

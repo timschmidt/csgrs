@@ -1,7 +1,7 @@
 //! Immediate exact intersections and Booleans between top-level curve paths.
 
-use std::cell::OnceCell;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::{
@@ -83,7 +83,7 @@ pub struct CurvePathBooleanFragment2 {
 /// Clone-shared exact fragment selection, arrangement, traversal, and region.
 #[derive(Clone, Debug)]
 pub struct CurvePathBooleanSelection2 {
-    data: Rc<CurvePathBooleanSelectionData>,
+    data: Arc<CurvePathBooleanSelectionData>,
 }
 
 #[derive(Debug)]
@@ -92,11 +92,11 @@ struct CurvePathBooleanSelectionData {
     policy: CurvePolicy,
     first_interior_side: CurveBoundaryInteriorSide2,
     second_interior_side: CurveBoundaryInteriorSide2,
-    fragments: Rc<[CurvePathBooleanFragment2]>,
-    overlap_resolutions: Rc<[CurvePathOverlapResolution2]>,
-    arrangement: OnceCell<ExactCurveResult<BezierArrangementGraph2>>,
-    traversal: OnceCell<ExactCurveResult<BezierArrangementTraversal2>>,
-    region: OnceCell<ExactCurveResult<CurveRegion2>>,
+    fragments: Arc<[CurvePathBooleanFragment2]>,
+    overlap_resolutions: Arc<[CurvePathOverlapResolution2]>,
+    arrangement: OnceLock<ExactCurveResult<BezierArrangementGraph2>>,
+    traversal: OnceLock<ExactCurveResult<BezierArrangementTraversal2>>,
+    region: OnceLock<ExactCurveResult<CurveRegion2>>,
 }
 
 /// One path-pair contact with authored curve and span indices.
@@ -126,37 +126,37 @@ pub struct CurvePathIntersectionBlocker2 {
 /// Clone-shared complete replay result for a retained path pair.
 #[derive(Clone, Debug)]
 pub struct CurvePathIntersectionResult2 {
-    data: Rc<CurvePathIntersectionResultData>,
+    data: Arc<CurvePathIntersectionResultData>,
 }
 
 #[derive(Debug)]
 struct CurvePathIntersectionResultData {
     authored_curve_pair_count: usize,
     candidate_curve_pair_count: usize,
-    contacts: Rc<[CurvePathIntersectionContact2]>,
-    overlaps: Rc<[CurvePathIntersectionOverlap2]>,
-    blockers: Rc<[CurvePathIntersectionBlocker2]>,
+    contacts: Arc<[CurvePathIntersectionContact2]>,
+    overlaps: Arc<[CurvePathIntersectionOverlap2]>,
+    blockers: Arc<[CurvePathIntersectionBlocker2]>,
 }
 
 /// Exact split materializations retained for one authored path curve.
 #[derive(Clone, Debug)]
 pub struct CurvePathSplit2 {
     curve_index: usize,
-    materializations: Rc<[BezierSplitMaterialization2]>,
+    materializations: Arc<[BezierSplitMaterialization2]>,
 }
 
 /// Clone-shared path-pair split topology and lazy arrangement.
 #[derive(Clone, Debug)]
 pub struct CurvePathIntersectionTopology2 {
-    data: Rc<CurvePathIntersectionTopologyData>,
+    data: Arc<CurvePathIntersectionTopologyData>,
 }
 
 #[derive(Debug)]
 struct CurvePathIntersectionTopologyData {
     result: CurvePathIntersectionResult2,
-    first: Rc<[CurvePathSplit2]>,
-    second: Rc<[CurvePathSplit2]>,
-    arrangement: OnceCell<CurveResult<BezierArrangementGraph2>>,
+    first: Arc<[CurvePathSplit2]>,
+    second: Arc<[CurvePathSplit2]>,
+    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
 }
 
 /// The four operation-aware exact Boolean selections for one path pair and side policy.
@@ -405,7 +405,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
             }));
         }
         Ok(CurvePathIntersectionResult2 {
-            data: Rc::new(CurvePathIntersectionResultData {
+            data: Arc::new(CurvePathIntersectionResultData {
                 authored_curve_pair_count: self.authored_curve_pair_count,
                 candidate_curve_pair_count: pair_count,
                 contacts: contacts.into(),
@@ -488,11 +488,11 @@ impl<'a> CurvePathIntersectionContext<'a> {
             &self.policy,
         )?;
         Ok(CurvePathIntersectionTopology2 {
-            data: Rc::new(CurvePathIntersectionTopologyData {
+            data: Arc::new(CurvePathIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement: OnceCell::new(),
+                arrangement: OnceLock::new(),
             }),
         })
     }
@@ -572,16 +572,16 @@ impl<'a> CurvePathIntersectionContext<'a> {
             self.second.start() == self.second.end(),
         );
         Ok(CurvePathBooleanSelection2 {
-            data: Rc::new(CurvePathBooleanSelectionData {
+            data: Arc::new(CurvePathBooleanSelectionData {
                 operation,
                 policy: self.policy.clone(),
                 first_interior_side,
                 second_interior_side,
                 fragments: fragments.into(),
                 overlap_resolutions: overlap_resolutions.into(),
-                arrangement: OnceCell::new(),
-                traversal: OnceCell::new(),
-                region: OnceCell::new(),
+                arrangement: OnceLock::new(),
+                traversal: OnceLock::new(),
+                region: OnceLock::new(),
             }),
         })
     }

@@ -15,7 +15,7 @@
 //! model: an overlap is a
 //! first-class event, not an arbitrary successor choice.
 
-use std::{cmp::Ordering, rc::Rc};
+use std::{cmp::Ordering, sync::Arc};
 
 use hyperreal::Real;
 
@@ -208,7 +208,7 @@ fn validate_line_overlap_segment_geometry(segment: &LineSeg2) -> CurveResult<()>
 /// Exact overlap evidence for materialized retained Bezier arrangement fragments.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct BezierRetainedOverlapEvidence2 {
-    overlaps: Rc<Vec<BezierRetainedOverlap2>>,
+    overlaps: Arc<Vec<BezierRetainedOverlap2>>,
 }
 
 /// Retained traversal after consuming certified duplicate materialized overlaps.
@@ -1728,7 +1728,7 @@ impl BezierRetainedOverlapEvidence2 {
             }
         }
         Classification::Decided(Self {
-            overlaps: Rc::new(overlaps),
+            overlaps: Arc::new(overlaps),
         })
     }
 
@@ -1736,7 +1736,7 @@ impl BezierRetainedOverlapEvidence2 {
     pub fn new(overlaps: Vec<BezierRetainedOverlap2>) -> CurveResult<Self> {
         validate_overlap_evidence_order(&overlaps)?;
         Ok(Self {
-            overlaps: Rc::new(overlaps),
+            overlaps: Arc::new(overlaps),
         })
     }
 
@@ -1747,7 +1747,7 @@ impl BezierRetainedOverlapEvidence2 {
 
     /// Consumes the evidence and returns certified overlap pairs.
     pub fn into_overlaps(self) -> Vec<BezierRetainedOverlap2> {
-        Rc::try_unwrap(self.overlaps).unwrap_or_else(|overlaps| (*overlaps).clone())
+        Arc::try_unwrap(self.overlaps).unwrap_or_else(|overlaps| (*overlaps).clone())
     }
 
     /// Returns true when the scan found no certified materialized overlaps.

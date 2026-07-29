@@ -596,6 +596,9 @@ fn boolean_region_between_impl(
     fill_rule: FillRule,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<LineArcRegion2>> {
+    if let Some(region) = coincident_hole_component_boolean(first, second, op) {
+        return Ok(Classification::Decided(region));
+    }
     let boundary_events =
         crate::region_events::intersect_region_views_point_only(first, second, policy)?;
     if let Some(region) = retained_offset_region_boolean(first, second, op, policy) {
@@ -624,6 +627,47 @@ fn boolean_region_between_impl(
     } else {
         LineArcRegion2::from_validated_boundary_contours(contours, policy)
     }
+}
+
+fn coincident_hole_component_boolean(
+    first: &RegionView2<'_>,
+    second: &RegionView2<'_>,
+    op: BooleanOp,
+) -> Option<LineArcRegion2> {
+    if let Some(region) = coincident_hole_component_boolean_ordered(first, second, op, true) {
+        return Some(region);
+    }
+    coincident_hole_component_boolean_ordered(second, first, op, false)
+}
+
+fn coincident_hole_component_boolean_ordered(
+    container: &RegionView2<'_>,
+    component: &RegionView2<'_>,
+    op: BooleanOp,
+    container_is_first: bool,
+) -> Option<LineArcRegion2> {
+    if container.material_contours().len() != 1
+        || container.hole_contours().len() != 1
+        || component.material_contours().len() != 1
+        || !component.hole_contours().is_empty()
+        || !contours_have_same_exact_boundary(
+            container.hole_contours()[0],
+            component.material_contours()[0],
+        )
+    {
+        return None;
+    }
+
+    let filled_container =
+        || LineArcRegion2::from_material_contours(vec![container.material_contours()[0].clone()]);
+    let container_region = || clone_region_view(container);
+    let component_region = || clone_region_view(component);
+    Some(match op {
+        BooleanOp::Union | BooleanOp::Xor => filled_container(),
+        BooleanOp::Intersection => LineArcRegion2::empty(),
+        BooleanOp::Difference if container_is_first => container_region(),
+        BooleanOp::Difference => component_region(),
+    })
 }
 
 pub(crate) fn retained_offset_region_boolean(
@@ -1884,13 +1928,26 @@ mod tests {
     }
 
     fn rectangle(width: i32, height: i32) -> Contour2 {
+        rectangle_at(0, 0, width, height)
+    }
+
+    fn rectangle_at(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Contour2 {
         Contour2::from_bulge_vertices(&[
-            BulgeVertex2::new(point(0, 0), Real::zero()),
-            BulgeVertex2::new(point(width, 0), Real::zero()),
-            BulgeVertex2::new(point(width, height), Real::zero()),
-            BulgeVertex2::new(point(0, height), Real::zero()),
+            BulgeVertex2::new(point(min_x, min_y), Real::zero()),
+            BulgeVertex2::new(point(max_x, min_y), Real::zero()),
+            BulgeVertex2::new(point(max_x, max_y), Real::zero()),
+            BulgeVertex2::new(point(min_x, max_y), Real::zero()),
         ])
         .unwrap()
+    }
+
+    fn decided_region(result: CurveResult<Classification<LineArcRegion2>>) -> LineArcRegion2 {
+        match result.unwrap() {
+            Classification::Decided(region) => region,
+            Classification::Uncertain(reason) => {
+                panic!("expected decided region Boolean, got {reason:?}")
+            }
+        }
     }
 
     fn fragment_set_for(key: RegionContourKey, segment: Segment2) -> RegionContourFragments {
@@ -1939,6 +1996,54 @@ mod tests {
         assert!(contours_have_same_exact_boundary(&first, &first));
         assert!(contours_have_same_exact_boundary(&first, &reversed));
         assert!(!contours_have_same_exact_boundary(&first, &different));
+    }
+
+    #[test]
+    fn coincident_hole_component_uses_explicit_region_roles() {
+        let outer = rectangle_at(0, 0, 4, 4);
+        let hole = rectangle_at(1, 1, 3, 3);
+        let ring = LineArcRegion2::new(vec![outer], vec![hole.clone()]);
+        let plug = LineArcRegion2::from_material_contours(vec![hole]);
+        let policy = CurvePolicy::certified();
+
+        let intersection = decided_region(ring.boolean_region(
+            &plug,
+            BooleanOp::Intersection,
+            FillRule::NonZero,
+            &policy,
+        ));
+        assert!(intersection.is_empty());
+
+        let union = decided_region(ring.boolean_region(
+            &plug,
+            BooleanOp::Union,
+            FillRule::NonZero,
+            &policy,
+        ));
+        assert_eq!(union.material_contours().len(), 1);
+        assert!(union.hole_contours().is_empty());
+        assert_eq!(
+            union.classify_point(&point(2, 2), &policy),
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+
+        let ring_minus_plug = decided_region(ring.boolean_region(
+            &plug,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy,
+        ));
+        assert_eq!(ring_minus_plug.material_contours().len(), 1);
+        assert_eq!(ring_minus_plug.hole_contours().len(), 1);
+
+        let plug_minus_ring = decided_region(plug.boolean_region(
+            &ring,
+            BooleanOp::Difference,
+            FillRule::NonZero,
+            &policy,
+        ));
+        assert_eq!(plug_minus_ring.material_contours().len(), 1);
+        assert!(plug_minus_ring.hole_contours().is_empty());
     }
 
     #[test]

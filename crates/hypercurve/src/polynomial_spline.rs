@@ -1,8 +1,8 @@
 //! Policy-free retained polynomial B-spline carrier.
 
-use std::cell::OnceCell;
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
@@ -18,8 +18,8 @@ type Cached<T> = Result<T, ExactCurveError>;
 struct PolynomialSplineData2 {
     retained: PolynomialBSplineCurve2,
     endpoints: SplineEndpoints2,
-    decomposition: OnceCell<Cached<PolynomialSplineBezierDecomposition2>>,
-    rational_spans: OnceCell<Cached<Vec<RationalBezier2>>>,
+    decomposition: OnceLock<Cached<PolynomialSplineBezierDecomposition2>>,
+    rational_spans: OnceLock<Cached<Vec<RationalBezier2>>>,
 }
 
 #[derive(Debug)]
@@ -34,7 +34,7 @@ enum SplineEndpoints2 {
 /// successful decomposition and a contextual failure are calculated once.
 #[derive(Clone, Debug)]
 pub struct PolynomialSplineCurve2 {
-    data: Rc<PolynomialSplineData2>,
+    data: Arc<PolynomialSplineData2>,
 }
 
 /// Exact Bezier decomposition retained by a [`PolynomialSplineCurve2`].
@@ -139,7 +139,7 @@ impl PolynomialSplineCurve2 {
             ),
             CurveOperation2::Construction,
         )?;
-        let decomposition = OnceCell::new();
+        let decomposition = OnceLock::new();
         let endpoints = if has_clamped_endpoints(
             retained.knots(),
             retained.degree(),
@@ -173,11 +173,11 @@ impl PolynomialSplineCurve2 {
             SplineEndpoints2::Extracted { start, end }
         };
         let curve = Self {
-            data: Rc::new(PolynomialSplineData2 {
+            data: Arc::new(PolynomialSplineData2 {
                 retained,
                 endpoints,
                 decomposition,
-                rational_spans: OnceCell::new(),
+                rational_spans: OnceLock::new(),
             }),
         };
         curve.validate_periodic_seam()?;
@@ -1000,7 +1000,7 @@ fn matching_spline_point(first: Point2, second: Point2) -> ExactCurveResult<Poin
 }
 
 fn cached_result<T>(
-    cache: &OnceCell<Cached<T>>,
+    cache: &OnceLock<Cached<T>>,
     initialize: impl FnOnce() -> Cached<T>,
 ) -> ExactCurveResult<&T> {
     match cache.get_or_init(initialize) {
