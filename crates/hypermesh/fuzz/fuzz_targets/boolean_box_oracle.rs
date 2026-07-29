@@ -3,8 +3,8 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, boolean_operation, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs,
+    BooleanOp, EmberConfig, boolean_operation, boolean_mesh,
+    boolean_mesh_with_certified_convex_inputs,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{Bytes, box_mesh, operation, r, validate_result, validate_soup, volume_numerator};
@@ -76,14 +76,14 @@ fuzz_target!(|data: [u8; 32]| {
             validate_result(&result, op, refs.len())
         }
         1 => {
-            let soup = boolean_triangle_soup(&refs, op, EmberConfig::default())
+            let soup = boolean_mesh(&refs, op, EmberConfig::default())
                 .unwrap_or_else(|error| panic!("integer-box immediate Boolean failed: {error:?}"));
             validate_soup(&soup);
             soup
         }
         _ => {
             let certified = vec![true; refs.len()];
-            let soup = boolean_triangle_soup_with_certified_convex_inputs(
+            let soup = boolean_mesh_with_certified_convex_inputs(
                 &refs,
                 op,
                 &certified,

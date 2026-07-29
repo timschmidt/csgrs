@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
 
 use hypermesh::{
-    Aabb, BooleanOp, BooleanResult, Classification, EmberConfig, ExactBvh, HypermeshResult,
-    InputMesh, MeshRef, OutputVertex, Plane, Point3, Real, Triangle, TriangleSoup,
+    Aabb, BooleanMesh, BooleanOp, BooleanResult, Classification, EmberConfig, ExactBvh,
+    HypermeshResult, OutputVertex, Plane, Point3, Real, Triangle, TriangleMesh, TriangleMeshRef,
     boolean_difference, boolean_intersection, boolean_operation, boolean_union,
     certify_output_polygon_closure, classify_point, polygon_soup,
     triangulate_and_resolve_certified,
@@ -47,8 +47,8 @@ fn standard_cube_triangles() -> Vec<Triangle> {
     ]
 }
 
-fn box_mesh(min: [i32; 3], max: [i32; 3]) -> InputMesh {
-    InputMesh::new(
+fn box_mesh(min: [i32; 3], max: [i32; 3]) -> TriangleMesh {
+    TriangleMesh::new(
         vec![
             p(min[0], min[1], min[2]),
             p(max[0], min[1], min[2]),
@@ -63,7 +63,7 @@ fn box_mesh(min: [i32; 3], max: [i32; 3]) -> InputMesh {
     )
 }
 
-fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
+fn rational_cube(center: [Real; 3], half_extent: Real) -> TriangleMesh {
     let min = [
         &center[0] - &half_extent,
         &center[1] - &half_extent,
@@ -74,7 +74,7 @@ fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
         &center[1] + &half_extent,
         &center[2] + &half_extent,
     ];
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             pr(min[0].clone(), min[1].clone(), min[2].clone()),
             pr(max[0].clone(), min[1].clone(), min[2].clone()),
@@ -89,8 +89,8 @@ fn rational_cube(center: [Real; 3], half_extent: Real) -> InputMesh {
     )
 }
 
-fn tetrahedron(points: [[i32; 3]; 4]) -> InputMesh {
-    InputMesh::new(
+fn tetrahedron(points: [[i32; 3]; 4]) -> TriangleMesh {
+    TriangleMesh::new(
         points
             .into_iter()
             .map(|[x, y, z]| p(x, y, z))
@@ -104,8 +104,8 @@ fn tetrahedron(points: [[i32; 3]; 4]) -> InputMesh {
     )
 }
 
-fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> InputMesh {
-    InputMesh::new(
+fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> TriangleMesh {
+    TriangleMesh::new(
         vec![a, b, c, apex],
         vec![
             Triangle::new(0, 2, 1),
@@ -116,11 +116,11 @@ fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> In
     )
 }
 
-fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
+fn octahedron(center: [Real; 3], radius: Real) -> TriangleMesh {
     let cx = center[0].clone();
     let cy = center[1].clone();
     let cz = center[2].clone();
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             pr(&cx + &radius, cy.clone(), cz.clone()),
             pr(&cx - &radius, cy.clone(), cz.clone()),
@@ -142,7 +142,7 @@ fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
     )
 }
 
-fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
+fn combine_meshes(meshes: &[TriangleMesh]) -> TriangleMesh {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
     for mesh in meshes {
@@ -156,7 +156,7 @@ fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
             )
         }));
     }
-    InputMesh::new(positions, triangles)
+    TriangleMesh::new(positions, triangles)
 }
 
 #[test]
@@ -184,21 +184,25 @@ fn config() -> EmberConfig {
     EmberConfig { max_depth: 10 }
 }
 
-fn run_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
+fn run_op(a: &TriangleMesh, b: &TriangleMesh, op: BooleanOp) -> HypermeshResult<BooleanMesh> {
     let refs = [a.as_ref(), b.as_ref()];
     let result = boolean_operation(&refs, op, config())?;
     assert_output_polygons_closed(&result);
     triangulate_and_resolve_certified(&result)
 }
 
-fn run_certified_op(a: &InputMesh, b: &InputMesh, op: BooleanOp) -> HypermeshResult<TriangleSoup> {
+fn run_certified_op(
+    a: &TriangleMesh,
+    b: &TriangleMesh,
+    op: BooleanOp,
+) -> HypermeshResult<BooleanMesh> {
     let refs = [a.as_ref(), b.as_ref()];
     let result = boolean_operation(&refs, op, config())?;
     assert_output_polygons_closed(&result);
     triangulate_and_resolve_certified(&result)
 }
 
-fn run_op_refs(meshes: &[MeshRef<'_>], op: BooleanOp) -> HypermeshResult<TriangleSoup> {
+fn run_op_refs(meshes: &[TriangleMeshRef<'_>], op: BooleanOp) -> HypermeshResult<BooleanMesh> {
     let result = boolean_operation(meshes, op, config())?;
     assert_output_polygons_closed(&result);
     triangulate_and_resolve_certified(&result)
@@ -220,7 +224,7 @@ fn point_key(point: &Point3) -> [String; 3] {
     ]
 }
 
-fn sorted_triangle_key(soup: &TriangleSoup, triangle: [usize; 3]) -> [[String; 3]; 3] {
+fn sorted_triangle_key(soup: &BooleanMesh, triangle: [usize; 3]) -> [[String; 3]; 3] {
     let mut keys = [
         vertex_key(&soup.vertices[triangle[0]]),
         vertex_key(&soup.vertices[triangle[1]]),
@@ -234,7 +238,7 @@ fn undirected_edge(a: [String; 3], b: [String; 3]) -> [[String; 3]; 2] {
     if a <= b { [a, b] } else { [b, a] }
 }
 
-fn assert_closed_triangle_soup(soup: &TriangleSoup) {
+fn assert_closed_boolean_mesh(soup: &BooleanMesh) {
     let mut edge_uses: BTreeMap<[[String; 3]; 2], usize> = BTreeMap::new();
     let mut faces = BTreeSet::new();
 
@@ -271,8 +275,8 @@ fn assert_closed_triangle_soup(soup: &TriangleSoup) {
     );
 }
 
-fn assert_no_boundary_edges(soup: &TriangleSoup) {
-    let closure = hypermesh::triangle_soup_closure_evidence(soup);
+fn assert_no_boundary_edges(soup: &BooleanMesh) {
+    let closure = hypermesh::boolean_mesh_closure_evidence(soup);
     assert_eq!(
         closure.boundary_edges, 0,
         "expected no boundary edges; closure evidence: {closure:?}",
@@ -295,7 +299,7 @@ fn assert_output_polygons_closed(result: &BooleanResult) {
     );
 }
 
-fn assert_bounds(soup: &TriangleSoup, min: [Real; 3], max: [Real; 3]) -> HypermeshResult<()> {
+fn assert_bounds(soup: &BooleanMesh, min: [Real; 3], max: [Real; 3]) -> HypermeshResult<()> {
     let bounds = Aabb::new(
         pr(min[0].clone(), min[1].clone(), min[2].clone()),
         pr(max[0].clone(), max[1].clone(), max[2].clone()),
@@ -313,7 +317,7 @@ fn assert_bounds(soup: &TriangleSoup, min: [Real; 3], max: [Real; 3]) -> Hyperme
     Ok(())
 }
 
-fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
+fn signed_volume_numerator(soup: &BooleanMesh) -> Real {
     let mut volume = Real::zero();
     for triangle in &soup.triangles {
         let v0 = &soup.vertices[triangle[0]];
@@ -326,11 +330,11 @@ fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
     volume.abs()
 }
 
-fn assert_volume_numerator(soup: &TriangleSoup, expected: Real) {
+fn assert_volume_numerator(soup: &BooleanMesh, expected: Real) {
     assert_eq!(signed_volume_numerator(soup), expected);
 }
 
-fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
+fn assert_same_shape(left: &BooleanMesh, right: &BooleanMesh) {
     let left_faces = left
         .triangles
         .iter()
@@ -344,7 +348,7 @@ fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
     assert_eq!(left_faces, right_faces);
 }
 
-fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
+fn passthrough(mesh: &TriangleMesh) -> HypermeshResult<BooleanMesh> {
     let result = boolean_operation(
         &[mesh.as_ref()],
         BooleanOp::Union,
@@ -353,10 +357,10 @@ fn passthrough(mesh: &InputMesh) -> HypermeshResult<TriangleSoup> {
     triangulate_and_resolve_certified(&result)
 }
 
-fn point_strictly_inside_convex_mesh(point: &Point3, mesh: &InputMesh) -> HypermeshResult<bool> {
+fn point_strictly_inside_convex_mesh(point: &Point3, mesh: &TriangleMesh) -> HypermeshResult<bool> {
     let mut saw_boundary = false;
 
-    for triangle in &mesh.triangles {
+    for triangle in mesh.triangles.iter() {
         let [i0, i1, i2] = triangle.indices();
         let plane = Plane::from_points(
             &mesh.positions[i0],
@@ -374,10 +378,10 @@ fn point_strictly_inside_convex_mesh(point: &Point3, mesh: &InputMesh) -> Hyperm
 }
 
 fn assert_no_strictly_contained_source_vertices(
-    left: &InputMesh,
-    right: &InputMesh,
+    left: &TriangleMesh,
+    right: &TriangleMesh,
 ) -> HypermeshResult<()> {
-    for point in &left.positions {
+    for point in left.positions.iter() {
         assert!(
             !point_strictly_inside_convex_mesh(point, right)?,
             "left source vertex {:?} lies strictly inside right mesh",
@@ -385,7 +389,7 @@ fn assert_no_strictly_contained_source_vertices(
         );
     }
 
-    for point in &right.positions {
+    for point in right.positions.iter() {
         assert!(
             !point_strictly_inside_convex_mesh(point, left)?,
             "right source vertex {:?} lies strictly inside left mesh",
@@ -404,7 +408,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let union = boolean_union(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     assert_output_polygons_closed(&union);
     let union_soup = triangulate_and_resolve_certified(&union).unwrap();
-    assert_closed_triangle_soup(&union_soup);
+    assert_closed_boolean_mesh(&union_soup);
     assert_bounds(
         &union_soup,
         [r(-1), r(-1), r(-1)],
@@ -416,7 +420,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let intersection = boolean_intersection(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     assert_output_polygons_closed(&intersection);
     let intersection_soup = triangulate_and_resolve_certified(&intersection).unwrap();
-    assert_closed_triangle_soup(&intersection_soup);
+    assert_closed_boolean_mesh(&intersection_soup);
     assert_bounds(
         &intersection_soup,
         [ratio(-1, 2), ratio(-1, 2), ratio(-1, 2)],
@@ -428,7 +432,7 @@ fn cube_boolean_outputs_are_closed_and_exact_volume() {
     let difference = boolean_difference(cube_a.as_ref(), cube_b.as_ref(), config()).unwrap();
     assert_output_polygons_closed(&difference);
     let difference_soup = triangulate_and_resolve_certified(&difference).unwrap();
-    assert_closed_triangle_soup(&difference_soup);
+    assert_closed_boolean_mesh(&difference_soup);
     assert_bounds(&difference_soup, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
     assert_volume_numerator(&difference_soup, ratio(111, 4));
 }
@@ -447,14 +451,14 @@ fn overlapping_axis_aligned_box_xor_is_closed_but_non_manifold() {
     );
 }
 
-fn assert_overlapping_box_xor_topology(a: InputMesh, b: InputMesh, volumes: [i32; 4]) {
+fn assert_overlapping_box_xor_topology(a: TriangleMesh, b: TriangleMesh, volumes: [i32; 4]) {
     for (op, expected_volume) in [
         (BooleanOp::Union, volumes[0]),
         (BooleanOp::Intersection, volumes[1]),
         (BooleanOp::Difference, volumes[2]),
     ] {
         let result = run_certified_op(&a, &b, op).unwrap();
-        assert_closed_triangle_soup(&result);
+        assert_closed_boolean_mesh(&result);
         assert_volume_numerator(&result, r(6 * expected_volume));
     }
 
@@ -477,7 +481,7 @@ fn assert_overlapping_box_xor_topology(a: InputMesh, b: InputMesh, volumes: [i32
 
     let xor = triangulate_and_resolve_certified(&xor_result).unwrap();
     assert_no_boundary_edges(&xor);
-    let closure = hypermesh::triangle_soup_closure_evidence(&xor);
+    let closure = hypermesh::boolean_mesh_closure_evidence(&xor);
     assert!(closure.non_manifold_edges > 0);
     assert_volume_numerator(&xor, r(6 * volumes[3]));
 }
@@ -562,7 +566,7 @@ proptest! {
             if op != BooleanOp::SymmetricDifference
                 && (overlap_volume > 0 || strictly_separated)
             {
-                assert_closed_triangle_soup(&result);
+                assert_closed_boolean_mesh(&result);
             }
             prop_assert_eq!(
                 signed_volume_numerator(&result),
@@ -584,7 +588,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
     let cube_b = rational_cube([ratio(1, 2), ratio(1, 2), ratio(1, 2)], r(1));
 
     let union = run_certified_op(&cube_a, &cube_b, BooleanOp::Union).unwrap();
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_bounds(
         &union,
         [r(-1), r(-1), r(-1)],
@@ -594,7 +598,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
     assert_volume_numerator(&union, ratio(303, 4));
 
     let intersection = run_certified_op(&cube_a, &cube_b, BooleanOp::Intersection).unwrap();
-    assert_closed_triangle_soup(&intersection);
+    assert_closed_boolean_mesh(&intersection);
     assert_bounds(
         &intersection,
         [ratio(-1, 2), ratio(-1, 2), ratio(-1, 2)],
@@ -604,7 +608,7 @@ fn ordered_axis_aligned_boxes_use_same_basis_cell_decomposition_with_certified_o
     assert_volume_numerator(&intersection, ratio(81, 4));
 
     let difference = run_certified_op(&cube_a, &cube_b, BooleanOp::Difference).unwrap();
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_bounds(&difference, [r(-1), r(-1), r(-1)], [r(1), r(1), r(1)]).unwrap();
     assert_volume_numerator(&difference, ratio(111, 4));
 }
@@ -636,7 +640,7 @@ fn roundtrip_preserves_triangle_vertices_exactly() {
     }
 
     let result = passthrough(&mesh).unwrap();
-    assert_closed_triangle_soup(&result);
+    assert_closed_boolean_mesh(&result);
     assert_volume_numerator(&result, r(64));
 }
 
@@ -703,7 +707,7 @@ fn generated_sphere_booleans_are_closed() {
         if !result.triangles.is_empty() {
             assert_no_boundary_edges(&result);
             if op != BooleanOp::SymmetricDifference {
-                assert_closed_triangle_soup(&result);
+                assert_closed_boolean_mesh(&result);
             }
         }
     }
@@ -751,15 +755,15 @@ fn hypermesh_nested_closed_tetrahedra_booleans_have_expected_shape() {
     let inner_soup = passthrough(&inner).unwrap();
 
     let union = run_op(&outer, &inner, BooleanOp::Union).unwrap();
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_volume_numerator(&union, signed_volume_numerator(&outer_soup));
 
     let intersection = run_op(&outer, &inner, BooleanOp::Intersection).unwrap();
-    assert_closed_triangle_soup(&intersection);
+    assert_closed_boolean_mesh(&intersection);
     assert_volume_numerator(&intersection, signed_volume_numerator(&inner_soup));
 
     let difference = run_op(&outer, &inner, BooleanOp::Difference).unwrap();
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert!(difference.triangles.len() >= outer_soup.triangles.len());
 }
 
@@ -792,11 +796,11 @@ fn hypermesh_disconnected_container_routes_containment_correctly() {
     let contained_soup = passthrough(&contained).unwrap();
 
     let union = run_op(&container, &contained, BooleanOp::Union).unwrap();
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_volume_numerator(&union, signed_volume_numerator(&container_soup));
 
     let intersection = run_op(&container, &contained, BooleanOp::Intersection).unwrap();
-    assert_closed_triangle_soup(&intersection);
+    assert_closed_boolean_mesh(&intersection);
     assert_volume_numerator(&intersection, signed_volume_numerator(&contained_soup));
 
     let difference = run_op(&contained, &container, BooleanOp::Difference).unwrap();
@@ -809,7 +813,7 @@ fn hypermesh_boundary_touching_boxes_regularize_named_booleans() {
     let right = box_mesh([1, 0, 0], [2, 1, 1]);
 
     let union = run_op(&left, &right, BooleanOp::Union).unwrap();
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_bounds(&union, [r(0), r(0), r(0)], [r(2), r(1), r(1)]).unwrap();
     assert_volume_numerator(&union, r(12));
 
@@ -817,7 +821,7 @@ fn hypermesh_boundary_touching_boxes_regularize_named_booleans() {
     assert!(intersection.triangles.is_empty());
 
     let difference = run_op(&left, &right, BooleanOp::Difference).unwrap();
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_volume_numerator(&difference, r(6));
 }
 
@@ -863,15 +867,15 @@ fn disjoint_boxes_use_general_leaf_path() -> HypermeshResult<()> {
 #[test]
 fn same_surface_solids_use_general_leaf_path_in_one_leaf() -> HypermeshResult<()> {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
-    let same_surface = InputMesh {
-        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
-        triangles: vec![
+    let same_surface = TriangleMesh::new(
+        vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        vec![
             Triangle::new(1, 2, 0),
             Triangle::new(1, 0, 3),
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-    };
+    );
     let refs = [left.as_ref(), same_surface.as_ref()];
     let config = EmberConfig { max_depth: 0 };
 
@@ -1028,7 +1032,7 @@ fn crossing_octahedra_use_general_leaf_path() -> HypermeshResult<()> {
         );
         assert_no_boundary_edges(&result);
         if op != BooleanOp::SymmetricDifference {
-            assert_closed_triangle_soup(&result);
+            assert_closed_boolean_mesh(&result);
         }
     }
 
@@ -1042,7 +1046,7 @@ fn crossing_octahedra_use_general_path() -> HypermeshResult<()> {
     let union = run_op(&left, &right, BooleanOp::Union)?;
     assert!(!union.triangles.is_empty());
     assert_no_boundary_edges(&union);
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
 
     let reverse_union = run_op(&right, &left, BooleanOp::Union)?;
     assert_same_shape(&reverse_union, &union);
@@ -1050,17 +1054,17 @@ fn crossing_octahedra_use_general_path() -> HypermeshResult<()> {
     let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
     assert!(!intersection.triangles.is_empty());
     assert_no_boundary_edges(&intersection);
-    assert_closed_triangle_soup(&intersection);
+    assert_closed_boolean_mesh(&intersection);
 
     let difference = run_op(&left, &right, BooleanOp::Difference)?;
     assert!(!difference.triangles.is_empty());
     assert_no_boundary_edges(&difference);
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
 
     let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
     assert!(!reverse_difference.triangles.is_empty());
     assert_no_boundary_edges(&reverse_difference);
-    assert_closed_triangle_soup(&reverse_difference);
+    assert_closed_boolean_mesh(&reverse_difference);
 
     let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
     assert!(!xor.triangles.is_empty());
@@ -1098,7 +1102,7 @@ fn affine_boxes_use_general_leaf_path() -> HypermeshResult<()> {
         );
         assert_no_boundary_edges(&result);
         if op != BooleanOp::SymmetricDifference {
-            assert_closed_triangle_soup(&result);
+            assert_closed_boolean_mesh(&result);
         }
         let expected_volume_numerator = match op {
             BooleanOp::Union => r(576),
@@ -1116,31 +1120,31 @@ fn affine_boxes_use_general_path() -> HypermeshResult<()> {
     let (left, right) = affine_box_pair();
     let union = run_op(&left, &right, BooleanOp::Union)?;
     assert_no_boundary_edges(&union);
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_volume_numerator(&union, r(576));
     assert_bounds(&union, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let reverse_union = run_op(&right, &left, BooleanOp::Union)?;
     assert_no_boundary_edges(&reverse_union);
-    assert_closed_triangle_soup(&reverse_union);
+    assert_closed_boolean_mesh(&reverse_union);
     assert_volume_numerator(&reverse_union, r(576));
     assert_bounds(&reverse_union, [r(0), r(0), r(0)], [r(8), r(4), r(4)])?;
 
     let intersection = run_op(&left, &right, BooleanOp::Intersection)?;
     assert_no_boundary_edges(&intersection);
-    assert_closed_triangle_soup(&intersection);
+    assert_closed_boolean_mesh(&intersection);
     assert_volume_numerator(&intersection, r(192));
     assert_bounds(&intersection, [r(2), r(0), r(0)], [r(6), r(4), r(4)])?;
 
     let difference = run_op(&left, &right, BooleanOp::Difference)?;
     assert_no_boundary_edges(&difference);
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_volume_numerator(&difference, r(192));
     assert_bounds(&difference, [r(0), r(0), r(0)], [r(6), r(4), r(4)])?;
 
     let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
     assert_no_boundary_edges(&reverse_difference);
-    assert_closed_triangle_soup(&reverse_difference);
+    assert_closed_boolean_mesh(&reverse_difference);
     assert_volume_numerator(&reverse_difference, r(192));
     assert_bounds(&reverse_difference, [r(2), r(0), r(0)], [r(8), r(4), r(4)])?;
 
@@ -1270,7 +1274,7 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_bounds(&difference, [r(0), r(0), r(0)], [r(1), r(1), r(1)])?;
     assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 
@@ -1278,7 +1282,7 @@ fn edge_touching_boxes_use_general_path() -> HypermeshResult<()> {
         boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_no_boundary_edges(&reverse_difference);
-    assert_closed_triangle_soup(&reverse_difference);
+    assert_closed_boolean_mesh(&reverse_difference);
     assert_bounds(&reverse_difference, [r(1), r(1), r(0)], [r(2), r(2), r(1)])?;
     assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
 
@@ -1463,7 +1467,7 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
     let difference_result = boolean_operation(&refs, BooleanOp::Difference, config)?;
     let difference = triangulate_and_resolve_certified(&difference_result)?;
     assert_no_boundary_edges(&difference);
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_bounds(&difference, [r(0), r(0), r(0)], [r(1), r(1), r(1)])?;
     assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
 
@@ -1471,7 +1475,7 @@ fn vertex_touching_boxes_use_general_path() -> HypermeshResult<()> {
         boolean_operation(&reverse_refs, BooleanOp::Difference, config)?;
     let reverse_difference = triangulate_and_resolve_certified(&reverse_difference_result)?;
     assert_no_boundary_edges(&reverse_difference);
-    assert_closed_triangle_soup(&reverse_difference);
+    assert_closed_boolean_mesh(&reverse_difference);
     assert_bounds(&reverse_difference, [r(1), r(1), r(1)], [r(2), r(2), r(2)])?;
     assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
 
@@ -1549,29 +1553,29 @@ fn vertex_touching_boxes_use_general_leaf_path() -> HypermeshResult<()> {
 fn hypermesh_identical_and_same_surface_solids_regularize() {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
     let identical = left.clone();
-    let same_surface = InputMesh {
-        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
-        triangles: vec![
+    let same_surface = TriangleMesh::new(
+        vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        vec![
             Triangle::new(1, 2, 0),
             Triangle::new(1, 0, 3),
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-    };
-    let reversed_same_surface = InputMesh {
-        positions: same_surface.positions.clone(),
-        triangles: vec![
+    );
+    let reversed_same_surface = TriangleMesh::new(
+        same_surface.positions.to_vec(),
+        vec![
             Triangle::new(1, 0, 2),
             Triangle::new(1, 3, 0),
             Triangle::new(0, 3, 2),
             Triangle::new(2, 3, 1),
         ],
-    };
+    );
     let left_soup = passthrough(&left).unwrap();
 
     for right in [&identical, &same_surface, &reversed_same_surface] {
         let union = run_op(&left, right, BooleanOp::Union).unwrap();
-        assert_closed_triangle_soup(&union);
+        assert_closed_boolean_mesh(&union);
         assert_volume_numerator(&union, signed_volume_numerator(&left_soup));
 
         let difference = run_op(&left, right, BooleanOp::Difference).unwrap();
@@ -1614,7 +1618,7 @@ fn hypermesh_affine_box_booleans_are_closed() {
             !result.triangles.is_empty(),
             "{op:?} should produce non-empty output"
         );
-        assert_closed_triangle_soup(&result);
+        assert_closed_boolean_mesh(&result);
     }
 }
 
@@ -1632,11 +1636,11 @@ fn affine_box_booleans_use_exact_cell_decomposition_with_certified_output() {
             !result.triangles.is_empty(),
             "{op:?} should produce non-empty output"
         );
-        assert_closed_triangle_soup(&result);
+        assert_closed_boolean_mesh(&result);
     }
 }
 
-fn affine_box_pair() -> (InputMesh, InputMesh) {
+fn affine_box_pair() -> (TriangleMesh, TriangleMesh) {
     let map = |u: i32, v: i32, w: i32| [2 * u + v, 2 * v, 2 * w];
     let affine_box = |min: [i32; 3], max: [i32; 3]| {
         let corners = [
@@ -1649,7 +1653,7 @@ fn affine_box_pair() -> (InputMesh, InputMesh) {
             map(max[0], max[1], max[2]),
             map(min[0], max[1], max[2]),
         ];
-        InputMesh::new(
+        TriangleMesh::new(
             corners
                 .into_iter()
                 .map(|[x, y, z]| p(x, y, z))
@@ -1666,15 +1670,15 @@ fn affine_box_pair() -> (InputMesh, InputMesh) {
 #[test]
 fn same_surface_solids_are_exact_equivalence_with_certified_output() {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
-    let same_surface = InputMesh {
-        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
-        triangles: vec![
+    let same_surface = TriangleMesh::new(
+        vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        vec![
             Triangle::new(1, 2, 0),
             Triangle::new(1, 0, 3),
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-    };
+    );
     let left_soup = passthrough(&left).unwrap();
 
     let union = run_certified_op(&left, &same_surface, BooleanOp::Union).unwrap();
@@ -1688,15 +1692,15 @@ fn same_surface_solids_are_exact_equivalence_with_certified_output() {
 #[test]
 fn same_surface_solids_use_general_path() -> HypermeshResult<()> {
     let left = tetrahedron([[0, 0, 0], [4, 0, 0], [0, 4, 0], [0, 0, 4]]);
-    let same_surface = InputMesh {
-        positions: vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
-        triangles: vec![
+    let same_surface = TriangleMesh::new(
+        vec![p(4, 0, 0), p(0, 0, 0), p(0, 4, 0), p(0, 0, 4)],
+        vec![
             Triangle::new(1, 2, 0),
             Triangle::new(1, 0, 3),
             Triangle::new(0, 2, 3),
             Triangle::new(2, 1, 3),
         ],
-    };
+    );
     let refs = [left.as_ref(), same_surface.as_ref()];
     let config = config();
 
@@ -1749,7 +1753,7 @@ fn hypermesh_borrowed_multi_mesh_union_uses_slice_api() {
     let refs = [left_a.as_ref(), left_b.as_ref(), right.as_ref()];
 
     let union = run_op_refs(&refs, BooleanOp::Union).unwrap();
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_volume_numerator(&union, r(3));
 }
 
@@ -1762,7 +1766,7 @@ fn projected_reference_escape_case_uses_general_path() -> HypermeshResult<()> {
 
     let union = run_op(&left, &right, BooleanOp::Union)?;
     assert_no_boundary_edges(&union);
-    assert_closed_triangle_soup(&union);
+    assert_closed_boolean_mesh(&union);
     assert_volume_numerator(
         &union,
         signed_volume_numerator(&left_soup) + signed_volume_numerator(&right_soup),
@@ -1774,19 +1778,19 @@ fn projected_reference_escape_case_uses_general_path() -> HypermeshResult<()> {
 
     let difference = run_op(&left, &right, BooleanOp::Difference)?;
     assert_no_boundary_edges(&difference);
-    assert_closed_triangle_soup(&difference);
+    assert_closed_boolean_mesh(&difference);
     assert_volume_numerator(&difference, signed_volume_numerator(&left_soup));
     assert_bounds(&difference, [r(0), r(1), r(1)], [r(1), r(5), r(5)])?;
 
     let reverse_difference = run_op(&right, &left, BooleanOp::Difference)?;
     assert_no_boundary_edges(&reverse_difference);
-    assert_closed_triangle_soup(&reverse_difference);
+    assert_closed_boolean_mesh(&reverse_difference);
     assert_volume_numerator(&reverse_difference, signed_volume_numerator(&right_soup));
     assert_bounds(&reverse_difference, [r(4), r(1), r(1)], [r(5), r(5), r(5)])?;
 
     let xor = run_op(&left, &right, BooleanOp::SymmetricDifference)?;
     assert_no_boundary_edges(&xor);
-    assert_closed_triangle_soup(&xor);
+    assert_closed_boolean_mesh(&xor);
     assert_volume_numerator(
         &xor,
         signed_volume_numerator(&left_soup) + signed_volume_numerator(&right_soup),

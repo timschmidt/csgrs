@@ -18,7 +18,7 @@
 //! exact predicate required by the operation is decidable under the strict
 //! bounded refinement policy:
 //!
-//! - If a boolean operation returns [`BooleanResult`], the classified
+//! - If a general arrangement operation returns [`BooleanResult`], the classified
 //!   arrangement and its winding data were certified by the general EMBER
 //!   subdivision/BSP/classification path; the public API does not rely on
 //!   special-case boolean shortcuts or output repair to turn an uncertified
@@ -47,7 +47,9 @@
 //!
 //! By default, boolean operations run the general EMBER
 //! subdivision/BSP/classification path; special-case boolean shortcuts are not
-//! used to rescue uncertified general results. Public boolean operations
+//! used to rescue uncertified general results. The reusable carrier-level
+//! [`boolean_triangle_meshes`] entry point may resolve exact algebraic cases
+//! before invoking that path. General arrangement operations
 //! certify that the classified polygon arrangement has no singleton edges and
 //! has exact forward/reverse edge cancellation before duplicate/T-junction
 //! triangulation cleanup runs. Open or directionally unbalanced arrangements
@@ -63,10 +65,10 @@
 //! while preserving the invariant that open or zero-volume output is rejected
 //! rather than repaired. Use [`certify_output_polygon_closure`] to validate
 //! that invariant directly on the classified polygon arrangement before any
-//! triangulation cleanup runs. [`TriangleSoup::try_to_gpu_mesh_f32`] is the
+//! triangulation cleanup runs. [`BooleanMesh::try_to_gpu_mesh_f32`] is the
 //! explicit approximation boundary for backend-neutral finite `f32` position,
 //! normal, and index buffers; the parallel
-//! [`TriangleSoup::try_to_gpu_mesh_f64`] adapter retains binary64 precision.
+//! [`BooleanMesh::try_to_gpu_mesh_f64`] adapter retains binary64 precision.
 
 #![deny(dead_code)]
 #![warn(missing_docs)]
@@ -113,18 +115,20 @@ pub use intersection::{
 };
 pub use local_bsp::{BspLeaf, LocalBsp};
 pub use mesh::{
-    InputMesh, MeshRef, OutputVertex, PolygonSoup, Triangle, certify_convex_mesh, polygon_soup,
+    OutputVertex, PolygonSoup, Triangle, TriangleMesh, TriangleMeshRef, certify_convex_mesh,
+    polygon_soup,
 };
 pub use operations::{
-    EmberConfig, boolean_difference, boolean_intersection, boolean_operation,
+    EmberConfig, boolean_difference, boolean_intersection, boolean_mesh,
+    boolean_mesh_with_certified_convex_inputs,
+    boolean_mesh_with_certified_convex_inputs_and_planes, boolean_native_meshes, boolean_operation,
     boolean_operation_with_certified_convex_inputs, boolean_symmetric_difference,
-    boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
-    boolean_triangle_soup_with_certified_convex_inputs_and_planes, boolean_union,
+    boolean_triangle_meshes, boolean_union,
 };
 pub use output::{
-    BooleanResult, OutputPolygon, TriangleSoup, TriangleSoupClosureEvidence, TriangleSource,
-    certify_output_polygon_closure, extract_output, triangle_soup_closure_evidence,
-    triangle_soup_is_closed, triangulate_and_resolve_certified,
+    BooleanMesh, BooleanMeshClosureEvidence, BooleanResult, OutputPolygon, TriangleSource,
+    boolean_mesh_closure_evidence, boolean_mesh_is_closed, certify_output_polygon_closure,
+    extract_output, triangulate_and_resolve_certified,
 };
 pub use polygon::{ApproxBounds, ConvexPolygon, InputTrianglePlanes, convex_quad, convex_triangle};
 pub use segment_trace::{

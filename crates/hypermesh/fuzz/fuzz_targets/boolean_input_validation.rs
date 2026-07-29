@@ -3,15 +3,15 @@
 mod support;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, InputMesh, Triangle, boolean_operation,
-    boolean_operation_with_certified_convex_inputs, boolean_triangle_soup,
+    BooleanOp, EmberConfig, HypermeshError, TriangleMesh, Triangle, boolean_operation,
+    boolean_operation_with_certified_convex_inputs, boolean_mesh,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{Bytes, box_mesh, operation};
 
-fn rejection(mesh: &InputMesh, operation: BooleanOp, immediate: bool) -> HypermeshError {
+fn rejection(mesh: &TriangleMesh, operation: BooleanOp, immediate: bool) -> HypermeshError {
     if immediate {
-        boolean_triangle_soup(&[mesh.as_ref()], operation, EmberConfig::default()).unwrap_err()
+        boolean_mesh(&[mesh.as_ref()], operation, EmberConfig::default()).unwrap_err()
     } else {
         boolean_operation(&[mesh.as_ref()], operation, EmberConfig::default()).unwrap_err()
     }
@@ -22,34 +22,36 @@ fuzz_target!(|data: [u8; 4]| {
     let mutation = bytes.next() % 7;
     let op = operation(bytes.next());
     let immediate = bytes.next() & 1 != 0;
-    let mut mesh = box_mesh([-2, -2, -2], [2, 2, 2]);
+    let mesh = box_mesh([-2, -2, -2], [2, 2, 2]);
 
     match mutation {
         0 => {
             let error = if immediate {
-                boolean_triangle_soup(&[], op, EmberConfig::default()).unwrap_err()
+                boolean_mesh(&[], op, EmberConfig::default()).unwrap_err()
             } else {
                 boolean_operation(&[], op, EmberConfig::default()).unwrap_err()
             };
             assert_eq!(error, HypermeshError::EmptyInput);
         }
         1 => {
-            if bytes.next() & 1 == 0 {
-                mesh.positions.clear();
+            let invalid = if bytes.next() & 1 == 0 {
+                TriangleMesh::new(Vec::new(), mesh.triangles.to_vec())
             } else {
-                mesh.triangles.clear();
-            }
+                TriangleMesh::new(mesh.positions.to_vec(), Vec::new())
+            };
             assert_eq!(
-                rejection(&mesh, op, immediate),
+                rejection(&invalid, op, immediate),
                 HypermeshError::EmptyMesh { mesh_index: 0 },
             );
         }
         2 => {
             let triangle = usize::from(bytes.next()) % mesh.triangles.len();
             let invalid = mesh.positions.len() + usize::from(bytes.next() % 8);
-            mesh.triangles[triangle].v0 = invalid;
+            let mut triangles = mesh.triangles.to_vec();
+            triangles[triangle].v0 = invalid;
+            let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles);
             assert_eq!(
-                rejection(&mesh, op, immediate),
+                rejection(&invalid_mesh, op, immediate),
                 HypermeshError::VertexIndexOutOfBounds {
                     index: invalid,
                     vertex_count: mesh.positions.len(),
@@ -58,9 +60,11 @@ fuzz_target!(|data: [u8; 4]| {
         }
         3 => {
             let triangle = usize::from(bytes.next()) % mesh.triangles.len();
-            mesh.triangles[triangle].v1 = mesh.triangles[triangle].v0;
+            let mut triangles = mesh.triangles.to_vec();
+            triangles[triangle].v1 = triangles[triangle].v0;
+            let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles);
             assert!(matches!(
-                rejection(&mesh, op, immediate),
+                rejection(&invalid_mesh, op, immediate),
                 HypermeshError::DegenerateTriangle {
                     mesh_index: 0,
                     triangle_index
@@ -69,9 +73,11 @@ fuzz_target!(|data: [u8; 4]| {
         }
         4 => {
             let triangle = usize::from(bytes.next()) % mesh.triangles.len();
-            mesh.triangles.remove(triangle);
+            let mut triangles = mesh.triangles.to_vec();
+            triangles.remove(triangle);
+            let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles);
             assert!(matches!(
-                rejection(&mesh, op, immediate),
+                rejection(&invalid_mesh, op, immediate),
                 HypermeshError::OpenInput {
                     mesh_index: 0,
                     boundary_edges: 3,
@@ -80,10 +86,12 @@ fuzz_target!(|data: [u8; 4]| {
         }
         5 => {
             let triangle = usize::from(bytes.next()) % mesh.triangles.len();
-            let [a, b, c] = mesh.triangles[triangle].indices();
-            mesh.triangles[triangle] = Triangle::new(a, c, b);
+            let mut triangles = mesh.triangles.to_vec();
+            let [a, b, c] = triangles[triangle].indices();
+            triangles[triangle] = Triangle::new(a, c, b);
+            let invalid_mesh = TriangleMesh::new(mesh.positions.to_vec(), triangles);
             assert!(matches!(
-                rejection(&mesh, op, immediate),
+                rejection(&invalid_mesh, op, immediate),
                 HypermeshError::NonPwnInput {
                     mesh_index: 0,
                     unbalanced_edges: 3,

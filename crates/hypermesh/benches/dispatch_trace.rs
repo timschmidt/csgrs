@@ -6,8 +6,8 @@ mod competitive_support;
 use hypermesh::clip::clip_polygon;
 use hypermesh::{
     BooleanOp, EmberConfig, ExactBvh, HypermeshResult, LocalBsp, Plane, Point3, Real,
-    boolean_operation, boolean_operation_with_certified_convex_inputs,
-    boolean_triangle_soup_with_certified_convex_inputs, classify_polygon_output, convex_hull,
+    boolean_mesh_with_certified_convex_inputs, boolean_operation,
+    boolean_operation_with_certified_convex_inputs, classify_polygon_output, convex_hull,
     convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_triangle,
     extract_output, intersect_polygons, polygon_soup, propagate_wnv, trace_axis_segment,
     trace_segment,
@@ -34,26 +34,29 @@ fn trace_workload<T>(name: &str, workload: impl FnOnce() -> HypermeshResult<T>) 
 }
 
 fn main() {
-    let yeahright_case = competitive_support::yeahright_boolean_case();
-    let yeahright_inputs = competitive_support::prepare_yeahright(&yeahright_case);
-    hyperreal::dispatch_trace::reset();
-    let yeahright_output = hyperreal::dispatch_trace::with_recording(|| {
-        competitive_support::run_hypermesh_exact(
-            &yeahright_inputs.hypermesh,
-            competitive_support::Operation::Union,
-        )
-    });
-    let trace = hyperreal::dispatch_trace::take_trace();
-    println!(
-        "yeahright_hull_4512_box/Union: triangles={}, correlation={:?}",
-        yeahright_output.triangles.len(),
-        trace.correlation_summary(),
-    );
-    for summary in &trace.dispatch {
+    if competitive_support::yeahright_enabled() {
+        let yeahright_case = competitive_support::yeahright_boolean_case();
+        let yeahright_inputs = competitive_support::prepare_yeahright(&yeahright_case);
+        hyperreal::dispatch_trace::reset();
+        let yeahright_output = hyperreal::dispatch_trace::with_recording(|| {
+            competitive_support::run_hypermesh_exact(
+                &yeahright_inputs.hypermesh,
+                competitive_support::Operation::Union,
+            )
+        });
+        let trace = hyperreal::dispatch_trace::take_trace();
         println!(
-            "  {}/{}/{}/{}",
-            summary.layer, summary.operation, summary.path, summary.count
+            "{}/Union: triangles={}, correlation={:?}",
+            yeahright_case.name,
+            yeahright_output.triangles.len(),
+            trace.correlation_summary(),
         );
+        for summary in &trace.dispatch {
+            println!(
+                "  {}/{}/{}/{}",
+                summary.layer, summary.operation, summary.path, summary.count
+            );
+        }
     }
 
     for (name, meshes) in [
@@ -203,14 +206,14 @@ fn main() {
         assert_eq!(owned.len(), borrowed.len());
         Ok(owned.len())
     });
-    trace_workload("immediate_certified_convex_triangle_soup", || {
-        let triangle_soup = boolean_triangle_soup_with_certified_convex_inputs(
+    trace_workload("immediate_certified_convex_boolean_mesh", || {
+        let boolean_mesh = boolean_mesh_with_certified_convex_inputs(
             &cube_refs,
             BooleanOp::Union,
             &[true, true],
             EmberConfig::default(),
         )?;
-        Ok(triangle_soup.triangles.len())
+        Ok(boolean_mesh.triangles.len())
     });
 
     let p = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));

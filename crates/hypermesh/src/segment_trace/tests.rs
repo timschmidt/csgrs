@@ -12156,8 +12156,13 @@ fn ordered_interior_points_for_probe_search_with_support_prefers_retained_defini
     use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
-    fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
-        crate::InputMesh::new(
+    fn tetra_from_face_and_apex(
+        a: Point3,
+        b: Point3,
+        c: Point3,
+        apex: Point3,
+    ) -> crate::TriangleMesh {
+        crate::TriangleMesh::new(
             vec![a, b, c, apex],
             vec![
                 crate::Triangle::new(0, 2, 1),
@@ -13655,8 +13660,13 @@ fn probe_hot_leaf_probe_family_breakdown() {
     use crate::mesh::polygon_soup;
     use crate::polygon::ConvexPolygon;
 
-    fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> crate::InputMesh {
-        crate::InputMesh::new(
+    fn tetra_from_face_and_apex(
+        a: Point3,
+        b: Point3,
+        c: Point3,
+        apex: Point3,
+    ) -> crate::TriangleMesh {
+        crate::TriangleMesh::new(
             vec![a, b, c, apex],
             vec![
                 crate::Triangle::new(0, 2, 1),

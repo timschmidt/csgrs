@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, compare_real};
-use crate::mesh::{OutputVertex, PolygonSoup};
+use crate::mesh::{OutputVertex, PolygonSoup, Triangle, TriangleMesh};
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
 };
@@ -155,7 +155,7 @@ pub struct BooleanResult {
 
 #[derive(Clone, Debug)]
 pub(crate) struct ClassifiedTriangleArrangement {
-    pub(crate) soup: TriangleSoup,
+    pub(crate) soup: BooleanMesh,
     pub(crate) windings: Vec<WindingPair>,
 }
 
@@ -261,6 +261,10 @@ impl BooleanResult {
     /// Returns the output polygon soup.
     pub const fn output(&self) -> &PolygonSoup {
         &self.output
+    }
+
+    pub(crate) fn into_output(self) -> PolygonSoup {
+        self.output
     }
 
     /// Returns per-output-polygon classifications.
@@ -546,9 +550,13 @@ pub struct TriangleSource {
     pub orientation: i8,
 }
 
-/// Indexed triangle soup using hyperreal output vertices.
+/// Boolean output geometry with source provenance.
+///
+/// Call [`Self::into_triangle_mesh`] when provenance has been consumed or is
+/// not needed. Keeping the source rows here leaves [`TriangleMesh`] as the
+/// canonical reusable geometry carrier.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct TriangleSoup {
+pub struct BooleanMesh {
     /// Output vertices.
     pub vertices: Vec<OutputVertex>,
     /// Triangle vertex indices.
@@ -557,9 +565,84 @@ pub struct TriangleSoup {
     pub sources: Vec<TriangleSource>,
 }
 
-/// Exact closure summary for an indexed triangle soup.
+impl BooleanMesh {
+    /// Materializes the reusable native triangle geometry while retaining this
+    /// Boolean result and its provenance.
+    pub fn to_triangle_mesh(&self) -> TriangleMesh {
+        TriangleMesh::new(
+            self.vertices
+                .iter()
+                .map(|vertex| {
+                    hyperlattice::Point3::new(vertex.x.clone(), vertex.y.clone(), vertex.z.clone())
+                })
+                .collect(),
+            self.triangles
+                .iter()
+                .map(|triangle| Triangle::new(triangle[0], triangle[1], triangle[2]))
+                .collect(),
+        )
+    }
+
+    /// Consumes this Boolean result and returns its reusable native triangle
+    /// geometry, discarding source provenance explicitly.
+    pub fn into_triangle_mesh(self) -> TriangleMesh {
+        TriangleMesh::new(
+            self.vertices
+                .into_iter()
+                .map(|vertex| hyperlattice::Point3::new(vertex.x, vertex.y, vertex.z))
+                .collect(),
+            self.triangles
+                .into_iter()
+                .map(|triangle| Triangle::new(triangle[0], triangle[1], triangle[2]))
+                .collect(),
+        )
+    }
+
+    /// Borrows the per-triangle provenance rows.
+    pub fn sources(&self) -> &[TriangleSource] {
+        &self.sources
+    }
+
+    /// Returns true when materialization contains no invalid, degenerate, or
+    /// exact duplicate triangle geometry.
+    ///
+    /// Independently indexed exact duplicate position rows are canonicalized
+    /// before triangle keys are compared.
+    pub fn has_unique_nondegenerate_triangles(&self) -> bool {
+        if self.sources.len() != self.triangles.len() {
+            return false;
+        }
+        let canonical = merge_duplicate_vertices(self);
+        let mut seen = BTreeSet::new();
+        for triangle in &canonical.triangles {
+            let [Some(a), Some(b), Some(c)] = triangle.map(|index| canonical.vertices.get(index))
+            else {
+                return false;
+            };
+            if triangle[0] == triangle[1]
+                || triangle[1] == triangle[2]
+                || triangle[0] == triangle[2]
+                || !crate::geometry::Plane::points_are_nondegenerate(
+                    &Point3::new(a.x.clone(), a.y.clone(), a.z.clone()),
+                    &Point3::new(b.x.clone(), b.y.clone(), b.z.clone()),
+                    &Point3::new(c.x.clone(), c.y.clone(), c.z.clone()),
+                )
+            {
+                return false;
+            }
+            let mut key = *triangle;
+            key.sort_unstable();
+            if !seen.insert(key) {
+                return false;
+            }
+        }
+        true
+    }
+}
+
+/// Exact closure summary for Boolean output geometry.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub struct TriangleSoupClosureEvidence {
+pub struct BooleanMeshClosureEvidence {
     /// Number of undirected edges used by exactly one triangle.
     pub boundary_edges: usize,
     /// Number of geometric edge classes whose forward and reverse uses do not
@@ -569,7 +652,7 @@ pub struct TriangleSoupClosureEvidence {
     pub non_manifold_edges: usize,
 }
 
-impl TriangleSoupClosureEvidence {
+impl BooleanMeshClosureEvidence {
     /// Returns true when there are no singleton edges and every directed edge
     /// use cancels. Balanced non-manifold edge valence is allowed for closed
     /// PWN outputs.
@@ -640,7 +723,7 @@ fn append_polygon_output_vertices(
     Ok(())
 }
 
-fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
+fn triangulate_output(result: &BooleanResult) -> HypermeshResult<BooleanMesh> {
     triangulate_polygons(&result.output.polygons, Some(&result.classifications))
 }
 
@@ -650,14 +733,14 @@ fn triangulate_output(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
 /// arrangement is already a closed regularized PWN surface. Non-manifold edge
 /// valence is allowed, but non-empty open, reversed, or zero-volume soups are
 /// reported as uncertified.
-pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<TriangleSoup> {
+pub fn triangulate_and_resolve_certified(result: &BooleanResult) -> HypermeshResult<BooleanMesh> {
     certify_output_polygon_closure(result)?;
     triangulate_and_resolve_polygon_certified(result)
 }
 
 pub(crate) fn triangulate_and_resolve_polygon_certified(
     result: &BooleanResult,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     let mut soup = match triangulate_closed_polygon_arrangement(
         &result.output.polygons,
         &result.classifications,
@@ -675,10 +758,10 @@ pub(crate) fn triangulate_and_resolve_polygon_certified(
     if soup.triangles.is_empty() {
         return Ok(soup);
     }
-    let mut closure = triangle_soup_closure_evidence(&soup);
+    let mut closure = boolean_mesh_closure_evidence(&soup);
     if !closure.has_no_boundary() {
         soup = resolve_tjunctions(&triangulate_output(result)?)?;
-        closure = triangle_soup_closure_evidence(&soup);
+        closure = boolean_mesh_closure_evidence(&soup);
     }
     if !closure.has_no_boundary() {
         return Err(HypermeshError::OpenOutput {
@@ -710,7 +793,7 @@ fn triangulate_closed_polygon_arrangement<P>(
     prefer_precomputed_f64_scan: bool,
     prefer_construction_candidates: bool,
     filter_recovery_candidates: bool,
-) -> HypermeshResult<(TriangleSoup, Vec<WindingPair>)>
+) -> HypermeshResult<(BooleanMesh, Vec<WindingPair>)>
 where
     P: Borrow<ConvexPolygon>,
 {
@@ -839,7 +922,13 @@ where
         }
         let triangle_start = triangles.len();
         if boundary.len() > indexed.len() {
-            if append_split_boundary_fan_from_unsplit_corner(&indexed, &boundary, &mut triangles) {
+            if append_split_boundary_fan_from_unsplit_corner(
+                polygon,
+                &indexed,
+                &boundary,
+                &vertices,
+                &mut triangles,
+            )? {
                 crate::trace_dispatch!("output-triangulation", "split-boundary-corner-fan");
             } else {
                 crate::trace_dispatch!("output-triangulation", "split-boundary-centroid");
@@ -869,13 +958,13 @@ where
                 match triangulate_weakly_convex_boundary(&boundary, &vertices, &polygon.support) {
                     Ok(polygon_triangles) => triangles.extend(polygon_triangles),
                     Err(HypermeshError::UnknownClassification) => {
-                        if cfg!(debug_assertions) {
-                            eprintln!(
-                                "[DEBUG] weakly-convex triangulation fell back: polygon={polygon_index}"
-                            );
-                        }
-                        for index in 1..(indexed.len() - 1) {
-                            triangles.push([indexed[0], indexed[index], indexed[index + 1]]);
+                        let center = append_output_polygon_centroid(&mut vertices, &boundary)?;
+                        for index in 0..boundary.len() {
+                            triangles.push([
+                                center,
+                                boundary[index],
+                                boundary[(index + 1) % boundary.len()],
+                            ]);
                         }
                     }
                     Err(err) => return Err(err),
@@ -895,7 +984,7 @@ where
         }
     }
 
-    let mut soup = TriangleSoup {
+    let mut soup = BooleanMesh {
         vertices,
         triangles,
         sources,
@@ -904,7 +993,7 @@ where
     Ok((soup, triangle_windings))
 }
 
-fn remove_unused_vertices(soup: &mut TriangleSoup) {
+fn remove_unused_vertices(soup: &mut BooleanMesh) {
     let mut used = vec![false; soup.vertices.len()];
     for triangle in &soup.triangles {
         for &vertex in triangle {
@@ -954,7 +1043,7 @@ pub(crate) fn triangulate_classified_arrangement_construction_candidates(
 pub(crate) fn triangulate_preclassified_arrangement_construction_candidates(
     classified: &[ClassifiedPolygon],
     filter_recovery_candidates: bool,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     triangulate_preclassified_arrangement_with_strategy(
         classified,
         false,
@@ -966,14 +1055,14 @@ pub(crate) fn triangulate_preclassified_arrangement_construction_candidates(
 
 pub(crate) fn triangulate_preclassified_arrangement_precomputed_f64_scan(
     classified: &[ClassifiedPolygon],
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     triangulate_preclassified_arrangement_with_strategy(classified, true, false, false, false)
 }
 
 pub(crate) fn triangulate_selected_preclassified_arrangement_construction_candidates(
     classified: &[ClassifiedPolygon],
     filter_recovery_candidates: bool,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     triangulate_preclassified_arrangement_with_strategy(
         classified,
         false,
@@ -989,7 +1078,7 @@ fn triangulate_preclassified_arrangement_with_strategy(
     prefer_construction_candidates: bool,
     filter_recovery_candidates: bool,
     retain_unselected_recovery: bool,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     let polygons = classified
         .iter()
         .map(|classified| &classified.polygon)
@@ -1056,10 +1145,12 @@ fn triangulate_classified_arrangement_with_strategy(
 }
 
 fn append_split_boundary_fan_from_unsplit_corner(
+    polygon: &ConvexPolygon,
     indexed: &[usize],
     boundary: &[usize],
+    vertices: &[OutputVertex],
     triangles: &mut Vec<[usize; 3]>,
-) -> bool {
+) -> HypermeshResult<bool> {
     let Some((anchor_position, &anchor)) =
         boundary.iter().enumerate().find(|(position, vertex)| {
             indexed.contains(vertex)
@@ -1067,21 +1158,23 @@ fn append_split_boundary_fan_from_unsplit_corner(
                 && indexed.contains(&boundary[(position + 1) % boundary.len()])
         })
     else {
-        return false;
+        return Ok(false);
     };
 
-    // Both boundary edges incident to the anchor are original unsplit edges.
-    // Every inserted vertex is therefore on a non-incident edge, so this fan
-    // preserves every split boundary subedge without producing a collinear
-    // triangle at the anchor.
+    let mut fan = Vec::with_capacity(boundary.len().saturating_sub(2));
     for offset in 1..(boundary.len() - 1) {
-        triangles.push([
+        let triangle = [
             anchor,
             boundary[(anchor_position + offset) % boundary.len()],
             boundary[(anchor_position + offset + 1) % boundary.len()],
-        ]);
+        ];
+        if !output_triangle_is_nondegenerate(triangle, vertices, &polygon.support)? {
+            return Ok(false);
+        }
+        fan.push(triangle);
     }
-    true
+    triangles.extend(fan);
+    Ok(true)
 }
 
 fn append_output_polygon_centroid(
@@ -1149,17 +1242,20 @@ fn append_exact_corner_boundary_triangles(
         triangles.push([a, b, c]);
         return Ok(Some(()));
     }
-    let triangle_start = triangles.len();
-    // A fan covers a weakly convex cycle exactly. Collinear wedges have zero
-    // area and can be omitted, so certify only the triangles that the fan
-    // would emit instead of classifying every boundary turn first.
+    let mut fan = Vec::with_capacity(boundary.len().saturating_sub(2));
+    // A corner fan is complete only when every boundary edge belongs to one
+    // nondegenerate wedge. Silently omitting a collinear wedge would also
+    // omit its boundary edge and turn an otherwise closed surface into an
+    // open one. Let the caller choose a different triangulation in that case.
     for index in 1..boundary.len() - 1 {
         let triangle = [boundary[0], boundary[index], boundary[index + 1]];
-        if output_triangle_is_nondegenerate(triangle, vertices, &polygon.support)? {
-            triangles.push(triangle);
+        if !output_triangle_is_nondegenerate(triangle, vertices, &polygon.support)? {
+            return Ok(None);
         }
+        fan.push(triangle);
     }
-    Ok((triangles.len() > triangle_start).then_some(()))
+    triangles.extend(fan);
+    Ok(Some(()))
 }
 
 fn triangulate_weakly_convex_boundary(
@@ -1268,7 +1364,7 @@ fn output_triangle_is_nondegenerate(
 /// instead of being left for triangle cleanup to repair.
 pub fn certify_output_polygon_closure(
     result: &BooleanResult,
-) -> HypermeshResult<TriangleSoupClosureEvidence> {
+) -> HypermeshResult<BooleanMeshClosureEvidence> {
     let polygon_closure =
         output_polygon_closure_evidence_from_convex_polygons(&result.output.polygons)?;
     if !polygon_closure.has_no_boundary() {
@@ -1284,14 +1380,14 @@ pub fn certify_output_polygon_closure(
 #[cfg(test)]
 fn output_polygon_closure_evidence(
     polygons: &[OutputPolygon],
-) -> HypermeshResult<TriangleSoupClosureEvidence> {
+) -> HypermeshResult<BooleanMeshClosureEvidence> {
     let (vertices, indexed_polygons) = merge_duplicate_polygon_vertices(polygons);
     output_polygon_closure_evidence_from_indexed_vertices(&vertices, &indexed_polygons)
 }
 
 fn output_polygon_closure_evidence_from_convex_polygons(
     polygons: &[ConvexPolygon],
-) -> HypermeshResult<TriangleSoupClosureEvidence> {
+) -> HypermeshResult<BooleanMeshClosureEvidence> {
     let (vertices, indexed_polygons) = merge_duplicate_convex_polygon_vertices(polygons)?;
     output_polygon_closure_evidence_from_indexed_vertices(&vertices, &indexed_polygons)
 }
@@ -1299,10 +1395,10 @@ fn output_polygon_closure_evidence_from_convex_polygons(
 fn output_polygon_closure_evidence_from_indexed_vertices(
     vertices: &[OutputVertex],
     indexed_polygons: &[Vec<usize>],
-) -> HypermeshResult<TriangleSoupClosureEvidence> {
+) -> HypermeshResult<BooleanMeshClosureEvidence> {
     let axis_order = sorted_vertex_indices_by_axis(vertices)?;
     let edge_counts = polygon_edge_counts(vertices, indexed_polygons, &axis_order)?;
-    let mut evidence = TriangleSoupClosureEvidence::default();
+    let mut evidence = BooleanMeshClosureEvidence::default();
     for uses in edge_counts.values().copied() {
         if uses.total() == 1 {
             evidence.boundary_edges += 1;
@@ -1865,6 +1961,11 @@ fn split_segment_subedges_exact_candidates<'a>(
             let coordinate = vertex_axis(&vertices[vertex_index], axis);
             if compare_real(coordinate, min).is_ok_and(|order| !order.is_lt())
                 && compare_real(coordinate, max).is_ok_and(|order| !order.is_gt())
+                && point_on_segment_exact(
+                    &vertices[vertex_index],
+                    &vertices[edge[0]],
+                    &vertices[edge[1]],
+                )?
             {
                 on_edge.push(vertex_index);
             }
@@ -1919,10 +2020,9 @@ fn split_segment_subedges_exact_candidates<'a>(
         on_edge.dedup();
         let mut chain = Vec::with_capacity(on_edge.len() + 2);
         chain.push(edge[0]);
-        if let Ok(ordered) = sort_along_segment_on_axis(&on_edge, edge[0], edge[1], vertices, axis)
-        {
-            chain.extend(ordered);
-        }
+        chain.extend(sort_along_segment_on_axis(
+            &on_edge, edge[0], edge[1], vertices, axis,
+        )?);
         chain.push(edge[1]);
         entry.insert(SplitEdgeChain(chain));
     }
@@ -2144,11 +2244,11 @@ fn upper_bound_vertex_axis(
 fn triangulate_polygons(
     polygons: &[ConvexPolygon],
     orientations: Option<&[i8]>,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     if orientations.is_some_and(|orientations| orientations.len() != polygons.len()) {
         return Err(HypermeshError::UnknownClassification);
     }
-    let mut soup = TriangleSoup::default();
+    let mut soup = BooleanMesh::default();
 
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let vertex_count = polygon.vertex_count();
@@ -2180,14 +2280,14 @@ fn triangulate_polygons(
 /// This pass deliberately uses no tolerance and no primitive floating-point
 /// arithmetic. It only merges or splits when exact hyperreal predicates prove
 /// equality, collinearity, and segment containment.
-fn resolve_tjunctions(input: &TriangleSoup) -> HypermeshResult<TriangleSoup> {
+pub(crate) fn resolve_tjunctions(input: &BooleanMesh) -> HypermeshResult<BooleanMesh> {
     resolve_tjunctions_with_pass_limit(input, RESOLVE_TJUNCTION_MAX_PASSES)
 }
 
 fn resolve_tjunctions_with_pass_limit(
-    input: &TriangleSoup,
+    input: &BooleanMesh,
     pass_limit: usize,
-) -> HypermeshResult<TriangleSoup> {
+) -> HypermeshResult<BooleanMesh> {
     let mut soup = merge_duplicate_vertices(input);
     remove_degenerate_and_duplicate_triangles(&mut soup);
 
@@ -2209,7 +2309,7 @@ fn resolve_tjunctions_with_pass_limit(
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct OutputVertexBucket([Option<u64>; 3]);
 
-fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
+fn merge_duplicate_vertices(input: &BooleanMesh) -> BooleanMesh {
     let mut vertices: Vec<OutputVertex> = Vec::with_capacity(input.vertices.len());
     let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
     let mut remap = vec![0; input.vertices.len()];
@@ -2240,19 +2340,30 @@ fn merge_duplicate_vertices(input: &TriangleSoup) -> TriangleSoup {
         .map(|triangle| [remap[triangle[0]], remap[triangle[1]], remap[triangle[2]]])
         .collect();
 
-    TriangleSoup {
+    BooleanMesh {
         vertices,
         triangles,
         sources: input.sources.clone(),
     }
 }
 
-fn remove_degenerate_and_duplicate_triangles(soup: &mut TriangleSoup) {
+fn remove_degenerate_and_duplicate_triangles(soup: &mut BooleanMesh) {
     let mut seen = BTreeSet::new();
     let mut triangles = Vec::with_capacity(soup.triangles.len());
     let mut sources = Vec::with_capacity(soup.sources.len());
     for (triangle, source) in soup.triangles.drain(..).zip(soup.sources.drain(..)) {
-        if triangle[0] == triangle[1] || triangle[1] == triangle[2] || triangle[0] == triangle[2] {
+        let [Some(a), Some(b), Some(c)] = triangle.map(|index| soup.vertices.get(index)) else {
+            continue;
+        };
+        if triangle[0] == triangle[1]
+            || triangle[1] == triangle[2]
+            || triangle[0] == triangle[2]
+            || !Plane::points_are_nondegenerate(
+                &Point3::new(a.x.clone(), a.y.clone(), a.z.clone()),
+                &Point3::new(b.x.clone(), b.y.clone(), b.z.clone()),
+                &Point3::new(c.x.clone(), c.y.clone(), c.z.clone()),
+            )
+        {
             continue;
         }
         let mut key = triangle;
@@ -2285,21 +2396,21 @@ fn triangle_edge_counts(triangles: &[[usize; 3]]) -> StorageHashMap<[usize; 2], 
 
 /// Returns true when every undirected triangle edge has exactly two
 /// oppositely directed uses.
-pub fn triangle_soup_is_closed(soup: &TriangleSoup) -> bool {
-    triangle_soup_closure_evidence(soup).is_closed()
+pub fn boolean_mesh_is_closed(soup: &BooleanMesh) -> bool {
+    boolean_mesh_closure_evidence(soup).is_closed()
 }
 
 /// Counts exact singleton, directed-imbalance, and non-manifold edges in a
 /// triangle soup.
-pub fn triangle_soup_closure_evidence(soup: &TriangleSoup) -> TriangleSoupClosureEvidence {
-    let mut evidence = TriangleSoupClosureEvidence::default();
+pub fn boolean_mesh_closure_evidence(soup: &BooleanMesh) -> BooleanMeshClosureEvidence {
+    let mut evidence = BooleanMeshClosureEvidence::default();
     for uses in triangle_edge_counts(&soup.triangles).values().copied() {
         update_closure_evidence(&mut evidence, uses);
     }
     evidence
 }
 
-fn update_closure_evidence(evidence: &mut TriangleSoupClosureEvidence, uses: DirectedEdgeUses) {
+fn update_closure_evidence(evidence: &mut BooleanMeshClosureEvidence, uses: DirectedEdgeUses) {
     if uses.total() == 1 {
         evidence.boundary_edges += 1;
     } else if uses.total() > 2 {
@@ -2310,7 +2421,8 @@ fn update_closure_evidence(evidence: &mut TriangleSoupClosureEvidence, uses: Dir
     }
 }
 
-fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
+fn split_one_tjunction_pass(soup: &mut BooleanMesh) -> HypermeshResult<bool> {
+    let directed_uses = triangle_edge_counts(&soup.triangles);
     let mut edge_faces: BTreeMap<[usize; 2], Vec<usize>> = BTreeMap::new();
     for (face_index, triangle) in soup.triangles.iter().enumerate() {
         for edge in triangle_edges(*triangle) {
@@ -2325,6 +2437,16 @@ fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
     let mut new_triangles = Vec::new();
 
     for (edge, faces) in edge_faces {
+        // A T-junction can repair an open boundary only when the long edge's
+        // directed uses do not already cancel. Skipping balanced internal
+        // diagonals avoids testing every vertex against centroid spokes and
+        // other triangulation-only edges.
+        if directed_uses
+            .get(&edge)
+            .is_some_and(|uses| uses.is_balanced())
+        {
+            continue;
+        }
         let mut on_edge = Vec::new();
         for vertex_index in 0..soup.vertices.len() {
             if vertex_index == edge[0] || vertex_index == edge[1] {
@@ -2393,7 +2515,7 @@ fn split_one_tjunction_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
     Ok(true)
 }
 
-fn split_one_edge_crossing_pass(soup: &mut TriangleSoup) -> HypermeshResult<bool> {
+fn split_one_edge_crossing_pass(soup: &mut BooleanMesh) -> HypermeshResult<bool> {
     let mut edges = Vec::new();
     for triangle in &soup.triangles {
         for edge in triangle_edges(*triangle) {
@@ -2560,7 +2682,7 @@ fn proper_segment_intersection_after_bounds_overlap(
     }
 }
 
-fn insert_or_find_vertex(soup: &mut TriangleSoup, vertex: OutputVertex) -> usize {
+fn insert_or_find_vertex(soup: &mut BooleanMesh, vertex: OutputVertex) -> usize {
     if let Some(index) = soup
         .vertices
         .iter()
@@ -2574,7 +2696,7 @@ fn insert_or_find_vertex(soup: &mut TriangleSoup, vertex: OutputVertex) -> usize
     }
 }
 
-fn split_edges_at_vertex(soup: &mut TriangleSoup, edges: &[[usize; 2]], vertex: usize) {
+fn split_edges_at_vertex(soup: &mut BooleanMesh, edges: &[[usize; 2]], vertex: usize) {
     let mut new_triangles = Vec::new();
     let mut new_sources = Vec::new();
     let mut kept = Vec::new();
@@ -2822,7 +2944,7 @@ fn dominant_component_axis(values: &[Real; 3]) -> HypermeshResult<usize> {
     Ok(best)
 }
 
-fn certify_positive_signed_volume(soup: &TriangleSoup) -> HypermeshResult<()> {
+fn certify_positive_signed_volume(soup: &BooleanMesh) -> HypermeshResult<()> {
     let volume = signed_volume_numerator(soup);
     if crate::geometry::classify_real(&volume)? != Classification::Positive {
         return Err(HypermeshError::UnknownClassification);
@@ -2830,7 +2952,7 @@ fn certify_positive_signed_volume(soup: &TriangleSoup) -> HypermeshResult<()> {
     Ok(())
 }
 
-fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
+fn signed_volume_numerator(soup: &BooleanMesh) -> Real {
     let mut volume = Real::zero();
     for triangle in &soup.triangles {
         let v0 = &soup.vertices[triangle[0]];
@@ -2925,8 +3047,8 @@ mod tests {
         }
     }
 
-    fn positive_tetra_soup() -> TriangleSoup {
-        TriangleSoup {
+    fn positive_tetra_soup() -> BooleanMesh {
+        BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(0, 0, 1)],
             triangles: vec![[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]],
             sources: vec![TriangleSource::default(); 4],
@@ -2997,7 +3119,7 @@ mod tests {
     }
 
     #[test]
-    fn exact_corner_boundary_skips_collinear_vertices() {
+    fn exact_corner_boundary_rejects_incomplete_collinear_fan() {
         let polygon = convex_triangle(&p(0, 0, 0), &p(2, 0, 0), &p(0, 1, 0), 0, 0);
         let vertices = vec![ov(0, 0, 0), ov(1, 0, 0), ov(2, 0, 0), ov(0, 1, 0)];
         let mut triangles = Vec::new();
@@ -3011,9 +3133,9 @@ mod tests {
                 &mut triangles,
             )
             .unwrap(),
-            Some(())
+            None
         );
-        assert_eq!(triangles, vec![[0, 2, 3]]);
+        assert!(triangles.is_empty());
     }
 
     #[test]
@@ -3074,7 +3196,7 @@ mod tests {
 
     #[test]
     fn unused_output_vertices_are_compacted_and_remapped() {
-        let mut soup = TriangleSoup {
+        let mut soup = BooleanMesh {
             vertices: vec![
                 ov(9, 9, 9),
                 ov(0, 0, 0),
@@ -3094,9 +3216,15 @@ mod tests {
 
     #[test]
     fn internal_resolution_merges_duplicate_vertices_and_faces_exactly() {
-        let soup = TriangleSoup {
-            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0), ov(1, 0, 0)],
-            triangles: vec![[0, 1, 2], [0, 3, 2]],
+        let soup = BooleanMesh {
+            vertices: vec![
+                ov(0, 0, 0),
+                ov(1, 0, 0),
+                ov(0, 1, 0),
+                ov(1, 0, 0),
+                ov(2, 0, 0),
+            ],
+            triangles: vec![[0, 1, 2], [0, 3, 2], [0, 1, 4]],
             sources: vec![
                 TriangleSource {
                     mesh: 0,
@@ -3108,12 +3236,17 @@ mod tests {
                     triangle: 9,
                     orientation: 0,
                 },
+                TriangleSource {
+                    mesh: 1,
+                    triangle: 10,
+                    orientation: 0,
+                },
             ],
         };
 
         let resolved = resolve_tjunctions(&soup).unwrap();
 
-        assert_eq!(resolved.vertices.len(), 3);
+        assert_eq!(resolved.vertices.len(), 4);
         assert_eq!(resolved.triangles.len(), 1);
         assert_eq!(
             resolved.sources,
@@ -3127,7 +3260,7 @@ mod tests {
 
     #[test]
     fn internal_resolution_splits_exact_boundary_tjunction() {
-        let soup = TriangleSoup {
+        let soup = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
             sources: vec![TriangleSource {
@@ -3162,7 +3295,7 @@ mod tests {
 
     #[test]
     fn internal_resolution_reports_pass_limit_exhaustion() {
-        let soup = TriangleSoup {
+        let soup = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
             sources: vec![TriangleSource::default()],
@@ -3175,7 +3308,7 @@ mod tests {
 
     #[test]
     fn internal_resolution_accepts_budget_covering_split_and_certification_passes() {
-        let soup = TriangleSoup {
+        let soup = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(2, 0, 0), ov(0, 2, 0), ov(1, 0, 0)],
             triangles: vec![[0, 1, 2]],
             sources: vec![TriangleSource::default()],
@@ -3217,7 +3350,7 @@ mod tests {
 
         assert_eq!(
             evidence,
-            TriangleSoupClosureEvidence {
+            BooleanMeshClosureEvidence {
                 boundary_edges: 0,
                 unbalanced_edges: 0,
                 non_manifold_edges: 0,
@@ -3263,10 +3396,10 @@ mod tests {
     }
 
     #[test]
-    fn triangle_soup_closure_evidence_requires_directed_balance() {
+    fn boolean_mesh_closure_evidence_requires_directed_balance() {
         let mut reversed_face = positive_tetra_soup();
         reversed_face.triangles[0].swap(1, 2);
-        let reversed_report = triangle_soup_closure_evidence(&reversed_face);
+        let reversed_report = boolean_mesh_closure_evidence(&reversed_face);
 
         assert_eq!(reversed_report.boundary_edges, 0);
         assert_eq!(reversed_report.unbalanced_edges, 3);
@@ -3275,12 +3408,14 @@ mod tests {
 
         let mut doubled = positive_tetra_soup();
         doubled.triangles.extend(doubled.triangles.clone());
-        let doubled_report = triangle_soup_closure_evidence(&doubled);
+        doubled.sources.extend(doubled.sources.clone());
+        let doubled_report = boolean_mesh_closure_evidence(&doubled);
 
         assert_eq!(doubled_report.boundary_edges, 0);
         assert_eq!(doubled_report.unbalanced_edges, 0);
         assert_eq!(doubled_report.non_manifold_edges, 6);
         assert!(doubled_report.has_no_boundary());
+        assert!(!doubled.has_unique_nondegenerate_triangles());
     }
 
     #[test]
@@ -3354,22 +3489,60 @@ mod tests {
 
     #[test]
     fn split_boundary_corner_fan_requires_both_incident_edges_unsplit() {
+        let polygon = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(0, 2, 0), 0, 0);
         let indexed = [0, 1, 2];
+        let vertices = vec![
+            ov(2, 0, 0),
+            ov(0, 0, 0),
+            ov(0, 2, 0),
+            ov(1, 0, 0),
+            ov(1, 1, 0),
+            ov(0, 1, 0),
+        ];
         let mut triangles = Vec::new();
 
-        assert!(append_split_boundary_fan_from_unsplit_corner(
-            &indexed,
-            &[0, 3, 1, 2],
-            &mut triangles,
-        ));
+        assert!(
+            append_split_boundary_fan_from_unsplit_corner(
+                &polygon,
+                &indexed,
+                &[0, 3, 1, 2],
+                &vertices,
+                &mut triangles,
+            )
+            .unwrap()
+        );
         assert_eq!(triangles, vec![[2, 0, 3], [2, 3, 1]]);
 
         triangles.clear();
-        assert!(!append_split_boundary_fan_from_unsplit_corner(
-            &indexed,
-            &[0, 3, 1, 4, 2, 5],
-            &mut triangles,
-        ));
+        assert!(
+            !append_split_boundary_fan_from_unsplit_corner(
+                &polygon,
+                &indexed,
+                &[0, 3, 1, 4, 2, 5],
+                &vertices,
+                &mut triangles,
+            )
+            .unwrap()
+        );
+        assert!(triangles.is_empty());
+    }
+
+    #[test]
+    fn split_boundary_corner_fan_rejects_a_degenerate_wedge_atomically() {
+        let polygon = convex_triangle(&p(2, 0, 0), &p(0, 0, 0), &p(0, 2, 0), 0, 0);
+        let vertices = vec![ov(2, 0, 0), ov(0, 0, 0), ov(0, 2, 0), ov(0, 1, 0)];
+        let mut triangles = Vec::new();
+
+        assert!(
+            !append_split_boundary_fan_from_unsplit_corner(
+                &polygon,
+                &[0, 1, 2],
+                &[0, 3, 1, 2],
+                &vertices,
+                &mut triangles,
+            )
+            .unwrap()
+        );
         assert!(triangles.is_empty());
     }
 
@@ -3445,6 +3618,31 @@ mod tests {
         let split_group = candidates.polygon_edges[0][0];
 
         assert_eq!(candidates.groups[split_group].collinear, vec![0, 1, 3]);
+    }
+
+    #[test]
+    fn construction_labels_do_not_admit_off_segment_vertices() {
+        let vertices = vec![ov(0, 0, 0), ov(2, 0, 0), ov(1, 1, 0), ov(1, 0, 0)];
+        let candidates = ConstructionEdgeCandidateGroup {
+            collinear: vec![0, 1, 2, 3],
+        };
+        let mut cache = SplitEdgeCache::default();
+
+        let subedges = split_segment_subedges_exact_candidates(
+            &mut cache,
+            &vertices,
+            [0, 1],
+            &candidates,
+            &[],
+            None,
+            None,
+            false,
+        )
+        .unwrap()
+        .subedges()
+        .collect::<Vec<_>>();
+
+        assert_eq!(subedges, vec![[0, 3], [3, 1]]);
     }
 
     #[test]
@@ -3751,7 +3949,7 @@ mod tests {
             Err(HypermeshError::UnknownClassification)
         );
 
-        let flat = TriangleSoup {
+        let flat = BooleanMesh {
             vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
             triangles: vec![[0, 1, 2]],
             sources: vec![TriangleSource::default()],

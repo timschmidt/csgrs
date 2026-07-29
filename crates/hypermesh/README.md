@@ -24,7 +24,7 @@ require tolerance-driven repair.
 Hypermesh keeps that decision chain explicit:
 
 ```text
-closed PWN InputMesh values
+closed PWN TriangleMesh values
            │  validate indices, degeneracy, closure, orientation
            ▼
        PolygonSoup
@@ -36,7 +36,7 @@ closed PWN InputMesh values
       BooleanResult
            │  certified triangulation and T-junction resolution
            ▼
-      TriangleSoup
+      BooleanMesh
 ```
 
 An uncertified sign, incidence, reference-propagation step, leaf
@@ -47,15 +47,15 @@ The crate does not repair an unresolved result into apparent success.
 
 | Type | Purpose |
 | --- | --- |
-| `InputMesh`, `MeshRef`, `Triangle` | Owned and borrowed indexed-triangle input. |
+| `TriangleMesh`, `TriangleMeshRef`, `Triangle` | Owned and borrowed indexed-triangle input. |
 | `PolygonSoup` | Validated combined exact polygon input for one or more meshes. |
 | `Point3`, `Vector3`, `Real` | Re-exported exact coordinate carriers. |
 | `Plane`, `Aabb`, `Classification` | Exact plane, bounds, and sidedness primitives. |
 | `ConvexPolygon`, `ExactBvh`, `LocalBsp` | Principal arrangement and acceleration structures. |
 | `BooleanOp`, `EmberConfig` | Operation selection and optional subdivision-depth budget. |
 | `BooleanResult` | Certified polygon arrangement with classifications and winding evidence. |
-| `OutputPolygon`, `TriangleSoup` | Exact polygon and indexed triangle output. |
-| `TriangleSoupClosureEvidence` | Exact boundary, imbalance, and non-manifold diagnostics. |
+| `OutputPolygon`, `BooleanMesh` | Exact polygon and indexed triangle output. |
+| `BooleanMeshClosureEvidence` | Exact boundary, imbalance, and non-manifold diagnostics. |
 | `ExactGpuMeshBuffers`, `GpuMeshBuffersF32`, `GpuMeshBuffersF64` | Exact and explicitly approximate renderer-neutral buffers. |
 | `HypermeshError`, `HypermeshResult<T>` | Invalid input, unresolved predicate, budget, and output-certification failures. |
 
@@ -73,13 +73,13 @@ Replace `src/main.rs` with:
 <!-- quickstart:start -->
 ```rust
 use hypermesh::{
-    BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, boolean_operation,
+    BooleanOp, EmberConfig, Point3, Real, Triangle, TriangleMesh, boolean_operation,
     triangulate_and_resolve_certified,
 };
 
-fn tetrahedron(offset: i64) -> InputMesh {
+fn tetrahedron(offset: i64) -> TriangleMesh {
     let p = |x, y, z| Point3::new(Real::from(x + offset), Real::from(y), Real::from(z));
-    InputMesh::new(
+    TriangleMesh::new(
         vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)],
         vec![
             Triangle::new(0, 2, 1),
@@ -139,8 +139,8 @@ outside that boundary if their needed signs cannot be certified.
 
 | Task | API |
 | --- | --- |
-| Construct triangles and meshes | `Triangle::new`, `InputMesh::new` |
-| Borrow without copying | `InputMesh::as_ref`, `MeshRef` |
+| Construct triangles and meshes | `Triangle::new`, `TriangleMesh::new` |
+| Borrow without copying | `TriangleMesh::as_ref`, `TriangleMeshRef` |
 | Validate and combine | `polygon_soup` |
 | Certify reusable convexity | `certify_convex_mesh` |
 | Construct a convex face | `convex_triangle`, `convex_quad`, `ConvexPolygon::from_points` |
@@ -155,10 +155,10 @@ entry points.
 | Task | API |
 | --- | --- |
 | Multi-mesh polygon output | `boolean_operation` |
-| Immediate indexed output | `boolean_triangle_soup` |
+| Immediate indexed output | `boolean_mesh` |
 | Two-input conveniences | `boolean_union`, `boolean_intersection`, `boolean_difference`, `boolean_symmetric_difference` |
-| Reuse convex-input facts | `boolean_operation_with_certified_convex_inputs`, `boolean_triangle_soup_with_certified_convex_inputs` |
-| Reuse exact source planes | `boolean_triangle_soup_with_certified_convex_inputs_and_planes` |
+| Reuse convex-input facts | `boolean_operation_with_certified_convex_inputs`, `boolean_mesh_with_certified_convex_inputs` |
+| Reuse exact source planes | `boolean_mesh_with_certified_convex_inputs_and_planes` |
 | Select the operation | `BooleanOp::{Union, Intersection, Difference, SymmetricDifference}` |
 | Set a certification budget | `EmberConfig { max_depth }` |
 
@@ -175,7 +175,7 @@ to return a partial result.
 | Extract output polygons | `extract_output` |
 | Triangulate certified polygons | `triangulate_and_resolve_certified` |
 | Certify polygon closure | `certify_output_polygon_closure` |
-| Check triangle closure | `triangle_soup_closure_evidence`, `triangle_soup_is_closed` |
+| Check triangle closure | `boolean_mesh_closure_evidence`, `boolean_mesh_is_closed` |
 
 Triangulation resolves output T-junctions and crossings, then rejects open or
 zero-volume output. Closure is a precondition for success, not a repair
@@ -185,8 +185,8 @@ performed after the fact.
 
 | Task | API |
 | --- | --- |
-| Preserve exact vertices | `TriangleSoup::to_exact_gpu_mesh_buffers`, `ExactGpuMeshBuffers::from_triangles` |
-| Strict finite export | `TriangleSoup::try_to_gpu_mesh_f32`, `try_to_gpu_mesh_f64` |
+| Preserve exact vertices | `BooleanMesh::to_exact_gpu_mesh_buffers`, `ExactGpuMeshBuffers::from_triangles` |
+| Strict finite export | `BooleanMesh::try_to_gpu_mesh_f32`, `try_to_gpu_mesh_f64` |
 | Documented zero fallback | `to_gpu_mesh_f32_or_zero`, `to_gpu_mesh_f64_or_zero` |
 | Convert exact buffers | `approximate_gpu_mesh_f32`, `approximate_gpu_mesh_f64` and `_or_zero` variants |
 | Build interleaved buffers | `approximate_interleaved_gpu_mesh_f32`, `approximate_interleaved_gpu_mesh_f64` |
@@ -235,36 +235,10 @@ final topology still comes from exact predicates and closure checks.
 
 Hypermesh has no default features.
 
-## Original full-resolution hard fixture
+## Optional benchmark fixture
 
-The public-domain YeahRight corpus is a permanent cross-kernel regression
-asset. `competitive/data/controlmesh.obj` is the original 5,687-vertex,
-5,845-polygon, genus-131 control mesh; fan triangulation produces 11,894
-triangles.
-
-The ordinary test suite always imports the full-resolution mesh, checks its
-finite/closed/nondegenerate topology, lifts every coordinate into Hypermesh,
-and runs `polygon_soup`:
-
-```sh
-cargo test --release --test competitive \
-  full_resolution_yeahright_reaches_and_validates_in_hypermesh -- --nocapture
-```
-
-The rotated-copy 11,894-by-11,894 triangle intersection remains an ignored,
-explicit memory-ceiling hard test rather than being replaced by a reduced
-fixture:
-
-```sh
-cargo test --release --test competitive \
-  full_resolution_yeahright_rotated_intersection_remains_a_hard_test \
-  -- --ignored --nocapture
-```
-
-The competitive suite also retains a 4,512-triangle subdivided convex-hull
-Boolean corpus and opt-in 18,048/72,192-triangle pressure cases. Fixture
-provenance and dimensions are recorded in
-[`competitive/data/README.md`](competitive/data/README.md).
+Set `YEAHRIGHT_BENCH=1` when running a competitive benchmark to download the
+public-domain YeahRight corpus into `target/benchmark-fixtures/yeahright`.
 
 ## Ecosystem and further documentation
 
@@ -315,10 +289,6 @@ the robust/exact predicate boundary.
 Hypermesh is developed by Timothy Schmidt, with repository-history
 contributions from sakikomikado. The architecture is directly informed by the
 EMBER paper and the mesh-arrangement literature above.
-
-Keenan Crane released the original YeahRight model and all of its meshes into
-the public domain. That contribution makes the permanent full-resolution
-cross-kernel regression gate possible.
 
 ## License and contributing
 

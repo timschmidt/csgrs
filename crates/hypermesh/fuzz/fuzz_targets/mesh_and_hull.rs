@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypermesh::{
-    ExactGpuVertex, InputMesh, Point3, Real, Triangle, approximate_gpu_mesh_f32,
+    ExactGpuVertex, TriangleMesh, Point3, Real, Triangle, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
     approximate_interleaved_gpu_mesh_f64, convex_hull, convex_hull_with_coplanar_groups,
     polygon_soup,
@@ -16,8 +16,8 @@ fn p(x: i64, y: i64, z: i64) -> Point3 {
     Point3::new(r(x), r(y), r(z))
 }
 
-fn tetrahedron() -> InputMesh {
-    InputMesh::new(
+fn tetrahedron() -> TriangleMesh {
+    TriangleMesh::new(
         vec![p(0, 0, 0), p(3, 0, 0), p(0, 3, 0), p(0, 0, 3)],
         vec![
             Triangle::new(0, 2, 1),
@@ -29,21 +29,24 @@ fn tetrahedron() -> InputMesh {
 }
 
 fuzz_target!(|data: [u8; 24]| {
-    let mut mesh = tetrahedron();
+    let mesh = tetrahedron();
+    let mut positions = mesh.positions.to_vec();
+    let mut triangles = mesh.triangles.to_vec();
     if data[0] & 1 != 0 {
-        mesh.positions.push(p(
+        positions.push(p(
             i64::from(data[1] % 7) - 3,
             i64::from(data[2] % 7) - 3,
             i64::from(data[3] % 7) - 3,
         ));
     }
     if data[0] & 2 != 0 {
-        mesh.triangles.push(Triangle::new(
+        triangles.push(Triangle::new(
             usize::from(data[4] % 7),
             usize::from(data[5] % 7),
             usize::from(data[6] % 7),
         ));
     }
+    let mesh = TriangleMesh::new(positions, triangles);
     if let Ok(mut soup) = polygon_soup(&[mesh.as_ref()]) {
         assert_eq!(soup.num_meshes, 1);
         assert!(soup.polygons.iter().all(|polygon| polygon.is_valid()));

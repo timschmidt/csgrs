@@ -9,6 +9,7 @@ use support::{
     Operation, corpus, large_boolean_case, prepare, prepare_yeahright, run_boolmesh, run_hypermesh,
     run_hypermesh_polygon, run_manifold, summarize, to_boolmesh, to_hypermesh, to_manifold,
     to_three_d_asset, validate_with_tri_mesh, yeahright_boolean_case, yeahright_control_mesh,
+    yeahright_enabled,
 };
 
 fn competitive(c: &mut Criterion) {
@@ -61,56 +62,63 @@ fn competitive(c: &mut Criterion) {
     }
     large_boolean_group.finish();
 
-    let yeahright_case = yeahright_boolean_case();
-    let yeahright_inputs = prepare_yeahright(&yeahright_case);
-    let mut yeahright_boolean_group = c.benchmark_group("competitive_yeahright_boolean");
-    yeahright_boolean_group.sample_size(10);
-    yeahright_boolean_group.warm_up_time(Duration::from_secs(1));
-    yeahright_boolean_group.measurement_time(Duration::from_secs(5));
-    for operation in Operation::ALL {
-        let workload = format!("{}/{}", yeahright_case.name, operation.name());
-        yeahright_boolean_group.bench_function(
-            BenchmarkId::new("hypermesh", &workload),
-            |benchmark| {
-                benchmark.iter(|| run_hypermesh(black_box(&yeahright_inputs.hypermesh), operation));
-            },
-        );
-        yeahright_boolean_group.bench_function(
-            BenchmarkId::new("boolmesh", &workload),
-            |benchmark| {
-                benchmark.iter(|| run_boolmesh(black_box(&yeahright_inputs.boolmesh), operation));
-            },
-        );
-        yeahright_boolean_group.bench_function(
-            BenchmarkId::new("manifold-rust", &workload),
-            |benchmark| {
-                benchmark.iter(|| run_manifold(black_box(&yeahright_inputs.manifold), operation));
-            },
-        );
-    }
-    yeahright_boolean_group.finish();
+    if yeahright_enabled() {
+        let yeahright_case = yeahright_boolean_case();
+        let yeahright_inputs = prepare_yeahright(&yeahright_case);
+        let mut yeahright_boolean_group = c.benchmark_group("competitive_yeahright_boolean");
+        yeahright_boolean_group.sample_size(10);
+        yeahright_boolean_group.warm_up_time(Duration::from_secs(1));
+        yeahright_boolean_group.measurement_time(Duration::from_secs(5));
+        for operation in Operation::ALL {
+            let workload = format!("{}/{}", yeahright_case.name, operation.name());
+            yeahright_boolean_group.bench_function(
+                BenchmarkId::new("hypermesh", &workload),
+                |benchmark| {
+                    benchmark
+                        .iter(|| run_hypermesh(black_box(&yeahright_inputs.hypermesh), operation));
+                },
+            );
+            yeahright_boolean_group.bench_function(
+                BenchmarkId::new("boolmesh", &workload),
+                |benchmark| {
+                    benchmark
+                        .iter(|| run_boolmesh(black_box(&yeahright_inputs.boolmesh), operation));
+                },
+            );
+            yeahright_boolean_group.bench_function(
+                BenchmarkId::new("manifold-rust", &workload),
+                |benchmark| {
+                    benchmark
+                        .iter(|| run_manifold(black_box(&yeahright_inputs.manifold), operation));
+                },
+            );
+        }
+        yeahright_boolean_group.finish();
 
-    let mut yeahright_immediate_group = c.benchmark_group("competitive_yeahright_immediate_api");
-    yeahright_immediate_group.sample_size(10);
-    yeahright_immediate_group.warm_up_time(Duration::from_secs(1));
-    yeahright_immediate_group.measurement_time(Duration::from_secs(5));
-    for operation in Operation::ALL {
-        yeahright_immediate_group.bench_function(
-            BenchmarkId::new("polygon", operation.name()),
-            |benchmark| {
-                benchmark.iter(|| {
-                    run_hypermesh_polygon(black_box(&yeahright_inputs.hypermesh), operation)
-                });
-            },
-        );
-        yeahright_immediate_group.bench_function(
-            BenchmarkId::new("triangle_soup", operation.name()),
-            |benchmark| {
-                benchmark.iter(|| run_hypermesh(black_box(&yeahright_inputs.hypermesh), operation));
-            },
-        );
+        let mut yeahright_immediate_group =
+            c.benchmark_group("competitive_yeahright_immediate_api");
+        yeahright_immediate_group.sample_size(10);
+        yeahright_immediate_group.warm_up_time(Duration::from_secs(1));
+        yeahright_immediate_group.measurement_time(Duration::from_secs(5));
+        for operation in Operation::ALL {
+            yeahright_immediate_group.bench_function(
+                BenchmarkId::new("polygon", operation.name()),
+                |benchmark| {
+                    benchmark.iter(|| {
+                        run_hypermesh_polygon(black_box(&yeahright_inputs.hypermesh), operation)
+                    });
+                },
+            );
+            yeahright_immediate_group.bench_function(
+                BenchmarkId::new("boolean_mesh", operation.name()),
+                |benchmark| {
+                    benchmark
+                        .iter(|| run_hypermesh(black_box(&yeahright_inputs.hypermesh), operation));
+                },
+            );
+        }
+        yeahright_immediate_group.finish();
     }
-    yeahright_immediate_group.finish();
 
     let fixture = &cases[0].left;
     let mut import_group = c.benchmark_group("competitive_mesh_import/box_12");
@@ -150,47 +158,50 @@ fn competitive(c: &mut Criterion) {
     });
     large_import_group.finish();
 
-    let mut yeahright_import_group =
-        c.benchmark_group("competitive_yeahright_mesh_import/subdivided_hull_4512");
-    yeahright_import_group.bench_function("hypermesh", |benchmark| {
-        benchmark.iter(|| to_hypermesh(black_box(&yeahright_case.left)));
-    });
-    yeahright_import_group.bench_function("boolmesh", |benchmark| {
-        benchmark.iter(|| to_boolmesh(black_box(&yeahright_case.left)));
-    });
-    yeahright_import_group.bench_function("manifold-rust", |benchmark| {
-        benchmark.iter(|| to_manifold(black_box(&yeahright_case.left)));
-    });
-    yeahright_import_group.bench_function("tri-mesh", |benchmark| {
-        benchmark.iter(|| {
-            let asset = to_three_d_asset(black_box(&yeahright_case.left));
-            tri_mesh::Mesh::new(&asset)
+    if yeahright_enabled() {
+        let yeahright_case = yeahright_boolean_case();
+        let mut yeahright_import_group =
+            c.benchmark_group("competitive_yeahright_mesh_import/subdivided_control_hull");
+        yeahright_import_group.bench_function("hypermesh", |benchmark| {
+            benchmark.iter(|| to_hypermesh(black_box(&yeahright_case.left)));
         });
-    });
-    yeahright_import_group.finish();
+        yeahright_import_group.bench_function("boolmesh", |benchmark| {
+            benchmark.iter(|| to_boolmesh(black_box(&yeahright_case.left)));
+        });
+        yeahright_import_group.bench_function("manifold-rust", |benchmark| {
+            benchmark.iter(|| to_manifold(black_box(&yeahright_case.left)));
+        });
+        yeahright_import_group.bench_function("tri-mesh", |benchmark| {
+            benchmark.iter(|| {
+                let asset = to_three_d_asset(black_box(&yeahright_case.left));
+                tri_mesh::Mesh::new(&asset)
+            });
+        });
+        yeahright_import_group.finish();
 
-    let yeahright_control = yeahright_control_mesh();
-    let mut full_import_group =
-        c.benchmark_group("competitive_full_mesh_import/control_genus131_11894");
-    full_import_group.sample_size(10);
-    full_import_group.warm_up_time(Duration::from_secs(1));
-    full_import_group.measurement_time(Duration::from_secs(3));
-    full_import_group.bench_function("hypermesh", |benchmark| {
-        benchmark.iter(|| to_hypermesh(black_box(&yeahright_control)));
-    });
-    full_import_group.bench_function("boolmesh", |benchmark| {
-        benchmark.iter(|| to_boolmesh(black_box(&yeahright_control)));
-    });
-    full_import_group.bench_function("manifold-rust", |benchmark| {
-        benchmark.iter(|| to_manifold(black_box(&yeahright_control)));
-    });
-    full_import_group.bench_function("tri-mesh", |benchmark| {
-        benchmark.iter(|| {
-            let asset = to_three_d_asset(black_box(&yeahright_control));
-            tri_mesh::Mesh::new(&asset)
+        let yeahright_control = yeahright_control_mesh();
+        let mut full_import_group =
+            c.benchmark_group("competitive_full_mesh_import/control_genus131_11894");
+        full_import_group.sample_size(10);
+        full_import_group.warm_up_time(Duration::from_secs(1));
+        full_import_group.measurement_time(Duration::from_secs(3));
+        full_import_group.bench_function("hypermesh", |benchmark| {
+            benchmark.iter(|| to_hypermesh(black_box(&yeahright_control)));
         });
-    });
-    full_import_group.finish();
+        full_import_group.bench_function("boolmesh", |benchmark| {
+            benchmark.iter(|| to_boolmesh(black_box(&yeahright_control)));
+        });
+        full_import_group.bench_function("manifold-rust", |benchmark| {
+            benchmark.iter(|| to_manifold(black_box(&yeahright_control)));
+        });
+        full_import_group.bench_function("tri-mesh", |benchmark| {
+            benchmark.iter(|| {
+                let asset = to_three_d_asset(black_box(&yeahright_control));
+                tri_mesh::Mesh::new(&asset)
+            });
+        });
+        full_import_group.finish();
+    }
 
     let hypermesh_output = run_hypermesh(&prepare(&cases[0]).hypermesh, Operation::Union);
     let mut topology_group = c.benchmark_group("competitive_topology/box_union");

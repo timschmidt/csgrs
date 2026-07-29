@@ -9,7 +9,8 @@ use std::fmt;
 
 use hyperlattice::{Point3, Real, Vector3};
 
-use crate::output::TriangleSoup;
+use crate::TriangleMesh;
+use crate::output::BooleanMesh;
 
 /// One exact render vertex stored as `(position, normal)` rows.
 pub type ExactGpuVertex = ([Real; 3], [Real; 3]);
@@ -312,7 +313,7 @@ pub fn approximate_gpu_mesh_f64_or_zero(
     })
 }
 
-impl TriangleSoup {
+impl BooleanMesh {
     /// Builds exact flat-shaded render rows and `u32` indices.
     pub fn to_exact_gpu_mesh_buffers(&self) -> Result<ExactGpuMeshBuffers, GpuMeshError> {
         for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
@@ -370,6 +371,75 @@ impl TriangleSoup {
     /// position row or normal component.
     pub fn to_gpu_mesh_f64_or_zero(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
         self.to_exact_gpu_mesh_buffers()?.approximate_f64_or_zero()
+    }
+}
+
+impl TriangleMesh {
+    /// Returns retained exact flat-shaded render rows and `u32` indices.
+    ///
+    /// The first call derives the rows from native indexed geometry; clones of
+    /// the same immutable mesh share the retained result.
+    pub fn exact_gpu_mesh_buffers(&self) -> Result<&ExactGpuMeshBuffers, &GpuMeshError> {
+        self.facts
+            .exact_gpu
+            .get_or_init(|| {
+                for (triangle_offset, triangle) in self.triangles.iter().enumerate() {
+                    for (corner, index) in triangle.indices().into_iter().enumerate() {
+                        if index >= self.positions.len() {
+                            return Err(GpuMeshError::SourceTriangleIndexOutOfBounds {
+                                triangle: triangle_offset,
+                                corner,
+                                index,
+                                vertex_count: self.positions.len(),
+                            });
+                        }
+                    }
+                }
+                let triangles = self.triangles.iter().map(|triangle| {
+                    let [a, b, c] = triangle
+                        .indices()
+                        .map(|index| self.positions[index].clone());
+                    let normal = (&b - &a)
+                        .unit_cross_checked(&(&c - &a))
+                        .unwrap_or_else(|_| Vector3::z());
+                    let normal = [
+                        normal.0[0].clone(),
+                        normal.0[1].clone(),
+                        normal.0[2].clone(),
+                    ];
+                    [
+                        (point_row(a), normal.clone()),
+                        (point_row(b), normal.clone()),
+                        (point_row(c), normal),
+                    ]
+                });
+                ExactGpuMeshBuffers::from_triangles_with_capacity(self.triangles.len(), triangles)
+            })
+            .as_ref()
+    }
+
+    /// Produces strict finite-`f32` GPU buffers from retained exact rows.
+    pub fn try_to_gpu_mesh_f32(&self) -> Result<GpuMeshBuffersF32, GpuMeshError> {
+        self.facts
+            .gpu_f32
+            .get_or_init(|| {
+                self.exact_gpu_mesh_buffers()
+                    .map_err(Clone::clone)?
+                    .try_approximate_f32()
+            })
+            .clone()
+    }
+
+    /// Produces strict finite-`f64` GPU buffers from retained exact rows.
+    pub fn try_to_gpu_mesh_f64(&self) -> Result<GpuMeshBuffersF64, GpuMeshError> {
+        self.facts
+            .gpu_f64
+            .get_or_init(|| {
+                self.exact_gpu_mesh_buffers()
+                    .map_err(Clone::clone)?
+                    .try_approximate_f64()
+            })
+            .clone()
     }
 }
 
@@ -610,8 +680,8 @@ mod tests {
     }
 
     #[test]
-    fn triangle_soup_rejects_an_invalid_source_index() {
-        let soup = TriangleSoup {
+    fn boolean_mesh_rejects_an_invalid_source_index() {
+        let soup = BooleanMesh {
             vertices: vec![OutputVertex {
                 x: 0.into(),
                 y: 0.into(),
@@ -633,8 +703,8 @@ mod tests {
     }
 
     #[test]
-    fn triangle_soup_exports_flat_shaded_gpu_rows() {
-        let soup = TriangleSoup {
+    fn boolean_mesh_exports_flat_shaded_gpu_rows() {
+        let soup = BooleanMesh {
             vertices: vec![
                 OutputVertex {
                     x: 0.into(),

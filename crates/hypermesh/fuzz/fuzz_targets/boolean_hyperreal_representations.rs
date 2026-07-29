@@ -3,8 +3,8 @@
 mod support;
 
 use hypermesh::{
-    EmberConfig, HypermeshError, InputMesh, Point3, Real, Triangle, TriangleSoup,
-    boolean_operation, boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
+    EmberConfig, HypermeshError, TriangleMesh, Point3, Real, Triangle, BooleanMesh,
+    boolean_operation, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
     certify_convex_mesh,
 };
 use hyperreal::{Rational, StructuralKind};
@@ -14,10 +14,10 @@ use support::{
     volume_numerator,
 };
 
-fn translated_box(base: &Real, offset: [i64; 3], extent: i64) -> InputMesh {
+fn translated_box(base: &Real, offset: [i64; 3], extent: i64) -> TriangleMesh {
     let coordinate =
         |axis: usize, high: bool| base + r(offset[axis] + if high { extent } else { 0 });
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             Point3::new(
                 coordinate(0, false),
@@ -103,7 +103,7 @@ fn accept_certification_boundary(error: HypermeshError) {
     );
 }
 
-fn assert_oracle_volume(soup: &TriangleSoup, expected: i64) {
+fn assert_oracle_volume(soup: &BooleanMesh, expected: i64) {
     let actual = volume_numerator(soup);
     let expected = Rational::new(6 * expected);
     if let Some(actual) = actual.exact_rational() {
@@ -150,13 +150,13 @@ fuzz_target!(|data: [u8; 8]| {
     }
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
 
-    let soup: Result<TriangleSoup, HypermeshError> = match api {
+    let soup: Result<BooleanMesh, HypermeshError> = match api {
         0 => boolean_operation(&refs, op, EmberConfig::default())
             .map(|result| validate_result(&result, op, refs.len())),
-        1 => boolean_triangle_soup(&refs, op, EmberConfig::default()).inspect(|soup| {
+        1 => boolean_mesh(&refs, op, EmberConfig::default()).inspect(|soup| {
             validate_soup(soup);
         }),
-        _ => boolean_triangle_soup_with_certified_convex_inputs(
+        _ => boolean_mesh_with_certified_convex_inputs(
             &refs,
             op,
             &[true, true],

@@ -7,10 +7,10 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use hypermesh::{
     BooleanOp, EmberConfig, ExactGpuMeshBuffers, Point3, Real, approximate_gpu_mesh_f32,
     approximate_gpu_mesh_f64, approximate_interleaved_gpu_mesh_f32,
-    approximate_interleaved_gpu_mesh_f64, boolean_operation, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs, convex_hull,
-    convex_hull_with_coplanar_groups, convex_hull_with_retained_facts, convex_quad,
-    convex_triangle, extract_output, polygon_soup, triangulate_and_resolve_certified,
+    approximate_interleaved_gpu_mesh_f64, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
+    boolean_operation, convex_hull, convex_hull_with_coplanar_groups,
+    convex_hull_with_retained_facts, convex_quad, convex_triangle, extract_output, polygon_soup,
+    triangulate_and_resolve_certified,
 };
 
 fn curved_shell(segments: usize, stacks: usize) -> Vec<Point3> {
@@ -139,21 +139,21 @@ fn bench_end_to_end(c: &mut Criterion) {
             },
         );
         output_group.bench_with_input(
-            BenchmarkId::new("triangle_soup", format!("{operation:?}")),
+            BenchmarkId::new("boolean_mesh", format!("{operation:?}")),
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_triangle_soup(black_box(&cube_refs), *operation, EmberConfig::default())
+                    boolean_mesh(black_box(&cube_refs), *operation, EmberConfig::default())
                         .expect("cube triangle soup is certified")
                 })
             },
         );
         output_group.bench_with_input(
-            BenchmarkId::new("certified_convex_triangle_soup", format!("{operation:?}")),
+            BenchmarkId::new("certified_convex_boolean_mesh", format!("{operation:?}")),
             &operation,
             |b, operation| {
                 b.iter(|| {
-                    boolean_triangle_soup_with_certified_convex_inputs(
+                    boolean_mesh_with_certified_convex_inputs(
                         black_box(&cube_refs),
                         *operation,
                         &[true, true],

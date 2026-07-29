@@ -3,9 +3,9 @@
 use std::collections::BTreeMap;
 
 use hypermesh::{
-    BooleanOp, BooleanResult, InputMesh, Point3, Real, Triangle, TriangleSoup,
+    BooleanOp, BooleanResult, TriangleMesh, Point3, Real, Triangle, BooleanMesh,
     certify_output_polygon_closure, classify_polygon_output, extract_output,
-    triangle_soup_closure_evidence, triangulate_and_resolve_certified,
+    boolean_mesh_closure_evidence, triangulate_and_resolve_certified,
 };
 use hyperreal::{Rational, StructuralKind};
 
@@ -84,8 +84,8 @@ pub fn operation(value: u8) -> BooleanOp {
     }
 }
 
-pub fn box_mesh(min: [i64; 3], max: [i64; 3]) -> InputMesh {
-    InputMesh::new(
+pub fn box_mesh(min: [i64; 3], max: [i64; 3]) -> TriangleMesh {
+    TriangleMesh::new(
         vec![
             p(min[0], min[1], min[2]),
             p(max[0], min[1], min[2]),
@@ -113,9 +113,9 @@ pub fn box_mesh(min: [i64; 3], max: [i64; 3]) -> InputMesh {
     )
 }
 
-pub fn tetrahedron(origin: [i64; 3], extent: [i64; 3]) -> InputMesh {
+pub fn tetrahedron(origin: [i64; 3], extent: [i64; 3]) -> TriangleMesh {
     let [x, y, z] = origin;
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             p(x, y, z),
             p(x + extent[0], y, z),
@@ -131,9 +131,9 @@ pub fn tetrahedron(origin: [i64; 3], extent: [i64; 3]) -> InputMesh {
     )
 }
 
-pub fn octahedron(center: [i64; 3], radius: [i64; 3]) -> InputMesh {
+pub fn octahedron(center: [i64; 3], radius: [i64; 3]) -> TriangleMesh {
     let [x, y, z] = center;
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             p(x + radius[0], y, z),
             p(x - radius[0], y, z),
@@ -155,7 +155,7 @@ pub fn octahedron(center: [i64; 3], radius: [i64; 3]) -> InputMesh {
     )
 }
 
-pub fn convex_mesh(bytes: &mut Bytes<'_>) -> InputMesh {
+pub fn convex_mesh(bytes: &mut Bytes<'_>) -> TriangleMesh {
     let kind = bytes.next() % 3;
     let origin = [
         bytes.bounded_i64(5),
@@ -167,7 +167,7 @@ pub fn convex_mesh(bytes: &mut Bytes<'_>) -> InputMesh {
         bytes.positive_i64(4),
         bytes.positive_i64(4),
     ];
-    let mut mesh = match kind {
+    let mesh = match kind {
         0 => box_mesh(
             origin,
             [
@@ -180,14 +180,15 @@ pub fn convex_mesh(bytes: &mut Bytes<'_>) -> InputMesh {
         _ => octahedron(origin, extent),
     };
     if !mesh.triangles.is_empty() {
-        let triangle_count = mesh.triangles.len();
-        mesh.triangles
-            .rotate_left(usize::from(bytes.next()) % triangle_count);
+        let mut triangles = mesh.triangles.to_vec();
+        let triangle_count = triangles.len();
+        triangles.rotate_left(usize::from(bytes.next()) % triangle_count);
+        return TriangleMesh::new(mesh.positions.to_vec(), triangles);
     }
     mesh
 }
 
-pub fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
+pub fn combine_meshes(meshes: &[TriangleMesh]) -> TriangleMesh {
     let position_count = meshes.iter().map(|mesh| mesh.positions.len()).sum();
     let triangle_count = meshes.iter().map(|mesh| mesh.triangles.len()).sum();
     let mut positions = Vec::with_capacity(position_count);
@@ -199,27 +200,28 @@ pub fn combine_meshes(meshes: &[InputMesh]) -> InputMesh {
             Triangle::new(base + triangle.v0, base + triangle.v1, base + triangle.v2)
         }));
     }
-    InputMesh::new(positions, triangles)
+    TriangleMesh::new(positions, triangles)
 }
 
-pub fn subdivide_once(mut mesh: InputMesh) -> InputMesh {
+pub fn subdivide_once(mesh: TriangleMesh) -> TriangleMesh {
+    let mut positions = mesh.positions.to_vec();
     let mut edge_midpoints = BTreeMap::new();
     let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
-    for triangle in &mesh.triangles {
+    for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
         let mut midpoint = |left: usize, right: usize| {
             let key = (left.min(right), left.max(right));
             *edge_midpoints.entry(key).or_insert_with(|| {
-                let left = &mesh.positions[left];
-                let right = &mesh.positions[right];
+                let left = &positions[left];
+                let right = &positions[right];
                 let two = r(2);
                 let point = Point3::new(
                     ((&left.x + &right.x) / &two).expect("two is nonzero"),
                     ((&left.y + &right.y) / &two).expect("two is nonzero"),
                     ((&left.z + &right.z) / &two).expect("two is nonzero"),
                 );
-                let index = mesh.positions.len();
-                mesh.positions.push(point);
+                let index = positions.len();
+                positions.push(point);
                 index
             })
         };
@@ -233,11 +235,10 @@ pub fn subdivide_once(mut mesh: InputMesh) -> InputMesh {
             Triangle::new(ab, bc, ca),
         ]);
     }
-    mesh.triangles = triangles;
-    mesh
+    TriangleMesh::new(positions, triangles)
 }
 
-pub fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
+pub fn signed_volume_numerator(soup: &BooleanMesh) -> Real {
     let mut volume = Real::zero();
     for triangle in &soup.triangles {
         let v0 = &soup.vertices[triangle[0]];
@@ -250,25 +251,26 @@ pub fn signed_volume_numerator(soup: &TriangleSoup) -> Real {
     volume
 }
 
-pub fn volume_numerator(soup: &TriangleSoup) -> Real {
+pub fn volume_numerator(soup: &BooleanMesh) -> Real {
     signed_volume_numerator(soup).abs()
 }
 
-pub fn validate_soup(soup: &TriangleSoup) {
+pub fn validate_soup(soup: &BooleanMesh) {
     assert_eq!(soup.sources.len(), soup.triangles.len());
     assert!(
         soup.triangles
             .iter()
             .all(|triangle| { triangle.iter().all(|vertex| *vertex < soup.vertices.len()) })
     );
-    assert!(triangle_soup_closure_evidence(soup).has_no_boundary());
+    assert!(soup.has_unique_nondegenerate_triangles());
+    assert!(boolean_mesh_closure_evidence(soup).has_no_boundary());
 }
 
 pub fn validate_result(
     result: &BooleanResult,
     operation: BooleanOp,
     mesh_count: usize,
-) -> TriangleSoup {
+) -> BooleanMesh {
     assert_eq!(result.output().num_meshes, mesh_count);
     assert_eq!(
         result.output().polygons.len(),

@@ -9,14 +9,14 @@ use hypergraphics::{
     axes_mesh, grid_mesh,
 };
 use hypermesh::{
-    BooleanOp, EmberConfig, InputMesh, MeshRef, OutputVertex, Point3, Real, Triangle, TriangleSoup,
+    BooleanOp, EmberConfig, TriangleMesh, TriangleMeshRef, OutputVertex, Point3, Real, Triangle, BooleanMesh,
     boolean_operation, triangulate_and_resolve_certified,
 };
 use web_time::{Duration, Instant};
 
 pub struct MainApp {
-    cube_a: InputMesh,
-    cube_b: InputMesh,
+    cube_a: TriangleMesh,
+    cube_b: TriangleMesh,
     operation: DemoOperation,
     show_cube_a: bool,
     show_cube_b: bool,
@@ -25,7 +25,7 @@ pub struct MainApp {
     offset_quarters: i32,
     spin: f32,
     last_frame: Instant,
-    result: Option<TriangleSoup>,
+    result: Option<BooleanMesh>,
     render_scene: RenderScene,
     render_resources: Arc<Mutex<Option<RenderResources>>>,
     stats: DemoStats,
@@ -254,7 +254,7 @@ impl RenderScene {
         }
     }
 
-    fn from_demo(cube_a: &InputMesh, cube_b: &InputMesh, result: Option<&TriangleSoup>) -> Self {
+    fn from_demo(cube_a: &TriangleMesh, cube_b: &TriangleMesh, result: Option<&BooleanMesh>) -> Self {
         let blue = Color3::new(0.31, 0.67, 1.0).expect("finite input color");
         let red = Color3::new(1.0, 0.47, 0.40).expect("finite input color");
         let green = Color3::new(0.41, 0.86, 0.60).expect("finite result color");
@@ -265,8 +265,8 @@ impl RenderScene {
         scene.input_a_wire = input_mesh_wire(cube_a, blue);
         scene.input_b_wire = input_mesh_wire(cube_b, red);
         if let Some(result) = result {
-            scene.result_faces = triangle_soup_faces(result, green);
-            scene.result_wire = triangle_soup_wire(result, pale_green);
+            scene.result_faces = boolean_mesh_faces(result, green);
+            scene.result_wire = boolean_mesh_wire(result, pale_green);
         }
         scene
     }
@@ -551,9 +551,9 @@ impl Default for DemoStats {
 impl DemoStats {
     fn ok(
         elapsed: Duration,
-        cube_a: &InputMesh,
-        cube_b: &InputMesh,
-        result: &TriangleSoup,
+        cube_a: &TriangleMesh,
+        cube_b: &TriangleMesh,
+        result: &BooleanMesh,
     ) -> Self {
         Self {
             elapsed,
@@ -575,16 +575,16 @@ impl DemoStats {
 }
 
 fn run_boolean(
-    meshes: &[MeshRef<'_>],
+    meshes: &[TriangleMeshRef<'_>],
     op: BooleanOp,
     config: EmberConfig,
-) -> hypermesh::HypermeshResult<TriangleSoup> {
+) -> hypermesh::HypermeshResult<BooleanMesh> {
     let result = boolean_operation(meshes, op, config)?;
     triangulate_and_resolve_certified(&result)
 }
 
-fn cube_mesh(min: i32, max: i32) -> InputMesh {
-    InputMesh::new(
+fn cube_mesh(min: i32, max: i32) -> TriangleMesh {
+    TriangleMesh::new(
         vec![
             p(min, min, min),
             p(max, min, min),
@@ -599,11 +599,11 @@ fn cube_mesh(min: i32, max: i32) -> InputMesh {
     )
 }
 
-fn shifted_cube_mesh(offset_quarters: i32) -> InputMesh {
+fn shifted_cube_mesh(offset_quarters: i32) -> TriangleMesh {
     let offset = real_ratio(offset_quarters, 4);
     let min = &offset - &Real::one();
     let max = &offset + &Real::one();
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             point(min.clone(), r(-1), r(-1)),
             point(max.clone(), r(-1), r(-1)),
@@ -635,7 +635,7 @@ fn cube_triangles() -> Vec<Triangle> {
     ]
 }
 
-fn input_mesh_faces(mesh: &InputMesh, color: Color3) -> ExactMesh {
+fn input_mesh_faces(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
     for triangle in &mesh.triangles {
         let [Some(a), Some(b), Some(c)] = triangle
@@ -652,7 +652,7 @@ fn input_mesh_faces(mesh: &InputMesh, color: Color3) -> ExactMesh {
     out
 }
 
-fn input_mesh_wire(mesh: &InputMesh, color: Color3) -> ExactMesh {
+fn input_mesh_wire(mesh: &TriangleMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Lines);
     for triangle in &mesh.triangles {
         push_wire_triangle(
@@ -666,7 +666,7 @@ fn input_mesh_wire(mesh: &InputMesh, color: Color3) -> ExactMesh {
     out
 }
 
-fn triangle_soup_faces(soup: &TriangleSoup, color: Color3) -> ExactMesh {
+fn boolean_mesh_faces(soup: &BooleanMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Triangles);
     for triangle in &soup.triangles {
         let [Some(a), Some(b), Some(c)] =
@@ -718,7 +718,7 @@ fn flat_shaded_color(base: Color3, [a, b, c]: [&Point3; 3]) -> Color3 {
     Color3::new(base.r * intensity, base.g * intensity, base.b * intensity).unwrap_or(base)
 }
 
-fn triangle_soup_wire(soup: &TriangleSoup, color: Color3) -> ExactMesh {
+fn boolean_mesh_wire(soup: &BooleanMesh, color: Color3) -> ExactMesh {
     let mut out = ExactMesh::empty(Primitive::Lines);
     for triangle in &soup.triangles {
         push_wire_triangle(
@@ -913,7 +913,7 @@ mod tests {
         )
         .unwrap();
         let green = Color3::new(0.41, 0.86, 0.60).unwrap();
-        let faces = triangle_soup_faces(&result, green);
+        let faces = boolean_mesh_faces(&result, green);
         let mut plane_colors = [None; 6];
 
         for (triangle, rendered) in result

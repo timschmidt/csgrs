@@ -1,10 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
+mod yeahright;
+
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
 use hypermesh::{
-    BooleanOp, BooleanResult, EmberConfig, InputMesh, Point3, Real, Triangle, TriangleSoup,
-    boolean_operation_with_certified_convex_inputs,
-    boolean_triangle_soup_with_certified_convex_inputs,
+    BooleanMesh, BooleanOp, BooleanResult, EmberConfig, Point3, Real, Triangle, TriangleMesh,
+    boolean_mesh_with_certified_convex_inputs, boolean_operation_with_certified_convex_inputs,
 };
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
@@ -17,10 +18,7 @@ const METRIC_TOLERANCE: f64 = 1.0e-8;
 const KEY_SCALE: f64 = 1.0e9;
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
-pub const YEAHRIGHT_BASE_TRIANGLES: usize = 1_128;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
-pub const YEAHRIGHT_TRIANGLES: usize =
-    YEAHRIGHT_BASE_TRIANGLES * YEAHRIGHT_SUBDIVISIONS * YEAHRIGHT_SUBDIVISIONS;
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
 pub const YEAHRIGHT_STRESS_SUBDIVISIONS: [usize; 2] = [4, 8];
@@ -112,7 +110,7 @@ pub struct Summary {
 }
 
 pub struct PreparedInputs {
-    pub hypermesh: [InputMesh; 2],
+    pub hypermesh: [TriangleMesh; 2],
     pub boolmesh: [BoolmeshManifold; 2],
     pub manifold: [ManifoldRs; 2],
 }
@@ -216,8 +214,12 @@ pub fn yeahright_boolean_case() -> MeshPair {
     yeahright_boolean_case_with_subdivisions(YEAHRIGHT_SUBDIVISIONS)
 }
 
+pub fn yeahright_enabled() -> bool {
+    yeahright::enabled()
+}
+
 pub fn yeahright_control_mesh() -> RawMesh {
-    let mesh = parse_triangle_obj(include_str!("data/controlmesh.obj"));
+    let mesh = parse_triangle_obj(&yeahright::control_mesh_source());
     assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
     assert_eq!(mesh.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
     mesh
@@ -226,26 +228,36 @@ pub fn yeahright_control_mesh() -> RawMesh {
 pub fn yeahright_boolean_case_with_subdivisions(subdivisions: usize) -> MeshPair {
     assert!(subdivisions.is_power_of_two());
     assert!(subdivisions >= YEAHRIGHT_SUBDIVISIONS);
-    let base = parse_triangle_obj(include_str!("data/yeahright_boolean_hull.obj"));
-    assert_eq!(base.positions.len(), 566);
-    assert_eq!(base.triangles.len(), YEAHRIGHT_BASE_TRIANGLES);
-    // Keep the pinned 4,512-triangle corpus byte-for-byte stable, then grow
-    // stress fixtures by splitting shared indexed edges. Re-running the
-    // barycentric/quantized importer at larger divisions can assign adjacent
-    // source faces incompatible boundary rows and manufacture open fixtures.
+    let control = yeahright_control_mesh();
+    let hull = hypermesh::convex_hull(&to_hypermesh(&control).positions)
+        .expect("YeahRight control points span a three-dimensional hull");
+    let base = RawMesh {
+        positions: hull
+            .positions
+            .iter()
+            .map(|point| {
+                [
+                    approximate(&point.x),
+                    approximate(&point.y),
+                    approximate(&point.z),
+                ]
+            })
+            .collect(),
+        triangles: hull
+            .triangles
+            .iter()
+            .map(|triangle| triangle.indices())
+            .collect(),
+    };
     let mut left = subdivide(&base, YEAHRIGHT_SUBDIVISIONS);
     for _ in YEAHRIGHT_SUBDIVISIONS.ilog2()..subdivisions.ilog2() {
         left = subdivide_raw_midpoints(&left);
     }
-    assert_eq!(
-        left.triangles.len(),
-        YEAHRIGHT_BASE_TRIANGLES * subdivisions * subdivisions
-    );
     MeshPair {
         name: match subdivisions {
-            2 => "yeahright_hull_4512_box",
-            4 => "yeahright_hull_18048_box",
-            8 => "yeahright_hull_72192_box",
+            2 => "yeahright_control_hull_subdivided_box",
+            4 => "yeahright_control_hull_subdivided_4_box",
+            8 => "yeahright_control_hull_subdivided_8_box",
             _ => "yeahright_hull_subdivided_box",
         },
         left,
@@ -271,15 +283,7 @@ pub fn prepare_yeahright(case: &MeshPair) -> PreparedInputs {
 
 pub fn prepare_yeahright_with_subdivisions(case: &MeshPair, subdivisions: usize) -> PreparedInputs {
     assert!(subdivisions.is_power_of_two());
-    let base = parse_triangle_obj(include_str!("data/yeahright_boolean_hull.obj"));
-    let mut exact_hull = to_hypermesh(&base);
-    for _ in 0..subdivisions.ilog2() {
-        exact_hull = subdivide_hypermesh_midpoints(&exact_hull);
-    }
-    assert_eq!(
-        exact_hull.triangles.len(),
-        YEAHRIGHT_BASE_TRIANGLES * subdivisions * subdivisions
-    );
+    let exact_hull = to_hypermesh(&case.left);
     PreparedInputs {
         hypermesh: [exact_hull, to_hypermesh(&case.right)],
         boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
@@ -287,12 +291,12 @@ pub fn prepare_yeahright_with_subdivisions(case: &MeshPair, subdivisions: usize)
     }
 }
 
-pub fn run_hypermesh(inputs: &[InputMesh; 2], operation: Operation) -> RawMesh {
+pub fn run_hypermesh(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMesh {
     raw_from_hypermesh(&run_hypermesh_exact(inputs, operation))
 }
 
-pub fn run_hypermesh_exact(inputs: &[InputMesh; 2], operation: Operation) -> TriangleSoup {
-    boolean_triangle_soup_with_certified_convex_inputs(
+pub fn run_hypermesh_exact(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanMesh {
+    boolean_mesh_with_certified_convex_inputs(
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
         &[true, true],
@@ -301,7 +305,7 @@ pub fn run_hypermesh_exact(inputs: &[InputMesh; 2], operation: Operation) -> Tri
     .unwrap_or_else(|error| panic!("hypermesh {} failed: {error}", operation.name()))
 }
 
-pub fn run_hypermesh_polygon(inputs: &[InputMesh; 2], operation: Operation) -> BooleanResult {
+pub fn run_hypermesh_polygon(inputs: &[TriangleMesh; 2], operation: Operation) -> BooleanResult {
     boolean_operation_with_certified_convex_inputs(
         &[inputs[0].as_ref(), inputs[1].as_ref()],
         operation.hypermesh(),
@@ -522,8 +526,8 @@ pub fn validate_with_tri_mesh(mesh: &RawMesh) -> (usize, usize, usize) {
     )
 }
 
-pub fn to_hypermesh(mesh: &RawMesh) -> InputMesh {
-    InputMesh::new(
+pub fn to_hypermesh(mesh: &RawMesh) -> TriangleMesh {
+    TriangleMesh::new(
         mesh.positions
             .iter()
             .map(|point| Point3::new(real(point[0]), real(point[1]), real(point[2])))
@@ -580,7 +584,7 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     }
 }
 
-pub fn raw_from_hypermesh(soup: &TriangleSoup) -> RawMesh {
+pub fn raw_from_hypermesh(soup: &BooleanMesh) -> RawMesh {
     RawMesh {
         positions: soup
             .vertices
@@ -710,7 +714,7 @@ fn subdivide(mesh: &RawMesh, divisions: usize) -> RawMesh {
 }
 
 fn subdivide_raw_midpoints(mesh: &RawMesh) -> RawMesh {
-    let mut positions = mesh.positions.clone();
+    let mut positions = mesh.positions.to_vec();
     let mut edge_midpoints = BTreeMap::<[usize; 2], usize>::new();
     let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
 
@@ -736,45 +740,6 @@ fn subdivide_raw_midpoints(mesh: &RawMesh) -> RawMesh {
         positions,
         triangles,
     }
-}
-
-fn subdivide_hypermesh_midpoints(mesh: &InputMesh) -> InputMesh {
-    let mut positions = mesh.positions.clone();
-    let mut edge_midpoints = BTreeMap::<[usize; 2], usize>::new();
-    let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
-
-    for triangle in &mesh.triangles {
-        let [a, b, c] = triangle.indices();
-        let mut midpoint = |left: usize, right: usize| {
-            let mut edge = [left, right];
-            edge.sort_unstable();
-            *edge_midpoints.entry(edge).or_insert_with(|| {
-                let two = Real::from(2);
-                let point = Point3::new(
-                    ((&positions[left].x + &positions[right].x) / two.clone())
-                        .expect("fixture midpoint is finite"),
-                    ((&positions[left].y + &positions[right].y) / two.clone())
-                        .expect("fixture midpoint is finite"),
-                    ((&positions[left].z + &positions[right].z) / two)
-                        .expect("fixture midpoint is finite"),
-                );
-                let index = positions.len();
-                positions.push(point);
-                index
-            })
-        };
-        let ab = midpoint(a, b);
-        let bc = midpoint(b, c);
-        let ac = midpoint(a, c);
-        triangles.extend([
-            Triangle::new(a, ab, ac),
-            Triangle::new(ab, bc, ac),
-            Triangle::new(ac, bc, c),
-            Triangle::new(ab, b, bc),
-        ]);
-    }
-
-    InputMesh::new(positions, triangles)
 }
 
 fn parse_triangle_obj(source: &str) -> RawMesh {

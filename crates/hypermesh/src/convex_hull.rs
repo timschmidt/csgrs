@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Classification;
-use crate::{ExactPointBvh, InputMesh, Point3, Real, Triangle};
+use crate::{ExactPointBvh, Point3, Real, Triangle, TriangleMesh};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct PositionBucket([Option<u64>; 3]);
@@ -40,7 +40,7 @@ struct HullFace {
 /// returned mesh contains only hull vertices and outward-wound triangles.
 /// Inputs with fewer than four unique non-coplanar points return
 /// [`HypermeshError::DegeneratePointSet`].
-pub fn convex_hull(input: &[Point3]) -> HypermeshResult<InputMesh> {
+pub fn convex_hull(input: &[Point3]) -> HypermeshResult<TriangleMesh> {
     convex_hull_impl(input, &[], None)
 }
 
@@ -52,7 +52,7 @@ pub fn convex_hull(input: &[Point3]) -> HypermeshResult<InputMesh> {
 pub fn convex_hull_with_coplanar_groups(
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
-) -> HypermeshResult<InputMesh> {
+) -> HypermeshResult<TriangleMesh> {
     convex_hull_impl(input, coplanar_groups, None)
 }
 
@@ -65,7 +65,7 @@ pub fn convex_hull_with_retained_facts(
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
     coordinate_ids: &[[u64; 5]],
-) -> HypermeshResult<InputMesh> {
+) -> HypermeshResult<TriangleMesh> {
     if input.len() != coordinate_ids.len() {
         return Err(HypermeshError::PointCountMismatch {
             expected: input.len(),
@@ -79,7 +79,7 @@ fn convex_hull_impl(
     input: &[Point3],
     coplanar_groups: &[Vec<usize>],
     input_coordinate_ids: Option<&[[u64; 5]]>,
-) -> HypermeshResult<InputMesh> {
+) -> HypermeshResult<TriangleMesh> {
     let (points, memberships, coordinate_ids) =
         deduplicate_points(input, coplanar_groups, input_coordinate_ids)?;
     let memberships = memberships.as_deref();
@@ -522,7 +522,7 @@ fn share_coplanar_group(
     })
 }
 
-fn compact_hull(points: Vec<Point3>, faces: Vec<HullFace>) -> HypermeshResult<InputMesh> {
+fn compact_hull(points: Vec<Point3>, faces: Vec<HullFace>) -> HypermeshResult<TriangleMesh> {
     let active_faces = faces
         .into_iter()
         .filter(|face| face.active)
@@ -551,7 +551,7 @@ fn compact_hull(points: Vec<Point3>, faces: Vec<HullFace>) -> HypermeshResult<In
             )
         })
         .collect();
-    Ok(InputMesh::new(positions, triangles))
+    Ok(TriangleMesh::new(positions, triangles).with_certified_convexity())
 }
 
 #[cfg(test)]
@@ -677,7 +677,7 @@ mod tests {
 
         let hull = convex_hull(&input).unwrap();
         crate::polygon_soup(&[hull.as_ref()]).unwrap();
-        for triangle in &hull.triangles {
+        for triangle in hull.triangles.iter() {
             let [a, b, c] = triangle.indices();
             let plane =
                 Plane::from_points(&hull.positions[a], &hull.positions[b], &hull.positions[c]);

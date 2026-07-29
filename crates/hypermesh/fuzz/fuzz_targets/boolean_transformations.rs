@@ -4,8 +4,8 @@ mod support;
 
 use hyperlattice::{Matrix4, Matrix4TransformKind};
 use hypermesh::{
-    BooleanOp, EmberConfig, HypermeshError, InputMesh, Real, Triangle, TriangleSoup,
-    boolean_operation, boolean_triangle_soup, boolean_triangle_soup_with_certified_convex_inputs,
+    BooleanOp, EmberConfig, HypermeshError, TriangleMesh, Real, Triangle, BooleanMesh,
+    boolean_operation, boolean_mesh, boolean_mesh_with_certified_convex_inputs,
     certify_convex_mesh, classify_polygon_output,
 };
 use hyperreal::StructuralKind;
@@ -126,12 +126,13 @@ fn transform_plan(family: u8, control: u8, value: &Real) -> TransformPlan {
     }
 }
 
-fn transform_mesh(mut mesh: InputMesh, plan: &TransformPlan) -> InputMesh {
+fn transform_mesh(mesh: TriangleMesh, plan: &TransformPlan) -> TriangleMesh {
+    let mut positions = mesh.positions.to_vec();
     for matrix in &plan.stages {
         let batch = matrix
-            .transform_point3_batch(&mesh.positions)
+            .transform_point3_batch(&positions)
             .expect("bounded transform must produce finite points");
-        for (source, transformed) in mesh.positions.iter().zip(&batch) {
+        for (source, transformed) in positions.iter().zip(&batch) {
             assert_eq!(
                 matrix
                     .transform_point3(source)
@@ -139,14 +140,15 @@ fn transform_mesh(mut mesh: InputMesh, plan: &TransformPlan) -> InputMesh {
                 *transformed,
             );
         }
-        mesh.positions = batch;
+        positions = batch;
     }
+    let mut triangles = mesh.triangles.to_vec();
     if plan.reverses_orientation {
-        for triangle in &mut mesh.triangles {
+        for triangle in &mut triangles {
             *triangle = Triangle::new(triangle.v0, triangle.v2, triangle.v1);
         }
     }
-    mesh
+    TriangleMesh::new(positions, triangles)
 }
 
 fn accept_certification_boundary(error: HypermeshError) {
@@ -164,18 +166,18 @@ fn accept_certification_boundary(error: HypermeshError) {
 }
 
 fn run_boolean(
-    meshes: &[InputMesh; 2],
+    meshes: &[TriangleMesh; 2],
     op: BooleanOp,
     api: u8,
-) -> Result<TriangleSoup, HypermeshError> {
+) -> Result<BooleanMesh, HypermeshError> {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
     match api % 3 {
         0 => boolean_operation(&refs, op, EmberConfig::default())
             .map(|result| validate_result(&result, op, refs.len())),
-        1 => boolean_triangle_soup(&refs, op, EmberConfig::default()).inspect(|soup| {
+        1 => boolean_mesh(&refs, op, EmberConfig::default()).inspect(|soup| {
             validate_soup(soup);
         }),
-        _ => boolean_triangle_soup_with_certified_convex_inputs(
+        _ => boolean_mesh_with_certified_convex_inputs(
             &refs,
             op,
             &[true, true],
@@ -187,7 +189,7 @@ fn run_boolean(
     }
 }
 
-fn run_symbolic_boolean(meshes: &[InputMesh; 2], op: BooleanOp) -> Result<(), HypermeshError> {
+fn run_symbolic_boolean(meshes: &[TriangleMesh; 2], op: BooleanOp) -> Result<(), HypermeshError> {
     let refs = [meshes[0].as_ref(), meshes[1].as_ref()];
     boolean_operation(&refs, op, EmberConfig::default()).map(|result| {
         assert_eq!(result.output().num_meshes, refs.len());

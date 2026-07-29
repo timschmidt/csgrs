@@ -87,7 +87,7 @@ before and after (20 samples for the end-to-end Boolean):
 | `convex_polygon/triangle_construction` | 1.1794--1.1870 us | 1.1743--1.1784 us | -0.60% |
 | `convex_polygon/quad_construction` | 1.4708--1.4779 us | 1.4518--1.4596 us | -1.27% |
 | `build_polygon_soup/cube_pair` | 44.088--44.594 us | 44.199--44.849 us | +0.42% |
-| `boolean_immediate_output/cubes/triangle_soup/Union` | 2.2691--2.2840 ms | 2.3030--2.3188 ms | +1.51% |
+| `boolean_immediate_output/cubes/boolean_mesh/Union` | 2.2691--2.2840 ms | 2.3030--2.3188 ms | +1.51% |
 
 The soup comparison reported no statistically significant change (`p = 0.09`).
 All unrelated sentinels drifted upward together during the final run, so the
@@ -481,7 +481,7 @@ names exactly one operation, performs only that operation's reachability and
 transition work, closure-certifies the result, and returns owned output without
 exposing or caching intermediate arrangement state.
 
-`boolean_operation` returns certified polygons. `boolean_triangle_soup`
+`boolean_operation` returns certified polygons. `boolean_mesh`
 continues directly through certified triangulation and output resolution, and
 the certified-convex variants use the projective two-input fast path without a
 public carrier. The selected classified fragments are moved into the result
@@ -863,7 +863,7 @@ Certified convex arrangements now also expose the already-constructed exact
 source support normal by global source triangle and output orientation. The
 lookup validates retained source identity and returns no value for general
 arrangements that consumed their source polygon carrier. This lets downstream
-adapters reuse exact support work without adding normals to `TriangleSoup` or
+adapters reuse exact support work without adding normals to `BooleanMesh` or
 changing its public storage contract.
 
 Validation passed the default and all-feature matrices (958 unit tests, 60/61
@@ -1083,7 +1083,7 @@ nine focused exact adapter/differential tests.
 Status: **kept**
 
 Certified two-convex preparation previously cloned the three exact source
-positions into every triangle even though `MeshRef` already supplied an indexed
+positions into every triangle even though `TriangleMeshRef` already supplied an indexed
 position pool. Deferred input polygons now retain one shared exact position
 slice per source mesh plus their three source indices. Owned vertex cycles
 remain available for ordinary input, clipping, inversion, and derived output,
@@ -1141,7 +1141,7 @@ all integration, regression, and benchmark targets, the no-default-feature
 build, warning-denied Clippy, rustdoc, and every fuzz-target build. A 20-second
 ASAN `boolean_pipeline` campaign completed 380 executions without failure. All
 nine downstream CSGRS exact Hypermesh adapter and differential tests passed.
-The concurrent CSGRS sketch conversion edit left the broader downstream run at
+The concurrent CSGRS curve conversion edit left the broader downstream run at
 389/390; its sole curved-region failure is outside this subdivision change.
 
 ## 2026-07-27: direct rational predicate evidence APIs
@@ -1180,14 +1180,11 @@ intersection, 2.274/2.291 ms for difference, and 2.413/2.434 ms for symmetric
 difference. The larger YeahRight immediate triangle-soup union measured
 10.302/10.356 ms, a change within Criterion's noise threshold.
 
-## 2026-07-28: original full-resolution mesh gate
+## 2026-07-28: original full-resolution mesh measurements
 
-The original YeahRight control mesh is now committed directly to Hypermesh's
-competitive corpus and used in every competitive run. It contains 5,687
-vertices and 5,845 arbitrary source polygons, fan-triangulating to 11,894
-triangles with genus 131. An always-on test validates the raw closure,
-finiteness, nondegeneracy, exact carrier counts, and Hypermesh closed-PWN input
-contract.
+This historical run used the original YeahRight control mesh as an always-on
+competitive input. The corpus has since moved to the opt-in benchmark download
+described in `README.md`; the measurements below are retained for comparison.
 
 Fresh serialized Criterion import measurements were:
 

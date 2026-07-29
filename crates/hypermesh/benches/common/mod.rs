@@ -1,4 +1,4 @@
-use hypermesh::{InputMesh, Point3, Real, Triangle};
+use hypermesh::{Point3, Real, Triangle, TriangleMesh};
 use std::collections::BTreeMap;
 
 pub fn r(value: i32) -> Real {
@@ -30,7 +30,7 @@ fn cube_triangles() -> Vec<Triangle> {
     ]
 }
 
-pub fn cube(center: [Real; 3], half_extent: Real) -> InputMesh {
+pub fn cube(center: [Real; 3], half_extent: Real) -> TriangleMesh {
     let min = [
         &center[0] - &half_extent,
         &center[1] - &half_extent,
@@ -41,7 +41,7 @@ pub fn cube(center: [Real; 3], half_extent: Real) -> InputMesh {
         &center[1] + &half_extent,
         &center[2] + &half_extent,
     ];
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             p(min[0].clone(), min[1].clone(), min[2].clone()),
             p(max[0].clone(), min[1].clone(), min[2].clone()),
@@ -56,9 +56,9 @@ pub fn cube(center: [Real; 3], half_extent: Real) -> InputMesh {
     )
 }
 
-pub fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
+pub fn octahedron(center: [Real; 3], radius: Real) -> TriangleMesh {
     let [cx, cy, cz] = center;
-    InputMesh::new(
+    TriangleMesh::new(
         vec![
             p(&cx + &radius, cy.clone(), cz.clone()),
             p(&cx - &radius, cy.clone(), cz.clone()),
@@ -80,32 +80,33 @@ pub fn octahedron(center: [Real; 3], radius: Real) -> InputMesh {
     )
 }
 
-pub fn cube_pair() -> [InputMesh; 2] {
+pub fn cube_pair() -> [TriangleMesh; 2] {
     [
         cube([r(0), r(0), r(0)], r(1)),
         cube([q(1, 2), q(1, 2), q(1, 2)], r(1)),
     ]
 }
 
-fn subdivide_triangles(mut mesh: InputMesh, levels: usize) -> InputMesh {
+fn subdivide_triangles(mut mesh: TriangleMesh, levels: usize) -> TriangleMesh {
     for _ in 0..levels {
+        let mut positions = mesh.positions.to_vec();
         let mut edge_midpoints = BTreeMap::new();
         let mut triangles = Vec::with_capacity(mesh.triangles.len() * 4);
-        for triangle in &mesh.triangles {
+        for triangle in mesh.triangles.iter() {
             let [a, b, c] = triangle.indices();
             let mut midpoint = |left: usize, right: usize| {
                 let key = (left.min(right), left.max(right));
                 *edge_midpoints.entry(key).or_insert_with(|| {
-                    let left = &mesh.positions[left];
-                    let right = &mesh.positions[right];
+                    let left = &positions[left];
+                    let right = &positions[right];
                     let two = r(2);
                     let point = Point3::new(
                         ((&left.x + &right.x) / &two).expect("nonzero midpoint divisor"),
                         ((&left.y + &right.y) / &two).expect("nonzero midpoint divisor"),
                         ((&left.z + &right.z) / &two).expect("nonzero midpoint divisor"),
                     );
-                    let index = mesh.positions.len();
-                    mesh.positions.push(point);
+                    let index = positions.len();
+                    positions.push(point);
                     index
                 })
             };
@@ -119,12 +120,12 @@ fn subdivide_triangles(mut mesh: InputMesh, levels: usize) -> InputMesh {
                 Triangle::new(ab, bc, ca),
             ]);
         }
-        mesh.triangles = triangles;
+        mesh = TriangleMesh::new(positions, triangles);
     }
     mesh
 }
 
-pub fn subdivided_cube_pair(levels: usize) -> [InputMesh; 2] {
+pub fn subdivided_cube_pair(levels: usize) -> [TriangleMesh; 2] {
     let [left, right] = cube_pair();
     [
         subdivide_triangles(left, levels),
@@ -132,21 +133,21 @@ pub fn subdivided_cube_pair(levels: usize) -> [InputMesh; 2] {
     ]
 }
 
-pub fn nested_cube_pair() -> [InputMesh; 2] {
+pub fn nested_cube_pair() -> [TriangleMesh; 2] {
     [
         cube([r(0), r(0), r(0)], r(2)),
         cube([r(0), r(0), r(0)], r(1)),
     ]
 }
 
-pub fn octahedron_pair() -> [InputMesh; 2] {
+pub fn octahedron_pair() -> [TriangleMesh; 2] {
     [
         octahedron([r(0), r(0), r(0)], r(3)),
         octahedron([r(1), r(1), r(1)], r(3)),
     ]
 }
 
-pub fn nested_tool_cubes() -> Vec<InputMesh> {
+pub fn nested_tool_cubes() -> Vec<TriangleMesh> {
     let mut meshes = Vec::with_capacity(6);
     meshes.push(cube([r(0), r(0), r(0)], r(8)));
     for x in [-6, -3, 0, 3, 6] {

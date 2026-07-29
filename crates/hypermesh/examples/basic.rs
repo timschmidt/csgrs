@@ -1,11 +1,11 @@
 use hypermesh::{
-    BooleanOp, EmberConfig, InputMesh, Point3, Real, Triangle, boolean_operation,
+    BooleanOp, EmberConfig, Point3, Real, Triangle, TriangleMesh, boolean_operation,
     triangulate_and_resolve_certified,
 };
 
-fn tetrahedron(offset: i64) -> InputMesh {
+fn tetrahedron(offset: i64) -> TriangleMesh {
     let p = |x, y, z| Point3::new(Real::from(x + offset), Real::from(y), Real::from(z));
-    InputMesh::new(
+    TriangleMesh::new(
         vec![p(0, 0, 0), p(2, 0, 0), p(0, 2, 0), p(0, 0, 2)],
         vec![
             Triangle::new(0, 2, 1),

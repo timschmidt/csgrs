@@ -5,8 +5,8 @@ mod support;
 use hypermesh::{
     BooleanOp, EmberConfig, HypermeshError, boolean_difference, boolean_intersection,
     boolean_operation, boolean_operation_with_certified_convex_inputs,
-    boolean_symmetric_difference, boolean_triangle_soup,
-    boolean_triangle_soup_with_certified_convex_inputs, boolean_union, certify_convex_mesh,
+    boolean_symmetric_difference, boolean_mesh,
+    boolean_mesh_with_certified_convex_inputs, boolean_union, certify_convex_mesh,
 };
 use libfuzzer_sys::fuzz_target;
 use support::{
@@ -15,20 +15,20 @@ use support::{
 };
 
 fn require_result(
-    meshes: &[hypermesh::MeshRef<'_>],
+    meshes: &[hypermesh::TriangleMeshRef<'_>],
     operation: BooleanOp,
-) -> hypermesh::TriangleSoup {
+) -> hypermesh::BooleanMesh {
     let result = boolean_operation(meshes, operation, EmberConfig::default())
         .unwrap_or_else(|error| panic!("supported exact Boolean input failed: {error:?}"));
     validate_result(&result, operation, meshes.len())
 }
 
 fn require_soup(
-    meshes: &[hypermesh::MeshRef<'_>],
+    meshes: &[hypermesh::TriangleMeshRef<'_>],
     operation: BooleanOp,
-) -> hypermesh::TriangleSoup {
+) -> hypermesh::BooleanMesh {
     let soup =
-        boolean_triangle_soup(meshes, operation, EmberConfig::default()).unwrap_or_else(|error| {
+        boolean_mesh(meshes, operation, EmberConfig::default()).unwrap_or_else(|error| {
             panic!("supported exact immediate Boolean input failed: {error:?}")
         });
     validate_soup(&soup);
@@ -83,7 +83,7 @@ fuzz_target!(|data: [u8; 48]| {
             )
             .unwrap_or_else(|error| panic!("certified-convex Boolean failed: {error:?}"));
             let certified_soup = validate_result(&certified, op, 2);
-            let immediate = boolean_triangle_soup_with_certified_convex_inputs(
+            let immediate = boolean_mesh_with_certified_convex_inputs(
                 &pair_refs,
                 op,
                 &[true, true],

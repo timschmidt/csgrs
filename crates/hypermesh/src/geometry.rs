@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 
-use hyperlattice::{Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
+use hyperlattice::{Matrix4, Plane3Coefficients, Point3, ProjectivePlane3, Rational, Real};
 
 use crate::error::HypermeshResult;
 pub use crate::predicate::{
@@ -41,6 +41,42 @@ impl Plane {
             _ => panic!("axis must be 0, 1, or 2"),
         };
         Self::new(normal, -value)
+    }
+
+    /// Returns the exact homogeneous reflection across this plane.
+    ///
+    /// For `n · x + d = 0`, reflection is
+    /// `x' = x - 2 (n · x + d) n / (n · n)`. Keeping this operation beside
+    /// Hypermesh's native plane prevents modeling layers from introducing a
+    /// second plane carrier solely to mirror triangle geometry.
+    pub fn reflection_matrix(&self) -> HypermeshResult<Matrix4> {
+        let nx = self.normal.x.clone();
+        let ny = self.normal.y.clone();
+        let nz = self.normal.z.clone();
+        let squared_norm =
+            nx.clone() * nx.clone() + ny.clone() * ny.clone() + nz.clone() * nz.clone();
+        let factor = (Real::from(2_u8) / squared_norm)
+            .map_err(|_| crate::error::HypermeshError::DegeneratePointSet)?;
+        let one = Real::one();
+        let zero = Real::zero();
+        Ok(Matrix4::from_row_major([
+            one.clone() - factor.clone() * nx.clone() * nx.clone(),
+            -factor.clone() * nx.clone() * ny.clone(),
+            -factor.clone() * nx.clone() * nz.clone(),
+            -factor.clone() * self.offset.clone() * nx.clone(),
+            -factor.clone() * ny.clone() * nx.clone(),
+            one.clone() - factor.clone() * ny.clone() * ny.clone(),
+            -factor.clone() * ny.clone() * nz.clone(),
+            -factor.clone() * self.offset.clone() * ny.clone(),
+            -factor.clone() * nz.clone() * nx,
+            -factor.clone() * nz.clone() * ny,
+            one - factor.clone() * nz.clone() * nz.clone(),
+            -factor * self.offset.clone() * nz,
+            zero.clone(),
+            zero.clone(),
+            zero,
+            Real::one(),
+        ]))
     }
 
     /// Constructs the oriented plane through three affine points.
@@ -174,6 +210,37 @@ impl Plane {
         )
     }
 
+    /// Removes a positive projective scale from an exact plane.
+    ///
+    /// Planes reconstructed around derived intersection coordinates can share
+    /// a very large rational factor across all four coefficients. Dividing by
+    /// one nonzero normal coefficient retains orientation while preventing
+    /// that irrelevant scale from entering later predicates.
+    pub(crate) fn normalized_projective_scale(self) -> Self {
+        let Some(scale) = [&self.normal.x, &self.normal.y, &self.normal.z]
+            .into_iter()
+            .find(|coefficient| {
+                coefficient
+                    .exact_rational_ref()
+                    .is_some_and(|value| !value.is_zero())
+            })
+            .map(|coefficient| coefficient.abs())
+        else {
+            return self;
+        };
+        let divide = |coefficient: Real| {
+            (coefficient / &scale).expect("a selected plane coefficient is nonzero")
+        };
+        Self::new(
+            Point3::new(
+                divide(self.normal.x),
+                divide(self.normal.y),
+                divide(self.normal.z),
+            ),
+            divide(self.offset),
+        )
+    }
+
     /// Returns the exact expression `normal . point + offset`.
     pub fn expression_at_point(&self, point: &Point3) -> Real {
         Real::signed_product_sum(
@@ -187,11 +254,17 @@ impl Plane {
         )
     }
 
-    /// Returns true when the normal is structurally known non-zero.
+    /// Returns true when the configured exact predicate policy certifies a
+    /// non-zero normal component.
     pub fn is_valid(&self) -> bool {
-        !(self.normal.x.definitely_zero()
-            && self.normal.y.definitely_zero()
-            && self.normal.z.definitely_zero())
+        [&self.normal.x, &self.normal.y, &self.normal.z]
+            .into_iter()
+            .any(|component| {
+                matches!(
+                    crate::predicate::classify_real(component),
+                    Ok(Classification::Negative | Classification::Positive)
+                )
+            })
     }
 
     /// Converts to hyperlattice's projective plane carrier.
@@ -207,7 +280,10 @@ impl Plane {
                 .iter()
                 .enumerate()
                 .all(|(i, value)| i == axis || value.definitely_zero())
-                && !components[axis].definitely_zero()
+                && matches!(
+                    crate::predicate::classify_real(components[axis]),
+                    Ok(Classification::Negative | Classification::Positive)
+                )
             {
                 let value = -((&self.offset / components[axis]).ok()?);
                 return Some((axis, value));

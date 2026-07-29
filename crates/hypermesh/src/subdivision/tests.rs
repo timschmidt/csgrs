@@ -3,10 +3,10 @@ use crate::geometry::Plane;
 use crate::intersection::OverlapInfo;
 use crate::mesh::{OutputVertex, PolygonSoup, polygon_soup};
 use crate::operations::{EmberConfig, boolean_operation};
-use crate::output::{BooleanResult, TriangleSoup, triangulate_and_resolve_certified};
+use crate::output::{BooleanMesh, BooleanResult, triangulate_and_resolve_certified};
 use crate::polygon::convex_triangle;
 use crate::winding::BooleanOp;
-use crate::{InputMesh, Triangle};
+use crate::{Triangle, TriangleMesh};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -135,8 +135,8 @@ fn axis_defs(point: &Point3) -> Vec<[Plane; 3]> {
     vec![axis_plane_definition(point)]
 }
 
-fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> InputMesh {
-    InputMesh::new(
+fn tetra_from_face_and_apex(a: Point3, b: Point3, c: Point3, apex: Point3) -> TriangleMesh {
+    TriangleMesh::new(
         vec![a, b, c, apex],
         vec![
             Triangle::new(0, 2, 1),
@@ -609,7 +609,7 @@ fn vertex_key(vertex: &OutputVertex) -> [String; 3] {
     ]
 }
 
-fn sorted_triangle_key(soup: &TriangleSoup, triangle: [usize; 3]) -> [[String; 3]; 3] {
+fn sorted_triangle_key(soup: &BooleanMesh, triangle: [usize; 3]) -> [[String; 3]; 3] {
     let mut keys = [
         vertex_key(&soup.vertices[triangle[0]]),
         vertex_key(&soup.vertices[triangle[1]]),
@@ -619,7 +619,7 @@ fn sorted_triangle_key(soup: &TriangleSoup, triangle: [usize; 3]) -> [[String; 3
     keys
 }
 
-fn assert_same_shape(left: &TriangleSoup, right: &TriangleSoup) {
+fn assert_same_shape(left: &BooleanMesh, right: &BooleanMesh) {
     let left_faces = left
         .triangles
         .iter()

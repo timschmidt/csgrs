@@ -1,6 +1,8 @@
 //! Pairwise convex polygon intersection primitives.
 
-use hyperlattice::{Point3, intersect_homogeneous_line_plane, intersect_two_planes};
+use hyperlattice::{
+    HomogeneousPoint3, Point3, intersect_homogeneous_line_plane, intersect_two_planes,
+};
 
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
@@ -369,13 +371,13 @@ fn projective_edge_plane_intersection_in_polygon(
             Ok(Classification::Positive) => return Ok(false),
             Ok(Classification::Negative | Classification::On) => {}
             Err(HypermeshError::UnknownClassification) => {
-                if four_plane_determinant(
-                    &edge_polygon.support,
-                    edge_plane,
-                    &plane_polygon.support,
-                    edge,
-                )
-                .definitely_zero()
+                if homogeneous_point_certifiably_nonzero(&point)
+                    && crate::predicate::classify_real(&four_plane_determinant(
+                        &edge_polygon.support,
+                        edge_plane,
+                        &plane_polygon.support,
+                        edge,
+                    )) == Ok(Classification::On)
                 {
                     continue;
                 }
@@ -389,6 +391,17 @@ fn projective_edge_plane_intersection_in_polygon(
     } else {
         Ok(true)
     }
+}
+
+fn homogeneous_point_certifiably_nonzero(point: &HomogeneousPoint3) -> bool {
+    [&point.x, &point.y, &point.z, &point.w]
+        .into_iter()
+        .any(|coordinate| {
+            matches!(
+                crate::predicate::classify_real(coordinate),
+                Ok(Classification::Negative | Classification::Positive)
+            )
+        })
 }
 
 pub(crate) fn four_plane_determinant(

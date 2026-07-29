@@ -18,7 +18,7 @@ fn readme_quickstart_matches_the_runnable_example() {
 }
 
 #[test]
-fn readme_release_metadata_matches_the_manifest_and_fixture() {
+fn readme_release_metadata_matches_the_manifest() {
     assert!(
         README.contains(env!("CARGO_PKG_VERSION")),
         "README must show the current package version"
@@ -28,7 +28,7 @@ fn readme_release_metadata_matches_the_manifest_and_fixture() {
         "## Quick start",
         "## API guide",
         "## Features",
-        "## Original full-resolution hard fixture",
+        "## Optional benchmark fixture",
         "## References",
         "## Acknowledgements",
         "## License and contributing",
@@ -38,7 +38,5 @@ fn readme_release_metadata_matches_the_manifest_and_fixture() {
             "missing README section: {heading}"
         );
     }
-    assert!(README.contains("11,894"));
-    assert!(README.contains("full_resolution_yeahright_reaches_and_validates_in_hypermesh"));
-    assert!(README.contains("full_resolution_yeahright_rotated_intersection_remains_a_hard_test"));
+    assert!(README.contains("YEAHRIGHT_BENCH=1"));
 }

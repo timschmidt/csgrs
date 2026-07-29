@@ -9,8 +9,9 @@ The Boolean suite is split by purpose:
   subdivided surfaces, disconnected components, and variadic inputs to
   succeed. It checks every operation, polygon and immediate output paths,
   certified-convex dispatch, convenience wrappers, bounded-depth behavior,
-  closure, winding evidence, operand-order invariance, and duplicate-input
-  identities.
+  closure, winding evidence, operand-order invariance, duplicate-input
+  identities, and the absence of degenerate or exact duplicate materialized
+  triangles (including independently indexed duplicates).
 - `boolean_box_oracle` checks one through four boxes against an independent
   exact cell-decomposition volume oracle. It exercises general polygon,
   immediate triangle-soup, and certified-convex APIs.
@@ -50,9 +51,10 @@ The Boolean suite is split by purpose:
   transformed cases exercise every triangulated API and require full closure.
   Default Hypermesh builds do not enable the approximate campaign policy.
 
-Every successful Boolean result is replayed through the public polygon-closure
-and certified-triangulation checks. Errors from supported default-config exact
-inputs are treated as fuzz failures rather than discarded.
+Every successful Boolean result is replayed through the public polygon-closure,
+certified-triangulation, and exact triangle-quality checks. Errors from
+supported default-config exact inputs are treated as fuzz failures rather than
+discarded.
 
 Compile every target:
 
