@@ -139,9 +139,9 @@ pub use predicates::interval::{
 };
 pub use predicates::nd::{affine_independent_d, insphere_d, orient_d};
 pub use predicates::order::{
-    classify_real_sign, compare_point2_lexicographic, compare_point3_lexicographic, compare_reals,
-    compare_reals_with_policy, point2_equal, point3_equal, real_clamp, real_ge, real_le, real_max,
-    real_min,
+    classify_real_sign, classify_real_sign_with_policy, compare_point2_lexicographic,
+    compare_point3_lexicographic, compare_reals, compare_reals_with_policy, point2_equal,
+    point3_equal, real_clamp, real_ge, real_le, real_max, real_min,
 };
 pub use predicates::ring::{
     Ring2Facts, RingEvenOddEdgeReport, RingEvenOddReport, RingEvenOddValidationError,

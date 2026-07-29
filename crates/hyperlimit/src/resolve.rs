@@ -14,7 +14,7 @@ use hyperreal::{CertifiedRealSign, Real, RealSignCertificate, ZeroKnowledge};
 /// certify signs that are already exposed by the computed Real value.
 pub(crate) fn resolve_real_sign(
     value: &Real,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
     filter: impl FnOnce() -> Option<PredicateOutcome<Sign>>,
     exact: impl FnOnce() -> Option<Sign>,
     unknown_need: RefinementNeed,
@@ -49,6 +49,15 @@ pub(crate) fn resolve_real_sign(
         return outcome;
     }
 
+    if let Some(outcome) = approximate_real_sign(value, policy) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "resolve_real_sign",
+            "policy-final-approximation"
+        );
+        return outcome;
+    }
+
     crate::trace_dispatch!("hyperlimit", "resolve_real_sign", "unknown");
     PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
 }
@@ -60,6 +69,7 @@ pub(crate) fn resolve_real_sign(
 /// avoiding the duplicate structural-facts pass in the general resolver.
 pub(crate) fn resolve_real_sign_direct(
     value: &Real,
+    policy: PredicatePolicy,
     unknown_need: RefinementNeed,
 ) -> PredicateOutcome<Sign> {
     match value.certified_sign_until(PredicatePolicy::MAX_REFINEMENT_PRECISION) {
@@ -85,8 +95,10 @@ pub(crate) fn resolve_real_sign_direct(
             PredicateOutcome::decided(map_real_sign(sign), Certainty::Exact, stage)
         }
         CertifiedRealSign::Unknown { .. } => {
-            crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "unknown");
-            PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
+            approximate_real_sign(value, policy).unwrap_or_else(|| {
+                crate::trace_dispatch!("hyperlimit", "resolve_real_sign_direct", "unknown");
+                PredicateOutcome::unknown(unknown_need, Escalation::Undecided)
+            })
         }
     }
 }
@@ -148,6 +160,25 @@ fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
             None
         }
     }
+}
+
+fn approximate_real_sign(value: &Real, policy: PredicatePolicy) -> Option<PredicateOutcome<Sign>> {
+    let precision = policy.final_approximation_precision()?;
+    let [lower, upper] = value.certified_dyadic_interval(precision)?;
+    let zero = hyperreal::Rational::zero();
+    let sign = if upper < zero {
+        Sign::Negative
+    } else if lower > zero {
+        Sign::Positive
+    } else {
+        Sign::Zero
+    };
+    crate::trace_dispatch!("hyperlimit", "approximate_real_sign", "decided");
+    Some(PredicateOutcome::decided(
+        sign,
+        Certainty::Approximate,
+        Escalation::Refined,
+    ))
 }
 
 /// Try to decide the sign of a sum of signed terms using structural zero/sign
@@ -287,6 +318,31 @@ mod tests {
                 RefinementNeed::ExactArithmetic,
             ),
             PredicateOutcome::decided(Sign::Positive, Certainty::Exact, Escalation::Exact)
+        );
+    }
+
+    #[test]
+    fn terminal_approximation_is_policy_controlled_and_reports_its_certainty() {
+        // The two expression trees are mathematically equal but intentionally
+        // arranged differently, so bounded sign certification cannot prove
+        // the zero identity from structural facts alone.
+        let value = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+
+        assert!(matches!(
+            resolve_real_sign_direct(
+                &value,
+                PredicatePolicy::STRICT,
+                RefinementNeed::RealRefinement,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert_eq!(
+            resolve_real_sign_direct(
+                &value,
+                PredicatePolicy::APPROXIMATE_512,
+                RefinementNeed::RealRefinement,
+            ),
+            PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Refined,)
         );
     }
 }

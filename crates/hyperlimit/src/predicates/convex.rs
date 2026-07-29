@@ -166,6 +166,7 @@ pub(crate) fn classify_point_convex_planes3_with_policy(
 
 fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     match (left, right) {
+        (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
         (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
         _ => Certainty::Exact,
     }

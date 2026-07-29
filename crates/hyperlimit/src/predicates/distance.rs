@@ -883,6 +883,8 @@ fn max_distance_certainty(
     right: crate::predicate::Certainty,
 ) -> crate::predicate::Certainty {
     match (left, right) {
+        (crate::predicate::Certainty::Approximate, _)
+        | (_, crate::predicate::Certainty::Approximate) => crate::predicate::Certainty::Approximate,
         (crate::predicate::Certainty::Filtered, _) | (_, crate::predicate::Certainty::Filtered) => {
             crate::predicate::Certainty::Filtered
         }

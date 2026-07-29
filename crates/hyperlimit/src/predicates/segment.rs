@@ -1119,6 +1119,7 @@ fn certainty_rank(certainty: Certainty) -> u8 {
     match certainty {
         Certainty::Exact => 0,
         Certainty::Filtered => 1,
+        Certainty::Approximate => 2,
     }
 }
 

@@ -1,4 +1,4 @@
-//! Predicate result states and strict escalation metadata.
+//! Predicate result states and centralized escalation metadata.
 
 /// A concrete sign.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -29,6 +29,8 @@ pub enum Certainty {
     Exact,
     /// The result follows from conservative structural Real facts.
     Filtered,
+    /// The result follows from a policy-authorized terminal approximation.
+    Approximate,
 }
 
 /// What a Real value or predicate currently knows about a sign.
@@ -209,20 +211,42 @@ pub enum RefinementNeed {
     Unsupported,
 }
 
-/// Strict predicate escalation policy shared with exact downstream algorithms.
+/// Predicate escalation policy shared with downstream geometry algorithms.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PredicatePolicy;
+pub struct PredicatePolicy {
+    final_approximation_precision: Option<i32>,
+}
 
 impl PredicatePolicy {
-    /// Conservative default: topology is decided by exact/refined paths.
-    pub const STRICT: Self = Self;
+    /// Topology is decided only by exact or certified-refinement paths.
+    pub const STRICT: Self = Self {
+        final_approximation_precision: None,
+    };
+
+    /// Permit one terminal 512-bit approximation after certification is
+    /// exhausted.
+    pub const APPROXIMATE_512: Self = Self {
+        final_approximation_precision: Some(-512),
+    };
 
     /// Lowest binary precision Real refinement may request.
     pub const MAX_REFINEMENT_PRECISION: i32 = -512;
+
+    /// Terminal approximation precision, when one is authorized.
+    pub const fn final_approximation_precision(self) -> Option<i32> {
+        self.final_approximation_precision
+    }
 }
 
 impl Default for PredicatePolicy {
     fn default() -> Self {
-        Self::STRICT
+        Self::APPROXIMATE_512
     }
 }
+
+/// Temporary workspace-wide predicate policy.
+///
+/// Existing call sites use this value directly. Keeping it centralized makes
+/// returning to [`PredicatePolicy::STRICT`] a one-line policy change.
+#[allow(non_upper_case_globals)]
+pub const PredicatePolicy: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;

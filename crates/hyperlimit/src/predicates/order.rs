@@ -19,11 +19,11 @@ pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
 }
 
 /// Decide the sign of one Real value with an explicit predicate policy.
-pub(crate) fn classify_real_sign_with_policy(
+pub fn classify_real_sign_with_policy(
     value: &Real,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
-    resolve_real_sign_direct(value, RefinementNeed::RealRefinement)
+    resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
 /// Compare two Real values by deciding the sign of `left - right`.
@@ -42,7 +42,7 @@ pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
 pub fn compare_reals_with_policy(
     left: &Real,
     right: &Real,
-    _policy: PredicatePolicy,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
     if let (Some(left), Some(right)) = (left.exact_rational_ref(), right.exact_rational_ref()) {
         crate::trace_dispatch!("hyperlimit", "compare_reals", "exact-rational");
@@ -57,7 +57,7 @@ pub fn compare_reals_with_policy(
     crate::trace_dispatch!("hyperlimit", "compare_reals", "difference-sign");
     let difference = sub_ref(left, right);
     map_outcome(
-        resolve_real_sign_direct(&difference, RefinementNeed::RealRefinement),
+        resolve_real_sign_direct(&difference, policy, RefinementNeed::RealRefinement),
         ordering_from_sign,
     )
 }
@@ -372,6 +372,7 @@ fn certainty_rank(certainty: Certainty) -> u8 {
     match certainty {
         Certainty::Exact => 0,
         Certainty::Filtered => 1,
+        Certainty::Approximate => 2,
     }
 }
 
