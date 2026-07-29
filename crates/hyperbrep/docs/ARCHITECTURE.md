@@ -233,6 +233,25 @@ witness only after the complete `CurvePath2` outer/hole classifier proves it
 interior. The corresponding exact surface image is then classified by the
 opposite solid. Boundaryless carriers use canonical parameters derived from
 their declared unbounded, closed, periodic, or lower-bounded domains.
+
+Selected-result transfer is likewise all-face. Source-local edge identity is
+preserved independent of curve family. Cross-operand candidates are first
+atomized at every represented exact endpoint and then share one result edge
+only when their endpoints and complete restricted `Curve3` data agree, with an
+exact reversal proof when traversal differs. Endpoint equality alone is used
+only after a carrier has been certified and canonicalized as a line.
+
+Regularization happens before publication, not after approximate sewing. A
+rational Bézier becomes a `Line` only when all weights agree and every control
+is the exact degree-elevated affine control. A rational-Bézier or NURBS tensor
+surface becomes a `Plane` only when a nondegenerate frame can be chosen from
+its controls and every remaining control has exactly zero signed plane value.
+Every affected face pcurve is then rebuilt by exact projection of its spatial
+edge into the new plane frame, and its affine edge correspondence is derived
+from the two exact parameter domains. The normal builder validation and
+untrusted persistence replay see only the regularized geometry; no Boolean
+provenance is trusted.
+
 For tensor carriers, `Surface::iso_curve` derives the complete exact
 homogeneous row or column at any represented constant parameter. The topology
 validator accepts an edge only when its full carrier or represented subcurve is

@@ -78,6 +78,16 @@ pub enum Orientation {
     Reversed,
 }
 
+impl Orientation {
+    /// Returns the opposite surface orientation.
+    pub const fn reversed(self) -> Self {
+        match self {
+            Self::Forward => Self::Reversed,
+            Self::Reversed => Self::Forward,
+        }
+    }
+}
+
 /// Exact relation from a face-local pcurve parameterization to an edge curve.
 ///
 /// A BREP edge has one canonical 3D parameterization while each incident face
@@ -11549,6 +11559,14 @@ impl ModelBuilder {
         }
         Ok(sum)
     }
+
+    pub(crate) fn certify_void_shell_nesting(
+        &self,
+        outer: ShellId,
+        voids: &[ShellId],
+    ) -> Result<(), BuildError> {
+        self.validate_void_shell_nesting(outer, voids)
+    }
 }
 
 fn certified_homothetic_loft_scale(
@@ -12530,7 +12548,7 @@ fn exact_point_order(left: &Point3, right: &Point3) -> Result<std::cmp::Ordering
     }
 }
 
-fn compare_curve3_exact_data(
+pub(crate) fn compare_curve3_exact_data(
     left: &Curve3ExactData,
     right: &Curve3ExactData,
 ) -> Result<std::cmp::Ordering, GeometryError> {

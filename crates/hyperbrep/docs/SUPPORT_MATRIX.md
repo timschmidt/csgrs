@@ -305,20 +305,34 @@ the two oriented material sides. Curved coincident ownership remains the typed
 `FaceBoundaryOwnershipUnsupported` boundary.
 
 `SolidIntersectionGraph::stitch_selected_faces` transfers the selected
-faces into one new arena, deduplicates exact vertices and shared straight
-edges across operands, atomizes partial cross-operand edge overlaps, remaps
-differing exact edge domains, reverses pcurves for difference, finds connected
-components, and publishes only fully revalidated shells. Planar prism-family
-results and arbitrary closed straight-planar outer shells are end-to-end
-supported, including strictly contained inward components republished as
-exact planar void shells. Convex polyhedra use an oriented-half-space fast
-certificate. General concave shells use exact pairwise coincident-region,
-boundary-segment, and transverse-line material checks; contacts without the
-corresponding shared topological edge or vertex produce
-`SelfIntersectingSolidShell`. Outer/void and void/void pairs additionally
-require exact non-contact, strict containment, and non-nesting. Curved-face
-transfer remains `NonPlanarFaceTransferUnsupported`; general curved-shell
-self-intersection certificates remain open.
+faces into one new arena. It preserves source-local edge identity for every
+curve family, atomizes selected edges at every represented exact opposite
+endpoint, and matches cross-operand edges only when endpoints and the complete
+restricted `Curve3` representation agree exactly (up to certified reversal).
+It remaps differing exact edge domains, reverses pcurves for difference, finds
+connected components, and publishes only fully revalidated shells.
+
+Whole-sphere faces and intact analytic/tensor shells now transfer directly;
+disjoint torus unions exercise native circular edges without a planar
+fallback. Transfer regularization also proves when a rational Bézier is an
+affinely parameterized line and when a complete rational-Bézier/NURBS tensor
+control net is planar. Those carriers are replaced by canonical lines and
+planes, with exact projected face pcurves and rebuilt affine parameter
+correspondence. A curved fixed-frame sweep clipped by transverse world planes
+therefore regularizes to and publishes its exact planar cuboid result through
+the same selected-face API.
+
+Planar prism-family results and arbitrary closed straight-planar outer shells
+remain end-to-end supported, including strictly contained inward components
+republished as exact planar void shells. Convex polyhedra use an
+oriented-half-space fast certificate. General concave shells use exact
+pairwise coincident-region, boundary-segment, and transverse-line material
+checks; contacts without the corresponding shared topological edge or vertex
+produce `SelfIntersectingSolidShell`. Outer/void and void/void pairs
+additionally require exact non-contact, strict containment, and non-nesting.
+Selected curved shells outside the retained analytic/sweep/loft certificates,
+or outside an exact canonical reduction to one of them, remain the general
+curved-shell self-intersection boundary.
 
 ## Derived adapters
 

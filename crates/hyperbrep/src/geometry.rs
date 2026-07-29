@@ -457,6 +457,45 @@ impl Curve3 {
         }
     }
 
+    pub(crate) fn canonical_line(&self) -> GeometryResult<Option<Self>> {
+        match &self.data.geometry {
+            CurveGeometry3::Line(_) => Ok(Some(self.clone())),
+            CurveGeometry3::RationalBezier(curve) => {
+                let Some(first_weight) = curve.weights.first() else {
+                    return Ok(None);
+                };
+                for weight in &curve.weights {
+                    if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                        return Ok(None);
+                    }
+                }
+                let start = curve
+                    .control_points
+                    .first()
+                    .expect("validated rational Bézier has controls");
+                let end = curve
+                    .control_points
+                    .last()
+                    .expect("validated rational Bézier has controls");
+                let degree = curve.control_points.len() - 1;
+                if degree == 0 {
+                    return Ok(None);
+                }
+                for (index, point) in curve.control_points.iter().enumerate() {
+                    let parameter = (Real::from(index as u64) / Real::from(degree as u64))
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    if !points_equal(point, &start.lerp(end, &parameter))? {
+                        return Ok(None);
+                    }
+                }
+                Ok(Some(Self::line(start.clone(), end.clone())?))
+            }
+            CurveGeometry3::Nurbs(_)
+            | CurveGeometry3::CircleArc(_)
+            | CurveGeometry3::EllipseArc(_) => Ok(None),
+        }
+    }
+
     /// Returns the exact public parameter domain.
     pub fn domain(&self) -> &ParameterDomain {
         &self.data.domain
@@ -1187,6 +1226,9 @@ enum SurfaceIntersectionPcurveMapping {
     TensorIsoV {
         constant: Real,
     },
+    TensorIsoU {
+        constant: Real,
+    },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -1348,6 +1390,24 @@ impl SurfaceIntersectionPcurve {
         }
     }
 
+    fn tensor_iso(
+        domain: ParameterDomain,
+        constant: Real,
+        profile_axis: TensorAxis,
+        coefficient_scale: Real,
+        coefficient_offset: Real,
+    ) -> Self {
+        Self {
+            domain,
+            source_scale: coefficient_scale,
+            source_offset: coefficient_offset,
+            mapping: match profile_axis {
+                TensorAxis::U => SurfaceIntersectionPcurveMapping::TensorIsoU { constant },
+                TensorAxis::V => SurfaceIntersectionPcurveMapping::TensorIsoV { constant },
+            },
+        }
+    }
+
     /// Returns the pcurve's parameter domain, shared exactly with the spatial
     /// intersection curve.
     pub const fn domain(&self) -> &ParameterDomain {
@@ -1394,6 +1454,9 @@ impl SurfaceIntersectionPcurve {
             }
             SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
                 Ok(Point2::new(source_parameter, constant.clone()))
+            }
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                Ok(Point2::new(constant.clone(), source_parameter))
             }
         }
     }
@@ -1566,6 +1629,13 @@ impl SurfaceIntersectionPcurve {
                 )?))?;
                 materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
             }
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                let curve = orient_curve(Curve2::from(LineSeg2::try_new(
+                    CurvePoint2::new(constant.clone(), ordered_source_start.clone()),
+                    CurvePoint2::new(constant.clone(), ordered_source_end.clone()),
+                )?))?;
+                materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+            }
         }
     }
 
@@ -1634,6 +1704,17 @@ impl SurfaceIntersectionPcurve {
                     curve: Curve2::from(LineSeg2::try_new(
                         CurvePoint2::new(self.domain.start().clone(), constant.clone()),
                         CurvePoint2::new(self.domain.end().clone(), constant.clone()),
+                    )?),
+                    spatial_scale: span,
+                    spatial_offset: self.domain.start().clone(),
+                }]))
+            }
+            SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                let span = self.domain.end() - self.domain.start();
+                Ok(Some(vec![SurfacePcurveClipCarrier {
+                    curve: Curve2::from(LineSeg2::try_new(
+                        CurvePoint2::new(constant.clone(), self.domain.start().clone()),
+                        CurvePoint2::new(constant.clone(), self.domain.end().clone()),
                     )?),
                     spatial_scale: span,
                     spatial_offset: self.domain.start().clone(),
@@ -2044,6 +2125,64 @@ impl Surface {
             SurfaceGeometry::RationalBezier(_) => SurfaceKind::RationalBezier,
             SurfaceGeometry::Nurbs(_) => SurfaceKind::Nurbs,
         }
+    }
+
+    pub(crate) fn canonical_plane(&self) -> GeometryResult<Option<Self>> {
+        let controls = match &self.data.geometry {
+            SurfaceGeometry::Plane(_) => return Ok(Some(self.clone())),
+            SurfaceGeometry::RationalBezier(surface) => {
+                surface.control_points.iter().flatten().collect::<Vec<_>>()
+            }
+            SurfaceGeometry::Nurbs(surface) => {
+                surface.control_points.iter().flatten().collect::<Vec<_>>()
+            }
+            SurfaceGeometry::Sphere(_)
+            | SurfaceGeometry::Cylinder(_)
+            | SurfaceGeometry::Cone(_)
+            | SurfaceGeometry::Torus(_)
+            | SurfaceGeometry::Extrusion(_)
+            | SurfaceGeometry::Revolution(_) => return Ok(None),
+        };
+        let Some(&origin) = controls.first() else {
+            return Ok(None);
+        };
+        let mut u = None;
+        for &point in controls.iter().skip(1) {
+            let candidate = point - origin;
+            if decided_order(compare_reals(&candidate.norm_squared(), &Real::zero()))?
+                == Ordering::Greater
+            {
+                u = Some(candidate);
+                break;
+            }
+        }
+        let Some(u) = u else {
+            return Ok(None);
+        };
+        let mut v = None;
+        for &point in controls.iter().skip(1) {
+            let candidate = point - origin;
+            if decided_order(compare_reals(
+                &u.cross(&candidate).norm_squared(),
+                &Real::zero(),
+            ))? == Ordering::Greater
+            {
+                v = Some(candidate);
+                break;
+            }
+        }
+        let Some(v) = v else {
+            return Ok(None);
+        };
+        let normal = u.cross(&v);
+        for &point in &controls {
+            if decided_order(compare_reals(&normal.dot(&(point - origin)), &Real::zero()))?
+                != Ordering::Equal
+            {
+                return Ok(None);
+            }
+        }
+        Ok(Some(Self::plane(origin.clone(), u, v)?))
     }
 
     /// Extracts one exact tensor-product iso-curve.
@@ -2600,6 +2739,11 @@ impl Surface {
         ) = (&self.data.geometry, &curve.data.geometry)
         {
             return intersect_ellipse_arc_plane(curve, arc, plane);
+        }
+        if let (SurfaceGeometry::Plane(plane), CurveGeometry3::RationalBezier(bezier)) =
+            (&self.data.geometry, &curve.data.geometry)
+        {
+            return intersect_rational_bezier_plane(curve, bezier, plane);
         }
         if let (SurfaceGeometry::Sphere(sphere), CurveGeometry3::CircleArc(arc)) =
             (&self.data.geometry, &curve.data.geometry)
@@ -3294,7 +3438,7 @@ fn project_point_to_plane_frame(
     ))
 }
 
-fn project_curve_to_plane_frame(
+pub(crate) fn project_curve_to_plane_frame(
     curve: &Curve3,
     origin: &Point3,
     u: &Vector3,
@@ -3873,16 +4017,40 @@ fn intersect_plane_linear_tensor_graph(
         .collect::<Vec<_>>();
     let denominator = normal.dot(&direction);
     if decided_order(compare_reals(&denominator, &Real::zero()))? == Ordering::Equal {
-        let orders = values
-            .iter()
-            .map(|value| decided_order(compare_reals(value, &Real::zero())))
-            .collect::<GeometryResult<Vec<_>>>()?;
-        if orders.iter().all(|order| *order == Ordering::Greater)
-            || orders.iter().all(|order| *order == Ordering::Less)
-        {
+        if curve_is_strictly_on_one_plane_side(&profile, &signed_plane_value)? {
             return Ok(SurfaceSurfaceIntersection::None);
         }
-        return Err(GeometryError::UnsupportedIntersection);
+        let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
+        return match plane_surface.intersect_curve(&profile)? {
+            CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
+            CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+                Err(GeometryError::UnsupportedIntersection)
+            }
+            CurveSurfaceIntersection::Points(points) => {
+                let mut curves = points
+                    .into_iter()
+                    .map(|point| {
+                        let curve =
+                            Curve3::line(point.point.clone(), point.point + direction.clone())?;
+                        Ok(SurfaceIntersectionCurve::new(
+                            curve.clone(),
+                            SurfaceIntersectionPcurve::plane_projection(curve.clone(), plane),
+                            SurfaceIntersectionPcurve::tensor_iso(
+                                curve.domain().clone(),
+                                point.parameter,
+                                profile_axis,
+                                coefficient_scale.clone(),
+                                coefficient_offset.clone(),
+                            ),
+                        ))
+                    })
+                    .collect::<GeometryResult<Vec<_>>>()?;
+                Ok(match curves.as_mut_slice() {
+                    [curve] => SurfaceSurfaceIntersection::Curve(Box::new(curve.clone())),
+                    _ => SurfaceSurfaceIntersection::Curves(curves),
+                })
+            }
+        };
     }
 
     let coefficients = values
@@ -3935,6 +4103,48 @@ fn intersect_plane_linear_tensor_graph(
         &coefficient_offset,
         &(&coefficient_offset + coefficient_scale),
     )
+}
+
+fn curve_is_strictly_on_one_plane_side(
+    curve: &Curve3,
+    signed_plane_value: &impl Fn(&Point3) -> Real,
+) -> GeometryResult<bool> {
+    let controls_are_strictly_one_sided = |controls: &[Point3]| -> GeometryResult<bool> {
+        let orders = controls
+            .iter()
+            .map(|point| decided_order(compare_reals(&signed_plane_value(point), &Real::zero())))
+            .collect::<GeometryResult<Vec<_>>>()?;
+        let endpoints_are = |side| orders.first() == Some(&side) && orders.last() == Some(&side);
+        Ok((endpoints_are(Ordering::Greater)
+            && orders
+                .iter()
+                .all(|order| matches!(order, Ordering::Greater | Ordering::Equal)))
+            || (endpoints_are(Ordering::Less)
+                && orders
+                    .iter()
+                    .all(|order| matches!(order, Ordering::Less | Ordering::Equal))))
+    };
+
+    match &curve.data.geometry {
+        CurveGeometry3::Line(line) => {
+            controls_are_strictly_one_sided(&[line.start.clone(), line.end.clone()])
+        }
+        CurveGeometry3::RationalBezier(curve) => {
+            controls_are_strictly_one_sided(&curve.control_points)
+        }
+        CurveGeometry3::Nurbs(curve) => {
+            for (span, _) in decompose_nurbs_into_bezier_segments(curve)? {
+                let CurveGeometry3::RationalBezier(span) = &span.data.geometry else {
+                    unreachable!("NURBS decomposition produces rational Bézier spans");
+                };
+                if !controls_are_strictly_one_sided(&span.control_points)? {
+                    return Ok(false);
+                }
+            }
+            Ok(true)
+        }
+        CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(false),
+    }
 }
 
 fn clip_linear_tensor_section(
@@ -4572,6 +4782,34 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
                 (second, IntersectionMultiplicity::Simple),
             ]))
         }
+    }
+}
+
+fn intersect_rational_bezier_plane(
+    curve: &Curve3,
+    bezier: &RationalBezier3,
+    plane: &PlaneSurface,
+) -> GeometryResult<CurveSurfaceIntersection> {
+    let normal = plane.u.cross(&plane.v);
+    let coefficients = bezier
+        .control_points
+        .iter()
+        .zip(&bezier.weights)
+        .map(|(point, weight)| weight * normal.dot(&(point - &plane.origin)))
+        .collect::<Vec<_>>();
+    let roots = match coefficients.as_slice() {
+        [start, end] => quadratic_roots(Real::zero(), end - start, start.clone())?,
+        [start, middle, end] => quadratic_roots(
+            start - Real::from(2) * middle + end,
+            Real::from(2) * (middle - start),
+            start.clone(),
+        )?,
+        _ => return Err(GeometryError::UnsupportedIntersection),
+    };
+    match roots {
+        QuadraticRoots::None => Ok(CurveSurfaceIntersection::None),
+        QuadraticRoots::All => Ok(CurveSurfaceIntersection::Contained),
+        QuadraticRoots::Isolated(roots) => isolated_line_parameters(curve, roots),
     }
 }
 
@@ -6655,10 +6893,18 @@ mod tests {
         );
 
         let transverse = Surface::plane(p(1, 0, 0), Vector3::y(), Vector3::z()).unwrap();
-        assert_eq!(
-            rational.intersect_surface(&transverse).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        let SurfaceSurfaceIntersection::Curve(section) =
+            rational.intersect_surface(&transverse).unwrap()
+        else {
+            panic!("a represented rational-profile plane root must lift to a tensor iso-curve");
+        };
+        let parameter = q(1, 2);
+        let tensor_parameter = section.first_pcurve().point_at(&parameter).unwrap();
+        let plane_parameter = section.second_pcurve().point_at(&parameter).unwrap();
+        let point = section.curve().point_at(&parameter).unwrap();
+        assert_points_equal(&point, &rational.point_at(&tensor_parameter).unwrap());
+        assert_points_equal(&point, &transverse.point_at(&plane_parameter).unwrap());
+        assert_eq!(tensor_parameter, Point2::new(q(1, 2), q(1, 2)));
     }
 
     #[test]

@@ -360,10 +360,10 @@ pub enum BooleanError {
         /// Face that cannot be transferred soundly.
         face: FaceId,
     },
-    /// Selected-face stitching encountered a nonplanar face.
-    NonPlanarFaceTransferUnsupported {
-        /// Face outside the planar transfer kernel.
-        face: FaceId,
+    /// A closed selected shell has no certified orientation witness.
+    SelectedShellOrientationUnsupported {
+        /// Shell whose outer/void role could not be certified.
+        shell: ShellId,
     },
     /// A selected inward shell is not strictly contained by one outer component.
     UncontainedSelectedVoid {
@@ -437,9 +437,10 @@ impl fmt::Display for BooleanError {
             Self::SelectedFaceUnresolved { face } => {
                 write!(formatter, "selected face {face:?} has unresolved ownership")
             }
-            Self::NonPlanarFaceTransferUnsupported { face } => {
-                write!(formatter, "selected face {face:?} is not planar")
-            }
+            Self::SelectedShellOrientationUnsupported { shell } => write!(
+                formatter,
+                "selected shell {shell:?} has no certified outer/void orientation"
+            ),
             Self::UncontainedSelectedVoid { shell } => {
                 write!(
                     formatter,
@@ -635,8 +636,10 @@ fn partition_graph_faces(
             }
             FacePairTrim::Unresolved(reason) => return Err(BooleanError::Unresolved(*reason)),
             FacePairTrim::NotAvailable | FacePairTrim::CompleteCarrier => match &pair.relation {
-                FacePairRelation::Unsupported
-                | FacePairRelation::Exact(
+                FacePairRelation::Unsupported => {
+                    return Err(BooleanError::FacePartitionUnsupported { face });
+                }
+                FacePairRelation::Exact(
                     SurfaceSurfaceIntersection::None | SurfaceSurfaceIntersection::Point(_),
                 ) => {}
                 FacePairRelation::Exact(_) => {
@@ -1190,14 +1193,16 @@ struct StitchedEdge {
     id: crate::EdgeId,
     start: Point3,
     end: Point3,
-    kind: crate::Curve3Kind,
+    curve: Curve3,
     domain: crate::ParameterDomain,
+    is_first: bool,
     cross_matchable: bool,
 }
 
 struct StitchedFace {
     id: FaceId,
     edges: Vec<crate::EdgeId>,
+    source_outer_after_reversal: bool,
 }
 
 fn stitch_graph_faces(
@@ -1206,30 +1211,12 @@ fn stitch_graph_faces(
 ) -> Result<BooleanResult, BooleanError> {
     let mut first = graph.select_first_faces(operation)?;
     let mut second = graph.select_second_faces(operation)?;
-    for selection in [&first, &second] {
-        if let Some(face) = selection.faces.iter().find(|face| {
-            selection
-                .model
-                .surface(
-                    selection
-                        .model
-                        .face(face.face)
-                        .expect("validated selected face")
-                        .surface(),
-                )
-                .expect("validated selected surface")
-                .kind()
-                != crate::SurfaceKind::Plane
-        }) {
-            return Err(BooleanError::NonPlanarFaceTransferUnsupported { face: face.face });
-        }
-    }
-    let mut atomic_points = selected_planar_edge_endpoints(&first)?;
-    for point in selected_planar_edge_endpoints(&second)? {
+    let mut atomic_points = selected_edge_endpoints(&first)?;
+    for point in selected_edge_endpoints(&second)? {
         push_unique_point(&mut atomic_points, point)?;
     }
-    atomize_selected_planar_edges(&mut first, &atomic_points)?;
-    atomize_selected_planar_edges(&mut second, &atomic_points)?;
+    atomize_selected_edges(&mut first, &atomic_points)?;
+    atomize_selected_edges(&mut second, &atomic_points)?;
     let mut selected_edge_uses = selected_edge_use_counts(&first, true)?;
     selected_edge_uses.extend(selected_edge_use_counts(&second, false)?);
     for selection in [&first, &second] {
@@ -1261,7 +1248,7 @@ fn stitch_graph_faces(
                     });
                 }
             };
-            faces.push(copy_selected_planar_face(
+            faces.push(copy_selected_face(
                 &selection.model,
                 classified.face,
                 is_first,
@@ -1288,8 +1275,13 @@ fn stitch_graph_faces(
         visited[root] = true;
         let mut pending = vec![root];
         let mut component = Vec::new();
+        let mut source_outer_after_reversal = None;
         while let Some(index) = pending.pop() {
             component.push(faces[index].id);
+            source_outer_after_reversal = Some(
+                source_outer_after_reversal.unwrap_or(false)
+                    || faces[index].source_outer_after_reversal,
+            );
             for candidate in 0..faces.len() {
                 if !visited[candidate]
                     && faces[index]
@@ -1312,26 +1304,35 @@ fn stitch_graph_faces(
         )? {
             Ordering::Greater => outer_shells.push(shell),
             Ordering::Less => void_shells.push(shell),
-            Ordering::Equal => {
-                return Err(BooleanError::Construction(ConstructionError::Build(
-                    crate::BuildError::DegenerateShellVolume(shell),
-                )));
-            }
+            Ordering::Equal => match source_outer_after_reversal {
+                Some(true) => outer_shells.push(shell),
+                Some(false) => void_shells.push(shell),
+                None => {
+                    return Err(BooleanError::SelectedShellOrientationUnsupported { shell });
+                }
+            },
         }
     }
     let mut assigned_voids = vec![Vec::new(); outer_shells.len()];
     for void_shell in void_shells {
-        let representative = builder
-            .shell_representative_point(void_shell)
-            .map_err(ConstructionError::from)?;
         let mut container = None;
         for (index, outer_shell) in outer_shells.iter().enumerate() {
-            if builder
-                .classify_point_against_planar_shell(*outer_shell, &representative)
-                .map_err(ConstructionError::from)?
-                == SolidPointLocation::Inside
-                && container.replace(index).is_some()
-            {
+            let contains = match builder.shell_representative_point(void_shell) {
+                Ok(representative) => match builder
+                    .classify_point_against_planar_shell(*outer_shell, &representative)
+                {
+                    Ok(SolidPointLocation::Inside) => true,
+                    Ok(_) => false,
+                    Err(_) => builder
+                        .certify_void_shell_nesting(*outer_shell, &[void_shell])
+                        .is_ok(),
+                },
+                Err(crate::BuildError::EmptyShell) => builder
+                    .certify_void_shell_nesting(*outer_shell, &[void_shell])
+                    .is_ok(),
+                Err(error) => return Err(ConstructionError::from(error).into()),
+            };
+            if contains && container.replace(index).is_some() {
                 return Err(BooleanError::AmbiguousSelectedVoid { shell: void_shell });
             }
         }
@@ -1339,6 +1340,11 @@ fn stitch_graph_faces(
             return Err(BooleanError::UncontainedSelectedVoid { shell: void_shell });
         };
         assigned_voids[container].push(void_shell);
+    }
+    for (outer_shell, voids) in outer_shells.iter().zip(&assigned_voids) {
+        builder
+            .certify_void_shell_nesting(*outer_shell, voids)
+            .map_err(ConstructionError::from)?;
     }
     let mut solids = Vec::with_capacity(outer_shells.len());
     for (outer_shell, voids) in outer_shells.into_iter().zip(assigned_voids) {
@@ -1394,7 +1400,7 @@ fn selected_edge_use_counts(
     Ok(counts)
 }
 
-fn selected_planar_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, BooleanError> {
+fn selected_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, BooleanError> {
     let mut points = Vec::new();
     for classified in &selection.faces {
         if matches!(
@@ -1450,7 +1456,7 @@ fn push_unique_point(points: &mut Vec<Point3>, candidate: Point3) -> Result<(), 
     Ok(())
 }
 
-fn atomize_selected_planar_edges(
+fn atomize_selected_edges(
     selection: &mut FaceSelection,
     points: &[Point3],
 ) -> Result<(), BooleanError> {
@@ -1495,9 +1501,6 @@ fn atomize_selected_planar_edges(
             .model
             .curve(edge.curve())
             .expect("validated selected curve");
-        if curve.kind() != crate::Curve3Kind::Line {
-            continue;
-        }
         let mut cuts = Vec::new();
         for point in points {
             let crate::CurveParameterLocation::Parameters(parameters) =
@@ -1537,7 +1540,7 @@ fn insert_descending_real(values: &mut Vec<Real>, candidate: Real) -> Result<(),
 }
 
 #[allow(clippy::too_many_arguments)]
-fn copy_selected_planar_face(
+fn copy_selected_face(
     model: &Model,
     face_id: FaceId,
     is_first: bool,
@@ -1556,21 +1559,42 @@ fn copy_selected_planar_face(
     let surface = model
         .surface(face.surface())
         .expect("validated selected surface");
-    if surface.kind() != crate::SurfaceKind::Plane {
-        return Err(BooleanError::NonPlanarFaceTransferUnsupported { face: face_id });
-    }
+    let transferred_surface = surface
+        .canonical_plane()?
+        .unwrap_or_else(|| surface.clone());
+    let projected_plane =
+        (transferred_surface.kind() == crate::SurfaceKind::Plane).then_some(&transferred_surface);
     let surface_id = if let Some(surface) = source_surfaces.get(&(is_first, face.surface())) {
         *surface
     } else {
         let copied = builder
-            .surface(surface.clone())
+            .surface(transferred_surface.clone())
             .map_err(ConstructionError::from)?;
         source_surfaces.insert((is_first, face.surface()), copied);
         copied
     };
+    let source_outer_after_reversal = source_face_is_outer_boundary(model, face_id)? != reversed;
+    if face.is_whole_surface() {
+        let id = builder
+            .whole_face(
+                surface_id,
+                if reversed {
+                    face.orientation().reversed()
+                } else {
+                    face.orientation()
+                },
+            )
+            .map_err(ConstructionError::from)?;
+        return Ok(StitchedFace {
+            id,
+            edges: Vec::new(),
+            source_outer_after_reversal,
+        });
+    }
     let outer = copy_selected_wire(
         model,
-        face.outer().expect("planar selected face is trimmed"),
+        face.outer()
+            .expect("selected trimmed face has an outer wire"),
         is_first,
         reversed,
         builder,
@@ -1578,6 +1602,7 @@ fn copy_selected_planar_face(
         edges,
         source_edges,
         selected_edge_uses,
+        projected_plane,
     )?;
     let mut face_edges = outer.1;
     let mut inner = Vec::with_capacity(face.inner().len());
@@ -1592,6 +1617,7 @@ fn copy_selected_planar_face(
             edges,
             source_edges,
             selected_edge_uses,
+            projected_plane,
         )?;
         inner.push(copied.0);
         face_edges.extend(copied.1);
@@ -1599,10 +1625,7 @@ fn copy_selected_planar_face(
     face_edges.sort_unstable();
     face_edges.dedup();
     let orientation = if reversed {
-        match face.orientation() {
-            crate::Orientation::Forward => crate::Orientation::Reversed,
-            crate::Orientation::Reversed => crate::Orientation::Forward,
-        }
+        face.orientation().reversed()
     } else {
         face.orientation()
     };
@@ -1612,7 +1635,21 @@ fn copy_selected_planar_face(
     Ok(StitchedFace {
         id,
         edges: face_edges,
+        source_outer_after_reversal,
     })
+}
+
+fn source_face_is_outer_boundary(model: &Model, face: FaceId) -> Result<bool, BooleanError> {
+    let shell = model
+        .shell_of_face(face)
+        .ok_or(BooleanError::UnsupportedOperand)?;
+    let solid_id = model
+        .solid_of_shell(shell)
+        .ok_or(BooleanError::UnsupportedOperand)?;
+    let solid = model
+        .solid(solid_id)
+        .ok_or(BooleanError::UnsupportedOperand)?;
+    Ok(solid.outer() == shell)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1629,6 +1666,7 @@ fn copy_selected_wire(
         (crate::EdgeId, bool, crate::ParameterDomain),
     >,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
+    projected_plane: Option<&Surface>,
 ) -> Result<(crate::WireId, Vec<crate::EdgeId>), BooleanError> {
     let wire = model.wire(wire_id).expect("validated selected wire");
     let uses = if reversed {
@@ -1656,28 +1694,65 @@ fn copy_selected_wire(
         let source_pcurve = model
             .pcurve(edge_use.pcurve())
             .expect("validated selected pcurve");
-        let pcurve = if reversed {
-            source_pcurve.reversed()?
-        } else {
-            source_pcurve.clone()
-        };
-        let mut correspondence = if reversed {
-            edge_use
-                .parameter_correspondence()
-                .reversed_pcurve(source_pcurve)
-        } else {
-            edge_use.parameter_correspondence().clone()
-        };
         let mut direction = if reversed {
             edge_use.direction().reversed()
         } else {
             edge_use.direction()
         };
-        correspondence =
-            correspondence.remapped_edge(edge.domain(), &mapped_domain, edge_reversed)?;
         if edge_reversed {
             direction = direction.reversed();
         }
+        let projected_curve = if let Some(plane) = projected_plane {
+            let mapped_curve = &stitched_edges
+                .iter()
+                .find(|edge| edge.id == mapped_edge)
+                .expect("every mapped edge has retained transfer geometry")
+                .curve;
+            let origin = plane
+                .plane_origin()
+                .expect("projected transfer target is a plane");
+            let (u, v) = plane
+                .plane_directions()
+                .expect("projected transfer target is a plane");
+            crate::geometry::project_curve_to_plane_frame(mapped_curve, origin, u, v)?
+        } else {
+            None
+        };
+        let (pcurve, correspondence) = if let Some(mut curve) = projected_curve {
+            if direction == crate::Direction::Reversed {
+                curve = curve.reversed().map_err(GeometryError::from)?;
+            }
+            let pcurve = crate::Pcurve::new(curve);
+            let pcurve_start = pcurve.domain_start();
+            let pcurve_end = pcurve.domain_end();
+            let (edge_start, edge_end) = match direction {
+                crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
+                crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
+            };
+            let scale = ((edge_end - edge_start) / (pcurve_end - pcurve_start))
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let offset = edge_start - &scale * pcurve_start;
+            (
+                pcurve,
+                crate::ParameterCorrespondence::affine(scale, offset)
+                    .map_err(ConstructionError::from)?,
+            )
+        } else {
+            let pcurve = if reversed {
+                source_pcurve.reversed()?
+            } else {
+                source_pcurve.clone()
+            };
+            let correspondence = if reversed {
+                edge_use
+                    .parameter_correspondence()
+                    .reversed_pcurve(source_pcurve)
+            } else {
+                edge_use.parameter_correspondence().clone()
+            }
+            .remapped_edge(edge.domain(), &mapped_domain, edge_reversed)?;
+            (pcurve, correspondence)
+        };
         let pcurve = builder.pcurve(pcurve).map_err(ConstructionError::from)?;
         copied_uses.push(
             builder
@@ -1721,19 +1796,26 @@ fn copy_or_match_selected_edge(
         .expect("validated selected end")
         .point();
     let curve = model.curve(edge.curve()).expect("validated selected curve");
+    let restricted_curve = curve.subcurve(edge.domain().start(), edge.domain().end())?;
+    let restricted_curve = restricted_curve
+        .canonical_line()?
+        .unwrap_or(restricted_curve);
+    let restricted_domain = restricted_curve.domain().clone();
     let cross_matchable = selected_edge_uses
         .get(&(is_first, source_edge_id))
         .is_some_and(|uses| *uses == 1);
-    if curve.kind() == crate::Curve3Kind::Line && cross_matchable {
+    if cross_matchable {
         for candidate in stitched_edges.iter() {
-            if candidate.kind != crate::Curve3Kind::Line || !candidate.cross_matchable {
+            if candidate.is_first == is_first || !candidate.cross_matchable {
                 continue;
             }
             let same = points_exactly_equal(start, &candidate.start)?
                 && points_exactly_equal(end, &candidate.end)?;
             let reversed = points_exactly_equal(start, &candidate.end)?
                 && points_exactly_equal(end, &candidate.start)?;
-            if same || reversed {
+            if (same || reversed)
+                && exact_edge_curve_equal(&restricted_curve, &candidate.curve, reversed)?
+            {
                 let mapped = (candidate.id, reversed, candidate.domain.clone());
                 source_edges.insert((is_first, source_edge_id), mapped.clone());
                 return Ok(mapped);
@@ -1743,22 +1825,42 @@ fn copy_or_match_selected_edge(
     let start_id = copy_or_match_vertex(start, builder, vertices)?;
     let end_id = copy_or_match_vertex(end, builder, vertices)?;
     let curve_id = builder
-        .curve(curve.clone())
+        .curve(restricted_curve.clone())
         .map_err(ConstructionError::from)?;
     let id = builder
-        .edge(start_id, end_id, curve_id, edge.domain().clone())
+        .edge(start_id, end_id, curve_id, restricted_domain.clone())
         .map_err(ConstructionError::from)?;
     stitched_edges.push(StitchedEdge {
         id,
         start: start.clone(),
         end: end.clone(),
-        kind: curve.kind(),
-        domain: edge.domain().clone(),
+        curve: restricted_curve,
+        domain: restricted_domain.clone(),
+        is_first,
         cross_matchable,
     });
-    let mapped = (id, false, edge.domain().clone());
+    let mapped = (id, false, restricted_domain);
     source_edges.insert((is_first, source_edge_id), mapped.clone());
     Ok(mapped)
+}
+
+fn exact_edge_curve_equal(
+    candidate: &Curve3,
+    existing: &Curve3,
+    reversed: bool,
+) -> Result<bool, GeometryError> {
+    let candidate = if reversed {
+        candidate.reversed()?
+    } else {
+        candidate.clone()
+    };
+    if candidate.kind() == crate::Curve3Kind::Line && existing.kind() == crate::Curve3Kind::Line {
+        return Ok(true);
+    }
+    Ok(
+        crate::model::compare_curve3_exact_data(&candidate.exact_data(), &existing.exact_data())?
+            == Ordering::Equal,
+    )
 }
 
 fn copy_or_match_vertex(
@@ -4731,6 +4833,69 @@ mod tests {
             selected_json
         );
 
+        let BooleanResult::Solid {
+            model: stitched,
+            solid: stitched_solid,
+        } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the regularized curved sweep/slab intersection must remain one solid");
+        };
+        assert!(stitched.faces().all(|(_, face)| {
+            stitched.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Plane
+        }));
+        assert!(stitched.edges().all(
+            |(_, edge)| stitched.curve(edge.curve()).unwrap().kind() == crate::Curve3Kind::Line
+        ));
+        assert_eq!(
+            compare_reals(
+                &stitched.solid_volume(stitched_solid).unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let stitched_json = stitched.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&stitched_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            stitched_json
+        );
+        let BooleanResult::Solid {
+            model: standard,
+            solid: standard_solid,
+        } = intersection(&sweep, sweep_solid, &slab, slab_solid).unwrap()
+        else {
+            panic!("the standard intersection API must publish the regularized result");
+        };
+        assert_eq!(
+            compare_reals(
+                &standard.solid_volume(standard_solid).unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let (transverse_slab, transverse_slab_solid) =
+            crate::builder::cuboid(p(-10, -10, 1), p(10, 10, 3)).unwrap();
+        let transverse_graph =
+            intersection_graph(&sweep, sweep_solid, &transverse_slab, transverse_slab_solid)
+                .unwrap();
+        assert!(matches!(
+            transverse_graph.select_first_faces(BooleanOperation::Intersection),
+            Err(BooleanError::Topology(TopologyEditError::Validation(report)))
+                if matches!(
+                    report.errors().first(),
+                    Some(crate::BuildError::UnsupportedSolidShell(_))
+                )
+        ));
+
         let mut by_face =
             std::collections::HashMap::<FaceId, Vec<crate::SurfaceIntersectionCurve>>::new();
         for pair in graph.intersections() {
@@ -5209,6 +5374,83 @@ mod tests {
         assert_eq!(
             inner_difference.faces[0].action,
             FaceSelectionAction::KeepReversed
+        );
+
+        for (operation, expected_volume) in [
+            (
+                BooleanOperation::Union,
+                (Real::from(32) * Real::pi() / Real::from(3)).unwrap(),
+            ),
+            (
+                BooleanOperation::Intersection,
+                (Real::from(4) * Real::pi() / Real::from(3)).unwrap(),
+            ),
+            (
+                BooleanOperation::Difference,
+                (Real::from(28) * Real::pi() / Real::from(3)).unwrap(),
+            ),
+        ] {
+            let BooleanResult::Solid { model, solid } =
+                graph.stitch_selected_faces(operation).unwrap()
+            else {
+                panic!("nested spheres have one connected volumetric result");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                Some(Ordering::Equal)
+            );
+            let json = model.to_json().unwrap();
+            assert_eq!(
+                crate::RawModel::from_json(&json)
+                    .unwrap()
+                    .validate()
+                    .unwrap()
+                    .to_json()
+                    .unwrap(),
+                json
+            );
+        }
+    }
+
+    #[test]
+    fn all_face_stitching_transfers_intact_curved_shells_without_planar_fallbacks() {
+        let (first, first_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (second, second_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let second = second
+            .transformed(&crate::Matrix4::affine_translation([
+                Real::from(10),
+                Real::zero(),
+                Real::zero(),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
+        let BooleanResult::Solids { model, solids } = graph
+            .stitch_selected_faces(BooleanOperation::Union)
+            .unwrap()
+        else {
+            panic!("disjoint tori must remain two connected curved solids");
+        };
+        assert_eq!(solids.len(), 2);
+        assert!(model.faces().all(|(_, face)| {
+            model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Torus
+        }));
+        let volume = solids
+            .iter()
+            .map(|solid| model.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&volume, &(Real::from(12) * Real::pi() * Real::pi())).value(),
+            Some(Ordering::Equal)
+        );
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
         );
     }
 

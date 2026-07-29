@@ -162,6 +162,12 @@ The clean-break implementation currently provides:
   analytic, and tensor carriers plus canonical parameter-domain witnesses for
   boundaryless faces; every face receives an operation-aware action or a typed
   ownership error;
+- all-face selected-result transfer through `stitch_selected_faces`, preserving
+  source-local curved edge identity and matching cross-operand edges only by
+  exact restricted `Curve3` evidence. Whole spherical faces and intact curved
+  shells transfer natively; exact affine Bézier lines and coplanar tensor
+  carriers regularize to canonical line/plane geometry with rebuilt projected
+  pcurves before ordinary shell validation;
 - `boolean::intersect_faces` as the same exact carrier-and-trim primitive for
   arbitrary validated faces, including faces in open shells; finite tensor
   iso-curves and plane/extrusion sections therefore do not require fabricated
