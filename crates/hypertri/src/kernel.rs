@@ -109,14 +109,12 @@ impl Kernel for ExactKernel {
             ZeroKnowledge::NonZero | ZeroKnowledge::Unknown => {}
         }
 
-        // Structural-dispatch note: this Real path currently consumes only
-        // sign and zero status. Future predicate kernels can avoid expression
-        // growth by carrying exact-rational kind, dyadic denominator shape, and
-        // Real-local magnitude-bit classes through determinant construction, then
-        // selecting a fraction-free or sparse product-sum path before asking
-        // hyperreal to refine the final sign.
-        if let Some(sign) = value.refine_sign_until(-4096) {
-            return Ok(map_real_sign(sign));
+        if let Some(sign) = hyperlimit::classify_real_sign(value).value() {
+            return Ok(match sign {
+                hyperlimit::Sign::Negative => Sign::Negative,
+                hyperlimit::Sign::Zero => Sign::Zero,
+                hyperlimit::Sign::Positive => Sign::Positive,
+            });
         }
 
         Err(Error::PredicateUndecided {
@@ -181,7 +179,8 @@ where
         return Ok(TriangleLocation::Degenerate);
     }
 
-    if point == a || point == b || point == c {
+    if points_equal::<K>(point, a)? || points_equal::<K>(point, b)? || points_equal::<K>(point, c)?
+    {
         return Ok(TriangleLocation::OnVertex);
     }
 
@@ -200,6 +199,14 @@ where
     } else {
         Ok(TriangleLocation::Inside)
     }
+}
+
+fn points_equal<K>(left: &Point2, right: &Point2) -> Result<bool>
+where
+    K: Kernel,
+{
+    Ok(K::cmp(&left.x, &right.x)? == Ordering::Equal
+        && K::cmp(&left.y, &right.y)? == Ordering::Equal)
 }
 
 fn map_real_sign(sign: RealSign) -> Sign {
@@ -268,6 +275,102 @@ mod tests {
         assert_eq!(
             ExactKernel::incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
             Sign::Negative
+        );
+    }
+
+    #[test]
+    fn exact_kernel_uses_central_terminal_equality_policy() {
+        let left = &Real::pi() + &Real::e();
+        let right = &Real::e() + &Real::pi();
+        assert_ne!(
+            left, right,
+            "the fixture must use distinct Real representations"
+        );
+
+        let left_point = Point2::new(left, Real::zero());
+        let right_point = Point2::new(right, Real::zero());
+        assert_eq!(
+            points_equal::<ExactKernel>(&left_point, &right_point),
+            Ok(true)
+        );
+        assert!(matches!(
+            hyperlimit::classify_real_sign_with_policy(
+                &(&left_point.x - &right_point.x),
+                hyperlimit::PredicatePolicy::STRICT,
+            ),
+            PredicateOutcome::Unknown { .. }
+        ));
+    }
+
+    #[test]
+    fn triangle_vertex_classification_uses_kernel_coordinate_equality() {
+        struct CoordinateEqualityKernel;
+
+        impl Kernel for CoordinateEqualityKernel {
+            fn zero() -> Real {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn from_i64(_value: i64) -> Real {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn add(_left: &Real, _right: &Real) -> Real {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn sub(_left: &Real, _right: &Real) -> Real {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn mul(_left: &Real, _right: &Real) -> Real {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn div(_left: &Real, _right: &Real) -> Result<Real> {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn real_sign(_value: &Real) -> Result<Sign> {
+                unreachable!("arithmetic is not used by this classifier fixture")
+            }
+
+            fn cmp(_left: &Real, _right: &Real) -> Result<Ordering> {
+                Ok(Ordering::Equal)
+            }
+
+            fn orient2(_a: &Point2, _b: &Point2, _c: &Point2) -> Result<Sign> {
+                Ok(Sign::Positive)
+            }
+
+            fn incircle2(_a: &Point2, _b: &Point2, _c: &Point2, _d: &Point2) -> Result<Sign> {
+                unreachable!("in-circle is not used by triangle classification")
+            }
+
+            fn classify_point_triangle(
+                a: &Point2,
+                b: &Point2,
+                c: &Point2,
+                point: &Point2,
+            ) -> Result<TriangleLocation> {
+                classify_point_triangle::<Self>(a, b, c, point)
+            }
+        }
+
+        let a = p(0, 0);
+        let b = p(2, 0);
+        let c = p(0, 2);
+        let representation_distinct_query = p(99, 99);
+        assert_ne!(representation_distinct_query, a);
+        assert_eq!(
+            CoordinateEqualityKernel::classify_point_triangle(
+                &a,
+                &b,
+                &c,
+                &representation_distinct_query,
+            )
+            .unwrap(),
+            TriangleLocation::OnVertex
         );
     }
 }
