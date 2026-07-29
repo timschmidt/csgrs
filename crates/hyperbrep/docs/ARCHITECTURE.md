@@ -226,6 +226,13 @@ interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented
 pcurve contacts and routed by exact `CurvePath2` classification against the
 current descendant regions.
+After partitioning, `select_first_faces` and `select_second_faces` generate
+exact parameter candidates from the retained pcurve boundary and its certified
+`Aabb2`. Candidate coordinates are merely a search schedule: a point becomes a
+witness only after the complete `CurvePath2` outer/hole classifier proves it
+interior. The corresponding exact surface image is then classified by the
+opposite solid. Boundaryless carriers use canonical parameters derived from
+their declared unbounded, closed, periodic, or lower-bounded domains.
 For tensor carriers, `Surface::iso_curve` derives the complete exact
 homogeneous row or column at any represented constant parameter. The topology
 validator accepts an edge only when its full carrier or represented subcurve is

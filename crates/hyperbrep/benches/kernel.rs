@@ -1314,7 +1314,7 @@ fn main() {
     let mut checksum = 0_usize;
     for _ in 0..BOOLEAN_ITERATIONS {
         let selected = black_box(&graph)
-            .select_first_planar_faces(boolean::BooleanOperation::Intersection)
+            .select_first_faces(boolean::BooleanOperation::Intersection)
             .expect("benchmark exact planar fragment selection");
         checksum += selected
             .faces
@@ -1346,7 +1346,7 @@ fn main() {
     let mut checksum = 0_usize;
     for _ in 0..PLANAR_STITCH_ITERATIONS {
         let boolean::BooleanResult::Solid { model, solid } = black_box(&graph)
-            .stitch_selected_planar_faces(boolean::BooleanOperation::Union)
+            .stitch_selected_faces(boolean::BooleanOperation::Union)
             .expect("benchmark exact planar selected-face stitching")
         else {
             panic!("overlapping cuboid union must stitch one solid");

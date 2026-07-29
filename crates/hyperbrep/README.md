@@ -157,6 +157,11 @@ The clean-break implementation currently provides:
   applied through `partition_first_faces` or `partition_second_faces` as
   deterministic validated partitions on either operand. Unsupported transfer
   is a typed error and never silently skips a known exact trace;
+- all-face retained-graph selection through `select_first_faces` and
+  `select_second_faces`, with exact pcurve-region witnesses for trimmed planar,
+  analytic, and tensor carriers plus canonical parameter-domain witnesses for
+  boundaryless faces; every face receives an operation-aware action or a typed
+  ownership error;
 - `boolean::intersect_faces` as the same exact carrier-and-trim primitive for
   arbitrary validated faces, including faces in open shells; finite tensor
   iso-curves and plane/extrusion sections therefore do not require fabricated

@@ -290,18 +290,21 @@ sweeps additionally prove each side group's pcurve boundary tiles the full
 unit rectangle and reconstruct the common translated path/profile directly
 from the resulting BREP.
 
-`SolidIntersectionGraph::{select_first_planar_faces,
-select_second_planar_faces}` retains both immutable operand snapshots, applies
-the partitions, constructs exact parameter-interior witnesses from each
-descendant's native face region, and classifies those witnesses against the
-opposite solid. `BooleanOperation` maps the resulting inside/outside evidence
-to `Keep`, `KeepReversed`, or `Discard`. Coincident planar boundaries are
-overpartitioned by exact straight support arrangements and resolved from the
-two oriented material sides. This includes contained polygon loops; curved
-coplanar splits remain typed errors. `PlanarFaceSelection` reports every
-nonplanar face skipped by this slice.
+`SolidIntersectionGraph::{select_first_faces, select_second_faces}` retains
+both immutable operand snapshots, applies all transferable partitions,
+constructs certified parameter-interior witnesses from each descendant's
+native pcurve region, and classifies those witnesses against the opposite
+solid. Candidate generation uses exact boundary controls and dyadic points in
+exact pcurve bounds; only `CurvePath2` classification proves that a candidate
+is interior. Boundaryless faces use a canonical exact point from the surface
+domain. `BooleanOperation` maps the resulting inside/outside evidence to
+`Keep`, `KeepReversed`, or `Discard`, and `FaceSelection` accounts for every
+face rather than carrying a skipped-nonplane list. Coincident planar boundaries
+are overpartitioned by exact straight support arrangements and resolved from
+the two oriented material sides. Curved coincident ownership remains the typed
+`FaceBoundaryOwnershipUnsupported` boundary.
 
-`SolidIntersectionGraph::stitch_selected_planar_faces` transfers the selected
+`SolidIntersectionGraph::stitch_selected_faces` transfers the selected
 faces into one new arena, deduplicates exact vertices and shared straight
 edges across operands, atomizes partial cross-operand edge overlaps, remaps
 differing exact edge domains, reverses pcurves for difference, finds connected
@@ -314,7 +317,8 @@ boundary-segment, and transverse-line material checks; contacts without the
 corresponding shared topological edge or vertex produce
 `SelfIntersectingSolidShell`. Outer/void and void/void pairs additionally
 require exact non-contact, strict containment, and non-nesting. Curved-face
-transfer and general curved-shell self-intersection certificates remain open.
+transfer remains `NonPlanarFaceTransferUnsupported`; general curved-shell
+self-intersection certificates remain open.
 
 ## Derived adapters
 

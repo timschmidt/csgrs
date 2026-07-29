@@ -358,8 +358,8 @@ fuzz_target!(|bytes: &[u8]| {
         1 => boolean::BooleanOperation::Intersection,
         _ => boolean::BooleanOperation::Difference,
     };
-    let _ = graph.select_first_planar_faces(operation);
-    let _ = graph.select_second_planar_faces(operation);
+    let _ = graph.select_first_faces(operation);
+    let _ = graph.select_second_faces(operation);
 
     let half_width = (&width / Real::from(2)).unwrap();
     let half_depth = (&depth / Real::from(2)).unwrap();
@@ -374,7 +374,7 @@ fuzz_target!(|bytes: &[u8]| {
     else {
         return;
     };
-    let _ = overlap_graph.stitch_selected_planar_faces(operation);
+    let _ = overlap_graph.stitch_selected_faces(operation);
 
     let three_fifths = (Real::from(3) / Real::from(5)).unwrap();
     let four_fifths = (Real::from(4) / Real::from(5)).unwrap();

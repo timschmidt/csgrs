@@ -22,9 +22,8 @@ pub mod builder;
 pub mod tessellation;
 
 pub use boolean::{
-    BooleanError, BooleanOperation, BooleanResult, ClassifiedPlanarFace, FacePairIntersection,
-    FacePairRelation, FacePairTrim, FaceSelectionAction, PlanarFaceSelection,
-    SolidIntersectionGraph,
+    BooleanError, BooleanOperation, BooleanResult, ClassifiedFace, FacePairIntersection,
+    FacePairRelation, FacePairTrim, FaceSelection, FaceSelectionAction, SolidIntersectionGraph,
 };
 pub use builder::{Axis, ConstructionError, LoftSection, TensorPatch};
 pub use error::{GeometryError, GeometryResult};

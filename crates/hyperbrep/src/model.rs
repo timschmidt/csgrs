@@ -4471,7 +4471,7 @@ impl Model {
         .map_err(GeometryError::from)
     }
 
-    fn classify_surface_parameter_on_face(
+    pub(crate) fn classify_surface_parameter_on_face(
         &self,
         face: FaceId,
         point: &CurvePoint2,

@@ -5,9 +5,10 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Contour2, Curve2,
-    CurvePolicy, CurveString2, ExactCurveError, FillRule, LineArcRegion2, LineSeg2,
-    RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
+    Aabb2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Contour2,
+    ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveString2, ExactCurveError, FillRule,
+    LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2, RationalQuadraticBezier2,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -71,9 +72,9 @@ pub enum FaceSelectionAction {
     BoundaryNeedsResolution,
 }
 
-/// One planar face fragment classified against the opposite solid.
+/// One face fragment classified against the opposite solid.
 #[derive(Clone, Debug)]
-pub struct ClassifiedPlanarFace {
+pub struct ClassifiedFace {
     /// Face in the partitioned operand model.
     pub face: FaceId,
     /// Exact parameter-interior point used for classification.
@@ -84,19 +85,17 @@ pub struct ClassifiedPlanarFace {
     pub action: FaceSelectionAction,
 }
 
-/// Partitioned operand plus complete exact planar-face selection evidence.
+/// Partitioned operand plus complete exact face-selection evidence.
 #[derive(Clone, Debug)]
-pub struct PlanarFaceSelection {
+pub struct FaceSelection {
     /// Operand model after retained intersection traces were applied.
     pub model: Model,
     /// Operand solid, whose typed ID remains stable through partitioning.
     pub solid: SolidId,
     /// Exact source-face partition records.
     pub partitions: Vec<FacePartition>,
-    /// Every planar face in the partitioned solid, classified exactly.
-    pub faces: Vec<ClassifiedPlanarFace>,
-    /// Nonplanar faces awaiting a carrier-specific interior witness.
-    pub unsupported_faces: Vec<FaceId>,
+    /// Every face in the partitioned solid, classified exactly.
+    pub faces: Vec<ClassifiedFace>,
 }
 
 /// One exact or explicitly unsupported carrier relation in a solid
@@ -283,29 +282,29 @@ impl SolidIntersectionGraph {
         partition_graph_faces(&self.second_model, self, false)
     }
 
-    /// Partitions and exactly selects every planar first-operand face.
-    pub fn select_first_planar_faces(
+    /// Partitions and exactly selects every first-operand face.
+    pub fn select_first_faces(
         &self,
         operation: BooleanOperation,
-    ) -> Result<PlanarFaceSelection, BooleanError> {
-        select_graph_planar_faces(self, operation, true)
+    ) -> Result<FaceSelection, BooleanError> {
+        select_graph_faces(self, operation, true)
     }
 
-    /// Partitions and exactly selects every planar second-operand face.
-    pub fn select_second_planar_faces(
+    /// Partitions and exactly selects every second-operand face.
+    pub fn select_second_faces(
         &self,
         operation: BooleanOperation,
-    ) -> Result<PlanarFaceSelection, BooleanError> {
-        select_graph_planar_faces(self, operation, false)
+    ) -> Result<FaceSelection, BooleanError> {
+        select_graph_faces(self, operation, false)
     }
 
-    /// Partitions, selects, and identity-stitches all supported planar result
+    /// Partitions, selects, and identity-stitches all transferable result
     /// faces into validated connected solids.
-    pub fn stitch_selected_planar_faces(
+    pub fn stitch_selected_faces(
         &self,
         operation: BooleanOperation,
     ) -> Result<BooleanResult, BooleanError> {
-        stitch_graph_planar_faces(self, operation)
+        stitch_graph_faces(self, operation)
     }
 }
 
@@ -326,7 +325,7 @@ pub enum BooleanError {
     Topology(TopologyEditError),
     /// An exact retained-model query failed.
     Query(QueryError),
-    /// No certified parameter-interior witness was found for a planar face.
+    /// No certified parameter-interior witness was found for a face.
     FaceInteriorWitnessUnavailable {
         /// Face that could not supply a witness.
         face: FaceId,
@@ -346,13 +345,18 @@ pub enum BooleanError {
         /// Face whose retained curve cannot yet be transferred.
         face: FaceId,
     },
+    /// A curved coincident face needs carrier-specific material-side ownership.
+    FaceBoundaryOwnershipUnsupported {
+        /// Curved face whose boundary ownership cannot yet be certified.
+        face: FaceId,
+    },
     /// Multiple coincident opposite faces claim the same planar patch.
     CoplanarOwnershipAmbiguous {
         /// Partitioned face whose ownership is ambiguous.
         face: FaceId,
     },
     /// A selected face still has unresolved coincident-boundary ownership.
-    SelectedPlanarFaceUnresolved {
+    SelectedFaceUnresolved {
         /// Face that cannot be transferred soundly.
         face: FaceId,
     },
@@ -399,7 +403,7 @@ impl fmt::Display for BooleanError {
             Self::FaceInteriorWitnessUnavailable { face, reason } => {
                 write!(
                     formatter,
-                    "no exact interior witness is available for planar face {face:?}"
+                    "no exact interior witness is available for face {face:?}"
                 )?;
                 if let Some(reason) = reason {
                     write!(formatter, ": {reason:?}")?;
@@ -420,17 +424,18 @@ impl fmt::Display for BooleanError {
                     "face {face:?} has a positive-length retained carrier without transferable pcurve evidence"
                 )
             }
+            Self::FaceBoundaryOwnershipUnsupported { face } => write!(
+                formatter,
+                "curved face {face:?} lies on the opposite boundary without certified material-side ownership"
+            ),
             Self::CoplanarOwnershipAmbiguous { face } => {
                 write!(
                     formatter,
                     "coincident ownership is ambiguous for face {face:?}"
                 )
             }
-            Self::SelectedPlanarFaceUnresolved { face } => {
-                write!(
-                    formatter,
-                    "selected planar face {face:?} has unresolved ownership"
-                )
+            Self::SelectedFaceUnresolved { face } => {
+                write!(formatter, "selected face {face:?} has unresolved ownership")
             }
             Self::NonPlanarFaceTransferUnsupported { face } => {
                 write!(formatter, "selected face {face:?} is not planar")
@@ -871,11 +876,11 @@ fn push_unique_planar_trace(
     Ok(())
 }
 
-fn select_graph_planar_faces(
+fn select_graph_faces(
     graph: &SolidIntersectionGraph,
     operation: BooleanOperation,
     first: bool,
-) -> Result<PlanarFaceSelection, BooleanError> {
+) -> Result<FaceSelection, BooleanError> {
     let (source_model, source_solid, opposite_model, opposite_solid) = if first {
         (
             &graph.first_model,
@@ -891,20 +896,15 @@ fn select_graph_planar_faces(
             graph.first_solid,
         )
     };
-    let (model, partitions) = partition_graph_planar_faces(source_model, graph, first)?;
+    let (model, partitions) = partition_graph_faces(source_model, graph, first)?;
     let mut faces = Vec::new();
-    let mut unsupported_faces = Vec::new();
     for face in solid_faces(&model, source_solid)? {
         let face_record = model.face(face).expect("validated solid face");
         let surface = model
             .surface(face_record.surface())
             .expect("validated face surface");
-        if surface.kind() != crate::SurfaceKind::Plane {
-            unsupported_faces.push(face);
-            continue;
-        }
         let mut classified_witness = None;
-        for witness in planar_face_interior_witnesses(&model, face)? {
+        for witness in face_interior_witnesses(&model, face)? {
             let location = opposite_model.classify_point(opposite_solid, &witness)?;
             if classified_witness.is_none() || location != SolidPointLocation::Boundary {
                 classified_witness = Some((witness, location));
@@ -916,23 +916,26 @@ fn select_graph_planar_faces(
         let (witness, location) = classified_witness
             .ok_or(BooleanError::FaceInteriorWitnessUnavailable { face, reason: None })?;
         let action = if location == SolidPointLocation::Boundary {
-            resolve_planar_boundary_action(graph, operation, first, &model, face, &witness)?
+            if surface.kind() == crate::SurfaceKind::Plane {
+                resolve_planar_boundary_action(graph, operation, first, &model, face, &witness)?
+            } else {
+                return Err(BooleanError::FaceBoundaryOwnershipUnsupported { face });
+            }
         } else {
-            planar_face_selection_action(operation, first, location)
+            face_selection_action(operation, first, location)
         };
-        faces.push(ClassifiedPlanarFace {
+        faces.push(ClassifiedFace {
             face,
             witness,
             location,
             action,
         });
     }
-    Ok(PlanarFaceSelection {
+    Ok(FaceSelection {
         model,
         solid: source_solid,
         partitions,
         faces,
-        unsupported_faces,
     })
 }
 
@@ -1029,7 +1032,7 @@ fn oriented_plane_normals_agree(
     Ok(exact_order(&first_normal.dot(&second_normal), &Real::zero())? == Ordering::Greater)
 }
 
-fn planar_face_selection_action(
+fn face_selection_action(
     operation: BooleanOperation,
     first: bool,
     location: SolidPointLocation,
@@ -1051,28 +1054,44 @@ fn planar_face_selection_action(
 }
 
 fn planar_face_interior_witness(model: &Model, face: FaceId) -> Result<Point3, BooleanError> {
-    planar_face_interior_witnesses(model, face)?
+    face_interior_witnesses(model, face)?
         .into_iter()
         .next()
         .ok_or(BooleanError::FaceInteriorWitnessUnavailable { face, reason: None })
 }
 
-fn planar_face_interior_witnesses(
-    model: &Model,
-    face: FaceId,
-) -> Result<Vec<Point3>, BooleanError> {
-    let face_record = model.face(face).expect("validated planar face");
+fn face_interior_witnesses(model: &Model, face: FaceId) -> Result<Vec<Point3>, BooleanError> {
+    let face_record = model.face(face).expect("validated face");
     let surface = model
         .surface(face_record.surface())
-        .expect("validated planar face surface");
-    let contours = model.face_contours(face)?;
-    let outer = &contours[0];
-    let vertices = outer
-        .segments()
+        .expect("validated face surface");
+    let Some(outer) = face_record.outer() else {
+        let parameter = crate::Point2::new(
+            surface_parameter_witness(surface.domain().u())?,
+            surface_parameter_witness(surface.domain().v())?,
+        );
+        return Ok(vec![surface.point_at(&parameter)?]);
+    };
+    let outer = model.wire(outer).expect("validated outer wire");
+    let curves = outer
+        .edge_uses()
         .iter()
-        .map(|segment| segment.start().clone())
+        .map(|edge_use| {
+            let edge_use = model.edge_use(*edge_use).expect("validated edge use");
+            model
+                .pcurve(edge_use.pcurve())
+                .expect("validated pcurve")
+                .curve()
+                .clone()
+        })
         .collect::<Vec<_>>();
-    let mut candidates = Vec::with_capacity(vertices.len() + 1);
+    let outer = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
+    let vertices = outer
+        .curves()
+        .iter()
+        .map(|curve| curve.start().clone())
+        .collect::<Vec<_>>();
+    let mut candidates = Vec::with_capacity(vertices.len() + 60);
     if let Some(average) = average_planar_points(&vertices)? {
         candidates.push(average);
     }
@@ -1088,19 +1107,37 @@ fn planar_face_interior_witnesses(
             );
         }
     }
-    let region = LineArcRegion2::new(vec![outer.clone()], contours[1..].to_vec());
+    let bounds = outer.bounds().map_err(GeometryError::from)?;
+    for denominator_value in [2_u64, 4, 8] {
+        let denominator = Real::from(denominator_value);
+        for u_index in 1..denominator_value {
+            for v_index in 1..denominator_value {
+                let u_fraction = (Real::from(u_index) / &denominator)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                let v_fraction = (Real::from(v_index) / &denominator)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                candidates.push(hypercurve::Point2::new(
+                    bounds.min_x() + (bounds.max_x() - bounds.min_x()) * u_fraction,
+                    bounds.min_y() + (bounds.max_y() - bounds.min_y()) * v_fraction,
+                ));
+            }
+        }
+    }
     let mut last_reason = None;
     let mut witnesses = Vec::new();
     for candidate in candidates {
-        match region.classify_point(&candidate, &CurvePolicy::certified()) {
-            Classification::Decided(RegionPointLocation::Inside) => {
+        match model.classify_surface_parameter_on_face(face, &candidate)? {
+            Classification::Decided(ContourPointLocation::Inside) => {
                 witnesses.push(surface.point_at(&crate::Point2::new(
                     candidate.x().clone(),
                     candidate.y().clone(),
                 ))?);
+                if witnesses.len() == 8 {
+                    break;
+                }
             }
             Classification::Decided(
-                RegionPointLocation::Outside | RegionPointLocation::Boundary,
+                ContourPointLocation::Outside | ContourPointLocation::Boundary,
             ) => {}
             Classification::Uncertain(reason) => last_reason = Some(reason),
         }
@@ -1112,6 +1149,21 @@ fn planar_face_interior_witnesses(
         })
     } else {
         Ok(witnesses)
+    }
+}
+
+fn surface_parameter_witness(
+    domain: &crate::SurfaceParameterDomain,
+) -> Result<Real, GeometryError> {
+    match domain {
+        crate::SurfaceParameterDomain::Unbounded => Ok(Real::zero()),
+        crate::SurfaceParameterDomain::Closed(domain) => ((domain.start() + domain.end())
+            / Real::from(2))
+        .map_err(|_| GeometryError::ProjectiveDivision),
+        crate::SurfaceParameterDomain::Periodic { start, period } => {
+            Ok(start + (period / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?)
+        }
+        crate::SurfaceParameterDomain::LowerBounded { start } => Ok(start + Real::one()),
     }
 }
 
@@ -1148,12 +1200,30 @@ struct StitchedFace {
     edges: Vec<crate::EdgeId>,
 }
 
-fn stitch_graph_planar_faces(
+fn stitch_graph_faces(
     graph: &SolidIntersectionGraph,
     operation: BooleanOperation,
 ) -> Result<BooleanResult, BooleanError> {
-    let mut first = graph.select_first_planar_faces(operation)?;
-    let mut second = graph.select_second_planar_faces(operation)?;
+    let mut first = graph.select_first_faces(operation)?;
+    let mut second = graph.select_second_faces(operation)?;
+    for selection in [&first, &second] {
+        if let Some(face) = selection.faces.iter().find(|face| {
+            selection
+                .model
+                .surface(
+                    selection
+                        .model
+                        .face(face.face)
+                        .expect("validated selected face")
+                        .surface(),
+                )
+                .expect("validated selected surface")
+                .kind()
+                != crate::SurfaceKind::Plane
+        }) {
+            return Err(BooleanError::NonPlanarFaceTransferUnsupported { face: face.face });
+        }
+    }
     let mut atomic_points = selected_planar_edge_endpoints(&first)?;
     for point in selected_planar_edge_endpoints(&second)? {
         push_unique_point(&mut atomic_points, point)?;
@@ -1163,15 +1233,12 @@ fn stitch_graph_planar_faces(
     let mut selected_edge_uses = selected_edge_use_counts(&first, true)?;
     selected_edge_uses.extend(selected_edge_use_counts(&second, false)?);
     for selection in [&first, &second] {
-        if let Some(face) = selection.unsupported_faces.first() {
-            return Err(BooleanError::NonPlanarFaceTransferUnsupported { face: *face });
-        }
         if let Some(face) = selection
             .faces
             .iter()
             .find(|face| face.action == FaceSelectionAction::BoundaryNeedsResolution)
         {
-            return Err(BooleanError::SelectedPlanarFaceUnresolved { face: face.face });
+            return Err(BooleanError::SelectedFaceUnresolved { face: face.face });
         }
     }
 
@@ -1189,7 +1256,7 @@ fn stitch_graph_planar_faces(
                 FaceSelectionAction::KeepReversed => true,
                 FaceSelectionAction::Discard => continue,
                 FaceSelectionAction::BoundaryNeedsResolution => {
-                    return Err(BooleanError::SelectedPlanarFaceUnresolved {
+                    return Err(BooleanError::SelectedFaceUnresolved {
                         face: classified.face,
                     });
                 }
@@ -1293,7 +1360,7 @@ fn stitch_graph_planar_faces(
 }
 
 fn selected_edge_use_counts(
-    selection: &PlanarFaceSelection,
+    selection: &FaceSelection,
     is_first: bool,
 ) -> Result<BTreeMap<(bool, crate::EdgeId), usize>, BooleanError> {
     let mut counts = BTreeMap::new();
@@ -1327,9 +1394,7 @@ fn selected_edge_use_counts(
     Ok(counts)
 }
 
-fn selected_planar_edge_endpoints(
-    selection: &PlanarFaceSelection,
-) -> Result<Vec<Point3>, BooleanError> {
+fn selected_planar_edge_endpoints(selection: &FaceSelection) -> Result<Vec<Point3>, BooleanError> {
     let mut points = Vec::new();
     for classified in &selection.faces {
         if matches!(
@@ -1386,7 +1451,7 @@ fn push_unique_point(points: &mut Vec<Point3>, candidate: Point3) -> Result<(), 
 }
 
 fn atomize_selected_planar_edges(
-    selection: &mut PlanarFaceSelection,
+    selection: &mut FaceSelection,
     points: &[Point3],
 ) -> Result<(), BooleanError> {
     let mut edge_ids = Vec::new();
@@ -2799,23 +2864,88 @@ fn trim_segment_to_planar_face(
     let region = planar_face_region(model, face)?;
     let start = project_to_plane(surface, start)?;
     let end = project_to_plane(surface, end)?;
-    let source = CurveString2::try_new(vec![Segment2::Line(LineSeg2::try_new(start, end)?)])?;
-    let fragments = match source.trim_inside_region(&region, &CurvePolicy::certified())? {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let source = LineSeg2::try_new(start, end)?;
+    let policy = CurvePolicy::certified();
+    let mut cuts = vec![Real::zero(), Real::one()];
+    for segment in region
+        .material_contours()
+        .iter()
+        .chain(region.hole_contours())
+        .flat_map(|contour| contour.segments())
+    {
+        match segment {
+            Segment2::Line(line) => match source.intersect_line(line, &policy)? {
+                LineLineIntersection::None => {}
+                LineLineIntersection::Point { a_param, .. } => {
+                    insert_sorted_parameter(&mut cuts, a_param)?;
+                }
+                LineLineIntersection::Overlap { a_range, .. } => {
+                    insert_sorted_parameter(&mut cuts, a_range.start().clone())?;
+                    insert_sorted_parameter(&mut cuts, a_range.end().clone())?;
+                }
+                LineLineIntersection::Uncertain { reason } => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+            Segment2::Arc(arc) => match source.intersect_arc(arc, &policy)? {
+                LineArcIntersection::None => {}
+                LineArcIntersection::Point(point) => {
+                    insert_sorted_parameter(&mut cuts, point.line_param)?;
+                }
+                LineArcIntersection::TwoPoints { first, second } => {
+                    insert_sorted_parameter(&mut cuts, first.line_param)?;
+                    insert_sorted_parameter(&mut cuts, second.line_param)?;
+                }
+                LineArcIntersection::Uncertain { reason } => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        }
+    }
     let mut curves = Vec::new();
-    for fragment in fragments {
-        for segment in fragment.segments() {
-            let start = segment.start();
-            let end = segment.end();
-            let start =
-                surface.point_at(&crate::Point2::new(start.x().clone(), start.y().clone()))?;
-            let end = surface.point_at(&crate::Point2::new(end.x().clone(), end.y().clone()))?;
-            curves.push(Curve3::line(start, end)?);
+    for interval in cuts.windows(2) {
+        if exact_order(&interval[0], &interval[1])? != Ordering::Less {
+            continue;
+        }
+        let midpoint = ((&interval[0] + &interval[1]) / Real::from(2))
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        match region.classify_point(&source.point_at(midpoint), &policy) {
+            Classification::Decided(RegionPointLocation::Inside) => {
+                let start = source.point_at(interval[0].clone());
+                let end = source.point_at(interval[1].clone());
+                let start =
+                    surface.point_at(&crate::Point2::new(start.x().clone(), start.y().clone()))?;
+                let end =
+                    surface.point_at(&crate::Point2::new(end.x().clone(), end.y().clone()))?;
+                curves.push(Curve3::line(start, end)?);
+            }
+            Classification::Decided(
+                RegionPointLocation::Outside | RegionPointLocation::Boundary,
+            ) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
     }
     Ok(Classification::Decided(curves))
+}
+
+fn insert_sorted_parameter(
+    parameters: &mut Vec<Real>,
+    parameter: Real,
+) -> Result<(), GeometryError> {
+    for (index, current) in parameters.iter().enumerate() {
+        match exact_order(&parameter, current)? {
+            Ordering::Less => {
+                parameters.insert(index, parameter);
+                return Ok(());
+            }
+            Ordering::Equal => return Ok(()),
+            Ordering::Greater => {}
+        }
+    }
+    parameters.push(parameter);
+    Ok(())
 }
 
 fn planar_face_region(model: &Model, face: FaceId) -> Result<LineArcRegion2, GeometryError> {
@@ -3065,7 +3195,7 @@ fn boolean(
         Err(optimized_error) => {
             let fallback = intersection_graph(first_model, first_solid, second_model, second_solid)
                 .and_then(|graph| {
-                    graph.stitch_selected_planar_faces(match operation {
+                    graph.stitch_selected_faces(match operation {
                         BooleanOp::Union => BooleanOperation::Union,
                         BooleanOp::Intersection => BooleanOperation::Intersection,
                         BooleanOp::Difference => BooleanOperation::Difference,
@@ -4356,7 +4486,13 @@ mod tests {
 
         assert_eq!(fragments.len(), 2);
         assert_eq!(graph.trimmed_curve_fragments(), 2);
-        assert!(graph.unresolved_trim_pairs() > 0);
+        assert_eq!(graph.unresolved_trim_pairs(), 0);
+        assert!(
+            graph
+                .intersections()
+                .iter()
+                .any(|pair| matches!(pair.trim(), FacePairTrim::NoCurveInterior))
+        );
         let half = (Real::one() / Real::from(2)).unwrap();
         for fragment in fragments {
             assert_eq!(fragment.kind(), crate::Curve3Kind::Line);
@@ -4553,6 +4689,46 @@ mod tests {
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
+        );
+        let selected = graph
+            .select_first_faces(BooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(
+            selected.faces.len(),
+            solid_faces(&selected.model, sweep_solid).unwrap().len()
+        );
+        assert!(selected.faces.iter().any(|classified| {
+            let face = selected.model.face(classified.face).unwrap();
+            matches!(
+                selected.model.surface(face.surface()).unwrap().kind(),
+                crate::SurfaceKind::RationalBezier | crate::SurfaceKind::Nurbs
+            )
+        }));
+        assert!(selected.faces.iter().all(|classified| {
+            classified.location != SolidPointLocation::Boundary
+                && classified.action != FaceSelectionAction::BoundaryNeedsResolution
+        }));
+        assert!(
+            selected
+                .faces
+                .iter()
+                .any(|classified| classified.action == FaceSelectionAction::Keep)
+        );
+        assert!(
+            selected
+                .faces
+                .iter()
+                .any(|classified| classified.action == FaceSelectionAction::Discard)
+        );
+        let selected_json = selected.model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&selected_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            selected_json
         );
 
         let mut by_face =
@@ -4873,15 +5049,13 @@ mod tests {
             intersection_graph(&first, first_solid, &disjoint, disjoint_solid).unwrap();
 
         let first_union = disjoint_graph
-            .select_first_planar_faces(BooleanOperation::Union)
+            .select_first_faces(BooleanOperation::Union)
             .unwrap();
         let second_union = disjoint_graph
-            .select_second_planar_faces(BooleanOperation::Union)
+            .select_second_faces(BooleanOperation::Union)
             .unwrap();
         assert!(first_union.partitions.is_empty());
         assert!(second_union.partitions.is_empty());
-        assert!(first_union.unsupported_faces.is_empty());
-        assert!(second_union.unsupported_faces.is_empty());
         assert_eq!(first_union.faces.len(), 6);
         assert_eq!(second_union.faces.len(), 6);
         assert!(first_union.faces.iter().all(|face| {
@@ -4892,7 +5066,7 @@ mod tests {
         }));
 
         let first_intersection = disjoint_graph
-            .select_first_planar_faces(BooleanOperation::Intersection)
+            .select_first_faces(BooleanOperation::Intersection)
             .unwrap();
         assert!(
             first_intersection
@@ -4901,7 +5075,7 @@ mod tests {
                 .all(|face| face.action == FaceSelectionAction::Discard)
         );
         let second_difference = disjoint_graph
-            .select_second_planar_faces(BooleanOperation::Difference)
+            .select_second_faces(BooleanOperation::Difference)
             .unwrap();
         assert!(
             second_difference
@@ -4915,11 +5089,10 @@ mod tests {
         let overlapping_graph =
             intersection_graph(&first, first_solid, &overlapping, overlapping_solid).unwrap();
         let selected = overlapping_graph
-            .select_first_planar_faces(BooleanOperation::Intersection)
+            .select_first_faces(BooleanOperation::Intersection)
             .unwrap();
         assert_eq!(selected.partitions.len(), 4);
         assert_eq!(selected.faces.len(), 14);
-        assert!(selected.unsupported_faces.is_empty());
         assert!(
             selected
                 .faces
@@ -4947,12 +5120,8 @@ mod tests {
             BooleanOperation::Intersection,
             BooleanOperation::Difference,
         ] {
-            let first_selection = overlapping_graph
-                .select_first_planar_faces(operation)
-                .unwrap();
-            let second_selection = overlapping_graph
-                .select_second_planar_faces(operation)
-                .unwrap();
+            let first_selection = overlapping_graph.select_first_faces(operation).unwrap();
+            let second_selection = overlapping_graph.select_second_faces(operation).unwrap();
             let first_boundary = first_selection
                 .faces
                 .iter()
@@ -4985,7 +5154,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            planar_face_selection_action(
+            face_selection_action(
                 BooleanOperation::Difference,
                 false,
                 SolidPointLocation::Inside,
@@ -4993,12 +5162,53 @@ mod tests {
             FaceSelectionAction::KeepReversed
         );
         assert_eq!(
-            planar_face_selection_action(
-                BooleanOperation::Union,
-                true,
-                SolidPointLocation::Boundary,
-            ),
+            face_selection_action(BooleanOperation::Union, true, SolidPointLocation::Boundary,),
             FaceSelectionAction::BoundaryNeedsResolution
+        );
+    }
+
+    #[test]
+    fn all_face_selection_classifies_boundaryless_spheres_without_fake_seams() {
+        let (outer, outer_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (inner, inner_solid) = crate::builder::sphere(Real::one()).unwrap();
+        let graph = intersection_graph(&outer, outer_solid, &inner, inner_solid).unwrap();
+
+        let outer_intersection = graph
+            .select_first_faces(BooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(outer_intersection.faces.len(), 1);
+        assert_eq!(
+            outer_intersection.faces[0].location,
+            SolidPointLocation::Outside
+        );
+        assert_eq!(
+            outer_intersection.faces[0].action,
+            FaceSelectionAction::Discard
+        );
+
+        let inner_intersection = graph
+            .select_second_faces(BooleanOperation::Intersection)
+            .unwrap();
+        assert_eq!(inner_intersection.faces.len(), 1);
+        assert_eq!(
+            inner_intersection.faces[0].location,
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            inner_intersection.faces[0].action,
+            FaceSelectionAction::Keep
+        );
+
+        let outer_difference = graph
+            .select_first_faces(BooleanOperation::Difference)
+            .unwrap();
+        let inner_difference = graph
+            .select_second_faces(BooleanOperation::Difference)
+            .unwrap();
+        assert_eq!(outer_difference.faces[0].action, FaceSelectionAction::Keep);
+        assert_eq!(
+            inner_difference.faces[0].action,
+            FaceSelectionAction::KeepReversed
         );
     }
 
@@ -5011,9 +5221,7 @@ mod tests {
             BooleanOperation::Intersection,
             BooleanOperation::Difference,
         ] {
-            let selected = identical_graph
-                .select_first_planar_faces(operation)
-                .unwrap();
+            let selected = identical_graph.select_first_faces(operation).unwrap();
             assert!(selected.partitions.is_empty());
             assert!(selected.faces.iter().all(|face| {
                 face.location == SolidPointLocation::Boundary
@@ -5034,10 +5242,8 @@ mod tests {
             BooleanOperation::Intersection,
             BooleanOperation::Difference,
         ] {
-            let first_selection = touching_graph.select_first_planar_faces(operation).unwrap();
-            let second_selection = touching_graph
-                .select_second_planar_faces(operation)
-                .unwrap();
+            let first_selection = touching_graph.select_first_faces(operation).unwrap();
+            let second_selection = touching_graph.select_second_faces(operation).unwrap();
             let first_boundary = first_selection
                 .faces
                 .iter()
@@ -5071,7 +5277,7 @@ mod tests {
             (BooleanOperation::Difference, Real::from(6)),
         ] {
             let result = graph
-                .stitch_selected_planar_faces(operation)
+                .stitch_selected_faces(operation)
                 .unwrap_or_else(|error| panic!("{operation:?} stitching failed: {error:?}"));
             let (model, solids) = match result {
                 BooleanResult::Solid { model, solid } => (model, vec![solid]),
@@ -5094,12 +5300,12 @@ mod tests {
             intersection_graph(&first, first_solid, &disjoint, disjoint_solid).unwrap();
         assert!(matches!(
             disjoint_graph
-                .stitch_selected_planar_faces(BooleanOperation::Intersection)
+                .stitch_selected_faces(BooleanOperation::Intersection)
                 .unwrap(),
             BooleanResult::Empty
         ));
         let BooleanResult::Solids { model, solids } = disjoint_graph
-            .stitch_selected_planar_faces(BooleanOperation::Union)
+            .stitch_selected_faces(BooleanOperation::Union)
             .unwrap()
         else {
             panic!("disjoint union must retain two connected solids");
@@ -5117,7 +5323,7 @@ mod tests {
         let identical_graph = intersection_graph(&first, first_solid, &first, first_solid).unwrap();
         assert!(matches!(
             identical_graph
-                .stitch_selected_planar_faces(BooleanOperation::Difference)
+                .stitch_selected_faces(BooleanOperation::Difference)
                 .unwrap(),
             BooleanResult::Empty
         ));
@@ -5134,7 +5340,7 @@ mod tests {
             (BooleanOperation::Difference, Real::from(24)),
         ] {
             let BooleanResult::Solid { model, solid } =
-                graph.stitch_selected_planar_faces(operation).unwrap()
+                graph.stitch_selected_faces(operation).unwrap()
             else {
                 panic!("contained planar Boolean must produce one connected solid");
             };
