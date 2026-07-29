@@ -594,8 +594,12 @@ fn fit_control_polygon_line_image(
     let Some(end) = controls.last().copied() else {
         return Err(CurveError::InsufficientVertices);
     };
-    if is_zero(&start.distance_squared(end), policy) == Some(true) {
-        return Err(CurveError::ZeroLengthLine);
+    match is_zero(&start.distance_squared(end), policy) {
+        Some(true) => {
+            return Ok(Classification::Decided(BezierLineImageFitRelation::NotLine));
+        }
+        Some(false) => {}
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     }
     let line = LineSeg2::try_new(start.clone(), end.clone())?;
     let envelope = match Aabb2::from_points([start, end], policy) {

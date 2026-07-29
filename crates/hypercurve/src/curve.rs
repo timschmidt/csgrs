@@ -1191,20 +1191,19 @@ impl CurvePath2 {
             if adjacent[0].end() == adjacent[1].start() {
                 continue;
             }
-            match adjacent[0]
-                .end()
-                .distance_squared(adjacent[1].start())
-                .zero_status()
-            {
-                ZeroKnowledge::Zero => {}
-                ZeroKnowledge::NonZero => {
+            match crate::classify::is_zero(
+                &adjacent[0].end().distance_squared(adjacent[1].start()),
+                &CurvePolicy::certified(),
+            ) {
+                Some(true) => {}
+                Some(false) => {
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Construction,
                         adjacent[1].family(),
                         CurveError::DisconnectedCurvePath,
                     ));
                 }
-                ZeroKnowledge::Unknown => {
+                None => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Construction,
                         adjacent[1].family(),
@@ -1536,16 +1535,19 @@ impl CurvePath2 {
     pub fn bezier_boundary_loop(&self) -> ExactCurveResult<&NativeBezierBoundaryLoop2> {
         match self.data.bezier_boundary_loop.get_or_init(|| {
             if self.start() != self.end() {
-                match self.start().distance_squared(self.end()).zero_status() {
-                    ZeroKnowledge::Zero => {}
-                    ZeroKnowledge::NonZero => {
+                match crate::classify::is_zero(
+                    &self.start().distance_squared(self.end()),
+                    &CurvePolicy::certified(),
+                ) {
+                    Some(true) => {}
+                    Some(false) => {
                         return Err(ExactCurveError::invalid(
                             CurveOperation2::Arrangement,
                             self.data.curves[0].family(),
                             CurveError::OpenCurvePath,
                         ));
                     }
-                    ZeroKnowledge::Unknown => {
+                    None => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Arrangement,
                             self.data.curves[0].family(),
