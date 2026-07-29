@@ -7,7 +7,7 @@ use crate::{
 
 /// Adapts a validated `hypermesh` closed solid into a triangle-solid carrier.
 pub fn adapt_hypermesh_exact_solid(
-    mesh: &hypermesh::InputMesh,
+    mesh: &hypermesh::TriangleMesh,
 ) -> HypervoxelResult<ExactTriangleSolidMesh> {
     hypermesh::polygon_soup(&[mesh.as_ref()]).map_err(|_| {
         HypervoxelError::InvalidSourceGeometry {

@@ -189,11 +189,11 @@ fn bench_triangle_solid(c: &mut Criterion) {
 fn bench_hypermesh_exact_adapter(c: &mut Criterion) {
     #[cfg(feature = "hypermesh-adapter")]
     {
-        use hypermesh::{InputMesh, Point3, Real, Triangle};
+        use hypermesh::{Point3, Real, Triangle, TriangleMesh};
         use hypervoxel::adapt_hypermesh_exact_solid;
 
         let point = |x, y, z| Point3::new(Real::from(x), Real::from(y), Real::from(z));
-        let mesh = InputMesh::new(
+        let mesh = TriangleMesh::new(
             vec![
                 point(0, 0, 0),
                 point(2, 0, 0),

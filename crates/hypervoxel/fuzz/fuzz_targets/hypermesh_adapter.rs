@@ -1,6 +1,6 @@
 #![no_main]
 
-use hypermesh::{InputMesh, Point3, Real, Triangle};
+use hypermesh::{TriangleMesh, Point3, Real, Triangle};
 use hypervoxel::{ExactTriangleSolid, adapt_hypermesh_exact_solid};
 use libfuzzer_sys::fuzz_target;
 
@@ -23,7 +23,7 @@ fuzz_target!(|data: (u8, bool, bool)| {
     } else {
         vec![Triangle::new(0, 2, 1)]
     };
-    let mesh = InputMesh::new(
+    let mesh = TriangleMesh::new(
         vec![
             point(0, 0, 0),
             point(scale, 0, 0),

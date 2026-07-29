@@ -1,13 +1,13 @@
 #![cfg(feature = "hypermesh-adapter")]
 
-use hypermesh::{InputMesh, Point3, Real, Triangle};
+use hypermesh::{Point3, Real, Triangle, TriangleMesh};
 use hypervoxel::{
     ExactTriangleSolid, GridFrame, MaterialRegionId, VoxelizationPolicy,
     adapt_hypermesh_exact_solid, voxelize_exact_triangle_solid,
 };
 
-fn tetrahedron_i64() -> InputMesh {
-    InputMesh::new(
+fn tetrahedron_i64() -> TriangleMesh {
+    TriangleMesh::new(
         vec![
             point(0, 0, 0),
             point(2, 0, 0),
@@ -49,7 +49,7 @@ fn hypermesh_exact_solid_adapts_to_scheduled_triangle_voxelization() {
 
 #[test]
 fn hypermesh_adapter_rejects_open_solid_evidence() {
-    let open = InputMesh::new(
+    let open = TriangleMesh::new(
         vec![point(0, 0, 0), point(1, 0, 0), point(0, 1, 0)],
         vec![Triangle::new(0, 1, 2)],
     );
