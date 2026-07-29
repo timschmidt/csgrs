@@ -11,9 +11,9 @@
 use std::cmp::Ordering;
 
 use hyperlattice::{Aabb, Point3, Real};
-use hyperreal::RealSign;
 
-use crate::{csg::CSG, mesh::Mesh};
+#[cfg(feature = "attributed")]
+use crate::AttributedMesh;
 
 use super::metadata::{AssemblyFlag, ExactVector3, PartMetadata};
 
@@ -187,18 +187,19 @@ impl ProjectedRect {
 /// projection that cannot be reduced to these retained box facts is not treated
 /// as exact visibility evidence. This mirrors Yap's rule that a preview is not
 /// proof simply because it looks plausible.
+#[cfg(feature = "attributed")]
 pub fn blueprint_from_aabb_parts(
-    parts: &[Mesh<PartMetadata>],
+    parts: &[AttributedMesh<PartMetadata>],
     projection: BlueprintProjection,
     suppress_hidden: bool,
 ) -> BlueprintReport {
     let aabb_parts = parts
         .iter()
         .filter_map(|mesh| {
-            let metadata = mesh.polygons.first()?.metadata.clone();
+            let metadata = mesh.face_metadata().first()?.clone();
             Some(AabbPart {
                 handle: metadata.handle.clone(),
-                bounds: mesh.bounding_box(),
+                bounds: crate::solid::bounding_box(mesh.geometry()).clone(),
                 metadata,
             })
         })
@@ -418,11 +419,7 @@ fn rects_overlap_2d(a: &ProjectedRect, b: &ProjectedRect) -> bool {
 fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
     hyperlimit::compare_reals(lhs, rhs)
         .value()
-        .unwrap_or_else(|| match (lhs.clone() - rhs.clone()).refine_sign_until(-128) {
-            Some(RealSign::Positive) => Ordering::Greater,
-            Some(RealSign::Negative) => Ordering::Less,
-            Some(RealSign::Zero) | None => Ordering::Equal,
-        })
+        .unwrap_or(Ordering::Equal)
 }
 
 fn real_le(lhs: &Real, rhs: &Real) -> bool {

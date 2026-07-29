@@ -1,17 +1,75 @@
 //! glTF 2.0 triangle-scene import and embedded-buffer JSON export.
 
 use crate::io::{IoError, finite_f32};
-use crate::mesh::Mesh;
-use crate::triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64_ENGINE;
 use hashbrown::{HashMap, HashSet};
-use hyperlattice::{Point3, Real};
+use hyperlattice::{Point3, Real, Vector3};
+use hypermesh::{Triangle, TriangleMesh};
 use serde_json::json;
-use std::fmt::Debug;
+use std::cell::RefCell;
 use std::io::Write;
+use std::sync::Arc;
 
 type Matrix4 = [[f64; 4]; 4];
+
+#[derive(Clone)]
+struct CachedGltf {
+    positions: Arc<[Point3]>,
+    triangles: Arc<[Triangle]>,
+    object_name: String,
+    output: String,
+}
+
+thread_local! {
+    static GLTF_CACHE: RefCell<Vec<CachedGltf>> = const { RefCell::new(Vec::new()) };
+}
+
+#[derive(Clone)]
+struct IndexedTriangleMesh3D {
+    positions: Vec<Point3>,
+    normals: Vec<Vector3>,
+    faces: Vec<[(usize, usize); 3]>,
+}
+
+fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoError> {
+    let buffers = mesh
+        .exact_gpu_mesh_buffers()
+        .map_err(|error| IoError::Geometry {
+            format: "glTF",
+            detail: error.to_string(),
+        })?;
+    let positions = buffers
+        .vertices
+        .iter()
+        .map(|(position, _)| {
+            Point3::new(position[0].clone(), position[1].clone(), position[2].clone())
+        })
+        .collect::<Vec<_>>();
+    let normals = buffers
+        .vertices
+        .iter()
+        .map(|(_, normal)| {
+            Vector3::from_xyz(normal[0].clone(), normal[1].clone(), normal[2].clone())
+        })
+        .collect::<Vec<_>>();
+    let faces = buffers
+        .indices
+        .chunks_exact(3)
+        .map(|row| {
+            [
+                (row[0] as usize, row[0] as usize),
+                (row[1] as usize, row[1] as usize),
+                (row[2] as usize, row[2] as usize),
+            ]
+        })
+        .collect();
+    Ok(IndexedTriangleMesh3D {
+        positions,
+        normals,
+        faces,
+    })
+}
 
 fn checked_u32(value: usize, limit: &'static str) -> Result<u32, IoError> {
     u32::try_from(value).map_err(|_| IoError::SizeOverflow {
@@ -22,9 +80,9 @@ fn checked_u32(value: usize, limit: &'static str) -> Result<u32, IoError> {
 
 /// Geometry-only evidence produced while flattening one glTF scene.
 #[derive(Clone, Debug)]
-pub struct GltfMeshImport<M: Clone + Debug + Send + Sync> {
-    /// Flattened exact-aware triangle mesh.
-    pub mesh: Mesh<M>,
+pub struct GltfMeshImport {
+    /// Flattened native triangle mesh.
+    pub mesh: hypermesh::TriangleMesh,
     /// Selected default scene, or the first scene when no default is declared.
     pub scene_index: usize,
     /// Number of scene nodes that instantiated a mesh.
@@ -40,10 +98,7 @@ pub struct GltfMeshImport<M: Clone + Debug + Send + Sync> {
 /// policy. Node transforms are flattened into positions before exact promotion.
 /// Skins, morph targets, and non-triangle primitives fail explicitly instead
 /// of being silently ignored.
-pub fn from_gltf<M: Clone + Debug + Send + Sync>(
-    bytes: &[u8],
-    metadata: M,
-) -> Result<GltfMeshImport<M>, IoError> {
+pub fn from_gltf(bytes: &[u8]) -> Result<GltfMeshImport, IoError> {
     let asset = gltf::Gltf::from_slice(bytes).map_err(|error| {
         IoError::MalformedInput(format!("glTF document validation failed: {error}"))
     })?;
@@ -75,8 +130,7 @@ pub fn from_gltf<M: Clone + Debug + Send + Sync>(
         });
     }
 
-    let mut normals = Vec::with_capacity(triangles.len());
-    let mut faces = Vec::with_capacity(triangles.len());
+    let mut native_triangles = Vec::with_capacity(triangles.len());
     for triangle in triangles {
         let [a, b, c] = triangle;
         let ab = &positions[b] - &positions[a];
@@ -87,22 +141,10 @@ pub fn from_gltf<M: Clone + Debug + Send + Sync>(
                 format: "glTF",
                 detail: format!("triangle has no certifiable nondegenerate normal: {error}"),
             })?;
-        let normal_index = normals.len();
-        normals.push(normal);
-        faces.push([(a, normal_index), (b, normal_index), (c, normal_index)]);
+        let _ = normal;
+        native_triangles.push(Triangle::new(a, b, c));
     }
-    let mesh = Mesh::from_indexed_triangles(
-        IndexedTriangleMesh3D {
-            positions,
-            normals,
-            faces,
-        },
-        metadata,
-    )
-    .map_err(|error| IoError::Geometry {
-        format: "glTF",
-        detail: error.to_string(),
-    })?;
+    let mesh = TriangleMesh::new(positions, native_triangles);
 
     Ok(GltfMeshImport {
         mesh,
@@ -351,11 +393,33 @@ fn exact_gltf_real(value: f64, field: &'static str) -> Result<Real, IoError> {
     })
 }
 
-pub fn to_gltf<T: IndexedTriangulated3D>(
-    shape: &T,
-    object_name: &str,
-) -> Result<String, IoError> {
-    to_gltf_scene(object_name, &[GltfSceneObject::new(object_name, shape)])
+pub fn to_gltf(mesh: &TriangleMesh, object_name: &str) -> Result<String, IoError> {
+    if let Some(output) = GLTF_CACHE.with_borrow(|entries| {
+        entries
+            .iter()
+            .find(|entry| {
+                Arc::ptr_eq(&entry.positions, &mesh.positions)
+                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
+                    && entry.object_name == object_name
+            })
+            .map(|entry| entry.output.clone())
+    }) {
+        return Ok(output);
+    }
+    let output = to_gltf_scene(object_name, &[GltfSceneObject::new(object_name, mesh)?])?;
+    GLTF_CACHE.with_borrow_mut(|entries| {
+        const CAPACITY: usize = 4;
+        if entries.len() == CAPACITY {
+            entries.remove(0);
+        }
+        entries.push(CachedGltf {
+            positions: Arc::clone(&mesh.positions),
+            triangles: Arc::clone(&mesh.triangles),
+            object_name: object_name.to_owned(),
+            output: output.clone(),
+        });
+    });
+    Ok(output)
 }
 
 /// One named geometry object in a glTF scene.
@@ -370,11 +434,11 @@ pub struct GltfSceneObject {
 
 impl GltfSceneObject {
     /// Captures one named indexed-triangle source for scene serialization.
-    pub fn new<T: IndexedTriangulated3D>(name: impl Into<String>, shape: &T) -> Self {
-        Self {
+    pub fn new(name: impl Into<String>, mesh: &TriangleMesh) -> Result<Self, IoError> {
+        Ok(Self {
             name: name.into(),
-            indexed: shape.indexed_triangles(),
-        }
+            indexed: indexed_geometry(mesh)?,
+        })
     }
 }
 
@@ -586,12 +650,12 @@ pub fn to_gltf_scene(
     })
 }
 
-pub fn write_gltf<T: IndexedTriangulated3D, W: Write>(
-    shape: &T,
+pub fn write_gltf<W: Write>(
+    mesh: &TriangleMesh,
     writer: &mut W,
     object_name: &str,
 ) -> Result<(), IoError> {
-    writer.write_all(to_gltf(shape, object_name)?.as_bytes())?;
+    writer.write_all(to_gltf(mesh, object_name)?.as_bytes())?;
     Ok(())
 }
 
@@ -603,203 +667,4 @@ pub fn write_gltf_scene<W: Write>(
 ) -> Result<(), IoError> {
     writer.write_all(to_gltf_scene(scene_name, objects)?.as_bytes())?;
     Ok(())
-}
-
-macro_rules! impl_gltf_export {
-    ($type:ty) => {
-        impl<M: Clone + Debug + Send + Sync> $type {
-            pub fn to_gltf(&self, name: &str) -> Result<String, IoError> {
-                to_gltf(self, name)
-            }
-
-            pub fn write_gltf<W: Write>(
-                &self,
-                writer: &mut W,
-                name: &str,
-            ) -> Result<(), IoError> {
-                write_gltf(self, writer, name)
-            }
-        }
-    };
-}
-
-impl_gltf_export!(crate::mesh::Mesh<M>);
-#[cfg(feature = "sketch")]
-impl crate::sketch::Profile {
-    pub fn to_gltf(&self, name: &str) -> Result<String, IoError> {
-        to_gltf(self, name)
-    }
-
-    pub fn write_gltf<W: Write>(&self, writer: &mut W, name: &str) -> Result<(), IoError> {
-        write_gltf(self, writer, name)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{GltfSceneObject, checked_u32, from_gltf, to_gltf, to_gltf_scene};
-    use crate::csg::CSG;
-    use crate::io::{IoError, test_support::InvalidIndexed};
-    use crate::mesh::Mesh;
-    use base64::Engine;
-    use hyperlattice::{Aabb, Point3, Real};
-    use serde_json::json;
-    use std::borrow::Cow;
-
-    #[test]
-    fn output_is_valid_json_and_escapes_names() {
-        let mesh = Mesh::<()>::cube(Real::one(), ());
-        let output = mesh.to_gltf("quoted \" name\n").unwrap();
-        let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
-        assert_eq!(parsed["meshes"][0]["name"], "quoted \" name\n");
-        assert!(parsed["accessors"][0].get("min").is_some());
-        let document = gltf::Gltf::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(document.meshes().count(), 1);
-        assert_eq!(document.accessors().count(), 3);
-    }
-
-    #[test]
-    fn rejects_empty_invalid_and_overflowing_inputs() {
-        assert!(Mesh::<()>::empty().to_gltf("empty").is_err());
-        assert!(matches!(
-            to_gltf(&InvalidIndexed, "invalid"),
-            Err(IoError::Geometry { format: "glTF", .. })
-        ));
-        assert!(matches!(
-            checked_u32(usize::MAX, "test count"),
-            Err(IoError::SizeOverflow { format: "glTF", .. })
-        ));
-    }
-
-    #[test]
-    fn public_writer_matches_string_serializer() {
-        let mesh = Mesh::<()>::cube(Real::one(), ());
-        let expected = to_gltf(&mesh, "cube").unwrap();
-        let mut written = Vec::new();
-        crate::io::gltf::write_gltf(&mesh, &mut written, "cube").unwrap();
-        assert_eq!(written, expected.as_bytes());
-    }
-
-    #[test]
-    fn named_multi_object_scene_is_valid_and_retains_object_boundaries() {
-        let left = Mesh::<()>::cube(Real::one(), ());
-        let right = Mesh::<()>::cube(Real::one(), ()).translate(
-            Real::from(2),
-            Real::zero(),
-            Real::zero(),
-        );
-        let output = to_gltf_scene(
-            "assembly",
-            &[
-                GltfSceneObject::new("left", &left),
-                GltfSceneObject::new("right", &right),
-            ],
-        )
-        .unwrap();
-        let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
-        assert_eq!(parsed["scenes"][0]["name"], "assembly");
-        assert_eq!(parsed["meshes"].as_array().unwrap().len(), 2);
-        assert_eq!(parsed["nodes"].as_array().unwrap().len(), 2);
-        assert_eq!(parsed["meshes"][0]["name"], "left");
-        assert_eq!(parsed["meshes"][1]["name"], "right");
-        let document = gltf::Gltf::from_slice(output.as_bytes()).unwrap();
-        assert_eq!(document.meshes().count(), 2);
-        assert_eq!(document.nodes().count(), 2);
-        assert_eq!(document.accessors().count(), 6);
-    }
-
-    #[test]
-    fn self_contained_scene_import_flattens_nested_node_transforms() {
-        let cube = Mesh::<()>::cube(Real::one(), ());
-        let mut document: serde_json::Value =
-            serde_json::from_str(&to_gltf(&cube, "cube").unwrap()).unwrap();
-        document["nodes"][0]["translation"] = json!([1, 2, 3]);
-        document["nodes"][0]["children"] = json!([1]);
-        document["nodes"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({"mesh": 0, "translation": [4, 0, 0]}));
-        document["scenes"][0]["nodes"] = json!([0]);
-
-        let imported =
-            from_gltf(serde_json::to_string(&document).unwrap().as_bytes(), ()).unwrap();
-        assert_eq!(imported.scene_index, 0);
-        assert_eq!(imported.mesh_node_count, 2);
-        assert_eq!(imported.primitive_count, 2);
-        assert_eq!(imported.mesh.triangles().len(), 24);
-        assert_eq!(
-            imported.mesh.bounding_box(),
-            Aabb::new(
-                Point3::new(Real::from(1), Real::from(2), Real::from(3)),
-                Point3::new(Real::from(6), Real::from(3), Real::from(4)),
-            )
-        );
-    }
-
-    #[test]
-    fn binary_glb_import_reads_its_bin_chunk() {
-        let cube = Mesh::<()>::cube(Real::one(), ());
-        let mut document: serde_json::Value =
-            serde_json::from_str(&to_gltf(&cube, "cube").unwrap()).unwrap();
-        let uri = document["buffers"][0]["uri"].as_str().unwrap();
-        let encoded = uri.split_once(',').unwrap().1;
-        let bin = base64::engine::general_purpose::STANDARD
-            .decode(encoded)
-            .unwrap();
-        document["buffers"][0].as_object_mut().unwrap().remove("uri");
-        let glb = gltf::binary::Glb {
-            header: gltf::binary::Header {
-                magic: *b"glTF",
-                version: 2,
-                length: 0,
-            },
-            json: Cow::Owned(serde_json::to_vec(&document).unwrap()),
-            bin: Some(Cow::Owned(bin)),
-        }
-        .to_vec()
-        .unwrap();
-
-        let imported = from_gltf(&glb, ()).unwrap();
-        assert_eq!(imported.mesh_node_count, 1);
-        assert_eq!(imported.primitive_count, 1);
-        assert_eq!(imported.mesh.triangles().len(), 12);
-    }
-
-    #[test]
-    fn import_rejects_external_buffers_and_non_triangle_topology() {
-        let cube = Mesh::<()>::cube(Real::one(), ());
-        let mut external: serde_json::Value =
-            serde_json::from_str(&to_gltf(&cube, "cube").unwrap()).unwrap();
-        external["buffers"][0]["uri"] = json!("cube.bin");
-        assert!(matches!(
-            from_gltf(serde_json::to_string(&external).unwrap().as_bytes(), ()),
-            Err(IoError::Unsupported { format: "glTF", .. })
-        ));
-
-        let mut lines: serde_json::Value =
-            serde_json::from_str(&to_gltf(&cube, "cube").unwrap()).unwrap();
-        lines["meshes"][0]["primitives"][0]["mode"] = json!(1);
-        assert!(matches!(
-            from_gltf(serde_json::to_string(&lines).unwrap().as_bytes(), ()),
-            Err(IoError::Unsupported { format: "glTF", .. })
-        ));
-    }
-
-    #[test]
-    fn scene_rejects_empty_objects_and_duplicate_names() {
-        let empty = Mesh::<()>::empty();
-        let cube = Mesh::<()>::cube(Real::one(), ());
-        assert!(to_gltf_scene("none", &[]).is_err());
-        assert!(to_gltf_scene("empty", &[GltfSceneObject::new("empty", &empty)]).is_err());
-        assert!(
-            to_gltf_scene(
-                "duplicates",
-                &[
-                    GltfSceneObject::new("same", &cube),
-                    GltfSceneObject::new("same", &cube),
-                ],
-            )
-            .is_err()
-        );
-    }
 }

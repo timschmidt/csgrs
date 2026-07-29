@@ -1,7 +1,7 @@
 //! Part-interface metadata and assembly documentation carriers.
 //!
 //! This module is the `csgrs` side of the Hyper part boundary.  Geometry stays
-//! in CSG/Profile/Mesh carriers, while source-attributed part facts are attached
+//! in native curve and triangle carriers, while source-attributed part facts are attached
 //! as ordinary metadata that can later be indexed by `hyperparts`.
 //!
 //! The trust boundary follows Yap, "Towards Exact Geometric Computation,"
@@ -13,13 +13,15 @@
 //! Circuit and PCB ownership is explicitly outside this module. See the
 //! repository's `PCB_MIGRATION.md` for the completed ownership migration.
 
+#[cfg_attr(not(feature = "attributed"), allow(dead_code, unused_imports))]
 mod blueprint;
 mod metadata;
 
+#[cfg(feature = "attributed")]
+pub use blueprint::blueprint_from_aabb_parts;
 pub use blueprint::{
     BlueprintEdge, BlueprintEdgeStyle, BlueprintOcclusionStatus, BlueprintProjection,
     BlueprintReport, BlueprintView, OcclusionEvidence, ProjectedPoint2, ProjectedRect,
-    blueprint_from_aabb_parts,
 };
 pub use metadata::{
     AnchorFrame, AssemblyDocumentation, AssemblyFlag, CsgPartInterface, ExactVector3,

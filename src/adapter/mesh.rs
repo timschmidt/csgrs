@@ -3,103 +3,96 @@ use super::scalar::{
     AdapterError, AdapterResult, F32, F64, I128, RawReal, ScalarAdapter, real3_to_scalar,
     scalar3_to_real,
 };
-use crate::csg::CSG;
-use crate::mesh::Mesh as CoreMesh;
+use crate::solid::{self, SolidExt};
 use hyperlattice::{Matrix4, Point3, Vector3};
-use std::fmt::Debug;
-use std::marker::PhantomData;
+use hypermesh::{Triangle, TriangleMesh};
+use std::{
+    any::{Any, TypeId},
+    cell::RefCell,
+    marker::PhantomData,
+    sync::Arc,
+};
 
 pub type MeshVertex<S> = ([S; 3], [S; 3]);
 pub type IndexedMeshBuffers<S> = (Vec<[S; 3]>, Vec<[u32; 3]>);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GraphicsMesh<S> {
-    pub vertices: Vec<MeshVertex<S>>,
-    pub indices: Vec<u32>,
+    pub vertices: Arc<[MeshVertex<S>]>,
+    pub indices: Arc<[u32]>,
 }
 
-pub type RawMesh<M> = Mesh<RawReal, M>;
-pub type MeshF32<M> = Mesh<F32, M>;
-pub type MeshF64<M> = Mesh<F64, M>;
-pub type MeshI128<M> = Mesh<I128, M>;
+struct CachedGraphicsMesh {
+    positions: Arc<[Point3]>,
+    triangles: Arc<[Triangle]>,
+    adapter: TypeId,
+    graphics: Box<dyn Any>,
+}
 
-#[derive(Debug)]
-pub struct Mesh<A, M>
+thread_local! {
+    static GRAPHICS_MESH_CACHE: RefCell<Vec<CachedGraphicsMesh>> =
+        const { RefCell::new(Vec::new()) };
+}
+
+pub type RawTriangleMesh = ScalarMesh<RawReal>;
+pub type TriangleMeshF32 = ScalarMesh<F32>;
+pub type TriangleMeshF64 = ScalarMesh<F64>;
+pub type TriangleMeshI128 = ScalarMesh<I128>;
+
+/// Primitive-scalar boundary over native [`TriangleMesh`] geometry.
+#[derive(Clone, Debug)]
+pub struct ScalarMesh<A>
 where
     A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
 {
-    inner: CoreMesh<M>,
+    inner: TriangleMesh,
     _adapter: PhantomData<fn() -> A>,
 }
 
-impl<A, M> Clone for Mesh<A, M>
+impl<A> ScalarMesh<A>
 where
     A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
 {
-    fn clone(&self) -> Self {
-        Self::from_raw(self.inner.clone())
-    }
-}
-
-impl<A, M> Mesh<A, M>
-where
-    A: ScalarAdapter,
-    M: Clone + Send + Sync + Debug,
-{
-    pub fn from_raw(inner: CoreMesh<M>) -> Self {
+    pub fn from_native(inner: TriangleMesh) -> Self {
         Self {
             inner,
             _adapter: PhantomData,
         }
     }
 
-    pub fn into_raw(self) -> CoreMesh<M> {
+    pub fn into_native(self) -> TriangleMesh {
         self.inner
     }
 
-    pub const fn raw(&self) -> &CoreMesh<M> {
+    pub const fn native(&self) -> &TriangleMesh {
         &self.inner
     }
 
-    pub const fn raw_mut(&mut self) -> &mut CoreMesh<M> {
-        &mut self.inner
-    }
-
     pub fn empty() -> Self {
-        Self::from_raw(CoreMesh::empty())
+        Self::from_native(solid::empty())
     }
 
-    pub fn cube(width: A::Scalar, metadata: M) -> AdapterResult<Self> {
-        Ok(Self::from_raw(CoreMesh::cube(A::into_real(width)?, metadata)))
+    pub fn cube(width: A::Scalar) -> AdapterResult<Self> {
+        Ok(Self::from_native(solid::cube(A::into_real(width)?)))
     }
 
     pub fn cuboid(
         width: A::Scalar,
         length: A::Scalar,
         height: A::Scalar,
-        metadata: M,
     ) -> AdapterResult<Self> {
-        Ok(Self::from_raw(CoreMesh::cuboid(
+        Ok(Self::from_native(solid::cuboid(
             A::into_real(width)?,
             A::into_real(length)?,
             A::into_real(height)?,
-            metadata,
         )))
     }
 
-    pub fn sphere(
-        radius: A::Scalar,
-        segments: usize,
-        stacks: usize,
-        metadata: M,
-    ) -> AdapterResult<Self> {
-        Ok(Self::from_raw(CoreMesh::sphere(
+    pub fn sphere(radius: A::Scalar, segments: usize, stacks: usize) -> AdapterResult<Self> {
+        Ok(Self::from_native(solid::sphere(
             A::into_real(radius)?,
             segments,
             stacks,
-            metadata,
         )))
     }
 
@@ -107,65 +100,59 @@ where
         radius: A::Scalar,
         height: A::Scalar,
         segments: usize,
-        metadata: M,
     ) -> AdapterResult<Self> {
-        Ok(Self::from_raw(CoreMesh::cylinder(
+        Ok(Self::from_native(solid::cylinder(
             A::into_real(radius)?,
             A::into_real(height)?,
             segments,
-            metadata,
         )))
     }
 
-    pub fn polyhedron(
-        points: &[[A::Scalar; 3]],
-        faces: &[&[usize]],
-        metadata: M,
-    ) -> AdapterResult<Self> {
+    pub fn polyhedron(points: &[[A::Scalar; 3]], faces: &[&[usize]]) -> AdapterResult<Self> {
         let points = points
             .iter()
             .cloned()
             .map(scalar3_to_real::<A>)
             .collect::<AdapterResult<Vec<_>>>()?;
-        CoreMesh::polyhedron(&points, faces, metadata)
-            .map(Self::from_raw)
-            .map_err(|err| AdapterError::Validation(err.to_string()))
+        solid::polyhedron(&points, faces)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn union(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_union(&other.inner)
-            .map(Self::from_raw)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_difference(&other.inner)
-            .map(Self::from_raw)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_intersection(&other.inner)
-            .map(Self::from_raw)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
         self.inner
             .try_xor(&other.inner)
-            .map(Self::from_raw)
+            .map(Self::from_native)
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn transform(&self, matrix: &Matrix4) -> Self {
-        Self::from_raw(self.inner.transform(matrix))
+        Self::from_native(solid::transform(&self.inner, matrix))
     }
 
     pub fn translate(&self, x: A::Scalar, y: A::Scalar, z: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_raw(self.inner.translate(
+        Ok(Self::from_native(self.inner.translated(
             A::into_real(x)?,
             A::into_real(y)?,
             A::into_real(z)?,
@@ -173,7 +160,8 @@ where
     }
 
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_raw(self.inner.scale(
+        Ok(Self::from_native(solid::scale(
+            &self.inner,
             A::into_real(sx)?,
             A::into_real(sy)?,
             A::into_real(sz)?,
@@ -186,7 +174,8 @@ where
         y_degrees: A::Scalar,
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
-        Ok(Self::from_raw(self.inner.rotate(
+        Ok(Self::from_native(solid::rotate(
+            &self.inner,
             A::into_real(x_degrees)?,
             A::into_real(y_degrees)?,
             A::into_real(z_degrees)?,
@@ -194,19 +183,35 @@ where
     }
 
     pub fn inverse(&self) -> Self {
-        Self::from_raw(self.inner.inverse())
+        let triangles = self
+            .inner
+            .triangles
+            .iter()
+            .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
+            .collect();
+        Self::from_native(TriangleMesh::new(self.inner.positions.to_vec(), triangles))
     }
 
     pub fn center(&self) -> Self {
-        Self::from_raw(self.inner.center())
+        let bounds = solid::bounding_box(&self.inner);
+        let two = hyperlattice::Real::from(2_u8);
+        let x = -((&bounds.mins.x + &bounds.maxs.x) / &two).expect("nonzero exact divisor");
+        let y = -((&bounds.mins.y + &bounds.maxs.y) / &two).expect("nonzero exact divisor");
+        let z = -((&bounds.mins.z + &bounds.maxs.z) / &two).expect("nonzero exact divisor");
+        Self::from_native(self.inner.translated(x, y, z))
     }
 
     pub fn float(&self) -> Self {
-        Self::from_raw(self.inner.float())
+        let bounds = solid::bounding_box(&self.inner);
+        Self::from_native(self.inner.translated(
+            hyperlattice::Real::zero(),
+            hyperlattice::Real::zero(),
+            -bounds.mins.z.clone(),
+        ))
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Aabb3<A::Scalar>> {
-        let bounds = self.inner.bounding_box();
+        let bounds = solid::bounding_box(&self.inner);
         Ok(Aabb3 {
             mins: [
                 A::from_real(&bounds.mins.x)?,
@@ -222,7 +227,28 @@ where
     }
 
     pub fn graphics_mesh(&self) -> AdapterResult<GraphicsMesh<A::Scalar>> {
-        let mesh = self.inner.build_graphics_mesh();
+        if let Some(graphics) = GRAPHICS_MESH_CACHE.with_borrow(|entries| {
+            entries
+                .iter()
+                .rev()
+                .find(|entry| {
+                    Arc::ptr_eq(&entry.positions, &self.inner.positions)
+                        && Arc::ptr_eq(&entry.triangles, &self.inner.triangles)
+                        && entry.adapter == TypeId::of::<A>()
+                })
+                .and_then(|entry| {
+                    entry
+                        .graphics
+                        .downcast_ref::<GraphicsMesh<A::Scalar>>()
+                        .cloned()
+                })
+        }) {
+            return Ok(graphics);
+        }
+        let mesh = self
+            .inner
+            .exact_gpu_mesh_buffers()
+            .map_err(|error| AdapterError::Validation(error.to_string()))?;
         let vertices = mesh
             .vertices
             .iter()
@@ -231,20 +257,44 @@ where
             })
             .collect::<AdapterResult<Vec<_>>>()?;
 
-        Ok(GraphicsMesh {
-            vertices,
-            indices: mesh.indices.to_vec(),
-        })
+        let graphics = GraphicsMesh {
+            vertices: vertices.into(),
+            indices: Arc::from(mesh.indices.as_slice()),
+        };
+        GRAPHICS_MESH_CACHE.with_borrow_mut(|entries| {
+            const CAPACITY: usize = 8;
+            if entries.len() == CAPACITY {
+                entries.remove(0);
+            }
+            entries.push(CachedGraphicsMesh {
+                positions: Arc::clone(&self.inner.positions),
+                triangles: Arc::clone(&self.inner.triangles),
+                adapter: TypeId::of::<A>(),
+                graphics: Box::new(graphics.clone()),
+            });
+        });
+        Ok(graphics)
     }
 
     pub fn vertices_and_indices(&self) -> AdapterResult<IndexedMeshBuffers<A::Scalar>> {
-        let (vertices, indices) =
-            self.inner.try_get_vertices_and_indices().map_err(|err| {
-                AdapterError::Validation(format!("could not extract mesh buffers: {err}"))
-            })?;
-        let vertices = vertices
+        let vertices = self
+            .inner
+            .positions
             .iter()
             .map(point3_to_scalar::<A>)
+            .collect::<AdapterResult<Vec<_>>>()?;
+        let indices = self
+            .inner
+            .triangles
+            .iter()
+            .map(|triangle| {
+                let [a, b, c] = triangle.indices();
+                Ok([
+                    u32::try_from(a).map_err(index_error)?,
+                    u32::try_from(b).map_err(index_error)?,
+                    u32::try_from(c).map_err(index_error)?,
+                ])
+            })
             .collect::<AdapterResult<Vec<_>>>()?;
         Ok((vertices, indices))
     }
@@ -261,7 +311,7 @@ where
                 let [x, y, z] = point?;
                 let transformed = matrix
                     .transform_point3(&Point3::new(x, y, z))
-                    .map_err(|err| AdapterError::Validation(err.to_string()))?;
+                    .map_err(|error| AdapterError::Validation(error.to_string()))?;
                 point3_to_scalar::<A>(&transformed)
             })
             .collect()
@@ -271,6 +321,10 @@ where
         let [x, y, z] = scalar3_to_real::<A>(values)?;
         Ok(Vector3::from_xyz(x, y, z))
     }
+}
+
+fn index_error(error: std::num::TryFromIntError) -> AdapterError {
+    AdapterError::Validation(format!("native mesh index exceeds u32: {error}"))
 }
 
 fn point3_to_scalar<A: ScalarAdapter>(point: &Point3) -> AdapterResult<[A::Scalar; 3]> {

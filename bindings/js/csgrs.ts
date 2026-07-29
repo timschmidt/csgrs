@@ -75,7 +75,7 @@ export class Real {
   }
 }
 
-export class Mesh<F extends Family> {
+export class TriangleMesh<F extends Family> {
   readonly family: F;
   readonly handle: unknown;
 
@@ -85,12 +85,12 @@ export class Mesh<F extends Family> {
   }
 
   /** @internal Wrap a handle returned by another typed binding operation. */
-  static fromNativeHandle<F extends Family>(family: F, handle: unknown): Mesh<F> {
-    return new Mesh(family, handle);
+  static fromNativeHandle<F extends Family>(family: F, handle: unknown): TriangleMesh<F> {
+    return new TriangleMesh(family, handle);
   }
 
-  static cube<F extends Family>(family: F, width: Scalar<F>): Mesh<F> {
-    return new Mesh(family, call(`csgrs_mesh_${family}_cube`, width));
+  static cube<F extends Family>(family: F, width: Scalar<F>): TriangleMesh<F> {
+    return new TriangleMesh(family, call(`csgrs_triangle_mesh_${family}_cube`, width));
   }
 
   static cuboid<F extends Family>(
@@ -98,8 +98,8 @@ export class Mesh<F extends Family> {
     width: Scalar<F>,
     length: Scalar<F>,
     height: Scalar<F>,
-  ): Mesh<F> {
-    return new Mesh(family, call(`csgrs_mesh_${family}_cuboid`, width, length, height));
+  ): TriangleMesh<F> {
+    return new TriangleMesh(family, call(`csgrs_triangle_mesh_${family}_cuboid`, width, length, height));
   }
 
   static sphere<F extends Family>(
@@ -107,8 +107,8 @@ export class Mesh<F extends Family> {
     radius: Scalar<F>,
     segments: number,
     stacks: number,
-  ): Mesh<F> {
-    return new Mesh(family, call(`csgrs_mesh_${family}_sphere`, radius, segments, stacks));
+  ): TriangleMesh<F> {
+    return new TriangleMesh(family, call(`csgrs_triangle_mesh_${family}_sphere`, radius, segments, stacks));
   }
 
   static cylinder<F extends Family>(
@@ -116,100 +116,100 @@ export class Mesh<F extends Family> {
     radius: Scalar<F>,
     height: Scalar<F>,
     segments: number,
-  ): Mesh<F> {
-    return new Mesh(family, call(`csgrs_mesh_${family}_cylinder`, radius, height, segments));
+  ): TriangleMesh<F> {
+    return new TriangleMesh(family, call(`csgrs_triangle_mesh_${family}_cylinder`, radius, height, segments));
   }
 
   static polyhedron<F extends Family>(
     family: F,
     points: Array<Vec3<Scalar<F>>>,
     faces: number[][],
-  ): Mesh<F> {
+  ): TriangleMesh<F> {
     const faceIndices = faces.flat();
     const faceOffsets = [0];
     for (const face of faces) {
       faceOffsets.push(faceOffsets[faceOffsets.length - 1] + face.length);
     }
-    return new Mesh(
+    return new TriangleMesh(
       family,
-      call(`csgrs_mesh_${family}_polyhedron`, points, faceIndices, faceOffsets),
+      call(`csgrs_triangle_mesh_${family}_polyhedron`, points, faceIndices, faceOffsets),
     );
   }
 
-  union(other: Mesh<F>): Mesh<F> {
+  union(other: TriangleMesh<F>): TriangleMesh<F> {
     return this.binary("union", other);
   }
 
-  difference(other: Mesh<F>): Mesh<F> {
+  difference(other: TriangleMesh<F>): TriangleMesh<F> {
     return this.binary("difference", other);
   }
 
-  intersection(other: Mesh<F>): Mesh<F> {
+  intersection(other: TriangleMesh<F>): TriangleMesh<F> {
     return this.binary("intersection", other);
   }
 
-  xor(other: Mesh<F>): Mesh<F> {
+  xor(other: TriangleMesh<F>): TriangleMesh<F> {
     return this.binary("xor", other);
   }
 
-  transform(matrix: Matrix4<Scalar<F>>): Mesh<F> {
-    return new Mesh(this.family, call(`csgrs_mesh_${this.family}_transform`, this.handle, matrix));
+  transform(matrix: Matrix4<Scalar<F>>): TriangleMesh<F> {
+    return new TriangleMesh(this.family, call(`csgrs_triangle_mesh_${this.family}_transform`, this.handle, matrix));
   }
 
-  translate(x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): Mesh<F> {
+  translate(x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): TriangleMesh<F> {
     return this.triple("translate", x, y, z);
   }
 
-  scale(sx: Scalar<F>, sy: Scalar<F>, sz: Scalar<F>): Mesh<F> {
+  scale(sx: Scalar<F>, sy: Scalar<F>, sz: Scalar<F>): TriangleMesh<F> {
     return this.triple("scale", sx, sy, sz);
   }
 
-  rotate(xDegrees: Scalar<F>, yDegrees: Scalar<F>, zDegrees: Scalar<F>): Mesh<F> {
+  rotate(xDegrees: Scalar<F>, yDegrees: Scalar<F>, zDegrees: Scalar<F>): TriangleMesh<F> {
     return this.triple("rotate", xDegrees, yDegrees, zDegrees);
   }
 
-  inverse(): Mesh<F> {
+  inverse(): TriangleMesh<F> {
     return this.unary("inverse");
   }
 
-  center(): Mesh<F> {
+  center(): TriangleMesh<F> {
     return this.unary("center");
   }
 
-  floating(): Mesh<F> {
+  floating(): TriangleMesh<F> {
     return this.unary("float");
   }
 
   boundingBox(): unknown {
-    return call(`csgrs_mesh_${this.family}_bounding_box`, this.handle);
+    return call(`csgrs_triangle_mesh_${this.family}_bounding_box`, this.handle);
   }
 
   verticesAndIndices(): unknown {
-    return call(`csgrs_mesh_${this.family}_vertices_and_indices`, this.handle);
+    return call(`csgrs_triangle_mesh_${this.family}_vertices_and_indices`, this.handle);
   }
 
   graphicsMesh(): unknown {
-    return call(`csgrs_mesh_${this.family}_graphics_mesh`, this.handle);
+    return call(`csgrs_triangle_mesh_${this.family}_graphics_mesh`, this.handle);
   }
 
   free(): void {
-    call("csgrs_mesh_free", this.handle);
+    call("csgrs_triangle_mesh_free", this.handle);
   }
 
-  private unary(op: string): Mesh<F> {
-    return new Mesh(this.family, call(`csgrs_mesh_${this.family}_${op}`, this.handle));
+  private unary(op: string): TriangleMesh<F> {
+    return new TriangleMesh(this.family, call(`csgrs_triangle_mesh_${this.family}_${op}`, this.handle));
   }
 
-  private binary(op: string, other: Mesh<F>): Mesh<F> {
-    return new Mesh(this.family, call(`csgrs_mesh_${this.family}_${op}`, this.handle, other.handle));
+  private binary(op: string, other: TriangleMesh<F>): TriangleMesh<F> {
+    return new TriangleMesh(this.family, call(`csgrs_triangle_mesh_${this.family}_${op}`, this.handle, other.handle));
   }
 
-  private triple(op: string, x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): Mesh<F> {
-    return new Mesh(this.family, call(`csgrs_mesh_${this.family}_${op}`, this.handle, x, y, z));
+  private triple(op: string, x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): TriangleMesh<F> {
+    return new TriangleMesh(this.family, call(`csgrs_triangle_mesh_${this.family}_${op}`, this.handle, x, y, z));
   }
 }
 
-export class Profile<F extends Family> {
+export class CurveRegion<F extends Family> {
   readonly family: F;
   readonly handle: unknown;
 
@@ -218,111 +218,111 @@ export class Profile<F extends Family> {
     this.handle = handle;
   }
 
-  static square<F extends Family>(family: F, width: Scalar<F>): Profile<F> {
-    return new Profile(family, call(`csgrs_profile_${family}_square`, width));
+  static square<F extends Family>(family: F, width: Scalar<F>): CurveRegion<F> {
+    return new CurveRegion(family, call(`csgrs_curve_region_${family}_square`, width));
   }
 
   static rectangle<F extends Family>(
     family: F,
     width: Scalar<F>,
     length: Scalar<F>,
-  ): Profile<F> {
-    return new Profile(family, call(`csgrs_profile_${family}_rectangle`, width, length));
+  ): CurveRegion<F> {
+    return new CurveRegion(family, call(`csgrs_curve_region_${family}_rectangle`, width, length));
   }
 
-  static circle<F extends Family>(family: F, radius: Scalar<F>, segments: number): Profile<F> {
-    return new Profile(family, call(`csgrs_profile_${family}_circle`, radius, segments));
+  static circle<F extends Family>(family: F, radius: Scalar<F>, segments: number): CurveRegion<F> {
+    return new CurveRegion(family, call(`csgrs_curve_region_${family}_circle`, radius, segments));
   }
 
-  static polygon<F extends Family>(family: F, points: Array<Vec2<Scalar<F>>>): Profile<F> {
-    return new Profile(family, call(`csgrs_profile_${family}_polygon`, points));
+  static polygon<F extends Family>(family: F, points: Array<Vec2<Scalar<F>>>): CurveRegion<F> {
+    return new CurveRegion(family, call(`csgrs_curve_region_${family}_polygon`, points));
   }
 
-  union(other: Profile<F>): Profile<F> {
+  union(other: CurveRegion<F>): CurveRegion<F> {
     return this.binary("union", other);
   }
 
-  difference(other: Profile<F>): Profile<F> {
+  difference(other: CurveRegion<F>): CurveRegion<F> {
     return this.binary("difference", other);
   }
 
-  intersection(other: Profile<F>): Profile<F> {
+  intersection(other: CurveRegion<F>): CurveRegion<F> {
     return this.binary("intersection", other);
   }
 
-  xor(other: Profile<F>): Profile<F> {
+  xor(other: CurveRegion<F>): CurveRegion<F> {
     return this.binary("xor", other);
   }
 
-  transform(matrix: Matrix4<Scalar<F>>): Profile<F> {
-    return new Profile(this.family, call(`csgrs_profile_${this.family}_transform`, this.handle, matrix));
+  transform(matrix: Matrix4<Scalar<F>>): CurveRegion<F> {
+    return new CurveRegion(this.family, call(`csgrs_curve_region_${this.family}_transform`, this.handle, matrix));
   }
 
-  translate(x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): Profile<F> {
+  translate(x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): CurveRegion<F> {
     return this.triple("translate", x, y, z);
   }
 
-  scale(sx: Scalar<F>, sy: Scalar<F>, sz: Scalar<F>): Profile<F> {
+  scale(sx: Scalar<F>, sy: Scalar<F>, sz: Scalar<F>): CurveRegion<F> {
     return this.triple("scale", sx, sy, sz);
   }
 
-  rotate(xDegrees: Scalar<F>, yDegrees: Scalar<F>, zDegrees: Scalar<F>): Profile<F> {
+  rotate(xDegrees: Scalar<F>, yDegrees: Scalar<F>, zDegrees: Scalar<F>): CurveRegion<F> {
     return this.triple("rotate", xDegrees, yDegrees, zDegrees);
   }
 
   boundingBox(): unknown {
-    return call(`csgrs_profile_${this.family}_bounding_box`, this.handle);
+    return call(`csgrs_curve_region_${this.family}_bounding_box`, this.handle);
   }
 
-  extrude(height: Scalar<F>): Mesh<F> {
-    return Mesh.fromNativeHandle(
+  extrude(height: Scalar<F>): TriangleMesh<F> {
+    return TriangleMesh.fromNativeHandle(
       this.family,
-      call(`csgrs_profile_${this.family}_extrude`, this.handle, height),
+      call(`csgrs_curve_region_${this.family}_extrude`, this.handle, height),
     );
   }
 
-  extrudeVector(direction: Vec3<Scalar<F>>): Mesh<F> {
-    return Mesh.fromNativeHandle(
+  extrudeVector(direction: Vec3<Scalar<F>>): TriangleMesh<F> {
+    return TriangleMesh.fromNativeHandle(
       this.family,
-      call(`csgrs_profile_${this.family}_extrude_vector`, this.handle, direction),
+      call(`csgrs_curve_region_${this.family}_extrude_vector`, this.handle, direction),
     );
   }
 
-  revolve(angleDegrees: Scalar<F>, segments: number): Mesh<F> {
-    return Mesh.fromNativeHandle(
+  revolve(angleDegrees: Scalar<F>, segments: number): TriangleMesh<F> {
+    return TriangleMesh.fromNativeHandle(
       this.family,
-      call(`csgrs_profile_${this.family}_revolve`, this.handle, angleDegrees, segments),
+      call(`csgrs_curve_region_${this.family}_revolve`, this.handle, angleDegrees, segments),
     );
   }
 
   regionProfiles(): unknown {
-    return call(`csgrs_profile_${this.family}_region_profiles`, this.handle);
+    return call(`csgrs_curve_region_${this.family}_region_profiles`, this.handle);
   }
 
   free(): void {
-    call("csgrs_profile_free", this.handle);
+    call("csgrs_curve_region_free", this.handle);
   }
 
-  private binary(op: string, other: Profile<F>): Profile<F> {
-    return new Profile(
+  private binary(op: string, other: CurveRegion<F>): CurveRegion<F> {
+    return new CurveRegion(
       this.family,
-      call(`csgrs_profile_${this.family}_${op}`, this.handle, other.handle),
+      call(`csgrs_curve_region_${this.family}_${op}`, this.handle, other.handle),
     );
   }
 
-  private triple(op: string, x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): Profile<F> {
-    return new Profile(
+  private triple(op: string, x: Scalar<F>, y: Scalar<F>, z: Scalar<F>): CurveRegion<F> {
+    return new CurveRegion(
       this.family,
-      call(`csgrs_profile_${this.family}_${op}`, this.handle, x, y, z),
+      call(`csgrs_curve_region_${this.family}_${op}`, this.handle, x, y, z),
     );
   }
 }
 
-export type MeshF32 = Mesh<"f32">;
-export type MeshF64 = Mesh<"f64">;
-export type MeshI128 = Mesh<"i128">;
-export type MeshReal = Mesh<"real">;
-export type ProfileF32 = Profile<"f32">;
-export type ProfileF64 = Profile<"f64">;
-export type ProfileI128 = Profile<"i128">;
-export type ProfileReal = Profile<"real">;
+export type TriangleMeshF32 = TriangleMesh<"f32">;
+export type TriangleMeshF64 = TriangleMesh<"f64">;
+export type TriangleMeshI128 = TriangleMesh<"i128">;
+export type TriangleMeshReal = TriangleMesh<"real">;
+export type CurveRegionF32 = CurveRegion<"f32">;
+export type CurveRegionF64 = CurveRegion<"f64">;
+export type CurveRegionI128 = CurveRegion<"i128">;
+export type CurveRegionReal = CurveRegion<"real">;

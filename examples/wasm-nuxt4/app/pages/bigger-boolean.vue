@@ -32,19 +32,19 @@ if (import.meta.client)
       0, 50, 0 
     );
 
-    // Make a 2D Profile
-    //const profile = new csgrs.ProfileJs();
-    //console.log(profile.isEmpty()); // true
+    // Make a filled 2D curve region
+    //const region = new csgrs.CurveRegionJs();
+    //console.log(region.isEmpty()); // true
     
     /*
-    profile.polygon([
+    region.polygon([
       -50, 50,
       50, 0,
       0, 50
     ]);
     */
 
-    const circle = csgrs.ProfileJs.circle(10, 32);
+    const circle = csgrs.CurveRegionJs.circle(10, 32);
     // console.log(circle.center()); // Expect the center point, is center operation
     //console.log(circle.boundingBox()); // { min: [-10,-10,0], max: [10,10,0] }
     const translatedCircle = circle.translate(100,0,0); // Expect in-place translation

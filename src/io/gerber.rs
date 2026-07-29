@@ -1,14 +1,12 @@
-//! Gerber (RS-274X) input and output for 2D [`Profile`] geometry.
+//! Gerber (RS-274X) input and output for native 2D curve geometry.
 //!
 //! The implementation uses `gerber-types` for code generation and `gerber_parser`
-//! for parsing. Gerber regions map directly to filled `Profile` polygons. Simple
+//! for parsing. Gerber regions map directly to filled Hypercurve regions. Simple
 //! circular, rectangular, obround, and regular-polygon flashes are imported as
 //! filled shapes. Linear and circular aperture-stroked traces are imported for
 //! standard apertures by constructing the swept aperture area.
 
-use crate::csg::CSG;
-use crate::hyper_math::{Real, hreal_to_f64};
-use crate::sketch::Profile;
+use crate::curve::{self, CurveRegionExt};
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
     CoordinateFormat, CoordinateMode, CoordinateNumber, CoordinateOffset, Coordinates, DCode,
@@ -18,8 +16,9 @@ use gerber_types::{
 };
 use hypercurve::{
     Classification, Contour2, CurvePolicy, CurveRegion2, CurveString2,
-    FiniteProjectionOptions, FiniteRegionProfile2, Point2, Segment2,
+    FiniteProjectionOptions, FiniteRegionProfile2,
 };
+use hyperlattice::Real;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
@@ -81,7 +80,7 @@ fn origin_circle_coord(radius: f64, angle: f64) -> Coord<f64> {
     coord_on_circle(Coord { x: 0.0, y: 0.0 }, radius, angle)
 }
 
-/// Options used when exporting a [`Profile`] to Gerber.
+/// Options used when exporting a native filled region to Gerber.
 #[derive(Clone, Copy, Debug)]
 pub struct GerberExportOptions {
     /// Gerber file units. Defaults to millimeters.
@@ -104,49 +103,46 @@ impl Default for GerberExportOptions {
     }
 }
 
-/// Parse Gerber data into a `Profile`.
-pub trait FromGerber: Sized {
-    fn from_gerber(gerber_data: &[u8]) -> Result<Self, IoError>;
+/// Parses Gerber into distinct native filled, string, and path carriers.
+pub fn import_gerber(
+    data: &[u8],
+) -> Result<(CurveRegion2, Vec<CurveString2>, Vec<hypercurve::CurvePath2>), IoError> {
+    parse_gerber(data).map(|region| (region, Vec::new(), Vec::new()))
 }
 
-/// Serialize geometry to Gerber.
-pub trait ToGerber {
-    fn to_gerber(&self) -> Result<Vec<u8>, IoError>;
-    fn to_gerber_with_options(&self, options: GerberExportOptions)
-    -> Result<Vec<u8>, IoError>;
+/// Serializes a native filled region to Gerber.
+pub fn export_gerber(region: &CurveRegion2) -> Result<Vec<u8>, IoError> {
+    export_gerber_with_options(region, GerberExportOptions::default())
 }
 
-impl FromGerber for Profile {
-    #[allow(clippy::result_large_err)]
-    fn from_gerber(gerber_data: &[u8]) -> Result<Self, IoError> {
-        preflight_gerber_input(gerber_data)?;
+#[allow(clippy::result_large_err)]
+fn parse_gerber(gerber_data: &[u8]) -> Result<CurveRegion2, IoError> {
+    preflight_gerber_input(gerber_data)?;
 
-        let reader = BufReader::new(Cursor::new(gerber_data));
-        let parsed = catch_unwind(AssertUnwindSafe(|| gerber_parser::parse(reader)))
-            .map_err(|_| IoError::GerberParsing("Gerber parser panicked".to_string()))?;
-        let doc =
-            parsed.map_err(|(_doc, error)| IoError::GerberParsing(format!("{error:?}")))?;
+    let reader = BufReader::new(Cursor::new(gerber_data));
+    let parsed = catch_unwind(AssertUnwindSafe(|| gerber_parser::parse(reader)))
+        .map_err(|_| IoError::GerberParsing("Gerber parser panicked".to_string()))?;
+    let doc = parsed.map_err(|(_doc, error)| IoError::GerberParsing(format!("{error:?}")))?;
 
-        let errors = doc.errors();
-        if !errors.is_empty() {
-            let message = errors
-                .iter()
-                .map(|error| error.to_string())
-                .collect::<Vec<_>>()
-                .join("; ");
-            return Err(IoError::GerberParsing(message));
-        }
-
-        let units = doc.units.ok_or_else(|| {
-            IoError::MalformedInput("Gerber input does not declare units".into())
-        })?;
-        let mut state = ImportState::new(units);
-        for command in doc.commands() {
-            state.apply_command(command, &doc.apertures)?;
-        }
-
-        state.finish()
+    let errors = doc.errors();
+    if !errors.is_empty() {
+        let message = errors
+            .iter()
+            .map(|error| error.to_string())
+            .collect::<Vec<_>>()
+            .join("; ");
+        return Err(IoError::GerberParsing(message));
     }
+
+    let units = doc.units.ok_or_else(|| {
+        IoError::MalformedInput("Gerber input does not declare units".into())
+    })?;
+    let mut state = ImportState::new(units);
+    for command in doc.commands() {
+        state.apply_command(command, &doc.apertures)?;
+    }
+
+    state.finish()
 }
 
 fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
@@ -155,101 +151,83 @@ fn preflight_gerber_input(gerber_data: &[u8]) -> Result<(), IoError> {
     Ok(())
 }
 
-impl ToGerber for Profile {
-    fn to_gerber(&self) -> Result<Vec<u8>, IoError> {
-        self.to_gerber_with_options(GerberExportOptions::default())
+pub fn export_gerber_with_options(
+    region: &CurveRegion2,
+    options: GerberExportOptions,
+) -> Result<Vec<u8>, IoError> {
+    if options.coordinate_format.coordinate_mode != CoordinateMode::Absolute {
+        return Err(IoError::Unsupported {
+            format: "Gerber",
+            detail: "incremental-coordinate export is not supported".into(),
+        });
+    }
+    let mut commands = vec![
+        FunctionCode::GCode(GCode::Comment(CommentContent::String(
+            "Generated by csgrs".to_string(),
+        )))
+        .into(),
+        ExtendedCode::Unit(options.unit).into(),
+        ExtendedCode::CoordinateFormat(options.coordinate_format).into(),
+        ExtendedCode::LoadPolarity(Polarity::Dark).into(),
+        ExtendedCode::ApertureDefinition(ApertureDefinition::new(
+            10,
+            Aperture::Circle(Circle::new(0.01)),
+        ))
+        .into(),
+        FunctionCode::DCode(DCode::SelectAperture(10)).into(),
+        FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into(),
+    ];
+
+    // Closed-region export consumes the native hypercurve boundary directly.
+    // Supported boundary input is promoted into CurveRegion2/CurveString2 when
+    // curves are constructed. Gerber coordinates are serialization output,
+    // while geometric classification stays with hyper geometry; that split
+    // follows Yap, "Towards Exact Geometric Computation," Computational
+    // Geometry 7(1-2), 1997
+    // (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
+    // boundary described by Hobby, "Practical Segment Intersection with
+    // Finite Precision Output," Computational Geometry 13(4), 1999
+    // (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
+    if region.is_empty() {
+        return Err(IoError::Geometry {
+            format: "Gerber",
+            detail: "cannot export empty geometry".into(),
+        });
+    }
+    {
+        let projection_options =
+            FiniteProjectionOptions::try_new(1e-3).map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: format!("invalid projection configuration: {error}"),
+            })?;
+        match region
+            .project_to_finite_profiles(&projection_options, &CurvePolicy::certified())
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: format!("native region projection failed: {error}"),
+            })? {
+            Classification::Decided(region_profiles) => {
+                emit_region_profiles(&region_profiles, &mut commands, options)?;
+            },
+            Classification::Uncertain(reason) => {
+                return Err(IoError::Geometry {
+                    format: "Gerber",
+                    detail: format!("region projection is uncertain: {reason:?}"),
+                });
+            },
+        }
     }
 
-    fn to_gerber_with_options(
-        &self,
-        options: GerberExportOptions,
-    ) -> Result<Vec<u8>, IoError> {
-        if options.coordinate_format.coordinate_mode != CoordinateMode::Absolute {
-            return Err(IoError::Unsupported {
-                format: "Gerber",
-                detail: "incremental-coordinate export is not supported".into(),
-            });
-        }
-        let mut commands = vec![
-            FunctionCode::GCode(GCode::Comment(CommentContent::String(
-                "Generated by csgrs".to_string(),
-            )))
-            .into(),
-            ExtendedCode::Unit(options.unit).into(),
-            ExtendedCode::CoordinateFormat(options.coordinate_format).into(),
-            ExtendedCode::LoadPolarity(Polarity::Dark).into(),
-            ExtendedCode::ApertureDefinition(ApertureDefinition::new(
-                10,
-                Aperture::Circle(Circle::new(0.01)),
-            ))
-            .into(),
-            FunctionCode::DCode(DCode::SelectAperture(10)).into(),
-            FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into(),
-        ];
+    commands.push(FunctionCode::MCode(MCode::EndOfFile).into());
 
-        // Closed-region export consumes the native hypercurve boundary directly.
-        // Supported boundary input is promoted into CurveRegion2/CurveString2 when
-        // sketches are constructed. Gerber coordinates are serialization output,
-        // while geometric classification stays with hyper geometry; that split
-        // follows Yap, "Towards Exact Geometric Computation," Computational
-        // Geometry 7(1-2), 1997
-        // (<https://doi.org/10.1016/0925-7721(95)00040-2>), and the finite-output
-        // boundary described by Hobby, "Practical Segment Intersection with
-        // Finite Precision Output," Computational Geometry 13(4), 1999
-        // (<https://doi.org/10.1016/S0925-7721(99)00021-8>).
-        let has_native_region = !self.filled_is_empty();
-        let has_native_wires = !self.wires().is_empty() || !self.curve_paths().is_empty();
-        if !has_native_region && !has_native_wires {
-            return Err(IoError::Geometry {
-                format: "Gerber",
-                detail: "cannot export empty geometry".into(),
-            });
-        }
-        {
-            let projection_options =
-                FiniteProjectionOptions::try_new(1e-3).map_err(|error| IoError::Geometry {
-                    format: "Gerber",
-                    detail: format!("invalid projection configuration: {error}"),
-                })?;
-            match self
-                .project_region_profiles(&projection_options)
-                .map_err(|error| IoError::Geometry {
-                    format: "Gerber",
-                    detail: format!("native region projection failed: {error}"),
-                })? {
-                Classification::Decided(region_profiles) => {
-                    emit_region_profiles(&region_profiles, &mut commands, options)?;
-                },
-                Classification::Uncertain(reason) => {
-                    return Err(IoError::Geometry {
-                        format: "Gerber",
-                        detail: format!("region projection is uncertain: {reason:?}"),
-                    });
-                },
-            }
-            emit_native_wires(self.wires(), &mut commands, options)?;
-            for path in self.curve_paths() {
-                let polyline =
-                    path.project_to_finite_polyline(&projection_options)
-                        .map_err(|error| IoError::Geometry {
-                            format: "Gerber",
-                            detail: format!("higher-order wire projection failed: {error}"),
-                        })?;
-                emit_finite_wire(polyline.points(), &mut commands, options)?;
-            }
-        }
-
-        commands.push(FunctionCode::MCode(MCode::EndOfFile).into());
-
-        let mut bytes = Vec::new();
-        commands.serialize(&mut bytes)?;
-        Ok(bytes)
-    }
+    let mut bytes = Vec::new();
+    commands.serialize(&mut bytes)?;
+    Ok(bytes)
 }
 
 struct ImportState {
-    sketch: Profile,
-    pending_dark: Vec<Profile>,
+    curve: CurveRegion2,
+    pending_dark: Vec<CurveRegion2>,
     unit_scale: f64,
     coordinate_mode: CoordinateMode,
     source_current: Coord<f64>,
@@ -266,7 +244,7 @@ struct ImportState {
 impl ImportState {
     fn new(unit: Unit) -> Self {
         Self {
-            sketch: Profile::empty(),
+            curve: CurveRegion2::empty(),
             pending_dark: Vec::new(),
             unit_scale: unit_scale(unit),
             coordinate_mode: CoordinateMode::Absolute,
@@ -282,7 +260,7 @@ impl ImportState {
         }
     }
 
-    fn finish(mut self) -> Result<Profile, IoError> {
+    fn finish(mut self) -> Result<CurveRegion2, IoError> {
         if self.region.is_some() {
             return Err(IoError::MalformedInput(
                 "Gerber input ends inside a region".into(),
@@ -294,7 +272,7 @@ impl ImportState {
             ));
         }
         self.flush_pending_dark()?;
-        Ok(self.sketch)
+        Ok(self.curve)
     }
 
     fn apply_command(
@@ -380,8 +358,8 @@ impl ImportState {
                             "Gerber region mode was closed while not active".into(),
                         )
                     })?;
-                    let sketch = region.into_sketch()?;
-                    self.apply_polarity(sketch)?;
+                    let curve = region.into_curve()?;
+                    self.apply_polarity(curve)?;
                 }
             },
             Command::FunctionCode(FunctionCode::DCode(DCode::SelectAperture(code))) => {
@@ -449,14 +427,14 @@ impl ImportState {
         Ok(())
     }
 
-    fn apply_polarity(&mut self, sketch: Profile) -> Result<(), IoError> {
-        let sketches = repeat_sketches(sketch, self.step_repeat)?;
-        for sketch in sketches {
+    fn apply_polarity(&mut self, curve: CurveRegion2) -> Result<(), IoError> {
+        let curves = repeat_curves(curve, self.step_repeat)?;
+        for curve in curves {
             match self.polarity {
-                Polarity::Dark => self.pending_dark.push(sketch),
+                Polarity::Dark => self.pending_dark.push(curve),
                 Polarity::Clear => {
                     self.flush_pending_dark()?;
-                    self.sketch = self.sketch.try_difference(&sketch).map_err(|error| {
+                    self.curve = self.curve.try_difference(&curve).map_err(|error| {
                         IoError::Geometry {
                             format: "Gerber",
                             detail: error.to_string(),
@@ -497,10 +475,10 @@ impl ImportState {
         let dark = level
             .pop()
             .expect("nonempty pending dark level retains one profile");
-        self.sketch = if self.sketch.is_empty() {
+        self.curve = if self.curve.is_empty() {
             dark
         } else {
-            self.sketch
+            self.curve
                 .try_union(&dark)
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
@@ -593,13 +571,13 @@ impl ImportState {
                 };
 
                 if let Some(arc) = &arc {
-                    let sketch = trace_arc_to_sketch(
+                    let curve = trace_arc_to_curve(
                         aperture,
                         arc,
                         self.unit_scale,
                         self.aperture_transform,
                     )?;
-                    self.apply_polarity(sketch)?;
+                    self.apply_polarity(curve)?;
                     self.source_current = source_target;
                     self.current = target;
                     return Ok(());
@@ -607,14 +585,14 @@ impl ImportState {
 
                 let mut start = self.current;
                 for point in points {
-                    let sketch = trace_to_sketch(
+                    let curve = trace_to_curve(
                         aperture,
                         start,
                         point,
                         self.unit_scale,
                         self.aperture_transform,
                     )?;
-                    self.apply_polarity(sketch)?;
+                    self.apply_polarity(curve)?;
                     start = point;
                 }
                 self.source_current = source_target;
@@ -641,13 +619,13 @@ impl ImportState {
                         "Gerber flash references unknown aperture D{code}"
                     )));
                 };
-                let sketch = flash_to_sketch(
+                let curve = flash_to_curve(
                     aperture,
                     self.current,
                     self.unit_scale,
                     self.aperture_transform,
                 )?;
-                self.apply_polarity(sketch)?;
+                self.apply_polarity(curve)?;
             },
         }
 
@@ -755,7 +733,7 @@ impl RegionBuilder {
         Ok(())
     }
 
-    fn into_sketch(mut self) -> Result<Profile, IoError> {
+    fn into_curve(mut self) -> Result<CurveRegion2, IoError> {
         self.finish_ring()?;
 
         let mut rings = self.rings;
@@ -789,7 +767,7 @@ impl RegionBuilder {
                 });
             },
         };
-        Ok(Profile::from_curve_region(region))
+        Ok(region)
     }
 }
 
@@ -831,171 +809,51 @@ fn emit_point_ring(
         detail: "projected region contains an empty contour".into(),
     })?;
 
+    let first_coordinates = gerber_coordinates(
+        Coord {
+            x: first[0],
+            y: first[1],
+        },
+        options,
+    )?;
     commands.push(
-        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
-            Coord {
-                x: first[0],
-                y: first[1],
-            },
-            options,
-        )?))))
+        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(
+            first_coordinates.clone(),
+        ))))
         .into(),
     );
 
+    let mut previous_coordinates = first_coordinates.clone();
     for point in ring.iter().skip(1) {
-        commands.push(
-            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                Some(gerber_coordinates(
-                    Coord {
-                        x: point[0],
-                        y: point[1],
-                    },
-                    options,
-                )?),
-                None,
-            )))
-            .into(),
-        );
-    }
-    if ring.last() != Some(first) {
-        commands.push(
-            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                Some(gerber_coordinates(
-                    Coord {
-                        x: first[0],
-                        y: first[1],
-                    },
-                    options,
-                )?),
-                None,
-            )))
-            .into(),
-        );
-    }
-
-    Ok(())
-}
-
-/// Emit native open hypercurve wires as Gerber interpolation commands.
-///
-/// Straight segments serialize as linear interpolation and circular arcs as
-/// RS-274X circular interpolation with I/J center offsets. This keeps
-/// `CurveString2` as the CAD representation and converts to finite Gerber
-/// coordinates only at the CAM file boundary, following Yap, "Towards Exact
-/// Geometric Computation," *Computational Geometry* 7(1-2), 1997
-/// (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-fn emit_native_wires(
-    wires: &[CurveString2],
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    for wire in wires {
-        emit_native_wire(wire, commands, options)?;
-    }
-    commands
-        .push(FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into());
-    Ok(())
-}
-
-fn emit_native_wire(
-    wire: &CurveString2,
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    let first = wire.segments().first().ok_or_else(|| IoError::Geometry {
-        format: "Gerber",
-        detail: "native wire contains no segments".into(),
-    })?;
-    commands.push(
-        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
-            finite_coord(first.start())?,
-            options,
-        )?))))
-        .into(),
-    );
-
-    for segment in wire.segments() {
-        match segment {
-            Segment2::Line(line) => {
-                commands.push(
-                    FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear))
-                        .into(),
-                );
-                commands.push(
-                    FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                        Some(gerber_coordinates(finite_coord(line.end())?, options)?),
-                        None,
-                    )))
-                    .into(),
-                );
-            },
-            Segment2::Arc(arc) => {
-                let start = finite_coord(arc.start())?;
-                let end = finite_coord(arc.end())?;
-                let center = finite_coord(arc.center())?;
-                let offset = Coord {
-                    x: center.x - start.x,
-                    y: center.y - start.y,
-                };
-                let interpolation = if arc.is_clockwise() {
-                    InterpolationMode::ClockwiseCircular
-                } else {
-                    InterpolationMode::CounterclockwiseCircular
-                };
-                commands
-                    .push(FunctionCode::GCode(GCode::InterpolationMode(interpolation)).into());
-                commands.push(
-                    FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                        Some(gerber_coordinates(end, options)?),
-                        Some(gerber_coordinate_offset(offset, options)?),
-                    )))
-                    .into(),
-                );
-            },
-        }
-    }
-
-    Ok(())
-}
-
-fn emit_finite_wire(
-    points: &[[f64; 2]],
-    commands: &mut Vec<Command>,
-    options: GerberExportOptions,
-) -> Result<(), IoError> {
-    let Some(first) = points.first() else {
-        return Err(IoError::Geometry {
-            format: "Gerber",
-            detail: "projected higher-order wire contains no points".into(),
-        });
-    };
-    commands
-        .push(FunctionCode::GCode(GCode::InterpolationMode(InterpolationMode::Linear)).into());
-    commands.push(
-        FunctionCode::DCode(DCode::Operation(Operation::Move(Some(gerber_coordinates(
+        let coordinates = gerber_coordinates(
             Coord {
-                x: first[0],
-                y: first[1],
+                x: point[0],
+                y: point[1],
             },
             options,
-        )?))))
-        .into(),
-    );
-    for point in &points[1..] {
+        )?;
+        if coordinates == previous_coordinates {
+            continue;
+        }
         commands.push(
             FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
-                Some(gerber_coordinates(
-                    Coord {
-                        x: point[0],
-                        y: point[1],
-                    },
-                    options,
-                )?),
+                Some(coordinates.clone()),
+                None,
+            )))
+            .into(),
+        );
+        previous_coordinates = coordinates;
+    }
+    if previous_coordinates != first_coordinates {
+        commands.push(
+            FunctionCode::DCode(DCode::Operation(Operation::Interpolate(
+                Some(first_coordinates),
                 None,
             )))
             .into(),
         );
     }
+
     Ok(())
 }
 
@@ -1006,30 +864,6 @@ fn gerber_coordinates(
     let x = export_coordinate_number(coord.x, options)?;
     let y = export_coordinate_number(coord.y, options)?;
     Ok(Coordinates::new(x, y, options.coordinate_format))
-}
-
-fn gerber_coordinate_offset(
-    coord: Coord<f64>,
-    options: GerberExportOptions,
-) -> Result<CoordinateOffset, IoError> {
-    let x = export_coordinate_number(coord.x, options)?;
-    let y = export_coordinate_number(coord.y, options)?;
-    Ok(CoordinateOffset::new(x, y, options.coordinate_format).validate()?)
-}
-
-fn finite_coord(point: &Point2) -> Result<Coord<f64>, IoError> {
-    Ok(Coord {
-        x: hreal_to_f64(point.x()).ok_or(IoError::UnrepresentableCoordinate {
-            format: "Gerber",
-            field: "x coordinate",
-            target: "f64",
-        })?,
-        y: hreal_to_f64(point.y()).ok_or(IoError::UnrepresentableCoordinate {
-            format: "Gerber",
-            field: "y coordinate",
-            target: "f64",
-        })?,
-    })
 }
 
 fn export_coordinate_number(
@@ -1146,20 +980,20 @@ impl ImageTransform {
     }
 }
 
-fn flash_to_sketch(
+fn flash_to_curve(
     aperture: &Aperture,
     center: Coord<f64>,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile, IoError> {
-    let mut sketch = match aperture {
+) -> Result<CurveRegion2, IoError> {
+    let mut curve = match aperture {
         Aperture::Circle(circle) => {
             let diameter = positive(
                 aperture_transform.scale_length(circle.diameter * unit_scale),
                 "circle aperture diameter",
             )?;
-            let mut sketch =
-                Profile::circle(required_real(diameter * 0.5, "circle aperture radius")?, 64);
+            let mut curve =
+                curve::circle(required_real(diameter * 0.5, "circle aperture radius")?, 64);
             if let Some(hole_diameter) = circle.hole_diameter {
                 let hole_diameter = positive(
                     aperture_transform.scale_length(hole_diameter * unit_scale),
@@ -1170,21 +1004,21 @@ fn flash_to_sketch(
                         "Gerber aperture hole must be smaller than its outer diameter".into(),
                     ));
                 }
-                sketch = add_aperture_hole(
-                    sketch,
-                    Profile::circle(
+                curve = add_aperture_hole(
+                    curve,
+                    curve::circle(
                         required_real(hole_diameter * 0.5, "circle aperture hole radius")?,
                         64,
                     ),
                 );
             }
-            sketch
+            curve
         },
         Aperture::Rectangle(rect) => {
-            aperture_rect_sketch(rect, unit_scale, aperture_transform, false)?
+            aperture_rect_curve(rect, unit_scale, aperture_transform, false)?
         },
         Aperture::Obround(rect) => {
-            aperture_rect_sketch(rect, unit_scale, aperture_transform, true)?
+            aperture_rect_curve(rect, unit_scale, aperture_transform, true)?
         },
         Aperture::Polygon(polygon) => {
             if polygon.vertices < 3 {
@@ -1197,13 +1031,11 @@ fn flash_to_sketch(
                 "polygon aperture diameter",
             )?;
             let rotation = polygon.rotation.unwrap_or(0.0);
-            let mut sketch = Profile::regular_ngon(
-                polygon.vertices as usize,
-                required_real(diameter * 0.5, "polygon aperture radius")?,
-            )
-            .rotate(
-                Real::zero(),
-                Real::zero(),
+            let mut curve = curve::rotated(
+                &curve::regular_ngon(
+                    polygon.vertices as usize,
+                    required_real(diameter * 0.5, "polygon aperture radius")?,
+                ),
                 required_real(rotation, "polygon rotation")?,
             );
             if let Some(hole_diameter) = polygon.hole_diameter {
@@ -1216,15 +1048,15 @@ fn flash_to_sketch(
                         "Gerber aperture hole must be smaller than its outer diameter".into(),
                     ));
                 }
-                sketch = add_aperture_hole(
-                    sketch,
-                    Profile::circle(
+                curve = add_aperture_hole(
+                    curve,
+                    curve::circle(
                         required_real(hole_diameter * 0.5, "polygon aperture hole radius")?,
                         64,
                     ),
                 );
             }
-            sketch
+            curve
         },
         Aperture::Macro(..) => {
             return Err(IoError::Unsupported {
@@ -1234,16 +1066,18 @@ fn flash_to_sketch(
         },
     };
 
-    sketch = apply_aperture_transform(sketch, aperture_transform)?;
-    Ok(sketch.translate(
+    curve = apply_aperture_transform(curve, aperture_transform)?;
+    Ok(curve::translated(
+        &curve,
         required_real(center.x, "flash center x")?,
         required_real(center.y, "flash center y")?,
-        Real::zero(),
     ))
 }
 
-fn add_aperture_hole(outer: Profile, hole: Profile) -> Profile {
-    outer.difference(&hole)
+fn add_aperture_hole(outer: CurveRegion2, hole: CurveRegion2) -> CurveRegion2 {
+    outer
+        .try_difference(&hole)
+        .unwrap_or_else(|_| CurveRegion2::empty())
 }
 
 impl ApertureTransform {
@@ -1252,12 +1086,12 @@ impl ApertureTransform {
     }
 }
 
-fn aperture_rect_sketch(
+fn aperture_rect_curve(
     rect: &Rectangular,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
     rounded: bool,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     let width = positive(
         aperture_transform.scale_length(rect.x * unit_scale),
         "rectangular aperture width",
@@ -1266,23 +1100,22 @@ fn aperture_rect_sketch(
         aperture_transform.scale_length(rect.y * unit_scale),
         "rectangular aperture height",
     )?;
-    let mut sketch = if rounded {
-        Profile::rounded_rectangle(
-            required_real(width, "rectangular aperture width")?,
-            required_real(height, "rectangular aperture height")?,
-            required_real(width.min(height) * 0.5, "obround aperture radius")?,
-            16,
-        )
-    } else {
-        Profile::rectangle(
-            required_real(width, "rectangular aperture width")?,
-            required_real(height, "rectangular aperture height")?,
-        )
-    }
-    .translate(
+    let mut curve = curve::translated(
+        &if rounded {
+            curve::rounded_rectangle(
+                required_real(width, "rectangular aperture width")?,
+                required_real(height, "rectangular aperture height")?,
+                required_real(width.min(height) * 0.5, "obround aperture radius")?,
+                16,
+            )
+        } else {
+            curve::rectangle(
+                required_real(width, "rectangular aperture width")?,
+                required_real(height, "rectangular aperture height")?,
+            )
+        },
         required_real(-width * 0.5, "rectangular aperture x origin")?,
         required_real(-height * 0.5, "rectangular aperture y origin")?,
-        Real::zero(),
     );
 
     if let Some(hole_diameter) = rect.hole_diameter {
@@ -1295,33 +1128,33 @@ fn aperture_rect_sketch(
                 "Gerber aperture hole must fit inside its outer aperture".into(),
             ));
         }
-        sketch = add_aperture_hole(
-            sketch,
-            Profile::circle(
+        curve = add_aperture_hole(
+            curve,
+            curve::circle(
                 required_real(hole_diameter * 0.5, "rectangular aperture hole radius")?,
                 64,
             ),
         );
     }
 
-    Ok(sketch)
+    Ok(curve)
 }
 
-fn trace_to_sketch(
+fn trace_to_curve(
     aperture: &Aperture,
     start: Coord<f64>,
     end: Coord<f64>,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     if nearly_same(start, end) {
-        return flash_to_sketch(aperture, start, unit_scale, aperture_transform);
+        return flash_to_curve(aperture, start, unit_scale, aperture_transform);
     }
 
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            linear_circular_sweep_sketch(start, end, radius)
+            linear_circular_sweep_curve(start, end, radius)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             let points = aperture_outline_points(aperture, unit_scale, aperture_transform)?;
@@ -1349,11 +1182,11 @@ fn trace_to_sketch(
     }
 }
 
-fn linear_circular_sweep_sketch(
+fn linear_circular_sweep_curve(
     start: Coord<f64>,
     end: Coord<f64>,
     radius: f64,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     let points = circle_points(positive(radius, "circular stroke radius")?, 64)
         .into_iter()
         .flat_map(|point| {
@@ -1366,16 +1199,16 @@ fn linear_circular_sweep_sketch(
     polygon_from_coords(convex_hull(points)?)
 }
 
-fn trace_arc_to_sketch(
+fn trace_arc_to_curve(
     aperture: &Aperture,
     arc: &CircularInterpolation,
     unit_scale: f64,
     aperture_transform: ApertureTransform,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     match aperture {
         Aperture::Circle(circle) => {
             let radius = aperture_transform.scale_length(circle.diameter * unit_scale) * 0.5;
-            circular_arc_sweep_sketch(arc, radius)
+            circular_arc_sweep_curve(arc, radius)
         },
         Aperture::Rectangle(_) | Aperture::Obround(_) | Aperture::Polygon(_) => {
             Err(IoError::Unsupported {
@@ -1396,10 +1229,10 @@ fn trace_arc_to_sketch(
 /// The boundary is an annular sector with semicircular end caps. Full circles
 /// become a disk or annulus. This retains the command's topology directly and
 /// only samples its circular boundary at the finite file-import boundary.
-fn circular_arc_sweep_sketch(
+fn circular_arc_sweep_curve(
     arc: &CircularInterpolation,
     aperture_radius: f64,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     if !aperture_radius.is_finite() || aperture_radius <= 0.0 {
         return Err(IoError::Geometry {
             format: "Gerber",
@@ -1695,7 +1528,7 @@ fn rounded_rect_points(
         .collect()
 }
 
-fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<Profile, IoError> {
+fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<CurveRegion2, IoError> {
     if points.len() < 3 {
         return Err(IoError::Geometry {
             format: "Gerber",
@@ -1713,19 +1546,23 @@ fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<Profile, IoError> 
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    Ok(Profile::from_contour(contour))
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::certified())
+        .map_err(|error| IoError::Geometry {
+            format: "Gerber",
+            detail: error.to_string(),
+        })
 }
 
 const fn point_from_coord(coord: Coord<f64>) -> [f64; 2] {
     [coord.x, coord.y]
 }
 
-fn repeat_sketches(
-    sketch: Profile,
+fn repeat_curves(
+    curve: CurveRegion2,
     step_repeat: Option<StepRepeatState>,
-) -> Result<Vec<Profile>, IoError> {
+) -> Result<Vec<CurveRegion2>, IoError> {
     let Some(step_repeat) = step_repeat else {
-        return Ok(vec![sketch]);
+        return Ok(vec![curve]);
     };
 
     let repeat_x =
@@ -1742,10 +1579,11 @@ fn repeat_sketches(
         format: "Gerber",
         limit: "step-repeat instance count",
     })?;
-    let mut sketches = Vec::with_capacity(count);
+    let mut curves = Vec::with_capacity(count);
     for x in 0..step_repeat.repeat_x {
         for y in 0..step_repeat.repeat_y {
-            sketches.push(sketch.translate(
+            curves.push(curve::translated(
+                &curve,
                 real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
                     IoError::UnrepresentableCoordinate {
                         format: "Gerber",
@@ -1760,34 +1598,30 @@ fn repeat_sketches(
                         target: "Real",
                     }
                 })?,
-                Real::zero(),
             ));
         }
     }
-    Ok(sketches)
+    Ok(curves)
 }
 
 fn apply_aperture_transform(
-    sketch: Profile,
+    curve: CurveRegion2,
     aperture_transform: ApertureTransform,
-) -> Result<Profile, IoError> {
+) -> Result<CurveRegion2, IoError> {
     let (sx, sy) = match aperture_transform.mirroring {
         Mirroring::None => (1.0, 1.0),
         Mirroring::X => (-1.0, 1.0),
         Mirroring::Y => (1.0, -1.0),
         Mirroring::XY => (-1.0, -1.0),
     };
-    Ok(sketch
-        .scale(
+    Ok(curve::rotated(
+        &curve::scaled(
+            &curve,
             required_real(sx, "aperture mirror x")?,
             required_real(sy, "aperture mirror y")?,
-            Real::one(),
-        )
-        .rotate(
-            Real::zero(),
-            Real::zero(),
-            required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
-        ))
+        ),
+        required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
+    ))
 }
 
 fn apply_aperture_transform_to_coord(
@@ -1903,343 +1737,5 @@ const fn unit_scale(unit: Unit) -> f64 {
     match unit {
         Unit::Millimeters => 1.0,
         Unit::Inches => 25.4,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fmt::Write;
-
-    use super::{Coord, FromGerber, ToGerber, convex_hull};
-    use crate::csg::CSG;
-    use crate::hyper_math::{Real, hreal_from_f64, pi};
-    use crate::io::IoError;
-    use crate::sketch::Profile;
-    use gerber_types::{
-        Command, CoordinateFormat, CoordinateMode, ExtendedCode, FunctionCode, GCode,
-        ZeroOmission,
-    };
-
-    fn r(value: f64) -> Real {
-        hreal_from_f64(value).expect("test values must be finite")
-    }
-
-    fn assert_bounds_close(
-        sketch: &Profile,
-        min_x: Real,
-        min_y: Real,
-        max_x: Real,
-        max_y: Real,
-        tolerance: Real,
-    ) {
-        let bounds = sketch.bounding_box();
-        let actual = [
-            bounds.mins.x.to_f64_lossy(),
-            bounds.mins.y.to_f64_lossy(),
-            bounds.maxs.x.to_f64_lossy(),
-            bounds.maxs.y.to_f64_lossy(),
-        ];
-        assert!(
-            (bounds.mins.x - min_x).abs() < tolerance,
-            "unexpected bounds {actual:?}"
-        );
-        assert!(
-            (bounds.mins.y - min_y).abs() < tolerance,
-            "unexpected bounds {actual:?}"
-        );
-        assert!(
-            (bounds.maxs.x - max_x).abs() < tolerance,
-            "unexpected bounds {actual:?}"
-        );
-        assert!(
-            (bounds.maxs.y - max_y).abs() < tolerance,
-            "unexpected bounds {actual:?}"
-        );
-    }
-
-    fn native_region_area(sketch: &Profile) -> Real {
-        sketch
-            .region_profiles()
-            .iter()
-            .map(|profile| profile.projected_filled_area())
-            .fold(Real::zero(), |sum, area| sum + area)
-    }
-
-    #[test]
-    fn gerber_convex_hull_uses_hyperreal_orientation_predicate() {
-        let hull = convex_hull(vec![
-            Coord { x: 0.0, y: 0.0 },
-            Coord { x: 1.0e-12, y: 0.0 },
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 1.0, y: 1.0 },
-            Coord { x: 0.0, y: 1.0 },
-            Coord { x: 0.5, y: 0.5 },
-        ])
-        .unwrap();
-
-        assert_eq!(hull.len(), 4);
-        assert!(hull.iter().all(|point| {
-            hreal_from_f64(point.x).is_ok() && hreal_from_f64(point.y).is_ok()
-        }));
-        assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 0.0));
-        assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 0.0));
-        assert!(hull.iter().any(|point| point.x == 1.0 && point.y == 1.0));
-        assert!(hull.iter().any(|point| point.x == 0.0 && point.y == 1.0));
-    }
-
-    #[test]
-    fn exports_and_imports_square_region() {
-        let square = Profile::square(r(5.0));
-
-        let gerber = square.to_gerber().unwrap();
-        let gerber_text = String::from_utf8(gerber.clone()).unwrap();
-        assert!(gerber_text.contains("%FSLAX46Y46*%"));
-        assert!(gerber_text.contains("G36*"));
-        assert!(gerber_text.contains("G37*"));
-
-        let parsed = Profile::from_gerber(&gerber).unwrap();
-        assert_bounds_close(&parsed, r(0.0), r(0.0), r(5.0), r(5.0), r(1.0e-9));
-    }
-
-    #[test]
-    fn imports_region_as_native_hypercurve_region() {
-        let gerber = b"G04 region*\n%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y3000000D01*\nX0Y3000000D01*\nX0Y0D01*\nG37*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_eq!(parsed.material_contour_count(), 1);
-        assert!(!parsed.as_curve_region().is_empty());
-
-        assert_bounds_close(&parsed, r(0.0), r(0.0), r(4.0), r(3.0), r(1.0e-9));
-    }
-
-    #[test]
-    fn imports_many_dark_regions_through_balanced_exact_unions() {
-        let mut gerber = String::from("%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\n");
-        for index in 0..256_i64 {
-            let column = index % 32;
-            let row = index / 32;
-            let x = column * 3_000_000;
-            let y = row * 3_000_000;
-            writeln!(
-                gerber,
-                "G36*\nX{x}Y{y}D02*\nX{}Y{y}D01*\nX{}Y{}D01*\nX{x}Y{}D01*\nX{x}Y{y}D01*\nG37*",
-                x + 1_000_000,
-                x + 1_000_000,
-                y + 1_000_000,
-                y + 1_000_000,
-            )
-            .unwrap();
-        }
-        gerber.push_str("M02*\n");
-
-        let parsed = Profile::from_gerber(gerber.as_bytes()).unwrap();
-        assert_eq!(parsed.material_contour_count(), 256);
-        assert_bounds_close(&parsed, r(0.0), r(0.0), r(94.0), r(22.0), r(1.0e-9));
-    }
-
-    #[test]
-    fn imports_circle_flash() {
-        let gerber = b"G04 flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,2*%\nD10*\nX3000000Y4000000D03*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(2.0), r(3.0), r(4.0), r(5.0), r(1.0e-6));
-    }
-
-    #[test]
-    fn imports_circular_trace_as_capsule() {
-        let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(4.5), r(0.5), r(1.0e-6));
-    }
-
-    #[test]
-    fn imports_rectangular_trace_as_sweep() {
-        let gerber = b"G04 trace*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX0Y0D02*\nX4000000Y0D01*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(-0.5), r(-1.0), r(4.5), r(1.0), r(1.0e-6));
-    }
-
-    #[test]
-    fn imports_arc_trace() {
-        let gerber = b"G04 arc*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        let bounds = parsed.bounding_box();
-        let (min_x, min_y, max_x, max_y) =
-            (bounds.mins.x, bounds.mins.y, bounds.maxs.x, bounds.maxs.y);
-        assert!(min_x >= r(-0.11));
-        assert!(min_y >= r(-0.11));
-        assert!((max_x - r(1.1)).abs() < r(0.02));
-        assert!((max_y - r(1.1)).abs() < r(0.02));
-    }
-
-    #[test]
-    fn imports_full_circle_trace_as_annulus() {
-        let gerber = b"G04 full circle*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X1000000Y0I-1000000J0D01*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_eq!(parsed.material_contour_count(), 1);
-        assert_eq!(parsed.hole_contour_count(), 1);
-        assert_bounds_close(&parsed, r(-1.1), r(-1.1), r(1.1), r(1.1), r(0.01));
-    }
-
-    #[test]
-    fn circular_trace_rejects_inconsistent_or_collapsed_topology() {
-        let inconsistent = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,0.2*%\nD10*\nX1000000Y0D02*\nG03X0Y2000000I-1000000J0D01*\nM02*\n";
-        assert!(matches!(
-            Profile::from_gerber(inconsistent),
-            Err(IoError::MalformedInput(_))
-        ));
-
-        let collapsed = b"%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,3*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
-        assert!(matches!(
-            Profile::from_gerber(collapsed),
-            Err(IoError::Unsupported {
-                format: "Gerber",
-                ..
-            })
-        ));
-    }
-
-    #[test]
-    fn circular_interpolation_accounts_for_orientation_reversal() {
-        use gerber_types::InterpolationMode;
-
-        let normal = super::circular_interpolation(
-            Coord { x: 1.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-            Coord { x: -1.0, y: 0.0 },
-            InterpolationMode::CounterclockwiseCircular,
-            false,
-        )
-        .unwrap();
-        let mirrored = super::circular_interpolation(
-            Coord { x: -1.0, y: 0.0 },
-            Coord { x: 0.0, y: 1.0 },
-            Coord { x: 1.0, y: 0.0 },
-            InterpolationMode::CounterclockwiseCircular,
-            true,
-        )
-        .unwrap();
-        assert!(normal.sweep > 0.0);
-        assert!(mirrored.sweep < 0.0);
-        assert!((normal.sweep.abs() - mirrored.sweep.abs()).abs() < 1.0e-12);
-    }
-
-    #[test]
-    fn imports_step_repeat() {
-        let gerber = b"G04 step repeat*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,1*%\nD10*\n%SRX2Y2I2J3*%\nX0Y0D03*\n%SR*%\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(-0.5), r(-0.5), r(2.5), r(3.5), r(1.0e-6));
-    }
-
-    #[test]
-    fn imports_load_rotation_for_flashes() {
-        let gerber = b"G04 rotated flash*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\n%LR90*%\nX0Y0D03*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(-1.0), r(-0.5), r(1.0), r(0.5), r(1.0e-6));
-    }
-
-    #[test]
-    fn imports_aperture_holes() {
-        let gerber = b"G04 aperture hole*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10C,4X2*%\nD10*\nX0Y0D03*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_eq!(parsed.material_contour_count(), 1);
-        assert_eq!(parsed.hole_contour_count(), 1);
-        let area = native_region_area(&parsed);
-        assert!(
-            (area.clone() - (pi() * r(3.0))).abs() < r(0.05),
-            "expected aperture hole area near 3*pi, got {area}"
-        );
-    }
-
-    #[test]
-    fn imports_clear_polarity_as_difference() {
-        let gerber = b"G04 clear polarity*\n%MOMM*%\n%FSLAX46Y46*%\n%LPD*%\nG36*\nX0Y0D02*\nX4000000Y0D01*\nX4000000Y4000000D01*\nX0Y4000000D01*\nX0Y0D01*\nG37*\n%ADD10R,2X2*%\nD10*\n%LPC*%\nX2000000Y2000000D03*\nM02*\n";
-
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        let area = native_region_area(&parsed);
-        assert!((area - r(12.0)).abs() < r(1.0e-6));
-    }
-
-    #[test]
-    fn rejects_empty_export() {
-        let sketch = Profile::empty();
-        assert!(sketch.to_gerber().is_err());
-    }
-
-    #[test]
-    fn rejects_incremental_export_configuration() {
-        let options = super::GerberExportOptions {
-            coordinate_format: CoordinateFormat::new(
-                ZeroOmission::Leading,
-                CoordinateMode::Incremental,
-                4,
-                6,
-            ),
-            ..super::GerberExportOptions::default()
-        };
-        assert!(
-            Profile::square(r(1.0))
-                .to_gerber_with_options(options)
-                .is_err()
-        );
-    }
-
-    #[test]
-    fn imports_incremental_coordinates() {
-        let gerber = b"G04 incremental*\n%MOMM*%\n%FSLIX46Y46*%\n%ADD10C,1*%\nD10*\nX1000000Y1000000D03*\nX2000000D03*\nM02*\n";
-        let parsed = Profile::from_gerber(gerber).unwrap();
-        assert_bounds_close(&parsed, r(0.5), r(0.5), r(3.5), r(1.5), r(1.0e-6));
-    }
-
-    #[test]
-    fn rejects_unterminated_region() {
-        let gerber = b"%MOMM*%\n%FSLAX46Y46*%\nG36*\nX0Y0D02*\nM02*\n";
-        assert!(Profile::from_gerber(gerber).is_err());
-    }
-
-    #[test]
-    fn rejects_malformed_and_unsupported_curved_aperture_input() {
-        assert!(Profile::from_gerber(b"not Gerber").is_err());
-        let rectangular_arc = b"G04 unsupported curved aperture*\n%MOMM*%\n%FSLAX46Y46*%\n%ADD10R,1X2*%\nD10*\nX1000000Y0D02*\nG03X0Y1000000I-1000000J0D01*\nM02*\n";
-        assert!(matches!(
-            Profile::from_gerber(rectangular_arc),
-            Err(IoError::Unsupported {
-                format: "Gerber",
-                ..
-            })
-        ));
-    }
-
-    #[test]
-    fn rejects_invalid_region_state_and_coordinate_overflow() {
-        let mut builder = super::RegionBuilder::new();
-        builder.move_to(Coord { x: 0.0, y: 0.0 }).unwrap();
-        assert!(builder.move_to(Coord { x: 1.0, y: 1.0 }).is_err());
-
-        let options = super::GerberExportOptions::default();
-        assert!(super::export_coordinate_number(1.0e100, options).is_err());
-
-        let mut state = super::ImportState::new(gerber_types::Unit::Millimeters);
-        let apertures = std::collections::HashMap::new();
-        let close_region =
-            Command::FunctionCode(FunctionCode::GCode(GCode::RegionMode(false)));
-        assert!(state.apply_command(&close_region, &apertures).is_err());
-        let negative = Command::ExtendedCode(ExtendedCode::ImagePolarity(
-            gerber_types::ImagePolarity::Negative,
-        ));
-        assert!(matches!(
-            state.apply_command(&negative, &apertures),
-            Err(IoError::Unsupported {
-                format: "Gerber",
-                ..
-            })
-        ));
     }
 }

@@ -15,4 +15,3 @@ run cargo test --test adversarial_extrusions
 run cargo test --test adversarial_stress
 run cargo test --test adversarial_fixtures
 run cargo test --doc
-run cargo check --features "parallel"

@@ -1,5 +1,5 @@
 [files]
-extend-exclude = [".git", "stl/**", "hershey-fonts/*"]
+extend-exclude = [".git", "stl/**"]
 
 [default]
 locale = "en"

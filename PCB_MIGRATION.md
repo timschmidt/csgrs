@@ -9,7 +9,7 @@ The retained semantic owners are:
 
 | Legacy csgrs metadata | Semantic replacement | Geometry handoff |
 | --- | --- | --- |
-| `InterfaceKind::Package` | `hypercircuit::LandPattern` | Materialize each `LandPatternPad` to a `csgrs::Profile` |
+| `InterfaceKind::Package` | `hypercircuit::LandPattern` | Materialize each `LandPatternPad` to a native `hypercurve::CurveRegion2` |
 | `InterfaceKind::Electrical` | `hypercircuit::DeviceModel` and `DevicePin` | No geometry required |
 | `PartTerminal { role: "pin" }` | `hypercircuit::DevicePin` / `PinRef` | Stable source id only |
 | `PartTerminal { role: "pad" }` | `hypercircuit::LandPatternPad` / `PadId` | Source-addressable copper profile |
@@ -36,6 +36,6 @@ remove: the live markers and electrical terminal roles are already gone.
 No compatibility path may infer nets, connectivity, footprint identity,
 placement, layer policy, or manufacturing rules from geometry.
 
-`src/tests/ownership_tests.rs` guards this boundary by rejecting public
-circuit/PCB type declarations, a reverse dependency on hypercircuit, and any
-return of the retired marker or electrical terminal-role vocabulary.
+The crate dependency graph guards this boundary: `csgrs` has no dependency on
+`hypercircuit`, and its public geometry APIs return only native Hyper geometry
+plus explicitly requested boundary sidecars.

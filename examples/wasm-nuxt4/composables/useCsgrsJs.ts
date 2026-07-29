@@ -1,22 +1,16 @@
 // Make sure we get the typing from the csgrs WASM module
 import type { 
   MeshJs, 
-  ProfileJs,
+  CurveRegionJs,
   PlaneJs, 
-  PolygonJs, 
-  VertexJs, 
   Matrix4Js,
-  ChromaSampling 
 } from '../../../pkg/csgrs.js';
 
 type CsgrsModule = {
   MeshJs: typeof MeshJs;
-  ProfileJs: typeof ProfileJs;
+  CurveRegionJs: typeof CurveRegionJs;
   PlaneJs: typeof PlaneJs;
-  PolygonJs: typeof PolygonJs;
-  VertexJs: typeof VertexJs;
   Matrix4Js: typeof Matrix4Js;
-  ChromaSampling: typeof ChromaSampling;
 };
 
 let wasmCache: CsgrsModule | null = null;

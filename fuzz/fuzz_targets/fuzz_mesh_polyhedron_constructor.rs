@@ -2,7 +2,6 @@
 
 #![no_main]
 
-use csgrs::mesh::Mesh;
 use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 
@@ -51,14 +50,11 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let faces = owned_faces.iter().map(Vec::as_slice).collect::<Vec<_>>();
 
-    if let Ok(mesh) = Mesh::<()>::polyhedron(&points, &faces, ()) {
-        for vertex in mesh.vertices() {
-            assert!(vertex.position.x.is_finite());
-            assert!(vertex.position.y.is_finite());
-            assert!(vertex.position.z.is_finite());
-            assert!(vertex.normal.0[0].is_finite());
-            assert!(vertex.normal.0[1].is_finite());
-            assert!(vertex.normal.0[2].is_finite());
+    if let Ok(mesh) = csgrs::solid::polyhedron(&points, &faces) {
+        for position in mesh.positions.iter() {
+            assert!(position.x.is_finite());
+            assert!(position.y.is_finite());
+            assert!(position.z.is_finite());
         }
     }
 });

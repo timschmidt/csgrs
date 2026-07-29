@@ -1,43 +1,14 @@
 //! WebAssembly bindings and JavaScript-facing conversion helpers.
 
-use serde_json::Value as JsonValue;
-use serde_wasm_bindgen::{from_value, to_value};
-use wasm_bindgen::prelude::*;
+use crate::hyper_math::{hreal_from_f64, hreal_to_f64};
+use hyperlattice::{Matrix4, Point3, Real, Vector3};
 
-use crate::hyper_math::{Real, hreal_from_f64, hreal_to_f64};
-use hyperlattice::{Matrix4, Point3, Vector3};
-
+pub mod curve_js;
 pub mod matrix_js;
 pub mod mesh_js;
-pub mod metaballs_js;
 pub mod plane_js;
 pub mod point_js;
-pub mod polygon_js;
-pub mod sketch_js;
 pub mod vector_js;
-pub mod vertex_js;
-
-fn js_metadata(metadata: JsValue) -> Result<Option<JsonValue>, JsValue> {
-    if metadata.is_undefined() || metadata.is_null() {
-        return Ok(None);
-    }
-
-    // Convert arbitrary JS value -> serde_json::Value
-    let json: JsonValue = from_value(metadata).map_err(|e| {
-        JsValue::from_str(&format!("Failed to serialize metadata from JS: {:?}", e))
-    })?;
-
-    Ok(Some(json))
-}
-
-fn metadata_to_js(metadata: &Option<JsonValue>) -> Result<JsValue, JsValue> {
-    match metadata {
-        Some(metadata) => to_value(metadata).map_err(|error| {
-            JsValue::from_str(&format!("Failed to return metadata: {error}"))
-        }),
-        None => Ok(JsValue::NULL),
-    }
-}
 
 pub(crate) fn finite_matrix4(values: [Real; 16]) -> Option<Matrix4> {
     Some(Matrix4::from_row_major(values))

@@ -9,7 +9,6 @@
 use std::str::FromStr;
 
 use hyperlattice::Real;
-use hyperreal::RealSign;
 
 /// Source evidence for a part-interface fact.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -38,7 +37,7 @@ pub enum SourceCertainty {
 /// Geometry status for the CSG object associated with a part interface.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GeometryCertainty {
-    /// Native CSG/profile construction over exact Hyper scalar carriers.
+    /// Native CSG/curve-region construction over exact Hyper scalar carriers.
     NativeExactCsg,
     /// Imported geometry certified by a domain-specific report.
     CertifiedImported,
@@ -89,8 +88,9 @@ pub struct PartTerminal {
 
 /// Exact vector retained as source text.
 ///
-/// `hyperreal::Real` values are intentionally not `Sync`, while `Mesh<M>`
-/// metadata must be `Send + Sync`.  Retaining exact vector coordinates as text
+/// `hyperreal::Real` values are intentionally not `Sync`, while attributed
+/// triangle-boundary metadata must be `Send + Sync`. Retaining exact vector
+/// coordinates as text
 /// keeps metadata thread-safe and moves exact parsing to the validation/report
 /// boundary, the same source-lift rule described by Yap.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -205,7 +205,7 @@ pub struct CsgPartInterface {
     pub documentation: AssemblyDocumentation,
 }
 
-/// Metadata wrapper intended for `Mesh<PartMetadata>` and
+/// Metadata wrapper intended for `AttributedMesh<PartMetadata>` and
 /// mesh polygons annotated with `PartMetadata`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PartMetadata {
@@ -315,5 +315,8 @@ fn vector_is_zero(vector: &ExactVector3) -> bool {
     let y2 = y.clone() * y;
     let z2 = z.clone() * z;
     let length_squared: Real = x2 + y2 + z2;
-    matches!(length_squared.refine_sign_until(-128), Some(RealSign::Zero))
+    matches!(
+        hyperlimit::classify_real_sign(&length_squared).value(),
+        Some(hyperlimit::Sign::Zero)
+    )
 }

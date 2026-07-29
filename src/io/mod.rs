@@ -1,4 +1,4 @@
-//! Optional import and export modules for mesh and sketch file formats.
+//! Optional import and export modules for mesh and curve file formats.
 
 #[cfg(feature = "svg-io")]
 pub mod svg;
@@ -35,7 +35,7 @@ pub mod gerber;
     feature = "gltf-io",
     feature = "dxf-io"
 ))]
-use hyperlattice::Real;
+use hyperlattice::{Point3, Real};
 
 /// Error produced while parsing or serializing a geometry interchange format.
 #[derive(Debug, thiserror::Error)]
@@ -89,6 +89,212 @@ pub enum IoError {
     GerberCodegen(#[from] ::gerber_types::GerberError),
 }
 
+/// Parses an exact decimal, including scientific notation, without routing
+/// through a binary floating-point approximation.
+#[cfg(any(feature = "obj-io", feature = "vrml-io"))]
+pub(crate) fn parse_real_decimal(
+    text: &str,
+) -> Result<hyperlattice::Real, hyperlattice::Problem> {
+    const MAX_EXPANDED_DECIMAL_LEN: usize = 1_000_000;
+
+    if !text.contains(['e', 'E']) {
+        return text.parse();
+    }
+    let (mantissa, exponent) = text
+        .split_once(['e', 'E'])
+        .ok_or(hyperlattice::Problem::BadDecimal)?;
+    let exponent = exponent
+        .parse::<i64>()
+        .map_err(|_| hyperlattice::Problem::BadDecimal)?;
+    let (sign, magnitude) = if let Some(magnitude) = mantissa.strip_prefix('-') {
+        ("-", magnitude)
+    } else if let Some(magnitude) = mantissa.strip_prefix('+') {
+        ("", magnitude)
+    } else {
+        ("", mantissa)
+    };
+    let (whole, fraction) = magnitude
+        .split_once('.')
+        .map_or((magnitude, ""), |parts| parts);
+    if (whole.is_empty() && fraction.is_empty())
+        || !whole.bytes().all(|byte| byte.is_ascii_digit())
+        || !fraction.bytes().all(|byte| byte.is_ascii_digit())
+    {
+        return Err(hyperlattice::Problem::BadDecimal);
+    }
+
+    let mut digits = String::with_capacity(whole.len().saturating_add(fraction.len()));
+    digits.push_str(whole);
+    digits.push_str(fraction);
+    let decimal_position = i64::try_from(whole.len())
+        .ok()
+        .and_then(|whole_len| whole_len.checked_add(exponent))
+        .ok_or(hyperlattice::Problem::OutOfRange)?;
+    let digits_len =
+        i64::try_from(digits.len()).map_err(|_| hyperlattice::Problem::OutOfRange)?;
+    let mut normalized = String::from(sign);
+    if decimal_position <= 0 {
+        normalized.push_str("0.");
+        let zero_count = usize::try_from(
+            decimal_position
+                .checked_neg()
+                .ok_or(hyperlattice::Problem::OutOfRange)?,
+        )
+        .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
+            return Err(hyperlattice::Problem::OutOfRange);
+        }
+        normalized.extend(std::iter::repeat_n('0', zero_count));
+        normalized.push_str(&digits);
+    } else if decimal_position >= digits_len {
+        normalized.push_str(&digits);
+        let zero_count = usize::try_from(decimal_position - digits_len)
+            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
+            return Err(hyperlattice::Problem::OutOfRange);
+        }
+        normalized.extend(std::iter::repeat_n('0', zero_count));
+    } else {
+        let decimal_position = usize::try_from(decimal_position)
+            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
+        normalized.push_str(&digits[..decimal_position]);
+        normalized.push('.');
+        normalized.push_str(&digits[decimal_position..]);
+    }
+    normalized.parse()
+}
+
+/// Triangulate one planar 3D index ring through Hypertri after dominant-axis
+/// projection. This is an interchange-boundary conversion, not a second mesh
+/// or polygon carrier.
+#[cfg(any(feature = "obj-io", feature = "dxf-io", feature = "vrml-io"))]
+pub(crate) fn triangulate_planar_face(
+    positions: &[hyperlattice::Point3],
+    face: &[usize],
+    format: &'static str,
+) -> Result<Vec<hypermesh::Triangle>, IoError> {
+    use hypertri::kernel::{ExactKernel, Kernel};
+
+    if face.len() < 3 || face.iter().any(|&index| index >= positions.len()) {
+        return Err(IoError::Geometry {
+            format,
+            detail: "face has too few vertices or an invalid position index".into(),
+        });
+    }
+    if face.len() == 3 {
+        return Ok(vec![hypermesh::Triangle::new(face[0], face[1], face[2])]);
+    }
+    let points = face
+        .iter()
+        .map(|&index| &positions[index])
+        .collect::<Vec<_>>();
+    let support = (1..points.len() - 1)
+        .find(|&index| {
+            hypermesh::Plane::points_are_nondegenerate(
+                points[0],
+                points[index],
+                points[index + 1],
+            )
+        })
+        .ok_or_else(|| IoError::Geometry {
+            format,
+            detail: "face is degenerate".into(),
+        })?;
+    let plane = hypermesh::Plane::from_points(points[0], points[support], points[support + 1]);
+    let planar = points.iter().all(|point| {
+        hyperlimit::classify_real_sign(&plane.expression_at_point(point)).value()
+            == Some(hyperlimit::Sign::Zero)
+    });
+    if !planar {
+        return Ok((1..face.len() - 1)
+            .map(|index| hypermesh::Triangle::new(face[0], face[index], face[index + 1]))
+            .collect());
+    }
+    let normal = points.iter().zip(points.iter().cycle().skip(1)).fold(
+        [
+            hyperlattice::Real::zero(),
+            hyperlattice::Real::zero(),
+            hyperlattice::Real::zero(),
+        ],
+        |mut sum, (a, b)| {
+            sum[0] += (&a.y - &b.y) * (&a.z + &b.z);
+            sum[1] += (&a.z - &b.z) * (&a.x + &b.x);
+            sum[2] += (&a.x - &b.x) * (&a.y + &b.y);
+            sum
+        },
+    );
+    let axis = normal
+        .iter()
+        .enumerate()
+        .max_by(|(_, left), (_, right)| {
+            hyperlimit::compare_reals(&(*left).clone().abs(), &(*right).clone().abs())
+                .value()
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+        .map_or(2, |(axis, _)| axis);
+    let projected = points
+        .iter()
+        .map(|point| match axis {
+            0 => hypertri::ExactPoint::new(point.y.clone(), point.z.clone()),
+            1 => hypertri::ExactPoint::new(point.z.clone(), point.x.clone()),
+            _ => hypertri::ExactPoint::new(point.x.clone(), point.y.clone()),
+        })
+        .collect::<Vec<_>>();
+    let mut winding = None;
+    let mut weakly_convex = true;
+    for index in 0..projected.len() {
+        let turn = ExactKernel::orient2(
+            &projected[index],
+            &projected[(index + 1) % projected.len()],
+            &projected[(index + 2) % projected.len()],
+        )
+        .map_err(|error| IoError::Geometry {
+            format,
+            detail: format!("face orientation failed: {error}"),
+        })?;
+        match winding {
+            None if turn != hypertri::Sign::Zero => winding = Some(turn),
+            Some(expected) if turn != hypertri::Sign::Zero && turn != expected => {
+                weakly_convex = false;
+            },
+            _ => {},
+        }
+    }
+    // Preserve collinear boundary vertices in a weakly convex interchange
+    // face. Earcut may legally discard them, but doing so can crack an
+    // otherwise closed polygon mesh along a neighboring face.
+    if weakly_convex && winding.is_some() {
+        return Ok((1..face.len() - 1)
+            .map(|index| hypermesh::Triangle::new(face[0], face[index], face[index + 1]))
+            .collect());
+    }
+    let signed_area = projected.iter().zip(projected.iter().cycle().skip(1)).fold(
+        hyperlattice::Real::zero(),
+        |area, (current, next)| {
+            area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone()
+        },
+    );
+    let reverse_output = hyperlimit::classify_real_sign(&signed_area).value()
+        == Some(hyperlimit::Sign::Negative);
+    hypertri::earcut(&projected, &[])
+        .map_err(|error| IoError::Geometry {
+            format,
+            detail: format!("face triangulation failed: {error}"),
+        })
+        .map(|indices| {
+            indices
+                .chunks_exact(3)
+                .map(|row| {
+                    let [a, mut b, mut c] = [face[row[0]], face[row[1]], face[row[2]]];
+                    if reverse_output {
+                        std::mem::swap(&mut b, &mut c);
+                    }
+                    hypermesh::Triangle::new(a, b, c)
+                })
+                .collect()
+        })
+}
+
 #[cfg(any(
     feature = "obj-io",
     feature = "ply-io",
@@ -108,6 +314,48 @@ pub(crate) fn finite_f64(
             target: "f64",
         },
     )
+}
+
+#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
+pub(crate) fn finite_triangle_normal(
+    points: [&Point3; 3],
+    format: &'static str,
+) -> Result<[f64; 3], IoError> {
+    let project = |point: &Point3| {
+        Ok::<_, IoError>([
+            finite_f64(&point.x, format, "vertex x")?,
+            finite_f64(&point.y, format, "vertex y")?,
+            finite_f64(&point.z, format, "vertex z")?,
+        ])
+    };
+    let points = [
+        project(points[0])?,
+        project(points[1])?,
+        project(points[2])?,
+    ];
+    let left = [
+        points[1][0] - points[0][0],
+        points[1][1] - points[0][1],
+        points[1][2] - points[0][2],
+    ];
+    let right = [
+        points[2][0] - points[0][0],
+        points[2][1] - points[0][1],
+        points[2][2] - points[0][2],
+    ];
+    let cross = [
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    ];
+    let length = cross.iter().map(|value| value * value).sum::<f64>().sqrt();
+    if !length.is_finite() || length == 0.0 {
+        return Err(IoError::Geometry {
+            format,
+            detail: "degenerate triangle after finite format projection".into(),
+        });
+    }
+    Ok(cross.map(|value| value / length))
 }
 
 #[cfg(any(feature = "stl-io", feature = "gltf-io"))]
@@ -163,34 +411,7 @@ pub(crate) fn xml_metadata(
         .replace('\'', "&apos;"))
 }
 
-#[cfg(test)]
-pub(crate) mod test_support {
-    use crate::triangulated::{IndexedTriangleMesh3D, IndexedTriangulated3D, Triangulated3D};
-    use crate::vertex::Vertex;
-    use hyperlattice::{Point3, Real, Vector3};
-
-    pub(crate) struct InvalidIndexed;
-
-    impl Triangulated3D for InvalidIndexed {
-        fn visit_triangles<F>(&self, _visit: F)
-        where
-            F: FnMut([Vertex; 3]),
-        {
-        }
-    }
-
-    impl IndexedTriangulated3D for InvalidIndexed {
-        fn indexed_triangles(&self) -> IndexedTriangleMesh3D {
-            IndexedTriangleMesh3D {
-                positions: vec![Point3::new(Real::zero(), Real::zero(), Real::zero())],
-                normals: vec![Vector3::z()],
-                faces: vec![[(1, 0), (0, 0), (0, 0)]],
-            }
-        }
-    }
-}
-
-#[cfg(test)]
+#[cfg(all(test, feature = "stl-io"))]
 mod tests {
     use super::{finite_f32, finite_f64};
     use hyperlattice::Real;

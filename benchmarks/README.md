@@ -5,23 +5,25 @@ This suite provides three complementary optimization anchors:
 - `kernel_comparison` runs the same named CAD scenarios in csgrs, CGAL, and
   OpenCascade (OCCT).
 - `feature_pipeline` covers csgrs-specific end-to-end paths and the underlying
-  Hyper geometry stack, optional mesh/profile features, adapters, and I/O.
+  Hyper geometry stack, optional solid/curve-region features, adapters, and I/O.
 - `competitive` compares the public csgrs mesh path against pinned `boolmesh`
   and pure-Rust Manifold versions. Since `tri-mesh` is a topology carrier
   rather than a Boolean kernel, it is compared on mesh import and half-edge
   validation. A dedicated large workload runs union, intersection, and
-  difference on two 3,072-triangle closed meshes. Every competitor is also
-  wired to the public-domain YeahRight corpus: the Boolean engines clip a
-  deterministically subdivided 4,512-triangle hull, while all four libraries
-  construct their native mesh carrier from the same hull.
+  difference on two 3,072-triangle closed meshes.
+- `solidean_comparison` replays Solidean's published ordered Boolean requests
+  in csgrs, preserving the published timing boundary and correctness oracles.
+  It is opt-in because the datasets are downloaded and the larger requests are
+  intentionally expensive.
 
 Everything needed to understand or reproduce a measurement lives in this
 directory:
 
 - `rust/` contains the explicitly registered Cargo benchmark targets.
 - `support/` contains the shared CSV harness and competitive correctness corpus.
+- The shared corpus deterministically serializes a concave labyrinth and a
+  level-3 Sierpiński foam below `target/benchmark-fixtures/generated`.
 - `native/` contains the CGAL and OpenCascade counterparts.
-- `data/` contains benchmark fixtures and their provenance.
 - `results/` receives generated samples and summaries.
 - `run.sh` orchestrates serialized runs; `summarize.py` validates and compares
   their output.
@@ -44,8 +46,8 @@ are discoverable, then run:
 benchmarks/run.sh
 ```
 
-The standard run includes the Rust-only competitive matrix, including its
-YeahRight rows, in `rust-competitive.csv` and the generated summary.
+The standard run includes the Rust-only competitive matrix in
+`rust-competitive.csv` and the generated summary.
 
 For a one-sample build and corpus check:
 
@@ -53,9 +55,7 @@ For a one-sample build and corpus check:
 benchmarks/run.sh --quick
 ```
 
-Quick runs skip the long combined corpus Boolean and opt-in stress workloads,
-but retain the full-resolution YeahRight import, transform, topology, and
-carrier checks.
+Quick runs skip the long combined corpus Boolean and opt-in stress workloads.
 
 To record cold and warm cross-kernel results together:
 
@@ -81,6 +81,21 @@ cargo test --test competitive
 cargo bench --bench competitive
 ```
 
+To download the pinned Solidean corpus and append its csgrs measurements to a
+normal serialized run:
+
+```sh
+SOLIDEAN_BENCH=1 benchmarks/run.sh
+```
+
+This runs the first iterated CSG, terrain carve, 10×10×10 cube grid, and
+10/100-tool dome requests. Add `CSGRS_BENCH_ENABLE_STRESS=1` for the 250-tool
+dome. `CSGRS_BENCH_ENABLE_DANGEROUS=1` additionally enables the published
+1,000- and 5,000-tool domes. The dome archive requires `7z`; acquisition also
+uses `curl`, `tar`, and `sha256sum`. See
+[Solidean protocol and published references](SOLIDEAN.md) before comparing
+times recorded on different hardware.
+
 Results are written below `benchmarks/results/` by default and ignored by Git.
 Pass `--output DIRECTORY` to select a durable result location. Native discovery
 honors normal CMake controls such as `CMAKE_PREFIX_PATH` and the package-specific
@@ -104,6 +119,8 @@ The runners share these environment variables:
 | `CSGRS_BENCH_SKIP_CORPUS_BOOLEANS` | unset | Set to a nonzero value to skip the combined corpus Boolean; `--quick` sets this |
 | `CSGRS_BENCH_ENABLE_STRESS` | unset | Set to exactly `1` to enable rotated-copy stress cases that may consume tens of GiB |
 | `CSGRS_BENCH_ENABLE_DANGEROUS` | unset | Set to exactly `1` to enable workloads known to risk exhausting host memory |
+| `YEAHRIGHT_BENCH` | unset | Set to `1` to download and run the optional public-domain mesh corpus from `target/benchmark-fixtures/yeahright` |
+| `SOLIDEAN_BENCH` | unset | Set to `1` to download and replay the pinned Solidean published benchmark requests |
 
 For example, this runs only Boolean cases with five samples:
 
@@ -115,14 +132,14 @@ CSGRS_BENCH_FILTER=boolean CSGRS_BENCH_SAMPLES=5 benchmarks/run.sh
 
 Enable `dispatch-trace` to record the exact-computation path selected by every
 timed `feature_pipeline` workload, including public mesh paths through
-`hypermesh` and public profile paths through `hypercurve`:
+`hypermesh` and public curve-region paths through `hypercurve`:
 
 ```sh
 cargo test --lib --all-features dispatch_trace_tests
 cargo bench --all-features --bench feature_pipeline
 ```
 
-The focused tests fail if representative public mesh or profile Booleans emit
+The focused tests fail if representative public mesh or curve-region Booleans emit
 neither a dispatch event nor rational-reducer evidence. Every benchmark window
 also records a `csgrs-benchmark/entry/recorded-workload` marker and fails on an empty trace, so
 finite adapters and serialization paths remain correlated even when they do
@@ -140,21 +157,24 @@ reused without changing operation semantics are built outside the timed region.
 Failed Booleans, invalid mass properties, or failed serialization abort a run
 instead of producing deceptively fast rows.
 
-The committed public-domain YeahRight corpus adds a real arbitrary-polygon OBJ
-boundary. All runners normalize its winding before kernel ingestion. The full
-11,894-triangle genus-131 control mesh drives import, transform, bounds,
-graphics-buffer, connectivity, and manifold workloads. A 1,128-triangle
-convex-hull proxy drives a combined
-union/difference/intersection/XOR clipping-box row in the always-on `corpus`
-suite. A separate 1,146-triangle genus-131 proxy supplies the opt-in rotated-copy
-`stress` suite. The full-control-mesh intersection is retained in the
-`dangerous` suite but disabled by default: one observed CSGRS run reached about
-116 GiB RSS and was killed by Linux. Enable it only with
-`CSGRS_BENCH_ENABLE_DANGEROUS=1` on a disposable, memory-limited benchmark host.
+The Solidean runner follows the request files rather than approximating their
+scenario in code. OBJ parsing and request decoding occur outside the timed
+window. Timed work begins with conversion from indexed `f64` triangles into
+the native Hypermesh carrier, includes every ordered Boolean, and ends once
+the final mesh is materialized. The same execution then checks the published
+area/volume oracle outside the recorded interval where one is available; the
+cube grid must finish empty. This matches the published “import conversion plus
+Booleans, excluding file I/O and export” boundary without performing each
+expensive request twice.
+
+The generated corpus contributes two closed native meshes to all three
+engines: an 8,020-triangle orthogonal concave labyrinth and a 36,096-triangle
+level-3 Sierpiński foam. Their position and triangle counts, manifold status,
+and serialized bytes are hard regression checks.
 
 The engines use their natural representations:
 
-- csgrs uses Hyper-backed exact-aware mesh/profile carriers.
+- csgrs uses native Hypermesh triangle meshes and Hypercurve regions.
 - `cgal-epeck` uses `Exact_predicates_exact_constructions_kernel` (EPECK) and
   triangulated `Surface_mesh` inputs.
 - `opencascade-double-tight` uses analytic B-reps, no added Boolean fuzzy
@@ -201,8 +221,6 @@ output triangles/facets. OCCT's analytic analysis cases report B-rep input faces
 The fixed sphere/box Boolean uses a deliberately moderate 12×6 mesh on the
 polygon kernels because exact topology dominates runtime; larger 32×16 and
 64×32 meshes remain in construction, transformation, analysis, and I/O cases.
-The YeahRight hull and genus-preserving proxy supply separate portable corpus
-and high-genus Boolean stress tiers.
 The `precision` suite adds a 128×64 sphere and the thin-overlap Boolean to make
 exact/tight behavior visible independently of ordinary throughput cases.
 
@@ -219,23 +237,23 @@ operation or their compile/test workflow rather than assigned meaningless
 standalone timings. Each runtime-bearing family in the table has semantic
 tests and a `feature_pipeline` or focused release benchmark. With
 `dispatch-trace`, every `feature_pipeline` row is independently recorded;
-mesh and profile trace integration is additionally enforced by
+mesh and curve-region trace integration is additionally enforced by
 `dispatch_trace_tests`.
 
 | Area | Representative cases | Principal implementation/dependencies |
 |---|---|---|
 | Exact scalar/lattice | expression evaluation; isolated translation, rotation, non-uniform scale, affine shear, mirror, and inverse | `hyperreal`, `hyperlattice` |
 | 3D construction | every public mesh constructor: boxes, round/frustum solids, polyhedron, revolved/extruded specialty solids, Platonic solids, torus, arrow, and gear variants | csgrs mesh shapes |
-| Mesh topology | union, difference, intersection, XOR, inverse orientation, connectivity, manifold test, triangulation | `hypermesh`, `hypertri`, `hyperlimit` |
+| TriangleMesh topology | union, difference, intersection, XOR, inverse orientation, connectivity, manifold test, triangulation | `hypermesh`, `hypertri`, `hyperlimit` |
 | Geometry algorithms | hull, Minkowski sum, subdivision, smoothing | `hypermesh`, csgrs mesh pipeline |
 | Analysis/query | bounds, rays, exact mass properties, graphics buffers | `hyperlimit`, `hyperphysics` |
-| 2D profiles | every public profile constructor (including polygon, Bezier/B-spline, gear/rack, airfoil, and Hilbert paths), all Booleans, all CSG transform helpers, triangulation, offsets | `hypercurve`, `hypertri` |
+| 2D curve regions | every public region constructor (including polygon, Bezier/B-spline, gear/rack, airfoil, and Hilbert paths), all Booleans, all CSG transform helpers, triangulation, offsets | `hypercurve`, `hypertri` |
 | 2D→3D | extrusion, revolution, twist, sweep, loft | `hypercurve`, csgrs mesh lowering |
 | Implicit geometry | retained SDF, 2D/3D metaballs, TPMS catalog | `hypersdf`, `fast-surface-nets` |
 | Projection | slice and flatten | `hypercurve`, `hyperlimit` |
 | Raster/text | direct integer-grid image contours, TrueType outlines, Hershey strokes | `image`, `hypercurve`, `ttf-parser`, `hershey` |
-| Mesh I/O | STL, DXF, OBJ, PLY, AMF, glTF; STL/OBJ import, including exact scientific-notation OBJ coordinates | format crates, `serde_json`, `base64` |
-| Profile I/O | SVG and Gerber round trips | `svg`, `svgtypes`, `gerber-types`, `gerber_parser` |
+| TriangleMesh I/O | STL, DXF, OBJ, PLY, AMF, glTF; STL/OBJ import, including exact scientific-notation OBJ coordinates | format crates, `serde_json`, `base64` |
+| CurveRegion2 I/O | SVG and Gerber round trips | `svg`, `svgtypes`, `gerber-types`, `gerber_parser` |
 | Adapters/parts | Bevy conversion, AABB blueprint extraction | `bevy_mesh`, csgrs parts |
 
 `voxels` currently exposes no executable public operation. WASM, language FFI,

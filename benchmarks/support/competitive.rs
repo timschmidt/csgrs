@@ -2,9 +2,15 @@
 
 use std::{collections::BTreeMap, num::NonZeroU32};
 
+mod yeahright;
+
 use boolmesh::prelude::{Manifold as BoolmeshManifold, OpType as BoolmeshOp, compute_boolean};
-use csgrs::{Real, mesh::Mesh, triangulated::IndexedTriangleMesh3D};
-use hyperlattice::{Point3, Vector3};
+use csgrs::{
+    Real, TriangleMesh,
+    solid::{self, SolidExt},
+};
+use hyperlattice::Point3;
+use hypermesh::Triangle;
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
     types::{Error as ManifoldError, MeshGL64},
@@ -15,10 +21,7 @@ const TOLERANCE: f64 = 1.0e-8;
 const KEY_SCALE: f64 = 1.0e9;
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
-pub const YEAHRIGHT_BASE_TRIANGLES: usize = 1_128;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
-pub const YEAHRIGHT_TRIANGLES: usize =
-    YEAHRIGHT_BASE_TRIANGLES * YEAHRIGHT_SUBDIVISIONS * YEAHRIGHT_SUBDIVISIONS;
 pub const YEAHRIGHT_CONTROL_VERTICES: usize = 5_687;
 pub const YEAHRIGHT_CONTROL_TRIANGLES: usize = 11_894;
 
@@ -82,7 +85,7 @@ pub struct Summary {
 }
 
 pub struct Prepared {
-    pub csgrs: [Mesh<()>; 2],
+    pub csgrs: [TriangleMesh; 2],
     pub boolmesh: [BoolmeshManifold; 2],
     pub manifold: [ManifoldRs; 2],
 }
@@ -150,21 +153,25 @@ pub fn large_boolean_case() -> Case {
 }
 
 pub fn yeahright_boolean_case() -> MeshPair {
-    let base =
-        parse_triangle_obj(include_str!("../data/yeahright/yeahright_boolean_hull.obj"));
-    assert_eq!(base.positions.len(), 566);
-    assert_eq!(base.triangles.len(), YEAHRIGHT_BASE_TRIANGLES);
+    let control = yeahright_control_mesh();
+    let base = raw_from_csgrs(
+        &solid::convex_hull(&to_csgrs(&control))
+            .expect("YeahRight control points span a three-dimensional hull"),
+    );
     let left = subdivide(&base, YEAHRIGHT_SUBDIVISIONS);
-    assert_eq!(left.triangles.len(), YEAHRIGHT_TRIANGLES);
     MeshPair {
-        name: "yeahright_hull_4512_box",
+        name: "yeahright_control_hull_subdivided_box",
         left,
         right: box_mesh([-20.0, -14.0, -20.0], [0.0, 26.0, 20.0]),
     }
 }
 
+pub fn yeahright_enabled() -> bool {
+    yeahright::enabled()
+}
+
 pub fn yeahright_control_mesh() -> RawMesh {
-    let mesh = parse_triangle_obj(include_str!("../data/yeahright/controlmesh.obj"));
+    let mesh = parse_triangle_obj(&yeahright::control_mesh_source());
     assert_eq!(mesh.positions.len(), YEAHRIGHT_CONTROL_VERTICES);
     assert_eq!(mesh.triangles.len(), YEAHRIGHT_CONTROL_TRIANGLES);
     mesh
@@ -183,14 +190,7 @@ pub fn prepare_meshes(left: &RawMesh, right: &RawMesh) -> Prepared {
 }
 
 pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
-    let base =
-        parse_triangle_obj(include_str!("../data/yeahright/yeahright_boolean_hull.obj"));
-    let mut exact_hull = to_convex_csgrs(&base);
-    for _ in 0..YEAHRIGHT_SUBDIVISIONS.ilog2() {
-        exact_hull =
-            exact_hull.subdivide_triangles(NonZeroU32::new(1).expect("one is nonzero"));
-    }
-    assert_eq!(exact_hull.triangles().len(), YEAHRIGHT_TRIANGLES);
+    let exact_hull = to_convex_csgrs(&case.left);
     Prepared {
         csgrs: [exact_hull, to_convex_csgrs(&case.right)],
         boolmesh: [to_boolmesh(&case.left), to_boolmesh(&case.right)],
@@ -198,24 +198,24 @@ pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
     }
 }
 
-fn to_convex_csgrs(mesh: &RawMesh) -> Mesh<()> {
+fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     let direct = to_csgrs(mesh);
-    if let Ok(certified) = direct.clone().try_certify_convex() {
-        return certified;
+    if let Ok(direct) = direct.clone().try_certify_convex() {
+        return direct;
     }
 
     // YeahRight is distributed as a decimal serialization of a CGAL convex
     // hull. Rebuild the exact hull after parsing and restore its benchmark
     // subdivision so csgrs still receives the full 4,512-face workload.
-    let hull = direct.convex_hull(());
-    if hull.triangles().len() < mesh.triangles.len() {
-        hull.subdivide_triangles(NonZeroU32::new(1).expect("one is nonzero"))
+    let hull = solid::convex_hull(&direct).expect("fixture point cloud spans 3D");
+    if hull.triangles.len() < mesh.triangles.len() {
+        solid::subdivide(&hull, NonZeroU32::new(1).expect("one is nonzero"))
     } else {
         hull
     }
 }
 
-pub fn run_csgrs(inputs: &[Mesh<()>; 2], operation: Operation) -> RawMesh {
+pub fn run_csgrs(inputs: &[TriangleMesh; 2], operation: Operation) -> RawMesh {
     let output = match operation {
         Operation::Union => inputs[0].try_union(&inputs[1]),
         Operation::Intersection => inputs[0].try_intersection(&inputs[1]),
@@ -367,25 +367,17 @@ pub fn validate_with_tri_mesh(mesh: &RawMesh, context: &str) -> (usize, usize) {
     (half_edge.no_vertices(), half_edge.no_faces())
 }
 
-pub fn to_csgrs(mesh: &RawMesh) -> Mesh<()> {
-    let normal = Vector3::new([Real::zero(), Real::zero(), Real::one()]);
-    Mesh::from_indexed_triangles(
-        IndexedTriangleMesh3D {
-            positions: mesh
-                .positions
-                .iter()
-                .map(|point| Point3::new(real(point[0]), real(point[1]), real(point[2])))
-                .collect(),
-            normals: vec![normal],
-            faces: mesh
-                .triangles
-                .iter()
-                .map(|triangle| triangle.map(|position| (position, 0)))
-                .collect(),
-        },
-        (),
+pub fn to_csgrs(mesh: &RawMesh) -> TriangleMesh {
+    TriangleMesh::new(
+        mesh.positions
+            .iter()
+            .map(|point| Point3::new(real(point[0]), real(point[1]), real(point[2])))
+            .collect(),
+        mesh.triangles
+            .iter()
+            .map(|triangle| Triangle::new(triangle[0], triangle[1], triangle[2]))
+            .collect(),
     )
-    .expect("fixture is valid csgrs input")
 }
 
 pub fn to_boolmesh(mesh: &RawMesh) -> BoolmeshManifold {
@@ -440,24 +432,23 @@ pub fn to_three_d_asset(mesh: &RawMesh) -> TriMesh {
     }
 }
 
-fn raw_from_csgrs(mesh: &Mesh<()>) -> RawMesh {
-    let buffers = mesh.to_hypermesh_buffers();
+fn raw_from_csgrs(mesh: &TriangleMesh) -> RawMesh {
     RawMesh {
-        positions: buffers
+        positions: mesh
             .positions
-            .chunks_exact(3)
+            .iter()
             .map(|point| {
                 [
-                    approximate(&point[0]),
-                    approximate(&point[1]),
-                    approximate(&point[2]),
+                    approximate(&point.x),
+                    approximate(&point.y),
+                    approximate(&point.z),
                 ]
             })
             .collect(),
-        triangles: buffers
-            .indices
-            .chunks_exact(3)
-            .map(|triangle| [triangle[0], triangle[1], triangle[2]])
+        triangles: mesh
+            .triangles
+            .iter()
+            .map(|triangle| triangle.indices())
             .collect(),
     }
 }

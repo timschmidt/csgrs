@@ -733,13 +733,68 @@ int main() {
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
 
+  const auto run_generated_corpus =
+      [&](std::string_view benchmark_case,
+          const std::filesystem::path &path) {
+        harness.run("corpus", "obj_import", benchmark_case, 1, [&] {
+          const auto soup = csgrs_bench::read_obj_boolean_mesh(path);
+          return measured(solid_from_obj_soup(soup), soup.source_faces);
+        });
+        const auto soup = csgrs_bench::read_obj_boolean_mesh(path);
+        const TopoDS_Shape source = solid_from_obj_soup(soup);
+        const std::size_t input = soup.triangles.size();
+        harness.run("corpus", "translate", benchmark_case, 1, [&] {
+          gp_Trsf translation;
+          translation.SetTranslation(gp_Vec(1, 2, 3));
+          return geometry_measured(
+              BRepBuilderAPI_Transform(source, translation, Standard_True)
+                  .Shape(),
+              input);
+        });
+        harness.run("corpus", "bounding_box", benchmark_case, 1, [&] {
+          Bnd_Box bounds;
+          BRepBndLib::Add(source, bounds, Standard_True);
+          Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
+          bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+          return Measurement{
+              input, 6, std::bit_cast<std::uint64_t>(xmax) ^
+                            std::bit_cast<std::uint64_t>(ymax) ^
+                            std::bit_cast<std::uint64_t>(zmax)};
+        });
+        harness.run("corpus", "graphics_buffers", benchmark_case, 1, [&] {
+          TopoDS_Shape output = BRepBuilderAPI_Copy(source).Shape();
+          triangulate(output);
+          const std::size_t corners = triangle_count(output) * 3;
+          return Measurement{input, corners,
+                             csgrs_bench::checksum(corners, corners)};
+        });
+        harness.run("corpus", "connectivity", benchmark_case, 1, [&] {
+          TopoDS_Shape output = BRepBuilderAPI_Copy(source).Shape();
+          triangulate(output);
+          const auto topology = build_triangulated_connectivity(output);
+          return Measurement{
+              input, topology.vertices,
+              csgrs_bench::checksum(topology.vertices,
+                                    topology.adjacency_vertices)};
+        });
+        harness.run("corpus", "is_manifold", benchmark_case, 1, [&] {
+          const bool valid = BRepCheck_Analyzer(source, Standard_True).IsValid();
+          return Measurement{input, 1, valid ? 1U : 0U};
+        });
+      };
+  run_generated_corpus("deterministic_concave_labyrinth_31x31x6",
+                       csgrs_bench::generated_concave_path());
+  run_generated_corpus("sierpinski_foam_level3",
+                       csgrs_bench::generated_sierpinski_foam_path());
+
+  if (csgrs_bench::yeahright_enabled()) {
   harness.run("corpus", "obj_import", "yeahright_control_genus131", 1, [] {
     const auto soup =
-        csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+        csgrs_bench::read_obj_boolean_mesh(csgrs_bench::yeahright_control_path());
     return measured(solid_from_obj_soup(soup), soup.source_faces);
   });
   const auto yeahright_soup =
-      csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+      csgrs_bench::read_obj_boolean_mesh(csgrs_bench::yeahright_control_path());
   const TopoDS_Shape yeahright_source = solid_from_obj_soup(yeahright_soup);
   const std::size_t yeahright_input = yeahright_soup.triangles.size();
 
@@ -787,7 +842,7 @@ int main() {
                     BRepCheck_Analyzer(yeahright_source, Standard_True).IsValid();
                 return Measurement{yeahright_input, 1, valid ? 1U : 0U};
               });
-  const auto yeahright_boolean_soup = csgrs_bench::read_obj_triangle_soup(
+  const auto yeahright_boolean_soup = csgrs_bench::read_obj_boolean_mesh(
       csgrs_bench::yeahright_boolean_hull_path());
   const TopoDS_Shape yeahright_boolean_source =
       solid_from_obj_soup(yeahright_boolean_soup);
@@ -829,7 +884,7 @@ int main() {
                 total += measured(compound, yeahright_box_input);
                 return total;
               });
-  const auto yeahright_stress_soup = csgrs_bench::read_obj_triangle_soup(
+  const auto yeahright_stress_soup = csgrs_bench::read_obj_boolean_mesh(
       csgrs_bench::yeahright_boolean_proxy_path());
   const TopoDS_Shape yeahright_stress_source =
       solid_from_obj_soup(yeahright_stress_soup);
@@ -838,7 +893,7 @@ int main() {
   const std::size_t yeahright_boolean_input =
       yeahright_stress_soup.triangles.size() * 2;
   harness.run("stress", "boolean_union",
-              "yeahright_genus131_proxy_rot90_offset", 1,
+              "yeahright_control_hull_rot90_offset", 1,
               [&] {
                 return measured(
                     boolean_shape<BRepAlgoAPI_Fuse>(yeahright_stress_source,
@@ -846,21 +901,21 @@ int main() {
                     yeahright_boolean_input);
               });
   harness.run("stress", "boolean_difference",
-              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+              "yeahright_control_hull_rot90_offset", 1, [&] {
                 return measured(
                     boolean_shape<BRepAlgoAPI_Cut>(yeahright_stress_source,
                                                    yeahright_copy),
                     yeahright_boolean_input);
               });
   harness.run("stress", "boolean_intersection",
-              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+              "yeahright_control_hull_rot90_offset", 1, [&] {
                 return measured(
                     boolean_shape<BRepAlgoAPI_Common>(yeahright_stress_source,
                                                       yeahright_copy),
                     yeahright_boolean_input);
               });
   harness.run("stress", "boolean_xor",
-              "yeahright_genus131_proxy_rot90_offset", 1,
+              "yeahright_control_hull_rot90_offset", 1,
               [&] {
                 const TopoDS_Shape left_only =
                     boolean_shape<BRepAlgoAPI_Cut>(yeahright_stress_source,
@@ -884,6 +939,7 @@ int main() {
                         yeahright_source, yeahright_dangerous_copy),
                     yeahright_input * 2);
               });
+  }
 
   harness.run("kernel", "stl_write", "sphere_medium", 8, [&] {
     TopoDS_Shape output = analysis_mesh_source;

@@ -2,9 +2,10 @@
 
 #![no_main]
 
-use csgrs::mesh::Mesh;
+use csgrs::solid;
 use hyperlattice::{Point3, Real};
 use hyperlimit::Point3 as HPoint3;
+use hypermesh::TriangleMesh;
 use hypersdf::SdfExpr;
 use libfuzzer_sys::fuzz_target;
 
@@ -27,14 +28,11 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-100.0, 100.0))
 }
 
-fn assert_mesh_finite(mesh: &Mesh<()>) {
-    for vertex in mesh.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.0[0].is_finite());
-        assert!(vertex.normal.0[1].is_finite());
-        assert!(vertex.normal.0[2].is_finite());
+fn assert_mesh_finite(mesh: &TriangleMesh) {
+    for position in mesh.positions.iter() {
+        assert!(position.x.is_finite());
+        assert!(position.y.is_finite());
+        assert!(position.z.is_finite());
     }
 }
 
@@ -54,46 +52,43 @@ fuzz_target!(|bytes: &[u8]| {
     idx += 1;
     let period = at_least(decode_real(bytes, &mut idx).abs(), 0.001);
     let iso = decode_real(bytes, &mut idx);
-    let base = Mesh::cube(real(2.0), ());
+    let base = solid::cube(real(2.0));
 
     let mesh = match tag {
-        0 => Mesh::sdf(
+        0 => solid::sdf(
             |p: &Point3| p.to_vector().norm() - real(0.5),
             (res, res, res),
             Point3::new(real(-1.0), real(-1.0), real(-1.0)),
             Point3::new(real(1.0), real(1.0), real(1.0)),
             iso,
-            (),
         ),
         1 => {
             let center = hpoint3(Real::zero(), Real::zero(), Real::zero());
             let max_radius_squared = real(10.0);
             let radius_squared = period.min(&max_radius_squared).clone();
-            Mesh::sdf_expr(
+            solid::sdf_expr(
                 SdfExpr::sphere(center, radius_squared),
                 (res, res, res),
                 Point3::new(real(-1.0), real(-1.0), real(-1.0)),
                 Point3::new(real(1.0), real(1.0), real(1.0)),
                 iso,
-                (),
             )
         },
-        2 => base.gyroid(res, period, iso, ()),
-        3 => base.schwarz_p(res, period, iso, ()),
-        4 => base.schwarz_d(res, period, iso, ()),
+        2 => solid::gyroid(&base, res, period, iso),
+        3 => solid::schwarz_p(&base, res, period, iso),
+        4 => solid::schwarz_d(&base, res, period, iso),
         _ => {
             let sign = if bytes[idx % bytes.len()] & 1 == 0 {
                 Real::one()
             } else {
                 -Real::one()
             };
-            Mesh::sdf(
+            solid::sdf(
                 |_| sign.clone() * real(1.0e-50),
                 (res, res, res),
                 Point3::new(real(-1.0), real(-1.0), real(-1.0)),
                 Point3::new(real(1.0), real(1.0), real(1.0)),
                 Real::zero(),
-                (),
             )
         },
     };

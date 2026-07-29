@@ -1,6 +1,5 @@
 #![cfg(all(
-    feature = "mesh",
-    feature = "sketch",
+    feature = "curve",
     feature = "image-io",
     feature = "truetype-text",
     feature = "metaballs",
@@ -50,7 +49,7 @@ fn generated_readme_pngs_match_checked_in_baselines() {
             "--example",
             "readme_renders",
             "--features",
-            "mesh,sketch,image-io,truetype-text,metaballs,sdf,offset",
+            "mesh,curve,image-io,truetype-text,metaballs,sdf,offset",
         ])
         .env("README_RENDER_OUTPUT_DIR", &output_dir)
         .status()

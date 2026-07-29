@@ -5,10 +5,10 @@ without digging through a large demo binary.
 
 ## Geometry Examples
 
-- `basic.rs`: minimal profile extrusion, mesh Boolean, manifold check, and STL
+- `basic.rs`: minimal curve-region extrusion, mesh Boolean, manifold check, and STL
   export; this is synchronized with the root README.
 - `basic_shapes.rs`: cube, sphere, cylinder, ellipsoid, and torus.
-- `basic2d_shapes_and_offsetting.rs`: 2D sketches and offset variants.
+- `basic2d_shapes_and_offsetting.rs`: 2D curves and offset variants.
 - `boolean_operations.rs`: union, difference, intersection, and xor.
 - `transformations.rs`: translate, rotate, scale, mirror, and matrix transforms.
 - `convex_hull.rs`: convex hull over a boolean model.
@@ -32,7 +32,7 @@ cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
 cargo run --example scalar_adapter
-cargo run --example readme_renders --features mesh,sketch,image-io,truetype-text,metaballs,sdf,offset
+cargo run --example readme_renders --features mesh,curve,image-io,truetype-text,metaballs,sdf,offset
 ```
 
 Most geometry examples write output under `stl/examples/`. The README render
