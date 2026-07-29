@@ -167,7 +167,8 @@ The clean-break implementation currently provides:
   exact restricted `Curve3` evidence. Whole spherical faces and intact curved
   shells transfer natively; exact affine Bézier lines and coplanar tensor
   carriers regularize to canonical line/plane geometry with rebuilt projected
-  pcurves before ordinary shell validation;
+  pcurves before ordinary shell validation. Subdivided curve-sweep connectors
+  and active tensor subrectangles also recertify exact transverse path clips;
 - `boolean::intersect_faces` as the same exact carrier-and-trim primitive for
   arbitrary validated faces, including faces in open shells; finite tensor
   iso-curves and plane/extrusion sections therefore do not require fabricated

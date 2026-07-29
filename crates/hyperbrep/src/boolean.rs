@@ -609,10 +609,24 @@ fn partition_graph_faces(
             .expect("validated graph face surface");
         match &pair.trim {
             FacePairTrim::SurfaceCurveFragments(fragments) => {
-                surface_traces
-                    .entry(face)
-                    .or_default()
-                    .extend(fragments.iter().cloned());
+                if surface.kind() == crate::SurfaceKind::Plane
+                    && fragments
+                        .iter()
+                        .all(|fragment| fragment.curve().kind() == crate::Curve3Kind::Line)
+                {
+                    let curves = fragments
+                        .iter()
+                        .map(|fragment| fragment.curve().clone())
+                        .collect::<Vec<_>>();
+                    for fragment in planar_line_support_split_traces(model, face, &curves)? {
+                        push_unique_planar_trace(planar_traces.entry(face).or_default(), fragment)?;
+                    }
+                } else {
+                    surface_traces
+                        .entry(face)
+                        .or_default()
+                        .extend(fragments.iter().cloned());
+                }
             }
             FacePairTrim::CurveFragments(fragments) => {
                 if surface.kind() != crate::SurfaceKind::Plane {
@@ -1228,6 +1242,8 @@ fn stitch_graph_faces(
             return Err(BooleanError::SelectedFaceUnresolved { face: face.face });
         }
     }
+    let regularize_to_planar =
+        selection_is_exactly_planar(&first)? && selection_is_exactly_planar(&second)?;
 
     let mut builder = ModelBuilder::new();
     let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
@@ -1259,6 +1275,7 @@ fn stitch_graph_faces(
                 &mut source_edges,
                 &mut source_surfaces,
                 &selected_edge_uses,
+                regularize_to_planar,
             )?);
         }
     }
@@ -1363,6 +1380,31 @@ fn stitch_graph_faces(
     } else {
         BooleanResult::Solids { model, solids }
     })
+}
+
+fn selection_is_exactly_planar(selection: &FaceSelection) -> Result<bool, BooleanError> {
+    for classified in &selection.faces {
+        if matches!(
+            classified.action,
+            FaceSelectionAction::Discard | FaceSelectionAction::BoundaryNeedsResolution
+        ) {
+            continue;
+        }
+        let face = selection
+            .model
+            .face(classified.face)
+            .expect("validated selected face");
+        if selection
+            .model
+            .surface(face.surface())
+            .expect("validated selected surface")
+            .canonical_plane()?
+            .is_none()
+        {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 fn selected_edge_use_counts(
@@ -1554,16 +1596,22 @@ fn copy_selected_face(
     >,
     source_surfaces: &mut BTreeMap<(bool, crate::SurfaceId), crate::SurfaceId>,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
+    regularize_to_planar: bool,
 ) -> Result<StitchedFace, BooleanError> {
     let face = model.face(face_id).expect("validated selected face");
     let surface = model
         .surface(face.surface())
         .expect("validated selected surface");
-    let transferred_surface = surface
-        .canonical_plane()?
-        .unwrap_or_else(|| surface.clone());
-    let projected_plane =
-        (transferred_surface.kind() == crate::SurfaceKind::Plane).then_some(&transferred_surface);
+    let transferred_surface = if regularize_to_planar {
+        surface
+            .canonical_plane()?
+            .unwrap_or_else(|| surface.clone())
+    } else {
+        surface.clone()
+    };
+    let projected_plane = (regularize_to_planar
+        && transferred_surface.kind() == crate::SurfaceKind::Plane)
+        .then_some(&transferred_surface);
     let surface_id = if let Some(surface) = source_surfaces.get(&(is_first, face.surface())) {
         *surface
     } else {
@@ -1603,6 +1651,7 @@ fn copy_selected_face(
         source_edges,
         selected_edge_uses,
         projected_plane,
+        regularize_to_planar,
     )?;
     let mut face_edges = outer.1;
     let mut inner = Vec::with_capacity(face.inner().len());
@@ -1618,6 +1667,7 @@ fn copy_selected_face(
             source_edges,
             selected_edge_uses,
             projected_plane,
+            regularize_to_planar,
         )?;
         inner.push(copied.0);
         face_edges.extend(copied.1);
@@ -1667,6 +1717,7 @@ fn copy_selected_wire(
     >,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
     projected_plane: Option<&Surface>,
+    regularize_to_planar: bool,
 ) -> Result<(crate::WireId, Vec<crate::EdgeId>), BooleanError> {
     let wire = model.wire(wire_id).expect("validated selected wire");
     let uses = if reversed {
@@ -1690,6 +1741,7 @@ fn copy_selected_wire(
             stitched_edges,
             source_edges,
             selected_edge_uses,
+            regularize_to_planar,
         )?;
         let source_pcurve = model
             .pcurve(edge_use.pcurve())
@@ -1780,6 +1832,7 @@ fn copy_or_match_selected_edge(
         (crate::EdgeId, bool, crate::ParameterDomain),
     >,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
+    regularize_to_planar: bool,
 ) -> Result<(crate::EdgeId, bool, crate::ParameterDomain), BooleanError> {
     if let Some(mapped) = source_edges.get(&(is_first, source_edge_id)) {
         return Ok(mapped.clone());
@@ -1797,9 +1850,13 @@ fn copy_or_match_selected_edge(
         .point();
     let curve = model.curve(edge.curve()).expect("validated selected curve");
     let restricted_curve = curve.subcurve(edge.domain().start(), edge.domain().end())?;
-    let restricted_curve = restricted_curve
-        .canonical_line()?
-        .unwrap_or(restricted_curve);
+    let restricted_curve = if regularize_to_planar {
+        restricted_curve
+            .canonical_line()?
+            .unwrap_or(restricted_curve)
+    } else {
+        restricted_curve
+    };
     let restricted_domain = restricted_curve.domain().clone();
     let cross_matchable = selected_edge_uses
         .get(&(is_first, source_edge_id))
@@ -4887,14 +4944,90 @@ mod tests {
         let transverse_graph =
             intersection_graph(&sweep, sweep_solid, &transverse_slab, transverse_slab_solid)
                 .unwrap();
-        assert!(matches!(
-            transverse_graph.select_first_faces(BooleanOperation::Intersection),
-            Err(BooleanError::Topology(TopologyEditError::Validation(report)))
-                if matches!(
-                    report.errors().first(),
-                    Some(crate::BuildError::UnsupportedSolidShell(_))
-                )
-        ));
+        let transverse_selection = transverse_graph
+            .select_first_faces(BooleanOperation::Intersection)
+            .unwrap();
+        assert!(transverse_selection.partitions.len() >= 4);
+        let BooleanResult::Solid {
+            model: transverse_stitched,
+            solid: transverse_stitched_solid,
+        } = transverse_graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("transverse clipping must retain one certified curved sweep");
+        };
+        assert!(transverse_stitched.faces().any(|(_, face)| {
+            transverse_stitched.surface(face.surface()).unwrap().kind()
+                == crate::SurfaceKind::RationalBezier
+        }));
+        assert_eq!(
+            compare_reals(
+                &transverse_stitched
+                    .solid_volume(transverse_stitched_solid)
+                    .unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let transverse_json = transverse_stitched.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&transverse_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            transverse_json
+        );
+        let reflected = transverse_stitched
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(
+                &reflected.solid_volume(transverse_stitched_solid).unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let BooleanResult::Solid {
+            model: transverse_standard,
+            solid: transverse_standard_solid,
+        } = intersection(&sweep, sweep_solid, &transverse_slab, transverse_slab_solid).unwrap()
+        else {
+            panic!("the standard API must publish the transversely clipped curved sweep");
+        };
+        assert_eq!(
+            compare_reals(
+                &transverse_standard
+                    .solid_volume(transverse_standard_solid)
+                    .unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let BooleanResult::Solid {
+            model: reversed_operands,
+            solid: reversed_solid,
+        } = intersection(&transverse_slab, transverse_slab_solid, &sweep, sweep_solid).unwrap()
+        else {
+            panic!("intersection must remain symmetric across operand order");
+        };
+        assert_eq!(
+            compare_reals(
+                &reversed_operands.solid_volume(reversed_solid).unwrap(),
+                &Real::from(32),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
 
         let mut by_face =
             std::collections::HashMap::<FaceId, Vec<crate::SurfaceIntersectionCurve>>::new();

@@ -290,11 +290,16 @@ Curve-sweep solid certification is topology-derived rather than tied to the
 builder's primitive face and edge counts. Coincident planar cap descendants
 are grouped and their internal shared edges cancel. Descendants on each
 rational-Bézier side support are grouped by exact `SurfaceId`; their external
-pcurve intervals must tile all four sides of the unit tensor rectangle with no
-gap or overlap. Complete tensor-boundary path edges recover the common exact
-rational-Bézier sweep path, and translated side controls recover the ordered
-profile. The same proof runs during untrusted persistence replay, so cap and
-side subdivision does not rely on edit provenance.
+pcurve intervals must tile all four sides of one exact active tensor rectangle
+with no gap or overlap. A connector may be one edge or an identity-connected
+chain: its edge domains must tile the complete retained spatial curve while
+its tensor pcurves tile the common active path interval. The side support is
+restricted to that exact interval by homogeneous subdivision before its
+translated controls are compared with the reconstructed connector subpath.
+This admits exact transverse clipping at represented path parameters while
+preserving the same curve-sweep certificate. The proof runs during untrusted
+persistence replay, so cap, connector, and side subdivision does not rely on
+edit provenance.
 
 Closed planar line shells outside the translation-prism family have two exact
 publication routes. Convex shells use a fast certificate: every face loop is

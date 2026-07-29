@@ -1264,6 +1264,14 @@ struct CertifiedCurveSweepShell {
     path: Curve3,
 }
 
+struct TensorPathChain {
+    lower: VertexId,
+    upper: VertexId,
+    curve: Curve3,
+    parameter_start: Real,
+    parameter_end: Real,
+}
+
 pub(crate) struct CertifiedZPrismProfile {
     pub(crate) outer: Contour2,
     pub(crate) holes: Vec<Contour2>,
@@ -9210,35 +9218,33 @@ impl ModelBuilder {
             return Ok(None);
         }
         let face_set = faces.iter().copied().collect::<HashSet<_>>();
-        let shell_edges = self.shell_edge_set(faces)?;
         let mut correspondence = HashMap::new();
         let mut connector_by_lower = HashMap::new();
-        for edge_id in shell_edges {
-            let edge = self.edge_ref(edge_id)?;
-            let (lower, upper, curve) = if lower_vertices.contains(&edge.start)
-                && upper_vertices.contains(&edge.end)
-            {
-                (edge.start, edge.end, self.curve_ref(edge.curve)?.clone())
-            } else if lower_vertices.contains(&edge.end) && upper_vertices.contains(&edge.start) {
-                (
-                    edge.end,
-                    edge.start,
-                    self.curve_ref(edge.curve)?.reversed()?,
-                )
+        let mut path_parameter_bounds = None;
+        for chain in
+            self.complete_tensor_path_chains(faces, &face_set, &lower_vertices, &upper_vertices)?
+        {
+            if let Some((start, end)) = &path_parameter_bounds {
+                if !real_values_equal(start, &chain.parameter_start)?
+                    || !real_values_equal(end, &chain.parameter_end)?
+                {
+                    return Ok(None);
+                }
             } else {
-                continue;
-            };
-            if curve.kind() != Curve3Kind::RationalBezier
-                || !self.edge_is_complete_tensor_path_boundary(edge_id, &face_set)?
-            {
-                continue;
+                path_parameter_bounds =
+                    Some((chain.parameter_start.clone(), chain.parameter_end.clone()));
             }
-            if correspondence.insert(lower, upper).is_some()
-                || connector_by_lower.insert(lower, curve).is_some()
+            if correspondence.insert(chain.lower, chain.upper).is_some()
+                || connector_by_lower
+                    .insert(chain.lower, chain.curve)
+                    .is_some()
             {
                 return Ok(None);
             }
         }
+        let Some((path_parameter_start, path_parameter_end)) = path_parameter_bounds else {
+            return Ok(None);
+        };
         let count = correspondence.len();
         if count < 3
             || connector_by_lower.len() != count
@@ -9341,10 +9347,15 @@ impl ModelBuilder {
             let end_offset = self.vertex_ref(end)?.point() - &reference_point;
             let mut matching = None;
             for (surface_id, group) in &side_groups {
+                let restricted_surface = self.restricted_curve_sweep_side_surface(
+                    *surface_id,
+                    &path_parameter_start,
+                    &path_parameter_end,
+                )?;
                 let SurfaceExactData::RationalBezier {
                     control_points,
                     weights,
-                } = self.surface_ref(*surface_id)?.exact_data()
+                } = restricted_surface.exact_data()
                 else {
                     unreachable!("side surface kind was checked");
                 };
@@ -9364,7 +9375,14 @@ impl ModelBuilder {
                 return Ok(None);
             };
             if !represented_surfaces.insert(surface_id)
-                || !self.certifies_complete_unit_tensor_face_group(faces, group)?
+                || !self.certifies_tensor_face_group(
+                    faces,
+                    group,
+                    &Real::zero(),
+                    &Real::one(),
+                    &path_parameter_start,
+                    &path_parameter_end,
+                )?
             {
                 return Ok(None);
             }
@@ -9419,11 +9437,145 @@ impl ModelBuilder {
         }))
     }
 
-    fn edge_is_complete_tensor_path_boundary(
+    fn complete_tensor_path_chains(
+        &self,
+        faces: &[FaceId],
+        shell_faces: &HashSet<FaceId>,
+        lower_vertices: &HashSet<VertexId>,
+        upper_vertices: &HashSet<VertexId>,
+    ) -> Result<Vec<TensorPathChain>, BuildError> {
+        let mut groups = HashMap::<Curve3Id, Vec<(EdgeId, Real, Real)>>::new();
+        for edge_id in self.shell_edge_set(faces)? {
+            let edge = self.edge_ref(edge_id)?;
+            if self.curve_ref(edge.curve)?.kind() != Curve3Kind::RationalBezier {
+                continue;
+            }
+            let Some((start, end)) = self.tensor_path_boundary_interval(edge_id, shell_faces)?
+            else {
+                continue;
+            };
+            groups
+                .entry(edge.curve)
+                .or_default()
+                .push((edge_id, start, end));
+        }
+
+        let mut chains = Vec::new();
+        for (curve_id, segments) in groups {
+            let curve = self.curve_ref(curve_id)?;
+            let edge_intervals = segments
+                .iter()
+                .map(|(edge, _, _)| {
+                    let domain = self.edge_ref(*edge)?.domain.clone();
+                    Ok((domain.start().clone(), domain.end().clone()))
+                })
+                .collect::<Result<Vec<_>, BuildError>>()?;
+            if !self.exact_intervals_tile(
+                &edge_intervals,
+                curve.domain().start(),
+                curve.domain().end(),
+            )? {
+                continue;
+            }
+            let parameter_start = segments
+                .iter()
+                .map(|(_, start, _)| start.clone())
+                .try_fold(None, |minimum, candidate| {
+                    Ok::<_, BuildError>(Some(match minimum {
+                        Some(minimum) => minimum_real(&minimum, &candidate)?,
+                        None => candidate,
+                    }))
+                })?
+                .expect("one or more path segments");
+            let parameter_end = segments
+                .iter()
+                .map(|(_, _, end)| end.clone())
+                .try_fold(None, |maximum, candidate| {
+                    Ok::<_, BuildError>(Some(match maximum {
+                        Some(maximum) => maximum_real(&maximum, &candidate)?,
+                        None => candidate,
+                    }))
+                })?
+                .expect("one or more path segments");
+            let parameter_intervals = segments
+                .iter()
+                .map(|(_, start, end)| (start.clone(), end.clone()))
+                .collect::<Vec<_>>();
+            if !self.exact_intervals_tile(&parameter_intervals, &parameter_start, &parameter_end)? {
+                continue;
+            }
+
+            let mut adjacency = HashMap::<VertexId, Vec<VertexId>>::new();
+            for (edge_id, _, _) in &segments {
+                let edge = self.edge_ref(*edge_id)?;
+                adjacency.entry(edge.start).or_default().push(edge.end);
+                adjacency.entry(edge.end).or_default().push(edge.start);
+            }
+            let lowers = adjacency
+                .keys()
+                .copied()
+                .filter(|vertex| lower_vertices.contains(vertex))
+                .collect::<Vec<_>>();
+            let uppers = adjacency
+                .keys()
+                .copied()
+                .filter(|vertex| upper_vertices.contains(vertex))
+                .collect::<Vec<_>>();
+            if lowers.len() != 1
+                || uppers.len() != 1
+                || adjacency.iter().any(|(vertex, adjacent)| {
+                    let expected = if *vertex == lowers[0] || *vertex == uppers[0] {
+                        1
+                    } else {
+                        2
+                    };
+                    adjacent.len() != expected
+                })
+            {
+                continue;
+            }
+            let mut visited = HashSet::new();
+            let mut pending = vec![lowers[0]];
+            while let Some(vertex) = pending.pop() {
+                if visited.insert(vertex) {
+                    pending.extend(adjacency[&vertex].iter().copied());
+                }
+            }
+            if visited.len() != adjacency.len() {
+                continue;
+            }
+            let lower_point = self.vertex_ref(lowers[0])?.point();
+            let upper_point = self.vertex_ref(uppers[0])?.point();
+            let curve_start = curve.point_at(curve.domain().start())?;
+            let curve_end = curve.point_at(curve.domain().end())?;
+            let curve = if points_equal(&curve_start, lower_point)?
+                && points_equal(&curve_end, upper_point)?
+            {
+                curve.clone()
+            } else if points_equal(&curve_start, upper_point)?
+                && points_equal(&curve_end, lower_point)?
+            {
+                curve.reversed()?
+            } else {
+                continue;
+            };
+            chains.push(TensorPathChain {
+                lower: lowers[0],
+                upper: uppers[0],
+                curve,
+                parameter_start,
+                parameter_end,
+            });
+        }
+        Ok(chains)
+    }
+
+    fn tensor_path_boundary_interval(
         &self,
         edge: EdgeId,
         shell_faces: &HashSet<FaceId>,
-    ) -> Result<bool, BuildError> {
+    ) -> Result<Option<(Real, Real)>, BuildError> {
+        let mut interval = None;
         for edge_use in &self.edge_uses_by_edge[edge.index()] {
             let Some(wire) = self.edge_use_wire[edge_use.index()] else {
                 continue;
@@ -9441,25 +9593,71 @@ impl ModelBuilder {
             let Some(line) = self.pcurve_ref(edge_use.pcurve)?.line_segment() else {
                 continue;
             };
-            let on_left = real_values_equal(line.start().x(), &Real::zero())?
-                && real_values_equal(line.end().x(), &Real::zero())?;
-            let on_right = real_values_equal(line.start().x(), &Real::one())?
-                && real_values_equal(line.end().x(), &Real::one())?;
-            let spans_path = (real_values_equal(line.start().y(), &Real::zero())?
-                && real_values_equal(line.end().y(), &Real::one())?)
-                || (real_values_equal(line.start().y(), &Real::one())?
-                    && real_values_equal(line.end().y(), &Real::zero())?);
-            if (on_left || on_right) && spans_path {
-                return Ok(true);
+            let on_path_boundary = real_values_equal(line.start().x(), line.end().x())?
+                && (real_values_equal(line.start().x(), &Real::zero())?
+                    || real_values_equal(line.start().x(), &Real::one())?);
+            if !on_path_boundary {
+                continue;
+            }
+            let order = decided_model_order(compare_reals(line.start().y(), line.end().y()))?;
+            if order == std::cmp::Ordering::Equal {
+                continue;
+            }
+            let candidate = if order == std::cmp::Ordering::Less {
+                (line.start().y().clone(), line.end().y().clone())
+            } else {
+                (line.end().y().clone(), line.start().y().clone())
+            };
+            if let Some((start, end)) = &interval {
+                if !real_values_equal(start, &candidate.0)?
+                    || !real_values_equal(end, &candidate.1)?
+                {
+                    return Ok(None);
+                }
+            } else {
+                interval = Some(candidate);
             }
         }
-        Ok(false)
+        Ok(interval)
     }
 
-    fn certifies_complete_unit_tensor_face_group(
+    fn restricted_curve_sweep_side_surface(
+        &self,
+        surface: SurfaceId,
+        start: &Real,
+        end: &Real,
+    ) -> Result<Surface, BuildError> {
+        let source = self.surface_ref(surface)?.clone();
+        if real_values_equal(start, &Real::zero())? && real_values_equal(end, &Real::one())? {
+            return Ok(source);
+        }
+        if decided_model_order(compare_reals(start, &Real::zero()))? == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(end, &Real::one()))? == std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(start, end))? != std::cmp::Ordering::Less
+        {
+            return Err(GeometryError::InvalidParameterDomain.into());
+        }
+        let selected =
+            if decided_model_order(compare_reals(end, &Real::one()))? == std::cmp::Ordering::Less {
+                source.split_v_at(end)?.0
+            } else {
+                source
+            };
+        if decided_model_order(compare_reals(start, &Real::zero()))? == std::cmp::Ordering::Equal {
+            return Ok(selected);
+        }
+        let relative = (start / end).map_err(|_| GeometryError::ProjectiveDivision)?;
+        Ok(selected.split_v_at(&relative)?.1)
+    }
+
+    fn certifies_tensor_face_group(
         &self,
         faces: &[FaceId],
         group: &[usize],
+        u_start: &Real,
+        u_end: &Real,
+        v_start: &Real,
+        v_end: &Real,
     ) -> Result<bool, BuildError> {
         let Some(boundaries) = self.cap_boundary_use_loops(faces, group)? else {
             return Ok(false);
@@ -9476,13 +9674,13 @@ impl ModelBuilder {
             let x_constant = real_values_equal(line.start().x(), line.end().x())?;
             let y_constant = real_values_equal(line.start().y(), line.end().y())?;
             let (side, first, second) =
-                if x_constant && real_values_equal(line.start().x(), &Real::zero())? {
+                if x_constant && real_values_equal(line.start().x(), u_start)? {
                     (0, line.start().y(), line.end().y())
-                } else if x_constant && real_values_equal(line.start().x(), &Real::one())? {
+                } else if x_constant && real_values_equal(line.start().x(), u_end)? {
                     (1, line.start().y(), line.end().y())
-                } else if y_constant && real_values_equal(line.start().y(), &Real::zero())? {
+                } else if y_constant && real_values_equal(line.start().y(), v_start)? {
                     (2, line.start().x(), line.end().x())
-                } else if y_constant && real_values_equal(line.start().y(), &Real::one())? {
+                } else if y_constant && real_values_equal(line.start().y(), v_end)? {
                     (3, line.start().x(), line.end().x())
                 } else {
                     return Ok(false);
@@ -9497,20 +9695,30 @@ impl ModelBuilder {
                 (second.clone(), first.clone())
             });
         }
-        for intervals in &sides {
-            if !self.exact_intervals_tile_unit(intervals)? {
+        for (intervals, start, end) in [
+            (&sides[0], v_start, v_end),
+            (&sides[1], v_start, v_end),
+            (&sides[2], u_start, u_end),
+            (&sides[3], u_start, u_end),
+        ] {
+            if !self.exact_intervals_tile(intervals, start, end)? {
                 return Ok(false);
             }
         }
         Ok(true)
     }
 
-    fn exact_intervals_tile_unit(&self, intervals: &[(Real, Real)]) -> Result<bool, BuildError> {
+    fn exact_intervals_tile(
+        &self,
+        intervals: &[(Real, Real)],
+        start: &Real,
+        end: &Real,
+    ) -> Result<bool, BuildError> {
         if intervals.is_empty() {
             return Ok(false);
         }
         let mut used = vec![false; intervals.len()];
-        let mut current = Real::zero();
+        let mut current = start.clone();
         for _ in 0..intervals.len() {
             let mut next = None;
             for (index, (start, end)) in intervals.iter().enumerate() {
@@ -9527,7 +9735,7 @@ impl ModelBuilder {
             used[index] = true;
             current = end.clone();
         }
-        real_values_equal(&current, &Real::one())
+        real_values_equal(&current, end)
     }
 
     fn certified_curve_sweep_cap_pair(

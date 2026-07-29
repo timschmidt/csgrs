@@ -286,9 +286,13 @@ side-face partition. Certification groups current coplanar caps, cancels their
 internal edges, groups lateral descendants only across identity-shared
 nonstandard partition edges on equivalent supports, and certifies the external
 translated-shell boundary without confusing periodic seam patches. Tensor
-sweeps additionally prove each side group's pcurve boundary tiles the full
-unit rectangle and reconstruct the common translated path/profile directly
-from the resulting BREP.
+sweeps additionally prove each side group's pcurve boundary tiles one common
+exact tensor rectangle. Subdivided connector chains must tile both the
+complete retained spatial subcurve and the same active tensor path interval;
+homogeneous side-support restriction then reconstructs the common translated
+subpath/profile directly from the resulting BREP. Exact transverse
+plane-clipped sweep intersections therefore survive selection, stitching,
+reflection, operand reversal, and persistence.
 
 `SolidIntersectionGraph::{select_first_faces, select_second_faces}` retains
 both immutable operand snapshots, applies all transferable partitions,
