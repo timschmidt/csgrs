@@ -8,13 +8,13 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
-csgrs = { version = "0.23.0", path = "..", features = ["offset", "svg-io"] }
+csgrs = { version = "0.23.0", path = "..", features = ["attributed", "offset", "svg-io"] }
 hypercurve = { version = "0.3.1", path = "../../hypercurve" }
 hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
 hyperlattice = { version = "0.6.1", path = "../../hyperlattice" }
+hypermesh = { version = "0.1.0", path = "../../hypermesh" }
 hypersdf = { version = "0.2.0", path = "../../hypersdf" }
 libfuzzer-sys = "0.4"
-hashbrown = "0.15"
 
 [[bin]]
 name = "fuzz_mesh_bytecode"
@@ -24,8 +24,8 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_sketch_polygon_triangulate"
-path = "fuzz_targets/fuzz_sketch_polygon_triangulate.rs"
+name = "fuzz_curve_polygon_triangulate"
+path = "fuzz_targets/fuzz_curve_polygon_triangulate.rs"
 test = false
 doc = false
 bench = false
@@ -73,13 +73,6 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_plane_split_polygon"
-path = "fuzz_targets/fuzz_plane_split_polygon.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
 name = "fuzz_mesh_primitive_catalog"
 path = "fuzz_targets/fuzz_mesh_primitive_catalog.rs"
 test = false
@@ -87,8 +80,8 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_sketch_shape_catalog"
-path = "fuzz_targets/fuzz_sketch_shape_catalog.rs"
+name = "fuzz_curve_shape_catalog"
+path = "fuzz_targets/fuzz_curve_shape_catalog.rs"
 test = false
 doc = false
 bench = false
@@ -108,15 +101,8 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_vertex_arithmetic"
-path = "fuzz_targets/fuzz_vertex_arithmetic.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "fuzz_sketch_extrude_revolve_sweep"
-path = "fuzz_targets/fuzz_sketch_extrude_revolve_sweep.rs"
+name = "fuzz_curve_extrude_revolve_sweep"
+path = "fuzz_targets/fuzz_curve_extrude_revolve_sweep.rs"
 test = false
 doc = false
 bench = false
@@ -143,15 +129,8 @@ doc = false
 bench = false
 
 [[bin]]
-name = "fuzz_sketch_boolean_pair"
-path = "fuzz_targets/fuzz_sketch_boolean_pair.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "fuzz_vertex_quality"
-path = "fuzz_targets/fuzz_vertex_quality.rs"
+name = "fuzz_curve_boolean_pair"
+path = "fuzz_targets/fuzz_curve_boolean_pair.rs"
 test = false
 doc = false
 bench = false

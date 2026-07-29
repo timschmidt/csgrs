@@ -4,7 +4,6 @@
 use crate::wasm::tolerance;
 use crate::wasm::{real_from_js, real_from_js_or_zero, real_to_js, vector3_from_js_or_zero};
 use hyperlattice::{Real, Vector3};
-use hyperreal::RealSign;
 use wasm_bindgen::prelude::*;
 
 fn finite_vector3(vector: &Vector3) -> Option<Vector3> {
@@ -35,8 +34,8 @@ fn rotation_between_quaternion_components(from: &Vector3, to: &Vector3) -> Optio
     let dot = a.dot(&b);
 
     if matches!(
-        (dot.clone() + Real::one()).refine_sign_until(-128),
-        Some(RealSign::Zero)
+        hyperlimit::classify_real_sign(&(dot.clone() + Real::one())).value(),
+        Some(hyperlimit::Sign::Zero)
     ) {
         let seed = if a.0[0].abs() < real(0.9) {
             Vector3::x()
@@ -110,8 +109,8 @@ impl Vector3Js {
     #[wasm_bindgen(js_name = isOrthogonal)]
     pub fn is_orthogonal(&self, other: &Vector3Js) -> bool {
         matches!(
-            self.inner.dot(&other.inner).refine_sign_until(-128),
-            Some(RealSign::Zero)
+            hyperlimit::classify_real_sign(&self.inner.dot(&other.inner)).value(),
+            Some(hyperlimit::Sign::Zero)
         )
     }
 

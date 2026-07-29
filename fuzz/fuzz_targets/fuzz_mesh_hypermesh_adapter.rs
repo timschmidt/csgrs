@@ -1,11 +1,12 @@
-//! Fuzz target for the transitional `csgrs::Mesh` to `hypermesh` adapter.
+//! Fuzz target for reusable native Hypermesh geometry emitted by csgrs.
 
 #![no_main]
 
 use std::collections::BTreeMap;
 
-use csgrs::mesh::Mesh;
+use csgrs::solid;
 use hyperlattice::{Point3, Real, Vector3};
+use hypermesh::TriangleMesh;
 use libfuzzer_sys::fuzz_target;
 
 fn real(value: f64) -> Real {
@@ -31,7 +32,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-100.0, 100.0))
 }
 
-fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
+fn decode_mesh(bytes: &[u8], idx: &mut usize) -> TriangleMesh {
     let tag = bytes[*idx % bytes.len()] % 8;
     *idx += 1;
     let a = decode_real(bytes, idx);
@@ -41,38 +42,34 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> Mesh<()> {
     *idx += 1;
 
     match tag {
-        0 => Mesh::cube(at_least_tolerance(a.abs()), ()),
-        1 => Mesh::cuboid(
+        0 => solid::cube(at_least_tolerance(a.abs())),
+        1 => solid::cuboid(
             at_least_tolerance(a.abs()),
             at_least_tolerance(b.abs()),
             at_least_tolerance(c.abs()),
-            (),
         ),
-        2 => Mesh::sphere(at_least_tolerance(a.abs()), segments, segments, ()),
-        3 => Mesh::cylinder(at_least_tolerance(a.abs()), b, segments, ()),
-        4 => Mesh::frustum(a.abs(), b.abs(), c, segments, ()),
-        5 => Mesh::frustum_ptp(
+        2 => solid::sphere(at_least_tolerance(a.abs()), segments, segments),
+        3 => solid::cylinder(at_least_tolerance(a.abs()), b, segments),
+        4 => solid::frustum(a.abs(), b.abs(), c, segments),
+        5 => solid::frustum_between(
             Point3::origin(),
             Point3::new(a.clone(), b.clone(), c.clone()),
             a.abs(),
             b.abs(),
             segments,
-            (),
         ),
-        6 => Mesh::ellipsoid(
+        6 => solid::ellipsoid(
             at_least_tolerance(a.abs()),
             at_least_tolerance(b.abs()),
             at_least_tolerance(c.abs()),
             segments,
             segments,
-            (),
         ),
-        _ => Mesh::arrow(
+        _ => solid::arrow(
             Point3::origin(),
             Vector3::from_xyz(a, b, c),
             segments,
             false,
-            (),
         ),
     }
 }
@@ -101,51 +98,27 @@ fuzz_target!(|bytes: &[u8]| {
 
     let mut idx = 0usize;
     let mesh = decode_mesh(bytes, &mut idx);
-    let buffers = mesh.to_hypermesh_buffers();
+    let buffers = mesh
+        .exact_gpu_mesh_buffers()
+        .expect("csgrs primitives have finite renderer projections");
 
-    assert!(buffers.positions.len().is_multiple_of(3));
+    assert_eq!(buffers.vertices.len(), mesh.positions.len());
     assert!(buffers.indices.len().is_multiple_of(3));
-    let vertex_count = buffers.positions.len() / 3;
-    for coordinate in &buffers.positions {
-        assert!(coordinate.is_finite());
+    let vertex_count = buffers.vertices.len();
+    for (position, normal) in &buffers.vertices {
+        assert!(position.iter().all(Real::is_finite));
+        assert!(normal.iter().all(Real::is_finite));
     }
     for index in &buffers.indices {
-        assert!(*index < vertex_count);
+        assert!((*index as usize) < vertex_count);
     }
-    if mesh.to_hypermesh_exact().is_ok() {
-        let (vertices, indices) = mesh
-            .try_get_vertices_and_indices()
-            .expect("exact mesh should lower");
-        assert!(!vertices.is_empty());
-        assert!(!indices.is_empty());
-        let (vertex_map, adjacency) = mesh.build_connectivity();
-        assert!(vertex_map.vertex_count() <= vertices.len());
-        assert!(
-            vertices
-                .iter()
-                .all(|position| vertex_map.find_index(position).is_some())
-        );
-        assert!(
-            vertex_map
-                .get_vertex_positions()
-                .iter()
-                .all(|(position, _)| vertices.contains(position))
-        );
-        let directed_edge_count = adjacency.values().map(Vec::len).sum::<usize>();
-        assert_eq!(directed_edge_count % 2, 0);
-    }
-
-    if let Ok(exact) = mesh.to_hypermesh_exact() {
-        assert!(!exact.positions.is_empty());
-        assert!(!exact.triangles.is_empty());
-        assert_eq!(
-            mesh.is_manifold(),
-            indexed_triangles_are_closed_manifold(
-                exact.positions.len(),
-                exact.triangles.iter().map(|triangle| triangle.indices()),
-            )
-        );
-    } else {
-        assert!(!mesh.is_manifold());
-    }
+    hypermesh::polygon_soup(&[mesh.as_ref()])
+        .expect("csgrs primitives remain valid reusable Hypermesh input");
+    assert_eq!(
+        mesh.is_closed_manifold(),
+        indexed_triangles_are_closed_manifold(
+            mesh.positions.len(),
+            mesh.triangles.iter().map(|triangle| triangle.indices()),
+        )
+    );
 });

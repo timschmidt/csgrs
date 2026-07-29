@@ -3,13 +3,13 @@
 #![no_main]
 
 use csgrs::{
-    csg::CSG,
-    mesh::Mesh,
+    AttributedMesh,
     parts::{
         AssemblyDocumentation, BlueprintEdgeStyle, BlueprintProjection, CsgPartInterface,
         ExactVector3, InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
     },
 };
+use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 
@@ -54,11 +54,10 @@ fuzz_target!(|bytes: &[u8]| {
         let size = i16::from(chunk[3] % 16) + 1;
         let explode = vec3(i16::from(chunk[4] as i8), 0, i16::from(chunk[5] as i8));
         let include_install = chunk[5] & 1 == 0;
-        let mesh = Mesh::cube(
-            real(size),
+        let mesh = AttributedMesh::from_uniform(
+            solid::cube(real(size)).translated(real(x), real(y), real(z)),
             metadata(format!("p{idx}"), explode, include_install),
-        )
-        .translate(real(x), real(y), real(z));
+        );
         parts.push(mesh);
     }
 

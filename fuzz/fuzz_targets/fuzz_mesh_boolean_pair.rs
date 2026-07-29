@@ -2,17 +2,14 @@
 
 #![no_main]
 
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh;
+mod support;
+
+use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 
-fn real(value: f64) -> Real {
-    Real::try_from(value).expect("fuzz decoder clamps to finite values")
-}
-
 fn tolerance() -> Real {
-    real(1.0e-9)
+    (Real::one() / Real::from(1_000_000_u64)).expect("one million is nonzero")
 }
 
 fn at_least_tolerance(value: Real) -> Real {
@@ -21,24 +18,15 @@ fn at_least_tolerance(value: Real) -> Real {
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
-    let mut raw = [0u8; 8];
-    for slot in &mut raw {
-        *slot = bytes[*idx % bytes.len()];
-        *idx += 1;
-    }
-    let value = i64::from_le_bytes(raw) as f64 / 1.0e12;
-    real(value.clamp(-100.0, 100.0))
-}
-
-fn assert_mesh_finite(mesh: &Mesh<()>) {
-    for vertex in mesh.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.0[0].is_finite());
-        assert!(vertex.normal.0[1].is_finite());
-        assert!(vertex.normal.0[2].is_finite());
-    }
+    let numerator_byte =
+        bytes[*idx % bytes.len()].wrapping_add(idx.to_le_bytes()[0].wrapping_mul(37));
+    *idx += 1;
+    let denominator_byte =
+        bytes[*idx % bytes.len()].wrapping_add(idx.to_le_bytes()[0].wrapping_mul(53));
+    *idx += 1;
+    let numerator = i16::from(numerator_byte % 33) - 16;
+    let denominator = u16::from(denominator_byte % 8) + 1;
+    (Real::from(numerator) / Real::from(denominator)).expect("denominator is positive")
 }
 
 fuzz_target!(|bytes: &[u8]| {
@@ -48,17 +36,39 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let size_a = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let size_b = at_least_tolerance(decode_real(bytes, &mut idx).abs());
-    let b = Mesh::cube(size_b, ()).translate(
+    let segments = 4;
+    idx += 1;
+    let a = match bytes[idx % bytes.len()] % 3 {
+        0 => solid::cube(size_a.clone()),
+        1 => solid::octahedron(size_a.clone()),
+        _ => solid::cylinder(size_a.clone(), size_b.clone(), segments),
+    };
+    idx += 1;
+    let b = match bytes[idx % bytes.len()] % 3 {
+        0 => solid::cube(size_b.clone()),
+        1 => solid::octahedron(size_b.clone()),
+        _ => csgrs::curve::extrude(
+            &csgrs::curve::rectangle(
+                size_b.clone(),
+                (size_b.clone() / Real::from(2_u8)).expect("two is nonzero"),
+            ),
+            size_a,
+        ),
+    }
+    .translated(
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
         decode_real(bytes, &mut idx),
     );
-    let a = Mesh::cube(size_a, ());
+    support::validate_triangle_mesh(&a, true);
+    support::validate_triangle_mesh(&b, true);
     let result = match bytes[idx % bytes.len()] % 4 {
-        0 => a.union(&b),
-        1 => a.difference(&b),
-        2 => a.intersection(&b),
-        _ => a.xor(&b),
+        0 => a.try_union(&b),
+        1 => a.try_difference(&b),
+        2 => a.try_intersection(&b),
+        _ => a.try_xor(&b),
     };
-    assert_mesh_finite(&result);
+    if let Ok(result) = result {
+        support::validate_triangle_mesh(&result, false);
+    }
 });

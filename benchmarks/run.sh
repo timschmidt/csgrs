@@ -34,6 +34,13 @@ fi
 mkdir -p "$output"
 cd "$root"
 
+cargo_target_dir="${CARGO_TARGET_DIR:-$root/target}"
+if [[ "$cargo_target_dir" != /* ]]; then
+  cargo_target_dir="$root/$cargo_target_dir"
+fi
+yeahright_fixture_dir="$cargo_target_dir/benchmark-fixtures/yeahright"
+generated_fixture_dir="$cargo_target_dir/benchmark-fixtures/generated"
+
 run_cold_samples() {
   local destination="$1"
   shift
@@ -64,7 +71,9 @@ if ((cold_warm)); then
     exit 2
   fi
   cmake -S benchmarks/native -B target/native-benchmarks \
-    -DCMAKE_BUILD_TYPE=Release -DCSGRS_BENCH_REQUIRE_ALL=ON
+    -DCMAKE_BUILD_TYPE=Release -DCSGRS_BENCH_REQUIRE_ALL=ON \
+    -DCSGRS_YEAHRIGHT_FIXTURE_DIR="$yeahright_fixture_dir" \
+    -DCSGRS_GENERATED_FIXTURE_DIR="$generated_fixture_dir"
   CCACHE_DISABLE=1 cmake --build target/native-benchmarks --parallel
 
   CSGRS_BENCH_TEMPERATURE=warm \
@@ -95,7 +104,7 @@ if ((cold_warm)); then
 fi
 
 export CSGRS_BENCH_TEMPERATURE="${CSGRS_BENCH_TEMPERATURE:-warm}"
-cargo bench --bench kernel_comparison >"$output/csgrs-kernel.csv"
+cargo bench --bench kernel_comparison --features attributed >"$output/csgrs-kernel.csv"
 cargo bench --bench feature_pipeline \
   --features bench-feature-pipeline \
   >"$output/csgrs-feature.csv"
@@ -106,10 +115,18 @@ csv_files=(
   "$output/csgrs-feature.csv"
   "$output/rust-competitive.csv"
 )
+case "${SOLIDEAN_BENCH:-}" in
+  1|true|TRUE|yes|YES|on|ON)
+    cargo bench --bench solidean_comparison >"$output/solidean-comparison.csv"
+    csv_files+=("$output/solidean-comparison.csv")
+    ;;
+esac
 if ((!csgrs_only)); then
   cmake -S benchmarks/native -B target/native-benchmarks \
-    -DCMAKE_BUILD_TYPE=Release -DCSGRS_BENCH_REQUIRE_ALL=ON
-  cmake --build target/native-benchmarks --parallel
+    -DCMAKE_BUILD_TYPE=Release -DCSGRS_BENCH_REQUIRE_ALL=ON \
+    -DCSGRS_YEAHRIGHT_FIXTURE_DIR="$yeahright_fixture_dir" \
+    -DCSGRS_GENERATED_FIXTURE_DIR="$generated_fixture_dir"
+  CCACHE_DISABLE=1 cmake --build target/native-benchmarks --parallel
   target/native-benchmarks/csgrs_bench_cgal >"$output/cgal-epeck.csv"
   target/native-benchmarks/csgrs_bench_occt >"$output/opencascade-tight.csv"
   csv_files+=("$output/cgal-epeck.csv" "$output/opencascade-tight.csv")

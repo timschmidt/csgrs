@@ -18,13 +18,13 @@ class _MeshHandle(ctypes.Structure):
     pass
 
 
-class _ProfileHandle(ctypes.Structure):
+class _CurveRegionHandle(ctypes.Structure):
     pass
 
 
 RealPtr = ctypes.POINTER(_RealHandle)
 MeshPtr = ctypes.POINTER(_MeshHandle)
-ProfilePtr = ctypes.POINTER(_ProfileHandle)
+CurveRegionPtr = ctypes.POINTER(_CurveRegionHandle)
 
 
 class I128(ctypes.Structure):
@@ -167,8 +167,8 @@ def _region_profiles(name: str, vec2_type: type[ctypes.Structure]) -> type[ctype
                 ("point_len", ctypes.c_size_t),
                 ("ring_offsets", ctypes.POINTER(ctypes.c_size_t)),
                 ("ring_offset_len", ctypes.c_size_t),
-                ("profile_offsets", ctypes.POINTER(ctypes.c_size_t)),
-                ("profile_offset_len", ctypes.c_size_t),
+                ("region_offsets", ctypes.POINTER(ctypes.c_size_t)),
+                ("region_offset_len", ctypes.c_size_t),
             ]
         },
     )
@@ -358,7 +358,7 @@ class RealFamily(Family):
     region_profiles_type = RegionProfilesReal
 
 
-class Mesh:
+class TriangleMesh:
     family: type[Family]
 
     def __init__(self, ptr: MeshPtr):
@@ -367,14 +367,14 @@ class Mesh:
     @classmethod
     def cube(cls, width):
         out = MeshPtr()
-        _call(f"csgrs_mesh_{cls.family.prefix}_cube", cls.family.scalar(width), ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{cls.family.prefix}_cube", cls.family.scalar(width), ctypes.byref(out))
         return cls(out)
 
     @classmethod
     def cuboid(cls, width, length, height):
         out = MeshPtr()
         _call(
-            f"csgrs_mesh_{cls.family.prefix}_cuboid",
+            f"csgrs_triangle_mesh_{cls.family.prefix}_cuboid",
             cls.family.scalar(width),
             cls.family.scalar(length),
             cls.family.scalar(height),
@@ -386,7 +386,7 @@ class Mesh:
     def sphere(cls, radius, segments: int, stacks: int):
         out = MeshPtr()
         _call(
-            f"csgrs_mesh_{cls.family.prefix}_sphere",
+            f"csgrs_triangle_mesh_{cls.family.prefix}_sphere",
             cls.family.scalar(radius),
             ctypes.c_size_t(segments),
             ctypes.c_size_t(stacks),
@@ -398,7 +398,7 @@ class Mesh:
     def cylinder(cls, radius, height, segments: int):
         out = MeshPtr()
         _call(
-            f"csgrs_mesh_{cls.family.prefix}_cylinder",
+            f"csgrs_triangle_mesh_{cls.family.prefix}_cylinder",
             cls.family.scalar(radius),
             cls.family.scalar(height),
             ctypes.c_size_t(segments),
@@ -418,7 +418,7 @@ class Mesh:
         offset_array = (ctypes.c_size_t * len(offsets))(*offsets)
         out = MeshPtr()
         _call(
-            f"csgrs_mesh_{cls.family.prefix}_polyhedron",
+            f"csgrs_triangle_mesh_{cls.family.prefix}_polyhedron",
             point_array,
             len(point_values),
             index_array,
@@ -429,9 +429,9 @@ class Mesh:
         )
         return cls(out)
 
-    def _binary(self, other: "Mesh", op: str):
+    def _binary(self, other: "TriangleMesh", op: str):
         out = MeshPtr()
-        _call(f"csgrs_mesh_{self.family.prefix}_{op}", self.ptr, other.ptr, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_{op}", self.ptr, other.ptr, ctypes.byref(out))
         return self.__class__(out)
 
     def union(self, other): return self._binary(other, "union")
@@ -441,7 +441,7 @@ class Mesh:
 
     def transform(self, matrix):
         out = MeshPtr()
-        _call(f"csgrs_mesh_{self.family.prefix}_transform", self.ptr, matrix, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_transform", self.ptr, matrix, ctypes.byref(out))
         return self.__class__(out)
 
     def translate(self, x, y, z): return self._triple("translate", x, y, z)
@@ -451,7 +451,7 @@ class Mesh:
     def _triple(self, op, x, y, z):
         out = MeshPtr()
         _call(
-            f"csgrs_mesh_{self.family.prefix}_{op}",
+            f"csgrs_triangle_mesh_{self.family.prefix}_{op}",
             self.ptr,
             self.family.scalar(x),
             self.family.scalar(y),
@@ -466,66 +466,66 @@ class Mesh:
 
     def _unary(self, op):
         out = MeshPtr()
-        _call(f"csgrs_mesh_{self.family.prefix}_{op}", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_{op}", self.ptr, ctypes.byref(out))
         return self.__class__(out)
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_mesh_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
         return out
 
     def vertices_and_indices(self):
         out = self.family.mesh_buffers_type()
-        _call(f"csgrs_mesh_{self.family.prefix}_vertices_and_indices", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_vertices_and_indices", self.ptr, ctypes.byref(out))
         return MeshBuffers(self.family, out)
 
     def graphics_mesh(self):
         out = self.family.graphics_mesh_type()
-        _call(f"csgrs_mesh_{self.family.prefix}_graphics_mesh", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_triangle_mesh_{self.family.prefix}_graphics_mesh", self.ptr, ctypes.byref(out))
         return GraphicsMesh(self.family, out)
 
     def __del__(self):
         ptr = getattr(self, "ptr", None)
         if ptr:
-            load().csgrs_mesh_free(ptr)
+            load().csgrs_triangle_mesh_free(ptr)
             self.ptr = MeshPtr()
 
 
-class Profile:
+class CurveRegion:
     family: type[Family]
 
-    def __init__(self, ptr: ProfilePtr):
+    def __init__(self, ptr: CurveRegionPtr):
         self.ptr = ptr
 
     @classmethod
     def square(cls, width):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{cls.family.prefix}_square", cls.family.scalar(width), ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{cls.family.prefix}_square", cls.family.scalar(width), ctypes.byref(out))
         return cls(out)
 
     @classmethod
     def rectangle(cls, width, length):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{cls.family.prefix}_rectangle", cls.family.scalar(width), cls.family.scalar(length), ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{cls.family.prefix}_rectangle", cls.family.scalar(width), cls.family.scalar(length), ctypes.byref(out))
         return cls(out)
 
     @classmethod
     def circle(cls, radius, segments: int):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{cls.family.prefix}_circle", cls.family.scalar(radius), ctypes.c_size_t(segments), ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{cls.family.prefix}_circle", cls.family.scalar(radius), ctypes.c_size_t(segments), ctypes.byref(out))
         return cls(out)
 
     @classmethod
     def polygon(cls, points: Iterable[Sequence]):
         values = [cls.family.vec2(point) for point in points]
         array = (cls.family.vec2_type * len(values))(*values)
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{cls.family.prefix}_polygon", array, len(values), ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{cls.family.prefix}_polygon", array, len(values), ctypes.byref(out))
         return cls(out)
 
-    def _binary(self, other: "Profile", op: str):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{self.family.prefix}_{op}", self.ptr, other.ptr, ctypes.byref(out))
+    def _binary(self, other: "CurveRegion", op: str):
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{self.family.prefix}_{op}", self.ptr, other.ptr, ctypes.byref(out))
         return self.__class__(out)
 
     def union(self, other): return self._binary(other, "union")
@@ -534,8 +534,8 @@ class Profile:
     def xor(self, other): return self._binary(other, "xor")
 
     def transform(self, matrix):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{self.family.prefix}_transform", self.ptr, matrix, ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{self.family.prefix}_transform", self.ptr, matrix, ctypes.byref(out))
         return self.__class__(out)
 
     def translate(self, x, y, z): return self._triple("translate", x, y, z)
@@ -543,54 +543,54 @@ class Profile:
     def rotate(self, x, y, z): return self._triple("rotate", x, y, z)
 
     def _triple(self, op, x, y, z):
-        out = ProfilePtr()
-        _call(f"csgrs_profile_{self.family.prefix}_{op}", self.ptr, self.family.scalar(x), self.family.scalar(y), self.family.scalar(z), ctypes.byref(out))
+        out = CurveRegionPtr()
+        _call(f"csgrs_curve_region_{self.family.prefix}_{op}", self.ptr, self.family.scalar(x), self.family.scalar(y), self.family.scalar(z), ctypes.byref(out))
         return self.__class__(out)
 
     def bounding_box(self):
         out = self.family.aabb_type()
-        _call(f"csgrs_profile_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_curve_region_{self.family.prefix}_bounding_box", self.ptr, ctypes.byref(out))
         return out
 
     def extrude(self, height):
         out = MeshPtr()
-        _call(f"csgrs_profile_{self.family.prefix}_extrude", self.ptr, self.family.scalar(height), ctypes.byref(out))
+        _call(f"csgrs_curve_region_{self.family.prefix}_extrude", self.ptr, self.family.scalar(height), ctypes.byref(out))
         return mesh_class_for(self.family)(out)
 
     def extrude_vector(self, direction):
         out = MeshPtr()
-        _call(f"csgrs_profile_{self.family.prefix}_extrude_vector", self.ptr, self.family.vec3(direction), ctypes.byref(out))
+        _call(f"csgrs_curve_region_{self.family.prefix}_extrude_vector", self.ptr, self.family.vec3(direction), ctypes.byref(out))
         return mesh_class_for(self.family)(out)
 
     def revolve(self, angle, segments: int):
         out = MeshPtr()
-        _call(f"csgrs_profile_{self.family.prefix}_revolve", self.ptr, self.family.scalar(angle), ctypes.c_size_t(segments), ctypes.byref(out))
+        _call(f"csgrs_curve_region_{self.family.prefix}_revolve", self.ptr, self.family.scalar(angle), ctypes.c_size_t(segments), ctypes.byref(out))
         return mesh_class_for(self.family)(out)
 
     def region_profiles(self):
         out = self.family.region_profiles_type()
-        _call(f"csgrs_profile_{self.family.prefix}_region_profiles", self.ptr, ctypes.byref(out))
+        _call(f"csgrs_curve_region_{self.family.prefix}_region_profiles", self.ptr, ctypes.byref(out))
         return RegionProfiles(self.family, out)
 
     def __del__(self):
         ptr = getattr(self, "ptr", None)
         if ptr:
-            load().csgrs_profile_free(ptr)
-            self.ptr = ProfilePtr()
+            load().csgrs_curve_region_free(ptr)
+            self.ptr = CurveRegionPtr()
 
 
-class MeshF32(Mesh): family = F32Family
-class MeshF64(Mesh): family = F64Family
-class MeshI128(Mesh): family = I128Family
-class MeshReal(Mesh): family = RealFamily
-class ProfileF32(Profile): family = F32Family
-class ProfileF64(Profile): family = F64Family
-class ProfileI128(Profile): family = I128Family
-class ProfileReal(Profile): family = RealFamily
+class TriangleMeshF32(TriangleMesh): family = F32Family
+class TriangleMeshF64(TriangleMesh): family = F64Family
+class TriangleMeshI128(TriangleMesh): family = I128Family
+class TriangleMeshReal(TriangleMesh): family = RealFamily
+class CurveRegionF32(CurveRegion): family = F32Family
+class CurveRegionF64(CurveRegion): family = F64Family
+class CurveRegionI128(CurveRegion): family = I128Family
+class CurveRegionReal(CurveRegion): family = RealFamily
 
 
 def mesh_class_for(family):
-    return {F32Family: MeshF32, F64Family: MeshF64, I128Family: MeshI128, RealFamily: MeshReal}[family]
+    return {F32Family: TriangleMeshF32, F64Family: TriangleMeshF64, I128Family: TriangleMeshI128, RealFamily: TriangleMeshReal}[family]
 
 
 class MeshBuffers:
@@ -601,7 +601,7 @@ class MeshBuffers:
     def __del__(self):
         raw = getattr(self, "raw", None)
         if raw is not None:
-            getattr(load(), f"csgrs_mesh_buffers_{self.family.prefix}_free")(raw)
+            getattr(load(), f"csgrs_triangle_mesh_buffers_{self.family.prefix}_free")(raw)
             self.raw = None
 
 

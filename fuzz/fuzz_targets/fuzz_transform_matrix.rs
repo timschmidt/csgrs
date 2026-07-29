@@ -2,8 +2,6 @@
 
 #![no_main]
 
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh;
 use hyperlattice::{Matrix4, Real};
 use libfuzzer_sys::fuzz_target;
 
@@ -33,15 +31,12 @@ fuzz_target!(|bytes: &[u8]| {
     let Some(matrix) = Matrix4::from_row_slice(&values) else {
         return;
     };
-    let mesh: Mesh<()> = Mesh::cube(Real::one(), ());
-    let transformed = mesh.transform(&matrix);
+    let mesh = csgrs::solid::cube(Real::one());
+    let transformed = csgrs::solid::transform(&mesh, &matrix);
 
-    for vertex in transformed.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.0[0].is_finite());
-        assert!(vertex.normal.0[1].is_finite());
-        assert!(vertex.normal.0[2].is_finite());
+    for position in transformed.positions.iter() {
+        assert!(position.x.is_finite());
+        assert!(position.y.is_finite());
+        assert!(position.z.is_finite());
     }
 });

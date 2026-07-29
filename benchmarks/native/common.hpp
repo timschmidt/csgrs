@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -25,11 +26,24 @@ struct ObjTriangleSoup {
   std::size_t source_faces{};
 };
 
+inline bool yeahright_enabled() {
+  const char *raw = std::getenv("YEAHRIGHT_BENCH");
+  if (raw == nullptr) {
+    return false;
+  }
+  std::string value(raw);
+  std::transform(value.begin(), value.end(), value.begin(),
+                 [](const unsigned char character) {
+                   return static_cast<char>(std::tolower(character));
+                 });
+  return value == "1" || value == "true" || value == "yes" || value == "on";
+}
+
 inline std::filesystem::path yeahright_control_path() {
 #ifdef CSGRS_YEAHRIGHT_CONTROL_OBJ
   return CSGRS_YEAHRIGHT_CONTROL_OBJ;
 #else
-  return "../data/yeahright/controlmesh.obj";
+  return "target/benchmark-fixtures/yeahright/controlmesh.obj";
 #endif
 }
 
@@ -37,7 +51,7 @@ inline std::filesystem::path yeahright_boolean_proxy_path() {
 #ifdef CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ
   return CSGRS_YEAHRIGHT_BOOLEAN_PROXY_OBJ;
 #else
-  return "../data/yeahright/controlmesh_boolean_proxy.obj";
+  return "target/benchmark-fixtures/yeahright/yeahright_boolean_hull.obj";
 #endif
 }
 
@@ -45,7 +59,24 @@ inline std::filesystem::path yeahright_boolean_hull_path() {
 #ifdef CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ
   return CSGRS_YEAHRIGHT_BOOLEAN_HULL_OBJ;
 #else
-  return "../data/yeahright/yeahright_boolean_hull.obj";
+  return "target/benchmark-fixtures/yeahright/yeahright_boolean_hull.obj";
+#endif
+}
+
+inline std::filesystem::path generated_concave_path() {
+#ifdef CSGRS_GENERATED_CONCAVE_OBJ
+  return CSGRS_GENERATED_CONCAVE_OBJ;
+#else
+  return "target/benchmark-fixtures/generated/"
+         "deterministic_concave_labyrinth_31x31x6.obj";
+#endif
+}
+
+inline std::filesystem::path generated_sierpinski_foam_path() {
+#ifdef CSGRS_GENERATED_SIERPINSKI_FOAM_OBJ
+  return CSGRS_GENERATED_SIERPINSKI_FOAM_OBJ;
+#else
+  return "target/benchmark-fixtures/generated/sierpinski_foam_level3.obj";
 #endif
 }
 
@@ -66,7 +97,7 @@ inline std::size_t obj_vertex_index(std::string_view token,
   return static_cast<std::size_t>(resolved);
 }
 
-inline void orient_closed_triangle_soup(ObjTriangleSoup &soup) {
+inline void orient_closed_boolean_mesh(ObjTriangleSoup &soup) {
   using Incidence = std::pair<std::size_t, bool>;
   std::map<std::pair<std::size_t, std::size_t>, std::vector<Incidence>> edges;
   std::vector<std::vector<std::pair<std::size_t, bool>>> adjacent(
@@ -145,7 +176,7 @@ inline void orient_closed_triangle_soup(ObjTriangleSoup &soup) {
   }
 }
 
-inline ObjTriangleSoup read_obj_triangle_soup(
+inline ObjTriangleSoup read_obj_boolean_mesh(
     const std::filesystem::path &path) {
   std::ifstream file(path);
   if (!file) {
@@ -178,7 +209,7 @@ inline ObjTriangleSoup read_obj_triangle_soup(
       }
     }
   }
-  orient_closed_triangle_soup(soup);
+  orient_closed_boolean_mesh(soup);
   return soup;
 }
 

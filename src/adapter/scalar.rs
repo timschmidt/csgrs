@@ -35,8 +35,8 @@ impl From<Problem> for AdapterError {
     }
 }
 
-pub trait ScalarAdapter {
-    type Scalar: Clone + fmt::Debug + PartialEq;
+pub trait ScalarAdapter: 'static {
+    type Scalar: Clone + fmt::Debug + PartialEq + 'static;
 
     const NAME: &'static str;
 
@@ -119,7 +119,7 @@ impl ScalarAdapter for I128 {
     }
 }
 
-#[cfg(feature = "sketch")]
+#[cfg(feature = "curve")]
 pub(crate) fn scalar2_to_real<A: ScalarAdapter>(
     point: [A::Scalar; 2],
 ) -> AdapterResult<[Real; 2]> {
@@ -134,7 +134,7 @@ pub(crate) fn scalar3_to_real<A: ScalarAdapter>(
     Ok([A::into_real(x)?, A::into_real(y)?, A::into_real(z)?])
 }
 
-#[cfg(feature = "sketch")]
+#[cfg(feature = "curve")]
 pub(crate) fn real2_to_scalar<A: ScalarAdapter>(
     point: &[Real; 2],
 ) -> AdapterResult<[A::Scalar; 2]> {

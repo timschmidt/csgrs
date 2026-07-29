@@ -2,9 +2,9 @@
 
 #![no_main]
 
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh;
+use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
+use hypermesh::TriangleMesh;
 use libfuzzer_sys::fuzz_target;
 
 fn real(value: f64) -> Real {
@@ -39,14 +39,11 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-1.0e4, 1.0e4))
 }
 
-fn assert_mesh_finite(mesh: &Mesh<()>) {
-    for vertex in mesh.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.0[0].is_finite());
-        assert!(vertex.normal.0[1].is_finite());
-        assert!(vertex.normal.0[2].is_finite());
+fn assert_mesh_finite(mesh: &TriangleMesh) {
+    for position in mesh.positions.iter() {
+        assert!(position.x.is_finite());
+        assert!(position.y.is_finite());
+        assert!(position.z.is_finite());
     }
 }
 
@@ -56,7 +53,7 @@ fuzz_target!(|bytes: &[u8]| {
     }
 
     let mut idx = 0;
-    let mut stack: Vec<Mesh<()>> = Vec::new();
+    let mut stack: Vec<TriangleMesh> = Vec::new();
 
     while idx < bytes.len() && stack.len() < 12 {
         let op = bytes[idx] % 14;
@@ -64,75 +61,77 @@ fuzz_target!(|bytes: &[u8]| {
         match op {
             0 => {
                 let size = at_least_tolerance(decode_real(bytes, &mut idx).abs());
-                stack.push(Mesh::cube(size, ()));
+                stack.push(solid::cube(size));
             },
             1 => {
                 let radius = at_least_tolerance(decode_real(bytes, &mut idx).abs());
                 let segments = (bytes[idx % bytes.len()] as usize % 16) + 3;
                 idx += 1;
-                stack.push(Mesh::sphere(radius, segments, segments, ()));
+                stack.push(solid::sphere(radius, segments, segments));
             },
             2 => {
                 let Some(mesh) = stack.pop() else { continue };
                 let dx = decode_real(bytes, &mut idx);
                 let dy = decode_real(bytes, &mut idx);
                 let dz = decode_real(bytes, &mut idx);
-                stack.push(mesh.translate(dx, dy, dz));
+                stack.push(mesh.translated(dx, dy, dz));
             },
             3 => {
                 let Some(mesh) = stack.pop() else { continue };
                 let rx = decode_real(bytes, &mut idx);
                 let ry = decode_real(bytes, &mut idx);
                 let rz = decode_real(bytes, &mut idx);
-                stack.push(mesh.rotate(rx, ry, rz));
+                stack.push(solid::rotate(&mesh, rx, ry, rz));
             },
             4 => {
                 let Some(mesh) = stack.pop() else { continue };
                 let sx = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
                 let sy = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
                 let sz = clamp_real(decode_real(bytes, &mut idx), -10.0, 10.0);
-                stack.push(mesh.scale(sx, sy, sz));
+                stack.push(solid::scale(&mesh, sx, sy, sz));
             },
             5 => {
                 let Some(mesh) = stack.pop() else { continue };
-                stack.push(mesh.triangulate());
+                stack.push(mesh);
             },
             6 => {
                 let Some(mesh) = stack.pop() else { continue };
-                let mut copy = mesh.clone();
-                copy.renormalize();
-                stack.push(copy);
+                stack.push(solid::renormalized(&mesh));
             },
             7 => {
                 let Some(mesh) = stack.pop() else { continue };
-                stack.push(mesh.inverse());
+                stack.push(solid::inverse(&mesh));
             },
             8 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
-                    stack.push(a.union(&b));
+                    let result = a.try_union(&b).unwrap_or_else(|_| a.clone());
+                    stack.push(result);
                 }
             },
             9 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
-                    stack.push(a.difference(&b));
+                    let result = a.try_difference(&b).unwrap_or_else(|_| a.clone());
+                    stack.push(result);
                 }
             },
             10 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
-                    stack.push(a.intersection(&b));
+                    let result = a.try_intersection(&b).unwrap_or_else(|_| a.clone());
+                    stack.push(result);
                 }
             },
             11 => {
                 if stack.len() >= 2 {
                     let b = stack.pop().unwrap();
                     let a = stack.pop().unwrap();
-                    stack.push(a.xor(&b));
+                    let result = a.try_xor(&b).unwrap_or_else(|_| a.clone());
+                    stack.push(result);
                 }
             },
             12 => {
@@ -140,7 +139,7 @@ fuzz_target!(|bytes: &[u8]| {
                 let lambda = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
                 let iterations = bytes[idx % bytes.len()] as usize % 3;
                 idx += 1;
-                stack.push(mesh.triangulate().laplacian_smooth(lambda, iterations, false));
+                stack.push(mesh.laplacian_smooth(&lambda, iterations));
             },
             _ => {
                 let Some(mesh) = stack.pop() else { continue };
@@ -148,10 +147,7 @@ fuzz_target!(|bytes: &[u8]| {
                 let mu = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
                 let iterations = bytes[idx % bytes.len()] as usize % 3;
                 idx += 1;
-                stack.push(
-                    mesh.triangulate()
-                        .taubin_smooth(lambda, mu, iterations, false),
-                );
+                stack.push(mesh.taubin_smooth(&lambda, &mu, iterations));
             },
         }
     }

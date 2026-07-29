@@ -5,19 +5,16 @@
 //! attributes are intentionally ignored. Unsupported geometry fails explicitly
 //! instead of producing an incomplete mesh.
 
-use crate::io::IoError;
-use crate::mesh::Mesh;
-use crate::mesh::polygon::triangulate_indexed_positions_into;
-use crate::triangulated::IndexedTriangleMesh3D;
+use crate::io::{IoError, parse_real_decimal as parse_real, triangulate_planar_face};
 use hashbrown::HashMap;
 use hyperlattice::{Matrix4, Point3, Real, Vector3};
-use std::fmt::Debug;
+use hypermesh::{Triangle, TriangleMesh};
 
 /// Geometry evidence produced while flattening a VRML scene.
 #[derive(Clone, Debug)]
-pub struct VrmlMeshImport<M: Clone + Debug + Send + Sync> {
-    /// Flattened exact-aware triangle mesh.
-    pub mesh: Mesh<M>,
+pub struct VrmlMeshImport {
+    /// Flattened native triangle mesh.
+    pub mesh: hypermesh::TriangleMesh,
     /// Number of `Shape` nodes visited.
     pub shape_count: usize,
     /// Number of `IndexedFaceSet` nodes consumed.
@@ -36,10 +33,7 @@ pub struct VrmlMeshImport<M: Clone + Debug + Send + Sync> {
 /// flattening. `DEF`/`USE` reuse is supported for geometry and scene nodes.
 /// Appearance, material, normal, color, and texture data are accepted but do
 /// not cross this geometry-only boundary.
-pub fn from_vrml<M: Clone + Debug + Send + Sync>(
-    bytes: &[u8],
-    metadata: M,
-) -> Result<VrmlMeshImport<M>, IoError> {
+pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
     let text = std::str::from_utf8(bytes)
         .map_err(|error| malformed(format!("document is not UTF-8: {error}")))?;
     let header = text
@@ -69,8 +63,7 @@ pub fn from_vrml<M: Clone + Debug + Send + Sync>(
         });
     }
 
-    let mut normals = Vec::with_capacity(flattened.triangles.len());
-    let mut faces = Vec::with_capacity(flattened.triangles.len());
+    let mut native_triangles = Vec::with_capacity(flattened.triangles.len());
     let triangles = std::mem::take(&mut flattened.triangles);
     for [a, b, c] in triangles {
         let ab = &flattened.positions[b] - &flattened.positions[a];
@@ -85,28 +78,16 @@ pub fn from_vrml<M: Clone + Debug + Send + Sync>(
                 })?;
             continue;
         };
-        let normal_index = normals.len();
-        normals.push(normal);
-        faces.push([(a, normal_index), (b, normal_index), (c, normal_index)]);
+        let _ = normal;
+        native_triangles.push(Triangle::new(a, b, c));
     }
-    if faces.is_empty() {
+    if native_triangles.is_empty() {
         return Err(IoError::Geometry {
             format: "VRML",
             detail: "scene contains no certifiably nondegenerate triangles".into(),
         });
     }
-    let mesh = Mesh::from_indexed_triangles(
-        IndexedTriangleMesh3D {
-            positions: flattened.positions,
-            normals,
-            faces,
-        },
-        metadata,
-    )
-    .map_err(|error| IoError::Geometry {
-        format: "VRML",
-        detail: error.to_string(),
-    })?;
+    let mesh = TriangleMesh::new(flattened.positions, native_triangles);
 
     Ok(VrmlMeshImport {
         mesh,
@@ -673,8 +654,6 @@ fn flatten_node(
                     })?);
             }
             let mut face_indices = Vec::new();
-            let mut face_triangles = Vec::new();
-            let mut projected = Vec::new();
             for polygon in polygons {
                 if polygon.len() < 3 {
                     return Err(malformed(
@@ -699,12 +678,9 @@ fn flatten_node(
                 if !ccw {
                     face_indices.reverse();
                 }
-                triangulate_indexed_positions_into(
-                    &flattened.positions,
-                    &face_indices,
-                    &mut face_triangles,
-                    &mut projected,
-                );
+                let face_triangles =
+                    triangulate_planar_face(&flattened.positions, &face_indices, "VRML")
+                        .unwrap_or_default();
                 if face_triangles.is_empty() {
                     flattened.ignored_degenerate_polygon_count = flattened
                         .ignored_degenerate_polygon_count
@@ -717,13 +693,7 @@ fn flatten_node(
                 }
                 flattened
                     .triangles
-                    .extend(face_triangles.iter().map(|triangle| {
-                        [
-                            face_indices[triangle[0]],
-                            face_indices[triangle[1]],
-                            face_indices[triangle[2]],
-                        ]
-                    }));
+                    .extend(face_triangles.iter().map(|triangle| (*triangle).indices()));
             }
         },
         Node::NonMeshGeometry => {
@@ -792,80 +762,9 @@ fn malformed(message: impl Into<String>) -> IoError {
     IoError::MalformedInput(format!("VRML: {}", message.into()))
 }
 
-fn parse_real(text: &str) -> Result<Real, hyperlattice::Problem> {
-    const MAX_EXPANDED_DECIMAL_LEN: usize = 1_000_000;
-
-    if !text.contains(['e', 'E']) {
-        return text.parse();
-    }
-    let (mantissa, exponent) = text
-        .split_once(['e', 'E'])
-        .ok_or(hyperlattice::Problem::BadDecimal)?;
-    let exponent = exponent
-        .parse::<i64>()
-        .map_err(|_| hyperlattice::Problem::BadDecimal)?;
-    let (sign, magnitude) = if let Some(magnitude) = mantissa.strip_prefix('-') {
-        ("-", magnitude)
-    } else if let Some(magnitude) = mantissa.strip_prefix('+') {
-        ("", magnitude)
-    } else {
-        ("", mantissa)
-    };
-    let (whole, fraction) = magnitude
-        .split_once('.')
-        .map_or((magnitude, ""), |parts| parts);
-    if (whole.is_empty() && fraction.is_empty())
-        || !whole.bytes().all(|byte| byte.is_ascii_digit())
-        || !fraction.bytes().all(|byte| byte.is_ascii_digit())
-    {
-        return Err(hyperlattice::Problem::BadDecimal);
-    }
-
-    let mut digits = String::with_capacity(whole.len().saturating_add(fraction.len()));
-    digits.push_str(whole);
-    digits.push_str(fraction);
-    let decimal_position = i64::try_from(whole.len())
-        .ok()
-        .and_then(|whole_len| whole_len.checked_add(exponent))
-        .ok_or(hyperlattice::Problem::OutOfRange)?;
-    let digits_len =
-        i64::try_from(digits.len()).map_err(|_| hyperlattice::Problem::OutOfRange)?;
-    let mut normalized = String::from(sign);
-    if decimal_position <= 0 {
-        normalized.push_str("0.");
-        let zero_count = usize::try_from(
-            decimal_position
-                .checked_neg()
-                .ok_or(hyperlattice::Problem::OutOfRange)?,
-        )
-        .map_err(|_| hyperlattice::Problem::OutOfRange)?;
-        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
-            return Err(hyperlattice::Problem::OutOfRange);
-        }
-        normalized.extend(std::iter::repeat_n('0', zero_count));
-        normalized.push_str(&digits);
-    } else if decimal_position >= digits_len {
-        normalized.push_str(&digits);
-        let zero_count = usize::try_from(decimal_position - digits_len)
-            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
-        if zero_count.saturating_add(digits.len()) > MAX_EXPANDED_DECIMAL_LEN {
-            return Err(hyperlattice::Problem::OutOfRange);
-        }
-        normalized.extend(std::iter::repeat_n('0', zero_count));
-    } else {
-        let decimal_position = usize::try_from(decimal_position)
-            .map_err(|_| hyperlattice::Problem::OutOfRange)?;
-        normalized.push_str(&digits[..decimal_position]);
-        normalized.push('.');
-        normalized.push_str(&digits[decimal_position..]);
-    }
-    normalized.parse()
-}
-
 #[cfg(test)]
 mod tests {
     use super::from_vrml;
-    use crate::triangulated::IndexedTriangulated3D;
     use hyperlattice::Real;
 
     #[test]
@@ -892,15 +791,14 @@ Transform {
   ]
 }
 "#;
-        let imported = from_vrml(source, "package").unwrap();
+        let imported = from_vrml(source).unwrap();
         assert_eq!(imported.shape_count, 1);
         assert_eq!(imported.indexed_face_set_count, 1);
         assert_eq!(imported.ignored_non_mesh_geometry_count, 0);
         assert_eq!(imported.ignored_degenerate_polygon_count, 0);
         assert_eq!(imported.ignored_degenerate_triangle_count, 0);
-        let indexed = imported.mesh.indexed_triangles();
-        assert_eq!(indexed.faces.len(), 2);
-        assert!(indexed.positions.iter().any(|point| {
+        assert_eq!(imported.mesh.triangles.len(), 2);
+        assert!(imported.mesh.positions.iter().any(|point| {
             point.x == Real::from(12) && point.y == Real::from(23) && point.z == Real::from(30)
         }));
     }
@@ -918,10 +816,12 @@ Shape {
   }
 }
 "#;
-        let imported = from_vrml(source, ()).unwrap();
-        let indexed = imported.mesh.indexed_triangles();
-        assert_eq!(indexed.faces.len(), 1);
-        let normal = &indexed.normals[indexed.faces[0][0].1];
+        let imported = from_vrml(source).unwrap();
+        assert_eq!(imported.mesh.triangles.len(), 1);
+        let [a, b, c] = imported.mesh.triangles[0].indices();
+        let ab = &imported.mesh.positions[b] - &imported.mesh.positions[a];
+        let ac = &imported.mesh.positions[c] - &imported.mesh.positions[a];
+        let normal = ab.cross(&ac);
         assert_eq!(normal.0[2], Real::from(-1));
     }
 
@@ -930,7 +830,7 @@ Shape {
         let source = br#"#VRML V2.0 utf8
 Shape { geometry Box { size 1 1 1 } }
 "#;
-        let error = from_vrml(source, ()).unwrap_err();
+        let error = from_vrml(source).unwrap_err();
         assert!(error.to_string().contains("geometry node Box"));
     }
 
@@ -948,14 +848,14 @@ Group { children [
   } }
 ] }
 "#;
-        let imported = from_vrml(source, ()).unwrap();
+        let imported = from_vrml(source).unwrap();
         assert_eq!(imported.ignored_non_mesh_geometry_count, 1);
         assert_eq!(imported.indexed_face_set_count, 1);
     }
 
     #[test]
     fn rejects_vrml_one() {
-        let error = from_vrml(b"#VRML V1.0 ascii\nSeparator { }", ()).unwrap_err();
+        let error = from_vrml(b"#VRML V1.0 ascii\nSeparator { }").unwrap_err();
         assert!(error.to_string().contains("only VRML V2.0"));
     }
 }

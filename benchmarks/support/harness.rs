@@ -49,6 +49,81 @@ impl Config {
         self.run_engine("csgrs", suite, benchmark, case, iterations, &mut f);
     }
 
+    // This shared module is compiled independently into benchmark binaries
+    // that do not all use the published-workload selection helper.
+    #[allow(dead_code)]
+    pub fn selects(&self, suite: &str, benchmark: &str, case: &str) -> bool {
+        selected(suite, benchmark, case)
+    }
+
+    /// Run a workload whose closure supplies the precise timed interval.
+    ///
+    /// This is useful when correctness validation must run for every sample
+    /// but is outside an externally published timing boundary.
+    #[allow(dead_code)]
+    pub fn run_with_elapsed<F>(
+        &self,
+        suite: &str,
+        benchmark: &str,
+        case: &str,
+        iterations: usize,
+        mut f: F,
+    ) where
+        F: FnMut() -> (Duration, Measurement),
+    {
+        if !selected(suite, benchmark, case) {
+            return;
+        }
+        let iterations = self
+            .iterations_override
+            .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
+        let (samples, warmup) = self.sample_plan(suite);
+        let mut measure = || {
+            for _ in 0..warmup {
+                for _ in 0..iterations {
+                    black_box(f());
+                }
+            }
+            for sample in 0..samples {
+                let mut elapsed = Duration::ZERO;
+                let mut measurement = Measurement::default();
+                for _ in 0..iterations {
+                    let (operation_elapsed, operation_measurement) = black_box(f());
+                    elapsed = elapsed.saturating_add(operation_elapsed);
+                    measurement = measurement.combine(operation_measurement);
+                }
+                emit(
+                    "csgrs",
+                    &self.temperature,
+                    suite,
+                    benchmark,
+                    case,
+                    self.sample_offset.saturating_add(sample),
+                    iterations,
+                    elapsed,
+                    measurement,
+                );
+            }
+        };
+
+        #[cfg(feature = "dispatch-trace")]
+        {
+            hyperreal::dispatch_trace::reset();
+            hyperreal::dispatch_trace::with_recording(|| {
+                hyperreal::dispatch_trace::record(
+                    "csgrs-benchmark",
+                    "entry",
+                    "recorded-workload",
+                );
+                measure();
+            });
+            print_dispatch_trace(suite, benchmark, case);
+        }
+
+        #[cfg(not(feature = "dispatch-trace"))]
+        measure();
+    }
+
     pub fn run_engine<F>(
         &self,
         engine: &str,
@@ -67,19 +142,7 @@ impl Config {
         let iterations = self
             .iterations_override
             .unwrap_or_else(|| iterations.saturating_mul(self.iteration_scale).max(1));
-        let (samples, warmup) = if matches!(
-            suite,
-            "corpus"
-                | "stress"
-                | "dangerous"
-                | "competitive-large"
-                | "competitive-yeahright"
-                | "competitive-full"
-        ) {
-            (self.stress_samples, self.stress_warmup)
-        } else {
-            (self.samples, self.warmup)
-        };
+        let (samples, warmup) = self.sample_plan(suite);
         let mut measure = || {
             for _ in 0..warmup {
                 for _ in 0..iterations {
@@ -123,6 +186,23 @@ impl Config {
 
         #[cfg(not(feature = "dispatch-trace"))]
         measure();
+    }
+
+    fn sample_plan(&self, suite: &str) -> (usize, usize) {
+        if matches!(
+            suite,
+            "corpus"
+                | "stress"
+                | "dangerous"
+                | "competitive-large"
+                | "competitive-yeahright"
+                | "competitive-full"
+                | "published-solidean"
+        ) {
+            (self.stress_samples, self.stress_warmup)
+        } else {
+            (self.samples, self.warmup)
+        }
     }
 }
 

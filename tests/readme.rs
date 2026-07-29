@@ -19,16 +19,17 @@ fn readme_quickstart_matches_the_runnable_example() {
 fn readme_release_metadata_matches_the_manifest() {
     assert!(README.contains("csgrs = \"0.23.0\""));
     for heading in [
-        "## What CSGRS owns",
         "## Primary types",
         "## Quick start",
-        "## Useful API",
+        "## Modeling API",
+        "## File formats",
+        "## Boundary adapters",
         "## Features",
-        "## Guarantees and boundaries",
+        "## Correctness boundaries",
         "## Performance and hard tests",
         "## References",
         "## Acknowledgements",
-        "## License",
+        "## Contributing and license",
     ] {
         assert!(README.contains(heading), "missing {heading}");
     }

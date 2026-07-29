@@ -1,10 +1,12 @@
 //! Example: Multi-Format Export Demo  
 //!
-//! This example demonstrates exporting Mesh objects to multiple 3D file formats:
+//! This example demonstrates exporting native triangle meshes to multiple 3D file formats:
 //! OBJ (universal format), PLY (research/scanning), and AMF (3D printing format).
 //! These formats can be opened in most 3D modeling software, CAD programs, and 3D viewers.
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh;
+use csgrs::{
+    TriangleMesh,
+    solid::{self, SolidExt},
+};
 use hyperlattice::Real;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -12,25 +14,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("========================");
     println!();
 
-    // Create various Mesh objects to demonstrate OBJ export
+    // Create various native meshes to demonstrate export.
 
     // 1. Simple cube
-    let cube: Mesh<()> = Mesh::cube(r(20.0), ()).center();
+    let cube: TriangleMesh = solid::center(&solid::cube(r(20.0)));
     export_to_obj(&cube, "cube", "Simple 20x20x20mm cube")?;
 
     // 2. Sphere
-    let sphere: Mesh<()> = Mesh::sphere(r(15.0), 32, 16, ());
+    let sphere: TriangleMesh = solid::sphere(r(15.0), 32, 16);
     export_to_obj(&sphere, "sphere", "Sphere with 15mm radius")?;
 
     // 3. Cylinder
-    let cylinder: Mesh<()> = Mesh::cylinder(r(8.0), r(25.0), 24, ());
+    let cylinder: TriangleMesh = solid::cylinder(r(8.0), r(25.0), 24);
     export_to_obj(&cylinder, "cylinder", "Cylinder: 8mm radius, 25mm height")?;
 
     // 4. Complex boolean operation: cube with spherical cavity
-    let cube_large: Mesh<()> = Mesh::cube(r(30.0), ()).center();
-    let sphere_cavity: Mesh<()> =
-        Mesh::sphere(r(12.0), 24, 12, ()).translate(r(5.0), r(5.0), r(0.0));
-    let cube_with_cavity = cube_large.difference(&sphere_cavity);
+    let cube_large: TriangleMesh = solid::center(&solid::cube(r(30.0)));
+    let sphere_cavity: TriangleMesh =
+        solid::sphere(r(12.0), 24, 12).translated(r(5.0), r(5.0), r(0.0));
+    let cube_with_cavity = cube_large.try_difference(&sphere_cavity).expect("difference");
     export_to_obj(
         &cube_with_cavity,
         "cube_with_cavity",
@@ -38,10 +40,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 5. Union operation: cube + sphere
-    let cube_small: Mesh<()> = Mesh::cube(r(16.0), ()).center();
-    let sphere_union: Mesh<()> =
-        Mesh::sphere(r(10.0), 20, 10, ()).translate(r(8.0), r(8.0), r(8.0));
-    let union_object = cube_small.union(&sphere_union);
+    let cube_small: TriangleMesh = solid::center(&solid::cube(r(16.0)));
+    let sphere_union: TriangleMesh =
+        solid::sphere(r(10.0), 20, 10).translated(r(8.0), r(8.0), r(8.0));
+    let union_object = cube_small.try_union(&sphere_union).expect("union");
     export_to_obj(
         &union_object,
         "cube_sphere_union",
@@ -49,10 +51,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 6. Intersection operation
-    let cube_intersect: Mesh<()> = Mesh::cube(r(25.0), ()).center();
-    let sphere_intersect: Mesh<()> =
-        Mesh::sphere(r(15.0), 24, 12, ()).translate(r(5.0), r(5.0), r(0.0));
-    let intersection_object = cube_intersect.intersection(&sphere_intersect);
+    let cube_intersect: TriangleMesh = solid::center(&solid::cube(r(25.0)));
+    let sphere_intersect: TriangleMesh =
+        solid::sphere(r(15.0), 24, 12).translated(r(5.0), r(5.0), r(0.0));
+    let intersection_object = cube_intersect
+        .try_intersection(&sphere_intersect)
+        .expect("intersection");
     export_to_obj(
         &intersection_object,
         "cube_sphere_intersection",
@@ -60,11 +64,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 7. More complex shape: cube with cylindrical hole
-    let cube_base: Mesh<()> = Mesh::cube(r(40.0), ()).center();
-    let hole_cylinder: Mesh<()> = Mesh::cylinder(r(6.0), r(50.0), 16, ())
-        .rotate(r(90.0), r(0.0), r(0.0)) // Rotate to align with X-axis
-        .translate(r(0.0), r(0.0), r(0.0));
-    let cube_with_hole = cube_base.difference(&hole_cylinder);
+    let cube_base: TriangleMesh = solid::center(&solid::cube(r(40.0)));
+    let hole_cylinder: TriangleMesh =
+        solid::rotate(&solid::cylinder(r(6.0), r(50.0), 16), r(90.0), r(0.0), r(0.0));
+    let cube_with_hole = cube_base.try_difference(&hole_cylinder).expect("difference");
     export_to_obj(
         &cube_with_hole,
         "cube_with_hole",
@@ -123,7 +126,7 @@ fn r(value: f64) -> Real {
 }
 
 fn export_to_obj(
-    csg: &Mesh<()>,
+    csg: &TriangleMesh,
     name: &str,
     description: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -134,12 +137,12 @@ fn export_to_obj(
 
         let filename = format!("{}.obj", name);
         let mut file = File::create(&filename)?;
-        csg.write_obj(&mut file, name)?;
+        csgrs::io::obj::write_obj(csg, &mut file, name)?;
 
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let obj_content = csg.to_obj(name)?;
+        let obj_content = csgrs::io::obj::to_obj(csg, name)?;
         let vertex_count = obj_content
             .lines()
             .filter(|line| line.starts_with("v "))
@@ -171,12 +174,12 @@ fn export_to_obj(
 
         let filename = format!("{}.ply", name);
         let mut file = File::create(&filename)?;
-        csg.write_ply(&mut file, description)?;
+        csgrs::io::ply::write_ply(csg, &mut file, description)?;
 
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let ply_content = csg.to_ply(description)?;
+        let ply_content = csgrs::io::ply::to_ply(csg, description)?;
         let vertex_count = ply_content
             .lines()
             .filter(|line| {
@@ -213,12 +216,12 @@ fn export_to_obj(
 
         let filename = format!("{}.amf", name);
         let mut file = File::create(&filename)?;
-        csg.write_amf(&mut file, name, "millimeter")?;
+        csgrs::io::amf::write_amf(csg, &mut file, name, "millimeter")?;
 
         println!("✓ Exported {}: {}", filename, description);
 
         // Print some statistics
-        let amf_content = csg.to_amf(name, "millimeter")?;
+        let amf_content = csgrs::io::amf::to_amf(csg, name, "millimeter")?;
         let vertex_count = amf_content.matches("<vertex>").count();
         let triangle_count = amf_content.matches("<triangle>").count();
 
@@ -246,11 +249,11 @@ mod tests {
     #[test]
     fn test_obj_export() {
         // Test basic OBJ export functionality
-        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
+        let cube: TriangleMesh = solid::cube(r(10.0));
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = cube.to_obj("test_cube").unwrap();
+            let obj_content = csgrs::io::obj::to_obj(&cube, "test_cube").unwrap();
 
             // Check that OBJ content contains expected elements
             assert!(obj_content.contains("o test_cube"));
@@ -266,11 +269,11 @@ mod tests {
 
     #[test]
     fn test_obj_content_format() {
-        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(r(5.0), 8, 4); // Low res for testing
 
         #[cfg(feature = "obj-io")]
         {
-            let obj_content = sphere.to_obj("test_sphere").unwrap();
+            let obj_content = csgrs::io::obj::to_obj(&sphere, "test_sphere").unwrap();
 
             // Verify OBJ format structure
             let lines: Vec<&str> = obj_content.lines().collect();
@@ -322,27 +325,27 @@ mod tests {
     #[test]
     fn test_boolean_operations_obj_export() {
         // Test that boolean operations export correctly
-        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
-        let sphere: Mesh<()> = Mesh::sphere(r(6.0), 8, 4, ());
+        let cube: TriangleMesh = solid::cube(r(10.0));
+        let sphere: TriangleMesh = solid::sphere(r(6.0), 8, 4);
 
         #[cfg(feature = "obj-io")]
         {
             // Test union
-            let union_result = cube.union(&sphere);
+            let union_result = cube.try_union(&sphere).expect("union");
             let union_obj = union_result.to_obj("union_test").unwrap();
             assert!(union_obj.contains("o union_test"));
             assert!(union_obj.contains("v "));
             assert!(union_obj.contains("f "));
 
             // Test difference
-            let diff_result = cube.difference(&sphere);
+            let diff_result = cube.try_difference(&sphere).expect("difference");
             let diff_obj = diff_result.to_obj("diff_test").unwrap();
             assert!(diff_obj.contains("o diff_test"));
             assert!(diff_obj.contains("v "));
             assert!(diff_obj.contains("f "));
 
             // Test intersection
-            let intersect_result = cube.intersection(&sphere);
+            let intersect_result = cube.try_intersection(&sphere).expect("intersection");
             let intersect_obj = intersect_result.to_obj("intersect_test").unwrap();
             assert!(intersect_obj.contains("o intersect_test"));
             assert!(intersect_obj.contains("v "));
@@ -353,7 +356,7 @@ mod tests {
     #[test]
     fn test_ply_export() {
         // Test basic PLY export functionality
-        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
+        let cube: TriangleMesh = solid::cube(r(10.0));
 
         #[cfg(feature = "ply-io")]
         {
@@ -396,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_ply_format_structure() {
-        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(r(5.0), 8, 4); // Low res for testing
 
         #[cfg(feature = "ply-io")]
         {
@@ -460,7 +463,7 @@ mod tests {
     #[test]
     fn test_amf_export() {
         // Test basic AMF export functionality
-        let cube: Mesh<()> = Mesh::cube(r(10.0), ());
+        let cube: TriangleMesh = solid::cube(r(10.0));
 
         #[cfg(feature = "amf-io")]
         {
@@ -493,7 +496,7 @@ mod tests {
 
     #[test]
     fn test_amf_with_color() {
-        let sphere: Mesh<()> = Mesh::sphere(r(5.0), 8, 4, ()); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(r(5.0), 8, 4); // Low res for testing
 
         #[cfg(feature = "amf-io")]
         {
@@ -525,7 +528,7 @@ mod tests {
 
     #[test]
     fn test_amf_xml_structure() {
-        let cube: Mesh<()> = Mesh::cube(r(8.0), ());
+        let cube: TriangleMesh = solid::cube(r(8.0));
 
         #[cfg(feature = "amf-io")]
         {

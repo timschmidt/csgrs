@@ -38,7 +38,7 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 ## Retained changes
 
-Mesh broad-phase disjoint and point-outside tests now consume Hyperlimit's
+TriangleMesh broad-phase disjoint and point-outside tests now consume Hyperlimit's
 canonical exact AABB predicates instead of rebuilding six scalar comparisons.
 A serialized 20-sample disjoint-box competitive gate preserved every output and
 checksum. CSGRS measured 25.132 us for union, 0.253 us for intersection, and
@@ -57,7 +57,7 @@ its first warmup now publishes each rational proposal in the existing cache,
 while overflow still returns `NotFiniteApproximation`. Exact `RawReal` and
 integer adapters retain their generic conversions. The same audit made the raw
 carrier accessors `const`, named the indexed-buffer return type, and removed the
-now-unnecessary forwarding layer from `Mesh::graphics_mesh`.
+now-unnecessary forwarding layer from `TriangleMesh::graphics_mesh`.
 
 Lazy cuboid pools now store exact minimum and maximum coordinates per axis, so
 translation and centering can construct the final cuboid carrier directly from
@@ -79,8 +79,8 @@ the only cold non-win remained the timer-scale identical-box intersection at
 110 ns versus CGAL's 100 ns.
 
 Exactly disjoint mesh concatenation now sums the two retained topology tuples
-instead of rescanning every cloned output polygon to rediscover facet, corner,
-and triangle-only counts. Polygon order, exact vertices, metadata, and set
+instead of rescanning every cloned output face to rediscover facet, corner,
+and triangle-only counts. Triangle order, exact positions, provenance, and set
 semantics are unchanged; the disjoint-set regression now also checks the
 retained 24-facet/48-corner output. A matched cold Callgrind A/B fell from
 35,474,450 to 35,011,530 instructions, 1.30%. In the complete native sweep,
@@ -120,19 +120,19 @@ both comparison engines. The only measured non-win was the timer-resolution
 identical-box intersection at 120 ns versus CGAL's 110 ns; its warm result was
 21 ns versus 24 ns.
 
-`Mesh::build_graphics_mesh` previously called `Mesh::triangulate`, which built
+`TriangleMesh::build_graphics_mesh` previously called `TriangleMesh::triangulate`, which built
 temporary triangle polygons, recomputed support planes, allocated metadata and
 IDs, and then discarded that intermediate mesh. The renderer boundary now
 streams the same certified triangle indices directly from each source polygon
 into exact `Real` position/normal rows. A regression test compares every row and
 the sequential index buffer with the former materialized path.
 
-`Mesh::indexed_triangles` now reserves position, normal, face, and lookup
+`TriangleMesh::indexed_triangles` now reserves position, normal, face, and lookup
 storage from source topology bounds before exporters populate it. Deduplication
 still uses retained position and plane identities; output order and serialized
 bytes are unchanged.
 
-Mesh Booleans now have one immediate path. `try_union`, `try_difference`,
+TriangleMesh Booleans now have one immediate path. `try_union`, `try_difference`,
 `try_intersection`, and `try_xor` select one operation, apply exact
 empty/disjoint/identical/axis-aligned-box shortcuts when certified, and
 otherwise request HyperMesh's direct certified triangle soup. CSGRS restores
@@ -177,9 +177,9 @@ union. A direct regression verifies that every materialized output polygon
 shares the retained vertex buffer while the existing exact-output and metadata
 oracles remain unchanged.
 
-`Mesh::ray_intersections` now streams triangle vertex references from each
-polygon's certified triangulation indices instead of cloning a temporary
-`[Vertex; 3]` for every ray test. The HyperLimit ray/triangle predicate, exact
+`TriangleMesh::ray_intersections` now streams triangle position references from
+the native index buffer instead of cloning a temporary `[Point3; 3]` for every
+ray test. The HyperLimit ray/triangle predicate, exact
 hit ordering, and exact deduplication are unchanged. A differential test replays
 the former materialized enumeration against the streaming result.
 
@@ -187,8 +187,8 @@ The exact translation path now materializes its complete finite position view
 once, shares that retained allocation with both the coordinate cache and the
 result layout, and skips construction of an indexed vertex pool unless the
 already-known triangle, normal, and coordinate-layout preconditions can accept
-it. Polygon corner counts survive the generic translated fallback because
-translation changes neither polygon order nor arity. That retained fact also
+it. Face corner counts survive the generic translated fallback because
+translation changes neither triangle order nor arity. That retained fact also
 lets the HyperMesh adapter triangulate translated cuboids directly from their
 canonical position slots instead of requiring the triangle-only pool. A
 differential regression compares every exact triangle coordinate row, source
@@ -211,7 +211,7 @@ and partial connectivity. The corrected oracle now checks bidirectional exact
 position coverage and reserves closed-manifold claims for successful HyperMesh
 imports.
 
-`Profile::circle_with_keyway` now recognizes the exactly certified case where
+`CurveRegion2::circle_with_keyway` now recognizes the exactly certified case where
 both left cutter corners lie in the convex sampled circle. It constructs that
 single attached notch with one ring traversal and a logarithmic convex-point
 certificate instead of invoking the general region Boolean. Deep or wide
@@ -220,7 +220,7 @@ Boolean path. Four fast-path geometries match the Boolean oracle's contour
 roles, signed area, and 484 exact-rational containment classifications; a
 separate deep/wide regression proves the fallback remains selected.
 
-`Profile::keyhole` applies the dual construction when a centered rectangular
+`CurveRegion2::keyhole` applies the dual construction when a centered rectangular
 handle reaches at least the sampled circle radius and its bottom corner is
 certified inside the convex ring. The height proof ensures the rectangle covers
 the complete replaced upper arc; a logarithmic convex-point query and two exact
@@ -230,7 +230,7 @@ the Boolean oracle's contour roles, signed area, and 572 exact-rational
 containment classifications; two fallback regressions cover both excluded
 topology classes.
 
-`Profile::crescent` now classifies the complete topology before invoking a
+`CurveRegion2::crescent` now classifies the complete topology before invoking a
 general Boolean. Properly crossing homothetic regular polygons are joined from
 their two exactly certified boundary transitions: the outer outside arc is
 spliced to the reversed inner inside arc. X-axis reflection reuses lower-half
@@ -242,7 +242,7 @@ segments and negative offset, match the Boolean oracle's contour roles, signed
 area, and 605 exact-rational containment classifications; contained and
 disjoint identities have separate regressions.
 
-`Profile::circle` now materializes its regular sampled polygon from the
+`CurveRegion2::circle` now materializes its regular sampled polygon from the
 constructor's own topology certificate. Positive radius and at least three
 cyclic samples prove distinct neighboring vertices, nonzero chords, simple
 closure, and consistent winding, so the generic exact distance predicates do
@@ -258,7 +258,7 @@ normal against its symbolic construction. Matched 30-sample medians fell from
 exact and recorded. Unknown and fallback/abort events each fell from 88 to
 zero, with no approximation or refinement events before or after.
 
-`Profile::ellipse` applies the same certified materialization after its positive
+`CurveRegion2::ellipse` applies the same certified materialization after its positive
 width and height admission. Independent positive axis scaling is an
 orientation-preserving affine map of the regular sampled polygon, so it
 preserves distinct neighboring vertices, nonzero edges, simplicity, closure,
@@ -270,7 +270,7 @@ from 1,647 to 1,175 dispatch events (28.7%); unknown and fallback/abort events
 each fell from 88 to zero, with no approximation or refinement events before
 or after.
 
-`Profile::star` now uses the direct line-ring path after its strict positive
+`CurveRegion2::star` now uses the direct line-ring path after its strict positive
 inner-radius and larger-outer-radius admission. Alternating samples lie on
 strictly increasing rays; each chord is contained in its own angular wedge, so
 nonadjacent chords cannot cross and every authored edge is nonzero with
@@ -282,8 +282,8 @@ one-call trace fell from 1,658 to 1,190 dispatch events (28.2%); unknown and
 fallback/abort events each fell from 88 to zero, with no approximation or
 refinement events before or after.
 
-`Profile::regular_ngon` reuses the same positive-radius regular-polygon proof
-as `Profile::circle`, without adding the circle-only convex-normal cache. A
+`CurveRegion2::regular_ngon` reuses the same positive-radius regular-polygon proof
+as `CurveRegion2::circle`, without adding the circle-only convex-normal cache. A
 differential regression compares the complete former exact `Region2` at 3, 4,
 5, 7, 16, and 31 sides. Matched 30-sample medians fell from 0.0368 to 0.0201
 ms/op (45.3%), with 0.0360--0.0431 and 0.0174--0.0211 ms interquartile ranges.
@@ -291,7 +291,7 @@ A one-call trace fell from 723 to 589 dispatch events (18.5%); unknown and
 fallback/abort events each fell from 26 to zero, with no approximation or
 refinement events before or after.
 
-`Profile::teardrop` now materializes its sampled semicircle-and-tip boundary
+`CurveRegion2::teardrop` now materializes its sampled semicircle-and-tip boundary
 from the constructor's existing strict `length > width / 2` certificate. The
 positive cap-center height places the entire semicircle on or above its
 endpoint chord while both tip edges stay below it except at shared endpoints,
@@ -303,7 +303,7 @@ and 0.0566--0.0672 ms interquartile ranges. A one-call trace fell from 2,112
 to 1,436 dispatch events (32.0%); unknown and fallback/abort events each fell
 from 92 to zero, with no approximation or refinement events before or after.
 
-`Profile::egg` no longer demotes every symbolic sine/cosine sample to binary64
+`CurveRegion2::egg` no longer demotes every symbolic sine/cosine sample to binary64
 for internal normalization. The discrete extrema are known from uniform sample
 indices: x extrema are nearest the quarter turns, while
 `d(c + c^2/5)/dc = 1 + 2c/5` is strictly positive on `[-1, 1]`, so y extrema
@@ -319,7 +319,7 @@ with 0.100--0.121 and 0.0618--0.0644 ms interquartile ranges. A one-call trace
 fell from 2,083 to 1,377 dispatch events (33.9%); approximation, refinement,
 fallback, and unknown events remained zero.
 
-`Profile::squircle` now materializes its exact signed-square-root samples from
+`CurveRegion2::squircle` now materializes its exact signed-square-root samples from
 the constructor's Lamé topology certificate. Positive width and height scale
 the strictly convex boundary `x^4/rx^4 + y^4/ry^4 = 1`, so cyclic samples are
 distinct and form a simple, consistently wound convex polygon without generic
@@ -332,7 +332,7 @@ fallback/abort events from 160 to 64, with approximation and refinement events
 remaining zero. The retained 64 fallback events belong to the intrinsic
 signed-square-root classification, not ring topology validation.
 
-`Profile::ring` now applies the same analytic topology certificate separately
+`CurveRegion2::ring` now applies the same analytic topology certificate separately
 to its two concentric regular polygons. Positive input dimensions and at least
 three samples make both boundaries simple and consistently wound; the larger
 outer radius makes the inner polygon a strict positive homothety inside it, so
@@ -344,7 +344,7 @@ interquartile ranges. A one-call trace fell from 3,646 to 2,174 dispatch events
 (40.4%); unknown and fallback/abort events both fell from 176 to zero, while
 approximation and refinement events remained zero.
 
-`Profile::supershape` no longer demotes its six parameters, symbolic sample
+`CurveRegion2::supershape` no longer demotes its six parameters, symbolic sample
 angles, powered superformula terms, radius, and final coordinates to binary64.
 General exponents now use Hyperreal powers throughout. The common
 `a = b = 1`, `n2 = n3 = 2` identity is reduced exactly through
@@ -358,7 +358,7 @@ matched 30-sample median from 0.0280 to 0.0692 ms/op (2.48x), with
 rises from 788 to 1,999 events because the exact sine/cosine path is now
 observable; fallback, approximation, and refinement events remain zero.
 
-`Profile::airfoil_naca4` previously evaluated every interior chord station
+`CurveRegion2::airfoil_naca4` previously evaluated every interior chord station
 twice: once while constructing the upper surface and again while traversing the
 lower surface in reverse. It now evaluates each exact station once, appends the
 upper point immediately, and retains the corresponding lower point for the
@@ -367,11 +367,11 @@ ms/op (29.8%). A one-call trace fell from 22,928 to 14,441 dispatch events;
 generic sine, cosine, and arctangent evaluations each fell from 158 to 80 and
 refinements remained zero. A differential oracle reconstructs the former
 two-pass algorithm and compares the complete exact `Region2` for symmetric and
-cambered airfoils at 10, 24, and 80 samples. The shared sketch-constructor fuzz
+cambered airfoils at 10, 24, and 80 samples. The shared curve-constructor fuzz
 target completed 1,000 AddressSanitizer-instrumented executions after the
 change with no failure.
 
-`Profile::involute_gear` no longer demotes module, pressure angle, clearance,
+`CurveRegion2::involute_gear` no longer demotes module, pressure angle, clearance,
 backlash, analytic radii, or sampled angles to binary64. Hyperreal square root,
 inverse tangent, and trigonometry retain the analytic samples directly. The
 constructor evaluates each radial flank sample once for one local tooth, reuses
@@ -391,7 +391,7 @@ emits 1,213 events versus 24,619 originally and 943 for the invisible finite
 sampler, with six arctangent and five generic square-root evaluations and no
 unknown or approximation events.
 
-`Profile::cycloidal_gear` now obtains its first-lobe tip and root parameters
+`CurveRegion2::cycloidal_gear` now obtains its first-lobe tip and root parameters
 from exact closed-form radial-square identities and retained inverse cosine
 nodes, replacing the former binary64 conversion and 64-step floating bisection.
 It samples one oriented epicycloid and hypocycloid per tooth shape, reuses those
@@ -407,7 +407,7 @@ path, while paying a documented 71% exactness cost against the intermediate
 events (74.4%), with zero approximation, refinement, fallback, unknown-fact,
 or rational-GCD events.
 
-`Profile::cycloidal_rack` now evaluates its exact cycloid lobe once and reuses
+`CurveRegion2::cycloidal_rack` now evaluates its exact cycloid lobe once and reuses
 that symbolic `Real` boundary under pitch translations for every tooth. Its
 constructor also owns a direct topology certificate: positive admitted radius
 gives `x'(theta) = r(1 - cos(theta))`, so every positive sample interval is
@@ -421,7 +421,7 @@ non-overlapping 0.162--0.185 and 0.0325--0.0469 ms interquartile ranges. The
 one-call trace fell from 1,848 to 667 events (63.9%); sine and cosine calls each
 fell from 33 to 9, while 128 unknown/fallback events fell to zero.
 
-`Profile::involute_rack` uses the same certified line-ring materialization when
+`CurveRegion2::involute_rack` uses the same certified line-ring materialization when
 its already-computed tip width and root space are strictly positive. Those
 inequalities, together with positive module, dedendum, and pressure-angle
 tangent, make each authored x coordinate strictly increase and every tooth
@@ -435,7 +435,7 @@ symbolically constructed zero-root-space case matches its empty result. Matched
 fell from 1,003 to 499 events (50.2%); unknown events fell from 92 to zero and
 fallback/abort events from 93 to one.
 
-`Profile::reuleaux` now recognizes the exact sampling alignment
+`CurveRegion2::reuleaux` now recognizes the exact sampling alignment
 `circle_segments % (4 * sides) == 0`. Under that certificate, every analytic
 arc endpoint is already one of the regular-polygon centers, so the intersection
 boundary is assembled directly from those shared centers and the intervening
@@ -449,7 +449,7 @@ baseline to 0.0650 ms/op (99.5%), with a 0.0643--0.0685 ms interquartile range
 and the same checksum. A one-call trace fell from 117,970 to 797 dispatch events
 (99.3%); approximations and refinements remained zero.
 
-`Profile::heart` no longer evaluates five exact trigonometric expressions per
+`CurveRegion2::heart` no longer evaluates five exact trigonometric expressions per
 sample, demotes them to binary64 for normalization, and promotes the results
 back into `Real`. The multiple-angle terms are the exact polynomial
 `y(c) = 4 + 19c - 2c^2 - 8c^3 - 8c^4`, so each station now evaluates one sine
@@ -463,7 +463,7 @@ from 128 to 32. Seven tessellation counts from 8 through 63 retain every legacy
 finite coordinate within 1e-12 while now proving exact requested width and
 height and retaining symbolic sample dependencies.
 
-The shared sketch-constructor target then completed 1,000
+The shared curve-constructor target then completed 1,000
 AddressSanitizer-instrumented executions (350 coverage points and 573 feature
 edges). Supershape inputs retain negative, zero, and positive exact powers in
 the bounded integer range -4 through 4 so fuzz throughput cannot be dominated
@@ -480,7 +480,7 @@ have permanent unit regressions and replay cleanly.
 Cuboids now author six lazy indexed quads over one retained vertex pool. The
 constructor reserves the exact eight position identities and two coordinate
 identities per axis immediately, but it materializes none of the 24
-face-corner vertices until geometry is read. Mesh storage retains that cuboid
+face-corner vertices until geometry is read. TriangleMesh storage retains that cuboid
 fact and initializes the shared topology-only transform layout only on its
 first consumer. Eight separate lazy representative vertices let transform
 layout traversal read unique positions without expanding the pool's 24-corner
@@ -536,7 +536,7 @@ comparison is intentionally absent; there is no cache or alternate extraction
 surface to benchmark.
 
 The public free writer surfaces now have their own in-memory benchmark rather
-than inheriting evidence only from the `Mesh` string-returning wrappers. The
+than inheriting evidence only from the `TriangleMesh` string-returning wrappers. The
 nine-sample `mesh_io/public_writer_exporters` median is 45.934 ms for 314,636
 materialized OBJ, PLY, plain AMF, colored AMF, and glTF bytes. Its isolated
 trace records 151,935 dispatch events and one benchmark-entry marker, with zero
@@ -631,7 +631,11 @@ self-contact validation, or changing the smoothing stencil would change quality
 or exactness rather than optimize the same result, so those substitutions were
 not attempted.
 
-## 2026-07-28: thin retained-evidence handoff and full-resolution gate
+## 2026-07-28: thin retained-evidence handoff and historical corpus gate
+
+The corpus rows below were measured before the fixture moved to the optional
+target-directory benchmark download. The timings remain as a historical
+baseline.
 
 CSGRS now forwards transform-derived exact support planes only when they are
 already retained. An ordinary first Boolean no longer scans every polygon to
@@ -674,9 +678,8 @@ were 2.70--3.70 ms. On the 12 small Boolean cases, CSGRS won only the three
 disjoint-box operations; the exact general path remains the principal
 small-overlap deficit.
 
-The original genus-131 control mesh is now an always-on hard carrier/import
-row at both CSGRS and Hypermesh: 5,687 vertices, 5,845 source polygons, and
-11,894 fan triangles. In the final full run, CSGRS import measured 16.72 ms
+The original genus-131 control mesh was an always-on hard carrier/import row
+for this run. CSGRS import measured 16.72 ms
 versus 5.75 ms for boolmesh, 5.17 ms for manifold-rust, and 1.54 ms for
 tri-mesh. Both layers also
 retain an ignored rotated-copy intersection as the explicit memory-ceiling

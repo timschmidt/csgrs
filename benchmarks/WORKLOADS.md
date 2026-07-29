@@ -22,6 +22,22 @@
 | `bounding_box/sphere_medium` | medium sphere or equivalent analytic sphere | six bounds |
 | `mass_properties/sphere_medium` | medium sphere or equivalent analytic sphere, unit density | volume/mass properties |
 | `stl_write/sphere_medium` | medium tessellated sphere | in-memory binary STL (csgrs and CGAL) |
+| `corpus/*/deterministic_concave_labyrinth_31x31x6` | deterministically serialized closed orthogonal labyrinth, 4,012 positions and 8,020 triangles | OBJ import, exact translation, bounds, graphics buffers, connectivity, and manifold validation |
+| `corpus/*/sierpinski_foam_level3` | deterministically serialized closed level-3 Sierpiński foam, 15,232 positions and 36,096 triangles | OBJ import, exact translation, bounds, graphics buffers, connectivity, and manifold validation |
+
+## Published Solidean requests
+
+These opt-in rows use the unmodified version-1 request files pinned by
+`benchmarks/support/solidean.rs`. Their local CSV rows are not part of native
+CGAL/OCCT parity because the comparison values were published by the kernel
+authors on a different host.
+
+| Benchmark/case | Fixed scenario | Timed result |
+|---|---|---|
+| `published-solidean/iterated_difference/primitives_A_minus_B_to_J` | convert A–J and perform 9 ordered differences | final mesh; published area 13.4224, volume 2.3513 |
+| `published-solidean/iterated_difference/terrain_0.2_-y_224` | convert the workpiece and 224 tools, then perform 224 ordered differences | final mesh; published area 6.1648, volume 0.5477 |
+| `published-solidean/iterated_union_difference/checker_grid_n10_1999` | convert 1,000 cubes, perform 999 unions followed by 1,000 differences | empty final mesh |
+| `published-solidean/iterated_difference/dome_carve_N` | convert one block and N capsule tools, then perform N ordered differences for N = 10, 100, 250, 1,000, or 5,000 | final mesh; published area/volume oracle for N ≥ 100 |
 
 ## csgrs-specific transform helpers
 
@@ -30,9 +46,9 @@ a single equivalent operation in all three native kernels:
 
 | Benchmark/case | Covered operations |
 |---|---|
-| `profile_transform/all_csg_helpers` | vector translation, Z rotation, non-uniform scaling, plane mirror, center, float, arbitrary affine transform, and inverse on `Profile` |
-| `profile_distribution/arc_linear_grid` | arc, linear, and grid distribution on `Profile`, including profile unions |
-| `mesh_positioning/center_float_vector` | bounding-box center, float-to-Z-zero, and vector translation on `Mesh` |
+| `profile_transform/all_csg_helpers` | vector translation, Z rotation, non-uniform scaling, plane mirror, center, float, arbitrary affine transform, and inverse on `CurveRegion2` |
+| `profile_distribution/arc_linear_grid` | arc, linear, and grid distribution on `CurveRegion2`, including profile unions |
+| `mesh_positioning/center_float_vector` | bounding-box center, float-to-Z-zero, and vector translation on `TriangleMesh` |
 | `mesh_distribution/arc_linear_grid` | arc, linear, and grid distribution, including the transforms and unions used to materialize every copy |
 
 CGAL's sphere/extrusion builders in the benchmark source deliberately construct

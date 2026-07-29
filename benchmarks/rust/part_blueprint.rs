@@ -6,12 +6,12 @@
 use std::time::Instant;
 
 use csgrs::{
-    csg::CSG,
-    mesh::Mesh,
+    AttributedMesh,
     parts::{
         AssemblyDocumentation, BlueprintProjection, CsgPartInterface, ExactVector3,
         InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
     },
+    solid::{self, SolidExt},
 };
 use hyperlattice::Real;
 
@@ -42,14 +42,14 @@ fn metadata(handle: &str, offset: ExactVector3) -> PartMetadata {
 fn main() {
     let parts = (0..64)
         .map(|idx| {
-            Mesh::cube(
-                Real::from(2),
-                metadata(&format!("p{idx}"), vec3(i64::from(idx), 0, 8)),
-            )
-            .translate(
+            let geometry = solid::cube(Real::from(2)).translated(
                 Real::from(idx % 8) * Real::from(3),
                 Real::from(idx / 8),
                 Real::from(idx),
+            );
+            AttributedMesh::from_uniform(
+                geometry,
+                metadata(&format!("p{idx}"), vec3(i64::from(idx), 0, 8)),
             )
         })
         .collect::<Vec<_>>();

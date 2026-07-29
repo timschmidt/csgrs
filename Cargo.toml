@@ -13,20 +13,13 @@ readme = "readme.md"
 
 keywords = ["geometry", "physics", "csg", "slicing", "offsetting"]
 categories = ["game-development", "graphics", "mathematics", "simulation", "wasm"]
-exclude = [
-  "benchmarks/data/yeahright/quads_94336.obj",
-  "benchmarks/data/yeahright/quads_377344.obj",
-  "benchmarks/data/yeahright/tris_188672.obj",
-  "benchmarks/data/yeahright/tris_754688.obj",
-]
 autobenches = false
 
 [package.metadata.docs.rs]
 no-default-features = true
 features = [
-  "mesh",
-  "polygon-mesh",
-  "sketch",
+  "attributed",
+  "curve",
   "stl-io",
   "dxf-io",
   "obj-io",
@@ -62,6 +55,7 @@ harness = false
 name = "kernel_comparison"
 path = "benchmarks/rust/kernel_comparison.rs"
 harness = false
+required-features = ["attributed"]
 
 [[bench]]
 name = "feature_pipeline"
@@ -73,11 +67,16 @@ required-features = ["bench-feature-pipeline"]
 name = "profile_primitives"
 path = "benchmarks/rust/profile_primitives.rs"
 harness = false
-required-features = ["sketch"]
+required-features = ["curve"]
 
 [[bench]]
 name = "competitive"
 path = "benchmarks/rust/competitive.rs"
+harness = false
+
+[[bench]]
+name = "solidean_comparison"
+path = "benchmarks/rust/solidean_comparison.rs"
 harness = false
 
 [[bench]]
@@ -113,11 +112,9 @@ bevy_asset = { version = "0.18", optional = true }
 wgpu-types = { version = "27", optional = true, default-features = false }
 
 # utils
-rayon = { version = "1.10", optional = true }
 thiserror = "2.0"
 hashbrown = { version = "0.15" }
 fast-surface-nets = { version = "0.2.1", optional = true }
-either = "1.15"
 base64 = { version = "0.22", optional = true }
 # doc
 #doc-image-embed = "0.2" # fork of https://crates.io/crates/embed-doc-image - should be upstreamed.
@@ -133,12 +130,10 @@ gerber_parser = { version = "0.4.0", optional = true }
 # font
 ttf-utils = { version = "0.1", optional = true, package = "ttf-parser-utils"}
 ttf-parser = { version = "0.25", optional = true }
-hershey = { version = "0.1.2", optional = true }
 
 doc-image-embed = "0.2.1"
 
 # wasm
-uuid = { version = "1.18", features = ["js"], optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 js-sys = { version = "0.3.81", optional = true }
 serde-wasm-bindgen = { version = "0.6.5", optional = true }
@@ -147,6 +142,8 @@ serde = { version = "1.0.228", optional = true }
 gltf = { version = "1.4.1", optional = true, default-features = false, features = ["names", "utils"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+# DXF and Gerber depend transitively on uuid; wasm32 requires an explicit
+# browser randomness provider even though csgrs does not construct UUIDs.
 uuid = { version = "1.18", features = ["js"] }
 
 # Keep transitive sibling crates unified while using local path development mode.
@@ -158,11 +155,11 @@ hypertri = { path = "../hypertri" }
 hypersolve = { path = "../hypersolve" }
 
 [features]
-default = ["mesh", "polygon-mesh", "sketch", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "vrml-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+default = ["curve", "stl-io", "dxf-io", "obj-io", "ply-io", "amf-io", "gltf-io", "vrml-io", "gerber-io", "image-io", "metaballs", "sdf", "truetype-text", "hershey-text"]
+attributed = []
 bench-feature-pipeline = [
-  "mesh",
-  "polygon-mesh",
-  "sketch",
+  "attributed",
+  "curve",
   "stl-io",
   "dxf-io",
   "obj-io",
@@ -184,25 +181,16 @@ dispatch-trace = [
   "hypermesh/dispatch-trace",
   "hyperreal/dispatch-trace",
 ]
-parallel = [
-  "rayon",
-  "hashbrown/rayon"
-]
-mesh = [] # Compatibility feature; Mesh is the always-available core carrier.
-polygon-mesh = [] # Planar polygon 3D backend; converts explicitly to triangle Mesh geometry.
-# Legacy BSP transition features removed after full hypermesh migration.
-sketch = [
-  # hypercurve backed Profile datatype
-]
+curve = []
 stl-io = [
   "stl_io",
 ]
 svg-io = [
-  "sketch",
+  "curve",
   "hypercurve/svg",
 ]
 dxf-io = [
-  "sketch",
+  "curve",
   "chrono",
   "dxf",
 ]
@@ -224,7 +212,7 @@ vrml-io = [
   # VRML 2.0 geometry import - no external dependencies needed
 ]
 gerber-io = [
-  "sketch",
+  "curve",
   "gerber-types",
   "gerber_parser",
 ]
@@ -233,11 +221,12 @@ truetype-text = [
   "ttf-utils",
 ]
 hershey-text = [
-  "hershey",
+  "curve",
+  "hypercurve/hershey",
 ]
 image-io = [
   "image",
-  "sketch",
+  "curve",
 ]
 metaballs = [
   "fast-surface-nets",
@@ -246,24 +235,20 @@ sdf = [
   "fast-surface-nets",
   "hypersdf",
 ]
-# Compatibility feature retained for existing consumers. Offset operations are
-# native Hypercurve APIs and no longer activate an external geometry backend.
-offset = ["sketch"]
+# Native Hypercurve offset and regularized-buffer operations.
+offset = ["curve"]
 bevymesh = [
   "dep:bevy_mesh",
   "dep:bevy_asset",
   "dep:wgpu-types"
 ]
 wasm = [
-  "mesh",
-  "polygon-mesh",
-  "sketch",
+  "curve",
   "svg-io",
   "stl-io",
   "amf-io",
   "gltf-io",
   "sdf",
-  "uuid",
   "wasm-bindgen",
   "js-sys",
   "serde-wasm-bindgen",
@@ -274,8 +259,7 @@ wasm = [
 [[example]]
 name = "readme_renders"
 required-features = [
-  "mesh",
-  "sketch",
+  "curve",
   "image-io",
   "truetype-text",
   "metaballs",
@@ -292,5 +276,6 @@ manifold-rust = "=0.9.2"
 ply-rs = "0.1.3"
 proptest = "1.9"
 quick-xml = "0.39.4"
+serde_json = "1.0.145"
 three-d-asset = "=0.4.0"
 tri-mesh = "=0.6.1"

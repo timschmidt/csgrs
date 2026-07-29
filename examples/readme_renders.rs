@@ -3,10 +3,12 @@
 //! Geometry is constructed with `hyperlattice::Real`; primitive floats are used
 //! only after projection into the image/raster boundary.
 
-use csgrs::csg::CSG;
-use csgrs::mesh::Mesh;
-use csgrs::mesh::metaballs::MetaBall;
-use csgrs::profile::Profile;
+use csgrs::solid::MetaBall;
+use csgrs::{
+    TriangleMesh, curve,
+    solid::{self, SolidExt},
+};
+use hypercurve::CurveRegion2;
 use hyperlattice::{Point3, Real, Vector3};
 use image::{Rgba, RgbaImage};
 use std::fs;
@@ -24,81 +26,74 @@ fn main() {
     let output_dir = output_dir();
     fs::create_dir_all(&output_dir).expect("create README render output directory");
 
-    render_readme_sketches();
+    render_readme_curves();
     render_readme_meshes();
 
     println!("README renders written to {}/*.png", output_dir.display());
 }
 
-fn render_readme_sketches() {
-    render_sketch("square", &Profile::square(r(2.0)));
-    render_sketch("rectangle", &Profile::rectangle(r(2.4), r(1.35)));
-    render_sketch("circle", &Profile::circle(r(1.0), 96));
-    render_sketch(
+fn render_readme_curves() {
+    render_curve("square", &curve::square(r(2.0)));
+    render_curve("rectangle", &curve::rectangle(r(2.4), r(1.35)));
+    render_curve("circle", &curve::circle(r(1.0), 96));
+    render_curve(
         "polygon",
-        &Profile::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]]),
+        &curve::polygon(&[[r(0.0), r(1.2)], [r(-1.1), r(-0.8)], [r(1.1), r(-0.8)]]),
     );
-    render_sketch(
+    render_curve(
         "rounded_rectangle",
-        &Profile::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12),
+        &curve::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12),
     );
-    render_sketch("ellipse", &Profile::ellipse(r(2.3), r(1.3), 96));
-    render_sketch("regular_ngon", &Profile::regular_ngon(6, r(1.0)));
-    render_sketch(
-        "sketch_arrow",
-        &Profile::arrow(r(2.2), r(0.35), r(0.8), r(1.0)),
-    );
-    render_sketch(
+    render_curve("ellipse", &curve::ellipse(r(2.3), r(1.3), 96));
+    render_curve("regular_ngon", &curve::regular_ngon(6, r(1.0)));
+    render_curve("curve_arrow", &curve::arrow(r(2.2), r(0.35), r(0.8), r(1.0)));
+    render_curve(
         "trapezoid",
-        &Profile::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45)),
+        &curve::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45)),
     );
-    render_sketch("star", &Profile::star(5, r(1.1), r(0.45)));
-    render_sketch("heart", &Profile::heart(r(2.0), r(1.8), 160));
-    render_sketch("ring", &Profile::ring(r(1.4), r(0.35), 96));
-    render_sketch(
-        "pie_slice",
-        &Profile::pie_slice(r(1.1), r(-35.0), r(115.0), 64),
-    );
+    render_curve("star", &curve::star(5, r(1.1), r(0.45)));
+    render_curve("heart", &curve::heart(r(2.0), r(1.8), 160));
+    render_curve("ring", &curve::ring(r(1.4), r(0.35), 96));
+    render_curve("pie_slice", &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64));
 }
 
 fn render_readme_meshes() {
-    render_mesh("cube", &Mesh::<()>::cube(r(2.0), ()));
-    render_mesh("cuboid", &Mesh::<()>::cuboid(r(1.4), r(2.3), r(0.95), ()));
-    render_mesh("sphere", &Mesh::<()>::sphere(r(1.0), 32, 16, ()));
-    render_mesh("cylinder", &Mesh::<()>::cylinder(r(1.0), r(2.0), 32, ()));
-    render_mesh(
-        "frustum",
-        &Mesh::<()>::frustum(r(0.65), r(1.05), r(2.0), 32, ()),
-    );
-    render_mesh("octahedron", &Mesh::<()>::octahedron(r(1.2), ()));
-    render_mesh("icosahedron", &Mesh::<()>::icosahedron(r(1.2), ()));
-    render_mesh("torus", &Mesh::<()>::torus(r(1.25), r(0.35), 36, 14, ()));
+    render_mesh("cube", &solid::cube(r(2.0)));
+    render_mesh("cuboid", &solid::cuboid(r(1.4), r(2.3), r(0.95)));
+    render_mesh("sphere", &solid::sphere(r(1.0), 32, 16));
+    render_mesh("cylinder", &solid::cylinder(r(1.0), r(2.0), 32));
+    render_mesh("frustum", &solid::frustum(r(0.65), r(1.05), r(2.0), 32));
+    render_mesh("octahedron", &solid::octahedron(r(1.2)));
+    render_mesh("icosahedron", &solid::icosahedron(r(1.2)));
+    render_mesh("torus", &solid::torus(r(1.25), r(0.35), 36, 14));
     render_mesh(
         "mesh_arrow",
-        &Mesh::<()>::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false, ()),
+        &solid::arrow(Point3::origin(), v3(0.8, 0.4, 2.0), 32, false),
     );
 
-    let star = Profile::star(5, r(1.0), r(0.45));
-    render_mesh("extrude", &star.extrude(r(0.65), ()));
+    let star = curve::star(5, r(1.0), r(0.45));
+    render_mesh("extrude", &curve::extrude(&star, r(0.65)));
     render_mesh(
         "extrude_vector",
-        &star.extrude_vector(v3(0.45, 0.25, 0.9), ()),
+        &curve::extrude_vector(&star, v3(0.45, 0.25, 0.9)),
     );
     render_mesh(
         "revolve",
-        &Profile::circle(r(0.18), 32)
-            .translate(r(1.0), r(0.0), r(0.0))
-            .revolve(r(265.0), 32, ())
-            .expect("revolve"),
+        &curve::revolve(&curve::circle(r(0.18), 32), r(265.0), 32)
+            .expect("revolve")
+            .translated(r(1.0), r(0.0), r(0.0)),
     );
 
-    render_mesh("inverse", &Mesh::<()>::sphere(r(1.0), 32, 16, ()).inverse());
+    render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
     render_mesh("csg", &cube_minus_translated_sphere());
-    render_mesh("convex_hull", &Mesh::<()>::cube(r(1.2), ()).convex_hull(()));
+    render_mesh(
+        "convex_hull",
+        &solid::convex_hull(&solid::cube(r(1.2))).expect("convex hull"),
+    );
     render_mesh(
         "minkowski_sum",
-        &Mesh::<()>::cube(r(1.1), ())
-            .minkowski_sum(&Mesh::<()>::sphere(r(0.45), 16, 8, ()), ()),
+        &solid::minkowski_sum(&solid::cube(r(1.1)), &solid::sphere(r(0.45), 16, 8))
+            .expect("Minkowski sum"),
     );
 
     let balls = [
@@ -108,35 +103,35 @@ fn render_readme_meshes() {
     ];
     render_mesh(
         "metaballs_3d",
-        &Mesh::<()>::metaballs(&balls, (16, 16, 16), r(0.7), r(0.25), ()),
+        &solid::metaballs(&balls, (16, 16, 16), r(0.7), r(0.25)),
     );
 
-    let tpms_box = Mesh::<()>::cube(r(2.0), ());
+    let tpms_box = solid::cube(r(2.0));
     render_mesh(
         "gyroid",
-        &tpms_box.gyroid_solid(24, r(2.0), r(0.0), r(0.18), ()),
+        &solid::gyroid_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
     );
     render_mesh(
         "schwarz_p",
-        &tpms_box.schwarz_p_solid(24, r(2.0), r(0.0), r(0.18), ()),
+        &solid::schwarz_p_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
     );
     render_mesh(
         "schwarz_d",
-        &tpms_box.schwarz_d_solid(24, r(2.0), r(0.0), r(0.18), ()),
+        &solid::schwarz_d_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18)),
     );
 }
 
-fn cube_minus_translated_sphere() -> Mesh<()> {
-    let cube = Mesh::<()>::cube(r(2.0), ());
-    let sphere = Mesh::<()>::sphere(r(1.25), 16, 8, ()).translate(r(1.0), r(1.0), r(1.0));
-    cube.difference(&sphere)
+fn cube_minus_translated_sphere() -> TriangleMesh {
+    let cube = solid::cube(r(2.0));
+    let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
+    cube.try_difference(&sphere).expect("difference")
 }
 
-fn render_sketch(name: &str, sketch: &Profile) {
+fn render_curve(name: &str, region: &CurveRegion2) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let profiles = sketch.region_profiles();
-    let wires = sketch.wire_polylines();
-    let Some(bounds) = sketch_bounds(&profiles, &wires) else {
+    let profiles = curve::finite_profiles(region);
+    let wires = Vec::<Vec<[Real; 2]>>::new();
+    let Some(bounds) = curve_bounds(&profiles, &wires) else {
         save_image(name, &image);
         return;
     };
@@ -154,26 +149,23 @@ fn render_sketch(name: &str, sketch: &Profile) {
     save_image(name, &image);
 }
 
-fn render_mesh(name: &str, mesh: &Mesh<()>) {
+fn render_mesh(name: &str, mesh: &TriangleMesh) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let triangulated = mesh.triangulate();
-    let triangles = triangulated.triangles();
-    if triangles.is_empty() {
+    if mesh.triangles.is_empty() {
         save_image(name, &image);
         return;
     }
 
-    let projected = triangles
+    let projected = mesh
+        .triangles
         .iter()
-        .filter_map(|poly| {
-            if poly.vertices().len() < 3 {
-                return None;
-            }
-            Some([
-                project_point(&poly.vertices()[0].position),
-                project_point(&poly.vertices()[1].position),
-                project_point(&poly.vertices()[2].position),
-            ])
+        .map(|triangle| {
+            let [a, b, c] = triangle.indices();
+            [
+                project_point(&mesh.positions[a]),
+                project_point(&mesh.positions[b]),
+                project_point(&mesh.positions[c]),
+            ]
         })
         .collect::<Vec<_>>();
 
@@ -220,7 +212,7 @@ fn stroke_real_points(
     }
 }
 
-fn sketch_bounds(
+fn curve_bounds(
     profiles: &[hypercurve::FiniteRegionProfile2],
     wires: &[Vec<[Real; 2]>],
 ) -> Option<(f64, f64, f64, f64)> {

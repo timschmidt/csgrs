@@ -2,11 +2,9 @@
 
 #![no_main]
 
-use csgrs::mesh::{
-    Mesh,
-    metaballs::{MetaBall, MetaballDiagnostics},
-};
+use csgrs::solid::{MetaBall, MetaballDiagnostics};
 use hyperlattice::{Point3, Real};
+use hypermesh::TriangleMesh;
 use libfuzzer_sys::fuzz_target;
 
 fn real(value: f64) -> Real {
@@ -23,14 +21,11 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-100.0, 100.0))
 }
 
-fn assert_mesh_finite(mesh: &Mesh<()>) {
-    for vertex in mesh.vertices() {
-        assert!(vertex.position.x.is_finite());
-        assert!(vertex.position.y.is_finite());
-        assert!(vertex.position.z.is_finite());
-        assert!(vertex.normal.0[0].is_finite());
-        assert!(vertex.normal.0[1].is_finite());
-        assert!(vertex.normal.0[2].is_finite());
+fn assert_mesh_finite(mesh: &TriangleMesh) {
+    for position in mesh.positions.iter() {
+        assert!(position.x.is_finite());
+        assert!(position.y.is_finite());
+        assert!(position.z.is_finite());
     }
 }
 
@@ -82,15 +77,14 @@ fuzz_target!(|bytes: &[u8]| {
 
     let iso_value = decode_real(bytes, &mut idx);
     let padding = decode_real(bytes, &mut idx);
-    let (mesh, diagnostics) = Mesh::<()>::metaballs_with_diagnostics(
+    let (mesh, diagnostics) = csgrs::solid::metaballs_with_diagnostics(
         &balls,
         (resolution, resolution, resolution),
         iso_value,
         padding,
-        (),
     );
 
     assert_mesh_finite(&mesh);
     assert_diagnostics_consistent(&diagnostics);
-    assert_eq!(diagnostics.emitted_triangle_count, mesh.triangles().len());
+    assert_eq!(diagnostics.emitted_triangle_count, mesh.triangles.len());
 });

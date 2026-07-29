@@ -29,22 +29,22 @@
 namespace PMP = CGAL::Polygon_mesh_processing;
 using Kernel = CGAL::Exact_predicates_exact_constructions_kernel;
 using Point = Kernel::Point_3;
-using Mesh = CGAL::Surface_mesh<Point>;
+using ModelMesh = CGAL::Surface_mesh<Point>;
 using Triangle = std::array<std::size_t, 3>;
 using csgrs_bench::Measurement;
 
 static_assert(!std::is_floating_point_v<Kernel::FT>,
               "the high-precision runner requires CGAL exact constructions");
 
-static Mesh mesh_from_soup(std::vector<Point> points,
+static ModelMesh mesh_from_soup(std::vector<Point> points,
                            std::vector<Triangle> triangles) {
   PMP::orient_polygon_soup(points, triangles);
-  Mesh mesh;
+  ModelMesh mesh;
   PMP::polygon_soup_to_polygon_mesh(points, triangles, mesh);
   return mesh;
 }
 
-static Mesh exact_box(const Kernel::FT &width, const Kernel::FT &cx,
+static ModelMesh exact_box(const Kernel::FT &width, const Kernel::FT &cx,
                       const Kernel::FT &cy, const Kernel::FT &cz) {
   const Kernel::FT h = width / Kernel::FT(2);
   std::vector<Point> points;
@@ -62,7 +62,7 @@ static Mesh exact_box(const Kernel::FT &width, const Kernel::FT &cx,
        {1, 3, 7}, {1, 7, 5}});
 }
 
-static Mesh exact_cuboid(const Kernel::FT &width, const Kernel::FT &length,
+static ModelMesh exact_cuboid(const Kernel::FT &width, const Kernel::FT &length,
                          const Kernel::FT &height) {
   const Kernel::FT hx = width / Kernel::FT(2);
   const Kernel::FT hy = length / Kernel::FT(2);
@@ -82,13 +82,13 @@ static Mesh exact_cuboid(const Kernel::FT &width, const Kernel::FT &length,
        {1, 3, 7}, {1, 7, 5}});
 }
 
-static Mesh box(double width, double cx = 0.0, double cy = 0.0,
+static ModelMesh box(double width, double cx = 0.0, double cy = 0.0,
                 double cz = 0.0) {
   return exact_box(Kernel::FT(width), Kernel::FT(cx), Kernel::FT(cy),
                    Kernel::FT(cz));
 }
 
-static Mesh sphere(double radius, std::size_t segments, std::size_t stacks) {
+static ModelMesh sphere(double radius, std::size_t segments, std::size_t stacks) {
   std::vector<Point> points;
   points.emplace_back(0.0, 0.0, radius);
   for (std::size_t stack = 1; stack < stacks; ++stack) {
@@ -131,7 +131,7 @@ static Mesh sphere(double radius, std::size_t segments, std::size_t stacks) {
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
-static Mesh extruded_circle(double radius, double height,
+static ModelMesh extruded_circle(double radius, double height,
                             std::size_t segments) {
   std::vector<Point> points;
   points.reserve(2 * segments);
@@ -158,7 +158,7 @@ static Mesh extruded_circle(double radius, double height,
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
-static Mesh frustum(double lower_radius, double upper_radius, double height,
+static ModelMesh frustum(double lower_radius, double upper_radius, double height,
                     std::size_t segments) {
   std::vector<Point> points;
   points.reserve(2 * segments + 2);
@@ -192,7 +192,7 @@ static Mesh frustum(double lower_radius, double upper_radius, double height,
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
-static Mesh torus(double major_radius, double minor_radius,
+static ModelMesh torus(double major_radius, double minor_radius,
                   std::size_t major_segments, std::size_t minor_segments) {
   std::vector<Point> points;
   points.reserve(major_segments * minor_segments);
@@ -225,7 +225,7 @@ static Mesh torus(double major_radius, double minor_radius,
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
-static Mesh octahedron(double radius) {
+static ModelMesh octahedron(double radius) {
   return mesh_from_soup(
       {{radius, 0, 0}, {-radius, 0, 0}, {0, radius, 0}, {0, -radius, 0},
        {0, 0, radius}, {0, 0, -radius}},
@@ -233,7 +233,7 @@ static Mesh octahedron(double radius) {
        {5, 2, 0}, {5, 1, 2}, {5, 3, 1}, {5, 0, 3}});
 }
 
-static Mesh icosahedron(double radius) {
+static ModelMesh icosahedron(double radius) {
   const double phi = (1.0 + std::sqrt(5.0)) / 2.0;
   const double scale = radius / std::sqrt(1.0 + phi * phi);
   const double a = scale;
@@ -248,7 +248,7 @@ static Mesh icosahedron(double radius) {
        {4, 9, 5}, {2, 4, 11}, {6, 2, 10}, {8, 6, 7}, {9, 8, 1}});
 }
 
-static Measurement measured(const Mesh &mesh, std::size_t input_facets) {
+static Measurement measured(const ModelMesh &mesh, std::size_t input_facets) {
   const std::size_t facets = mesh.number_of_faces();
   std::size_t corners = 0;
   for (const auto face : mesh.faces()) {
@@ -260,7 +260,7 @@ static Measurement measured(const Mesh &mesh, std::size_t input_facets) {
   return {input_facets, facets, csgrs_bench::checksum(facets, corners)};
 }
 
-static Measurement geometry_measured(const Mesh &mesh,
+static Measurement geometry_measured(const ModelMesh &mesh,
                                      std::size_t input_facets) {
   const std::size_t facets = mesh.number_of_faces();
   std::size_t corners = 0;
@@ -281,20 +281,20 @@ static Measurement geometry_measured(const Mesh &mesh,
 }
 
 template <typename PointTransform>
-static Mesh transformed(const Mesh &source, PointTransform transform) {
-  Mesh output = source;
+static ModelMesh transformed(const ModelMesh &source, PointTransform transform) {
+  ModelMesh output = source;
   for (const auto vertex : output.vertices()) {
     output.point(vertex) = transform(output.point(vertex));
   }
   return output;
 }
 
-static Mesh distributed(
-    const Mesh &source,
+static ModelMesh distributed(
+    const ModelMesh &source,
     const std::vector<std::array<double, 3>> &offsets) {
-  Mesh output;
+  ModelMesh output;
   for (const auto &offset : offsets) {
-    const Mesh copy = transformed(source, [&](const Point &point) {
+    const ModelMesh copy = transformed(source, [&](const Point &point) {
       return Point(point.x() + Kernel::FT(offset[0]),
                    point.y() + Kernel::FT(offset[1]),
                    point.z() + Kernel::FT(offset[2]));
@@ -304,7 +304,7 @@ static Mesh distributed(
   return output;
 }
 
-static Mesh subdivide_once(const Mesh &source) {
+static ModelMesh subdivide_once(const ModelMesh &source) {
   std::vector<Point> points;
   points.reserve(source.number_of_vertices() + source.number_of_edges());
   std::vector<std::size_t> vertex_indices(source.num_vertices());
@@ -355,7 +355,7 @@ static Mesh subdivide_once(const Mesh &source) {
   return mesh_from_soup(std::move(points), std::move(triangles));
 }
 
-static Mesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
+static ModelMesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
   std::vector<Point> points;
   points.reserve(soup.points.size());
   for (const auto &point : soup.points) {
@@ -364,7 +364,7 @@ static Mesh mesh_from_obj_soup(const csgrs_bench::ObjTriangleSoup &soup) {
   return mesh_from_soup(std::move(points), soup.triangles);
 }
 
-static Mesh yeahright_boolean_operand(const Mesh &source) {
+static ModelMesh yeahright_boolean_operand(const ModelMesh &source) {
   return transformed(source, [](const Point &point) {
     return Point(point.z() + Kernel::FT(1), point.y() + Kernel::FT(12),
                  -point.x() + Kernel::FT(1));
@@ -406,7 +406,7 @@ int main() {
   harness.run("kernel", "construct_torus", "r10_2_s32x16", 2,
               [] { return measured(torus(10.0, 2.0, 32, 16), 0); });
 
-  const Mesh transform_source = sphere(10.0, 32, 16);
+  const ModelMesh transform_source = sphere(10.0, 32, 16);
   const std::size_t transform_input = transform_source.number_of_faces();
   harness.run("kernel", "translate", "sphere_medium", 8, [&] {
     return geometry_measured(transformed(transform_source, [](const Point &point) {
@@ -420,7 +420,7 @@ int main() {
     const double ax = 17.0 * std::numbers::pi / 180.0;
     const double ay = 29.0 * std::numbers::pi / 180.0;
     const double az = 43.0 * std::numbers::pi / 180.0;
-    Mesh output = transformed(transform_source, [&](const Point &point) {
+    ModelMesh output = transformed(transform_source, [&](const Point &point) {
       double x = CGAL::to_double(point.x());
       double y = CGAL::to_double(point.y());
       double z = CGAL::to_double(point.z());
@@ -446,7 +446,7 @@ int main() {
                     transform_input);
   });
   harness.run("kernel", "mirror", "sphere_across_x_eq_1", 8, [&] {
-    Mesh output = transformed(transform_source, [](const Point &point) {
+    ModelMesh output = transformed(transform_source, [](const Point &point) {
       return Point(Kernel::FT(2) - point.x(), point.y(), point.z());
     });
     PMP::reverse_face_orientations(output);
@@ -463,11 +463,11 @@ int main() {
                     transform_input);
   });
   harness.run("kernel", "inverse", "sphere_orientation", 16, [&] {
-    Mesh output = transform_source;
+    ModelMesh output = transform_source;
     PMP::reverse_face_orientations(output);
     return geometry_measured(output, transform_input);
   });
-  const Mesh off_center = exact_box(Kernel::FT(2), Kernel::FT(7),
+  const ModelMesh off_center = exact_box(Kernel::FT(2), Kernel::FT(7),
                                     Kernel::FT(-3), Kernel::FT(5));
   harness.run("kernel", "center", "translated_box", 32, [&] {
     const CGAL::Bbox_3 bounds = PMP::bbox(off_center);
@@ -489,39 +489,39 @@ int main() {
                              transform_input);
   });
 
-  const Mesh boolean_left = sphere(10.0, 12, 6);
-  const Mesh boolean_right = box(14.0, 3.0, 2.0, 1.0);
+  const ModelMesh boolean_left = sphere(10.0, 12, 6);
+  const ModelMesh boolean_right = box(14.0, 3.0, 2.0, 1.0);
   const std::size_t boolean_input = boolean_left.number_of_faces() +
                                     boolean_right.number_of_faces();
   const auto boolean_case = [&](auto operation) {
-    Mesh left = boolean_left;
-    Mesh right = boolean_right;
-    Mesh output;
+    ModelMesh left = boolean_left;
+    ModelMesh right = boolean_right;
+    ModelMesh output;
     if (!operation(left, right, output)) {
       throw std::runtime_error("CGAL Boolean comparison workload failed");
     }
     return measured(output, boolean_input);
   };
   harness.run("kernel", "boolean_union", "sphere_box", 1, [&] {
-    return boolean_case([](Mesh &left, Mesh &right, Mesh &output) {
+    return boolean_case([](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
       return PMP::corefine_and_compute_union(left, right, output);
     });
   });
   harness.run("kernel", "boolean_difference", "sphere_box", 1, [&] {
-    return boolean_case([](Mesh &left, Mesh &right, Mesh &output) {
+    return boolean_case([](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
       return PMP::corefine_and_compute_difference(left, right, output);
     });
   });
   harness.run("kernel", "boolean_intersection", "sphere_box", 1, [&] {
-    return boolean_case([](Mesh &left, Mesh &right, Mesh &output) {
+    return boolean_case([](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
       return PMP::corefine_and_compute_intersection(left, right, output);
     });
   });
   harness.run("kernel", "boolean_xor", "sphere_box", 1, [&] {
-    Mesh left = boolean_left;
-    Mesh right = boolean_right;
-    Mesh left_only;
-    Mesh right_only;
+    ModelMesh left = boolean_left;
+    ModelMesh right = boolean_right;
+    ModelMesh left_only;
+    ModelMesh right_only;
     if (!PMP::corefine_and_compute_difference(left, right, left_only)) {
       throw std::runtime_error("CGAL XOR left difference failed");
     }
@@ -533,33 +533,33 @@ int main() {
     // The two differences are disjoint by definition. CGAL's corefining union
     // reports false for some nonintersecting component pairs, so materialize
     // the symmetric difference as one Surface_mesh with both components.
-    Mesh output = left_only;
+    ModelMesh output = left_only;
     CGAL::copy_face_graph(right_only, output);
     return measured(output, boolean_input);
   });
 
-  const Mesh topology_left = box(4.0);
-  const Mesh topology_disjoint = box(4.0, 10.0, 0.0, 0.0);
-  const Mesh topology_contained = box(2.0);
-  const Mesh topology_touching = box(4.0, 4.0, 0.0, 0.0);
+  const ModelMesh topology_left = box(4.0);
+  const ModelMesh topology_disjoint = box(4.0, 10.0, 0.0, 0.0);
+  const ModelMesh topology_contained = box(2.0);
+  const ModelMesh topology_touching = box(4.0, 4.0, 0.0, 0.0);
   harness.run("kernel", "boolean_union", "disjoint_boxes", 8, [&] {
-    Mesh output = topology_left;
+    ModelMesh output = topology_left;
     CGAL::copy_face_graph(topology_disjoint, output);
     return measured(output, 24);
   });
   harness.run("kernel", "boolean_difference", "contained_boxes", 1, [&] {
-    Mesh left = topology_left;
-    Mesh right = topology_contained;
-    Mesh output;
+    ModelMesh left = topology_left;
+    ModelMesh right = topology_contained;
+    ModelMesh output;
     if (!PMP::corefine_and_compute_difference(left, right, output)) {
       throw std::runtime_error("CGAL contained difference failed");
     }
     return measured(output, 24);
   });
   harness.run("kernel", "boolean_union", "face_touching_boxes", 1, [&] {
-    Mesh left = topology_left;
-    Mesh right = topology_touching;
-    Mesh output;
+    ModelMesh left = topology_left;
+    ModelMesh right = topology_touching;
+    ModelMesh output;
     if (!PMP::corefine_and_compute_union(left, right, output)) {
       throw std::runtime_error("CGAL face-touching union failed");
     }
@@ -571,14 +571,14 @@ int main() {
 
   const Kernel::FT sliver_shift =
       Kernel::FT(1999999) / Kernel::FT(1000000);
-  const Mesh sliver_left =
+  const ModelMesh sliver_left =
       exact_box(Kernel::FT(2), Kernel::FT(0), Kernel::FT(0), Kernel::FT(0));
-  const Mesh sliver_right = exact_box(Kernel::FT(2), sliver_shift,
+  const ModelMesh sliver_right = exact_box(Kernel::FT(2), sliver_shift,
                                       Kernel::FT(0), Kernel::FT(0));
   harness.run("precision", "boolean_sliver", "overlap_1e-6", 1, [&] {
-    Mesh left = sliver_left;
-    Mesh right = sliver_right;
-    Mesh output;
+    ModelMesh left = sliver_left;
+    ModelMesh right = sliver_right;
+    ModelMesh output;
     if (!PMP::corefine_and_compute_intersection(left, right, output) ||
         output.is_empty()) {
       throw std::runtime_error("CGAL exact sliver intersection failed");
@@ -594,7 +594,7 @@ int main() {
   harness.run("kernel", "extrude", "circle_64", 8,
               [] { return measured(extruded_circle(6.0, 20.0, 64), 64); });
 
-  const Mesh distribution_source = box(1.0);
+  const ModelMesh distribution_source = box(1.0);
   harness.run("kernel", "distribute_linear", "box_8", 1, [&] {
     std::vector<std::array<double, 3>> offsets;
     for (std::size_t index = 0; index < 8; ++index) {
@@ -622,9 +622,9 @@ int main() {
     return measured(distributed(distribution_source, offsets), 12);
   });
 
-  const Mesh analysis_source = sphere(10.0, 32, 16);
+  const ModelMesh analysis_source = sphere(10.0, 32, 16);
   harness.run("kernel", "triangulate", "sphere_medium", 16, [&] {
-    Mesh output = analysis_source;
+    ModelMesh output = analysis_source;
     PMP::triangulate_faces(output);
     return measured(output, analysis_source.number_of_faces());
   });
@@ -633,7 +633,7 @@ int main() {
                     analysis_source.number_of_faces());
   });
   harness.run("kernel", "renormalize", "sphere_medium", 4, [&] {
-    Mesh output = analysis_source;
+    ModelMesh output = analysis_source;
     std::vector<std::array<double, 3>> normals;
     normals.reserve(output.number_of_faces());
     for (const auto face : output.faces()) {
@@ -661,7 +661,7 @@ int main() {
                        normals.size()};
   });
   harness.run("kernel", "materialize_finite", "sphere_medium", 4, [&] {
-    Mesh output = transformed(analysis_source, [](const Point &point) {
+    ModelMesh output = transformed(analysis_source, [](const Point &point) {
       return Point(CGAL::to_double(point.x()), CGAL::to_double(point.y()),
                    CGAL::to_double(point.z()));
     });
@@ -727,7 +727,7 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), 1, manifold ? 1U : 0U};
   });
   harness.run("kernel", "contains_point", "sphere_two_queries", 8, [&] {
-    const CGAL::Side_of_triangle_mesh<Mesh, Kernel> side(analysis_source);
+    const CGAL::Side_of_triangle_mesh<ModelMesh, Kernel> side(analysis_source);
     const bool inside = side(Point(0, 0, 0)) != CGAL::ON_UNBOUNDED_SIDE;
     const bool outside = side(Point(20, 0, 0)) != CGAL::ON_UNBOUNDED_SIDE;
     return Measurement{analysis_source.number_of_faces(), 2,
@@ -735,7 +735,7 @@ int main() {
                            (static_cast<std::uint64_t>(outside) << 1U)};
   });
   harness.run("kernel", "ray_intersections", "sphere_diameter", 8, [&] {
-    using Primitive = CGAL::AABB_face_graph_triangle_primitive<Mesh>;
+    using Primitive = CGAL::AABB_face_graph_triangle_primitive<ModelMesh>;
     using Traits = CGAL::AABB_traits_3<Kernel, Primitive>;
     CGAL::AABB_tree<Traits> tree(faces(analysis_source).first,
                                  faces(analysis_source).second,
@@ -745,7 +745,7 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), hits, hits};
   });
   harness.run("kernel", "polyline_intersections", "sphere_diameter", 8, [&] {
-    using Primitive = CGAL::AABB_face_graph_triangle_primitive<Mesh>;
+    using Primitive = CGAL::AABB_face_graph_triangle_primitive<ModelMesh>;
     using Traits = CGAL::AABB_traits_3<Kernel, Primitive>;
     CGAL::AABB_tree<Traits> tree(faces(analysis_source).first,
                                  faces(analysis_source).second,
@@ -755,7 +755,7 @@ int main() {
     return Measurement{analysis_source.number_of_faces(), hits, hits};
   });
   harness.run("kernel", "dihedral_angle", "box_adjacent_faces", 32, [&] {
-    const Mesh shape = box(2.0);
+    const ModelMesh shape = box(2.0);
     std::vector<Kernel::Vector_3> normals;
     for (const auto face : shape.faces()) {
       std::array<Point, 3> points{};
@@ -779,14 +779,70 @@ int main() {
     return Measurement{12, 1, std::bit_cast<std::uint64_t>(angle)};
   });
 
+  const auto run_generated_corpus =
+      [&](std::string_view benchmark_case,
+          const std::filesystem::path &path) {
+        harness.run("corpus", "obj_import", benchmark_case, 1, [&] {
+          const auto soup = csgrs_bench::read_obj_boolean_mesh(path);
+          return measured(mesh_from_obj_soup(soup), soup.source_faces);
+        });
+        const auto soup = csgrs_bench::read_obj_boolean_mesh(path);
+        const ModelMesh source = mesh_from_obj_soup(soup);
+        const std::size_t input = source.number_of_faces();
+        harness.run("corpus", "translate", benchmark_case, 1, [&] {
+          return geometry_measured(
+              transformed(source, [](const Point &point) {
+                return Point(point.x() + Kernel::FT(1),
+                             point.y() + Kernel::FT(2),
+                             point.z() + Kernel::FT(3));
+              }),
+              input);
+        });
+        harness.run("corpus", "bounding_box", benchmark_case, 1, [&] {
+          const CGAL::Bbox_3 bounds = PMP::bbox(source);
+          return Measurement{
+              input, 6,
+              std::bit_cast<std::uint64_t>(bounds.xmax()) ^
+                  std::bit_cast<std::uint64_t>(bounds.ymax()) ^
+                  std::bit_cast<std::uint64_t>(bounds.zmax())};
+        });
+        harness.run("corpus", "graphics_buffers", benchmark_case, 1, [&] {
+          std::size_t corners{};
+          for (const auto face : source.faces()) {
+            for ([[maybe_unused]] const auto vertex :
+                 CGAL::vertices_around_face(source.halfedge(face), source)) {
+              ++corners;
+            }
+          }
+          return Measurement{input, corners,
+                             csgrs_bench::checksum(corners, corners)};
+        });
+        harness.run("corpus", "connectivity", benchmark_case, 1, [&] {
+          return Measurement{
+              input, source.number_of_vertices(),
+              csgrs_bench::checksum(source.number_of_vertices(),
+                                    source.number_of_edges())};
+        });
+        harness.run("corpus", "is_manifold", benchmark_case, 1, [&] {
+          const bool manifold =
+              CGAL::is_closed(source) && CGAL::is_valid_polygon_mesh(source);
+          return Measurement{input, 1, manifold ? 1U : 0U};
+        });
+      };
+  run_generated_corpus("deterministic_concave_labyrinth_31x31x6",
+                       csgrs_bench::generated_concave_path());
+  run_generated_corpus("sierpinski_foam_level3",
+                       csgrs_bench::generated_sierpinski_foam_path());
+
+  if (csgrs_bench::yeahright_enabled()) {
   harness.run("corpus", "obj_import", "yeahright_control_genus131", 1, [] {
     const auto soup =
-        csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
+        csgrs_bench::read_obj_boolean_mesh(csgrs_bench::yeahright_control_path());
     return measured(mesh_from_obj_soup(soup), soup.source_faces);
   });
   const auto yeahright_soup =
-      csgrs_bench::read_obj_triangle_soup(csgrs_bench::yeahright_control_path());
-  const Mesh yeahright_source = mesh_from_obj_soup(yeahright_soup);
+      csgrs_bench::read_obj_boolean_mesh(csgrs_bench::yeahright_control_path());
+  const ModelMesh yeahright_source = mesh_from_obj_soup(yeahright_soup);
   const std::size_t yeahright_input = yeahright_source.number_of_faces();
 
   harness.run("corpus", "rotate_translate",
@@ -834,11 +890,11 @@ int main() {
                 return Measurement{yeahright_input, 1, manifold ? 1U : 0U};
               });
 
-  const auto yeahright_boolean_soup = csgrs_bench::read_obj_triangle_soup(
+  const auto yeahright_boolean_soup = csgrs_bench::read_obj_boolean_mesh(
       csgrs_bench::yeahright_boolean_hull_path());
-  const Mesh yeahright_boolean_source =
+  const ModelMesh yeahright_boolean_source =
       mesh_from_obj_soup(yeahright_boolean_soup);
-  const Mesh yeahright_box = transformed(
+  const ModelMesh yeahright_box = transformed(
       exact_cuboid(Kernel::FT(20), Kernel::FT(40), Kernel::FT(40)),
       [](const Point &point) {
         return Point(point.x() - Kernel::FT(10),
@@ -848,9 +904,9 @@ int main() {
       yeahright_boolean_source.number_of_faces() +
       yeahright_box.number_of_faces();
   const auto yeahright_box_case = [&](auto operation) {
-    Mesh left = yeahright_boolean_source;
-    Mesh right = yeahright_box;
-    Mesh output;
+    ModelMesh left = yeahright_boolean_source;
+    ModelMesh right = yeahright_box;
+    ModelMesh output;
     if (!operation(left, right, output)) {
       throw std::runtime_error("CGAL YeahRight box Boolean workload failed");
     }
@@ -860,24 +916,24 @@ int main() {
               [&] {
                 Measurement total;
                 total += yeahright_box_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_union(left, right,
                                                              output);
                     });
                 total += yeahright_box_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_difference(left, right,
                                                                   output);
                     });
                 total += yeahright_box_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_intersection(left, right,
                                                                     output);
                     });
-                Mesh left = yeahright_boolean_source;
-                Mesh right = yeahright_box;
-                Mesh left_only;
-                Mesh right_only;
+                ModelMesh left = yeahright_boolean_source;
+                ModelMesh right = yeahright_box;
+                ModelMesh left_only;
+                ModelMesh right_only;
                 if (!PMP::corefine_and_compute_difference(left, right,
                                                           left_only)) {
                   throw std::runtime_error(
@@ -890,60 +946,60 @@ int main() {
                   throw std::runtime_error(
                       "CGAL YeahRight box XOR right difference failed");
                 }
-                Mesh output = left_only;
+                ModelMesh output = left_only;
                 CGAL::copy_face_graph(right_only, output);
                 total += measured(output, yeahright_box_input);
                 return total;
               });
-  const auto yeahright_stress_soup = csgrs_bench::read_obj_triangle_soup(
+  const auto yeahright_stress_soup = csgrs_bench::read_obj_boolean_mesh(
       csgrs_bench::yeahright_boolean_proxy_path());
-  const Mesh yeahright_stress_source = mesh_from_obj_soup(yeahright_stress_soup);
-  const Mesh yeahright_copy =
+  const ModelMesh yeahright_stress_source = mesh_from_obj_soup(yeahright_stress_soup);
+  const ModelMesh yeahright_copy =
       yeahright_boolean_operand(yeahright_stress_source);
   const std::size_t yeahright_boolean_input =
       yeahright_stress_source.number_of_faces() +
       yeahright_copy.number_of_faces();
   const auto yeahright_boolean_case = [&](auto operation) {
-    Mesh left = yeahright_stress_source;
-    Mesh right = yeahright_copy;
-    Mesh output;
+    ModelMesh left = yeahright_stress_source;
+    ModelMesh right = yeahright_copy;
+    ModelMesh output;
     if (!operation(left, right, output)) {
       throw std::runtime_error("CGAL YeahRight Boolean workload failed");
     }
     return measured(output, yeahright_boolean_input);
   };
   harness.run("stress", "boolean_union",
-              "yeahright_genus131_proxy_rot90_offset", 1,
+              "yeahright_control_hull_rot90_offset", 1,
               [&] {
                 return yeahright_boolean_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_union(left, right,
                                                              output);
                     });
               });
   harness.run("stress", "boolean_difference",
-              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+              "yeahright_control_hull_rot90_offset", 1, [&] {
                 return yeahright_boolean_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_difference(left, right,
                                                                   output);
                     });
               });
   harness.run("stress", "boolean_intersection",
-              "yeahright_genus131_proxy_rot90_offset", 1, [&] {
+              "yeahright_control_hull_rot90_offset", 1, [&] {
                 return yeahright_boolean_case(
-                    [](Mesh &left, Mesh &right, Mesh &output) {
+                    [](ModelMesh &left, ModelMesh &right, ModelMesh &output) {
                       return PMP::corefine_and_compute_intersection(left, right,
                                                                     output);
                     });
               });
   harness.run("stress", "boolean_xor",
-              "yeahright_genus131_proxy_rot90_offset", 1,
+              "yeahright_control_hull_rot90_offset", 1,
               [&] {
-                Mesh left = yeahright_stress_source;
-                Mesh right = yeahright_copy;
-                Mesh left_only;
-                Mesh right_only;
+                ModelMesh left = yeahright_stress_source;
+                ModelMesh right = yeahright_copy;
+                ModelMesh left_only;
+                ModelMesh right_only;
                 if (!PMP::corefine_and_compute_difference(left, right,
                                                           left_only)) {
                   throw std::runtime_error(
@@ -956,17 +1012,17 @@ int main() {
                   throw std::runtime_error(
                       "CGAL YeahRight XOR right difference failed");
                 }
-                Mesh output = left_only;
+                ModelMesh output = left_only;
                 CGAL::copy_face_graph(right_only, output);
                 return measured(output, yeahright_boolean_input);
               });
-  const Mesh yeahright_dangerous_copy =
+  const ModelMesh yeahright_dangerous_copy =
       yeahright_boolean_operand(yeahright_source);
   harness.run("dangerous", "boolean_intersection",
               "yeahright_control_full_rot90_offset_dangerous", 1, [&] {
-                Mesh left = yeahright_source;
-                Mesh right = yeahright_dangerous_copy;
-                Mesh output;
+                ModelMesh left = yeahright_source;
+                ModelMesh right = yeahright_dangerous_copy;
+                ModelMesh output;
                 if (!PMP::corefine_and_compute_intersection(left, right,
                                                             output)) {
                   throw std::runtime_error(
@@ -974,6 +1030,7 @@ int main() {
                 }
                 return measured(output, yeahright_input * 2);
               });
+  }
 
   harness.run("kernel", "stl_write", "sphere_medium", 8, [&] {
     std::ostringstream output(std::ios::binary);
