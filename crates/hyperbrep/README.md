@@ -157,6 +157,13 @@ The clean-break implementation currently provides:
   applied through `partition_first_faces` or `partition_second_faces` as
   deterministic validated partitions on either operand. Unsupported transfer
   is a typed error and never silently skips a known exact trace;
+- perpendicular plane/cylinder graph cuts retain one authoritative spatial
+  latitude circle plus exact pcurves on both carriers: native angular-sweep
+  correspondence on the planar circle and an affine constant-height line in
+  cylinder parameters. Quarter traces coalesce into a certified closed planar
+  loop, cylinder parameter rectangles tile exactly across axial subdivision,
+  and axial slab clipping survives stitching, rigid orientation, reflection,
+  operand reversal, and byte-identical persistence with exact `πr²h` volume;
 - all-face retained-graph selection through `select_first_faces` and
   `select_second_faces`, with exact pcurve-region witnesses for trimmed planar,
   analytic, and tensor carriers plus canonical parameter-domain witnesses for

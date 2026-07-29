@@ -17,7 +17,7 @@ use crate::geometry::{
     Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, ParameterDomain, Pcurve, Surface,
     SurfaceExactData, SurfaceIntersectionCurve, SurfaceIntersectionOperand,
     SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain,
-    affine_transform_orientation, materialize_nurbs_parameter_graph,
+    SurfacePcurveCorrespondence, affine_transform_orientation, materialize_nurbs_parameter_graph,
 };
 
 macro_rules! model_id {
@@ -1641,8 +1641,14 @@ impl Model {
             return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
         }
         let materialized = pcurve.materialize()?;
-        let (scale, offset) = materialized.spatial_parameter_map();
-        let correspondence = ParameterCorrespondence::affine(scale.clone(), offset.clone())?;
+        let correspondence = match materialized.correspondence() {
+            SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                ParameterCorrespondence::affine(scale.clone(), offset.clone())?
+            }
+            SurfacePcurveCorrespondence::AngularSweep { .. } => {
+                ParameterCorrespondence::angular_sweep()
+            }
+        };
         let (staged, start_vertex, start_edge) =
             self.attach_face_split_endpoint(face_id, Endpoint::Start, &start)?;
         let (staged, end_vertex, end_edge) =
@@ -1750,22 +1756,34 @@ impl Model {
             let spatial = curve.subcurve(range_start, range_end)?;
             let retained = pcurve.subcurve(range_start, range_end)?;
             let materialized = retained.materialize()?;
-            let (scale, offset) = materialized.spatial_parameter_map();
             let forward_pcurve = Pcurve::new(materialized.curve().clone());
-            let source_span = range_end - range_start;
-            let spatial_span = spatial.domain().end() - spatial.domain().start();
-            let domain_scale =
-                (spatial_span / source_span).map_err(|_| GeometryError::ProjectiveDivision)?;
-            let edge_scale = &domain_scale * scale;
-            let edge_offset = spatial.domain().start() + &domain_scale * (offset - range_start);
-            let forward_correspondence =
-                ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?;
             let reverse_pcurve = forward_pcurve.reversed()?;
-            let reverse_correspondence = ParameterCorrespondence::affine(
-                -edge_scale.clone(),
-                edge_scale * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
-                    + edge_offset,
-            )?;
+            let (forward_correspondence, reverse_correspondence) = match materialized
+                .correspondence()
+            {
+                SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                    let source_span = range_end - range_start;
+                    let spatial_span = spatial.domain().end() - spatial.domain().start();
+                    let domain_scale = (spatial_span / source_span)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let edge_scale = &domain_scale * scale;
+                    let edge_offset =
+                        spatial.domain().start() + &domain_scale * (offset - range_start);
+                    (
+                        ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?,
+                        ParameterCorrespondence::affine(
+                            -edge_scale.clone(),
+                            edge_scale
+                                * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
+                                + edge_offset,
+                        )?,
+                    )
+                }
+                SurfacePcurveCorrespondence::AngularSweep { .. } => (
+                    ParameterCorrespondence::angular_sweep(),
+                    ParameterCorrespondence::angular_sweep(),
+                ),
+            };
             halves.push((
                 spatial,
                 forward_pcurve,
@@ -2038,11 +2056,8 @@ impl Model {
                     let Some(second_parameter) = contact.second().exact_curve_parameter() else {
                         return Err(GeometryError::UnsupportedIntersection.into());
                     };
-                    let (second_scale, second_offset) =
-                        materialized[second_index].spatial_parameter_map();
-                    let (first_scale, first_offset) =
-                        materialized[first_index].spatial_parameter_map();
-                    let first_spatial = first_scale * first_parameter + first_offset;
+                    let first_spatial =
+                        materialized[first_index].spatial_parameter_at(&first_parameter)?;
                     if !ordered[first_index]
                         .intersection
                         .curve()
@@ -2053,7 +2068,7 @@ impl Model {
                     }
                     insert_exact_split_parameter(
                         &mut split_parameters[second_index],
-                        second_scale * second_parameter + second_offset,
+                        materialized[second_index].spatial_parameter_at(&second_parameter)?,
                     )?;
                 }
             }
@@ -11106,9 +11121,6 @@ impl ModelBuilder {
         &self,
         shell: ShellId,
     ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
-        if !self.certify_translation_shell_topology(shell)? {
-            return Ok(None);
-        }
         let faces = &self.shell_ref(shell)?.faces;
         let mut side_faces = Vec::new();
         for face_id in faces {
@@ -11143,45 +11155,85 @@ impl ModelBuilder {
             unreachable!("cylinder kind carries cylinder exact data");
         };
 
+        let mut u_values = Vec::new();
         let mut v_values = Vec::new();
+        let mut face_coordinates = Vec::with_capacity(side_faces.len());
         for face_id in &side_faces {
             let Some(outer) = self.face_ref(*face_id)?.outer() else {
                 return Ok(None);
             };
             let wire = self.wire_ref(outer)?;
+            if wire.edge_uses.len() < 4 {
+                return Ok(None);
+            }
+            let mut face_u = Vec::with_capacity(8);
+            let mut face_v = Vec::with_capacity(8);
+            let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
             for edge_use_id in &wire.edge_uses {
                 let pcurve = self.pcurve_ref(self.edge_use_ref(*edge_use_id)?.pcurve)?;
                 let Some(line) = pcurve.line_segment() else {
                     return Ok(None);
                 };
-                v_values.push(line.start().y().clone());
-                v_values.push(line.end().y().clone());
+                let u_constant = real_values_equal(line.start().x(), line.end().x())?;
+                let v_constant = real_values_equal(line.start().y(), line.end().y())?;
+                if u_constant == v_constant {
+                    return Ok(None);
+                }
+                face_u.extend([line.start().x().clone(), line.end().x().clone()]);
+                face_v.extend([line.start().y().clone(), line.end().y().clone()]);
+                parameter_segments.push(Segment2::Line(line.clone()));
             }
+            let (u_min, u_max) = exact_real_min_max(&face_u)?;
+            let (v_min, v_max) = exact_real_min_max(&face_v)?;
+            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
+            let represented_area = contour
+                .signed_area()
+                .map_err(GeometryError::from)?
+                .ok_or(BuildError::DegenerateShellVolume(shell))?
+                .abs();
+            let rectangle_area = (&u_max - &u_min) * (&v_max - &v_min);
+            if !real_values_equal(&represented_area, &rectangle_area)? {
+                return Ok(None);
+            }
+            insert_sorted_real(&mut u_values, &u_min)?;
+            insert_sorted_real(&mut u_values, &u_max)?;
+            insert_sorted_real(&mut v_values, &v_min)?;
+            insert_sorted_real(&mut v_values, &v_max)?;
+            face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        let Some(first_v) = v_values.first() else {
+        if u_values.len() != 5 || v_values.len() < 2 {
             return Ok(None);
-        };
-        let mut v_min = first_v.clone();
-        let mut v_max = first_v.clone();
-        for value in &v_values[1..] {
-            if decided_model_order(compare_reals(value, &v_min))? == std::cmp::Ordering::Less {
-                v_min = value.clone();
-            }
-            if decided_model_order(compare_reals(value, &v_max))? == std::cmp::Ordering::Greater {
-                v_max = value.clone();
+        }
+        let quarter =
+            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        for pair in u_values.windows(2) {
+            if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
+                return Ok(None);
             }
         }
+        let v_min = v_values[0].clone();
+        let v_max = v_values.last().expect("cylinder has axial values").clone();
         if decided_model_order(compare_reals(&v_min, &v_max))? != std::cmp::Ordering::Less {
             return Ok(None);
         }
-        for value in &v_values {
-            let at_min =
-                decided_model_order(compare_reals(value, &v_min))? == std::cmp::Ordering::Equal;
-            let at_max =
-                decided_model_order(compare_reals(value, &v_max))? == std::cmp::Ordering::Equal;
-            if !at_min && !at_max {
+
+        let mut covered_cells = HashSet::new();
+        for (u_min, u_max, face_v_min, face_v_max) in face_coordinates {
+            let u_start = exact_real_index(&u_values, &u_min)?;
+            let u_end = exact_real_index(&u_values, &u_max)?;
+            let v_start = exact_real_index(&v_values, &face_v_min)?;
+            let v_end = exact_real_index(&v_values, &face_v_max)?;
+            if u_end != u_start + 1 || v_start >= v_end {
                 return Ok(None);
             }
+            for v_cell in v_start..v_end {
+                if !covered_cells.insert((u_start, v_cell)) {
+                    return Ok(None);
+                }
+            }
+        }
+        if covered_cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
+            return Ok(None);
         }
 
         let expected_centers = [

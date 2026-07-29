@@ -32,7 +32,8 @@ pub use geometry::{
     CurveSurfacePoint, IntersectionMultiplicity, MaterializedSurfacePcurve, ParameterDomain,
     Pcurve, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionCurve,
     SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis,
-    SurfaceKind, SurfaceParameterDomain, SurfacePartials, SurfaceSurfaceIntersection,
+    SurfaceKind, SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
+    SurfaceSurfaceIntersection,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use model::{

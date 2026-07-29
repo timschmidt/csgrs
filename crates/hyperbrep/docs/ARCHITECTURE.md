@@ -77,6 +77,13 @@ the owning shell is updated by identity. Prism and cylinder certificates derive
 cap regions from stitched external boundaries, so internal face subdivision
 does not alter the represented solid.
 
+The native cylinder certificate also derives an exact parameter-space grid
+from every current side descendant. Each rectilinear pcurve loop must have the
+exact area of its bounding rectangle; those rectangles must cover every
+quarter-angle/axial grid cell exactly once. This admits latitude cuts and
+temporarily subdivided axial boundary edges without accepting overlaps, gaps,
+or a sampled approximation.
+
 ## Exact image agreement
 
 Endpoint agreement is necessary but not sufficient. Each supported

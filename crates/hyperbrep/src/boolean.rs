@@ -705,9 +705,15 @@ fn partition_graph_faces(
     } else {
         SurfaceIntersectionOperand::Second
     };
-    for (face, curves) in surface_traces {
+    for (face, mut curves) in surface_traces {
         if curves.is_empty() {
             continue;
+        }
+        let surface = staged
+            .surface(staged.face(face).expect("validated graph face").surface())
+            .expect("validated graph face surface");
+        if surface.kind() == crate::SurfaceKind::Plane {
+            curves = coalesce_planar_closed_circle_traces(surface, curves)?;
         }
         let (next, partition) = staged.split_face_by_surface_curves(face, &curves, operand)?;
         staged = next;
@@ -715,6 +721,86 @@ fn partition_graph_faces(
     }
     partitions.sort_by_key(|partition| partition.source_face);
     Ok((staged, partitions))
+}
+
+fn coalesce_planar_closed_circle_traces(
+    surface: &Surface,
+    curves: Vec<SurfaceIntersectionCurve>,
+) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
+    if curves.len() < 2
+        || curves
+            .iter()
+            .any(|curve| curve.curve().kind() != crate::Curve3Kind::CircleArc)
+    {
+        return Ok(curves);
+    }
+
+    let mut normalized = Vec::with_capacity(curves.len());
+    for curve in curves {
+        let Curve3ExactData::EllipseArc(data) = curve.curve().exact_data() else {
+            unreachable!("circle kind carries ellipse-arc exact data");
+        };
+        normalized.push(if data.direction < 0 {
+            curve.reversed()?
+        } else {
+            curve
+        });
+    }
+    let Curve3ExactData::EllipseArc(reference) = normalized[0].curve().exact_data() else {
+        unreachable!("normalized circle retains conic data");
+    };
+    for curve in &normalized {
+        let Curve3ExactData::EllipseArc(candidate) = curve.curve().exact_data() else {
+            unreachable!("normalized circle retains conic data");
+        };
+        if !candidate.circle
+            || candidate.direction != reference.direction
+            || !points_exactly_equal(&candidate.center, &reference.center)?
+            || !vectors_exactly_equal(&candidate.x, &reference.x)?
+            || !vectors_exactly_equal(&candidate.y, &reference.y)?
+            || exact_order(&candidate.x_radius, &reference.x_radius)? != Ordering::Equal
+            || exact_order(&candidate.y_radius, &reference.y_radius)? != Ordering::Equal
+        {
+            return Ok(normalized);
+        }
+    }
+    let mut ordered: Vec<SurfaceIntersectionCurve> = Vec::with_capacity(normalized.len());
+    for curve in normalized {
+        let mut insertion = ordered.len();
+        while insertion > 0
+            && exact_order(
+                curve.curve().domain().start(),
+                ordered[insertion - 1].curve().domain().start(),
+            )? == Ordering::Less
+        {
+            insertion -= 1;
+        }
+        ordered.insert(insertion, curve);
+    }
+    let normalized = ordered;
+    let start = normalized[0].curve().domain().start().clone();
+    let mut end = start.clone();
+    for curve in &normalized {
+        if exact_order(curve.curve().domain().start(), &end)? != Ordering::Equal
+            || exact_order(curve.curve().domain().start(), curve.curve().domain().end())?
+                != Ordering::Less
+        {
+            return Ok(normalized);
+        }
+        end = curve.curve().domain().end().clone();
+    }
+    if exact_order(&(&end - &start), &Real::tau())? != Ordering::Equal {
+        return Ok(normalized);
+    }
+    let closed = Curve3::circle_arc(
+        reference.center,
+        reference.x,
+        reference.y,
+        reference.x_radius,
+        start,
+        end,
+    )?;
+    Ok(vec![SurfaceIntersectionCurve::on_plane(closed, surface)?])
 }
 
 fn add_opposite_planar_edge_supports(
@@ -4478,8 +4564,7 @@ mod tests {
             let curve_domain = materialized.curve().parameter_domain();
             let curve_parameter =
                 ((curve_domain.start() + curve_domain.end()) / Real::from(2)).unwrap();
-            let (scale, offset) = materialized.spatial_parameter_map();
-            let spatial_parameter = scale * &curve_parameter + offset;
+            let spatial_parameter = materialized.spatial_parameter_at(&curve_parameter).unwrap();
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized.curve().point_at(&curve_parameter).unwrap();
             assert_eq!(
@@ -5289,6 +5374,135 @@ mod tests {
             .unwrap()
             .validate()
             .unwrap();
+    }
+
+    #[test]
+    fn axial_cylinder_slab_intersection_retains_exact_latitude_pcurves() {
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
+        let graph = intersection_graph(&cylinder, cylinder_solid, &slab, slab_solid).unwrap();
+        let latitude_pairs = graph
+            .intersections()
+            .iter()
+            .filter(|pair| {
+                matches!(
+                    pair.relation(),
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(_))
+                ) && matches!(pair.trim(), FacePairTrim::SurfaceCurveFragments(_))
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(latitude_pairs.len(), 8);
+        for pair in latitude_pairs {
+            let FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
+                unreachable!("filtered retained latitude pair");
+            };
+            assert_eq!(fragments.len(), 1);
+            let fragment = &fragments[0];
+            assert_eq!(fragment.curve().kind(), crate::Curve3Kind::CircleArc);
+            for pcurve in [fragment.first_pcurve(), fragment.second_pcurve()] {
+                pcurve.materialize().unwrap();
+            }
+        }
+
+        let (partitioned_cylinder, cylinder_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(cylinder_partitions.len(), 4);
+        assert_eq!(
+            compare_reals(
+                &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
+                &cylinder.solid_volume(cylinder_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (partitioned_slab, slab_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(slab_partitions.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned_slab.solid_volume(slab_solid).unwrap(),
+                &slab.solid_volume(slab_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let result = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap();
+        let BooleanResult::Solid { model, solid } = result else {
+            panic!("axial cylinder/slab clipping must retain one exact cylinder");
+        };
+        let expected = Real::from(8) * Real::pi();
+        assert!(model.faces().any(|(_, face)| {
+            model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Cylinder
+        }));
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        for result in [
+            intersection(&cylinder, cylinder_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &cylinder, cylinder_solid).unwrap(),
+        ] {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("the standard API must preserve the exact axial cylinder clip");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [Real::from(5), -Real::from(2), Real::from(7)],
+        );
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        let oriented_slab = slab.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(
+            &oriented_cylinder,
+            cylinder_solid,
+            &oriented_slab,
+            slab_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigidly oriented axial clipping must retain one exact cylinder");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected,).value(),
+            Some(Ordering::Equal)
+        );
+
+        let reflected = model
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                -Real::one(),
+                Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

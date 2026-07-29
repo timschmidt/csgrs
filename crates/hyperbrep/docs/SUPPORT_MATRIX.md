@@ -229,9 +229,8 @@ algebraic contact are explicit errors. A wholly interior closed curve authors
 two canonical shared edge halves, one inner wire on the surrounding material
 face, and one outer wire on the enclosed descendant. Nested loops, mixed
 boundary-attached traces, exact hole transfer, and caller order/direction
-invariance use the same descendant arrangement. Conic clipping against
-nonplanar bounded faces, curved classification and selection, stitching, and
-general curved regularization remain open.
+invariance use the same descendant arrangement. General conic clipping against
+other nonplanar bounded faces and general curved regularization remain open.
 
 ## Local topology editing
 
@@ -278,6 +277,16 @@ transferable face-local curve returns `FacePartitionUnsupported`; unresolved
 trim evidence remains unresolved rather than being skipped. The narrower
 `partition_{first,second}_planar_faces` methods remain available only as
 explicit line-only operations.
+
+Perpendicular plane/cylinder cuts use the same retained path rather than the
+older planar-conic-only trim. The spatial latitude circle is authoritative;
+the plane pcurve retains native angular-sweep correspondence and the cylinder
+pcurve is the exact line `(u, constant-v)`. Quarter traces from the four native
+cylinder patches coalesce into one closed planar loop, while side descendants
+are certified by exact rectangular parameter-grid coverage. Axial slab
+intersection is therefore supported through graph partition, all-face
+selection, native curved stitching, rigid orientation, reflection, operand
+reversal, and persistence.
 
 Closed rational-Bézier curve sweeps and translated prism shells retain their
 exact solid certificate after

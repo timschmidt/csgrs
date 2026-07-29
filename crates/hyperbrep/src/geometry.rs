@@ -4,8 +4,9 @@ use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    BezierParameter2, Contour2, Curve2, CurveFamily2, CurveGeometry2, CurvePolicy, LineArcRegion2,
-    LineSeg2, Point2 as CurvePoint2, RationalBezier2, RationalBezierPointIncidence2, Segment2,
+    BezierParameter2, CircularArc2, Classification, Contour2, Curve2, CurveFamily2, CurveGeometry2,
+    CurvePolicy, LineArcRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
+    RationalBezierPointIncidence2, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -1199,8 +1200,39 @@ pub struct SurfaceIntersectionPcurve {
 #[derive(Clone, Debug)]
 pub struct MaterializedSurfacePcurve {
     curve: Curve2,
-    spatial_scale: Real,
-    spatial_offset: Real,
+    correspondence: SurfacePcurveCorrespondence,
+}
+
+/// Exact correspondence from a materialized pcurve to its retained spatial
+/// intersection curve.
+#[derive(Clone, Debug)]
+pub enum SurfacePcurveCorrespondence {
+    /// `spatial_parameter = scale * pcurve_parameter + offset`.
+    Affine {
+        /// Nonzero exact scale.
+        scale: Real,
+        /// Exact offset.
+        offset: Real,
+    },
+    /// The pcurve's directed angular sweep fraction spans the spatial curve
+    /// domain.
+    AngularSweep {
+        /// Spatial parameter at the pcurve sweep start.
+        spatial_start: Real,
+        /// Spatial parameter at the pcurve sweep end.
+        spatial_end: Real,
+    },
+}
+
+impl SurfacePcurveCorrespondence {
+    /// Returns affine coefficients, or `None` for angular sweep
+    /// correspondence.
+    pub const fn affine_coefficients(&self) -> Option<(&Real, &Real)> {
+        match self {
+            Self::Affine { scale, offset } => Some((scale, offset)),
+            Self::AngularSweep { .. } => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -1541,7 +1573,17 @@ impl SurfaceIntersectionPcurve {
                     project_curve_to_plane_frame(&source_curve, origin, u, v)?
                         .ok_or(GeometryError::UnsupportedIntersection)?,
                 )?;
-                materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+                if curve.family() == CurveFamily2::CircularArc {
+                    Ok(MaterializedSurfacePcurve {
+                        curve,
+                        correspondence: SurfacePcurveCorrespondence::AngularSweep {
+                            spatial_start: self.domain.start().clone(),
+                            spatial_end: self.domain.end().clone(),
+                        },
+                    })
+                } else {
+                    materialized_surface_pcurve_from_matching_domains(curve, &self.domain)
+                }
             }
             SurfaceIntersectionPcurveMapping::LinearPlaneSection {
                 profile,
@@ -1679,8 +1721,35 @@ impl SurfaceIntersectionPcurve {
                 origin,
                 u,
                 v,
-            } => Ok(project_curve_to_plane_frame(spatial, origin, u, v)?
-                .map(|curve| vec![identity(curve)])),
+            } => {
+                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
+                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
+                let descending =
+                    decided_order(compare_reals(&source_start, &source_end))? == Ordering::Greater;
+                let source_curve = if descending {
+                    spatial.subcurve(&source_end, &source_start)?
+                } else {
+                    spatial.subcurve(&source_start, &source_end)?
+                };
+                let Some(mut curve) = project_curve_to_plane_frame(&source_curve, origin, u, v)?
+                else {
+                    return Ok(None);
+                };
+                if descending {
+                    curve = curve.reversed()?;
+                }
+                let curve_domain = curve.parameter_domain();
+                let curve_span = curve_domain.end() - curve_domain.start();
+                let spatial_span = self.domain.end() - self.domain.start();
+                let spatial_scale =
+                    (&spatial_span / &curve_span).map_err(|_| GeometryError::ProjectiveDivision)?;
+                let spatial_offset = self.domain.start() - &spatial_scale * curve_domain.start();
+                Ok(Some(vec![SurfacePcurveClipCarrier {
+                    curve,
+                    spatial_scale,
+                    spatial_offset,
+                }]))
+            }
             SurfaceIntersectionPcurveMapping::LinearPlaneSection {
                 profile,
                 plane_origin,
@@ -1730,9 +1799,33 @@ impl MaterializedSurfacePcurve {
         &self.curve
     }
 
-    /// Returns `spatial_parameter = scale * pcurve_parameter + offset`.
-    pub const fn spatial_parameter_map(&self) -> (&Real, &Real) {
-        (&self.spatial_scale, &self.spatial_offset)
+    /// Returns the exact pcurve-to-spatial parameter correspondence.
+    pub const fn correspondence(&self) -> &SurfacePcurveCorrespondence {
+        &self.correspondence
+    }
+
+    /// Maps one pcurve parameter to the authoritative spatial-curve parameter.
+    pub fn spatial_parameter_at(&self, parameter: &Real) -> GeometryResult<Real> {
+        match &self.correspondence {
+            SurfacePcurveCorrespondence::Affine { scale, offset } => Ok(scale * parameter + offset),
+            SurfacePcurveCorrespondence::AngularSweep {
+                spatial_start,
+                spatial_end,
+            } => {
+                let CurveGeometry2::CircularArc(arc) = self.curve.geometry() else {
+                    return Err(GeometryError::UnsupportedPcurveContour);
+                };
+                let point = self.curve.point_at(parameter)?;
+                let point = CurvePoint2::new(point.x().clone(), point.y().clone());
+                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::certified())? {
+                    Classification::Decided(fraction) => fraction,
+                    Classification::Uncertain(reason) => {
+                        return Err(GeometryError::PlanarClassificationUnresolved(reason));
+                    }
+                };
+                Ok(spatial_start + (spatial_end - spatial_start) * fraction)
+            }
+        }
     }
 }
 
@@ -1749,8 +1842,10 @@ fn materialized_surface_pcurve_from_matching_domains(
     let spatial_offset = target_domain.start() - &spatial_scale * curve_start;
     Ok(MaterializedSurfacePcurve {
         curve,
-        spatial_offset,
-        spatial_scale,
+        correspondence: SurfacePcurveCorrespondence::Affine {
+            scale: spatial_scale,
+            offset: spatial_offset,
+        },
     })
 }
 
@@ -2831,9 +2926,11 @@ impl Surface {
             | (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Plane(plane)) => {
                 intersect_plane_sphere(plane, sphere)
             }
-            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cylinder(cylinder))
-            | (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Plane(plane)) => {
+            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cylinder(cylinder)) => {
                 intersect_plane_cylinder(plane, cylinder)
+            }
+            (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Plane(plane)) => {
+                intersect_plane_cylinder(plane, cylinder).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cone(cone))
             | (SurfaceGeometry::Cone(cone), SurfaceGeometry::Plane(plane)) => {
@@ -3477,6 +3574,39 @@ pub(crate) fn project_curve_to_plane_frame(
             weights,
             knots,
         )?)),
+        Curve3ExactData::EllipseArc(data) if data.circle => {
+            let center = project(&data.center)?;
+            let projected_x =
+                project(&(data.center.clone() + data.x.clone() * data.x_radius.clone()))?;
+            let projected_y =
+                project(&(data.center.clone() + data.y.clone() * data.y_radius.clone()))?;
+            let x = (projected_x.x() - center.x(), projected_x.y() - center.y());
+            let y = (projected_y.x() - center.x(), projected_y.y() - center.y());
+            let xy = &x.0 * &y.0 + &x.1 * &y.1;
+            let x_squared = &x.0 * &x.0 + &x.1 * &x.1;
+            let y_squared = &y.0 * &y.0 + &y.1 * &y.1;
+            if decided_order(compare_reals(&xy, &Real::zero()))? != Ordering::Equal
+                || decided_order(compare_reals(&x_squared, &y_squared))? != Ordering::Equal
+            {
+                return Ok(None);
+            }
+            let start = project(&curve.start()?)?;
+            let end = project(&curve.end()?)?;
+            let tangent_point =
+                data.center.clone() + curve.derivative_at(curve.domain().start(), 1)?.vector();
+            let projected_tangent_point = project(&tangent_point)?;
+            let projected_tangent = (
+                projected_tangent_point.x() - center.x(),
+                projected_tangent_point.y() - center.y(),
+            );
+            let radial = (start.x() - center.x(), start.y() - center.y());
+            let orientation = &radial.0 * &projected_tangent.1 - &radial.1 * &projected_tangent.0;
+            let clockwise =
+                decided_order(compare_reals(&orientation, &Real::zero()))? == Ordering::Less;
+            Ok(Some(Curve2::from(CircularArc2::try_from_center(
+                start, end, center, clockwise,
+            )?)))
+        }
         Curve3ExactData::EllipseArc(_) => Ok(None),
     }
 }
@@ -4182,7 +4312,6 @@ fn clip_linear_tensor_section(
     )?;
     let region = LineArcRegion2::from_material_contours(vec![contour]);
     let materialized = section.second_pcurve.materialize()?;
-    let (spatial_scale, spatial_offset) = materialized.spatial_parameter_map();
     let trimmed = materialized
         .curve()
         .trim_inside_region_with_parameters(&region, &CurvePolicy::certified())?;
@@ -4191,8 +4320,8 @@ fn clip_linear_tensor_section(
         let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
             return Err(GeometryError::UnrepresentableParameter);
         };
-        let spatial_start = spatial_scale * pcurve_start + spatial_offset;
-        let spatial_end = spatial_scale * pcurve_end + spatial_offset;
+        let spatial_start = materialized.spatial_parameter_at(&pcurve_start)?;
+        let spatial_end = materialized.spatial_parameter_at(&pcurve_end)?;
         if let Some((_, previous_end)) = intervals.last_mut()
             && decided_order(compare_reals(previous_end, &spatial_start))? == Ordering::Equal
         {
@@ -4364,15 +4493,23 @@ fn intersect_plane_cylinder(
         let numerator = normal.dot(&(&plane.origin - &cylinder.origin));
         let axial_parameter =
             (numerator / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-        let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_parameter;
-        return Ok(SurfaceSurfaceIntersection::Circle(Curve3::circle_arc(
+        let center = cylinder.origin.clone() + cylinder.frame.z.clone() * axial_parameter.clone();
+        let curve = Curve3::circle_arc(
             center,
             cylinder.frame.x.clone(),
             cylinder.frame.y.clone(),
             cylinder.radius.clone(),
             Real::zero(),
             Real::from(2) * Real::pi(),
-        )?));
+        )?;
+        let domain = curve.domain().clone();
+        return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+            SurfaceIntersectionCurve::new(
+                curve.clone(),
+                SurfaceIntersectionPcurve::plane_projection(curve, plane),
+                SurfaceIntersectionPcurve::tensor_iso_v(domain, axial_parameter),
+            ),
+        )));
     }
 
     let axis_dot_normal = cylinder.frame.z.dot(&normal);
@@ -7550,7 +7687,10 @@ mod tests {
             Point2::new(q(7, 2), q(17, 2))
         );
         let materialized = section.second_pcurve().materialize().unwrap();
-        assert_eq!(materialized.spatial_parameter_map(), (&r(3), &r(2)));
+        assert_eq!(
+            materialized.correspondence().affine_coefficients(),
+            Some((&r(3), &r(2)))
+        );
         assert_eq!(
             materialized.curve().point_at(&q(1, 2)).unwrap(),
             CurvePoint2::new(q(7, 2), q(17, 2))
@@ -7711,7 +7851,10 @@ mod tests {
         assert_eq!(section.curve().domain().start(), &r(2));
         assert_eq!(section.curve().domain().end(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
-        assert_eq!(materialized.spatial_parameter_map(), (&r(3), &r(2)));
+        assert_eq!(
+            materialized.correspondence().affine_coefficients(),
+            Some((&r(3), &r(2)))
+        );
         assert_eq!(
             materialized.curve().point_at(&q(1, 2)).unwrap(),
             CurvePoint2::new(q(17, 2), q(7, 2))
@@ -7770,7 +7913,10 @@ mod tests {
         assert_eq!(section.curve().domain().end(), &r(5));
         let materialized = section.first_pcurve().materialize().unwrap();
         assert_eq!(materialized.curve().family(), CurveFamily2::Nurbs);
-        assert_eq!(materialized.spatial_parameter_map(), (&r(1), &r(0)));
+        assert_eq!(
+            materialized.correspondence().affine_coefficients(),
+            Some((&r(1), &r(0)))
+        );
         for parameter in [r(2), r(3), r(4), r(5)] {
             let surface_parameter = materialized.curve().point_at(&parameter).unwrap();
             assert_points_equal(
@@ -7847,7 +7993,10 @@ mod tests {
         };
         let v_materialized = v_section.first_pcurve().materialize().unwrap();
         assert_eq!(v_materialized.curve().family(), CurveFamily2::Nurbs);
-        assert_eq!(v_materialized.spatial_parameter_map(), (&r(1), &r(0)));
+        assert_eq!(
+            v_materialized.correspondence().affine_coefficients(),
+            Some((&r(1), &r(0)))
+        );
         let (v_split, _) = v_patch
             .split_face_by_surface_curve(v_face, v_section.curve(), v_section.first_pcurve())
             .unwrap();
@@ -8565,12 +8714,24 @@ mod tests {
         )
         .unwrap();
         let transverse = Surface::plane(p(0, 0, 3), Vector3::x(), Vector3::y()).unwrap();
-        let SurfaceSurfaceIntersection::Circle(circle) =
+        let SurfaceSurfaceIntersection::Curve(section) =
             cylinder.intersect_surface(&transverse).unwrap()
         else {
-            panic!("transverse plane must retain a full circle");
+            panic!("transverse plane must retain a full circle with both exact pcurves");
         };
-        assert_points_equal(&circle.start().unwrap(), &p(2, 0, 3));
+        assert_points_equal(&section.curve().start().unwrap(), &p(2, 0, 3));
+        let cylinder_pcurve = section.first_pcurve().materialize().unwrap();
+        assert_eq!(cylinder_pcurve.curve().family(), CurveFamily2::Line);
+        assert!(matches!(
+            cylinder_pcurve.correspondence(),
+            SurfacePcurveCorrespondence::Affine { .. }
+        ));
+        let plane_pcurve = section.second_pcurve().materialize().unwrap();
+        assert_eq!(plane_pcurve.curve().family(), CurveFamily2::CircularArc);
+        assert!(matches!(
+            plane_pcurve.correspondence(),
+            SurfacePcurveCorrespondence::AngularSweep { .. }
+        ));
 
         let secant = Surface::plane(Point3::origin(), Vector3::y(), Vector3::z()).unwrap();
         let SurfaceSurfaceIntersection::Lines(lines) = secant.intersect_surface(&cylinder).unwrap()
