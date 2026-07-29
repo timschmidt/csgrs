@@ -300,7 +300,7 @@ impl ClosedTriangleMesh3 {
     /// Physics keeps material and mass-property interpretation. Mesh
     /// validation and topology facts are delegated to hypermesh at this
     /// boundary.
-    pub fn to_hypermesh_exact(&self) -> hypermesh::HypermeshResult<hypermesh::InputMesh> {
+    pub fn to_hypermesh_exact(&self) -> hypermesh::HypermeshResult<hypermesh::TriangleMesh> {
         let mut positions = Vec::with_capacity(self.triangles.len() * 3);
         let mut triangles = Vec::with_capacity(self.triangles.len());
         for triangle in &self.triangles {
@@ -314,7 +314,7 @@ impl ClosedTriangleMesh3 {
             }
             triangles.push(hypermesh::Triangle::new(base, base + 1, base + 2));
         }
-        let mesh = hypermesh::InputMesh::new(positions, triangles);
+        let mesh = hypermesh::TriangleMesh::new(positions, triangles);
         hypermesh::polygon_soup(&[mesh.as_ref()])?;
         Ok(mesh)
     }

@@ -10,6 +10,8 @@ pub enum PhysicsError {
     EmptyIdentifier,
     /// A triangle mesh had no triangles.
     EmptyTriangleMesh,
+    /// A native triangle row referenced a missing position.
+    TriangleIndexOutOfBounds,
     /// A requested density was not certified strictly positive.
     NonPositiveDensity,
     /// The oriented mesh volume was certified as zero.

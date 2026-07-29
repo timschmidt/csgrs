@@ -245,14 +245,14 @@ impl ElectromagneticBoundaryCondition3 {
 }
 
 fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
 }
 
 fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive | RealSign::Zero) => Ok(()),
         Some(RealSign::Negative) | None => Err(error),
     }

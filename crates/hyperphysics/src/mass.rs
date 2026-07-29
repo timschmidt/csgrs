@@ -1,11 +1,26 @@
 //! Exact uniform-density mass-property reports.
 
 use std::array::from_fn;
+use std::cell::RefCell;
+use std::sync::Arc;
 
-use hyperlattice::Vector3;
+use hyperlattice::{Point3, Vector3};
 use hyperreal::{CertifiedRealSign, Real, RealSign};
 
 use crate::{ClosedTriangleMesh3, ExactMaterial, PhysicsError, PhysicsResult};
+
+#[derive(Clone)]
+struct CachedTriangleMeshMassProperties {
+    positions: Arc<[Point3]>,
+    triangles: Arc<[hypermesh::Triangle]>,
+    density: Real,
+    report: MassPropertyReport3,
+}
+
+thread_local! {
+    static TRIANGLE_MESH_MASS_PROPERTIES: RefCell<Vec<CachedTriangleMeshMassProperties>> =
+        const { RefCell::new(Vec::new()) };
+}
 
 /// Symmetric inertia tensor in row-major named components.
 #[derive(Clone, Debug, PartialEq)]
@@ -217,8 +232,68 @@ impl ClosedTriangleMesh3 {
     }
 }
 
+/// Computes and retains exact uniform-density properties for native Hypermesh
+/// geometry.
+///
+/// Repeated queries against clones of the same immutable position and triangle
+/// buffers reuse the physics report. Geometry remains owned by Hypermesh;
+/// Hyperphysics retains only this bounded physical interpretation.
+pub fn triangle_mesh_uniform_density_mass_properties(
+    mesh: &hypermesh::TriangleMesh,
+    density: Real,
+) -> PhysicsResult<MassPropertyReport3> {
+    if let Some(report) = TRIANGLE_MESH_MASS_PROPERTIES.with_borrow(|entries| {
+        entries
+            .iter()
+            .find(|entry| {
+                Arc::ptr_eq(&entry.positions, &mesh.positions)
+                    && Arc::ptr_eq(&entry.triangles, &mesh.triangles)
+                    && entry.density == density
+            })
+            .map(|entry| entry.report.clone())
+    }) {
+        return Ok(report);
+    }
+
+    let triangles = mesh
+        .triangles
+        .iter()
+        .map(|triangle| {
+            let [a, b, c] = triangle.indices();
+            let [Some(a), Some(b), Some(c)] = [
+                mesh.positions.get(a),
+                mesh.positions.get(b),
+                mesh.positions.get(c),
+            ] else {
+                return Err(PhysicsError::TriangleIndexOutOfBounds);
+            };
+            Ok(crate::Triangle3::new([
+                a.to_vector(),
+                b.to_vector(),
+                c.to_vector(),
+            ]))
+        })
+        .collect::<PhysicsResult<Vec<_>>>()?;
+    let report =
+        ClosedTriangleMesh3::new(triangles)?.uniform_density_mass_properties(density.clone())?;
+
+    TRIANGLE_MESH_MASS_PROPERTIES.with_borrow_mut(|entries| {
+        const CAPACITY: usize = 8;
+        if entries.len() == CAPACITY {
+            entries.remove(0);
+        }
+        entries.push(CachedTriangleMeshMassProperties {
+            positions: Arc::clone(&mesh.positions),
+            triangles: Arc::clone(&mesh.triangles),
+            density,
+            report: report.clone(),
+        });
+    });
+    Ok(report)
+}
+
 fn require_positive_density(density: &Real) -> PhysicsResult<()> {
-    match density.refine_sign_until(-64) {
+    match crate::strict_real_sign(density) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(PhysicsError::NonPositiveDensity),
     }

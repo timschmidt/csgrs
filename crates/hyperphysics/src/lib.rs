@@ -48,7 +48,10 @@ pub use integration::{
     CouplingPolicy, DiagnosticStatus, ForceAccumulator3, ForceContribution3, IntegrationPolicy,
     StepReplayReport3, SystemDiagnostics3,
 };
-pub use mass::{MassPropertyCertificate3, MassPropertyReport3, SymmetricInertia3};
+pub use mass::{
+    MassPropertyCertificate3, MassPropertyReport3, SymmetricInertia3,
+    triangle_mesh_uniform_density_mass_properties,
+};
 pub use material::{ExactMaterial, MaterialId};
 pub use optics::{
     BeerLambertSlabReport, FresnelNormalReport, OpticalInterface3, OpticalMedium, OpticalRay3,
@@ -76,3 +79,25 @@ pub use thermal::{
     SteadySlabConductionReport, TemperatureField3, ThermalContactPair3, ThermalMaterial,
     ThermalPolicy, ThermalPort3, ThermalReportStatus, TransientThermalStepReport,
 };
+
+/// Classify a sign for report paths that promise exact/certified provenance.
+///
+/// These paths intentionally opt out of the workspace's temporary terminal
+/// approximation while still sharing Hyperlimit's structural and refinement
+/// pipeline.
+pub(crate) fn strict_real_sign(value: &hyperreal::Real) -> Option<hyperreal::RealSign> {
+    hyperlimit::classify_real_sign_with_policy(value, hyperlimit::PredicatePolicy::STRICT)
+        .value()
+        .map(|sign| match sign {
+            hyperlimit::Sign::Negative => hyperreal::RealSign::Negative,
+            hyperlimit::Sign::Zero => hyperreal::RealSign::Zero,
+            hyperlimit::Sign::Positive => hyperreal::RealSign::Positive,
+        })
+}
+
+pub(crate) fn strict_real_cmp(
+    left: &hyperreal::Real,
+    right: &hyperreal::Real,
+) -> Option<std::cmp::Ordering> {
+    hyperlimit::compare_reals_with_policy(left, right, hyperlimit::PredicatePolicy::STRICT).value()
+}

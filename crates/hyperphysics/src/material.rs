@@ -41,7 +41,7 @@ impl MaterialId {
 impl ExactMaterial {
     /// Creates a material with certified positive density.
     pub fn new(id: MaterialId, name: impl Into<String>, density: Real) -> PhysicsResult<Self> {
-        match density.refine_sign_until(-64) {
+        match crate::strict_real_sign(&density) {
             Some(RealSign::Positive) => Ok(Self {
                 id,
                 name: name.into(),

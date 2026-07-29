@@ -220,7 +220,7 @@ impl PropertyValue {
 
     /// Creates a validated exact interval.
     pub fn interval(lower: Real, upper: Real) -> PhysicsResult<Self> {
-        match lower.partial_cmp(&upper) {
+        match crate::strict_real_cmp(&lower, &upper) {
             Some(Ordering::Less | Ordering::Equal) => Ok(Self::Interval {
                 lower: Box::new(lower),
                 upper: Box::new(upper),
@@ -368,7 +368,7 @@ impl MaterialPropertyGraph {
 }
 
 fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }

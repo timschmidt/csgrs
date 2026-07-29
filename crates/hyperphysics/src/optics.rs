@@ -162,11 +162,9 @@ impl OpticalInterface3 {
         let offset = &ray.origin - &self.point;
         let signed_distance = offset.dot(&self.normal);
         let direction_dot = ray.direction.dot(&self.normal);
-        let distance_sign = signed_distance
-            .refine_sign_until(-64)
+        let distance_sign = crate::strict_real_sign(&signed_distance)
             .ok_or(PhysicsError::UnknownOpticalClassification)?;
-        let direction_sign = direction_dot
-            .refine_sign_until(-64)
+        let direction_sign = crate::strict_real_sign(&direction_dot)
             .ok_or(PhysicsError::UnknownOpticalClassification)?;
         match (distance_sign, direction_sign) {
             (RealSign::Zero, _) => Ok(RayInterfaceClassification::OnInterface),
@@ -230,14 +228,14 @@ impl BeerLambertSlabReport {
 }
 
 fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
 }
 
 fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive | RealSign::Zero) => Ok(()),
         Some(RealSign::Negative) | None => Err(error),
     }

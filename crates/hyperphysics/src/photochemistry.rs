@@ -310,7 +310,7 @@ impl VatPhotopolymerWorkingCurve {
                 .ln()
                 .map_err(|_| PhysicsError::NonPositiveExposure)?;
         let margin = cure_depth.clone() - self.layer_thickness.clone();
-        let status = match margin.partial_cmp(&Real::zero()) {
+        let status = match crate::strict_real_cmp(&margin, &Real::zero()) {
             Some(Ordering::Less) => CureStatus::UnderCured,
             Some(Ordering::Equal | Ordering::Greater) => CureStatus::ClearsLayer,
             None => CureStatus::Unknown,
@@ -332,14 +332,14 @@ impl VatPhotopolymerWorkingCurve {
 }
 
 fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
 }
 
 fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match value.refine_sign_until(-64) {
+    match crate::strict_real_sign(value) {
         Some(RealSign::Positive | RealSign::Zero) => Ok(()),
         Some(RealSign::Negative) | None => Err(error),
     }
@@ -347,8 +347,8 @@ fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
 
 fn require_fraction(value: &Real) -> PhysicsResult<()> {
     match (
-        value.partial_cmp(&Real::zero()),
-        value.partial_cmp(&Real::one()),
+        crate::strict_real_cmp(value, &Real::zero()),
+        crate::strict_real_cmp(value, &Real::one()),
     ) {
         (Some(Ordering::Greater | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
             Ok(())
