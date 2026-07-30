@@ -145,8 +145,9 @@ exact signatures.
   `BezierRootIsolationResult2` retain exact algebraic parameter information.
 - Bézier analysis includes cusp and inflection classification, monotone spans,
   line/curve contacts, curve/curve intersection, length bounds, exact
-  polynomial and rational-quadratic area moments, certified flattening,
-  fitting, and split materialization.
+  polynomial and rational-quadratic area moments (including exact homogeneous
+  degree elevations), certified flattening, fitting, and split
+  materialization.
 - Parallel and offset entry points include `parallel_left`, `parallel_right`,
   `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and

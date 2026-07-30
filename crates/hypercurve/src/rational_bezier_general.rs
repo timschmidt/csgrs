@@ -3970,9 +3970,6 @@ impl RationalBezier2 {
         if self.degree() == 2 {
             self.retain_quadratic_conic_parameter_frame(policy);
         }
-        let Some(frame) = self.data.lineage.root.quadratic_conic_parameter_frame.get() else {
-            return Ok(Classification::Decided(None));
-        };
         let range = self.source_parameter_range();
         let forward = compare_reals(range.start(), &Real::zero(), policy)
             == Some(std::cmp::Ordering::Equal)
@@ -3980,12 +3977,32 @@ impl RationalBezier2 {
         let reversed = compare_reals(range.start(), &Real::one(), policy)
             == Some(std::cmp::Ordering::Equal)
             && compare_reals(range.end(), &Real::zero(), policy) == Some(std::cmp::Ordering::Equal);
-        let ordered = if forward {
+        let retained_frame = self.data.lineage.root.quadratic_conic_parameter_frame.get();
+        let structural_frame;
+        let ordered = if let Some(frame) = retained_frame
+            && forward
+        {
             [&frame[0], &frame[1], &frame[2]]
-        } else if reversed {
+        } else if let Some(frame) = retained_frame
+            && reversed
+        {
             [&frame[2], &frame[1], &frame[0]]
         } else {
-            return Ok(Classification::Decided(None));
+            structural_frame =
+                match exact_quadratic_homogeneous_reduction(self.homogeneous_controls(), policy) {
+                    Classification::Decided(Some(frame)) => frame,
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            [
+                &structural_frame[0],
+                &structural_frame[1],
+                &structural_frame[2],
+            ]
         };
         let mut controls = Vec::with_capacity(3);
         for point in ordered {
@@ -5716,6 +5733,82 @@ fn exact_binomial_product(
         return Some(Real::from(product));
     }
     Some(exact_binomial(first_n, first_k)? * exact_binomial(second_n, second_k)?)
+}
+
+fn exact_quadratic_homogeneous_reduction(
+    source: &[HomogeneousPoint2],
+    policy: &CurvePolicy,
+) -> Classification<Option<[HomogeneousPoint2; 3]>> {
+    if source.len() < 3 {
+        return Classification::Decided(None);
+    }
+    let mut current = source.to_vec();
+    while current.len() > 3 {
+        let degree = current.len() - 1;
+        let Ok(degree_u64) = u64::try_from(degree) else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        let degree_real = Real::from(degree_u64);
+        let mut reduced = Vec::with_capacity(degree);
+        reduced.push(current[0].clone());
+        for index in 1..degree {
+            let Ok(index_u64) = u64::try_from(index) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let Ok(remaining_u64) = u64::try_from(degree - index) else {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            };
+            let index_real = Real::from(index_u64);
+            let remaining = Real::from(remaining_u64);
+            let previous = &reduced[index - 1];
+            let candidate = HomogeneousPoint2 {
+                x: match (&degree_real * &current[index].x - &index_real * &previous.x) / &remaining
+                {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                },
+                y: match (&degree_real * &current[index].y - &index_real * &previous.y) / &remaining
+                {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                },
+                weight: match (&degree_real * &current[index].weight
+                    - &index_real * &previous.weight)
+                    / &remaining
+                {
+                    Ok(value) => value,
+                    Err(_) => {
+                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    }
+                },
+            };
+            reduced.push(candidate);
+        }
+        let expected_end = reduced
+            .last()
+            .expect("positive-degree inverse elevation has an endpoint");
+        for residual in [
+            &expected_end.x - &current[degree].x,
+            &expected_end.y - &current[degree].y,
+            &expected_end.weight - &current[degree].weight,
+        ] {
+            match is_zero(&residual, policy) {
+                Some(true) => {}
+                Some(false) => return Classification::Decided(None),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+        current = reduced;
+    }
+    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 3]>>::try_into(current)
+    else {
+        return Classification::Decided(None);
+    };
+    Classification::Decided(Some(frame))
 }
 
 impl HomogeneousPoint2 {

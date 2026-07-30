@@ -10,7 +10,9 @@
 //! Bernstein weights certify that `W` has no projective zero on `[0, 1]`.
 //! Rational-quadratic first moments similarly retain their homogeneous `W^4`
 //! integrands and use exact Hermite reduction to the same inverse-quadratic
-//! branches.
+//! branches. Higher-degree rational carriers first attempt exact inverse
+//! Bernstein degree elevation in homogeneous space, so serialized or otherwise
+//! provenance-free degree-elevated conics reuse the same integral.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -452,9 +454,10 @@ impl RationalBezier2 {
     /// Equal nonzero weights cancel from every homogeneous coordinate. The
     /// affine controls can therefore use the arbitrary-degree polynomial
     /// Green integral directly without changing the curve family or sampling.
-    /// Nonuniform degree-two carriers specialize exactly to the conic kernel.
-    /// `None` means a higher-degree genuinely rational integral is not
-    /// implemented; it does not approximate one.
+    /// Nonuniform degree-two carriers and exact degree elevations of them
+    /// specialize to the retained conic kernel. `None` means another
+    /// higher-degree genuinely rational integral is not implemented; it does
+    /// not approximate one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -473,7 +476,8 @@ impl RationalBezier2 {
     /// degree-two rational Béziers.
     ///
     /// `None` is an explicit unsupported symbolic integral for a genuinely
-    /// rational degree-three-or-higher image, never a finite approximation.
+    /// rational degree-three-or-higher image that has no retained quadratic
+    /// representative, never a finite approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -492,21 +496,10 @@ impl RationalBezier2 {
 fn rational_quadratic_specialization(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<RationalQuadraticBezier2>> {
-    let [start, control, end] = curve.control_points() else {
-        return Ok(None);
-    };
-    let [start_weight, control_weight, end_weight] = curve.weights() else {
-        return Ok(None);
-    };
-    RationalQuadraticBezier2::try_new(
-        start.clone(),
-        control.clone(),
-        end.clone(),
-        start_weight.clone(),
-        control_weight.clone(),
-        end_weight.clone(),
-    )
-    .map(Some)
+    match curve.retained_quadratic_representative(&CurvePolicy::certified())? {
+        Classification::Decided(representative) => Ok(representative),
+        Classification::Uncertain(_) => Ok(None),
+    }
 }
 
 fn prefix_signed_area_for_controls(
@@ -1548,7 +1541,41 @@ mod tests {
             quarter_circle.weights().into_iter().cloned().collect(),
         )
         .unwrap();
-        assert_eq!(general.area_moments_contribution().unwrap(), Some(moments));
+        assert_eq!(
+            general.area_moments_contribution().unwrap(),
+            Some(moments.clone())
+        );
+
+        let elevated = general.elevated_to_degree(7).unwrap();
+        assert_eq!(elevated.degree(), 7);
+        assert_eq!(
+            elevated.area_moments_contribution().unwrap(),
+            Some(moments.clone())
+        );
+        assert_eq!(
+            elevated.signed_area_contribution().unwrap(),
+            Some(moments.signed_area().clone())
+        );
+
+        let reconstructed = RationalBezier2::try_new(
+            elevated.control_points().to_vec(),
+            elevated.weights().to_vec(),
+        )
+        .unwrap();
+        let reconstructed_moments = reconstructed
+            .area_moments_contribution()
+            .unwrap()
+            .expect("exact inverse degree elevation recovers the conic kernel");
+        for (actual, expected) in [
+            (reconstructed_moments.signed_area(), moments.signed_area()),
+            (reconstructed_moments.x_moment(), moments.x_moment()),
+            (reconstructed_moments.y_moment(), moments.y_moment()),
+        ] {
+            assert_eq!(
+                compare_reals(actual, expected, &CurvePolicy::certified()),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
     }
 
     #[test]
