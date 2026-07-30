@@ -1831,6 +1831,19 @@ impl NativeBezierFragment2 {
         &self.span_range
     }
 
+    /// Returns whether one exact coordinate certifies this fragment's image as
+    /// injective on its complete local parameter interval.
+    ///
+    /// A `false` result is deliberately only a missing certificate; callers
+    /// that require simple-path topology must retain that distinction instead
+    /// of assuming the fragment self-intersects.
+    pub fn has_certified_injective_axis(&self, policy: &CurvePolicy) -> ExactCurveResult<bool> {
+        Ok(
+            rationalize_subcurve(&self.curve, CurveFamily2::RationalBezier)?
+                .has_certified_injective_axis(policy),
+        )
+    }
+
     /// Consumes this fragment and returns its native curve.
     pub fn into_curve(self) -> BezierSubcurve2 {
         self.curve
