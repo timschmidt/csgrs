@@ -54,7 +54,10 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
     }
     assert!(!result.triangles.is_empty());
     let bounds = solid::bounding_box(&result);
-    assert!(bounds.maxs.x > bounds.mins.x);
+    assert_eq!(
+        hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x).value(),
+        Some(std::cmp::Ordering::Greater)
+    );
 }
 
 #[test]
@@ -92,5 +95,8 @@ fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     let mesh = curve::extrude(&region, r(0.75));
 
     assert!(!mesh.triangles.is_empty());
-    assert!(solid::bounding_box(&mesh).maxs.z >= r(0.75));
+    assert!(matches!(
+        hyperlimit::compare_reals(&solid::bounding_box(&mesh).maxs.z, &r(0.75)).value(),
+        Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+    ));
 }

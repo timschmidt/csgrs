@@ -228,7 +228,7 @@ impl InstallationVector {
         show_guide: bool,
         propagate_to_children: bool,
     ) -> Option<Self> {
-        if vector_is_zero(&install_direction) {
+        if vector_is_zero(&install_direction) != Some(false) {
             return None;
         }
         Some(Self {
@@ -307,16 +307,13 @@ impl ExactVector3 {
     }
 }
 
-fn vector_is_zero(vector: &ExactVector3) -> bool {
-    let Some((x, y, z)) = vector.to_reals() else {
-        return true;
-    };
+fn vector_is_zero(vector: &ExactVector3) -> Option<bool> {
+    let (x, y, z) = vector.to_reals()?;
     let x2 = x.clone() * x;
     let y2 = y.clone() * y;
     let z2 = z.clone() * z;
     let length_squared: Real = x2 + y2 + z2;
-    matches!(
-        hyperlimit::classify_real_sign(&length_squared).value(),
-        Some(hyperlimit::Sign::Zero)
-    )
+    hyperlimit::classify_real_sign(&length_squared)
+        .value()
+        .map(|sign| sign == hyperlimit::Sign::Zero)
 }

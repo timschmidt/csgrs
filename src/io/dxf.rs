@@ -6,6 +6,7 @@ use dxf::Drawing;
 use dxf::entities::{Entity, EntityType, Face3D};
 use hyperlattice::{Point3, Real, Vector3};
 use hypermesh::{Triangle, TriangleMesh};
+use std::cmp::Ordering;
 use std::io::Cursor;
 
 // `Drawing::new()` initializes its creation and update dates from the wall
@@ -44,7 +45,16 @@ fn ocs_basis(normal: dxf::Vector) -> Result<(Vector3, Vector3, Vector3), IoError
         format: "DXF",
         detail: "could not construct OCS basis threshold".into(),
     })?;
-    let reference = if normal.0[0].abs() < threshold && normal.0[1].abs() < threshold {
+    let component_is_small = |component: &Real| {
+        hyperlimit::compare_reals(&component.abs(), &threshold)
+            .value()
+            .map(|ordering| ordering == Ordering::Less)
+            .ok_or_else(|| IoError::Geometry {
+                format: "DXF",
+                detail: "OCS reference-axis selection is indeterminate".into(),
+            })
+    };
+    let reference = if component_is_small(&normal.0[0])? && component_is_small(&normal.0[1])? {
         Vector3::y()
     } else {
         Vector3::z()
@@ -186,7 +196,23 @@ pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
                     point_from_wcs(face.third_corner.clone())?,
                 ];
                 let fourth = point_from_wcs(face.fourth_corner.clone())?;
-                if fourth != points[2] {
+                let fourth_limit = hyperlimit::Point3::new(
+                    fourth.x.clone(),
+                    fourth.y.clone(),
+                    fourth.z.clone(),
+                );
+                let third_limit = hyperlimit::Point3::new(
+                    points[2].x.clone(),
+                    points[2].y.clone(),
+                    points[2].z.clone(),
+                );
+                let same_as_third = hyperlimit::point3_equal(&fourth_limit, &third_limit)
+                    .value()
+                    .ok_or_else(|| IoError::Geometry {
+                        format: "DXF",
+                        detail: "3DFACE fourth-corner incidence is indeterminate".into(),
+                    })?;
+                if !same_as_third {
                     points.push(fourth);
                 }
                 append_polygon(points)?;

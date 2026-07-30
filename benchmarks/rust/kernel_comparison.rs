@@ -266,30 +266,24 @@ fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
     }
 
     for component in components {
-        let signed_volume = component
-            .iter()
-            .map(|&triangle_index| {
-                let triangle = triangles[triangle_index].indices();
-                let position = |index: usize| {
-                    let point = &source.positions[index];
-                    [
-                        point.x.to_f64_lossy().unwrap_or_default(),
-                        point.y.to_f64_lossy().unwrap_or_default(),
-                        point.z.to_f64_lossy().unwrap_or_default(),
-                    ]
-                };
-                let [ax, ay, az] = position(triangle[0]);
-                let [bx, by, bz] = position(triangle[1]);
-                let [cx, cy, cz] = position(triangle[2]);
-                ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)
-            })
-            .sum::<f64>();
-        if signed_volume < 0.0 {
-            for triangle_index in component {
-                let triangle = &mut triangles[triangle_index];
-                std::mem::swap(&mut triangle.v1, &mut triangle.v2);
-            }
-            orientation_changed = true;
+        let signed_volume = component.iter().fold(Real::zero(), |sum, &triangle_index| {
+            let [a, b, c] = triangles[triangle_index]
+                .indices()
+                .map(|index| &source.positions[index]);
+            sum + a.to_vector().dot(&b.to_vector().cross(&c.to_vector()))
+        });
+        match hyperlimit::classify_real_sign(&signed_volume).value() {
+            Some(hyperlimit::Sign::Negative) => {
+                for triangle_index in component {
+                    let triangle = &mut triangles[triangle_index];
+                    std::mem::swap(&mut triangle.v1, &mut triangle.v2);
+                }
+                orientation_changed = true;
+            },
+            Some(hyperlimit::Sign::Positive) => {},
+            Some(hyperlimit::Sign::Zero) | None => {
+                panic!("YeahRight component orientation must be certifiable")
+            },
         }
     }
 
@@ -738,7 +732,11 @@ fn run() {
             .iter()
             .copied()
             .find(|triangle| {
-                first_normal.dot(&triangle_normal(&box_mesh, *triangle)) == Real::zero()
+                hyperlimit::classify_real_sign(
+                    &first_normal.dot(&triangle_normal(&box_mesh, *triangle)),
+                )
+                .value()
+                    == Some(hyperlimit::Sign::Zero)
             })
             .expect("cube has an adjacent orthogonal face");
         let angle =

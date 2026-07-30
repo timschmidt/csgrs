@@ -109,17 +109,14 @@ pub(crate) fn sdf_field_with_diagnostics(
 
     let Some(grid) = hypersdf_grid(min_pt.clone(), max_pt.clone(), nx, ny, nz) else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
     let Ok(iso_value) = hreal_from_f64(iso_value) else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
     let Ok(grid_report) = sdf.sample_grid_preview(grid, SdfSamplingPrecision::F64) else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
 
@@ -183,7 +180,6 @@ where
         || hreal_from_f64(iso_value.clone()).is_err()
     {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     }
 
@@ -193,7 +189,6 @@ where
         SamplingGrid::from_bounds(min_pt.clone(), max_pt.clone(), nx, ny, nz, iso_value)
     else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
     let x_coordinates = grid.axis_coordinates(&grid.origin.x, &grid.step.x, nx);
@@ -231,6 +226,7 @@ where
 struct SdfSampleField {
     hyper_values: Option<Vec<Real>>,
     surface_nets_values: Vec<f32>,
+    failed: bool,
 }
 
 impl SdfSampleField {
@@ -238,6 +234,7 @@ impl SdfSampleField {
         Self {
             hyper_values: retain_hyper_values.then(|| Vec::with_capacity(capacity)),
             surface_nets_values: Vec::with_capacity(capacity),
+            failed: false,
         }
     }
 
@@ -253,11 +250,8 @@ impl SdfSampleField {
         true
     }
 
-    fn push_nonfinite_sample(&mut self) {
-        if let Some(hyper_values) = &mut self.hyper_values {
-            hyper_values.push(hreal_from_f64(1.0e10).expect("finite SDF sentinel"));
-        }
-        self.surface_nets_values.push(1.0e10_f32);
+    const fn push_nonfinite_sample(&mut self) {
+        self.failed = true;
     }
 }
 
@@ -318,23 +312,22 @@ fn push_sdf_sample(
         let shifted = sdf_val.clone() - iso_value.clone();
         if !field_values.push_hyper_sample(shifted.clone()) {
             diagnostics.non_finite_sample_count += 1;
-            diagnostics.positive_sample_count += 1;
             return;
         }
+        let Some(sign) = hreal_sign(&shifted) else {
+            field_values.failed = true;
+            diagnostics.non_finite_sample_count += 1;
+            return;
+        };
         diagnostics.finite_sample_count += 1;
         record_sdf_finite_sample(diagnostics, &sdf_val);
-        match hreal_sign(&shifted) {
-            Some(RealSign::Negative) => diagnostics.negative_sample_count += 1,
-            Some(RealSign::Positive) => diagnostics.positive_sample_count += 1,
-            Some(RealSign::Zero) => diagnostics.zero_sample_count += 1,
-            None => {
-                diagnostics.non_finite_sample_count += 1;
-                diagnostics.positive_sample_count += 1;
-            },
+        match sign {
+            RealSign::Negative => diagnostics.negative_sample_count += 1,
+            RealSign::Positive => diagnostics.positive_sample_count += 1,
+            RealSign::Zero => diagnostics.zero_sample_count += 1,
         }
     } else {
         diagnostics.non_finite_sample_count += 1;
-        diagnostics.positive_sample_count += 1;
         field_values.push_nonfinite_sample();
     }
 }
@@ -354,11 +347,13 @@ fn push_sdf_sample_without_diagnostics(
 fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &Real) {
     diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
         Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
-        None => Some(value.clone()),
+        None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
+        None => None,
     };
     diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
         Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
-        None => Some(value.clone()),
+        None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
+        None => None,
     };
 }
 
@@ -372,10 +367,19 @@ fn mesh_from_sampled_field(
     mut diagnostics: SdfDiagnostics,
     collect_diagnostics: bool,
 ) -> (TriangleMesh, SdfDiagnostics) {
+    let expected_samples = (nx as usize)
+        .checked_mul(ny as usize)
+        .and_then(|count| count.checked_mul(nz as usize));
+    if field_values.failed || expected_samples != Some(field_values.surface_nets_values.len())
+    {
+        if diagnostics.non_finite_sample_count == 0 {
+            diagnostics.non_finite_sample_count = diagnostics.sample_count;
+        }
+        return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
+    }
     let Some(grid) = SamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz, Real::zero())
     else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
 
@@ -456,6 +460,10 @@ fn mesh_from_sampled_field(
             (finite_point3(&point) && finite_vector3(&normal)).then_some(point)
         })
         .collect::<Vec<_>>();
+    if converted_vertices.iter().any(Option::is_none) {
+        diagnostics.skipped_non_finite_triangle_count = sn_buffer.indices.len() / 3;
+        return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
+    }
 
     for tri in sn_buffer.indices.chunks_exact(3) {
         let i0 = tri[0] as usize;
@@ -471,18 +479,18 @@ fn mesh_from_sampled_field(
             continue;
         };
 
-        if collect_diagnostics && !htriangle_area2_is_nonzero(v0, v1, v2) {
-            diagnostics.degenerate_triangle_count += 1;
+        if !htriangle_area2_is_nonzero(v0, v1, v2) {
+            if collect_diagnostics {
+                diagnostics.degenerate_triangle_count += 1;
+            }
+            return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
         }
 
         triangles.push(Triangle::new(i0, i1, i2));
         diagnostics.emitted_triangle_count += 1;
     }
 
-    let positions = converted_vertices
-        .into_iter()
-        .map(|point| point.unwrap_or_else(Point3::origin))
-        .collect();
+    let positions = converted_vertices.into_iter().flatten().collect();
     (TriangleMesh::new(positions, triangles), diagnostics)
 }
 

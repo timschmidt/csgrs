@@ -18,12 +18,22 @@ fn tolerance() -> Real {
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
     let min = real(min);
     let max = real(max);
-    value.max(&min).min(&max).clone()
+    let value = hyperlimit::real_max(&value, &min)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order");
+    hyperlimit::real_min(&value, &max)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order")
 }
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    value.max(&tolerance).clone()
+    hyperlimit::real_max(&value, &tolerance)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order")
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {

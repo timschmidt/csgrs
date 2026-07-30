@@ -45,6 +45,7 @@ crate-type = ["cdylib", "rlib"]
 name = "part_blueprint"
 path = "benchmarks/rust/part_blueprint.rs"
 harness = false
+required-features = ["attributed"]
 
 [[bench]]
 name = "mesh_pipeline"

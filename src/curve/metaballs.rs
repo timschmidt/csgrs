@@ -66,7 +66,10 @@ pub(crate) fn metaballs(
     let Some(padding_h) = hreal_from_f64(&padding).ok() else {
         return CurveRegion2::empty();
     };
-    if matches!(hreal_sign(&padding_h), Some(RealSign::Negative)) {
+    if !matches!(
+        hreal_sign(&padding_h),
+        Some(RealSign::Zero | RealSign::Positive)
+    ) {
         return CurveRegion2::empty();
     }
     let Some(iso_value_h) = hreal_from_f64(&iso_value).ok() else {
@@ -83,7 +86,7 @@ pub(crate) fn metaballs(
             matches!(hreal_sign(&radius), Some(RealSign::Positive)).then_some((center, radius))
         })
         .collect::<Vec<_>>();
-    if valid_balls.is_empty() {
+    if valid_balls.len() != balls.len() {
         return CurveRegion2::empty();
     }
 
@@ -148,11 +151,16 @@ pub(crate) fn metaballs(
         for ix in 0..nx {
             let xv = &x_coords[ix];
             let sample = Point2::new(xv.clone(), yv.clone());
-            let val = scalar_field(&valid_balls, &sample).unwrap_or_else(Real::zero)
-                - iso_value_h.clone();
+            let Some(val) = scalar_field(&valid_balls, &sample) else {
+                return CurveRegion2::empty();
+            };
+            let val = val - iso_value_h.clone();
             grid[index(ix, iy)] = val;
         }
     }
+    let Some(grid_signs) = grid.iter().map(hreal_sign).collect::<Option<Vec<_>>>() else {
+        return CurveRegion2::empty();
+    };
 
     // 3) Marching squares -> exact interpolated line segments.
     let mut contours = Vec::<Segment>::new();
@@ -162,14 +170,16 @@ pub(crate) fn metaballs(
                        (x2, y2, v2): (&Real, &Real, &Real)|
      -> Option<[Real; 2]> {
         let delta = v2.clone() - v1.clone();
-        if matches!(hreal_sign(&delta), Some(RealSign::Zero)) {
-            Some([x1.clone(), y1.clone()])
-        } else {
-            let t = (Real::zero() - v1.clone()) / delta; // crossing at 0
-            let t = t.ok()?;
-            let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
-            let y = y1.clone() + t * (y2.clone() - y1.clone());
-            Some([x, y])
+        match hreal_sign(&delta) {
+            Some(RealSign::Zero) => Some([x1.clone(), y1.clone()]),
+            Some(RealSign::Negative | RealSign::Positive) => {
+                let t = (Real::zero() - v1.clone()) / delta; // crossing at 0
+                let t = t.ok()?;
+                let x = x1.clone() + t.clone() * (x2.clone() - x1.clone());
+                let y = y1.clone() + t * (y2.clone() - y1.clone());
+                Some([x, y])
+            },
+            None => None,
         }
     };
 
@@ -181,23 +191,27 @@ pub(crate) fn metaballs(
             let x0 = &x_coords[ix];
             let x1 = &x_coords[ix + 1];
 
-            let v0 = &grid[index(ix, iy)];
-            let v1 = &grid[index(ix + 1, iy)];
-            let v2 = &grid[index(ix + 1, iy + 1)];
-            let v3 = &grid[index(ix, iy + 1)];
+            let indices = [
+                index(ix, iy),
+                index(ix + 1, iy),
+                index(ix + 1, iy + 1),
+                index(ix, iy + 1),
+            ];
+            let [v0, v1, v2, v3] = indices.map(|index| &grid[index]);
+            let [s0, s1, s2, s3] = indices.map(|index| grid_signs[index]);
 
             // classification
             let mut c = 0u8;
-            if !matches!(hreal_sign(v0), Some(RealSign::Negative) | None) {
+            if s0 != RealSign::Negative {
                 c |= 1;
             }
-            if !matches!(hreal_sign(v1), Some(RealSign::Negative) | None) {
+            if s1 != RealSign::Negative {
                 c |= 2;
             }
-            if !matches!(hreal_sign(v2), Some(RealSign::Negative) | None) {
+            if s2 != RealSign::Negative {
                 c |= 4;
             }
-            if !matches!(hreal_sign(v3), Some(RealSign::Negative) | None) {
+            if s3 != RealSign::Negative {
                 c |= 8;
             }
             if c == 0 || c == 15 {
@@ -212,25 +226,33 @@ pub(crate) fn metaballs(
                 |mask_a: u8, mask_b: u8, a: usize, b: usize, edge: GridEdge| {
                     let inside_a = (c & mask_a) != 0;
                     let inside_b = (c & mask_b) != 0;
-                    if inside_a != inside_b
-                        && let Some(coordinates) = interpolate(corners[a], corners[b])
-                    {
+                    if inside_a != inside_b {
+                        let Some(coordinates) = interpolate(corners[a], corners[b]) else {
+                            return false;
+                        };
                         pts.push(SamplePoint { coordinates, edge });
                     }
+                    true
                 };
 
-            check_edge(1, 2, 0, 1, GridEdge::Horizontal(ix, iy));
-            check_edge(2, 4, 1, 2, GridEdge::Vertical(ix + 1, iy));
-            check_edge(4, 8, 2, 3, GridEdge::Horizontal(ix, iy + 1));
-            check_edge(8, 1, 3, 0, GridEdge::Vertical(ix, iy));
+            if !check_edge(1, 2, 0, 1, GridEdge::Horizontal(ix, iy))
+                || !check_edge(2, 4, 1, 2, GridEdge::Vertical(ix + 1, iy))
+                || !check_edge(4, 8, 2, 3, GridEdge::Horizontal(ix, iy + 1))
+                || !check_edge(8, 1, 3, 0, GridEdge::Vertical(ix, iy))
+            {
+                return CurveRegion2::empty();
+            }
 
             // Resolve diagonal cases from the bilinear cell-center sign.
             // A fixed edge-order pairing changes topology when the center is
             // on the other side of the isocontour.
             if matches!(c, 5 | 10) && pts.len() == 4 {
                 let center = v0.clone() + v1.clone() + v2.clone() + v3.clone();
-                let center_inside =
-                    matches!(hreal_sign(&center), Some(RealSign::Positive | RealSign::Zero));
+                let center_inside = match hreal_sign(&center) {
+                    Some(RealSign::Positive | RealSign::Zero) => true,
+                    Some(RealSign::Negative) => false,
+                    None => return CurveRegion2::empty(),
+                };
                 for (a, b) in ambiguous_edge_pairs(c, center_inside) {
                     contours.push([pts[a].clone(), pts[b].clone()]);
                 }
@@ -242,17 +264,20 @@ pub(crate) fn metaballs(
 
     // 4) Stitch line segments and promote closed loops directly to CurveRegion2.
     let stitched = stitch(&contours);
-    let material = stitched
-        .iter()
-        .filter(|line| line.len() >= 4 && same_point(&line[0], line.last().unwrap()))
-        .filter_map(|line| {
-            let coordinates = line
-                .iter()
-                .map(|point| point.coordinates.clone())
-                .collect::<Vec<_>>();
-            Contour2::from_real_ring(&coordinates).ok()
-        })
-        .collect::<Vec<_>>();
+    let mut material = Vec::with_capacity(stitched.len());
+    for line in &stitched {
+        if line.len() < 4 || !same_point(&line[0], line.last().expect("nonempty chain")) {
+            return CurveRegion2::empty();
+        }
+        let coordinates = line
+            .iter()
+            .map(|point| point.coordinates.clone())
+            .collect::<Vec<_>>();
+        let Ok(contour) = Contour2::from_real_ring(&coordinates) else {
+            return CurveRegion2::empty();
+        };
+        material.push(contour);
+    }
 
     if material.is_empty() {
         return CurveRegion2::empty();

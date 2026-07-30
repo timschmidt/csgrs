@@ -27,6 +27,8 @@ pub mod vrml;
 #[cfg(feature = "gerber-io")]
 pub mod gerber;
 
+#[cfg(any(feature = "stl-io", feature = "dxf-io"))]
+use hyperlattice::Point3;
 #[cfg(any(
     feature = "obj-io",
     feature = "ply-io",
@@ -35,7 +37,7 @@ pub mod gerber;
     feature = "gltf-io",
     feature = "dxf-io"
 ))]
-use hyperlattice::{Point3, Real};
+use hyperlattice::Real;
 
 /// Error produced while parsing or serializing a geometry interchange format.
 #[derive(Debug, thiserror::Error)]
@@ -201,10 +203,20 @@ pub(crate) fn triangulate_planar_face(
             detail: "face is degenerate".into(),
         })?;
     let plane = hypermesh::Plane::from_points(points[0], points[support], points[support + 1]);
-    let planar = points.iter().all(|point| {
-        hyperlimit::classify_real_sign(&plane.expression_at_point(point)).value()
-            == Some(hyperlimit::Sign::Zero)
-    });
+    let planar =
+        points
+            .iter()
+            .try_fold(true, |planar, point| {
+                match hyperlimit::classify_real_sign(&plane.expression_at_point(point)).value()
+                {
+                    Some(hyperlimit::Sign::Zero) => Ok(planar),
+                    Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => Ok(false),
+                    None => Err(IoError::Geometry {
+                        format,
+                        detail: "face planarity is indeterminate".into(),
+                    }),
+                }
+            })?;
     if !planar {
         return Ok((1..face.len() - 1)
             .map(|index| hypermesh::Triangle::new(face[0], face[index], face[index + 1]))
@@ -223,15 +235,24 @@ pub(crate) fn triangulate_planar_face(
             sum
         },
     );
-    let axis = normal
-        .iter()
-        .enumerate()
-        .max_by(|(_, left), (_, right)| {
-            hyperlimit::compare_reals(&(*left).clone().abs(), &(*right).clone().abs())
-                .value()
-                .unwrap_or(std::cmp::Ordering::Equal)
-        })
-        .map_or(2, |(axis, _)| axis);
+    let mut axis = 0;
+    for candidate in 1..normal.len() {
+        match hyperlimit::compare_reals(
+            &normal[candidate].clone().abs(),
+            &normal[axis].clone().abs(),
+        )
+        .value()
+        {
+            Some(std::cmp::Ordering::Greater) => axis = candidate,
+            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Less) => {},
+            None => {
+                return Err(IoError::Geometry {
+                    format,
+                    detail: "dominant projection axis is indeterminate".into(),
+                });
+            },
+        }
+    }
     let projected = points
         .iter()
         .map(|point| match axis {
@@ -274,8 +295,22 @@ pub(crate) fn triangulate_planar_face(
             area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone()
         },
     );
-    let reverse_output = hyperlimit::classify_real_sign(&signed_area).value()
-        == Some(hyperlimit::Sign::Negative);
+    let reverse_output = match hyperlimit::classify_real_sign(&signed_area).value() {
+        Some(hyperlimit::Sign::Negative) => true,
+        Some(hyperlimit::Sign::Positive) => false,
+        Some(hyperlimit::Sign::Zero) => {
+            return Err(IoError::Geometry {
+                format,
+                detail: "projected face has zero signed area".into(),
+            });
+        },
+        None => {
+            return Err(IoError::Geometry {
+                format,
+                detail: "projected face winding is indeterminate".into(),
+            });
+        },
+    };
     hypertri::earcut(&projected, &[])
         .map_err(|error| IoError::Geometry {
             format,

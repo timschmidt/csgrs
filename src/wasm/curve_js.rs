@@ -3,7 +3,7 @@
 use crate::curve::{self, CurveRegionExt};
 use crate::wasm::{
     matrix_js::Matrix4Js, mesh_js::MeshJs, point_js::Point3Js, real_from_js,
-    real_from_js_or_zero, real_to_js,
+    real_from_js_named, real_to_js,
 };
 use hypercurve::{Contour2, CurvePolicy, CurveRegion2};
 use hyperlattice::Real;
@@ -84,7 +84,8 @@ impl CurveRegionJs {
 
     #[wasm_bindgen(js_name = toRegionProfiles)]
     pub fn to_region_profiles(&self) -> Result<JsValue, JsValue> {
-        let profiles = curve::finite_profiles(&self.inner)
+        let profiles = curve::try_finite_profiles(&self.inner)
+            .map_err(js_error)?
             .into_iter()
             .map(|profile| RegionProfileJs {
                 material: profile.material().points().to_vec(),
@@ -104,8 +105,8 @@ impl CurveRegionJs {
     }
 
     #[wasm_bindgen(js_name = toArrays)]
-    pub fn to_arrays(&self) -> Object {
-        let mesh = curve::triangulate(&self.inner);
+    pub fn to_arrays(&self) -> Result<Object, JsValue> {
+        let mesh = curve::try_triangulate(&self.inner).map_err(js_error)?;
         let positions = mesh
             .positions
             .iter()
@@ -138,7 +139,7 @@ impl CurveRegionJs {
             &Uint32Array::from(indices.as_slice()),
         )
         .expect("plain object accepts indices");
-        object
+        Ok(object)
     }
 
     pub fn union(&self, other: &Self) -> Result<Self, JsValue> {
@@ -169,40 +170,68 @@ impl CurveRegionJs {
             .map_err(js_error)
     }
 
-    pub fn transform(&self, matrix: &Matrix4Js) -> Self {
-        curve::transformed(&self.inner, &matrix.inner).into()
-    }
-
-    pub fn translate(&self, x: f64, y: f64) -> Self {
-        curve::translated(&self.inner, real_from_js_or_zero(x), real_from_js_or_zero(y)).into()
-    }
-
-    pub fn rotate(&self, degrees: f64) -> Self {
-        curve::rotated(&self.inner, real_from_js_or_zero(degrees)).into()
-    }
-
-    pub fn scale(&self, x: f64, y: f64) -> Self {
-        curve::scaled(&self.inner, real_from_js_or_zero(x), real_from_js_or_zero(y)).into()
-    }
-
-    #[wasm_bindgen(js_name = containsXY)]
-    pub fn contains_xy(&self, x: f64, y: f64) -> Option<bool> {
-        curve::contains_xy(&self.inner, real_from_js_or_zero(x), real_from_js_or_zero(y))
-    }
-
-    pub fn extrude(&self, height: f64) -> MeshJs {
-        curve::extrude(&self.inner, real_from_js_or_zero(height)).into()
-    }
-
-    pub fn revolve(&self, angle_degrees: f64, segments: usize) -> Result<MeshJs, JsValue> {
-        curve::revolve(&self.inner, real_from_js_or_zero(angle_degrees), segments)
+    pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
+        curve::try_transformed(&self.inner, &matrix.inner)
             .map(Into::into)
             .map_err(js_error)
     }
 
-    pub fn sweep(&self, path: Vec<Point3Js>) -> MeshJs {
+    pub fn translate(&self, x: f64, y: f64) -> Result<Self, JsValue> {
+        curve::try_translated(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    pub fn rotate(&self, degrees: f64) -> Result<Self, JsValue> {
+        curve::try_rotated(&self.inner, real_from_js_named(degrees, "degrees")?)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    pub fn scale(&self, x: f64, y: f64) -> Result<Self, JsValue> {
+        curve::try_scaled(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = containsXY)]
+    pub fn contains_xy(&self, x: f64, y: f64) -> Result<Option<bool>, JsValue> {
+        Ok(curve::contains_xy(
+            &self.inner,
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+        ))
+    }
+
+    pub fn extrude(&self, height: f64) -> Result<MeshJs, JsValue> {
+        curve::try_extrude(&self.inner, real_from_js_named(height, "height")?)
+            .map(Into::into)
+            .map_err(js_error)
+    }
+
+    pub fn revolve(&self, angle_degrees: f64, segments: usize) -> Result<MeshJs, JsValue> {
+        curve::revolve(
+            &self.inner,
+            real_from_js_named(angle_degrees, "angleDegrees")?,
+            segments,
+        )
+        .map(Into::into)
+        .map_err(js_error)
+    }
+
+    pub fn sweep(&self, path: Vec<Point3Js>) -> Result<MeshJs, JsValue> {
         let path = path.into_iter().map(|point| point.inner).collect::<Vec<_>>();
-        curve::sweep(&self.inner, &path).into()
+        curve::try_sweep(&self.inner, &path)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     #[wasm_bindgen(js_name = extrudeTwisted)]
@@ -216,11 +245,11 @@ impl CurveRegionJs {
     ) -> Result<MeshJs, JsValue> {
         curve::extrude_twisted(
             &self.inner,
-            real_from_js_or_zero(height),
-            real_from_js_or_zero(twist_degrees),
+            real_from_js_named(height, "height")?,
+            real_from_js_named(twist_degrees, "twistDegrees")?,
             [
-                real_from_js_or_zero(end_scale_x),
-                real_from_js_or_zero(end_scale_y),
+                real_from_js_named(end_scale_x, "endScaleX")?,
+                real_from_js_named(end_scale_y, "endScaleY")?,
             ],
             slices,
         )
@@ -228,80 +257,92 @@ impl CurveRegionJs {
         .map_err(js_error)
     }
 
-    pub fn rectangle(width: f64, height: f64) -> Self {
-        curve::rectangle(real_from_js_or_zero(width), real_from_js_or_zero(height)).into()
+    pub fn rectangle(width: f64, height: f64) -> Result<Self, JsValue> {
+        Ok(curve::rectangle(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(height, "height")?,
+        )
+        .into())
     }
 
-    pub fn square(width: f64) -> Self {
-        curve::square(real_from_js_or_zero(width)).into()
+    pub fn square(width: f64) -> Result<Self, JsValue> {
+        Ok(curve::square(real_from_js_named(width, "width")?).into())
     }
 
-    pub fn circle(radius: f64, segments: usize) -> Self {
-        curve::circle(real_from_js_or_zero(radius), segments).into()
+    pub fn circle(radius: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(curve::circle(real_from_js_named(radius, "radius")?, segments).into())
     }
 
-    pub fn ellipse(width: f64, height: f64, segments: usize) -> Self {
-        curve::ellipse(
-            real_from_js_or_zero(width),
-            real_from_js_or_zero(height),
+    pub fn ellipse(width: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(curve::ellipse(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(height, "height")?,
             segments,
         )
-        .into()
+        .into())
     }
 
     #[wasm_bindgen(js_name = rightTriangle)]
-    pub fn right_triangle(width: f64, height: f64) -> Self {
-        curve::right_triangle(real_from_js_or_zero(width), real_from_js_or_zero(height)).into()
+    pub fn right_triangle(width: f64, height: f64) -> Result<Self, JsValue> {
+        Ok(curve::right_triangle(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(height, "height")?,
+        )
+        .into())
     }
 
     #[wasm_bindgen(js_name = regularNgon)]
-    pub fn regular_ngon(sides: usize, radius: f64) -> Self {
-        curve::regular_ngon(sides, real_from_js_or_zero(radius)).into()
+    pub fn regular_ngon(sides: usize, radius: f64) -> Result<Self, JsValue> {
+        Ok(curve::regular_ngon(sides, real_from_js_named(radius, "radius")?).into())
     }
 
-    pub fn star(points: usize, outer_radius: f64, inner_radius: f64) -> Self {
-        curve::star(
+    pub fn star(points: usize, outer_radius: f64, inner_radius: f64) -> Result<Self, JsValue> {
+        Ok(curve::star(
             points,
-            real_from_js_or_zero(outer_radius),
-            real_from_js_or_zero(inner_radius),
+            real_from_js_named(outer_radius, "outerRadius")?,
+            real_from_js_named(inner_radius, "innerRadius")?,
         )
-        .into()
+        .into())
     }
 
-    pub fn teardrop(width: f64, length: f64, segments: usize) -> Self {
-        curve::teardrop(
-            real_from_js_or_zero(width),
-            real_from_js_or_zero(length),
+    pub fn teardrop(width: f64, length: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(curve::teardrop(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(length, "length")?,
             segments,
         )
-        .into()
+        .into())
     }
 
-    pub fn egg(width: f64, length: f64, segments: usize) -> Self {
-        curve::egg(
-            real_from_js_or_zero(width),
-            real_from_js_or_zero(length),
+    pub fn egg(width: f64, length: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(curve::egg(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(length, "length")?,
             segments,
         )
-        .into()
+        .into())
     }
 
-    pub fn ring(inner_diameter: f64, thickness: f64, segments: usize) -> Self {
-        curve::ring(
-            real_from_js_or_zero(inner_diameter),
-            real_from_js_or_zero(thickness),
+    pub fn ring(
+        inner_diameter: f64,
+        thickness: f64,
+        segments: usize,
+    ) -> Result<Self, JsValue> {
+        Ok(curve::ring(
+            real_from_js_named(inner_diameter, "innerDiameter")?,
+            real_from_js_named(thickness, "thickness")?,
             segments,
         )
-        .into()
+        .into())
     }
 
-    pub fn heart(width: f64, height: f64, segments: usize) -> Self {
-        curve::heart(
-            real_from_js_or_zero(width),
-            real_from_js_or_zero(height),
+    pub fn heart(width: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(curve::heart(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(height, "height")?,
             segments,
         )
-        .into()
+        .into())
     }
 
     pub fn crescent(
@@ -309,14 +350,14 @@ impl CurveRegionJs {
         inner_radius: f64,
         offset: f64,
         segments: usize,
-    ) -> Self {
-        curve::crescent(
-            real_from_js_or_zero(outer_radius),
-            real_from_js_or_zero(inner_radius),
-            real_from_js_or_zero(offset),
+    ) -> Result<Self, JsValue> {
+        Ok(curve::crescent(
+            real_from_js_named(outer_radius, "outerRadius")?,
+            real_from_js_named(inner_radius, "innerRadius")?,
+            real_from_js_named(offset, "offset")?,
             segments,
         )
-        .into()
+        .into())
     }
 }
 

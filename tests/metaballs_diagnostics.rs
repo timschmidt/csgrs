@@ -69,9 +69,14 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
 #[test]
 fn metaball_influence_at_center_is_finite_hyperreal_value() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
-    let influence = ball.influence(&p3(0.0, 0.0, 0.0));
+    let influence = ball
+        .influence(&p3(0.0, 0.0, 0.0))
+        .expect("valid metaball influence");
 
-    assert!(influence > r(0.0));
+    assert_eq!(
+        hyperlimit::compare_reals(&influence, &r(0.0)).value(),
+        Some(std::cmp::Ordering::Greater)
+    );
 }
 
 #[test]

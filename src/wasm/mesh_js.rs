@@ -3,7 +3,7 @@
 use crate::solid::{self, SolidExt};
 use crate::wasm::{
     matrix_js::Matrix4Js, plane_js::PlaneJs, point_js::Point3Js, real_from_js,
-    real_from_js_or_zero, real_to_js,
+    real_from_js_named, real_to_js,
 };
 use hyperlattice::Point3;
 use hypermesh::{Triangle, TriangleMesh};
@@ -204,55 +204,66 @@ impl MeshJs {
             .map_err(js_error)
     }
 
-    pub fn transform(&self, matrix: &Matrix4Js) -> Self {
-        solid::transform(&self.inner, &matrix.inner).into()
+    pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
+        solid::try_transform(&self.inner, &matrix.inner)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
-    pub fn translate(&self, x: f64, y: f64, z: f64) -> Self {
-        self.inner
+    pub fn translate(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
+        Ok(self
+            .inner
             .translated(
-                real_from_js_or_zero(x),
-                real_from_js_or_zero(y),
-                real_from_js_or_zero(z),
+                real_from_js_named(x, "x")?,
+                real_from_js_named(y, "y")?,
+                real_from_js_named(z, "z")?,
             )
-            .into()
+            .into())
     }
 
-    pub fn rotate(&self, x: f64, y: f64, z: f64) -> Self {
-        solid::rotate(
+    pub fn rotate(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
+        solid::try_rotate(
             &self.inner,
-            real_from_js_or_zero(x),
-            real_from_js_or_zero(y),
-            real_from_js_or_zero(z),
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            real_from_js_named(z, "z")?,
         )
-        .into()
+        .map(Into::into)
+        .map_err(js_error)
     }
 
-    pub fn scale(&self, x: f64, y: f64, z: f64) -> Self {
-        solid::scale(
+    pub fn scale(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
+        solid::try_scale(
             &self.inner,
-            real_from_js_or_zero(x),
-            real_from_js_or_zero(y),
-            real_from_js_or_zero(z),
+            real_from_js_named(x, "x")?,
+            real_from_js_named(y, "y")?,
+            real_from_js_named(z, "z")?,
         )
-        .into()
+        .map(Into::into)
+        .map_err(js_error)
     }
 
-    pub fn center(&self) -> Self {
-        solid::center(&self.inner).into()
+    pub fn center(&self) -> Result<Self, JsValue> {
+        solid::try_center(&self.inner)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     #[wasm_bindgen(js_name = floatOnZ)]
-    pub fn float_on_z(&self) -> Self {
-        solid::float(&self.inner).into()
+    pub fn float_on_z(&self) -> Result<Self, JsValue> {
+        solid::try_float(&self.inner)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     pub fn inverse(&self) -> Self {
         solid::inverse(&self.inner).into()
     }
 
-    pub fn mirror(&self, plane: &PlaneJs) -> Self {
-        solid::mirror(&self.inner, &plane.inner).into()
+    pub fn mirror(&self, plane: &PlaneJs) -> Result<Self, JsValue> {
+        solid::try_mirror(&self.inner, &plane.inner)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     #[wasm_bindgen(js_name = convexHull)]
@@ -270,8 +281,8 @@ impl MeshJs {
     }
 
     #[wasm_bindgen(js_name = boundingBox)]
-    pub fn bounding_box(&self) -> JsValue {
-        let bounds = solid::bounding_box(&self.inner);
+    pub fn bounding_box(&self) -> Result<JsValue, JsValue> {
+        let bounds = solid::try_bounding_box(&self.inner).map_err(js_error)?;
         let object = Object::new();
         Reflect::set(
             &object,
@@ -285,7 +296,7 @@ impl MeshJs {
             &JsValue::from(Point3Js::from(bounds.maxs.clone())),
         )
         .expect("plain object accepts maximum");
-        object.into()
+        Ok(object.into())
     }
 
     #[wasm_bindgen(js_name = toSTLBinary)]
@@ -304,51 +315,62 @@ impl MeshJs {
         Ok(solid::subdivide(&self.inner, levels).into())
     }
 
-    pub fn cube(size: f64) -> Self {
-        solid::cube(real_from_js_or_zero(size)).into()
+    pub fn cube(size: f64) -> Result<Self, JsValue> {
+        Ok(solid::cube(real_from_js_named(size, "size")?).into())
     }
 
-    pub fn cuboid(width: f64, length: f64, height: f64) -> Self {
-        solid::cuboid(
-            real_from_js_or_zero(width),
-            real_from_js_or_zero(length),
-            real_from_js_or_zero(height),
+    pub fn cuboid(width: f64, length: f64, height: f64) -> Result<Self, JsValue> {
+        Ok(solid::cuboid(
+            real_from_js_named(width, "width")?,
+            real_from_js_named(length, "length")?,
+            real_from_js_named(height, "height")?,
         )
-        .into()
+        .into())
     }
 
-    pub fn sphere(radius: f64, segments: usize, stacks: usize) -> Self {
-        solid::sphere(real_from_js_or_zero(radius), segments, stacks).into()
+    pub fn sphere(radius: f64, segments: usize, stacks: usize) -> Result<Self, JsValue> {
+        Ok(solid::sphere(real_from_js_named(radius, "radius")?, segments, stacks).into())
     }
 
-    pub fn cylinder(radius: f64, height: f64, segments: usize) -> Self {
-        solid::cylinder(
-            real_from_js_or_zero(radius),
-            real_from_js_or_zero(height),
+    pub fn cylinder(radius: f64, height: f64, segments: usize) -> Result<Self, JsValue> {
+        Ok(solid::cylinder(
+            real_from_js_named(radius, "radius")?,
+            real_from_js_named(height, "height")?,
             segments,
         )
-        .into()
+        .into())
     }
 
-    pub fn frustum(bottom_radius: f64, top_radius: f64, height: f64, segments: usize) -> Self {
-        solid::frustum(
-            real_from_js_or_zero(bottom_radius),
-            real_from_js_or_zero(top_radius),
-            real_from_js_or_zero(height),
+    pub fn frustum(
+        bottom_radius: f64,
+        top_radius: f64,
+        height: f64,
+        segments: usize,
+    ) -> Result<Self, JsValue> {
+        Ok(solid::frustum(
+            real_from_js_named(bottom_radius, "bottomRadius")?,
+            real_from_js_named(top_radius, "topRadius")?,
+            real_from_js_named(height, "height")?,
             segments,
         )
-        .into()
+        .into())
     }
 
-    pub fn ellipsoid(rx: f64, ry: f64, rz: f64, segments: usize, stacks: usize) -> Self {
-        solid::ellipsoid(
-            real_from_js_or_zero(rx),
-            real_from_js_or_zero(ry),
-            real_from_js_or_zero(rz),
+    pub fn ellipsoid(
+        rx: f64,
+        ry: f64,
+        rz: f64,
+        segments: usize,
+        stacks: usize,
+    ) -> Result<Self, JsValue> {
+        Ok(solid::ellipsoid(
+            real_from_js_named(rx, "rx")?,
+            real_from_js_named(ry, "ry")?,
+            real_from_js_named(rz, "rz")?,
             segments,
             stacks,
         )
-        .into()
+        .into())
     }
 
     pub fn torus(
@@ -356,14 +378,14 @@ impl MeshJs {
         minor_radius: f64,
         major_segments: usize,
         minor_segments: usize,
-    ) -> Self {
-        solid::torus(
-            real_from_js_or_zero(major_radius),
-            real_from_js_or_zero(minor_radius),
+    ) -> Result<Self, JsValue> {
+        Ok(solid::torus(
+            real_from_js_named(major_radius, "majorRadius")?,
+            real_from_js_named(minor_radius, "minorRadius")?,
             major_segments,
             minor_segments,
         )
-        .into()
+        .into())
     }
 }
 
