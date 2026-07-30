@@ -137,8 +137,8 @@ families is recertified:
   net, and whose normalized profile-plane progress is certified affine and
   strictly positive by exact Bernstein coefficient identities;
 - analytic cylinders;
-- complete closed-surface spheres, spherical voids, and exact two-cap
-  sphere/sphere Boolean shells;
+- complete closed-surface spheres, spherical voids, exact plane-capped axial
+  sphere segments, and exact two-cap sphere/sphere Boolean shells;
 - truncated cones that exclude the singular apex;
 - full periodic ring tori and exact axial torus bands closed by zero, one, or
   two planar annular cap groups.
@@ -157,6 +157,15 @@ This proves full tori, two-cap interior bands, and one-cap bands that close at
 a natural torus extremum. Volume uses the exact `Real` antiderivative of
 `4*pi*R*sqrt(r²-h²)`; classification combines the same axial interval with the
 ring-torus implicit predicate.
+
+A whole sphere remains one boundaryless face until an actual retained latitude
+requires topology. The first exact axial plane cut authors two identity-shared
+circle halves and two complementary periodic spherical-cap faces; no
+always-present pole or longitude seam is introduced. A selected cap plus its
+planar disk is certified from the exact latitude, circle center/radius, full
+angular coverage, and outward cap normal. Its volume integrates the exact
+cross-section `pi*(r²-h²)` over the retained axial interval, and classification
+combines that interval with the radial sphere predicate.
 
 Line/arc revolution certificates project every authored meridian carrier into
 one exact positive-radius radial/axial contour. Circular meridians are checked

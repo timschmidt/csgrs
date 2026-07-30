@@ -630,7 +630,7 @@ impl SurfaceCurveFaceSplit {
     }
 }
 
-/// Stable identifiers produced by one wholly interior closed surface curve.
+/// Stable identifiers produced by one closed surface curve.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ClosedSurfaceCurveFaceSplit {
     /// Newly inserted vertex at the retained curve's public-domain seam.
@@ -639,17 +639,17 @@ pub struct ClosedSurfaceCurveFaceSplit {
     pub midpoint_vertex: VertexId,
     /// Two canonical curve halves shared by both descendants.
     pub edges: [EdgeId; 2],
-    /// Uses on the retained exterior face's new inner wire.
-    pub exterior_edge_uses: [EdgeUseId; 2],
-    /// Uses on the enclosed descendant's outer wire.
-    pub interior_edge_uses: [EdgeUseId; 2],
-    /// New inner wire on the retained exterior face.
-    pub exterior_inner_wire: WireId,
-    /// New outer wire on the enclosed descendant.
-    pub interior_outer_wire: WireId,
-    /// Exterior descendant retaining the source face ID.
+    /// Uses on the retained first descendant's new boundary wire.
+    pub first_edge_uses: [EdgeUseId; 2],
+    /// Uses on the appended second descendant's new boundary wire.
+    pub second_edge_uses: [EdgeUseId; 2],
+    /// New boundary wire on the retained first descendant.
+    pub first_wire: WireId,
+    /// New boundary wire on the appended second descendant.
+    pub second_wire: WireId,
+    /// First descendant retaining the source face ID.
     pub first_face: FaceId,
-    /// Newly appended enclosed descendant.
+    /// Newly appended second descendant.
     pub second_face: FaceId,
 }
 
@@ -1174,6 +1174,14 @@ struct CertifiedSphereShell {
     center: Point3,
     radius: Real,
     voids: Vec<(Point3, Real)>,
+    axial_clip: Option<CertifiedSphereAxialClip>,
+}
+
+#[derive(Clone, Debug)]
+struct CertifiedSphereAxialClip {
+    axis: Vector3,
+    min: Real,
+    max: Real,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1197,6 +1205,7 @@ struct CertifiedSphericalCapFace {
     center: Point3,
     axis: Vector3,
     radius: Real,
+    latitude: Real,
     upper: bool,
     orientation: Orientation,
 }
@@ -1602,14 +1611,15 @@ impl Model {
         ))
     }
 
-    /// Splits a trimmed face along one retained exact surface curve.
+    /// Splits a face along one retained exact surface curve.
     ///
     /// The supplied pcurve is materialized without inverse fitting and retains
     /// its exact affine correspondence to the spatial curve parameter. Curve
-    /// endpoints attach to existing outer-boundary vertices or split the
-    /// unique containing canonical edges. The new canonical curve is shared
-    /// by two opposite edge uses, and the complete model is revalidated before
-    /// publication.
+    /// endpoints on a trimmed face attach to existing outer-boundary vertices
+    /// or split the unique containing canonical edges. A closed latitude on a
+    /// boundaryless whole sphere authors two complementary periodic caps. The
+    /// new canonical curve is shared by two opposite edge uses, and the
+    /// complete model is revalidated before publication.
     pub fn split_face_by_surface_curve(
         &self,
         face_id: FaceId,
@@ -1622,9 +1632,6 @@ impl Model {
                 kind: EntityKind::Face,
                 index: face_id.index(),
             })?;
-        let Some(_) = face.outer() else {
-            return Err(TopologyEditError::WholeSurfaceFace(face_id));
-        };
         let start = curve.start()?;
         let end = curve.end()?;
         if exact_point_order(&start, &end)? == std::cmp::Ordering::Equal {
@@ -1640,9 +1647,16 @@ impl Model {
                 } else {
                     (curve, pcurve)
                 };
-            let (model, split) = self.split_face_by_closed_surface_curve(face_id, curve, pcurve)?;
+            let (model, split) = if face.outer().is_none() {
+                self.split_whole_sphere_by_surface_curve(face_id, curve, pcurve)?
+            } else {
+                self.split_face_by_closed_surface_curve(face_id, curve, pcurve)?
+            };
             return Ok((model, SurfaceCurveFaceSplit::Closed(split)));
         }
+        let Some(_) = face.outer() else {
+            return Err(TopologyEditError::WholeSurfaceFace(face_id));
+        };
         let materialized = pcurve.materialize()?;
         let correspondence = match materialized.correspondence() {
             SurfacePcurveCorrespondence::Affine { scale, offset } => {
@@ -1673,6 +1687,207 @@ impl Model {
                 end_edge,
                 face,
             }),
+        ))
+    }
+
+    fn split_whole_sphere_by_surface_curve(
+        &self,
+        face_id: FaceId,
+        curve: &Curve3,
+        pcurve: &SurfaceIntersectionPcurve,
+    ) -> Result<(Self, ClosedSurfaceCurveFaceSplit), TopologyEditError> {
+        let face = self
+            .face(face_id)
+            .ok_or(TopologyEditError::InvalidReference {
+                kind: EntityKind::Face,
+                index: face_id.index(),
+            })?
+            .clone();
+        if !face.is_whole_surface()
+            || self
+                .surface(face.surface)
+                .expect("validated whole-face surface")
+                .kind()
+                != SurfaceKind::Sphere
+        {
+            return Err(TopologyEditError::WholeSurfaceFace(face_id));
+        }
+        let start = curve.start()?;
+        let end = curve.end()?;
+        if exact_point_order(&start, &end)? != std::cmp::Ordering::Equal {
+            return Err(TopologyEditError::DegenerateFaceSplit);
+        }
+        let midpoint = ((curve.domain().start() + curve.domain().end()) / Real::from(2))
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let midpoint_point = curve.point_at(&midpoint)?;
+        if exact_point_order(&start, &midpoint_point)? == std::cmp::Ordering::Equal {
+            return Err(TopologyEditError::DegenerateFaceSplit);
+        }
+
+        let ranges = [
+            (curve.domain().start(), &midpoint),
+            (&midpoint, curve.domain().end()),
+        ];
+        let mut halves = Vec::with_capacity(2);
+        for (range_start, range_end) in ranges {
+            let spatial = curve.subcurve(range_start, range_end)?;
+            let retained = pcurve.subcurve(range_start, range_end)?;
+            let materialized = retained.materialize()?;
+            let forward_pcurve = Pcurve::new(materialized.curve().clone());
+            let reverse_pcurve = forward_pcurve.reversed()?;
+            let (forward_correspondence, reverse_correspondence) = match materialized
+                .correspondence()
+            {
+                SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                    let source_span = range_end - range_start;
+                    let spatial_span = spatial.domain().end() - spatial.domain().start();
+                    let domain_scale = (spatial_span / source_span)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let edge_scale = &domain_scale * scale;
+                    let edge_offset =
+                        spatial.domain().start() + &domain_scale * (offset - range_start);
+                    (
+                        ParameterCorrespondence::affine(edge_scale.clone(), edge_offset.clone())?,
+                        ParameterCorrespondence::affine(
+                            -edge_scale.clone(),
+                            edge_scale
+                                * (forward_pcurve.domain_start() + forward_pcurve.domain_end())
+                                + edge_offset,
+                        )?,
+                    )
+                }
+                SurfacePcurveCorrespondence::AngularSweep { .. } => (
+                    ParameterCorrespondence::angular_sweep(),
+                    ParameterCorrespondence::angular_sweep(),
+                ),
+            };
+            halves.push((
+                spatial,
+                forward_pcurve,
+                forward_correspondence,
+                reverse_pcurve,
+                reverse_correspondence,
+            ));
+        }
+
+        let mut staged = self.clone();
+        let data = Arc::make_mut(&mut staged.data);
+        let seam_vertex = VertexId::from_index(data.vertices.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
+        data.vertices.push(Vertex {
+            point: start.clone(),
+        });
+        let midpoint_vertex = VertexId::from_index(data.vertices.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
+        data.vertices.push(Vertex {
+            point: midpoint_point,
+        });
+
+        let mut edges = Vec::with_capacity(2);
+        let mut forward_uses = Vec::with_capacity(2);
+        let mut reverse_uses = Vec::with_capacity(2);
+        for (index, (spatial, forward, forward_map, reverse, reverse_map)) in
+            halves.into_iter().enumerate()
+        {
+            let curve_id = Curve3Id::from_index(data.curves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
+            let domain = spatial.domain().clone();
+            data.curves.push(spatial);
+            let edge = EdgeId::from_index(data.edges.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Edge))?;
+            data.edges.push(Edge {
+                start: if index == 0 {
+                    seam_vertex
+                } else {
+                    midpoint_vertex
+                },
+                end: if index == 0 {
+                    midpoint_vertex
+                } else {
+                    seam_vertex
+                },
+                curve: curve_id,
+                domain,
+            });
+            edges.push(edge);
+
+            let forward_pcurve = PcurveId::from_index(data.pcurves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
+            data.pcurves.push(forward);
+            let forward_use = EdgeUseId::from_index(data.edge_uses.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
+            data.edge_uses.push(EdgeUse {
+                edge,
+                direction: Direction::Forward,
+                pcurve: forward_pcurve,
+                parameter_correspondence: forward_map,
+            });
+            forward_uses.push(forward_use);
+
+            let reverse_pcurve = PcurveId::from_index(data.pcurves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
+            data.pcurves.push(reverse);
+            let reverse_use = EdgeUseId::from_index(data.edge_uses.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
+            data.edge_uses.push(EdgeUse {
+                edge,
+                direction: Direction::Reversed,
+                pcurve: reverse_pcurve,
+                parameter_correspondence: reverse_map,
+            });
+            reverse_uses.push(reverse_use);
+        }
+        reverse_uses.reverse();
+        let first_wire = WireId::from_index(data.wires.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
+        data.wires.push(Wire {
+            edge_uses: forward_uses.clone(),
+        });
+        let second_wire = WireId::from_index(data.wires.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
+        data.wires.push(Wire {
+            edge_uses: reverse_uses.clone(),
+        });
+        data.faces[face_id.index()].boundary = FaceBoundary::Trimmed {
+            outer: first_wire,
+            inner: Vec::new(),
+        };
+        let second_face = FaceId::from_index(data.faces.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Face))?;
+        data.faces.push(Face {
+            surface: face.surface,
+            orientation: face.orientation,
+            boundary: FaceBoundary::Trimmed {
+                outer: second_wire,
+                inner: Vec::new(),
+            },
+        });
+        let shell = self.data.face_shell[face_id.index()];
+        let source_position = data.shells[shell.index()]
+            .faces
+            .iter()
+            .position(|candidate| *candidate == face_id)
+            .expect("validated face-shell adjacency");
+        data.shells[shell.index()]
+            .faces
+            .insert(source_position + 1, second_face);
+        reset_model_caches(data);
+        let validated = staged
+            .revalidated()
+            .map_err(TopologyEditError::Validation)?;
+        Ok((
+            validated,
+            ClosedSurfaceCurveFaceSplit {
+                seam_vertex,
+                midpoint_vertex,
+                edges: [edges[0], edges[1]],
+                first_edge_uses: [forward_uses[0], forward_uses[1]],
+                second_edge_uses: [reverse_uses[0], reverse_uses[1]],
+                first_wire,
+                second_wire,
+                first_face: face_id,
+                second_face,
+            },
         ))
     }
 
@@ -1932,17 +2147,17 @@ impl Model {
                 seam_vertex,
                 midpoint_vertex,
                 edges: [edges[0], edges[1]],
-                exterior_edge_uses: [exterior_uses[0], exterior_uses[1]],
-                interior_edge_uses: [interior_uses[0], interior_uses[1]],
-                exterior_inner_wire,
-                interior_outer_wire,
+                first_edge_uses: [exterior_uses[0], exterior_uses[1]],
+                second_edge_uses: [interior_uses[0], interior_uses[1]],
+                first_wire: exterior_inner_wire,
+                second_wire: interior_outer_wire,
                 first_face: face_id,
                 second_face,
             },
         ))
     }
 
-    /// Deterministically partitions one trimmed face by retained exact
+    /// Deterministically partitions one face by retained exact
     /// surface-intersection curves.
     ///
     /// Curves are ordered by their unordered spatial endpoint pairs, so caller
@@ -1962,7 +2177,7 @@ impl Model {
                 kind: EntityKind::Face,
                 index: face_id.index(),
             })?;
-        if face.outer().is_none() {
+        if face.outer().is_none() && curves.len() != 1 {
             return Err(TopologyEditError::WholeSurfaceFace(face_id));
         }
 
@@ -3111,6 +3326,13 @@ impl Model {
                                 .transform_point3(&certificate.center)
                                 .map_err(|_| GeometryError::TransformFailure)?,
                             radius: certificate.radius.clone(),
+                            axial_clip: certificate.axial_clip.as_ref().map(|clip| {
+                                CertifiedSphereAxialClip {
+                                    axis: transform.transform_direction3(&clip.axis),
+                                    min: clip.min.clone(),
+                                    max: clip.max.clone(),
+                                }
+                            }),
                             voids: certificate
                                 .voids
                                 .iter()
@@ -3573,6 +3795,14 @@ impl Model {
                 * (&cylinder.v_max - &cylinder.v_min));
         }
         if let Some(sphere) = &self.data.certified_spheres[id.index()] {
+            if let Some(clip) = &sphere.axial_clip {
+                let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                    let cubic = (height * height * height / Real::from(3))
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    Ok(Real::pi() * (&sphere.radius * &sphere.radius * height - cubic))
+                };
+                return Ok(antiderivative(&clip.max)? - antiderivative(&clip.min)?);
+            }
             let mut cubic_radius = &sphere.radius * &sphere.radius * &sphere.radius;
             for (_, radius) in &sphere.voids {
                 cubic_radius -= radius * radius * radius;
@@ -3948,12 +4178,28 @@ impl Model {
         sphere: &CertifiedSphereShell,
         point: &Point3,
     ) -> Result<SolidPointLocation, QueryError> {
+        let clip_orders = if let Some(clip) = &sphere.axial_clip {
+            let height = (point - &sphere.center).dot(&clip.axis);
+            let min = decided_model_order(compare_reals(&height, &clip.min))?;
+            let max = decided_model_order(compare_reals(&height, &clip.max))?;
+            if min == std::cmp::Ordering::Less || max == std::cmp::Ordering::Greater {
+                return Ok(SolidPointLocation::Outside);
+            }
+            Some((min, max))
+        } else {
+            None
+        };
         let distance_squared = (point - &sphere.center).norm_squared();
         let radius_squared = &sphere.radius * &sphere.radius;
         match decided_model_order(compare_reals(&distance_squared, &radius_squared))? {
             std::cmp::Ordering::Greater => return Ok(SolidPointLocation::Outside),
             std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
             std::cmp::Ordering::Less => {}
+        }
+        if clip_orders.is_some_and(|(min, max)| {
+            min == std::cmp::Ordering::Equal || max == std::cmp::Ordering::Equal
+        }) {
+            return Ok(SolidPointLocation::Boundary);
         }
         for (center, radius) in &sphere.voids {
             let distance_squared = (point - center).norm_squared();
@@ -4711,7 +4957,7 @@ impl Model {
             .certified_spheres
             .get(solid.index())
             .and_then(Option::as_ref)
-            .filter(|sphere| sphere.voids.is_empty())
+            .filter(|sphere| sphere.voids.is_empty() && sphere.axial_clip.is_none())
             .map(|sphere| CertifiedSphereProfile {
                 center: sphere.center.clone(),
                 radius: sphere.radius.clone(),
@@ -5372,7 +5618,11 @@ impl ModelBuilder {
             }
             self.validate_closed_shell(*shell)?;
         }
-        let sphere = self.certified_sphere_shell(outer)?;
+        let sphere = match self.certified_sphere_shell(outer)? {
+            Some(sphere) => Some(sphere),
+            None if voids.is_empty() => self.certified_sphere_segment_shell(outer)?,
+            None => None,
+        };
         let sphere_pair = self.certified_sphere_pair_shell(outer)?;
         let revolution = self.certified_revolution_shell(outer)?;
         let analytic_closed = sphere.is_some() || sphere_pair.is_some() || revolution.is_some();
@@ -8716,6 +8966,7 @@ impl ModelBuilder {
                 center,
                 radius,
                 voids: Vec::new(),
+                axial_clip: None,
             }))
     }
 
@@ -8757,6 +9008,7 @@ impl ModelBuilder {
             center,
             axis,
             radius,
+            latitude: line.start().y().clone(),
             upper,
             orientation: face.orientation,
         }))
@@ -8861,23 +9113,128 @@ impl ModelBuilder {
         &self,
         solid: &Solid,
     ) -> Result<Option<CertifiedSphereShell>, BuildError> {
-        let Some((center, radius)) =
+        if let Some((center, radius)) =
             self.certified_oriented_sphere_shell(solid.outer, Orientation::Forward)?
-        else {
+        {
+            let mut voids = Vec::with_capacity(solid.voids.len());
+            for shell in &solid.voids {
+                let Some(void) =
+                    self.certified_oriented_sphere_shell(*shell, Orientation::Reversed)?
+                else {
+                    return Ok(None);
+                };
+                voids.push(void);
+            }
+            return Ok(Some(CertifiedSphereShell {
+                center,
+                radius,
+                voids,
+                axial_clip: None,
+            }));
+        }
+        if !solid.voids.is_empty() {
+            return Ok(None);
+        }
+        self.certified_sphere_segment_shell(solid.outer)
+    }
+
+    fn certified_sphere_segment_shell(
+        &self,
+        shell: ShellId,
+    ) -> Result<Option<CertifiedSphereShell>, BuildError> {
+        let faces = &self.shell_ref(shell)?.faces;
+        let mut sphere_faces = Vec::new();
+        for face_id in faces {
+            match self.surface_ref(self.face_ref(*face_id)?.surface)?.kind() {
+                SurfaceKind::Plane => {}
+                SurfaceKind::Sphere => sphere_faces.push(*face_id),
+                _ => return Ok(None),
+            }
+        }
+        if sphere_faces.len() != 1 {
+            return Ok(None);
+        }
+        let Some(cap) = self.certified_spherical_cap_face(sphere_faces[0])? else {
             return Ok(None);
         };
-        let mut voids = Vec::with_capacity(solid.voids.len());
-        for shell in &solid.voids {
-            let Some(void) = self.certified_oriented_sphere_shell(*shell, Orientation::Reversed)?
+        if cap.orientation != Orientation::Forward {
+            return Ok(None);
+        }
+        let cap_groups = self.planar_face_groups(faces)?;
+        if cap_groups.len() != 1 {
+            return Ok(None);
+        }
+        let height = &cap.radius * cap.latitude.clone().sin();
+        let expected_center = cap.center.clone() + cap.axis.clone() * &height;
+        let expected_radius = &cap.radius * cap.latitude.clone().cos();
+        let Some(boundaries) = self.cap_boundary_use_loops(faces, &cap_groups[0])? else {
+            return Ok(None);
+        };
+        if boundaries.len() != 1 {
+            return Ok(None);
+        }
+        let mut sweep = Real::zero();
+        for edge_use_id in &boundaries[0] {
+            let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
+            let Curve3ExactData::EllipseArc(circle) = self.curve_ref(edge.curve)?.exact_data()
             else {
                 return Ok(None);
             };
-            voids.push(void);
+            if !circle.circle
+                || !points_equal(&circle.center, &expected_center)?
+                || !real_values_equal(&circle.x_radius, &expected_radius)?
+                || !real_values_equal(&circle.y_radius, &expected_radius)?
+            {
+                return Ok(None);
+            }
+            sweep += edge.domain.end() - edge.domain.start();
+        }
+        if !real_values_equal(&sweep, &Real::tau())? {
+            return Ok(None);
+        }
+
+        let expected_outward = if cap.upper {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        };
+        for index in &cap_groups[0] {
+            let face = self.face_ref(faces[*index])?;
+            let SurfaceExactData::Plane { origin, u, v } =
+                self.surface_ref(face.surface)?.exact_data()
+            else {
+                return Ok(None);
+            };
+            let normal = u.cross(&v);
+            if decided_model_order(compare_reals(
+                &normal.cross(&cap.axis).norm_squared(),
+                &Real::zero(),
+            ))? != std::cmp::Ordering::Equal
+                || !real_values_equal(&(origin - &cap.center).dot(&cap.axis), &height)?
+            {
+                return Ok(None);
+            }
+            let oriented = match face.orientation {
+                Orientation::Forward => normal.dot(&cap.axis),
+                Orientation::Reversed => -normal.dot(&cap.axis),
+            };
+            if decided_model_order(compare_reals(&oriented, &Real::zero()))? != expected_outward {
+                return Ok(None);
+            }
         }
         Ok(Some(CertifiedSphereShell {
-            center,
-            radius,
-            voids,
+            center: cap.center,
+            radius: cap.radius.clone(),
+            voids: Vec::new(),
+            axial_clip: Some(CertifiedSphereAxialClip {
+                axis: cap.axis,
+                min: if cap.upper {
+                    height.clone()
+                } else {
+                    -cap.radius.clone()
+                },
+                max: if cap.upper { cap.radius } else { height },
+            }),
         }))
     }
 
@@ -8887,19 +9244,45 @@ impl ModelBuilder {
         orientation: Orientation,
     ) -> Result<Option<(Point3, Real)>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        if faces.len() != 1 {
-            return Ok(None);
+        match faces.as_slice() {
+            [face_id] => {
+                let face = self.face_ref(*face_id)?;
+                if !face.is_whole_surface() || face.orientation != orientation {
+                    return Ok(None);
+                }
+                let SurfaceExactData::Sphere { center, radius, .. } =
+                    self.surface_ref(face.surface)?.exact_data()
+                else {
+                    return Ok(None);
+                };
+                Ok(Some((center, radius)))
+            }
+            [first_id, second_id] => {
+                let first_face = self.face_ref(*first_id)?;
+                let second_face = self.face_ref(*second_id)?;
+                if first_face.orientation != orientation
+                    || second_face.orientation != orientation
+                    || first_face.surface != second_face.surface
+                {
+                    return Ok(None);
+                }
+                let Some(first) = self.certified_spherical_cap_face(*first_id)? else {
+                    return Ok(None);
+                };
+                let Some(second) = self.certified_spherical_cap_face(*second_id)? else {
+                    return Ok(None);
+                };
+                if first.upper == second.upper
+                    || !points_equal(&first.center, &second.center)?
+                    || !vectors_equal(&first.axis, &second.axis)?
+                    || !real_values_equal(&first.radius, &second.radius)?
+                {
+                    return Ok(None);
+                }
+                Ok(Some((first.center, first.radius)))
+            }
+            _ => Ok(None),
         }
-        let face = self.face_ref(faces[0])?;
-        if !face.is_whole_surface() || face.orientation != orientation {
-            return Ok(None);
-        }
-        let SurfaceExactData::Sphere { center, radius, .. } =
-            self.surface_ref(face.surface)?.exact_data()
-        else {
-            return Ok(None);
-        };
-        Ok(Some((center, radius)))
     }
 
     fn certified_cone_frustum_shell(

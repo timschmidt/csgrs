@@ -80,7 +80,7 @@ strict-convexity certificate.
 | Finite line / sphere | None, tangent/simple points |
 | Finite line / cylinder | None, tangent/simple points |
 | Finite line / cone | None, tangent/simple points, generator overlap; lower nappe rejected |
-| Plane / sphere | None, tangent point, full circle |
+| Plane / sphere | None, tangent point, full circle; authored-axis transverse circles retain exact pcurves on both carriers |
 | Sphere / sphere | None, coincident, tangent point, full circle |
 | Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines |
 | Plane / cone | Transverse lower none, apex point, or upper circle |
@@ -176,6 +176,15 @@ difference retains the first sphere; point-contact union remains unsupported.
 At internal tangency, union/intersection select the outer/inner operand and
 inner-minus-outer is empty; outer-minus-inner remains unsupported because its
 touching cavity boundary is non-manifold.
+
+An authored-axis transverse plane/sphere circle retains a planar angular-sweep
+pcurve and the exact constant-latitude sphere pcurve. The first such cut of a
+boundaryless whole sphere authors two complementary periodic cap faces only
+when the trim requires them. Sphere/halfspace intersection then selects one
+cap and one planar disk and certifies the exact axial segment for analytic
+volume, point classification, rigid/reflection transforms, operand reversal,
+and persistence. Multi-latitude spherical bands remain a separate topology
+step.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects

@@ -2922,9 +2922,11 @@ impl Surface {
             (SurfaceGeometry::Plane(first), SurfaceGeometry::Plane(second)) => {
                 intersect_planes(first, second)
             }
-            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Sphere(sphere))
-            | (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Plane(plane)) => {
+            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Sphere(sphere)) => {
                 intersect_plane_sphere(plane, sphere)
+            }
+            (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Plane(plane)) => {
+                intersect_plane_sphere(plane, sphere).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Plane(plane), SurfaceGeometry::Cylinder(cylinder)) => {
                 intersect_plane_cylinder(plane, cylinder)
@@ -4444,6 +4446,10 @@ fn intersect_plane_sphere(
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let normal = plane.u.cross(&plane.v);
     let normal_squared = normal.norm_squared();
+    let axial = decided_order(compare_reals(
+        &normal.cross(&sphere.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? == Ordering::Equal;
     let separation = normal.dot(&(&sphere.center - &plane.origin));
     let distance_squared = ((&separation * &separation) / &normal_squared)
         .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -4452,7 +4458,7 @@ fn intersect_plane_sphere(
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
-                (separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+                (&separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
             let center = sphere.center.clone() - normal.clone() * projection_scale;
             if decided_order(compare_reals(&distance_squared, &radius_squared))? == Ordering::Equal
             {
@@ -4461,6 +4467,31 @@ fn intersect_plane_sphere(
             let radius = (radius_squared - distance_squared)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
+            if axial {
+                let height = ((-&separation) / normal.dot(&sphere.frame.z))
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                let center = sphere.center.clone() + sphere.frame.z.clone() * &height;
+                let curve = Curve3::circle_arc(
+                    center,
+                    sphere.frame.x.clone(),
+                    sphere.frame.y.clone(),
+                    radius,
+                    Real::zero(),
+                    Real::tau(),
+                )?;
+                let latitude = (height / &sphere.radius)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?
+                    .asin()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let domain = curve.domain().clone();
+                return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                    SurfaceIntersectionCurve::new(
+                        curve.clone(),
+                        SurfaceIntersectionPcurve::plane_projection(curve, plane),
+                        SurfaceIntersectionPcurve::tensor_iso_v(domain, latitude),
+                    ),
+                )));
+            }
             let unit_normal = normal
                 .normalize()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
@@ -7412,7 +7443,7 @@ mod tests {
         assert_eq!(partitioned.face(face).unwrap().inner().len(), 1);
         assert_eq!(
             partitioned.face(closed.second_face).unwrap().outer(),
-            Some(closed.interior_outer_wire)
+            Some(closed.second_wire)
         );
         for edge in closed.edges {
             assert_eq!(partitioned.uses_of_edge(edge).unwrap().len(), 2);
@@ -9079,13 +9110,53 @@ mod tests {
         )
         .unwrap();
         let equator = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
-        let SurfaceSurfaceIntersection::Circle(circle) =
-            equator.intersect_surface(&sphere).unwrap()
+        let SurfaceSurfaceIntersection::Curve(circle) = equator.intersect_surface(&sphere).unwrap()
         else {
-            panic!("equatorial plane must produce a circle");
+            panic!("equatorial plane must retain a circle with both exact pcurves");
         };
-        assert_eq!(circle.kind(), Curve3Kind::CircleArc);
-        assert_points_equal(&circle.start().unwrap(), &p(2, 0, 0));
+        assert_eq!(circle.curve().kind(), Curve3Kind::CircleArc);
+        assert_points_equal(&circle.curve().start().unwrap(), &p(2, 0, 0));
+        assert_eq!(
+            circle
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::CircularArc
+        );
+        assert_eq!(
+            circle
+                .second_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::Line
+        );
+        let SurfaceSurfaceIntersection::Curve(swapped) =
+            sphere.intersect_surface(&equator).unwrap()
+        else {
+            panic!("operand reversal must retain the same exact sphere latitude");
+        };
+        assert_eq!(
+            swapped
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::Line
+        );
+        assert_eq!(
+            swapped
+                .second_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::CircularArc
+        );
 
         let tangent_plane = Surface::plane(p(0, 0, 2), Vector3::x(), Vector3::y()).unwrap();
         let SurfaceSurfaceIntersection::Point(point) =
