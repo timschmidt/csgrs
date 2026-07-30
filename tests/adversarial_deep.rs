@@ -26,7 +26,10 @@ fn repeated_boolean_and_transform_sequence_stays_nonempty() {
 
     assert!(!acc.triangles.is_empty());
     let bounds = solid::bounding_box(&acc);
-    assert!(bounds.maxs.x > bounds.mins.x);
+    assert_eq!(
+        hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x).value(),
+        Some(std::cmp::Ordering::Greater)
+    );
 }
 
 #[test]

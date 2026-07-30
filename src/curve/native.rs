@@ -8,13 +8,14 @@ use crate::errors::{CurveBooleanError, ValidationError};
 use crate::solid;
 use hypercurve::{
     BooleanOp, Classification, Contour2, CubicBezier2, Curve2, CurvePath2, CurvePolicy,
-    CurveRegion2, CurveString2, ExactCurveResult, FiniteProjectionOptions,
+    CurveRegion2, CurveString2, ExactCurveResult, FinitePolyline2, FiniteProjectionOptions,
     FiniteRegionProfile2, LineSeg2, Point2, PolynomialSplineCurve2, QuadraticBezier2,
     RationalBezier2, RegionPointLocation,
 };
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::TriangleMesh;
 use std::cell::RefCell;
+use std::cmp::Ordering;
 
 thread_local! {
     static REGION_RING_CACHE: RefCell<Vec<(Vec<[Real; 2]>, CurveRegion2)>> =
@@ -78,6 +79,39 @@ fn nonnegative_real(value: &Real) -> bool {
     matches!(
         crate::hyper_math::hreal_sign(value),
         Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Zero)
+    )
+}
+
+fn real_cmp(left: &Real, right: &Real) -> Option<Ordering> {
+    crate::hyper_math::hreal_try_cmp(left, right)
+}
+
+fn points_equal(left: &Point2, right: &Point2) -> Option<bool> {
+    Some(
+        real_cmp(left.x(), right.x())? == Ordering::Equal
+            && real_cmp(left.y(), right.y())? == Ordering::Equal,
+    )
+}
+
+fn finite_ring_sign(ring: &FinitePolyline2) -> Option<hyperlimit::Sign> {
+    let points = ring
+        .points()
+        .iter()
+        .map(|[x, y]| {
+            Some(hyperlimit::Point2::new(
+                Real::try_from(*x).ok()?,
+                Real::try_from(*y).ok()?,
+            ))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    hyperlimit::ring_area_sign(&points).value()
+}
+
+fn point3_equal(left: &Point3, right: &Point3) -> Option<bool> {
+    Some(
+        real_cmp(&left.x, &right.x)? == Ordering::Equal
+            && real_cmp(&left.y, &right.y)? == Ordering::Equal
+            && real_cmp(&left.z, &right.z)? == Ordering::Equal,
     )
 }
 
@@ -249,7 +283,10 @@ pub fn star(num_points: usize, outer_radius: Real, inner_radius: Real) -> CurveR
     let Some(count) = num_points.checked_mul(2) else {
         return empty();
     };
-    if num_points < 3 || !positive_real(&inner_radius) || outer_radius <= inner_radius {
+    if num_points < 3
+        || !positive_real(&inner_radius)
+        || real_cmp(&outer_radius, &inner_radius) != Some(Ordering::Greater)
+    {
         return empty();
     }
     let denominator = Real::from(count as u64);
@@ -284,7 +321,7 @@ pub fn teardrop(width: Real, length: Real, segments: usize) -> CurveRegion2 {
     };
     let Some(radius) = (width / Real::from(2_u8))
         .ok()
-        .filter(|radius| length > *radius)
+        .filter(|radius| real_cmp(&length, radius) == Some(Ordering::Greater))
     else {
         return empty();
     };
@@ -379,17 +416,17 @@ pub fn rounded_rectangle(
     if !positive_real(&width) || !positive_real(&height) || !nonnegative_real(&corner_radius) {
         return empty();
     }
-    let half_width = (&width / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-    let half_height = (&height / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
-    let radius = if corner_radius > half_width {
-        half_width
-    } else {
-        corner_radius
+    let half_width = (&width / Real::from(2_u8)).expect("two is nonzero");
+    let half_height = (&height / Real::from(2_u8)).expect("two is nonzero");
+    let radius = match real_cmp(&corner_radius, &half_width) {
+        Some(Ordering::Greater) => half_width,
+        Some(Ordering::Equal | Ordering::Less) => corner_radius,
+        None => return empty(),
     };
-    let radius = if radius > half_height {
-        half_height
-    } else {
-        radius
+    let radius = match real_cmp(&radius, &half_height) {
+        Some(Ordering::Greater) => half_height,
+        Some(Ordering::Equal | Ordering::Less) => radius,
+        None => return empty(),
     };
     if corner_segments == 0 || !positive_real(&radius) {
         return rectangle(width, height);
@@ -409,9 +446,22 @@ pub fn rounded_rectangle(
         ),
         (radius.clone(), height - radius.clone(), half_pi.clone()),
     ];
-    let mut points = Vec::new();
-    for (cx, cy, start) in centers {
+    let Some(point_capacity) = corner_segments.checked_mul(4) else {
+        return empty();
+    };
+    let mut points = Vec::with_capacity(point_capacity);
+    let corner_count = centers.len();
+    for (corner_index, (cx, cy, start)) in centers.into_iter().enumerate() {
         for index in 0..=corner_segments {
+            // Adjacent analytic corner intervals share their endpoint, and the
+            // last endpoint closes onto the first. Omit those duplicates by
+            // construction instead of making repeated equality decisions over
+            // transcendental coordinates.
+            if (corner_index > 0 && index == 0)
+                || (corner_index + 1 == corner_count && index == corner_segments)
+            {
+                continue;
+            }
             let Some(fraction) =
                 (Real::from(index as u64) / Real::from(corner_segments as u64)).ok()
             else {
@@ -423,10 +473,6 @@ pub fn rounded_rectangle(
                 cy.clone() + radius.clone() * angle.sin(),
             ]);
         }
-    }
-    points.dedup();
-    if points.first() == points.last() {
-        points.pop();
     }
     region_from_ring(&points)
 }
@@ -443,10 +489,10 @@ pub fn squircle(width: Real, height: Real, segments: usize) -> CurveRegion2 {
         return empty();
     };
     let signed_root = |value: Real| {
-        let negative = matches!(
-            crate::hyper_math::hreal_sign(&value),
-            Some(hyperreal::RealSign::Negative)
-        );
+        let negative = match crate::hyper_math::hreal_sign(&value)? {
+            hyperreal::RealSign::Negative => true,
+            hyperreal::RealSign::Zero | hyperreal::RealSign::Positive => false,
+        };
         value
             .abs()
             .sqrt()
@@ -463,7 +509,11 @@ pub fn squircle(width: Real, height: Real, segments: usize) -> CurveRegion2 {
             ])
         })
         .collect::<Vec<_>>();
-    region_from_ring(&points)
+    if points.len() == segments {
+        region_from_ring(&points)
+    } else {
+        empty()
+    }
 }
 
 /// Keyhole region.
@@ -480,7 +530,7 @@ pub fn keyhole(
     {
         return empty();
     }
-    let handle_x = -(handle_width.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
+    let handle_x = -(handle_width.clone() / Real::from(2_u8)).expect("two is nonzero");
     let handle = translated(
         &rectangle(handle_width, handle_height),
         handle_x,
@@ -511,7 +561,8 @@ pub fn reuleaux(sides: usize, diameter: Real, circle_segments: usize) -> CurveRe
     let mut result: Option<CurveRegion2> = None;
     for index in 0..sides {
         let angle = Real::tau()
-            * (Real::from(index as u64) / &denominator).unwrap_or_else(|_| Real::zero());
+            * (Real::from(index as u64) / &denominator)
+                .expect("the validated side count is nonzero");
         let disk = translated(
             &circle(diameter.clone(), circle_segments),
             circumradius.clone() * angle.clone().cos(),
@@ -550,11 +601,14 @@ pub fn pie_slice(
         return empty();
     }
     let sweep = end_angle_deg - start_angle_deg.clone();
-    if !positive_real(&sweep.clone().abs()) || sweep.clone().abs() > Real::from(360_u16) {
+    let absolute_sweep = sweep.clone().abs();
+    if !positive_real(&absolute_sweep) {
         return empty();
     }
-    if sweep.clone().abs() == Real::from(360_u16) {
-        return circle(radius, segments.max(3));
+    match real_cmp(&absolute_sweep, &Real::from(360_u16)) {
+        Some(Ordering::Greater) | None => return empty(),
+        Some(Ordering::Equal) => return circle(radius, segments.max(3)),
+        Some(Ordering::Less) => {},
     }
     let (Some(start), Some(sweep)) = (
         (start_angle_deg * Real::pi() / Real::from(180_u16)).ok(),
@@ -564,8 +618,9 @@ pub fn pie_slice(
     };
     let mut points = vec![[Real::zero(), Real::zero()]];
     for index in 0..=segments {
-        let fraction = (Real::from(index as u64) / Real::from(segments as u64))
-            .unwrap_or_else(|_| Real::zero());
+        let Ok(fraction) = Real::from(index as u64) / Real::from(segments as u64) else {
+            return empty();
+        };
         let angle = start.clone() + sweep.clone() * fraction;
         points.push([
             radius.clone() * angle.clone().cos(),
@@ -610,10 +665,10 @@ pub fn heart(width: Real, height: Real, segments: usize) -> CurveRegion2 {
     let mut upper = segments / 2;
     while lower < upper {
         let middle = lower + (upper - lower) / 2;
-        if raw[middle][1] < raw[middle + 1][1] {
-            lower = middle + 1;
-        } else {
-            upper = middle;
+        match real_cmp(&raw[middle][1], &raw[middle + 1][1]) {
+            Some(Ordering::Less) => lower = middle + 1,
+            Some(Ordering::Equal | Ordering::Greater) => upper = middle,
+            None => return empty(),
         }
     }
     let min_y = raw[segments / 2][1].clone();
@@ -629,7 +684,11 @@ pub fn heart(width: Real, height: Real, segments: usize) -> CurveRegion2 {
             ])
         })
         .collect::<Vec<_>>();
-    region_from_ring(&points)
+    if points.len() == segments {
+        region_from_ring(&points)
+    } else {
+        empty()
+    }
 }
 
 /// Crescent region.
@@ -639,7 +698,10 @@ pub fn crescent(
     offset: Real,
     segments: usize,
 ) -> CurveRegion2 {
-    if segments < 6 || !positive_real(&inner_radius) || outer_radius <= inner_radius {
+    if segments < 6
+        || !positive_real(&inner_radius)
+        || real_cmp(&outer_radius, &inner_radius) != Some(Ordering::Greater)
+    {
         return empty();
     }
     let outer = circle(outer_radius, segments);
@@ -678,7 +740,11 @@ pub fn supershape(
             Some([radius.clone() * theta.clone().cos(), radius * theta.sin()])
         })
         .collect::<Vec<_>>();
-    region_from_ring(&points)
+    if points.len() == segments {
+        region_from_ring(&points)
+    } else {
+        empty()
+    }
 }
 
 /// Circular region with a rectangular keyway.
@@ -693,12 +759,12 @@ pub fn circle_with_keyway(
         || !positive_real(&radius)
         || !positive_real(&key_width)
         || !positive_real(&key_depth)
-        || key_width >= diameter
-        || key_depth >= diameter
+        || real_cmp(&key_width, &diameter) != Some(Ordering::Less)
+        || real_cmp(&key_depth, &diameter) != Some(Ordering::Less)
     {
         return empty();
     }
-    let key_y = -(key_width.clone() / Real::from(2_u8)).unwrap_or_else(|_| Real::zero());
+    let key_y = -(key_width.clone() / Real::from(2_u8)).expect("two is nonzero");
     let cutter = translated(
         &rectangle(key_depth.clone(), key_width),
         radius.clone() - key_depth,
@@ -714,7 +780,7 @@ pub fn circle_with_flat(radius: Real, segments: usize, flat_distance: Real) -> C
     if segments < 3
         || !positive_real(&radius)
         || !nonnegative_real(&flat_distance)
-        || flat_distance >= radius
+        || real_cmp(&flat_distance, &radius) != Some(Ordering::Less)
     {
         return empty();
     }
@@ -738,7 +804,7 @@ pub fn circle_with_two_flats(
     if segments < 3
         || !positive_real(&radius)
         || !nonnegative_real(&flat_distance)
-        || flat_distance >= radius
+        || real_cmp(&flat_distance, &radius) != Some(Ordering::Less)
     {
         return empty();
     }
@@ -770,7 +836,7 @@ pub fn involute_gear(
         || !nonnegative_real(&clearance)
         || !nonnegative_real(&backlash)
         || !positive_real(&pressure_angle_degrees)
-        || pressure_angle_degrees >= Real::from(90_u8)
+        || real_cmp(&pressure_angle_degrees, &Real::from(90_u8)) != Some(Ordering::Less)
     {
         return empty();
     }
@@ -820,7 +886,7 @@ pub fn involute_rack(
     if teeth == 0
         || !positive_real(&module)
         || !positive_real(&pressure_angle_degrees)
-        || pressure_angle_degrees >= Real::from(90_u8)
+        || real_cmp(&pressure_angle_degrees, &Real::from(90_u8)) != Some(Ordering::Less)
         || !nonnegative_real(&clearance)
         || !nonnegative_real(&backlash)
     {
@@ -949,11 +1015,11 @@ pub fn airfoil_naca4(
 ) -> CurveRegion2 {
     if samples < 10
         || !nonnegative_real(&max_camber)
-        || max_camber >= Real::from(10_u8)
+        || real_cmp(&max_camber, &Real::from(10_u8)) != Some(Ordering::Less)
         || !nonnegative_real(&camber_position)
-        || camber_position >= Real::from(10_u8)
+        || real_cmp(&camber_position, &Real::from(10_u8)) != Some(Ordering::Less)
         || !positive_real(&thickness)
-        || thickness >= Real::from(100_u8)
+        || real_cmp(&thickness, &Real::from(100_u8)) != Some(Ordering::Less)
         || !positive_real(&chord)
     {
         return empty();
@@ -966,7 +1032,7 @@ pub fn airfoil_naca4(
         return empty();
     };
     let cambered = positive_real(&m);
-    if cambered && (!positive_real(&p) || p >= Real::one()) {
+    if cambered && (!positive_real(&p) || real_cmp(&p, &Real::one()) != Some(Ordering::Less)) {
         return empty();
     }
     let coefficient = |value: f64| Real::try_from(value).expect("finite NACA coefficient");
@@ -993,7 +1059,10 @@ pub fn airfoil_naca4(
                 + coefficient(0.2843) * x3
                 - coefficient(0.1015) * x4);
         let (yc, dy) = if cambered {
-            if x < p {
+            let Some(x_ordering) = real_cmp(&x, &p) else {
+                return empty();
+            };
+            if x_ordering == Ordering::Less {
                 let p2 = p.clone() * p.clone();
                 let (Some(y_factor), Some(slope_factor)) = (
                     (m.clone() / p2.clone()).ok(),
@@ -1078,11 +1147,11 @@ fn sampled_involute_gear(
             let parameter = (ratio.clone() * ratio - Real::one()).sqrt().ok()?;
             Some(parameter.clone() - parameter.atan().ok()?)
         };
-        let (flank_start_radius, has_root_transition) = if root_radius < base_radius {
-            (base_radius.clone(), true)
-        } else {
-            (root_radius.clone(), false)
-        };
+        let (flank_start_radius, has_root_transition) =
+            match real_cmp(&root_radius, &base_radius)? {
+                Ordering::Less => (base_radius.clone(), true),
+                Ordering::Equal | Ordering::Greater => (root_radius.clone(), false),
+            };
         let pitch_involute = involute_angle(&pitch_radius)?;
         let start_involute = involute_angle(&flank_start_radius)?;
         let outer_involute = involute_angle(&outer_radius)?;
@@ -1091,7 +1160,9 @@ fn sampled_involute_gear(
         let left_start = offset.clone() - start_involute.clone();
         let right_tip = outer_involute.clone() - offset.clone();
         let left_tip = offset.clone() - outer_involute.clone();
-        if right_start >= left_start || right_tip >= left_tip {
+        if real_cmp(&right_start, &left_start)? != Ordering::Less
+            || real_cmp(&right_tip, &left_tip)? != Ordering::Less
+        {
             return None;
         }
 
@@ -1157,19 +1228,24 @@ fn sampled_cycloidal_gear(
             - (module.clone() * Real::from(5_u8) / Real::from(4_u8)).ok()?
             - clearance.clone();
         let twice_generator = two.clone() * generating_radius.clone();
-        if !positive_real(&root_radius) || twice_generator >= pitch_radius {
+        if !positive_real(&root_radius)
+            || real_cmp(&twice_generator, &pitch_radius)? != Ordering::Less
+        {
             return None;
         }
         let epicycle_radius = pitch_radius.clone() + generating_radius.clone();
         let hypocycle_radius = pitch_radius.clone() - generating_radius.clone();
-        if outer_radius > pitch_radius.clone() + twice_generator.clone() {
+        if real_cmp(
+            &outer_radius,
+            &(pitch_radius.clone() + twice_generator.clone()),
+        )? == Ordering::Greater
+        {
             return None;
         }
         let generated_root_radius = pitch_radius.clone() - twice_generator;
-        let flank_root_radius = if root_radius < generated_root_radius {
-            generated_root_radius
-        } else {
-            root_radius.clone()
+        let flank_root_radius = match real_cmp(&root_radius, &generated_root_radius)? {
+            Ordering::Less => generated_root_radius,
+            Ordering::Equal | Ordering::Greater => root_radius.clone(),
         };
         let square = |value: &Real| value.clone() * value.clone();
         let tip_phase = ((square(&epicycle_radius) + square(generating_radius)
@@ -1229,7 +1305,9 @@ fn sampled_cycloidal_gear(
         let right_root = -(root_parameter + root_argument + pitch_half_thickness.clone());
         let left_tip = -right_tip.clone();
         let left_root = -right_root.clone();
-        if right_tip >= left_tip || right_root >= left_root {
+        if real_cmp(&right_tip, &left_tip)? != Ordering::Less
+            || real_cmp(&right_root, &left_root)? != Ordering::Less
+        {
             return None;
         }
         let mut tooth = Vec::with_capacity(segments_per_flank.checked_mul(6)?);
@@ -1295,7 +1373,7 @@ pub fn bezier_region(control: &[[Real; 2]], display_segments: usize) -> CurveReg
     let Some(path) = bezier_path(control, display_segments) else {
         return empty();
     };
-    if path.start() != path.end() {
+    if points_equal(path.start(), path.end()) != Some(true) {
         return empty();
     }
     CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path))
@@ -1349,7 +1427,9 @@ pub fn hilbert_strings(
     {
         return Vec::new();
     }
-    let bounds = bounding_box(boundary);
+    let Ok(bounds) = try_bounding_box(boundary) else {
+        return Vec::new();
+    };
     let width =
         bounds.maxs.x.clone() - bounds.mins.x.clone() - Real::from(2_u8) * padding.clone();
     let height =
@@ -1404,15 +1484,20 @@ pub fn hilbert_strings(
             ))
         })
         .collect::<Vec<_>>();
+    if points.len() != (size * size) as usize {
+        return Vec::new();
+    }
     let mut runs = Vec::<Vec<(Real, Real)>>::new();
     let mut run = Vec::new();
     for pair in points.windows(2) {
         let midpoint_x = ((&pair[0].0 + &pair[1].0) / Real::from(2_u8)).ok();
         let midpoint_y = ((&pair[0].1 + &pair[1].1) / Real::from(2_u8)).ok();
-        let keep = midpoint_x
+        let Some(keep) = midpoint_x
             .zip(midpoint_y)
             .and_then(|(x, y)| contains_xy(boundary, x, y))
-            .unwrap_or(false);
+        else {
+            return Vec::new();
+        };
         if keep {
             if run.is_empty() {
                 run.push(pair[0].clone());
@@ -1425,11 +1510,13 @@ pub fn hilbert_strings(
     if run.len() >= 2 {
         runs.push(run);
     }
-    runs.into_iter()
-        .filter_map(|run| {
+    let strings = runs
+        .into_iter()
+        .map(|run| {
             CurveString2::from_real_point_iter(run.into_iter().map(|(x, y)| [x, y])).ok()
         })
-        .collect()
+        .collect::<Option<Vec<_>>>();
+    strings.unwrap_or_default()
 }
 
 /// Sharp regularized offset of a native filled region.
@@ -1456,12 +1543,12 @@ pub fn offset_rounded(
 }
 
 /// Triangulates a filled region as a flat native triangle surface.
-pub fn triangulate(input: &CurveRegion2) -> TriangleMesh {
+pub fn try_triangulate(input: &CurveRegion2) -> Result<TriangleMesh, ValidationError> {
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in finite_profiles(input) {
+    for profile in try_finite_profiles(input)? {
         let Ok(faces) = profile.triangulate() else {
-            continue;
+            return Err(ValidationError::InvalidArguments);
         };
         for face in faces {
             let Some(points) = face
@@ -1475,41 +1562,73 @@ pub fn triangulate(input: &CurveRegion2) -> TriangleMesh {
                 })
                 .collect::<Option<Vec<_>>>()
             else {
-                continue;
+                return Err(ValidationError::InvalidArguments);
             };
-            emit_triangle(
+            // Hypertri certifies the exact finite-profile triangulation.
+            if !emit_certified_triangle(
                 &mut positions,
                 &mut triangles,
                 points.try_into().expect("triangulation emits triangles"),
                 false,
-            );
+            ) {
+                return Err(ValidationError::InvalidArguments);
+            }
         }
     }
-    TriangleMesh::new(positions, triangles)
+    Ok(TriangleMesh::new(positions, triangles))
+}
+
+/// Triangulates a filled region, returning empty geometry on uncertainty.
+pub fn triangulate(input: &CurveRegion2) -> TriangleMesh {
+    try_triangulate(input).unwrap_or_else(|_| TriangleMesh::new(Vec::new(), Vec::new()))
 }
 
 /// Finite polygon-with-holes boundary view for rendering and interchange.
-pub fn finite_profiles(input: &CurveRegion2) -> Vec<FiniteRegionProfile2> {
+pub fn try_finite_profiles(
+    input: &CurveRegion2,
+) -> Result<Vec<FiniteRegionProfile2>, ValidationError> {
     let options = FiniteProjectionOptions::try_new(1.0e-3)
         .expect("positive finite projection tolerance");
-    match input.project_to_finite_profiles(&options, &CurvePolicy::certified()) {
-        Ok(Classification::Decided(profiles)) => profiles,
-        Ok(Classification::Uncertain(_)) | Err(_) => Vec::new(),
+    let policy = CurvePolicy::certified();
+    match input
+        .project_to_finite_profiles_exact(&options, &policy)
+        .map_err(|error| ValidationError::Geometry(error.to_string()))?
+    {
+        Classification::Decided(profiles) => Ok(profiles),
+        Classification::Uncertain(reason) => Err(ValidationError::Geometry(format!(
+            "finite curve projection is uncertain: {reason:?}"
+        ))),
     }
+}
+
+/// Finite polygon view, returning no profiles on uncertainty.
+pub fn finite_profiles(input: &CurveRegion2) -> Vec<FiniteRegionProfile2> {
+    try_finite_profiles(input).unwrap_or_default()
 }
 
 /// Linear extrusion of a native filled region.
 pub fn extrude(region: &CurveRegion2, height: Real) -> TriangleMesh {
-    extrude_vector(region, Vector3::from_xyz(Real::zero(), Real::zero(), height))
+    try_extrude(region, height).unwrap_or_else(|_| TriangleMesh::new(Vec::new(), Vec::new()))
+}
+
+/// Linear extrusion that reports invalid or uncertain geometry.
+pub fn try_extrude(
+    region: &CurveRegion2,
+    height: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    try_extrude_vector(region, Vector3::from_xyz(Real::zero(), Real::zero(), height))
 }
 
 /// Vector extrusion of a native filled region.
-pub fn extrude_vector(region: &CurveRegion2, direction: Vector3) -> TriangleMesh {
+pub fn try_extrude_vector(
+    region: &CurveRegion2,
+    direction: Vector3,
+) -> Result<TriangleMesh, ValidationError> {
     if !matches!(
         crate::hyper_math::hreal_sign(&direction.0[2]),
         Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative)
     ) {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+        return Err(ValidationError::InvalidArguments);
     }
     let flip = matches!(
         crate::hyper_math::hreal_sign(&direction.0[2]),
@@ -1525,26 +1644,27 @@ pub fn extrude_vector(region: &CurveRegion2, direction: Vector3) -> TriangleMesh
         ))
     };
 
-    for profile in finite_profiles(region) {
+    for profile in try_finite_profiles(region)? {
         let Ok(cap_faces) = profile.triangulate() else {
-            continue;
+            return Err(ValidationError::InvalidArguments);
         };
         for face in cap_faces {
             let [Some(a), Some(b), Some(c)] = face.map(point) else {
-                continue;
+                return Err(ValidationError::InvalidArguments);
             };
-            emit_triangle(
+            if !emit_certified_triangle(
                 &mut positions,
                 &mut triangles,
                 [a.clone(), b.clone(), c.clone()],
                 !flip,
-            );
-            emit_triangle(
+            ) || !emit_certified_triangle(
                 &mut positions,
                 &mut triangles,
                 [a + &direction, b + &direction, c + &direction],
                 flip,
-            );
+            ) {
+                return Err(ValidationError::InvalidArguments);
+            }
         }
         for (ring, is_hole) in std::iter::once((profile.material(), false))
             .chain(profile.holes().iter().map(|ring| (ring, true)))
@@ -1553,12 +1673,18 @@ pub fn extrude_vector(region: &CurveRegion2, direction: Vector3) -> TriangleMesh
             // negative hole winding. Exact curve-region projection preserves
             // authored loop orientation, so align each side ring with the cap
             // role instead of assuming every material loop arrived CCW.
-            let reverse_ring = ring.signed_ring_area().is_sign_positive() == is_hole;
+            let reverse_ring = match finite_ring_sign(ring) {
+                Some(hyperlimit::Sign::Positive) => is_hole,
+                Some(hyperlimit::Sign::Negative) => !is_hole,
+                Some(hyperlimit::Sign::Zero) | None => {
+                    return Err(ValidationError::InvalidArguments);
+                },
+            };
             for edge in ring.points().windows(2) {
                 let (Some(mut bottom_a), Some(mut bottom_b)) =
                     (point(edge[0]), point(edge[1]))
                 else {
-                    continue;
+                    return Err(ValidationError::InvalidArguments);
                 };
                 if reverse_ring {
                     std::mem::swap(&mut bottom_a, &mut bottom_b);
@@ -1566,49 +1692,64 @@ pub fn extrude_vector(region: &CurveRegion2, direction: Vector3) -> TriangleMesh
                 let top_a = bottom_a.clone() + &direction;
                 let top_b = bottom_b.clone() + &direction;
                 if flip {
-                    emit_triangle(
+                    let emitted = emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [bottom_b.clone(), bottom_a, top_a.clone()],
                         false,
-                    );
-                    emit_triangle(
+                    ) && emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [bottom_b, top_a, top_b],
                         false,
                     );
+                    if !emitted {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 } else {
-                    emit_triangle(
+                    let emitted = emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [bottom_a.clone(), bottom_b, top_b.clone()],
                         false,
-                    );
-                    emit_triangle(
+                    ) && emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [bottom_a, top_b, top_a],
                         false,
                     );
+                    if !emitted {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 }
             }
         }
     }
-    TriangleMesh::new(positions, triangles)
+    Ok(TriangleMesh::new(positions, triangles))
 }
 
-fn emit_triangle(
+/// Vector extrusion, returning empty geometry on uncertainty.
+pub fn extrude_vector(region: &CurveRegion2, direction: Vector3) -> TriangleMesh {
+    try_extrude_vector(region, direction)
+        .unwrap_or_else(|_| TriangleMesh::new(Vec::new(), Vec::new()))
+}
+
+/// Emits geometry whose nondegeneracy follows from an exact source contract,
+/// or whose caller performs one exact whole-mesh validation before returning.
+fn emit_certified_triangle(
     positions: &mut Vec<Point3>,
     triangles: &mut Vec<hypermesh::Triangle>,
     points: [Point3; 3],
     reverse: bool,
-) {
+) -> bool {
+    debug_assert!(crate::hyper_math::htriangle_area2_is_nonzero(
+        &points[0], &points[1], &points[2]
+    ));
     let mut indices = [0; 3];
     for (slot, point) in indices.iter_mut().zip(points) {
         *slot = positions
             .iter()
-            .position(|candidate| candidate == &point)
+            .rposition(|candidate| candidate == &point)
             .unwrap_or_else(|| {
                 let index = positions.len();
                 positions.push(point);
@@ -1616,13 +1757,14 @@ fn emit_triangle(
             });
     }
     if indices[0] == indices[1] || indices[1] == indices[2] || indices[2] == indices[0] {
-        return;
+        return true;
     }
     triangles.push(if reverse {
         hypermesh::Triangle::new(indices[2], indices[1], indices[0])
     } else {
         hypermesh::Triangle::new(indices[0], indices[1], indices[2])
     });
+    true
 }
 
 fn finite_point([x, y]: [f64; 2], z: Real) -> Option<Point3> {
@@ -1648,10 +1790,13 @@ pub fn revolve(
     let Some(sign) = crate::hyper_math::hreal_sign(&angle_degrees) else {
         return Err(ValidationError::InvalidArguments);
     };
-    if sign == hyperreal::RealSign::Zero || angle_degrees.clone().abs() > Real::from(360_u16) {
-        return Err(ValidationError::InvalidArguments);
-    }
-    let full = angle_degrees.clone().abs() == Real::from(360_u16);
+    let full = match real_cmp(&angle_degrees.clone().abs(), &Real::from(360_u16)) {
+        Some(Ordering::Less) if sign != hyperreal::RealSign::Zero => false,
+        Some(Ordering::Equal) if sign != hyperreal::RealSign::Zero => true,
+        Some(Ordering::Greater | Ordering::Less | Ordering::Equal) | None => {
+            return Err(ValidationError::InvalidArguments);
+        },
+    };
     if full && segments < 3 {
         return Err(ValidationError::FieldLessThan {
             name: "segments",
@@ -1684,86 +1829,167 @@ pub fn revolve(
     };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in finite_profiles(region) {
+    for profile in try_finite_profiles(region)? {
         for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
             if ring.points().iter().any(|point| point[0].is_sign_negative())
                 && ring.points().iter().any(|point| point[0].is_sign_positive())
             {
                 return Err(ValidationError::InvalidArguments);
             }
+            if ring.points().windows(2).any(|edge| edge[0] == edge[1]) {
+                return Err(ValidationError::InvalidArguments);
+            }
             let radial_positive = ring.points().iter().any(|point| point[0] > 0.0);
             let reverse = (sign == hyperreal::RealSign::Positive) != radial_positive;
-            for edge in ring.points().windows(2) {
+            let mut unique_rows = Vec::<([f64; 2], Vec<usize>)>::new();
+            let mut point_rows = Vec::with_capacity(ring.points().len());
+            for &point in ring.points() {
+                if let Some((_, row)) =
+                    unique_rows.iter().find(|(candidate, _)| *candidate == point)
+                {
+                    point_rows.push(row.clone());
+                    continue;
+                }
+                let radius =
+                    Real::try_from(point[0]).map_err(|_| ValidationError::InvalidArguments)?;
+                let height =
+                    Real::try_from(point[1]).map_err(|_| ValidationError::InvalidArguments)?;
+                let row = if point[0] == 0.0 {
+                    let index = positions.len();
+                    positions.push(Point3::new(Real::zero(), height, Real::zero()));
+                    vec![index; samples.len()]
+                } else {
+                    samples
+                        .iter()
+                        .map(|sample| {
+                            let index = positions.len();
+                            positions.push(Point3::new(
+                                radius.clone() * sample.1.clone(),
+                                height.clone(),
+                                radius.clone() * sample.0.clone(),
+                            ));
+                            index
+                        })
+                        .collect()
+                };
+                unique_rows.push((point, row.clone()));
+                point_rows.push(row);
+            }
+            for (edge_index, edge) in ring.points().windows(2).enumerate() {
                 for slice in 0..segments {
                     let next = if full {
                         (slice + 1) % samples.len()
                     } else {
                         slice + 1
                     };
-                    let [Some(a), Some(b), Some(c), Some(d)] = [
-                        map(edge[0], &samples[slice]),
-                        map(edge[1], &samples[slice]),
-                        map(edge[1], &samples[next]),
-                        map(edge[0], &samples[next]),
-                    ] else {
-                        continue;
-                    };
-                    emit_triangle(
-                        &mut positions,
-                        &mut triangles,
-                        [a.clone(), b, c.clone()],
-                        reverse,
-                    );
-                    emit_triangle(&mut positions, &mut triangles, [a, c, d], reverse);
+                    let a = point_rows[edge_index][slice];
+                    let b = point_rows[edge_index + 1][slice];
+                    let c = point_rows[edge_index + 1][next];
+                    let d = point_rows[edge_index][next];
+                    // Rotation maps an axis endpoint to the same point in both
+                    // adjacent slices. OpenSCAD-style rotate_extrude omits that
+                    // collapsed fan triangle while retaining its nondegenerate
+                    // neighbor.
+                    for (axis_endpoint, indices) in [
+                        (edge[1][0] == 0.0, [a, b, c]),
+                        (edge[0][0] == 0.0, [a, c, d]),
+                    ] {
+                        if axis_endpoint
+                            || indices[0] == indices[1]
+                            || indices[1] == indices[2]
+                            || indices[2] == indices[0]
+                        {
+                            continue;
+                        }
+                        triangles.push(if reverse {
+                            hypermesh::Triangle::new(indices[2], indices[1], indices[0])
+                        } else {
+                            hypermesh::Triangle::new(indices[0], indices[1], indices[2])
+                        });
+                    }
                 }
             }
         }
         if !full {
             let Ok(cap_faces) = profile.triangulate() else {
-                continue;
+                return Err(ValidationError::InvalidArguments);
             };
             for face in cap_faces {
                 let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, &samples[0]))
                 else {
-                    continue;
+                    return Err(ValidationError::InvalidArguments);
                 };
-                emit_triangle(
+                if !emit_certified_triangle(
                     &mut positions,
                     &mut triangles,
                     [a, b, c],
                     sign == hyperreal::RealSign::Positive,
-                );
+                ) {
+                    return Err(ValidationError::InvalidArguments);
+                }
                 let [Some(a), Some(b), Some(c)] = face
                     .map(|point| map(point, samples.last().expect("samples are nonempty")))
                 else {
-                    continue;
+                    return Err(ValidationError::InvalidArguments);
                 };
-                emit_triangle(
+                if !emit_certified_triangle(
                     &mut positions,
                     &mut triangles,
                     [a, b, c],
                     sign == hyperreal::RealSign::Negative,
-                );
+                ) {
+                    return Err(ValidationError::InvalidArguments);
+                }
             }
         }
     }
     Ok(TriangleMesh::new(positions, triangles))
 }
 
-/// Sweep a native filled region along a 3D point path.
-pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
-    let mut path = path.to_vec();
-    path.dedup();
-    if path.len() < 2 {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+/// Sweeps a native filled region along a 3D point path.
+pub fn try_sweep(
+    region: &CurveRegion2,
+    path: &[Point3],
+) -> Result<TriangleMesh, ValidationError> {
+    let mut deduplicated = Vec::with_capacity(path.len());
+    for point in path {
+        let duplicate = match deduplicated.last() {
+            Some(previous) => {
+                let Some(equal) = point3_equal(previous, point) else {
+                    return Err(ValidationError::InvalidArguments);
+                };
+                equal
+            },
+            None => false,
+        };
+        if !duplicate {
+            deduplicated.push(point.clone());
+        }
     }
-    let closed = path.first() == path.last();
+    let path = deduplicated;
+    if path.len() < 2 {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let closed = match path.first().zip(path.last()) {
+        Some((first, last)) => {
+            let Some(equal) = point3_equal(first, last) else {
+                return Err(ValidationError::InvalidArguments);
+            };
+            equal
+        },
+        None => return Err(ValidationError::InvalidArguments),
+    };
     let slice_count = if closed { path.len() - 1 } else { path.len() };
     if slice_count < if closed { 3 } else { 2 } {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+        return Err(ValidationError::InvalidArguments);
     }
-    if (0..slice_count).any(|index| path[..index].contains(&path[index])) {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+    for index in 0..slice_count {
+        for previous in &path[..index] {
+            match point3_equal(previous, &path[index]) {
+                Some(true) | None => return Err(ValidationError::InvalidArguments),
+                Some(false) => {},
+            }
+        }
     }
     let segment_count = if closed { slice_count } else { slice_count - 1 };
     let Some(segment_directions) = (0..segment_count)
@@ -1774,7 +2000,7 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
         })
         .collect::<Option<Vec<_>>>()
     else {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+        return Err(ValidationError::InvalidArguments);
     };
     let Some(tangents) = (0..slice_count)
         .map(|index| {
@@ -1791,11 +2017,11 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
         })
         .collect::<Option<Vec<_>>>()
     else {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+        return Err(ValidationError::InvalidArguments);
     };
     let Ok(mut orientation) = Matrix4::rotation_between_vectors(&Vector3::z(), &tangents[0])
     else {
-        return TriangleMesh::new(Vec::new(), Vec::new());
+        return Err(ValidationError::InvalidArguments);
     };
     let mut frames = Vec::with_capacity(slice_count);
     frames.push((orientation.clone(), path[0].clone()));
@@ -1803,7 +2029,7 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
         let Ok(transport) =
             Matrix4::rotation_between_vectors(&tangents[index - 1], &tangents[index])
         else {
-            return TriangleMesh::new(Vec::new(), Vec::new());
+            return Err(ValidationError::InvalidArguments);
         };
         orientation = transport * orientation;
         frames.push((orientation.clone(), path[index].clone()));
@@ -1818,7 +2044,7 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
     };
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in finite_profiles(region) {
+    for profile in try_finite_profiles(region)? {
         for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
             for edge in ring.points().windows(2) {
                 let segment_count = if closed { slice_count } else { slice_count - 1 };
@@ -1830,21 +2056,27 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
                         map(edge[1], &frames[next]),
                         map(edge[0], &frames[next]),
                     ] else {
-                        continue;
+                        return Err(ValidationError::InvalidArguments);
                     };
-                    emit_triangle(
+                    if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [a.clone(), b, c.clone()],
                         false,
-                    );
-                    emit_triangle(&mut positions, &mut triangles, [a, c, d], false);
+                    ) || !emit_certified_triangle(
+                        &mut positions,
+                        &mut triangles,
+                        [a, c, d],
+                        false,
+                    ) {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 }
             }
         }
         if !closed {
             let Ok(cap_faces) = profile.triangulate() else {
-                continue;
+                return Err(ValidationError::InvalidArguments);
             };
             for face in cap_faces {
                 for (frame, reverse) in [
@@ -1853,21 +2085,35 @@ pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
                 ] {
                     let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, frame))
                     else {
-                        continue;
+                        return Err(ValidationError::InvalidArguments);
                     };
-                    emit_triangle(&mut positions, &mut triangles, [a, b, c], reverse);
+                    if !emit_certified_triangle(
+                        &mut positions,
+                        &mut triangles,
+                        [a, b, c],
+                        reverse,
+                    ) {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 }
             }
         }
     }
     let mesh = TriangleMesh::new(positions, triangles);
+    // Frame transport can collapse otherwise valid source geometry, so sweep
+    // defers nondegeneracy certification to one exact whole-mesh pass here.
     if mesh.triangles.is_empty()
         || (mesh.has_unique_nondegenerate_triangles() && mesh.is_closed_manifold_geometry())
     {
-        mesh
+        Ok(mesh)
     } else {
-        TriangleMesh::new(Vec::new(), Vec::new())
+        Err(ValidationError::InvalidArguments)
     }
+}
+
+/// Sweeps a region, returning empty geometry on uncertainty.
+pub fn sweep(region: &CurveRegion2, path: &[Point3]) -> TriangleMesh {
+    try_sweep(region, path).unwrap_or_else(|_| TriangleMesh::new(Vec::new(), Vec::new()))
 }
 
 /// Extrudes while varying twist and terminal XY scale.
@@ -1884,8 +2130,10 @@ pub fn extrude_twisted(
             min: 1,
         });
     }
-    if crate::hyper_math::hreal_sign(&height) == Some(hyperreal::RealSign::Zero)
-        || !end_scale.iter().all(positive_real)
+    if !matches!(
+        crate::hyper_math::hreal_sign(&height),
+        Some(hyperreal::RealSign::Negative | hyperreal::RealSign::Positive)
+    ) || !end_scale.iter().all(positive_real)
     {
         return Err(ValidationError::InvalidArguments);
     }
@@ -1918,8 +2166,11 @@ pub fn extrude_twisted(
         crate::hyper_math::hreal_sign(&height) == Some(hyperreal::RealSign::Negative);
     let mut positions = Vec::new();
     let mut triangles = Vec::new();
-    for profile in finite_profiles(input) {
+    for profile in try_finite_profiles(input)? {
         for ring in std::iter::once(profile.material()).chain(profile.holes().iter()) {
+            if ring.points().windows(2).any(|edge| edge[0] == edge[1]) {
+                return Err(ValidationError::InvalidArguments);
+            }
             for edge in ring.points().windows(2) {
                 for slice in 0..slices {
                     let [Some(a), Some(b), Some(c), Some(d)] = [
@@ -1928,20 +2179,26 @@ pub fn extrude_twisted(
                         map(edge[1], &parameters[slice + 1]),
                         map(edge[0], &parameters[slice + 1]),
                     ] else {
-                        continue;
+                        return Err(ValidationError::InvalidArguments);
                     };
-                    emit_triangle(
+                    if !emit_certified_triangle(
                         &mut positions,
                         &mut triangles,
                         [a.clone(), b, c.clone()],
                         reverse_sides,
-                    );
-                    emit_triangle(&mut positions, &mut triangles, [a, c, d], reverse_sides);
+                    ) || !emit_certified_triangle(
+                        &mut positions,
+                        &mut triangles,
+                        [a, c, d],
+                        reverse_sides,
+                    ) {
+                        return Err(ValidationError::InvalidArguments);
+                    }
                 }
             }
         }
         let Ok(cap_faces) = profile.triangulate() else {
-            continue;
+            return Err(ValidationError::InvalidArguments);
         };
         for face in cap_faces {
             for (parameter, reverse) in [
@@ -1953,9 +2210,12 @@ pub fn extrude_twisted(
             ] {
                 let [Some(a), Some(b), Some(c)] = face.map(|point| map(point, parameter))
                 else {
-                    continue;
+                    return Err(ValidationError::InvalidArguments);
                 };
-                emit_triangle(&mut positions, &mut triangles, [a, b, c], reverse);
+                if !emit_certified_triangle(&mut positions, &mut triangles, [a, b, c], reverse)
+                {
+                    return Err(ValidationError::InvalidArguments);
+                }
             }
         }
     }
@@ -2089,66 +2349,81 @@ impl CurveRegionExt for CurveRegion2 {
 
 /// Applies a 3D homogeneous transform through the established curve lifting
 /// boundary and returns only native filled topology.
+pub fn try_transformed(
+    input: &CurveRegion2,
+    matrix: &Matrix4,
+) -> ExactCurveResult<CurveRegion2> {
+    input.transform_affine(
+        &matrix.0[0][0],
+        &matrix.0[0][1],
+        &matrix.0[1][0],
+        &matrix.0[1][1],
+        &matrix.0[0][3],
+        &matrix.0[1][3],
+        &CurvePolicy::certified(),
+    )
+}
+
 pub fn transformed(input: &CurveRegion2, matrix: &Matrix4) -> CurveRegion2 {
-    input
-        .transform_affine(
-            &matrix.0[0][0],
-            &matrix.0[0][1],
-            &matrix.0[1][0],
-            &matrix.0[1][1],
-            &matrix.0[0][3],
-            &matrix.0[1][3],
-            &CurvePolicy::certified(),
-        )
-        .expect("nonsingular planar affine transform preserves filled-region topology")
+    try_transformed(input, matrix).unwrap_or_else(|_| empty())
 }
 
 /// Applies an exact planar translation to a filled native region.
+pub fn try_translated(
+    input: &CurveRegion2,
+    x: Real,
+    y: Real,
+) -> ExactCurveResult<CurveRegion2> {
+    input.transform_affine(
+        &Real::one(),
+        &Real::zero(),
+        &Real::zero(),
+        &Real::one(),
+        &x,
+        &y,
+        &CurvePolicy::certified(),
+    )
+}
+
 pub fn translated(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
-    input
-        .transform_affine(
-            &Real::one(),
-            &Real::zero(),
-            &Real::zero(),
-            &Real::one(),
-            &x,
-            &y,
-            &CurvePolicy::certified(),
-        )
-        .expect("translation preserves exact filled-region topology")
+    try_translated(input, x, y).unwrap_or_else(|_| empty())
 }
 
 /// Rotates a filled native region counterclockwise about the origin in degrees.
-pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
+pub fn try_rotated(input: &CurveRegion2, z_degrees: Real) -> ExactCurveResult<CurveRegion2> {
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
     let cosine = radians.clone().cos();
     let sine = radians.sin();
-    input
-        .transform_affine(
-            &cosine,
-            &(-sine.clone()),
-            &sine,
-            &cosine,
-            &Real::zero(),
-            &Real::zero(),
-            &CurvePolicy::certified(),
-        )
-        .expect("rotation preserves exact filled-region topology")
+    input.transform_affine(
+        &cosine,
+        &(-sine.clone()),
+        &sine,
+        &cosine,
+        &Real::zero(),
+        &Real::zero(),
+        &CurvePolicy::certified(),
+    )
+}
+
+pub fn rotated(input: &CurveRegion2, z_degrees: Real) -> CurveRegion2 {
+    try_rotated(input, z_degrees).unwrap_or_else(|_| empty())
 }
 
 /// Scales a filled native region independently along the planar axes.
+pub fn try_scaled(input: &CurveRegion2, x: Real, y: Real) -> ExactCurveResult<CurveRegion2> {
+    input.transform_affine(
+        &x,
+        &Real::zero(),
+        &Real::zero(),
+        &y,
+        &Real::zero(),
+        &Real::zero(),
+        &CurvePolicy::certified(),
+    )
+}
+
 pub fn scaled(input: &CurveRegion2, x: Real, y: Real) -> CurveRegion2 {
-    input
-        .transform_affine(
-            &x,
-            &Real::zero(),
-            &Real::zero(),
-            &y,
-            &Real::zero(),
-            &Real::zero(),
-            &CurvePolicy::certified(),
-        )
-        .expect("nondegenerate planar scale preserves filled-region topology")
+    try_scaled(input, x, y).unwrap_or_else(|_| empty())
 }
 
 /// Classifies an exact XY point, returning `None` on boundaries or uncertainty.
@@ -2168,17 +2443,25 @@ pub fn contains_xy(input: &CurveRegion2, x: Real, y: Real) -> Option<bool> {
 }
 
 /// Returns the certified exact planar bounds, embedded in the XY plane.
-///
-/// Empty or currently uncertifiable regions use the origin box, matching the
-/// solid grammar's empty-geometry bounds convention.
-pub fn bounding_box(input: &CurveRegion2) -> Aabb {
+pub fn try_bounding_box(input: &CurveRegion2) -> Result<Aabb, ValidationError> {
+    if input.is_empty() {
+        return Ok(Aabb::origin());
+    }
     match input.bounds(&CurvePolicy::certified()) {
-        Ok(Classification::Decided(bounds)) => Aabb::new(
+        Ok(Classification::Decided(bounds)) => Ok(Aabb::new(
             Point3::new(bounds.min_x().clone(), bounds.min_y().clone(), Real::zero()),
             Point3::new(bounds.max_x().clone(), bounds.max_y().clone(), Real::zero()),
-        ),
-        Ok(Classification::Uncertain(_)) | Err(_) => Aabb::origin(),
+        )),
+        Ok(Classification::Uncertain(reason)) => Err(ValidationError::Geometry(format!(
+            "curve bounds are uncertain: {reason:?}"
+        ))),
+        Err(error) => Err(ValidationError::Geometry(error.to_string())),
     }
+}
+
+/// Returns exact bounds, using the origin box only for empty or invalid input.
+pub fn bounding_box(input: &CurveRegion2) -> Aabb {
+    try_bounding_box(input).unwrap_or_else(|_| Aabb::origin())
 }
 
 /// Returns the same native solid translation helper used by the 3D grammar.
@@ -2299,7 +2582,15 @@ mod tests {
     #[test]
     fn degenerate_profile_solid_requests_do_not_claim_solids() {
         let square = square(Real::from(2_u8));
+        assert!(try_extrude(&square, Real::zero()).is_err());
         assert!(extrude(&square, Real::zero()).triangles.is_empty());
+        assert!(
+            try_extrude_vector(
+                &square,
+                Vector3::from_xyz(Real::one(), Real::zero(), Real::zero())
+            )
+            .is_err()
+        );
         assert!(
             extrude_vector(
                 &square,
@@ -2308,6 +2599,7 @@ mod tests {
             .triangles
             .is_empty()
         );
+        assert!(try_sweep(&square, &[Point3::origin()]).is_err());
         assert!(revolve(&square, Real::from(360_u16), 2).is_err());
         assert!(revolve(&square, Real::from(180_u16), usize::MAX).is_err());
         assert!(
@@ -2605,7 +2897,11 @@ mod tests {
             .flat_map(|segment| [segment.start(), segment.end()])
             .collect::<Vec<_>>();
         assert!(!points.is_empty());
-        let order = |left: &&Real, right: &&Real| left.partial_cmp(right).unwrap();
+        let order = |left: &&Real, right: &&Real| {
+            hyperlimit::compare_reals(left, right).value().expect(
+                "catalog coordinates must be ordered by the centralized predicate policy",
+            )
+        };
         let min_x = points.iter().map(|point| point.x()).min_by(order).unwrap();
         let max_x = points.iter().map(|point| point.x()).max_by(order).unwrap();
         let min_y = points.iter().map(|point| point.y()).min_by(order).unwrap();

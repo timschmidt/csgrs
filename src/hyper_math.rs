@@ -137,12 +137,8 @@ pub(crate) fn hreal_try_cmp<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<
     hyperlimit::compare_reals(&lhs, &rhs).value()
 }
 
-pub(crate) fn hreal_cmp_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Ordering {
-    hreal_try_cmp(lhs, rhs).unwrap_or(Ordering::Equal)
-}
-
 pub(crate) fn hreal_gt_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> bool {
-    matches!(hreal_cmp_f64(lhs, rhs), Ordering::Greater)
+    matches!(hreal_try_cmp(lhs, rhs), Some(Ordering::Greater))
 }
 
 pub(crate) fn hreal_sub<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<Real> {
@@ -167,22 +163,22 @@ pub(crate) fn hreal_abs<T: IntoReal>(value: T) -> Option<Real> {
 }
 
 pub(crate) fn hreal_min(values: &[Real]) -> Option<Real> {
-    values.iter().cloned().reduce(|best, value| {
-        if hreal_cmp_f64(&value, &best) == Ordering::Less {
-            value
-        } else {
-            best
-        }
+    let (first, rest) = values.split_first()?;
+    rest.iter().try_fold(first.clone(), |best, value| {
+        Some(match hreal_try_cmp(value, &best)? {
+            Ordering::Less => value.clone(),
+            Ordering::Equal | Ordering::Greater => best,
+        })
     })
 }
 
 pub(crate) fn hreal_max(values: &[Real]) -> Option<Real> {
-    values.iter().cloned().reduce(|best, value| {
-        if hreal_cmp_f64(&value, &best) == Ordering::Greater {
-            value
-        } else {
-            best
-        }
+    let (first, rest) = values.split_first()?;
+    rest.iter().try_fold(first.clone(), |best, value| {
+        Some(match hreal_try_cmp(value, &best)? {
+            Ordering::Greater => value.clone(),
+            Ordering::Equal | Ordering::Less => best,
+        })
     })
 }
 
@@ -199,8 +195,8 @@ pub(crate) fn hpoint_lerp(from: &Point3, to: &Point3, t: Real) -> Option<Point3>
 }
 
 pub(crate) fn htriangle_area2_is_nonzero(a: &Point3, b: &Point3, c: &Point3) -> bool {
-    let ab = b - a;
-    let ac = c - a;
-    let area2 = ab.cross(&ac);
-    !matches!(hreal_sign(&area2.dot(&area2)), Some(RealSign::Zero))
+    matches!(
+        hyperlimit::classify_triangle3_degeneracy(a, b, c),
+        hyperlimit::TriangleDegeneracy::NonDegenerate
+    )
 }

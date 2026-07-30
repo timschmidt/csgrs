@@ -147,8 +147,10 @@ where
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn transform(&self, matrix: &Matrix4) -> Self {
-        Self::from_native(solid::transform(&self.inner, matrix))
+    pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
+        solid::try_transform(&self.inner, matrix)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn translate(&self, x: A::Scalar, y: A::Scalar, z: A::Scalar) -> AdapterResult<Self> {
@@ -160,12 +162,14 @@ where
     }
 
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_native(solid::scale(
+        solid::try_scale(
             &self.inner,
             A::into_real(sx)?,
             A::into_real(sy)?,
             A::into_real(sz)?,
-        )))
+        )
+        .map(Self::from_native)
+        .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn rotate(
@@ -174,12 +178,14 @@ where
         y_degrees: A::Scalar,
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
-        Ok(Self::from_native(solid::rotate(
+        solid::try_rotate(
             &self.inner,
             A::into_real(x_degrees)?,
             A::into_real(y_degrees)?,
             A::into_real(z_degrees)?,
-        )))
+        )
+        .map(Self::from_native)
+        .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn inverse(&self) -> Self {
@@ -192,26 +198,21 @@ where
         Self::from_native(TriangleMesh::new(self.inner.positions.to_vec(), triangles))
     }
 
-    pub fn center(&self) -> Self {
-        let bounds = solid::bounding_box(&self.inner);
-        let two = hyperlattice::Real::from(2_u8);
-        let x = -((&bounds.mins.x + &bounds.maxs.x) / &two).expect("nonzero exact divisor");
-        let y = -((&bounds.mins.y + &bounds.maxs.y) / &two).expect("nonzero exact divisor");
-        let z = -((&bounds.mins.z + &bounds.maxs.z) / &two).expect("nonzero exact divisor");
-        Self::from_native(self.inner.translated(x, y, z))
+    pub fn center(&self) -> AdapterResult<Self> {
+        solid::try_center(&self.inner)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn float(&self) -> Self {
-        let bounds = solid::bounding_box(&self.inner);
-        Self::from_native(self.inner.translated(
-            hyperlattice::Real::zero(),
-            hyperlattice::Real::zero(),
-            -bounds.mins.z.clone(),
-        ))
+    pub fn float(&self) -> AdapterResult<Self> {
+        solid::try_float(&self.inner)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Aabb3<A::Scalar>> {
-        let bounds = solid::bounding_box(&self.inner);
+        let bounds = solid::try_bounding_box(&self.inner)
+            .map_err(|error| AdapterError::Validation(error.to_string()))?;
         Ok(Aabb3 {
             mins: [
                 A::from_real(&bounds.mins.x)?,

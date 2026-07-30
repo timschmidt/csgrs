@@ -1,6 +1,6 @@
 //! JavaScript wrapper for 3D points.
 
-use crate::wasm::{point3_from_js_or_origin, real_to_js};
+use crate::wasm::{point3_from_js, real_to_js};
 use hyperlattice::Point3;
 use wasm_bindgen::prelude::*;
 
@@ -12,14 +12,14 @@ pub struct Point3Js {
 #[wasm_bindgen]
 impl Point3Js {
     #[wasm_bindgen(constructor)]
-    pub fn new(x: f64, y: f64, z: f64) -> Point3Js {
+    pub fn new(x: f64, y: f64, z: f64) -> Result<Point3Js, JsValue> {
         // JS coordinates are primitive boundary data. Promote through
-        // hyperreal first and fall back to the origin if a caller supplies
-        // NaN/Inf, following Yap's exact-geometric-computation boundary split
+        // hyperreal first and reject NaN/Inf rather than fabricating an origin,
+        // following Yap's exact-geometric-computation boundary split
         // (<https://doi.org/10.1016/0925-7721(95)00040-2>).
-        Point3Js {
-            inner: point3_from_js_or_origin(x, y, z),
-        }
+        Ok(Point3Js {
+            inner: point3_from_js(x, y, z)?,
+        })
     }
 
     #[wasm_bindgen(getter)]
@@ -65,10 +65,10 @@ mod tests {
 
     #[test]
     fn constructor_rejects_nonfinite_js_boundary_coordinates() {
-        let point = Point3Js::new(f64::NAN, 2.0, f64::INFINITY);
-        assert_eq!(point.inner, Point3::origin());
+        assert!(crate::wasm::real_from_js(f64::NAN).is_none());
+        assert!(crate::wasm::real_from_js(f64::INFINITY).is_none());
 
-        let finite = Point3Js::new(1.0, 2.0, 3.0);
+        let finite = Point3Js::new(1.0, 2.0, 3.0).expect("finite point");
         assert_eq!(finite.x(), 1.0);
         assert_eq!(finite.y(), 2.0);
         assert_eq!(finite.z(), 3.0);

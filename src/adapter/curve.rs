@@ -103,24 +103,22 @@ where
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn transform(&self, matrix: &Matrix4) -> Self {
-        Self::from_native(curve::transformed(&self.inner, matrix))
+    pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
+        curve::try_transformed(&self.inner, matrix)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn translate(&self, x: A::Scalar, y: A::Scalar, _z: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_native(curve::translated(
-            &self.inner,
-            A::into_real(x)?,
-            A::into_real(y)?,
-        )))
+        curve::try_translated(&self.inner, A::into_real(x)?, A::into_real(y)?)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, _sz: A::Scalar) -> AdapterResult<Self> {
-        Ok(Self::from_native(curve::scaled(
-            &self.inner,
-            A::into_real(sx)?,
-            A::into_real(sy)?,
-        )))
+        curve::try_scaled(&self.inner, A::into_real(sx)?, A::into_real(sy)?)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn rotate(
@@ -130,14 +128,14 @@ where
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
         let _ = (A::into_real(x_degrees)?, A::into_real(y_degrees)?);
-        Ok(Self::from_native(curve::rotated(
-            &self.inner,
-            A::into_real(z_degrees)?,
-        )))
+        curve::try_rotated(&self.inner, A::into_real(z_degrees)?)
+            .map(Self::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Aabb3<A::Scalar>> {
-        let bounds = curve::bounding_box(&self.inner);
+        let bounds = curve::try_bounding_box(&self.inner)
+            .map_err(|error| AdapterError::Validation(error.to_string()))?;
         Ok(Aabb3 {
             mins: [
                 A::from_real(&bounds.mins.x)?,
@@ -153,18 +151,16 @@ where
     }
 
     pub fn extrude(&self, height: A::Scalar) -> AdapterResult<ScalarMesh<A>> {
-        Ok(ScalarMesh::from_native(curve::extrude(
-            &self.inner,
-            A::into_real(height)?,
-        )))
+        curve::try_extrude(&self.inner, A::into_real(height)?)
+            .map(ScalarMesh::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn extrude_vector(&self, direction: [A::Scalar; 3]) -> AdapterResult<ScalarMesh<A>> {
         let [x, y, z] = scalar3_to_real::<A>(direction)?;
-        Ok(ScalarMesh::from_native(curve::extrude_vector(
-            &self.inner,
-            Vector3::from_xyz(x, y, z),
-        )))
+        curve::try_extrude_vector(&self.inner, Vector3::from_xyz(x, y, z))
+            .map(ScalarMesh::from_native)
+            .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
     pub fn revolve(
@@ -178,7 +174,8 @@ where
     }
 
     pub fn region_profiles(&self) -> AdapterResult<Vec<RegionProfile<A::Scalar>>> {
-        curve::finite_profiles(&self.inner)
+        curve::try_finite_profiles(&self.inner)
+            .map_err(|error| AdapterError::Validation(error.to_string()))?
             .iter()
             .map(|profile| {
                 let exterior = profile

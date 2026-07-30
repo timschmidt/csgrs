@@ -78,6 +78,8 @@ pub enum BlueprintOcclusionStatus {
     NoExplodeFlag,
     /// The source did not include an installation/explode vector.
     MissingInstallationVector,
+    /// The authored installation/explode vector could not be parsed exactly.
+    InvalidInstallationVector,
 }
 
 /// Per-edge evidence for visibility.
@@ -193,17 +195,42 @@ pub fn blueprint_from_aabb_parts(
     projection: BlueprintProjection,
     suppress_hidden: bool,
 ) -> BlueprintReport {
-    let aabb_parts = parts
-        .iter()
-        .filter_map(|mesh| {
-            let metadata = mesh.face_metadata().first()?.clone();
-            Some(AabbPart {
-                handle: metadata.handle.clone(),
-                bounds: crate::solid::bounding_box(mesh.geometry()).clone(),
-                metadata,
-            })
-        })
-        .collect::<Vec<_>>();
+    let mut aabb_parts = Vec::with_capacity(parts.len());
+    let mut input_blockers = Vec::new();
+    for (index, mesh) in parts.iter().enumerate() {
+        let Some(metadata) = mesh.face_metadata().first().cloned() else {
+            input_blockers.push(format!("part at input index {index} has no face metadata"));
+            continue;
+        };
+        let Ok(bounds) = crate::solid::try_bounding_box(mesh.geometry()) else {
+            input_blockers.push(format!(
+                "{} has no certifiable exact axis-aligned bounds",
+                metadata.handle
+            ));
+            continue;
+        };
+        aabb_parts.push(AabbPart {
+            handle: metadata.handle.clone(),
+            bounds: bounds.clone(),
+            metadata,
+        });
+    }
+
+    if !input_blockers.is_empty() {
+        return BlueprintReport {
+            assembled: BlueprintView {
+                projection,
+                exploded: false,
+                edges: Vec::new(),
+            },
+            exploded: BlueprintView {
+                projection,
+                exploded: true,
+                edges: Vec::new(),
+            },
+            blockers: input_blockers,
+        };
+    }
 
     let assembled = blueprint_view_from_aabbs(&aabb_parts, projection, false, suppress_hidden);
     let exploded = blueprint_view_from_aabbs(&aabb_parts, projection, true, suppress_hidden);
@@ -217,6 +244,13 @@ pub fn blueprint_from_aabb_parts(
                 .contains(&AssemblyFlag::NoExplode)
         {
             blockers.push(format!("{} missing installation vector", part.handle));
+        } else if interface
+            .documentation
+            .installation
+            .as_ref()
+            .is_some_and(|installation| installation.explode_offset.to_reals().is_none())
+        {
+            blockers.push(format!("{} has an invalid installation vector", part.handle));
         }
     }
 
@@ -239,15 +273,27 @@ fn blueprint_view_from_aabbs(
             let bounds = if exploded {
                 exploded_bounds(part)
             } else {
-                part.bounds.clone()
+                Some(part.bounds.clone())
             };
-            (part, project_aabb(&bounds, projection))
+            let translation_failed = bounds.is_none();
+            let bounds = bounds.unwrap_or_else(|| part.bounds.clone());
+            (part, project_aabb(&bounds, projection), translation_failed)
         })
         .collect::<Vec<_>>();
 
     let mut edges = Vec::new();
-    for (part, rect) in &rects {
-        let (style, evidence) = classify_rect(part, rect, &rects, suppress_hidden);
+    for (part, rect, translation_failed) in &rects {
+        let (style, evidence) = if *translation_failed {
+            (
+                BlueprintEdgeStyle::Unknown,
+                OcclusionEvidence {
+                    status: BlueprintOcclusionStatus::InvalidInstallationVector,
+                    notes: vec!["explode offset could not be parsed exactly".into()],
+                },
+            )
+        } else {
+            classify_rect(part, rect, &rects, suppress_hidden)
+        };
         for (start, end) in rect.edges() {
             edges.push(BlueprintEdge {
                 part_handle: part.handle.clone(),
@@ -266,9 +312,9 @@ fn blueprint_view_from_aabbs(
     }
 }
 
-fn exploded_bounds(part: &AabbPart) -> Aabb {
+fn exploded_bounds(part: &AabbPart) -> Option<Aabb> {
     let Some(installation) = &part.metadata.interface.documentation.installation else {
-        return part.bounds.clone();
+        return Some(part.bounds.clone());
     };
     if part
         .metadata
@@ -277,10 +323,9 @@ fn exploded_bounds(part: &AabbPart) -> Aabb {
         .flags
         .contains(&AssemblyFlag::NoExplode)
     {
-        return part.bounds.clone();
+        return Some(part.bounds.clone());
     }
     translate_aabb(&part.bounds, &installation.explode_offset)
-        .unwrap_or_else(|| part.bounds.clone())
 }
 
 fn translate_aabb(bounds: &Aabb, offset: &ExactVector3) -> Option<Aabb> {
@@ -331,7 +376,7 @@ fn project_aabb(bounds: &Aabb, projection: BlueprintProjection) -> ProjectedRect
 fn classify_rect(
     part: &AabbPart,
     rect: &ProjectedRect,
-    all_rects: &[(&AabbPart, ProjectedRect)],
+    all_rects: &[(&AabbPart, ProjectedRect, bool)],
     suppress_hidden: bool,
 ) -> (BlueprintEdgeStyle, OcclusionEvidence) {
     if part
@@ -351,25 +396,40 @@ fn classify_rect(
     }
 
     let mut partial = false;
-    for (other_part, other_rect) in all_rects {
+    for (other_part, other_rect, translation_failed) in all_rects {
         if other_part.handle == part.handle {
             continue;
         }
-        if rect_covered_by_nearer(rect, other_rect) {
-            return (
-                if suppress_hidden {
-                    BlueprintEdgeStyle::Suppressed
-                } else {
-                    BlueprintEdgeStyle::HiddenDashed
-                },
-                OcclusionEvidence {
-                    status: BlueprintOcclusionStatus::ExactAabb,
-                    notes: vec![format!("fully occluded by {}", other_part.handle)],
-                },
-            );
-        }
-        if rects_overlap_2d(rect, other_rect) && nearer_or_depth_ambiguous(rect, other_rect) {
+        if *translation_failed {
             partial = true;
+            continue;
+        }
+        match rect_covered_by_nearer(rect, other_rect) {
+            Some(true) => {
+                return (
+                    if suppress_hidden {
+                        BlueprintEdgeStyle::Suppressed
+                    } else {
+                        BlueprintEdgeStyle::HiddenDashed
+                    },
+                    OcclusionEvidence {
+                        status: BlueprintOcclusionStatus::ExactAabb,
+                        notes: vec![format!("fully occluded by {}", other_part.handle)],
+                    },
+                );
+            },
+            Some(false) => {},
+            None => {
+                partial = true;
+                continue;
+            },
+        }
+        match (
+            rects_overlap_2d(rect, other_rect),
+            nearer_or_depth_ambiguous(rect, other_rect),
+        ) {
+            (Some(true), Some(true) | None) | (None, _) => partial = true,
+            (Some(true), Some(false)) | (Some(false), _) => {},
         }
     }
 
@@ -394,42 +454,50 @@ fn classify_rect(
     }
 }
 
-fn rect_covered_by_nearer(target: &ProjectedRect, candidate: &ProjectedRect) -> bool {
-    rect_contains(candidate, target) && real_ge(&candidate.back_depth, &target.front_depth)
+fn rect_covered_by_nearer(target: &ProjectedRect, candidate: &ProjectedRect) -> Option<bool> {
+    Some(
+        rect_contains(candidate, target)?
+            && real_ge(&candidate.back_depth, &target.front_depth)?,
+    )
 }
 
-fn nearer_or_depth_ambiguous(target: &ProjectedRect, candidate: &ProjectedRect) -> bool {
+fn nearer_or_depth_ambiguous(
+    target: &ProjectedRect,
+    candidate: &ProjectedRect,
+) -> Option<bool> {
     real_ge(&candidate.front_depth, &target.back_depth)
 }
 
-fn rect_contains(container: &ProjectedRect, contained: &ProjectedRect) -> bool {
-    real_le(&container.min_x, &contained.min_x)
-        && real_le(&container.min_y, &contained.min_y)
-        && real_ge(&container.max_x, &contained.max_x)
-        && real_ge(&container.max_y, &contained.max_y)
+fn rect_contains(container: &ProjectedRect, contained: &ProjectedRect) -> Option<bool> {
+    Some(
+        real_le(&container.min_x, &contained.min_x)?
+            && real_le(&container.min_y, &contained.min_y)?
+            && real_ge(&container.max_x, &contained.max_x)?
+            && real_ge(&container.max_y, &contained.max_y)?,
+    )
 }
 
-fn rects_overlap_2d(a: &ProjectedRect, b: &ProjectedRect) -> bool {
-    real_lt(&a.min_x, &b.max_x)
-        && real_lt(&b.min_x, &a.max_x)
-        && real_lt(&a.min_y, &b.max_y)
-        && real_lt(&b.min_y, &a.max_y)
+fn rects_overlap_2d(a: &ProjectedRect, b: &ProjectedRect) -> Option<bool> {
+    Some(
+        real_lt(&a.min_x, &b.max_x)?
+            && real_lt(&b.min_x, &a.max_x)?
+            && real_lt(&a.min_y, &b.max_y)?
+            && real_lt(&b.min_y, &a.max_y)?,
+    )
 }
 
-fn real_cmp(lhs: &Real, rhs: &Real) -> Ordering {
-    hyperlimit::compare_reals(lhs, rhs)
-        .value()
-        .unwrap_or(Ordering::Equal)
+fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
+    hyperlimit::compare_reals(lhs, rhs).value()
 }
 
-fn real_le(lhs: &Real, rhs: &Real) -> bool {
-    !matches!(real_cmp(lhs, rhs), Ordering::Greater)
+fn real_le(lhs: &Real, rhs: &Real) -> Option<bool> {
+    real_cmp(lhs, rhs).map(|ordering| ordering != Ordering::Greater)
 }
 
-fn real_ge(lhs: &Real, rhs: &Real) -> bool {
-    !matches!(real_cmp(lhs, rhs), Ordering::Less)
+fn real_ge(lhs: &Real, rhs: &Real) -> Option<bool> {
+    real_cmp(lhs, rhs).map(|ordering| ordering != Ordering::Less)
 }
 
-fn real_lt(lhs: &Real, rhs: &Real) -> bool {
-    matches!(real_cmp(lhs, rhs), Ordering::Less)
+fn real_lt(lhs: &Real, rhs: &Real) -> Option<bool> {
+    real_cmp(lhs, rhs).map(|ordering| ordering == Ordering::Less)
 }

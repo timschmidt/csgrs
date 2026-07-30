@@ -24,8 +24,8 @@ fn separate_then_merge_f32(mesh: &TriangleMesh) -> GraphicsMesh<f32> {
             .cloned()
             .map(|(position, normal)| {
                 (
-                    position.map(|value| value.to_f64_lossy().unwrap() as f32),
-                    normal.map(|value| value.to_f64_lossy().unwrap() as f32),
+                    position.map(|value| value.to_f32_lossy().unwrap()),
+                    normal.map(|value| value.to_f32_lossy().unwrap()),
                 )
             })
             .collect::<Vec<_>>()

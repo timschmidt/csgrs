@@ -18,26 +18,36 @@ pub(crate) fn real_from_js(value: f64) -> Option<Real> {
     hreal_from_f64(value).ok()
 }
 
-pub(crate) fn real_from_js_or_zero(value: f64) -> Real {
-    real_from_js(value).unwrap_or_else(Real::zero)
+pub(crate) fn real_from_js_named(
+    value: f64,
+    name: &str,
+) -> Result<Real, wasm_bindgen::JsValue> {
+    real_from_js(value)
+        .ok_or_else(|| wasm_bindgen::JsValue::from_str(&format!("{name} must be finite")))
 }
 
 pub(crate) fn real_to_js(value: &Real) -> f64 {
-    hreal_to_f64(value).unwrap_or(0.0)
+    hreal_to_f64(value).unwrap_or(f64::NAN)
 }
 
-pub(crate) fn point3_from_js_or_origin(x: f64, y: f64, z: f64) -> Point3 {
-    match (real_from_js(x), real_from_js(y), real_from_js(z)) {
-        (Some(x), Some(y), Some(z)) => Point3::new(x, y, z),
-        _ => Point3::origin(),
-    }
+pub(crate) fn point3_from_js(x: f64, y: f64, z: f64) -> Result<Point3, wasm_bindgen::JsValue> {
+    Ok(Point3::new(
+        real_from_js_named(x, "x")?,
+        real_from_js_named(y, "y")?,
+        real_from_js_named(z, "z")?,
+    ))
 }
 
-pub(crate) fn vector3_from_js_or_zero(x: f64, y: f64, z: f64) -> Vector3 {
-    match (real_from_js(x), real_from_js(y), real_from_js(z)) {
-        (Some(x), Some(y), Some(z)) => Vector3::from_xyz(x, y, z),
-        _ => Vector3::zeros(),
-    }
+pub(crate) fn vector3_from_js(
+    x: f64,
+    y: f64,
+    z: f64,
+) -> Result<Vector3, wasm_bindgen::JsValue> {
+    Ok(Vector3::from_xyz(
+        real_from_js_named(x, "x")?,
+        real_from_js_named(y, "y")?,
+        real_from_js_named(z, "z")?,
+    ))
 }
 
 #[cfg(test)]

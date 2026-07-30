@@ -19,7 +19,10 @@ fn tolerance() -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    value.max(&tolerance).clone()
+    hyperlimit::real_max(&value, &tolerance)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order")
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -65,12 +68,7 @@ fn decode_mesh(bytes: &[u8], idx: &mut usize) -> TriangleMesh {
             segments,
             segments,
         ),
-        _ => solid::arrow(
-            Point3::origin(),
-            Vector3::from_xyz(a, b, c),
-            segments,
-            false,
-        ),
+        _ => solid::arrow(Point3::origin(), Vector3::from_xyz(a, b, c), segments, false),
     }
 }
 

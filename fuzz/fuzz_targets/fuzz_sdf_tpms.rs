@@ -15,7 +15,10 @@ fn real(value: f64) -> Real {
 
 fn at_least(value: Real, minimum: f64) -> Real {
     let minimum = real(minimum);
-    value.max(&minimum).clone()
+    hyperlimit::real_max(&value, &minimum)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order")
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
@@ -65,7 +68,10 @@ fuzz_target!(|bytes: &[u8]| {
         1 => {
             let center = hpoint3(Real::zero(), Real::zero(), Real::zero());
             let max_radius_squared = real(10.0);
-            let radius_squared = period.min(&max_radius_squared).clone();
+            let radius_squared = hyperlimit::real_min(&period, &max_radius_squared)
+                .value()
+                .cloned()
+                .expect("decoded rationals have decidable order");
             solid::sdf_expr(
                 SdfExpr::sphere(center, radius_squared),
                 (res, res, res),

@@ -37,12 +37,12 @@ impl Matrix4Js {
         m42: f64,
         m43: f64,
         m44: f64,
-    ) -> Matrix4Js {
+    ) -> Result<Matrix4Js, JsValue> {
         let matrix = matrix_from_js_values([
             m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33, m34, m41, m42, m43, m44,
         ])
-        .unwrap_or_else(Matrix4::identity);
-        Matrix4Js { inner: matrix }
+        .ok_or_else(|| JsValue::from_str("matrix components must be finite"))?;
+        Ok(Matrix4Js { inner: matrix })
     }
 
     #[wasm_bindgen(js_name = toArray)]
@@ -74,7 +74,7 @@ mod tests {
 
     #[test]
     fn matrix_js_rejects_nonfinite_constructor_values() {
-        let matrix = Matrix4Js::new(
+        let matrix = matrix_from_js_values([
             1.0,
             0.0,
             0.0,
@@ -91,9 +91,9 @@ mod tests {
             0.0,
             0.0,
             1.0,
-        );
+        ]);
 
-        assert_eq!(matrix.inner, Matrix4::identity());
+        assert!(matrix.is_none());
     }
 
     #[test]

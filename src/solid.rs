@@ -176,6 +176,12 @@ fn nonnegative(value: &Real) -> bool {
     )
 }
 
+fn exact_point3_equal(left: &Point3, right: &Point3) -> Option<bool> {
+    let left = hyperlimit::Point3::new(left.x.clone(), left.y.clone(), left.z.clone());
+    let right = hyperlimit::Point3::new(right.x.clone(), right.y.clone(), right.z.clone());
+    hyperlimit::point3_equal(&left, &right).value()
+}
+
 fn sampled_circle(count: usize) -> Option<Vec<(Real, Real)>> {
     if count == 0 {
         return None;
@@ -738,8 +744,8 @@ pub fn arrow(
         let orientation = normal.dot(&outward);
         let faces_inward = match crate::hyper_math::hreal_sign(&orientation) {
             Some(RealSign::Negative) => true,
-            Some(RealSign::Positive | RealSign::Zero) => false,
-            None => orientation.to_f64_lossy().is_some_and(|value| value < 0.0),
+            Some(RealSign::Positive) => false,
+            Some(RealSign::Zero) | None => return empty(),
         };
         if faces_inward {
             triangle.swap(1, 2);
@@ -788,20 +794,21 @@ pub fn arrow(
             triangle.swap(1, 2);
         }
     }
-    let orientation_score = triangles
-        .iter()
-        .filter_map(|triangle| {
-            let [a, b, c] = triangle.map(|index| &positions[index]);
-            let normal = (b - a).cross(&(c - a));
-            let outward = a.to_vector() + b.to_vector() + c.to_vector()
-                - interior.to_vector() * Real::from(3_u8);
-            normal.dot(&outward).to_f64_lossy()
-        })
-        .sum::<f64>();
-    if orientation_score < 0.0 {
-        for triangle in &mut triangles {
-            triangle.swap(1, 2);
-        }
+    let orientation_score = triangles.iter().fold(Real::zero(), |score, triangle| {
+        let [a, b, c] = triangle.map(|index| &positions[index]);
+        let normal = (b - a).cross(&(c - a));
+        let outward = a.to_vector() + b.to_vector() + c.to_vector()
+            - interior.to_vector() * Real::from(3_u8);
+        score + normal.dot(&outward)
+    });
+    match crate::hyper_math::hreal_sign(&orientation_score) {
+        Some(RealSign::Negative) => {
+            for triangle in &mut triangles {
+                triangle.swap(1, 2);
+            }
+        },
+        Some(RealSign::Positive) => {},
+        Some(RealSign::Zero) | None => return empty(),
     }
     indexed(positions, triangles)
 }
@@ -834,7 +841,8 @@ fn torus_uncached(
 ) -> TriangleMesh {
     if !positive(&major_radius)
         || !positive(&minor_radius)
-        || major_radius <= minor_radius
+        || crate::hyper_math::hreal_try_cmp(&major_radius, &minor_radius)
+            != Some(std::cmp::Ordering::Greater)
         || major_segments < 3
         || minor_segments < 3
     {
@@ -1048,35 +1056,106 @@ pub fn boolean(
 }
 
 /// Applies a homogeneous transform and returns native geometry.
-pub fn transform(mesh: &TriangleMesh, matrix: &Matrix4) -> TriangleMesh {
-    let Some(orientation) = crate::hyper_math::hreal_sign(&matrix.determinant()) else {
-        return empty();
-    };
-    let Some(transformed) = mesh.try_transformed(matrix) else {
-        return empty();
-    };
+pub fn try_transform(
+    mesh: &TriangleMesh,
+    matrix: &Matrix4,
+) -> Result<TriangleMesh, ValidationError> {
+    let orientation = crate::hyper_math::hreal_sign(&matrix.determinant())
+        .ok_or(ValidationError::InvalidArguments)?;
+    let transformed = mesh
+        .try_transformed(matrix)
+        .ok_or(ValidationError::InvalidArguments)?;
     match orientation {
-        RealSign::Positive => transformed,
-        RealSign::Negative => transformed.reversed_winding(),
-        RealSign::Zero => empty(),
+        RealSign::Positive => Ok(transformed),
+        RealSign::Negative => Ok(transformed.reversed_winding()),
+        RealSign::Zero => Err(ValidationError::InvalidArguments),
     }
+}
+
+fn try_transform_with_known_orientation(
+    mesh: &TriangleMesh,
+    matrix: &Matrix4,
+    reverse_winding: bool,
+) -> Result<TriangleMesh, ValidationError> {
+    let transformed = mesh
+        .try_transformed(matrix)
+        .ok_or(ValidationError::InvalidArguments)?;
+    Ok(if reverse_winding {
+        transformed.reversed_winding()
+    } else {
+        transformed
+    })
+}
+
+/// Applies a homogeneous transform, returning empty geometry on uncertainty.
+pub fn transform(mesh: &TriangleMesh, matrix: &Matrix4) -> TriangleMesh {
+    try_transform(mesh, matrix).unwrap_or_else(|_| empty())
+}
+
+/// Rotates native geometry by Euler angles in degrees, reporting uncertainty.
+pub fn try_rotate(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    mesh.try_rotated_xyz_degrees(x, y, z)
+        .ok_or(ValidationError::InvalidArguments)
 }
 
 /// Rotates native geometry by Euler angles in degrees.
 pub fn rotate(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> TriangleMesh {
-    mesh.rotated_xyz_degrees(x, y, z)
+    try_rotate(mesh, x, y, z).unwrap_or_else(|_| empty())
+}
+
+/// Scales native geometry independently along each axis, reporting degeneracy.
+pub fn try_scale(
+    mesh: &TriangleMesh,
+    x: Real,
+    y: Real,
+    z: Real,
+) -> Result<TriangleMesh, ValidationError> {
+    let signs = [&x, &y, &z]
+        .map(crate::hyper_math::hreal_sign)
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
+        .ok_or(ValidationError::InvalidArguments)?;
+    if signs.contains(&RealSign::Zero) {
+        return Err(ValidationError::InvalidArguments);
+    }
+    let reverse_winding = signs
+        .iter()
+        .filter(|sign| **sign == RealSign::Negative)
+        .count()
+        % 2
+        == 1;
+    try_transform_with_known_orientation(
+        mesh,
+        &Matrix4::affine_nonuniform_scale([x, y, z]),
+        reverse_winding,
+    )
 }
 
 /// Scales native geometry independently along each axis.
 pub fn scale(mesh: &TriangleMesh, x: Real, y: Real, z: Real) -> TriangleMesh {
-    transform(mesh, &Matrix4::affine_nonuniform_scale([x, y, z]))
+    try_scale(mesh, x, y, z).unwrap_or_else(|_| empty())
+}
+
+/// Reflects native geometry across a plane, reporting an invalid plane.
+pub fn try_mirror(
+    mesh: &TriangleMesh,
+    plane: &Plane,
+) -> Result<TriangleMesh, ValidationError> {
+    let matrix = plane
+        .reflection_matrix()
+        .map_err(|_| ValidationError::InvalidArguments)?;
+    // A valid plane reflection always reverses orientation.
+    try_transform_with_known_orientation(mesh, &matrix, true)
 }
 
 /// Reflects native geometry across a plane.
 pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> TriangleMesh {
-    plane
-        .reflection_matrix()
-        .map_or_else(|_| mesh.clone(), |matrix| transform(mesh, &matrix))
+    try_mirror(mesh, plane).unwrap_or_else(|_| empty())
 }
 
 /// Uniformly subdivides every native triangle.
@@ -1271,26 +1350,50 @@ pub fn schwarz_d(
 }
 
 /// Exact bounds of native triangle positions.
-pub fn bounding_box(mesh: &TriangleMesh) -> &Aabb {
+pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<&Aabb, ValidationError> {
     static EMPTY_BOUNDS: OnceLock<Aabb> = OnceLock::new();
-    mesh.exact_bounds()
-        .unwrap_or_else(|| EMPTY_BOUNDS.get_or_init(Aabb::origin))
+    match mesh.exact_bounds() {
+        Some(bounds) => Ok(bounds),
+        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => {
+            Ok(EMPTY_BOUNDS.get_or_init(Aabb::origin))
+        },
+        None => Err(ValidationError::InvalidArguments),
+    }
+}
+
+/// Exact bounds, using the origin box only for empty or invalid geometry.
+pub fn bounding_box(mesh: &TriangleMesh) -> &Aabb {
+    static FALLBACK_BOUNDS: OnceLock<Aabb> = OnceLock::new();
+    try_bounding_box(mesh).unwrap_or_else(|_| FALLBACK_BOUNDS.get_or_init(Aabb::origin))
+}
+
+/// Translates the center of the exact bounds to the origin.
+pub fn try_center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    let bounds = try_bounding_box(mesh)?;
+    let two = Real::from(2_u8);
+    let x = -((&bounds.mins.x + &bounds.maxs.x) / &two)
+        .map_err(|_| ValidationError::InvalidArguments)?;
+    let y = -((&bounds.mins.y + &bounds.maxs.y) / &two)
+        .map_err(|_| ValidationError::InvalidArguments)?;
+    let z = -((&bounds.mins.z + &bounds.maxs.z) / &two)
+        .map_err(|_| ValidationError::InvalidArguments)?;
+    Ok(mesh.translated(x, y, z))
 }
 
 /// Translates the center of the exact bounds to the origin.
 pub fn center(mesh: &TriangleMesh) -> TriangleMesh {
-    let bounds = bounding_box(mesh);
-    let two = Real::from(2_u8);
-    let x = -((&bounds.mins.x + &bounds.maxs.x) / &two).expect("two is nonzero");
-    let y = -((&bounds.mins.y + &bounds.maxs.y) / &two).expect("two is nonzero");
-    let z = -((&bounds.mins.z + &bounds.maxs.z) / &two).expect("two is nonzero");
-    mesh.translated(x, y, z)
+    try_center(mesh).unwrap_or_else(|_| empty())
+}
+
+/// Translates the minimum Z bound to zero.
+pub fn try_float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    let bounds = try_bounding_box(mesh)?;
+    Ok(mesh.translated(Real::zero(), Real::zero(), -bounds.mins.z.clone()))
 }
 
 /// Translates the minimum Z bound to zero.
 pub fn float(mesh: &TriangleMesh) -> TriangleMesh {
-    let bounds = bounding_box(mesh);
-    mesh.translated(Real::zero(), Real::zero(), -bounds.mins.z.clone())
+    try_float(mesh).unwrap_or_else(|_| empty())
 }
 
 /// Concatenates native meshes without performing a Boolean operation.
@@ -1367,12 +1470,13 @@ fn union_copies(copies: Vec<TriangleMesh>) -> TriangleMesh {
     if pairwise_disjoint {
         return merge(&copies);
     }
+    let mut copies = copies.into_iter();
+    let Some(first) = copies.next() else {
+        return empty();
+    };
     copies
-        .into_iter()
-        .reduce(|left, right| {
-            boolean(&left, &right, BooleanOp::Union).unwrap_or_else(|_| merge(&[left, right]))
-        })
-        .unwrap_or_else(empty)
+        .try_fold(first, |left, right| boolean(&left, &right, BooleanOp::Union))
+        .unwrap_or_else(|_| empty())
 }
 
 /// Places `count` copies along a direction at exact spacing.
@@ -1383,7 +1487,7 @@ pub fn distribute_linear(
     spacing: Real,
 ) -> TriangleMesh {
     if count == 0 {
-        return mesh.clone();
+        return empty();
     }
     let parameters = DistributionParameters::Linear {
         count,
@@ -1394,7 +1498,7 @@ pub fn distribute_linear(
         return result;
     }
     let Ok(direction) = direction.normalize_checked() else {
-        return mesh.clone();
+        return empty();
     };
     let step = direction * spacing;
     let result = union_copies(
@@ -1418,7 +1522,7 @@ pub fn distribute_grid(
     dy: Real,
 ) -> TriangleMesh {
     if rows == 0 || columns == 0 {
-        return mesh.clone();
+        return empty();
     }
     let parameters = DistributionParameters::Grid {
         rows,
@@ -1453,7 +1557,7 @@ pub fn distribute_arc(
     end_angle_degrees: Real,
 ) -> TriangleMesh {
     if count == 0 {
-        return mesh.clone();
+        return empty();
     }
     let parameters = DistributionParameters::Arc {
         count,
@@ -1555,7 +1659,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             mesh.positions.get(b),
             mesh.positions.get(c),
         ) else {
-            continue;
+            return CurveRegion2::empty();
         };
         let mut points = [
             [a.x.clone(), a.y.clone()],
@@ -1569,22 +1673,25 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
         match hyperlimit::ring_area_sign(&limit).value() {
             Some(hyperlimit::Sign::Negative) => points.swap(1, 2),
             Some(hyperlimit::Sign::Positive) => {},
-            Some(hyperlimit::Sign::Zero) | None => continue,
+            Some(hyperlimit::Sign::Zero) => continue,
+            None => return CurveRegion2::empty(),
         }
         let Ok(contour) = Contour2::from_real_ring(&points) else {
-            continue;
+            return CurveRegion2::empty();
         };
         let Ok(region) =
             CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
         else {
-            continue;
+            return CurveRegion2::empty();
         };
         output = if output.is_empty() {
             region
         } else {
-            output
-                .boolean_region(&region, CurveBooleanOp::Union, &policy)
-                .unwrap_or(output)
+            let Ok(union) = output.boolean_region(&region, CurveBooleanOp::Union, &policy)
+            else {
+                return CurveRegion2::empty();
+            };
+            union
         };
     }
     FLATTEN_CACHE.with_borrow_mut(|entries| {
@@ -1607,6 +1714,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
     use hypercurve::{
         BooleanOp as CurveBooleanOp, Contour2, CurvePolicy, CurveRegion2, CurveString2,
     };
+    let empty_result = || (CurveRegion2::empty(), Vec::new(), Vec::new());
 
     if let Some(result) = SLICE_CACHE.with_borrow(|entries| {
         entries
@@ -1620,11 +1728,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
     }) {
         return result;
     }
-    let equal = |left: &Point3, right: &Point3| {
-        let left = hyperlimit::Point3::new(left.x.clone(), left.y.clone(), left.z.clone());
-        let right = hyperlimit::Point3::new(right.x.clone(), right.y.clone(), right.z.clone());
-        matches!(hyperlimit::point3_equal(&left, &right).value(), Some(true))
-    };
+    let equal = exact_point3_equal;
     let mut edges = Vec::<[Point3; 2]>::new();
     let mut coplanar_positions = Vec::new();
     let mut coplanar_triangles = Vec::new();
@@ -1635,13 +1739,16 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             .map(|index| mesh.positions.get(index).cloned())
             .collect::<Option<Vec<_>>>()
         else {
-            continue;
+            return empty_result();
         };
-        let signs = points
+        let Some(signs) = points
             .iter()
             .map(|point| crate::hyper_math::hreal_sign(&(point.z.clone() - z.clone())))
-            .collect::<Vec<_>>();
-        if signs.iter().all(|sign| *sign == Some(RealSign::Zero)) {
+            .collect::<Option<Vec<_>>>()
+        else {
+            return empty_result();
+        };
+        if signs.iter().all(|sign| *sign == RealSign::Zero) {
             let base = coplanar_positions.len();
             coplanar_positions.extend(points);
             coplanar_triangles.push(Triangle::new(base, base + 1, base + 2));
@@ -1650,16 +1757,16 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
         let mut intersections = Vec::with_capacity(2);
         for [start, end] in [[0, 1], [1, 2], [2, 0]] {
             let (start_sign, end_sign) = (signs[start], signs[end]);
-            let point = if start_sign == Some(RealSign::Zero) {
+            let point = if start_sign == RealSign::Zero {
                 Some(points[start].clone())
             } else if matches!(
                 (start_sign, end_sign),
-                (Some(RealSign::Negative), Some(RealSign::Positive))
-                    | (Some(RealSign::Positive), Some(RealSign::Negative))
+                (RealSign::Negative, RealSign::Positive)
+                    | (RealSign::Positive, RealSign::Negative)
             ) {
                 let denominator = points[end].z.clone() - points[start].z.clone();
                 let Ok(parameter) = (z.clone() - points[start].z.clone()) / denominator else {
-                    continue;
+                    return empty_result();
                 };
                 Some(Point3::new(
                     points[start].x.clone()
@@ -1672,10 +1779,17 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             } else {
                 None
             };
-            if let Some(point) = point
-                && !intersections.iter().any(|existing| equal(existing, &point))
-            {
-                intersections.push(point);
+            if let Some(point) = point {
+                let Some(duplicate) =
+                    intersections.iter().try_fold(false, |duplicate, existing| {
+                        Some(duplicate || equal(existing, &point)?)
+                    })
+                else {
+                    return empty_result();
+                };
+                if !duplicate {
+                    intersections.push(point);
+                }
             }
         }
         if intersections.len() == 2 {
@@ -1697,13 +1811,17 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
                 if used[index] {
                     continue;
                 }
-                if equal(last, &edge[0]) {
-                    next = Some((index, edge[1].clone()));
-                    break;
-                }
-                if equal(last, &edge[1]) {
-                    next = Some((index, edge[0].clone()));
-                    break;
+                match (equal(last, &edge[0]), equal(last, &edge[1])) {
+                    (Some(true), _) => {
+                        next = Some((index, edge[1].clone()));
+                        break;
+                    },
+                    (Some(false), Some(true)) => {
+                        next = Some((index, edge[0].clone()));
+                        break;
+                    },
+                    (Some(false), Some(false)) => {},
+                    (None, _) | (_, None) => return empty_result(),
                 }
             }
             let Some((index, point)) = next else {
@@ -1727,27 +1845,38 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
             .iter()
             .map(|point| [point.x.clone(), point.y.clone()])
             .collect::<Vec<_>>();
-        let closed = chain
-            .first()
-            .zip(chain.last())
-            .is_some_and(|(first, last)| equal(first, last));
+        let closed = match chain.first().zip(chain.last()) {
+            Some((first, last)) => {
+                let Some(equal) = equal(first, last) else {
+                    return empty_result();
+                };
+                equal
+            },
+            None => false,
+        };
         if closed {
             let Ok(contour) = Contour2::from_real_ring(&points) else {
-                continue;
+                return empty_result();
             };
             let Ok(loop_region) =
                 CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
             else {
-                continue;
+                return empty_result();
             };
             region = if region.is_empty() {
                 loop_region
             } else {
-                region
-                    .boolean_region(&loop_region, CurveBooleanOp::Union, &policy)
-                    .unwrap_or(region)
+                let Ok(union) =
+                    region.boolean_region(&loop_region, CurveBooleanOp::Union, &policy)
+                else {
+                    return empty_result();
+                };
+                union
             };
-        } else if let Ok(wire) = CurveString2::from_real_point_iter(points) {
+        } else {
+            let Ok(wire) = CurveString2::from_real_point_iter(points) else {
+                return empty_result();
+            };
             wires.push(wire);
         }
     }
@@ -1837,12 +1966,11 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
 
     let section_basis =
         |section: &[Point3]| -> Result<(Vector3, Vector3, Vector3), ValidationError> {
-            if section
-                .iter()
-                .zip(section.iter().cycle().skip(1))
-                .any(|(left, right)| left == right)
-            {
-                return Err(ValidationError::InvalidArguments);
+            for (left, right) in section.iter().zip(section.iter().cycle().skip(1)) {
+                match exact_point3_equal(left, right) {
+                    Some(false) => {},
+                    Some(true) | None => return Err(ValidationError::InvalidArguments),
+                }
             }
             let origin = &section[0];
             let axis_x = (&section[1] - origin)
@@ -2225,6 +2353,12 @@ mod tests {
         assert!(signed_volume(&reflected_arrow) > 0.0);
 
         let cube = cube(Real::from(2_u8));
+        assert!(try_scale(&cube, Real::zero(), Real::one(), Real::one()).is_err());
+        assert!(
+            scale(&cube, Real::zero(), Real::one(), Real::one())
+                .triangles
+                .is_empty()
+        );
         let reflected = scale(&cube, -Real::one(), Real::one(), Real::one());
         assert!(reflected.is_closed_manifold());
         assert!(signed_volume(&reflected) > 0.0);

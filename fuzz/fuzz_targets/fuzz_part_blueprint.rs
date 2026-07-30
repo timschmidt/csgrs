@@ -2,6 +2,7 @@
 
 #![no_main]
 
+use csgrs::solid::{self, SolidExt};
 use csgrs::{
     AttributedMesh,
     parts::{
@@ -9,7 +10,6 @@ use csgrs::{
         ExactVector3, InstallationVector, PartMetadata, PartSource, blueprint_from_aabb_parts,
     },
 };
-use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
 use libfuzzer_sys::fuzz_target;
 

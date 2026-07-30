@@ -9,10 +9,6 @@ use hyperreal::RealSign;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-fn invalid_sdf_value() -> Real {
-    hreal_from_f64(1.0e10).expect("finite SDF sentinel")
-}
-
 fn cubic_resolution(resolution: usize) -> Option<(usize, usize, usize)> {
     let resolution = resolution.max(2);
     let finite = u32::try_from(resolution).ok()?;
@@ -48,7 +44,7 @@ fn tpms_from_indexed_sdf(
 #[inline]
 fn tpms_solid_from_sdf(
     bounds: &Aabb,
-    sdf_fn: impl Fn(&Point3) -> Real,
+    sdf_fn: impl Fn(&Point3) -> Option<Real>,
     resolution: (usize, usize, usize),
     iso_value: Real,
     thickness: Real,
@@ -114,21 +110,28 @@ fn tpms_solid_from_sdf(
                     origins[1].clone() + steps[1].clone() * Real::from(y as u64),
                     origins[2].clone() + steps[2].clone() * Real::from(z as u64),
                 );
-                let sheet = hreal_sub(sdf_fn(&point), iso_value.clone())
+                let Some(sheet) = sdf_fn(&point)
+                    .and_then(|value| hreal_sub(value, iso_value.clone()))
                     .and_then(hreal_abs)
                     .and_then(|distance| hreal_sub(distance, half_thickness.clone()))
-                    .unwrap_or_else(invalid_sdf_value);
-                let clip = hreal_max(&[
+                else {
+                    return TriangleMesh::new(Vec::new(), Vec::new());
+                };
+                let Some(clip) = hreal_max(&[
                     bounds.mins.x.clone() - point.x.clone(),
                     point.x.clone() - bounds.maxs.x.clone(),
                     bounds.mins.y.clone() - point.y.clone(),
                     point.y.clone() - bounds.maxs.y.clone(),
                     bounds.mins.z.clone() - point.z.clone(),
                     point.z.clone() - bounds.maxs.z.clone(),
-                ])
-                .unwrap_or_else(invalid_sdf_value);
+                ]) else {
+                    return TriangleMesh::new(Vec::new(), Vec::new());
+                };
+                let Some(value) = hreal_max(&[sheet, clip]) else {
+                    return TriangleMesh::new(Vec::new(), Vec::new());
+                };
                 samples.push(point);
-                values.push(hreal_max(&[sheet, clip]).unwrap_or_else(invalid_sdf_value));
+                values.push(value);
             }
         }
     }
@@ -170,15 +173,20 @@ fn tetrahedral_isosurface(
         direction: &hyperlattice::Vector3,
         positions: &[Point3],
         triangles: &mut Vec<Triangle>,
-    ) {
+    ) -> Option<()> {
         let ab = &positions[indices[1]] - &positions[indices[0]];
         let ac = &positions[indices[2]] - &positions[indices[0]];
-        let reverse = hreal_sign(&ab.cross(&ac).dot(direction)) == Some(RealSign::Negative);
+        let reverse = match hreal_sign(&ab.cross(&ac).dot(direction))? {
+            RealSign::Negative => true,
+            RealSign::Positive => false,
+            RealSign::Zero => return None,
+        };
         triangles.push(if reverse {
             Triangle::new(indices[0], indices[2], indices[1])
         } else {
             Triangle::new(indices[0], indices[1], indices[2])
         });
+        Some(())
     }
 
     const TETRAHEDRA: [[usize; 4]; 6] = [
@@ -189,6 +197,22 @@ fn tetrahedral_isosurface(
         [0, 4, 5, 7],
         [0, 5, 1, 7],
     ];
+    let empty = || TriangleMesh::new(Vec::new(), Vec::new());
+    if dimensions.iter().any(|count| *count < 2) {
+        return empty();
+    }
+    let Some(expected_samples) = dimensions
+        .iter()
+        .try_fold(1_usize, |product, count| product.checked_mul(*count))
+    else {
+        return empty();
+    };
+    if samples.len() != expected_samples || values.len() != expected_samples {
+        return empty();
+    }
+    let Some(signs) = values.iter().map(hreal_sign).collect::<Option<Vec<_>>>() else {
+        return empty();
+    };
     let sample_index =
         |x: usize, y: usize, z: usize| (z * dimensions[1] + y) * dimensions[0] + x;
     let mut positions = Vec::new();
@@ -210,10 +234,9 @@ fn tetrahedral_isosurface(
                 ];
                 for tetrahedron in TETRAHEDRA {
                     let vertices = tetrahedron.map(|corner| corners[corner]);
-                    let (inside, outside): (Vec<_>, Vec<_>) =
-                        vertices.into_iter().partition(|&index| {
-                            hreal_sign(&values[index]) == Some(RealSign::Negative)
-                        });
+                    let (inside, outside): (Vec<_>, Vec<_>) = vertices
+                        .into_iter()
+                        .partition(|&index| signs[index] == RealSign::Negative);
                     if inside.is_empty() || outside.is_empty() {
                         continue;
                     }
@@ -235,14 +258,18 @@ fn tetrahedral_isosurface(
                                 })
                                 .collect::<Option<Vec<_>>>()
                             else {
-                                continue;
+                                return empty();
                             };
-                            emit_oriented(
+                            if emit_oriented(
                                 [indices[0], indices[1], indices[2]],
                                 &direction,
                                 &positions,
                                 &mut triangles,
-                            );
+                            )
+                            .is_none()
+                            {
+                                return empty();
+                            }
                         },
                         3 => {
                             let o = outside[0];
@@ -260,14 +287,18 @@ fn tetrahedral_isosurface(
                                 })
                                 .collect::<Option<Vec<_>>>()
                             else {
-                                continue;
+                                return empty();
                             };
-                            emit_oriented(
+                            if emit_oriented(
                                 [indices[0], indices[1], indices[2]],
                                 &direction,
                                 &positions,
                                 &mut triangles,
-                            );
+                            )
+                            .is_none()
+                            {
+                                return empty();
+                            }
                         },
                         2 => {
                             let Some(a) = crossing_vertex(
@@ -278,7 +309,7 @@ fn tetrahedral_isosurface(
                                 &mut positions,
                                 &mut edge_vertices,
                             ) else {
-                                continue;
+                                return empty();
                             };
                             let Some(b) = crossing_vertex(
                                 inside[0],
@@ -288,7 +319,7 @@ fn tetrahedral_isosurface(
                                 &mut positions,
                                 &mut edge_vertices,
                             ) else {
-                                continue;
+                                return empty();
                             };
                             let Some(c) = crossing_vertex(
                                 inside[1],
@@ -298,7 +329,7 @@ fn tetrahedral_isosurface(
                                 &mut positions,
                                 &mut edge_vertices,
                             ) else {
-                                continue;
+                                return empty();
                             };
                             let Some(d) = crossing_vertex(
                                 inside[1],
@@ -308,10 +339,21 @@ fn tetrahedral_isosurface(
                                 &mut positions,
                                 &mut edge_vertices,
                             ) else {
-                                continue;
+                                return empty();
                             };
-                            emit_oriented([a, b, c], &direction, &positions, &mut triangles);
-                            emit_oriented([a, c, d], &direction, &positions, &mut triangles);
+                            if emit_oriented([a, b, c], &direction, &positions, &mut triangles)
+                                .and_then(|()| {
+                                    emit_oriented(
+                                        [a, c, d],
+                                        &direction,
+                                        &positions,
+                                        &mut triangles,
+                                    )
+                                })
+                                .is_none()
+                            {
+                                return empty();
+                            }
                         },
                         _ => unreachable!("a tetrahedron has four vertices"),
                     }
@@ -376,9 +418,7 @@ pub fn gyroid_solid(
     };
     tpms_solid_from_sdf(
         bounds,
-        move |p: &Point3| {
-            tpms_gyroid_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
-        },
+        move |p: &Point3| tpms_gyroid_value(p, scale.clone()),
         res,
         iso_value,
         thickness,
@@ -433,9 +473,7 @@ pub fn schwarz_p_solid(
     };
     tpms_solid_from_sdf(
         bounds,
-        move |p: &Point3| {
-            tpms_schwarz_p_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
-        },
+        move |p: &Point3| tpms_schwarz_p_value(p, scale.clone()),
         res,
         iso_value,
         thickness,
@@ -494,9 +532,7 @@ pub fn schwarz_d_solid(
     };
     tpms_solid_from_sdf(
         bounds,
-        move |p: &Point3| {
-            tpms_schwarz_d_value(p, scale.clone()).unwrap_or_else(invalid_sdf_value)
-        },
+        move |p: &Point3| tpms_schwarz_d_value(p, scale.clone()),
         res,
         iso_value,
         thickness,

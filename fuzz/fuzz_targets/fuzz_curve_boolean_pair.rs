@@ -17,7 +17,10 @@ fn tolerance() -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    value.max(&tolerance).clone()
+    hyperlimit::real_max(&value, &tolerance)
+        .value()
+        .cloned()
+        .expect("decoded rationals have decidable order")
 }
 
 fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {

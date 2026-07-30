@@ -19,6 +19,7 @@ use hypercurve::{
     FiniteProjectionOptions, FiniteRegionProfile2,
 };
 use hyperlattice::Real;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
@@ -537,12 +538,19 @@ impl ImportState {
                                         .into(),
                             });
                         }
+                        let orientation_reversed = self
+                            .image_transform
+                            .reverses_orientation()
+                            .ok_or_else(|| IoError::Geometry {
+                                format: "Gerber",
+                                detail: "image-transform orientation is indeterminate".into(),
+                            })?;
                         Some(circular_interpolation(
                             self.current,
                             target,
                             resolve_offset(offset, self.unit_scale, self.image_transform),
                             self.interpolation_mode,
-                            self.image_transform.reverses_orientation(),
+                            orientation_reversed,
                         )?)
                     },
                 };
@@ -678,6 +686,7 @@ struct CircularInterpolation {
     radius: f64,
     start_angle: f64,
     sweep: f64,
+    full_circle: bool,
     points: Vec<Coord<f64>>,
 }
 
@@ -915,15 +924,22 @@ fn resolve_offset(
 
 impl ImageTransform {
     fn preserves_circles(self) -> bool {
-        self.scaling.a.is_finite()
-            && self.scaling.b.is_finite()
-            && self.scaling.a.abs() == self.scaling.b.abs()
+        let (Ok(a), Ok(b)) = (
+            Real::try_from(self.scaling.a.abs()),
+            Real::try_from(self.scaling.b.abs()),
+        ) else {
+            return false;
+        };
+        hyperlimit::compare_reals(&a, &b).value() == Some(Ordering::Equal)
     }
 
-    fn reverses_orientation(self) -> bool {
+    fn reverses_orientation(self) -> Option<bool> {
         let x = self.apply_vector(Coord { x: 1.0, y: 0.0 });
         let y = self.apply_vector(Coord { x: 0.0, y: 1.0 });
-        x.x * y.y - x.y * y.x < 0.0
+        let determinant = Real::try_from(x.x * y.y - x.y * y.x).ok()?;
+        hyperlimit::classify_real_sign(&determinant)
+            .value()
+            .map(|sign| sign == hyperlimit::Sign::Negative)
     }
 
     fn apply_point(self, point: Coord<f64>, unit_scale: f64) -> Coord<f64> {
@@ -1010,7 +1026,7 @@ fn flash_to_curve(
                         required_real(hole_diameter * 0.5, "circle aperture hole radius")?,
                         64,
                     ),
-                );
+                )?;
             }
             curve
         },
@@ -1031,13 +1047,17 @@ fn flash_to_curve(
                 "polygon aperture diameter",
             )?;
             let rotation = polygon.rotation.unwrap_or(0.0);
-            let mut curve = curve::rotated(
+            let mut curve = curve::try_rotated(
                 &curve::regular_ngon(
                     polygon.vertices as usize,
                     required_real(diameter * 0.5, "polygon aperture radius")?,
                 ),
                 required_real(rotation, "polygon rotation")?,
-            );
+            )
+            .map_err(|error| IoError::Geometry {
+                format: "Gerber",
+                detail: format!("polygon aperture rotation failed: {error}"),
+            })?;
             if let Some(hole_diameter) = polygon.hole_diameter {
                 let hole_diameter = positive(
                     aperture_transform.scale_length(hole_diameter * unit_scale),
@@ -1054,7 +1074,7 @@ fn flash_to_curve(
                         required_real(hole_diameter * 0.5, "polygon aperture hole radius")?,
                         64,
                     ),
-                );
+                )?;
             }
             curve
         },
@@ -1067,17 +1087,27 @@ fn flash_to_curve(
     };
 
     curve = apply_aperture_transform(curve, aperture_transform)?;
-    Ok(curve::translated(
+    curve::try_translated(
         &curve,
         required_real(center.x, "flash center x")?,
         required_real(center.y, "flash center y")?,
-    ))
+    )
+    .map_err(|error| IoError::Geometry {
+        format: "Gerber",
+        detail: format!("aperture translation failed: {error}"),
+    })
 }
 
-fn add_aperture_hole(outer: CurveRegion2, hole: CurveRegion2) -> CurveRegion2 {
+fn add_aperture_hole(
+    outer: CurveRegion2,
+    hole: CurveRegion2,
+) -> Result<CurveRegion2, IoError> {
     outer
         .try_difference(&hole)
-        .unwrap_or_else(|_| CurveRegion2::empty())
+        .map_err(|error| IoError::Geometry {
+            format: "Gerber",
+            detail: format!("aperture-hole subtraction failed: {error}"),
+        })
 }
 
 impl ApertureTransform {
@@ -1100,7 +1130,7 @@ fn aperture_rect_curve(
         aperture_transform.scale_length(rect.y * unit_scale),
         "rectangular aperture height",
     )?;
-    let mut curve = curve::translated(
+    let mut curve = curve::try_translated(
         &if rounded {
             curve::rounded_rectangle(
                 required_real(width, "rectangular aperture width")?,
@@ -1116,7 +1146,11 @@ fn aperture_rect_curve(
         },
         required_real(-width * 0.5, "rectangular aperture x origin")?,
         required_real(-height * 0.5, "rectangular aperture y origin")?,
-    );
+    )
+    .map_err(|error| IoError::Geometry {
+        format: "Gerber",
+        detail: format!("rectangular aperture translation failed: {error}"),
+    })?;
 
     if let Some(hole_diameter) = rect.hole_diameter {
         let hole_diameter = positive(
@@ -1134,7 +1168,7 @@ fn aperture_rect_curve(
                 required_real(hole_diameter * 0.5, "rectangular aperture hole radius")?,
                 64,
             ),
-        );
+        )?;
     }
 
     Ok(curve)
@@ -1241,9 +1275,7 @@ fn circular_arc_sweep_curve(
     }
     let outer_radius = arc.radius + aperture_radius;
     let inner_radius = arc.radius - aperture_radius;
-    let full_circle = (arc.sweep.abs() - std::f64::consts::TAU).abs() <= 1.0e-12;
-
-    if full_circle {
+    if arc.full_circle {
         let outer =
             polygon_from_coords(translated_circle_points(arc.center, outer_radius, 96))?;
         if inner_radius <= 0.0 {
@@ -1251,7 +1283,7 @@ fn circular_arc_sweep_curve(
         }
         let inner =
             polygon_from_coords(translated_circle_points(arc.center, inner_radius, 96))?;
-        return Ok(add_aperture_hole(outer, inner));
+        return add_aperture_hole(outer, inner);
     }
     if inner_radius <= 0.0 {
         return Err(IoError::Unsupported {
@@ -1392,9 +1424,14 @@ fn circular_interpolation(
         ));
     }
     let end_radius = (end.x - center.x).hypot(end.y - center.y);
+    let full_circle = nearly_same(start, end);
+    let radius_scale = radius.max(end_radius).max(1.0);
+    // Gerber-parser coordinates cross this adapter as binary floats. Bound
+    // only the accumulated subtraction/hypot roundoff in ULPs; this is not a
+    // retained geometric tolerance or a topology predicate.
+    let radius_roundoff_bound = 32.0 * f64::EPSILON * radius_scale;
     if !end_radius.is_finite()
-        || (!nearly_same(start, end)
-            && (end_radius - radius).abs() > 1.0e-9 * radius.max(end_radius).max(1.0))
+        || (!full_circle && (end_radius - radius).abs() > radius_roundoff_bound)
     {
         return Err(IoError::MalformedInput(
             "Gerber circular interpolation endpoints do not share one center radius".into(),
@@ -1405,7 +1442,7 @@ fn circular_interpolation(
     let mut end_angle = (end.y - center.y).atan2(end.x - center.x);
     let clockwise = (mode == InterpolationMode::ClockwiseCircular) ^ orientation_reversed;
 
-    if nearly_same(start, end) {
+    if full_circle {
         end_angle = if clockwise {
             start_angle - std::f64::consts::TAU
         } else {
@@ -1428,6 +1465,7 @@ fn circular_interpolation(
         radius,
         start_angle,
         sweep,
+        full_circle,
         points,
     })
 }
@@ -1582,23 +1620,29 @@ fn repeat_curves(
     let mut curves = Vec::with_capacity(count);
     for x in 0..step_repeat.repeat_x {
         for y in 0..step_repeat.repeat_y {
-            curves.push(curve::translated(
-                &curve,
-                real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
-                    IoError::UnrepresentableCoordinate {
-                        format: "Gerber",
-                        field: "step-repeat x translation",
-                        target: "Real",
-                    }
+            curves.push(
+                curve::try_translated(
+                    &curve,
+                    real(f64::from(x) * step_repeat.distance_x).ok_or_else(|| {
+                        IoError::UnrepresentableCoordinate {
+                            format: "Gerber",
+                            field: "step-repeat x translation",
+                            target: "Real",
+                        }
+                    })?,
+                    real(f64::from(y) * step_repeat.distance_y).ok_or_else(|| {
+                        IoError::UnrepresentableCoordinate {
+                            format: "Gerber",
+                            field: "step-repeat y translation",
+                            target: "Real",
+                        }
+                    })?,
+                )
+                .map_err(|error| IoError::Geometry {
+                    format: "Gerber",
+                    detail: format!("step-repeat translation failed: {error}"),
                 })?,
-                real(f64::from(y) * step_repeat.distance_y).ok_or_else(|| {
-                    IoError::UnrepresentableCoordinate {
-                        format: "Gerber",
-                        field: "step-repeat y translation",
-                        target: "Real",
-                    }
-                })?,
-            ));
+            );
         }
     }
     Ok(curves)
@@ -1614,14 +1658,23 @@ fn apply_aperture_transform(
         Mirroring::Y => (1.0, -1.0),
         Mirroring::XY => (-1.0, -1.0),
     };
-    Ok(curve::rotated(
-        &curve::scaled(
-            &curve,
-            required_real(sx, "aperture mirror x")?,
-            required_real(sy, "aperture mirror y")?,
-        ),
+    let scaled = curve::try_scaled(
+        &curve,
+        required_real(sx, "aperture mirror x")?,
+        required_real(sy, "aperture mirror y")?,
+    )
+    .map_err(|error| IoError::Geometry {
+        format: "Gerber",
+        detail: format!("aperture mirroring failed: {error}"),
+    })?;
+    curve::try_rotated(
+        &scaled,
         required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
-    ))
+    )
+    .map_err(|error| IoError::Geometry {
+        format: "Gerber",
+        detail: format!("aperture rotation failed: {error}"),
+    })
 }
 
 fn apply_aperture_transform_to_coord(
@@ -1723,10 +1776,14 @@ fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> Result<bool
             field: "hull point",
             target: "Real",
         })?;
-    Ok(matches!(
-        hyperlimit::orient2(&origin, &a, &b).value(),
-        Some(hyperlimit::Sign::Positive)
-    ))
+    match hyperlimit::orient2(&origin, &a, &b).value() {
+        Some(hyperlimit::Sign::Positive) => Ok(true),
+        Some(hyperlimit::Sign::Zero | hyperlimit::Sign::Negative) => Ok(false),
+        None => Err(IoError::Geometry {
+            format: "Gerber",
+            detail: "convex-hull orientation is indeterminate".into(),
+        }),
+    }
 }
 
 fn nearly_same(a: Coord<f64>, b: Coord<f64>) -> bool {

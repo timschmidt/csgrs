@@ -51,8 +51,8 @@ impl MetaBall {
     /// The implicit-field model follows Blinn, "A Generalization of Algebraic
     /// Surface Drawing," *ACM Transactions on Graphics* 1(3), 1982
     /// (<https://doi.org/10.1145/357306.357310>).
-    pub fn influence(&self, p: &Point3) -> Real {
-        self.influence_hreal(p).unwrap_or_else(Real::zero)
+    pub fn influence(&self, p: &Point3) -> Option<Real> {
+        self.influence_hreal(p)
     }
 
     /// Return this metaball's finite influence as a hyperreal field value.
@@ -179,22 +179,22 @@ pub fn metaballs_with_diagnostics(
         .collect::<Vec<_>>();
     let Some(padding_h) = hreal_from_f64(padding).ok() else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
-    let padding_is_negative = matches!(hreal_sign(&padding_h), Some(RealSign::Negative));
+    let padding_is_nonnegative = matches!(
+        hreal_sign(&padding_h),
+        Some(RealSign::Zero | RealSign::Positive)
+    );
     let Some(iso_value_h) = hreal_from_f64(iso_value).ok() else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
 
-    if valid_balls.is_empty()
-        || padding_is_negative
+    if valid_balls.len() != balls.len()
+        || !padding_is_nonnegative
         || !matches!(hreal_sign(&iso_value_h), Some(RealSign::Positive))
     {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     }
 
@@ -202,14 +202,12 @@ pub fn metaballs_with_diagnostics(
         metaball_bounds_hreal(&valid_balls, &iso_value_h, &padding_h)
     else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
     let Some((min_pt, max_pt)) =
         add_surface_nets_border(core_min, core_max, requested_nx, requested_ny, requested_nz)
     else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
     // Surface Nets intentionally omits faces on a chunk's positive boundary.
@@ -236,7 +234,6 @@ pub fn metaballs_with_diagnostics(
 
     let Some(grid) = MetaballSamplingGrid::from_bounds(min_pt, max_pt, nx, ny, nz) else {
         diagnostics.non_finite_sample_count = diagnostics.sample_count;
-        diagnostics.positive_sample_count = diagnostics.sample_count;
         return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     };
 
@@ -250,8 +247,6 @@ pub fn metaballs_with_diagnostics(
             for ix in 0..nx {
                 let Some(p) = grid.point_at(ix, iy, iz) else {
                     diagnostics.non_finite_sample_count += 1;
-                    diagnostics.positive_sample_count += 1;
-                    field_values.push_nonfinite_sample();
                     continue;
                 };
 
@@ -261,8 +256,6 @@ pub fn metaballs_with_diagnostics(
                     })
                 else {
                     diagnostics.non_finite_sample_count += 1;
-                    diagnostics.positive_sample_count += 1;
-                    field_values.push_nonfinite_sample();
                     continue;
                 };
                 let shifted = field_value_h.clone() - iso_value_h.clone();
@@ -276,15 +269,16 @@ pub fn metaballs_with_diagnostics(
                         Some(RealSign::Zero) => diagnostics.zero_sample_count += 1,
                         None => {
                             diagnostics.non_finite_sample_count += 1;
-                            diagnostics.positive_sample_count += 1;
                         },
                     }
                 } else {
                     diagnostics.non_finite_sample_count += 1;
-                    diagnostics.positive_sample_count += 1;
                 }
             }
         }
+    }
+    if diagnostics.non_finite_sample_count != 0 {
+        return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
     }
 
     // Use fast-surface-nets to extract a mesh from this 3D scalar field.
@@ -361,6 +355,10 @@ pub fn metaballs_with_diagnostics(
             (finite_point3(&point) && finite_vector3(&normal)).then_some(point)
         })
         .collect::<Vec<_>>();
+    if converted_vertices.iter().any(Option::is_none) {
+        diagnostics.skipped_non_finite_triangle_count = sn_buffer.indices.len() / 3;
+        return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
+    }
 
     for tri in sn_buffer.indices.chunks_exact(3) {
         let i0 = tri[0] as usize;
@@ -378,6 +376,7 @@ pub fn metaballs_with_diagnostics(
 
         if !htriangle_area2_is_nonzero(v0, v1, v2) {
             diagnostics.degenerate_triangle_count += 1;
+            return (TriangleMesh::new(Vec::new(), Vec::new()), diagnostics);
         }
 
         // Keep the historical outward orientation while retaining the native
@@ -386,10 +385,7 @@ pub fn metaballs_with_diagnostics(
         diagnostics.emitted_triangle_count += 1;
     }
 
-    let positions = converted_vertices
-        .into_iter()
-        .map(|point| point.unwrap_or_else(Point3::origin))
-        .collect();
+    let positions = converted_vertices.into_iter().flatten().collect();
     (TriangleMesh::new(positions, triangles), diagnostics)
 }
 
@@ -409,29 +405,24 @@ impl MetaballSampleField {
 
     fn push_hyper_sample(&mut self, shifted: Real) -> bool {
         let Some(surface_value) = surface_nets_scalar(&shifted) else {
-            self.push_nonfinite_sample();
             return false;
         };
         self.hyper_values.push(shifted);
         self.surface_nets_values.push(surface_value);
         true
     }
-
-    fn push_nonfinite_sample(&mut self) {
-        let sentinel = hreal_from_f64(1.0e10).expect("finite metaball sentinel");
-        self.hyper_values.push(sentinel);
-        self.surface_nets_values.push(1.0e10_f32);
-    }
 }
 
 fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &Real) {
     diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
         Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
-        None => Some(value.clone()),
+        None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
+        None => None,
     };
     diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
         Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
-        None => Some(value.clone()),
+        None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
+        None => None,
     };
 }
 

@@ -115,16 +115,17 @@ pub(crate) fn text_region(text: &str, font_data: &[u8], scale: Real) -> CurveReg
                         })
                         .collect::<Option<Vec<_>>>();
                     let Some(ring) = ring else {
-                        continue;
+                        return CurveRegion2::empty();
                     };
                     let orientation = hyperlimit::ring_area_sign(&ring).value();
                     let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
-                        continue;
+                        return CurveRegion2::empty();
                     };
-                    if matches!(orientation, Some(hyperlimit::Sign::Negative)) {
-                        material_contours.push(contour);
-                    } else {
-                        hole_contours.push(contour);
+                    match orientation {
+                        Some(hyperlimit::Sign::Negative) => material_contours.push(contour),
+                        Some(hyperlimit::Sign::Positive) => hole_contours.push(contour),
+                        Some(hyperlimit::Sign::Zero) => continue,
+                        None => return CurveRegion2::empty(),
                     }
                 }
             }

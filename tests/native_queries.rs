@@ -8,8 +8,14 @@ fn sphere_diameter_ray_reports_only_surface_hits() {
     let hits = solid::ray_intersections(&mesh, &origin, &Vector3::x()).unwrap();
 
     assert_eq!(hits.len(), 2);
-    assert!((hits[0].1.to_f64_lossy().expect("finite parameter") - 10.0).abs() < f64::EPSILON);
-    assert!((hits[1].1.to_f64_lossy().expect("finite parameter") - 30.0).abs() < 1.0e-12);
+    assert_eq!(
+        hyperlimit::compare_reals(&hits[0].1, &Real::from(10_u8)).value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    assert_eq!(
+        hyperlimit::compare_reals(&hits[1].1, &Real::from(30_u8)).value(),
+        Some(std::cmp::Ordering::Equal)
+    );
     assert_eq!(
         solid::ray_intersections(&mesh, &origin, &Vector3::x()).unwrap(),
         hits,

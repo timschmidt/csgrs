@@ -76,7 +76,10 @@ pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
                     format: "VRML",
                     limit: "ignored degenerate triangle count",
                 })?;
-            continue;
+            return Err(IoError::Geometry {
+                format: "VRML",
+                detail: "IndexedFaceSet contains a degenerate triangle".into(),
+            });
         };
         let _ = normal;
         native_triangles.push(Triangle::new(a, b, c));
@@ -679,8 +682,7 @@ fn flatten_node(
                     face_indices.reverse();
                 }
                 let face_triangles =
-                    triangulate_planar_face(&flattened.positions, &face_indices, "VRML")
-                        .unwrap_or_default();
+                    triangulate_planar_face(&flattened.positions, &face_indices, "VRML")?;
                 if face_triangles.is_empty() {
                     flattened.ignored_degenerate_polygon_count = flattened
                         .ignored_degenerate_polygon_count
@@ -689,7 +691,10 @@ fn flatten_node(
                             format: "VRML",
                             limit: "ignored degenerate polygon count",
                         })?;
-                    continue;
+                    return Err(IoError::Geometry {
+                        format: "VRML",
+                        detail: "IndexedFaceSet polygon triangulated to no faces".into(),
+                    });
                 }
                 flattened
                     .triangles
