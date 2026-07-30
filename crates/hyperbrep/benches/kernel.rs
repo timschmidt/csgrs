@@ -5,6 +5,7 @@ use hyperbrep::{
     Curve3, Direction, Model, Point3, RawModel, Real, SolidPointLocation, Surface,
     SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
+use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2};
 use hyperlimit::compare_reals;
 
 fn point(x: i32, y: i32, z: i32) -> Point3 {
@@ -754,6 +755,65 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "spline_kernel/nurbs_patch_build_validate: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
+    let curve_point = |x, y| CurvePoint2::new(Real::from(x), Real::from(y));
+    let line = |x0, y0, x1, y1| {
+        Curve2::from(
+            LineSeg2::try_new(curve_point(x0, y0), curve_point(x1, y1))
+                .expect("benchmark planar line"),
+        )
+    };
+    let planar_outer = CurvePath2::try_new(vec![
+        Curve2::try_nurbs(
+            2,
+            vec![curve_point(0, 0), curve_point(2, 0), curve_point(4, 0)],
+            vec![Real::one(), Real::from(2), Real::from(3)],
+            vec![
+                Real::from(2),
+                Real::from(2),
+                Real::from(2),
+                Real::from(5),
+                Real::from(5),
+                Real::from(5),
+            ],
+        )
+        .expect("benchmark planar NURBS boundary"),
+        line(4, 0, 4, 4),
+        line(4, 4, 0, 4),
+        line(0, 4, 0, 0),
+    ])
+    .expect("benchmark planar outer path");
+    let planar_hole = CurvePath2::try_new(vec![
+        line(1, 1, 2, 1),
+        line(2, 1, 2, 2),
+        line(2, 2, 1, 2),
+        line(1, 2, 1, 1),
+    ])
+    .expect("benchmark planar hole path");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let (model, face) = builder::planar_face(
+            black_box(&planar_outer),
+            black_box(std::slice::from_ref(&planar_hole)),
+            black_box(point(5, -2, 7)),
+            black_box(Vector3::from_xyz(Real::from(2), Real::zero(), Real::zero())),
+            black_box(Vector3::from_xyz(Real::one(), Real::from(3), Real::zero())),
+        )
+        .expect("benchmark exact planar face");
+        let area = model
+            .face_area(face)
+            .expect("benchmark exact planar spline region area");
+        checksum += usize::from(
+            compare_reals(&area, &Real::from(90)).value() == Some(std::cmp::Ordering::Equal),
+        );
+        black_box(model);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/nurbs_planar_face_build_exact_area: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / SPLINE_ITERATIONS as u32,
     );
 

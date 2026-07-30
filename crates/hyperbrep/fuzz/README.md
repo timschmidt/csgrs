@@ -48,7 +48,10 @@ revalidated. The same exact patch is also sent through byte-varied explicit
 boundary subdivision and shared-midpoint chordal derivation; every returned
 index must address its retained exact parameter/source-image pair. It also
 builds a byte-scaled complete affine tensor patch with separable positive
-weights, checks its exact area before and after untrusted replay, and
+weights, checks its exact area before and after untrusted replay, and builds a
+native-domain NURBS-bounded planar `CurvePath2` face in a byte-scaled skew
+plane frame, checking its exact frame-scaled area and replaying the complete
+open shell. It then
 intersects an exact rational Bézier extrusion with a transverse plane and a
 line extrusion with a parallel plane, exercising the retained native
 projected curve, both exact pcurve images, and lifted-line paths.

@@ -88,6 +88,10 @@ The clean-break implementation currently provides:
   cavities, strict nesting, exact volume, and material classification;
 - validated open-shell `builder::{rational_bezier_patch, nurbs_patch}`
   constructors with native spline boundary curves and exact parameter maps;
+- validated open-shell `builder::planar_face` construction from exact
+  `CurvePath2` outer and hole loops in any nondegenerate authored plane frame,
+  with Hypercurve-owned simplicity/nesting proof and exact persistent
+  promotion of conic and polynomial spline boundaries;
 - validated open-shell `builder::extrusion_patch` construction for any exact
   profile family, retaining the profile's native `u` domain and strictly
   ordered finite sweep-coefficient bounds without direct arena manipulation;

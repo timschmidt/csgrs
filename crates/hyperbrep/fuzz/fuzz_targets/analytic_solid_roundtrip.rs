@@ -4,6 +4,7 @@ use hyperbrep::{
     Matrix4, RawModel, Real, Surface, SurfaceIntersectionOperand, SurfaceSurfaceIntersection,
     Vector3, boolean, builder,
 };
+use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2};
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|bytes: &[u8]| {
@@ -916,6 +917,93 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(affine_face)
                 .expect("replayed separable affine patch has exact area"),
             &expected_affine_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+
+    let planar_width = positive(1);
+    let planar_height = positive(2);
+    let planar_half_width =
+        (&planar_width / Real::from(2)).expect("two is a nonzero exact denominator");
+    let planar_point = |x: Real, y: Real| CurvePoint2::new(x, y);
+    let planar_00 = planar_point(Real::zero(), Real::zero());
+    let planar_10 = planar_point(planar_width.clone(), Real::zero());
+    let planar_11 = planar_point(planar_width.clone(), planar_height.clone());
+    let planar_01 = planar_point(Real::zero(), planar_height.clone());
+    let planar_line = |start: CurvePoint2, end: CurvePoint2| {
+        Curve2::from(LineSeg2::try_new(start, end).expect("distinct fuzz rectangle vertices"))
+    };
+    let Ok(planar_bottom) = Curve2::try_nurbs(
+        2,
+        vec![
+            planar_00.clone(),
+            planar_point(planar_half_width, Real::zero()),
+            planar_10.clone(),
+        ],
+        vec![Real::one(), positive(2), positive(3)],
+        vec![
+            Real::from(2),
+            Real::from(2),
+            Real::from(2),
+            Real::from(5),
+            Real::from(5),
+            Real::from(5),
+        ],
+    ) else {
+        return;
+    };
+    let Ok(planar_outer) = CurvePath2::try_new(vec![
+        planar_bottom,
+        planar_line(planar_10, planar_11.clone()),
+        planar_line(planar_11, planar_01.clone()),
+        planar_line(planar_01, planar_00),
+    ]) else {
+        return;
+    };
+    let planar_outer = if bytes[3] & 1 == 0 {
+        planar_outer
+    } else {
+        let Ok(reversed) = planar_outer.reversed() else {
+            return;
+        };
+        reversed
+    };
+    let planar_u_scale = positive(3);
+    let planar_v_scale = positive(1);
+    let Ok((planar_model, planar_face)) = builder::planar_face(
+        &planar_outer,
+        &[],
+        hyperbrep::Point3::origin(),
+        Vector3::from_xyz(planar_u_scale.clone(), Real::zero(), Real::zero()),
+        Vector3::from_xyz(positive(2), planar_v_scale.clone(), Real::zero()),
+    ) else {
+        return;
+    };
+    let expected_planar_area = planar_width * planar_height * planar_u_scale * planar_v_scale;
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &planar_model
+                .face_area(planar_face)
+                .expect("authored-frame planar spline region has exact area"),
+            &expected_planar_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    let planar_json = planar_model
+        .to_json()
+        .expect("planar spline region serializes");
+    let replayed_planar = RawModel::from_json(&planar_json)
+        .expect("planar spline region JSON parses")
+        .validate()
+        .expect("planar spline region JSON revalidates");
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &replayed_planar
+                .face_area(planar_face)
+                .expect("replayed planar spline region has exact area"),
+            &expected_planar_area,
         )
         .value(),
         Some(std::cmp::Ordering::Equal)

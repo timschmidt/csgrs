@@ -281,6 +281,15 @@ and projectively parameterized line images independently of projective speed.
 Profiles outside that plane or with transverse backtracking return
 `UnsupportedMeasurement`.
 
+Standalone planar faces consume Hypercurve `CurvePath2` loops directly.
+Hypercurve certifies complete fragment injectivity, path simplicity, pairwise
+loop non-contact, containment, and non-nesting before HyperBREP authors one
+plane, its spatial edges, exact pcurves, wires, face, and open shell. Lines,
+rational Béziers, and finite NURBS retain native persistent carriers;
+circular, polynomial Bézier, rational-quadratic, and polynomial B-spline
+inputs are promoted exactly to persistence-supported rational Bézier or NURBS
+boundaries without fitting or sampling.
+
 Finite revolution patches share one native latitude extractor between
 construction and validation. Latitude edges are compared against the complete
 expected circle parameterization, including frame, domain, and directed
