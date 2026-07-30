@@ -4307,36 +4307,46 @@ impl Model {
                 relative - axis.clone() * axial
             };
             let angular_span = &u_values[1] - &u_values[0];
-            return match profile.exact_data() {
-                Curve3ExactData::Line(line) => {
-                    let start_radial = radial_at(&line.start);
-                    let end_radial = radial_at(&line.end);
-                    if decided_model_order(compare_reals(
-                        &start_radial.cross(&end_radial).norm_squared(),
+            let line_image_area = || -> Result<Real, QueryError> {
+                let start = profile.point_at(profile.domain().start())?;
+                let end = profile.point_at(profile.domain().end())?;
+                let start_radial = radial_at(&start);
+                let end_radial = radial_at(&end);
+                if decided_model_order(compare_reals(
+                    &start_radial.cross(&end_radial).norm_squared(),
+                    &Real::zero(),
+                ))? != std::cmp::Ordering::Equal
+                    || decided_model_order(compare_reals(
+                        &start_radial.dot(&end_radial),
                         &Real::zero(),
-                    ))? != std::cmp::Ordering::Equal
-                        || decided_model_order(compare_reals(
-                            &start_radial.dot(&end_radial),
-                            &Real::zero(),
-                        ))? != std::cmp::Ordering::Greater
-                    {
-                        return Err(GeometryError::UnsupportedMeasurement.into());
-                    }
-                    let start_radius = start_radial
-                        .norm_squared()
-                        .sqrt()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
-                    let end_radius = end_radial
-                        .norm_squared()
-                        .sqrt()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
-                    let profile_length = (&line.end - &line.start)
-                        .norm_squared()
-                        .sqrt()
-                        .map_err(|_| GeometryError::ElementaryFunction)?;
-                    (angular_span * profile_length * (start_radius + end_radius) / Real::from(2))
-                        .map_err(|_| GeometryError::ProjectiveDivision)
-                        .map_err(QueryError::from)
+                    ))? != std::cmp::Ordering::Greater
+                {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
+                let start_radius = start_radial
+                    .norm_squared()
+                    .sqrt()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let end_radius = end_radial
+                    .norm_squared()
+                    .sqrt()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let profile_length = (&end - &start)
+                    .norm_squared()
+                    .sqrt()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                (angular_span.clone() * profile_length * (start_radius + end_radius)
+                    / Real::from(2))
+                .map_err(|_| GeometryError::ProjectiveDivision)
+                .map_err(QueryError::from)
+            };
+            return match profile.exact_data() {
+                Curve3ExactData::Line(_) => line_image_area(),
+                Curve3ExactData::RationalBezier { .. } | Curve3ExactData::Nurbs { .. }
+                    if certified_monotone_line_curve_image(&profile)
+                        .map_err(build_error_geometry)? =>
+                {
+                    line_image_area()
                 }
                 Curve3ExactData::EllipseArc(data) if data.circle => {
                     let start_point = profile.point_at(profile.domain().start())?;
@@ -15502,6 +15512,57 @@ fn rational_bezier_weights_proportional(
     Ok(true)
 }
 
+fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool, BuildError> {
+    let control_points = match curve.exact_data() {
+        Curve3ExactData::RationalBezier { control_points, .. }
+        | Curve3ExactData::Nurbs { control_points, .. } => control_points,
+        _ => return Ok(false),
+    };
+    let start = curve.point_at(curve.domain().start())?;
+    let end = curve.point_at(curve.domain().end())?;
+    if !points_equal(
+        control_points
+            .first()
+            .expect("validated spline has control points"),
+        &start,
+    )? || !points_equal(
+        control_points
+            .last()
+            .expect("validated spline has control points"),
+        &end,
+    )? {
+        return Ok(false);
+    }
+    let direction = &end - &start;
+    let length_squared = direction.norm_squared();
+    if decided_model_order(compare_reals(&length_squared, &Real::zero()))?
+        != std::cmp::Ordering::Greater
+    {
+        return Ok(false);
+    }
+    let mut previous_projection = Real::zero();
+    for control in control_points {
+        let relative = control - &start;
+        if decided_model_order(compare_reals(
+            &relative.cross(&direction).norm_squared(),
+            &Real::zero(),
+        ))? != std::cmp::Ordering::Equal
+        {
+            return Ok(false);
+        }
+        let projection = relative.dot(&direction);
+        if decided_model_order(compare_reals(&projection, &previous_projection))?
+            == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(&projection, &length_squared))?
+                == std::cmp::Ordering::Greater
+        {
+            return Ok(false);
+        }
+        previous_projection = projection;
+    }
+    Ok(true)
+}
+
 struct AffineTensorImage {
     spatial_area: Real,
     parameter_area: Real,
@@ -17624,6 +17685,23 @@ mod tests {
 
         let report = builder.finish().unwrap_err();
         assert_eq!(report.errors(), &[BuildError::OrphanEdgeUse(edge_use)]);
+    }
+
+    #[test]
+    fn rational_line_image_certificate_rejects_collinear_backtracking() {
+        let monotone = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 0, 0), p(3, 0, 0)],
+            vec![Real::one(), r(2), r(5)],
+        )
+        .unwrap();
+        assert!(certified_monotone_line_curve_image(&monotone).unwrap());
+
+        let backtracking = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(3, 0, 0), p(2, 0, 0)],
+            vec![Real::one(), r(2), r(5)],
+        )
+        .unwrap();
+        assert!(!certified_monotone_line_curve_image(&backtracking).unwrap());
     }
 
     #[test]

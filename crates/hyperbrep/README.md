@@ -72,7 +72,9 @@ The clean-break implementation currently provides:
   exact span injectivity and pairwise intersections certify simplicity,
   polynomial-equivalent, rational-quadratic, exact homogeneous degree-elevated
   conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational
-  line-image moments drive exact volume. Arbitrary-degree weight polynomials
+  line-image moments drive exact volume; monotone rational Bézier/NURBS line
+  images also use their parameterization-independent exact revolution area.
+  Arbitrary-degree weight polynomials
   also use exact multiplicity-aware partial fractions when rational-root
   deflation leaves linear factors, a power of one irreducible quadratic, or
   two irreducible quadratics; other residual factors remain explicit

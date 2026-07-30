@@ -218,8 +218,11 @@ weight polynomial certifiably has degree at most two use exact polynomial
 division before the same square-free, repeated-root, or linear-denominator
 Hermite branches.
 A nonuniform rational span certified to have an exact finite line image uses
-that line's geometric moment, independent of its projective speed. HyperBREP
-applies the same exact Pappus factor and cavity subtraction. Rational images
+that line's geometric moment, independent of its projective speed. The same
+complete collinearity and monotone-control proof lets revolution faces use the
+straight meridian's exact radius-times-length integral without treating
+projective speed as arc length. HyperBREP applies the exact Pappus factor and
+cavity subtraction. Rational images
 with cubic-or-higher weight polynomials and the general
 radius-times-spline-speed face integral are explicit unsupported measurements
 until symbolic integrators exist. Native-only contours remain the sole input
