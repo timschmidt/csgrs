@@ -743,7 +743,13 @@ fn partition_graph_faces(
                         push_unique_planar_trace(planar_traces.entry(face).or_default(), fragment)?;
                     }
                 } else if !covers_contained_face {
-                    return Err(BooleanError::FacePartitionUnsupported { face });
+                    let Some(region_traces) = surface_region_contained_traces(graph, pair)? else {
+                        return Err(BooleanError::FacePartitionUnsupported { face });
+                    };
+                    surface_traces
+                        .entry(face)
+                        .or_default()
+                        .extend(region_traces);
                 }
             }
             FacePairTrim::NotAvailable | FacePairTrim::CompleteCarrier => match &pair.relation {
@@ -849,6 +855,37 @@ fn surface_region_plane_traces(
         ),
     };
     contained_face_boundary_traces_on_plane(
+        contained_model,
+        contained_face,
+        plane_model,
+        plane_face,
+    )
+}
+
+fn surface_region_contained_traces(
+    graph: &SolidIntersectionGraph,
+    pair: &FacePairIntersection,
+) -> Result<Option<Vec<SurfaceIntersectionCurve>>, BooleanError> {
+    let FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(contained)) =
+        &pair.relation
+    else {
+        return Ok(None);
+    };
+    let (contained_model, contained_face, plane_model, plane_face) = match contained {
+        SurfaceIntersectionOperand::First => (
+            &graph.first_model,
+            pair.first_face,
+            &graph.second_model,
+            pair.second_face,
+        ),
+        SurfaceIntersectionOperand::Second => (
+            &graph.second_model,
+            pair.second_face,
+            &graph.first_model,
+            pair.first_face,
+        ),
+    };
+    contained_face_boundary_traces_from_plane(
         contained_model,
         contained_face,
         plane_model,
@@ -2878,6 +2915,161 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
         }
     }
     planar_line_support_split_traces(plane_model, plane_face, &traces).map(Some)
+}
+
+fn contained_face_boundary_traces_from_plane(
+    contained_model: &Model,
+    contained_face: FaceId,
+    plane_model: &Model,
+    plane_face: FaceId,
+) -> Result<Option<Vec<SurfaceIntersectionCurve>>, BooleanError> {
+    let contained_face_record = contained_model
+        .face(contained_face)
+        .expect("validated contained face");
+    if !contained_face_record.inner().is_empty() {
+        return Ok(None);
+    }
+    let plane = face_surface(plane_model, plane_face);
+    if plane.kind() != crate::SurfaceKind::Plane {
+        return Ok(None);
+    }
+    let Some((plane_u, plane_v)) = plane.plane_directions() else {
+        unreachable!("plane kind carries plane directions");
+    };
+    let plane_normal = plane_u.cross(plane_v);
+    let plane_face_record = plane_model.face(plane_face).expect("validated plane face");
+    let Some(_) = plane_face_record.outer() else {
+        return Ok(None);
+    };
+    let contained_surface = face_surface(contained_model, contained_face);
+    if !matches!(
+        contained_surface.kind(),
+        crate::SurfaceKind::RationalBezier | crate::SurfaceKind::Nurbs
+    ) {
+        return Ok(None);
+    }
+
+    let mut support_planes = Vec::<Surface>::new();
+    let mut traces = Vec::new();
+    for wire_id in plane_face_record
+        .outer()
+        .into_iter()
+        .chain(plane_face_record.inner().iter().copied())
+    {
+        let wire = plane_model.wire(wire_id).expect("validated plane wire");
+        for edge_use_id in wire.edge_uses() {
+            let edge_use = plane_model
+                .edge_use(*edge_use_id)
+                .expect("validated plane edge use");
+            let edge = plane_model
+                .edge(edge_use.edge())
+                .expect("validated plane edge");
+            if plane_model
+                .curve(edge.curve())
+                .expect("validated plane edge curve")
+                .kind()
+                != crate::Curve3Kind::Line
+            {
+                return Ok(None);
+            }
+            let start = plane_model
+                .vertex(edge.start())
+                .expect("validated plane start vertex")
+                .point();
+            let end = plane_model
+                .vertex(edge.end())
+                .expect("validated plane end vertex")
+                .point();
+            let support = Surface::plane(start.clone(), end - start, plane_normal.clone())?;
+            let mut duplicate = false;
+            for prior in &support_planes {
+                if matches!(
+                    prior.intersect_surface(&support)?,
+                    SurfaceSurfaceIntersection::Coincident
+                ) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if duplicate {
+                continue;
+            }
+            support_planes.push(support.clone());
+
+            let intersection = contained_surface.intersect_surface(&support)?;
+            let candidates = match intersection {
+                SurfaceSurfaceIntersection::None
+                | SurfaceSurfaceIntersection::Point(_)
+                | SurfaceSurfaceIntersection::Points(_) => Vec::new(),
+                SurfaceSurfaceIntersection::Curve(curve) => vec![*curve],
+                SurfaceSurfaceIntersection::Curves(curves) => curves,
+                SurfaceSurfaceIntersection::Components(components)
+                    if components.curves().is_empty() =>
+                {
+                    components.surface_curves().to_vec()
+                }
+                SurfaceSurfaceIntersection::Coincident
+                | SurfaceSurfaceIntersection::ContainedSurface(_)
+                | SurfaceSurfaceIntersection::Line(_)
+                | SurfaceSurfaceIntersection::Lines(_)
+                | SurfaceSurfaceIntersection::Ray(_)
+                | SurfaceSurfaceIntersection::Rays(_)
+                | SurfaceSurfaceIntersection::Circle(_)
+                | SurfaceSurfaceIntersection::Circles(_)
+                | SurfaceSurfaceIntersection::Ellipse(_)
+                | SurfaceSurfaceIntersection::Components(_) => return Ok(None),
+            };
+            for candidate in candidates {
+                let intervals = match retained_curve_face_intervals(
+                    contained_model,
+                    contained_face,
+                    candidate.first_pcurve(),
+                    candidate.curve().domain(),
+                )? {
+                    Classification::Decided(Some(intervals)) => intervals,
+                    Classification::Decided(None) => return Ok(None),
+                    Classification::Uncertain(reason) => {
+                        return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+                    }
+                };
+                for (start, end) in coalesce_parameter_intervals(intervals)? {
+                    let fragment = candidate.subcurve(&start, &end)?;
+                    let midpoint = ((fragment.curve().domain().start()
+                        + fragment.curve().domain().end())
+                        / Real::from(2))
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let parameter = fragment.first_pcurve().point_at(&midpoint)?;
+                    let parameter = hypercurve::Point2::new(parameter.x, parameter.y);
+                    match contained_model
+                        .classify_surface_parameter_on_face(contained_face, &parameter)?
+                    {
+                        Classification::Decided(ContourPointLocation::Inside) => {}
+                        Classification::Decided(
+                            ContourPointLocation::Boundary | ContourPointLocation::Outside,
+                        ) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Err(
+                                GeometryError::PlanarClassificationUnresolved(reason).into()
+                            );
+                        }
+                    }
+                    if fragment.curve().canonical_line()?.is_none() {
+                        return Ok(None);
+                    }
+                    // Both graph operand selectors address the same contained
+                    // face here. Preserve its native tensor pcurve in both
+                    // slots so caller operand order cannot change topology.
+                    let pcurve = fragment.first_pcurve().clone();
+                    traces.push(SurfaceIntersectionCurve::new(
+                        fragment.curve().clone(),
+                        pcurve.clone(),
+                        pcurve,
+                    ));
+                }
+            }
+        }
+    }
+    Ok(Some(traces))
 }
 
 fn lift_planar_line_image(
@@ -5553,6 +5745,244 @@ mod tests {
             Some(Ordering::Equal)
         );
     }
+
+    fn unit_affine_tensor_cap(nurbs: bool) -> (Model, SolidId, FaceId) {
+        let (source, solid) = crate::builder::cuboid(p(0, 0, 0), p(1, 1, 1)).expect("unit cuboid");
+        let (face, surface, origin, u, v) = source
+            .faces()
+            .find_map(|(face_id, face)| {
+                let surface = source.surface(face.surface()).expect("validated surface");
+                let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal)).then(
+                    || {
+                        (
+                            face_id,
+                            face.surface(),
+                            origin.clone(),
+                            u.clone(),
+                            v.clone(),
+                        )
+                    },
+                )
+            })
+            .expect("unit cuboid has an upper cap");
+        let control_points = vec![
+            vec![origin.clone(), origin.clone() + u.clone()],
+            vec![origin.clone() + v.clone(), origin + u + v],
+        ];
+        let weights = vec![vec![Real::one(), Real::one()]; 2];
+        let tensor = if nurbs {
+            let knots = vec![Real::zero(), Real::zero(), Real::one(), Real::one()];
+            Surface::nurbs(1, 1, control_points, weights, knots.clone(), knots)
+                .expect("affine NURBS tensor cap")
+        } else {
+            Surface::rational_bezier(control_points, weights).expect("affine rational tensor cap")
+        };
+        let mut edit = source.edit();
+        edit.replace_surface(surface, tensor)
+            .expect("replace cap surface");
+        (edit.commit().expect("certified tensor cap"), solid, face)
+    }
+
+    #[test]
+    fn partial_surface_region_partitions_contained_affine_tensor_from_exact_pcurves() {
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap(false);
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let three_halves = (Real::from(3) / Real::from(2)).unwrap();
+        let points = [
+            hypercurve::Point2::new(half.clone(), Real::from(-1)),
+            hypercurve::Point2::new(three_halves.clone(), Real::from(-1)),
+            hypercurve::Point2::new(three_halves, Real::from(2)),
+            hypercurve::Point2::new(half, Real::from(2)),
+        ];
+        let outer = CurvePath2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    Curve2::from(
+                        LineSeg2::try_new(
+                            points[index].clone(),
+                            points[(index + 1) % points.len()].clone(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let pair = intersect_faces(&tensor, tensor_face, &plane, plane_face)
+            .unwrap()
+            .expect("partial contained faces intersect");
+        assert!(matches!(
+            pair.relation(),
+            FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(
+                SurfaceIntersectionOperand::First
+            ))
+        ));
+        assert!(matches!(
+            pair.trim(),
+            FacePairTrim::SurfaceRegion {
+                parameterized_on: SurfaceIntersectionOperand::Second,
+                covers_contained_face: false,
+                ..
+            }
+        ));
+
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("affine tensor inverse pcurves are represented");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::RationalBezier);
+        assert!(traces[0].curve().canonical_line().unwrap().is_some());
+        let materialized = traces[0].first_pcurve().materialize().unwrap();
+        let (scale, offset) = materialized
+            .correspondence()
+            .affine_coefficients()
+            .expect("tensor graph uses affine correspondence");
+        assert_eq!(
+            (
+                scale.to_string(),
+                offset.to_string(),
+                materialized.curve().parameter_domain().start().to_string(),
+                materialized.curve().parameter_domain().end().to_string(),
+            ),
+            (
+                "1".to_owned(),
+                "0".to_owned(),
+                "0".to_owned(),
+                "1".to_owned(),
+            )
+        );
+        assert!(traces[0].second_pcurve().materialize().is_ok());
+        let tensor_surface = face_surface(&tensor, tensor_face);
+        assert_surface_fragment_replays(&traces[0], tensor_surface, tensor_surface);
+
+        let (first_split, first_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let (second_split, second_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::Second)
+            .unwrap();
+        assert_eq!(first_partition.faces.len(), 2);
+        assert_eq!(second_partition.faces.len(), 2);
+        assert_eq!(
+            first_split.to_json().unwrap(),
+            second_split.to_json().unwrap()
+        );
+        assert_eq!(
+            compare_reals(&first_split.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        let json = first_split.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        let (nurbs, nurbs_solid, nurbs_face) = unit_affine_tensor_cap(true);
+        let nurbs_traces =
+            contained_face_boundary_traces_from_plane(&nurbs, nurbs_face, &plane, plane_face)
+                .unwrap()
+                .expect("affine NURBS inverse pcurves are represented");
+        assert_eq!(nurbs_traces.len(), 1);
+        assert_eq!(nurbs_traces[0].curve().kind(), crate::Curve3Kind::Nurbs);
+        let (nurbs_split, nurbs_partition) = nurbs
+            .split_face_by_surface_curves(
+                nurbs_face,
+                &nurbs_traces,
+                SurfaceIntersectionOperand::First,
+            )
+            .unwrap();
+        assert_eq!(nurbs_partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &nurbs_split.solid_volume(nurbs_solid).unwrap(),
+                &Real::one()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        nurbs_split
+            .edit()
+            .commit()
+            .expect("partitioned NURBS cap revalidates");
+
+        let (cutter, cutter_solid) = crate::builder::cuboid(
+            crate::Point3::new(
+                (Real::one() / Real::from(2)).unwrap(),
+                Real::from(-1),
+                Real::from(-1),
+            ),
+            crate::Point3::new(
+                (Real::from(3) / Real::from(2)).unwrap(),
+                Real::from(2),
+                Real::one(),
+            ),
+        )
+        .unwrap();
+        let cutter_face = cutter
+            .faces()
+            .find_map(|(face_id, face)| {
+                let SurfaceExactData::Plane { origin, .. } = cutter
+                    .surface(face.surface())
+                    .expect("validated cutter surface")
+                    .exact_data()
+                else {
+                    return None;
+                };
+                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal))
+                    .then_some(face_id)
+            })
+            .expect("cutter has an upper coplanar cap");
+        let pair = intersect_faces(&tensor, tensor_face, &cutter, cutter_face)
+            .unwrap()
+            .expect("partial tensor/cutter caps intersect");
+        let graph = SolidIntersectionGraph {
+            first_model: tensor.clone(),
+            first_solid: solid,
+            second_model: cutter,
+            second_solid: cutter_solid,
+            candidate_pairs: 1,
+            broad_phase_rejections: 0,
+            exact_disjoint_pairs: 0,
+            exact_intersection_pairs: 1,
+            unsupported_pairs: 0,
+            trimmed_curve_fragments: 0,
+            unresolved_trim_pairs: 0,
+            intersections: vec![pair],
+        };
+        let (partitioned, partitions) = graph.partition_first_faces().unwrap();
+        let tensor_partition = partitions
+            .iter()
+            .find(|partition| partition.source_face == tensor_face)
+            .expect("graph partitions the partial contained tensor face");
+        assert_eq!(tensor_partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        partitioned
+            .clone()
+            .edit()
+            .commit()
+            .expect("graph partition result revalidates");
+    }
+
     #[test]
     fn intersection_graph_retains_exact_sphere_carrier_intersections() {
         let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();

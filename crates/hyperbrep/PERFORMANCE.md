@@ -168,6 +168,9 @@ certificate deliberately rebases rational Bézier patch construction from
 - tensor face intersection, exact two-pcurve clipping, canonical boundary
   attachment, identity-shared iso-curve split, and full revalidation:
   `340.603 us/iteration`;
+- affine rational-tensor auxiliary-plane section, authoritative inverse
+  pcurve, two-boundary endpoint attachment, identity-shared face partition,
+  and full model revalidation: `380.718 us/iteration`;
 - disjoint cuboid 6×6 face intersection graph with 36 certified broad-phase
   rejections: `11.423 us/iteration`;
 - overlapping cuboid intersection graph with exact transverse trim clipping

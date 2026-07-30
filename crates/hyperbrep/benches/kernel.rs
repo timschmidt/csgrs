@@ -1752,6 +1752,56 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
+    let (affine_tensor, affine_tensor_face) = builder::rational_bezier_patch(
+        vec![
+            vec![point(0, 0, 1), point(1, 0, 1)],
+            vec![point(0, 1, 1), point(1, 1, 1)],
+        ],
+        vec![vec![Real::one(), Real::one()]; 2],
+    )
+    .expect("benchmark affine tensor patch");
+    let affine_tensor_surface = affine_tensor
+        .surface(
+            affine_tensor
+                .face(affine_tensor_face)
+                .expect("benchmark affine tensor face")
+                .surface(),
+        )
+        .expect("benchmark affine tensor surface");
+    let half = (Real::one() / Real::from(2)).expect("two is nonzero");
+    let boundary_support = Surface::plane(
+        Point3::new(half, Real::zero(), Real::one()),
+        Vector3::y(),
+        Vector3::z(),
+    )
+    .expect("benchmark boundary support plane");
+    let SurfaceSurfaceIntersection::Curve(boundary_trace) = affine_tensor_surface
+        .intersect_surface(&boundary_support)
+        .expect("benchmark inverse tensor pcurve")
+    else {
+        panic!("affine tensor boundary support must retain one exact trace");
+    };
+    let boundary_trace = [*boundary_trace];
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = affine_tensor
+            .split_face_by_surface_curves(
+                affine_tensor_face,
+                black_box(&boundary_trace),
+                SurfaceIntersectionOperand::First,
+            )
+            .expect("benchmark affine tensor boundary partition");
+        assert_eq!(partition.faces.len(), 2);
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/affine_tensor_inverse_pcurve_boundary_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     const BOOLEAN_ITERATIONS: usize = 250;
     let (first_box, first_box_solid) =
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("first graph cuboid");

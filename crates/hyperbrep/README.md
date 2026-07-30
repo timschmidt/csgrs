@@ -250,6 +250,12 @@ The clean-break implementation currently provides:
   applied through `partition_first_faces` or `partition_second_faces` as
   deterministic validated partitions on either operand. Unsupported transfer
   is a typed error and never silently skips a known exact trace;
+- partial coplanar `SurfaceRegion` relations transfer a line-bounded planar
+  face boundary onto a contained affine-image rational Bézier or NURBS tensor
+  through exact auxiliary-plane sections. The tensor's native rational graph
+  pcurves remain authoritative in either graph operand order; no inverse
+  fitting or planar replacement is used, and non-straight or unrepresented
+  inverse images remain an explicit unsupported partition;
 - perpendicular plane/cylinder graph cuts retain one authoritative spatial
   latitude circle plus exact pcurves on both carriers: native angular-sweep
   correspondence on the planar circle and an affine constant-height line in

@@ -491,9 +491,41 @@ impl Curve3 {
                 }
                 Ok(Some(Self::line(start.clone(), end.clone())?))
             }
-            CurveGeometry3::Nurbs(_)
-            | CurveGeometry3::CircleArc(_)
-            | CurveGeometry3::EllipseArc(_) => Ok(None),
+            CurveGeometry3::Nurbs(curve) => {
+                let Some(first_weight) = curve.weights.first() else {
+                    return Ok(None);
+                };
+                for weight in &curve.weights {
+                    if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                        return Ok(None);
+                    }
+                }
+                let start = curve
+                    .control_points
+                    .first()
+                    .expect("validated NURBS has controls");
+                let end = curve
+                    .control_points
+                    .last()
+                    .expect("validated NURBS has controls");
+                let domain_start = self.domain().start();
+                let domain_span = self.domain().end() - domain_start;
+                for (index, point) in curve.control_points.iter().enumerate() {
+                    let greville = curve.knots[(index + 1)..=(index + curve.degree)]
+                        .iter()
+                        .cloned()
+                        .fold(Real::zero(), |sum, knot| sum + knot);
+                    let greville = (greville / Real::from(curve.degree as u64))
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    let parameter = ((greville - domain_start) / &domain_span)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    if !points_equal(point, &start.lerp(end, &parameter))? {
+                        return Ok(None);
+                    }
+                }
+                Ok(Some(Self::line(start.clone(), end.clone())?))
+            }
+            CurveGeometry3::CircleArc(_) | CurveGeometry3::EllipseArc(_) => Ok(None),
         }
     }
 

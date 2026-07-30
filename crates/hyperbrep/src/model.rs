@@ -7817,7 +7817,7 @@ impl ModelBuilder {
     fn validate_tensor_surface_iso_image(
         &self,
         curve: &Curve3,
-        _edge: &Edge,
+        edge: &Edge,
         edge_use: &EdgeUse,
         pcurve: &Pcurve,
         surface: &Surface,
@@ -7860,8 +7860,9 @@ impl ModelBuilder {
             }
             std::cmp::Ordering::Equal => return Err(BuildError::EdgeUseSupportMismatch),
         };
-        if !tensor_curve_images_equal(curve, &complete)?
-            && !tensor_curve_images_equal(curve, &segment)?
+        let edge_curve = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        if !tensor_curve_images_equal(&edge_curve, &complete)?
+            && !tensor_curve_images_equal(&edge_curve, &segment)?
         {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
@@ -9335,7 +9336,7 @@ impl ModelBuilder {
             for wire_id in face.boundary_wires() {
                 for edge_use_id in &self.wire_ref(*wire_id)?.edge_uses {
                     let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
-                    if self.curve_ref(edge.curve)?.kind() != Curve3Kind::Line {
+                    if self.curve_ref(edge.curve)?.canonical_line()?.is_none() {
                         return Ok(false);
                     }
                 }
