@@ -3014,24 +3014,30 @@ fn contained_face_boundary_traces_from_plane(
                 ) {
                     return Ok(None);
                 }
-                let Some(parameter_plane) = &affine_parameter_plane else {
-                    return Ok(None);
-                };
                 let curve = edge_curve.subcurve(edge.domain().start(), edge.domain().end())?;
-                let parameter_origin = parameter_plane
-                    .plane_origin()
-                    .expect("affine parameter certificate is a plane");
-                let (parameter_u, parameter_v) = parameter_plane
-                    .plane_directions()
-                    .expect("affine parameter certificate is a plane");
-                let Some(pcurve) = crate::geometry::project_curve_to_plane_frame(
-                    &curve,
-                    parameter_origin,
-                    parameter_u,
-                    parameter_v,
-                )?
-                else {
-                    return Ok(None);
+                let pcurve = if let Some(parameter_plane) = &affine_parameter_plane {
+                    let parameter_origin = parameter_plane
+                        .plane_origin()
+                        .expect("affine parameter certificate is a plane");
+                    let (parameter_u, parameter_v) = parameter_plane
+                        .plane_directions()
+                        .expect("affine parameter certificate is a plane");
+                    let Some(pcurve) = crate::geometry::project_curve_to_plane_frame(
+                        &curve,
+                        parameter_origin,
+                        parameter_u,
+                        parameter_v,
+                    )?
+                    else {
+                        return Ok(None);
+                    };
+                    pcurve
+                } else {
+                    let Some(pcurve) = contained_surface.affine_bilinear_inverse_pcurve(&curve)?
+                    else {
+                        return Ok(None);
+                    };
+                    pcurve
                 };
                 let candidate =
                     SurfaceIntersectionCurve::from_exact_pcurves(curve, pcurve.clone(), pcurve)?;
@@ -6336,6 +6342,125 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = first.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn curved_region_partitions_mobius_reparameterized_affine_tensor_exactly() {
+        let (tensor, tensor_face) = crate::builder::rational_bezier_patch(
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![
+                vec![Real::one(), Real::from(2)],
+                vec![Real::from(3), Real::from(6)],
+            ],
+        )
+        .unwrap();
+
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let curve_start = hypercurve::Point2::new(Real::zero(), quarter);
+        let curve_end = hypercurve::Point2::new(Real::one(), three_quarters);
+        let outer = CurvePath2::try_new(vec![
+            Curve2::from(hypercurve::QuadraticBezier2::new(
+                curve_start.clone(),
+                hypercurve::Point2::new(half, Real::zero()),
+                curve_end.clone(),
+            )),
+            Curve2::from(
+                LineSeg2::try_new(
+                    curve_end,
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                    curve_start,
+                )
+                .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("degree-one projective tensor inverse is Möbius-rational");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::RationalBezier);
+        let materialized = traces[0].first_pcurve().materialize().unwrap();
+        let hypercurve::CurveGeometry2::RationalBezier(inverse) = materialized.curve().geometry()
+        else {
+            panic!("Möbius inverse retains a rational Bézier pcurve");
+        };
+        assert_eq!(inverse.degree(), 4);
+        let mut forged_controls = inverse.control_points().to_vec();
+        forged_controls[2] = hypercurve::Point2::new(
+            forged_controls[2].x() + (Real::one() / Real::from(100)).unwrap(),
+            forged_controls[2].y().clone(),
+        );
+        let forged = Curve2::from(
+            RationalBezier2::try_new(forged_controls, inverse.weights().to_vec()).unwrap(),
+        );
+        let forged_trace = SurfaceIntersectionCurve::from_exact_pcurves(
+            traces[0].curve().clone(),
+            forged.clone(),
+            forged,
+        )
+        .unwrap();
+        assert!(
+            tensor
+                .split_face_by_surface_curves(
+                    tensor_face,
+                    &[forged_trace],
+                    SurfaceIntersectionOperand::First,
+                )
+                .is_err(),
+            "an endpoint-preserving Möbius inverse forgery must not publish"
+        );
+        let (first_operand, first_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let (second_operand, second_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::Second)
+            .unwrap();
+        assert_eq!(first_partition.faces.len(), 2);
+        assert_eq!(second_partition.faces.len(), 2);
+        assert_eq!(
+            first_operand.to_json().unwrap(),
+            second_operand.to_json().unwrap()
+        );
+
+        let (partitioned, partition) =
+            partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("Möbius inverse pcurve partitions the projective tensor");
+        assert_eq!(partition.faces.len(), 2);
+        let json = partitioned.to_json().unwrap();
         assert_eq!(
             crate::RawModel::from_json(&json)
                 .unwrap()

@@ -8013,7 +8013,9 @@ impl ModelBuilder {
                     SurfaceKind::RationalBezier,
                     ParameterCorrespondence::Affine { .. },
                 ) => {
-                    self.validate_rational_tensor_graph_image(curve, edge_use, pcurve, surface)?;
+                    self.validate_rational_tensor_graph_image(
+                        curve, edge, edge_use, pcurve, surface,
+                    )?;
                 }
                 (
                     Curve3Kind::Nurbs,
@@ -8021,7 +8023,9 @@ impl ModelBuilder {
                     SurfaceKind::RationalBezier,
                     ParameterCorrespondence::Affine { .. },
                 ) => {
-                    self.validate_rational_tensor_graph_image(curve, edge_use, pcurve, surface)?;
+                    self.validate_rational_tensor_graph_image(
+                        curve, edge, edge_use, pcurve, surface,
+                    )?;
                 }
                 (
                     Curve3Kind::Nurbs,
@@ -8094,10 +8098,14 @@ impl ModelBuilder {
     fn validate_rational_tensor_graph_image(
         &self,
         curve: &Curve3,
+        edge: &Edge,
         edge_use: &EdgeUse,
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
+        if self.validate_affine_bilinear_inverse_pcurve(curve, edge, edge_use, pcurve, surface)? {
+            return Ok(());
+        }
         if self.validate_affine_tensor_parameter_image(curve, edge_use, pcurve, surface)? {
             return Ok(());
         }
@@ -8182,6 +8190,26 @@ impl ModelBuilder {
             &Real::zero(),
             SurfaceIsoAxis::U,
         )
+    }
+
+    fn validate_affine_bilinear_inverse_pcurve(
+        &self,
+        curve: &Curve3,
+        edge: &Edge,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<bool, BuildError> {
+        let restricted = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        let directed = match edge_use.direction {
+            Direction::Forward => restricted,
+            Direction::Reversed => restricted.reversed()?,
+        };
+        let Some(expected) = surface.affine_bilinear_inverse_pcurve(&directed)? else {
+            return Ok(false);
+        };
+        validate_projective_pcurve_equal(pcurve.curve(), &expected)?;
+        Ok(true)
     }
 
     fn validate_nurbs_tensor_graph_image(

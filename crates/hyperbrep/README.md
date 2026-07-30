@@ -111,6 +111,11 @@ The clean-break implementation currently provides:
   exact native spans, elevate homogeneously to one degree, and concatenate as
   one closed NURBS trace before topology authorship; this includes circular
   boundaries and elliptic spatial images under skew frames;
+- degree-one `2×2` affine tensor images with nonconstant positive rank-one
+  weights pull rational Bézier boundaries back through two exact Möbius
+  inverses and one homogeneous Bernstein denominator product; complete
+  parameterization validation rejects interior-control forgeries, while
+  higher-degree projective inverses remain explicitly algebraic/unsupported;
 - exact extrusion-face area for line profiles, circular profiles swept normal
   to their plane, and rectangular trims of certified planar rational
   Bézier/NURBS profiles whose positive-weight control projections are

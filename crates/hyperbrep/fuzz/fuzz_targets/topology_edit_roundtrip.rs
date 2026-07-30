@@ -388,7 +388,15 @@ fuzz_target!(|bytes: &[u8]| {
         );
         return;
     }
-    if bytes[0] == 0xa7 {
+    if matches!(bytes[0], 0xa7 | b'p') {
+        let tensor_weights = if bytes[2] & 2 == 0 {
+            vec![vec![Real::one(), Real::one()]; 2]
+        } else {
+            vec![
+                vec![Real::one(), Real::from(2)],
+                vec![Real::from(3), Real::from(6)],
+            ]
+        };
         let (tensor, tensor_face) = builder::rational_bezier_patch(
             vec![
                 vec![
@@ -400,7 +408,7 @@ fuzz_target!(|bytes: &[u8]| {
                     hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
                 ],
             ],
-            vec![vec![Real::one(), Real::one()]; 2],
+            tensor_weights,
         )
         .expect("unit affine tensor patch is constructible");
         let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");

@@ -174,6 +174,9 @@ certificate deliberately rebases rational Bézier patch construction from
 - constant-weight affine-tensor parameter-plane certification, exact curved
   rational inverse pcurve, identity-shared face partition, and full model
   revalidation: `553.064 us/iteration`;
+- rank-one projective affine-bilinear certification, two exact Möbius inverse
+  coordinates, homogeneous Bernstein denominator product, identity-shared
+  face partition, and full model revalidation: `1.556065 ms/iteration`;
 - circular rational-span normalization, one closed NURBS inverse pcurve,
   identity-shared inner/outer topology, and full model revalidation:
   `1.082481 ms/iteration`;

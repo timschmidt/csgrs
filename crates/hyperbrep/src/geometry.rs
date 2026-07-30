@@ -2693,6 +2693,125 @@ impl Surface {
         )?))
     }
 
+    /// Pulls one rational Bézier image curve back through an exact affine
+    /// bilinear tensor whose two native axes are independently Möbius
+    /// reparameterized.
+    ///
+    /// This deliberately recognizes only a `2×2` affine control lattice with
+    /// a positive rank-one weight matrix. Each native inverse is then
+    /// fractional-linear, and their two denominators are multiplied in
+    /// homogeneous Bernstein form. Higher-degree projective tensor inverses
+    /// are generally algebraic rather than rational and remain unsupported.
+    pub(crate) fn affine_bilinear_inverse_pcurve(
+        &self,
+        curve: &Curve3,
+    ) -> GeometryResult<Option<Curve2>> {
+        let SurfaceGeometry::RationalBezier(surface) = &self.data.geometry else {
+            return Ok(None);
+        };
+        if surface.control_points.len() != 2
+            || surface.weights.len() != 2
+            || surface
+                .control_points
+                .iter()
+                .zip(&surface.weights)
+                .any(|(points, weights)| points.len() != 2 || weights.len() != 2)
+        {
+            return Ok(None);
+        }
+        let first_weight = &surface.weights[0][0];
+        let mut nonconstant_weights = false;
+        for weight in surface.weights.iter().flatten().skip(1) {
+            if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                nonconstant_weights = true;
+                break;
+            }
+        }
+        if !nonconstant_weights {
+            return Ok(None);
+        }
+        let origin = &surface.control_points[0][0];
+        let u = &surface.control_points[0][1] - origin;
+        let v = &surface.control_points[1][0] - origin;
+        if decided_order(compare_reals(&u.cross(&v).norm_squared(), &Real::zero()))?
+            != Ordering::Greater
+            || !points_equal(
+                &surface.control_points[1][1],
+                &(origin.clone() + u.clone() + v.clone()),
+            )?
+            || decided_order(compare_reals(
+                &(&surface.weights[0][0] * &surface.weights[1][1]),
+                &(&surface.weights[0][1] * &surface.weights[1][0]),
+            ))? != Ordering::Equal
+        {
+            return Ok(None);
+        }
+        let Some(projected) = project_curve_to_plane_frame(curve, origin, &u, &v)? else {
+            return Ok(None);
+        };
+        let CurveGeometry2::RationalBezier(projected) = projected.geometry() else {
+            return Ok(None);
+        };
+        let x = projected
+            .control_points()
+            .iter()
+            .zip(projected.weights())
+            .map(|(point, weight)| point.x() * weight)
+            .collect::<Vec<_>>();
+        let y = projected
+            .control_points()
+            .iter()
+            .zip(projected.weights())
+            .map(|(point, weight)| point.y() * weight)
+            .collect::<Vec<_>>();
+        let weights = projected.weights();
+        let u_numerator = x
+            .iter()
+            .map(|value| &surface.weights[0][0] * value)
+            .collect::<Vec<_>>();
+        let u_denominator = weights
+            .iter()
+            .zip(&x)
+            .map(|(weight, value)| {
+                &surface.weights[0][1] * (weight - value) + &surface.weights[0][0] * value
+            })
+            .collect::<Vec<_>>();
+        let v_numerator = y
+            .iter()
+            .map(|value| &surface.weights[0][0] * value)
+            .collect::<Vec<_>>();
+        let v_denominator = weights
+            .iter()
+            .zip(&y)
+            .map(|(weight, value)| {
+                &surface.weights[1][0] * (weight - value) + &surface.weights[0][0] * value
+            })
+            .collect::<Vec<_>>();
+        let common_weights = bernstein_product(&u_denominator, &v_denominator)?;
+        for weight in &common_weights {
+            if decided_order(compare_reals(weight, &Real::zero()))? != Ordering::Greater {
+                return Ok(None);
+            }
+        }
+        let u_homogeneous = bernstein_product(&u_numerator, &v_denominator)?;
+        let v_homogeneous = bernstein_product(&v_numerator, &u_denominator)?;
+        let controls = u_homogeneous
+            .iter()
+            .zip(&v_homogeneous)
+            .zip(&common_weights)
+            .map(|((u, v), weight)| {
+                Ok(CurvePoint2::new(
+                    (u / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+                    (v / weight).map_err(|_| GeometryError::ProjectiveDivision)?,
+                ))
+            })
+            .collect::<GeometryResult<Vec<_>>>()?;
+        Ok(Some(Curve2::from(RationalBezier2::try_new(
+            controls,
+            common_weights,
+        )?)))
+    }
+
     /// Extracts one exact tensor-product iso-curve.
     ///
     /// Rational Bézier surfaces collapse the orthogonal homogeneous control
@@ -5181,6 +5300,36 @@ fn quadratic_bernstein_product(first: &[Real; 3], second: &[Real; 3]) -> Geometr
             .map_err(|_| GeometryError::ProjectiveDivision)?,
         &first[2] * &second[2],
     ])
+}
+
+fn bernstein_product(first: &[Real], second: &[Real]) -> GeometryResult<Vec<Real>> {
+    let Some(first_degree) = first.len().checked_sub(1) else {
+        return Err(GeometryError::InvalidDegree);
+    };
+    let Some(second_degree) = second.len().checked_sub(1) else {
+        return Err(GeometryError::InvalidDegree);
+    };
+    let product_degree = first_degree
+        .checked_add(second_degree)
+        .ok_or(GeometryError::InvalidDegree)?;
+    let mut product = Vec::with_capacity(product_degree + 1);
+    for product_index in 0..=product_degree {
+        let first_min = product_index.saturating_sub(second_degree);
+        let first_max = first_degree.min(product_index);
+        let denominator = binomial_real(product_degree, product_index)?;
+        let mut coefficient = Real::zero();
+        for (first_index, first_value) in
+            first.iter().enumerate().take(first_max + 1).skip(first_min)
+        {
+            let second_index = product_index - first_index;
+            let numerator = binomial_real(first_degree, first_index)?
+                * binomial_real(second_degree, second_index)?;
+            coefficient += (numerator * first_value * &second[second_index] / &denominator)
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+        }
+        product.push(coefficient);
+    }
+    Ok(product)
 }
 
 fn intersect_plane_extrusion(
@@ -9999,6 +10148,53 @@ mod tests {
         )
         .unwrap();
         assert!(projective.affine_parameter_plane().unwrap().is_none());
+    }
+
+    #[test]
+    fn affine_bilinear_projective_weights_have_exact_mobius_inverse_pcurves() {
+        let surface = Surface::rational_bezier(
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![vec![r(1), r(2)], vec![r(3), r(6)]],
+        )
+        .unwrap();
+        let curve = Curve3::rational_bezier(
+            vec![
+                Point3::new(r(0), q(1, 4), r(1)),
+                Point3::new(q(1, 2), r(0), r(1)),
+                Point3::new(r(1), q(3, 4), r(1)),
+            ],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap();
+        let pcurve = surface
+            .affine_bilinear_inverse_pcurve(&curve)
+            .unwrap()
+            .expect("rank-one bilinear weights have a rational Möbius inverse");
+        let CurveGeometry2::RationalBezier(inverse) = pcurve.geometry() else {
+            panic!("Möbius inverse retains a rational Bézier carrier");
+        };
+        assert_eq!(inverse.degree(), 4);
+        for parameter in [Real::zero(), q(1, 2), Real::one()] {
+            let uv = pcurve.point_at(&parameter).unwrap();
+            assert_points_equal(
+                &surface
+                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .unwrap(),
+                &curve.point_at(&parameter).unwrap(),
+            );
+        }
+
+        let nonseparable = Surface::rational_bezier(
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![vec![r(1), r(2)], vec![r(3), r(5)]],
+        )
+        .unwrap();
+        assert!(
+            nonseparable
+                .affine_bilinear_inverse_pcurve(&curve)
+                .unwrap()
+                .is_none()
+        );
     }
 
     #[test]
