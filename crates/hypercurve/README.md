@@ -154,17 +154,18 @@ exact signatures.
 ### Splines and unified curves
 
 - `PolynomialSplineCurve2::{try_new, try_new_periodic, point_at,
-  derivative_at, insert_knot, split_at, subcurve, reversed,
+  derivative_at, insert_knot, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, bezier_decomposition, bezier_spans}`.
 - `NurbsCurve2::{try_new, try_new_periodic, point_at, derivative_at,
   insert_knot, insert_knots, remove_knot, degree_elevation,
-  elevated_to_degree, split_at, subcurve, reversed, transform_similarity,
-  bezier_decomposition, bezier_spans, native_subcurves}`.
+  elevated_to_degree, split_at, subcurve, clamped_subcurve, reversed,
+  transform_similarity, bezier_decomposition, bezier_spans,
+  native_subcurves}`.
 - Wrapped evaluation and one-sided evaluation are available on periodic spline
   carriers through the `*_wrapped` and `*_side` method families.
 - `Curve2::{new, try_polynomial_bspline, try_nurbs,
   try_periodic_polynomial_bspline, try_periodic_nurbs, family, point_at,
-  derivative_at, bounds, split_at, subcurve, reversed,
+  derivative_at, bounds, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, native_bezier_fragments}` is the common owned carrier.
   `CurveView2` supplies the borrowed equivalents.
 

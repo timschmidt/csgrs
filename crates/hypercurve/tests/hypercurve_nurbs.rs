@@ -891,6 +891,13 @@ fn periodic_nurbs_editing_preserves_period_only_for_whole_curve_operations() {
     assert_eq!(right.period(), None);
     assert_ne!(left.start(), left.end());
     assert_ne!(right.start(), right.end());
+
+    let clamped = curve.clamped_subcurve(r(0), r(1)).unwrap();
+    assert_eq!(clamped.period(), None);
+    assert_eq!(clamped.parameter_domain(), (&r(0), &r(1)));
+    assert_eq!(clamped.knots(), &[r(0), r(0), r(0), r(1), r(1), r(1)]);
+    assert_eq!(clamped.start(), &curve.point_at(&r(0)).unwrap());
+    assert_eq!(clamped.end(), &curve.point_at(&r(1)).unwrap());
 }
 
 #[test]

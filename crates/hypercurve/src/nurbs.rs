@@ -692,6 +692,73 @@ impl NurbsCurve2 {
         }
     }
 
+    /// Returns an exact finite subcurve in clamped piecewise-Bézier NURBS form.
+    ///
+    /// This is the topology-ingestion form for a range cut from an unclamped or
+    /// periodic carrier. It preserves the source parameter interval and exact
+    /// rational image while replacing irrelevant exterior knots with clamped
+    /// endpoints. Internal spans use full Bézier multiplicity; no fitting,
+    /// sampling, or endpoint-only reconstruction is involved.
+    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+        validate_subcurve_range(self, &start, &end)?;
+        let subcurve = self.subcurve(start, end)?;
+        if !subcurve.periodicity().is_periodic()
+            && has_clamped_endpoints(
+                subcurve.knots(),
+                subcurve.degree(),
+                subcurve.control_points().len(),
+            )?
+        {
+            return Ok(subcurve);
+        }
+        subcurve.clamped_piecewise_bezier_form()
+    }
+
+    fn clamped_piecewise_bezier_form(&self) -> ExactCurveResult<Self> {
+        let decomposition = self.bezier_decomposition()?;
+        let spans = decomposition.spans();
+        let first = spans.first().ok_or_else(|| {
+            ExactCurveError::invalid(
+                CurveOperation2::Subdivision,
+                CurveFamily2::Nurbs,
+                CurveError::InvalidBSpline,
+            )
+        })?;
+        let degree = self.degree();
+        let mut control_points = first.control_points().to_vec();
+        let mut weights = first.weights().to_vec();
+        let mut knots = Vec::with_capacity(control_points.len() + degree + 1);
+        knots.extend(std::iter::repeat_n(
+            first.knot_interval().0.clone(),
+            degree + 1,
+        ));
+        for span in &spans[1..] {
+            let scale = (weights.last().expect("first exact NURBS span has weights")
+                / &span.weights()[0])
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Subdivision,
+                        CurveFamily2::Nurbs,
+                        cause.into(),
+                    )
+                })?;
+            control_points.extend(span.control_points().iter().skip(1).cloned());
+            weights.extend(span.weights().iter().skip(1).map(|weight| weight * &scale));
+            knots.extend(std::iter::repeat_n(span.knot_interval().0.clone(), degree));
+        }
+        knots.extend(std::iter::repeat_n(
+            spans
+                .last()
+                .expect("exact NURBS decomposition is nonempty")
+                .knot_interval()
+                .1
+                .clone(),
+            degree + 1,
+        ));
+        Self::try_new_with_optional_source(degree, control_points, weights, knots)
+            .map_err(|error| remap_nurbs_operation(error, CurveOperation2::Subdivision))
+    }
+
     /// Returns the same NURBS image with traversal direction reversed.
     ///
     /// Controls and weights are reversed, while knots are reflected through

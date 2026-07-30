@@ -344,6 +344,13 @@ fn periodic_polynomial_editing_preserves_only_whole_curve_periodicity() {
     let (left, right) = curve.split_at(r(2)).unwrap();
     assert_eq!(left.period(), None);
     assert_eq!(right.period(), None);
+
+    let clamped = curve.clamped_subcurve(r(0), r(1)).unwrap();
+    assert_eq!(clamped.period(), None);
+    assert_eq!(clamped.parameter_domain(), (&r(0), &r(1)));
+    assert_eq!(clamped.knots(), &[r(0), r(0), r(0), r(1), r(1), r(1)]);
+    assert_eq!(clamped.start(), &curve.point_at(&r(0)).unwrap());
+    assert_eq!(clamped.end(), &curve.point_at(&r(1)).unwrap());
 }
 
 #[test]

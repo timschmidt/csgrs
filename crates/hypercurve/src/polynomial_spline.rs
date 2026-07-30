@@ -284,6 +284,18 @@ impl PolynomialSplineCurve2 {
         Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision)
     }
 
+    /// Returns an exact finite subcurve with clamped endpoints.
+    ///
+    /// Periodic and unclamped polynomial splines are materialized in exact
+    /// piecewise-Bézier B-spline form over the requested source interval.
+    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+        let subcurve = self
+            .as_unit_weight_nurbs()?
+            .clamped_subcurve(start, end)
+            .map_err(|error| remap_spline_family_operation(error, CurveOperation2::Subdivision))?;
+        Self::from_unit_weight_nurbs(subcurve, CurveOperation2::Subdivision)
+    }
+
     /// Returns the same polynomial spline image with traversal direction reversed.
     ///
     /// The control net is reversed and the knot vector is reflected through

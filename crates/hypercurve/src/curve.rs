@@ -661,6 +661,28 @@ impl Curve2 {
         self.with_lineage(geometry, lineage)
     }
 
+    /// Returns an exact finite subcurve suitable for clamped topology carriers.
+    ///
+    /// Spline families preserve their authored parameter interval and exact
+    /// image in clamped piecewise-Bézier form. Other families use their native
+    /// exact subdivision.
+    pub fn clamped_subcurve(&self, start: Real, end: Real) -> ExactCurveResult<Self> {
+        let domain = self.parameter_domain();
+        validate_subcurve_range(domain.start(), &start, &end, domain.end(), self.family())?;
+        let lineage = self.lineage_subrange(&start, &end)?;
+        match self.geometry() {
+            CurveGeometry2::PolynomialBSpline(curve) => self.with_lineage(
+                CurveGeometry2::PolynomialBSpline(curve.clamped_subcurve(start, end)?),
+                lineage,
+            ),
+            CurveGeometry2::Nurbs(curve) => self.with_lineage(
+                CurveGeometry2::Nurbs(curve.clamped_subcurve(start, end)?),
+                lineage,
+            ),
+            _ => self.subcurve(start, end),
+        }
+    }
+
     fn with_lineage(
         &self,
         geometry: CurveGeometry2,
