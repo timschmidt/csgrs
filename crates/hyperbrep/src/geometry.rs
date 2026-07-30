@@ -5207,17 +5207,20 @@ fn intersect_coaxial_sphere_cylinder(
     let sphere_radius_squared = &sphere.radius * &sphere.radius;
     let cylinder_radius_squared = &cylinder.radius * &cylinder.radius;
     let frames_match = orthonormal_frames_equal(&sphere.frame, &cylinder.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&sphere.frame, &cylinder.frame)?;
+    let retain_pcurves = frames_match || frames_mirrored;
     let retained_circle = |height: Real| -> GeometryResult<SurfaceIntersectionCurve> {
         let center = sphere.center.clone() + cylinder.frame.z.clone() * &height;
         let curve = Curve3::circle_arc(
-            center,
+            center.clone(),
             sphere.frame.x.clone(),
             sphere.frame.y.clone(),
             cylinder.radius.clone(),
             Real::zero(),
             Real::tau(),
         )?;
-        let latitude = (height.clone() / &sphere.radius)
+        let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
+        let latitude = (sphere_height / &sphere.radius)
             .map_err(|_| GeometryError::ProjectiveDivision)?
             .asin()
             .map_err(|_| GeometryError::ElementaryFunction)?;
@@ -5226,7 +5229,7 @@ fn intersect_coaxial_sphere_cylinder(
         Ok(SurfaceIntersectionCurve::new(
             curve,
             SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), latitude),
-            SurfaceIntersectionPcurve::tensor_iso_v(domain, cylinder_height),
+            angular_iso_v_pcurve(domain, cylinder_height, frames_mirrored),
         ))
     };
     match decided_order(compare_reals(
@@ -5235,7 +5238,7 @@ fn intersect_coaxial_sphere_cylinder(
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => {
-            if frames_match {
+            if retain_pcurves {
                 Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                     retained_circle(Real::zero())?,
                 )))
@@ -5254,7 +5257,7 @@ fn intersect_coaxial_sphere_cylinder(
             let axial_distance = (sphere_radius_squared - cylinder_radius_squared)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            if frames_match {
+            if retain_pcurves {
                 return Ok(SurfaceSurfaceIntersection::Curves(vec![
                     retained_circle(axial_distance.clone())?,
                     retained_circle(-axial_distance)?,
@@ -5333,6 +5336,8 @@ fn intersect_coaxial_sphere_cone(
     }
 
     let frames_match = orthonormal_frames_equal(&sphere.frame, &cone.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&sphere.frame, &cone.frame)?;
+    let retain_pcurves = frames_match || frames_mirrored;
     let mut circles = Vec::with_capacity(slant_parameters.len());
     let mut retained = Vec::with_capacity(slant_parameters.len());
     for parameter in slant_parameters {
@@ -5340,15 +5345,15 @@ fn intersect_coaxial_sphere_cone(
         let radius = &parameter * &sine;
         let center = cone.apex.clone() + cone.frame.z.clone() * &axial_height;
         let curve = Curve3::circle_arc(
-            center,
+            center.clone(),
             cone.frame.x.clone(),
             cone.frame.y.clone(),
             radius,
             Real::zero(),
             Real::tau(),
         )?;
-        if frames_match {
-            let sphere_height = axial_height - &axial_offset;
+        if retain_pcurves {
+            let sphere_height = (&center - &sphere.center).dot(&sphere.frame.z);
             let latitude = (sphere_height / &sphere.radius)
                 .map_err(|_| GeometryError::ProjectiveDivision)?
                 .asin()
@@ -5356,7 +5361,7 @@ fn intersect_coaxial_sphere_cone(
             let domain = curve.domain().clone();
             retained.push(SurfaceIntersectionCurve::new(
                 curve,
-                SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), latitude),
+                angular_iso_v_pcurve(domain.clone(), latitude, frames_mirrored),
                 SurfaceIntersectionPcurve::tensor_iso_v(domain, parameter),
             ));
         } else {
@@ -5368,7 +5373,7 @@ fn intersect_coaxial_sphere_cone(
             SurfaceIntersectionComponents::new(vec![cone.apex.clone()], circles, retained),
         )));
     }
-    if frames_match {
+    if retain_pcurves {
         Ok(match retained.len() {
             1 => SurfaceSurfaceIntersection::Curve(Box::new(
                 retained.pop().expect("one retained sphere/cone circle"),
@@ -5416,7 +5421,9 @@ fn intersect_coaxial_cylinder_cone(
         Real::zero(),
         Real::tau(),
     )?;
-    if !orthonormal_frames_equal(&cylinder.frame, &cone.frame)? {
+    let frames_match = orthonormal_frames_equal(&cylinder.frame, &cone.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&cylinder.frame, &cone.frame)?;
+    if !frames_match && !frames_mirrored {
         return Ok(SurfaceSurfaceIntersection::Circle(curve));
     }
     let cylinder_height = (&center - &cylinder.origin).dot(&cylinder.frame.z);
@@ -5424,7 +5431,7 @@ fn intersect_coaxial_cylinder_cone(
     Ok(SurfaceSurfaceIntersection::Curve(Box::new(
         SurfaceIntersectionCurve::new(
             curve,
-            SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), cylinder_height),
+            angular_iso_v_pcurve(domain.clone(), cylinder_height, frames_mirrored),
             SurfaceIntersectionPcurve::tensor_iso_v(domain, slant_parameter),
         ),
     )))
@@ -5578,6 +5585,24 @@ fn orthonormal_frames_equal(
                     &Real::zero(),
                 ))? == Ordering::Equal)
         })
+}
+
+fn angular_iso_v_pcurve(
+    domain: ParameterDomain,
+    constant: Real,
+    reversed: bool,
+) -> SurfaceIntersectionPcurve {
+    if reversed {
+        SurfaceIntersectionPcurve::tensor_iso(
+            domain,
+            constant,
+            TensorAxis::V,
+            -Real::one(),
+            Real::tau(),
+        )
+    } else {
+        SurfaceIntersectionPcurve::tensor_iso_v(domain, constant)
+    }
 }
 
 fn orthonormal_frames_mirrored(
@@ -10362,6 +10387,41 @@ mod tests {
             cylinder.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circles(_)
         ));
+        let mirrored_cylinder = Surface::cylinder(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            r(2),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(mirrored_circles) =
+            sphere.intersect_surface(&mirrored_cylinder).unwrap()
+        else {
+            panic!("mirrored coaxial cylinder parameters must retain both circles");
+        };
+        assert_eq!(mirrored_circles.len(), 2);
+        let mirrored_parameter = q(1, 3);
+        for mirrored_circle in &mirrored_circles {
+            let spatial = mirrored_circle
+                .curve()
+                .point_at(&mirrored_parameter)
+                .unwrap();
+            assert_points_equal(
+                &mirrored_cylinder
+                    .point_at(
+                        &mirrored_circle
+                            .second_pcurve()
+                            .point_at(&mirrored_parameter)
+                            .unwrap(),
+                    )
+                    .unwrap(),
+                &spatial,
+            );
+            let cylinder_pcurve = mirrored_circle.second_pcurve().materialize().unwrap();
+            assert_eq!(cylinder_pcurve.curve().start().x(), &Real::tau());
+            assert_eq!(cylinder_pcurve.curve().end().x(), &Real::zero());
+        }
 
         let tangent = Surface::sphere(
             Point3::origin(),
@@ -10569,6 +10629,31 @@ mod tests {
             &rotated.curves()[0].start().unwrap(),
             &Point3::new(q(24, 5), Real::zero(), q(32, 5)),
         );
+
+        let mirrored_centered = Surface::sphere(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            r(2),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(mirrored_circle) =
+            mirrored_centered.intersect_surface(&cone).unwrap()
+        else {
+            panic!("mirrored sphere/cone frames must retain both exact pcurves");
+        };
+        let sphere_pcurve = mirrored_circle.first_pcurve().materialize().unwrap();
+        assert_eq!(sphere_pcurve.curve().start().x(), &Real::tau());
+        assert_eq!(sphere_pcurve.curve().end().x(), &Real::zero());
+        let parameter = q(2, 3);
+        let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &mirrored_centered
+                .point_at(&mirrored_circle.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
     }
 
     #[test]
@@ -10625,6 +10710,25 @@ mod tests {
             cone.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circle(_)
         ));
+        let mirrored_cylinder =
+            Surface::cylinder(p(0, 0, 1), Vector3::x(), -Vector3::y(), -Vector3::z(), r(3))
+                .unwrap();
+        let SurfaceSurfaceIntersection::Curve(mirrored_circle) =
+            mirrored_cylinder.intersect_surface(&cone).unwrap()
+        else {
+            panic!("mirrored cylinder/cone frames must retain both exact pcurves");
+        };
+        let cylinder_pcurve = mirrored_circle.first_pcurve().materialize().unwrap();
+        assert_eq!(cylinder_pcurve.curve().start().x(), &Real::tau());
+        assert_eq!(cylinder_pcurve.curve().end().x(), &Real::zero());
+        let parameter = q(1, 4);
+        let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &mirrored_cylinder
+                .point_at(&mirrored_circle.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
         let off_axis =
             Surface::cylinder(p(1, 0, 1), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
         assert_eq!(
