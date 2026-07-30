@@ -9877,6 +9877,45 @@ mod tests {
     }
 
     #[test]
+    fn coaxial_sphere_cone_graph_retains_quarter_circle_pcurves() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let sphere = sphere
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::from(4)],
+            ))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &frustum, frustum_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) => Some((curve, fragments)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 4);
+        for (curve, fragments) in retained {
+            assert_eq!(fragments.len(), 1);
+            assert!(curve.first_pcurve().materialize().is_ok());
+            assert!(curve.second_pcurve().materialize().is_ok());
+            let fragment = &fragments[0];
+            assert!(fragment.first_pcurve().materialize().is_ok());
+            assert!(fragment.second_pcurve().materialize().is_ok());
+        }
+    }
+
+    #[test]
     fn certified_aabb_disjoint_booleans_support_nonprismatic_solids() {
         let (first, first_solid) = crate::builder::sphere(Real::one()).unwrap();
         let (second, second_solid) = crate::builder::sphere(Real::one()).unwrap();

@@ -3077,6 +3077,12 @@ impl Surface {
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Sphere(sphere)) => {
                 intersect_coaxial_sphere_cylinder(sphere, cylinder).map(swapped_curve_intersection)
             }
+            (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cone(cone)) => {
+                intersect_coaxial_sphere_cone(sphere, cone)
+            }
+            (SurfaceGeometry::Cone(cone), SurfaceGeometry::Sphere(sphere)) => {
+                intersect_coaxial_sphere_cone(sphere, cone).map(swapped_curve_intersection)
+            }
             (SurfaceGeometry::Sphere(first), SurfaceGeometry::Sphere(second)) => {
                 intersect_spheres(first, second)
             }
@@ -5125,20 +5131,7 @@ fn intersect_coaxial_sphere_cylinder(
     }
     let sphere_radius_squared = &sphere.radius * &sphere.radius;
     let cylinder_radius_squared = &cylinder.radius * &cylinder.radius;
-    let frames_match = || -> GeometryResult<bool> {
-        [&sphere.frame.x, &sphere.frame.y, &sphere.frame.z]
-            .into_iter()
-            .zip([&cylinder.frame.x, &cylinder.frame.y, &cylinder.frame.z])
-            .try_fold(true, |matches, (sphere_axis, cylinder_axis)| {
-                Ok::<_, GeometryError>(
-                    matches
-                        && decided_order(compare_reals(
-                            &(sphere_axis - cylinder_axis).norm_squared(),
-                            &Real::zero(),
-                        ))? == Ordering::Equal,
-                )
-            })
-    };
+    let frames_match = orthonormal_frames_equal(&sphere.frame, &cylinder.frame)?;
     let retained_circle = |height: Real| -> GeometryResult<SurfaceIntersectionCurve> {
         let center = sphere.center.clone() + cylinder.frame.z.clone() * &height;
         let curve = Curve3::circle_arc(
@@ -5167,7 +5160,7 @@ fn intersect_coaxial_sphere_cylinder(
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => {
-            if frames_match()? {
+            if frames_match {
                 Ok(SurfaceSurfaceIntersection::Curve(Box::new(
                     retained_circle(Real::zero())?,
                 )))
@@ -5186,7 +5179,7 @@ fn intersect_coaxial_sphere_cylinder(
             let axial_distance = (sphere_radius_squared - cylinder_radius_squared)
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            if frames_match()? {
+            if frames_match {
                 return Ok(SurfaceSurfaceIntersection::Curves(vec![
                     retained_circle(axial_distance.clone())?,
                     retained_circle(-axial_distance)?,
@@ -5212,6 +5205,121 @@ fn intersect_coaxial_sphere_cylinder(
             ]))
         }
     }
+}
+
+fn intersect_coaxial_sphere_cone(
+    sphere: &SphereSurface,
+    cone: &ConeSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    let center_offset = &sphere.center - &cone.apex;
+    let axial_offset = center_offset.dot(&cone.frame.z);
+    let radial_offset = center_offset - cone.frame.z.clone() * &axial_offset;
+    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+        != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    let sine = cone.semi_angle.clone().sin();
+    let cosine = cone.semi_angle.clone().cos();
+    let discriminant =
+        &sphere.radius * &sphere.radius - &axial_offset * &axial_offset * &sine * &sine;
+    let discriminant_order = decided_order(compare_reals(&discriminant, &Real::zero()))?;
+    if discriminant_order == Ordering::Less {
+        return Ok(SurfaceSurfaceIntersection::None);
+    }
+    let root_center = &axial_offset * &cosine;
+    let root_parameters = if discriminant_order == Ordering::Equal {
+        vec![root_center]
+    } else {
+        let root_offset = discriminant
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        vec![&root_center - &root_offset, root_center + root_offset]
+    };
+    let mut has_apex = false;
+    let mut slant_parameters = Vec::with_capacity(root_parameters.len());
+    for parameter in root_parameters {
+        match decided_order(compare_reals(&parameter, &Real::zero()))? {
+            Ordering::Less => {}
+            Ordering::Equal => {
+                has_apex = true;
+            }
+            Ordering::Greater => slant_parameters.push(parameter),
+        }
+    }
+    if has_apex && !slant_parameters.is_empty() {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    if has_apex {
+        return Ok(SurfaceSurfaceIntersection::Point(Box::new(
+            cone.apex.clone(),
+        )));
+    }
+    if slant_parameters.is_empty() {
+        return Ok(SurfaceSurfaceIntersection::None);
+    }
+
+    let frames_match = orthonormal_frames_equal(&sphere.frame, &cone.frame)?;
+    let mut circles = Vec::with_capacity(slant_parameters.len());
+    let mut retained = Vec::with_capacity(slant_parameters.len());
+    for parameter in slant_parameters {
+        let axial_height = &parameter * &cosine;
+        let radius = &parameter * &sine;
+        let center = cone.apex.clone() + cone.frame.z.clone() * &axial_height;
+        let curve = Curve3::circle_arc(
+            center,
+            cone.frame.x.clone(),
+            cone.frame.y.clone(),
+            radius,
+            Real::zero(),
+            Real::tau(),
+        )?;
+        if frames_match {
+            let sphere_height = axial_height - &axial_offset;
+            let latitude = (sphere_height / &sphere.radius)
+                .map_err(|_| GeometryError::ProjectiveDivision)?
+                .asin()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let domain = curve.domain().clone();
+            retained.push(SurfaceIntersectionCurve::new(
+                curve,
+                SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), latitude),
+                SurfaceIntersectionPcurve::tensor_iso_v(domain, parameter),
+            ));
+        } else {
+            circles.push(curve);
+        }
+    }
+    if frames_match {
+        Ok(match retained.len() {
+            1 => SurfaceSurfaceIntersection::Curve(Box::new(
+                retained.pop().expect("one retained sphere/cone circle"),
+            )),
+            _ => SurfaceSurfaceIntersection::Curves(retained),
+        })
+    } else {
+        Ok(match circles.len() {
+            1 => SurfaceSurfaceIntersection::Circle(circles.pop().expect("one sphere/cone circle")),
+            _ => SurfaceSurfaceIntersection::Circles(circles),
+        })
+    }
+}
+
+fn orthonormal_frames_equal(
+    first: &OrthonormalFrame3,
+    second: &OrthonormalFrame3,
+) -> GeometryResult<bool> {
+    [&first.x, &first.y, &first.z]
+        .into_iter()
+        .zip([&second.x, &second.y, &second.z])
+        .try_fold(true, |matches, (first_axis, second_axis)| {
+            Ok(matches
+                && decided_order(compare_reals(
+                    &(first_axis - second_axis).norm_squared(),
+                    &Real::zero(),
+                ))? == Ordering::Equal)
+        })
 }
 
 fn intersect_spheres(
@@ -9960,6 +10068,127 @@ mod tests {
             cylinder.intersect_surface(&off_axis).unwrap_err(),
             GeometryError::UnsupportedIntersection
         );
+    }
+
+    #[test]
+    fn coaxial_sphere_cone_intersections_retain_native_slant_circles() {
+        let semi_angle = q(3, 4).atan().unwrap();
+        let cone = Surface::cone(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            semi_angle.clone(),
+        )
+        .unwrap();
+        let centered = Surface::sphere(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(2),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(circle) = centered.intersect_surface(&cone).unwrap()
+        else {
+            panic!("an apex-centered sphere must cut one exact cone latitude");
+        };
+        assert_points_equal(
+            &circle.curve().start().unwrap(),
+            &Point3::new(q(6, 5), Real::zero(), q(8, 5)),
+        );
+        for parameter in [Real::zero(), Real::pi()] {
+            let spatial = circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &centered
+                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &cone
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+        }
+
+        let two_circle_sphere =
+            Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(4)).unwrap();
+        let SurfaceSurfaceIntersection::Curves(circles) =
+            two_circle_sphere.intersect_surface(&cone).unwrap()
+        else {
+            panic!("a coaxial sphere spanning both cone sheets must retain two upper circles");
+        };
+        assert_eq!(circles.len(), 2);
+        let parameter = q(1, 3);
+        for circle in &circles {
+            let spatial = circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &two_circle_sphere
+                    .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &cone
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+        }
+
+        let tangent =
+            Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
+        let SurfaceSurfaceIntersection::Curve(tangent_circle) =
+            tangent.intersect_surface(&cone).unwrap()
+        else {
+            panic!("zero discriminant must retain one tangent latitude circle");
+        };
+        assert_points_equal(
+            &tangent_circle.curve().start().unwrap(),
+            &Point3::new(q(12, 5), Real::zero(), q(16, 5)),
+        );
+
+        let separated =
+            Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
+        assert!(matches!(
+            separated.intersect_surface(&cone).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+        let apex_only =
+            Surface::sphere(p(0, 0, -5), Vector3::x(), Vector3::y(), Vector3::z(), r(5)).unwrap();
+        let SurfaceSurfaceIntersection::Point(point) = apex_only.intersect_surface(&cone).unwrap()
+        else {
+            panic!("the lower coaxial sphere must retain its isolated apex contact");
+        };
+        assert_points_equal(&point, &Point3::origin());
+
+        let mixed_dimension =
+            Surface::sphere(p(0, 0, 5), Vector3::x(), Vector3::y(), Vector3::z(), r(5)).unwrap();
+        assert_eq!(
+            mixed_dimension.intersect_surface(&cone).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let off_axis =
+            Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
+        assert_eq!(
+            off_axis.intersect_surface(&cone).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+
+        let rotated_parameters = Surface::sphere(
+            Point3::origin(),
+            Vector3::y(),
+            -Vector3::x(),
+            Vector3::z(),
+            r(2),
+        )
+        .unwrap();
+        assert!(matches!(
+            cone.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circle(_)
+        ));
     }
 
     #[test]

@@ -90,6 +90,7 @@ strict-convexity certificate.
 | Plane / revolution surface | Authored-axis transverse none, isolated axis point, or one/more exact profile-contact circles with native pcurves on both carriers; finite multi-span NURBS contacts map to authored knot parameters and deduplicate knot seams |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
+| Coaxial sphere / cone | None, isolated apex point, one tangent/secant circle, or two circles; authored-frame-aligned circles retain sphere latitude and cone slant pcurves |
 | Plane / linear-extrusion rational Bézier tensor patch | None or one native rational Bézier iso-curve |
 | Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
@@ -128,6 +129,14 @@ and constant-height pcurves directly. The graph clips them across the four
 native cylinder patches and exactly coalesces adjacent common-support
 fragments before partitioning the boundaryless sphere; both partitioned
 operands retain certified volume and byte-identical persistence.
+Coaxial sphere/cone intersections solve one exact quadratic in the cone's
+native nonnegative slant parameter. Matching authored frames retain
+constant-latitude sphere pcurves and constant-slant cone pcurves; a bounded
+frustum therefore clips one complete carrier into four exact quarter-circle
+fragments without inverse fitting. A sphere passing through the apex can
+produce both an isolated apex point and a positive-radius circle; that mixed
+dimensional result remains explicitly unsupported until the result enum can
+represent both components without discarding either.
 An axis-containing plane/ring-torus pair returns two native minor-radius
 meridian circles. Their exact planar circular pcurves and constant-longitude
 torus pcurves share the spatial curve domain. The graph clips an oblique

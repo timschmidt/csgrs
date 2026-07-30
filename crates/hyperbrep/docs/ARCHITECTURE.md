@@ -338,6 +338,14 @@ angular domains coalesce the patch fragments back into one periodic trace;
 the coalescer reconstructs both constant parameters rather than substituting a
 plane projection. Operand reversal and a common rigid transform preserve the
 same two authoritative images.
+An authored-frame-aligned coaxial sphere/cone pair follows the same retained
+circle contract. The carrier solver works in the cone's native nonnegative
+slant parameter, certifies the exact quadratic discriminant, and emits sphere
+latitude plus cone slant pcurves for each positive root. Frustum face clipping
+therefore partitions the full circle across its native quarter-angle cells
+without a sampled inverse. A lone zero root is the exact apex point; a zero
+root accompanied by a positive circle is rejected as an unsupported
+mixed-dimensional relation rather than losing one component.
 Selected intersection faces form two spherical caps and one subdivided
 cylindrical band. Their mixed-shell certificate reuses the cylinder's exact
 parameter-cell coverage, proves both cap latitudes have the same sphere and
