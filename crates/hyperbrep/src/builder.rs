@@ -5601,6 +5601,92 @@ mod tests {
     }
 
     #[test]
+    fn separably_reparameterized_complete_affine_tensor_patches_have_exact_area() {
+        let bezier_controls = vec![
+            vec![p(0, 0, 0), p(2, 0, 0), p(4, 0, 0)],
+            vec![p(0, 3, 0), p(2, 3, 0), p(4, 3, 0)],
+            vec![p(0, 6, 0), p(2, 6, 0), p(4, 6, 0)],
+        ];
+        let bezier_weights = vec![
+            vec![r(2), r(4), r(6)],
+            vec![r(5), r(10), r(15)],
+            vec![r(7), r(14), r(21)],
+        ];
+        let (bezier, bezier_face) =
+            rational_bezier_patch(bezier_controls.clone(), bezier_weights).unwrap();
+        assert_eq!(
+            compare_reals(&bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let (split_bezier, _) = bezier
+            .split_edge(
+                EdgeId::from_index(0).unwrap(),
+                (Real::one() / r(2)).unwrap(),
+            )
+            .unwrap();
+        assert_eq!(
+            compare_reals(&split_bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let scaled_bezier = split_bezier
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled_bezier.face_area(bezier_face).unwrap(), &r(144)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let rebuilt_bezier = crate::RawModel::from_json(&scaled_bezier.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt_bezier.face_area(bezier_face).unwrap(), &r(144)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+
+        let nonseparable_weights = vec![
+            vec![r(2), r(4), r(6)],
+            vec![r(5), r(11), r(15)],
+            vec![r(7), r(14), r(21)],
+        ];
+        let (nonseparable, nonseparable_face) =
+            rational_bezier_patch(bezier_controls, nonseparable_weights).unwrap();
+        assert_eq!(
+            nonseparable.face_area(nonseparable_face),
+            Err(crate::QueryError::Geometry(
+                GeometryError::UnsupportedMeasurement
+            ))
+        );
+
+        let nurbs_controls = vec![
+            vec![p(0, 0, 0), p(1, 0, 0), p(4, 0, 0), p(6, 0, 0)],
+            vec![p(0, 4, 0), p(1, 4, 0), p(4, 4, 0), p(6, 4, 0)],
+            vec![p(0, 8, 0), p(1, 8, 0), p(4, 8, 0), p(6, 8, 0)],
+        ];
+        let nurbs_weights = vec![
+            vec![r(2), r(4), r(10), r(6)],
+            vec![r(7), r(14), r(35), r(21)],
+            vec![r(4), r(8), r(20), r(12)],
+        ];
+        let u_knots = vec![r(2), r(2), r(2), r(3), r(5), r(5), r(5)];
+        let v_knots = vec![r(7), r(7), r(7), r(11), r(11), r(11)];
+        let (nurbs, nurbs_face) =
+            nurbs_patch(2, 2, nurbs_controls, nurbs_weights, u_knots, v_knots).unwrap();
+        assert_eq!(
+            compare_reals(&nurbs.face_area(nurbs_face).unwrap(), &r(48)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let rebuilt_nurbs = crate::RawModel::from_json(&nurbs.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt_nurbs.face_area(nurbs_face).unwrap(), &r(48)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn tensor_patch_shell_identity_stitches_projectively_equal_boundaries() {
         assert_eq!(
             tensor_patch_shell(Vec::new()).unwrap_err(),

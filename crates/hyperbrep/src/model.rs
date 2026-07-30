@@ -4391,9 +4391,10 @@ impl Model {
                     .map_err(|_| GeometryError::ElementaryFunction)?
             }
             data @ (SurfaceExactData::RationalBezier { .. } | SurfaceExactData::Nurbs { .. }) => {
-                affine_tensor_surface_scale(&data)
+                return affine_tensor_face_area(&data, &parameter_area)
                     .map_err(build_error_geometry)?
-                    .ok_or(GeometryError::UnsupportedMeasurement)?
+                    .ok_or(GeometryError::UnsupportedMeasurement)
+                    .map_err(QueryError::from);
             }
             _ => return Err(GeometryError::UnsupportedMeasurement.into()),
         };
@@ -15501,15 +15502,44 @@ fn rational_bezier_weights_proportional(
     Ok(true)
 }
 
-fn affine_tensor_surface_scale(data: &SurfaceExactData) -> Result<Option<Real>, BuildError> {
+struct AffineTensorImage {
+    spatial_area: Real,
+    parameter_area: Real,
+    constant_weights: bool,
+    separable_weights: bool,
+}
+
+fn affine_tensor_face_area(
+    data: &SurfaceExactData,
+    parameter_double_area: &Real,
+) -> Result<Option<Real>, BuildError> {
+    let Some(image) = affine_tensor_image(data)? else {
+        return Ok(None);
+    };
+    if image.constant_weights {
+        let double_area = (parameter_double_area * image.spatial_area / image.parameter_area)
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        return Ok(Some(
+            (double_area / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?,
+        ));
+    }
+    if !image.separable_weights
+        || !real_values_equal(
+            parameter_double_area,
+            &(Real::from(2) * &image.parameter_area),
+        )?
+    {
+        return Ok(None);
+    }
+    Ok(Some(image.spatial_area))
+}
+
+fn affine_tensor_image(data: &SurfaceExactData) -> Result<Option<AffineTensorImage>, BuildError> {
     match data {
         SurfaceExactData::RationalBezier {
             control_points,
             weights,
         } => {
-            if !tensor_weights_are_constant(weights)? {
-                return Ok(None);
-            }
             let u_count = control_points[0].len();
             let v_count = control_points.len();
             let u_denominator =
@@ -15530,12 +15560,14 @@ fn affine_tensor_surface_scale(data: &SurfaceExactData) -> Result<Option<Real>, 
                         .map_err(|_| GeometryError::ProjectiveDivision.into())
                 })
                 .collect::<Result<Vec<_>, BuildError>>()?;
-            affine_control_net_scale(
+            affine_control_net_image(
                 control_points,
                 &u_coordinates,
                 &v_coordinates,
                 &Real::one(),
                 &Real::one(),
+                tensor_weights_are_constant(weights)?,
+                tensor_weights_are_separable(weights)?,
             )
         }
         SurfaceExactData::Nurbs {
@@ -15546,9 +15578,6 @@ fn affine_tensor_surface_scale(data: &SurfaceExactData) -> Result<Option<Real>, 
             u_knots,
             v_knots,
         } => {
-            if !tensor_weights_are_constant(weights)? {
-                return Ok(None);
-            }
             let u_count = control_points[0].len();
             let v_count = control_points.len();
             let u_start = &u_knots[*u_degree];
@@ -15561,12 +15590,14 @@ fn affine_tensor_surface_scale(data: &SurfaceExactData) -> Result<Option<Real>, 
                 normalized_greville_coordinates(u_count, *u_degree, u_knots, u_start, &u_span)?;
             let v_coordinates =
                 normalized_greville_coordinates(v_count, *v_degree, v_knots, v_start, &v_span)?;
-            affine_control_net_scale(
+            affine_control_net_image(
                 control_points,
                 &u_coordinates,
                 &v_coordinates,
                 &u_span,
                 &v_span,
+                tensor_weights_are_constant(weights)?,
+                tensor_weights_are_separable(weights)?,
             )
         }
         _ => Ok(None),
@@ -15580,6 +15611,28 @@ fn tensor_weights_are_constant(weights: &[Vec<Real>]) -> Result<bool, BuildError
     for weight in weights.iter().flatten().skip(1) {
         if !real_values_equal(weight, first)? {
             return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn tensor_weights_are_separable(weights: &[Vec<Real>]) -> Result<bool, BuildError> {
+    let Some(first_row) = weights.first() else {
+        return Ok(false);
+    };
+    let Some(first) = first_row.first() else {
+        return Ok(false);
+    };
+    if weights.iter().any(|row| row.len() != first_row.len()) {
+        return Ok(false);
+    }
+    // These cross-products prove that the positive weight matrix has rank one
+    // without choosing a potentially expression-expanding quotient.
+    for row in weights.iter().skip(1) {
+        for (weight, first_row_weight) in row.iter().zip(first_row) {
+            if !real_values_equal(&(weight * first), &(&row[0] * first_row_weight))? {
+                return Ok(false);
+            }
         }
     }
     Ok(true)
@@ -15605,13 +15658,15 @@ fn normalized_greville_coordinates(
         .collect()
 }
 
-fn affine_control_net_scale(
+fn affine_control_net_image(
     control_points: &[Vec<Point3>],
     u_coordinates: &[Real],
     v_coordinates: &[Real],
     u_parameter_span: &Real,
     v_parameter_span: &Real,
-) -> Result<Option<Real>, BuildError> {
+    constant_weights: bool,
+    separable_weights: bool,
+) -> Result<Option<AffineTensorImage>, BuildError> {
     let origin = &control_points[0][0];
     let u = &control_points[0][control_points[0].len() - 1] - origin;
     let v = &control_points[control_points.len() - 1][0] - origin;
@@ -15629,13 +15684,15 @@ fn affine_control_net_scale(
             }
         }
     }
-    let parameter_area = u_parameter_span * v_parameter_span;
     let spatial_area = cross_squared
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
-    Ok(Some(
-        (spatial_area / parameter_area).map_err(|_| GeometryError::ProjectiveDivision)?,
-    ))
+    Ok(Some(AffineTensorImage {
+        spatial_area,
+        parameter_area: u_parameter_span * v_parameter_span,
+        constant_weights,
+        separable_weights,
+    }))
 }
 
 fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> Result<Vector3, BuildError> {

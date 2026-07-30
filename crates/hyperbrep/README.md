@@ -86,8 +86,10 @@ The clean-break implementation currently provides:
 - validated open-shell `builder::{rational_bezier_patch, nurbs_patch}`
   constructors with native spline boundary curves and exact parameter maps;
 - exact face area for affine-image rational Bézier and NURBS tensor patches,
-  certified from constant projective weights and the complete
-  Bernstein/Greville control lattice without tessellation;
+  certified from the complete Bernstein/Greville control lattice without
+  tessellation; constant weights support arbitrary validated trims, while a
+  rank-one positive weight matrix supports a complete patch through its two
+  independent exact rational axis reparameterizations;
 - `builder::tensor_patch_shell` for mixed collections of exact rational
   Bézier/NURBS patch specifications; complete projectively identical
   boundaries are identity-stitched across faces, including reversed traversal
