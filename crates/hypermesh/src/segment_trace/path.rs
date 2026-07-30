@@ -33,7 +33,7 @@ use crate::geometry::{
 use crate::halfspace::aabb_core_halfspaces;
 use crate::polygon::{ApproxBounds, ConvexPolygon};
 use crate::predicate::classify_point_decision;
-use crate::winding::WindingNumberVector;
+use crate::winding::{WindingNumberVector, apply_transition_in_place};
 use hyperlattice::{Point3, Real, intersect_three_planes};
 use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3, Sign, classify_plane_aabb3_report};
 use hyperreal::Rational;
@@ -271,6 +271,7 @@ pub fn trace_axis_segment(
     start_wnv: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<MeshOutcome<TraceAxisSegmentResult>> {
+    validate_polygon_winding_dimensions(start_wnv, polygons)?;
     let decisions = DecisionContext::new(context);
     let traced =
         trace_axis_segment_ignoring_mesh(&decisions, start, end, axis, start_wnv, polygons, None)?;
@@ -400,7 +401,7 @@ pub(super) fn trace_axis_segment_ignoring_mesh(
     sort_crossing_events(decisions, &mut accepted, axis, dir_sign)?;
 
     for event in accepted {
-        apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
+        apply_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
     }
 
     Ok(TraceAxisSegmentResult {
@@ -509,9 +510,27 @@ pub fn trace_segment(
     winding: &[i32],
     polygons: &[ConvexPolygon],
 ) -> HypermeshResult<MeshOutcome<WindingNumberVector>> {
+    validate_polygon_winding_dimensions(winding, polygons)?;
     let decisions = DecisionContext::new(context);
     let winding = trace_segment_decision(&decisions, start, end, winding, polygons)?;
     Ok(decisions.finish(winding))
+}
+
+fn validate_polygon_winding_dimensions(
+    winding: &[i32],
+    polygons: &[ConvexPolygon],
+) -> HypermeshResult<()> {
+    if let Some(actual) = polygons
+        .iter()
+        .map(|polygon| polygon.delta_w.len())
+        .find(|actual| *actual != winding.len())
+    {
+        return Err(HypermeshError::WindingDimensionMismatch {
+            expected: winding.len(),
+            actual,
+        });
+    }
+    Ok(())
 }
 
 pub(crate) fn trace_segment_decision(
@@ -2120,20 +2139,6 @@ pub(super) fn retryable_trace<T>(result: HypermeshResult<T>) -> HypermeshResult<
     }
 }
 
-pub(super) fn apply_winding_transition_in_place(
-    winding: &mut [i32],
-    sign: i32,
-    delta_w: &[i32],
-) -> HypermeshResult<()> {
-    if winding.len() != delta_w.len() {
-        return Err(HypermeshError::UnknownClassification);
-    }
-    for (value, delta) in winding.iter_mut().zip(delta_w) {
-        *value += sign * *delta;
-    }
-    Ok(())
-}
-
 pub(super) fn trace_direct_segment(
     decisions: &DecisionContext,
     start: &Point3,
@@ -2272,7 +2277,7 @@ pub(super) fn trace_direct_segment(
     sort_crossing_events(decisions, &mut accepted, sort_axis, dir_sign)?;
 
     for event in accepted {
-        apply_winding_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
+        apply_transition_in_place(&mut winding, event.cross_sign, &event.delta_w)?;
     }
 
     Ok(TraceAxisSegmentResult {

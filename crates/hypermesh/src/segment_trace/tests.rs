@@ -93,13 +93,18 @@ fn trace_axis_segment_rejects_transition_dimension_mismatch() {
 
     assert_eq!(
         approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0, 0], &[wall]),
-        Err(HypermeshError::UnknownClassification)
+        Err(HypermeshError::WindingDimensionMismatch {
+            expected: 2,
+            actual: 1,
+        })
     );
 }
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_unmatched_edge_crossing() {
-    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    let mut wall =
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, 1, 0), &p(1, 0, 1), 0, 0);
+    wall.delta_w = vec![0];
 
     assert_eq!(
         approximate_trace_axis_segment(&p(0, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
@@ -168,7 +173,9 @@ fn trace_axis_segment_rejects_duplicated_vertex_crossing() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
-    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let mut wall =
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    wall.delta_w = vec![0];
 
     assert_eq!(
         approximate_trace_axis_segment(&p(1, 0, 0), &p(2, 0, 0), 0, &[0], &[wall]),
@@ -178,7 +185,9 @@ fn trace_axis_segment_reports_unknown_for_endpoint_surface_contact() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
-    let wall = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let mut wall =
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    wall.delta_w = vec![0];
 
     assert_eq!(
         approximate_trace_axis_segment(&p(1, 0, 0), &p(1, 0, 0), 0, &[0], &[wall]),
@@ -188,7 +197,9 @@ fn trace_axis_segment_reports_unknown_for_zero_length_surface_contact() {
 
 #[test]
 fn trace_axis_segment_reports_unknown_when_ray_lies_in_parallel_support_plane() {
-    let wall = approximate_convex_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
+    let mut wall =
+        approximate_convex_triangle(&p(0, -1, 0), &p(2, -1, 0), &p(1, 1, 0), 0, 0);
+    wall.delta_w = vec![0];
 
     assert_eq!(
         approximate_trace_axis_segment(&p(-1, 0, 0), &p(3, 0, 0), 0, &[0], &[wall]),
@@ -5198,7 +5209,9 @@ fn trace_axis_ordered_paths_reports_unknown_for_zero_length_surface_contact() {
 fn trace_axis_ordered_paths_try_later_ordering_after_endpoint_surface_contact() {
     let start = p(0, 0, 0);
     let end = p(1, 1, 0);
-    let polygon = approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    let mut polygon =
+        approximate_convex_triangle(&p(1, 0, 0), &p(1, -1, 1), &p(1, 1, 1), 0, 0);
+    polygon.delta_w = vec![0];
 
     let winding = trace_axis_ordered_paths_with_queries(
         &crate::test_support::approximate_decisions(),

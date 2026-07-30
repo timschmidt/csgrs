@@ -158,22 +158,39 @@ pub fn propagate_wnv(
 }
 
 fn apply_transition(w: &[i32], sign: i32, delta_w: &[i32]) -> HypermeshResult<WindingNumberVector> {
-    if w.len() != delta_w.len() {
+    let mut result = w.to_vec();
+    apply_transition_in_place(&mut result, sign, delta_w)?;
+    Ok(result)
+}
+
+pub(crate) fn apply_transition_in_place(
+    winding: &mut [i32],
+    sign: i32,
+    delta_w: &[i32],
+) -> HypermeshResult<()> {
+    if winding.len() != delta_w.len() {
         return Err(HypermeshError::WindingDimensionMismatch {
-            expected: w.len(),
+            expected: winding.len(),
             actual: delta_w.len(),
         });
     }
-    let mut result = w.to_vec();
-    for (value, delta) in result.iter_mut().zip(delta_w) {
-        *value = value
-            .checked_add(
-                sign.checked_mul(*delta)
-                    .ok_or(HypermeshError::WindingOverflow)?,
-            )
+    for (value, delta) in winding.iter().zip(delta_w) {
+        let signed_delta = sign
+            .checked_mul(*delta)
+            .ok_or(HypermeshError::WindingOverflow)?;
+        value
+            .checked_add(signed_delta)
             .ok_or(HypermeshError::WindingOverflow)?;
     }
-    Ok(result)
+    for (value, delta) in winding.iter_mut().zip(delta_w) {
+        let signed_delta = sign
+            .checked_mul(*delta)
+            .expect("transition arithmetic was validated above");
+        *value = value
+            .checked_add(signed_delta)
+            .expect("transition arithmetic was validated above");
+    }
+    Ok(())
 }
 
 fn remaining_transition_abs_spans(
@@ -265,6 +282,16 @@ mod tests {
             propagate_wnv(&[0], -1, &[i32::MIN]),
             Err(HypermeshError::WindingOverflow)
         );
+    }
+
+    #[test]
+    fn in_place_transition_reports_checked_overflow_without_wrapping() {
+        let mut winding = [7, i32::MAX];
+        assert_eq!(
+            apply_transition_in_place(&mut winding, 1, &[1, 1]),
+            Err(HypermeshError::WindingOverflow)
+        );
+        assert_eq!(winding, [7, i32::MAX]);
     }
 
     #[test]

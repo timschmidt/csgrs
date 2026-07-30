@@ -2975,9 +2975,7 @@ fn certify_bsp_leaf_against_candidate(
                     } else {
                         -1
                     };
-                for (value, delta) in delta_w.iter_mut().zip(&other.delta_w) {
-                    *value += sign * *delta;
-                }
+                crate::winding::apply_transition_in_place(delta_w, sign, &other.delta_w)?;
             }
         }
     }

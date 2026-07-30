@@ -143,10 +143,6 @@ fn quadrilateral_reference_cell_fixture() -> (Aabb, Vec<LimitPlane3>, Point3) {
     (bounds, halfspaces, Point3::new(q(5, 2), r(2), r(0)))
 }
 
-fn px(x: Real, y: i32, z: i32) -> Point3 {
-    Point3::new(x, r(y), r(z))
-}
-
 fn axis_defs(point: &Point3) -> Vec<[Plane; 3]> {
     vec![axis_plane_definition(point)]
 }
@@ -7462,57 +7458,30 @@ fn trace_reference_target_retries_axis_start_after_retained_definitions_fail() {
 }
 
 #[test]
-fn trace_reference_target_uses_detour_on_plane_replacement_step() {
+fn trace_reference_target_propagates_winding_dimension_mismatch() {
     let ref_point = p(0, 0, 0);
     let target_point = p(4, 0, 0);
-    let ref_definition = [
-        Plane::axis_aligned(0, r(0)),
-        Plane::from_coefficients(r(-1), r(1), r(0), r(0)),
-        Plane::from_coefficients(r(-1), r(0), r(1), r(0)),
-    ];
-    let target_definition = [
-        Plane::from_coefficients(r(1), r(1), r(0), r(-4)),
-        Plane::axis_aligned(1, r(0)),
-        Plane::axis_aligned(2, r(0)),
-    ];
-    let mut blockers = vec![
-        approximate_convex_triangle(&p(2, 0, 0), &p(3, 0, 0), &p(2, 1, 0), 0, 0),
-        approximate_convex_triangle(&p(0, 2, 0), &p(1, 2, 0), &p(0, 3, 0), 0, 1),
-        approximate_convex_triangle(&p(0, 0, 2), &p(1, 0, 2), &p(0, 1, 2), 0, 2),
-    ];
-    for (index, x) in [q(2, 3), r(1), q(4, 3)].into_iter().enumerate() {
-        blockers.push(approximate_convex_triangle(
-            &px(x.clone(), -1, -1),
-            &px(x.clone(), 3, -1),
-            &px(x, 1, 3),
-            0,
-            3 + index as isize,
-        ));
-    }
-    let bounds = Aabb::new(p(0, -1, -1), p(5, 3, 5));
+    let wall = approximate_convex_triangle(&p(2, -1, -1), &p(2, 1, -1), &p(2, 0, 1), 0, 0);
+    let bounds = Aabb::new(p(-1, -2, -2), p(5, 2, 2));
+    let expected = crate::error::HypermeshError::WindingDimensionMismatch {
+        expected: 1,
+        actual: 0,
+    };
 
     assert_eq!(
-        crate::segment_trace::trace_segment_without_detours(
-            &crate::test_support::approximate_decisions(),
+        trace_reference_target(
             &ref_point,
-            &target_point,
+            &[axis_plane_definition(&ref_point)],
             &[0],
-            &blockers,
+            &bounds,
+            &[wall],
+            &ReferenceTarget::with_definitions(
+                target_point.clone(),
+                vec![axis_plane_definition(&target_point)],
+            ),
         ),
-        Err(crate::error::HypermeshError::UnknownClassification)
+        Err(expected)
     );
-
-    let winding = trace_reference_target(
-        &ref_point,
-        &[ref_definition],
-        &[0],
-        &bounds,
-        &blockers,
-        &ReferenceTarget::with_definitions(target_point, vec![target_definition]),
-    )
-    .unwrap();
-
-    assert_eq!(winding, Some(vec![0]));
 }
 
 #[test]

@@ -8,6 +8,7 @@ mod probe_geometry;
 mod probe_reachability;
 mod witness;
 
+pub(crate) use crate::winding::apply_transition_in_place as apply_winding_transition_in_place;
 #[cfg(test)]
 use halfspace_witness::*;
 use halfspace_witness::{
@@ -45,11 +46,10 @@ use path::*;
 use path::{
     AXIS_ORDERINGS, DetourArrangementCellState, DetourPathPointBuckets,
     InteriorBoxDetourTargetBatchCache, aabb_from_axis_intervals,
-    adapt_plane_replacement_vertex_to_trace_bounds, apply_winding_transition_in_place,
-    axis_plane_defined_point, cached_affine_from_planes_with, cached_detour_target_family,
-    cached_detour_target_family_with, cached_interior_box_axis_intervals_with_surface_queries,
-    cached_strict_aabb_target_families, definition_families_match_as_sets,
-    definition_planes_match_as_sets, detour_arrangement_cell,
+    adapt_plane_replacement_vertex_to_trace_bounds, axis_plane_defined_point,
+    cached_affine_from_planes_with, cached_detour_target_family, cached_detour_target_family_with,
+    cached_interior_box_axis_intervals_with_surface_queries, cached_strict_aabb_target_families,
+    definition_families_match_as_sets, definition_planes_match_as_sets, detour_arrangement_cell,
     detour_arrangement_cell_state_is_dominated, detour_arrangement_planes,
     detour_target_family_result_from_targets, endpoint_definition_family,
     evaluate_strict_aabb_target_families_with_direct_ranking, first_changed_axis,
