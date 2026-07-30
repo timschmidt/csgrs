@@ -192,11 +192,16 @@ not be replaced with an epsilon comparison.
 | Constants and exact input | `Computable::zero`, `one`, `pi`, `tau`, `e`, `rational` |
 | Expression nodes | `negate`, `inverse`, `square`, `multiply`, `add`, `sqrt`, `exp`, `expm1`, `ln`, trig and inverse/hyperbolic methods |
 | Approximation | `approx`, `approx_signal` |
-| Decisions | `structural_facts`, `zero_status`, `sign_until`, `sign`, `try_compare_to`, `compare_absolute` |
+| Decisions | `structural_facts`, `zero_status`, `sign_until`, `try_compare_to_until`, `try_compare_to` |
 | Cancellation | `abort` |
 
 `Computable::approx(p)` returns a scaled integer approximation at binary
 precision `p`; it does not promise a fixed decimal digit count.
+`Computable::sign` is a compatibility best-effort query whose `NoSign` result
+also means unresolved, and `compare_absolute` reports tolerance overlap as
+`Equal`; neither is an exact decision API. Partial-function expression
+constructors such as `inverse`, `sqrt`, and `ln` assume their mathematical
+domains. Prefer the checked `Real` operations at external decision boundaries.
 
 ### Advanced exact reducers
 

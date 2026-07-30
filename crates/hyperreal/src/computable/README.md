@@ -376,7 +376,8 @@ flowchart TD
 
 Symbolic stage 2 shows inverse-function reduction checks. These are not
 floating-point identities; `compare_absolute(..., -64)` asks the computable
-values to refine enough to prove equality at that tolerance:
+values to refine enough to establish tolerance overlap. Its `Equal` result is
+not an exact equality certificate:
 
 ```mermaid
 flowchart TD

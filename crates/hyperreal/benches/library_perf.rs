@@ -82,15 +82,25 @@ const LIBRARY_PERF_GROUPS: &[BenchGroupDoc] = &[
                 name: "irrational_17",
                 description: "Raises sqrt(3) to the 17th power with symbolic simplification.",
             },
+            BenchDoc {
+                name: "large_exact_lazy_20000",
+                description: "Routes an oversized exact rational power to its bounded lazy exact representation.",
+            },
         ],
     },
     BenchGroupDoc {
         name: "rational_powi",
         description: "Integer exponentiation for `Rational`.",
-        benches: &[BenchDoc {
-            name: "exact_17",
-            description: "Raises a rational value to the 17th power.",
-        }],
+        benches: &[
+            BenchDoc {
+                name: "exact_17",
+                description: "Raises a rational value to the 17th power.",
+            },
+            BenchDoc {
+                name: "oversized_20000_exhausted",
+                description: "Rejects eager materialization before an oversized rational power allocates its result.",
+            },
+        ],
     },
     BenchGroupDoc {
         name: "real_exact_trig",
@@ -837,6 +847,7 @@ fn bench_real_powi(c: &mut Criterion) {
     let exact = Real::new(Rational::fraction(7, 5).unwrap());
     let irrational = Real::new(Rational::new(3)).sqrt().unwrap();
     let exp = BigInt::from(17_u8);
+    let large_exp = BigInt::from(20_000_u32);
     let negative_one = BigInt::from(-1_i8);
 
     group.bench_function("exact_17", |b| {
@@ -860,6 +871,13 @@ fn bench_real_powi(c: &mut Criterion) {
             BatchSize::SmallInput,
         )
     });
+    group.bench_function("large_exact_lazy_20000", |b| {
+        b.iter_batched(
+            || Real::from(10_u8),
+            |value| black_box(value.powi(large_exp.clone()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
     group.bench_function("pi_negative_one", |b| {
         b.iter_batched(
             Real::pi,
@@ -875,11 +893,19 @@ fn bench_rational_powi(c: &mut Criterion) {
     let mut group = c.benchmark_group("rational_powi");
     let value = Rational::fraction(7, 5).unwrap();
     let exp = BigInt::from(17_u8);
+    let large_exp = BigInt::from(20_000_u32);
 
     group.bench_function("exact_17", |b| {
         b.iter_batched(
             || value.clone(),
             |value| black_box(value.powi(exp.clone()).unwrap()),
+            BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("oversized_20000_exhausted", |b| {
+        b.iter_batched(
+            || value.clone(),
+            |value| black_box(value.powi(large_exp.clone()).unwrap_err()),
             BatchSize::SmallInput,
         )
     });

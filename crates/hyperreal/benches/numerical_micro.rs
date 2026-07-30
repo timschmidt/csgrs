@@ -111,11 +111,15 @@ const NUMERICAL_MICRO_GROUPS: &[BenchGroupDoc] = &[
             },
             BenchDoc {
                 name: "compare_absolute_exact_rational",
-                description: "Compares absolute values of exact rationals.",
+                description: "Compares exact rationals using an absolute error tolerance.",
             },
             BenchDoc {
                 name: "compare_absolute_exact_rational_same_numerator",
-                description: "Compares exact rational magnitudes with matching numerators.",
+                description: "Compares exact rationals with matching numerator magnitudes.",
+            },
+            BenchDoc {
+                name: "compare_absolute_mixed_exact_leaf_kinds",
+                description: "Compares opposite-sign exact values stored as `One` and `Ratio` leaves.",
             },
             BenchDoc {
                 name: "compare_absolute_dominant_add",
@@ -836,6 +840,11 @@ fn bench_computable_compare(c: &mut Criterion) {
     );
     group.bench_function("compare_absolute_exact_rational_same_numerator", |b| {
         b.iter(|| black_box(same_num_left.compare_absolute(&same_num_right, -40)))
+    });
+    let negative_large =
+        Computable::rational(Rational::fraction(-100, 3).expect("three is nonzero"));
+    group.bench_function("compare_absolute_mixed_exact_leaf_kinds", |b| {
+        b.iter(|| black_box(Computable::one().compare_absolute(&negative_large, -40)))
     });
 
     let big = Computable::pi();

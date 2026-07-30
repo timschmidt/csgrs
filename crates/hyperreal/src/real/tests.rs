@@ -1,6 +1,8 @@
 #[cfg(test)]
 #[allow(clippy::module_inception)]
 mod tests {
+    use core::cmp::Ordering;
+
     use crate::real::arithmetic::curve;
     use crate::{
         CertifiedRealEquality, CertifiedRealOrdering, CertifiedRealSign, DomainStatus,
@@ -1097,6 +1099,28 @@ mod tests {
     }
 
     #[test]
+    fn certified_cmp_until_uses_operand_sign_and_magnitude_facts() {
+        let pi = Real::pi();
+        let minus_pi = -pi.clone();
+        assert_eq!(
+            minus_pi.certified_cmp_until(&pi, 0),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                certificate: RealOrderingCertificate::StructuralFacts,
+            }
+        );
+
+        let scaled_pi = &pi * &Real::from(1_u64 << 40);
+        assert_eq!(
+            pi.certified_cmp_until(&scaled_pi, 0),
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                certificate: RealOrderingCertificate::StructuralFacts,
+            }
+        );
+    }
+
+    #[test]
     fn partial_ord_uses_certified_real_comparison() {
         use core::cmp::Ordering;
 
@@ -1138,6 +1162,23 @@ mod tests {
         assert_eq!(Real::zero().powi_i64(0), Err(Problem::NotANumber));
         assert_eq!(Real::zero().powi_i64(-2), Err(Problem::NotANumber));
         assert_eq!(Real::from(-1).powi_i64(i64::MIN), Ok(Real::one()));
+    }
+
+    #[test]
+    fn large_rational_powers_use_the_exact_lazy_fallback() {
+        let exponent = 20_000_i64;
+        let via_i64 = Real::from(10).powi_i64(exponent).unwrap();
+        let via_bigint = Real::from(10).powi(num::BigInt::from(exponent)).unwrap();
+
+        assert!(via_i64.computable.is_some());
+        assert!(via_bigint.computable.is_some());
+        assert_eq!(
+            via_i64.certified_cmp_until(&via_bigint, -512),
+            CertifiedRealOrdering::Known {
+                ordering: core::cmp::Ordering::Equal,
+                certificate: RealOrderingCertificate::StructuralEquality,
+            }
+        );
     }
 
     #[test]
@@ -4191,6 +4232,48 @@ mod tests {
             .atan2(Computable::one().negate())
             .approx(-2600);
         assert_eq!(got, expected);
+    }
+
+    #[test]
+    fn unresolved_opaque_sign_is_not_treated_as_exact_zero() {
+        use crate::Computable;
+
+        let tiny = Rational::from_bigint_fraction(
+            num::BigInt::from(1_u8),
+            num::BigUint::from(1_u8) << 5000,
+        )
+        .unwrap();
+        let left = Computable::pi().add(Computable::rational(&tiny + &tiny));
+        let right = Computable::pi().add(Computable::rational(tiny));
+        let opaque_positive = left.add(right.negate());
+
+        assert_eq!(opaque_positive.sign_until(-4096), None);
+        assert_eq!(opaque_positive.sign(), num::bigint::Sign::NoSign);
+        assert_eq!(
+            opaque_positive.try_compare_to_until(&Computable::zero(), -4096),
+            None
+        );
+        assert!(
+            opaque_positive
+                .clone()
+                .try_atan2_until(Computable::one().negate(), -4096)
+                .is_none()
+        );
+
+        let value = Real::irrational_from_computable(opaque_positive);
+        assert_eq!(value.best_sign(), num::bigint::Sign::NoSign);
+        assert_eq!(value.clone().sqrt(), Err(Problem::Exhausted));
+        assert_eq!(value.clone().inverse(), Err(Problem::UnknownZero));
+        assert_eq!(&Real::one() / &value, Err(Problem::UnknownZero));
+        assert_eq!(
+            value.clone().powi(num::BigInt::from(0_u8)),
+            Err(Problem::UnknownZero)
+        );
+        assert_eq!(
+            (Real::one() + value.clone()).acos(),
+            Err(Problem::Exhausted)
+        );
+        assert_eq!(value.try_atan2(-Real::one()), Err(Problem::Exhausted));
     }
 
     #[test]

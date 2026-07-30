@@ -6,9 +6,7 @@ enum CosPiRationalReduction {
 impl Real {
     /// Are two Reals definitely unequal?
     pub fn definitely_not_equal(&self, other: &Self) -> bool {
-        if let (Some(left), Some(right)) =
-            (self.exact_rational_ref(), other.exact_rational_ref())
-        {
+        if let (Some(left), Some(right)) = (self.exact_rational_ref(), other.exact_rational_ref()) {
             return left != right;
         }
 
@@ -22,7 +20,12 @@ impl Real {
     }
 
     /// Our best attempt to discern the [`Sign`] of this Real.
-    /// This will be accurate for trivial Rationals and many but not all other cases.
+    ///
+    /// This is accurate for trivial rationals and many, but not all, other
+    /// cases. In particular, [`Sign::NoSign`] means either exact zero or that
+    /// bounded refinement did not resolve an opaque computable value. Do not
+    /// use this method for domain, endpoint, equality, or quadrant decisions;
+    /// use the certificate-bearing predicate APIs instead.
     pub fn best_sign(&self) -> Sign {
         if !matches!(self.class, Irrational) {
             crate::trace_dispatch!("real", "best_sign", "symbolic-or-rational");
@@ -37,6 +40,44 @@ impl Real {
                 (Sign::Minus, Sign::Plus) => Sign::Minus,
                 (Sign::Minus, Sign::Minus) => Sign::Plus,
             }
+        }
+    }
+
+    /// Resolve a sign for an internal semantic branch without treating bounded
+    /// refinement failure as exact zero.
+    #[inline]
+    fn operation_sign(&self) -> Result<Sign, Problem> {
+        match self.certified_sign_until(Self::PARTIAL_CMP_MIN_PRECISION) {
+            CertifiedRealSign::Known { sign, .. } => Ok(num_sign_from_real(sign)),
+            CertifiedRealSign::Unknown { .. } => Err(Problem::Exhausted),
+        }
+    }
+
+    /// Resolve a sign when it is only needed to select an optimization.
+    ///
+    /// `None` must fall through to a branch-independent exact construction.
+    #[inline]
+    fn operation_sign_if_known(&self) -> Option<Sign> {
+        self.certified_sign_until(Self::PARTIAL_CMP_MIN_PRECISION)
+            .sign()
+            .map(num_sign_from_real)
+    }
+
+    /// Prove that a denominator is nonzero before constructing a reciprocal.
+    #[inline]
+    fn require_nonzero(&self) -> Result<(), Problem> {
+        match self.zero_status() {
+            ZeroKnowledge::Zero => return Err(Problem::DivideByZero),
+            ZeroKnowledge::NonZero => return Ok(()),
+            ZeroKnowledge::Unknown => {}
+        }
+        match self.certified_sign_until(Self::PARTIAL_CMP_MIN_PRECISION) {
+            CertifiedRealSign::Known {
+                sign: RealSign::Zero,
+                ..
+            } => Err(Problem::DivideByZero),
+            CertifiedRealSign::Known { .. } => Ok(()),
+            CertifiedRealSign::Unknown { .. } => Err(Problem::UnknownZero),
         }
     }
 
@@ -59,7 +100,7 @@ impl Real {
         }
     }
 
-    fn irrational_from_computable(computable: Computable) -> Self {
+    pub(super) fn irrational_from_computable(computable: Computable) -> Self {
         Self {
             rational: Rational::one(),
             class: Irrational,
@@ -128,14 +169,18 @@ impl Real {
                 rational: Rational::new(-1),
                 class: SinPi(reduced),
                 computable: Some(computable),
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
             }
         } else {
             Self {
                 rational: Rational::one(),
                 class: SinPi(reduced),
                 computable: Some(computable),
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
             }
         }
     }
@@ -146,11 +191,7 @@ impl Real {
                 .integer_magnitude()
                 .expect("integer rational has integer magnitude")
                 .bit(0);
-            return CosPiRationalReduction::Exact(if odd {
-                -Self::one()
-            } else {
-                Self::one()
-            });
+            return CosPiRationalReduction::Exact(if odd { -Self::one() } else { Self::one() });
         }
 
         if rational.sign() == Sign::Plus && rational < *rationals::HALF {
@@ -204,11 +245,7 @@ impl Real {
         };
 
         if let Some(exact) = exact {
-            return CosPiRationalReduction::Exact(if negate {
-                exact.neg()
-            } else {
-                exact
-            });
+            return CosPiRationalReduction::Exact(if negate { exact.neg() } else { exact });
         }
 
         CosPiRationalReduction::SinPi {
@@ -253,7 +290,9 @@ impl Real {
                         rational: self.rational.inverse()?,
                         class: One,
                         computable: None,
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 Pi => {
@@ -262,7 +301,9 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class: PiInv,
                         computable: Some(Computable::pi_inverse_constant()),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 PiInv => {
@@ -271,15 +312,13 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class: Pi,
                         computable: Some(Computable::pi()),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 Sqrt(sqrt) => {
-                    crate::trace_dispatch!(
-                        "real",
-                        "inverse",
-                        "prechecked-sqrt-rational-radical"
-                    );
+                    crate::trace_dispatch!("real", "inverse", "prechecked-sqrt-rational-radical");
                     let rational = if self.rational.is_one() {
                         sqrt.clone().inverse()?
                     } else {
@@ -289,7 +328,9 @@ impl Real {
                         rational,
                         class: self.class,
                         computable: self.computable,
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 ConstProductSqrt(product) => {
@@ -309,16 +350,15 @@ impl Real {
                         rational,
                         class,
                         computable: Some(computable),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 _ => {}
             }
         }
-        if self.definitely_zero() {
-            crate::trace_dispatch!("real", "inverse", "div-by-zero");
-            return Err(Problem::DivideByZero);
-        }
+        self.require_nonzero()?;
         match &self.class {
             One => {
                 // Rational reciprocals remain exact.
@@ -327,7 +367,9 @@ impl Real {
                     rational: self.rational.inverse()?,
                     class: One,
                     computable: None,
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             Sqrt(sqrt) => {
@@ -349,7 +391,9 @@ impl Real {
                         rational,
                         class: self.class,
                         computable: self.computable,
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
             }
@@ -361,7 +405,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiInv,
                     computable: Some(Computable::pi_inverse_constant()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             PiInv => {
@@ -372,7 +418,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Pi,
                     computable: Some(Computable::pi()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             Exp(exp) => {
@@ -383,7 +431,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             PiExp(exp) => {
@@ -394,7 +444,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiInvExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             PiInvExp(exp) => {
@@ -404,7 +456,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 });
             }
             _ => (),
@@ -429,7 +483,9 @@ impl Real {
                 rational,
                 class,
                 computable: Some(computable),
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
             });
         }
         if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
@@ -442,7 +498,9 @@ impl Real {
                 rational: self.rational.inverse()?,
                 class,
                 computable: Some(computable),
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                    PrimitiveApproxCache::Empty,
+                ),
             });
         }
         crate::trace_dispatch!("real", "inverse", "generic");
@@ -464,7 +522,9 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class: One,
                         computable: None,
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 Pi => {
@@ -473,7 +533,9 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class: PiInv,
                         computable: Some(Computable::pi_inverse_constant()),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 PiInv => {
@@ -482,7 +544,9 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class: Pi,
                         computable: Some(Computable::pi()),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 Sqrt(sqrt) => {
@@ -500,7 +564,9 @@ impl Real {
                         rational,
                         class: self.class.clone(),
                         computable: self.computable.clone(),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 ConstProductSqrt(product) => {
@@ -520,16 +586,15 @@ impl Real {
                         rational,
                         class,
                         computable: Some(computable),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 _ => {}
             }
         }
-        if self.definitely_zero() {
-            crate::trace_dispatch!("real", "inverse_ref", "div-by-zero");
-            return Err(Problem::DivideByZero);
-        }
+        self.require_nonzero()?;
         match &self.class {
             One => {
                 // Borrowed one-inverse keeps exact rational form and no extra cache.
@@ -555,7 +620,9 @@ impl Real {
                         rational,
                         class: self.class.clone(),
                         computable: self.computable.clone(),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 crate::trace_dispatch!("real", "inverse_ref", "sqrt-generic");
@@ -563,7 +630,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
                     computable: Some(Computable::inverse(self.computable_clone())),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             Pi => {
@@ -574,7 +643,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiInv,
                     computable: Some(Computable::pi_inverse_constant()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             PiInv => {
@@ -583,7 +654,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Pi,
                     computable: Some(Computable::pi()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             Exp(exp) => {
@@ -595,7 +668,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Exp(exp.clone()),
                     computable: Some(Computable::exp_rational(exp)),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             PiExp(exp) => {
@@ -604,7 +679,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiInvExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             PiInvExp(exp) => {
@@ -613,7 +690,9 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: PiExp(exp.clone().neg()),
                     computable: Some(self.computable_clone().inverse()),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
             _ => {
@@ -636,7 +715,9 @@ impl Real {
                         rational,
                         class,
                         computable: Some(computable),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 if let Some((pi_power, exp_power)) = self.class.const_product_parts() {
@@ -648,7 +729,9 @@ impl Real {
                         rational: self.rational.clone().inverse()?,
                         class,
                         computable: Some(computable),
-                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
                     });
                 }
                 crate::trace_dispatch!("real", "inverse_ref", "generic");
@@ -656,10 +739,39 @@ impl Real {
                     rational: self.rational.clone().inverse()?,
                     class: Irrational,
                     computable: Some(Computable::inverse(self.computable_clone())),
-                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+                    primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                        PrimitiveApproxCache::Empty,
+                    ),
                 })
             }
         }
     }
 
+    /// Construct the multiplicative inverse after an external predicate has
+    /// already decided that this value is nonzero.
+    ///
+    /// This is the low-level construction hook for policy owners such as
+    /// `hyperlimit`. It avoids repeating a potentially expensive bounded sign
+    /// refinement after the caller has retained an exact or policy-authorized
+    /// nonzero decision. A structurally zero value is still rejected, so an
+    /// accidentally stale caller decision cannot manufacture a reciprocal of
+    /// the canonical zero.
+    ///
+    /// Most callers should use `hyperlimit::reciprocal_real`, which performs
+    /// and preserves the centralized certainty decision.
+    pub fn inverse_ref_assuming_nonzero(&self) -> Result<Self, Problem> {
+        if self.has_zero_scale() {
+            return Err(Problem::DivideByZero);
+        }
+        if !matches!(self.class, Irrational) {
+            return self.inverse_ref();
+        }
+        crate::trace_dispatch!("real", "inverse_ref", "externally-certified-nonzero");
+        Ok(Self {
+            rational: self.rational.clone().inverse()?,
+            class: Irrational,
+            computable: Some(Computable::inverse(self.computable_clone())),
+            primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
+        })
+    }
 }

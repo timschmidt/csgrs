@@ -1,5 +1,6 @@
 pub type Precision = i32;
 const ATAN2_SIGN_REFINEMENT_FLOOR: Precision = -4096;
+const DEFAULT_COMPARE_REFINEMENT_FLOOR: Precision = -4096;
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub(crate) enum BoundCache {

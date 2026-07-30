@@ -116,6 +116,8 @@ pub enum RealOrderingCertificate {
     StructuralEquality,
     /// Both operands were exact rationals and compared as rationals.
     ExactRationalComparison,
+    /// Cheap structural sign or magnitude facts about the operands proved the ordering.
+    StructuralFacts,
     /// Cheap structural facts about `left - right` proved the ordering.
     DifferenceStructuralFacts,
     /// Bounded exact-real refinement of `left - right` proved the ordering.

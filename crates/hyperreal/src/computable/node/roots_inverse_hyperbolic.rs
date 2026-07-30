@@ -229,81 +229,93 @@ impl Computable {
     /// - `x < 0` and `self < 0`: returns `atan(self / x) - pi`.
     /// - axes return exact constants: `pi/2`, `-pi/2`, `pi`, or zero.
     /// - the origin `(0, 0)` returns zero, matching `f64::atan2`.
+    ///
+    /// # Panics
+    ///
+    /// Panics when the default bounded refinement cannot certify a required
+    /// axis or quadrant. Use [`Computable::try_atan2_until`] to preserve that
+    /// uncertainty.
+    #[inline]
     pub fn atan2(self, x: Computable) -> Computable {
+        self.try_atan2_until(x, ATAN2_SIGN_REFINEMENT_FLOOR).expect(
+            "atan2 quadrant could not be certified; use Computable::try_atan2_until to handle uncertainty",
+        )
+    }
+
+    /// Checked `atan2` construction with a caller-selected exact-refinement floor.
+    ///
+    /// Returns `None` rather than treating an unresolved sign as an axis value.
+    #[inline]
+    pub fn try_atan2_until(
+        self,
+        x: Computable,
+        min_precision: Precision,
+    ) -> Option<Computable> {
         let y_sign = self.structural_facts().sign.map(private_sign);
         let x_sign = x.structural_facts().sign.map(private_sign);
         match (y_sign, x_sign) {
             (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
                 crate::trace_dispatch!("computable", "atan2", "axis-zero-y");
-                return Self::zero();
+                return Some(Self::zero());
             }
             (Some(Sign::NoSign), Some(Sign::Minus)) => {
                 crate::trace_dispatch!("computable", "atan2", "axis-negative-x");
-                return Self::pi();
+                return Some(Self::pi());
             }
             (Some(Sign::Plus), Some(Sign::NoSign)) => {
                 crate::trace_dispatch!("computable", "atan2", "axis-positive-y");
-                return Self::pi().shift_right(1);
+                return Some(Self::pi().shift_right(1));
             }
             (Some(Sign::Minus), Some(Sign::NoSign)) => {
                 crate::trace_dispatch!("computable", "atan2", "axis-negative-y");
-                return Self::pi().shift_right(1).negate();
+                return Some(Self::pi().shift_right(1).negate());
             }
             _ => {}
         }
-        match (
-            y_sign.unwrap_or_else(|| self.sign()),
-            x_sign.unwrap_or_else(|| x.sign()),
-        ) {
-            (Sign::NoSign, Sign::Plus) => {
+
+        let x_sign = x_sign.or_else(|| x.sign_until(min_precision).map(private_sign));
+        match x_sign {
+            Some(Sign::Plus) => {
                 crate::trace_dispatch!("computable", "atan2", "quadrant-right");
-                return self.multiply(x.inverse()).atan();
+                Some(self.multiply(x.inverse()).atan())
             }
-            (Sign::NoSign, Sign::NoSign) => {
-                crate::trace_dispatch!("computable", "atan2", "unresolved-origin");
-                return Self::zero();
-            }
-            (Sign::NoSign, Sign::Minus) => {
-                let y_sign = self
-                    .sign_until(ATAN2_SIGN_REFINEMENT_FLOOR)
-                    .map(private_sign);
-                return match y_sign {
-                    Some(Sign::Minus) => {
-                        crate::trace_dispatch!("computable", "atan2", "quadrant-lower-left");
-                        self.multiply(x.inverse()).atan().add(Self::pi().negate())
-                    }
-                    Some(Sign::Plus) => {
-                        crate::trace_dispatch!("computable", "atan2", "quadrant-upper-left");
-                        self.multiply(x.inverse()).atan().add(Self::pi())
-                    }
-                    _ => {
+            Some(Sign::Minus) => {
+                let y_sign =
+                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                let base = self.multiply(x.inverse()).atan();
+                match y_sign {
+                    Sign::NoSign => {
                         crate::trace_dispatch!("computable", "atan2", "axis-negative-x");
-                        Self::pi()
+                        Some(Self::pi())
                     }
-                };
+                    Sign::Plus => {
+                        crate::trace_dispatch!("computable", "atan2", "quadrant-upper-left");
+                        Some(base.add(Self::pi()))
+                    }
+                    Sign::Minus => {
+                        crate::trace_dispatch!("computable", "atan2", "quadrant-lower-left");
+                        Some(base.add(Self::pi().negate()))
+                    }
+                }
             }
-            (Sign::Plus, Sign::NoSign) => {
+            Some(Sign::NoSign) => {
+                let y_sign =
+                    y_sign.or_else(|| self.sign_until(min_precision).map(private_sign))?;
+                match y_sign {
+                    Sign::NoSign => Some(Self::zero()),
+                    Sign::Plus => Some(Self::pi().shift_right(1)),
+                    Sign::Minus => Some(Self::pi().shift_right(1).negate()),
+                }
+            }
+            None if y_sign == Some(Sign::Plus) => {
                 crate::trace_dispatch!("computable", "atan2", "half-angle-positive-y");
-                return Self::atan2_half_angle(self, x);
+                Some(Self::atan2_half_angle(self, x))
             }
-            (Sign::Minus, Sign::NoSign) => {
+            None if y_sign == Some(Sign::Minus) => {
                 crate::trace_dispatch!("computable", "atan2", "half-angle-negative-y");
-                return Self::atan2_half_angle(self, x);
+                Some(Self::atan2_half_angle(self, x))
             }
-            _ => {}
-        }
-        let x_sign = x_sign.unwrap_or_else(|| x.sign());
-        let y_sign = y_sign.unwrap_or_else(|| self.sign());
-        let base = self.multiply(x.inverse()).atan();
-        if x_sign == Sign::Plus {
-            crate::trace_dispatch!("computable", "atan2", "quadrant-right");
-            base
-        } else if y_sign == Sign::Plus {
-            crate::trace_dispatch!("computable", "atan2", "quadrant-upper-left");
-            base.add(Self::pi())
-        } else {
-            crate::trace_dispatch!("computable", "atan2", "quadrant-lower-left");
-            base.add(Self::pi().negate())
+            None => None,
         }
     }
 

@@ -49,11 +49,16 @@ impl Real {
         let known_safe_subwindow = Self::normal_quantile_inside_safe_subwindow(&cdf);
         let folded = cdf.fold();
         if !known_safe_subwindow {
-            if folded.compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE)
-                != Ordering::Less
-            {
-                crate::trace_dispatch!("real", trace_name, "domain-computable-one-or-more");
-                return Err(Problem::NotANumber);
+            match folded.compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE) {
+                Ordering::Less => {}
+                Ordering::Greater => {
+                    crate::trace_dispatch!("real", trace_name, "domain-computable-one-or-more");
+                    return Err(Problem::NotANumber);
+                }
+                Ordering::Equal => {
+                    crate::trace_dispatch!("real", trace_name, "domain-computable-one-unresolved");
+                    return Err(Problem::Exhausted);
+                }
             }
             if folded.compare_absolute(&Self::pnorm_cap_lo(), Self::NORMAL_COMPARE_TOLERANCE)
                 != Ordering::Greater
@@ -138,7 +143,7 @@ impl Real {
     /// The square root of this Real, or a [`Problem`] if that's impossible,
     /// in particular Problem::SqrtNegative if this Real is negative.
     pub fn sqrt(self) -> Result<Real, Problem> {
-        match self.best_sign() {
+        match self.operation_sign()? {
             Sign::Minus => {
                 crate::trace_dispatch!("real", "sqrt", "domain-negative");
                 return Err(Problem::SqrtNegative);
@@ -265,7 +270,7 @@ impl Real {
             return Ok(Self::new(root));
         }
 
-        match self.best_sign() {
+        match self.operation_sign()? {
             Sign::NoSign => {
                 crate::trace_dispatch!("real", "root_n", "exact-zero");
                 Ok(Self::zero())
@@ -326,7 +331,7 @@ impl Real {
 
     /// The base 10 logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn log10(self) -> Result<Real, Problem> {
-        if self.best_sign() != Sign::Plus {
+        if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "log10", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
@@ -382,7 +387,7 @@ impl Real {
                 return Err(Problem::NotANumber);
             }
             None => {
-                if self.best_sign() != Sign::Plus {
+                if self.operation_sign()? != Sign::Plus {
                     crate::trace_dispatch!("real", "log2", "domain-not-positive");
                     return Err(Problem::NotANumber);
                 }
@@ -593,7 +598,7 @@ impl Real {
 
     /// The natural logarithm of this Real or Problem::NotANumber if this Real is negative.
     pub fn ln(self) -> Result<Real, Problem> {
-        if self.best_sign() != Sign::Plus {
+        if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "ln", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
@@ -651,14 +656,11 @@ impl Real {
                 Computable::rational(self.rational).ln_1p(),
             ));
         }
-        match self.best_sign() {
-            Sign::Plus => {}
-            Sign::Minus | Sign::NoSign => {
-                let one_plus = Self::one() + self.clone();
-                if one_plus.best_sign() != Sign::Plus {
-                    crate::trace_dispatch!("real", "ln_1p", "domain-one-plus-not-positive");
-                    return Err(Problem::NotANumber);
-                }
+        if self.structural_facts().sign != Some(RealSign::Positive) {
+            let one_plus = Self::one() + self.clone();
+            if one_plus.operation_sign()? != Sign::Plus {
+                crate::trace_dispatch!("real", "ln_1p", "domain-one-plus-not-positive");
+                return Err(Problem::NotANumber);
             }
         }
 
@@ -808,13 +810,19 @@ impl Real {
             return Self::softplus_rational(self.rational);
         }
 
-        match self.best_sign() {
-            Sign::NoSign => constants::scaled_ln(2, 1).ok_or(Problem::Exhausted),
-            Sign::Minus => {
+        match self.operation_sign_if_known() {
+            None => {
+                crate::trace_dispatch!("real", "softplus", "unknown-sign-generic");
+                Ok(Self::irrational_from_computable(
+                    Computable::one().add(self.fold().exp()).ln(),
+                ))
+            }
+            Some(Sign::NoSign) => constants::scaled_ln(2, 1).ok_or(Problem::Exhausted),
+            Some(Sign::Minus) => {
                 crate::trace_dispatch!("real", "softplus", "negative-ln1p-exp");
                 Self::ln_1p_exp_tail(self)
             }
-            Sign::Plus => {
+            Some(Sign::Plus) => {
                 crate::trace_dispatch!("real", "softplus", "positive-max-plus-ln1p-tail");
                 let correction = Self::ln_1p_exp_tail(-self.clone())?;
                 Ok(self + correction)
@@ -844,11 +852,11 @@ impl Real {
             );
             return Ok(log_p - log_one_minus_p);
         }
-        if self.best_sign() != Sign::Plus {
+        if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "logit", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
-        if (Self::one() - self.clone()).best_sign() != Sign::Plus {
+        if (Self::one() - self.clone()).operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "logit", "domain-not-below-one");
             return Err(Problem::NotANumber);
         }
@@ -873,14 +881,21 @@ impl Real {
             return Ok(Self::sigmoid_rational(self.rational));
         }
 
-        match self.best_sign() {
-            Sign::NoSign => Ok(constants::half()),
-            Sign::Plus => {
+        match self.operation_sign_if_known() {
+            None => {
+                crate::trace_dispatch!("real", "sigmoid", "unknown-sign-generic");
+                let tail = self.fold().negate().exp();
+                Ok(Self::irrational_from_computable(
+                    Computable::one().add(tail).inverse(),
+                ))
+            }
+            Some(Sign::NoSign) => Ok(constants::half()),
+            Some(Sign::Plus) => {
                 crate::trace_dispatch!("real", "sigmoid", "positive-tail");
                 let tail = Self::exp_tail(-self)?;
                 Self::one() / (Self::one() + tail)
             }
-            Sign::Minus => {
+            Some(Sign::Minus) => {
                 crate::trace_dispatch!("real", "sigmoid", "negative-tail");
                 let tail = Self::exp_tail(self)?;
                 tail.clone() / (Self::one() + tail)
@@ -998,9 +1013,13 @@ impl Real {
                 let correction = (-tail).make_computable(Computable::ln_1p);
                 Ok(a + correction)
             }
-            CertifiedRealOrdering::Known { .. } | CertifiedRealOrdering::Unknown { .. } => {
+            CertifiedRealOrdering::Known { .. } => {
                 crate::trace_dispatch!("real", "logsubexp", "domain-not-left-greater");
                 Err(Problem::NotANumber)
+            }
+            CertifiedRealOrdering::Unknown { .. } => {
+                crate::trace_dispatch!("real", "logsubexp", "domain-order-unresolved");
+                Err(Problem::Exhausted)
             }
         }
     }
@@ -1132,6 +1151,11 @@ impl Real {
             return Ok(value);
         }
 
+        Self::normal_interval_ordered(lo, hi)
+    }
+
+    /// Construct an interval mass after the caller has certified `lo < hi`.
+    fn normal_interval_ordered(lo: &Self, hi: &Self) -> Result<Real, Problem> {
         Self::check_normal_window(lo, "normal_interval")?;
         Self::check_normal_window(hi, "normal_interval")?;
 
@@ -1167,7 +1191,7 @@ impl Real {
             } => Ok(None),
             CertifiedRealOrdering::Unknown { .. } => {
                 crate::trace_dispatch!("real", "normal_interval", "domain-unresolved-bounds");
-                Err(Problem::NotANumber)
+                Err(Problem::Exhausted)
             }
         }
     }
@@ -1191,18 +1215,26 @@ impl Real {
             crate::trace_dispatch!("real", "erfinv", "exact-zero");
             return Ok(Self::zero());
         }
-        if self.best_sign() == Sign::Minus {
+        if self.operation_sign_if_known() == Some(Sign::Minus) {
             crate::trace_dispatch!("real", "erfinv", "odd-symmetry");
             return Ok(-(-self).erfinv()?);
         }
-        if self
-            .clone()
-            .fold()
-            .compare_absolute(&Computable::one(), Self::NORMAL_COMPARE_TOLERANCE)
-            != Ordering::Less
+        match self
+            .abs()
+            .certified_cmp_until(&Self::one(), Self::NORMAL_COMPARE_TOLERANCE)
         {
-            crate::trace_dispatch!("real", "erfinv", "domain-outside-open-unit");
-            return Err(Problem::NotANumber);
+            CertifiedRealOrdering::Known {
+                ordering: Ordering::Less,
+                ..
+            } => {}
+            CertifiedRealOrdering::Known { .. } => {
+                crate::trace_dispatch!("real", "erfinv", "domain-outside-open-unit");
+                return Err(Problem::NotANumber);
+            }
+            CertifiedRealOrdering::Unknown { .. } => {
+                crate::trace_dispatch!("real", "erfinv", "domain-unit-bound-unresolved");
+                return Err(Problem::Exhausted);
+            }
         }
 
         if self.exact_rational().is_some() {
@@ -1222,7 +1254,7 @@ impl Real {
             crate::trace_dispatch!("real", "erfcinv", "exact-one-zero");
             return Ok(Self::zero());
         }
-        if self.best_sign() != Sign::Plus {
+        if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "erfcinv", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
@@ -1237,7 +1269,7 @@ impl Real {
             }
             CertifiedRealOrdering::Unknown { .. } => {
                 crate::trace_dispatch!("real", "erfcinv", "domain-unresolved-upper-bound");
-                return Err(Problem::NotANumber);
+                return Err(Problem::Exhausted);
             }
         }
 
@@ -1293,7 +1325,7 @@ impl Real {
     }
 
     fn check_normal_sigma(sigma: &Self, _name: &'static str) -> Result<(), Problem> {
-        if sigma.best_sign() != Sign::Plus {
+        if sigma.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", _name, "domain-nonpositive-sigma");
             return Err(Problem::NotANumber);
         }
@@ -1519,20 +1551,15 @@ impl Real {
         })
     }
 
-    fn normal_interval_components(lo: &Self, hi: &Self) -> Result<NormalIntervalComponents, Problem> {
-        let mass = Self::normal_interval(lo, hi)?;
-        Self::normal_interval_components_from_mass(lo, hi, mass)
-    }
-
     fn nondegenerate_normal_interval_components(
         lo: &Self,
         hi: &Self,
     ) -> Result<NormalIntervalComponents, Problem> {
-        let components = Self::normal_interval_components(lo, hi)?;
-        if components.mass.definitely_zero() {
+        if Self::normal_interval_degenerate_or_invalid(lo, hi)?.is_some() {
             return Err(Problem::NotANumber);
         }
-        Ok(components)
+        let mass = Self::normal_interval_ordered(lo, hi)?;
+        Self::normal_interval_components_from_mass(lo, hi, mass)
     }
 
     /// Mean of a standard normal truncated to [lo, hi].
@@ -1783,13 +1810,13 @@ impl Real {
     pub fn regularized_beta(a: &Self, b: &Self, x: &Self) -> Result<Real, Problem> {
         let a = Self::exact_positive_integer(a)?;
         let b = Self::exact_positive_integer(b)?;
-        match x.best_sign() {
+        match x.operation_sign()? {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => return Ok(Self::zero()),
             Sign::Plus => {}
         }
         let one_minus_x = Self::one() - x.clone();
-        match one_minus_x.best_sign() {
+        match one_minus_x.operation_sign()? {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => return Ok(Self::one()),
             Sign::Plus => {}
@@ -1827,13 +1854,13 @@ impl Real {
     pub fn regularized_beta_q(a: &Self, b: &Self, x: &Self) -> Result<Real, Problem> {
         let a = Self::exact_positive_integer(a)?;
         let b = Self::exact_positive_integer(b)?;
-        match x.best_sign() {
+        match x.operation_sign()? {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => return Ok(Self::one()),
             Sign::Plus => {}
         }
         let one_minus_x = Self::one() - x.clone();
-        match one_minus_x.best_sign() {
+        match one_minus_x.operation_sign()? {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => return Ok(Self::zero()),
             Sign::Plus => {}
@@ -1916,7 +1943,7 @@ impl Real {
         upper: bool,
     ) -> Result<Real, Problem> {
         let target_twice = Self::exact_positive_half_integer_twice(a)?;
-        match x.best_sign() {
+        match x.operation_sign()? {
             Sign::Minus => return Err(Problem::NotANumber),
             Sign::NoSign => {
                 return Ok(if upper { Self::one() } else { Self::zero() });
@@ -1988,7 +2015,7 @@ impl Real {
 
     /// Standard normal quantile, the inverse of [`Real::pnorm`].
     pub fn qnorm(self) -> Result<Real, Problem> {
-        if self.best_sign() != Sign::Plus {
+        if self.operation_sign()? != Sign::Plus {
             crate::trace_dispatch!("real", "qnorm", "domain-not-positive");
             return Err(Problem::NotANumber);
         }
@@ -2159,6 +2186,22 @@ impl Real {
             )));
         }
 
+        // Rational and algebraic certificates cannot equal an odd half-pi
+        // pole (pi is transcendental), and SinPi is bounded in magnitude by
+        // one. Other exact-looking classes may encode relations between e,
+        // logarithms, and pi that the class certificate does not prove, so
+        // they must take the checked cosine path just like opaque values.
+        if !matches!(
+            &self.class,
+            One | Pi | PiPow(_) | PiInv | PiSqrt(_) | Sqrt(_) | SinPi(_)
+        ) {
+            let cosine = self.clone().cos();
+            match cosine.require_nonzero() {
+                Ok(()) => {}
+                Err(Problem::DivideByZero) => return Err(Problem::NotANumber),
+                Err(problem) => return Err(problem),
+            }
+        }
         crate::trace_dispatch!("real", "tan", "generic-computable");
         Ok(self.make_computable(Computable::tan))
     }
@@ -2496,13 +2539,15 @@ impl Real {
             crate::trace_dispatch!("real", "acos", "exact-special-form");
             return Ok(exact);
         }
-        if self.class == One
-            && self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater
-        {
-            // Exact rational domain failures are rejected before any
-            // approximation machinery is constructed.
-            crate::trace_dispatch!("real", "acos", "rational-domain-error");
-            return Err(Problem::NotANumber);
+        if self.class == One {
+            if self.rational.abs_cmp_one_structural() == std::cmp::Ordering::Greater {
+                // Exact rational domain failures are rejected before any
+                // approximation machinery is constructed.
+                crate::trace_dispatch!("real", "acos", "rational-domain-error");
+                return Err(Problem::NotANumber);
+            }
+            crate::trace_dispatch!("real", "acos", "rational-computable");
+            return Ok(self.make_computable(|value| value.acos()));
         }
         if !matches!(&self.class, Sqrt(_))
             && let Some(asin) = self.asin_exact()
@@ -2519,6 +2564,35 @@ impl Real {
         {
             crate::trace_dispatch!("real", "acos", "sqrt-domain-error");
             return Err(Problem::NotANumber);
+        }
+        if matches!(&self.class, Sqrt(_)) {
+            crate::trace_dispatch!("real", "acos", "sqrt-computable");
+            return Ok(self.make_computable(|value| value.acos()));
+        }
+
+        match self.asin_acos_domain() {
+            DomainStatus::Invalid => {
+                crate::trace_dispatch!("real", "acos", "generic-domain-error");
+                return Err(Problem::NotANumber);
+            }
+            DomainStatus::Valid => {}
+            DomainStatus::Unknown => {
+                let radicand = Self::one() - self.clone().powi(BigInt::from(2_u8))?;
+                match radicand.operation_sign()? {
+                    Sign::Minus => {
+                        crate::trace_dispatch!("real", "acos", "generic-domain-error");
+                        return Err(Problem::NotANumber);
+                    }
+                    Sign::NoSign => {
+                        return match self.operation_sign()? {
+                            Sign::Plus => Ok(Self::zero()),
+                            Sign::Minus => Ok(Self::pi()),
+                            Sign::NoSign => Ok(Self::pi_fraction(1, 2)),
+                        };
+                    }
+                    Sign::Plus => {}
+                }
+            }
         }
 
         crate::trace_dispatch!("real", "acos", "generic-computable");
@@ -2566,16 +2640,17 @@ impl Real {
     ///     (Real::pi() / Real::from(2_i32)).unwrap(),
     /// );
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if bounded exact-real refinement cannot certify a required axis
+    /// or quadrant. Use [`Real::try_atan2`] to preserve that uncertainty.
+    #[inline]
     pub fn atan2(self, x: Real) -> Real {
-        // Structural sign first. `best_sign` for Irrational class refines the
-        // computable graph until the sign is decided, which is dramatically
-        // more expensive than reading already-derivable structural facts. Only
-        // descend to the refinement path when structural inspection cannot
-        // decide for one of the inputs.
         let y_sign = self.structural_facts().sign.map(num_sign_from_real);
         let x_sign = x.structural_facts().sign.map(num_sign_from_real);
         match (y_sign, x_sign) {
-            (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
+            (Some(Sign::NoSign), Some(Sign::NoSign | Sign::Plus)) => {
                 crate::trace_dispatch!("real", "atan2", "axis-zero-y");
                 return Self::zero();
             }
@@ -2593,16 +2668,25 @@ impl Real {
             }
             _ => {}
         }
-        let y_sign = y_sign.unwrap_or_else(|| self.best_sign());
-        let x_sign = x_sign.unwrap_or_else(|| x.best_sign());
-        if y_sign == Sign::NoSign && x_sign != Sign::Plus {
-            crate::trace_dispatch!("real", "atan2", "generic-computable");
-            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
+
+        let y_sign = y_sign.unwrap_or_else(|| {
+            self.operation_sign().expect(
+                "atan2 y sign could not be certified; use Real::try_atan2 to handle uncertainty",
+            )
+        });
+        let x_sign = x_sign.unwrap_or_else(|| {
+            x.operation_sign().expect(
+                "atan2 x sign could not be certified; use Real::try_atan2 to handle uncertainty",
+            )
+        });
+        match (y_sign, x_sign) {
+            (Sign::NoSign, Sign::NoSign | Sign::Plus) => return Self::zero(),
+            (Sign::NoSign, Sign::Minus) => return Self::pi(),
+            (Sign::Plus, Sign::NoSign) => return Self::pi_fraction(1, 2),
+            (Sign::Minus, Sign::NoSign) => return Self::pi_fraction(-1, 2),
+            _ => {}
         }
-        if x_sign == Sign::NoSign {
-            crate::trace_dispatch!("real", "atan2", "generic-computable");
-            return Self::irrational_from_computable(self.fold().atan2(x.fold()));
-        }
+
         let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
         let base = ratio.atan().expect("Real::atan is total");
         if x_sign == Sign::Plus {
@@ -2614,6 +2698,67 @@ impl Real {
         } else {
             crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
             base - Self::pi()
+        }
+    }
+
+    /// Checked counterpart to [`Real::atan2`].
+    ///
+    /// Returns [`Problem::Exhausted`] when bounded exact-real refinement cannot
+    /// certify a required axis or quadrant decision. This is necessary because
+    /// `atan2` is discontinuous on the negative x-axis: treating an unresolved
+    /// sign as zero can silently select an angle on the wrong side of the branch
+    /// cut.
+    #[inline]
+    pub fn try_atan2(self, x: Real) -> Result<Real, Problem> {
+        let y_sign = self.structural_facts().sign.map(num_sign_from_real);
+        let x_sign = x.structural_facts().sign.map(num_sign_from_real);
+        match (y_sign, x_sign) {
+            (Some(Sign::NoSign), Some(Sign::NoSign)) | (Some(Sign::NoSign), Some(Sign::Plus)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-zero-y");
+                return Ok(Self::zero());
+            }
+            (Some(Sign::NoSign), Some(Sign::Minus)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-x");
+                return Ok(Self::pi());
+            }
+            (Some(Sign::Plus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-positive-y");
+                return Ok(Self::pi_fraction(1, 2));
+            }
+            (Some(Sign::Minus), Some(Sign::NoSign)) => {
+                crate::trace_dispatch!("real", "atan2", "axis-negative-y");
+                return Ok(Self::pi_fraction(-1, 2));
+            }
+            _ => {}
+        }
+
+        let y_sign = match y_sign {
+            Some(sign) => sign,
+            None => self.operation_sign()?,
+        };
+        let x_sign = match x_sign {
+            Some(sign) => sign,
+            None => x.operation_sign()?,
+        };
+        match (y_sign, x_sign) {
+            (Sign::NoSign, Sign::NoSign | Sign::Plus) => return Ok(Self::zero()),
+            (Sign::NoSign, Sign::Minus) => return Ok(Self::pi()),
+            (Sign::Plus, Sign::NoSign) => return Ok(Self::pi_fraction(1, 2)),
+            (Sign::Minus, Sign::NoSign) => return Ok(Self::pi_fraction(-1, 2)),
+            _ => {}
+        }
+
+        let ratio = (self / &x).expect("nonzero x rules out divide-by-zero");
+        let base = ratio.atan().expect("Real::atan is total");
+        if x_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-right");
+            Ok(base)
+        } else if y_sign == Sign::Plus {
+            crate::trace_dispatch!("real", "atan2", "quadrant-upper-left");
+            Ok(base + Self::pi())
+        } else {
+            crate::trace_dispatch!("real", "atan2", "quadrant-lower-left");
+            Ok(base - Self::pi())
         }
     }
 
@@ -2790,7 +2935,9 @@ impl Real {
         if known_sign == Some(Sign::Minus) {
             crate::trace_dispatch!("real", "asinh", "negative-symmetry");
             return Ok(self.neg().asinh()?.neg());
-        } else if known_sign.is_none() && self.best_sign() == Sign::Minus {
+        } else if known_sign.is_none()
+            && self.operation_sign_if_known() == Some(Sign::Minus)
+        {
             // Fall back to the slower exact sign check only when the planning
             // layer cannot determine sign from symbolic structure.
             crate::trace_dispatch!("real", "asinh", "negative-symmetry-fallback");
@@ -2896,10 +3043,17 @@ impl Real {
                     "non-rational structural comparison cannot certify equality to one"
                 ),
                 StructuralComparison::Unknown => {
-                    let one = Self::one();
-                    if (self.clone() - one).best_sign() == Sign::Minus {
-                        crate::trace_dispatch!("real", "acosh", "generic-domain-error");
-                        return Err(Problem::NotANumber);
+                    let difference = self.clone() - Self::one();
+                    match difference.operation_sign()? {
+                        Sign::Minus => {
+                            crate::trace_dispatch!("real", "acosh", "generic-domain-error");
+                            return Err(Problem::NotANumber);
+                        }
+                        Sign::NoSign => {
+                            crate::trace_dispatch!("real", "acosh", "generic-exact-one");
+                            return Ok(Self::zero());
+                        }
+                        Sign::Plus => {}
                     }
                 }
             }
@@ -3092,8 +3246,8 @@ impl Real {
     }
 
     fn exp_ln_powi(self, exp: BigInt) -> Result<Self, Problem> {
-        match self.best_sign() {
-            Sign::NoSign => {
+        match self.operation_sign_if_known() {
+            None | Some(Sign::NoSign) => {
                 // Unknown sign cannot safely use ln(base)*exp, so keep the exact
                 // repeated-squaring fallback even though it may allocate more nodes.
                 let power = Self::recursive_powi(&self, exp.magnitude());
@@ -3103,7 +3257,7 @@ impl Real {
                     Ok(power)
                 }
             }
-            Sign::Plus => {
+            Some(Sign::Plus) => {
                 // Known-positive generic powers use exp(exp*ln(base)) to avoid a long
                 // multiplication chain for large exponents.
                 let value = self.fold();
@@ -3116,7 +3270,7 @@ impl Real {
                     primitive_approx_cache: AtomicPrimitiveApproxCache::new(PrimitiveApproxCache::Empty),
                 })
             }
-            Sign::Minus => {
+            Some(Sign::Minus) => {
                 let odd = exp.bit(0);
                 let value = self.fold();
                 let exp = Computable::integer(exp);
@@ -3151,9 +3305,13 @@ impl Real {
             return Ok(self);
         }
         if exp == 0 {
-            if self.definitely_zero() {
-                crate::trace_dispatch!("real", "powi-i64", "zero-to-zero-domain-error");
-                return Err(Problem::NotANumber);
+            match self.require_nonzero() {
+                Ok(()) => {}
+                Err(Problem::DivideByZero) => {
+                    crate::trace_dispatch!("real", "powi-i64", "zero-to-zero-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                Err(problem) => return Err(problem),
             }
             crate::trace_dispatch!("real", "powi-i64", "exponent-zero-one");
             return Ok(Self::one());
@@ -3171,16 +3329,24 @@ impl Real {
             return self.inverse();
         }
         if self.class == One {
-            let rational = self.rational.powi_i64(exp)?;
-            crate::trace_dispatch!("real", "powi-i64", "rational-exact");
-            return Ok(Self {
-                rational,
-                class: One,
-                computable: None,
-                primitive_approx_cache: AtomicPrimitiveApproxCache::new(
-                    PrimitiveApproxCache::Empty,
-                ),
-            });
+            match self.rational.clone().powi_i64(exp) {
+                Ok(rational) => {
+                    crate::trace_dispatch!("real", "powi-i64", "rational-exact");
+                    return Ok(Self {
+                        rational,
+                        class: One,
+                        computable: None,
+                        primitive_approx_cache: AtomicPrimitiveApproxCache::new(
+                            PrimitiveApproxCache::Empty,
+                        ),
+                    });
+                }
+                Err(Problem::Exhausted) => {
+                    crate::trace_dispatch!("real", "powi-i64", "rational-output-budget");
+                    return self.powi(BigInt::from(exp));
+                }
+                Err(problem) => return Err(problem),
+            }
         }
 
         crate::trace_dispatch!("real", "powi-i64", "bigint-kernel-fallback");
@@ -3194,12 +3360,16 @@ impl Real {
             return Ok(self);
         }
         if exp.sign() == Sign::NoSign {
-            if self.definitely_zero() {
-                crate::trace_dispatch!("real", "powi", "zero-to-zero-domain-error");
-                return Err(Problem::NotANumber);
-            } else {
-                crate::trace_dispatch!("real", "powi", "exponent-zero-one");
-                return Ok(Self::one());
+            match self.require_nonzero() {
+                Ok(()) => {
+                    crate::trace_dispatch!("real", "powi", "exponent-zero-one");
+                    return Ok(Self::one());
+                }
+                Err(Problem::DivideByZero) => {
+                    crate::trace_dispatch!("real", "powi", "zero-to-zero-domain-error");
+                    return Err(Problem::NotANumber);
+                }
+                Err(problem) => return Err(problem),
             }
         }
         if exp.sign() == Sign::Minus && self.definitely_zero() {
@@ -3286,9 +3456,9 @@ impl Real {
     /// Arbitrary, possibly irrational exponent.
     /// NB: Assumed not to be integer
     fn pow_arb(self, exponent: Self) -> Result<Self, Problem> {
-        match self.best_sign() {
+        match self.operation_sign()? {
             Sign::NoSign => {
-                if exponent.best_sign() == Sign::Plus {
+                if exponent.operation_sign()? == Sign::Plus {
                     crate::trace_dispatch!("real", "pow", "zero-positive-exponent");
                     Ok(Real::zero())
                 } else {
@@ -3322,7 +3492,7 @@ impl Real {
             return self.powi(integer);
         }
 
-        if self.best_sign() == Sign::Minus && exponent.denominator().bit(0) {
+        if self.operation_sign()? == Sign::Minus && exponent.denominator().bit(0) {
             let Some(denominator) = exponent.denominator().to_u32() else {
                 crate::trace_dispatch!("real", "pow_rational", "odd-denominator-exhausted");
                 return Err(Problem::Exhausted);
@@ -3381,12 +3551,18 @@ impl Real {
         self.pow_arb(exponent)
     }
 
-    /// Is this Real an integer ?
+    /// Whether this value is structurally stored as an exact integer.
+    ///
+    /// `false` does not prove mathematical non-integrality for an opaque
+    /// computable expression.
     pub fn is_integer(&self) -> bool {
         self.class == One && self.rational.is_integer()
     }
 
-    /// Is this Real known to be rational ?
+    /// Whether this value is structurally stored as an exact rational.
+    ///
+    /// `false` does not prove mathematical irrationality for an opaque
+    /// computable expression.
     pub fn is_rational(&self) -> bool {
         self.class == One
     }

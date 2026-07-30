@@ -491,6 +491,12 @@ impl<T: AsRef<Real>> Div<T> for &Real {
             crate::trace_dispatch!("real", "div", "div-by-zero");
             return Err(Problem::DivideByZero);
         }
+        // Every retained symbolic class is a nonzero certificate once its
+        // rational scale is nonzero. Only an opaque computable denominator
+        // needs bounded refinement here.
+        if matches!(&other.class, Irrational) {
+            other.require_nonzero()?;
+        }
         if self.has_zero_scale() {
             crate::trace_dispatch!("real", "div", "zero");
             return Ok(Real::zero());

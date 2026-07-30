@@ -2241,6 +2241,15 @@ mod tests {
             negative.powi((-3_i32).into()),
             Rational::fraction(-125, 343)
         );
+
+        assert_eq!(
+            Rational::new(10).powi(BigInt::from(20_000_u32)),
+            Err(Problem::Exhausted)
+        );
+        assert_eq!(
+            Rational::new(10).powi(BigInt::from(-20_000_i32)),
+            Err(Problem::Exhausted)
+        );
     }
 
     #[test]

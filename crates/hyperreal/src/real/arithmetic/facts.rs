@@ -1139,6 +1139,16 @@ impl Real {
             };
         }
 
+        let left_facts = self.structural_facts();
+        let right_facts = other.structural_facts();
+        if let Some(ordering) = structural_ordering_from_facts(left_facts, right_facts) {
+            crate::trace_dispatch!("real", "certified_cmp_until", "structural-facts");
+            return CertifiedRealOrdering::Known {
+                ordering,
+                certificate: RealOrderingCertificate::StructuralFacts,
+            };
+        }
+
         let difference = self - other;
         match difference.certified_sign_until(min_precision) {
             CertifiedRealSign::Known { sign, certificate } => {

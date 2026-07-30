@@ -355,7 +355,11 @@ impl Computable {
         }
     }
 
-    /// Try to determine the exact sign, refining cached approximations as needed.
+    /// Best-effort sign query retained for compatibility.
+    ///
+    /// [`Sign::NoSign`] means either exact zero or unresolved after the legacy
+    /// refinement floor. Semantic decisions must use [`Computable::sign_until`]
+    /// so uncertainty remains explicit.
     pub fn sign(&self) -> Sign {
         if let Some(sign) = self.exact_sign() {
             crate::trace_dispatch!("computable", "sign", "exact-sign-cache");
@@ -406,6 +410,63 @@ impl Computable {
     /// the public comparison API for callers that may be comparing equal or
     /// semantically equivalent values.
     pub fn try_compare_to(&self, other: &Self) -> Option<Ordering> {
+        // Keep the default entry point's certified fast cascade in this
+        // function. Routing these overwhelmingly common cases through the
+        // caller-configurable API adds a measurable extra call boundary.
+        if Self::internal_structural_eq(self, other) {
+            return Some(Ordering::Equal);
+        }
+        if let Some(order) = self.exact_rational_leaf_cmp(other) {
+            crate::trace_dispatch!("computable", "compare_to", "exact-rational");
+            return Some(order);
+        }
+        let exact_signs = (self.exact_sign(), other.exact_sign());
+        if let (Some(left), Some(right)) = exact_signs {
+            match (left, right) {
+                (Sign::Minus, Sign::Plus | Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
+                    crate::trace_dispatch!("computable", "compare_to", "exact-sign-opposite");
+                    return Some(Ordering::Less);
+                }
+                (Sign::Plus, Sign::Minus | Sign::NoSign) | (Sign::NoSign, Sign::Minus) => {
+                    crate::trace_dispatch!("computable", "compare_to", "exact-sign-opposite");
+                    return Some(Ordering::Greater);
+                }
+                _ => {}
+            }
+        }
+        if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
+            crate::trace_dispatch!("computable", "compare_to", "exact-rational");
+            return Some(
+                left.partial_cmp(&right)
+                    .expect("exact rationals should be comparable"),
+            );
+        }
+        if let (Some(left), Some(right)) = exact_signs
+            && matches!(left, Sign::Plus | Sign::Minus)
+            && left == right
+            && let (Some(Some(left_msd)), Some(Some(right_msd))) = (
+                self.cheap_bound().known_msd(),
+                other.cheap_bound().known_msd(),
+            )
+            && left_msd != right_msd
+        {
+            crate::trace_dispatch!("computable", "compare_to", "cheap-bound-msd-gap");
+            return Some(match left {
+                Sign::Plus => left_msd.cmp(&right_msd),
+                Sign::Minus => right_msd.cmp(&left_msd),
+                Sign::NoSign => Ordering::Equal,
+            });
+        }
+        self.try_compare_to_until(other, DEFAULT_COMPARE_REFINEMENT_FLOOR)
+    }
+
+    /// Try to compare two computable values without refining past
+    /// `min_precision`.
+    pub fn try_compare_to_until(
+        &self,
+        other: &Self,
+        min_precision: Precision,
+    ) -> Option<Ordering> {
         if Self::internal_structural_eq(self, other) {
             return Some(Ordering::Equal);
         }
@@ -418,17 +479,8 @@ impl Computable {
             return Some(order);
         }
 
-        if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
-            // Exact rationals compare directly; escalating to approximate comparison here is
-            // both slower and can burn cache precision unnecessarily.
-            crate::trace_dispatch!("computable", "compare_to", "exact-rational");
-            return Some(
-                left.partial_cmp(&right)
-                    .expect("exact rationals should be comparable"),
-            );
-        }
-
-        if let (Some(left), Some(right)) = (self.exact_sign(), other.exact_sign()) {
+        let exact_signs = (self.exact_sign(), other.exact_sign());
+        if let (Some(left), Some(right)) = exact_signs {
             match (left, right) {
                 (Sign::Minus, Sign::Plus | Sign::NoSign) | (Sign::NoSign, Sign::Plus) => {
                     crate::trace_dispatch!("computable", "compare_to", "exact-sign-opposite");
@@ -440,24 +492,35 @@ impl Computable {
                 }
                 _ => {}
             }
+        }
 
-            if matches!(left, Sign::Plus | Sign::Minus)
-                && left == right
-                && let (Some(Some(left_msd)), Some(Some(right_msd))) = (
-                    self.cheap_bound().known_msd(),
-                    other.cheap_bound().known_msd(),
-                )
-                && left_msd != right_msd
-            {
-                // Same-sign values with different most-significant digits have a known
-                // order without evaluating either value to a requested precision.
-                crate::trace_dispatch!("computable", "compare_to", "exact-sign-msd-gap");
-                return Some(match left {
-                    Sign::Plus => left_msd.cmp(&right_msd),
-                    Sign::Minus => right_msd.cmp(&left_msd),
-                    Sign::NoSign => unreachable!(),
-                });
-            }
+        if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
+            // Exact rationals compare directly; escalating to approximate comparison here is
+            // both slower and can burn cache precision unnecessarily.
+            crate::trace_dispatch!("computable", "compare_to", "exact-rational");
+            return Some(
+                left.partial_cmp(&right)
+                    .expect("exact rationals should be comparable"),
+            );
+        }
+
+        if let (Some(left), Some(right)) = exact_signs
+            && matches!(left, Sign::Plus | Sign::Minus)
+            && left == right
+            && let (Some(Some(left_msd)), Some(Some(right_msd))) = (
+                self.cheap_bound().known_msd(),
+                other.cheap_bound().known_msd(),
+            )
+            && left_msd != right_msd
+        {
+            // Same-sign values with different most-significant digits have a known
+            // order without evaluating either value to a requested precision.
+            crate::trace_dispatch!("computable", "compare_to", "exact-sign-msd-gap");
+            return Some(match left {
+                Sign::Plus => left_msd.cmp(&right_msd),
+                Sign::Minus => right_msd.cmp(&left_msd),
+                Sign::NoSign => unreachable!(),
+            });
         }
 
         let self_bound = self.cheap_bound();
@@ -493,18 +556,30 @@ impl Computable {
             }
         }
         crate::trace_dispatch!("computable", "compare_to", "approx-refinement");
-        let mut tolerance = -20;
-        while tolerance > Precision::MIN {
+        let mut tolerance = (-20).max(min_precision);
+        loop {
             let order = self.compare_absolute(other, tolerance);
             if order != Ordering::Equal {
                 return Some(order);
             }
-            tolerance *= 2;
+            if tolerance <= min_precision {
+                return None;
+            }
+            let next = if tolerance >= 0 {
+                tolerance.saturating_sub(16)
+            } else {
+                tolerance.saturating_mul(2)
+            };
+            tolerance = next.max(min_precision);
         }
-        None
     }
 
-    /// Compare two values to a specified tolerance (more negative numbers are more precise).
+    /// Compare two values to a specified absolute tolerance.
+    ///
+    /// More negative tolerances are more precise. `Equal` generally means that
+    /// the requested tolerance did not separate the values; it is not an exact
+    /// equality certificate. Predicate callers must use
+    /// [`Computable::try_compare_to_until`] and preserve `None`.
     pub fn compare_absolute(&self, other: &Self, tolerance: Precision) -> Ordering {
         // Fast-path exact leafs before structural perturbation checks.
         if let Some(order) = self.exact_rational_leaf_cmp(other) {
@@ -556,17 +631,19 @@ impl Computable {
         }
 
         if let (Some(left), Some(right)) = (self.exact_rational(), other.exact_rational()) {
-            // Compare exact-rational magnitudes without normalizing both operands.
-            // This keeps the absolute-ordering branch allocation-light for symbolically
-            // small values that are hit in compare-heavy workloads.
+            // Compare exact rationals without normalizing both operands. The
+            // method name refers to its absolute error tolerance, not to
+            // absolute values: opposite signs and comparisons with zero must
+            // therefore be decided by signed order before comparing magnitudes.
             crate::trace_dispatch!("computable", "compare_absolute", "exact-rational");
             return match (left.sign(), right.sign()) {
                 (Sign::Minus, Sign::Minus) => right.compare_magnitude(&left),
-                (Sign::Minus, Sign::Plus) => left.compare_magnitude(&right),
-                (Sign::Plus, Sign::Minus) => left.compare_magnitude(&right),
+                (Sign::Minus, Sign::NoSign | Sign::Plus) => Ordering::Less,
+                (Sign::NoSign, Sign::Minus) => Ordering::Greater,
+                (Sign::NoSign, Sign::NoSign) => Ordering::Equal,
+                (Sign::NoSign, Sign::Plus) => Ordering::Less,
+                (Sign::Plus, Sign::Minus | Sign::NoSign) => Ordering::Greater,
                 (Sign::Plus, Sign::Plus) => left.compare_magnitude(&right),
-                (_, Sign::NoSign) => Ordering::Greater,
-                (Sign::NoSign, _) => Ordering::Less,
             };
         }
 

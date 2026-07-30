@@ -490,6 +490,31 @@ mod tests {
     }
 
     #[test]
+    fn compare_absolute_orders_mixed_exact_leaf_kinds_by_signed_value() {
+        let one = Computable::one();
+        let negative_large =
+            Computable::rational(Rational::fraction(-100, 3).expect("three is nonzero"));
+        let positive_large =
+            Computable::rational(Rational::fraction(100, 3).expect("three is nonzero"));
+        let zero = Computable::rational(Rational::zero());
+
+        // `One` versus `Ratio` reaches the general exact-rational shortcut
+        // rather than the same-kind leaf shortcut.
+        assert_eq!(
+            one.compare_absolute(&negative_large, -40),
+            Ordering::Greater
+        );
+        assert_eq!(
+            negative_large.compare_absolute(&one, -40),
+            Ordering::Less
+        );
+        assert_eq!(zero.compare_absolute(&negative_large, -40), Ordering::Greater);
+        assert_eq!(negative_large.compare_absolute(&zero, -40), Ordering::Less);
+        assert_eq!(zero.compare_absolute(&positive_large, -40), Ordering::Less);
+        assert_eq!(positive_large.compare_absolute(&zero, -40), Ordering::Greater);
+    }
+
+    #[test]
     fn compare_absolute_uses_exact_msd_gap_shortcut() {
         let base = Computable::pi();
         base.approx(-16);

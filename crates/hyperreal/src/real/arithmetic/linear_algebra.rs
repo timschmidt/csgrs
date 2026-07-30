@@ -1838,20 +1838,24 @@ impl Real {
             return Ok(y.abs());
         }
         if y.rational.is_zero() {
-            return match x.best_sign() {
-                Sign::Plus | Sign::NoSign => {
+            return match x.operation_sign_if_known() {
+                Some(Sign::Plus | Sign::NoSign) => {
                     crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-y-nonnegative-x");
                     Ok(Real::zero())
                 }
-                Sign::Minus => {
+                Some(Sign::Minus) => {
                     crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-y-negative-x");
                     Ok(-x - x)
+                }
+                None => {
+                    crate::trace_dispatch!("real", "hypot", "hypot-minus-zero-y-generic");
+                    Ok(x.abs() - x)
                 }
             };
         }
 
         let hypot = Self::hypot2(x, y)?;
-        if x.best_sign() == Sign::Plus {
+        if x.operation_sign_if_known() == Some(Sign::Plus) {
             crate::trace_dispatch!("real", "hypot", "hypot-minus-rationalized");
             let y_squared = y.clone().powi(BigInt::from(2_u8))?;
             return y_squared / (&hypot + x);

@@ -1,4 +1,28 @@
 impl Rational {
+    // Eager integer powers can otherwise turn a tiny input into an arbitrarily
+    // large numerator or denominator. Real uses `Problem::Exhausted` from this
+    // kernel to retain the same exact value as a lazy computable expression.
+    const MAX_EAGER_POWER_OUTPUT_BITS: u64 = 1 << 16;
+
+    fn eager_power_u64_fits_budget(&self, exp: u64) -> bool {
+        exp <= u64::from(u8::MAX)
+            || self
+                .numerator
+                .bits()
+                .saturating_add(self.denominator.bits())
+                <= Self::MAX_EAGER_POWER_OUTPUT_BITS / exp
+    }
+
+    fn eager_power_fits_budget(&self, exp: &BigUint) -> bool {
+        // Modest exponents have bounded amplification relative to the input
+        // rational and remain on the established fast path.
+        if exp.bits() <= u64::from(u8::BITS) {
+            return true;
+        }
+        exp.to_u64()
+            .is_some_and(|exp| self.eager_power_u64_fits_budget(exp))
+    }
+
     const EXTRACT_SQUARE_MAX_LEN: u64 = 5000;
     const SMALL_SQUARE_FACTORS: [(u64, u64); 7] = [
         (2, 4),
@@ -588,6 +612,10 @@ impl Rational {
             };
         }
 
+        if !self.eager_power_u64_fits_budget(exp.unsigned_abs()) {
+            return Err(Problem::Exhausted);
+        }
+
         if exp < 0 {
             Ok(self.inverse()?.pow_up_u64(exp.unsigned_abs()))
         } else {
@@ -600,7 +628,6 @@ impl Rational {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().clone().powi(exp);
         }
-        const TOO_MANY_BITS: u64 = 1000;
         if exp == BigInt::ZERO {
             return Ok(Self::one());
         }
@@ -619,7 +646,7 @@ impl Rational {
                 return Ok(Self::one());
             }
         }
-        if exp.bits() >= TOO_MANY_BITS {
+        if !self.eager_power_fits_budget(exp.magnitude()) {
             return Err(Problem::Exhausted);
         }
         match exp.sign() {

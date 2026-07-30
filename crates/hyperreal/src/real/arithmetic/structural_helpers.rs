@@ -60,6 +60,42 @@ fn ordering_from_real_sign(sign: RealSign) -> Ordering {
     }
 }
 
+#[inline]
+fn structural_ordering_from_facts(
+    left: RealStructuralFacts,
+    right: RealStructuralFacts,
+) -> Option<Ordering> {
+    if let (Some(left_sign), Some(right_sign)) = (left.sign, right.sign) {
+        let separated = match (left_sign, right_sign) {
+            (RealSign::Negative, RealSign::Zero | RealSign::Positive)
+            | (RealSign::Zero, RealSign::Positive) => Some(Ordering::Less),
+            (RealSign::Positive, RealSign::Negative | RealSign::Zero)
+            | (RealSign::Zero, RealSign::Negative) => Some(Ordering::Greater),
+            (RealSign::Zero, RealSign::Zero) => Some(Ordering::Equal),
+            _ => None,
+        };
+        if separated.is_some() {
+            return separated;
+        }
+
+        if left_sign == right_sign
+            && !matches!(left_sign, RealSign::Zero)
+            && let (Some(left_magnitude), Some(right_magnitude)) =
+                (left.magnitude, right.magnitude)
+            && left_magnitude.exact_msd
+            && right_magnitude.exact_msd
+            && left_magnitude.msd != right_magnitude.msd
+        {
+            return Some(match left_sign {
+                RealSign::Positive => left_magnitude.msd.cmp(&right_magnitude.msd),
+                RealSign::Negative => right_magnitude.msd.cmp(&left_magnitude.msd),
+                RealSign::Zero => Ordering::Equal,
+            });
+        }
+    }
+    None
+}
+
 fn structural_cmp_from_ordering(ordering: Ordering) -> StructuralComparison {
     match ordering {
         Ordering::Less => StructuralComparison::Less,
