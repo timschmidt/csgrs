@@ -193,6 +193,14 @@ periodic two-loop spherical-band face; sphere/slab intersection selects that
 face with two planar disks and carries the same exact query, symmetry,
 transform, and persistence guarantees without a longitude seam.
 
+An authored-frame-aligned coaxial sphere/cylinder intersection similarly
+selects two periodic spherical caps and the central four-patch cylindrical
+band. Certification proves complete cylinder parameter-cell coverage, a common
+axis and center line, opposite sphere latitudes, and exact agreement of both
+circle radii and heights. The standard API then exposes exact face area,
+`4*pi*(R³-h³)/3` volume, radial-and-spherical point classification, operand
+reversal, rigid/reflection transforms, and persistence.
+
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects
 only strictly separated AABBs, retains exact supported complete-carrier

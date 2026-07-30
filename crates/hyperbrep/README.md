@@ -175,7 +175,9 @@ The clean-break implementation currently provides:
 - authored-frame-aligned coaxial sphere/cylinder cuts retain both exact
   latitude pcurves, clip each circle across the four bounded cylinder patches,
   coalesce those fragments back into one periodic sphere trace, and partition
-  both complete carriers with volume-preserving, byte-identical replay;
+  both complete carriers. Standard intersection stitches two spherical caps
+  and the central cylindrical band with exact area, volume, classification,
+  transforms, operand reversal, and byte-identical replay;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

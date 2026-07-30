@@ -4833,7 +4833,7 @@ mod tests {
     }
 
     #[test]
-    fn coaxial_sphere_cylinder_graph_partitions_both_exact_carriers() {
+    fn coaxial_sphere_cylinder_intersection_stitches_exact_mixed_shell() {
         let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
             crate::builder::cylinder(Real::from(2), Real::from(6)).unwrap();
@@ -4908,11 +4908,109 @@ mod tests {
             cylinder_json
         );
 
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the two spherical caps and central cylinder band must form one exact solid");
+        };
+        let sqrt_five = Real::from(5).sqrt().unwrap();
+        let expected =
+            (Real::from(4) * Real::pi() * (Real::from(27) - Real::from(5) * sqrt_five.clone())
+                / Real::from(3))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let expected_area = Real::from(4) * Real::pi() * (Real::from(9) - sqrt_five.clone());
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, 0), SolidPointLocation::Inside),
+            (p(2, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 3), SolidPointLocation::Boundary),
+            (p(0, 0, 2), SolidPointLocation::Inside),
+            (p(3, 0, 0), SolidPointLocation::Outside),
+            (
+                Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::zero(),
+                    Real::zero(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new(
+                    Real::from(2),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (p(0, 0, 4), SolidPointLocation::Outside),
+            (
+                Point3::new(Real::from(2), Real::zero(), sqrt_five),
+                SolidPointLocation::Boundary,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
         let reversed =
             intersection_graph(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap();
         let (_, reversed_sphere_partitions) = reversed.partition_second_faces().unwrap();
         assert_eq!(reversed_sphere_partitions.len(), 1);
         assert_eq!(reversed_sphere_partitions[0].traces.len(), 2);
+        let BooleanResult::Solid {
+            model: reversed_model,
+            solid: reversed_solid,
+        } = reversed
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("operand reversal must retain the same exact mixed solid");
+        };
+        assert_eq!(
+            compare_reals(
+                &reversed_model.solid_volume(reversed_solid).unwrap(),
+                &expected,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for (index, result) in [
+            intersection(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
+            intersection(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("standard operand order {index} must retain the exact mixed solid");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal),
+                "standard operand order {index}"
+            );
+        }
 
         let cyclic = Matrix4::affine_orthonormal(
             [
@@ -4934,6 +5032,34 @@ mod tests {
         let (_, oriented_sphere_partitions) = oriented.partition_first_faces().unwrap();
         assert_eq!(oriented_sphere_partitions.len(), 1);
         assert_eq!(oriented_sphere_partitions[0].traces.len(), 2);
+        let BooleanResult::Solid {
+            model: oriented_model,
+            solid: oriented_solid,
+        } = oriented
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("rigid reorientation must retain the same exact mixed solid");
+        };
+        assert_eq!(
+            compare_reals(
+                &oriented_model.solid_volume(oriented_solid).unwrap(),
+                &expected,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let reflected = model
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

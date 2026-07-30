@@ -265,6 +265,13 @@ angular domains coalesce the patch fragments back into one periodic trace;
 the coalescer reconstructs both constant parameters rather than substituting a
 plane projection. Operand reversal and a common rigid transform preserve the
 same two authoritative images.
+Selected intersection faces form two spherical caps and one subdivided
+cylindrical band. Their mixed-shell certificate reuses the cylinder's exact
+parameter-cell coverage, proves both cap latitudes have the same sphere and
+opposite heights, and matches each circle radius and axial parameter to that
+band. Only then does the query layer evaluate the intersection predicate
+`sphere ∩ radial cylinder`; its volume is
+`4*pi*(sphere_radius³-axial_half_height³)/3`.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented
