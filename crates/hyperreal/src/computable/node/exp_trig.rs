@@ -439,8 +439,79 @@ impl Computable {
         }
     }
 
+    fn atan_argument(&self) -> Option<Computable> {
+        match &self.internal.approximation {
+            Approximation::AtanRational(argument) => {
+                Some(Self::rational(argument.clone()))
+            }
+            Approximation::PrescaledAtan(argument) => Some(argument.clone()),
+            _ => None,
+        }
+    }
+
+    pub(crate) fn atan_rational_argument(&self) -> Option<Rational> {
+        match &self.internal.approximation {
+            Approximation::AtanRational(argument) => Some(argument.clone()),
+            Approximation::Negate(argument) => {
+                argument.atan_rational_argument().map(Rational::neg)
+            }
+            _ => None,
+        }
+    }
+
+    fn asin_argument(&self) -> Option<Computable> {
+        match &self.internal.approximation {
+            Approximation::AsinRational(argument) => {
+                Some(Self::rational(argument.clone()))
+            }
+            Approximation::PrescaledAsin(argument) | Approximation::AsinDeferred(argument) => {
+                Some(argument.clone())
+            }
+            _ => None,
+        }
+    }
+
+    fn acos_argument(&self) -> Option<Computable> {
+        match &self.internal.approximation {
+            Approximation::AcosPositive(argument) => Some(argument.clone()),
+            Approximation::AcosPositiveRational(argument) => {
+                Some(Self::rational(argument.clone()))
+            }
+            Approximation::AcosNegativeRational(argument) => {
+                Some(Self::rational(argument.clone().neg()))
+            }
+            _ => None,
+        }
+    }
+
+    fn unit_hypotenuse(argument: &Computable) -> Computable {
+        Self::one().add(argument.clone().square()).sqrt()
+    }
+
+    fn unit_complement(argument: &Computable) -> Computable {
+        Self::one()
+            .add(argument.clone().square().negate())
+            .sqrt()
+    }
+
     /// Cosine of this number.
     pub fn cos(self) -> Computable {
+        if let Approximation::Negate(argument) = &self.internal.approximation {
+            crate::trace_dispatch!("computable", "cos", "negative-even-rewrite");
+            return argument.clone().cos();
+        }
+        if let Some(argument) = self.atan_argument() {
+            crate::trace_dispatch!("computable", "cos", "atan-inverse-rewrite");
+            return Self::unit_hypotenuse(&argument).inverse();
+        }
+        if let Some(argument) = self.asin_argument() {
+            crate::trace_dispatch!("computable", "cos", "asin-complement-rewrite");
+            return Self::unit_complement(&argument);
+        }
+        if let Some(argument) = self.acos_argument() {
+            crate::trace_dispatch!("computable", "cos", "acos-inverse-rewrite");
+            return argument;
+        }
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
                 crate::trace_dispatch!("computable", "cos", "exact-zero-one");
@@ -512,6 +583,24 @@ impl Computable {
 
     /// Sine of this number.
     pub fn sin(self) -> Computable {
+        if let Approximation::Negate(argument) = &self.internal.approximation {
+            crate::trace_dispatch!("computable", "sin", "negative-odd-rewrite");
+            return argument.clone().sin().negate();
+        }
+        if let Some(argument) = self.atan_argument() {
+            crate::trace_dispatch!("computable", "sin", "atan-inverse-rewrite");
+            return argument
+                .clone()
+                .multiply(Self::unit_hypotenuse(&argument).inverse());
+        }
+        if let Some(argument) = self.asin_argument() {
+            crate::trace_dispatch!("computable", "sin", "asin-inverse-rewrite");
+            return argument;
+        }
+        if let Some(argument) = self.acos_argument() {
+            crate::trace_dispatch!("computable", "sin", "acos-complement-rewrite");
+            return Self::unit_complement(&argument);
+        }
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
                 crate::trace_dispatch!("computable", "sin", "exact-zero");

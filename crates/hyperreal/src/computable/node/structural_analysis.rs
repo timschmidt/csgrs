@@ -983,7 +983,7 @@ impl Computable {
         (bound.known_sign(), bound.planning_msd())
     }
 
-    fn exact_rational(&self) -> Option<Rational> {
+    pub(crate) fn exact_rational(&self) -> Option<Rational> {
         // Only exact leaf nodes are exposed here. Keeping this narrow prevents
         // constructor shortcuts from accidentally forcing approximation of a
         // composite just to discover that it is not rational.

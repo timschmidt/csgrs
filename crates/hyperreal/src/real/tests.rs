@@ -1410,6 +1410,21 @@ mod tests {
     }
 
     #[test]
+    fn inverse_trig_compositions_retain_exact_structural_images() {
+        let three_fifths = Real::new(Rational::fraction(3, 5).unwrap());
+        let two_fifths = Real::new(Rational::fraction(2, 5).unwrap());
+
+        assert_eq!(three_fifths.clone().asin().unwrap().sin(), three_fifths);
+        assert_eq!(two_fifths.clone().acos().unwrap().cos(), two_fifths);
+
+        let slope = Real::new(Rational::fraction(2, 3).unwrap());
+        let angle = slope.clone().atan().unwrap();
+        let denominator = (Real::one() + &slope * &slope).sqrt().unwrap();
+        assert_eq!(angle.clone().sin(), (&slope / &denominator).unwrap());
+        assert_eq!(angle.cos(), (Real::one() / denominator).unwrap());
+    }
+
+    #[test]
     fn scaled_acos_trig_composition_remains_bounded() {
         let phase = Real::new(Rational::fraction(-14, 31).unwrap())
             .acos()

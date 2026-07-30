@@ -91,6 +91,9 @@ impl Real {
         // This is the boundary where exact/symbolic information is intentionally
         // discarded. Callers should exhaust local exact shortcuts before using it.
         let computable = convert(self.fold());
+        if let Some(rational) = computable.exact_rational() {
+            return Self::new(rational);
+        }
 
         Self {
             rational: Rational::one(),

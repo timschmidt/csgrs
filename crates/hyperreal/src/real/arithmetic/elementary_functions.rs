@@ -2045,6 +2045,20 @@ impl Real {
             crate::trace_dispatch!("real", "sin", "exact-zero");
             return Self::zero();
         }
+        if matches!(self.class, Irrational)
+            && let Some(argument) = self
+                .computable
+                .as_ref()
+                .and_then(Computable::atan_rational_argument)
+        {
+            crate::trace_dispatch!("real", "sin", "atan-rational-inverse-rewrite");
+            let argument = Self::new(argument);
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus a rational square is positive");
+            return (&argument / denominator)
+                .expect("positive inverse-trig normalization is nonzero");
+        }
         match &self.class {
             One => {
                 // Plain rational trig still uses Computable, not SinPi/TanPi:
@@ -2094,6 +2108,20 @@ impl Real {
         if self.definitely_zero() {
             crate::trace_dispatch!("real", "cos", "exact-zero-one");
             return Self::one();
+        }
+        if matches!(self.class, Irrational)
+            && let Some(argument) = self
+                .computable
+                .as_ref()
+                .and_then(Computable::atan_rational_argument)
+        {
+            crate::trace_dispatch!("real", "cos", "atan-rational-inverse-rewrite");
+            let argument = Self::new(argument);
+            let denominator = (Self::one() + &argument * &argument)
+                .sqrt()
+                .expect("one plus a rational square is positive");
+            return (Self::one() / denominator)
+                .expect("positive inverse-trig normalization is nonzero");
         }
         match &self.class {
             One => {
