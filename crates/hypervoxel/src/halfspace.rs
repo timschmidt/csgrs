@@ -108,6 +108,7 @@ pub fn classify_cell_against_halfspace(
         &halfspace.predicate_plane(),
         &point3(&bounds.min),
         &point3(&bounds.max),
+        hyperlimit::PredicatePolicy::STRICT,
     ))?;
     Ok(match (report.lower_sign, report.upper_sign) {
         (_, Sign::Negative | Sign::Zero) => VoxelHalfSpaceClassification::Inside,

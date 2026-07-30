@@ -158,7 +158,7 @@ fn classify_ray_aabb_parameter_interval(
 }
 
 fn compare(left: &Real, right: &Real, axis: usize) -> HypervoxelResult<Ordering> {
-    hyperlimit::compare_reals(left, right)
+    hyperlimit::compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT)
         .value()
         .ok_or(HypervoxelError::UnknownOrdering { axis })
 }

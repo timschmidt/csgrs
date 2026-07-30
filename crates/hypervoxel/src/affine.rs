@@ -96,7 +96,7 @@ impl ExactAffineTransform {
 }
 
 fn certified_cmp(left: &Real, right: &Real, field: &'static str) -> HypervoxelResult<Ordering> {
-    match hyperlimit::compare_reals(left, right).value() {
+    match hyperlimit::compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT).value() {
         Some(ordering) => Ok(ordering),
         None => Err(HypervoxelError::UnknownScalarOrdering { field }),
     }

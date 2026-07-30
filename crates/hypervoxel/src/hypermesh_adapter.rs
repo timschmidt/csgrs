@@ -7,13 +7,16 @@ use crate::{
 
 /// Adapts a validated `hypermesh` closed solid into a triangle-solid carrier.
 pub fn adapt_hypermesh_exact_solid(
+    context: &hypermesh::MeshContext,
     mesh: &hypermesh::TriangleMesh,
-) -> HypervoxelResult<ExactTriangleSolidMesh> {
-    hypermesh::polygon_soup(&[mesh.as_ref()]).map_err(|_| {
+) -> HypervoxelResult<hypermesh::MeshOutcome<ExactTriangleSolidMesh>> {
+    let validation = hypermesh::polygon_soup(context, &[mesh.as_ref()]).map_err(|_| {
         HypervoxelError::InvalidSourceGeometry {
             reason: "hypermesh input is not a validated closed solid",
         }
     })?;
+    let certainty = validation.certainty;
+    drop(validation);
 
     let mut triangles = Vec::with_capacity(mesh.triangles.len());
     for (face, triangle) in mesh.triangles.iter().enumerate() {
@@ -52,8 +55,8 @@ pub fn adapt_hypermesh_exact_solid(
         });
     }
 
-    Ok(ExactTriangleSolidMesh::new(
-        ExactTriangleSurfaceMesh::new(triangles),
-        true,
-    ))
+    Ok(hypermesh::MeshOutcome {
+        value: ExactTriangleSolidMesh::new(ExactTriangleSurfaceMesh::new(triangles), true),
+        certainty,
+    })
 }

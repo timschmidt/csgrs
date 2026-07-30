@@ -15,6 +15,7 @@ arbitrary = { version = "1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 hypervoxel = { version = "0.3.0", path = "..", features = ["hypermesh-adapter", "legacy-voxelis"] }
 hyperreal = { version = "0.13.1", path = "../../hyperreal" }
+hyperlimit = { version = "0.4.1", path = "../../hyperlimit" }
 hypermesh = { version = "0.1.0", path = "../../hypermesh" }
 voxelis = { version = "25.5.0", path = "../voxelis" }
 glam = "0.29"

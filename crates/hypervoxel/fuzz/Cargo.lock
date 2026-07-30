@@ -172,6 +172,7 @@ version = "0.1.0"
 dependencies = [
  "arbitrary",
  "glam",
+ "hyperlimit",
  "hypermesh",
  "hyperreal",
  "hypervoxel",

@@ -104,7 +104,7 @@ pub enum VoxelBoxClassification {
 }
 
 fn certified_cmp(left: &Real, right: &Real, axis: usize) -> HypervoxelResult<Ordering> {
-    match hyperlimit::compare_reals(left, right).value() {
+    match hyperlimit::compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT).value() {
         Some(ordering) => Ok(ordering),
         None => Err(HypervoxelError::UnknownOrdering { axis }),
     }

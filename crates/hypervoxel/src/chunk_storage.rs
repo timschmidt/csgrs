@@ -427,6 +427,7 @@ impl ChunkPagedSparseGrid {
                 &query_max,
                 &point3(&page_bounds.min),
                 &point3(&page_bounds.max),
+                hyperlimit::PredicatePolicy::STRICT,
             ) {
                 PredicateOutcome::Decided { value, .. } if !value.intersects() => {
                     rejected_pages += 1;
@@ -444,6 +445,7 @@ impl ChunkPagedSparseGrid {
                     &query_max,
                     &point3(&bounds.min),
                     &point3(&bounds.max),
+                    hyperlimit::PredicatePolicy::STRICT,
                 ) {
                     PredicateOutcome::Decided { value, .. } if value.intersects() => {
                         candidates.push(AabbBroadPhaseCandidate {

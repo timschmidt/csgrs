@@ -299,6 +299,7 @@ impl SparseVoxelGrid {
                 &query_max,
                 &point3(&bounds.min),
                 &point3(&bounds.max),
+                hyperlimit::PredicatePolicy::STRICT,
             ) {
                 PredicateOutcome::Decided { value, .. } if value.intersects() => {
                     candidates.push(AabbBroadPhaseCandidate {

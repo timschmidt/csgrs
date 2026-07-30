@@ -192,6 +192,7 @@ fn classify_cell_boundary_against_exact_triangle_solid(
             &point3(&triangle.bounds.max),
             &cell_min,
             &cell_max,
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2301,6 +2302,7 @@ fn classify_axis_row_against_exact_triangle_solid(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2357,6 +2359,7 @@ fn classify_adaptive_axis_row_against_exact_triangle_solid(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2413,6 +2416,7 @@ fn classify_consensus_axis_row_against_exact_triangle_solid(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2469,6 +2473,7 @@ fn classify_component_consensus_axis_row_against_exact_triangle_solid(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2543,6 +2548,7 @@ fn classify_component_consensus_axis_row_with_candidate_schedule(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -2645,7 +2651,9 @@ fn classify_axis_sweep_center(
 ) -> HypervoxelResult<Option<VoxelTriangleSolidClassification>> {
     let mut crossings_after_center = 0_usize;
     for parameter in parameters {
-        match hyperlimit::compare_reals(parameter, threshold).value() {
+        match hyperlimit::compare_reals(parameter, threshold, hyperlimit::PredicatePolicy::STRICT)
+            .value()
+        {
             Some(Ordering::Greater) => crossings_after_center += 1,
             Some(Ordering::Less) => {}
             Some(Ordering::Equal) => return Ok(None),
@@ -3020,6 +3028,7 @@ fn classify_point_against_exact_triangle_solid_by_single_ray(
             &triangle.points[0],
             &triangle.points[1],
             &triangle.points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {

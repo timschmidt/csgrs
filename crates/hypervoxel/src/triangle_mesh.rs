@@ -52,7 +52,13 @@ impl ExactTriangle3 {
 
     pub(crate) fn points_and_report(&self) -> ([hyperlimit::Point3; 3], ExactTriangle3Report) {
         let points = self.points();
-        let location = classify_point_triangle3(&points[0], &points[1], &points[2], &points[0]);
+        let location = classify_point_triangle3(
+            &points[0],
+            &points[1],
+            &points[2],
+            &points[0],
+            hyperlimit::PredicatePolicy::STRICT,
+        );
         let (degenerate, unknown_predicate) = match location.value() {
             Some(Triangle3Location::Degenerate) => (true, false),
             Some(_) => (false, false),
@@ -587,7 +593,12 @@ fn classify_point_against_triangle_solid_by_single_ray(
     for triangle in &mesh.surface.triangles {
         let points = triangle.points();
         let report = classify_ray_triangle3_intersection_report(
-            &origin, direction, &points[0], &points[1], &points[2],
+            &origin,
+            direction,
+            &points[0],
+            &points[1],
+            &points[2],
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .value()
         .ok_or(HypervoxelError::UnknownScalarOrdering {
@@ -645,7 +656,9 @@ pub(crate) fn insert_unique_parameter(
     parameter: Real,
 ) -> HypervoxelResult<()> {
     for existing in parameters.iter() {
-        match hyperlimit::compare_reals(existing, &parameter).value() {
+        match hyperlimit::compare_reals(existing, &parameter, hyperlimit::PredicatePolicy::STRICT)
+            .value()
+        {
             Some(core::cmp::Ordering::Equal) => return Ok(()),
             Some(_) => {}
             None => {
@@ -681,6 +694,7 @@ pub(crate) fn triangle_intersects_cell(
         &point3(&triangle_bounds.max),
         &cell_min,
         &cell_max,
+        hyperlimit::PredicatePolicy::STRICT,
     ))? == Aabb3Intersection::Disjoint
     {
         return Ok(TriangleCellIntersection::Disjoint);
@@ -794,7 +808,7 @@ pub(crate) fn triangle_bounds(triangle: &ExactTriangle3) -> HypervoxelResult<cra
 }
 
 fn compare(left: &Real, right: &Real, axis: usize) -> HypervoxelResult<core::cmp::Ordering> {
-    hyperlimit::compare_reals(left, right)
+    hyperlimit::compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT)
         .value()
         .ok_or(HypervoxelError::UnknownOrdering { axis })
 }

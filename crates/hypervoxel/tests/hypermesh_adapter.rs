@@ -1,6 +1,7 @@
 #![cfg(feature = "hypermesh-adapter")]
 
-use hypermesh::{Point3, Real, Triangle, TriangleMesh};
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshCertainty, MeshContext, Point3, Real, Triangle, TriangleMesh};
 use hypervoxel::{
     ExactTriangleSolid, GridFrame, MaterialRegionId, VoxelizationPolicy,
     adapt_hypermesh_exact_solid, voxelize_exact_triangle_solid,
@@ -30,7 +31,10 @@ fn point(x: i64, y: i64, z: i64) -> Point3 {
 #[test]
 fn hypermesh_exact_solid_adapts_to_scheduled_triangle_voxelization() {
     let mesh = tetrahedron_i64();
-    let solid = adapt_hypermesh_exact_solid(&mesh).unwrap();
+    let outcome =
+        adapt_hypermesh_exact_solid(&MeshContext::new(PredicatePolicy::STRICT), &mesh).unwrap();
+    assert_eq!(outcome.certainty, MeshCertainty::Certified);
+    let solid = outcome.into_value();
     assert!(solid.report().exact_solid_source_ready);
     let solid = ExactTriangleSolid::new(solid).unwrap();
     assert_eq!(solid.triangle_count(), 4);
@@ -53,5 +57,7 @@ fn hypermesh_adapter_rejects_open_solid_evidence() {
         vec![point(0, 0, 0), point(1, 0, 0), point(0, 1, 0)],
         vec![Triangle::new(0, 1, 2)],
     );
-    assert!(adapt_hypermesh_exact_solid(&open).is_err());
+    assert!(
+        adapt_hypermesh_exact_solid(&MeshContext::new(PredicatePolicy::STRICT), &open).is_err()
+    );
 }

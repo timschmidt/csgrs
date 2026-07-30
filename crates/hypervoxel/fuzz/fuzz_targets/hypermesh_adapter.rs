@@ -1,6 +1,7 @@
 #![no_main]
 
-use hypermesh::{TriangleMesh, Point3, Real, Triangle};
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshContext, Point3, Real, Triangle, TriangleMesh};
 use hypervoxel::{ExactTriangleSolid, adapt_hypermesh_exact_solid};
 use libfuzzer_sys::fuzz_target;
 
@@ -33,9 +34,10 @@ fuzz_target!(|data: (u8, bool, bool)| {
         triangles,
     );
 
-    let adapter = adapt_hypermesh_exact_solid(&mesh);
+    let adapter =
+        adapt_hypermesh_exact_solid(&MeshContext::new(PredicatePolicy::APPROXIMATE_512), &mesh);
     if closed_policy {
-        let solid = ExactTriangleSolid::new(adapter.unwrap()).unwrap();
+        let solid = ExactTriangleSolid::new(adapter.unwrap().into_value()).unwrap();
         assert_eq!(solid.triangle_count(), 4);
     } else {
         assert!(adapter.is_err());
