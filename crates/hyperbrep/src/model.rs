@@ -8017,6 +8017,14 @@ impl ModelBuilder {
                 }
                 (
                     Curve3Kind::Nurbs,
+                    CurveFamily2::Nurbs,
+                    SurfaceKind::RationalBezier,
+                    ParameterCorrespondence::Affine { .. },
+                ) => {
+                    self.validate_rational_tensor_graph_image(curve, edge_use, pcurve, surface)?;
+                }
+                (
+                    Curve3Kind::Nurbs,
                     CurveFamily2::RationalBezier,
                     SurfaceKind::Nurbs,
                     ParameterCorrespondence::Affine { .. },
@@ -8300,9 +8308,8 @@ impl ModelBuilder {
         let Some(parameter_plane) = surface.affine_parameter_plane()? else {
             return Ok(false);
         };
-        let oriented_pcurve = match edge_use.direction {
-            Direction::Forward => pcurve.clone(),
-            Direction::Reversed => pcurve.reversed()?,
+        let Some((scale, offset)) = edge_use.parameter_correspondence.affine_coefficients() else {
+            return Ok(false);
         };
         let origin = parameter_plane
             .plane_origin()
@@ -8310,8 +8317,14 @@ impl ModelBuilder {
         let (u, v) = parameter_plane
             .plane_directions()
             .expect("affine parameter certificate is a plane");
-        let Some(expected) =
-            crate::geometry::lift_curve_from_plane_frame(oriented_pcurve.curve(), origin, u, v)?
+        let Some(expected) = crate::geometry::lift_curve_from_plane_frame_with_affine_parameter(
+            pcurve.curve(),
+            origin,
+            u,
+            v,
+            scale,
+            offset,
+        )?
         else {
             return Ok(false);
         };

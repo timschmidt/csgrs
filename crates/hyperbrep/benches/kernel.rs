@@ -5,7 +5,9 @@ use hyperbrep::{
     Curve3, Direction, Model, Point3, RawModel, Real, SolidPointLocation, Surface,
     SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
-use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2};
+use hypercurve::{
+    CircularArc2, Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2,
+};
 use hyperlimit::compare_reals;
 
 fn point(x: i32, y: i32, z: i32) -> Point3 {
@@ -1810,7 +1812,7 @@ fn main() {
     let curved_region = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(
             curve_start.clone(),
-            CurvePoint2::new(half, Real::zero()),
+            CurvePoint2::new(half.clone(), Real::zero()),
             curve_end.clone(),
         )),
         Curve2::from(
@@ -1856,6 +1858,54 @@ fn main() {
     let elapsed = started.elapsed();
     println!(
         "spline_kernel/curved_affine_tensor_inverse_pcurve_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
+    let circle_center = CurvePoint2::new(half.clone(), half.clone());
+    let circle_right = CurvePoint2::new(&half + &quarter, half.clone());
+    let circle_left = CurvePoint2::new(&half - &quarter, half.clone());
+    let circular_region = CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(
+                circle_right.clone(),
+                circle_left.clone(),
+                circle_center.clone(),
+                false,
+            )
+            .expect("benchmark lower semicircle"),
+        ),
+        Curve2::from(
+            CircularArc2::try_from_center(circle_left, circle_right, circle_center, false)
+                .expect("benchmark upper semicircle"),
+        ),
+    ])
+    .expect("benchmark circular region");
+    let (circular_plane, circular_plane_face) = builder::planar_face(
+        &circular_region,
+        &[],
+        point(0, 0, 1),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .expect("benchmark circular plane region");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
+            black_box(&affine_tensor),
+            affine_tensor_face,
+            black_box(&circular_plane),
+            circular_plane_face,
+        )
+        .expect("benchmark exact circular contained-region partition")
+        .expect("benchmark circular boundary is represented");
+        assert_eq!(partition.faces.len(), 2);
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/circular_affine_tensor_inverse_pcurve_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 

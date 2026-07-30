@@ -4165,6 +4165,68 @@ pub(crate) fn lift_curve_from_plane_frame(
     }
 }
 
+pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
+    curve: &Curve2,
+    origin: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+    scale: &Real,
+    offset: &Real,
+) -> GeometryResult<Option<Curve3>> {
+    let order = decided_order(compare_reals(scale, &Real::zero()))?;
+    if order == Ordering::Equal {
+        return Err(GeometryError::InvalidParameterDomain);
+    }
+    let reversed = order == Ordering::Less;
+    let lift = |point: &CurvePoint2| origin.clone() + u.clone() * point.x() + v.clone() * point.y();
+    match curve.geometry() {
+        CurveGeometry2::Line(line) => {
+            let (start, end) = if reversed {
+                (line.end(), line.start())
+            } else {
+                (line.start(), line.end())
+            };
+            Ok(Some(Curve3::line(lift(start), lift(end))?))
+        }
+        CurveGeometry2::RationalBezier(curve) => {
+            let mut control_points = curve.control_points().to_vec();
+            let mut weights = curve.weights().to_vec();
+            if reversed {
+                control_points.reverse();
+                weights.reverse();
+            }
+            Ok(Some(Curve3::rational_bezier(
+                control_points.iter().map(lift).collect(),
+                weights,
+            )?))
+        }
+        CurveGeometry2::Nurbs(curve) => {
+            let mut control_points = curve.control_points().to_vec();
+            let mut weights = curve.weights().to_vec();
+            let mut knots = curve.knots().to_vec();
+            if reversed {
+                control_points.reverse();
+                weights.reverse();
+                knots.reverse();
+            }
+            for knot in &mut knots {
+                *knot = scale * &*knot + offset;
+            }
+            Ok(Some(Curve3::nurbs(
+                curve.degree(),
+                control_points.iter().map(lift).collect(),
+                weights,
+                knots,
+            )?))
+        }
+        CurveGeometry2::CircularArc(_)
+        | CurveGeometry2::QuadraticBezier(_)
+        | CurveGeometry2::CubicBezier(_)
+        | CurveGeometry2::RationalQuadraticBezier(_)
+        | CurveGeometry2::PolynomialBSpline(_) => Ok(None),
+    }
+}
+
 fn linear_section_pcurve_carriers(
     profile: &Curve3,
     plane_origin: &Point3,

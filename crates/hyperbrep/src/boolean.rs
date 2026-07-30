@@ -2995,6 +2995,7 @@ fn contained_face_boundary_traces_from_plane(
         .into_iter()
         .chain(plane_face_record.inner().iter().copied())
     {
+        let wire_trace_start = traces.len();
         let wire = plane_model.wire(wire_id).expect("validated plane wire");
         for edge_use_id in wire.edge_uses() {
             let edge_use = plane_model
@@ -3104,8 +3105,96 @@ fn contained_face_boundary_traces_from_plane(
                 }
             }
         }
+        if let Some(parameter_plane) = &affine_parameter_plane
+            && let Some(closed) = concatenate_closed_contained_rational_trace(
+                &traces[wire_trace_start..],
+                parameter_plane,
+            )?
+        {
+            traces.truncate(wire_trace_start);
+            traces.push(closed);
+        }
     }
     Ok(Some(traces))
+}
+
+fn concatenate_closed_contained_rational_trace(
+    traces: &[SurfaceIntersectionCurve],
+    parameter_plane: &Surface,
+) -> Result<Option<SurfaceIntersectionCurve>, BooleanError> {
+    if traces.len() < 2
+        || traces
+            .iter()
+            .any(|trace| trace.curve().kind() != crate::Curve3Kind::RationalBezier)
+    {
+        return Ok(None);
+    }
+    let mut remaining = traces[1..].to_vec();
+    let mut ordered = vec![traces[0].clone()];
+    while !remaining.is_empty() {
+        let end = ordered
+            .last()
+            .expect("ordered trace chain is nonempty")
+            .curve()
+            .end()?;
+        let mut matches = Vec::new();
+        for (index, candidate) in remaining.iter().enumerate() {
+            if points_exactly_equal(&end, &candidate.curve().start()?)? {
+                matches.push((index, false));
+            } else if points_exactly_equal(&end, &candidate.curve().end()?)? {
+                matches.push((index, true));
+            }
+        }
+        let [(index, reverse)] = matches.as_slice() else {
+            return Ok(None);
+        };
+        let candidate = remaining.remove(*index);
+        ordered.push(if *reverse {
+            candidate.reversed()?
+        } else {
+            candidate
+        });
+    }
+    if !points_exactly_equal(
+        &ordered.last().expect("at least two traces").curve().end()?,
+        &ordered[0].curve().start()?,
+    )? {
+        return Ok(None);
+    }
+    let pcurves = ordered
+        .iter()
+        .map(|trace| {
+            trace
+                .first_pcurve()
+                .materialize()
+                .map(|pcurve| pcurve.curve().clone())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if pcurves
+        .iter()
+        .any(|curve| curve.family() != hypercurve::CurveFamily2::RationalBezier)
+    {
+        return Ok(None);
+    }
+    let boundaries = (0..=ordered.len())
+        .map(|index| Real::from(u64::try_from(index).expect("trace count fits u64")))
+        .collect::<Vec<_>>();
+    let pcurve =
+        crate::geometry::concatenate_rational_bezier_spans_as_nurbs(&pcurves, &boundaries)?;
+    let origin = parameter_plane
+        .plane_origin()
+        .expect("affine parameter certificate is a plane");
+    let (u, v) = parameter_plane
+        .plane_directions()
+        .expect("affine parameter certificate is a plane");
+    let Some(spatial) = crate::geometry::lift_curve_from_plane_frame(&pcurve, origin, u, v)? else {
+        return Ok(None);
+    };
+    Ok(Some(SurfaceIntersectionCurve::from_exact_pcurves(
+        spatial,
+        pcurve.clone(),
+        pcurve,
+    )?))
 }
 
 fn push_contained_face_curve_fragments(
@@ -6308,6 +6397,73 @@ mod tests {
             partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
                 .unwrap()
                 .expect("public contained-region partition is exact");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn circular_parameter_region_partitions_elliptic_tensor_boundary_as_exact_nurbs() {
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[]);
+        let radius = (Real::one() / Real::from(8)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let center = hypercurve::Point2::new(half.clone(), half.clone());
+        let right = hypercurve::Point2::new(&half + &radius, half.clone());
+        let left = hypercurve::Point2::new(&half - &radius, half.clone());
+        let outer = CurvePath2::try_new(vec![
+            Curve2::from(
+                hypercurve::CircularArc2::try_from_center(
+                    right.clone(),
+                    left.clone(),
+                    center.clone(),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                hypercurve::CircularArc2::try_from_center(left, right, center, false).unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::new([half, Real::one(), Real::zero()]),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("circular planar boundary promotes to exact rational spans");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::Nurbs);
+        assert_eq!(
+            traces[0]
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            hypercurve::CurveFamily2::Nurbs
+        );
+        let (partitioned, partition) =
+            partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("circular region partitions the affine tensor");
         assert_eq!(partition.faces.len(), 2);
         assert_eq!(
             compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
