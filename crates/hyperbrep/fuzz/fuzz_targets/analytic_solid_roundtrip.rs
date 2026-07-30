@@ -296,6 +296,33 @@ fuzz_target!(|bytes: &[u8]| {
     let _ = model.solid_volume(solid);
     let _ = model.classify_point(solid, &hyperbrep::Point3::origin());
     let _ = boolean::intersection_graph(&model, solid, &model, solid);
+    let chordal_policy = hyperbrep::tessellation::ChordalApproximationPolicy::uniform(
+        std::num::NonZeroUsize::new(usize::from(bytes[1] % 3) + 1)
+            .expect("fuzz boundary subdivision is positive"),
+        bytes[2] % 3,
+    );
+    if let Some(face) = model
+        .solid(solid)
+        .and_then(|solid| model.shell(solid.outer()))
+        .and_then(|shell| {
+            shell
+                .faces()
+                .get(usize::from(bytes[3]) % shell.faces().len())
+        })
+        && let Ok(artifact) =
+            hyperbrep::tessellation::approximate_face_chordally(&model, *face, chordal_policy)
+    {
+        assert_eq!(artifact.parameters().len(), artifact.points().len());
+        for index in 0..artifact.parameters().len() {
+            assert!(
+                artifact
+                    .triangles()
+                    .iter()
+                    .flatten()
+                    .any(|retained| *retained == index)
+            );
+        }
+    }
     let translation = Matrix4::affine_translation([
         Real::from(i32::from(bytes[1]) - 128),
         Real::from(i32::from(bytes[2]) - 128),
@@ -898,16 +925,9 @@ fuzz_target!(|bytes: &[u8]| {
     else {
         return;
     };
-    let chordal_policy = hyperbrep::tessellation::ChordalApproximationPolicy::uniform(
-        std::num::NonZeroUsize::new(usize::from(bytes[1] % 3) + 1)
-            .expect("fuzz boundary subdivision is positive"),
-        bytes[2] % 3,
-    );
-    if let Ok(artifact) = hyperbrep::tessellation::approximate_tensor_face_chordally(
-        &patch,
-        patch_face,
-        chordal_policy,
-    ) {
+    if let Ok(artifact) =
+        hyperbrep::tessellation::approximate_face_chordally(&patch, patch_face, chordal_policy)
+    {
         assert_eq!(artifact.parameters().len(), artifact.points().len());
         for triangle in artifact.triangles() {
             assert!(

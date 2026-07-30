@@ -501,11 +501,12 @@ With `--features tessellation`,
 line-bounded planar faces, including holes, through HyperTRI. It returns copied
 exact parameter/model-space vertices and oriented triangle indices.
 
-`tessellation::approximate_tensor_face_chordally` is a separate, visibly lossy
-API for line-trimmed rational Bézier and finite NURBS faces. Its explicit
+`tessellation::approximate_face_chordally` is a separate, visibly lossy API
+for any validated face with an explicit finite outer boundary. Its explicit
 `ChordalApproximationPolicy` uses only integer boundary segments and midpoint
 refinement levels; all generated parameters and surface evaluations use
-`hyperreal::Real`. `ChordalTensorFaceApproximation` retains parameters beside
-points and certifies `ExactAtVerticesOnly`. Chord interiors have no claimed
-geometric error bound. Curved pcurve trims, analytic surfaces, and
-surface-error-tolerance requests remain rejected.
+`hyperreal::Real`. `ChordalFaceApproximation` retains parameters beside points
+and certifies `ExactAtVerticesOnly`. Chord interiors have no claimed geometric
+error bound. Curved pcurve trims and analytic surfaces are supported without
+demoting their authoritative carriers. Whole periodic faces without explicit
+finite trimming, and surface-error-tolerance requests, remain rejected.

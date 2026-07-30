@@ -536,8 +536,10 @@ a non-manifold cavity.
 The optional tessellation adapter has separate exact and lossy types. Exact
 planar triangulation copies validated line-boundary parameters into HyperTRI
 and maps the result back to exact model-space points.
-`approximate_tensor_face_chordally` accepts only line-trimmed finite rational
-Bézier/NURBS faces and an explicit integer parameter-subdivision policy.
+`approximate_face_chordally` accepts any validated face with an explicit
+finite boundary and an explicit integer parameter-subdivision policy.
+All supported pcurve and surface families are evaluated through their native
+exact `Real` parameterizations; no sampled carrier replaces either one.
 HyperTRI's planar ear clipping may remove collinear UV samples, so the adapter
 reinserts every requested boundary sample into the triangle topology before
 refinement: those UV-collinear samples can have non-collinear images on a

@@ -755,12 +755,12 @@ fn main() {
         let started = Instant::now();
         let mut checksum = 0_usize;
         for _ in 0..CHORDAL_ITERATIONS {
-            let artifact = hyperbrep::tessellation::approximate_tensor_face_chordally(
+            let artifact = hyperbrep::tessellation::approximate_face_chordally(
                 black_box(&model),
                 faces[0],
                 black_box(policy),
             )
-            .expect("benchmark explicit chordal tensor output");
+            .expect("benchmark explicit chordal face output");
             assert_eq!(
                 artifact.source_relation(),
                 hyperbrep::tessellation::ChordalSourceRelation::ExactAtVerticesOnly
@@ -770,7 +770,32 @@ fn main() {
         }
         let elapsed = started.elapsed();
         println!(
-            "derived_output/tensor_face_exact_vertex_chordal_approximation: {CHORDAL_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+            "derived_output/face_exact_vertex_chordal_approximation: {CHORDAL_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+            elapsed / CHORDAL_ITERATIONS as u32,
+        );
+
+        let (analytic, analytic_solid) =
+            builder::cylinder(Real::from(2), Real::from(3)).expect("benchmark analytic source");
+        let face = *analytic
+            .solid(analytic_solid)
+            .and_then(|solid| analytic.shell(solid.outer()))
+            .and_then(|shell| shell.faces().first())
+            .expect("benchmark analytic face");
+        let started = Instant::now();
+        let mut checksum = 0_usize;
+        for _ in 0..CHORDAL_ITERATIONS {
+            let artifact = hyperbrep::tessellation::approximate_face_chordally(
+                black_box(&analytic),
+                face,
+                black_box(policy),
+            )
+            .expect("benchmark curved-trim analytic chordal output");
+            checksum += artifact.triangles().len();
+            black_box(artifact);
+        }
+        let elapsed = started.elapsed();
+        println!(
+            "derived_output/analytic_face_exact_vertex_chordal_approximation: {CHORDAL_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
             elapsed / CHORDAL_ITERATIONS as u32,
         );
     }

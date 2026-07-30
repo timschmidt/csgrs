@@ -2,7 +2,7 @@
 //!
 //! This module derives an index mesh from a validated BREP face without
 //! changing or replacing the source model. Line-bounded planar faces can be
-//! triangulated exactly. Finite tensor-product faces have a separate,
+//! triangulated exactly. Any explicitly trimmed face has a separate,
 //! unmistakably lossy chordal API: its policy controls parameter-space
 //! subdivision, every emitted vertex is an exact [`Real`] evaluation of the
 //! source surface, and triangle interiors carry no invented error guarantee.
@@ -87,13 +87,13 @@ pub enum ChordalSourceRelation {
     ExactAtVerticesOnly,
 }
 
-/// Lossy chordal approximation derived from one finite tensor-product face.
+/// Lossy chordal approximation derived from one explicitly trimmed face.
 ///
 /// The source BREP remains authoritative and shares no mutable storage with
 /// this artifact. `parameters[index]` is retained for every `points[index]`,
 /// making the exact-at-vertices relation replayable.
 #[derive(Clone, Debug)]
-pub struct ChordalTensorFaceApproximation {
+pub struct ChordalFaceApproximation {
     source_face: FaceId,
     source_surface_kind: SurfaceKind,
     policy: ChordalApproximationPolicy,
@@ -102,7 +102,7 @@ pub struct ChordalTensorFaceApproximation {
     triangles: Vec<[usize; 3]>,
 }
 
-impl ChordalTensorFaceApproximation {
+impl ChordalFaceApproximation {
     /// Returns the face from which this independent artifact was derived.
     pub const fn source_face(&self) -> FaceId {
         self.source_face
@@ -148,8 +148,8 @@ pub enum TessellationError {
     UnsupportedSurface(SurfaceKind),
     /// A boundary is not composed exclusively of exact line pcurves.
     CurvedBoundary,
-    /// Chordal output is currently restricted to finite tensor surfaces.
-    UnsupportedChordalSurface(SurfaceKind),
+    /// Chordal output requires an explicit finite outer boundary.
+    MissingFiniteBoundary,
     /// The requested uniform refinement exceeds addressable index storage.
     RefinementOverflow,
     /// HyperTRI removed a sampled parameter-boundary vertex that could not be
@@ -174,12 +174,8 @@ impl fmt::Display for TessellationError {
             Self::CurvedBoundary => {
                 formatter.write_str("exact planar tessellation requires line pcurves")
             }
-            Self::UnsupportedChordalSurface(kind) => {
-                write!(
-                    formatter,
-                    "chordal face approximation does not support {kind:?}"
-                )
-            }
+            Self::MissingFiniteBoundary => formatter
+                .write_str("chordal face approximation requires an explicit finite boundary"),
             Self::RefinementOverflow => {
                 formatter.write_str("chordal refinement exceeds addressable index storage")
             }
@@ -225,7 +221,7 @@ pub fn triangulate_planar_face(
         return Err(TessellationError::UnsupportedSurface(surface.kind()));
     }
 
-    let (parameters, hole_indices) = sampled_line_boundaries(model, face_id, 1)?;
+    let (parameters, hole_indices) = sampled_boundaries(model, face_id, 1, true)?;
 
     let hypertri_points = parameters
         .iter()
@@ -251,35 +247,29 @@ pub fn triangulate_planar_face(
     })
 }
 
-/// Derives an explicitly lossy chordal approximation of a tensor-product face.
+/// Derives an explicitly lossy chordal approximation of a trimmed face.
 ///
-/// Rational Bézier and finite non-periodic NURBS faces are accepted when every
-/// boundary use has an exact line pcurve. All boundary and refinement
-/// parameters are computed with [`Real`]. Every output point is then evaluated
-/// exactly from the immutable source surface.
+/// Every supported surface family is accepted when the face has an explicit
+/// finite outer boundary. Boundary pcurves of every evaluable family are
+/// sampled at exact uniform parameters. All boundary and refinement parameters
+/// are computed with [`Real`]. Every output point is then evaluated exactly
+/// from the immutable source surface.
 ///
 /// Only vertices are certified to lie on the source. Triangle edges and
 /// interiors are model-space chords with no geometric error bound.
-pub fn approximate_tensor_face_chordally(
+pub fn approximate_face_chordally(
     model: &Model,
     face_id: FaceId,
     policy: ChordalApproximationPolicy,
-) -> Result<ChordalTensorFaceApproximation, TessellationError> {
+) -> Result<ChordalFaceApproximation, TessellationError> {
     let face = model
         .face(face_id)
         .ok_or(TessellationError::InvalidFace(face_id))?;
     let surface = model
         .surface(face.surface())
         .expect("validated face surface ID");
-    if !matches!(
-        surface.kind(),
-        SurfaceKind::RationalBezier | SurfaceKind::Nurbs
-    ) {
-        return Err(TessellationError::UnsupportedChordalSurface(surface.kind()));
-    }
-
     let (mut parameters, hole_indices) =
-        sampled_line_boundaries(model, face_id, policy.boundary_segments.get())?;
+        sampled_boundaries(model, face_id, policy.boundary_segments.get(), false)?;
     let hypertri_points = parameters
         .iter()
         .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
@@ -302,7 +292,7 @@ pub fn approximate_tensor_face_chordally(
         .map(|parameter| surface.point_at(parameter))
         .collect::<Result<Vec<_>, _>>()?;
 
-    Ok(ChordalTensorFaceApproximation {
+    Ok(ChordalFaceApproximation {
         source_face: face_id,
         source_surface_kind: surface.kind(),
         policy,
@@ -312,10 +302,11 @@ pub fn approximate_tensor_face_chordally(
     })
 }
 
-fn sampled_line_boundaries(
+fn sampled_boundaries(
     model: &Model,
     face_id: FaceId,
     segments_per_use: usize,
+    lines_only: bool,
 ) -> Result<(Vec<Point2>, Vec<usize>), TessellationError> {
     debug_assert!(segments_per_use > 0);
     let face = model
@@ -325,7 +316,7 @@ fn sampled_line_boundaries(
     let mut hole_indices = Vec::with_capacity(face.inner().len());
     let outer = face
         .outer()
-        .ok_or(TessellationError::UnsupportedSurface(SurfaceKind::Sphere))?;
+        .ok_or(TessellationError::MissingFiniteBoundary)?;
     let denominator = Real::from(
         u128::try_from(segments_per_use).map_err(|_| TessellationError::RefinementOverflow)?,
     );
@@ -344,9 +335,9 @@ fn sampled_line_boundaries(
             let pcurve = model
                 .pcurve(edge_use.pcurve())
                 .expect("validated edge-use pcurve ID");
-            pcurve
-                .line_segment()
-                .ok_or(TessellationError::CurvedBoundary)?;
+            if lines_only && pcurve.line_segment().is_none() {
+                return Err(TessellationError::CurvedBoundary);
+            }
             let span = pcurve.domain_end() - pcurve.domain_start();
             for segment in 0..segments_per_use {
                 let numerator = Real::from(
@@ -607,7 +598,7 @@ mod tests {
     }
 
     #[test]
-    fn tensor_chordal_output_is_explicit_and_exact_at_every_vertex() {
+    fn chordal_output_is_explicit_and_exact_at_every_vertex() {
         let control_points = vec![
             vec![
                 Point3::new(r(0), r(0), r(0)),
@@ -632,7 +623,7 @@ mod tests {
         let (model, faces) = crate::builder::tensor_patch_shell(vec![patch]).unwrap();
         let source_json = model.to_json().unwrap();
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), 2);
-        let artifact = approximate_tensor_face_chordally(&model, faces[0], policy).unwrap();
+        let artifact = approximate_face_chordally(&model, faces[0], policy).unwrap();
 
         assert_eq!(artifact.source_face(), faces[0]);
         assert_eq!(artifact.source_surface_kind(), SurfaceKind::RationalBezier);
@@ -650,11 +641,20 @@ mod tests {
                 Some(true)
             );
         }
+        for index in 0..artifact.parameters().len() {
+            assert!(
+                artifact
+                    .triangles()
+                    .iter()
+                    .flatten()
+                    .any(|retained| *retained == index)
+            );
+        }
         assert_eq!(model.to_json().unwrap(), source_json);
     }
 
     #[test]
-    fn chordal_tensor_policy_retains_nurbs_domain_samples_and_rejects_analytic_faces() {
+    fn chordal_policy_retains_nurbs_domain_samples() {
         let patch = crate::TensorPatch::Nurbs {
             u_degree: 1,
             v_degree: 1,
@@ -668,7 +668,7 @@ mod tests {
         };
         let (model, faces) = crate::builder::tensor_patch_shell(vec![patch]).unwrap();
         let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(2).unwrap(), 1);
-        let artifact = approximate_tensor_face_chordally(&model, faces[0], policy).unwrap();
+        let artifact = approximate_face_chordally(&model, faces[0], policy).unwrap();
         assert_eq!(artifact.source_surface_kind(), SurfaceKind::Nurbs);
         assert_eq!(artifact.triangles().len(), 24);
         assert!(
@@ -677,12 +677,51 @@ mod tests {
                 .iter()
                 .any(|parameter| parameter.x == r(2) && parameter.y == r(-1))
         );
+    }
 
-        let (analytic, _) = crate::builder::cylinder(r(2), r(3)).unwrap();
+    #[test]
+    fn chordal_output_accepts_curved_trims_and_analytic_surfaces() {
+        let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(3).unwrap(), 1);
+        let (cylinder, _) = crate::builder::cylinder(r(2), r(3)).unwrap();
+        for face_index in 0..6 {
+            let face_id = FaceId::from_index(face_index).unwrap();
+            let artifact = approximate_face_chordally(&cylinder, face_id, policy).unwrap();
+            let face = cylinder.face(face_id).unwrap();
+            let surface = cylinder.surface(face.surface()).unwrap();
+            assert_eq!(artifact.source_surface_kind(), surface.kind());
+            assert!(!artifact.triangles().is_empty());
+            for (parameter, point) in artifact.parameters().iter().zip(artifact.points()) {
+                assert_eq!(
+                    point3_equal(point, &surface.point_at(parameter).unwrap()).value(),
+                    Some(true)
+                );
+            }
+            for index in 0..artifact.parameters().len() {
+                assert!(
+                    artifact
+                        .triangles()
+                        .iter()
+                        .flatten()
+                        .any(|retained| *retained == index)
+                );
+            }
+        }
+
+        let (torus, _) = crate::builder::torus(r(3), r(1)).unwrap();
+        let torus_face = FaceId::from_index(0).unwrap();
+        let artifact = approximate_face_chordally(&torus, torus_face, policy).unwrap();
+        assert_eq!(artifact.source_surface_kind(), SurfaceKind::Torus);
+        assert!(!artifact.triangles().is_empty());
+    }
+
+    #[test]
+    fn chordal_output_requires_an_explicit_finite_boundary() {
+        let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(2).unwrap(), 0);
+        let (sphere, _) = crate::builder::sphere(r(2)).unwrap();
         assert_eq!(
-            approximate_tensor_face_chordally(&analytic, FaceId::from_index(2).unwrap(), policy)
+            approximate_face_chordally(&sphere, FaceId::from_index(0).unwrap(), policy)
                 .unwrap_err(),
-            TessellationError::UnsupportedChordalSurface(SurfaceKind::Cylinder)
+            TessellationError::MissingFiniteBoundary
         );
     }
 }
