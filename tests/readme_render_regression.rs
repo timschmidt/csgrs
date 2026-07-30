@@ -49,7 +49,7 @@ fn generated_readme_pngs_match_checked_in_baselines() {
             "--example",
             "readme_renders",
             "--features",
-            "mesh,curve,image-io,truetype-text,metaballs,sdf,offset",
+            "curve,image-io,truetype-text,metaballs,sdf,offset",
         ])
         .env("README_RENDER_OUTPUT_DIR", &output_dir)
         .status()

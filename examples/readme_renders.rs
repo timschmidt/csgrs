@@ -8,19 +8,26 @@ use csgrs::{
     GeometryContext, TriangleMesh, curve,
     solid::{self, SolidExt},
 };
-use hypercurve::CurveRegion2;
+use hypercurve::{
+    Classification, CurvePath2, CurvePolicy, CurveRegion2, FiniteProjectionOptions,
+    FiniteRegionProfile2,
+};
 use hyperlattice::{Point3, Real, Vector3};
 use image::{Rgba, RgbaImage};
-use std::fs;
-use std::path::PathBuf;
+use std::{collections::BTreeSet, fs, path::PathBuf};
 
 const SIZE: u32 = 768;
 const PADDING: f64 = 0.12;
+const CURVE_CHORD_ERROR: f64 = 1.0e-3;
 const BG: Rgba<u8> = Rgba([0, 0, 0, 0]);
-const INK_2D: Rgba<u8> = Rgba([42, 95, 143, 255]);
-const EDGE_2D: Rgba<u8> = Rgba([15, 41, 70, 255]);
-const FILL_3D: Rgba<u8> = Rgba([104, 145, 178, 255]);
-const EDGE_3D: Rgba<u8> = Rgba([31, 47, 64, 160]);
+const FACE_2D: Rgba<u8> = Rgba([68, 150, 173, 255]);
+const FACE_SHADOW_3D: Rgba<u8> = Rgba([54, 108, 142, 255]);
+const FACE_LIGHT_3D: Rgba<u8> = Rgba([120, 201, 204, 255]);
+const EDGE: Rgba<u8> = Rgba([16, 34, 49, 255]);
+const VERTEX: Rgba<u8> = Rgba([255, 203, 79, 255]);
+const EDGE_WIDTH_2D: f64 = 3.25;
+const VIEW_DIRECTION: [f64; 3] = [1.0, 1.0, 0.9];
+const LIGHT_DIRECTION: [f64; 3] = [0.25, 0.55, 1.0];
 
 fn main() {
     let output_dir = output_dir();
@@ -93,31 +100,40 @@ fn render_readme_meshes() {
         .expect("vector extrude")
         .into_value(),
     );
+    let revolve_profile = curve::translated(&curve::circle(r(0.18), 32), r(1.0), r(0.0));
     render_mesh(
         "revolve",
         &curve::revolve(
-            &curve::circle(r(0.18), 32),
+            &revolve_profile,
             r(265.0),
             32,
             &csgrs::GeometryContext::STRICT,
         )
         .expect("revolve")
-        .into_value()
-        .translated(r(1.0), r(0.0), r(0.0)),
+        .into_value(),
     );
 
     render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
-    render_mesh("csg", &cube_minus_translated_sphere());
+    render_mesh("csg", &cube_with_square_bore());
     render_mesh(
         "convex_hull",
         &solid::convex_hull(&solid::cube(r(1.2))).expect("convex hull"),
     );
     render_mesh(
         "minkowski_sum",
-        &solid::minkowski_sum(&solid::cube(r(1.1)), &solid::sphere(r(0.45), 16, 8))
+        &solid::minkowski_sum(&solid::cube(r(1.1)), &solid::octahedron(r(0.45)))
             .expect("Minkowski sum"),
     );
 
+    render_implicit_meshes();
+}
+
+fn render_implicit_meshes() {
+    render_metaballs_mesh();
+    render_tpms_meshes();
+}
+
+fn render_metaballs_mesh() {
     let balls = [
         MetaBall::new(p3(-0.55, 0.0, 0.0), r(0.65)),
         MetaBall::new(p3(0.55, 0.0, 0.0), r(0.65)),
@@ -125,9 +141,12 @@ fn render_readme_meshes() {
     ];
     render_mesh(
         "metaballs_3d",
-        &solid::metaballs(&balls, (16, 16, 16), r(0.7), r(0.25)),
+        &solid::metaballs(&balls, (8, 8, 8), r(0.7), r(0.25)),
     );
+}
 
+fn render_tpms_meshes() {
+    // Keep implicit thumbnail meshes legible once their vertices are visible.
     let tpms_box = solid::cube(r(2.0));
     render_mesh(
         "gyroid",
@@ -143,32 +162,60 @@ fn render_readme_meshes() {
     );
 }
 
-fn cube_minus_translated_sphere() -> TriangleMesh {
+fn cube_with_square_bore() -> TriangleMesh {
     let cube = solid::cube(r(2.0));
-    let sphere = solid::sphere(r(1.25), 16, 8).translated(r(1.0), r(1.0), r(1.0));
-    cube.try_difference(&sphere).expect("difference")
+    let bore = solid::cuboid(r(0.8), r(0.8), r(3.0)).translated(r(0.6), r(0.6), r(-0.5));
+    cube.try_difference(&bore).expect("square-bore difference")
 }
 
 fn render_curve(name: &str, region: &CurveRegion2) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let profiles = curve::try_finite_profiles(region, &csgrs::GeometryContext::STRICT)
-        .expect("finite curve profiles")
-        .into_value();
-    let wires = Vec::<Vec<[Real; 2]>>::new();
-    let Some(bounds) = curve_bounds(&profiles, &wires) else {
+    let projection = FiniteProjectionOptions::try_new(CURVE_CHORD_ERROR)
+        .expect("README curve chord error is positive");
+    // Material/hole ownership and edge identity are decided on CurveRegion2
+    // before the finite raster projection is created.
+    let profiles = expect_decided(
+        region
+            .project_to_finite_profiles_exact(&projection, &CurvePolicy::STRICT)
+            .expect("project exact CurveRegion2 profiles"),
+        "exact CurveRegion2 profile topology",
+    );
+    let edge_paths = expect_decided(
+        region
+            .project_to_finite_curve_paths(&CurvePolicy::STRICT)
+            .expect("project exact CurveRegion2 edge paths"),
+        "exact CurveRegion2 edge topology",
+    );
+    let Some(bounds) = curve_bounds(&profiles) else {
         save_image(name, &image);
         return;
     };
     let map = Map2::new(bounds);
 
     for profile in &profiles {
-        stroke_points(&mut image, &map, profile.material().points(), EDGE_2D);
-        for hole in profile.holes() {
-            stroke_points(&mut image, &map, hole.points(), EDGE_2D);
+        for triangle in profile
+            .triangulate(&CurvePolicy::STRICT)
+            .expect("triangulate exact CurveRegion2 profile")
+            .into_value()
+        {
+            let [a, b, c] = triangle.map(|point| map.point((point[0], point[1])));
+            fill_triangle_2d(&mut image, a, b, c, FACE_2D);
         }
     }
-    for wire in &wires {
-        stroke_real_points(&mut image, &map, wire, INK_2D);
+
+    let edge_polylines = project_edge_paths(&edge_paths, &projection);
+    for points in &edge_polylines {
+        stroke_points(&mut image, &map, points, EDGE_WIDTH_2D, EDGE);
+    }
+
+    let vertex_count = edge_paths.iter().map(|path| path.curves().len()).sum();
+    let radius = vertex_radius(vertex_count);
+    for path in &edge_paths {
+        // Mark exact curve-fragment junctions, not chordization samples.
+        for edge in path.curves() {
+            let vertex = (real_to_f64(edge.start().x()), real_to_f64(edge.start().y()));
+            draw_vertex_2d(&mut image, map.point(vertex), radius);
+        }
     }
     save_image(name, &image);
 }
@@ -180,66 +227,118 @@ fn render_mesh(name: &str, mesh: &TriangleMesh) {
         return;
     }
 
-    let projected = mesh
-        .triangles
-        .iter()
-        .map(|triangle| {
-            let [a, b, c] = triangle.indices();
-            [
-                project_point(&mesh.positions[a]),
-                project_point(&mesh.positions[b]),
-                project_point(&mesh.positions[c]),
-            ]
-        })
-        .collect::<Vec<_>>();
+    let world = mesh.positions.iter().map(point3_to_f64).collect::<Vec<_>>();
+    let projected = world.iter().copied().map(project_point).collect::<Vec<_>>();
+    let mut edges = BTreeSet::new();
+    let mut used_vertices = BTreeSet::new();
+    for triangle in mesh.triangles.iter() {
+        let [a, b, c] = triangle.indices();
+        used_vertices.extend([a, b, c]);
+        for (from, to) in [(a, b), (b, c), (c, a)] {
+            edges.insert(if from < to { (from, to) } else { (to, from) });
+        }
+    }
 
-    let Some(bounds) = projected_bounds(&projected) else {
+    let mut bounds = None;
+    for &index in &used_vertices {
+        include_point(&mut bounds, projected[index].plane);
+    }
+    let Some(bounds) = bounds else {
         save_image(name, &image);
         return;
     };
     let map = Map2::new(bounds);
+    let raster = projected
+        .iter()
+        .map(|point| {
+            let (x, y) = map.point(point.plane);
+            RasterPoint3 {
+                x,
+                y,
+                depth: point.depth,
+            }
+        })
+        .collect::<Vec<_>>();
 
-    for tri in projected {
-        let a = map.point(tri[0]);
-        let b = map.point(tri[1]);
-        let c = map.point(tri[2]);
-        fill_triangle(&mut image, a, b, c, FILL_3D);
-        draw_line(&mut image, a, b, EDGE_3D);
-        draw_line(&mut image, b, c, EDGE_3D);
-        draw_line(&mut image, c, a, EDGE_3D);
+    let (min_depth, max_depth) = used_vertices
+        .iter()
+        .map(|&index| projected[index].depth)
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), depth| {
+            (min.min(depth), max.max(depth))
+        });
+    let depth_bias = ((max_depth - min_depth).abs() * 0.006).max(1.0e-9);
+    let mut depth_buffer = vec![f64::NEG_INFINITY; (SIZE * SIZE) as usize];
+
+    // Faces establish visibility; topology overlays are then depth-tested so
+    // rear edges and vertices cannot bleed through the solid.
+    for triangle in mesh.triangles.iter() {
+        let indices = triangle.indices();
+        let points = indices.map(|index| raster[index]);
+        let color = shaded_face_color(indices.map(|index| world[index]));
+        fill_triangle_3d(&mut image, &mut depth_buffer, points, color);
+    }
+
+    let edge_width = edge_width(edges.len());
+    for &(from, to) in &edges {
+        draw_depth_line(
+            &mut image,
+            &depth_buffer,
+            raster[from],
+            raster[to],
+            edge_width,
+            depth_bias,
+            EDGE,
+        );
+    }
+
+    let radius = vertex_radius(used_vertices.len());
+    for index in used_vertices {
+        draw_vertex_3d(&mut image, &depth_buffer, raster[index], radius, depth_bias);
     }
     save_image(name, &image);
 }
 
-fn stroke_points(image: &mut RgbaImage, map: &Map2, points: &[[f64; 2]], color: Rgba<u8>) {
+fn expect_decided<T>(classification: Classification<T>, context: &str) -> T {
+    match classification {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => {
+            panic!("{context} was uncertain: {reason:?}")
+        },
+    }
+}
+
+fn project_edge_paths(
+    paths: &[CurvePath2],
+    projection: &FiniteProjectionOptions,
+) -> Vec<Vec<[f64; 2]>> {
+    paths
+        .iter()
+        .map(|path| {
+            path.project_to_finite_polyline(projection)
+                .expect("rasterize exact CurveRegion2 edge path")
+                .points()
+                .to_vec()
+        })
+        .collect()
+}
+
+fn stroke_points(
+    image: &mut RgbaImage,
+    map: &Map2,
+    points: &[[f64; 2]],
+    width: f64,
+    color: Rgba<u8>,
+) {
     let pixels = points
         .iter()
         .map(|point| map.point((point[0], point[1])))
         .collect::<Vec<_>>();
     for pair in pixels.windows(2) {
-        draw_line(image, pair[0], pair[1], color);
+        draw_line(image, pair[0], pair[1], width, color);
     }
 }
 
-fn stroke_real_points(
-    image: &mut RgbaImage,
-    map: &Map2,
-    points: &[[Real; 2]],
-    color: Rgba<u8>,
-) {
-    let pixels = points
-        .iter()
-        .map(|point| map.point((real_to_f64(&point[0]), real_to_f64(&point[1]))))
-        .collect::<Vec<_>>();
-    for pair in pixels.windows(2) {
-        draw_line(image, pair[0], pair[1], color);
-    }
-}
-
-fn curve_bounds(
-    profiles: &[hypercurve::FiniteRegionProfile2],
-    wires: &[Vec<[Real; 2]>],
-) -> Option<(f64, f64, f64, f64)> {
+fn curve_bounds(profiles: &[FiniteRegionProfile2]) -> Option<(f64, f64, f64, f64)> {
     let mut bounds = None;
     for profile in profiles {
         include_points(&mut bounds, profile.material().points());
@@ -247,29 +346,12 @@ fn curve_bounds(
             include_points(&mut bounds, hole.points());
         }
     }
-    for wire in wires {
-        include_real_points(&mut bounds, wire);
-    }
-    bounds
-}
-
-fn projected_bounds(triangles: &[[(f64, f64); 3]]) -> Option<(f64, f64, f64, f64)> {
-    let mut bounds = None;
-    for point in triangles.iter().flat_map(|tri| tri.iter()) {
-        include_point(&mut bounds, *point);
-    }
     bounds
 }
 
 fn include_points(bounds: &mut Option<(f64, f64, f64, f64)>, points: &[[f64; 2]]) {
     for point in points {
         include_point(bounds, (point[0], point[1]));
-    }
-}
-
-fn include_real_points(bounds: &mut Option<(f64, f64, f64, f64)>, points: &[[Real; 2]]) {
-    for point in points {
-        include_point(bounds, (real_to_f64(&point[0]), real_to_f64(&point[1])));
     }
 }
 
@@ -285,74 +367,371 @@ fn include_point(bounds: &mut Option<(f64, f64, f64, f64)>, point: (f64, f64)) {
     });
 }
 
-fn project_point(point: &Point3) -> (f64, f64) {
-    let x = real_to_f64(&point.x);
-    let y = real_to_f64(&point.y);
-    let z = real_to_f64(&point.z);
-    (x - y, (x + y) * 0.45 - z)
+#[derive(Clone, Copy)]
+struct ProjectedPoint3 {
+    plane: (f64, f64),
+    depth: f64,
 }
 
-fn fill_triangle(
+#[derive(Clone, Copy)]
+struct RasterPoint3 {
+    x: f64,
+    y: f64,
+    depth: f64,
+}
+
+impl RasterPoint3 {
+    const fn plane(self) -> (f64, f64) {
+        (self.x, self.y)
+    }
+}
+
+fn point3_to_f64(point: &Point3) -> [f64; 3] {
+    [
+        real_to_f64(&point.x),
+        real_to_f64(&point.y),
+        real_to_f64(&point.z),
+    ]
+}
+
+fn project_point([x, y, z]: [f64; 3]) -> ProjectedPoint3 {
+    ProjectedPoint3 {
+        plane: (x - y, (x + y) * 0.45 - z),
+        depth: x + y + z * 0.9,
+    }
+}
+
+fn shaded_face_color([a, b, c]: [[f64; 3]; 3]) -> Rgba<u8> {
+    let ab = subtract3(b, a);
+    let ac = subtract3(c, a);
+    let Some(mut normal) = normalize3(cross3(ab, ac)) else {
+        return FACE_SHADOW_3D;
+    };
+    let view = normalize3(VIEW_DIRECTION).expect("view direction is nonzero");
+    if dot3(normal, view) < 0.0 {
+        normal = normal.map(|component| -component);
+    }
+    let light = normalize3(LIGHT_DIRECTION).expect("light direction is nonzero");
+    let diffuse = dot3(normal, light).max(0.0);
+    let facing = dot3(normal, view).clamp(0.0, 1.0);
+    let amount = (0.18 + 0.68 * diffuse + 0.14 * facing).clamp(0.0, 1.0);
+    mix_color(FACE_SHADOW_3D, FACE_LIGHT_3D, amount)
+}
+
+fn subtract3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
+}
+
+fn cross3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [
+        left[1] * right[2] - left[2] * right[1],
+        left[2] * right[0] - left[0] * right[2],
+        left[0] * right[1] - left[1] * right[0],
+    ]
+}
+
+fn dot3(left: [f64; 3], right: [f64; 3]) -> f64 {
+    left[0] * right[0] + left[1] * right[1] + left[2] * right[2]
+}
+
+fn normalize3(vector: [f64; 3]) -> Option<[f64; 3]> {
+    let length = dot3(vector, vector).sqrt();
+    (length > f64::EPSILON).then(|| vector.map(|component| component / length))
+}
+
+fn mix_color(shadow: Rgba<u8>, light: Rgba<u8>, amount: f64) -> Rgba<u8> {
+    Rgba(std::array::from_fn(|channel| {
+        let value =
+            f64::from(shadow[channel]) * (1.0 - amount) + f64::from(light[channel]) * amount;
+        value.round().clamp(0.0, 255.0) as u8
+    }))
+}
+
+fn fill_triangle_2d(
     image: &mut RgbaImage,
-    a: (u32, u32),
-    b: (u32, u32),
-    c: (u32, u32),
+    a: (f64, f64),
+    b: (f64, f64),
+    c: (f64, f64),
     color: Rgba<u8>,
 ) {
-    let min_x = a.0.min(b.0).min(c.0);
-    let max_x = a.0.max(b.0).max(c.0);
-    let min_y = a.1.min(b.1).min(c.1);
-    let max_y = a.1.max(b.1).max(c.1);
-    let af = (a.0 as f64, a.1 as f64);
-    let bf = (b.0 as f64, b.1 as f64);
-    let cf = (c.0 as f64, c.1 as f64);
-    let area = edge(af, bf, cf);
-    if area.abs() < f64::EPSILON {
+    let Some((min_x, min_y, max_x, max_y)) = triangle_pixel_bounds(a, b, c) else {
+        return;
+    };
+    let area = edge(a, b, c);
+    if area.abs() <= f64::EPSILON {
         return;
     }
+
     for y in min_y..=max_y {
         for x in min_x..=max_x {
             let p = (x as f64 + 0.5, y as f64 + 0.5);
-            let w0 = edge(bf, cf, p);
-            let w1 = edge(cf, af, p);
-            let w2 = edge(af, bf, p);
-            if (w0 >= 0.0 && w1 >= 0.0 && w2 >= 0.0) || (w0 <= 0.0 && w1 <= 0.0 && w2 <= 0.0) {
+            let w0 = edge(b, c, p) / area;
+            let w1 = edge(c, a, p) / area;
+            let w2 = edge(a, b, p) / area;
+            if w0 >= -1.0e-9 && w1 >= -1.0e-9 && w2 >= -1.0e-9 {
                 image.put_pixel(x, y, color);
             }
         }
     }
 }
 
+fn fill_triangle_3d(
+    image: &mut RgbaImage,
+    depth_buffer: &mut [f64],
+    [a, b, c]: [RasterPoint3; 3],
+    color: Rgba<u8>,
+) {
+    let Some((min_x, min_y, max_x, max_y)) =
+        triangle_pixel_bounds(a.plane(), b.plane(), c.plane())
+    else {
+        return;
+    };
+    let area = edge(a.plane(), b.plane(), c.plane());
+    if area.abs() <= f64::EPSILON {
+        return;
+    }
+
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let point = (x as f64 + 0.5, y as f64 + 0.5);
+            let w0 = edge(b.plane(), c.plane(), point) / area;
+            let w1 = edge(c.plane(), a.plane(), point) / area;
+            let w2 = edge(a.plane(), b.plane(), point) / area;
+            if w0 < -1.0e-9 || w1 < -1.0e-9 || w2 < -1.0e-9 {
+                continue;
+            }
+
+            let depth = w0 * a.depth + w1 * b.depth + w2 * c.depth;
+            let index = pixel_index(x, y);
+            if depth >= depth_buffer[index] {
+                depth_buffer[index] = depth;
+                image.put_pixel(x, y, color);
+            }
+        }
+    }
+}
+
+fn triangle_pixel_bounds(
+    a: (f64, f64),
+    b: (f64, f64),
+    c: (f64, f64),
+) -> Option<(u32, u32, u32, u32)> {
+    let min_x = a.0.min(b.0).min(c.0).floor().max(0.0) as u32;
+    let min_y = a.1.min(b.1).min(c.1).floor().max(0.0) as u32;
+    let max_x = a.0.max(b.0).max(c.0).ceil().min(f64::from(SIZE - 1)) as u32;
+    let max_y = a.1.max(b.1).max(c.1).ceil().min(f64::from(SIZE - 1)) as u32;
+    (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
+}
+
 fn edge(a: (f64, f64), b: (f64, f64), c: (f64, f64)) -> f64 {
     (c.0 - a.0) * (b.1 - a.1) - (c.1 - a.1) * (b.0 - a.0)
 }
 
-fn draw_line(image: &mut RgbaImage, a: (u32, u32), b: (u32, u32), color: Rgba<u8>) {
-    let (mut x0, mut y0) = (a.0 as i32, a.1 as i32);
-    let (x1, y1) = (b.0 as i32, b.1 as i32);
-    let dx = (x1 - x0).abs();
-    let dy = -(y1 - y0).abs();
-    let sx = if x0 < x1 { 1 } else { -1 };
-    let sy = if y0 < y1 { 1 } else { -1 };
-    let mut err = dx + dy;
+fn draw_line(
+    image: &mut RgbaImage,
+    a: (f64, f64),
+    b: (f64, f64),
+    width: f64,
+    color: Rgba<u8>,
+) {
+    let half_width = width * 0.5;
+    let Some((min_x, min_y, max_x, max_y)) = line_pixel_bounds(a, b, half_width) else {
+        return;
+    };
+    let delta = (b.0 - a.0, b.1 - a.1);
+    let length_squared = delta.0 * delta.0 + delta.1 * delta.1;
 
-    loop {
-        if x0 >= 0 && y0 >= 0 && x0 < SIZE as i32 && y0 < SIZE as i32 {
-            image.put_pixel(x0 as u32, y0 as u32, color);
-        }
-        if x0 == x1 && y0 == y1 {
-            break;
-        }
-        let e2 = 2 * err;
-        if e2 >= dy {
-            err += dy;
-            x0 += sx;
-        }
-        if e2 <= dx {
-            err += dx;
-            y0 += sy;
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let point = (x as f64 + 0.5, y as f64 + 0.5);
+            let t = closest_line_parameter(point, a, delta, length_squared);
+            let closest = (a.0 + delta.0 * t, a.1 + delta.1 * t);
+            let distance = (point.0 - closest.0).hypot(point.1 - closest.1);
+            let coverage = (half_width + 0.5 - distance).clamp(0.0, 1.0);
+            if coverage > 0.0 {
+                blend_pixel(image, x, y, color, coverage);
+            }
         }
     }
+}
+
+fn draw_depth_line(
+    image: &mut RgbaImage,
+    depth_buffer: &[f64],
+    a: RasterPoint3,
+    b: RasterPoint3,
+    width: f64,
+    depth_bias: f64,
+    color: Rgba<u8>,
+) {
+    let half_width = width * 0.5;
+    let Some((min_x, min_y, max_x, max_y)) =
+        line_pixel_bounds(a.plane(), b.plane(), half_width)
+    else {
+        return;
+    };
+    let delta = (b.x - a.x, b.y - a.y);
+    let length_squared = delta.0 * delta.0 + delta.1 * delta.1;
+
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let point = (x as f64 + 0.5, y as f64 + 0.5);
+            let t = closest_line_parameter(point, a.plane(), delta, length_squared);
+            let closest = (a.x + delta.0 * t, a.y + delta.1 * t);
+            let distance = (point.0 - closest.0).hypot(point.1 - closest.1);
+            let coverage = (half_width + 0.5 - distance).clamp(0.0, 1.0);
+            let depth = a.depth + (b.depth - a.depth) * t;
+            let index = pixel_index(x, y);
+            if coverage > 0.0 && depth + depth_bias >= depth_buffer[index] {
+                blend_pixel(image, x, y, color, coverage);
+            }
+        }
+    }
+}
+
+fn line_pixel_bounds(
+    a: (f64, f64),
+    b: (f64, f64),
+    half_width: f64,
+) -> Option<(u32, u32, u32, u32)> {
+    let padding = half_width + 1.0;
+    let min_x = (a.0.min(b.0) - padding).floor().max(0.0) as u32;
+    let min_y = (a.1.min(b.1) - padding).floor().max(0.0) as u32;
+    let max_x = (a.0.max(b.0) + padding).ceil().min(f64::from(SIZE - 1)) as u32;
+    let max_y = (a.1.max(b.1) + padding).ceil().min(f64::from(SIZE - 1)) as u32;
+    (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
+}
+
+fn closest_line_parameter(
+    point: (f64, f64),
+    start: (f64, f64),
+    delta: (f64, f64),
+    length_squared: f64,
+) -> f64 {
+    if length_squared <= f64::EPSILON {
+        0.0
+    } else {
+        (((point.0 - start.0) * delta.0 + (point.1 - start.1) * delta.1) / length_squared)
+            .clamp(0.0, 1.0)
+    }
+}
+
+fn vertex_radius(vertex_count: usize) -> f64 {
+    match vertex_count {
+        0..=48 => 4.75,
+        49..=192 => 3.75,
+        193..=768 => 2.5,
+        769..=2_048 => 1.35,
+        _ => 0.75,
+    }
+}
+
+fn edge_width(edge_count: usize) -> f64 {
+    match edge_count {
+        0..=100 => 2.5,
+        101..=1_000 => 1.9,
+        1_001..=5_000 => 1.35,
+        _ => 0.85,
+    }
+}
+
+fn draw_vertex_2d(image: &mut RgbaImage, center: (f64, f64), radius: f64) {
+    draw_disc(image, center, vertex_outline_radius(radius), EDGE);
+    draw_disc(image, center, radius, VERTEX);
+}
+
+fn draw_vertex_3d(
+    image: &mut RgbaImage,
+    depth_buffer: &[f64],
+    center: RasterPoint3,
+    radius: f64,
+    depth_bias: f64,
+) {
+    draw_depth_disc(
+        image,
+        depth_buffer,
+        center,
+        vertex_outline_radius(radius),
+        depth_bias,
+        EDGE,
+    );
+    draw_depth_disc(image, depth_buffer, center, radius, depth_bias, VERTEX);
+}
+
+fn vertex_outline_radius(radius: f64) -> f64 {
+    radius + (radius * 0.35 + 0.5).min(1.35)
+}
+
+fn draw_disc(image: &mut RgbaImage, center: (f64, f64), radius: f64, color: Rgba<u8>) {
+    let Some((min_x, min_y, max_x, max_y)) = disc_pixel_bounds(center, radius) else {
+        return;
+    };
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let distance = (x as f64 + 0.5 - center.0).hypot(y as f64 + 0.5 - center.1);
+            let coverage = (radius + 0.5 - distance).clamp(0.0, 1.0);
+            if coverage > 0.0 {
+                blend_pixel(image, x, y, color, coverage);
+            }
+        }
+    }
+}
+
+fn draw_depth_disc(
+    image: &mut RgbaImage,
+    depth_buffer: &[f64],
+    center: RasterPoint3,
+    radius: f64,
+    depth_bias: f64,
+    color: Rgba<u8>,
+) {
+    let Some((min_x, min_y, max_x, max_y)) = disc_pixel_bounds(center.plane(), radius) else {
+        return;
+    };
+    for y in min_y..=max_y {
+        for x in min_x..=max_x {
+            let distance = (x as f64 + 0.5 - center.x).hypot(y as f64 + 0.5 - center.y);
+            let coverage = (radius + 0.5 - distance).clamp(0.0, 1.0);
+            if coverage > 0.0 && center.depth + depth_bias >= depth_buffer[pixel_index(x, y)] {
+                blend_pixel(image, x, y, color, coverage);
+            }
+        }
+    }
+}
+
+fn disc_pixel_bounds(center: (f64, f64), radius: f64) -> Option<(u32, u32, u32, u32)> {
+    let padding = radius + 1.0;
+    let min_x = (center.0 - padding).floor().max(0.0) as u32;
+    let min_y = (center.1 - padding).floor().max(0.0) as u32;
+    let max_x = (center.0 + padding).ceil().min(f64::from(SIZE - 1)) as u32;
+    let max_y = (center.1 + padding).ceil().min(f64::from(SIZE - 1)) as u32;
+    (min_x <= max_x && min_y <= max_y).then_some((min_x, min_y, max_x, max_y))
+}
+
+fn pixel_index(x: u32, y: u32) -> usize {
+    (y * SIZE + x) as usize
+}
+
+fn blend_pixel(image: &mut RgbaImage, x: u32, y: u32, color: Rgba<u8>, coverage: f64) {
+    let destination = *image.get_pixel(x, y);
+    let source_alpha = f64::from(color[3]) / 255.0 * coverage;
+    let destination_alpha = f64::from(destination[3]) / 255.0;
+    let output_alpha = source_alpha + destination_alpha * (1.0 - source_alpha);
+    if output_alpha <= f64::EPSILON {
+        return;
+    }
+
+    let mut output = [0_u8; 4];
+    for channel in 0..3 {
+        let source = f64::from(color[channel]) / 255.0;
+        let destination = f64::from(destination[channel]) / 255.0;
+        let value = (source * source_alpha
+            + destination * destination_alpha * (1.0 - source_alpha))
+            / output_alpha;
+        output[channel] = (value * 255.0).round().clamp(0.0, 255.0) as u8;
+    }
+    output[3] = (output_alpha * 255.0).round().clamp(0.0, 255.0) as u8;
+    image.put_pixel(x, y, Rgba(output));
 }
 
 struct Map2 {
@@ -377,13 +756,12 @@ impl Map2 {
         }
     }
 
-    fn point(&self, point: (f64, f64)) -> (u32, u32) {
-        let px = ((point.0 - self.min_x) * self.scale + self.offset_x).round();
-        let py = (SIZE as f64 - 1.0 - ((point.1 - self.min_y) * self.scale + self.offset_y))
-            .round();
+    fn point(&self, point: (f64, f64)) -> (f64, f64) {
+        let px = (point.0 - self.min_x) * self.scale + self.offset_x;
+        let py = SIZE as f64 - 1.0 - ((point.1 - self.min_y) * self.scale + self.offset_y);
         (
-            px.clamp(0.0, SIZE as f64 - 1.0) as u32,
-            py.clamp(0.0, SIZE as f64 - 1.0) as u32,
+            px.clamp(0.0, SIZE as f64 - 1.0),
+            py.clamp(0.0, SIZE as f64 - 1.0),
         )
     }
 }
@@ -405,7 +783,9 @@ fn r(value: f64) -> Real {
 }
 
 fn real_to_f64(value: &Real) -> f64 {
-    value.to_f64_lossy().unwrap_or(0.0)
+    value
+        .to_f64_lossy()
+        .expect("README render coordinates are finitely projectable")
 }
 
 fn p3(x: f64, y: f64, z: f64) -> Point3 {

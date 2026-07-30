@@ -32,7 +32,7 @@ cargo run --example basic_shapes
 cargo run --example boolean_operations
 cargo run --example extrude
 cargo run --example scalar_adapter
-cargo run --example readme_renders --features mesh,curve,image-io,truetype-text,metaballs,sdf,offset
+cargo run --example readme_renders --features curve,image-io,truetype-text,metaballs,sdf,offset
 ```
 
 Most geometry examples write output under `stl/examples/`. The README render
