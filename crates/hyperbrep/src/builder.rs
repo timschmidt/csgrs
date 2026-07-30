@@ -6079,6 +6079,52 @@ mod tests {
     }
 
     #[test]
+    fn revolution_path_measures_genuinely_cubic_quadratic_weight_profile() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let two_thirds = (r(2) / r(3)).unwrap();
+        let rational = hypercurve::RationalBezier2::try_new(
+            vec![cp(4, 0), cp(6, 0), cp(6, 2), cp(4, 2)],
+            vec![Real::one(), two_thirds.clone(), two_thirds, Real::one()],
+        )
+        .unwrap();
+        let profile = CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            Curve2::from(rational),
+            Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let expected =
+            (r(8) * Real::pi() * &(r(16) * Real::from(3).sqrt().unwrap() * Real::pi() + r(351))
+                / r(81))
+            .unwrap();
+        let (model, solid) = revolve_path(&profile).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 0, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(6, 0, 1)).unwrap(),
+            SolidPointLocation::Outside
+        );
+
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn revolution_path_rejects_exact_self_crossings_before_topology_build() {
         let cp = |x, y| CurvePoint2::new(r(x), r(y));
         let profile = CurvePath2::try_new(vec![

@@ -212,15 +212,18 @@ homogeneous Green integrals with denominator `W^4`, reduced symbolically to
 rational endpoint terms and certified `atan`/`ln` inverse-quadratic branches.
 Arbitrary-degree rational carriers exactly inverse-elevated in homogeneous
 Bernstein space reuse that conic kernel, including after untrusted replay where
-no provenance cache exists.
+no provenance cache exists. Genuinely higher-degree images whose homogeneous
+weight polynomial certifiably has degree at most two use exact polynomial
+division before the same square-free, repeated-root, or linear-denominator
+Hermite branches.
 A nonuniform rational span certified to have an exact finite line image uses
 that line's geometric moment, independent of its projective speed. HyperBREP
-applies the same exact Pappus factor and cavity subtraction. Genuinely rational
-degree-three-and-higher images that do not reduce to conics, and the general
+applies the same exact Pappus factor and cavity subtraction. Rational images
+with cubic-or-higher weight polynomials and the general
 radius-times-spline-speed face integral are explicit unsupported measurements
 until symbolic integrators exist. Native-only contours remain the sole input
-to the optimized coaxial-profile Boolean path; curved profiles use the
-retained face graph instead of claiming compatibility geometry.
+to the optimized coaxial-profile Boolean path; curved profiles use the retained
+face graph instead of claiming compatibility geometry.
 
 Subdivision does not change that certificate. Revolution descendants must tile
 four exact quarter-angle columns and every represented profile-parameter cell
