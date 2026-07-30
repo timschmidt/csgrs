@@ -47,10 +47,11 @@ float to its exact represented value before topology is decided.
 | --- | --- |
 | `Point2`, `ExactPoint` | Exact 2D point used by native triangulators. |
 | `PolygonInput` | Owned flat polygon buffer with earcut-compatible hole starts and retained facts. |
-| `PolygonInputFacts`, `RingInputFacts` | Conservative exact-set, winding, convexity, and degeneracy scheduling facts. |
+| `PolygonInputFacts`, `RingInputFacts` | Policy-independent structural and exact-scalar input facts. |
 | `Constraint` | One caller-indexed segment in a planar straight-line graph. |
 | `Triangle`, `TriangleIndices` | Indexed triangle and flat earcut-compatible index output. |
-| `earcut::EarcutReport` | Polygon result plus non-certifying workload diagnostics. |
+| `EarcutReport` | Polygon result plus non-certifying workload diagnostics. |
+| `TriangulationContext`, `TriangulationOutcome` | Explicit predicate policy and aggregate certainty for one operation. |
 | `cdt::DelaunayTriangulation` | Exact 2D points and Delaunay triangles. |
 | `cdt::ConstrainedDelaunayTriangulation` | Caller constraints, planarized protected edges, exact Steiner points, and triangles. |
 | `PointD`, `TriangulationDataStructureD`, `DelaunayComplex` | D-dimensional points, dynamic combinatorial storage, and small exact oracle complex. |
@@ -77,7 +78,7 @@ Replace `src/main.rs` with:
 
 <!-- quickstart:start -->
 ```rust
-use hypertri::{Point2, Real};
+use hypertri::{Point2, PredicatePolicy, Real, TriangulationContext};
 
 fn main() -> hypertri::Result<()> {
     let points = vec![
@@ -86,7 +87,8 @@ fn main() -> hypertri::Result<()> {
         Point2::new(Real::from(0), Real::from(1)),
     ];
 
-    let triangles = hypertri::earcut(&points, &[])?;
+    let context = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+    let triangles = hypertri::earcut(&context, &points, &[])?.value;
     assert_eq!(triangles.len(), 3);
     Ok(())
 }
@@ -116,13 +118,19 @@ start of a hole in the same flat point buffer.
 
 | Task | API |
 | --- | --- |
-| Return flat indices | `earcut`, `earcut::triangulate` |
-| Include diagnostics | `earcut_report`, `earcut::triangulate_report` |
-| Supply an advanced kernel | `earcut::triangulate_with_kernel`, `triangulate_report_with_kernel` |
+| Return flat indices and certainty | `earcut` |
+| Include diagnostics and certainty | `earcut_report` |
 
 The result contains three indices per triangle. Diagnostics measure candidate,
 containment, bounding-box, cure, and split-fallback work; they are not topology
 certificates.
+
+Every predicate-bearing operation takes a [`TriangulationContext`] selecting
+either `PredicatePolicy::STRICT` or `PredicatePolicy::APPROXIMATE_512`.
+Successful operations return a [`TriangulationOutcome`]. Its `certainty` is
+`Certified` unless at least one decision consumed the policy-authorized
+512-bit terminal approximation. Strict mode returns
+`Error::PredicateUndecided` at that same boundary.
 
 ### Build 2D Delaunay topology (`cdt`)
 
@@ -177,13 +185,12 @@ surface. It is not presented as a production large-data tessellator.
 `f64::constrained_delaunay` accept finite coordinate pairs. Non-finite values
 return `Error`; finite values are exact-lifted before any topology branch.
 
-### Use predicates and kernels
+### Predicate ownership
 
-The `predicates` module exposes triangulation-facing orientation, containment,
-segment, in-circle, in-sphere, and D-dimensional predicate adapters. The
-`kernel` module contains the `Kernel` abstraction and `ExactKernel` used by
-algorithm implementations. Most applications should call a triangulator
-rather than assemble topology from these lower-level pieces.
+Hypertri's predicate adapters and operation-local kernel are private so every
+topology path uses the selected policy and contributes to one aggregate
+certainty result. Applications call a triangulator; Hyperlimit remains the
+public predicate layer.
 
 ## Features
 
@@ -206,8 +213,8 @@ application uses.
 - Primitive floats are accepted only by the explicit `f64` adapter module.
 - Validation methods check index, orientation, constraint, manifold, and local
   Delaunay invariants appropriate to each result type.
-- Retained input facts and diagnostics guide work but do not replace exact
-  predicates.
+- Retained input facts are policy-independent. They and diagnostics guide work
+  but do not replace exact predicates.
 - Duplicate points, invalid ring/constraint indices, and unsupported
   configurations return typed errors.
 - Curves must be segmented or otherwise converted by their owning crate before

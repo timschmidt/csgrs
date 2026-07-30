@@ -1,4 +1,4 @@
-use hypertri::{Point2, Real};
+use hypertri::{Point2, PredicatePolicy, Real, TriangulationContext};
 
 fn main() -> hypertri::Result<()> {
     let points = vec![
@@ -7,7 +7,8 @@ fn main() -> hypertri::Result<()> {
         Point2::new(Real::from(0), Real::from(1)),
     ];
 
-    let triangles = hypertri::earcut(&points, &[])?;
+    let context = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+    let triangles = hypertri::earcut(&context, &points, &[])?.value;
     assert_eq!(triangles.len(), 3);
     Ok(())
 }

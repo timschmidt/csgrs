@@ -4,8 +4,13 @@
 
 use egui::{CentralPanel, Color32, RichText, ScrollArea, SidePanel, Stroke, TopBottomPanel};
 use egui_plot::{Line, Plot, PlotPoint, PlotPoints, PlotUi, Points, Text};
-use hypertri::{Constraint, QualityPolicy, Triangle};
+use hypertri::{
+    Constraint, PredicatePolicy, QualityPolicy, Triangle, TriangulationContext,
+};
 use serde::{Deserialize, Serialize};
+
+const APPROX: TriangulationContext =
+    TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 pub struct MainApp {
     active: Scene,
@@ -274,8 +279,9 @@ impl PolygonScene {
         if view.show_input {
             draw_rings(plot_ui, &input.vertices, &input.holes);
         }
-        match hypertri::f64::earcut(&input.vertices, &input.holes) {
-            Ok(indices) => {
+        match hypertri::f64::earcut(&APPROX, &input.vertices, &input.holes) {
+            Ok(outcome) => {
+                let indices = outcome.value;
                 if view.show_triangles {
                     draw_index_triangles(plot_ui, "earcut", &input.vertices, &indices, RESULT);
                 }
@@ -372,8 +378,9 @@ impl PointScene {
         if let Some(point) = handle_vertex_interaction(plot_ui, &mut self.points, &mut self.drag) {
             self.points.push(point);
         }
-        match hypertri::f64::delaunay(&self.points) {
-            Ok(triangulation) => {
+        match hypertri::f64::delaunay(&APPROX, &self.points) {
+            Ok(outcome) => {
+                let triangulation = outcome.value;
                 if view.show_triangles {
                     draw_triangles(
                         plot_ui,
@@ -473,8 +480,13 @@ impl ConstraintScene {
             self.input.points.push(point);
         }
         let input = &self.input;
-        match hypertri::f64::constrained_delaunay(&input.points, &input.constraints) {
-            Ok(triangulation) => {
+        match hypertri::f64::constrained_delaunay(
+            &APPROX,
+            &input.points,
+            &input.constraints,
+        ) {
+            Ok(outcome) => {
+                let triangulation = outcome.value;
                 let points = approx_points(triangulation.points());
                 if view.show_triangles {
                     draw_triangles(
@@ -562,7 +574,8 @@ impl CompareScene {
         if view.show_input {
             draw_rings(plot_ui, &input.vertices, &input.holes);
         }
-        if let Ok(earcut) = hypertri::f64::earcut(&input.vertices, &input.holes) {
+        if let Ok(outcome) = hypertri::f64::earcut(&APPROX, &input.vertices, &input.holes) {
+            let earcut = outcome.value;
             draw_index_triangles(
                 plot_ui,
                 "earcut baseline",
@@ -578,8 +591,9 @@ impl CompareScene {
             algorithm: hypertri::PolygonTriangulationAlgorithm::Auto,
             quality: self.quality,
         };
-        match hypertri::triangulate_polygon(&polygon, options) {
-            Ok(indices) => {
+        match hypertri::triangulate_polygon(&APPROX, &polygon, options) {
+            Ok(outcome) => {
+                let indices = outcome.value;
                 if view.show_triangles {
                     draw_index_triangles(plot_ui, "runtime", &input.vertices, &indices, RESULT);
                 }

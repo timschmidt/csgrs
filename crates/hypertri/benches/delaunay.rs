@@ -1,4 +1,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use hypertri::{PredicatePolicy, TriangulationContext};
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn bench_exact_lifted_delaunay(c: &mut Criterion) {
     let points = vec![
@@ -15,7 +18,7 @@ fn bench_exact_lifted_delaunay(c: &mut Criterion) {
     ];
 
     c.bench_function("f64_exact_lifted_incremental_delaunay", |b| {
-        b.iter(|| hypertri::f64::delaunay(&points).unwrap())
+        b.iter(|| hypertri::f64::delaunay(&APPROX, &points).unwrap())
     });
 
     let polygon = vec![
@@ -40,7 +43,7 @@ fn bench_exact_lifted_delaunay(c: &mut Criterion) {
     ];
 
     c.bench_function("f64_exact_lifted_closed_ring_cdt_hole", |b| {
-        b.iter(|| hypertri::f64::constrained_delaunay(&polygon, &constraints).unwrap())
+        b.iter(|| hypertri::f64::constrained_delaunay(&APPROX, &polygon, &constraints).unwrap())
     });
 
     let flip_points = vec![
@@ -54,14 +57,18 @@ fn bench_exact_lifted_delaunay(c: &mut Criterion) {
     let flip_constraints = vec![hypertri::Constraint::new(1, 3)];
 
     c.bench_function("f64_exact_lifted_cdt_edge_flip_recovery", |b| {
-        b.iter(|| hypertri::f64::constrained_delaunay(&flip_points, &flip_constraints).unwrap())
+        b.iter(|| {
+            hypertri::f64::constrained_delaunay(&APPROX, &flip_points, &flip_constraints).unwrap()
+        })
     });
 
     let split_points = vec![[0.0, 0.0], [4.0, 0.0], [2.0, 0.0], [0.0, 3.0]];
     let split_constraints = vec![hypertri::Constraint::new(0, 1)];
 
     c.bench_function("f64_exact_lifted_cdt_existing_vertex_split", |b| {
-        b.iter(|| hypertri::f64::constrained_delaunay(&split_points, &split_constraints).unwrap())
+        b.iter(|| {
+            hypertri::f64::constrained_delaunay(&APPROX, &split_points, &split_constraints).unwrap()
+        })
     });
 
     let crossing_points = vec![[0.0, 0.0], [4.0, 3.0], [0.0, 3.0], [4.0, 0.0]];
@@ -72,7 +79,8 @@ fn bench_exact_lifted_delaunay(c: &mut Criterion) {
 
     c.bench_function("f64_exact_lifted_cdt_crossing_split", |b| {
         b.iter(|| {
-            hypertri::f64::constrained_delaunay(&crossing_points, &crossing_constraints).unwrap()
+            hypertri::f64::constrained_delaunay(&APPROX, &crossing_points, &crossing_constraints)
+                .unwrap()
         })
     });
 
@@ -84,13 +92,15 @@ fn bench_exact_lifted_delaunay(c: &mut Criterion) {
     ];
     let exact_constraints = crossing_constraints.clone();
     let exact_crossing =
-        hypertri::cdt::constrained_delaunay(&exact_points, &exact_constraints).unwrap();
+        hypertri::cdt::constrained_delaunay(&APPROX, &exact_points, &exact_constraints)
+            .unwrap()
+            .value;
 
     c.bench_function("exact_cdt_validate_crossing_split", |b| {
         b.iter(|| {
-            exact_crossing.validate().unwrap();
+            exact_crossing.validate(&APPROX).unwrap();
             exact_crossing
-                .validate_unconstrained_edges_are_delaunay()
+                .validate_unconstrained_edges_are_delaunay(&APPROX)
                 .unwrap();
         })
     });

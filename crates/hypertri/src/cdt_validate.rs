@@ -7,26 +7,31 @@
 //! the same empty-circle predicate used by Delaunay insertion.
 
 use crate::error::{Error, Result};
-use crate::kernel::{ExactKernel, Kernel};
+use crate::kernel::ExactKernel;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{Constraint, ExactPoint, Triangle};
 
 /// Validate unconstrained exact Delaunay topology and local edge legality.
-pub(crate) fn validate_delaunay(points: &[ExactPoint], triangles: &[Triangle]) -> Result<()> {
-    validate_triangles(points, triangles)?;
+pub(crate) fn validate_delaunay(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+    triangles: &[Triangle],
+) -> Result<()> {
+    validate_triangles(kernel, points, triangles)?;
     validate_edge_adjacency(triangles)?;
-    validate_local_delaunay(points, triangles, &[])
+    validate_local_delaunay(kernel, points, triangles, &[])
 }
 
 /// Validate exact constrained triangulation topology without Delaunay legality.
 pub(crate) fn validate_constrained_topology(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
     validate_constraints(points.len(), constraints)?;
-    validate_triangles(points, triangles)?;
+    validate_triangles(kernel, points, triangles)?;
     validate_edge_adjacency(triangles)?;
     for &constraint in constraints {
         if !triangulation_has_edge(triangles, EdgeKey::from_constraint(constraint)) {
@@ -41,17 +46,18 @@ pub(crate) fn validate_constrained_topology(
 /// Validate constrained topology and local Delaunay legality of unprotected
 /// interior edges.
 pub(crate) fn validate_constrained_delaunay(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
     triangles: &[Triangle],
 ) -> Result<()> {
-    validate_constrained_topology(points, constraints, triangles)?;
+    validate_constrained_topology(kernel, points, constraints, triangles)?;
     let constrained_edges = constraints
         .iter()
         .copied()
         .map(EdgeKey::from_constraint)
         .collect::<Vec<_>>();
-    validate_local_delaunay(points, triangles, &constrained_edges)
+    validate_local_delaunay(kernel, points, triangles, &constrained_edges)
 }
 
 fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Result<()> {
@@ -70,7 +76,11 @@ fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Resul
     Ok(())
 }
 
-fn validate_triangles(points: &[ExactPoint], triangles: &[Triangle]) -> Result<()> {
+fn validate_triangles(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+    triangles: &[Triangle],
+) -> Result<()> {
     let mut seen = Vec::new();
     for &triangle in triangles {
         if triangle[0] == triangle[1] || triangle[1] == triangle[2] || triangle[2] == triangle[0] {
@@ -83,7 +93,8 @@ fn validate_triangles(points: &[ExactPoint], triangles: &[Triangle]) -> Result<(
                 reason: "triangle index out of bounds",
             });
         }
-        if predicates::orient2::<ExactKernel>(
+        if predicates::orient2(
+            kernel,
             &points[triangle[0]],
             &points[triangle[1]],
             &points[triangle[2]],
@@ -117,6 +128,7 @@ fn validate_edge_adjacency(triangles: &[Triangle]) -> Result<()> {
 }
 
 fn validate_local_delaunay(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     triangles: &[Triangle],
     constrained_edges: &[EdgeKey],
@@ -133,13 +145,13 @@ fn validate_local_delaunay(
 
         let first = adjacent[0].opposite;
         let second = adjacent[1].opposite;
-        if !opposite_sides_of_edge(points, edge, first, second)? {
+        if !opposite_sides_of_edge(kernel, points, edge, first, second)? {
             return Err(Error::InvalidInput {
                 reason: "adjacent triangles are not on opposite sides of edge",
             });
         }
 
-        if edge_is_illegal(points, edge, first, second)? {
+        if edge_is_illegal(kernel, points, edge, first, second)? {
             return Err(Error::InvalidInput {
                 reason: "unconstrained interior edge violates Delaunay legality",
             });
@@ -149,12 +161,14 @@ fn validate_local_delaunay(
 }
 
 fn edge_is_illegal(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     edge: EdgeKey,
     first_opposite: usize,
     second_opposite: usize,
 ) -> Result<bool> {
-    let orientation = predicates::orient2::<ExactKernel>(
+    let orientation = predicates::orient2(
+        kernel,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -163,7 +177,7 @@ fn edge_is_illegal(
         return Ok(false);
     }
 
-    let sign = ExactKernel::incircle2(
+    let sign = kernel.incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -176,15 +190,20 @@ fn edge_is_illegal(
 }
 
 fn opposite_sides_of_edge(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     edge: EdgeKey,
     first: usize,
     second: usize,
 ) -> Result<bool> {
     let first_side =
-        predicates::orient2::<ExactKernel>(&points[edge.from], &points[edge.to], &points[first])?;
-    let second_side =
-        predicates::orient2::<ExactKernel>(&points[edge.from], &points[edge.to], &points[second])?;
+        predicates::orient2(kernel, &points[edge.from], &points[edge.to], &points[first])?;
+    let second_side = predicates::orient2(
+        kernel,
+        &points[edge.from],
+        &points[edge.to],
+        &points[second],
+    )?;
     Ok(signs_strictly_differ(first_side, second_side))
 }
 

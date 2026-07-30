@@ -19,6 +19,7 @@ nd = []
 runtime-select = []
 f64-interop = []
 serde = ["dep:serde", "hyperreal/serde"]
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
 
 [dependencies]
 # Cargo uses the path in this workspace and retains the version requirement in
@@ -61,3 +62,8 @@ required-features = ["cdt", "f64-interop"]
 name = "exact"
 harness = false
 required-features = ["earcut", "cdt", "nd", "runtime-select"]
+
+[[bench]]
+name = "dispatch_trace"
+harness = false
+required-features = ["all-algorithms", "runtime-select", "dispatch-trace"]

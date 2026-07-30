@@ -6,8 +6,9 @@
 //! implementation and has no external triangulation dependency.
 
 use crate::cdt_constraints;
+use crate::context::{TriangulationContext, TriangulationOutcome};
 use crate::error::{Error, Result};
-use crate::kernel::{ExactKernel, Kernel};
+use crate::kernel::ExactKernel;
 use crate::predicates;
 use crate::types::{Constraint, ExactPoint, Point2, Real, Triangle};
 use crate::types::{Sign, TriangleLocation};
@@ -50,8 +51,10 @@ impl DelaunayTriangulation {
     /// This is intentionally `O(n^2)` over the produced topology. It is meant
     /// for tests, debug assertions, and downstream callers that want to audit a
     /// triangulation boundary before consuming it.
-    pub fn validate(&self) -> Result<()> {
-        crate::cdt_validate::validate_delaunay(&self.points, &self.triangles)
+    pub fn validate(&self, context: &TriangulationContext) -> Result<TriangulationOutcome<()>> {
+        let kernel = ExactKernel::new(context);
+        crate::cdt_validate::validate_delaunay(&kernel, &self.points, &self.triangles)?;
+        Ok(kernel.finish(()))
     }
 }
 
@@ -157,12 +160,15 @@ impl ConstrainedDelaunayTriangulation {
     /// planarized [`Self::constraint_edges`] entry is present as a triangulation
     /// edge. It does not require Delaunay legality, so it also applies to the
     /// closed-ring earcut fallback.
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self, context: &TriangulationContext) -> Result<TriangulationOutcome<()>> {
+        let kernel = ExactKernel::new(context);
         crate::cdt_validate::validate_constrained_topology(
+            &kernel,
             &self.points,
             &self.constraint_edges,
             &self.triangles,
-        )
+        )?;
+        Ok(kernel.finish(()))
     }
 
     /// Validate the exact local Delaunay condition on unconstrained interior
@@ -171,12 +177,18 @@ impl ConstrainedDelaunayTriangulation {
     /// This check implements the Constrained Delaunay Lemma criterion: after
     /// protected PSLG edges are excluded, each interior edge must satisfy the
     /// empty-circle legality test against the two adjacent triangles.
-    pub fn validate_unconstrained_edges_are_delaunay(&self) -> Result<()> {
+    pub fn validate_unconstrained_edges_are_delaunay(
+        &self,
+        context: &TriangulationContext,
+    ) -> Result<TriangulationOutcome<()>> {
+        let kernel = ExactKernel::new(context);
         crate::cdt_validate::validate_constrained_delaunay(
+            &kernel,
             &self.points,
             &self.constraint_edges,
             &self.triangles,
-        )
+        )?;
+        Ok(kernel.finish(()))
     }
 }
 
@@ -185,9 +197,18 @@ impl ConstrainedDelaunayTriangulation {
 /// The local edge choices use the empty-circumcircle rule from Delaunay
 /// triangulation; the in-circle predicate is evaluated exactly through the
 /// crate-local kernel.
-pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
-    validate_unique_points(points)?;
-    let triangles = delaunay_triangles::<ExactKernel>(points)?;
+pub fn delaunay(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+) -> Result<TriangulationOutcome<DelaunayTriangulation>> {
+    let kernel = ExactKernel::new(context);
+    let triangulation = delaunay_inner(&kernel, points)?;
+    Ok(kernel.finish(triangulation))
+}
+
+fn delaunay_inner(kernel: &ExactKernel, points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
+    validate_unique_points(kernel, points)?;
+    let triangles = delaunay_triangles(kernel, points)?;
     // Every construction branch admits only nondegenerate, positively
     // oriented triangles and makes each Delaunay choice with the exact
     // in-circle predicate. Re-running the public validator here would repeat
@@ -211,9 +232,21 @@ pub fn delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
 /// function can choose different valid diagonals than [`delaunay`]. Callers
 /// that require the historical insertion-order tie topology should use
 /// [`delaunay`].
-pub fn delaunay_spatial(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
-    validate_unique_points(points)?;
-    let triangles = delaunay_triangles_spatial::<ExactKernel>(points)?;
+pub fn delaunay_spatial(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+) -> Result<TriangulationOutcome<DelaunayTriangulation>> {
+    let kernel = ExactKernel::new(context);
+    let triangulation = delaunay_spatial_inner(&kernel, points)?;
+    Ok(kernel.finish(triangulation))
+}
+
+fn delaunay_spatial_inner(
+    kernel: &ExactKernel,
+    points: &[ExactPoint],
+) -> Result<DelaunayTriangulation> {
+    validate_unique_points(kernel, points)?;
+    let triangles = delaunay_triangles_spatial(kernel, points)?;
     Ok(DelaunayTriangulation::from_parts(
         points.to_vec(),
         triangles,
@@ -232,43 +265,72 @@ pub fn delaunay_spatial(points: &[ExactPoint]) -> Result<DelaunayTriangulation> 
 /// from local Delaunay flips. Local legality requires every unprotected
 /// interior edge to satisfy the exact empty-circle test.
 pub fn constrained_delaunay(
+    context: &TriangulationContext,
+    points: &[ExactPoint],
+    constraints: &[Constraint],
+) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
+    let kernel = ExactKernel::new(context);
+    let triangulation = constrained_delaunay_inner(&kernel, points, constraints)?;
+    Ok(kernel.finish(triangulation))
+}
+
+pub(crate) fn constrained_delaunay_inner(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
 ) -> Result<ConstrainedDelaunayTriangulation> {
     validate_constraints(points.len(), constraints)?;
-    validate_unique_points(points)?;
+    validate_unique_points(kernel, points)?;
 
     if constraints.is_empty() {
-        let triangulation = delaunay(points)?;
+        let triangulation = delaunay_inner(kernel, points)?;
         let constrained = ConstrainedDelaunayTriangulation::from_parts_with_constraint_edges(
             triangulation.points,
             Vec::new(),
             Vec::new(),
             triangulation.triangles,
         );
-        constrained.validate()?;
-        constrained.validate_unconstrained_edges_are_delaunay()?;
+        crate::cdt_validate::validate_constrained_topology(
+            kernel,
+            &constrained.points,
+            &constrained.constraint_edges,
+            &constrained.triangles,
+        )?;
+        crate::cdt_validate::validate_constrained_delaunay(
+            kernel,
+            &constrained.points,
+            &constrained.constraint_edges,
+            &constrained.triangles,
+        )?;
         return Ok(constrained);
     }
 
-    let planar = crate::cdt_insert::planarize_constraints(points, constraints)?;
+    let planar = crate::cdt_insert::planarize_constraints(kernel, points, constraints)?;
     let points = planar.points;
     let internal_constraints = planar.constraints;
-    validate_constraint_geometry(&points, &internal_constraints)?;
+    validate_constraint_geometry(kernel, &points, &internal_constraints)?;
 
     if let Some(polygon) =
-        cdt_constraints::polygon_from_closed_constraints(&points, &internal_constraints)?
+        cdt_constraints::polygon_from_closed_constraints(kernel, &points, &internal_constraints)?
     {
-        // Structural-dispatch note: closed-constraint recognition has already
-        // proved ring topology. Preserve facts such as convexity, hole count,
-        // monotone chains, and lattice/grid provenance on the polygon record so
-        // this branch can select a fan, monotone triangulator, earcut, or full
-        // CDT recovery path without rediscovering those properties from exact
-        // coordinates.
+        // Closed-constraint recognition has already proved ring topology.
+        // Policy-independent structural facts can guide later scheduling;
+        // winding, convexity, and other policy-derived decisions remain local
+        // to this operation and use this same kernel.
         #[cfg(feature = "earcut")]
         {
             let (flat_points, hole_indices, source_indices) = polygon.to_flat_polygon(&points);
-            let flat = crate::earcut::triangulate(&flat_points, &hole_indices)?;
+            let flat = crate::earcut::triangulate_inner(kernel, &flat_points, &hole_indices)?;
+            if !flat.len().is_multiple_of(3) {
+                return Err(Error::InvalidInput {
+                    reason: "polygon triangulation index count is not a multiple of three",
+                });
+            }
+            if flat.iter().any(|&index| index >= source_indices.len()) {
+                return Err(Error::InvalidInput {
+                    reason: "polygon triangulation index is out of bounds",
+                });
+            }
             let triangles = flat
                 .chunks_exact(3)
                 .map(|tri| {
@@ -286,7 +348,12 @@ pub fn constrained_delaunay(
                 internal_constraints,
                 triangles,
             );
-            triangulation.validate()?;
+            crate::cdt_validate::validate_constrained_topology(
+                kernel,
+                &triangulation.points,
+                &triangulation.constraint_edges,
+                &triangulation.triangles,
+            )?;
             return Ok(triangulation);
         }
 
@@ -304,13 +371,14 @@ pub fn constrained_delaunay(
     }
 
     if let Some(triangulation) =
-        constrained_edges_already_delaunay(&points, &internal_constraints, constraints)?
+        constrained_edges_already_delaunay(kernel, &points, &internal_constraints, constraints)?
     {
         return Ok(triangulation);
     }
 
-    let base = delaunay(&points)?;
-    let triangles = crate::cdt_insert::insert_constraints::<ExactKernel>(
+    let base = delaunay_inner(kernel, &points)?;
+    let triangles = crate::cdt_insert::insert_constraints(
+        kernel,
         &points,
         base.triangles().to_vec(),
         &internal_constraints,
@@ -321,42 +389,48 @@ pub fn constrained_delaunay(
         internal_constraints,
         triangles,
     );
-    triangulation.validate()?;
-    triangulation.validate_unconstrained_edges_are_delaunay()?;
+    crate::cdt_validate::validate_constrained_topology(
+        kernel,
+        &triangulation.points,
+        &triangulation.constraint_edges,
+        &triangulation.triangles,
+    )?;
+    crate::cdt_validate::validate_constrained_delaunay(
+        kernel,
+        &triangulation.points,
+        &triangulation.constraint_edges,
+        &triangulation.triangles,
+    )?;
     Ok(triangulation)
 }
 
-fn delaunay_triangles<K>(points: &[Point2]) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
+fn delaunay_triangles(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<Triangle>> {
     match points.len() {
         0..=2 => Ok(Vec::new()),
-        3 => triangle_if_not_degenerate::<K>(points, [0, 1, 2])
+        3 => triangle_if_not_degenerate(kernel, points, [0, 1, 2])
             .map(|triangle| triangle.into_iter().collect()),
-        4 => delaunay_quad::<K>(points),
-        _ => incremental_delaunay::<K>(points),
+        4 => delaunay_quad(kernel, points),
+        _ => incremental_delaunay(kernel, points),
     }
 }
 
-fn delaunay_triangles_spatial<K>(points: &[Point2]) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
+fn delaunay_triangles_spatial(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<Triangle>> {
     match points.len() {
-        0..=4 => delaunay_triangles::<K>(points),
+        0..=4 => delaunay_triangles(kernel, points),
         _ => {
-            let order = brio_insertion_order::<K>(points)?;
-            incremental_delaunay_in_order::<K>(points, &order)
+            let order = brio_insertion_order(kernel, points)?;
+            incremental_delaunay_in_order(kernel, points, &order)
         }
     }
 }
 
-fn triangle_if_not_degenerate<K>(points: &[Point2], triangle: Triangle) -> Result<Option<Triangle>>
-where
-    K: Kernel,
-{
-    let sign = predicates::orient2::<K>(
+fn triangle_if_not_degenerate(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangle: Triangle,
+) -> Result<Option<Triangle>> {
+    let sign = predicates::orient2(
+        kernel,
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -364,23 +438,20 @@ where
     Ok((sign != Sign::Zero).then_some(oriented_triangle(sign, triangle)))
 }
 
-fn delaunay_quad<K>(points: &[Point2]) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
-    if let Some(triangles) = triangulate_interior_point::<K>(points)? {
+fn delaunay_quad(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<Triangle>> {
+    if let Some(triangles) = triangulate_interior_point(kernel, points)? {
         return Ok(triangles);
     }
 
     for diagonal in [(0, 1, 2, 3), (0, 2, 1, 3), (0, 3, 1, 2)] {
         let (a, b, c, d) = diagonal;
-        let ac = predicates::orient2::<K>(&points[a], &points[b], &points[c])?;
-        let ad = predicates::orient2::<K>(&points[a], &points[b], &points[d])?;
+        let ac = predicates::orient2(kernel, &points[a], &points[b], &points[c])?;
+        let ad = predicates::orient2(kernel, &points[a], &points[b], &points[d])?;
         if !opposite_sides(ac, ad) {
             continue;
         }
 
-        if diagonal_is_delaunay::<K>(points, a, b, c, d)? {
+        if diagonal_is_delaunay(kernel, points, a, b, c, d)? {
             return Ok(vec![
                 oriented_triangle(ac, [a, b, c]),
                 oriented_triangle(ad.reversed(), [a, d, b]),
@@ -393,15 +464,15 @@ where
     })
 }
 
-fn triangulate_interior_point<K>(points: &[Point2]) -> Result<Option<Vec<Triangle>>>
-where
-    K: Kernel,
-{
+fn triangulate_interior_point(
+    kernel: &ExactKernel,
+    points: &[Point2],
+) -> Result<Option<Vec<Triangle>>> {
     for interior in 0..4 {
         let outer = (0..4)
             .filter(|&index| index != interior)
             .collect::<Vec<_>>();
-        let location = K::classify_point_triangle(
+        let location = kernel.classify_point_triangle(
             &points[outer[0]],
             &points[outer[1]],
             &points[outer[2]],
@@ -410,13 +481,14 @@ where
         match location {
             TriangleLocation::Inside => {
                 return Ok(Some(vec![
-                    make_oriented::<K>(points, [interior, outer[0], outer[1]])?,
-                    make_oriented::<K>(points, [interior, outer[1], outer[2]])?,
-                    make_oriented::<K>(points, [interior, outer[2], outer[0]])?,
+                    make_oriented(kernel, points, [interior, outer[0], outer[1]])?,
+                    make_oriented(kernel, points, [interior, outer[1], outer[2]])?,
+                    make_oriented(kernel, points, [interior, outer[2], outer[0]])?,
                 ]));
             }
             TriangleLocation::OnEdge => {
-                return triangulate_point_on_triangle_edge::<K>(
+                return triangulate_point_on_triangle_edge(
+                    kernel,
                     points,
                     interior,
                     [outer[0], outer[1], outer[2]],
@@ -431,22 +503,20 @@ where
     Ok(None)
 }
 
-fn triangulate_point_on_triangle_edge<K>(
+fn triangulate_point_on_triangle_edge(
+    kernel: &ExactKernel,
     points: &[Point2],
     point: usize,
     triangle: Triangle,
-) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
+) -> Result<Vec<Triangle>> {
     for edge_index in 0..3 {
         let a = triangle[edge_index];
         let b = triangle[(edge_index + 1) % 3];
         let c = triangle[(edge_index + 2) % 3];
-        if predicates::point_on_segment(&points[a], &points[b], &points[point])? {
+        if predicates::point_on_segment(kernel, &points[a], &points[b], &points[point])? {
             return Ok(vec![
-                make_oriented::<K>(points, [a, point, c])?,
-                make_oriented::<K>(points, [point, b, c])?,
+                make_oriented(kernel, points, [a, point, c])?,
+                make_oriented(kernel, points, [point, b, c])?,
             ]);
         }
     }
@@ -456,33 +526,29 @@ where
     })
 }
 
-fn diagonal_is_delaunay<K>(
+fn diagonal_is_delaunay(
+    kernel: &ExactKernel,
     points: &[Point2],
     a: usize,
     b: usize,
     c: usize,
     d: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
-    let abc = predicates::orient2::<K>(&points[a], &points[b], &points[c])?;
-    let abd = predicates::orient2::<K>(&points[a], &points[b], &points[d])?;
-    let d_in_abc = incircle_inside::<K>(points, [a, b, c], d, abc)?;
-    let c_in_abd = incircle_inside::<K>(points, [a, d, b], c, abd.reversed())?;
+) -> Result<bool> {
+    let abc = predicates::orient2(kernel, &points[a], &points[b], &points[c])?;
+    let abd = predicates::orient2(kernel, &points[a], &points[b], &points[d])?;
+    let d_in_abc = incircle_inside(kernel, points, [a, b, c], d, abc)?;
+    let c_in_abd = incircle_inside(kernel, points, [a, d, b], c, abd.reversed())?;
     Ok(!d_in_abc && !c_in_abd)
 }
 
-fn incircle_inside<K>(
+fn incircle_inside(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangle: Triangle,
     point: usize,
     orientation: Sign,
-) -> Result<bool>
-where
-    K: Kernel,
-{
-    let sign = K::incircle2(
+) -> Result<bool> {
+    let sign = kernel.incircle2(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -494,20 +560,18 @@ where
     ))
 }
 
-fn incircle_inside_or_on_positive<K>(
+fn incircle_inside_or_on_positive(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangle: Triangle,
     point: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     // Incremental Bowyer-Watson insertion creates the seed and every cavity
     // replacement through `make_oriented`, so active triangles carry a
     // certified positive-orientation invariant. Reuse that object fact rather
     // than evaluating the orientation determinant again for every candidate
     // point/circumcircle pair.
-    let sign = K::incircle2(
+    let sign = kernel.incircle2(
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -516,29 +580,25 @@ where
     Ok(matches!(sign, Sign::Positive | Sign::Zero))
 }
 
-fn incremental_delaunay<K>(points: &[Point2]) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
-    incremental_delaunay_in_order::<K>(points, &(0..points.len()).collect::<Vec<_>>())
+fn incremental_delaunay(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<Triangle>> {
+    incremental_delaunay_in_order(kernel, points, &(0..points.len()).collect::<Vec<_>>())
 }
 
-fn incremental_delaunay_in_order<K>(
+fn incremental_delaunay_in_order(
+    kernel: &ExactKernel,
     points: &[Point2],
     insertion_order: &[usize],
-) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
+) -> Result<Vec<Triangle>> {
     let mut work_points = points.to_vec();
     let first_super = work_points.len();
-    work_points.extend(super_triangle::<K>(points)?);
+    work_points.extend(super_triangle(kernel, points)?);
 
     // This is the Bowyer-Watson empty-circumcircle update: remove every
     // triangle whose circumcircle contains the inserted point, then stitch the
     // boundary cavity back to the point. The empty-circle test is evaluated by
     // the exact predicate kernel.
-    let mut triangles = vec![make_oriented::<K>(
+    let mut triangles = vec![make_oriented(
+        kernel,
         &work_points,
         [first_super, first_super + 1, first_super + 2],
     )?];
@@ -547,7 +607,8 @@ where
         let mut bad = vec![false; triangles.len()];
         if triangles.len() >= LOCATED_CAVITY_THRESHOLD {
             let neighbors = triangle_neighbors(&triangles);
-            if let Some(seed) = locate_triangle::<K>(
+            if let Some(seed) = locate_triangle(
+                kernel,
                 &work_points,
                 &triangles,
                 &neighbors,
@@ -561,7 +622,8 @@ where
                         continue;
                     }
                     visited[triangle_index] = true;
-                    if incircle_inside_or_on_positive::<K>(
+                    if incircle_inside_or_on_positive(
+                        kernel,
                         &work_points,
                         triangles[triangle_index],
                         point,
@@ -571,13 +633,19 @@ where
                     }
                 }
                 if !bad.iter().any(|is_bad| *is_bad) {
-                    mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
+                    mark_bad_triangles_exhaustive(
+                        kernel,
+                        &work_points,
+                        &triangles,
+                        point,
+                        &mut bad,
+                    )?;
                 }
             } else {
-                mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
+                mark_bad_triangles_exhaustive(kernel, &work_points, &triangles, point, &mut bad)?;
             }
         } else {
-            mark_bad_triangles_exhaustive::<K>(&work_points, &triangles, point, &mut bad)?;
+            mark_bad_triangles_exhaustive(kernel, &work_points, &triangles, point, &mut bad)?;
         }
 
         let mut cavity = Vec::new();
@@ -596,7 +664,7 @@ where
             .collect();
 
         for edge in cavity {
-            match make_oriented::<K>(&work_points, [edge.from, edge.to, point]) {
+            match make_oriented(kernel, &work_points, [edge.from, edge.to, point]) {
                 Ok(triangle) => triangles.push(triangle),
                 Err(Error::InvalidInput {
                     reason: "degenerate triangle",
@@ -610,10 +678,7 @@ where
     Ok(triangles)
 }
 
-fn brio_insertion_order<K>(points: &[Point2]) -> Result<Vec<usize>>
-where
-    K: Kernel,
-{
+fn brio_insertion_order(kernel: &ExactKernel, points: &[Point2]) -> Result<Vec<usize>> {
     // A minimum first-round population avoids spending exact spatial-sort
     // comparisons on many tiny buckets. Above that floor, splitmix-assigned
     // levels produce the geometrically growing rounds of a biased randomized
@@ -632,7 +697,7 @@ where
 
     let mut order = Vec::with_capacity(points.len());
     for round in rounds.iter_mut().rev() {
-        spatial_median_order::<K>(points, round, false)?;
+        spatial_median_order(kernel, points, round, false)?;
         order.append(round);
     }
     Ok(order)
@@ -645,31 +710,31 @@ fn splitmix64(mut value: u64) -> u64 {
     value ^ (value >> 31)
 }
 
-fn spatial_median_order<K>(points: &[Point2], indices: &mut [usize], split_y: bool) -> Result<()>
-where
-    K: Kernel,
-{
+fn spatial_median_order(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    indices: &mut [usize],
+    split_y: bool,
+) -> Result<()> {
     if indices.len() <= 1 {
         return Ok(());
     }
 
     let midpoint = indices.len() / 2;
-    select_spatial_nth::<K>(points, indices, midpoint, split_y)?;
+    select_spatial_nth(kernel, points, indices, midpoint, split_y)?;
 
     let (lower, upper) = indices.split_at_mut(midpoint);
-    spatial_median_order::<K>(points, lower, !split_y)?;
-    spatial_median_order::<K>(points, &mut upper[1..], !split_y)
+    spatial_median_order(kernel, points, lower, !split_y)?;
+    spatial_median_order(kernel, points, &mut upper[1..], !split_y)
 }
 
-fn select_spatial_nth<K>(
+fn select_spatial_nth(
+    kernel: &ExactKernel,
     points: &[Point2],
     indices: &mut [usize],
     nth: usize,
     compare_y_first: bool,
-) -> Result<()>
-where
-    K: Kernel,
-{
+) -> Result<()> {
     // `slice::select_nth_unstable_by` cannot propagate a fallible exact
     // comparison without making its comparator stateful and potentially
     // inconsistent after an error. This compact quickselect keeps comparison
@@ -683,7 +748,7 @@ where
         let pivot = indices[upper - 1];
         let mut split = lower;
         for candidate in lower..upper - 1 {
-            if spatial_point_cmp::<K>(points, indices[candidate], pivot, compare_y_first)?
+            if spatial_point_cmp(kernel, points, indices[candidate], pivot, compare_y_first)?
                 == std::cmp::Ordering::Less
             {
                 indices.swap(candidate, split);
@@ -700,15 +765,13 @@ where
     Ok(())
 }
 
-fn spatial_point_cmp<K>(
+fn spatial_point_cmp(
+    kernel: &ExactKernel,
     points: &[Point2],
     left: usize,
     right: usize,
     compare_y_first: bool,
-) -> Result<std::cmp::Ordering>
-where
-    K: Kernel,
-{
+) -> Result<std::cmp::Ordering> {
     let (left_primary, left_secondary) = if compare_y_first {
         (&points[left].y, &points[left].x)
     } else {
@@ -719,24 +782,24 @@ where
     } else {
         (&points[right].x, &points[right].y)
     };
-    let primary = K::cmp(left_primary, right_primary)?;
+    let primary = kernel.cmp(left_primary, right_primary)?;
     if primary != std::cmp::Ordering::Equal {
         return Ok(primary);
     }
-    Ok(K::cmp(left_secondary, right_secondary)?.then(left.cmp(&right)))
+    Ok(kernel
+        .cmp(left_secondary, right_secondary)?
+        .then(left.cmp(&right)))
 }
 
-fn mark_bad_triangles_exhaustive<K>(
+fn mark_bad_triangles_exhaustive(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangles: &[Triangle],
     point: usize,
     bad: &mut [bool],
-) -> Result<()>
-where
-    K: Kernel,
-{
+) -> Result<()> {
     for (triangle_index, &triangle) in triangles.iter().enumerate() {
-        if incircle_inside_or_on_positive::<K>(points, triangle, point)? {
+        if incircle_inside_or_on_positive(kernel, points, triangle, point)? {
             bad[triangle_index] = true;
         }
     }
@@ -778,16 +841,14 @@ fn triangle_neighbors(triangles: &[Triangle]) -> Vec<[Option<usize>; 3]> {
     neighbors
 }
 
-fn locate_triangle<K>(
+fn locate_triangle(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangles: &[Triangle],
     neighbors: &[[Option<usize>; 3]],
     point: usize,
     seed: usize,
-) -> Result<Option<usize>>
-where
-    K: Kernel,
-{
+) -> Result<Option<usize>> {
     if triangles.is_empty() {
         return Ok(None);
     }
@@ -805,7 +866,7 @@ where
         .into_iter()
         .enumerate()
         {
-            if predicates::orient2::<K>(&points[from], &points[to], &points[point])?
+            if predicates::orient2(kernel, &points[from], &points[to], &points[point])?
                 == Sign::Negative
             {
                 crossed_edge = true;
@@ -851,29 +912,32 @@ fn add_cavity_edge(edges: &mut Vec<Edge>, edge: Edge) {
     }
 }
 
-fn super_triangle<K>(points: &[Point2]) -> Result<[Point2; 3]>
-where
-    K: Kernel,
-{
-    let bounds = Bounds::from_points::<K>(points)?;
-    let dx = K::sub(&bounds.max_x, &bounds.min_x);
-    let dy = K::sub(&bounds.max_y, &bounds.min_y);
-    let span = if K::cmp(&dx, &dy)? == std::cmp::Ordering::Less {
+fn super_triangle(kernel: &ExactKernel, points: &[Point2]) -> Result<[Point2; 3]> {
+    let bounds = Bounds::from_points(kernel, points)?;
+    let dx = ExactKernel::sub(&bounds.max_x, &bounds.min_x);
+    let dy = ExactKernel::sub(&bounds.max_y, &bounds.min_y);
+    let span = if kernel.cmp(&dx, &dy)? == std::cmp::Ordering::Less {
         dy
     } else {
         dx
     };
-    let one = K::from_i64(1);
-    let two = K::from_i64(2);
-    let radius = K::add(&K::mul(&span, &K::from_i64(64)), &one);
-    let double_radius = K::mul(&radius, &two);
-    let mid_x = K::div(&K::add(&bounds.min_x, &bounds.max_x), &two)?;
-    let mid_y = K::div(&K::add(&bounds.min_y, &bounds.max_y), &two)?;
+    let one = ExactKernel::from_i64(1);
+    let two = ExactKernel::from_i64(2);
+    let radius = ExactKernel::add(&ExactKernel::mul(&span, &ExactKernel::from_i64(64)), &one);
+    let double_radius = ExactKernel::mul(&radius, &two);
+    let mid_x = ExactKernel::div(&ExactKernel::add(&bounds.min_x, &bounds.max_x), &two)?;
+    let mid_y = ExactKernel::div(&ExactKernel::add(&bounds.min_y, &bounds.max_y), &two)?;
 
     Ok([
-        Point2::new(K::sub(&mid_x, &double_radius), K::sub(&mid_y, &radius)),
-        Point2::new(mid_x.clone(), K::add(&mid_y, &double_radius)),
-        Point2::new(K::add(&mid_x, &double_radius), K::sub(&mid_y, &radius)),
+        Point2::new(
+            ExactKernel::sub(&mid_x, &double_radius),
+            ExactKernel::sub(&mid_y, &radius),
+        ),
+        Point2::new(mid_x.clone(), ExactKernel::add(&mid_y, &double_radius)),
+        Point2::new(
+            ExactKernel::add(&mid_x, &double_radius),
+            ExactKernel::sub(&mid_y, &radius),
+        ),
     ])
 }
 
@@ -886,10 +950,7 @@ struct Bounds {
 }
 
 impl Bounds {
-    fn from_points<K>(points: &[Point2]) -> Result<Self>
-    where
-        K: Kernel,
-    {
+    fn from_points(kernel: &ExactKernel, points: &[Point2]) -> Result<Self> {
         let Some(first) = points.first() else {
             return Err(Error::InvalidInput {
                 reason: "Delaunay point set must be non-empty",
@@ -904,16 +965,16 @@ impl Bounds {
         };
 
         for point in &points[1..] {
-            if K::cmp(&point.x, &bounds.min_x)? == std::cmp::Ordering::Less {
+            if kernel.cmp(&point.x, &bounds.min_x)? == std::cmp::Ordering::Less {
                 bounds.min_x = point.x.clone();
             }
-            if K::cmp(&point.x, &bounds.max_x)? == std::cmp::Ordering::Greater {
+            if kernel.cmp(&point.x, &bounds.max_x)? == std::cmp::Ordering::Greater {
                 bounds.max_x = point.x.clone();
             }
-            if K::cmp(&point.y, &bounds.min_y)? == std::cmp::Ordering::Less {
+            if kernel.cmp(&point.y, &bounds.min_y)? == std::cmp::Ordering::Less {
                 bounds.min_y = point.y.clone();
             }
-            if K::cmp(&point.y, &bounds.max_y)? == std::cmp::Ordering::Greater {
+            if kernel.cmp(&point.y, &bounds.max_y)? == std::cmp::Ordering::Greater {
                 bounds.max_y = point.y.clone();
             }
         }
@@ -922,11 +983,9 @@ impl Bounds {
     }
 }
 
-fn make_oriented<K>(points: &[Point2], triangle: Triangle) -> Result<Triangle>
-where
-    K: Kernel,
-{
-    let sign = predicates::orient2::<K>(
+fn make_oriented(kernel: &ExactKernel, points: &[Point2], triangle: Triangle) -> Result<Triangle> {
+    let sign = predicates::orient2(
+        kernel,
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -970,7 +1029,11 @@ fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Resul
     Ok(())
 }
 
-fn validate_constraint_geometry(points: &[Point2], constraints: &[Constraint]) -> Result<()> {
+fn validate_constraint_geometry(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    constraints: &[Constraint],
+) -> Result<()> {
     for first in 0..constraints.len() {
         for second in first + 1..constraints.len() {
             let a = constraints[first];
@@ -984,6 +1047,7 @@ fn validate_constraint_geometry(points: &[Point2], constraints: &[Constraint]) -
             // normalization bug. The classification remains exact and
             // predicate-backed.
             let intersection = predicates::segment_intersection(
+                kernel,
                 &points[a.from],
                 &points[a.to],
                 &points[b.from],
@@ -1013,11 +1077,12 @@ fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
 }
 
 fn constrained_edges_already_delaunay(
+    kernel: &ExactKernel,
     points: &[ExactPoint],
     constraints: &[Constraint],
     public_constraints: &[Constraint],
 ) -> Result<Option<ConstrainedDelaunayTriangulation>> {
-    let triangulation = delaunay(points)?;
+    let triangulation = delaunay_inner(kernel, points)?;
 
     // This accepts a narrow, exact subset of CDT inputs before full edge
     // insertion is ported: if every requested constrained segment already
@@ -1035,8 +1100,18 @@ fn constrained_edges_already_delaunay(
             constraints.to_vec(),
             triangles,
         );
-        constrained.validate()?;
-        constrained.validate_unconstrained_edges_are_delaunay()?;
+        crate::cdt_validate::validate_constrained_topology(
+            kernel,
+            &constrained.points,
+            &constrained.constraint_edges,
+            &constrained.triangles,
+        )?;
+        crate::cdt_validate::validate_constrained_delaunay(
+            kernel,
+            &constrained.points,
+            &constrained.constraint_edges,
+            &constrained.triangles,
+        )?;
         return Ok(Some(constrained));
     }
 
@@ -1053,10 +1128,10 @@ fn triangle_contains_edge(triangle: Triangle, first: usize, second: usize) -> bo
     triangle.contains(&first) && triangle.contains(&second)
 }
 
-fn validate_unique_points(points: &[Point2]) -> Result<()> {
+fn validate_unique_points(kernel: &ExactKernel, points: &[Point2]) -> Result<()> {
     for i in 0..points.len() {
         for j in i + 1..points.len() {
-            if points[i] == points[j] {
+            if predicates::points_equal(kernel, &points[i], &points[j])? {
                 return Err(Error::InvalidInput {
                     reason: "duplicate points are not supported",
                 });
@@ -1071,6 +1146,28 @@ fn validate_unique_points(points: &[Point2]) -> Result<()> {
 mod tests {
     use super::*;
 
+    const APPROX: TriangulationContext =
+        TriangulationContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+
+    fn kernel() -> ExactKernel {
+        ExactKernel::new(&APPROX)
+    }
+
+    fn approx_delaunay(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
+        delaunay(&APPROX, points).map(TriangulationOutcome::into_value)
+    }
+
+    fn approx_delaunay_spatial(points: &[ExactPoint]) -> Result<DelaunayTriangulation> {
+        delaunay_spatial(&APPROX, points).map(TriangulationOutcome::into_value)
+    }
+
+    fn approx_constrained_delaunay(
+        points: &[ExactPoint],
+        constraints: &[Constraint],
+    ) -> Result<ConstrainedDelaunayTriangulation> {
+        constrained_delaunay(&APPROX, points, constraints).map(TriangulationOutcome::into_value)
+    }
+
     fn p(x: i32, y: i32) -> ExactPoint {
         Point2::new(Real::from(x), Real::from(y))
     }
@@ -1079,16 +1176,35 @@ mod tests {
     fn delaunay_returns_single_exact_triangle() {
         let points = vec![p(0, 0), p(2, 0), p(0, 2)];
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
         assert_eq!(triangulation.triangles(), &[[0, 1, 2]]);
+    }
+
+    #[test]
+    fn delaunay_rejects_numeric_duplicates_with_distinct_representations() {
+        let left = Real::pi() + Real::e();
+        let right = Real::e() + Real::pi();
+        assert_ne!(left, right);
+
+        let points = vec![
+            Point2::new(left, Real::zero()),
+            Point2::new(right, Real::zero()),
+            p(0, 1),
+        ];
+        assert!(matches!(
+            approx_delaunay(&points),
+            Err(Error::InvalidInput {
+                reason: "duplicate points are not supported"
+            })
+        ));
     }
 
     #[test]
     fn delaunay_rejects_collinear_triangle() {
         let points = vec![p(0, 0), p(1, 1), p(2, 2)];
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
         assert!(triangulation.triangles().is_empty());
     }
@@ -1097,7 +1213,7 @@ mod tests {
     fn delaunay_rejects_duplicate_points() {
         let points = vec![p(0, 0), p(1, 0), p(1, 0), p(0, 1)];
 
-        let error = delaunay(&points).unwrap_err();
+        let error = approx_delaunay(&points).unwrap_err();
 
         assert_eq!(
             error,
@@ -1120,11 +1236,11 @@ mod tests {
             p(5, 10),
             p(11, 2),
         ];
-        let ordinary = delaunay(&points).unwrap();
-        let spatial = delaunay_spatial(&points).unwrap();
+        let ordinary = approx_delaunay(&points).unwrap();
+        let spatial = approx_delaunay_spatial(&points).unwrap();
 
-        ordinary.validate().unwrap();
-        spatial.validate().unwrap();
+        ordinary.validate(&APPROX).unwrap();
+        spatial.validate(&APPROX).unwrap();
         assert_eq!(spatial.points(), points.as_slice());
 
         let canonical = |triangulation: &DelaunayTriangulation| {
@@ -1143,8 +1259,8 @@ mod tests {
         let points = (0..80)
             .map(|index| p((index * 17) % 83, (index * 29) % 89))
             .collect::<Vec<_>>();
-        let first = brio_insertion_order::<ExactKernel>(&points).unwrap();
-        let second = brio_insertion_order::<ExactKernel>(&points).unwrap();
+        let first = brio_insertion_order(&kernel(), &points).unwrap();
+        let second = brio_insertion_order(&kernel(), &points).unwrap();
         let mut sorted = first.clone();
         sorted.sort_unstable();
 
@@ -1156,7 +1272,7 @@ mod tests {
     fn delaunay_triangulates_convex_quad_with_one_diagonal() {
         let points = vec![p(0, 0), p(1, 0), p(1, 1), p(0, 1)];
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
         assert_eq!(triangulation.triangles().len(), 2);
         assert!(
@@ -1173,7 +1289,7 @@ mod tests {
     fn delaunay_triangulates_square_with_center_point() {
         let points = vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4), p(2, 2)];
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
         assert_eq!(triangulation.triangles().len(), 4);
         assert!(
@@ -1188,7 +1304,7 @@ mod tests {
     fn delaunay_triangulates_larger_non_cocircular_set() {
         let points = vec![p(0, 0), p(3, 0), p(5, 2), p(4, 5), p(1, 4), p(2, 2)];
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
         assert_eq!(triangulation.triangles().len(), 5);
         assert!(
@@ -1211,9 +1327,9 @@ mod tests {
             })
             .collect::<Vec<_>>();
 
-        let triangulation = delaunay(&points).unwrap();
+        let triangulation = approx_delaunay(&points).unwrap();
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         for index in 0..points.len() {
             assert!(
                 triangulation
@@ -1235,7 +1351,7 @@ mod tests {
             Constraint::new(3, 0),
         ];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(triangulation.triangles().len(), 2);
@@ -1252,11 +1368,11 @@ mod tests {
             Constraint::new(3, 0),
         ];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert!(
@@ -1290,7 +1406,7 @@ mod tests {
             Constraint::new(7, 6),
         ];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(triangulation.triangles().len(), 8);
@@ -1326,11 +1442,11 @@ mod tests {
             Constraint::new(7, 4),
         ];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert!(
@@ -1345,7 +1461,7 @@ mod tests {
         let points = vec![p(0, 0), p(3, 0), p(0, 2), p(1, 1)];
         let constraints = vec![Constraint::new(0, 1), Constraint::new(0, 3)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert!(
@@ -1360,7 +1476,7 @@ mod tests {
         let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
         let constraints = vec![Constraint::new(1, 3)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(triangulation.triangles().len(), 2);
@@ -1379,7 +1495,7 @@ mod tests {
         let points = vec![p(0, 0), p(2, 0), p(1, 0), p(0, 2)];
         let constraints = vec![Constraint::new(0, 1)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(
@@ -1402,7 +1518,7 @@ mod tests {
         let points = vec![p(0, 0), p(1, 0), p(2, 0), p(3, 0), p(0, 2)];
         let constraints = vec![Constraint::new(0, 3), Constraint::new(1, 2)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(
@@ -1427,7 +1543,7 @@ mod tests {
         let points = vec![p(0, 0), p(2, 2), p(0, 2), p(2, 0)];
         let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
         assert_eq!(triangulation.constraints(), constraints.as_slice());
         assert_eq!(triangulation.points().len(), 5);
@@ -1461,7 +1577,7 @@ mod tests {
             vec![[0, 1, 3], [1, 2, 3]],
         );
 
-        let error = triangulation.validate().unwrap_err();
+        let error = triangulation.validate(&APPROX).unwrap_err();
 
         assert_eq!(
             error,
@@ -1476,7 +1592,7 @@ mod tests {
         let points = vec![p(0, 0), p(4, 0), p(3, 2), p(0, 3)];
         let triangulation = DelaunayTriangulation::from_parts(points, vec![[0, 1, 3], [1, 2, 3]]);
 
-        let error = triangulation.validate().unwrap_err();
+        let error = triangulation.validate(&APPROX).unwrap_err();
 
         assert_eq!(
             error,
@@ -1491,11 +1607,11 @@ mod tests {
         let points = vec![p(0, 0), p(2, 0), p(2, 2), p(0, 2)];
         let constraints = vec![Constraint::new(1, 3)];
 
-        let triangulation = constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation = approx_constrained_delaunay(&points, &constraints).unwrap();
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
     }
 
@@ -1504,7 +1620,7 @@ mod tests {
         let points = vec![p(0, 0), p(3, 0), p(1, 0), p(4, 0)];
         let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 
-        let error = constrained_delaunay(&points, &constraints).unwrap_err();
+        let error = approx_constrained_delaunay(&points, &constraints).unwrap_err();
 
         assert_eq!(
             error,
@@ -1518,7 +1634,7 @@ mod tests {
     fn rejects_constraint_index_out_of_bounds() {
         let points = vec![p(0, 0), p(1, 0), p(0, 1)];
 
-        let error = constrained_delaunay(&points, &[Constraint::new(0, 3)]).unwrap_err();
+        let error = approx_constrained_delaunay(&points, &[Constraint::new(0, 3)]).unwrap_err();
 
         assert_eq!(
             error,

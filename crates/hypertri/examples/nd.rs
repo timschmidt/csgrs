@@ -1,4 +1,4 @@
-use hypertri::{PointD, Real, nd};
+use hypertri::{PointD, PredicatePolicy, Real, TriangulationContext, nd};
 
 fn main() -> hypertri::Result<()> {
     let points = vec![
@@ -7,8 +7,9 @@ fn main() -> hypertri::Result<()> {
         PointD::new(vec![Real::from(0), Real::from(1)]),
     ];
 
-    let complex = nd::delaunay_complex(&points)?;
-    complex.validate()?;
+    let context = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+    let complex = nd::delaunay_complex(&context, &points)?.value;
+    complex.validate(&context)?;
     assert_eq!(complex.cells().len(), 1);
     Ok(())
 }

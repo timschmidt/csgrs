@@ -2,9 +2,11 @@
 
 #[cfg(feature = "cdt")]
 use hypertri::Constraint;
-use hypertri::{ExactPoint, Point2, Rational, Real};
+use hypertri::{ExactPoint, Point2, PredicatePolicy, Rational, Real, TriangulationContext};
 #[cfg(feature = "earcut")]
 use proptest::prelude::*;
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
@@ -60,59 +62,13 @@ fn polygon_input_retains_ring_structural_facts() {
     assert_eq!(facts.rings[0].known_degenerate_edges, 1);
     assert_eq!(facts.rings[0].known_axis_aligned_edges, 4);
     assert_eq!(facts.rings[0].unknown_edge_zero_status, 0);
-    assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
-    assert_eq!(
-        facts.rings[0].convexity,
-        hypertri::RingConvexity::LocallyConvex
-    );
     assert_eq!(facts.rings[1].start, 5);
     assert_eq!(facts.rings[1].end, 8);
     assert_eq!(facts.rings[1].known_degenerate_edges, 1);
     assert_eq!(facts.rings[1].known_axis_aligned_edges, 2);
     assert_eq!(facts.rings[1].unknown_edge_zero_status, 0);
-    assert_eq!(facts.rings[1].signed_area, Some(hypertri::Sign::Zero));
-    assert_eq!(
-        facts.rings[1].convexity,
-        hypertri::RingConvexity::Degenerate
-    );
     assert_eq!(facts.known_degenerate_edge_count(), 2);
     assert_eq!(facts.unknown_edge_zero_status_count(), 0);
-    assert!(facts.all_ring_orientations_certified());
-    assert_eq!(facts.unknown_convexity_ring_count(), 0);
-}
-
-#[test]
-fn polygon_input_retains_exact_ring_orientation_and_turn_facts() {
-    let convex = hypertri::PolygonInput::new(vec![p(0, 0), p(4, 0), p(4, 3), p(0, 3)], vec![]);
-    assert_eq!(
-        convex.facts().rings[0].signed_area,
-        Some(hypertri::Sign::Positive)
-    );
-    assert_eq!(
-        convex.facts().rings[0].convexity,
-        hypertri::RingConvexity::LocallyConvex
-    );
-
-    let concave =
-        hypertri::PolygonInput::new(vec![p(0, 0), p(4, 0), p(4, 4), p(2, 1), p(0, 4)], vec![]);
-    assert_eq!(
-        concave.facts().rings[0].signed_area,
-        Some(hypertri::Sign::Positive)
-    );
-    assert_eq!(
-        concave.facts().rings[0].convexity,
-        hypertri::RingConvexity::MixedTurns
-    );
-
-    let reversed = hypertri::PolygonInput::new(vec![p(0, 3), p(4, 3), p(4, 0), p(0, 0)], vec![]);
-    assert_eq!(
-        reversed.facts().rings[0].signed_area,
-        Some(hypertri::Sign::Negative)
-    );
-    assert_eq!(
-        reversed.facts().rings[0].convexity,
-        hypertri::RingConvexity::LocallyConvex
-    );
 }
 
 #[test]
@@ -126,7 +82,9 @@ fn exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point() {
         point_d(&[rq(1, 4), rq(1, 4), rq(1, 4)]),
     ];
 
-    let complex = hypertri::nd::delaunay_complex(&points).unwrap();
+    let complex = hypertri::nd::delaunay_complex(&APPROX, &points)
+        .unwrap()
+        .value;
 
     assert_eq!(complex.dimension(), 3);
     assert_eq!(complex.cells().len(), 4);
@@ -136,7 +94,7 @@ fn exact_nd_delaunay_stars_3d_simplex_around_rational_interior_point() {
             .iter()
             .all(|cell| cell.indices().contains(&4))
     );
-    complex.validate().unwrap();
+    complex.validate(&APPROX).unwrap();
 }
 
 #[test]
@@ -148,11 +106,14 @@ fn exact_nd_delaunay_oracle_insertion_reports_conflict_boundary() {
         point_d(&[r(0), r(1), r(0)]),
         point_d(&[r(0), r(0), r(1)]),
     ];
-    let complex = hypertri::nd::delaunay_complex(&base).unwrap();
+    let complex = hypertri::nd::delaunay_complex(&APPROX, &base)
+        .unwrap()
+        .value;
 
     let report = complex
-        .insert_point_oracle(point_d(&[rq(1, 4), rq(1, 4), rq(1, 4)]))
-        .unwrap();
+        .insert_point_oracle(&APPROX, point_d(&[rq(1, 4), rq(1, 4), rq(1, 4)]))
+        .unwrap()
+        .value;
 
     assert_eq!(report.inserted_vertex(), 4);
     assert_eq!(report.old_cell_count(), 1);
@@ -166,7 +127,7 @@ fn exact_nd_delaunay_oracle_insertion_reports_conflict_boundary() {
             .iter()
             .all(|cell| cell.indices().contains(&4))
     );
-    report.result().validate().unwrap();
+    report.result().validate(&APPROX).unwrap();
 }
 
 #[test]
@@ -179,7 +140,9 @@ fn exact_nd_delaunay_preserves_cospherical_cells_as_complex() {
         point_d(&[r(0), r(1)]),
     ];
 
-    let complex = hypertri::nd::delaunay_complex(&points).unwrap();
+    let complex = hypertri::nd::delaunay_complex(&APPROX, &points)
+        .unwrap()
+        .value;
 
     assert_eq!(complex.dimension(), 2);
     assert_eq!(
@@ -187,7 +150,7 @@ fn exact_nd_delaunay_preserves_cospherical_cells_as_complex() {
         4,
         "cospherical square is represented as a Delaunay complex, not an arbitrary float tie-break"
     );
-    complex.validate().unwrap();
+    complex.validate(&APPROX).unwrap();
 }
 
 #[test]
@@ -207,10 +170,10 @@ fn exact_nd_bistellar_flip_report_validates_circuit_and_delaunay_legality() {
             hypertri::nd::Simplex::new(vec![0, 2, 3]),
         ],
     );
-    complex.validate().unwrap();
+    complex.validate(&APPROX).unwrap();
 
     let flip = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
-    let report = complex.validate_bistellar_flip(&flip);
+    let report = complex.validate_bistellar_flip(&APPROX, &flip).value;
 
     assert!(report.is_valid(), "{report:?}");
     assert_eq!(report.p(), 2);
@@ -219,7 +182,7 @@ fn exact_nd_bistellar_flip_report_validates_circuit_and_delaunay_legality() {
     assert_eq!(report.inserted_cells().len(), 2);
     assert!(!report.blocks_delaunay());
 
-    let applied = complex.flip_oracle(&flip).unwrap();
+    let applied = complex.flip_oracle(&APPROX, &flip).unwrap().value;
     assert!(applied.validation().is_valid());
     assert_eq!(applied.result().cells().len(), 2);
     assert!(
@@ -236,10 +199,10 @@ fn exact_nd_bistellar_flip_report_validates_circuit_and_delaunay_legality() {
             .iter()
             .any(|cell| cell.indices() == [1, 2, 3])
     );
-    applied.result().validate().unwrap();
+    applied.result().validate(&APPROX).unwrap();
 
     let bad = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![0, 1]);
-    let bad_report = complex.validate_bistellar_flip(&bad);
+    let bad_report = complex.validate_bistellar_flip(&APPROX, &bad).value;
     assert_eq!(
         bad_report.reason(),
         Some("D-dimensional flip removed cell is not present")
@@ -294,11 +257,11 @@ fn exact_nd_tds_validates_reciprocal_neighbor_facets() {
             reason: "finite facet has boundary degree under closed policy"
         }
     );
-    let geometric = tds.validate_geometric_report();
+    let geometric = tds.validate_geometric_report(&APPROX).value;
     assert!(geometric.is_valid(), "{geometric:?}");
     assert_eq!(geometric.finite_cell_count(), 2);
     assert_eq!(geometric.cospherical_boundary_count(), 2);
-    tds.validate_geometric().unwrap();
+    tds.validate_geometric(&APPROX).unwrap();
     hypertri::TriangulationD::new(tds).unwrap();
 }
 
@@ -317,7 +280,7 @@ fn exact_nd_tds_geometric_report_rejects_affinely_dependent_cell() {
     .unwrap();
 
     tds.validate_combinatorial().unwrap();
-    let report = tds.validate_geometric_report();
+    let report = tds.validate_geometric_report(&APPROX).value;
     assert!(!report.is_valid());
     assert_eq!(report.finite_cell_count(), 1);
     assert!(
@@ -445,7 +408,7 @@ fn exact_earcut_keeps_tiny_rational_spike() {
         p(0, 2),
     ];
 
-    let triangles = hypertri::earcut(&vertices, &[]).unwrap();
+    let triangles = hypertri::earcut(&APPROX, &vertices, &[]).unwrap().value;
 
     assert_eq!(triangles.len(), 9);
 }
@@ -455,7 +418,7 @@ fn exact_earcut_keeps_tiny_rational_spike() {
 fn f64_boundary_rejects_infinity_before_exact_lift() {
     let vertices = [[0.0, 0.0], [f64::INFINITY, 0.0], [1.0, 1.0]];
 
-    let error = hypertri::f64::earcut(&vertices, &[]).unwrap_err();
+    let error = hypertri::f64::earcut(&APPROX, &vertices, &[]).unwrap_err();
 
     assert_eq!(
         error,
@@ -477,7 +440,7 @@ fn f64_delaunay_lifts_larger_point_set_to_exact_path() {
         [2.0, 2.0],
     ];
 
-    let triangulation = hypertri::f64::delaunay(&points).unwrap();
+    let triangulation = hypertri::f64::delaunay(&APPROX, &points).unwrap().value;
 
     assert_eq!(triangulation.triangles().len(), 5);
     assert!(
@@ -504,9 +467,11 @@ fn f64_spatial_delaunay_lifts_and_preserves_input_indices() {
         [11.0, 2.0],
     ];
 
-    let triangulation = hypertri::f64::delaunay_spatial(&points).unwrap();
+    let triangulation = hypertri::f64::delaunay_spatial(&APPROX, &points)
+        .unwrap()
+        .value;
 
-    triangulation.validate().unwrap();
+    triangulation.validate(&APPROX).unwrap();
     assert!(
         triangulation
             .triangles()
@@ -522,7 +487,9 @@ fn f64_cdt_returns_inserted_intersection_point() {
     let points = [[0.0, 0.0], [2.0, 2.0], [0.0, 2.0], [2.0, 0.0]];
     let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 
-    let triangulation = hypertri::f64::constrained_delaunay(&points, &constraints).unwrap();
+    let triangulation = hypertri::f64::constrained_delaunay(&APPROX, &points, &constraints)
+        .unwrap()
+        .value;
 
     assert_eq!(triangulation.constraints(), constraints.as_slice());
     assert_eq!(
@@ -556,7 +523,9 @@ fn cdt_closed_ring_accepts_reversed_constraint_edge() {
         Constraint::new(3, 0),
     ];
 
-    let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+    let triangulation = hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+        .unwrap()
+        .value;
 
     assert_eq!(triangulation.triangles().len(), 2);
 }
@@ -572,7 +541,9 @@ fn cdt_splits_tiny_exact_rational_constraint_crossing() {
     ];
     let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 
-    let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+    let triangulation = hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+        .unwrap()
+        .value;
 
     assert_eq!(triangulation.constraints(), constraints.as_slice());
     assert_eq!(triangulation.points().len(), 5);
@@ -613,12 +584,14 @@ fn serde_roundtrips_public_topology_and_rebuilds_polygon_facts() {
     assert_eq!(decoded.facts(), input.facts());
 
     let triangulation =
-        hypertri::cdt::constrained_delaunay(decoded.vertices(), &[Constraint::new(1, 3)]).unwrap();
+        hypertri::cdt::constrained_delaunay(&APPROX, decoded.vertices(), &[Constraint::new(1, 3)])
+            .unwrap()
+            .value;
     let encoded = serde_json::to_string(&triangulation).unwrap();
     let decoded: hypertri::cdt::ConstrainedDelaunayTriangulation =
         serde_json::from_str(&encoded).unwrap();
 
-    decoded.validate().unwrap();
+    decoded.validate(&APPROX).unwrap();
     assert_eq!(decoded.constraints(), triangulation.constraints());
     assert_eq!(decoded.constraint_edges(), triangulation.constraint_edges());
     assert_eq!(decoded.triangles(), triangulation.triangles());
@@ -638,7 +611,7 @@ fn exact_earcut_hole_bridge_uses_exact_visibility() {
         q(2, 1, 3, 1),
     ];
 
-    let triangles = hypertri::earcut(&vertices, &[4]).unwrap();
+    let triangles = hypertri::earcut(&APPROX, &vertices, &[4]).unwrap().value;
 
     assert_eq!(triangles.len(), 24);
     assert!(triangles.iter().all(|&index| index < vertices.len()));
@@ -650,10 +623,12 @@ fn runtime_auto_uses_compiled_boundary_preserving_path() {
     let input = hypertri::PolygonInput::new(vec![p(0, 0), p(1, 0), p(1, 1), p(0, 1)], vec![]);
 
     let (triangles, report) = hypertri::triangulate_polygon_with_report(
+        &APPROX,
         &input,
         hypertri::TriangulationOptions::default(),
     )
-    .unwrap();
+    .unwrap()
+    .value;
     assert_eq!(
         report.algorithm,
         hypertri::PolygonTriangulationAlgorithm::Earcut
@@ -673,7 +648,9 @@ fn runtime_can_choose_cdt_polygon_path_explicitly() {
         quality: hypertri::QualityPolicy::PreferDelaunay,
     };
 
-    let (triangles, report) = hypertri::triangulate_polygon_with_report(&input, options).unwrap();
+    let (triangles, report) = hypertri::triangulate_polygon_with_report(&APPROX, &input, options)
+        .unwrap()
+        .value;
     assert_eq!(
         report.algorithm,
         hypertri::PolygonTriangulationAlgorithm::ConstrainedDelaunay
@@ -693,7 +670,9 @@ fn runtime_auto_uses_polygon_facts_to_avoid_cdt_on_degenerate_ring_edges() {
         quality: hypertri::QualityPolicy::PreferDelaunay,
     };
 
-    let (_, report) = hypertri::triangulate_polygon_with_report(&input, options).unwrap();
+    let (_, report) = hypertri::triangulate_polygon_with_report(&APPROX, &input, options)
+        .unwrap()
+        .value;
 
     assert_eq!(input.facts().known_degenerate_edge_count(), 1);
     assert_eq!(
@@ -724,7 +703,9 @@ fn runtime_cdt_polygon_path_supports_holes() {
         quality: hypertri::QualityPolicy::PreferDelaunay,
     };
 
-    let triangles = hypertri::triangulate_polygon(&input, options).unwrap();
+    let triangles = hypertri::triangulate_polygon(&APPROX, &input, options)
+        .unwrap()
+        .value;
 
     assert_eq!(triangles.len(), 24);
     assert!(
@@ -755,8 +736,10 @@ proptest! {
             p(x, y + height),
         ];
 
-        let triangles = hypertri::earcut(&vertices, &[]).unwrap();
-        let report = hypertri::earcut_report(&vertices, &[]).unwrap();
+        let triangles = hypertri::earcut(&APPROX, &vertices, &[]).unwrap().value;
+        let report = hypertri::earcut_report(&APPROX, &vertices, &[])
+            .unwrap()
+            .value;
 
         prop_assert_eq!(&report.triangles, &triangles);
         prop_assert_eq!(triangles.len(), 6);
@@ -798,8 +781,10 @@ proptest! {
             p(hole_x, height - 1),
         ];
 
-        let triangles = hypertri::earcut(&vertices, &[4]).unwrap();
-        let report = hypertri::earcut_report(&vertices, &[4]).unwrap();
+        let triangles = hypertri::earcut(&APPROX, &vertices, &[4]).unwrap().value;
+        let report = hypertri::earcut_report(&APPROX, &vertices, &[4])
+            .unwrap()
+            .value;
 
         prop_assert_eq!(&report.triangles, &triangles);
         prop_assert_eq!(triangles.len(), 24);

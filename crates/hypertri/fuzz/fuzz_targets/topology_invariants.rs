@@ -8,8 +8,14 @@
 #![no_main]
 
 use arbitrary::Arbitrary;
-use hypertri::{Constraint, ExactPoint, Point2, Rational, Real, TriangleIndices};
+use hypertri::{
+    Constraint, ExactPoint, Point2, PredicatePolicy, Rational, Real, TriangleIndices,
+    TriangulationContext,
+};
 use libfuzzer_sys::fuzz_target;
+
+const APPROX: TriangulationContext =
+    TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawInput {
@@ -49,9 +55,10 @@ fn exercise_l_shape_earcut(input: RawInput) {
         p(x, y + notch_y),
     ];
 
-    let Ok(triangles) = hypertri::earcut(&vertices, &[]) else {
+    let Ok(outcome) = hypertri::earcut(&APPROX, &vertices, &[]) else {
         return;
     };
+    let triangles = outcome.value;
     assert_triangle_indices(&triangles, vertices.len());
 }
 
@@ -70,12 +77,17 @@ fn exercise_crossing_constraint_cdt(input: RawInput) {
     ];
     let constraints = [Constraint::new(0, 1), Constraint::new(2, 3)];
 
-    let Ok(triangulation) = hypertri::cdt::constrained_delaunay(&points, &constraints) else {
+    let Ok(outcome) =
+        hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+    else {
         return;
     };
-    triangulation.validate().expect("CDT topology must validate");
+    let triangulation = outcome.value;
     triangulation
-        .validate_unconstrained_edges_are_delaunay()
+        .validate(&APPROX)
+        .expect("CDT topology must validate");
+    triangulation
+        .validate_unconstrained_edges_are_delaunay(&APPROX)
         .expect("unprotected CDT edges must be locally Delaunay");
     assert_eq!(triangulation.constraints(), constraints);
     assert!(triangulation.points().len() >= points.len());
@@ -112,12 +124,17 @@ fn exercise_separated_cycle_cdt(input: RawInput) {
         Constraint::new(7, 4),
     ];
 
-    let Ok(triangulation) = hypertri::cdt::constrained_delaunay(&points, &constraints) else {
+    let Ok(outcome) =
+        hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+    else {
         return;
     };
-    triangulation.validate().expect("CDT topology must validate");
+    let triangulation = outcome.value;
     triangulation
-        .validate_unconstrained_edges_are_delaunay()
+        .validate(&APPROX)
+        .expect("CDT topology must validate");
+    triangulation
+        .validate_unconstrained_edges_are_delaunay(&APPROX)
         .expect("unprotected CDT edges must be locally Delaunay");
     for constraint in constraints {
         assert!(
@@ -150,10 +167,13 @@ fn exercise_exact_nd_complex(input: RawInput) {
         ]),
     ];
 
-    let Ok(complex) = hypertri::nd::delaunay_complex(&points) else {
+    let Ok(outcome) = hypertri::nd::delaunay_complex(&APPROX, &points) else {
         return;
     };
-    complex.validate().expect("exact ND Delaunay complex must validate");
+    let complex = outcome.value;
+    complex
+        .validate(&APPROX)
+        .expect("exact ND Delaunay complex must validate");
     for cell in complex.cells() {
         assert_eq!(cell.indices().len(), complex.dimension() + 1);
         assert!(cell.indices().iter().all(|&index| index < complex.points().len()));

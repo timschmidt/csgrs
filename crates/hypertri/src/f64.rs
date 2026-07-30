@@ -2,6 +2,7 @@
 
 #[cfg(feature = "cdt")]
 use crate::cdt::{ConstrainedDelaunayTriangulation, DelaunayTriangulation};
+use crate::context::{TriangulationContext, TriangulationOutcome};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
 use crate::error::{Error, Result};
 #[cfg(feature = "cdt")]
@@ -17,37 +18,48 @@ use crate::types::{ExactPoint, Point2, Real};
 /// rationals. This boundary therefore preserves the caller's finite binary
 /// input exactly instead of making topology decisions in floating arithmetic.
 #[cfg(feature = "earcut")]
-pub fn earcut(vertices: &[[f64; 2]], hole_indices: &[usize]) -> Result<TriangleIndices> {
-    crate::earcut::triangulate(&lift_vertices(vertices)?, hole_indices)
+pub fn earcut(
+    context: &TriangulationContext,
+    vertices: &[[f64; 2]],
+    hole_indices: &[usize],
+) -> Result<TriangulationOutcome<TriangleIndices>> {
+    crate::earcut::triangulate(context, &lift_vertices(vertices)?, hole_indices)
 }
 
 /// Triangulate finite `f64` points after exact dyadic lifting.
 #[cfg(feature = "cdt")]
-pub fn delaunay(points: &[[f64; 2]]) -> Result<DelaunayTriangulation> {
+pub fn delaunay(
+    context: &TriangulationContext,
+    points: &[[f64; 2]],
+) -> Result<TriangulationOutcome<DelaunayTriangulation>> {
     validate_f64_vertices(points)?;
     let exact = lift_vertices(points)?;
-    crate::cdt::delaunay(&exact)
+    crate::cdt::delaunay(context, &exact)
 }
 
 /// Triangulate finite `f64` points with the BRIO-style batch schedule after
 /// exact dyadic lifting. See [`crate::cdt::delaunay_spatial`] for tie behavior.
 #[cfg(feature = "cdt")]
-pub fn delaunay_spatial(points: &[[f64; 2]]) -> Result<DelaunayTriangulation> {
+pub fn delaunay_spatial(
+    context: &TriangulationContext,
+    points: &[[f64; 2]],
+) -> Result<TriangulationOutcome<DelaunayTriangulation>> {
     validate_f64_vertices(points)?;
     let exact = lift_vertices(points)?;
-    crate::cdt::delaunay_spatial(&exact)
+    crate::cdt::delaunay_spatial(context, &exact)
 }
 
 /// Triangulate finite `f64` points with constraints after exact dyadic lifting.
 #[cfg(feature = "cdt")]
 pub fn constrained_delaunay(
+    context: &TriangulationContext,
     points: &[[f64; 2]],
     constraints: &[Constraint],
-) -> Result<ConstrainedDelaunayTriangulation> {
+) -> Result<TriangulationOutcome<ConstrainedDelaunayTriangulation>> {
     validate_f64_vertices(points)?;
     validate_constraints(points.len(), constraints)?;
     let exact = lift_vertices(points)?;
-    crate::cdt::constrained_delaunay(&exact, constraints)
+    crate::cdt::constrained_delaunay(context, &exact, constraints)
 }
 
 #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -101,12 +113,15 @@ fn validate_constraints(point_count: usize, constraints: &[Constraint]) -> Resul
 mod tests {
     use super::*;
 
+    const APPROX: TriangulationContext =
+        TriangulationContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+
     #[cfg(feature = "earcut")]
     #[test]
     fn f64_earcut_accepts_plain_runtime_points() {
         let vertices = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
 
-        let triangles = earcut(&vertices, &[]).unwrap();
+        let triangles = earcut(&APPROX, &vertices, &[]).unwrap().value;
 
         assert_eq!(triangles.len(), 6);
     }
@@ -116,7 +131,7 @@ mod tests {
     fn f64_rejects_nan() {
         let vertices = [[0.0, 0.0], [f64::NAN, 0.0], [1.0, 1.0]];
 
-        let error = earcut(&vertices, &[]).unwrap_err();
+        let error = earcut(&APPROX, &vertices, &[]).unwrap_err();
 
         assert_eq!(
             error,

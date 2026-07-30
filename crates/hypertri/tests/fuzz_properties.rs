@@ -2,8 +2,10 @@
 
 #[cfg(feature = "nd")]
 use hypertri::Rational;
-use hypertri::{Constraint, ExactPoint, Point2, Real};
+use hypertri::{Constraint, ExactPoint, Point2, PredicatePolicy, Real, TriangulationContext};
 use proptest::prelude::*;
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn p(x: i32, y: i32) -> ExactPoint {
     Point2::new(Real::from(x), Real::from(y))
@@ -73,9 +75,11 @@ proptest! {
             .into_iter()
             .map(|(x, y)| p(x, y))
             .collect::<Vec<_>>();
-        let triangulation = hypertri::cdt::delaunay_spatial(&points).unwrap();
+        let triangulation = hypertri::cdt::delaunay_spatial(&APPROX, &points)
+            .unwrap()
+            .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         prop_assert_eq!(triangulation.points(), points.as_slice());
         prop_assert!(
             triangulation
@@ -107,8 +111,10 @@ proptest! {
             p(x, y + notch_y),
         ];
 
-        let triangles = hypertri::earcut(&vertices, &[]).unwrap();
-        let report = hypertri::earcut_report(&vertices, &[]).unwrap();
+        let triangles = hypertri::earcut(&APPROX, &vertices, &[]).unwrap().value;
+        let report = hypertri::earcut_report(&APPROX, &vertices, &[])
+            .unwrap()
+            .value;
         let facts = hypertri::PolygonInput::new(vertices.clone(), vec![]).facts().clone();
 
         prop_assert_eq!(&report.triangles, &triangles);
@@ -128,9 +134,8 @@ proptest! {
             report.diagnostics.containment_candidates,
             "every scanned containment candidate should use the prepared reflex/convex table"
         );
-        prop_assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
-        prop_assert_eq!(facts.rings[0].convexity, hypertri::RingConvexity::MixedTurns);
-        prop_assert!(facts.all_ring_orientations_certified());
+        prop_assert_eq!(facts.rings[0].known_axis_aligned_edges, 6);
+        prop_assert_eq!(facts.rings[0].unknown_edge_zero_status, 0);
         prop_assert_eq!(triangles.len(), 12);
         for triangle in triangles.chunks_exact(3) {
             prop_assert!(triangle.iter().all(|&index| index < vertices.len()));
@@ -155,11 +160,14 @@ proptest! {
         ];
         let constraints = selected_triangle_edges(mask);
 
-        let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation =
+            hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+                .unwrap()
+                .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         prop_assert_eq!(triangulation.constraints(), constraints.as_slice());
         prop_assert_eq!(triangulation.triangles().len(), 1);
@@ -190,14 +198,17 @@ proptest! {
         let constraints = vec![Constraint::new(1, 3)];
         let facts = hypertri::PolygonInput::new(points.clone(), vec![]).facts().clone();
 
-        prop_assert_eq!(facts.rings[0].signed_area, Some(hypertri::Sign::Positive));
-        prop_assert_eq!(facts.rings[0].convexity, hypertri::RingConvexity::LocallyConvex);
+        prop_assert_eq!(facts.rings[0].known_axis_aligned_edges, 4);
+        prop_assert_eq!(facts.rings[0].unknown_edge_zero_status, 0);
 
-        let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation =
+            hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+                .unwrap()
+                .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         prop_assert_eq!(triangulation.constraints(), constraints.as_slice());
         prop_assert_eq!(triangulation.triangles().len(), 2);
@@ -226,11 +237,14 @@ proptest! {
         ];
         let constraints = vec![Constraint::new(0, 1)];
 
-        let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation =
+            hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+                .unwrap()
+                .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         prop_assert_eq!(triangulation.constraints(), constraints.as_slice());
         prop_assert_eq!(
@@ -262,11 +276,14 @@ proptest! {
         ];
         let constraints = vec![Constraint::new(0, 1), Constraint::new(2, 3)];
 
-        let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation =
+            hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+                .unwrap()
+                .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         prop_assert_eq!(triangulation.constraints(), constraints.as_slice());
         prop_assert_eq!(triangulation.points().len(), 5);
@@ -321,11 +338,14 @@ proptest! {
             Constraint::new(7, 4),
         ];
 
-        let triangulation = hypertri::cdt::constrained_delaunay(&points, &constraints).unwrap();
+        let triangulation =
+            hypertri::cdt::constrained_delaunay(&APPROX, &points, &constraints)
+                .unwrap()
+                .value;
 
-        triangulation.validate().unwrap();
+        triangulation.validate(&APPROX).unwrap();
         triangulation
-            .validate_unconstrained_edges_are_delaunay()
+            .validate_unconstrained_edges_are_delaunay(&APPROX)
             .unwrap();
         prop_assert_eq!(triangulation.constraints(), constraints.as_slice());
         for constraint in &constraints {
@@ -366,10 +386,10 @@ proptest! {
                 hypertri::Simplex::new(vec![0, 2, 3]),
             ],
         );
-        original.validate().unwrap();
+        original.validate(&APPROX).unwrap();
 
         let forward = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
-        let flipped = original.flip_oracle(&forward).unwrap();
+        let flipped = original.flip_oracle(&APPROX, &forward).unwrap().value;
         prop_assert!(flipped.validation().is_valid());
         prop_assert_eq!(
             canonical_cells(flipped.result()),
@@ -377,7 +397,11 @@ proptest! {
         );
 
         let reverse = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![0, 2]);
-        let round_trip = flipped.result().flip_oracle(&reverse).unwrap();
+        let round_trip = flipped
+            .result()
+            .flip_oracle(&APPROX, &reverse)
+            .unwrap()
+            .value;
         prop_assert!(round_trip.validation().is_valid());
         prop_assert_eq!(canonical_cells(round_trip.result()), canonical_cells(&original));
     }

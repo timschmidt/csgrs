@@ -1,6 +1,6 @@
 //! Public data types shared by exact and runtime `f64` APIs.
 
-use hyperreal::{RealExactSetFacts, SymbolicDependencyMask};
+use hyperreal::{RealExactSetFacts, SymbolicDependencyMask, ZeroKnowledge};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -71,26 +71,6 @@ pub type Triangle = [usize; 3];
 /// Flat earcut-compatible triangle index buffer.
 pub type TriangleIndices = Vec<usize>;
 
-/// Local turn consistency known for one polygon ring.
-///
-/// This is advisory scheduling metadata for exact triangulation algorithms. It
-/// summarizes certified signs of adjacent edge turns, but it is not a polygon
-/// simplicity proof and must not replace exact containment, visibility, or
-/// constraint predicates. Certified structure may select algorithms, while
-/// exact predicates still certify topology.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub enum RingConvexity {
-    /// Fewer than three useful vertices, or every certified local turn is zero.
-    Degenerate,
-    /// Every certified nonzero local turn has the same sign and no turn is unknown.
-    LocallyConvex,
-    /// Certified nonzero local turns contain both signs.
-    MixedTurns,
-    /// At least one local turn could not be certified.
-    Unknown,
-}
-
 /// Structural facts retained for one polygon input ring.
 ///
 /// These facts are inexpensive summaries over exact `Real` coordinates. They
@@ -109,14 +89,6 @@ pub struct RingInputFacts {
     pub known_axis_aligned_edges: usize,
     /// Number of edges with at least one coordinate-zero status that remains unknown.
     pub unknown_edge_zero_status: usize,
-    /// Certified sign of twice the signed ring area, when available.
-    ///
-    /// Positive and negative signs are orientation facts; zero means the
-    /// shoelace area is exactly zero. `None` means the fact was not certified
-    /// cheaply under the predicate policy used while building input facts.
-    pub signed_area: Option<Sign>,
-    /// Certified local turn consistency for the ring.
-    pub convexity: RingConvexity,
 }
 
 impl RingInputFacts {
@@ -202,19 +174,6 @@ impl PolygonInputFacts {
             .iter()
             .map(|ring| ring.unknown_edge_zero_status)
             .sum()
-    }
-
-    /// Return true when every ring has certified exact area orientation.
-    pub fn all_ring_orientations_certified(&self) -> bool {
-        self.rings.iter().all(|ring| ring.signed_area.is_some())
-    }
-
-    /// Return the number of rings whose local turns could not all be certified.
-    pub fn unknown_convexity_ring_count(&self) -> usize {
-        self.rings
-            .iter()
-            .filter(|ring| ring.convexity == RingConvexity::Unknown)
-            .count()
     }
 }
 
@@ -361,48 +320,39 @@ fn polygon_symbolic_dependencies(vertices: &[ExactPoint]) -> SymbolicDependencyM
 
 impl RingInputFacts {
     fn from_range(vertices: &[ExactPoint], start: usize, end: usize) -> Self {
-        let ring = predicate_ring(vertices, start, end);
-        let facts = hyperlimit::ring2_facts(&ring);
+        let mut known_degenerate_edges = 0;
+        let mut known_axis_aligned_edges = 0;
+        let mut unknown_edge_zero_status = 0;
+
+        if end.saturating_sub(start) >= 2 {
+            for index in start..end {
+                let current = &vertices[index];
+                let next = &vertices[if index + 1 == end { start } else { index + 1 }];
+                let dx = &next.x - &current.x;
+                let dy = &next.y - &current.y;
+                match (dx.structural_facts().zero, dy.structural_facts().zero) {
+                    (ZeroKnowledge::Zero, ZeroKnowledge::Zero) => {
+                        known_degenerate_edges += 1;
+                    }
+                    (ZeroKnowledge::Zero, ZeroKnowledge::NonZero)
+                    | (ZeroKnowledge::NonZero, ZeroKnowledge::Zero) => {
+                        known_axis_aligned_edges += 1;
+                    }
+                    (ZeroKnowledge::Unknown, _) | (_, ZeroKnowledge::Unknown) => {
+                        unknown_edge_zero_status += 1;
+                    }
+                    (ZeroKnowledge::NonZero, ZeroKnowledge::NonZero) => {}
+                }
+            }
+        }
 
         Self {
             start,
             end,
-            known_degenerate_edges: facts.known_degenerate_edges,
-            known_axis_aligned_edges: facts.known_axis_aligned_edges,
-            unknown_edge_zero_status: facts.unknown_edge_zero_status,
-            signed_area: facts.signed_area.map(map_hyperlimit_sign),
-            convexity: map_hyperlimit_ring_convexity(facts.convexity),
+            known_degenerate_edges,
+            known_axis_aligned_edges,
+            unknown_edge_zero_status,
         }
-    }
-}
-
-fn predicate_ring(vertices: &[ExactPoint], start: usize, end: usize) -> Vec<hyperlimit::Point2> {
-    let open_end = end.min(vertices.len());
-    let start = start.min(open_end);
-    vertices[start..open_end]
-        .iter()
-        .map(predicate_point)
-        .collect()
-}
-
-fn predicate_point(point: &ExactPoint) -> hyperlimit::Point2 {
-    hyperlimit::Point2::new(point.x.clone(), point.y.clone())
-}
-
-fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
-    match sign {
-        hyperlimit::Sign::Negative => Sign::Negative,
-        hyperlimit::Sign::Zero => Sign::Zero,
-        hyperlimit::Sign::Positive => Sign::Positive,
-    }
-}
-
-fn map_hyperlimit_ring_convexity(convexity: hyperlimit::RingConvexity) -> RingConvexity {
-    match convexity {
-        hyperlimit::RingConvexity::Degenerate => RingConvexity::Degenerate,
-        hyperlimit::RingConvexity::LocallyConvex => RingConvexity::LocallyConvex,
-        hyperlimit::RingConvexity::MixedTurns => RingConvexity::MixedTurns,
-        hyperlimit::RingConvexity::Unknown => RingConvexity::Unknown,
     }
 }
 

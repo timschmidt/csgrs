@@ -10,7 +10,7 @@
 //! layer.
 
 use crate::error::{Error, Result};
-use crate::kernel::Kernel;
+use crate::kernel::ExactKernel;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{Constraint, Point2, Triangle};
@@ -31,14 +31,12 @@ pub(crate) struct PlanarConstraints {
 /// every requested segment as a triangulation edge and restores local Delaunay
 /// legality for unconstrained interior edges where exact predicates can decide
 /// the required flips.
-pub(crate) fn insert_constraints<K>(
+pub(crate) fn insert_constraints(
+    kernel: &ExactKernel,
     points: &[Point2],
     mut triangles: Vec<Triangle>,
     constraints: &[Constraint],
-) -> Result<Vec<Triangle>>
-where
-    K: Kernel,
-{
+) -> Result<Vec<Triangle>> {
     // Structural-dispatch note: constraint recovery processes the planarized
     // subsegments in caller-derived order. The retained PSLG facts already
     // keep intersection vertices and split subsegments explicit; richer
@@ -54,12 +52,18 @@ where
             continue;
         }
 
-        recover_constraint::<K>(points, &mut triangles, constraint, &constrained_edges)?;
+        recover_constraint(
+            kernel,
+            points,
+            &mut triangles,
+            constraint,
+            &constrained_edges,
+        )?;
         push_unique_edge(&mut constrained_edges, edge);
-        legalize_unconstrained_edges::<K>(points, &mut triangles, &constrained_edges)?;
+        legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
     }
 
-    legalize_unconstrained_edges::<K>(points, &mut triangles, &constrained_edges)?;
+    legalize_unconstrained_edges(kernel, points, &mut triangles, &constrained_edges)?;
     Ok(triangles)
 }
 
@@ -71,6 +75,7 @@ where
 /// into subsegments. Constraint recovery then operates only on a valid planar
 /// straight-line graph.
 pub(crate) fn planarize_constraints(
+    kernel: &ExactKernel,
     points: &[Point2],
     constraints: &[Constraint],
 ) -> Result<PlanarConstraints> {
@@ -89,6 +94,7 @@ pub(crate) fn planarize_constraints(
             }
 
             if predicates::segment_intersection(
+                kernel,
                 &planar_points[a.from],
                 &planar_points[a.to],
                 &planar_points[b.from],
@@ -96,8 +102,8 @@ pub(crate) fn planarize_constraints(
             )?
             .is_proper_crossing()
             {
-                let point = segment_intersection_point(&planar_points, a, b)?;
-                push_unique_point(&mut planar_points, point);
+                let point = segment_intersection_point(kernel, &planar_points, a, b)?;
+                push_unique_point(kernel, &mut planar_points, point)?;
             }
         }
     }
@@ -107,6 +113,7 @@ pub(crate) fn planarize_constraints(
         let mut on_segment = Vec::new();
         for point_index in 0..planar_points.len() {
             if predicates::point_on_segment(
+                kernel,
                 &planar_points[constraint.from],
                 &planar_points[constraint.to],
                 &planar_points[point_index],
@@ -115,7 +122,7 @@ pub(crate) fn planarize_constraints(
             }
         }
 
-        sort_indices_on_segment(&planar_points, constraint, &mut on_segment)?;
+        sort_indices_on_segment(kernel, &planar_points, constraint, &mut on_segment)?;
         for pair in on_segment.windows(2) {
             push_unique_constraint(&mut split, Constraint::new(pair[0], pair[1]));
         }
@@ -128,6 +135,7 @@ pub(crate) fn planarize_constraints(
 }
 
 fn segment_intersection_point(
+    kernel: &ExactKernel,
     points: &[Point2],
     first: Constraint,
     second: Constraint,
@@ -137,32 +145,37 @@ fn segment_intersection_point(
     let c = &points[second.from];
     let d = &points[second.to];
 
-    match hyperlimit::proper_segment_intersection_point(
-        &predicate_point(a),
-        &predicate_point(b),
-        &predicate_point(c),
-        &predicate_point(d),
-    ) {
-        hyperlimit::PredicateOutcome::Decided {
-            value: Some(point), ..
-        } => Ok(Point2::new(point.x, point.y)),
-        hyperlimit::PredicateOutcome::Decided { value: None, .. } => Err(Error::InvalidInput {
+    match kernel.decide(
+        hyperlimit::proper_segment_intersection_point(
+            &predicate_point(a),
+            &predicate_point(b),
+            &predicate_point(c),
+            &predicate_point(d),
+            kernel.policy(),
+        ),
+        "proper_segment_intersection_point",
+    )? {
+        Some(point) => Ok(Point2::new(point.x, point.y)),
+        None => Err(Error::InvalidInput {
             reason: "constraints do not properly cross",
-        }),
-        hyperlimit::PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
-            predicate: "proper_segment_intersection_point",
         }),
     }
 }
 
-fn push_unique_point(points: &mut Vec<Point2>, point: Point2) -> usize {
-    if let Some(index) = points.iter().position(|candidate| candidate == &point) {
-        index
-    } else {
-        let index = points.len();
-        points.push(point);
-        index
+fn push_unique_point(
+    kernel: &ExactKernel,
+    points: &mut Vec<Point2>,
+    point: Point2,
+) -> Result<usize> {
+    for (index, candidate) in points.iter().enumerate() {
+        if predicates::points_equal(kernel, candidate, &point)? {
+            return Ok(index);
+        }
     }
+
+    let index = points.len();
+    points.push(point);
+    Ok(index)
 }
 
 fn constraints_share_endpoint(first: Constraint, second: Constraint) -> bool {
@@ -177,11 +190,13 @@ fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
 }
 
 fn sort_indices_on_segment(
+    kernel: &ExactKernel,
     points: &[Point2],
     constraint: &Constraint,
     indices: &mut [usize],
 ) -> Result<()> {
     let use_x = compare_segment_axis_reals(
+        kernel,
         &points[constraint.from].x,
         &points[constraint.to].x,
         "compare_constraint_endpoint_x",
@@ -190,7 +205,7 @@ fn sort_indices_on_segment(
     for index in 1..indices.len() {
         let mut cursor = index;
         while cursor > 0
-            && compare_segment_indices(points, indices[cursor], indices[cursor - 1], use_x)?
+            && compare_segment_indices(kernel, points, indices[cursor], indices[cursor - 1], use_x)?
                 == Ordering::Less
         {
             indices.swap(cursor, cursor - 1);
@@ -202,19 +217,31 @@ fn sort_indices_on_segment(
 }
 
 fn compare_segment_indices(
+    kernel: &ExactKernel,
     points: &[Point2],
     left: usize,
     right: usize,
     use_x: bool,
 ) -> Result<Ordering> {
     if use_x {
-        compare_segment_axis_reals(&points[left].x, &points[right].x, "compare_segment_x")
+        compare_segment_axis_reals(
+            kernel,
+            &points[left].x,
+            &points[right].x,
+            "compare_segment_x",
+        )
     } else {
-        compare_segment_axis_reals(&points[left].y, &points[right].y, "compare_segment_y")
+        compare_segment_axis_reals(
+            kernel,
+            &points[left].y,
+            &points[right].y,
+            "compare_segment_y",
+        )
     }
 }
 
 fn compare_segment_axis_reals(
+    kernel: &ExactKernel,
     left: &crate::types::Real,
     right: &crate::types::Real,
     predicate: &'static str,
@@ -222,12 +249,10 @@ fn compare_segment_axis_reals(
     // Points have already been certified to lie on this segment. The remaining
     // subsegment split order is therefore a scalar exact-ordering predicate,
     // which belongs in hyperlimit rather than CDT topology.
-    match hyperlimit::compare_reals(left, right) {
-        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
-        hyperlimit::PredicateOutcome::Unknown { .. } => {
-            Err(Error::PredicateUndecided { predicate })
-        }
-    }
+    kernel.decide(
+        hyperlimit::compare_reals(left, right, kernel.policy()),
+        predicate,
+    )
 }
 
 fn push_unique_constraint(constraints: &mut Vec<Constraint>, constraint: Constraint) {
@@ -240,15 +265,13 @@ fn push_unique_constraint(constraints: &mut Vec<Constraint>, constraint: Constra
     }
 }
 
-fn recover_constraint<K>(
+fn recover_constraint(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
     constraint: Constraint,
     constrained_edges: &[EdgeKey],
-) -> Result<()>
-where
-    K: Kernel,
-{
+) -> Result<()> {
     let target = EdgeKey::new(constraint.from, constraint.to);
     let max_flips = flip_budget(points.len(), triangles.len());
 
@@ -257,8 +280,13 @@ where
             return Ok(());
         }
 
-        let Some(crossing_edge) =
-            first_edge_crossing_constraint(points, triangles, constraint, constrained_edges)?
+        let Some(crossing_edge) = first_edge_crossing_constraint(
+            kernel,
+            points,
+            triangles,
+            constraint,
+            constrained_edges,
+        )?
         else {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery without a flippable crossing edge",
@@ -271,13 +299,13 @@ where
             });
         };
         let new_edge = EdgeKey::new(first.opposite, second.opposite);
-        if !flip_preserves_constraints(points, new_edge, constrained_edges)? {
+        if !flip_preserves_constraints(kernel, points, new_edge, constrained_edges)? {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery would cross a previous constraint",
             });
         }
 
-        if !flip_edge::<K>(points, triangles, crossing_edge)? {
+        if !flip_edge(kernel, points, triangles, crossing_edge)? {
             return Err(Error::UnsupportedFeature {
                 feature: "constraint recovery across a non-convex edge cavity",
             });
@@ -290,6 +318,7 @@ where
 }
 
 fn first_edge_crossing_constraint(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangles: &[Triangle],
     constraint: Constraint,
@@ -300,6 +329,7 @@ fn first_edge_crossing_constraint(
             continue;
         }
         let intersection = predicates::segment_intersection(
+            kernel,
             &points[constraint.from],
             &points[constraint.to],
             &points[edge.from],
@@ -318,14 +348,12 @@ fn first_edge_crossing_constraint(
     Ok(None)
 }
 
-fn legalize_unconstrained_edges<K>(
+fn legalize_unconstrained_edges(
+    kernel: &ExactKernel,
     points: &[Point2],
     triangles: &mut [Triangle],
     constrained_edges: &[EdgeKey],
-) -> Result<()>
-where
-    K: Kernel,
-{
+) -> Result<()> {
     let max_flips = flip_budget(points.len(), triangles.len()) * 4;
 
     for _ in 0..max_flips {
@@ -340,13 +368,13 @@ where
             };
 
             let new_edge = EdgeKey::new(first.opposite, second.opposite);
-            if !edge_is_illegal::<K>(points, edge, first.opposite, second.opposite)? {
+            if !edge_is_illegal(kernel, points, edge, first.opposite, second.opposite)? {
                 continue;
             }
-            if !flip_preserves_constraints(points, new_edge, constrained_edges)? {
+            if !flip_preserves_constraints(kernel, points, new_edge, constrained_edges)? {
                 continue;
             }
-            if flip_edge::<K>(points, triangles, edge)? {
+            if flip_edge(kernel, points, triangles, edge)? {
                 flipped = true;
                 break;
             }
@@ -362,20 +390,19 @@ where
     })
 }
 
-fn edge_is_illegal<K>(
+fn edge_is_illegal(
+    kernel: &ExactKernel,
     points: &[Point2],
     edge: EdgeKey,
     first_opposite: usize,
     second_opposite: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
-    if !edge_is_flippable::<K>(points, edge, first_opposite, second_opposite)? {
+) -> Result<bool> {
+    if !edge_is_flippable(kernel, points, edge, first_opposite, second_opposite)? {
         return Ok(false);
     }
 
-    let orientation = predicates::orient2::<K>(
+    let orientation = predicates::orient2(
+        kernel,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -384,7 +411,7 @@ where
         return Ok(false);
     }
 
-    let incircle = K::incircle2(
+    let incircle = kernel.incircle2(
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
@@ -397,34 +424,34 @@ where
     ))
 }
 
-fn flip_edge<K>(points: &[Point2], triangles: &mut [Triangle], edge: EdgeKey) -> Result<bool>
-where
-    K: Kernel,
-{
+fn flip_edge(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    triangles: &mut [Triangle],
+    edge: EdgeKey,
+) -> Result<bool> {
     let Some([first, second]) = two_adjacent_triangles(triangles, edge)? else {
         return Ok(false);
     };
 
-    if !edge_is_flippable::<K>(points, edge, first.opposite, second.opposite)? {
+    if !edge_is_flippable(kernel, points, edge, first.opposite, second.opposite)? {
         return Ok(false);
     }
 
-    let first_new = make_oriented::<K>(points, [first.opposite, second.opposite, edge.from])?;
-    let second_new = make_oriented::<K>(points, [second.opposite, first.opposite, edge.to])?;
+    let first_new = make_oriented(kernel, points, [first.opposite, second.opposite, edge.from])?;
+    let second_new = make_oriented(kernel, points, [second.opposite, first.opposite, edge.to])?;
     triangles[first.triangle] = first_new;
     triangles[second.triangle] = second_new;
     Ok(true)
 }
 
-fn edge_is_flippable<K>(
+fn edge_is_flippable(
+    kernel: &ExactKernel,
     points: &[Point2],
     edge: EdgeKey,
     first_opposite: usize,
     second_opposite: usize,
-) -> Result<bool>
-where
-    K: Kernel,
-{
+) -> Result<bool> {
     if first_opposite == second_opposite
         || edge.contains(first_opposite)
         || edge.contains(second_opposite)
@@ -432,22 +459,26 @@ where
         return Ok(false);
     }
 
-    let first_side = predicates::orient2::<K>(
+    let first_side = predicates::orient2(
+        kernel,
         &points[edge.from],
         &points[edge.to],
         &points[first_opposite],
     )?;
-    let second_side = predicates::orient2::<K>(
+    let second_side = predicates::orient2(
+        kernel,
         &points[edge.from],
         &points[edge.to],
         &points[second_opposite],
     )?;
-    let opposite_edge_side = predicates::orient2::<K>(
+    let opposite_edge_side = predicates::orient2(
+        kernel,
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.from],
     )?;
-    let opposite_other_side = predicates::orient2::<K>(
+    let opposite_other_side = predicates::orient2(
+        kernel,
         &points[first_opposite],
         &points[second_opposite],
         &points[edge.to],
@@ -458,6 +489,7 @@ where
 }
 
 fn flip_preserves_constraints(
+    kernel: &ExactKernel,
     points: &[Point2],
     new_edge: EdgeKey,
     constrained_edges: &[EdgeKey],
@@ -467,6 +499,7 @@ fn flip_preserves_constraints(
             continue;
         }
         if predicates::point_on_segment(
+            kernel,
             &points[new_edge.from],
             &points[new_edge.to],
             &points[point_index],
@@ -481,6 +514,7 @@ fn flip_preserves_constraints(
         }
 
         let intersection = predicates::segment_intersection(
+            kernel,
             &points[new_edge.from],
             &points[new_edge.to],
             &points[constraint.from],
@@ -535,11 +569,13 @@ fn two_adjacent_triangles(
     }
 }
 
-fn make_oriented<K>(points: &[Point2], mut triangle: Triangle) -> Result<Triangle>
-where
-    K: Kernel,
-{
-    let sign = predicates::orient2::<K>(
+fn make_oriented(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    mut triangle: Triangle,
+) -> Result<Triangle> {
+    let sign = predicates::orient2(
+        kernel,
         &points[triangle[0]],
         &points[triangle[1]],
         &points[triangle[2]],
@@ -624,4 +660,27 @@ fn flip_budget(point_count: usize, triangle_count: usize) -> usize {
         .saturating_add(triangle_count)
         .saturating_add(1)
         .pow(2)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::context::TriangulationContext;
+    use crate::types::Real;
+
+    #[test]
+    fn steiner_point_deduplication_uses_numeric_equality() {
+        let left = Real::pi() + Real::e();
+        let right = Real::e() + Real::pi();
+        assert_ne!(left, right);
+
+        let mut points = vec![Point2::new(left, Real::zero())];
+        let context = TriangulationContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let kernel = ExactKernel::new(&context);
+        assert_eq!(
+            push_unique_point(&kernel, &mut points, Point2::new(right, Real::zero())),
+            Ok(0)
+        );
+        assert_eq!(points.len(), 1);
+    }
 }

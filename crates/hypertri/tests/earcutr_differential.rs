@@ -1,7 +1,9 @@
 #![cfg(feature = "earcut")]
 
-use hypertri::{ExactPoint, Point2, Real};
+use hypertri::{ExactPoint, Point2, PredicatePolicy, Real, TriangulationContext};
 use proptest::prelude::*;
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 /// Lift ordinary finite `f64` fixtures into exact dyadic coordinates.
 ///
@@ -92,7 +94,9 @@ fn assert_indices_in_bounds(triangles: &[usize], vertex_count: usize) {
 
 fn assert_ordinary_case_matches_earcutr(vertices: &[[f64; 2]], hole_indices: &[usize]) {
     let exact_vertices = lift_vertices(vertices);
-    let hypertri_triangles = hypertri::earcut(&exact_vertices, hole_indices).unwrap();
+    let hypertri_triangles = hypertri::earcut(&APPROX, &exact_vertices, hole_indices)
+        .unwrap()
+        .value;
 
     let flat = flatten_vertices(vertices);
     let earcutr_triangles = earcutr::earcut(&flat, hole_indices, 2).unwrap();

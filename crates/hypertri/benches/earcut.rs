@@ -1,4 +1,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use hypertri::{PredicatePolicy, TriangulationContext};
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn bench_exact_lifted_earcut(c: &mut Criterion) {
     let concave = vec![
@@ -12,7 +15,7 @@ fn bench_exact_lifted_earcut(c: &mut Criterion) {
     ];
 
     c.bench_function("f64_exact_lifted_concave_earcut", |b| {
-        b.iter(|| hypertri::f64::earcut(&concave, &[]).unwrap())
+        b.iter(|| hypertri::f64::earcut(&APPROX, &concave, &[]).unwrap())
     });
 
     let holed = vec![
@@ -31,7 +34,7 @@ fn bench_exact_lifted_earcut(c: &mut Criterion) {
     ];
 
     c.bench_function("f64_exact_lifted_holed_earcut", |b| {
-        b.iter(|| hypertri::f64::earcut(&holed, &[4, 8]).unwrap())
+        b.iter(|| hypertri::f64::earcut(&APPROX, &holed, &[4, 8]).unwrap())
     });
 }
 

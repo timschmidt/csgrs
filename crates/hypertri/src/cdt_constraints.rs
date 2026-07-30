@@ -8,7 +8,8 @@
 
 use std::cmp::Ordering;
 
-use crate::error::{Error, Result};
+use crate::error::Result;
+use crate::kernel::ExactKernel;
 use crate::predicates;
 #[cfg(feature = "earcut")]
 use crate::types::ExactPoint;
@@ -53,6 +54,7 @@ impl ConstraintPolygon {
 /// order. This is the same containment model used by the other polygon
 /// algorithms in this crate.
 pub(crate) fn polygon_from_closed_constraints(
+    kernel: &ExactKernel,
     points: &[Point2],
     constraints: &[Constraint],
 ) -> Result<Option<ConstraintPolygon>> {
@@ -61,7 +63,7 @@ pub(crate) fn polygon_from_closed_constraints(
         return Ok(None);
     };
 
-    order_polygon_rings(points, rings)
+    order_polygon_rings(kernel, points, rings)
 }
 
 fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Option<Vec<Vec<usize>>> {
@@ -131,6 +133,7 @@ fn extract_closed_rings(point_count: usize, constraints: &[Constraint]) -> Optio
 }
 
 fn order_polygon_rings(
+    kernel: &ExactKernel,
     points: &[Point2],
     rings: Vec<Vec<usize>>,
 ) -> Result<Option<ConstraintPolygon>> {
@@ -138,7 +141,7 @@ fn order_polygon_rings(
         return Ok(Some(ConstraintPolygon { rings }));
     }
 
-    let Some(exterior_index) = exterior_ring_index(points, &rings)? else {
+    let Some(exterior_index) = exterior_ring_index(kernel, points, &rings)? else {
         return Ok(None);
     };
 
@@ -150,10 +153,10 @@ fn order_polygon_rings(
         if ring_index == exterior_index {
             continue;
         }
-        if ring_is_inside_any_other_hole(points, &rings, exterior_index, ring_index)? {
+        if ring_is_inside_any_other_hole(kernel, points, &rings, exterior_index, ring_index)? {
             return Ok(None);
         }
-        insert_hole_sorted(points, &mut holes, ring.clone())?;
+        insert_hole_sorted(kernel, points, &mut holes, ring.clone())?;
     }
     ordered.extend(holes);
 
@@ -161,13 +164,14 @@ fn order_polygon_rings(
 }
 
 fn insert_hole_sorted(
+    kernel: &ExactKernel,
     points: &[Point2],
     holes: &mut Vec<Vec<usize>>,
     hole: Vec<usize>,
 ) -> Result<()> {
     let mut insert_at = holes.len();
     for (candidate_at, candidate) in holes.iter().enumerate() {
-        if compare_ring_representatives(points, &hole, candidate)? == Ordering::Less {
+        if compare_ring_representatives(kernel, points, &hole, candidate)? == Ordering::Less {
             insert_at = candidate_at;
             break;
         }
@@ -176,7 +180,11 @@ fn insert_hole_sorted(
     Ok(())
 }
 
-fn exterior_ring_index(points: &[Point2], rings: &[Vec<usize>]) -> Result<Option<usize>> {
+fn exterior_ring_index(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    rings: &[Vec<usize>],
+) -> Result<Option<usize>> {
     let mut candidate = None;
     for (ring_index, ring) in rings.iter().enumerate() {
         let contains_all_other_rings = rings
@@ -187,7 +195,7 @@ fn exterior_ring_index(points: &[Point2], rings: &[Vec<usize>]) -> Result<Option
                 if !contains_all {
                     return Ok(false);
                 }
-                predicates::point_in_ring_even_odd(points, ring, &points[other[0]])
+                predicates::point_in_ring_even_odd(kernel, points, ring, &points[other[0]])
             })?;
 
         if contains_all_other_rings {
@@ -202,6 +210,7 @@ fn exterior_ring_index(points: &[Point2], rings: &[Vec<usize>]) -> Result<Option
 }
 
 fn ring_is_inside_any_other_hole(
+    kernel: &ExactKernel,
     points: &[Point2],
     rings: &[Vec<usize>],
     exterior_index: usize,
@@ -211,7 +220,8 @@ fn ring_is_inside_any_other_hole(
         if other_index == exterior_index || other_index == ring_index {
             continue;
         }
-        if predicates::point_in_ring_even_odd(points, other, &points[rings[ring_index][0]])? {
+        if predicates::point_in_ring_even_odd(kernel, points, other, &points[rings[ring_index][0]])?
+        {
             return Ok(true);
         }
     }
@@ -220,38 +230,43 @@ fn ring_is_inside_any_other_hole(
 }
 
 fn compare_ring_representatives(
+    kernel: &ExactKernel,
     points: &[Point2],
     left: &[usize],
     right: &[usize],
 ) -> Result<Ordering> {
-    let left_rep = leftmost_position(points, left)?;
-    let right_rep = leftmost_position(points, right)?;
-    compare_points(points, left[left_rep], right[right_rep])
+    let left_rep = leftmost_position(kernel, points, left)?;
+    let right_rep = leftmost_position(kernel, points, right)?;
+    compare_points(kernel, points, left[left_rep], right[right_rep])
 }
 
-fn leftmost_position(points: &[Point2], ring: &[usize]) -> Result<usize> {
+fn leftmost_position(kernel: &ExactKernel, points: &[Point2], ring: &[usize]) -> Result<usize> {
     let mut best = 0;
     for position in 1..ring.len() {
-        if compare_points(points, ring[position], ring[best])? == Ordering::Less {
+        if compare_points(kernel, points, ring[position], ring[best])? == Ordering::Less {
             best = position;
         }
     }
     Ok(best)
 }
 
-fn compare_points(points: &[Point2], left: usize, right: usize) -> Result<Ordering> {
+fn compare_points(
+    kernel: &ExactKernel,
+    points: &[Point2],
+    left: usize,
+    right: usize,
+) -> Result<Ordering> {
     // Ring ordering is not CDT topology; it is a reusable exact point-order
     // predicate. Keep it in hyperlimit so hypertri only chooses how ordered
     // rings are consumed.
-    match hyperlimit::compare_point2_lexicographic(
-        &predicate_point(&points[left]),
-        &predicate_point(&points[right]),
-    ) {
-        hyperlimit::PredicateOutcome::Decided { value, .. } => Ok(value),
-        hyperlimit::PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided {
-            predicate: "compare_point2_lexicographic",
-        }),
-    }
+    kernel.decide(
+        hyperlimit::compare_point2_lexicographic(
+            &predicate_point(&points[left]),
+            &predicate_point(&points[right]),
+            kernel.policy(),
+        ),
+        "compare_point2_lexicographic",
+    )
 }
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {

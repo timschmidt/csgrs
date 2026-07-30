@@ -1,5 +1,7 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use hypertri::{Constraint, Point2, Rational, Real};
+use hypertri::{Constraint, Point2, PredicatePolicy, Rational, Real, TriangulationContext};
+
+const APPROX: TriangulationContext = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fn r(value: i64) -> Real {
     Real::from(value)
@@ -23,20 +25,28 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     ];
 
     c.bench_function("exact_rational_spike_earcut", |b| {
-        b.iter(|| hypertri::earcut(&rational_spike, &[]).unwrap())
+        b.iter(|| hypertri::earcut(&APPROX, &rational_spike, &[]).unwrap())
+    });
+    c.bench_function("exact_rational_spike_earcut_dynamic_policy", |b| {
+        b.iter(|| hypertri::earcut(black_box(&APPROX), black_box(&rational_spike), &[]).unwrap())
     });
 
     let runtime_polygon = hypertri::PolygonInput::new(rational_spike.clone(), Vec::new());
     let runtime_options = hypertri::TriangulationOptions::default();
     c.bench_function("runtime_polygon_triangulation", |b| {
         b.iter(|| {
-            hypertri::triangulate_polygon(black_box(&runtime_polygon), black_box(runtime_options))
-                .unwrap()
+            hypertri::triangulate_polygon(
+                black_box(&APPROX),
+                black_box(&runtime_polygon),
+                black_box(runtime_options),
+            )
+            .unwrap()
         })
     });
     c.bench_function("runtime_polygon_triangulation_report", |b| {
         b.iter(|| {
             hypertri::triangulate_polygon_with_report(
+                black_box(&APPROX),
                 black_box(&runtime_polygon),
                 black_box(runtime_options),
             )
@@ -46,7 +56,9 @@ fn bench_exact_triangulation(c: &mut Criterion) {
 
     c.bench_function("exact_rational_spike_earcut_diagnostics", |b| {
         b.iter(|| {
-            let report = hypertri::earcut_report(&rational_spike, &[]).unwrap();
+            let report = hypertri::earcut_report(&APPROX, &rational_spike, &[])
+                .unwrap()
+                .value;
             (
                 report.triangles.len(),
                 report.diagnostics.ear_tests,
@@ -75,7 +87,9 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             // z-order candidate pruning or unsafe indexing. The report counts
             // predicate-stage pressure while topology still routes through
             // exact `hyperlimit` predicates.
-            let report = hypertri::earcut_report(&sawtooth, &[]).unwrap();
+            let report = hypertri::earcut_report(&APPROX, &sawtooth, &[])
+                .unwrap()
+                .value;
             (
                 report.triangles.len(),
                 report.diagnostics.ear_tests,
@@ -96,7 +110,8 @@ fn bench_exact_triangulation(c: &mut Criterion) {
 
     c.bench_function("exact_cdt_crossing_constraint_split", |b| {
         b.iter(|| {
-            hypertri::cdt::constrained_delaunay(&crossing_points, &crossing_constraints).unwrap()
+            hypertri::cdt::constrained_delaunay(&APPROX, &crossing_points, &crossing_constraints)
+                .unwrap()
         })
     });
 
@@ -127,7 +142,8 @@ fn bench_exact_triangulation(c: &mut Criterion) {
             // PSLG path that starts from an exact Delaunay triangulation,
             // recovers protected cycle edges, then re-legalizes unprotected
             // edges with exact local Delaunay predicates.
-            hypertri::cdt::constrained_delaunay(&separated_cycles, &separated_constraints).unwrap()
+            hypertri::cdt::constrained_delaunay(&APPROX, &separated_cycles, &separated_constraints)
+                .unwrap()
         })
     });
 
@@ -140,26 +156,26 @@ fn bench_exact_triangulation(c: &mut Criterion) {
         })
         .collect::<Vec<_>>();
     c.bench_function("exact_delaunay_400_located_insertions", |b| {
-        b.iter(|| hypertri::cdt::delaunay(&located_delaunay_points).unwrap())
+        b.iter(|| hypertri::cdt::delaunay(&APPROX, &located_delaunay_points).unwrap())
     });
 
     let scattered_delaunay_points = (0..400_usize)
         .map(|position| located_delaunay_points[(position * 37) % 400].clone())
         .collect::<Vec<_>>();
     c.bench_function("exact_delaunay_400_scattered_insertions", |b| {
-        b.iter(|| hypertri::cdt::delaunay(&scattered_delaunay_points).unwrap())
+        b.iter(|| hypertri::cdt::delaunay(&APPROX, &scattered_delaunay_points).unwrap())
     });
     c.bench_function("exact_delaunay_spatial_400_located_input", |b| {
-        b.iter(|| hypertri::cdt::delaunay_spatial(&located_delaunay_points).unwrap())
+        b.iter(|| hypertri::cdt::delaunay_spatial(&APPROX, &located_delaunay_points).unwrap())
     });
     c.bench_function("exact_delaunay_spatial_400_scattered_input", |b| {
-        b.iter(|| hypertri::cdt::delaunay_spatial(&scattered_delaunay_points).unwrap())
+        b.iter(|| hypertri::cdt::delaunay_spatial(&APPROX, &scattered_delaunay_points).unwrap())
     });
     c.bench_function("exact_delaunay_64_located_insertions", |b| {
-        b.iter(|| hypertri::cdt::delaunay(&located_delaunay_points[..64]).unwrap())
+        b.iter(|| hypertri::cdt::delaunay(&APPROX, &located_delaunay_points[..64]).unwrap())
     });
     c.bench_function("exact_delaunay_spatial_64_located_input", |b| {
-        b.iter(|| hypertri::cdt::delaunay_spatial(&located_delaunay_points[..64]).unwrap())
+        b.iter(|| hypertri::cdt::delaunay_spatial(&APPROX, &located_delaunay_points[..64]).unwrap())
     });
 
     let shared_denominator_polygon = hypertri::PolygonInput::new(
@@ -179,8 +195,8 @@ fn bench_exact_triangulation(c: &mut Criterion) {
                 facts.all_coordinates_exact_rational(),
                 facts.has_shared_denominator_schedule(),
                 facts.rings[0].known_axis_aligned_edges,
-                facts.rings[0].signed_area,
-                facts.rings[0].convexity,
+                facts.rings[0].known_degenerate_edges,
+                facts.rings[0].unknown_edge_zero_status,
             )
         })
     });
@@ -195,16 +211,19 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     ];
 
     c.bench_function("exact_nd_4d_delaunay_complex", |b| {
-        b.iter(|| hypertri::nd::delaunay_complex(&nd_points).unwrap())
+        b.iter(|| hypertri::nd::delaunay_complex(&APPROX, &nd_points).unwrap())
     });
 
-    let insertion_base = hypertri::nd::delaunay_complex(&nd_points[..5]).unwrap();
+    let insertion_base = hypertri::nd::delaunay_complex(&APPROX, &nd_points[..5])
+        .unwrap()
+        .value;
     let insertion_point = hypertri::nd::PointD::new(vec![q(1, 5), q(1, 5), q(1, 5), q(1, 5)]);
     c.bench_function("exact_nd_4d_oracle_insertion_report", |b| {
         b.iter(|| {
             let report = insertion_base
-                .insert_point_oracle(insertion_point.clone())
-                .unwrap();
+                .insert_point_oracle(&APPROX, insertion_point.clone())
+                .unwrap()
+                .value;
             (
                 report.old_cell_count(),
                 report.new_cell_count(),
@@ -230,7 +249,7 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     let flip = hypertri::BistellarFlipD::new(vec![0, 1, 2, 3], vec![1, 3]);
     c.bench_function("exact_nd_bistellar_flip_validate", |b| {
         b.iter(|| {
-            let report = flip_complex.validate_bistellar_flip(&flip);
+            let report = flip_complex.validate_bistellar_flip(&APPROX, &flip).value;
             (
                 report.is_valid(),
                 report.p(),
@@ -243,7 +262,7 @@ fn bench_exact_triangulation(c: &mut Criterion) {
     });
     c.bench_function("exact_nd_bistellar_flip_oracle_apply", |b| {
         b.iter(|| {
-            let report = flip_complex.flip_oracle(&flip).unwrap();
+            let report = flip_complex.flip_oracle(&APPROX, &flip).unwrap().value;
             (
                 report.validation().p(),
                 report.validation().q(),
@@ -303,7 +322,7 @@ fn bench_exact_triangulation(c: &mut Criterion) {
 
     c.bench_function("exact_nd_tds_geometric_report", |b| {
         b.iter(|| {
-            let report = tds.validate_geometric_report();
+            let report = tds.validate_geometric_report(&APPROX).value;
             (
                 report.is_valid(),
                 report.finite_cell_count(),

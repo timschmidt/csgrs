@@ -1,4 +1,4 @@
-use hypertri::{Constraint, Point2, Real, cdt};
+use hypertri::{Constraint, Point2, PredicatePolicy, Real, TriangulationContext, cdt};
 
 fn main() -> hypertri::Result<()> {
     let points = vec![
@@ -8,10 +8,15 @@ fn main() -> hypertri::Result<()> {
         Point2::new(Real::from(0), Real::from(2)),
     ];
 
-    let delaunay = cdt::delaunay(&points)?;
-    let constrained =
-        cdt::constrained_delaunay(&points, &[Constraint::new(0, 1), Constraint::new(1, 2)])?;
-    delaunay.validate()?;
-    constrained.validate()?;
+    let context = TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+    let delaunay = cdt::delaunay(&context, &points)?.value;
+    let constrained = cdt::constrained_delaunay(
+        &context,
+        &points,
+        &[Constraint::new(0, 1), Constraint::new(1, 2)],
+    )?
+    .value;
+    delaunay.validate(&context)?;
+    constrained.validate(&context)?;
     Ok(())
 }

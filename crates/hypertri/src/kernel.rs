@@ -4,34 +4,100 @@
 //! layer. Cheap structural facts and filters are used only when they certify a
 //! sign; otherwise the exact/refinement path must decide or report uncertainty.
 
+use crate::context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
+#[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 use crate::error::{Error, Result};
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 use crate::types::{Point2, Real, Sign, TriangleLocation};
-use hyperlimit::PredicateOutcome;
+#[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
+use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 use hyperreal::{RealSign, ZeroKnowledge};
+use std::cell::Cell;
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 use std::cmp::Ordering;
 
-/// Numeric operations required by triangulation algorithms.
-pub trait Kernel {
-    /// Additive identity.
-    fn zero() -> Real;
+/// Operation-local exact kernel backed by [`hyperreal::Real`].
+///
+/// A fresh kernel is created for every public operation. Its interior cell
+/// aggregates whether any Hyperlimit decision consumed APPROXIMATE_512 without
+/// making the caller's immutable [`TriangulationContext`] stateful.
+#[derive(Debug)]
+pub(crate) struct ExactKernel {
+    #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
+    policy: PredicatePolicy,
+    certainty: Cell<TriangulationCertainty>,
+}
 
-    /// Construct a Real from a small integer.
-    fn from_i64(value: i64) -> Real;
+impl ExactKernel {
+    pub(crate) fn new(context: &TriangulationContext) -> Self {
+        #[cfg(not(any(feature = "earcut", feature = "cdt", feature = "nd")))]
+        let _ = context;
+        Self {
+            #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
+            policy: context.predicate_policy(),
+            certainty: Cell::new(TriangulationCertainty::Certified),
+        }
+    }
 
-    /// Add two Real values.
-    fn add(left: &Real, right: &Real) -> Real;
+    #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
+    pub(crate) const fn policy(&self) -> PredicatePolicy {
+        self.policy
+    }
 
-    /// Subtract two Real values.
-    fn sub(left: &Real, right: &Real) -> Real;
+    pub(crate) fn finish<T>(&self, value: T) -> TriangulationOutcome<T> {
+        TriangulationOutcome::new(value, self.certainty.get())
+    }
 
-    /// Multiply two Real values.
-    fn mul(left: &Real, right: &Real) -> Real;
+    #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
+    pub(crate) fn decide<T>(
+        &self,
+        outcome: PredicateOutcome<T>,
+        predicate: &'static str,
+    ) -> Result<T> {
+        match outcome {
+            PredicateOutcome::Decided {
+                value, certainty, ..
+            } => {
+                if certainty == Certainty::Approximate {
+                    self.certainty
+                        .set(TriangulationCertainty::Approximate512Consumed);
+                }
+                Ok(value)
+            }
+            PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided { predicate }),
+        }
+    }
 
-    /// Divide two Real values.
-    fn div(left: &Real, right: &Real) -> Result<Real>;
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn from_i64(value: i64) -> Real {
+        Real::from(value)
+    }
 
-    /// Return the exact midpoint between two points.
-    fn midpoint(left: &Point2, right: &Point2) -> Result<Point2> {
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn add(left: &Real, right: &Real) -> Real {
+        left + right
+    }
+
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn sub(left: &Real, right: &Real) -> Real {
+        left - right
+    }
+
+    #[cfg(feature = "cdt")]
+    pub(crate) fn mul(left: &Real, right: &Real) -> Real {
+        left * right
+    }
+
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn div(left: &Real, right: &Real) -> Result<Real> {
+        (left / right).map_err(|_| Error::InvalidInput {
+            reason: "Real division failed",
+        })
+    }
+
+    #[cfg(feature = "earcut")]
+    pub(crate) fn midpoint(left: &Point2, right: &Point2) -> Result<Point2> {
         let two = Self::from_i64(2);
         Ok(Point2::new(
             Self::div(&Self::add(&left.x, &right.x), &two)?,
@@ -39,65 +105,8 @@ pub trait Kernel {
         ))
     }
 
-    /// Decide a Real sign.
-    fn real_sign(value: &Real) -> Result<Sign>;
-
-    /// Compare two Real values by deciding the sign of `left - right`.
-    fn cmp(left: &Real, right: &Real) -> Result<Ordering> {
-        match Self::real_sign(&Self::sub(left, right))? {
-            Sign::Negative => Ok(Ordering::Less),
-            Sign::Zero => Ok(Ordering::Equal),
-            Sign::Positive => Ok(Ordering::Greater),
-        }
-    }
-
-    /// Decide the orientation of three 2D points.
-    fn orient2(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign>;
-
-    /// Decide the in-circle relation of four 2D points.
-    fn incircle2(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign>;
-
-    /// Classify a point relative to a triangle.
-    fn classify_point_triangle(
-        a: &Point2,
-        b: &Point2,
-        c: &Point2,
-        point: &Point2,
-    ) -> Result<TriangleLocation>;
-}
-
-/// Exact kernel backed by [`hyperreal::Real`].
-#[derive(Clone, Copy, Debug, Default)]
-pub struct ExactKernel;
-
-impl Kernel for ExactKernel {
-    fn zero() -> Real {
-        Real::zero()
-    }
-
-    fn from_i64(value: i64) -> Real {
-        Real::from(value)
-    }
-
-    fn add(left: &Real, right: &Real) -> Real {
-        left + right
-    }
-
-    fn sub(left: &Real, right: &Real) -> Real {
-        left - right
-    }
-
-    fn mul(left: &Real, right: &Real) -> Real {
-        left * right
-    }
-
-    fn div(left: &Real, right: &Real) -> Result<Real> {
-        (left / right).map_err(|_| Error::InvalidInput {
-            reason: "Real division failed",
-        })
-    }
-
-    fn real_sign(value: &Real) -> Result<Sign> {
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn real_sign(&self, value: &Real) -> Result<Sign> {
         let facts = value.structural_facts();
 
         if let Some(sign) = facts.sign {
@@ -109,84 +118,96 @@ impl Kernel for ExactKernel {
             ZeroKnowledge::NonZero | ZeroKnowledge::Unknown => {}
         }
 
-        if let Some(sign) = hyperlimit::classify_real_sign(value).value() {
-            return Ok(match sign {
-                hyperlimit::Sign::Negative => Sign::Negative,
-                hyperlimit::Sign::Zero => Sign::Zero,
-                hyperlimit::Sign::Positive => Sign::Positive,
-            });
-        }
-
-        Err(Error::PredicateUndecided {
-            predicate: "exact Real sign",
-        })
+        self.decide(
+            hyperlimit::classify_real_sign(value, self.policy),
+            "exact Real sign",
+        )
+        .map(map_hyperlimit_sign)
     }
 
-    fn orient2(a: &Point2, b: &Point2, c: &Point2) -> Result<Sign> {
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn cmp(&self, left: &Real, right: &Real) -> Result<Ordering> {
+        match self.real_sign(&Self::sub(left, right))? {
+            Sign::Negative => Ok(Ordering::Less),
+            Sign::Zero => Ok(Ordering::Equal),
+            Sign::Positive => Ok(Ordering::Greater),
+        }
+    }
+
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn orient2(&self, a: &Point2, b: &Point2, c: &Point2) -> Result<Sign> {
         // Triangulation topology consumes `hyperlimit`'s certified predicate
         // pipeline rather than rebuilding a private determinant expression.
         // Keeping the determinant owner in the predicate crate separates
         // application topology from arithmetic policy. The predicate
         // implementation keeps robust-orientation logic and exact
         // rational/common-scale schedules near their use.
-        decide_hyperlimit_sign(
+        self.decide(
             hyperlimit::orient2(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
+                self.policy,
             ),
             "orient2",
         )
+        .map(map_hyperlimit_sign)
     }
 
-    fn incircle2(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign> {
+    #[cfg(feature = "cdt")]
+    pub(crate) fn incircle2(&self, a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> Result<Sign> {
         // In-circle legality is the CDT edge-flip predicate. Route it through
         // `hyperlimit` so exact lifted-determinant certificates remain
         // centralized. Hypertri consumes only the certified empty-circle
         // result.
-        decide_hyperlimit_sign(
+        self.decide(
             hyperlimit::incircle2(
                 &predicate_point(a),
                 &predicate_point(b),
                 &predicate_point(c),
                 &predicate_point(d),
+                self.policy,
             ),
             "incircle2",
         )
+        .map(map_hyperlimit_sign)
     }
 
-    fn classify_point_triangle(
+    #[cfg(any(feature = "earcut", feature = "cdt"))]
+    pub(crate) fn classify_point_triangle(
+        &self,
         a: &Point2,
         b: &Point2,
         c: &Point2,
         point: &Point2,
     ) -> Result<TriangleLocation> {
-        classify_point_triangle::<Self>(a, b, c, point)
+        classify_point_triangle(self, a, b, c, point)
     }
 }
 
-fn classify_point_triangle<K>(
+#[cfg(any(feature = "earcut", feature = "cdt"))]
+fn classify_point_triangle(
+    kernel: &ExactKernel,
     a: &Point2,
     b: &Point2,
     c: &Point2,
     point: &Point2,
-) -> Result<TriangleLocation>
-where
-    K: Kernel,
-{
-    let orientation = K::orient2(a, b, c)?;
+) -> Result<TriangleLocation> {
+    let orientation = kernel.orient2(a, b, c)?;
     if orientation == Sign::Zero {
         return Ok(TriangleLocation::Degenerate);
     }
 
-    if points_equal::<K>(point, a)? || points_equal::<K>(point, b)? || points_equal::<K>(point, c)?
+    if points_equal(kernel, point, a)?
+        || points_equal(kernel, point, b)?
+        || points_equal(kernel, point, c)?
     {
         return Ok(TriangleLocation::OnVertex);
     }
 
-    let ab = K::orient2(a, b, point)?;
-    let bc = K::orient2(b, c, point)?;
-    let ca = K::orient2(c, a, point)?;
+    let ab = kernel.orient2(a, b, point)?;
+    let bc = kernel.orient2(b, c, point)?;
+    let ca = kernel.orient2(c, a, point)?;
     let signs = [ab, bc, ca];
 
     let has_negative = signs.contains(&Sign::Negative);
@@ -201,14 +222,13 @@ where
     }
 }
 
-fn points_equal<K>(left: &Point2, right: &Point2) -> Result<bool>
-where
-    K: Kernel,
-{
-    Ok(K::cmp(&left.x, &right.x)? == Ordering::Equal
-        && K::cmp(&left.y, &right.y)? == Ordering::Equal)
+#[cfg(any(feature = "earcut", feature = "cdt"))]
+fn points_equal(kernel: &ExactKernel, left: &Point2, right: &Point2) -> Result<bool> {
+    Ok(kernel.cmp(&left.x, &right.x)? == Ordering::Equal
+        && kernel.cmp(&left.y, &right.y)? == Ordering::Equal)
 }
 
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 fn map_real_sign(sign: RealSign) -> Sign {
     match sign {
         RealSign::Negative => Sign::Negative,
@@ -217,20 +237,12 @@ fn map_real_sign(sign: RealSign) -> Sign {
     }
 }
 
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x.clone(), point.y.clone())
 }
 
-fn decide_hyperlimit_sign(
-    outcome: PredicateOutcome<hyperlimit::Sign>,
-    predicate: &'static str,
-) -> Result<Sign> {
-    match outcome {
-        PredicateOutcome::Decided { value, .. } => Ok(map_hyperlimit_sign(value)),
-        PredicateOutcome::Unknown { .. } => Err(Error::PredicateUndecided { predicate }),
-    }
-}
-
+#[cfg(any(feature = "earcut", feature = "cdt"))]
 fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
     match sign {
         hyperlimit::Sign::Negative => Sign::Negative,
@@ -239,9 +251,16 @@ fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, any(feature = "earcut", feature = "cdt")))]
 mod tests {
     use super::*;
+
+    const APPROX: TriangulationContext =
+        TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
+
+    fn kernel() -> ExactKernel {
+        ExactKernel::new(&APPROX)
+    }
 
     fn p(x: i64, y: i64) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
@@ -249,35 +268,36 @@ mod tests {
 
     #[test]
     fn exact_kernel_routes_orientation_through_predicate_layer() {
+        let kernel = kernel();
         assert_eq!(
-            ExactKernel::orient2(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
+            kernel.orient2(&p(0, 0), &p(2, 0), &p(1, 1)).unwrap(),
             Sign::Positive
         );
         assert_eq!(
-            ExactKernel::orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
+            kernel.orient2(&p(0, 0), &p(1, 1), &p(2, 2)).unwrap(),
             Sign::Zero
         );
     }
 
+    #[cfg(feature = "cdt")]
     #[test]
     fn exact_kernel_routes_incircle_through_predicate_layer() {
+        let kernel = kernel();
         let a = p(0, 0);
         let b = p(2, 0);
         let c = p(0, 2);
         assert_eq!(
-            ExactKernel::incircle2(&a, &b, &c, &p(1, 1)).unwrap(),
+            kernel.incircle2(&a, &b, &c, &p(1, 1)).unwrap(),
             Sign::Positive
         );
+        assert_eq!(kernel.incircle2(&a, &b, &c, &p(2, 2)).unwrap(), Sign::Zero);
         assert_eq!(
-            ExactKernel::incircle2(&a, &b, &c, &p(2, 2)).unwrap(),
-            Sign::Zero
-        );
-        assert_eq!(
-            ExactKernel::incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
+            kernel.incircle2(&a, &b, &c, &p(3, 3)).unwrap(),
             Sign::Negative
         );
     }
 
+    #[cfg(feature = "earcut")]
     #[test]
     fn exact_kernel_uses_central_terminal_equality_policy() {
         let left = &Real::pi() + &Real::e();
@@ -289,87 +309,35 @@ mod tests {
 
         let left_point = Point2::new(left, Real::zero());
         let right_point = Point2::new(right, Real::zero());
+        let kernel = kernel();
+        assert_eq!(points_equal(&kernel, &left_point, &right_point), Ok(true));
         assert_eq!(
-            points_equal::<ExactKernel>(&left_point, &right_point),
-            Ok(true)
+            kernel.finish(()).certainty,
+            TriangulationCertainty::Approximate512Consumed
         );
         assert!(matches!(
-            hyperlimit::classify_real_sign_with_policy(
+            hyperlimit::classify_real_sign(
                 &(&left_point.x - &right_point.x),
-                hyperlimit::PredicatePolicy::STRICT,
+                PredicatePolicy::STRICT,
             ),
             PredicateOutcome::Unknown { .. }
         ));
     }
 
+    #[cfg(feature = "earcut")]
     #[test]
     fn triangle_vertex_classification_uses_kernel_coordinate_equality() {
-        struct CoordinateEqualityKernel;
-
-        impl Kernel for CoordinateEqualityKernel {
-            fn zero() -> Real {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn from_i64(_value: i64) -> Real {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn add(_left: &Real, _right: &Real) -> Real {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn sub(_left: &Real, _right: &Real) -> Real {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn mul(_left: &Real, _right: &Real) -> Real {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn div(_left: &Real, _right: &Real) -> Result<Real> {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn real_sign(_value: &Real) -> Result<Sign> {
-                unreachable!("arithmetic is not used by this classifier fixture")
-            }
-
-            fn cmp(_left: &Real, _right: &Real) -> Result<Ordering> {
-                Ok(Ordering::Equal)
-            }
-
-            fn orient2(_a: &Point2, _b: &Point2, _c: &Point2) -> Result<Sign> {
-                Ok(Sign::Positive)
-            }
-
-            fn incircle2(_a: &Point2, _b: &Point2, _c: &Point2, _d: &Point2) -> Result<Sign> {
-                unreachable!("in-circle is not used by triangle classification")
-            }
-
-            fn classify_point_triangle(
-                a: &Point2,
-                b: &Point2,
-                c: &Point2,
-                point: &Point2,
-            ) -> Result<TriangleLocation> {
-                classify_point_triangle::<Self>(a, b, c, point)
-            }
-        }
-
-        let a = p(0, 0);
-        let b = p(2, 0);
-        let c = p(0, 2);
-        let representation_distinct_query = p(99, 99);
+        let left = Real::pi() + Real::e();
+        let right = Real::e() + Real::pi();
+        let a = Point2::new(left.clone(), Real::zero());
+        let b = Point2::new(&left + &Real::from(2), Real::zero());
+        let c = Point2::new(left, Real::from(2));
+        let representation_distinct_query = Point2::new(right, Real::zero());
         assert_ne!(representation_distinct_query, a);
         assert_eq!(
-            CoordinateEqualityKernel::classify_point_triangle(
-                &a,
-                &b,
-                &c,
-                &representation_distinct_query,
-            )
-            .unwrap(),
+            kernel()
+                .classify_point_triangle(&a, &b, &c, &representation_distinct_query,)
+                .unwrap(),
             TriangleLocation::OnVertex
         );
     }

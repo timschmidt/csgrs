@@ -15,21 +15,35 @@ mod cdt_constraints;
 mod cdt_insert;
 #[cfg(feature = "cdt")]
 mod cdt_validate;
+mod context;
 #[cfg(feature = "earcut")]
-pub mod earcut;
+mod earcut;
 pub mod error;
 #[cfg(feature = "f64-interop")]
 pub mod f64;
-pub mod kernel;
+#[cfg(any(
+    feature = "earcut",
+    feature = "cdt",
+    feature = "nd",
+    feature = "runtime-select"
+))]
+mod kernel;
 #[cfg(feature = "nd")]
 pub mod nd;
 pub mod polygon;
-pub mod predicates;
+#[cfg(any(feature = "earcut", feature = "cdt"))]
+mod predicates;
 #[cfg(feature = "runtime-select")]
 pub mod runtime;
 pub mod types;
 
+pub use context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
+#[cfg(feature = "earcut")]
+pub use earcut::{
+    EarcutDiagnostics, EarcutReport, triangulate as earcut, triangulate_report as earcut_report,
+};
 pub use error::{Error, Result};
+pub use hyperlimit::PredicatePolicy;
 #[cfg(feature = "nd")]
 pub use nd::{
     BistellarFlipApplyReportD, BistellarFlipD, BistellarFlipReportD, Cell, CellHandle,
@@ -45,21 +59,6 @@ pub use runtime::{
     triangulate_polygon, triangulate_polygon_with_report,
 };
 pub use types::{
-    Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real, RingConvexity,
+    Constraint, ExactPoint, Point2, PolygonInput, PolygonInputFacts, Rational, Real,
     RingInputFacts, Sign, Triangle, TriangleIndices, TriangleLocation,
 };
-
-/// Triangulate an exact polygon with the earcut-style algorithm.
-#[cfg(feature = "earcut")]
-pub fn earcut(vertices: &[ExactPoint], hole_indices: &[usize]) -> Result<TriangleIndices> {
-    earcut::triangulate(vertices, hole_indices)
-}
-
-/// Triangulate an exact polygon with earcut-style diagnostics.
-#[cfg(feature = "earcut")]
-pub fn earcut_report(
-    vertices: &[ExactPoint],
-    hole_indices: &[usize],
-) -> Result<earcut::EarcutReport> {
-    earcut::triangulate_report(vertices, hole_indices)
-}

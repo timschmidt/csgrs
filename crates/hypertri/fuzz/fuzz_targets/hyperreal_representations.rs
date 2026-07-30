@@ -3,8 +3,13 @@
 #![no_main]
 
 use hyperreal::{Rational, Real, StructuralKind};
-use hypertri::{ExactPoint, Point2};
+use hypertri::{
+    ExactPoint, Point2, PredicatePolicy, TriangulationContext,
+};
 use libfuzzer_sys::fuzz_target;
+
+const APPROX: TriangulationContext =
+    TriangulationContext::new(PredicatePolicy::APPROXIMATE_512);
 
 fuzz_target!(|_data: &[u8]| {
     let values = representative_values();
@@ -16,13 +21,18 @@ fuzz_target!(|_data: &[u8]| {
                 point(tx + Real::from(2), ty + Real::from(2)),
                 point(tx.clone(), ty + Real::from(2)),
             ];
-            let indices = hypertri::earcut(&vertices, &[]).expect("translated square triangulates");
+            let indices = hypertri::earcut(&APPROX, &vertices, &[])
+                .expect("translated square triangulates")
+                .value;
             assert_eq!(indices.len(), 6);
             assert!(indices.iter().all(|&index| index < vertices.len()));
 
-            let delaunay =
-                hypertri::cdt::delaunay(&vertices[..3]).expect("translated triangle Delaunay");
-            delaunay.validate().expect("valid exact topology");
+            let delaunay = hypertri::cdt::delaunay(&APPROX, &vertices[..3])
+                .expect("translated triangle Delaunay")
+                .value;
+            delaunay
+                .validate(&APPROX)
+                .expect("valid exact topology");
             assert_eq!(delaunay.points().len(), 3);
         }
     }

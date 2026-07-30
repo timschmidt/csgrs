@@ -6,6 +6,8 @@
 //! differently.
 
 use crate::error::{Error, Result};
+#[cfg(any(feature = "earcut", all(feature = "cdt", feature = "runtime-select")))]
+use crate::kernel::ExactKernel;
 use crate::types::ExactPoint;
 
 /// A borrowed ring over a flat polygon vertex buffer.
@@ -109,15 +111,19 @@ pub fn rings_from_hole_indices(
 
 /// Build a ring index list, dropping a duplicated closing point when present.
 #[cfg(any(feature = "earcut", all(feature = "cdt", feature = "runtime-select")))]
-pub(crate) fn open_ring_indices(vertices: &[ExactPoint], range: RingRange) -> Vec<usize> {
+pub(crate) fn open_ring_indices(
+    kernel: &ExactKernel,
+    vertices: &[ExactPoint],
+    range: RingRange,
+) -> Result<Vec<usize>> {
     if range.len() < 2 {
-        return (range.start..range.end).collect();
+        return Ok((range.start..range.end).collect());
     }
 
     let mut end = range.end;
-    if vertices[range.start] == vertices[range.end - 1] {
+    if crate::predicates::points_equal(kernel, &vertices[range.start], &vertices[range.end - 1])? {
         end -= 1;
     }
 
-    (range.start..end).collect()
+    Ok((range.start..end).collect())
 }
