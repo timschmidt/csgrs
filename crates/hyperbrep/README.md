@@ -105,8 +105,10 @@ The clean-break implementation currently provides:
 - exact `builder::{sweep_moving_frame, sweep_moving_frame_region}` for polygon
   or through-hole region sweeps through an explicit shared-weight rational
   Bézier origin/axis frame; complete Bernstein identities prove parallel
-  section planes, positive affine progress, and constant oriented section area,
-  retaining authored shear without inferred Frenet transport or sampling;
+  section planes, positive affine progress, and either constant rational or
+  strictly positive polynomial oriented section area; the latter is integrated
+  exactly, retaining authored shear and taper without inferred Frenet
+  transport or sampling;
 - exact multi-section `builder::loft` for vertex-corresponding polygons:
   every span independently retains planar homothetic sides or certifies convex
   non-homothetic interpolation with native bilinear tensor patches;

@@ -50,7 +50,7 @@ pub enum ConstructionError {
     /// A curve sweep currently requires a rational Bézier path.
     UnsupportedSweepPath,
     /// A curve sweep path is not an exact positive affine graph through the
-    /// fixed profile plane.
+    /// initial profile plane.
     NonMonotoneSweepPath,
     /// A rational Bézier moving frame has inconsistent control counts or
     /// invalid projective data.
@@ -58,9 +58,12 @@ pub enum ConstructionError {
     /// A moving frame leaves the parallel section-plane family established
     /// by its initial axes.
     NonPlanarSweepFrame,
-    /// A moving frame does not preserve its exact oriented section-area
-    /// element over the complete parameter domain.
-    NonAreaPreservingSweepFrame,
+    /// A polynomial moving frame reaches or crosses zero oriented section
+    /// area somewhere in its complete Bernstein certificate.
+    NonPositiveSweepFrameArea,
+    /// A nonconstant rational section-area law has no active exact integration
+    /// certificate.
+    UnsupportedRationalSweepFrameArea,
     /// A tensor patch shell requires at least one face.
     EmptyPatchShell,
     /// A planar extrusion profile crosses or overlaps itself.
@@ -111,8 +114,8 @@ pub struct LoftSection {
 /// At parameter `t`, a profile point `(x, y)` maps to
 /// `origin(t) + u(t)*x + v(t)*y`. All three vector-valued paths use the same
 /// positive rational Bézier weights. The frame must remain in the initial
-/// section-plane family and preserve `u(t) × v(t)` exactly; this is a complete
-/// Bernstein identity, not a sampled condition.
+/// section-plane family and have a certified strictly positive oriented area
+/// law; this is a complete Bernstein proof, not a sampled condition.
 #[derive(Clone, Debug)]
 pub struct RationalBezierSweepFrame {
     origins: Vec<Point3>,
@@ -222,8 +225,11 @@ impl fmt::Display for ConstructionError {
             Self::NonPlanarSweepFrame => formatter.write_str(
                 "moving sweep frame axes must remain in the initial section-plane family",
             ),
-            Self::NonAreaPreservingSweepFrame => formatter.write_str(
-                "moving sweep frame must preserve its exact oriented section-area element",
+            Self::NonPositiveSweepFrameArea => formatter.write_str(
+                "moving sweep frame must retain strictly positive oriented section area",
+            ),
+            Self::UnsupportedRationalSweepFrameArea => formatter.write_str(
+                "nonconstant rational moving-frame area has no exact integration certificate",
             ),
             Self::EmptyPatchShell => {
                 formatter.write_str("tensor patch shell requires at least one patch")
@@ -2231,9 +2237,9 @@ pub fn sweep_moving_frame(
 ///
 /// The authored frame is accepted only when its complete Bernstein form proves
 /// parallel section planes, positive affine plane progress, and an exactly
-/// constant oriented section-area element. Those restrictions make the
+/// strictly positive supported section-area law. Those restrictions make the
 /// resulting shell globally injective without sampling while still permitting
-/// exact shear and other non-rigid in-plane motion.
+/// exact shear, polynomial taper, and other non-rigid in-plane motion.
 pub fn sweep_moving_frame_region(
     outer: &[Point2],
     holes: &[Vec<Point2>],
@@ -2266,7 +2272,7 @@ fn sweep_rational_bezier_frame_region(
     let mut loops = Vec::with_capacity(holes.len() + 1);
     loops.push(outer);
     loops.extend(holes);
-    let normal = certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
+    let (normal, _) = certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
     certify_sweep_path_progress(&origins, &weights, &normal)?;
 
     let count = loops.iter().map(Vec::len).sum::<usize>();
@@ -2484,7 +2490,7 @@ fn certify_sweep_frame(
     u_axes: &[Vector3],
     v_axes: &[Vector3],
     weights: &[Real],
-) -> Result<Vector3, ConstructionError> {
+) -> Result<(Vector3, Real), ConstructionError> {
     if origins.len() < 2
         || origins.len() != u_axes.len()
         || origins.len() != v_axes.len()
@@ -2512,6 +2518,9 @@ fn certify_sweep_frame(
     let product_degree = degree
         .checked_mul(2)
         .ok_or(ConstructionError::InvalidSweepFrame)?;
+    let normal_squared = normal.norm_squared();
+    let mut constant_area = true;
+    let mut determinant_numerators = Vec::with_capacity(product_degree + 1);
     for product_index in 0..=product_degree {
         let first_min = product_index.saturating_sub(degree);
         let first_max = degree.min(product_index);
@@ -2526,17 +2535,59 @@ fn certify_sweep_frame(
             weight_coefficient += &coefficient * &weights[first] * &weights[second];
         }
         let expected = normal.clone() * weight_coefficient;
+        let mut this_constant = true;
         for component in 0..3 {
             if decided_construction_order(compare_reals(
                 &cross_coefficient.0[component],
                 &expected.0[component],
             ))? != std::cmp::Ordering::Equal
             {
-                return Err(ConstructionError::NonAreaPreservingSweepFrame);
+                this_constant = false;
             }
         }
+        constant_area &= this_constant;
+        let determinant_numerator = (cross_coefficient.dot(&normal) / &normal_squared)
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parallel = normal.clone() * &determinant_numerator;
+        for component in 0..3 {
+            if decided_construction_order(compare_reals(
+                &cross_coefficient.0[component],
+                &parallel.0[component],
+            ))? != std::cmp::Ordering::Equal
+            {
+                return Err(ConstructionError::NonPlanarSweepFrame);
+            }
+        }
+        determinant_numerators.push(determinant_numerator);
     }
-    Ok(normal)
+    if constant_area {
+        return Ok((normal, Real::one()));
+    }
+    for weight in &weights[1..] {
+        if decided_construction_order(compare_reals(weight, &weights[0]))?
+            != std::cmp::Ordering::Equal
+        {
+            return Err(ConstructionError::UnsupportedRationalSweepFrameArea);
+        }
+    }
+    let weight_squared = &weights[0] * &weights[0];
+    let mut integral = Real::zero();
+    for numerator in determinant_numerators {
+        let coefficient =
+            (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+        if decided_construction_order(compare_reals(&coefficient, &Real::zero()))?
+            != std::cmp::Ordering::Greater
+        {
+            return Err(ConstructionError::NonPositiveSweepFrameArea);
+        }
+        integral += coefficient;
+    }
+    let basis_count =
+        Real::from(u128::try_from(product_degree + 1).expect("usize is representable as u128"));
+    Ok((
+        normal,
+        (integral / basis_count).map_err(|_| GeometryError::ProjectiveDivision)?,
+    ))
 }
 
 fn bernstein_product_coefficient(
@@ -7654,7 +7705,72 @@ mod tests {
     }
 
     #[test]
-    fn moving_frame_rejects_incomplete_nonplanar_and_area_changing_authorship() {
+    fn moving_frame_integrates_exact_positive_polynomial_taper() {
+        let profile = [p2(0, 0), p2(2, 0), p2(2, 2), p2(0, 2)];
+        let frame = RationalBezierSweepFrame::try_new(
+            vec![p(0, 0, 0), p(0, 0, 3)],
+            vec![
+                Vector3::x(),
+                Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
+            ],
+            vec![
+                Vector3::y(),
+                Vector3::from_xyz(Real::zero(), r(2), Real::zero()),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let (model, solid) = sweep_moving_frame(&profile, frame).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(28)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let half = (Real::one() / r(2)).unwrap();
+        for (point, expected) in [
+            (
+                Point3::new(
+                    (r(3) / r(2)).unwrap(),
+                    (r(3) / r(2)).unwrap(),
+                    (r(3) / r(2)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(Real::zero(), half, (r(3) / r(2)).unwrap()),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(r(4), r(4), (r(3) / r(2)).unwrap()),
+                SolidPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(28)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let scaled = rebuilt
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(672)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            scaled
+                .classify_point(solid, &Point3::new(r(3), (r(9) / r(2)).unwrap(), r(6)),)
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+    }
+
+    #[test]
+    fn moving_frame_rejects_incomplete_nonplanar_and_uncertified_area_authorship() {
         assert_eq!(
             RationalBezierSweepFrame::try_new(
                 vec![p(0, 0, 0), p(0, 0, 4)],
@@ -7681,15 +7797,26 @@ mod tests {
         assert_eq!(
             RationalBezierSweepFrame::try_new(
                 vec![p(0, 0, 0), p(0, 0, 4)],
-                vec![
-                    Vector3::x(),
-                    Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
-                ],
+                vec![Vector3::x(), Vector3::zero()],
                 vec![Vector3::y(), Vector3::y()],
                 vec![Real::one(), Real::one()],
             )
             .unwrap_err(),
-            ConstructionError::NonAreaPreservingSweepFrame
+            ConstructionError::NonPositiveSweepFrameArea
+        );
+        assert_eq!(
+            RationalBezierSweepFrame::try_new(
+                vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
+                vec![
+                    Vector3::x(),
+                    Vector3::from_xyz(r(2), Real::zero(), Real::zero()),
+                    Vector3::from_xyz(r(3), Real::zero(), Real::zero()),
+                ],
+                vec![Vector3::y(), Vector3::y(), Vector3::y()],
+                vec![Real::one(), r(2), r(3)],
+            )
+            .unwrap_err(),
+            ConstructionError::UnsupportedRationalSweepFrameArea
         );
     }
 

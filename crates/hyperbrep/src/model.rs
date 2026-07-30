@@ -1441,6 +1441,7 @@ struct CertifiedCurveSweepShell {
     path: Curve3,
     u_path: Curve3,
     v_path: Curve3,
+    area_scale_integral: Real,
 }
 
 struct TensorPathChain {
@@ -4032,6 +4033,7 @@ impl Model {
                             path: certificate.path.transformed(transform)?,
                             u_path: transform_vector_curve(&certificate.u_path, transform)?,
                             v_path: transform_vector_curve(&certificate.v_path, transform)?,
+                            area_scale_integral: certificate.area_scale_integral.clone(),
                         })
                     })
                     .transpose()
@@ -4604,7 +4606,7 @@ impl Model {
             let u = Vector3::from(sweep.u_path.point_at(sweep.u_path.domain().start())?);
             let v = Vector3::from(sweep.v_path.point_at(sweep.v_path.domain().start())?);
             let progress = u.cross(&v).dot(&(path_end - path_start)).abs();
-            return Ok(area * progress);
+            return Ok(area * progress * &sweep.area_scale_integral);
         }
         if let Some(prism) = &self.data.certified_prisms[id.index()] {
             let mut area = prism
@@ -12113,14 +12115,15 @@ impl ModelBuilder {
                 &basis_determinant,
             )?);
         }
-        if !certified_area_preserving_sweep_frame(
+        let Some(area_scale_integral) = certified_sweep_frame_area_integral(
             &u_controls,
             &v_controls,
             &path_weights,
             &lower_u.cross(&lower_v),
-        )? {
+        )?
+        else {
             return Ok(None);
-        }
+        };
         for lower in &sorted_lower {
             let coordinate = &lower_coordinates[lower];
             for (index, actual) in connector_controls[lower].iter().enumerate() {
@@ -12308,6 +12311,7 @@ impl ModelBuilder {
             path,
             u_path: vector_control_curve(u_controls, &path_weights)?,
             v_path: vector_control_curve(v_controls, &path_weights)?,
+            area_scale_integral,
         }))
     }
 
@@ -12905,6 +12909,7 @@ impl ModelBuilder {
             path,
             u_path: constant_vector_curve(&lower_u, &path_weights)?,
             v_path: constant_vector_curve(&lower_v, &path_weights)?,
+            area_scale_integral: Real::one(),
         }))
     }
 
@@ -15499,27 +15504,30 @@ fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> Result<Vector3,
     ))
 }
 
-fn certified_area_preserving_sweep_frame(
+fn certified_sweep_frame_area_integral(
     u_controls: &[Vector3],
     v_controls: &[Vector3],
     weights: &[Real],
     normal: &Vector3,
-) -> Result<bool, BuildError> {
+) -> Result<Option<Real>, BuildError> {
     if u_controls.len() != v_controls.len()
         || u_controls.len() != weights.len()
         || u_controls.is_empty()
     {
-        return Ok(false);
+        return Ok(None);
     }
     for axis in u_controls.iter().chain(v_controls) {
         if !real_values_equal(&axis.dot(normal), &Real::zero())? {
-            return Ok(false);
+            return Ok(None);
         }
     }
     let degree = u_controls.len() - 1;
     let Some(product_degree) = degree.checked_mul(2) else {
-        return Ok(false);
+        return Ok(None);
     };
+    let normal_squared = normal.norm_squared();
+    let mut constant_area = true;
+    let mut determinant_numerators = Vec::with_capacity(product_degree + 1);
     for product_index in 0..=product_degree {
         let first_min = product_index.saturating_sub(degree);
         let first_max = degree.min(product_index);
@@ -15534,11 +15542,44 @@ fn certified_area_preserving_sweep_frame(
             weight_coefficient += &coefficient * &weights[first] * &weights[second];
         }
         let expected = normal.clone() * weight_coefficient;
-        if !vectors_equal(&cross_coefficient, &expected)? {
-            return Ok(false);
+        constant_area &= vectors_equal(&cross_coefficient, &expected)?;
+        let determinant_numerator = (cross_coefficient.dot(normal) / &normal_squared)
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        if !vectors_equal(
+            &cross_coefficient,
+            &(normal.clone() * &determinant_numerator),
+        )? {
+            return Ok(None);
+        }
+        determinant_numerators.push(determinant_numerator);
+    }
+    if constant_area {
+        return Ok(Some(Real::one()));
+    }
+    for weight in &weights[1..] {
+        if !real_values_equal(weight, &weights[0])? {
+            return Ok(None);
         }
     }
-    Ok(true)
+    let weight_squared = &weights[0] * &weights[0];
+    let mut integral = Real::zero();
+    for numerator in determinant_numerators {
+        let coefficient =
+            (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
+        if decided_model_order(compare_reals(&coefficient, &Real::zero()))?
+            != std::cmp::Ordering::Greater
+        {
+            return Ok(None);
+        }
+        integral += coefficient;
+    }
+    Ok(Some(
+        (integral
+            / Real::from(
+                u128::try_from(product_degree + 1).expect("usize is representable as u128"),
+            ))
+        .map_err(|_| GeometryError::ProjectiveDivision)?,
+    ))
 }
 
 fn model_bernstein_product_coefficient(
