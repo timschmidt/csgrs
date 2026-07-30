@@ -5214,6 +5214,145 @@ impl Rational {
         positive.cmp(&negative)
     }
 
+    /// Compare a dynamically sized signed sum of two-factor products with
+    /// zero without materializing the resulting rational.
+    ///
+    /// This complements [`Self::signed_product_sum_ordering`] for predicates
+    /// whose number of terms is data-dependent, such as polygon area. The
+    /// word-sized path keeps only scaled numerator totals; the arbitrary-width
+    /// fallback likewise compares positive and negative magnitudes directly.
+    pub fn signed_product_sum2_ordering_slice(
+        positive_terms: &[bool],
+        terms: &[[&Self; 2]],
+    ) -> Ordering {
+        assert_eq!(
+            positive_terms.len(),
+            terms.len(),
+            "each rational product term must have a sign"
+        );
+
+        let signs: Vec<_> = positive_terms
+            .iter()
+            .zip(terms)
+            .map(|(&positive, &term)| Self::product_term_sign(positive, term))
+            .collect();
+        let mut nonzero = signs
+            .iter()
+            .copied()
+            .enumerate()
+            .filter(|(_, sign)| *sign != NoSign);
+        let Some((_first_index, first_sign)) = nonzero.next() else {
+            crate::trace_dispatch!("rational", "product_sum_ordering_slice", "all-zero");
+            return Ordering::Equal;
+        };
+        if nonzero.next().is_none() {
+            crate::trace_dispatch!(
+                "rational",
+                "product_sum_ordering_slice",
+                "single-term-product"
+            );
+            return match first_sign {
+                Minus => Ordering::Less,
+                Plus => Ordering::Greater,
+                NoSign => unreachable!("the retained product term is nonzero"),
+            };
+        }
+
+        let mut word_terms = Vec::with_capacity(terms.len());
+        let mut word_common_denominator = 1_u128;
+        let mut word_path = true;
+        for (&sign, &term) in signs.iter().zip(terms) {
+            if sign == NoSign {
+                word_terms.push((0_u128, 1_u128));
+                continue;
+            }
+            let Some((magnitude, denominator)) = Self::product_term_words(term) else {
+                word_path = false;
+                break;
+            };
+            let divisor = Self::gcd_word(word_common_denominator, denominator);
+            let Some(common) =
+                word_common_denominator.checked_mul(denominator / divisor)
+            else {
+                word_path = false;
+                break;
+            };
+            word_common_denominator = common;
+            word_terms.push((magnitude, denominator));
+        }
+        if word_path {
+            let mut positive = 0_u128;
+            let mut negative = 0_u128;
+            for ((magnitude, denominator), sign) in
+                word_terms.into_iter().zip(signs.iter().copied())
+            {
+                if sign == NoSign {
+                    continue;
+                }
+                let Some(scaled) =
+                    magnitude.checked_mul(word_common_denominator / denominator)
+                else {
+                    word_path = false;
+                    break;
+                };
+                let total = match sign {
+                    Plus => &mut positive,
+                    Minus => &mut negative,
+                    NoSign => unreachable!("zero terms were skipped"),
+                };
+                let Some(next) = total.checked_add(scaled) else {
+                    word_path = false;
+                    break;
+                };
+                *total = next;
+            }
+            if word_path {
+                crate::trace_dispatch!(
+                    "rational",
+                    "product_sum_ordering_slice",
+                    "word-sized"
+                );
+                return positive.cmp(&negative);
+            }
+        }
+
+        crate::trace_dispatch!(
+            "rational",
+            "product_sum_ordering_slice",
+            "arbitrary-precision"
+        );
+        let mut denominators = Vec::with_capacity(terms.len());
+        let mut common_denominator = BigUint::one();
+        for (&sign, &term) in signs.iter().zip(terms) {
+            if sign == NoSign {
+                denominators.push(BigUint::one());
+                continue;
+            }
+            let denominator = Self::product_term_denominator(term);
+            let divisor =
+                Self::gcd_magnitudes_with_mixed_width_fast_path(&common_denominator, &denominator);
+            common_denominator *= &denominator / &divisor;
+            denominators.push(denominator);
+        }
+        let mut positive = BigUint::ZERO;
+        let mut negative = BigUint::ZERO;
+        for ((&sign, &term), denominator) in signs.iter().zip(terms).zip(&denominators) {
+            if sign == NoSign {
+                continue;
+            }
+            let mut magnitude = Self::product_term_magnitude(term);
+            if denominator != &common_denominator {
+                magnitude *= &common_denominator / denominator;
+            }
+            match sign {
+                Plus => positive += magnitude,
+                Minus => negative += magnitude,
+                NoSign => unreachable!("zero terms were skipped"),
+            }
+        }
+        positive.cmp(&negative)
+    }
+
     pub(crate) fn dot_products<const N: usize>(left: [&Self; N], right: [&Self; N]) -> Self {
         // Dense vector and matrix dot products are exact rational linear
         // forms when all inputs are rational. Build one shared denominator and

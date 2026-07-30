@@ -3494,6 +3494,46 @@ mod tests {
     }
 
     #[test]
+    fn dynamic_signed_product_sum_ordering_matches_materialized_result() {
+        let values = [
+            Rational::new(7) / Rational::new(11),
+            Rational::new(-13) / Rational::new(17),
+            Rational::new(19) / Rational::new(23),
+            Rational::new(29) / Rational::new(31),
+            Rational::new(-37) / Rational::new(41),
+            Rational::new(43) / Rational::new(47),
+        ];
+        let signs = [true, false, true];
+        let terms = [
+            [&values[0], &values[1]],
+            [&values[2], &values[3]],
+            [&values[4], &values[5]],
+        ];
+        let materialized = Rational::signed_product_sum(signs, terms);
+        assert_eq!(
+            Rational::signed_product_sum2_ordering_slice(&signs, &terms),
+            materialized.partial_cmp(&Rational::zero()).unwrap()
+        );
+
+        let huge = BigUint::one() << 320_usize;
+        let wide = [
+            Rational::from_parts_raw(Plus, &huge + BigUint::from(7_u8), BigUint::from(11_u8)),
+            Rational::from_parts_raw(Minus, &huge - BigUint::from(3_u8), BigUint::from(13_u8)),
+            Rational::from_parts_raw(Plus, &huge + BigUint::from(5_u8), BigUint::from(17_u8)),
+            Rational::from_parts_raw(Plus, &huge - BigUint::from(9_u8), BigUint::from(19_u8)),
+        ];
+        let wide_signs = [true, false];
+        let wide_terms = [[&wide[0], &wide[1]], [&wide[2], &wide[3]]];
+        let wide_materialized = Rational::signed_product_sum(wide_signs, wide_terms);
+        assert_eq!(
+            Rational::signed_product_sum2_ordering_slice(&wide_signs, &wide_terms),
+            wide_materialized
+                .partial_cmp(&Rational::zero())
+                .unwrap()
+        );
+    }
+
+    #[test]
     fn signed_product_sum_ordering_four_products_preserves_wide_dyadic_fallbacks() {
         let wide = |bits: usize, add: u8, shift: usize| {
             Rational::from_bigint_fraction(
