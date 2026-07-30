@@ -83,7 +83,7 @@ strict-convexity certificate.
 | Plane / sphere | None, tangent point, full circle; authored-axis transverse circles retain exact pcurves on both carriers |
 | Sphere / sphere | None, coincident, tangent point, full circle |
 | Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines |
-| Plane / cone | Transverse lower none, apex point, or upper circle |
+| Plane / cone | Transverse lower none, apex point, or upper circle; axis-containing two lower-bounded upper-nappe generator rays with exact affine pcurves on both operands |
 | Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
@@ -166,6 +166,15 @@ Coincident truncated cones with the same apex, axis, and semi-angle regularize
 their exact slant-parameter intervals at arbitrary orientation. The result may
 be empty, one spanning/retained frustum, two disconnected frustums after an
 interior cut, or a separated multi-solid union.
+
+An axis-containing planar cutter intersects a cone carrier in two explicit
+lower-bounded generator rays. Exact ray pcurves partition a bounded frustum and
+the cutter without inverse fitting. Standard intersection and complementary
+frustum-minus-cutter difference publish either longitudinal half-frustum with
+three conical cells, two half-caps, and one axial planar face. A closed region
+certificate supplies exact half-volume, conical-plus-planar area, halfspace
+classification, rigid/reflection transforms, untrusted replay, and exclusion
+from the whole-frustum optimization profile.
 
 Geometrically identical ring tori support union, intersection, and difference
 even when their periodic frames use opposite axis directions.

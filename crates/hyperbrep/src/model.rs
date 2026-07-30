@@ -1290,6 +1290,13 @@ struct CertifiedConeFrustumShell {
     semi_angle: Real,
     v_min: Real,
     v_max: Real,
+    region: CertifiedConeFrustumRegion,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedConeFrustumRegion {
+    Whole,
+    LongitudinalHalf { interior_normal: Vector3 },
 }
 
 #[derive(Clone, Debug)]
@@ -3963,6 +3970,17 @@ impl Model {
                             semi_angle: certificate.semi_angle.clone(),
                             v_min: certificate.v_min.clone(),
                             v_max: certificate.v_max.clone(),
+                            region: match &certificate.region {
+                                CertifiedConeFrustumRegion::Whole => {
+                                    CertifiedConeFrustumRegion::Whole
+                                }
+                                CertifiedConeFrustumRegion::LongitudinalHalf {
+                                    interior_normal,
+                                } => CertifiedConeFrustumRegion::LongitudinalHalf {
+                                    interior_normal: transform
+                                        .transform_direction3(interior_normal),
+                                },
+                            },
                         })
                     })
                     .transpose()
@@ -4458,14 +4476,20 @@ impl Model {
             let min_radius = &frustum.v_min * &sine;
             let max_radius = &frustum.v_max * sine;
             let height = (&frustum.v_max - &frustum.v_min) * cosine;
-            return (Real::pi()
+            let volume = (Real::pi()
                 * height
                 * (&min_radius * &min_radius
                     + &min_radius * &max_radius
                     + &max_radius * &max_radius)
                 / Real::from(3))
             .map_err(|_| GeometryError::ProjectiveDivision)
-            .map_err(QueryError::from);
+            .map_err(QueryError::from)?;
+            return match &frustum.region {
+                CertifiedConeFrustumRegion::Whole => Ok(volume),
+                CertifiedConeFrustumRegion::LongitudinalHalf { .. } => (volume / Real::from(2))
+                    .map_err(|_| GeometryError::ProjectiveDivision)
+                    .map_err(QueryError::from),
+            };
         }
         if let Some(revolution) = &self.data.certified_revolutions[id.index()] {
             let mut first_moment = revolution
@@ -5488,16 +5512,30 @@ impl Model {
         if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
-        let radial = offset - frustum.axis.clone() * axial;
+        let radial = offset.clone() - frustum.axis.clone() * axial;
         let radius = v * frustum.semi_angle.clone().sin();
         let radial_order =
             decided_model_order(compare_reals(&radial.norm_squared(), &(&radius * &radius)))?;
         if radial_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
+        let region_boundary = match &frustum.region {
+            CertifiedConeFrustumRegion::Whole => false,
+            CertifiedConeFrustumRegion::LongitudinalHalf { interior_normal } => {
+                match decided_model_order(compare_reals(
+                    &offset.dot(interior_normal),
+                    &Real::zero(),
+                ))? {
+                    std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
+                    std::cmp::Ordering::Equal => true,
+                    std::cmp::Ordering::Greater => false,
+                }
+            }
+        };
         if radial_order == std::cmp::Ordering::Equal
             || min_order == std::cmp::Ordering::Equal
             || max_order == std::cmp::Ordering::Equal
+            || region_boundary
         {
             Ok(SolidPointLocation::Boundary)
         } else {
@@ -5807,6 +5845,7 @@ impl Model {
             .certified_cone_frustums
             .get(solid.index())
             .and_then(Option::as_ref)
+            .filter(|frustum| matches!(frustum.region, CertifiedConeFrustumRegion::Whole))
             .map(|frustum| CertifiedConeFrustumProfile {
                 apex: frustum.apex.clone(),
                 axis: frustum.axis.clone(),
@@ -10808,7 +10847,6 @@ impl ModelBuilder {
         shell: ShellId,
     ) -> Result<Option<CertifiedConeFrustumShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        let mut cap_count = 0_usize;
         let mut cone_surface = None;
         let mut u_values = Vec::new();
         let mut v_values = Vec::new();
@@ -10819,10 +10857,7 @@ impl ModelBuilder {
                 return Ok(None);
             }
             match self.surface_ref(face.surface)?.kind() {
-                SurfaceKind::Plane => {
-                    cap_count += 1;
-                    continue;
-                }
+                SurfaceKind::Plane => continue,
                 SurfaceKind::Cone if face.orientation == Orientation::Forward => {}
                 _ => return Ok(None),
             }
@@ -10874,16 +10909,13 @@ impl ModelBuilder {
             insert_sorted_real(&mut v_values, &v_max)?;
             face_coordinates.push((u_min, u_max, v_min, v_max));
         }
-        if cap_count != 2 || face_coordinates.len() < 4 || u_values.len() != 5 || v_values.len() < 2
+        let cap_groups = self.planar_face_groups(faces)?;
+        if !matches!(cap_groups.len(), 2 | 3)
+            || face_coordinates.len() < 2
+            || u_values.len() < 2
+            || v_values.len() < 2
         {
             return Ok(None);
-        }
-        let quarter =
-            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        for pair in u_values.windows(2) {
-            if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
-                return Ok(None);
-            }
         }
         let v_min = v_values[0].clone();
         let v_max = v_values.last().expect("frustum has axial values").clone();
@@ -10891,34 +10923,72 @@ impl ModelBuilder {
         {
             return Ok(None);
         }
-        let mut cells = HashSet::new();
-        for (u_min, u_max, face_v_min, face_v_max) in face_coordinates {
-            let u_start = exact_real_index(&u_values, &u_min)?;
-            let u_end = exact_real_index(&u_values, &u_max)?;
-            let v_start = exact_real_index(&v_values, &face_v_min)?;
-            let v_end = exact_real_index(&v_values, &face_v_max)?;
-            if u_end != u_start + 1 || v_start >= v_end {
-                return Ok(None);
-            }
-            for v_cell in v_start..v_end {
-                if !cells.insert((u_start, v_cell)) {
-                    return Ok(None);
-                }
-            }
-        }
-        if cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
-            return Ok(None);
-        }
         let SurfaceExactData::Cone {
             apex,
+            x,
+            y,
             axis,
             semi_angle,
-            ..
         } = self
             .surface_ref(cone_surface.expect("frustum has cone faces"))?
             .exact_data()
         else {
             unreachable!("cone kind carries cone exact data");
+        };
+        let mut cells = HashSet::new();
+        for (u_min, u_max, face_v_min, face_v_max) in &face_coordinates {
+            let u_start = exact_real_index(&u_values, u_min)?;
+            let u_end = exact_real_index(&u_values, u_max)?;
+            let v_start = exact_real_index(&v_values, face_v_min)?;
+            let v_end = exact_real_index(&v_values, face_v_max)?;
+            if u_start >= u_end || v_start >= v_end {
+                return Ok(None);
+            }
+            for u_cell in u_start..u_end {
+                for v_cell in v_start..v_end {
+                    if !cells.insert((u_cell, v_cell)) {
+                        return Ok(None);
+                    }
+                }
+            }
+        }
+
+        let region = if cap_groups.len() == 3 {
+            let Some(interior_normal) = self.certified_cone_longitudinal_cap_groups(
+                faces,
+                &cap_groups,
+                &apex,
+                &axis,
+                &semi_angle,
+                &v_min,
+                &v_max,
+            )?
+            else {
+                return Ok(None);
+            };
+            if !certified_periodic_longitudinal_half_coverage(
+                &u_values,
+                &v_values,
+                &cells,
+                &x,
+                &y,
+                &interior_normal,
+            )? {
+                return Ok(None);
+            }
+            CertifiedConeFrustumRegion::LongitudinalHalf { interior_normal }
+        } else {
+            if face_coordinates.len() < 4
+                || u_values.len() < 5
+                || !real_values_equal(
+                    &(u_values.last().expect("frustum u grid") - &u_values[0]),
+                    &Real::tau(),
+                )?
+                || cells.len() != (u_values.len() - 1) * (v_values.len() - 1)
+            {
+                return Ok(None);
+            }
+            CertifiedConeFrustumRegion::Whole
         };
         Ok(Some(CertifiedConeFrustumShell {
             apex,
@@ -10926,7 +10996,93 @@ impl ModelBuilder {
             semi_angle,
             v_min,
             v_max,
+            region,
         }))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn certified_cone_longitudinal_cap_groups(
+        &self,
+        faces: &[FaceId],
+        groups: &[Vec<usize>],
+        apex: &Point3,
+        axis: &Vector3,
+        semi_angle: &Real,
+        v_min: &Real,
+        v_max: &Real,
+    ) -> Result<Option<Vector3>, BuildError> {
+        let cosine = semi_angle.clone().cos();
+        let mut lower = false;
+        let mut upper = false;
+        let mut interior_normal = None;
+        for group in groups {
+            let Some(boundaries) = self.cap_boundary_use_loops(faces, group)? else {
+                return Ok(None);
+            };
+            if boundaries.len() != 1 {
+                return Ok(None);
+            }
+            let mut group_origin = None;
+            let mut group_normal = None::<Vector3>;
+            for index in group {
+                let face = self.face_ref(faces[*index])?;
+                let SurfaceExactData::Plane { origin, u, v } =
+                    self.surface_ref(face.surface)?.exact_data()
+                else {
+                    return Ok(None);
+                };
+                let normal = u.cross(&v);
+                let oriented = match face.orientation {
+                    Orientation::Forward => normal,
+                    Orientation::Reversed => -normal,
+                }
+                .normalize()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+                if let Some(expected) = &group_normal {
+                    if !vectors_equal(expected, &oriented)? {
+                        return Ok(None);
+                    }
+                } else {
+                    group_origin = Some(origin);
+                    group_normal = Some(oriented);
+                }
+            }
+            let Some(origin) = group_origin else {
+                return Ok(None);
+            };
+            let outward = group_normal.expect("nonempty planar group");
+            if real_values_equal(&outward.cross(axis).norm_squared(), &Real::zero())? {
+                let parameter = ((&origin - apex).dot(axis) / &cosine)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+                let direction =
+                    decided_model_order(compare_reals(&outward.dot(axis), &Real::zero()))?;
+                if real_values_equal(&parameter, v_min)?
+                    && direction == std::cmp::Ordering::Less
+                    && !lower
+                {
+                    lower = true;
+                } else if real_values_equal(&parameter, v_max)?
+                    && direction == std::cmp::Ordering::Greater
+                    && !upper
+                {
+                    upper = true;
+                } else {
+                    return Ok(None);
+                }
+            } else if real_values_equal(&outward.dot(axis), &Real::zero())?
+                && real_values_equal(&outward.dot(&(apex - &origin)), &Real::zero())?
+                && interior_normal.is_none()
+            {
+                interior_normal = Some(-outward);
+            } else {
+                return Ok(None);
+            }
+        }
+        if lower && upper {
+            Ok(interior_normal)
+        } else {
+            Ok(None)
+        }
     }
 
     fn certified_sphere_cylinder_capped_shell(
@@ -11250,7 +11406,10 @@ impl ModelBuilder {
                 &minor_radius,
             )?
         {
-            if !certified_torus_longitudinal_coverage(
+            if !real_values_equal(
+                &(v_values.last().expect("torus v grid") - &v_values[0]),
+                &Real::tau(),
+            )? || !certified_periodic_longitudinal_half_coverage(
                 &u_values,
                 &v_values,
                 &cells,
@@ -15395,7 +15554,7 @@ fn exact_real_index(values: &[Real], value: &Real) -> Result<usize, BuildError> 
     unreachable!("value was inserted into the exact grid")
 }
 
-fn certified_torus_longitudinal_coverage(
+fn certified_periodic_longitudinal_half_coverage(
     u_values: &[Real],
     v_values: &[Real],
     cells: &HashSet<(usize, usize)>,
@@ -15403,13 +15562,7 @@ fn certified_torus_longitudinal_coverage(
     y: &Vector3,
     interior_normal: &Vector3,
 ) -> Result<bool, BuildError> {
-    if u_values.len() < 2
-        || v_values.len() < 2
-        || !real_values_equal(
-            &(v_values.last().expect("nonempty torus v grid") - &v_values[0]),
-            &Real::tau(),
-        )?
-    {
+    if u_values.len() < 2 || v_values.len() < 2 {
         return Ok(false);
     }
     let angular_span = u_values.last().expect("nonempty torus u grid") - &u_values[0];

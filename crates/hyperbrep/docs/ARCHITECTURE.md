@@ -61,7 +61,9 @@ authoring a longitude seam.
 `RawModel` is deliberately untrusted. Exact JSON decoding reconstructs every
 carrier through its validating constructor and then replays topology through
 `ModelBuilder`. Derived certificates and caches are never trusted serialized
-state.
+state. The decoder permits the full depth of authoritative `Real` expression
+trees rather than inheriting Serde JSON's generic recursion ceiling; geometry
+and topology validation remain the trust boundary.
 
 `Model::split_edge` is a topology-changing exact edit. It splits every
 incident pcurve, updates forward and reversed wire traversal, and republishes
@@ -239,7 +241,13 @@ exact pcurve on each surface operand. Hypercurve region trimming preserves the
 promoted Bézier span and top-level public parameter range for every fragment;
 HyperBREP intersects those ranges and uses exact `Curve3::subcurve`
 materialization. Plane/extrusion generator lines use the same principle with
-an affine surface-parameter line. A plane cutting a rational Bézier/NURBS
+an affine surface-parameter line. An axis-containing plane/cone relation is
+represented explicitly as two lower-bounded `SurfaceIntersectionRay` values,
+each carrying the authoritative spatial origin, direction, and minimum plus
+an affine parameter ray for both operands. Face clipping works directly in
+those retained parameter rays, intersects the exact trim intervals, clamps
+them at the apex, and admits only finite `SurfaceIntersectionCurve` fragments
+to topology; no cone inverse fit is needed. A plane cutting a rational Bézier/NURBS
 translation tensor linear in either parameter axis uses the same projection
 theorem but retains the non-isoparametric tensor image as an exact rational
 graph `(u(v), v)` or `(u, v(u))`.
@@ -386,6 +394,12 @@ edge into the new plane frame, and its affine edge correspondence is derived
 from the two exact parameter domains. The normal builder validation and
 untrusted persistence replay see only the regularized geometry; no Boolean
 provenance is trusted.
+
+The same projection rule applies to line edges on planar faces inside mixed
+curved shells even when no carrier regularization is required. This makes the
+spatial edge and actual plane frame authoritative at result transfer time,
+discarding exact-but-pathological expression history introduced by planar
+arrangement routing while retaining byte-stable exact replay.
 
 For tensor carriers, `Surface::iso_curve` derives the complete exact
 homogeneous row or column at any represented constant parameter. The topology

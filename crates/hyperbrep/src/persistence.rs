@@ -92,7 +92,9 @@ pub struct RawModel {
 impl RawModel {
     /// Parses exact JSON without claiming that the encoded topology is valid.
     pub fn from_json(json: &str) -> Result<Self, PersistenceError> {
-        let data = serde_json::from_str(json)
+        let mut deserializer = serde_json::Deserializer::from_str(json);
+        deserializer.disable_recursion_limit();
+        let data = RawModelData::deserialize(&mut deserializer)
             .map_err(|error| PersistenceError::Json(error.to_string()))?;
         Ok(Self { data })
     }

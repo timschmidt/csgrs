@@ -8,7 +8,7 @@ use hypercurve::{
     CurvePolicy, LineArcRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
     RationalBezierPointIncidence2, Segment2,
 };
-use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
+use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::error::{GeometryError, GeometryResult};
@@ -1155,6 +1155,10 @@ pub enum SurfaceSurfaceIntersection {
     Line(Box<SurfaceIntersectionLine>),
     /// The surfaces meet in multiple unbounded exact lines.
     Lines(Vec<SurfaceIntersectionLine>),
+    /// The surfaces meet in one exact lower-bounded ray.
+    Ray(Box<SurfaceIntersectionRay>),
+    /// The surfaces meet in multiple exact lower-bounded rays.
+    Rays(Vec<SurfaceIntersectionRay>),
     /// The surfaces meet in one exact full circle.
     Circle(Curve3),
     /// The surfaces meet in multiple exact full circles.
@@ -1869,6 +1873,81 @@ pub struct SurfaceIntersectionLine {
     pub point: Point3,
     /// Exact nonzero line direction.
     pub direction: Vector3,
+}
+
+/// Exact lower-bounded ray produced by a surface/surface intersection.
+#[derive(Clone, Debug)]
+pub struct SurfaceIntersectionRay {
+    /// Exact point at ray parameter zero.
+    pub point: Point3,
+    /// Exact nonzero direction for increasing parameters.
+    pub direction: Vector3,
+    /// Authoritative lower bound of the ray parameter.
+    pub minimum: Real,
+    first_pcurve: SurfaceIntersectionParameterRay,
+    second_pcurve: SurfaceIntersectionParameterRay,
+}
+
+/// Exact affine surface-parameter image of an intersection ray.
+#[derive(Clone, Debug)]
+pub struct SurfaceIntersectionParameterRay {
+    origin: Point2,
+    direction: Vector2,
+}
+
+impl SurfaceIntersectionRay {
+    fn new(
+        point: Point3,
+        direction: Vector3,
+        minimum: Real,
+        first_pcurve: SurfaceIntersectionParameterRay,
+        second_pcurve: SurfaceIntersectionParameterRay,
+    ) -> Self {
+        Self {
+            point,
+            direction,
+            minimum,
+            first_pcurve,
+            second_pcurve,
+        }
+    }
+
+    fn swapped(mut self) -> Self {
+        std::mem::swap(&mut self.first_pcurve, &mut self.second_pcurve);
+        self
+    }
+
+    /// Returns the exact affine parameter ray on one surface operand.
+    pub const fn pcurve(
+        &self,
+        operand: SurfaceIntersectionOperand,
+    ) -> &SurfaceIntersectionParameterRay {
+        match operand {
+            SurfaceIntersectionOperand::First => &self.first_pcurve,
+            SurfaceIntersectionOperand::Second => &self.second_pcurve,
+        }
+    }
+}
+
+impl SurfaceIntersectionParameterRay {
+    fn new(origin: Point2, direction: Vector2) -> Self {
+        Self { origin, direction }
+    }
+
+    /// Returns the surface parameter at one authoritative ray parameter.
+    pub fn point_at(&self, parameter: &Real) -> Point2 {
+        self.origin.clone() + self.direction.clone() * parameter
+    }
+
+    /// Returns the exact surface-parameter origin.
+    pub const fn origin(&self) -> &Point2 {
+        &self.origin
+    }
+
+    /// Returns the exact surface-parameter direction.
+    pub const fn direction(&self) -> &Vector2 {
+        &self.direction
+    }
 }
 
 impl SurfacePartials {
@@ -3533,6 +3612,14 @@ fn swapped_curve_intersection(
                 .map(SurfaceIntersectionCurve::swapped)
                 .collect(),
         ),
+        SurfaceSurfaceIntersection::Ray(ray) => {
+            SurfaceSurfaceIntersection::Ray(Box::new((*ray).swapped()))
+        }
+        SurfaceSurfaceIntersection::Rays(rays) => SurfaceSurfaceIntersection::Rays(
+            rays.into_iter()
+                .map(SurfaceIntersectionRay::swapped)
+                .collect(),
+        ),
         other => other,
     }
 }
@@ -4645,12 +4732,56 @@ fn intersect_plane_cone(
     cone: &ConeSurface,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let normal = plane.u.cross(&plane.v);
-    if decided_order(compare_reals(
+    let axis_cross_normal = decided_order(compare_reals(
         &cone.frame.z.cross(&normal).norm_squared(),
         &Real::zero(),
-    ))? != Ordering::Equal
-    {
-        return Err(GeometryError::UnsupportedIntersection);
+    ))?;
+    if axis_cross_normal != Ordering::Equal {
+        let axis_dot_normal = cone.frame.z.dot(&normal);
+        let apex_separation = normal.dot(&(&cone.apex - &plane.origin));
+        if decided_order(compare_reals(&axis_dot_normal, &Real::zero()))? != Ordering::Equal
+            || decided_order(compare_reals(&apex_separation, &Real::zero()))? != Ordering::Equal
+        {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        let radial = normal
+            .cross(&cone.frame.z)
+            .normalize()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let sine = cone.semi_angle.clone().sin();
+        let cosine = cone.semi_angle.clone().cos();
+        let ray = |radial: Vector3| -> GeometryResult<SurfaceIntersectionRay> {
+            let direction = radial.clone() * &sine + cone.frame.z.clone() * &cosine;
+            let plane_origin =
+                project_point_to_plane_frame(&plane.origin, &plane.u, &plane.v, &cone.apex)?;
+            let plane_end = project_point_to_plane_frame(
+                &plane.origin,
+                &plane.u,
+                &plane.v,
+                &(cone.apex.clone() + direction.clone()),
+            )?;
+            let mut u = certified_atan2(radial.dot(&cone.frame.y), radial.dot(&cone.frame.x))?;
+            if decided_order(compare_reals(&u, &Real::zero()))? == Ordering::Less {
+                u += Real::tau();
+            }
+            Ok(SurfaceIntersectionRay::new(
+                cone.apex.clone(),
+                direction,
+                Real::zero(),
+                SurfaceIntersectionParameterRay::new(
+                    plane_origin.clone(),
+                    Vector2::from_xy(
+                        &plane_end.x - &plane_origin.x,
+                        &plane_end.y - &plane_origin.y,
+                    ),
+                ),
+                SurfaceIntersectionParameterRay::new(Point2::new(u, Real::zero()), Vector2::y()),
+            ))
+        };
+        return Ok(SurfaceSurfaceIntersection::Rays(vec![
+            ray(radial.clone())?,
+            ray(-radial)?,
+        ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &cone.apex)) / normal.dot(&cone.frame.z))
         .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -9112,8 +9243,82 @@ mod tests {
         ));
 
         let axial_plane = Surface::plane(Point3::origin(), Vector3::y(), Vector3::z()).unwrap();
+        let SurfaceSurfaceIntersection::Rays(rays) = cone.intersect_surface(&axial_plane).unwrap()
+        else {
+            panic!("an axis-containing plane must retain both upper-cone generator rays");
+        };
+        assert_eq!(rays.len(), 2);
+        let sqrt_two = r(2).sqrt().unwrap();
+        for ray in &rays {
+            assert_points_equal(&ray.point, &Point3::origin());
+            assert_eq!(
+                compare_reals(&ray.direction.norm_squared(), &Real::one()).value(),
+                Some(Ordering::Equal)
+            );
+            assert_eq!(
+                compare_reals(&ray.minimum, &Real::zero()).value(),
+                Some(Ordering::Equal)
+            );
+            for parameter in [Real::zero(), sqrt_two.clone()] {
+                let spatial = ray.point.clone() + ray.direction.clone() * &parameter;
+                assert_points_equal(
+                    &cone
+                        .point_at(
+                            &ray.pcurve(SurfaceIntersectionOperand::First)
+                                .point_at(&parameter),
+                        )
+                        .unwrap(),
+                    &spatial,
+                );
+                assert_points_equal(
+                    &axial_plane
+                        .point_at(
+                            &ray.pcurve(SurfaceIntersectionOperand::Second)
+                                .point_at(&parameter),
+                        )
+                        .unwrap(),
+                    &spatial,
+                );
+            }
+        }
+        assert_points_equal(
+            &(rays[0].point.clone() + rays[0].direction.clone() * &sqrt_two),
+            &p(0, -1, 1),
+        );
+        assert_points_equal(
+            &(rays[1].point.clone() + rays[1].direction.clone() * &sqrt_two),
+            &p(0, 1, 1),
+        );
+        let SurfaceSurfaceIntersection::Rays(swapped) =
+            axial_plane.intersect_surface(&cone).unwrap()
+        else {
+            panic!("operand reversal must retain both cone rays");
+        };
+        assert_eq!(swapped.len(), 2);
+        for ray in &swapped {
+            let spatial = ray.point.clone() + ray.direction.clone() * &sqrt_two;
+            assert_points_equal(
+                &axial_plane
+                    .point_at(
+                        &ray.pcurve(SurfaceIntersectionOperand::First)
+                            .point_at(&sqrt_two),
+                    )
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &cone
+                    .point_at(
+                        &ray.pcurve(SurfaceIntersectionOperand::Second)
+                            .point_at(&sqrt_two),
+                    )
+                    .unwrap(),
+                &spatial,
+            );
+        }
+        let offset_axial = Surface::plane(p(1, 0, 0), Vector3::y(), Vector3::z()).unwrap();
         assert_eq!(
-            cone.intersect_surface(&axial_plane).unwrap_err(),
+            cone.intersect_surface(&offset_axial).unwrap_err(),
             GeometryError::UnsupportedIntersection
         );
     }

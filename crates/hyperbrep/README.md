@@ -208,6 +208,14 @@ The clean-break implementation currently provides:
   solids with exact frustum volume. The z-prism fast path now requires a real
   translation-family certificate and cannot misclassify a two-layer frustum
   from its vertices alone;
+- axis-containing plane/cone cuts retain two native lower-bounded generator
+  rays. Each ray owns one authoritative spatial `Real` parameter plus exact
+  affine parameter rays on both carriers; face trimming clamps that parameter
+  at the apex and publishes only finite two-pcurve fragments. An axial cuboid
+  cutter partitions both operands and standard intersection or complementary
+  difference publishes either longitudinal half-frustum with exact area,
+  volume, halfspace classification, transforms, profile isolation, and
+  persistence;
 - all-face retained-graph selection through `select_first_faces` and
   `select_second_faces`, with exact pcurve-region witnesses for trimmed planar,
   analytic, and tensor carriers plus canonical parameter-domain witnesses for
@@ -218,8 +226,11 @@ The clean-break implementation currently provides:
   exact restricted `Curve3` evidence. Whole spherical faces and intact curved
   shells transfer natively; exact affine Bézier lines and coplanar tensor
   carriers regularize to canonical line/plane geometry with rebuilt projected
-  pcurves before ordinary shell validation. Subdivided curve-sweep connectors
-  and active tensor subrectangles also recertify exact transverse path clips;
+  pcurves before ordinary shell validation. Planar faces in mixed curved shells
+  likewise rebuild line pcurves from the authoritative spatial edge and plane
+  frame instead of persisting arrangement-expression history. Subdivided
+  curve-sweep connectors and active tensor subrectangles also recertify exact
+  transverse path clips;
 - `boolean::intersect_faces` as the same exact carrier-and-trim primitive for
   arbitrary validated faces, including faces in open shells; finite tensor
   iso-curves and plane/extrusion sections therefore do not require fabricated

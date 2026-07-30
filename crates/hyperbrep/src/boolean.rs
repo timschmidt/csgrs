@@ -24,7 +24,7 @@ use crate::{
     Aabb, Curve3, CurveParameterLocation, FaceId, FacePartition, GeometryError, Matrix4, Model,
     ModelBuilder, Point3, QueryError, Real, ShellId, SolidId, SolidPointLocation, Surface,
     SurfaceBounds, SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
-    SurfaceSurfaceIntersection, TopologyEditError,
+    SurfaceIntersectionRay, SurfaceSurfaceIntersection, TopologyEditError,
 };
 
 /// A regularized Boolean result in the currently supported solid matrix.
@@ -1838,9 +1838,8 @@ fn copy_selected_face(
     } else {
         surface.clone()
     };
-    let projected_plane = (regularize_to_planar
-        && transferred_surface.kind() == crate::SurfaceKind::Plane)
-        .then_some(&transferred_surface);
+    let projected_plane =
+        (transferred_surface.kind() == crate::SurfaceKind::Plane).then_some(&transferred_surface);
     let surface_id = if let Some(surface) = source_surfaces.get(&(is_first, face.surface())) {
         *surface
     } else {
@@ -1989,13 +1988,17 @@ fn copy_selected_wire(
                 .find(|edge| edge.id == mapped_edge)
                 .expect("every mapped edge has retained transfer geometry")
                 .curve;
-            let origin = plane
-                .plane_origin()
-                .expect("projected transfer target is a plane");
-            let (u, v) = plane
-                .plane_directions()
-                .expect("projected transfer target is a plane");
-            crate::geometry::project_curve_to_plane_frame(mapped_curve, origin, u, v)?
+            if !regularize_to_planar && mapped_curve.kind() != crate::Curve3Kind::Line {
+                None
+            } else {
+                let origin = plane
+                    .plane_origin()
+                    .expect("projected transfer target is a plane");
+                let (u, v) = plane
+                    .plane_directions()
+                    .expect("projected transfer target is a plane");
+                crate::geometry::project_curve_to_plane_frame(mapped_curve, origin, u, v)?
+            }
         } else {
             None
         };
@@ -2427,6 +2430,24 @@ fn trim_face_pair_intersection(
             FacePairTrim::SurfaceCurveFragments(retained)
         });
     }
+    if let SurfaceSurfaceIntersection::Rays(rays) = intersection {
+        return trim_supported_surface_rays(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            rays,
+        );
+    }
+    if let SurfaceSurfaceIntersection::Ray(ray) = intersection {
+        return trim_supported_surface_rays(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            std::slice::from_ref(ray.as_ref()),
+        );
+    }
     if let SurfaceSurfaceIntersection::Lines(lines) = intersection {
         return trim_supported_surface_lines(
             first_model,
@@ -2589,6 +2610,82 @@ enum SupportedLineFaceTrim {
     Unsupported,
 }
 
+fn trim_supported_surface_rays(
+    first_model: &Model,
+    first_face: FaceId,
+    second_model: &Model,
+    second_face: FaceId,
+    rays: &[SurfaceIntersectionRay],
+) -> Result<FacePairTrim, GeometryError> {
+    let mut fragments = Vec::new();
+    for ray in rays {
+        let line = SurfaceIntersectionLine {
+            point: ray.point.clone(),
+            direction: ray.direction.clone(),
+        };
+        let first = match ray_face_trim_intervals(
+            first_model,
+            first_face,
+            ray,
+            SurfaceIntersectionOperand::First,
+        )? {
+            Classification::Decided(trim) => trim,
+            Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+        };
+        let second = match ray_face_trim_intervals(
+            second_model,
+            second_face,
+            ray,
+            SurfaceIntersectionOperand::Second,
+        )? {
+            Classification::Decided(trim) => trim,
+            Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+        };
+        let intervals = match common_line_trim_intervals(&first, &second)? {
+            Some(intervals) => intervals,
+            None => return Ok(FacePairTrim::NotAvailable),
+        };
+        for (start, end) in intervals {
+            let start = exact_max(&start, &ray.minimum)?;
+            if exact_order(&start, &end)? != Ordering::Less {
+                continue;
+            }
+            let first_pcurve =
+                retained_ray_pcurve(ray, SurfaceIntersectionOperand::First, &start, &end)?;
+            let second_pcurve =
+                retained_ray_pcurve(ray, SurfaceIntersectionOperand::Second, &start, &end)?;
+            fragments.push(SurfaceIntersectionCurve::from_exact_pcurves(
+                Curve3::line(
+                    line.point.clone() + line.direction.clone() * &start,
+                    line.point.clone() + line.direction.clone() * &end,
+                )?,
+                first_pcurve,
+                second_pcurve,
+            )?);
+        }
+    }
+    Ok(if fragments.is_empty() {
+        FacePairTrim::NoCurveInterior
+    } else {
+        FacePairTrim::SurfaceCurveFragments(fragments)
+    })
+}
+
+fn retained_ray_pcurve(
+    ray: &SurfaceIntersectionRay,
+    operand: SurfaceIntersectionOperand,
+    start: &Real,
+    end: &Real,
+) -> Result<Curve2, GeometryError> {
+    let pcurve = ray.pcurve(operand);
+    let start = pcurve.point_at(start);
+    let end = pcurve.point_at(end);
+    Ok(Curve2::from(LineSeg2::try_new(
+        hypercurve::Point2::new(start.x, start.y),
+        hypercurve::Point2::new(end.x, end.y),
+    )?))
+}
+
 fn trim_supported_surface_lines(
     first_model: &Model,
     first_face: FaceId,
@@ -2703,6 +2800,37 @@ fn line_face_trim_intervals(
     let Some(parameter_lines) = surface_parameter_lines(surface, line)? else {
         return Ok(Classification::Decided(SupportedLineFaceTrim::Unsupported));
     };
+    parameter_lines_face_trim_intervals(model, face, parameter_lines)
+}
+
+fn ray_face_trim_intervals(
+    model: &Model,
+    face: FaceId,
+    ray: &SurfaceIntersectionRay,
+    operand: SurfaceIntersectionOperand,
+) -> Result<Classification<SupportedLineFaceTrim>, GeometryError> {
+    let pcurve = ray.pcurve(operand);
+    parameter_lines_face_trim_intervals(
+        model,
+        face,
+        vec![(
+            hypercurve::Point2::new(pcurve.origin().x.clone(), pcurve.origin().y.clone()),
+            hypercurve::Point2::new(
+                pcurve.direction().0[0].clone(),
+                pcurve.direction().0[1].clone(),
+            ),
+        )],
+    )
+}
+
+fn parameter_lines_face_trim_intervals(
+    model: &Model,
+    face: FaceId,
+    parameter_lines: Vec<(hypercurve::Point2, hypercurve::Point2)>,
+) -> Result<Classification<SupportedLineFaceTrim>, GeometryError> {
+    if face_is_boundaryless(model, face) {
+        return Ok(Classification::Decided(SupportedLineFaceTrim::Unbounded));
+    }
     let region = planar_face_region(model, face)?;
     let policy = CurvePolicy::certified();
     let bounds = match Aabb2::from_region(&region, &policy)? {
@@ -6150,6 +6278,10 @@ mod tests {
         ));
 
         let json = model.to_json().unwrap();
+        assert!(
+            json.len() < 100_000,
+            "canonical mixed-shell pcurves must not retain arrangement-expression history"
+        );
         let decoded = crate::RawModel::from_json(&json)
             .unwrap()
             .validate()
@@ -7869,6 +8001,277 @@ mod tests {
         assert_eq!(
             compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
             Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn axial_cone_rays_partition_an_exact_half_frustum_cut() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();
+        let diagonal = (Real::one() / Real::from(2).sqrt().unwrap()).unwrap();
+        let frame_rotation = Matrix4::affine_orthonormal(
+            [
+                [diagonal.clone(), -diagonal.clone(), Real::zero()],
+                [diagonal.clone(), diagonal, Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [Real::zero(), Real::zero(), Real::zero()],
+        );
+        let frustum = frustum.transformed(&frame_rotation).unwrap();
+        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -1), p(5, 5, 4)).unwrap();
+
+        let graph = intersection_graph(&frustum, frustum_solid, &cutter, cutter_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 2);
+        assert!(retained.iter().all(|trace| {
+            trace.curve().kind() == crate::Curve3Kind::Line
+                && trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+
+        let (partitioned_frustum, frustum_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(frustum_partitions.len(), 4);
+        assert_eq!(
+            compare_reals(
+                &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
+                &frustum.solid_volume(frustum_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (partitioned_cutter, cutter_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(cutter_partitions.len(), 1);
+        assert_eq!(
+            compare_reals(
+                &partitioned_cutter.solid_volume(cutter_solid).unwrap(),
+                &cutter.solid_volume(cutter_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the selected axial half-frustum must be one exact solid");
+        };
+        let expected_volume = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
+        let expected_area = ((Real::from(15) * Real::from(2).sqrt().unwrap() + Real::from(17))
+            * Real::pi()
+            / Real::from(2))
+        .unwrap()
+            + Real::from(15);
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Cone
+                })
+                .count(),
+            3
+        );
+        assert_eq!(
+            model
+                .faces()
+                .filter(|(_, face)| {
+                    model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Plane
+                })
+                .count(),
+            3
+        );
+        assert!(model.certified_cone_frustum_profile(solid).is_none());
+
+        let height = (Real::from(3) / Real::from(2)).unwrap();
+        let interior = Point3::new(Real::one(), Real::zero(), height.clone());
+        let excluded = Point3::new(-Real::one(), Real::zero(), height.clone());
+        for (point, location) in [
+            (interior.clone(), SolidPointLocation::Inside),
+            (excluded.clone(), SolidPointLocation::Outside),
+            (
+                Point3::new(Real::zero(), Real::one(), height.clone()),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::zero(),
+                    height,
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (p(1, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 4), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            decoded.classify_point(solid, &interior).unwrap(),
+            SolidPointLocation::Inside
+        );
+
+        for (index, result) in [
+            intersection(&frustum, frustum_solid, &cutter, cutter_solid).unwrap(),
+            intersection(&cutter, cutter_solid, &frustum, frustum_solid).unwrap(),
+            difference(&frustum, frustum_solid, &cutter, cutter_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid {
+                model: standard,
+                solid: standard_solid,
+            } = result
+            else {
+                panic!("axial frustum operation {index} must retain one exact half-frustum");
+            };
+            assert_eq!(
+                compare_reals(
+                    &standard.solid_volume(standard_solid).unwrap(),
+                    &expected_volume,
+                )
+                .value(),
+                Some(Ordering::Equal),
+                "operation {index}"
+            );
+            let standard_area = standard
+                .faces()
+                .map(|(face, _)| standard.face_area(face).unwrap())
+                .fold(Real::zero(), |sum, face_area| sum + face_area);
+            assert_eq!(
+                compare_reals(&standard_area, &expected_area).value(),
+                Some(Ordering::Equal),
+                "operation {index}"
+            );
+            assert!(
+                standard
+                    .certified_cone_frustum_profile(standard_solid)
+                    .is_none(),
+                "operation {index}"
+            );
+            let (retained, rejected) = if index == 2 {
+                (&excluded, &interior)
+            } else {
+                (&interior, &excluded)
+            };
+            assert_eq!(
+                standard.classify_point(standard_solid, retained).unwrap(),
+                SolidPointLocation::Inside,
+                "operation {index}"
+            );
+            assert_eq!(
+                standard.classify_point(standard_solid, rejected).unwrap(),
+                SolidPointLocation::Outside,
+                "operation {index}"
+            );
+            let standard_json = standard.to_json().unwrap();
+            assert!(
+                standard_json.len() < 100_000,
+                "operation {index} must retain canonical mixed-shell pcurves"
+            );
+            let standard_decoded = crate::RawModel::from_json(&standard_json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(
+                standard_decoded.to_json().unwrap(),
+                standard_json,
+                "operation {index}"
+            );
+        }
+
+        let reflection = Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]);
+        let reflected = model.transformed(&reflection).unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            reflected.classify_point(solid, &excluded).unwrap(),
+            SolidPointLocation::Inside
+        );
+        let reflected_json = reflected.to_json().unwrap();
+        assert!(
+            reflected_json.len() < 100_000,
+            "reflection must retain canonical mixed-shell pcurves"
+        );
+        assert_eq!(
+            crate::RawModel::from_json(&reflected_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            reflected_json
+        );
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_frustum = frustum.transformed(&cyclic).unwrap();
+        let oriented_cutter = cutter.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(
+            &oriented_frustum,
+            frustum_solid,
+            &oriented_cutter,
+            cutter_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigidly oriented axial clipping must retain one exact half-frustum");
+        };
+        assert_eq!(
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            oriented
+                .classify_point(oriented_solid, &p(-1, 7, 2))
+                .unwrap(),
+            SolidPointLocation::Inside
         );
     }
 
