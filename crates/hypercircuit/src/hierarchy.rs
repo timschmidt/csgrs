@@ -1,5 +1,7 @@
 //! Reusable circuit hierarchy, validation, and deterministic flattening.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
@@ -666,7 +668,11 @@ fn expand_children(
                 .get(&rail.net)
                 .expect("validated child rail net must exist")
                 .clone();
-            if !output.rails.iter().any(|existing| existing == &rail) {
+            if !output
+                .rails
+                .iter()
+                .any(|existing| rail_intents_equal(existing, &rail) == Some(true))
+            {
                 output.rails.push(rail);
             }
         }
@@ -736,6 +742,24 @@ fn expand_children(
             output,
             scopes,
         );
+    }
+}
+
+fn rail_intents_equal(first: &crate::RailIntent, second: &crate::RailIntent) -> Option<bool> {
+    if first.net != second.net || first.kind != second.kind {
+        return Some(false);
+    }
+    Some(
+        optional_reals_equal(&first.nominal_voltage, &second.nominal_voltage)?
+            && optional_reals_equal(&first.max_current, &second.max_current)?,
+    )
+}
+
+fn optional_reals_equal(first: &Option<crate::Real>, second: &Option<crate::Real>) -> Option<bool> {
+    match (first, second) {
+        (Some(first), Some(second)) => first.predicate_eq(second),
+        (None, None) => Some(true),
+        (Some(_), None) | (None, Some(_)) => Some(false),
     }
 }
 

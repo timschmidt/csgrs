@@ -1,5 +1,6 @@
 //! Deterministic realization of retained copper-zone stitching-via intent.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 
 use hypercurve::{Classification, CurvePolicy};
@@ -95,7 +96,7 @@ impl PcbLayout {
             let mut y = min.y + inset.clone();
             let mut row = 0_usize;
             'rows: loop {
-                match y.partial_cmp(&max_y) {
+                match y.predicate_cmp(&max_y) {
                     Some(Ordering::Greater) => break,
                     Some(Ordering::Less | Ordering::Equal) => {}
                     None => {
@@ -106,7 +107,7 @@ impl PcbLayout {
                 let mut x = min.x.clone() + inset.clone();
                 let mut column = 0_usize;
                 loop {
-                    match x.partial_cmp(&max_x) {
+                    match x.predicate_cmp(&max_x) {
                         Some(Ordering::Greater) => break,
                         Some(Ordering::Less | Ordering::Equal) => {}
                         None => {
@@ -233,7 +234,7 @@ fn candidate_status(
         let required = land_radius.clone() + other_radius + edge_clearance.clone();
         let dx = center.x.clone() - via.center.x.clone();
         let dy = center.y.clone() - via.center.y.clone();
-        match (dx.clone() * dx + dy.clone() * dy).partial_cmp(&(required.clone() * required)) {
+        match (dx.clone() * dx + dy.clone() * dy).predicate_cmp(&(required.clone() * required)) {
             Some(Ordering::Less) => return CandidateStatus::ViaCollision,
             Some(Ordering::Equal | Ordering::Greater) => {}
             None => return CandidateStatus::Indeterminate,
@@ -247,16 +248,16 @@ fn polygon_bounds(points: &[Point2]) -> Option<(Point2, Point2)> {
     let mut min = first.clone();
     let mut max = first;
     for point in points.iter().skip(1) {
-        if point.x.partial_cmp(&min.x)? == Ordering::Less {
+        if point.x.predicate_cmp(&min.x)? == Ordering::Less {
             min.x = point.x.clone();
         }
-        if point.y.partial_cmp(&min.y)? == Ordering::Less {
+        if point.y.predicate_cmp(&min.y)? == Ordering::Less {
             min.y = point.y.clone();
         }
-        if point.x.partial_cmp(&max.x)? == Ordering::Greater {
+        if point.x.predicate_cmp(&max.x)? == Ordering::Greater {
             max.x = point.x.clone();
         }
-        if point.y.partial_cmp(&max.y)? == Ordering::Greater {
+        if point.y.predicate_cmp(&max.y)? == Ordering::Greater {
             max.y = point.y.clone();
         }
     }
@@ -285,7 +286,7 @@ fn polygon_edges_clear(points: &[Point2], center: &Point2, radius: &Real) -> Opt
             &points[index],
             &points[(index + 1) % points.len()],
         )?;
-        if distance.partial_cmp(&required_squared)? == Ordering::Less {
+        if distance.predicate_cmp(&required_squared)? == Ordering::Less {
             return Some(false);
         }
     }
@@ -296,16 +297,16 @@ fn point_segment_distance_squared(point: &Point2, start: &Point2, end: &Point2) 
     let dx = end.x.clone() - start.x.clone();
     let dy = end.y.clone() - start.y.clone();
     let length_squared = dx.clone() * dx.clone() + dy.clone() * dy.clone();
-    if length_squared.partial_cmp(&Real::zero())? != Ordering::Greater {
+    if length_squared.predicate_cmp(&Real::zero())? != Ordering::Greater {
         return None;
     }
     let px = point.x.clone() - start.x.clone();
     let py = point.y.clone() - start.y.clone();
     let projection = px.clone() * dx.clone() + py.clone() * dy.clone();
-    if projection.partial_cmp(&Real::zero())? != Ordering::Greater {
+    if projection.predicate_cmp(&Real::zero())? != Ordering::Greater {
         return Some(px.clone() * px + py.clone() * py);
     }
-    if projection.partial_cmp(&length_squared)? != Ordering::Less {
+    if projection.predicate_cmp(&length_squared)? != Ordering::Less {
         let ex = point.x.clone() - end.x.clone();
         let ey = point.y.clone() - end.y.clone();
         return Some(ex.clone() * ex + ey.clone() * ey);

@@ -1,5 +1,7 @@
 //! Retained design-for-test requirements and coverage claims.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::BTreeSet;
 
 use hyperlattice::Point2;
@@ -219,7 +221,7 @@ impl DesignForTestIntent {
             if access
                 .probe_diameter
                 .as_ref()
-                .is_some_and(|diameter| diameter <= &Real::zero())
+                .is_some_and(|diameter| diameter.predicate_gt(&Real::zero()) != Some(true))
             {
                 issues.push(TestIntentIssue::InvalidProbeDiameter(access.id.clone()));
             }

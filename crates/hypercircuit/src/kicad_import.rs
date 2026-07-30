@@ -6,6 +6,7 @@
 //! zones, and board contours instead of reverse-engineering those nouns from
 //! flattened polygons.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::path::Path;
@@ -140,6 +141,10 @@ pub enum KiCadImportError {
     InvalidConductorThickness,
     /// No closed polygonal Edge.Cuts contour was found.
     MissingBoardOutline,
+    /// Exact board-outline area ordering remained undecided.
+    IndeterminateBoardOutline,
+    /// An imported geometric ordering decision remained undecided.
+    IndeterminateGeometry(String),
     /// A referenced copper layer was absent from the declared layer table.
     UnknownCopperLayer(String),
     /// Imported ids or cross-references did not pass semantic validation.
@@ -163,6 +168,15 @@ impl Display for KiCadImportError {
             }
             Self::MissingBoardOutline => {
                 formatter.write_str("KiCad board has no closed polygonal Edge.Cuts contour")
+            }
+            Self::IndeterminateBoardOutline => {
+                formatter.write_str("KiCad board outline area ordering remained undecided")
+            }
+            Self::IndeterminateGeometry(field) => {
+                write!(
+                    formatter,
+                    "KiCad geometry ordering remained undecided for {field}"
+                )
             }
             Self::UnknownCopperLayer(layer) => write!(formatter, "unknown KiCad layer {layer}"),
             Self::InvalidImportedDesign {
@@ -201,7 +215,7 @@ impl KiCadImportReport {
         design_rules: Option<&str>,
         options: KiCadImportOptions,
     ) -> Result<Self, KiCadImportError> {
-        if options.assumed_conductor_thickness.structural_facts().sign != Some(RealSign::Positive) {
+        if options.assumed_conductor_thickness.predicate_sign() != Some(RealSign::Positive) {
             return Err(KiCadImportError::InvalidConductorThickness);
         }
         let root = sexp::parse(source).map_err(KiCadImportError::Parse)?;
@@ -943,15 +957,11 @@ impl Importer {
                 )?;
             }
         }
-        let mut contours = stitch_board_contours(edges);
+        let contours = stitch_board_contours(edges)?;
         if contours.is_empty() {
             return Err(KiCadImportError::MissingBoardOutline);
         }
-        contours.sort_by(|left, right| {
-            contour_anchor_area(right)
-                .partial_cmp(&contour_anchor_area(left))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
+        let mut contours = order_contours_by_exact_area(contours)?;
         let exterior = contours.remove(0);
         Ok(BoardOutline {
             exterior,
@@ -1348,7 +1358,7 @@ impl Importer {
             let shape_name = pad.atom_at(3).unwrap_or("rect");
             let shape = match shape_name {
                 "circle" => PadShape::Circle {
-                    diameter: max_real(&width, &height),
+                    diameter: max_real(&width, &height, "pad diameter")?,
                 },
                 "rect" => PadShape::Rectangle {
                     width: width.clone(),
@@ -1375,7 +1385,7 @@ impl Importer {
                     PadShape::RoundedRectangle {
                         width: width.clone(),
                         height: height.clone(),
-                        corner_radius: min_real(&width, &height) * ratio,
+                        corner_radius: min_real(&width, &height, "roundrect radius")? * ratio,
                     }
                 }
                 other => {
@@ -1534,11 +1544,15 @@ impl Importer {
         if drill.atom_at(1) == Some("oval") {
             let width = self.number_atom(drill, 2, &format!("{field}.width"))?;
             let height = self.number_atom(drill, 3, &format!("{field}.height"))?;
-            let half_length = ((max_real(&width, &height) - min_real(&width, &height))
+            let half_length = ((max_real(&width, &height, &field)?
+                - min_real(&width, &height, &field)?)
                 / Real::from(2))
             .map_err(|_| KiCadImportError::Parse(format!("invalid {field}")))?;
-            let cutter_width = min_real(&width, &height);
-            let (start, end) = if width >= height {
+            let cutter_width = min_real(&width, &height, &field)?;
+            let width_is_longer = width
+                .predicate_ge(&height)
+                .ok_or_else(|| KiCadImportError::IndeterminateGeometry(field.clone()))?;
+            let (start, end) = if width_is_longer {
                 (
                     Point2::new(-half_length.clone(), Real::zero()),
                     Point2::new(half_length, Real::zero()),
@@ -1678,38 +1692,46 @@ fn unique_text(base: &str, used: &mut BTreeSet<String>, index: usize) -> String 
     candidate
 }
 
-fn max_real(left: &Real, right: &Real) -> Real {
-    if left >= right {
-        left.clone()
-    } else {
-        right.clone()
+fn max_real(left: &Real, right: &Real, field: &str) -> Result<Real, KiCadImportError> {
+    match left.predicate_cmp(right) {
+        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => Ok(left.clone()),
+        Some(std::cmp::Ordering::Less) => Ok(right.clone()),
+        None => Err(KiCadImportError::IndeterminateGeometry(field.into())),
     }
 }
 
-fn min_real(left: &Real, right: &Real) -> Real {
-    if left <= right {
-        left.clone()
-    } else {
-        right.clone()
+fn min_real(left: &Real, right: &Real, field: &str) -> Result<Real, KiCadImportError> {
+    match left.predicate_cmp(right) {
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(left.clone()),
+        Some(std::cmp::Ordering::Greater) => Ok(right.clone()),
+        None => Err(KiCadImportError::IndeterminateGeometry(field.into())),
     }
 }
 
-fn stitch_board_contours(mut edges: Vec<BoardContourSegment>) -> Vec<BoardContour> {
+fn stitch_board_contours(
+    mut edges: Vec<BoardContourSegment>,
+) -> Result<Vec<BoardContour>, KiCadImportError> {
     let mut contours = Vec::new();
     while let Some(first) = edges.pop() {
         let start = first.start().clone();
         let mut end = first.end().clone();
         let mut segments = vec![first];
-        while end != start {
-            let Some(index) = edges
-                .iter()
-                .position(|candidate| candidate.start() == &end || candidate.end() == &end)
-            else {
+        while !import_points_equal(&end, &start)? {
+            let mut matching = None;
+            for (index, candidate) in edges.iter().enumerate() {
+                if import_points_equal(candidate.start(), &end)?
+                    || import_points_equal(candidate.end(), &end)?
+                {
+                    matching = Some(index);
+                    break;
+                }
+            }
+            let Some(index) = matching else {
                 segments.clear();
                 break;
             };
             let candidate = edges.swap_remove(index);
-            let candidate = if candidate.start() == &end {
+            let candidate = if import_points_equal(candidate.start(), &end)? {
                 candidate
             } else {
                 reverse_board_segment(candidate)
@@ -1722,7 +1744,16 @@ fn stitch_board_contours(mut edges: Vec<BoardContourSegment>) -> Vec<BoardContou
             contours.push(contour);
         }
     }
-    contours
+    Ok(contours)
+}
+
+fn import_points_equal(first: &Point2, second: &Point2) -> Result<bool, KiCadImportError> {
+    first
+        .x
+        .predicate_eq(&second.x)
+        .zip(first.y.predicate_eq(&second.y))
+        .map(|(x, y)| x && y)
+        .ok_or_else(|| KiCadImportError::IndeterminateGeometry("board contour incidence".into()))
 }
 
 fn reverse_board_segment(segment: BoardContourSegment) -> BoardContourSegment {
@@ -1758,36 +1789,46 @@ fn reverse_board_segment(segment: BoardContourSegment) -> BoardContourSegment {
     }
 }
 
-fn contour_anchor_area(contour: &BoardContour) -> f64 {
-    polygon_area(
-        &contour
-            .segments()
-            .iter()
-            .map(|segment| segment.start().clone())
-            .collect::<Vec<_>>(),
-    )
+fn order_contours_by_exact_area(
+    contours: Vec<BoardContour>,
+) -> Result<Vec<BoardContour>, KiCadImportError> {
+    let mut ordered: Vec<(Real, BoardContour)> = Vec::with_capacity(contours.len());
+    for contour in contours {
+        let area = contour_anchor_twice_area_magnitude(&contour)?;
+        let mut position = ordered.len();
+        for (index, (existing_area, _)) in ordered.iter().enumerate() {
+            match area.predicate_cmp(existing_area) {
+                Some(std::cmp::Ordering::Greater) => {
+                    position = index;
+                    break;
+                }
+                Some(_) => {}
+                None => return Err(KiCadImportError::IndeterminateBoardOutline),
+            }
+        }
+        ordered.insert(position, (area, contour));
+    }
+    Ok(ordered.into_iter().map(|(_, contour)| contour).collect())
 }
 
-fn polygon_area(points: &[Point2]) -> f64 {
-    let mut twice_area = 0.0;
+fn contour_anchor_twice_area_magnitude(contour: &BoardContour) -> Result<Real, KiCadImportError> {
+    let points = contour
+        .segments()
+        .iter()
+        .map(|segment| segment.start())
+        .collect::<Vec<_>>();
+    let mut twice_area = Real::zero();
     for index in 0..points.len() {
-        let current = &points[index];
-        let next = &points[(index + 1) % points.len()];
-        let Some(x0) = current.x.to_f64_lossy() else {
-            return 0.0;
-        };
-        let Some(y0) = current.y.to_f64_lossy() else {
-            return 0.0;
-        };
-        let Some(x1) = next.x.to_f64_lossy() else {
-            return 0.0;
-        };
-        let Some(y1) = next.y.to_f64_lossy() else {
-            return 0.0;
-        };
-        twice_area += x0 * y1 - x1 * y0;
+        let current = points[index];
+        let next = points[(index + 1) % points.len()];
+        twice_area =
+            twice_area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone();
     }
-    twice_area.abs() / 2.0
+    match twice_area.predicate_sign() {
+        Some(RealSign::Negative) => Ok(-twice_area),
+        Some(RealSign::Zero | RealSign::Positive) => Ok(twice_area),
+        None => Err(KiCadImportError::IndeterminateBoardOutline),
+    }
 }
 
 fn parse_decimal(token: &str) -> Option<Real> {
@@ -1825,8 +1866,8 @@ fn exact_arc_through(start: Point2, mid: Point2, end: Point2) -> Option<Explicit
         * (start.x.clone() * (mid.y.clone() - end.y.clone())
             + mid.x.clone() * (end.y.clone() - start.y.clone())
             + end.x.clone() * (start.y.clone() - mid.y.clone()));
-    if denominator.refine_sign_until(-128) != Some(RealSign::Positive)
-        && denominator.refine_sign_until(-128) != Some(RealSign::Negative)
+    if denominator.predicate_sign() != Some(RealSign::Positive)
+        && denominator.predicate_sign() != Some(RealSign::Negative)
     {
         return None;
     }
@@ -1848,7 +1889,7 @@ fn exact_arc_through(start: Point2, mid: Point2, end: Point2) -> Option<Explicit
     let radius = (dx.clone() * dx + dy.clone() * dy).sqrt().ok()?;
     let orientation = (mid.x.clone() - start.x.clone()) * (end.y.clone() - start.y.clone())
         - (mid.y.clone() - start.y.clone()) * (end.x.clone() - start.x.clone());
-    let direction = match orientation.refine_sign_until(-128)? {
+    let direction = match orientation.predicate_sign()? {
         RealSign::Positive => ArcDirection::Ccw,
         RealSign::Negative => ArcDirection::Cw,
         RealSign::Zero => return None,

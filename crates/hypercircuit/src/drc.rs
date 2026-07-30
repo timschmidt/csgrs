@@ -4,9 +4,11 @@
 //! lossy policy conversion. It does not run DRC itself; callers choose the
 //! relevant `hyperdrc` checks and release profile.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 
-use hypercurve::Point2 as CurvePoint2;
+use csgrs::curve::{self, CurveRegionExt};
+use hypercurve::{CurveRegion2, Point2 as CurvePoint2};
 use hyperdrc::authoring_intent::{
     AuthoredComponentEnvelope, AuthoredComponentEnvelopeKind, AuthoredComponentSide,
     AuthoredFunctionalRole, AuthoredFunctionalRoleKind, AuthoredKeepout, AuthoredKeepoutScope,
@@ -28,7 +30,7 @@ use hyperdrc::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use hyperdrc::{
     CapabilityProfile, Check, CheckCoverage, CheckRunDisposition, EvidenceContext,
     FindingSourcePosition, FindingSourceSpan, FindingSubject, LayerMetadata, NativeTestAccess,
-    NativeTestCoverageMethod, NativeTestCoverageReport, NativeTestRequirement, PcbSketch,
+    NativeTestCoverageMethod, NativeTestCoverageReport, NativeTestRequirement, PcbRegion,
     ReadinessContext, ReadinessRunner, Severity, Violation, default_checks,
     native_testpoint_coverage, opinionated_prototype_profile,
 };
@@ -192,7 +194,7 @@ pub struct DrcProcessLayer {
     /// Stable source label used in findings.
     pub name: String,
     /// Exact-aware union image.
-    pub sketch: PcbSketch,
+    pub region: PcbRegion,
 }
 
 /// One certified copper-layer union used for process-to-copper checks.
@@ -203,7 +205,7 @@ pub struct DrcCopperLayerImage {
     /// Stable layer name used in findings.
     pub name: String,
     /// Exact-aware union image.
-    pub sketch: PcbSketch,
+    pub region: PcbRegion,
 }
 
 /// Typed `hyperdrc` inputs plus an audit of non-representable retained intent.
@@ -383,7 +385,7 @@ impl HyperDrcHandoff {
                     crate::CopperFeatureKind::Zone => CopperKind::Zone,
                     crate::CopperFeatureKind::Artwork => CopperKind::Artwork,
                 },
-                sketch: PcbSketch::new(
+                region: PcbRegion::new(
                     feature.profile.clone(),
                     Some(LayerMetadata {
                         name: feature.source.clone(),
@@ -439,7 +441,7 @@ impl HyperDrcHandoff {
                     let name = routing_layer_name(layout, image.layer.0);
                     DrcCopperLayerImage {
                         layer: image.layer,
-                        sketch: PcbSketch::new(
+                        region: PcbRegion::new(
                             copper.clone(),
                             Some(LayerMetadata { name: name.clone() }),
                         ),
@@ -456,7 +458,7 @@ impl HyperDrcHandoff {
                     let name = process_role_name(image.role).to_owned();
                     Some(DrcProcessLayer {
                         role: image.role,
-                        sketch: PcbSketch::new(
+                        region: PcbRegion::new(
                             profile.clone(),
                             Some(LayerMetadata { name: name.clone() }),
                         ),
@@ -492,7 +494,7 @@ impl HyperDrcHandoff {
             .keepouts
             .iter()
             .filter_map(|keepout| {
-                let profile = csgrs::sketch::Profile::polygon_points(
+                let profile = curve::polygon_points(
                     &keepout
                         .boundary
                         .iter()
@@ -518,7 +520,7 @@ impl HyperDrcHandoff {
                 };
                 Some(AuthoredKeepout {
                     source: keepout.id.as_str().to_owned(),
-                    sketch: PcbSketch::new(
+                    region: PcbRegion::new(
                         profile,
                         Some(LayerMetadata {
                             name: format!("keepout:{}", keepout.id.as_str()),
@@ -613,7 +615,7 @@ impl HyperDrcHandoff {
                 source: layout.id.as_str().to_owned(),
                 copper,
                 drills,
-                board_outline: Some(PcbSketch::new(
+                board_outline: Some(PcbRegion::new(
                     materialized.substrate.clone(),
                     Some(LayerMetadata {
                         name: "board-outline".into(),
@@ -857,7 +859,7 @@ impl HyperDrcHandoff {
                         for process in self.mask_layers() {
                             violations.extend(minimum_mask_opening(
                                 &process.name,
-                                &process.sketch,
+                                &process.region,
                                 &policy.minimum_mask_opening,
                                 &policy.minimum_process_report_area,
                             ));
@@ -867,7 +869,7 @@ impl HyperDrcHandoff {
                         for process in self.mask_layers() {
                             violations.extend(solder_mask_opening_spacing(
                                 &process.name,
-                                &process.sketch,
+                                &process.region,
                                 minimum_mask_spacing,
                                 &policy.minimum_process_report_area,
                             ));
@@ -878,7 +880,7 @@ impl HyperDrcHandoff {
                             for process in self.mask_layers() {
                                 violations.extend(solder_mask_board_edge_clearance(
                                     &process.name,
-                                    &process.sketch,
+                                    &process.region,
                                     "board-outline",
                                     board_outline,
                                     process_board_edge_clearance,
@@ -890,19 +892,19 @@ impl HyperDrcHandoff {
                     Check::SolderMaskExpansion => {
                         for process in self.mask_layers() {
                             if let Some(copper) = self.surface_copper(process.role) {
-                                let feature_sketches = self
+                                let feature_regiones = self
                                     .board
                                     .copper
                                     .iter()
                                     .filter(|feature| feature.layer == copper.name)
-                                    .map(|feature| &feature.sketch)
+                                    .map(|feature| &feature.region)
                                     .collect::<Vec<_>>();
                                 violations.extend(solder_mask_expansion_from_features(
                                     &copper.name,
-                                    &copper.sketch,
-                                    &feature_sketches,
+                                    &copper.region,
+                                    &feature_regiones,
                                     &process.name,
-                                    &process.sketch,
+                                    &process.region,
                                     &policy.maximum_mask_expansion,
                                     &policy.minimum_process_report_area,
                                 ));
@@ -912,19 +914,19 @@ impl HyperDrcHandoff {
                     Check::PasteOverhang => {
                         for process in self.paste_layers() {
                             if let Some(copper) = self.surface_copper(process.role) {
-                                let feature_sketches = self
+                                let feature_regiones = self
                                     .board
                                     .copper
                                     .iter()
                                     .filter(|feature| feature.layer == copper.name)
-                                    .map(|feature| &feature.sketch)
+                                    .map(|feature| &feature.region)
                                     .collect::<Vec<_>>();
                                 violations.extend(paste_overhang_from_features(
                                     &process.name,
-                                    &process.sketch,
+                                    &process.region,
                                     &copper.name,
-                                    &copper.sketch,
-                                    &feature_sketches,
+                                    &copper.region,
+                                    &feature_regiones,
                                     &policy.paste_overhang_tolerance,
                                     &policy.minimum_process_report_area,
                                 ));
@@ -936,7 +938,7 @@ impl HyperDrcHandoff {
                             for process in self.silkscreen_layers() {
                                 violations.extend(silkscreen_board_edge_clearance(
                                     &process.name,
-                                    &process.sketch,
+                                    &process.region,
                                     "board-outline",
                                     board_outline,
                                     process_board_edge_clearance,
@@ -949,7 +951,7 @@ impl HyperDrcHandoff {
                         for process in self.silkscreen_layers() {
                             violations.extend(silkscreen_min_width(
                                 &process.name,
-                                &process.sketch,
+                                &process.region,
                                 minimum_silkscreen_width,
                                 &policy.minimum_process_report_area,
                             ));
@@ -960,9 +962,9 @@ impl HyperDrcHandoff {
                             if let Some(mask) = self.side_process_layer(process.role, true) {
                                 violations.extend(silkscreen_overlap(
                                     &process.name,
-                                    &process.sketch,
+                                    &process.region,
                                     &mask.name,
-                                    &mask.sketch,
+                                    &mask.region,
                                     &policy.minimum_process_report_area,
                                 ));
                             }
@@ -1451,8 +1453,8 @@ fn component_envelope(
 fn placed_polygon(
     vertices: &[hyperlattice::Point2],
     placement: &crate::PcbPlacement,
-) -> csgrs::sketch::Profile {
-    csgrs::sketch::Profile::polygon_points(
+) -> CurveRegion2 {
+    curve::polygon_points(
         &vertices
             .iter()
             .map(|point| {
@@ -1463,9 +1465,7 @@ fn placed_polygon(
     )
 }
 
-fn union_component_profiles(
-    profiles: Vec<csgrs::sketch::Profile>,
-) -> Result<Option<csgrs::sketch::Profile>, String> {
+fn union_component_profiles(profiles: Vec<CurveRegion2>) -> Result<Option<CurveRegion2>, String> {
     let mut profiles = profiles.into_iter();
     let Some(mut combined) = profiles.next() else {
         return Ok(None);
@@ -1480,7 +1480,7 @@ fn union_component_profiles(
 
 fn authored_component(
     placement: &crate::PcbPlacement,
-    profile: csgrs::sketch::Profile,
+    profile: CurveRegion2,
     kind: AuthoredComponentEnvelopeKind,
 ) -> AuthoredComponentEnvelope {
     AuthoredComponentEnvelope {
@@ -1489,7 +1489,7 @@ fn authored_component(
             BoardSide::Front => AuthoredComponentSide::Front,
             BoardSide::Back => AuthoredComponentSide::Back,
         },
-        sketch: PcbSketch::new(
+        region: PcbRegion::new(
             profile,
             Some(LayerMetadata {
                 name: format!("component:{}", placement.instance.as_str()),
@@ -1727,7 +1727,7 @@ fn resolve_dimensionless_property(
     let Some(PropertyValue::ExactScalar(value)) = resolution.value else {
         unreachable!("exact HyperPhysics property resolution must carry an exact scalar");
     };
-    let sign = value.refine_sign_until(-64);
+    let sign = value.predicate_sign();
     let valid = if require_positive {
         sign == Some(RealSign::Positive)
     } else {
@@ -1758,7 +1758,10 @@ fn homogeneous_property(
     omissions: &mut Vec<DrcHandoffOmission>,
 ) -> Option<Real> {
     let (_, first) = values.first()?;
-    if values.iter().any(|(_, value)| value != first) {
+    if values
+        .iter()
+        .any(|(_, value)| value.predicate_eq(first) != Some(true))
+    {
         omissions.push(DrcHandoffOmission::HeterogeneousDielectricProperty {
             property,
             materials: values
@@ -1905,8 +1908,8 @@ mod tests {
                     layer: "F.Cu".into(),
                     net: Some("RF".into()),
                     kind: CopperKind::Segment,
-                    sketch: PcbSketch::new(
-                        csgrs::sketch::Profile::rectangle(exact_ratio(8, 100), Real::one()),
+                    region: PcbRegion::new(
+                        curve::rectangle(exact_ratio(8, 100), Real::one()),
                         Some(LayerMetadata {
                             name: "route:rf".into(),
                         }),

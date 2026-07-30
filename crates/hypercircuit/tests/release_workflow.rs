@@ -713,8 +713,7 @@ fn external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_ident
         .materialize(&circuit, MaterializationOptions::default())
         .unwrap();
     let obj = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 3 1 4\n";
-    let gltf = csgrs::mesh::Mesh::<()>::cube(Real::one(), ())
-        .to_gltf("package-detail")
+    let gltf = csgrs::io::gltf::to_gltf(&csgrs::solid::cube(Real::one()), "package-detail")
         .unwrap()
         .into_bytes();
     let vrml = br#"#VRML V2.0 utf8

@@ -66,6 +66,7 @@ pub mod package;
 pub mod panel;
 #[cfg(feature = "layout")]
 pub mod placement;
+mod predicate;
 #[cfg(feature = "layout")]
 pub mod preview;
 #[cfg(feature = "layout")]

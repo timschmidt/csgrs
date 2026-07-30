@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use hypercircuit::{
@@ -7,6 +8,13 @@ use hypercircuit::{
     PiecewiseLinearSolveError, PinBinding, PinElectricalKind, PinRef, Real, TransientPolicy,
     solve_piecewise_linear,
 };
+use hyperlimit::compare_reals;
+
+fn real_order(left: &Real, right: &Real) -> Ordering {
+    compare_reals(left, right)
+        .value()
+        .expect("test comparison must be decided by the centralized predicate policy")
+}
 
 fn fixture(current: i64) -> (NetId, Vec<LinearStamp>, PiecewiseLinearDevice) {
     let output = NetId::new("OUT").unwrap();
@@ -221,8 +229,8 @@ fn shockley_newton_uses_lossy_proposals_but_exact_true_law_replay() {
                 && iteration.linearizations.len() == 1)
     );
     let output = report.net_voltage(&NetId::new("OUT").unwrap()).unwrap();
-    assert!(output > &Real::zero());
-    assert!(output < &Real::one());
+    assert_eq!(real_order(output, &Real::zero()), Ordering::Greater);
+    assert_eq!(real_order(output, &Real::one()), Ordering::Less);
     assert!(output.to_f64_lossy().is_some());
 }
 

@@ -1,5 +1,7 @@
 //! Exact linear frequency-domain analysis over retained device models.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
@@ -833,7 +835,7 @@ impl Circuit {
         if !self.validate().is_valid() {
             return Err(AcAnalysisError::InvalidCircuit);
         }
-        if angular_frequency.structural_facts().sign != Some(RealSign::Positive) {
+        if angular_frequency.predicate_sign() != Some(RealSign::Positive) {
             return Err(AcAnalysisError::InvalidAngularFrequency);
         }
         let excitation_map = validate_excitations(self, excitations)?;
@@ -1369,7 +1371,7 @@ fn parameter<'a>(
 }
 
 fn is_positive(value: &Real) -> bool {
-    value.structural_facts().sign == Some(RealSign::Positive)
+    value.predicate_sign() == Some(RealSign::Positive)
 }
 
 fn missing_parameter(

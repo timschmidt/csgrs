@@ -155,7 +155,7 @@ Route generation additionally needs retained policy/evidence nouns:
 They belong in `hypercircuit`, because they carry electrical or manufacturing
 meaning. `csgrs` should expose geometry vocabulary only: profiles, paths,
 regions, solids, transforms, offsets, booleans, meshes and import/export
-geometry adapters. A pad becomes a `csgrs::Profile` only during materialization;
+geometry adapters. A pad becomes a `hypercurve::CurveRegion2` only during materialization;
 the result retains a hypercircuit source id and net rather than teaching csgrs
 what a pad or net means.
 

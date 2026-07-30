@@ -5,21 +5,20 @@
 //! `HyperDrcHandoff` remains the release authority for exact component
 //! overlap and board-readiness certification when the `drc` feature is enabled.
 
+use crate::predicate::RealPredicateExt as _;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
 };
-
-use hypercurve::{Classification, CurvePolicy};
-use hyperlattice::Point2;
-use hyperpath::TraceLayer;
-use hyperreal::RealSign;
 
 use crate::{
     BoardBoundaryGeometry, BoardSide, Circuit, CircuitInstanceId, LandPattern,
     LandPatternGraphicPrimitive, LayerRole, NetId, PadId, PadShape, PcbLayout, PcbPlacement,
     PinRef, PlacementConstraintKind, PlacementResolutionIssue, Real, RouteId,
 };
+use hypercurve::{Classification, CurvePolicy};
+use hyperlattice::Point2;
+use hyperpath::TraceLayer;
 
 /// Conservative source used to bound one package during placement search.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -273,6 +272,8 @@ pub enum PlacementSolveIssue {
     NonPositivePinAccessTraceWidth,
     /// An enabled pin-access clearance must be structurally non-negative.
     NegativePinAccessClearance,
+    /// A required exact policy sign could not be decided.
+    IndeterminatePolicy(String),
     /// Structural pin-access audit setup failed.
     PinAccess(PlacementPinAccessIssue),
     /// One final terminal retained exact-predicate uncertainty.
@@ -354,35 +355,52 @@ impl Bounds {
             max_y: first.y,
         };
         for point in points {
-            if point.x < bounds.min_x {
-                bounds.min_x = point.x.clone();
+            match point.x.predicate_cmp(&bounds.min_x) {
+                Some(Ordering::Less) => bounds.min_x = point.x.clone(),
+                Some(_) => {}
+                None => return None,
             }
-            if point.y < bounds.min_y {
-                bounds.min_y = point.y.clone();
+            match point.y.predicate_cmp(&bounds.min_y) {
+                Some(Ordering::Less) => bounds.min_y = point.y.clone(),
+                Some(_) => {}
+                None => return None,
             }
-            if point.x > bounds.max_x {
-                bounds.max_x = point.x.clone();
+            match point.x.predicate_cmp(&bounds.max_x) {
+                Some(Ordering::Greater) => bounds.max_x = point.x.clone(),
+                Some(_) => {}
+                None => return None,
             }
-            if point.y > bounds.max_y {
-                bounds.max_y = point.y;
+            match point.y.predicate_cmp(&bounds.max_y) {
+                Some(Ordering::Greater) => bounds.max_y = point.y,
+                Some(_) => {}
+                None => return None,
             }
         }
         Some(bounds)
     }
 
-    fn include(&mut self, other: &Self) {
-        if other.min_x < self.min_x {
-            self.min_x.clone_from(&other.min_x);
+    fn include(&mut self, other: &Self) -> Option<()> {
+        match other.min_x.predicate_cmp(&self.min_x) {
+            Some(Ordering::Less) => self.min_x.clone_from(&other.min_x),
+            Some(_) => {}
+            None => return None,
         }
-        if other.min_y < self.min_y {
-            self.min_y.clone_from(&other.min_y);
+        match other.min_y.predicate_cmp(&self.min_y) {
+            Some(Ordering::Less) => self.min_y.clone_from(&other.min_y),
+            Some(_) => {}
+            None => return None,
         }
-        if other.max_x > self.max_x {
-            self.max_x.clone_from(&other.max_x);
+        match other.max_x.predicate_cmp(&self.max_x) {
+            Some(Ordering::Greater) => self.max_x.clone_from(&other.max_x),
+            Some(_) => {}
+            None => return None,
         }
-        if other.max_y > self.max_y {
-            self.max_y.clone_from(&other.max_y);
+        match other.max_y.predicate_cmp(&self.max_y) {
+            Some(Ordering::Greater) => self.max_y.clone_from(&other.max_y),
+            Some(_) => {}
+            None => return None,
         }
+        Some(())
     }
 
     fn expanded(&self, amount: &Real) -> Self {
@@ -394,11 +412,12 @@ impl Bounds {
         }
     }
 
-    fn collides(&self, other: &Self, clearance: &Real) -> bool {
-        !(self.max_x.clone() + clearance.clone() <= other.min_x
-            || other.max_x.clone() + clearance.clone() <= self.min_x
-            || self.max_y.clone() + clearance.clone() <= other.min_y
-            || other.max_y.clone() + clearance.clone() <= self.min_y)
+    fn collides(&self, other: &Self, clearance: &Real) -> Option<bool> {
+        let x_before = (self.max_x.clone() + clearance.clone()).predicate_le(&other.min_x)?;
+        let x_after = (other.max_x.clone() + clearance.clone()).predicate_le(&self.min_x)?;
+        let y_before = (self.max_y.clone() + clearance.clone()).predicate_le(&other.min_y)?;
+        let y_after = (other.max_y.clone() + clearance.clone()).predicate_le(&self.min_y)?;
+        Some(!(x_before || x_after || y_before || y_after))
     }
 }
 
@@ -426,47 +445,65 @@ impl PcbLayout {
             report.issues.push(PlacementSolveIssue::InvalidLayout);
             return report;
         }
-        if policy.grid_pitch.structural_facts().sign != Some(RealSign::Positive) {
-            report
+        match policy.grid_pitch.predicate_sign() {
+            Some(hyperreal::RealSign::Positive) => {}
+            Some(_) => report
                 .issues
-                .push(PlacementSolveIssue::NonPositiveGridPitch);
+                .push(PlacementSolveIssue::NonPositiveGridPitch),
+            None => report.issues.push(PlacementSolveIssue::IndeterminatePolicy(
+                "grid_pitch".into(),
+            )),
         }
-        if !matches!(
-            policy.clearance.structural_facts().sign,
-            Some(RealSign::Zero | RealSign::Positive)
-        ) {
-            report.issues.push(PlacementSolveIssue::NegativeClearance);
+        match policy.clearance.predicate_sign() {
+            Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive) => {}
+            Some(hyperreal::RealSign::Negative) => {
+                report.issues.push(PlacementSolveIssue::NegativeClearance);
+            }
+            None => report
+                .issues
+                .push(PlacementSolveIssue::IndeterminatePolicy("clearance".into())),
         }
         if policy.max_candidates_per_component == 0 {
             report.issues.push(PlacementSolveIssue::ZeroCandidateLimit);
         }
-        if policy
-            .density_radius
-            .as_ref()
-            .is_some_and(|radius| radius.structural_facts().sign != Some(RealSign::Positive))
-        {
-            report
-                .issues
-                .push(PlacementSolveIssue::NonPositiveDensityRadius);
+        if let Some(radius) = &policy.density_radius {
+            match radius.predicate_sign() {
+                Some(hyperreal::RealSign::Positive) => {}
+                Some(_) => report
+                    .issues
+                    .push(PlacementSolveIssue::NonPositiveDensityRadius),
+                None => report.issues.push(PlacementSolveIssue::IndeterminatePolicy(
+                    "density_radius".into(),
+                )),
+            }
         }
         if let Some(pin_access) = &policy.pin_access {
-            if pin_access.probe_distance.structural_facts().sign != Some(RealSign::Positive) {
-                report
+            match pin_access.probe_distance.predicate_sign() {
+                Some(hyperreal::RealSign::Positive) => {}
+                Some(_) => report
                     .issues
-                    .push(PlacementSolveIssue::NonPositivePinAccessProbeDistance);
+                    .push(PlacementSolveIssue::NonPositivePinAccessProbeDistance),
+                None => report.issues.push(PlacementSolveIssue::IndeterminatePolicy(
+                    "pin_access.probe_distance".into(),
+                )),
             }
-            if pin_access.minimum_trace_width.structural_facts().sign != Some(RealSign::Positive) {
-                report
+            match pin_access.minimum_trace_width.predicate_sign() {
+                Some(hyperreal::RealSign::Positive) => {}
+                Some(_) => report
                     .issues
-                    .push(PlacementSolveIssue::NonPositivePinAccessTraceWidth);
+                    .push(PlacementSolveIssue::NonPositivePinAccessTraceWidth),
+                None => report.issues.push(PlacementSolveIssue::IndeterminatePolicy(
+                    "pin_access.minimum_trace_width".into(),
+                )),
             }
-            if !matches!(
-                pin_access.minimum_clearance.structural_facts().sign,
-                Some(RealSign::Zero | RealSign::Positive)
-            ) {
-                report
+            match pin_access.minimum_clearance.predicate_sign() {
+                Some(hyperreal::RealSign::Zero | hyperreal::RealSign::Positive) => {}
+                Some(hyperreal::RealSign::Negative) => report
                     .issues
-                    .push(PlacementSolveIssue::NegativePinAccessClearance);
+                    .push(PlacementSolveIssue::NegativePinAccessClearance),
+                None => report.issues.push(PlacementSolveIssue::IndeterminatePolicy(
+                    "pin_access.minimum_clearance".into(),
+                )),
             }
         }
         if !report.issues.is_empty() {
@@ -569,15 +606,30 @@ impl PcbLayout {
             let Some((local, source)) = local_envelopes.get(&instance) else {
                 continue;
             };
-            let authored_score = candidate_score(
+            let Some(authored_score) = candidate_score(
                 self,
                 circuit,
                 &authored,
                 &authored,
                 &report.placements,
                 policy,
-            );
-            let rotations = allowed_rotations(self, &instance, &authored.rotation_degrees);
+            ) else {
+                report
+                    .issues
+                    .push(PlacementSolveIssue::IndeterminateCandidateScore(
+                        instance.clone(),
+                    ));
+                continue;
+            };
+            let Some(rotations) = allowed_rotations(self, &instance, &authored.rotation_degrees)
+            else {
+                report
+                    .issues
+                    .push(PlacementSolveIssue::IndeterminateCandidateScore(
+                        instance.clone(),
+                    ));
+                continue;
+            };
             let sides = allowed_sides(self, &instance, authored.side);
             let mut candidates = vec![authored.clone()];
             for rotation in rotations {
@@ -599,7 +651,14 @@ impl PcbLayout {
                 .take(policy.max_candidates_per_component)
             {
                 tested += 1;
-                let bounds = transformed_bounds(local, &candidate);
+                let Some(same_as_authored) = placements_equal(&candidate, &authored) else {
+                    indeterminate_score = true;
+                    continue;
+                };
+                let Some(bounds) = transformed_bounds(local, &candidate) else {
+                    indeterminate_board = true;
+                    continue;
+                };
                 match candidate_allowed(
                     self,
                     &board_boundary,
@@ -611,15 +670,18 @@ impl PcbLayout {
                     &policy.clearance,
                 ) {
                     Some(true) => {
-                        let score = candidate_score(
+                        let Some(score) = candidate_score(
                             self,
                             circuit,
                             &candidate,
                             &authored,
                             &report.placements,
                             policy,
-                        );
-                        if candidate == authored && !policy.optimize_legal_authored_positions {
+                        ) else {
+                            indeterminate_score = true;
+                            continue;
+                        };
+                        if same_as_authored && !policy.optimize_legal_authored_positions {
                             accepted = Some((candidate, bounds, score));
                             break;
                         }
@@ -655,13 +717,21 @@ impl PcbLayout {
                     ));
             }
             let Some((candidate, bounds, accepted_score)) = accepted else {
-                let authored_bounds = transformed_bounds(local, &authored);
+                let Some(authored_bounds) = transformed_bounds(local, &authored) else {
+                    report
+                        .issues
+                        .push(PlacementSolveIssue::IndeterminateBoardContainment(
+                            instance.clone(),
+                        ));
+                    continue;
+                };
                 if envelope_inside_board(&authored_bounds, &board_boundary) == Some(false) {
                     report
                         .issues
                         .push(PlacementSolveIssue::LockedOutsideBoard(instance));
                 } else if let Some((other, _, _)) = occupied.iter().find(|(_, side, bounds)| {
-                    *side == authored.side && authored_bounds.collides(bounds, &policy.clearance)
+                    *side == authored.side
+                        && authored_bounds.collides(bounds, &policy.clearance) == Some(true)
                 }) {
                     report.issues.push(PlacementSolveIssue::LockedCollision {
                         first: other.clone(),
@@ -675,7 +745,7 @@ impl PcbLayout {
                 }
                 continue;
             };
-            if candidate != authored {
+            if placements_equal(&candidate, &authored) == Some(false) {
                 report.moves.push(PlacementMove {
                     instance: instance.clone(),
                     from: authored.position,
@@ -694,7 +764,7 @@ impl PcbLayout {
             report.placements[index] = candidate;
         }
 
-        for index in 0..report.placements.len() {
+        'placements: for index in 0..report.placements.len() {
             if locked.contains(&report.placements[index].instance) {
                 continue;
             }
@@ -708,27 +778,48 @@ impl PcbLayout {
             let mut indeterminate_board = false;
             let mut indeterminate_score = false;
 
-            let authored_bounds = transformed_bounds(local, &authored);
+            let Some(authored_bounds) = transformed_bounds(local, &authored) else {
+                report
+                    .issues
+                    .push(PlacementSolveIssue::IndeterminateBoardContainment(
+                        instance.clone(),
+                    ));
+                continue;
+            };
             let mut blockers = occupied.clone();
             for future in report.placements.iter().skip(index + 1) {
                 let Some((future_local, _)) = local_envelopes.get(&future.instance) else {
                     continue;
                 };
-                let future_bounds = transformed_bounds(future_local, future);
+                let Some(future_bounds) = transformed_bounds(future_local, future) else {
+                    report
+                        .issues
+                        .push(PlacementSolveIssue::IndeterminateBoardContainment(
+                            instance.clone(),
+                        ));
+                    continue 'placements;
+                };
                 if future.side != authored.side
-                    || !authored_bounds.collides(&future_bounds, &policy.clearance)
+                    || authored_bounds.collides(&future_bounds, &policy.clearance) != Some(true)
                 {
                     blockers.push((future.instance.clone(), future.side, future_bounds));
                 }
             }
-            let authored_score = candidate_score(
+            let Some(authored_score) = candidate_score(
                 self,
                 circuit,
                 &authored,
                 &authored,
                 &report.placements,
                 policy,
-            );
+            ) else {
+                report
+                    .issues
+                    .push(PlacementSolveIssue::IndeterminateCandidateScore(
+                        instance.clone(),
+                    ));
+                continue;
+            };
             tested += 1;
             match candidate_allowed(
                 self,
@@ -752,12 +843,36 @@ impl PcbLayout {
                 None => indeterminate_board = true,
             }
 
-            let rotations = allowed_rotations(self, &instance, &authored.rotation_degrees);
+            let Some(rotations) = allowed_rotations(self, &instance, &authored.rotation_degrees)
+            else {
+                report
+                    .issues
+                    .push(PlacementSolveIssue::IndeterminateCandidateScore(
+                        instance.clone(),
+                    ));
+                continue;
+            };
             let sides = allowed_sides(self, &instance, authored.side);
             let mut y = board_bounds.min_y.clone();
-            while y <= board_bounds.max_y && tested < policy.max_candidates_per_component {
+            'rows: loop {
+                match y.predicate_le(&board_bounds.max_y) {
+                    Some(true) if tested < policy.max_candidates_per_component => {}
+                    Some(_) => break,
+                    None => {
+                        indeterminate_board = true;
+                        break;
+                    }
+                }
                 let mut x = board_bounds.min_x.clone();
-                while x <= board_bounds.max_x && tested < policy.max_candidates_per_component {
+                loop {
+                    match x.predicate_le(&board_bounds.max_x) {
+                        Some(true) if tested < policy.max_candidates_per_component => {}
+                        Some(_) => break,
+                        None => {
+                            indeterminate_board = true;
+                            break 'rows;
+                        }
+                    }
                     let position = Point2::new(x.clone(), y.clone());
                     x += policy.grid_pitch.clone();
                     for rotation in &rotations {
@@ -769,11 +884,19 @@ impl PcbLayout {
                             candidate.position.clone_from(&position);
                             candidate.rotation_degrees.clone_from(rotation);
                             candidate.side = *side;
-                            if candidate == authored {
-                                continue;
+                            match placements_equal(&candidate, &authored) {
+                                Some(true) => continue,
+                                Some(false) => {}
+                                None => {
+                                    indeterminate_score = true;
+                                    continue;
+                                }
                             }
                             tested += 1;
-                            let bounds = transformed_bounds(local, &candidate);
+                            let Some(bounds) = transformed_bounds(local, &candidate) else {
+                                indeterminate_board = true;
+                                continue;
+                            };
                             match candidate_allowed(
                                 self,
                                 &board_boundary,
@@ -785,14 +908,17 @@ impl PcbLayout {
                                 &policy.clearance,
                             ) {
                                 Some(true) => {
-                                    let score = candidate_score(
+                                    let Some(score) = candidate_score(
                                         self,
                                         circuit,
                                         &candidate,
                                         &authored,
                                         &report.placements,
                                         policy,
-                                    );
+                                    ) else {
+                                        indeterminate_score = true;
+                                        continue;
+                                    };
                                     match &accepted {
                                         None => accepted = Some((candidate, bounds, score)),
                                         Some((_, _, best_score)) => {
@@ -836,7 +962,7 @@ impl PcbLayout {
                 });
                 continue;
             };
-            if position != authored {
+            if placements_equal(&position, &authored) == Some(false) {
                 report.moves.push(PlacementMove {
                     instance: instance.clone(),
                     from: authored.position.clone(),
@@ -913,27 +1039,32 @@ fn candidate_allowed(
     occupied: &[(CircuitInstanceId, BoardSide, Bounds)],
     clearance: &Real,
 ) -> Option<bool> {
-    if occupied.iter().any(|(_, other_side, other)| {
-        *other_side == candidate.side && bounds.collides(other, clearance)
-    }) {
-        return Some(false);
+    for (_, other_side, other) in occupied {
+        if *other_side != candidate.side {
+            continue;
+        }
+        match bounds.collides(other, clearance) {
+            Some(true) => return Some(false),
+            Some(false) => {}
+            None => return None,
+        }
     }
     match envelope_inside_board(bounds, board_boundary) {
         Some(true) => {}
         decision => return decision,
     }
-    Some(layout.placement_constraints.iter().all(|constraint| {
-        match &constraint.kind {
+    for constraint in &layout.placement_constraints {
+        let decision = match &constraint.kind {
             PlacementConstraintKind::Within {
                 instance: constrained,
                 min,
                 max,
-            } if constrained == instance => {
-                min.x <= candidate.position.x
-                    && candidate.position.x <= max.x
-                    && min.y <= candidate.position.y
-                    && candidate.position.y <= max.y
-            }
+            } if constrained == instance => Some(
+                min.x.predicate_le(&candidate.position.x)?
+                    && candidate.position.x.predicate_le(&max.x)?
+                    && min.y.predicate_le(&candidate.position.y)?
+                    && candidate.position.y.predicate_le(&max.y)?,
+            ),
             PlacementConstraintKind::WithinDistance {
                 subject,
                 anchor,
@@ -947,37 +1078,89 @@ fn candidate_allowed(
                         placement.position.clone_from(position);
                     }
                 }
-                crate::layout::placement_anchor_point(layout, &placements, subject)
-                    .zip(crate::layout::placement_anchor_point(
-                        layout,
-                        &placements,
-                        anchor,
-                    ))
-                    .is_some_and(|(subject, anchor)| {
-                        let dx = subject.x - anchor.x;
-                        let dy = subject.y - anchor.y;
-                        dx.clone() * dx + dy.clone() * dy <= maximum.clone() * maximum.clone()
-                    })
+                let Some((subject, anchor)) =
+                    crate::layout::placement_anchor_point(layout, &placements, subject).zip(
+                        crate::layout::placement_anchor_point(layout, &placements, anchor),
+                    )
+                else {
+                    return Some(false);
+                };
+                let dx = subject.x - anchor.x;
+                let dy = subject.y - anchor.y;
+                (dx.clone() * dx + dy.clone() * dy)
+                    .predicate_le(&(maximum.clone() * maximum.clone()))
             }
             PlacementConstraintKind::AlignX { instances } if instances.contains(instance) => {
-                alignment_target(instances, instance, positions, |point| &point.x)
-                    .is_none_or(|target| candidate.position.x == *target)
+                match alignment_target(instances, instance, positions, |point| &point.x) {
+                    Some(target) => candidate
+                        .position
+                        .x
+                        .predicate_cmp(target)
+                        .map(|value| value == Ordering::Equal),
+                    None => Some(true),
+                }
             }
             PlacementConstraintKind::AlignY { instances } if instances.contains(instance) => {
-                alignment_target(instances, instance, positions, |point| &point.y)
-                    .is_none_or(|target| candidate.position.y == *target)
+                match alignment_target(instances, instance, positions, |point| &point.y) {
+                    Some(target) => candidate
+                        .position
+                        .y
+                        .predicate_cmp(target)
+                        .map(|value| value == Ordering::Equal),
+                    None => Some(true),
+                }
             }
             PlacementConstraintKind::AllowedRotations {
                 instance: constrained,
                 rotations_degrees,
-            } if constrained == instance => rotations_degrees.contains(&candidate.rotation_degrees),
+            } if constrained == instance => {
+                let mut unknown = false;
+                let matched = rotations_degrees.iter().any(|rotation| {
+                    match rotation.predicate_cmp(&candidate.rotation_degrees) {
+                        Some(Ordering::Equal) => true,
+                        Some(_) => false,
+                        None => {
+                            unknown = true;
+                            false
+                        }
+                    }
+                });
+                if matched {
+                    Some(true)
+                } else if unknown {
+                    None
+                } else {
+                    Some(false)
+                }
+            }
             PlacementConstraintKind::AllowedSides {
                 instance: constrained,
                 sides,
-            } if constrained == instance => sides.contains(&candidate.side),
-            _ => true,
+            } if constrained == instance => Some(sides.contains(&candidate.side)),
+            _ => Some(true),
+        };
+        match decision {
+            Some(true) => {}
+            decision => return decision,
         }
-    }))
+    }
+    Some(true)
+}
+
+fn placements_equal(first: &PcbPlacement, second: &PcbPlacement) -> Option<bool> {
+    if first.instance != second.instance
+        || first.land_pattern != second.land_pattern
+        || first.side != second.side
+    {
+        return Some(false);
+    }
+    Some(
+        first.position.x.predicate_eq(&second.position.x)?
+            && first.position.y.predicate_eq(&second.position.y)?
+            && first
+                .rotation_degrees
+                .predicate_eq(&second.rotation_degrees)?,
+    )
 }
 
 fn candidate_score(
@@ -987,7 +1170,7 @@ fn candidate_score(
     authored: &PcbPlacement,
     placements: &[PcbPlacement],
     policy: &PlacementSolvePolicy,
-) -> PlacementCandidateScore {
+) -> Option<PlacementCandidateScore> {
     let endpoints = electrical_endpoints(layout, circuit, candidate, &candidate.position);
     let mut connectivity_length = Real::zero();
     for other in placements {
@@ -1007,24 +1190,27 @@ fn candidate_score(
     }
     let dx = candidate.position.x.clone() - authored.position.x.clone();
     let dy = candidate.position.y.clone() - authored.position.y.clone();
-    PlacementCandidateScore {
+    let orientation_changed = candidate
+        .rotation_degrees
+        .predicate_ne(&authored.rotation_degrees)?;
+    Some(PlacementCandidateScore {
         pin_access: candidate_pin_access_score(layout, circuit, candidate, placements, policy),
         routing_congestion: if policy.minimize_routing_congestion {
-            routing_congestion(layout, circuit, candidate, placements)
+            routing_congestion(layout, circuit, candidate, placements)?
         } else {
             Real::zero()
         },
         density_pressure: policy
             .density_radius
             .as_ref()
-            .map_or_else(Real::zero, |radius| {
+            .map_or(Some(Real::zero()), |radius| {
                 density_pressure(candidate, placements, radius)
-            }),
+            })?,
         connectivity_length,
         displacement_squared: dx.clone() * dx + dy.clone() * dy,
-        orientation_changes: u8::from(candidate.rotation_degrees != authored.rotation_degrees)
+        orientation_changes: u8::from(orientation_changed)
             + u8::from(candidate.side != authored.side),
-    }
+    })
 }
 
 fn candidate_pin_access_score(
@@ -1054,17 +1240,21 @@ fn candidate_pin_access_score(
         .score()
 }
 
-fn density_pressure(candidate: &PcbPlacement, placements: &[PcbPlacement], radius: &Real) -> Real {
+fn density_pressure(
+    candidate: &PcbPlacement,
+    placements: &[PcbPlacement],
+    radius: &Real,
+) -> Option<Real> {
     placements
         .iter()
         .filter(|other| other.instance != candidate.instance && other.side == candidate.side)
-        .fold(Real::zero(), |pressure, other| {
+        .try_fold(Real::zero(), |pressure, other| {
             let distance = (candidate.position.x.clone() - other.position.x.clone()).abs()
                 + (candidate.position.y.clone() - other.position.y.clone()).abs();
-            if distance < *radius {
-                pressure + radius.clone() - distance
+            if distance.predicate_lt(radius)? {
+                Some(pressure + radius.clone() - distance)
             } else {
-                pressure
+                Some(pressure)
             }
         })
 }
@@ -1074,7 +1264,7 @@ fn routing_congestion(
     circuit: &Circuit,
     candidate: &PcbPlacement,
     placements: &[PcbPlacement],
-) -> Real {
+) -> Option<Real> {
     let mut endpoints = BTreeMap::<crate::NetId, Vec<Point2>>::new();
     for placement in placements {
         let effective = if placement.instance == candidate.instance {
@@ -1089,25 +1279,25 @@ fn routing_congestion(
     let boxes = endpoints
         .into_values()
         .filter(|points| points.len() >= 2)
-        .filter_map(Bounds::from_points)
-        .collect::<Vec<_>>();
+        .map(Bounds::from_points)
+        .collect::<Option<Vec<_>>>()?;
     let mut pressure = Real::zero();
     for (index, first) in boxes.iter().enumerate() {
         for second in boxes.iter().skip(index + 1) {
             let Some(overlap_x) =
-                interval_overlap(&first.min_x, &first.max_x, &second.min_x, &second.max_x)
+                interval_overlap(&first.min_x, &first.max_x, &second.min_x, &second.max_x)?
             else {
                 continue;
             };
             let Some(overlap_y) =
-                interval_overlap(&first.min_y, &first.max_y, &second.min_y, &second.max_y)
+                interval_overlap(&first.min_y, &first.max_y, &second.min_y, &second.max_y)?
             else {
                 continue;
             };
             pressure += overlap_x + overlap_y + Real::one();
         }
     }
-    pressure
+    Some(pressure)
 }
 
 fn interval_overlap(
@@ -1115,18 +1305,16 @@ fn interval_overlap(
     first_max: &Real,
     second_min: &Real,
     second_max: &Real,
-) -> Option<Real> {
-    let low = if first_min >= second_min {
-        first_min
-    } else {
-        second_min
+) -> Option<Option<Real>> {
+    let low = match first_min.predicate_cmp(second_min)? {
+        Ordering::Greater | Ordering::Equal => first_min,
+        Ordering::Less => second_min,
     };
-    let high = if first_max <= second_max {
-        first_max
-    } else {
-        second_max
+    let high = match first_max.predicate_cmp(second_max)? {
+        Ordering::Less | Ordering::Equal => first_max,
+        Ordering::Greater => second_max,
     };
-    (low <= high).then(|| high.clone() - low.clone())
+    Some(low.predicate_le(high)?.then(|| high.clone() - low.clone()))
 }
 
 fn electrical_endpoints(
@@ -1197,25 +1385,25 @@ fn compare_candidate_scores(
     }
     match candidate
         .routing_congestion
-        .partial_cmp(&current.routing_congestion)?
+        .predicate_cmp(&current.routing_congestion)?
     {
         Ordering::Equal => {}
         ordering => return Some(ordering),
     }
     match candidate
         .density_pressure
-        .partial_cmp(&current.density_pressure)?
+        .predicate_cmp(&current.density_pressure)?
     {
         Ordering::Equal => {}
         ordering => return Some(ordering),
     }
     match candidate
         .connectivity_length
-        .partial_cmp(&current.connectivity_length)?
+        .predicate_cmp(&current.connectivity_length)?
     {
         Ordering::Equal => candidate
             .displacement_squared
-            .partial_cmp(&current.displacement_squared)
+            .predicate_cmp(&current.displacement_squared)
             .map(|ordering| {
                 if ordering == Ordering::Equal {
                     candidate
@@ -1260,7 +1448,7 @@ fn allowed_rotations(
     layout: &PcbLayout,
     instance: &CircuitInstanceId,
     authored: &Real,
-) -> Vec<Real> {
+) -> Option<Vec<Real>> {
     let constraints = layout
         .placement_constraints
         .iter()
@@ -1273,26 +1461,43 @@ fn allowed_rotations(
         })
         .collect::<Vec<_>>();
     let Some(first) = constraints.first() else {
-        return vec![authored.clone()];
+        return Some(vec![authored.clone()]);
     };
     let mut rotations = Vec::new();
-    if first.contains(authored)
-        && constraints
-            .iter()
-            .all(|constraint| constraint.contains(authored))
+    if constraints
+        .iter()
+        .map(|constraint| real_slice_contains(constraint, authored))
+        .collect::<Option<Vec<_>>>()?
+        .into_iter()
+        .all(|contains| contains)
     {
         rotations.push(authored.clone());
     }
     for rotation in *first {
-        if !rotations.contains(rotation)
-            && constraints
-                .iter()
-                .all(|constraint| constraint.contains(rotation))
-        {
+        let already_retained = real_slice_contains(&rotations, rotation)?;
+        let allowed_everywhere = constraints
+            .iter()
+            .map(|constraint| real_slice_contains(constraint, rotation))
+            .collect::<Option<Vec<_>>>()?
+            .into_iter()
+            .all(|contains| contains);
+        if !already_retained && allowed_everywhere {
             rotations.push(rotation.clone());
         }
     }
-    rotations
+    Some(rotations)
+}
+
+fn real_slice_contains(values: &[Real], target: &Real) -> Option<bool> {
+    let mut indeterminate = false;
+    for value in values {
+        match value.predicate_eq(target) {
+            Some(true) => return Some(true),
+            Some(false) => {}
+            None => indeterminate = true,
+        }
+    }
+    if indeterminate { None } else { Some(false) }
 }
 
 fn allowed_sides(
@@ -1334,7 +1539,7 @@ fn allowed_sides(
     sides
 }
 
-fn transformed_bounds(local: &Bounds, placement: &PcbPlacement) -> Bounds {
+fn transformed_bounds(local: &Bounds, placement: &PcbPlacement) -> Option<Bounds> {
     Bounds::from_points(
         [
             Point2::new(local.min_x.clone(), local.min_y.clone()),
@@ -1345,7 +1550,6 @@ fn transformed_bounds(local: &Bounds, placement: &PcbPlacement) -> Bounds {
         .iter()
         .map(|point| placement.transform_point(point)),
     )
-    .expect("four envelope corners are nonempty")
 }
 
 fn local_envelope(pattern: &LandPattern) -> Option<(Bounds, PlacementEnvelopeSource)> {
@@ -1372,14 +1576,16 @@ fn local_envelope(pattern: &LandPattern) -> Option<(Bounds, PlacementEnvelopeSou
         };
         if let Some(bounds) = bounds {
             match &mut courtyard {
-                Some(combined) => combined.include(&bounds),
+                Some(combined) => combined.include(&bounds)?,
                 None => courtyard = Some(bounds),
             }
         }
         if let Some(width) = &graphic.stroke_width {
             let half = (width.clone() / Real::from(2)).expect("two is nonzero");
-            if half > stroke_expansion {
-                stroke_expansion = half;
+            match half.predicate_cmp(&stroke_expansion) {
+                Some(Ordering::Greater) => stroke_expansion = half,
+                Some(Ordering::Equal | Ordering::Less) => {}
+                None => return None,
             }
         }
     }
@@ -1399,7 +1605,7 @@ fn local_envelope(pattern: &LandPattern) -> Option<(Bounds, PlacementEnvelopeSou
     for pad in &pattern.pads {
         let bounds = pad_bounds(pad);
         match &mut pads {
-            Some(combined) => combined.include(&bounds),
+            Some(combined) => combined.include(&bounds)?,
             None => pads = Some(bounds),
         }
     }

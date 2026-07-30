@@ -39,12 +39,12 @@ attributes, and assembly outputs.
 Ownership is deliberately separated:
 
 - HyperCircuit owns circuit, schematic, PCB, and release semantics.
-- [Hyperpath](../hyperpath/README.md) owns routed-path geometry and exact path
+- [Hyperpath](https://github.com/timschmidt/hyperpath) owns routed-path geometry and exact path
   predicates.
-- [CSGRS](../csgrs/readme.md) composes profiles and solids for materialization.
-- [HyperDRC](../hyperdrc/README.md) owns readiness policy and findings.
-- [Hyperphysics](../hyperphysics/README.md) owns physical property models.
-- [Hypersolve](../hypersolve/README.md) accepts coupled residual systems.
+- [CSGRS](https://github.com/timschmidt/csgrs) composes profiles and solids for materialization.
+- [HyperDRC](https://github.com/timschmidt/hyperdrc) owns readiness policy and findings.
+- [Hyperphysics](https://github.com/timschmidt/hyperphysics) owns physical property models.
+- [Hypersolve](https://github.com/timschmidt/hypersolve) accepts coupled residual systems.
 
 ## Primary types
 

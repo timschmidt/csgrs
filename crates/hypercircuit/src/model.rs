@@ -10,6 +10,7 @@
 //! The crate README collects the supporting SPICE, MNA, and exact-computation
 //! references.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 
 use hyperreal::{Real, RealSign};
@@ -959,7 +960,7 @@ impl Circuit {
             if rail
                 .max_current
                 .as_ref()
-                .is_some_and(|current| current.structural_facts().sign != Some(RealSign::Positive))
+                .is_some_and(|current| current.predicate_sign() != Some(RealSign::Positive))
             {
                 issues.push(CircuitValidationIssue::InvalidRailCurrent(rail.net.clone()));
             }
@@ -1128,7 +1129,7 @@ impl Circuit {
                     ));
                 }
                 if points.windows(2).any(|pair| {
-                    pair[0].time.partial_cmp(&pair[1].time) != Some(std::cmp::Ordering::Less)
+                    pair[0].time.predicate_cmp(&pair[1].time) != Some(std::cmp::Ordering::Less)
                 }) {
                     issues.push(CircuitValidationIssue::NonIncreasingSourceWaveformTime(
                         stimulus.component.clone(),
@@ -1146,7 +1147,7 @@ impl Circuit {
             {
                 let nonnegative = |value: &Real| {
                     matches!(
-                        value.structural_facts().sign,
+                        value.predicate_sign(),
                         Some(RealSign::Zero | RealSign::Positive)
                     )
                 };
@@ -1155,9 +1156,9 @@ impl Circuit {
                     || !nonnegative(rise_time)
                     || !nonnegative(high_time)
                     || !nonnegative(fall_time)
-                    || period.structural_facts().sign != Some(RealSign::Positive)
+                    || period.predicate_sign() != Some(RealSign::Positive)
                     || !matches!(
-                        active_time.partial_cmp(period),
+                        active_time.predicate_cmp(period),
                         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
                     )
                 {
@@ -1175,7 +1176,7 @@ impl Circuit {
             {
                 let nonnegative = |value: &Real| {
                     matches!(
-                        value.structural_facts().sign,
+                        value.predicate_sign(),
                         Some(RealSign::Zero | RealSign::Positive)
                     )
                 };
@@ -1195,17 +1196,17 @@ impl Circuit {
             {
                 let nonnegative = |value: &Real| {
                     matches!(
-                        value.structural_facts().sign,
+                        value.predicate_sign(),
                         Some(RealSign::Zero | RealSign::Positive)
                     )
                 };
                 if !nonnegative(rise_delay)
-                    || rise_time_constant.structural_facts().sign != Some(RealSign::Positive)
+                    || rise_time_constant.predicate_sign() != Some(RealSign::Positive)
                     || !matches!(
-                        rise_delay.partial_cmp(fall_delay),
+                        rise_delay.predicate_cmp(fall_delay),
                         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
                     )
-                    || fall_time_constant.structural_facts().sign != Some(RealSign::Positive)
+                    || fall_time_constant.predicate_sign() != Some(RealSign::Positive)
                 {
                     issues.push(CircuitValidationIssue::InvalidExponentialSourceWaveform(
                         stimulus.component.clone(),

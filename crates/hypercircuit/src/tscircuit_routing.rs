@@ -6,6 +6,7 @@
 //! `@tscircuit/capacity-autorouter`, then reconstructs returned wire/via paths
 //! through HyperPath before they become semantic layout objects.
 
+use crate::predicate::RealPredicateExt as _;
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
@@ -237,7 +238,18 @@ impl RoutingProblemReport {
             .map(|rule| &rule.width)
             .chain(options.fallback_min_trace_width.iter())
         {
-            if !distinct_widths.iter().any(|known| known == width) {
+            let mut matched = false;
+            for known in &distinct_widths {
+                match known.predicate_cmp(width) {
+                    Some(Ordering::Equal) => {
+                        matched = true;
+                        break;
+                    }
+                    Some(_) => {}
+                    None => return Err(TscircuitRoutingError::InvalidOptions),
+                }
+            }
+            if !matched {
                 distinct_widths.push(width.clone());
             }
         }
@@ -312,7 +324,10 @@ impl TscircuitRoutingImportReport {
     ) -> Result<Self, TscircuitRoutingError> {
         if !positive(&options.via_land_diameter)
             || !positive(&options.via_drill_diameter)
-            || options.via_drill_diameter > options.via_land_diameter
+            || options
+                .via_drill_diameter
+                .predicate_cmp(&options.via_land_diameter)
+                != Some(Ordering::Less)
         {
             return Err(TscircuitRoutingError::InvalidOptions);
         }
@@ -354,12 +369,18 @@ impl TscircuitRoutingImportReport {
                 match point.get("route_type").and_then(Value::as_str) {
                     Some("wire") => {
                         let wire = import_wire_point(problem, point, &field, &mut numeric_imports)?;
-                        if let Some((center, expected_layer)) = pending_via.take()
-                            && (wire.point != center || wire.layer != expected_layer)
-                        {
-                            return Err(TscircuitRoutingError::InvalidRoute(format!(
-                                "{field} does not continue the preceding via"
-                            )));
+                        if let Some((center, expected_layer)) = pending_via.take() {
+                            let continues =
+                                routing_points_equal(&wire.point, &center).ok_or_else(|| {
+                                    TscircuitRoutingError::InvalidRoute(format!(
+                                        "{field} has indeterminate continuity after a via"
+                                    ))
+                                })?;
+                            if !continues || wire.layer != expected_layer {
+                                return Err(TscircuitRoutingError::InvalidRoute(format!(
+                                    "{field} does not continue the preceding via"
+                                )));
+                            }
                         }
                         if let Some(prior) = previous.take() {
                             if prior.layer != wire.layer {
@@ -367,7 +388,13 @@ impl TscircuitRoutingImportReport {
                                     "{field} changes layer without a via"
                                 )));
                             }
-                            if prior.point != wire.point {
+                            let same_point = routing_points_equal(&prior.point, &wire.point)
+                                .ok_or_else(|| {
+                                    TscircuitRoutingError::InvalidRoute(format!(
+                                        "{field} has indeterminate segment continuity"
+                                    ))
+                                })?;
+                            if !same_point {
                                 let centerline =
                                     LinePathSegment::new(prior.point, wire.point.clone());
                                 let swept = SweptLineSegment::new(centerline, wire.width.clone())
@@ -501,8 +528,10 @@ fn global_minimum_width(
         return Err(TscircuitRoutingError::MissingMinimumTraceWidth);
     };
     for width in widths {
-        if width < minimum {
-            minimum = width;
+        match width.predicate_cmp(&minimum) {
+            Some(Ordering::Less) => minimum = width,
+            Some(_) => {}
+            None => return Err(TscircuitRoutingError::InvalidOptions),
         }
     }
     if !positive(&minimum) {
@@ -998,17 +1027,25 @@ fn bounds_box(
     let mut min_y = first.y.clone();
     let mut max_y = first.y.clone();
     for point in &points[1..] {
-        if point.x < min_x {
-            min_x = point.x.clone();
+        match point.x.predicate_cmp(&min_x) {
+            Some(Ordering::Less) => min_x = point.x.clone(),
+            Some(_) => {}
+            None => return Err(TscircuitRoutingError::InvalidGeometry(source.into())),
         }
-        if point.x > max_x {
-            max_x = point.x.clone();
+        match point.x.predicate_cmp(&max_x) {
+            Some(Ordering::Greater) => max_x = point.x.clone(),
+            Some(_) => {}
+            None => return Err(TscircuitRoutingError::InvalidGeometry(source.into())),
         }
-        if point.y < min_y {
-            min_y = point.y.clone();
+        match point.y.predicate_cmp(&min_y) {
+            Some(Ordering::Less) => min_y = point.y.clone(),
+            Some(_) => {}
+            None => return Err(TscircuitRoutingError::InvalidGeometry(source.into())),
         }
-        if point.y > max_y {
-            max_y = point.y.clone();
+        match point.y.predicate_cmp(&max_y) {
+            Some(Ordering::Greater) => max_y = point.y.clone(),
+            Some(_) => {}
+            None => return Err(TscircuitRoutingError::InvalidGeometry(source.into())),
         }
     }
     let center = Point2::new(
@@ -1045,6 +1082,10 @@ fn is_axis_aligned_rectangle(contour: &BoardContour) -> bool {
         .is_some_and(|vertices| is_rectangle_points(&vertices))
 }
 
+fn routing_points_equal(first: &Point2, second: &Point2) -> Option<bool> {
+    Some(first.x.predicate_eq(&second.x)? && first.y.predicate_eq(&second.y)?)
+}
+
 fn is_rectangle_points(points: &[Point2]) -> bool {
     if points.len() != 4 {
         return false;
@@ -1053,13 +1094,22 @@ fn is_rectangle_points(points: &[Point2]) -> bool {
     let mut ys = Vec::<Real>::new();
     let mut corners = Vec::<Point2>::new();
     for point in points {
-        if !xs.iter().any(|x| x == &point.x) {
+        if !xs
+            .iter()
+            .any(|x| x.predicate_cmp(&point.x) == Some(Ordering::Equal))
+        {
             xs.push(point.x.clone());
         }
-        if !ys.iter().any(|y| y == &point.y) {
+        if !ys
+            .iter()
+            .any(|y| y.predicate_cmp(&point.y) == Some(Ordering::Equal))
+        {
             ys.push(point.y.clone());
         }
-        if !corners.iter().any(|corner| corner == point) {
+        if !corners.iter().any(|corner| {
+            corner.x.predicate_cmp(&point.x) == Some(Ordering::Equal)
+                && corner.y.predicate_cmp(&point.y) == Some(Ordering::Equal)
+        }) {
             corners.push(point.clone());
         }
     }
@@ -1153,7 +1203,7 @@ fn string_field<'a>(
 }
 
 fn positive(value: &Real) -> bool {
-    value.partial_cmp(&Real::zero()) == Some(Ordering::Greater)
+    value.predicate_cmp(&Real::zero()) == Some(Ordering::Greater)
 }
 
 fn finite(value: &Real, field: &str) -> Result<f64, TscircuitRoutingError> {

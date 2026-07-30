@@ -12,7 +12,7 @@ use std::{collections::BTreeMap, fs, path::Path};
 use hypercircuit::{
     AssemblyOutputs, FabricationPackage, HyperDrcHandoff, ReleaseOptions, SemanticDocument,
 };
-use hyperdrc::PcbSketchExt;
+use hyperdrc::PcbRegionExt;
 
 const BOARDS: &[(&str, &str)] = &[
     (
@@ -94,7 +94,7 @@ fn main() {
                     Some(&document.test_intent),
                 );
                 for copper in &handoff.copper_layers {
-                    let polygons = copper.sketch.to_multipolygon().0;
+                    let polygons = copper.region.to_multipolygon().0;
                     println!(
                         "easyduino-full-pipeline/{slug}: copper {} has {} polygons / {} rings / {} vertices",
                         copper.name,
@@ -117,7 +117,7 @@ fn main() {
                     );
                 }
                 for process in &handoff.process_layers {
-                    let polygons = process.sketch.to_multipolygon().0;
+                    let polygons = process.region.to_multipolygon().0;
                     println!(
                         "easyduino-full-pipeline/{slug}: process {} has {} polygons / {} rings / {} vertices",
                         process.name,

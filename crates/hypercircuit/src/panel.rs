@@ -1,5 +1,6 @@
 //! Typed PCB panel manufacturing intent.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
@@ -165,6 +166,7 @@ pub enum PanelIssue {
     InvalidFrame,
     NonPositiveDimension(String),
     CurvedOutlineRequiresCertifiedGeometry(String),
+    IndeterminateGeometry(String),
     ChildOutsidePanel(String),
     ChildOverlap { left: String, right: String },
     ChildWebTooSmall { left: String, right: String },
@@ -253,8 +255,10 @@ impl PanelDefinition {
             ("minimum_web", &self.minimum_web),
             ("minimum_rail", &self.minimum_rail),
         ] {
-            if value <= &Real::zero() {
-                issues.push(PanelIssue::NonPositiveDimension(name.into()));
+            match value.predicate_gt(&Real::zero()) {
+                Some(true) => {}
+                Some(false) => issues.push(PanelIssue::NonPositiveDimension(name.into())),
+                None => issues.push(PanelIssue::IndeterminateGeometry(name.into())),
             }
         }
         let mut ids = BTreeSet::new();
@@ -307,51 +311,89 @@ impl PanelDefinition {
             }
         }
         let panel_bounds = match linear_bounds(&self.outline, None) {
-            Some(bounds) => bounds,
-            None => {
+            Ok(Some(bounds)) => bounds,
+            Ok(None) => {
                 issues.push(PanelIssue::CurvedOutlineRequiresCertifiedGeometry(
                     self.id.clone(),
                 ));
                 return issues;
             }
+            Err(()) => {
+                issues.push(PanelIssue::IndeterminateGeometry(self.id.clone()));
+                return issues;
+            }
         };
         let mut children = Vec::new();
         for child in &self.children {
-            let Some(bounds) = linear_bounds(&child.outline, Some(&child.transform)) else {
-                issues.push(PanelIssue::CurvedOutlineRequiresCertifiedGeometry(
-                    child.id.clone(),
-                ));
-                continue;
+            let bounds = match linear_bounds(&child.outline, Some(&child.transform)) {
+                Ok(Some(bounds)) => bounds,
+                Ok(None) => {
+                    issues.push(PanelIssue::CurvedOutlineRequiresCertifiedGeometry(
+                        child.id.clone(),
+                    ));
+                    continue;
+                }
+                Err(()) => {
+                    issues.push(PanelIssue::IndeterminateGeometry(child.id.clone()));
+                    continue;
+                }
             };
-            if !contains(&panel_bounds, &bounds) {
-                issues.push(PanelIssue::ChildOutsidePanel(child.id.clone()));
+            match contains(&panel_bounds, &bounds) {
+                Some(true) => {}
+                Some(false) => issues.push(PanelIssue::ChildOutsidePanel(child.id.clone())),
+                None => issues.push(PanelIssue::IndeterminateGeometry(child.id.clone())),
             }
             children.push((child.id.as_str(), bounds));
         }
         for index in 0..children.len() {
             for right in children.iter().skip(index + 1) {
                 let left = &children[index];
-                if overlaps(&left.1, &right.1) {
-                    issues.push(PanelIssue::ChildOverlap {
+                match overlaps(&left.1, &right.1) {
+                    Some(true) => issues.push(PanelIssue::ChildOverlap {
                         left: left.0.into(),
                         right: right.0.into(),
-                    });
-                } else if orthogonal_gap(&left.1, &right.1)
-                    .is_some_and(|gap| gap < self.minimum_web)
-                {
-                    issues.push(PanelIssue::ChildWebTooSmall {
-                        left: left.0.into(),
-                        right: right.0.into(),
-                    });
+                    }),
+                    Some(false) => match orthogonal_gap(&left.1, &right.1) {
+                        Ok(Some(gap)) => match gap.predicate_lt(&self.minimum_web) {
+                            Some(true) => issues.push(PanelIssue::ChildWebTooSmall {
+                                left: left.0.into(),
+                                right: right.0.into(),
+                            }),
+                            Some(false) => {}
+                            None => issues.push(PanelIssue::IndeterminateGeometry(format!(
+                                "{}:{}",
+                                left.0, right.0
+                            ))),
+                        },
+                        Ok(None) => {}
+                        Err(()) => {
+                            issues.push(PanelIssue::IndeterminateGeometry(format!(
+                                "{}:{}",
+                                left.0, right.0
+                            )));
+                        }
+                    },
+                    None => issues.push(PanelIssue::IndeterminateGeometry(format!(
+                        "{}:{}",
+                        left.0, right.0
+                    ))),
                 }
             }
         }
         for rail in &self.rails {
-            if rail.width < self.minimum_rail || rail.height < self.minimum_rail {
-                issues.push(PanelIssue::NonPositiveDimension(format!(
+            match (
+                rail.width.predicate_ge(&self.minimum_rail),
+                rail.height.predicate_ge(&self.minimum_rail),
+            ) {
+                (Some(true), Some(true)) => {}
+                (Some(_), Some(_)) => issues.push(PanelIssue::NonPositiveDimension(format!(
                     "rail:{} below minimum rail",
                     rail.id
-                )));
+                ))),
+                _ => issues.push(PanelIssue::IndeterminateGeometry(format!(
+                    "rail:{}",
+                    rail.id
+                ))),
             }
         }
         issues
@@ -381,15 +423,22 @@ impl PanelDefinition {
     }
 }
 
-fn linear_bounds(outline: &BoardOutline, transform: Option<&RigidTransform2>) -> Option<Bounds> {
-    let points = outline.exterior.linear_vertices()?;
+fn linear_bounds(
+    outline: &BoardOutline,
+    transform: Option<&RigidTransform2>,
+) -> Result<Option<Bounds>, ()> {
+    let Some(points) = outline.exterior.linear_vertices() else {
+        return Ok(None);
+    };
     let mut points = points.into_iter().map(|point| {
         let coordinates = [point.x, point.y];
         transform.map_or(coordinates.clone(), |transform| {
             transform.apply(coordinates)
         })
     });
-    let first = points.next()?;
+    let Some(first) = points.next() else {
+        return Ok(None);
+    };
     let mut bounds = Bounds {
         min_x: first[0].clone(),
         min_y: first[1].clone(),
@@ -397,58 +446,72 @@ fn linear_bounds(outline: &BoardOutline, transform: Option<&RigidTransform2>) ->
         max_y: first[1].clone(),
     };
     for [x, y] in points {
-        if x.partial_cmp(&bounds.min_x) == Some(Ordering::Less) {
-            bounds.min_x = x.clone();
+        match x.predicate_cmp(&bounds.min_x) {
+            Some(Ordering::Less) => bounds.min_x = x.clone(),
+            Some(_) => {}
+            None => return Err(()),
         }
-        if x.partial_cmp(&bounds.max_x) == Some(Ordering::Greater) {
-            bounds.max_x = x;
+        match x.predicate_cmp(&bounds.max_x) {
+            Some(Ordering::Greater) => bounds.max_x = x,
+            Some(_) => {}
+            None => return Err(()),
         }
-        if y.partial_cmp(&bounds.min_y) == Some(Ordering::Less) {
-            bounds.min_y = y.clone();
+        match y.predicate_cmp(&bounds.min_y) {
+            Some(Ordering::Less) => bounds.min_y = y.clone(),
+            Some(_) => {}
+            None => return Err(()),
         }
-        if y.partial_cmp(&bounds.max_y) == Some(Ordering::Greater) {
-            bounds.max_y = y;
+        match y.predicate_cmp(&bounds.max_y) {
+            Some(Ordering::Greater) => bounds.max_y = y,
+            Some(_) => {}
+            None => return Err(()),
         }
     }
-    Some(bounds)
+    Ok(Some(bounds))
 }
 
-fn contains(outer: &Bounds, inner: &Bounds) -> bool {
-    outer.min_x <= inner.min_x
-        && outer.min_y <= inner.min_y
-        && outer.max_x >= inner.max_x
-        && outer.max_y >= inner.max_y
+fn contains(outer: &Bounds, inner: &Bounds) -> Option<bool> {
+    Some(
+        outer.min_x.predicate_le(&inner.min_x)?
+            && outer.min_y.predicate_le(&inner.min_y)?
+            && outer.max_x.predicate_ge(&inner.max_x)?
+            && outer.max_y.predicate_ge(&inner.max_y)?,
+    )
 }
 
-fn overlaps(left: &Bounds, right: &Bounds) -> bool {
-    left.min_x < right.max_x
-        && left.max_x > right.min_x
-        && left.min_y < right.max_y
-        && left.max_y > right.min_y
+fn overlaps(left: &Bounds, right: &Bounds) -> Option<bool> {
+    Some(
+        left.min_x.predicate_lt(&right.max_x)?
+            && left.max_x.predicate_gt(&right.min_x)?
+            && left.min_y.predicate_lt(&right.max_y)?
+            && left.max_y.predicate_gt(&right.min_y)?,
+    )
 }
 
-fn orthogonal_gap(left: &Bounds, right: &Bounds) -> Option<Real> {
-    let y_overlap = left.min_y < right.max_y && left.max_y > right.min_y;
+fn orthogonal_gap(left: &Bounds, right: &Bounds) -> Result<Option<Real>, ()> {
+    let y_overlap = left.min_y.predicate_lt(&right.max_y).ok_or(())?
+        && left.max_y.predicate_gt(&right.min_y).ok_or(())?;
     if y_overlap {
-        return if left.max_x <= right.min_x {
-            Some(right.min_x.clone() - left.max_x.clone())
-        } else if right.max_x <= left.min_x {
-            Some(left.min_x.clone() - right.max_x.clone())
+        return if left.max_x.predicate_le(&right.min_x).ok_or(())? {
+            Ok(Some(right.min_x.clone() - left.max_x.clone()))
+        } else if right.max_x.predicate_le(&left.min_x).ok_or(())? {
+            Ok(Some(left.min_x.clone() - right.max_x.clone()))
         } else {
-            None
+            Ok(None)
         };
     }
-    let x_overlap = left.min_x < right.max_x && left.max_x > right.min_x;
+    let x_overlap = left.min_x.predicate_lt(&right.max_x).ok_or(())?
+        && left.max_x.predicate_gt(&right.min_x).ok_or(())?;
     if x_overlap {
-        return if left.max_y <= right.min_y {
-            Some(right.min_y.clone() - left.max_y.clone())
-        } else if right.max_y <= left.min_y {
-            Some(left.min_y.clone() - right.max_y.clone())
+        return if left.max_y.predicate_le(&right.min_y).ok_or(())? {
+            Ok(Some(right.min_y.clone() - left.max_y.clone()))
+        } else if right.max_y.predicate_le(&left.min_y).ok_or(())? {
+            Ok(Some(left.min_y.clone() - right.max_y.clone()))
         } else {
-            None
+            Ok(None)
         };
     }
-    None
+    Ok(None)
 }
 
 fn svg_polygon(points: &[Point2], transform: Option<&RigidTransform2>) -> String {

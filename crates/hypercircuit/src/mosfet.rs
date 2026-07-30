@@ -5,6 +5,7 @@
 //! replayed through the exact cutoff/triode/saturation law and ordinary MNA
 //! residuals before convergence can be accepted.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
@@ -664,10 +665,10 @@ fn validate_mosfet(
     mosfet: &SquareLawMosfet,
     nets: Option<&BTreeSet<NetId>>,
 ) -> Result<(), MosfetNewtonSolveError> {
-    if mosfet.threshold_voltage.structural_facts().sign != Some(RealSign::Positive)
-        || mosfet.transconductance_parameter.structural_facts().sign != Some(RealSign::Positive)
+    if mosfet.threshold_voltage.predicate_sign() != Some(RealSign::Positive)
+        || mosfet.transconductance_parameter.predicate_sign() != Some(RealSign::Positive)
         || !matches!(
-            mosfet.channel_length_modulation.structural_facts().sign,
+            mosfet.channel_length_modulation.predicate_sign(),
             Some(RealSign::Zero | RealSign::Positive)
         )
         || nets.is_some_and(|nets| {
@@ -686,11 +687,11 @@ fn validate_mosfet(
 
 fn validate_policy(policy: &MosfetNewtonPolicy) -> Result<(), MosfetNewtonSolveError> {
     if policy.maximum_iterations == 0
-        || policy.voltage_tolerance.structural_facts().sign != Some(RealSign::Positive)
-        || policy.current_tolerance.structural_facts().sign != Some(RealSign::Positive)
-        || policy.damping.structural_facts().sign != Some(RealSign::Positive)
+        || policy.voltage_tolerance.predicate_sign() != Some(RealSign::Positive)
+        || policy.current_tolerance.predicate_sign() != Some(RealSign::Positive)
+        || policy.damping.predicate_sign() != Some(RealSign::Positive)
         || !matches!(
-            policy.damping.partial_cmp(&Real::one()),
+            policy.damping.predicate_cmp(&Real::one()),
             Some(Ordering::Less | Ordering::Equal)
         )
     {
@@ -708,7 +709,7 @@ fn terminal_value(terminal: &Option<NetId>, values: &BTreeMap<MnaUnknown, Real>)
 }
 
 fn exact_max(current: Real, candidate: Real) -> Result<Real, MosfetNewtonSolveError> {
-    match current.partial_cmp(&candidate) {
+    match current.predicate_cmp(&candidate) {
         Some(Ordering::Less) => Ok(candidate),
         Some(Ordering::Equal | Ordering::Greater) => Ok(current),
         None => Err(MosfetNewtonSolveError::IndeterminateComparison),
@@ -716,7 +717,7 @@ fn exact_max(current: Real, candidate: Real) -> Result<Real, MosfetNewtonSolveEr
 }
 
 fn exact_lt(left: &Real, right: &Real) -> Result<bool, MosfetNewtonSolveError> {
-    match left.partial_cmp(right) {
+    match left.predicate_cmp(right) {
         Some(Ordering::Less) => Ok(true),
         Some(Ordering::Equal | Ordering::Greater) => Ok(false),
         None => Err(MosfetNewtonSolveError::IndeterminateComparison),
@@ -724,7 +725,7 @@ fn exact_lt(left: &Real, right: &Real) -> Result<bool, MosfetNewtonSolveError> {
 }
 
 fn exact_le(left: &Real, right: &Real) -> Result<bool, MosfetNewtonSolveError> {
-    match left.partial_cmp(right) {
+    match left.predicate_cmp(right) {
         Some(Ordering::Less | Ordering::Equal) => Ok(true),
         Some(Ordering::Greater) => Ok(false),
         None => Err(MosfetNewtonSolveError::IndeterminateComparison),
@@ -732,7 +733,7 @@ fn exact_le(left: &Real, right: &Real) -> Result<bool, MosfetNewtonSolveError> {
 }
 
 fn exact_abs(value: &Real) -> Result<Real, MosfetNewtonSolveError> {
-    match value.partial_cmp(&Real::zero()) {
+    match value.predicate_cmp(&Real::zero()) {
         Some(Ordering::Less) => Ok(-value.clone()),
         Some(Ordering::Equal | Ordering::Greater) => Ok(value.clone()),
         None => Err(MosfetNewtonSolveError::IndeterminateComparison),

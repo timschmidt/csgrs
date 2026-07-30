@@ -13,6 +13,7 @@
 //! residual payloads, not a full field solver. The README lists the underlying
 //! circuit, exact-computation, and field-coupling references.
 
+use crate::predicate::RealPredicateExt as _;
 use hyperreal::{Real, RealSign};
 use hypersolve::{Constraint, Expr, Problem};
 
@@ -147,7 +148,7 @@ impl ElectrothermalRcReport {
 }
 
 fn require_nonnegative(value: &Real, error: CircuitError) -> CircuitResult<()> {
-    match value.refine_sign_until(-64) {
+    match value.predicate_sign() {
         Some(RealSign::Positive | RealSign::Zero) => Ok(()),
         Some(RealSign::Negative) | None => Err(error),
     }

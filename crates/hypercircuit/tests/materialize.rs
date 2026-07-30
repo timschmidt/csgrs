@@ -463,15 +463,15 @@ fn zone_island_policy_prunes_unconnected_and_exact_undersized_components() {
         .find(|feature| feature.source == "zone:ground-pour")
         .unwrap();
     assert_eq!(
-        zone.profile.contains_xy(Real::from(6), Real::from(5)),
+        csgrs::curve::contains_xy(&zone.profile, Real::from(6), Real::from(5)),
         Some(true)
     );
     assert_eq!(
-        zone.profile.contains_xy(Real::from(1), Real::from(5)),
+        csgrs::curve::contains_xy(&zone.profile, Real::from(1), Real::from(5)),
         Some(false)
     );
     assert_eq!(
-        zone.profile.contains_xy(Real::from(15), Real::from(5)),
+        csgrs::curve::contains_xy(&zone.profile, Real::from(15), Real::from(5)),
         Some(true)
     );
     let preview = layout

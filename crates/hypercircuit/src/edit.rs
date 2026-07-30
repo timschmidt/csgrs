@@ -4,6 +4,8 @@
 //! profiles. A batch is applied to a clone, structurally validated, checked
 //! against retained placement constraints, and committed only as one revision.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::fmt::{Display, Formatter};
 
 use hyperlattice::Point2;
@@ -2182,7 +2184,7 @@ impl SemanticDocument {
                     .iter()
                     .find(|placement| placement.instance == instance)
                     .expect("resolved placement target must still exist");
-                if authored != resolved {
+                if edit_placements_equal(authored, resolved) != Some(true) {
                     return Err(DesignEditError::PlacementConstraintConflict(instance));
                 }
             }
@@ -2198,6 +2200,25 @@ impl SemanticDocument {
         inverse.reverse();
         Ok((report, inverse))
     }
+}
+
+fn edit_placements_equal(
+    first: &crate::PcbPlacement,
+    second: &crate::PcbPlacement,
+) -> Option<bool> {
+    if first.instance != second.instance
+        || first.land_pattern != second.land_pattern
+        || first.side != second.side
+    {
+        return Some(false);
+    }
+    Some(
+        first.position.x.predicate_eq(&second.position.x)?
+            && first.position.y.predicate_eq(&second.position.y)?
+            && first
+                .rotation_degrees
+                .predicate_eq(&second.rotation_degrees)?,
+    )
 }
 
 impl DesignHistory {

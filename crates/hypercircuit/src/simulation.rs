@@ -1,5 +1,6 @@
 //! Lowering retained primitive device models into executable linear MNA stamps.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
@@ -139,7 +140,7 @@ impl SourceWaveform {
                 initial,
                 final_value,
                 at,
-            } => match time.partial_cmp(at) {
+            } => match time.predicate_cmp(at) {
                 Some(Ordering::Less) => Ok(initial.clone()),
                 Some(Ordering::Equal | Ordering::Greater) => Ok(final_value.clone()),
                 None => Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -148,20 +149,15 @@ impl SourceWaveform {
                 let Some(first) = points.first() else {
                     return Err(SourceWaveformEvaluationError::Empty);
                 };
-                if points
-                    .windows(2)
-                    .any(|pair| pair[0].time.partial_cmp(&pair[1].time) != Some(Ordering::Less))
-                {
-                    return Err(SourceWaveformEvaluationError::NonIncreasingTimes);
-                }
-                match time.partial_cmp(&first.time) {
+                validate_pwl_times(points)?;
+                match time.predicate_cmp(&first.time) {
                     Some(Ordering::Less | Ordering::Equal) => return Ok(first.value.clone()),
                     Some(Ordering::Greater) => {}
                     None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
                 }
                 for pair in points.windows(2) {
                     let end = &pair[1];
-                    match time.partial_cmp(&end.time) {
+                    match time.predicate_cmp(&end.time) {
                         Some(Ordering::Less) => {
                             let elapsed = time.clone() - pair[0].time.clone();
                             let duration = end.time.clone() - pair[0].time.clone();
@@ -195,30 +191,36 @@ impl SourceWaveform {
                     return Ok(low_value.clone());
                 };
                 let rise_end = rise_time.clone();
-                if phase.partial_cmp(&rise_end) == Some(Ordering::Less) {
-                    let fraction = (phase / rise_time.clone())
-                        .map_err(|_| SourceWaveformEvaluationError::Arithmetic)?;
-                    return Ok(
-                        low_value.clone() + (high_value.clone() - low_value.clone()) * fraction
-                    );
+                match phase.predicate_cmp(&rise_end) {
+                    Some(Ordering::Less) => {
+                        let fraction = (phase / rise_time.clone())
+                            .map_err(|_| SourceWaveformEvaluationError::Arithmetic)?;
+                        return Ok(
+                            low_value.clone() + (high_value.clone() - low_value.clone()) * fraction
+                        );
+                    }
+                    Some(Ordering::Equal | Ordering::Greater) => {}
+                    None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
                 }
                 let high_end = rise_end + high_time.clone();
-                if phase.partial_cmp(&high_end) == Some(Ordering::Less) {
-                    return Ok(high_value.clone());
+                match phase.predicate_cmp(&high_end) {
+                    Some(Ordering::Less) => return Ok(high_value.clone()),
+                    Some(Ordering::Equal | Ordering::Greater) => {}
+                    None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
                 }
                 let fall_end = high_end.clone() + fall_time.clone();
-                if phase.partial_cmp(&fall_end) == Some(Ordering::Less) {
-                    let elapsed = phase - high_end;
-                    let fraction = (elapsed / fall_time.clone())
-                        .map_err(|_| SourceWaveformEvaluationError::Arithmetic)?;
-                    return Ok(
-                        high_value.clone() + (low_value.clone() - high_value.clone()) * fraction
-                    );
-                }
-                match phase.partial_cmp(&fall_end) {
+                match phase.predicate_cmp(&fall_end) {
+                    Some(Ordering::Less) => {
+                        let elapsed = phase - high_end;
+                        let fraction = (elapsed / fall_time.clone())
+                            .map_err(|_| SourceWaveformEvaluationError::Arithmetic)?;
+                        Ok(
+                            high_value.clone()
+                                + (low_value.clone() - high_value.clone()) * fraction,
+                        )
+                    }
                     Some(Ordering::Equal | Ordering::Greater) => Ok(low_value.clone()),
                     None => Err(SourceWaveformEvaluationError::IndeterminateTime),
-                    Some(Ordering::Less) => unreachable!("fall interval returned above"),
                 }
             }
             Self::Sine {
@@ -230,7 +232,7 @@ impl SourceWaveform {
                 phase_degrees,
             } => {
                 validate_sine_timing(frequency, delay, damping)?;
-                let elapsed = match time.partial_cmp(delay) {
+                let elapsed = match time.predicate_cmp(delay) {
                     Some(Ordering::Less) => Real::zero(),
                     Some(Ordering::Equal | Ordering::Greater) => time.clone() - delay.clone(),
                     None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -257,7 +259,7 @@ impl SourceWaveform {
                     fall_delay,
                     fall_time_constant,
                 )?;
-                match time.partial_cmp(rise_delay) {
+                match time.predicate_cmp(rise_delay) {
                     Some(Ordering::Less) => return Ok(initial.clone()),
                     Some(Ordering::Equal | Ordering::Greater) => {}
                     None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -267,7 +269,7 @@ impl SourceWaveform {
                 let mut value = initial.clone()
                     + excursion.clone()
                         * exponential_transition(&rise_elapsed, rise_time_constant)?;
-                match time.partial_cmp(fall_delay) {
+                match time.predicate_cmp(fall_delay) {
                     Some(Ordering::Less) => {}
                     Some(Ordering::Equal | Ordering::Greater) => {
                         let fall_elapsed = time.clone() - fall_delay.clone();
@@ -292,7 +294,7 @@ impl SourceWaveform {
     ) -> Result<Option<Real>, SourceWaveformEvaluationError> {
         match self {
             Self::Constant(_) => Ok(None),
-            Self::Step { at, .. } => match time.partial_cmp(at) {
+            Self::Step { at, .. } => match time.predicate_cmp(at) {
                 Some(Ordering::Less) => Ok(Some(at.clone())),
                 Some(Ordering::Equal | Ordering::Greater) => Ok(None),
                 None => Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -301,14 +303,9 @@ impl SourceWaveform {
                 if points.is_empty() {
                     return Err(SourceWaveformEvaluationError::Empty);
                 }
-                if points
-                    .windows(2)
-                    .any(|pair| pair[0].time.partial_cmp(&pair[1].time) != Some(Ordering::Less))
-                {
-                    return Err(SourceWaveformEvaluationError::NonIncreasingTimes);
-                }
+                validate_pwl_times(points)?;
                 for point in points {
-                    match time.partial_cmp(&point.time) {
+                    match time.predicate_cmp(&point.time) {
                         Some(Ordering::Less) => return Ok(Some(point.time.clone())),
                         Some(Ordering::Equal | Ordering::Greater) => {}
                         None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -336,7 +333,7 @@ impl SourceWaveform {
                 ];
                 for offset in offsets {
                     let candidate = cycle_start.clone() + offset;
-                    match time.partial_cmp(&candidate) {
+                    match time.predicate_cmp(&candidate) {
                         Some(Ordering::Less) => return Ok(Some(candidate)),
                         Some(Ordering::Equal | Ordering::Greater) => {}
                         None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -351,7 +348,7 @@ impl SourceWaveform {
                 ..
             } => {
                 validate_sine_timing(frequency, delay, damping)?;
-                match time.partial_cmp(delay) {
+                match time.predicate_cmp(delay) {
                     Some(Ordering::Less) => Ok(Some(delay.clone())),
                     Some(Ordering::Equal | Ordering::Greater) => Ok(None),
                     None => Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -371,7 +368,7 @@ impl SourceWaveform {
                     fall_time_constant,
                 )?;
                 for breakpoint in [rise_delay, fall_delay] {
-                    match time.partial_cmp(breakpoint) {
+                    match time.predicate_cmp(breakpoint) {
                         Some(Ordering::Less) => return Ok(Some(breakpoint.clone())),
                         Some(Ordering::Equal | Ordering::Greater) => {}
                         None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -383,6 +380,21 @@ impl SourceWaveform {
     }
 }
 
+fn validate_pwl_times(
+    points: &[crate::SourceWaveformPoint],
+) -> Result<(), SourceWaveformEvaluationError> {
+    for pair in points.windows(2) {
+        match pair[0].time.predicate_cmp(&pair[1].time) {
+            Some(Ordering::Less) => {}
+            Some(Ordering::Equal | Ordering::Greater) => {
+                return Err(SourceWaveformEvaluationError::NonIncreasingTimes);
+            }
+            None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
+        }
+    }
+    Ok(())
+}
+
 fn validate_pulse_timing(
     delay: &Real,
     rise_time: &Real,
@@ -392,7 +404,7 @@ fn validate_pulse_timing(
 ) -> Result<(), SourceWaveformEvaluationError> {
     let nonnegative = |value: &Real| {
         matches!(
-            value.structural_facts().sign,
+            value.predicate_sign(),
             Some(RealSign::Zero | RealSign::Positive)
         )
     };
@@ -401,9 +413,9 @@ fn validate_pulse_timing(
         || !nonnegative(rise_time)
         || !nonnegative(high_time)
         || !nonnegative(fall_time)
-        || period.structural_facts().sign != Some(RealSign::Positive)
+        || period.predicate_sign() != Some(RealSign::Positive)
         || !matches!(
-            active_time.partial_cmp(period),
+            active_time.predicate_cmp(period),
             Some(Ordering::Less | Ordering::Equal)
         )
     {
@@ -417,7 +429,7 @@ fn pulse_cycle_position(
     delay: &Real,
     period: &Real,
 ) -> Result<Option<(Real, Real)>, SourceWaveformEvaluationError> {
-    match time.partial_cmp(delay) {
+    match time.predicate_cmp(delay) {
         Some(Ordering::Less) => return Ok(None),
         Some(Ordering::Equal | Ordering::Greater) => {}
         None => return Err(SourceWaveformEvaluationError::IndeterminateTime),
@@ -439,7 +451,7 @@ fn validate_sine_timing(
 ) -> Result<(), SourceWaveformEvaluationError> {
     let nonnegative = |value: &Real| {
         matches!(
-            value.structural_facts().sign,
+            value.predicate_sign(),
             Some(RealSign::Zero | RealSign::Positive)
         )
     };
@@ -456,14 +468,14 @@ fn validate_exponential_timing(
     fall_time_constant: &Real,
 ) -> Result<(), SourceWaveformEvaluationError> {
     if !matches!(
-        rise_delay.structural_facts().sign,
+        rise_delay.predicate_sign(),
         Some(RealSign::Zero | RealSign::Positive)
-    ) || rise_time_constant.structural_facts().sign != Some(RealSign::Positive)
+    ) || rise_time_constant.predicate_sign() != Some(RealSign::Positive)
         || !matches!(
-            rise_delay.partial_cmp(fall_delay),
+            rise_delay.predicate_cmp(fall_delay),
             Some(Ordering::Less | Ordering::Equal)
         )
-        || fall_time_constant.structural_facts().sign != Some(RealSign::Positive)
+        || fall_time_constant.predicate_sign() != Some(RealSign::Positive)
     {
         return Err(SourceWaveformEvaluationError::InvalidExponentialTiming);
     }
@@ -895,6 +907,8 @@ pub enum TransientSessionError {
     InvalidPolicy,
     /// Requested stepping limit precedes the current session time or exceeds its stop time.
     InvalidTargetTime,
+    /// A required exact session-time comparison remained indeterminate.
+    IndeterminateTargetTime,
     /// Exact transient execution failed.
     Run(TransientRunError),
     /// Pending event time cannot be compared with session time.
@@ -912,6 +926,9 @@ impl Display for TransientSessionError {
         match self {
             Self::InvalidPolicy => formatter.write_str("invalid transient session policy"),
             Self::InvalidTargetTime => formatter.write_str("invalid transient session target time"),
+            Self::IndeterminateTargetTime => {
+                formatter.write_str("transient session time ordering is indeterminate")
+            }
             Self::Run(error) => Display::fmt(error, formatter),
             Self::IndeterminateEventTime => {
                 formatter.write_str("session event time is indeterminate")
@@ -1022,8 +1039,12 @@ impl TransientSession {
         agenda: CircuitEventAgenda,
     ) -> Result<Self, TransientSessionError> {
         validate_run_policy(&policy).map_err(|_| TransientSessionError::InvalidPolicy)?;
-        if agenda.time().partial_cmp(&policy.start_time) != Some(Ordering::Equal) {
-            return Err(TransientSessionError::InvalidPolicy);
+        match agenda.time().predicate_cmp(&policy.start_time) {
+            Some(Ordering::Equal) => {}
+            Some(Ordering::Less | Ordering::Greater) => {
+                return Err(TransientSessionError::InvalidPolicy);
+            }
+            None => return Err(TransientSessionError::IndeterminateTargetTime),
         }
         Ok(Self {
             circuit: circuit.clone(),
@@ -1155,23 +1176,23 @@ impl TransientSession {
         target: Real,
     ) -> Result<Vec<TransientSessionStep>, TransientSessionError> {
         if !matches!(
-            self.time.partial_cmp(&target),
+            self.time.predicate_cmp(&target),
             Some(Ordering::Less | Ordering::Equal)
         ) || !matches!(
-            target.partial_cmp(&self.policy.stop_time),
+            target.predicate_cmp(&self.policy.stop_time),
             Some(Ordering::Less | Ordering::Equal)
         ) {
             return Err(TransientSessionError::InvalidTargetTime);
         }
         let mut output = Vec::new();
         while self.status == TransientSessionStatus::Running {
-            match self.time.partial_cmp(&target) {
+            match self.time.predicate_cmp(&target) {
                 Some(Ordering::Less) => output.push(self.step_to_limit(target.clone())?),
                 Some(Ordering::Equal) => {
                     let Some(next) = self.agenda.peek() else {
                         break;
                     };
-                    match next.time.partial_cmp(&self.time) {
+                    match next.time.predicate_cmp(&self.time) {
                         Some(Ordering::Equal) => output.push(self.step_to_limit(target.clone())?),
                         Some(Ordering::Greater) => break,
                         Some(Ordering::Less) | None => {
@@ -1311,16 +1332,22 @@ impl TransientSession {
                 status: self.status,
             });
         }
-        if self.time.partial_cmp(&limit) == Some(Ordering::Equal) {
-            if self.time.partial_cmp(&self.policy.stop_time) == Some(Ordering::Equal) {
-                self.status = TransientSessionStatus::Complete;
+        match self.time.predicate_cmp(&limit) {
+            Some(Ordering::Equal) => {
+                match self.time.predicate_cmp(&self.policy.stop_time) {
+                    Some(Ordering::Equal) => self.status = TransientSessionStatus::Complete,
+                    Some(Ordering::Less | Ordering::Greater) => {}
+                    None => return Err(TransientSessionError::IndeterminateTargetTime),
+                }
+                return Ok(TransientSessionStep {
+                    sample: None,
+                    events: Vec::new(),
+                    applications: Vec::new(),
+                    status: self.status,
+                });
             }
-            return Ok(TransientSessionStep {
-                sample: None,
-                events: Vec::new(),
-                applications: Vec::new(),
-                status: self.status,
-            });
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => return Err(TransientSessionError::IndeterminateTargetTime),
         }
         if self.samples.len() >= self.policy.maximum_accepted_steps {
             self.status = TransientSessionStatus::Bounded(TransientRunStatus::AcceptedStepLimit);
@@ -1391,8 +1418,10 @@ impl TransientSession {
             next_session_timestep(&self.policy, &sample.timestep, self.decisions.last())?;
         self.history = report.final_history;
         self.samples.push(sample.clone());
-        if self.time.partial_cmp(&self.policy.stop_time) == Some(Ordering::Equal) {
-            self.status = TransientSessionStatus::Complete;
+        match self.time.predicate_cmp(&self.policy.stop_time) {
+            Some(Ordering::Equal) => self.status = TransientSessionStatus::Complete,
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => return Err(TransientSessionError::IndeterminateTargetTime),
         }
         let (events, applications) = self.deliver_current_events_limit(event_limit)?;
         Ok(TransientSessionStep {
@@ -1413,7 +1442,7 @@ impl TransientSession {
             let Some(next) = self.agenda.peek() else {
                 break;
             };
-            match next.time.partial_cmp(&self.time) {
+            match next.time.predicate_cmp(&self.time) {
                 Some(Ordering::Equal) => {}
                 Some(Ordering::Greater) => break,
                 Some(Ordering::Less) | None => {
@@ -1730,7 +1759,7 @@ impl Circuit {
         if !self.validate().is_valid() {
             return Err(TransientStepError::InvalidCircuit);
         }
-        if timestep.structural_facts().sign != Some(RealSign::Positive) {
+        if timestep.predicate_sign() != Some(RealSign::Positive) {
             return Err(TransientStepError::InvalidTimestep);
         }
         if !matches!(
@@ -1822,7 +1851,7 @@ impl Circuit {
         if !self.validate().is_valid() {
             return Err(DiodeTransientStepError::InvalidCircuit);
         }
-        if timestep.structural_facts().sign != Some(RealSign::Positive) {
+        if timestep.predicate_sign() != Some(RealSign::Positive) {
             return Err(DiodeTransientStepError::InvalidTimestep);
         }
         if !matches!(
@@ -1950,7 +1979,7 @@ impl Circuit {
         let mut samples = Vec::new();
         let mut nonlinear_steps = Vec::new();
         let status = loop {
-            match time.partial_cmp(&policy.stop_time) {
+            match time.predicate_cmp(&policy.stop_time) {
                 Some(Ordering::Equal) => break TransientRunStatus::Complete,
                 Some(Ordering::Less) => {}
                 None => return Err(DiodeTransientRunError::IndeterminateTime),
@@ -2053,7 +2082,7 @@ impl Circuit {
         let mut decisions = Vec::new();
         let mut rejected_steps = 0_usize;
         let status = loop {
-            match time.partial_cmp(&policy.stop_time) {
+            match time.predicate_cmp(&policy.stop_time) {
                 Some(Ordering::Equal) => break TransientRunStatus::Complete,
                 Some(Ordering::Less) => {}
                 _ => return Err(TransientRunError::InvalidPolicy),
@@ -2108,7 +2137,7 @@ impl Circuit {
                         absolute_tolerance,
                         relative_tolerance,
                     )?;
-                    let accepted = match error_ratio.partial_cmp(&Real::one()) {
+                    let accepted = match error_ratio.predicate_cmp(&Real::one()) {
                         Some(Ordering::Less | Ordering::Equal) => true,
                         Some(Ordering::Greater) => false,
                         None => return Err(TransientRunError::IndeterminateErrorEstimate),
@@ -2134,7 +2163,7 @@ impl Circuit {
                         )?);
                         let quarter =
                             (Real::one() / Real::from(4)).expect("quarter denominator is nonzero");
-                        match error_ratio.partial_cmp(&quarter) {
+                        match error_ratio.predicate_cmp(&quarter) {
                             Some(Ordering::Less | Ordering::Equal) => {
                                 let grown = attempted * growth_factor.clone();
                                 timestep = exact_min(&grown, &policy.maximum_timestep)
@@ -2151,7 +2180,7 @@ impl Circuit {
                             break TransientRunStatus::RejectedStepLimit;
                         }
                         let shrunk = attempted * shrink_factor.clone();
-                        match shrunk.partial_cmp(&policy.minimum_timestep) {
+                        match shrunk.predicate_cmp(&policy.minimum_timestep) {
                             Some(Ordering::Less) => {
                                 break TransientRunStatus::MinimumTimestep;
                             }
@@ -2215,7 +2244,7 @@ impl Circuit {
                 parameter: parameter_name.into(),
             });
         };
-        if value.structural_facts().sign != Some(RealSign::Positive) {
+        if value.predicate_sign() != Some(RealSign::Positive) {
             return Err(TransientStepError::InvalidReactiveParameter {
                 component: instance.component.clone(),
                 parameter: parameter_name.into(),
@@ -2270,7 +2299,7 @@ impl Circuit {
             let Some(breakpoint) = breakpoint else {
                 continue;
             };
-            match breakpoint.partial_cmp(&endpoint) {
+            match breakpoint.predicate_cmp(&endpoint) {
                 Some(Ordering::Less) => endpoint = breakpoint,
                 Some(Ordering::Equal | Ordering::Greater) => {}
                 None => {
@@ -2300,7 +2329,7 @@ impl Circuit {
         if let Some(breakpoint) = earliest_exact_breakpoint_after(time, providers)
             .map_err(TransientRunError::Breakpoint)?
         {
-            match breakpoint.partial_cmp(&endpoint) {
+            match breakpoint.predicate_cmp(&endpoint) {
                 Some(Ordering::Less) => endpoint = breakpoint,
                 Some(Ordering::Equal | Ordering::Greater) => {}
                 None => {
@@ -2345,27 +2374,27 @@ fn nonlinear_terminal_voltage(
 }
 
 fn validate_run_policy(policy: &TransientRunPolicy) -> Result<(), TransientRunError> {
-    let positive = |value: &Real| value.structural_facts().sign == Some(RealSign::Positive);
+    let positive = |value: &Real| value.predicate_sign() == Some(RealSign::Positive);
     let nonnegative = |value: &Real| {
         matches!(
-            value.structural_facts().sign,
+            value.predicate_sign(),
             Some(RealSign::Positive | RealSign::Zero)
         )
     };
-    if policy.start_time.partial_cmp(&policy.stop_time) != Some(Ordering::Less)
+    if policy.start_time.predicate_cmp(&policy.stop_time) != Some(Ordering::Less)
         || !positive(&policy.initial_timestep)
         || !positive(&policy.minimum_timestep)
         || !positive(&policy.maximum_timestep)
         || !matches!(
             policy
                 .minimum_timestep
-                .partial_cmp(&policy.initial_timestep),
+                .predicate_cmp(&policy.initial_timestep),
             Some(Ordering::Less | Ordering::Equal)
         )
         || !matches!(
             policy
                 .initial_timestep
-                .partial_cmp(&policy.maximum_timestep),
+                .predicate_cmp(&policy.maximum_timestep),
             Some(Ordering::Less | Ordering::Equal)
         )
         || policy.maximum_accepted_steps == 0
@@ -2382,8 +2411,8 @@ fn validate_run_policy(policy: &TransientRunPolicy) -> Result<(), TransientRunEr
         } if !positive(absolute_tolerance)
             || !nonnegative(relative_tolerance)
             || !positive(shrink_factor)
-            || shrink_factor.partial_cmp(&Real::one()) != Some(Ordering::Less)
-            || growth_factor.partial_cmp(&Real::one()) != Some(Ordering::Greater) =>
+            || shrink_factor.predicate_cmp(&Real::one()) != Some(Ordering::Less)
+            || growth_factor.predicate_cmp(&Real::one()) != Some(Ordering::Greater) =>
         {
             return Err(TransientRunError::InvalidPolicy);
         }
@@ -2487,7 +2516,7 @@ fn update_error_ratio(
         .ok_or(TransientRunError::IndeterminateErrorEstimate)?;
     let tolerance = absolute_tolerance.clone() + relative_tolerance.clone() * scale;
     let ratio = (error / tolerance).map_err(|_| TransientRunError::IndeterminateErrorEstimate)?;
-    match ratio.partial_cmp(maximum) {
+    match ratio.predicate_cmp(maximum) {
         Some(Ordering::Greater) => *maximum = ratio,
         Some(Ordering::Less | Ordering::Equal) => {}
         None => return Err(TransientRunError::IndeterminateErrorEstimate),
@@ -2496,7 +2525,7 @@ fn update_error_ratio(
 }
 
 fn exact_min(first: &Real, second: &Real) -> Option<Real> {
-    match first.partial_cmp(second)? {
+    match first.predicate_cmp(second)? {
         Ordering::Less | Ordering::Equal => Some(first.clone()),
         Ordering::Greater => Some(second.clone()),
     }
@@ -2515,7 +2544,7 @@ fn next_session_timestep(
     };
     let quarter = (Real::one() / Real::from(4))
         .map_err(|_| TransientSessionError::Run(TransientRunError::InvalidPolicy))?;
-    match ratio.partial_cmp(&quarter) {
+    match ratio.predicate_cmp(&quarter) {
         Some(Ordering::Less | Ordering::Equal) => {
             let grown = accepted.clone() * growth_factor.clone();
             exact_min(&grown, &policy.maximum_timestep).ok_or(TransientSessionError::Run(
@@ -2530,18 +2559,14 @@ fn next_session_timestep(
 }
 
 fn exact_max(first: &Real, second: &Real) -> Option<Real> {
-    match first.partial_cmp(second)? {
+    match first.predicate_cmp(second)? {
         Ordering::Less => Some(second.clone()),
         Ordering::Equal | Ordering::Greater => Some(first.clone()),
     }
 }
 
 fn real_abs(value: &Real) -> Real {
-    if value.structural_facts().sign == Some(RealSign::Negative) {
-        -value.clone()
-    } else {
-        value.clone()
-    }
+    value.abs()
 }
 
 fn lower_instance_at(
@@ -2630,7 +2655,7 @@ fn lower_instance(
             let conductance = if let Some(value) = parameter(instance, model, "conductance") {
                 value.clone()
             } else if let Some(resistance) = parameter(instance, model, "resistance") {
-                if resistance.structural_facts().sign != Some(RealSign::Positive) {
+                if resistance.predicate_sign() != Some(RealSign::Positive) {
                     report.issues.push(DeviceLoweringIssue::InvalidResistance(
                         instance.component.clone(),
                     ));

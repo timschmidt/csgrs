@@ -5,12 +5,13 @@
 //! semantic identities. The result remains a proposal: ordinary layout
 //! validation and HyperDRC release checks still certify the resulting copper.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
-#[cfg(feature = "geometry")]
-use hypercurve::RegionPointLocation;
 use hypercurve::{Classification, CurvePolicy};
+#[cfg(feature = "geometry")]
+use hypercurve::{CurveRegion2, RegionPointLocation};
 use hyperlattice::Point2;
 use hyperlimit::{
     RingPointLocation, SegmentIntersection, classify_point_ring_even_odd,
@@ -56,6 +57,8 @@ pub enum LengthTuningIssue {
     NoEligibleSpan,
     /// Exact region containment could not be decided.
     IndeterminateRegion,
+    /// Exact length or capacity ordering could not be decided.
+    IndeterminateOrdering,
     /// Every geometrically eligible serpentine leaves the authored tuning region.
     OutsideRegion,
 }
@@ -194,8 +197,12 @@ pub enum PhaseTuningIssue {
     },
     /// Final member centerline lengths exceed the retained group skew.
     SkewExceeded,
+    /// The final member centerline skew could not be ordered against its limit.
+    IndeterminateSkew,
     /// A differential-pair group no longer has one constant translated route shape.
     DifferentialCouplingLost,
+    /// Constant-spacing differential coupling could not be decided.
+    IndeterminateDifferentialCoupling,
     /// Candidate-layout zone materialization could not be certified.
     RealizedZoneMaterialization(String),
 }
@@ -328,6 +335,8 @@ pub enum PhaseTuningSynthesisIssue {
     NoEligibleSpan(NetId),
     /// Exact generated-copper containment against the board could not be decided.
     IndeterminateBoardBoundary(NetId),
+    /// Exact retained-length or capacity ordering could not be decided.
+    IndeterminateOrdering(NetId),
     /// Every generated assembly failed atomic phase/clearance certification.
     NoCertifiedAssembly,
     /// Candidate certification stopped at the caller's hard assembly bound.
@@ -390,18 +399,17 @@ impl PcbLayout {
         let unique_nets = policy.nets.iter().collect::<BTreeSet<_>>();
         if policy.nets.len() < 2
             || unique_nets.len() != policy.nets.len()
-            || policy.amplitude.partial_cmp(&Real::zero()) != Some(Ordering::Greater)
-            || policy.pitch.partial_cmp(&Real::zero()) != Some(Ordering::Greater)
+            || policy.amplitude.predicate_cmp(&Real::zero()) != Some(Ordering::Greater)
+            || policy.pitch.predicate_cmp(&Real::zero()) != Some(Ordering::Greater)
             || policy.maximum_cycles == 0
             || !is_non_negative(&policy.tolerance)
             || !is_non_negative(&policy.region_margin)
             || !is_non_negative(&policy.maximum_skew)
             || !is_non_negative(&policy.minimum_clearance)
             || policy.maximum_candidate_assemblies == 0
-            || policy
-                .target_length
-                .as_ref()
-                .is_some_and(|target| target.partial_cmp(&Real::zero()) != Some(Ordering::Greater))
+            || policy.target_length.as_ref().is_some_and(|target| {
+                target.predicate_cmp(&Real::zero()) != Some(Ordering::Greater)
+            })
             || !self.validate(circuit).is_valid()
         {
             return rejected(PhaseTuningSynthesisIssue::InvalidPolicy);
@@ -445,31 +453,39 @@ impl PcbLayout {
         }
         let target = match &policy.target_length {
             Some(target) => target.clone(),
-            None => lengths
-                .iter()
-                .map(|(_, length)| length)
-                .try_fold(None, |maximum: Option<Real>, length| {
-                    Some(Some(match maximum {
-                        Some(maximum)
-                            if length.partial_cmp(&maximum) != Some(Ordering::Greater) =>
-                        {
-                            maximum
+            None => {
+                let mut maximum = lengths[0].1.clone();
+                for (net, length) in lengths.iter().skip(1) {
+                    match length.predicate_cmp(&maximum) {
+                        Some(Ordering::Greater) => maximum.clone_from(length),
+                        Some(_) => {}
+                        None => {
+                            return rejected(PhaseTuningSynthesisIssue::IndeterminateOrdering(
+                                net.clone(),
+                            ));
                         }
-                        _ => length.clone(),
-                    }))
-                })
-                .flatten()
-                .expect("at least two selected nets have retained lengths"),
+                    }
+                }
+                maximum
+            }
         };
         for (net, length) in &lengths {
-            if length > &(target.clone() + policy.tolerance.clone()) {
-                return rejected_synthesis(
-                    policy.group.clone(),
-                    Some(target),
-                    0,
-                    0,
-                    PhaseTuningSynthesisIssue::TargetBelowCurrent(net.clone()),
-                );
+            match length.predicate_gt(&(target.clone() + policy.tolerance.clone())) {
+                Some(true) => {
+                    return rejected_synthesis(
+                        policy.group.clone(),
+                        Some(target),
+                        0,
+                        0,
+                        PhaseTuningSynthesisIssue::TargetBelowCurrent(net.clone()),
+                    );
+                }
+                Some(false) => {}
+                None => {
+                    return rejected(PhaseTuningSynthesisIssue::IndeterminateOrdering(
+                        net.clone(),
+                    ));
+                }
             }
         }
 
@@ -606,35 +622,70 @@ impl PcbLayout {
             );
         };
         let deviation = real_abs(&(original_length.clone() - pattern_value.target_length.clone()));
-        if deviation <= pattern_value.tolerance {
-            return LengthTuningReport {
-                pattern: pattern.clone(),
-                status: LengthTuningStatus::AlreadySatisfied,
-                original_length: Some(original_length.clone()),
-                realized_length: Some(original_length),
-                target_length: target,
-                cycles: 0,
-                route: None,
-                segment_index: None,
-                issues: Vec::new(),
-                tuned_route: None,
-            };
+        match deviation.predicate_le(&pattern_value.tolerance) {
+            None => {
+                return rejected(
+                    pattern.clone(),
+                    Some(original_length),
+                    target,
+                    LengthTuningIssue::IndeterminateOrdering,
+                );
+            }
+            Some(true) => {
+                return LengthTuningReport {
+                    pattern: pattern.clone(),
+                    status: LengthTuningStatus::AlreadySatisfied,
+                    original_length: Some(original_length.clone()),
+                    realized_length: Some(original_length),
+                    target_length: target,
+                    cycles: 0,
+                    route: None,
+                    segment_index: None,
+                    issues: Vec::new(),
+                    tuned_route: None,
+                };
+            }
+            Some(false) => {}
         }
-        if original_length > pattern_value.target_length.clone() + pattern_value.tolerance.clone() {
-            return rejected(
-                pattern.clone(),
-                Some(original_length),
-                target,
-                LengthTuningIssue::TargetBelowCurrent,
-            );
+        match original_length
+            .predicate_gt(&(pattern_value.target_length.clone() + pattern_value.tolerance.clone()))
+        {
+            None => {
+                return rejected(
+                    pattern.clone(),
+                    Some(original_length),
+                    target,
+                    LengthTuningIssue::IndeterminateOrdering,
+                );
+            }
+            Some(true) => {
+                return rejected(
+                    pattern.clone(),
+                    Some(original_length),
+                    target,
+                    LengthTuningIssue::TargetBelowCurrent,
+                );
+            }
+            Some(false) => {}
         }
-        let Some(cycles) = matching_cycle_count(&original_length, pattern_value) else {
-            return rejected(
-                pattern.clone(),
-                Some(original_length),
-                target,
-                LengthTuningIssue::UnreachableTarget,
-            );
+        let cycles = match matching_cycle_count(&original_length, pattern_value) {
+            Ok(Some(cycles)) => cycles,
+            Ok(None) => {
+                return rejected(
+                    pattern.clone(),
+                    Some(original_length),
+                    target,
+                    LengthTuningIssue::UnreachableTarget,
+                );
+            }
+            Err(()) => {
+                return rejected(
+                    pattern.clone(),
+                    Some(original_length),
+                    target,
+                    LengthTuningIssue::IndeterminateOrdering,
+                );
+            }
         };
 
         let mut indeterminate = false;
@@ -660,8 +711,13 @@ impl PcbLayout {
                 };
                 let required_forward =
                     pattern_value.pitch.clone() * Real::from(cycles.saturating_mul(2) as u128);
-                if span < required_forward {
-                    continue;
+                match span.predicate_lt(&required_forward) {
+                    Some(true) => continue,
+                    Some(false) => {}
+                    None => {
+                        indeterminate = true;
+                        continue;
+                    }
                 }
                 had_capacity = true;
                 let Some(points) = tuning_points(line.start(), line.end(), cycles, pattern_value)
@@ -671,16 +727,29 @@ impl PcbLayout {
                 match polyline_inside_region(&points, &pattern_value.region) {
                     Some(true) => {
                         let mut tuned = source.clone();
-                        let replacements = points
-                            .windows(2)
-                            .filter(|pair| pair[0] != pair[1])
-                            .map(|pair| {
-                                PcbRouteSegment::Line(LinePathSegment::new(
-                                    pair[0].clone(),
-                                    pair[1].clone(),
-                                ))
-                            })
-                            .collect::<Vec<_>>();
+                        let mut replacements = Vec::new();
+                        let mut replacement_indeterminate = false;
+                        for pair in points.windows(2) {
+                            match pair[0]
+                                .x
+                                .predicate_eq(&pair[1].x)
+                                .zip(pair[0].y.predicate_eq(&pair[1].y))
+                                .map(|(x, y)| x && y)
+                            {
+                                Some(true) => {}
+                                Some(false) => replacements.push(PcbRouteSegment::Line(
+                                    LinePathSegment::new(pair[0].clone(), pair[1].clone()),
+                                )),
+                                None => {
+                                    replacement_indeterminate = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if replacement_indeterminate {
+                            indeterminate = true;
+                            continue;
+                        }
                         tuned
                             .segments
                             .splice(segment_index..=segment_index, replacements);
@@ -847,13 +916,24 @@ impl PcbLayout {
                     PhaseTuningIssue::InvalidContract,
                 );
             };
-            if !differential_routes_remain_coupled(&working, &patterns, pair) {
-                return rejected_phase(
-                    group.clone(),
-                    members,
-                    original_lengths,
-                    PhaseTuningIssue::DifferentialCouplingLost,
-                );
+            match differential_routes_remain_coupled(&working, &patterns, pair) {
+                Some(true) => {}
+                Some(false) => {
+                    return rejected_phase(
+                        group.clone(),
+                        members,
+                        original_lengths,
+                        PhaseTuningIssue::DifferentialCouplingLost,
+                    );
+                }
+                None => {
+                    return rejected_phase(
+                        group.clone(),
+                        members,
+                        original_lengths,
+                        PhaseTuningIssue::IndeterminateDifferentialCoupling,
+                    );
+                }
             }
         }
         let Some(realized_skew) = length_skew(&realized_lengths) else {
@@ -864,16 +944,24 @@ impl PcbLayout {
                 PhaseTuningIssue::InvalidContract,
             );
         };
-        if !matches!(
-            realized_skew.partial_cmp(&group_value.maximum_skew),
-            Some(Ordering::Less | Ordering::Equal)
-        ) {
-            return rejected_phase(
-                group.clone(),
-                members,
-                original_lengths,
-                PhaseTuningIssue::SkewExceeded,
-            );
+        match realized_skew.predicate_le(&group_value.maximum_skew) {
+            Some(true) => {}
+            Some(false) => {
+                return rejected_phase(
+                    group.clone(),
+                    members,
+                    original_lengths,
+                    PhaseTuningIssue::SkewExceeded,
+                );
+            }
+            None => {
+                return rejected_phase(
+                    group.clone(),
+                    members,
+                    original_lengths,
+                    PhaseTuningIssue::IndeterminateSkew,
+                );
+            }
         }
         let tuned_routes = working
             .routes
@@ -1032,7 +1120,7 @@ fn realized_zone_collision(
             };
             let fill_empty = zone_feature.profile.is_empty();
             let clearance_is_sufficient = required_clearance
-                .partial_cmp(&zone.clearance)
+                .predicate_cmp(&zone.clearance)
                 .is_some_and(|ordering| ordering != Ordering::Greater);
             let status = if fill_empty || clearance_is_sufficient {
                 PhaseTuningRealizedZoneStatus::Clear
@@ -1078,7 +1166,7 @@ fn realized_zone_collision(
 #[cfg(feature = "geometry")]
 fn realized_zone_intrusion_probe(
     route: &PcbRoute,
-    zone: &csgrs::sketch::Profile,
+    zone: &CurveRegion2,
     realized_clearance: &Real,
     required_clearance: &Real,
 ) -> Option<bool> {
@@ -1090,8 +1178,8 @@ fn realized_zone_intrusion_probe(
         let PcbRouteSegment::Line(line) = segment else {
             return None;
         };
-        let horizontal = line.start().y == line.end().y;
-        let vertical = line.start().x == line.end().x;
+        let horizontal = line.start().y.predicate_eq(&line.end().y)?;
+        let vertical = line.start().x.predicate_eq(&line.end().x)?;
         if !horizontal && !vertical {
             return None;
         }
@@ -1116,7 +1204,6 @@ fn realized_zone_intrusion_probe(
             for probe in probes {
                 let probe = hypercurve::Point2::new(probe.x, probe.y);
                 match zone
-                    .as_curve_region()
                     .classify_point(&probe, &CurvePolicy::certified())
                     .ok()?
                 {
@@ -1168,12 +1255,12 @@ fn length_skew(lengths: &[(crate::NetId, Real)]) -> Option<Real> {
     let (minimum, maximum) =
         values.try_fold((first.clone(), first), |(minimum, maximum), value| {
             Some((
-                if value.partial_cmp(&minimum)? == Ordering::Less {
+                if value.predicate_cmp(&minimum)? == Ordering::Less {
                     value.clone()
                 } else {
                     minimum
                 },
-                if value.partial_cmp(&maximum)? == Ordering::Greater {
+                if value.predicate_cmp(&maximum)? == Ordering::Greater {
                     value.clone()
                 } else {
                     maximum
@@ -1187,7 +1274,7 @@ fn differential_routes_remain_coupled(
     layout: &PcbLayout,
     patterns: &[&LengthTuningPattern],
     pair: &crate::DifferentialPair,
-) -> bool {
+) -> Option<bool> {
     let route_for_net = |net: &crate::NetId| {
         let pattern = patterns.iter().find(|pattern| &pattern.net == net)?;
         let route_id = pattern.route.as_ref()?;
@@ -1196,18 +1283,18 @@ fn differential_routes_remain_coupled(
     let (Some(positive), Some(negative)) =
         (route_for_net(&pair.positive), route_for_net(&pair.negative))
     else {
-        return false;
+        return Some(false);
     };
     if positive.layer != negative.layer
         || positive.segments.len() != negative.segments.len()
         || positive.segments.is_empty()
     {
-        return false;
+        return Some(false);
     }
     let center_spacing = pair.spacing.clone()
         + match ((positive.width.clone() + negative.width.clone()) / Real::from(2)).ok() {
             Some(half_widths) => half_widths,
-            None => return false,
+            None => return Some(false),
         };
     let first_positive = positive.segments[0].start();
     let first_negative = negative.segments[0].start();
@@ -1217,22 +1304,32 @@ fn differential_routes_remain_coupled(
     );
     let translation_squared = translation.x.clone() * translation.x.clone()
         + translation.y.clone() * translation.y.clone();
-    if translation_squared != center_spacing.clone() * center_spacing {
-        return false;
+    if !translation_squared.predicate_eq(&(center_spacing.clone() * center_spacing))? {
+        return Some(false);
     }
-    positive
-        .segments
-        .iter()
-        .zip(&negative.segments)
-        .all(|(positive, negative)| {
-            matches!(
-                (positive, negative),
-                (PcbRouteSegment::Line(_), PcbRouteSegment::Line(_))
-            ) && negative.start().x.clone() - positive.start().x.clone() == translation.x
-                && negative.start().y.clone() - positive.start().y.clone() == translation.y
-                && negative.end().x.clone() - positive.end().x.clone() == translation.x
-                && negative.end().y.clone() - positive.end().y.clone() == translation.y
-        })
+    positive.segments.iter().zip(&negative.segments).try_fold(
+        true,
+        |coupled, (positive, negative)| {
+            if !coupled
+                || !matches!(
+                    (positive, negative),
+                    (PcbRouteSegment::Line(_), PcbRouteSegment::Line(_))
+                )
+            {
+                return Some(false);
+            }
+            Some(
+                (negative.start().x.clone() - positive.start().x.clone())
+                    .predicate_eq(&translation.x)?
+                    && (negative.start().y.clone() - positive.start().y.clone())
+                        .predicate_eq(&translation.y)?
+                    && (negative.end().x.clone() - positive.end().x.clone())
+                        .predicate_eq(&translation.x)?
+                    && (negative.end().y.clone() - positive.end().y.clone())
+                        .predicate_eq(&translation.y)?,
+            )
+        },
+    )
 }
 
 fn phase_tuning_collision(
@@ -1283,7 +1380,7 @@ fn phase_tuning_collision(
                             obstacle: PhaseTuningObstacle::Route(other.id.clone()),
                         });
                     };
-                    let Some(ordering) = distance.partial_cmp(&required_squared) else {
+                    let Some(ordering) = distance.predicate_cmp(&required_squared) else {
                         return Some(PhaseTuningIssue::IndeterminateClearance {
                             route: tuned.id.clone(),
                             obstacle: PhaseTuningObstacle::Route(other.id.clone()),
@@ -1326,7 +1423,7 @@ fn phase_tuning_collision(
                         obstacle: PhaseTuningObstacle::Via(via.id.clone()),
                     });
                 };
-                let Some(ordering) = distance.partial_cmp(&required_squared) else {
+                let Some(ordering) = distance.predicate_cmp(&required_squared) else {
                     return Some(PhaseTuningIssue::IndeterminateClearance {
                         route: tuned.id.clone(),
                         obstacle: PhaseTuningObstacle::Via(via.id.clone()),
@@ -1517,7 +1614,7 @@ fn route_polygon_collision_issue(
                     obstacle: obstacle.clone(),
                 });
             };
-            let Some(ordering) = distance.partial_cmp(&required_squared) else {
+            let Some(ordering) = distance.predicate_cmp(&required_squared) else {
                 return Some(PhaseTuningIssue::IndeterminateClearance {
                     route: route.id.clone(),
                     obstacle: obstacle.clone(),
@@ -1556,7 +1653,7 @@ fn placed_layer(
 }
 
 fn maximum_real(first: &Real, second: &Real) -> Option<Real> {
-    match first.partial_cmp(second)? {
+    match first.predicate_cmp(second)? {
         Ordering::Less => Some(second.clone()),
         Ordering::Equal | Ordering::Greater => Some(first.clone()),
     }
@@ -1590,38 +1687,63 @@ fn tuning_synthesis_candidates(
     target_length: &Real,
     policy: &PhaseTuningSynthesisPolicy,
 ) -> Result<Vec<LengthTuningPattern>, PhaseTuningSynthesisIssue> {
-    if real_abs(&(original_length.clone() - target_length.clone())) <= policy.tolerance {
-        let route = layout
-            .routes
-            .iter()
-            .find(|route| &route.net == net)
-            .ok_or_else(|| PhaseTuningSynthesisIssue::UnknownNet(net.clone()))?;
-        let points = route
-            .segments
-            .first()
-            .map(|segment| vec![segment.start().clone(), segment.end().clone()])
-            .ok_or_else(|| PhaseTuningSynthesisIssue::UnknownNet(net.clone()))?;
-        return Ok(vec![LengthTuningPattern {
-            id,
-            net: net.clone(),
-            route: Some(route.id.clone()),
-            region: synthesis_region(
-                &points,
-                &(policy.amplitude.clone() + policy.region_margin.clone()),
-            )
-            .ok_or_else(|| PhaseTuningSynthesisIssue::NoEligibleSpan(net.clone()))?,
-            target_length: target_length.clone(),
-            tolerance: policy.tolerance.clone(),
-            amplitude: policy.amplitude.clone(),
-            pitch: policy.pitch.clone(),
-            maximum_cycles: policy.maximum_cycles,
-            side: LengthTuningSide::Left,
-        }]);
+    match real_abs(&(original_length.clone() - target_length.clone()))
+        .predicate_le(&policy.tolerance)
+    {
+        None => {
+            return Err(PhaseTuningSynthesisIssue::IndeterminateOrdering(
+                net.clone(),
+            ));
+        }
+        Some(true) => {
+            let route = layout
+                .routes
+                .iter()
+                .find(|route| &route.net == net)
+                .ok_or_else(|| PhaseTuningSynthesisIssue::UnknownNet(net.clone()))?;
+            let points = route
+                .segments
+                .first()
+                .map(|segment| vec![segment.start().clone(), segment.end().clone()])
+                .ok_or_else(|| PhaseTuningSynthesisIssue::UnknownNet(net.clone()))?;
+            return Ok(vec![LengthTuningPattern {
+                id,
+                net: net.clone(),
+                route: Some(route.id.clone()),
+                region: synthesis_region(
+                    &points,
+                    &(policy.amplitude.clone() + policy.region_margin.clone()),
+                )
+                .ok_or_else(|| PhaseTuningSynthesisIssue::NoEligibleSpan(net.clone()))?,
+                target_length: target_length.clone(),
+                tolerance: policy.tolerance.clone(),
+                amplitude: policy.amplitude.clone(),
+                pitch: policy.pitch.clone(),
+                maximum_cycles: policy.maximum_cycles,
+                side: LengthTuningSide::Left,
+            }]);
+        }
+        Some(false) => {}
     }
-    let Some(cycles) = (1..=policy.maximum_cycles).find(|cycles| {
-        let added = policy.amplitude.clone() * Real::from(cycles.saturating_mul(2) as u128);
-        real_abs(&(original_length.clone() + added - target_length.clone())) <= policy.tolerance
-    }) else {
+    let mut cycles = None;
+    for candidate in 1..=policy.maximum_cycles {
+        let added = policy.amplitude.clone() * Real::from(candidate.saturating_mul(2) as u128);
+        match real_abs(&(original_length.clone() + added - target_length.clone()))
+            .predicate_le(&policy.tolerance)
+        {
+            Some(true) => {
+                cycles = Some(candidate);
+                break;
+            }
+            Some(false) => {}
+            None => {
+                return Err(PhaseTuningSynthesisIssue::IndeterminateOrdering(
+                    net.clone(),
+                ));
+            }
+        }
+    }
+    let Some(cycles) = cycles else {
         return Err(PhaseTuningSynthesisIssue::UnreachableTarget(net.clone()));
     };
     let required_forward = policy.pitch.clone() * Real::from(cycles.saturating_mul(2) as u128);
@@ -1641,8 +1763,14 @@ fn tuning_synthesis_candidates(
             let Some(span) = orthogonal_line_length(line.start(), line.end()) else {
                 continue;
             };
-            if span < required_forward {
-                continue;
+            match span.predicate_lt(&required_forward) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => {
+                    return Err(PhaseTuningSynthesisIssue::IndeterminateOrdering(
+                        net.clone(),
+                    ));
+                }
             }
             for side in [LengthTuningSide::Left, LengthTuningSide::Right] {
                 let draft = LengthTuningPattern {
@@ -1710,16 +1838,16 @@ fn synthesis_region(points: &[Point2], margin: &Real) -> Option<Vec<Point2>> {
     let mut min_y = first.y.clone();
     let mut max_y = first.y.clone();
     for point in &points[1..] {
-        if point.x.partial_cmp(&min_x)? == Ordering::Less {
+        if point.x.predicate_cmp(&min_x)? == Ordering::Less {
             min_x = point.x.clone();
         }
-        if point.x.partial_cmp(&max_x)? == Ordering::Greater {
+        if point.x.predicate_cmp(&max_x)? == Ordering::Greater {
             max_x = point.x.clone();
         }
-        if point.y.partial_cmp(&min_y)? == Ordering::Less {
+        if point.y.predicate_cmp(&min_y)? == Ordering::Less {
             min_y = point.y.clone();
         }
-        if point.y.partial_cmp(&max_y)? == Ordering::Greater {
+        if point.y.predicate_cmp(&max_y)? == Ordering::Greater {
             max_y = point.y.clone();
         }
     }
@@ -1727,7 +1855,7 @@ fn synthesis_region(points: &[Point2], margin: &Real) -> Option<Vec<Point2>> {
     max_x += margin.clone();
     min_y -= margin.clone();
     max_y += margin.clone();
-    if min_x == max_x || min_y == max_y {
+    if min_x.predicate_eq(&max_x)? || min_y.predicate_eq(&max_y)? {
         return None;
     }
     Some(vec![
@@ -1758,12 +1886,21 @@ fn rejected(
     }
 }
 
-fn matching_cycle_count(original_length: &Real, pattern: &LengthTuningPattern) -> Option<usize> {
-    (1..=pattern.maximum_cycles).find(|cycles| {
+fn matching_cycle_count(
+    original_length: &Real,
+    pattern: &LengthTuningPattern,
+) -> Result<Option<usize>, ()> {
+    for cycles in 1..=pattern.maximum_cycles {
         let added = pattern.amplitude.clone() * Real::from(cycles.saturating_mul(2) as u128);
-        real_abs(&(original_length.clone() + added - pattern.target_length.clone()))
-            <= pattern.tolerance
-    })
+        match real_abs(&(original_length.clone() + added - pattern.target_length.clone()))
+            .predicate_le(&pattern.tolerance)
+        {
+            Some(true) => return Ok(Some(cycles)),
+            Some(false) => {}
+            None => return Err(()),
+        }
+    }
+    Ok(None)
 }
 
 fn net_orthogonal_length(layout: &PcbLayout, pattern: &LengthTuningPattern) -> Option<Real> {
@@ -1789,12 +1926,10 @@ fn net_orthogonal_length_for_net(layout: &PcbLayout, net: &NetId) -> Option<Real
 }
 
 fn orthogonal_line_length(start: &Point2, end: &Point2) -> Option<Real> {
-    if start.x == end.x {
-        Some(real_abs(&(end.y.clone() - start.y.clone())))
-    } else if start.y == end.y {
-        Some(real_abs(&(end.x.clone() - start.x.clone())))
-    } else {
-        None
+    match (start.x.predicate_cmp(&end.x), start.y.predicate_cmp(&end.y)) {
+        (Some(Ordering::Equal), _) => Some(real_abs(&(end.y.clone() - start.y.clone()))),
+        (_, Some(Ordering::Equal)) => Some(real_abs(&(end.x.clone() - start.x.clone()))),
+        _ => None,
     }
 }
 
@@ -1804,12 +1939,12 @@ fn tuning_points(
     cycles: usize,
     pattern: &LengthTuningPattern,
 ) -> Option<Vec<Point2>> {
-    let (forward_x, forward_y) = if start.y == end.y {
+    let (forward_x, forward_y) = if start.y.predicate_cmp(&end.y) == Some(Ordering::Equal) {
         (
             direction_sign(&(end.x.clone() - start.x.clone()))?,
             Real::zero(),
         )
-    } else if start.x == end.x {
+    } else if start.x.predicate_cmp(&end.x) == Some(Ordering::Equal) {
         (
             Real::zero(),
             direction_sign(&(end.y.clone() - start.y.clone()))?,
@@ -1847,14 +1982,14 @@ fn tuning_points(
         );
         points.push(cursor.clone());
     }
-    if &cursor != end {
+    if cursor.x.predicate_ne(&end.x)? || cursor.y.predicate_ne(&end.y)? {
         points.push(end.clone());
     }
     Some(points)
 }
 
 fn direction_sign(value: &Real) -> Option<Real> {
-    match value.partial_cmp(&Real::zero())? {
+    match value.predicate_cmp(&Real::zero())? {
         Ordering::Less => Some(-Real::one()),
         Ordering::Greater => Some(Real::one()),
         Ordering::Equal => None,
@@ -1886,16 +2021,12 @@ fn polyline_inside_region(points: &[Point2], region: &[Point2]) -> Option<bool> 
 }
 
 fn real_abs(value: &Real) -> Real {
-    if value.partial_cmp(&Real::zero()) == Some(Ordering::Less) {
-        -value.clone()
-    } else {
-        value.clone()
-    }
+    value.abs()
 }
 
 fn is_non_negative(value: &Real) -> bool {
     matches!(
-        value.partial_cmp(&Real::zero()),
+        value.predicate_cmp(&Real::zero()),
         Some(Ordering::Equal | Ordering::Greater)
     )
 }

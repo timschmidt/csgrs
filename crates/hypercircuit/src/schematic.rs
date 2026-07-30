@@ -1,5 +1,8 @@
 //! Circuit-owned schematic placement, connectivity validation, and SVG review output.
 
+use crate::predicate::RealPredicateExt as _;
+
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter, Write};
 
@@ -480,7 +483,7 @@ impl SchematicPresentation {
             .canvas
             .grid_spacing
             .as_ref()
-            .is_some_and(|spacing| spacing.structural_facts().sign != Some(RealSign::Positive))
+            .is_some_and(|spacing| spacing.predicate_sign() != Some(RealSign::Positive))
         {
             issues.push(SchematicPresentationIssue::InvalidGridSpacing);
         }
@@ -529,7 +532,7 @@ impl SchematicPresentation {
             if metadata
                 .width
                 .as_ref()
-                .is_some_and(|width| width.structural_facts().sign != Some(RealSign::Positive))
+                .is_some_and(|width| width.predicate_sign() != Some(RealSign::Positive))
             {
                 issues.push(SchematicPresentationIssue::InvalidWireWidth(
                     metadata.wire.clone(),
@@ -554,8 +557,8 @@ impl SchematicPresentation {
                 ));
             }
             if block.size.as_ref().is_some_and(|size| {
-                size.width.structural_facts().sign != Some(RealSign::Positive)
-                    || size.height.structural_facts().sign != Some(RealSign::Positive)
+                size.width.predicate_sign() != Some(RealSign::Positive)
+                    || size.height.predicate_sign() != Some(RealSign::Positive)
             }) {
                 issues.push(SchematicPresentationIssue::InvalidBlockSize(
                     block.instance.clone(),
@@ -938,13 +941,17 @@ fn valid_graphic(graphic: &SchematicGraphic) -> bool {
             from,
             to,
             stroke_width,
-        } => positive(stroke_width) && from != to,
+        } => positive(stroke_width) && schematic_points_ne(from, to),
         SchematicGraphic::Rectangle {
             start,
             end,
             stroke_width,
             ..
-        } => positive(stroke_width) && start.x != end.x && start.y != end.y,
+        } => {
+            positive(stroke_width)
+                && start.x.predicate_ne(&end.x) == Some(true)
+                && start.y.predicate_ne(&end.y) == Some(true)
+        }
         SchematicGraphic::Circle {
             radius,
             stroke_width,
@@ -956,13 +963,13 @@ fn valid_graphic(graphic: &SchematicGraphic) -> bool {
             end,
             stroke_width,
         } => {
+            let cross = (mid.x.clone() - start.x.clone()) * (end.y.clone() - start.y.clone())
+                - (mid.y.clone() - start.y.clone()) * (end.x.clone() - start.x.clone());
             positive(stroke_width)
-                && start != mid
-                && mid != end
-                && start != end
-                && (mid.x.clone() - start.x.clone()) * (end.y.clone() - start.y.clone())
-                    - (mid.y.clone() - start.y.clone()) * (end.x.clone() - start.x.clone())
-                    != Real::zero()
+                && schematic_points_ne(start, mid)
+                && schematic_points_ne(mid, end)
+                && schematic_points_ne(start, end)
+                && cross.predicate_ne(&Real::zero()) == Some(true)
         }
         SchematicGraphic::Polyline {
             points,
@@ -972,10 +979,23 @@ fn valid_graphic(graphic: &SchematicGraphic) -> bool {
         } => {
             positive(stroke_width)
                 && points.len() >= if *closed { 3 } else { 2 }
-                && points.windows(2).all(|pair| pair[0] != pair[1])
+                && points
+                    .windows(2)
+                    .all(|pair| schematic_points_ne(&pair[0], &pair[1]))
         }
         SchematicGraphic::Text { text, size, .. } => !text.is_empty() && positive(size),
     }
+}
+
+fn schematic_points_ne(first: &SchematicPoint, second: &SchematicPoint) -> bool {
+    matches!(
+        (
+            first.x.predicate_cmp(&second.x),
+            first.y.predicate_cmp(&second.y),
+        ),
+        (Some(Ordering::Less | Ordering::Greater), _)
+            | (_, Some(Ordering::Less | Ordering::Greater))
+    )
 }
 
 #[derive(Default)]
@@ -1367,7 +1387,7 @@ fn validate_endpoint_sheet(
 }
 
 fn positive(value: &Real) -> bool {
-    value.structural_facts().sign == Some(RealSign::Positive)
+    value.predicate_sign() == Some(RealSign::Positive)
 }
 
 /// Finite review-rendering policy.

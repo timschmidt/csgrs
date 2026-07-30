@@ -4,6 +4,8 @@
 //! to the file is recorded in [`KiCadNumericProjection`], and unsupported
 //! semantic details are returned as explicit omissions.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, Write};
 
@@ -1319,15 +1321,16 @@ fn kicad_oval_slot_dimensions(
     end: &hyperlattice::Point2,
     cutter_width: &Real,
 ) -> Option<(Real, Real)> {
-    let centered = start.x == -end.x.clone() && start.y == -end.y.clone();
+    let centered =
+        start.x.predicate_eq(&(-end.x.clone()))? && start.y.predicate_eq(&(-end.y.clone()))?;
     if !centered {
         return None;
     }
-    if start.y == Real::zero() && end.y == Real::zero() {
+    if start.y.predicate_eq(&Real::zero())? && end.y.predicate_eq(&Real::zero())? {
         let length = (end.x.clone() - start.x.clone()).abs();
         return Some((length + cutter_width.clone(), cutter_width.clone()));
     }
-    if start.x == Real::zero() && end.x == Real::zero() {
+    if start.x.predicate_eq(&Real::zero())? && end.x.predicate_eq(&Real::zero())? {
         let length = (end.y.clone() - start.y.clone()).abs();
         return Some((cutter_width.clone(), length + cutter_width.clone()));
     }

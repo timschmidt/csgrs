@@ -4,6 +4,7 @@
 //! emitted through hyperpath's exact trace/via carriers before it can re-enter
 //! semantic PCB layout state.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::{Ordering, Reverse};
 use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 use std::fmt::{Display, Formatter};
@@ -143,6 +144,8 @@ pub enum NegotiatedRouterError {
     InvalidProblem(RoutingAdapterError),
     /// A positive bound or physical dimension was invalid.
     InvalidPolicy,
+    /// A required exact initialization decision remained indeterminate.
+    IndeterminatePredicate,
     /// Grid construction exceeded the caller's per-connection node bound.
     GridTooLarge,
     /// The exact board-boundary query carrier could not be constructed.
@@ -166,6 +169,9 @@ impl Display for NegotiatedRouterError {
                 write!(formatter, "invalid PCB routing problem: {error:?}")
             }
             Self::InvalidPolicy => formatter.write_str("invalid negotiated routing policy"),
+            Self::IndeterminatePredicate => {
+                formatter.write_str("an exact negotiated-routing predicate remained indeterminate")
+            }
             Self::GridTooLarge => {
                 formatter.write_str("routing grid exceeds the configured search bound")
             }
@@ -652,7 +658,8 @@ impl PcbLayout {
                 self, &handoff, &report, &regions, &board_min, &board_max, &coarse_xs, &coarse_ys,
                 &policy,
             )?;
-            let no_progress = proposed == regions;
+            let no_progress = refinement_region_slices_equal(&proposed, &regions)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
             let region_limit = proposed.len() > policy.maximum_regions;
             rounds.push(NegotiatedAdaptiveRouteRound {
                 round,
@@ -919,10 +926,10 @@ pub(crate) fn placement_pin_access_report(
         terminals: Vec::new(),
         issues: Vec::new(),
     };
-    let positive = |value: &Real| value.partial_cmp(&Real::zero()) == Some(Ordering::Greater);
+    let positive = |value: &Real| value.predicate_cmp(&Real::zero()) == Some(Ordering::Greater);
     let nonnegative = |value: &Real| {
         matches!(
-            value.partial_cmp(&Real::zero()),
+            value.predicate_cmp(&Real::zero()),
             Some(Ordering::Equal | Ordering::Greater)
         )
     };
@@ -1421,12 +1428,18 @@ impl Grid {
         if matches!(&policy.grid_mode, NegotiatedGridMode::FeatureAligned { .. }) {
             for geometry in differential_pair_grid_geometry(layout, handoff, policy)? {
                 for point in geometry.endpoint_points {
-                    if coordinate_is_in_bounds(&point.x, &min.x, &max.x)? && !xs.contains(&point.x)
+                    if coordinate_is_in_bounds(&point.x, &min.x, &max.x)?
+                        && numeric_position(&xs, &point.x)
+                            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+                            .is_none()
                     {
                         xs.push(point.x);
                         injected_x_coordinates = injected_x_coordinates.saturating_add(1);
                     }
-                    if coordinate_is_in_bounds(&point.y, &min.y, &max.y)? && !ys.contains(&point.y)
+                    if coordinate_is_in_bounds(&point.y, &min.y, &max.y)?
+                        && numeric_position(&ys, &point.y)
+                            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+                            .is_none()
                     {
                         ys.push(point.y);
                         injected_y_coordinates = injected_y_coordinates.saturating_add(1);
@@ -1471,17 +1484,25 @@ impl Grid {
                 let mut active = BTreeSet::new();
                 for (x, x_coordinate) in xs.iter().enumerate() {
                     for (y, y_coordinate) in ys.iter().enumerate() {
-                        let coarse =
-                            coarse_xs.contains(x_coordinate) && coarse_ys.contains(y_coordinate);
-                        let refined = regions.iter().any(|region| {
-                            coordinate_is_in_bounds(x_coordinate, &region.min.x, &region.max.x)
-                                == Ok(true)
+                        let coarse = numeric_position(&coarse_xs, x_coordinate)
+                            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+                            .is_some()
+                            && numeric_position(&coarse_ys, y_coordinate)
+                                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+                                .is_some();
+                        let mut refined = false;
+                        for region in regions {
+                            if coordinate_is_in_bounds(x_coordinate, &region.min.x, &region.max.x)?
                                 && coordinate_is_in_bounds(
                                     y_coordinate,
                                     &region.min.y,
                                     &region.max.y,
-                                ) == Ok(true)
-                        });
+                                )?
+                            {
+                                refined = true;
+                                break;
+                            }
+                        }
                         if coarse || refined {
                             active.insert((x, y));
                         }
@@ -1578,9 +1599,13 @@ impl Grid {
         )
     }
 
-    fn terminal_nodes(&self, point: &Point2, layers: &[TraceLayer]) -> Option<Vec<Node>> {
-        let x = self.xs.iter().position(|value| value == &point.x)?;
-        let y = self.ys.iter().position(|value| value == &point.y)?;
+    fn terminal_nodes(&self, point: &Point2, layers: &[TraceLayer]) -> Option<Option<Vec<Node>>> {
+        let Some(x) = numeric_position(&self.xs, &point.x)? else {
+            return Some(None);
+        };
+        let Some(y) = numeric_position(&self.ys, &point.y)? else {
+            return Some(None);
+        };
         let nodes = layers
             .iter()
             .filter_map(|layer| {
@@ -1591,8 +1616,20 @@ impl Grid {
                     .filter(|node| self.is_active(*node))
             })
             .collect::<Vec<_>>();
-        (!nodes.is_empty()).then_some(nodes)
+        Some((!nodes.is_empty()).then_some(nodes))
     }
+}
+
+fn numeric_position(values: &[Real], target: &Real) -> Option<Option<usize>> {
+    let mut indeterminate = false;
+    for (index, value) in values.iter().enumerate() {
+        match value.predicate_cmp(target) {
+            Some(Ordering::Equal) => return Some(Some(index)),
+            Some(Ordering::Less | Ordering::Greater) => {}
+            None => indeterminate = true,
+        }
+    }
+    if indeterminate { None } else { Some(None) }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -1840,18 +1877,14 @@ fn placed_pad_layers(
 }
 
 fn real_abs(value: &Real) -> Real {
-    if value.partial_cmp(&Real::zero()) == Some(Ordering::Less) {
-        -value.clone()
-    } else {
-        value.clone()
-    }
+    value.abs()
 }
 
 fn validate_policy(policy: &NegotiatedRoutePolicy) -> Result<(), NegotiatedRouterError> {
-    let positive = |value: &Real| value.partial_cmp(&Real::zero()) == Some(Ordering::Greater);
+    let positive = |value: &Real| value.predicate_cmp(&Real::zero()) == Some(Ordering::Greater);
     let nonnegative = |value: &Real| {
         matches!(
-            value.partial_cmp(&Real::zero()),
+            value.predicate_cmp(&Real::zero()),
             Some(Ordering::Equal | Ordering::Greater)
         )
     };
@@ -1901,7 +1934,10 @@ fn validate_policy(policy: &NegotiatedRoutePolicy) -> Result<(), NegotiatedRoute
         || !nonnegative(&policy.default_clearance)
         || !positive(&policy.via_land_diameter)
         || !positive(&policy.via_drill_diameter)
-        || policy.via_drill_diameter > policy.via_land_diameter
+        || policy
+            .via_drill_diameter
+            .predicate_le(&policy.via_land_diameter)
+            != Some(true)
     {
         return Err(NegotiatedRouterError::InvalidPolicy);
     }
@@ -1940,11 +1976,11 @@ fn validate_selected_spacing(
             ];
             if requirements.iter().any(|required| {
                 !matches!(
-                    policy.grid_pitch.partial_cmp(required),
+                    policy.grid_pitch.predicate_cmp(required),
                     Some(Ordering::Equal | Ordering::Greater)
                 ) || octilinear_spacing.as_ref().is_some_and(|available| {
                     !matches!(
-                        available.partial_cmp(required),
+                        available.predicate_cmp(required),
                         Some(Ordering::Equal | Ordering::Greater)
                     )
                 })
@@ -1969,6 +2005,7 @@ fn minimum_octilinear_track_spacing(grid: &Grid) -> Result<Option<Real>, Negotia
             }
             for (x_forward, y_forward) in [(true, true), (true, false)] {
                 let Some(neighbor) = active_diagonal_neighbor(grid, node, x_forward, y_forward)
+                    .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
                 else {
                     continue;
                 };
@@ -1976,7 +2013,7 @@ fn minimum_octilinear_track_spacing(grid: &Grid) -> Result<Option<Real>, Negotia
                 let spacing =
                     (span / root_two.clone()).map_err(|_| NegotiatedRouterError::InvalidPolicy)?;
                 minimum = Some(match minimum {
-                    Some(current) => match current.partial_cmp(&spacing) {
+                    Some(current) => match current.predicate_cmp(&spacing) {
                         Some(Ordering::Less | Ordering::Equal) => current,
                         Some(Ordering::Greater) => spacing,
                         None => return Err(NegotiatedRouterError::InvalidPolicy),
@@ -1990,17 +2027,35 @@ fn minimum_octilinear_track_spacing(grid: &Grid) -> Result<Option<Real>, Negotia
 }
 
 fn exact_max(first: &Real, second: &Real) -> Option<Real> {
-    match first.partial_cmp(second)? {
+    match first.predicate_cmp(second)? {
         Ordering::Less => Some(second.clone()),
         Ordering::Equal | Ordering::Greater => Some(first.clone()),
     }
 }
 
 fn exact_min(first: &Real, second: &Real) -> Option<Real> {
-    match first.partial_cmp(second)? {
+    match first.predicate_cmp(second)? {
         Ordering::Greater => Some(second.clone()),
         Ordering::Equal | Ordering::Less => Some(first.clone()),
     }
+}
+
+fn refinement_region_slices_equal(
+    first: &[NegotiatedGridRefinementRegion],
+    second: &[NegotiatedGridRefinementRegion],
+) -> Option<bool> {
+    if first.len() != second.len() {
+        return Some(false);
+    }
+    first
+        .iter()
+        .zip(second)
+        .try_fold(true, |equal, (first, second)| {
+            if !equal {
+                return Some(false);
+            }
+            Some(points_equal(&first.min, &second.min)? && points_equal(&first.max, &second.max)?)
+        })
 }
 
 fn prepare_differential_pair(
@@ -2028,10 +2083,16 @@ fn prepare_differential_pair(
         ));
     }
 
-    let direct = point_delta(&positive[0].center, &negative[0].center)
-        == point_delta(&positive[1].center, &negative[1].center);
-    let reversed = point_delta(&positive[0].center, &negative[1].center)
-        == point_delta(&positive[1].center, &negative[0].center);
+    let direct = point_deltas_equal(
+        &point_delta(&positive[0].center, &negative[0].center),
+        &point_delta(&positive[1].center, &negative[1].center),
+    )
+    .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    let reversed = point_deltas_equal(
+        &point_delta(&positive[0].center, &negative[1].center),
+        &point_delta(&positive[1].center, &negative[0].center),
+    )
+    .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
     let negative_order = if direct {
         [0, 1]
     } else if reversed {
@@ -2065,8 +2126,12 @@ fn prepare_differential_pair(
     let terminal_translation =
         point_delta(&positive[0].center, &negative[negative_order[0]].center);
     let (translation, neckdown_transition_length, positive_pair_points, negative_pair_points) =
-        if start_separation.partial_cmp(&trace_separation_squared) == Some(Ordering::Equal)
-            && end_separation.partial_cmp(&trace_separation_squared) == Some(Ordering::Equal)
+        if start_separation
+            .predicate_eq(&trace_separation_squared)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+            && end_separation
+                .predicate_eq(&trace_separation_squared)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
         {
             (
                 Point2::new(terminal_translation.0, terminal_translation.1),
@@ -2086,14 +2151,21 @@ fn prepare_differential_pair(
             })?;
             let neckdown_separation = neckdown.trace_width.clone() + neckdown.spacing.clone();
             let neckdown_squared = neckdown_separation.clone() * neckdown_separation.clone();
-            if start_separation.partial_cmp(&neckdown_squared) != Some(Ordering::Equal)
-                || end_separation.partial_cmp(&neckdown_squared) != Some(Ordering::Equal)
-            {
+            let start_matches = start_separation
+                .predicate_eq(&neckdown_squared)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+            let end_matches = end_separation
+                .predicate_eq(&neckdown_squared)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+            if !start_matches || !end_matches {
                 return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
                     pair.id.clone(),
                 ));
             }
-            if neckdown_separation.partial_cmp(&required_trace_separation) != Some(Ordering::Less) {
+            if !neckdown_separation
+                .predicate_lt(&required_trace_separation)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+            {
                 return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
                     pair.id.clone(),
                 ));
@@ -2101,8 +2173,9 @@ fn prepare_differential_pair(
             let transition_length = ((required_trace_separation.clone() - neckdown_separation)
                 / Real::from(2))
             .map_err(|_| NegotiatedRouterError::InvalidPolicy)?;
-            if transition_length.partial_cmp(&neckdown.maximum_transition_length)
-                == Some(Ordering::Greater)
+            if !transition_length
+                .predicate_le(&neckdown.maximum_transition_length)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
             {
                 return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
                     pair.id.clone(),
@@ -2124,13 +2197,16 @@ fn prepare_differential_pair(
                 .ok_or_else(|| {
                     NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone())
                 })?;
-                if translation
-                    .as_ref()
-                    .is_some_and(|candidate| candidate != &endpoint_translation)
-                {
-                    return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
-                        pair.id.clone(),
-                    ));
+                if let Some(candidate) = translation.as_ref() {
+                    match points_equal(candidate, &endpoint_translation) {
+                        Some(true) => {}
+                        Some(false) => {
+                            return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
+                                pair.id.clone(),
+                            ));
+                        }
+                        None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+                    }
                 }
                 translation = Some(endpoint_translation);
                 positive_points.push(positive_point);
@@ -2148,10 +2224,16 @@ fn prepare_differential_pair(
         .iter()
         .map(|terminal| grid.terminal_nodes(&terminal.center, &terminal.layers))
         .collect::<Option<Vec<_>>>()
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
         .ok_or_else(|| NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone()))?;
     let negative_nodes = negative
         .iter()
         .map(|terminal| grid.terminal_nodes(&terminal.center, &terminal.layers))
+        .collect::<Option<Vec<_>>>()
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        .into_iter()
         .collect::<Option<Vec<_>>>()
         .ok_or_else(|| NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone()))?;
     let positive_pair_nodes = positive
@@ -2159,11 +2241,17 @@ fn prepare_differential_pair(
         .zip(&positive_pair_points)
         .map(|(terminal, point)| grid.terminal_nodes(point, &terminal.layers))
         .collect::<Option<Vec<_>>>()
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
         .ok_or_else(|| NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone()))?;
     let negative_pair_nodes = negative
         .iter()
         .zip(&negative_pair_points)
         .map(|(terminal, point)| grid.terminal_nodes(point, &terminal.layers))
+        .collect::<Option<Vec<_>>>()
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        .into_iter()
         .collect::<Option<Vec<_>>>()
         .ok_or_else(|| NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone()))?;
     let source_escapes = pair_endpoint_escapes(
@@ -2197,7 +2285,10 @@ fn prepare_differential_pair(
     let required_via_separation =
         positive_via_half_land.clone() + negative_via_half_land.clone() + pair_clearance;
     let required_via_squared = required_via_separation.clone() * required_via_separation;
-    if trace_separation_squared.partial_cmp(&required_via_squared) == Some(Ordering::Less) {
+    if trace_separation_squared
+        .predicate_lt(&required_via_squared)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+    {
         return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
             pair.id.clone(),
         ));
@@ -2227,6 +2318,14 @@ fn point_delta(positive: &Point2, negative: &Point2) -> (Real, Real) {
     )
 }
 
+fn point_deltas_equal(first: &(Real, Real), second: &(Real, Real)) -> Option<bool> {
+    Some(first.0.predicate_eq(&second.0)? && first.1.predicate_eq(&second.1)?)
+}
+
+fn points_equal(first: &Point2, second: &Point2) -> Option<bool> {
+    Some(first.x.predicate_eq(&second.x)? && first.y.predicate_eq(&second.y)?)
+}
+
 fn expanded_pair_centers(
     positive: &Point2,
     negative: &Point2,
@@ -2237,36 +2336,28 @@ fn expanded_pair_centers(
     let zero = Real::zero();
     let mut positive = positive.clone();
     let mut negative = negative.clone();
-    let translation = if y == zero {
-        match x.partial_cmp(&zero)? {
-            Ordering::Greater => {
-                positive.x -= transition.clone();
-                negative.x += transition.clone();
-                Point2::new(separation.clone(), zero)
-            }
-            Ordering::Less => {
-                positive.x += transition.clone();
-                negative.x -= transition.clone();
-                Point2::new(-separation.clone(), zero)
-            }
-            Ordering::Equal => return None,
+    let translation = match (x.predicate_cmp(&zero)?, y.predicate_cmp(&zero)?) {
+        (Ordering::Greater, Ordering::Equal) => {
+            positive.x -= transition.clone();
+            negative.x += transition.clone();
+            Point2::new(separation.clone(), zero)
         }
-    } else if x == zero {
-        match y.partial_cmp(&zero)? {
-            Ordering::Greater => {
-                positive.y -= transition.clone();
-                negative.y += transition.clone();
-                Point2::new(zero, separation.clone())
-            }
-            Ordering::Less => {
-                positive.y += transition.clone();
-                negative.y -= transition.clone();
-                Point2::new(zero, -separation.clone())
-            }
-            Ordering::Equal => return None,
+        (Ordering::Less, Ordering::Equal) => {
+            positive.x += transition.clone();
+            negative.x -= transition.clone();
+            Point2::new(-separation.clone(), zero)
         }
-    } else {
-        return None;
+        (Ordering::Equal, Ordering::Greater) => {
+            positive.y -= transition.clone();
+            negative.y += transition.clone();
+            Point2::new(zero, separation.clone())
+        }
+        (Ordering::Equal, Ordering::Less) => {
+            positive.y += transition.clone();
+            negative.y -= transition.clone();
+            Point2::new(zero, -separation.clone())
+        }
+        _ => return None,
     };
     Some((positive, negative, translation))
 }
@@ -2357,7 +2448,7 @@ fn grid_axis(
     let mut values = Vec::new();
     let mut value = min;
     loop {
-        match value.partial_cmp(&max) {
+        match value.predicate_cmp(&max) {
             Some(Ordering::Greater) => break,
             Some(Ordering::Less | Ordering::Equal) => values.push(value.clone()),
             None => return Err(NegotiatedRouterError::InvalidPolicy),
@@ -2524,16 +2615,24 @@ fn refinement_region_from_bounds(
     let Some(mut max_y) = snap_up_to_pitch(&raw_max_y, &board_min.y, pitch, cap) else {
         return Ok(None);
     };
-    if max_x.partial_cmp(&board_max.x) == Some(Ordering::Greater)
-        || max_y.partial_cmp(&board_max.y) == Some(Ordering::Greater)
-    {
+    let max_x_in_bounds = max_x
+        .predicate_le(&board_max.x)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    let max_y_in_bounds = max_y
+        .predicate_le(&board_max.y)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    if !max_x_in_bounds || !max_y_in_bounds {
         return Ok(None);
     }
     include_coarse_coordinate(&mut min_x, &mut max_x, coarse_xs)?;
     include_coarse_coordinate(&mut min_y, &mut max_y, coarse_ys)?;
-    if min_x.partial_cmp(&max_x) != Some(Ordering::Less)
-        || min_y.partial_cmp(&max_y) != Some(Ordering::Less)
-    {
+    let x_ordered = min_x
+        .predicate_lt(&max_x)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    let y_ordered = min_y
+        .predicate_lt(&max_y)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    if !x_ordered || !y_ordered {
         return Ok(None);
     }
     Ok(Some(NegotiatedGridRefinementRegion {
@@ -2546,7 +2645,7 @@ fn snap_down_to_pitch(value: &Real, base: &Real, pitch: &Real, cap: usize) -> Op
     let distance = value.clone() - base.clone();
     let units = span_units(&distance, pitch, cap)?;
     let mut candidate = base.clone() + pitch.clone() * Real::from(units as u128);
-    if candidate.partial_cmp(value)? == Ordering::Greater {
+    if candidate.predicate_cmp(value)? == Ordering::Greater {
         candidate -= pitch.clone();
     }
     Some(candidate)
@@ -2563,31 +2662,31 @@ fn include_coarse_coordinate(
     max: &mut Real,
     coarse: &[Real],
 ) -> Result<(), NegotiatedRouterError> {
-    if coarse
-        .iter()
-        .any(|coordinate| coordinate_is_in_bounds(coordinate, min, max) == Ok(true))
-    {
+    if any_coordinate_in_bounds(coarse, min, max)? {
         return Ok(());
     }
-    let nearest = coarse
-        .iter()
-        .min_by(|first, second| {
-            let first_distance = exact_min(
-                &real_abs(&((*first).clone() - min.clone())),
-                &real_abs(&((*first).clone() - max.clone())),
-            )
-            .expect("exact coarse coordinate distance is orderable");
-            let second_distance = exact_min(
-                &real_abs(&((*second).clone() - min.clone())),
-                &real_abs(&((*second).clone() - max.clone())),
-            )
-            .expect("exact coarse coordinate distance is orderable");
-            first_distance
-                .partial_cmp(&second_distance)
-                .unwrap_or(Ordering::Equal)
-        })
-        .ok_or(NegotiatedRouterError::InvalidPolicy)?
-        .clone();
+    let first = coarse.first().ok_or(NegotiatedRouterError::InvalidPolicy)?;
+    let mut nearest = (*first).clone();
+    let mut nearest_distance = exact_min(
+        &real_abs(&(nearest.clone() - min.clone())),
+        &real_abs(&(nearest.clone() - max.clone())),
+    )
+    .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    for candidate in &coarse[1..] {
+        let distance = exact_min(
+            &real_abs(&((*candidate).clone() - min.clone())),
+            &real_abs(&((*candidate).clone() - max.clone())),
+        )
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+        if distance
+            .predicate_cmp(&nearest_distance)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+            == Ordering::Less
+        {
+            nearest = (*candidate).clone();
+            nearest_distance = distance;
+        }
+    }
     *min = exact_min(min, &nearest).ok_or(NegotiatedRouterError::InvalidPolicy)?;
     *max = exact_max(max, &nearest).ok_or(NegotiatedRouterError::InvalidPolicy)?;
     Ok(())
@@ -2596,63 +2695,77 @@ fn include_coarse_coordinate(
 fn merge_refinement_regions(
     mut regions: Vec<NegotiatedGridRefinementRegion>,
 ) -> Result<Vec<NegotiatedGridRefinementRegion>, NegotiatedRouterError> {
+    sort_refinement_regions(&mut regions)?;
+    let mut merged = Vec::<NegotiatedGridRefinementRegion>::new();
+    for mut candidate in regions {
+        loop {
+            let mut overlapping = None;
+            for (index, region) in merged.iter().enumerate() {
+                match refinement_regions_overlap(region, &candidate) {
+                    Some(true) => {
+                        overlapping = Some(index);
+                        break;
+                    }
+                    Some(false) => {}
+                    None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+                }
+            }
+            let Some(index) = overlapping else {
+                break;
+            };
+            let region = merged.remove(index);
+            candidate.min.x = exact_min(&candidate.min.x, &region.min.x)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+            candidate.min.y = exact_min(&candidate.min.y, &region.min.y)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+            candidate.max.x = exact_max(&candidate.max.x, &region.max.x)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+            candidate.max.y = exact_max(&candidate.max.y, &region.max.y)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+        }
+        merged.push(candidate);
+    }
+    sort_refinement_regions(&mut merged)?;
+    Ok(merged)
+}
+
+fn sort_refinement_regions(
+    regions: &mut [NegotiatedGridRefinementRegion],
+) -> Result<(), NegotiatedRouterError> {
+    let mut indeterminate = false;
     regions.sort_by(|first, second| {
         first
             .min
             .x
-            .partial_cmp(&second.min.x)
-            .unwrap_or(Ordering::Equal)
+            .predicate_cmp(&second.min.x)
+            .unwrap_or_else(|| {
+                indeterminate = true;
+                Ordering::Equal
+            })
             .then_with(|| {
-                first
-                    .min
-                    .y
-                    .partial_cmp(&second.min.y)
-                    .unwrap_or(Ordering::Equal)
+                first.min.y.predicate_cmp(&second.min.y).unwrap_or_else(|| {
+                    indeterminate = true;
+                    Ordering::Equal
+                })
             })
     });
-    let mut merged = Vec::<NegotiatedGridRefinementRegion>::new();
-    for mut candidate in regions {
-        while let Some(index) = merged
-            .iter()
-            .position(|region| refinement_regions_overlap(region, &candidate))
-        {
-            let region = merged.remove(index);
-            candidate.min.x = exact_min(&candidate.min.x, &region.min.x)
-                .ok_or(NegotiatedRouterError::InvalidPolicy)?;
-            candidate.min.y = exact_min(&candidate.min.y, &region.min.y)
-                .ok_or(NegotiatedRouterError::InvalidPolicy)?;
-            candidate.max.x = exact_max(&candidate.max.x, &region.max.x)
-                .ok_or(NegotiatedRouterError::InvalidPolicy)?;
-            candidate.max.y = exact_max(&candidate.max.y, &region.max.y)
-                .ok_or(NegotiatedRouterError::InvalidPolicy)?;
-        }
-        merged.push(candidate);
+    if indeterminate {
+        Err(NegotiatedRouterError::IndeterminatePredicate)
+    } else {
+        Ok(())
     }
-    merged.sort_by(|first, second| {
-        first
-            .min
-            .x
-            .partial_cmp(&second.min.x)
-            .unwrap_or(Ordering::Equal)
-            .then_with(|| {
-                first
-                    .min
-                    .y
-                    .partial_cmp(&second.min.y)
-                    .unwrap_or(Ordering::Equal)
-            })
-    });
-    Ok(merged)
 }
 
 fn refinement_regions_overlap(
     first: &NegotiatedGridRefinementRegion,
     second: &NegotiatedGridRefinementRegion,
-) -> bool {
-    first.min.x.partial_cmp(&second.max.x) != Some(Ordering::Greater)
-        && second.min.x.partial_cmp(&first.max.x) != Some(Ordering::Greater)
-        && first.min.y.partial_cmp(&second.max.y) != Some(Ordering::Greater)
-        && second.min.y.partial_cmp(&first.max.y) != Some(Ordering::Greater)
+) -> Option<bool> {
+    Some(
+        first.min.x.predicate_le(&second.max.x)?
+            && second.min.x.predicate_le(&first.max.x)?
+            && first.min.y.predicate_le(&second.max.y)?
+            && second.min.y.predicate_le(&first.max.y)?,
+    )
 }
 
 fn refinement_grid_axis(
@@ -2662,8 +2775,10 @@ fn refinement_grid_axis(
     cap: usize,
 ) -> Result<Vec<Real>, NegotiatedRouterError> {
     let values = grid_axis(min, max.clone(), pitch, cap)?;
-    if values.last() != Some(&max) {
-        return Err(NegotiatedRouterError::InvalidPolicy);
+    match values.last().and_then(|value| value.predicate_eq(&max)) {
+        Some(true) => {}
+        Some(false) => return Err(NegotiatedRouterError::InvalidPolicy),
+        None => return Err(NegotiatedRouterError::IndeterminatePredicate),
     }
     Ok(values)
 }
@@ -2675,17 +2790,22 @@ fn validate_refinement_region(
     coarse_xs: &[Real],
     coarse_ys: &[Real],
 ) -> Result<(), NegotiatedRouterError> {
-    let ordered = region.min.x.partial_cmp(&region.max.x) == Some(Ordering::Less)
-        && region.min.y.partial_cmp(&region.max.y) == Some(Ordering::Less);
+    let ordered = region
+        .min
+        .x
+        .predicate_lt(&region.max.x)
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        && region
+            .min
+            .y
+            .predicate_lt(&region.max.y)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
     let in_bounds = coordinate_is_in_bounds(&region.min.x, &board_min.x, &board_max.x)?
         && coordinate_is_in_bounds(&region.max.x, &board_min.x, &board_max.x)?
         && coordinate_is_in_bounds(&region.min.y, &board_min.y, &board_max.y)?
         && coordinate_is_in_bounds(&region.max.y, &board_min.y, &board_max.y)?;
-    let intersects_coarse_mesh = coarse_xs.iter().any(|coordinate| {
-        coordinate_is_in_bounds(coordinate, &region.min.x, &region.max.x) == Ok(true)
-    }) && coarse_ys.iter().any(|coordinate| {
-        coordinate_is_in_bounds(coordinate, &region.min.y, &region.max.y) == Ok(true)
-    });
+    let intersects_coarse_mesh = any_coordinate_in_bounds(coarse_xs, &region.min.x, &region.max.x)?
+        && any_coordinate_in_bounds(coarse_ys, &region.min.y, &region.max.y)?;
     if !ordered || !in_bounds || !intersects_coarse_mesh {
         return Err(NegotiatedRouterError::InvalidPolicy);
     }
@@ -2698,17 +2818,34 @@ fn validate_refined_axis_spacing(
     max: &Real,
     pitch: &Real,
 ) -> Result<(), NegotiatedRouterError> {
-    let local = values
-        .iter()
-        .filter(|value| coordinate_is_in_bounds(value, min, max) == Ok(true))
-        .collect::<Vec<_>>();
-    if local.windows(2).any(|pair| {
+    let mut local = Vec::new();
+    for value in values {
+        if coordinate_is_in_bounds(value, min, max)? {
+            local.push(value);
+        }
+    }
+    for pair in local.windows(2) {
         let spacing = pair[1].clone() - pair[0].clone();
-        spacing.partial_cmp(pitch) == Some(Ordering::Less)
-    }) {
-        return Err(NegotiatedRouterError::InvalidPolicy);
+        match spacing.predicate_lt(pitch) {
+            Some(true) => return Err(NegotiatedRouterError::InvalidPolicy),
+            Some(false) => {}
+            None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+        }
     }
     Ok(())
+}
+
+fn any_coordinate_in_bounds(
+    values: &[Real],
+    min: &Real,
+    max: &Real,
+) -> Result<bool, NegotiatedRouterError> {
+    for value in values {
+        if coordinate_is_in_bounds(value, min, max)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 #[derive(Clone, Copy)]
@@ -2862,16 +2999,22 @@ fn differential_pair_grid_geometry(
         if positive.len() != 2 || negative.len() != 2 {
             continue;
         }
-        let direct = point_delta(&positive[0].center, &negative[0].center)
-            == point_delta(&positive[1].center, &negative[1].center);
+        let direct = point_deltas_equal(
+            &point_delta(&positive[0].center, &negative[0].center),
+            &point_delta(&positive[1].center, &negative[1].center),
+        )
+        .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
         let negative_index = if direct {
             0
-        } else if point_delta(&positive[0].center, &negative[1].center)
-            == point_delta(&positive[1].center, &negative[0].center)
-        {
-            1
         } else {
-            continue;
+            match point_deltas_equal(
+                &point_delta(&positive[0].center, &negative[1].center),
+                &point_delta(&positive[1].center, &negative[0].center),
+            ) {
+                Some(true) => 1,
+                Some(false) => continue,
+                None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+            }
         };
         let negative_order = [negative_index, 1 - negative_index];
         let (positive_width, _) = maximum_net_rule(layout, handoff, &pair.positive, policy)?;
@@ -2887,8 +3030,12 @@ fn differential_pair_grid_geometry(
             point_distance_squared(&positive[0].center, &negative[negative_order[0]].center);
         let end_squared =
             point_distance_squared(&positive[1].center, &negative[negative_order[1]].center);
-        if start_squared.partial_cmp(&nominal_squared) == Some(Ordering::Equal)
-            && end_squared.partial_cmp(&nominal_squared) == Some(Ordering::Equal)
+        if start_squared
+            .predicate_eq(&nominal_squared)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+            && end_squared
+                .predicate_eq(&nominal_squared)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
         {
             let (x, y) = point_delta(&positive[0].center, &negative[negative_order[0]].center);
             geometries.push(DifferentialPairGridGeometry {
@@ -2902,12 +3049,19 @@ fn differential_pair_grid_geometry(
         };
         let reduced = neckdown.trace_width.clone() + neckdown.spacing.clone();
         let reduced_squared = reduced.clone() * reduced.clone();
-        if start_squared.partial_cmp(&reduced_squared) != Some(Ordering::Equal)
-            || end_squared.partial_cmp(&reduced_squared) != Some(Ordering::Equal)
-        {
+        let start_matches = start_squared
+            .predicate_eq(&reduced_squared)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+        let end_matches = end_squared
+            .predicate_eq(&reduced_squared)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+        if !start_matches || !end_matches {
             continue;
         }
-        if reduced.partial_cmp(&nominal) != Some(Ordering::Less) {
+        if !reduced
+            .predicate_lt(&nominal)
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?
+        {
             continue;
         }
         let transition = ((nominal.clone() - reduced) / Real::from(2))
@@ -2922,13 +3076,16 @@ fn differential_pair_grid_geometry(
                 &transition,
             )
             .ok_or_else(|| NegotiatedRouterError::UnsupportedDifferentialPair(pair.id.clone()))?;
-            if translation
-                .as_ref()
-                .is_some_and(|candidate| candidate != &endpoint_translation)
-            {
-                return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
-                    pair.id.clone(),
-                ));
+            if let Some(candidate) = translation.as_ref() {
+                match points_equal(candidate, &endpoint_translation) {
+                    Some(true) => {}
+                    Some(false) => {
+                        return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
+                            pair.id.clone(),
+                        ));
+                    }
+                    None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+                }
             }
             translation = Some(endpoint_translation);
             endpoint_points.push(positive_point);
@@ -2974,11 +3131,11 @@ fn coordinate_is_in_bounds(
     max: &Real,
 ) -> Result<bool, NegotiatedRouterError> {
     let after_min = value
-        .partial_cmp(min)
+        .predicate_cmp(min)
         .ok_or(NegotiatedRouterError::InvalidPolicy)?
         != Ordering::Less;
     let before_max = value
-        .partial_cmp(max)
+        .predicate_cmp(max)
         .ok_or(NegotiatedRouterError::InvalidPolicy)?
         != Ordering::Greater;
     Ok(after_min && before_max)
@@ -2987,22 +3144,27 @@ fn coordinate_is_in_bounds(
 fn sort_dedup_coordinates(values: &mut Vec<Real>) -> Result<(), NegotiatedRouterError> {
     let mut indeterminate = false;
     values.sort_by(|first, second| {
-        first.partial_cmp(second).unwrap_or_else(|| {
+        first.predicate_cmp(second).unwrap_or_else(|| {
             indeterminate = true;
             Ordering::Equal
         })
     });
     if indeterminate {
-        return Err(NegotiatedRouterError::InvalidPolicy);
+        return Err(NegotiatedRouterError::IndeterminatePredicate);
     }
-    values.dedup();
+    for pair in values.windows(2) {
+        pair[0]
+            .predicate_eq(&pair[1])
+            .ok_or(NegotiatedRouterError::IndeterminatePredicate)?;
+    }
+    values.dedup_by(|left, right| left.predicate_eq(right) == Some(true));
     Ok(())
 }
 
 fn span_units(span: &Real, pitch: &Real, cap: usize) -> Option<u64> {
     let mut covered = Real::zero();
     let mut units = 0_u64;
-    while covered.partial_cmp(span)? == Ordering::Less {
+    while covered.predicate_cmp(span)? == Ordering::Less {
         if units as u128 >= cap as u128 {
             return None;
         }
@@ -3028,13 +3190,24 @@ fn route_net(
     let mut terminal_nodes = Vec::new();
     for (index, terminal) in terminals.iter().enumerate() {
         terminal_nodes.push(
-            router
+            match router
                 .grid
                 .terminal_nodes(&terminal.center, &terminal.layers)
-                .ok_or_else(|| NegotiatedRouteFailure::OffGridTerminal {
-                    net: net.clone(),
-                    terminal: index,
-                })?,
+            {
+                Some(Some(nodes)) => nodes,
+                Some(None) => {
+                    return Err(NegotiatedRouteFailure::OffGridTerminal {
+                        net: net.clone(),
+                        terminal: index,
+                    });
+                }
+                None => {
+                    return Err(NegotiatedRouteFailure::Indeterminate {
+                        net: net.clone(),
+                        terminal: index,
+                    });
+                }
+            },
         );
     }
     let via_style = resolved_via_style(router.layout, net, router.policy);
@@ -3055,9 +3228,14 @@ fn route_net(
         };
         let path = search.search_connection(&tree, targets, expanded_total)?;
         for pair in path.windows(2) {
-            route
-                .resources
-                .extend(transition_resources(router.grid, pair[0], pair[1]));
+            route.resources.extend(
+                transition_resources(router.grid, pair[0], pair[1]).ok_or_else(|| {
+                    NegotiatedRouteFailure::Indeterminate {
+                        net: net.clone(),
+                        terminal: terminal_index,
+                    }
+                })?,
+            );
         }
         for node in &path {
             route.resources.insert(Resource::Node(*node));
@@ -3191,8 +3369,14 @@ fn route_differential_pair(
             negative.extend(path.iter().skip(1).map(|nodes| nodes.negative));
             negative.extend(target_escape.negative.iter().skip(1).copied());
             negative.dedup();
-            let mut positive_route = net_route_from_path(router.grid, positive);
-            let mut negative_route = net_route_from_path(router.grid, negative);
+            let mut positive_route =
+                net_route_from_path(router.grid, positive).ok_or_else(|| {
+                    NegotiatedRouteFailure::DifferentialPairIndeterminate(problem.pair.id.clone())
+                })?;
+            let mut negative_route =
+                net_route_from_path(router.grid, negative).ok_or_else(|| {
+                    NegotiatedRouteFailure::DifferentialPairIndeterminate(problem.pair.id.clone())
+                })?;
             if problem.neckdown_transition_length.is_some() {
                 let width = &problem
                     .pair
@@ -3213,12 +3397,16 @@ fn route_differential_pair(
             }
             return Ok((positive_route, negative_route));
         }
-        for (next, direction) in pair_neighbors(
+        let neighbors = pair_neighbors(
             router.grid,
             state.nodes,
             &problem.translation,
             router.policy.planar_topology,
-        ) {
+        )
+        .ok_or_else(|| {
+            NegotiatedRouteFailure::DifferentialPairIndeterminate(problem.pair.id.clone())
+        })?;
+        for (next, direction) in neighbors {
             let Some(positive_legal) =
                 positive_search.edge_is_legal(state.nodes.positive, next.positive, direction)
             else {
@@ -3261,20 +3449,34 @@ fn route_differential_pair(
                 step = step.saturating_add(router.policy.bend_penalty);
             }
             step = step
-                .saturating_add(transition_congestion(
-                    router,
-                    occupancy,
-                    &problem.pair.positive,
-                    state.nodes.positive,
-                    next.positive,
-                ))
-                .saturating_add(transition_congestion(
-                    router,
-                    occupancy,
-                    &problem.pair.negative,
-                    state.nodes.negative,
-                    next.negative,
-                ));
+                .saturating_add(
+                    transition_congestion(
+                        router,
+                        occupancy,
+                        &problem.pair.positive,
+                        state.nodes.positive,
+                        next.positive,
+                    )
+                    .ok_or_else(|| {
+                        NegotiatedRouteFailure::DifferentialPairIndeterminate(
+                            problem.pair.id.clone(),
+                        )
+                    })?,
+                )
+                .saturating_add(
+                    transition_congestion(
+                        router,
+                        occupancy,
+                        &problem.pair.negative,
+                        state.nodes.negative,
+                        next.negative,
+                    )
+                    .ok_or_else(|| {
+                        NegotiatedRouteFailure::DifferentialPairIndeterminate(
+                            problem.pair.id.clone(),
+                        )
+                    })?,
+                );
             let next_state = PairSearchState {
                 nodes: next,
                 direction: Some(direction),
@@ -3337,21 +3539,20 @@ fn retain_escape_width<'a>(
     }
 }
 
-fn net_route_from_path(grid: &Grid, path: Vec<Node>) -> NetRoute {
+fn net_route_from_path(grid: &Grid, path: Vec<Node>) -> Option<NetRoute> {
     let mut resources = path
         .iter()
         .copied()
         .map(Resource::Node)
         .collect::<BTreeSet<_>>();
-    resources.extend(
-        path.windows(2)
-            .flat_map(|pair| transition_resources(grid, pair[0], pair[1])),
-    );
-    NetRoute {
+    for pair in path.windows(2) {
+        resources.extend(transition_resources(grid, pair[0], pair[1])?);
+    }
+    Some(NetRoute {
         paths: vec![path],
         resources,
         width_overrides: BTreeMap::new(),
-    }
+    })
 }
 
 fn differential_pair_evidence(
@@ -3368,15 +3569,16 @@ fn differential_pair_evidence(
     let positive_length = net_route_planar_length(positive, grid);
     let negative_length = net_route_planar_length(negative, grid);
     let skew = real_abs(&(positive_length.clone() - negative_length.clone()));
-    if problem
-        .pair
-        .max_skew
-        .as_ref()
-        .is_some_and(|maximum| skew.partial_cmp(maximum) == Some(Ordering::Greater))
-    {
-        return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
-            problem.pair.id.clone(),
-        ));
+    if let Some(maximum) = &problem.pair.max_skew {
+        match skew.predicate_le(maximum) {
+            Some(true) => {}
+            Some(false) => {
+                return Err(NegotiatedRouterError::UnsupportedDifferentialPair(
+                    problem.pair.id.clone(),
+                ));
+            }
+            None => return Err(NegotiatedRouterError::IndeterminatePredicate),
+        }
     }
     let positive_vias = positive
         .resources
@@ -3683,9 +3885,10 @@ fn account_inter_route_clearance(
                 &second.end,
             )
             .ok_or(NegotiatedRouterError::InvalidPolicy)?;
-            if distance_squared.partial_cmp(&(required.clone() * required)) != Some(Ordering::Less)
-            {
-                continue;
+            match distance_squared.predicate_lt(&(required.clone() * required)) {
+                Some(true) => {}
+                Some(false) => continue,
+                None => return Err(NegotiatedRouterError::IndeterminatePredicate),
             }
             for edge in [first, second] {
                 let users = occupancy
@@ -3712,17 +3915,21 @@ fn transition_congestion(
     net: &NetId,
     first: Node,
     second: Node,
-) -> u64 {
-    transition_resources(router.grid, first, second)
-        .into_iter()
-        .chain([Resource::Node(second)])
-        .fold(0_u64, |cost, resource| {
-            let present = occupancy.get(&resource).map_or(0, |users| {
-                users.iter().filter(|user| *user != net).count() as u64
-            });
-            cost.saturating_add(present.saturating_mul(router.policy.present_congestion_penalty))
+) -> Option<u64> {
+    Some(
+        transition_resources(router.grid, first, second)?
+            .into_iter()
+            .chain([Resource::Node(second)])
+            .fold(0_u64, |cost, resource| {
+                let present = occupancy.get(&resource).map_or(0, |users| {
+                    users.iter().filter(|user| *user != net).count() as u64
+                });
+                cost.saturating_add(
+                    present.saturating_mul(router.policy.present_congestion_penalty),
+                )
                 .saturating_add(router.history.get(&resource).copied().unwrap_or_default())
-        })
+            }),
+    )
 }
 
 impl SearchContext<'_> {
@@ -3773,11 +3980,16 @@ impl SearchContext<'_> {
                 path.dedup();
                 return Ok(path);
             }
-            for (next, direction) in neighbors(
+            let neighbors = neighbors(
                 self.router.grid,
                 state.node,
                 self.router.policy.planar_topology,
-            ) {
+            )
+            .ok_or_else(|| NegotiatedRouteFailure::Indeterminate {
+                net: self.net.clone(),
+                terminal: self.terminal_index,
+            })?;
+            for (next, direction) in neighbors {
                 let Some(legal) = self.edge_is_legal(state.node, next, direction) else {
                     return Err(NegotiatedRouteFailure::Indeterminate {
                         net: self.net.clone(),
@@ -3804,13 +4016,13 @@ impl SearchContext<'_> {
                 {
                     step = step.saturating_add(self.router.policy.bend_penalty);
                 }
-                step = step.saturating_add(transition_congestion(
-                    self.router,
-                    self.occupancy,
-                    self.net,
-                    state.node,
-                    next,
-                ));
+                step = step.saturating_add(
+                    transition_congestion(self.router, self.occupancy, self.net, state.node, next)
+                        .ok_or_else(|| NegotiatedRouteFailure::Indeterminate {
+                            net: self.net.clone(),
+                            terminal: self.terminal_index,
+                        })?,
+                );
                 let next_state = SearchState {
                     node: next,
                     direction: Some(direction),
@@ -4064,15 +4276,15 @@ fn segment_touches_manhattan_ball(
     let dy = end.y.clone() - start.y.clone();
     let mut parameters = vec![Real::zero(), Real::one()];
     for (origin, coordinate, delta) in [(&start.x, &point.x, &dx), (&start.y, &point.y, &dy)] {
-        if delta.partial_cmp(&Real::zero())? == Ordering::Equal {
+        if delta.predicate_cmp(&Real::zero())? == Ordering::Equal {
             continue;
         }
         let parameter = ((coordinate.clone() - origin.clone()) / delta.clone()).ok()?;
         if matches!(
-            parameter.partial_cmp(&Real::zero()),
+            parameter.predicate_cmp(&Real::zero()),
             Some(Ordering::Equal | Ordering::Greater)
         ) && matches!(
-            parameter.partial_cmp(&Real::one()),
+            parameter.predicate_cmp(&Real::one()),
             Some(Ordering::Equal | Ordering::Less)
         ) {
             parameters.push(parameter);
@@ -4090,7 +4302,7 @@ fn segment_touches_manhattan_ball(
             );
             let distance = real_abs(&(candidate.x - point.x.clone()))
                 + real_abs(&(candidate.y - point.y.clone()));
-            Some(distance.partial_cmp(radius)? != Ordering::Greater)
+            Some(distance.predicate_cmp(radius)? != Ordering::Greater)
         })
 }
 
@@ -4098,13 +4310,17 @@ fn neighbors(
     grid: &Grid,
     node: Node,
     topology: NegotiatedPlanarTopology,
-) -> Vec<(Node, Direction)> {
+) -> Option<Vec<(Node, Direction)>> {
     let mut result = Vec::with_capacity(10);
     if let NegotiatedPlanarTopology::AnyAngle {
         maximum_neighbors_per_node,
     } = topology
     {
-        result.extend(visibility_neighbors(grid, node, maximum_neighbors_per_node));
+        result.extend(visibility_neighbors(
+            grid,
+            node,
+            maximum_neighbors_per_node,
+        )?);
     } else {
         for (axis, forward, direction) in [
             (Axis::X, false, Direction::Horizontal),
@@ -4123,7 +4339,7 @@ fn neighbors(
                 (false, true, Direction::DiagonalFalling),
                 (true, false, Direction::DiagonalFalling),
             ] {
-                if let Some(next) = active_diagonal_neighbor(grid, node, x_forward, y_forward) {
+                if let Some(next) = active_diagonal_neighbor(grid, node, x_forward, y_forward)? {
                     result.push((next, direction));
                 }
             }
@@ -4147,7 +4363,7 @@ fn neighbors(
             Direction::Via,
         ));
     }
-    result
+    Some(result)
 }
 
 fn pair_neighbors(
@@ -4155,7 +4371,7 @@ fn pair_neighbors(
     nodes: PairNodes,
     translation: &Point2,
     topology: NegotiatedPlanarTopology,
-) -> Vec<(PairNodes, Direction)> {
+) -> Option<Vec<(PairNodes, Direction)>> {
     let mut result = Vec::with_capacity(10);
     if let NegotiatedPlanarTopology::AnyAngle {
         maximum_neighbors_per_node,
@@ -4166,7 +4382,7 @@ fn pair_neighbors(
             nodes,
             translation,
             maximum_neighbors_per_node,
-        ));
+        )?);
     } else {
         for (axis, forward, direction) in [
             (Axis::X, false, Direction::Horizontal),
@@ -4175,7 +4391,7 @@ fn pair_neighbors(
             (Axis::Y, true, Direction::Vertical),
         ] {
             if let Some(positive) = active_axis_neighbor(grid, nodes.positive, axis, forward)
-                && let Some(negative) = translated_node(grid, positive, translation)
+                && let Some(negative) = translated_node(grid, positive, translation)?
             {
                 result.push((PairNodes { positive, negative }, direction));
             }
@@ -4188,8 +4404,8 @@ fn pair_neighbors(
                 (true, false, Direction::DiagonalFalling),
             ] {
                 if let Some(positive) =
-                    active_diagonal_neighbor(grid, nodes.positive, x_forward, y_forward)
-                    && let Some(negative) = translated_node(grid, positive, translation)
+                    active_diagonal_neighbor(grid, nodes.positive, x_forward, y_forward)?
+                    && let Some(negative) = translated_node(grid, positive, translation)?
                 {
                     result.push((PairNodes { positive, negative }, direction));
                 }
@@ -4227,10 +4443,10 @@ fn pair_neighbors(
             Direction::Via,
         ));
     }
-    result
+    Some(result)
 }
 
-fn visibility_neighbors(grid: &Grid, node: Node, cap: usize) -> Vec<(Node, Direction)> {
+fn visibility_neighbors(grid: &Grid, node: Node, cap: usize) -> Option<Vec<(Node, Direction)>> {
     let mut candidates = Vec::<(Real, Node, Direction)>::new();
     for x in 0..grid.xs.len() {
         for y in 0..grid.ys.len() {
@@ -4248,18 +4464,27 @@ fn visibility_neighbors(grid: &Grid, node: Node, cap: usize) -> Vec<(Node, Direc
             ));
         }
     }
+    let mut indeterminate = false;
     candidates.sort_by(|first, second| {
         first
             .0
-            .partial_cmp(&second.0)
-            .unwrap_or(Ordering::Equal)
+            .predicate_cmp(&second.0)
+            .unwrap_or_else(|| {
+                indeterminate = true;
+                Ordering::Equal
+            })
             .then_with(|| first.1.cmp(&second.1))
     });
+    if indeterminate {
+        return None;
+    }
     candidates.truncate(cap);
-    candidates
-        .into_iter()
-        .map(|(_, node, direction)| (node, direction))
-        .collect()
+    Some(
+        candidates
+            .into_iter()
+            .map(|(_, node, direction)| (node, direction))
+            .collect(),
+    )
 }
 
 fn pair_visibility_neighbors(
@@ -4267,7 +4492,7 @@ fn pair_visibility_neighbors(
     nodes: PairNodes,
     translation: &Point2,
     cap: usize,
-) -> Vec<(PairNodes, Direction)> {
+) -> Option<Vec<(PairNodes, Direction)>> {
     let mut candidates = Vec::<(Real, PairNodes, Direction)>::new();
     for x in 0..grid.xs.len() {
         for y in 0..grid.ys.len() {
@@ -4279,7 +4504,7 @@ fn pair_visibility_neighbors(
             if positive == nodes.positive || !grid.is_active(positive) {
                 continue;
             }
-            let Some(negative) = translated_node(grid, positive, translation) else {
+            let Some(negative) = translated_node(grid, positive, translation)? else {
                 continue;
             };
             let dx = grid.xs[x].clone() - grid.xs[nodes.positive.x].clone();
@@ -4292,18 +4517,27 @@ fn pair_visibility_neighbors(
             ));
         }
     }
+    let mut indeterminate = false;
     candidates.sort_by(|first, second| {
         first
             .0
-            .partial_cmp(&second.0)
-            .unwrap_or(Ordering::Equal)
+            .predicate_cmp(&second.0)
+            .unwrap_or_else(|| {
+                indeterminate = true;
+                Ordering::Equal
+            })
             .then_with(|| first.1.cmp(&second.1))
     });
+    if indeterminate {
+        return None;
+    }
     candidates.truncate(cap);
-    candidates
-        .into_iter()
-        .map(|(_, nodes, direction)| (nodes, direction))
-        .collect()
+    Some(
+        candidates
+            .into_iter()
+            .map(|(_, nodes, direction)| (nodes, direction))
+            .collect(),
+    )
 }
 
 fn active_axis_neighbor(grid: &Grid, node: Node, axis: Axis, forward: bool) -> Option<Node> {
@@ -4336,7 +4570,7 @@ fn active_diagonal_neighbor(
     node: Node,
     x_forward: bool,
     y_forward: bool,
-) -> Option<Node> {
+) -> Option<Option<Node>> {
     let x_indices = directional_indices(node.x, grid.xs.len(), x_forward);
     let y_indices = directional_indices(node.y, grid.ys.len(), y_forward);
     let mut best = None::<(Real, Node)>;
@@ -4344,22 +4578,24 @@ fn active_diagonal_neighbor(
         let dx = real_abs(&(grid.xs[x].clone() - grid.xs[node.x].clone()));
         for y in &y_indices {
             let dy = real_abs(&(grid.ys[*y].clone() - grid.ys[node.y].clone()));
-            if dx != dy {
-                continue;
+            match dx.predicate_cmp(&dy)? {
+                Ordering::Equal => {}
+                Ordering::Less | Ordering::Greater => continue,
             }
             let candidate = Node { x, y: *y, ..node };
             if !grid.is_active(candidate) {
                 continue;
             }
-            if best
-                .as_ref()
-                .is_none_or(|(span, _)| dx.partial_cmp(span) == Some(Ordering::Less))
-            {
+            let nearer = match best.as_ref() {
+                None => true,
+                Some((span, _)) => dx.predicate_lt(span)?,
+            };
+            if nearer {
                 best = Some((dx.clone(), candidate));
             }
         }
     }
-    best.map(|(_, node)| node)
+    Some(best.map(|(_, node)| node))
 }
 
 fn directional_indices(start: usize, length: usize, forward: bool) -> Vec<usize> {
@@ -4370,16 +4606,22 @@ fn directional_indices(start: usize, length: usize, forward: bool) -> Vec<usize>
     }
 }
 
-fn translated_node(grid: &Grid, positive: Node, translation: &Point2) -> Option<Node> {
+fn translated_node(grid: &Grid, positive: Node, translation: &Point2) -> Option<Option<Node>> {
     let point = grid.point(positive);
     let translated_x = point.x + translation.x.clone();
     let translated_y = point.y + translation.y.clone();
+    let Some(x) = numeric_position(&grid.xs, &translated_x)? else {
+        return Some(None);
+    };
+    let Some(y) = numeric_position(&grid.ys, &translated_y)? else {
+        return Some(None);
+    };
     let node = Node {
-        x: grid.xs.iter().position(|value| value == &translated_x)?,
-        y: grid.ys.iter().position(|value| value == &translated_y)?,
+        x,
+        y,
         layer: positive.layer,
     };
-    grid.is_active(node).then_some(node)
+    Some(grid.is_active(node).then_some(node))
 }
 
 fn resource(first: Node, second: Node) -> Resource {
@@ -4409,7 +4651,7 @@ fn diagonal_cell(first: Node, second: Node) -> Resource {
     Resource::DiagonalCell(lower_left, upper_right)
 }
 
-fn diagonal_breakpoints(grid: &Grid, first: Node, second: Node) -> Vec<Node> {
+fn diagonal_breakpoints(grid: &Grid, first: Node, second: Node) -> Option<Vec<Node>> {
     let (left, right) = if first.x <= second.x {
         (first, second)
     } else {
@@ -4424,11 +4666,7 @@ fn diagonal_breakpoints(grid: &Grid, first: Node, second: Node) -> Vec<Node> {
         } else {
             grid.ys[left.y].clone() - offset
         };
-        let Some(y) = grid
-            .ys
-            .iter()
-            .position(|coordinate| coordinate == &y_coordinate)
-        else {
+        let Some(y) = numeric_position(&grid.ys, &y_coordinate)? else {
             continue;
         };
         let node = Node {
@@ -4440,18 +4678,21 @@ fn diagonal_breakpoints(grid: &Grid, first: Node, second: Node) -> Vec<Node> {
             points.push(node);
         }
     }
-    points
+    Some(points)
 }
 
-fn transition_resources(grid: &Grid, first: Node, second: Node) -> Vec<Resource> {
+fn transition_resources(grid: &Grid, first: Node, second: Node) -> Option<Vec<Resource>> {
     let mut resources = vec![resource(first, second)];
-    let exact_diagonal = first.layer == second.layer
-        && first.x != second.x
-        && first.y != second.y
-        && real_abs(&(grid.xs[first.x].clone() - grid.xs[second.x].clone()))
-            == real_abs(&(grid.ys[first.y].clone() - grid.ys[second.y].clone()));
+    let exact_diagonal =
+        if first.layer == second.layer && first.x != second.x && first.y != second.y {
+            real_abs(&(grid.xs[first.x].clone() - grid.xs[second.x].clone())).predicate_eq(
+                &real_abs(&(grid.ys[first.y].clone() - grid.ys[second.y].clone())),
+            )?
+        } else {
+            false
+        };
     if exact_diagonal {
-        let points = diagonal_breakpoints(grid, first, second);
+        let points = diagonal_breakpoints(grid, first, second)?;
         resources.extend(
             points
                 .iter()
@@ -4466,7 +4707,7 @@ fn transition_resources(grid: &Grid, first: Node, second: Node) -> Vec<Resource>
                 .map(|pair| diagonal_cell(pair[0], pair[1])),
         );
     }
-    resources
+    Some(resources)
 }
 
 fn heuristic(
@@ -4586,7 +4827,7 @@ fn point_clear_of_fixed(
         let pair_clearance = exact_max(subject.clearance, &line.clearance)?;
         let required = subject.physical_radius.clone() + line.radius.clone() + pair_clearance;
         if point_segment_distance_squared(point, &line.start, &line.end)?
-            .partial_cmp(&(required.clone() * required))?
+            .predicate_cmp(&(required.clone() * required))?
             == Ordering::Less
         {
             return Some(false);
@@ -4602,7 +4843,7 @@ fn point_clear_of_fixed(
         let pair_clearance = exact_max(subject.clearance, &disc.clearance)?;
         let required = subject.physical_radius.clone() + disc.radius.clone() + pair_clearance;
         if point_distance_squared(point, &disc.center)
-            .partial_cmp(&(required.clone() * required))?
+            .predicate_cmp(&(required.clone() * required))?
             == Ordering::Less
         {
             return Some(false);
@@ -4643,7 +4884,7 @@ fn segment_clear_of_fixed(
         let pair_clearance = exact_max(subject.clearance, &line.clearance)?;
         let required = subject.physical_radius.clone() + line.radius.clone() + pair_clearance;
         if segment_segment_distance_squared(start, end, &line.start, &line.end)?
-            .partial_cmp(&(required.clone() * required))?
+            .predicate_cmp(&(required.clone() * required))?
             == Ordering::Less
         {
             return Some(false);
@@ -4659,7 +4900,7 @@ fn segment_clear_of_fixed(
         let pair_clearance = exact_max(subject.clearance, &disc.clearance)?;
         let required = subject.physical_radius.clone() + disc.radius.clone() + pair_clearance;
         if point_segment_distance_squared(&disc.center, start, end)?
-            .partial_cmp(&(required.clone() * required))?
+            .predicate_cmp(&(required.clone() * required))?
             == Ordering::Less
         {
             return Some(false);
@@ -4691,7 +4932,7 @@ fn point_clear_of_pad(point: &Point2, pad: &FixedPad, radius: &Real) -> Option<b
             let required = radius.clone() + pad_radius;
             Some(
                 point_distance_squared(&point, &Point2::new(Real::zero(), Real::zero()))
-                    .partial_cmp(&(required.clone() * required))?
+                    .predicate_cmp(&(required.clone() * required))?
                     != Ordering::Less,
             )
         }
@@ -4758,7 +4999,7 @@ pub(crate) fn segment_clear_of_placed_pad(
                     &start,
                     &end,
                 )?
-                .partial_cmp(&(required.clone() * required))?
+                .predicate_cmp(&(required.clone() * required))?
                     != Ordering::Less,
             )
         }
@@ -4828,11 +5069,11 @@ fn point_clear_of_axis_rectangle(
     let dx = positive_part(&(real_abs(&point.x) - half_width.clone()))?;
     let dy = positive_part(&(real_abs(&point.y) - half_height.clone()))?;
     let distance_squared = dx.clone() * dx + dy.clone() * dy;
-    Some(distance_squared.partial_cmp(&(radius.clone() * radius.clone()))? != Ordering::Less)
+    Some(distance_squared.predicate_cmp(&(radius.clone() * radius.clone()))? != Ordering::Less)
 }
 
 fn positive_part(value: &Real) -> Option<Real> {
-    match value.partial_cmp(&Real::zero())? {
+    match value.predicate_cmp(&Real::zero())? {
         Ordering::Greater => Some(value.clone()),
         Ordering::Equal | Ordering::Less => Some(Real::zero()),
     }
@@ -4845,8 +5086,8 @@ fn segment_clear_of_axis_rectangle(
     half_height: &Real,
     radius: &Real,
 ) -> Option<bool> {
-    let width_positive = half_width.partial_cmp(&Real::zero())? == Ordering::Greater;
-    let height_positive = half_height.partial_cmp(&Real::zero())? == Ordering::Greater;
+    let width_positive = half_width.predicate_cmp(&Real::zero())? == Ordering::Greater;
+    let height_positive = half_height.predicate_cmp(&Real::zero())? == Ordering::Greater;
     match (width_positive, height_positive) {
         (true, true) => capsule_disjoint_from_polygon(
             start,
@@ -4868,7 +5109,7 @@ fn segment_clear_of_axis_rectangle(
                     &Point2::new(-half_width.clone(), Real::zero()),
                     &Point2::new(half_width.clone(), Real::zero()),
                 )?
-                .partial_cmp(&required)?
+                .predicate_cmp(&required)?
                     != Ordering::Less,
             )
         }
@@ -4881,7 +5122,7 @@ fn segment_clear_of_axis_rectangle(
                     &Point2::new(Real::zero(), -half_height.clone()),
                     &Point2::new(Real::zero(), half_height.clone()),
                 )?
-                .partial_cmp(&required)?
+                .predicate_cmp(&required)?
                     != Ordering::Less,
             )
         }
@@ -4893,7 +5134,7 @@ fn segment_clear_of_axis_rectangle(
                     start,
                     end,
                 )?
-                .partial_cmp(&required)?
+                .predicate_cmp(&required)?
                     != Ordering::Less,
             )
         }
@@ -4929,7 +5170,7 @@ fn segment_clear_of_ring(
         {
             return Some(false);
         }
-        if segment_segment_distance_squared(start, end, a, b)?.partial_cmp(&required)?
+        if segment_segment_distance_squared(start, end, a, b)?.predicate_cmp(&required)?
             == Ordering::Less
         {
             return Some(false);
@@ -4961,7 +5202,7 @@ pub(crate) fn segment_segment_distance_squared(
     ]
     .into_iter()
     .try_fold(None, |best: Option<Real>, value| match best {
-        Some(best) => Some(Some(if value.partial_cmp(&best)? == Ordering::Less {
+        Some(best) => Some(Some(if value.predicate_cmp(&best)? == Ordering::Less {
             value
         } else {
             best
@@ -4978,16 +5219,16 @@ pub(crate) fn point_segment_distance_squared(
     let dx = end.x.clone() - start.x.clone();
     let dy = end.y.clone() - start.y.clone();
     let length_squared = dx.clone() * dx.clone() + dy.clone() * dy.clone();
-    if length_squared.partial_cmp(&Real::zero())? != Ordering::Greater {
+    if length_squared.predicate_cmp(&Real::zero())? != Ordering::Greater {
         return None;
     }
     let px = point.x.clone() - start.x.clone();
     let py = point.y.clone() - start.y.clone();
     let projection = px.clone() * dx.clone() + py.clone() * dy.clone();
-    if projection.partial_cmp(&Real::zero())? != Ordering::Greater {
+    if projection.predicate_cmp(&Real::zero())? != Ordering::Greater {
         return Some(px.clone() * px + py.clone() * py);
     }
-    if projection.partial_cmp(&length_squared)? != Ordering::Less {
+    if projection.predicate_cmp(&length_squared)? != Ordering::Less {
         let ex = point.x.clone() - end.x.clone();
         let ey = point.y.clone() - end.y.clone();
         return Some(ex.clone() * ex + ey.clone() * ey);
@@ -5011,7 +5252,7 @@ fn polygon_edges_clear(points: &[Point2], center: &Point2, radius: &Real) -> Opt
             &points[index],
             &points[(index + 1) % points.len()],
         )?
-        .partial_cmp(&required)?
+        .predicate_cmp(&required)?
             == Ordering::Less
         {
             return Some(false);
@@ -5278,7 +5519,13 @@ fn emit_planar_spans(
                 nodes[index - 1],
                 nodes[index],
             );
-        if next_width.as_ref() != Some(&width) || !continues_straight {
+        let width_changes = match next_width.as_ref() {
+            Some(next_width) => next_width
+                .predicate_ne(&width)
+                .ok_or(NegotiatedRouterError::IndeterminatePredicate)?,
+            None => true,
+        };
+        if width_changes || !continues_straight {
             let segment = LinePathSegment::new(
                 context.grid.point(nodes[start]),
                 context.grid.point(nodes[index - 1]),
@@ -5305,8 +5552,10 @@ fn nodes_continue_straight(grid: &Grid, first: Node, middle: Node, last: Node) -
     let first_dy = grid.ys[middle.y].clone() - grid.ys[first.y].clone();
     let second_dx = grid.xs[last.x].clone() - grid.xs[middle.x].clone();
     let second_dy = grid.ys[last.y].clone() - grid.ys[middle.y].clone();
-    first_dx.clone() * second_dy.clone() - first_dy.clone() * second_dx.clone() == Real::zero()
-        && first_dx * second_dx + first_dy * second_dy > Real::zero()
+    (first_dx.clone() * second_dy.clone() - first_dy.clone() * second_dx.clone())
+        .predicate_cmp(&Real::zero())
+        == Some(Ordering::Equal)
+        && (first_dx * second_dx + first_dy * second_dy).predicate_gt(&Real::zero()) == Some(true)
 }
 
 fn planar_edge_width(
@@ -5339,12 +5588,12 @@ fn direction_between(grid: &Grid, first: Node, second: Node) -> Direction {
     } else if first.x != second.x && first.y != second.y {
         let dx = grid.xs[second.x].clone() - grid.xs[first.x].clone();
         let dy = grid.ys[second.y].clone() - grid.ys[first.y].clone();
-        if real_abs(&dx) != real_abs(&dy) {
-            Direction::Arbitrary
-        } else if (first.x < second.x) == (first.y < second.y) {
-            Direction::DiagonalRising
-        } else {
-            Direction::DiagonalFalling
+        match real_abs(&dx).predicate_cmp(&real_abs(&dy)) {
+            Some(Ordering::Equal) if (first.x < second.x) == (first.y < second.y) => {
+                Direction::DiagonalRising
+            }
+            Some(Ordering::Equal) => Direction::DiagonalFalling,
+            Some(_) | None => Direction::Arbitrary,
         }
     } else if first.x != second.x {
         Direction::Horizontal

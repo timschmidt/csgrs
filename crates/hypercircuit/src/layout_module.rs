@@ -6,6 +6,8 @@
 //! [`PcbLayout`]. Geometry remains owned by hyperpath/csgrs after this semantic
 //! composition boundary.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 
@@ -740,12 +742,24 @@ fn transform_directions(
         let axis = transform.transform_point(&axis);
         let dx = axis.x - origin.x.clone();
         let dy = axis.y - origin.y.clone();
-        let direction = if dy == Real::zero() && dx != Real::zero() {
+        let dx_sign = dx.predicate_sign().ok_or_else(|| {
+            LayoutCompositionError::RoutingConstraintTransform(constraint.to_owned())
+        })?;
+        let dy_sign = dy.predicate_sign().ok_or_else(|| {
+            LayoutCompositionError::RoutingConstraintTransform(constraint.to_owned())
+        })?;
+        let direction = if dy_sign == hyperreal::RealSign::Zero
+            && dx_sign != hyperreal::RealSign::Zero
+        {
             RouteDirection::Horizontal
-        } else if dx == Real::zero() && dy != Real::zero() {
+        } else if dx_sign == hyperreal::RealSign::Zero && dy_sign != hyperreal::RealSign::Zero {
             RouteDirection::Vertical
-        } else if dx.clone() * dx.clone() == dy.clone() * dy.clone() && dx != Real::zero() {
-            if (dx > Real::zero()) == (dy > Real::zero()) {
+        } else if (dx.clone() * dx.clone()).predicate_eq(&(dy.clone() * dy.clone())) == Some(true)
+            && dx_sign != hyperreal::RealSign::Zero
+        {
+            if (dx_sign == hyperreal::RealSign::Positive)
+                == (dy_sign == hyperreal::RealSign::Positive)
+            {
                 RouteDirection::DiagonalRising
             } else {
                 RouteDirection::DiagonalFalling

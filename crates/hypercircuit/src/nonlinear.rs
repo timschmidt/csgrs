@@ -10,6 +10,7 @@
 //! three-terminal MOSFETs use exact square-law derivatives and true-region
 //! replay, so neither device family is accepted from a linear proposal alone.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
@@ -249,8 +250,8 @@ impl ShockleyDiode {
         &self,
         voltage: &Real,
     ) -> Result<DiodeLinearizationEvidence, DiodeNewtonSolveError> {
-        if self.saturation_current.structural_facts().sign != Some(RealSign::Positive)
-            || self.thermal_voltage.structural_facts().sign != Some(RealSign::Positive)
+        if self.saturation_current.predicate_sign() != Some(RealSign::Positive)
+            || self.thermal_voltage.predicate_sign() != Some(RealSign::Positive)
         {
             return Err(DiodeNewtonSolveError::InvalidDiode(self.component.clone()));
         }
@@ -458,8 +459,8 @@ pub fn solve_shockley_diode_newton(
         return Err(DiodeNewtonSolveError::UnknownInitialNet(net.clone()));
     }
     for diode in diodes {
-        if diode.saturation_current.structural_facts().sign != Some(RealSign::Positive)
-            || diode.thermal_voltage.structural_facts().sign != Some(RealSign::Positive)
+        if diode.saturation_current.predicate_sign() != Some(RealSign::Positive)
+            || diode.thermal_voltage.predicate_sign() != Some(RealSign::Positive)
             || diode
                 .anode
                 .as_ref()
@@ -683,11 +684,11 @@ impl Circuit {
 
 fn validate_diode_policy(policy: &DiodeNewtonPolicy) -> Result<(), DiodeNewtonSolveError> {
     if policy.maximum_iterations == 0
-        || policy.voltage_tolerance.structural_facts().sign != Some(RealSign::Positive)
-        || policy.current_tolerance.structural_facts().sign != Some(RealSign::Positive)
-        || policy.damping.structural_facts().sign != Some(RealSign::Positive)
+        || policy.voltage_tolerance.predicate_sign() != Some(RealSign::Positive)
+        || policy.current_tolerance.predicate_sign() != Some(RealSign::Positive)
+        || policy.damping.predicate_sign() != Some(RealSign::Positive)
         || !matches!(
-            policy.damping.partial_cmp(&Real::one()),
+            policy.damping.predicate_cmp(&Real::one()),
             Some(Ordering::Less | Ordering::Equal)
         )
     {
@@ -828,7 +829,7 @@ fn diode_parameter(
 }
 
 fn exact_max_result(current: Real, candidate: Real) -> Result<Real, DiodeNewtonSolveError> {
-    match current.partial_cmp(&candidate) {
+    match current.predicate_cmp(&candidate) {
         Some(Ordering::Less) => Ok(candidate),
         Some(Ordering::Equal | Ordering::Greater) => Ok(current),
         None => Err(DiodeNewtonSolveError::IndeterminateComparison),
@@ -836,7 +837,7 @@ fn exact_max_result(current: Real, candidate: Real) -> Result<Real, DiodeNewtonS
 }
 
 fn exact_le(left: &Real, right: &Real) -> Result<bool, DiodeNewtonSolveError> {
-    match left.partial_cmp(right) {
+    match left.predicate_cmp(right) {
         Some(Ordering::Less | Ordering::Equal) => Ok(true),
         Some(Ordering::Greater) => Ok(false),
         None => Err(DiodeNewtonSolveError::IndeterminateComparison),
@@ -844,7 +845,7 @@ fn exact_le(left: &Real, right: &Real) -> Result<bool, DiodeNewtonSolveError> {
 }
 
 fn exact_abs(value: &Real) -> Result<Real, DiodeNewtonSolveError> {
-    match value.partial_cmp(&Real::zero()) {
+    match value.predicate_cmp(&Real::zero()) {
         Some(Ordering::Less) => Ok(-value.clone()),
         Some(Ordering::Equal | Ordering::Greater) => Ok(value.clone()),
         None => Err(DiodeNewtonSolveError::IndeterminateComparison),
@@ -868,7 +869,7 @@ pub fn solve_piecewise_linear(
         if device.segments.is_empty()
             || device.segments.iter().any(|segment| {
                 !matches!(
-                    segment.lower.partial_cmp(&segment.upper),
+                    segment.lower.predicate_cmp(&segment.upper),
                     Some(Ordering::Less | Ordering::Equal)
                 )
             })
@@ -954,10 +955,10 @@ fn decode_region(mut ordinal: usize, devices: &[PiecewiseLinearDevice]) -> Vec<u
 
 fn interval_contains(segment: &PiecewiseLinearSegment, value: &Real) -> bool {
     matches!(
-        segment.lower.partial_cmp(value),
+        segment.lower.predicate_cmp(value),
         Some(Ordering::Less | Ordering::Equal)
     ) && matches!(
-        value.partial_cmp(&segment.upper),
+        value.predicate_cmp(&segment.upper),
         Some(Ordering::Less | Ordering::Equal)
     )
 }

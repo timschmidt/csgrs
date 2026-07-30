@@ -5,6 +5,7 @@
 //! `(time, phase, sequence)` ordering; no tolerance or container iteration
 //! order participates in execution.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, VecDeque};
 use std::fmt::{Display, Formatter};
@@ -607,14 +608,14 @@ impl CircuitEventAgenda {
     /// Sessions use this after an analog-only endpoint. Advancing cannot move
     /// backward or skip a pending event.
     pub fn advance_time(&mut self, time: Real) -> Result<(), CircuitEventAgendaError> {
-        match time.partial_cmp(&self.now) {
+        match time.predicate_cmp(&self.now) {
             Some(Ordering::Less) => return Err(CircuitEventAgendaError::EventInPast),
             Some(Ordering::Equal) => return Ok(()),
             Some(Ordering::Greater) => {}
             None => return Err(CircuitEventAgendaError::IndeterminateTime),
         }
         if let Some(next) = self.pending.front() {
-            match next.time.partial_cmp(&time) {
+            match next.time.predicate_cmp(&time) {
                 Some(Ordering::Less) => {
                     return Err(CircuitEventAgendaError::ClockWouldSkipEvent);
                 }
@@ -819,7 +820,7 @@ impl CircuitEventAgenda {
             return None;
         }
         let event = self.pending.pop_front()?;
-        if self.now.partial_cmp(&event.time) != Some(Ordering::Equal) {
+        if self.now.predicate_cmp(&event.time) != Some(Ordering::Equal) {
             self.last_delivered_phase = None;
         }
         self.now = event.time.clone();
@@ -946,7 +947,7 @@ impl CircuitEventAgenda {
     }
 
     fn validate_future_time(&self, time: &Real) -> Result<(), CircuitEventAgendaError> {
-        match time.partial_cmp(&self.now) {
+        match time.predicate_cmp(&self.now) {
             Some(Ordering::Less) => Err(CircuitEventAgendaError::EventInPast),
             Some(Ordering::Equal) => Ok(()),
             Some(Ordering::Greater) => Ok(()),
@@ -959,7 +960,7 @@ impl CircuitEventAgenda {
         time: &Real,
         phase: CircuitEventPhase,
     ) -> Result<(), CircuitEventAgendaError> {
-        if time.partial_cmp(&self.now) == Some(Ordering::Equal)
+        if time.predicate_cmp(&self.now) == Some(Ordering::Equal)
             && self
                 .last_delivered_phase
                 .is_some_and(|completed| phase < completed)
@@ -986,7 +987,7 @@ impl ExactBreakpointProvider for CircuitEventAgenda {
 
     fn next_breakpoint_after(&self, time: &Real) -> Result<Option<Real>, ExactBreakpointError> {
         for event in &self.pending {
-            match time.partial_cmp(&event.time) {
+            match time.predicate_cmp(&event.time) {
                 Some(Ordering::Less) => return Ok(Some(event.time.clone())),
                 Some(Ordering::Equal | Ordering::Greater) => {}
                 None => {
@@ -1011,7 +1012,7 @@ pub fn earliest_exact_breakpoint_after(
         let Some(candidate) = provider.next_breakpoint_after(time)? else {
             continue;
         };
-        match candidate.partial_cmp(time) {
+        match candidate.predicate_cmp(time) {
             Some(Ordering::Greater) => {}
             Some(Ordering::Less | Ordering::Equal) => {
                 return Err(ExactBreakpointError {
@@ -1029,7 +1030,7 @@ pub fn earliest_exact_breakpoint_after(
         }
         match earliest.as_ref() {
             None => earliest = Some(candidate),
-            Some(current) => match candidate.partial_cmp(current) {
+            Some(current) => match candidate.predicate_cmp(current) {
                 Some(Ordering::Less) => earliest = Some(candidate),
                 Some(Ordering::Equal | Ordering::Greater) => {}
                 None => {
@@ -1048,7 +1049,7 @@ fn compare_request_order(
     left: &CircuitEventRequest,
     right: &CircuitEventRequest,
 ) -> Result<Ordering, CircuitEventAgendaError> {
-    match left.time.partial_cmp(&right.time) {
+    match left.time.predicate_cmp(&right.time) {
         Some(Ordering::Equal) => Ok(left.phase.cmp(&right.phase)),
         Some(ordering) => Ok(ordering),
         None => Err(CircuitEventAgendaError::IndeterminateTime),
@@ -1095,7 +1096,7 @@ fn compare_event_order(
     left: &CircuitEvent,
     right: &CircuitEvent,
 ) -> Result<Ordering, CircuitEventAgendaError> {
-    match left.time.partial_cmp(&right.time) {
+    match left.time.predicate_cmp(&right.time) {
         Some(Ordering::Equal) => Ok(left
             .phase
             .cmp(&right.phase)
@@ -1267,7 +1268,7 @@ impl ExactBreakpointSchedule {
             });
         }
         for (index, pair) in times.windows(2).enumerate() {
-            if pair[0].partial_cmp(&pair[1]) != Some(Ordering::Less) {
+            if pair[0].predicate_cmp(&pair[1]) != Some(Ordering::Less) {
                 return Err(ExactBreakpointError {
                     provider,
                     detail: format!(
@@ -1288,7 +1289,7 @@ impl ExactBreakpointProvider for ExactBreakpointSchedule {
 
     fn next_breakpoint_after(&self, time: &Real) -> Result<Option<Real>, ExactBreakpointError> {
         for candidate in &self.times {
-            match candidate.partial_cmp(time) {
+            match candidate.predicate_cmp(time) {
                 Some(Ordering::Greater) => return Ok(Some(candidate.clone())),
                 Some(Ordering::Less | Ordering::Equal) => {}
                 None => {

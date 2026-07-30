@@ -224,25 +224,17 @@ fn arc_board_profile_materializes_exactly_and_emits_cam_arcs() {
     let materialized = layout
         .materialize(&circuit, MaterializationOptions::default())
         .unwrap();
-    assert!(!materialized.substrate.as_curve_region().is_empty());
+    assert!(!materialized.substrate.is_empty());
 
     #[cfg(feature = "drc")]
     {
         let handoff = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
-        assert!(
-            !handoff
-                .board
-                .board_outline
-                .as_ref()
-                .unwrap()
-                .as_curve_region()
-                .is_empty()
-        );
+        assert!(!handoff.board.board_outline.as_ref().unwrap().is_empty());
         let readiness = handoff.run_readiness(&hypercircuit::DrcReadinessPolicy::default());
         assert!(readiness.is_release_clean(), "{:?}", readiness.violations);
 
-        let legend = hyperdrc::PcbSketch::new(
-            csgrs::sketch::Profile::polygon_points(&[
+        let legend = hyperdrc::PcbRegion::new(
+            csgrs::curve::polygon_points(&[
                 hypercurve::Point2::new(Real::from(5), Real::from(12)),
                 hypercurve::Point2::new(Real::from(6), Real::from(12)),
                 hypercurve::Point2::new(Real::from(6), Real::from(13)),

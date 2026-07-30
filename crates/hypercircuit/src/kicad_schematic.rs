@@ -4,6 +4,7 @@
 //! [`SchematicLayout`] against a caller-supplied authoritative [`Circuit`];
 //! it never infers or replaces circuit topology from drawing geometry.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter, Write};
 use std::path::Path;
@@ -1509,6 +1510,8 @@ pub enum KiCadSchematicImportError {
     InvalidIdentifier(String),
     /// A wire had no authoritative circuit-net evidence.
     UnresolvedWireNet(String),
+    /// Exact imported drawing incidence remained indeterminate.
+    IndeterminateGeometry(String),
     /// Native geometry produced a drawing that disagrees with the circuit.
     InvalidImportedLayout { issue_count: usize },
     /// File input failed.
@@ -1546,6 +1549,12 @@ impl Display for KiCadSchematicImportError {
                 write!(
                     formatter,
                     "cannot resolve authoritative net for KiCad wire {wire}"
+                )
+            }
+            Self::IndeterminateGeometry(detail) => {
+                write!(
+                    formatter,
+                    "indeterminate KiCad schematic geometry: {detail}"
                 )
             }
             Self::InvalidImportedLayout { issue_count } => write!(
@@ -2172,12 +2181,12 @@ impl<'a> SchematicImporter<'a> {
                     "wire {uuid} has fewer than two points"
                 )));
             }
-            let from_evidence = endpoint_for(layout, self.circuit, &points[0]);
+            let from_evidence = endpoint_for(layout, self.circuit, &points[0])?;
             let to_evidence = endpoint_for(
                 layout,
                 self.circuit,
                 points.last().expect("wire has two points"),
-            );
+            )?;
             let mut nets = Vec::new();
             if let Some((_, net)) = &from_evidence {
                 nets.push(net.clone());
@@ -2186,8 +2195,11 @@ impl<'a> SchematicImporter<'a> {
                 nets.push(net.clone());
             }
             for label in labels {
-                if points.iter().any(|point| point == &label.position)
-                    && let Ok(net) = NetId::new(&label.text)
+                if any_schematic_point_equal(&points, &label.position).ok_or_else(|| {
+                    KiCadSchematicImportError::IndeterminateGeometry(format!(
+                        "wire {uuid} label incidence"
+                    ))
+                })? && let Ok(net) = NetId::new(&label.text)
                     && self
                         .circuit
                         .nets
@@ -2667,51 +2679,94 @@ fn endpoint_for(
     layout: &SchematicLayout,
     circuit: &Circuit,
     point: &SchematicPoint,
-) -> Option<(SchematicEndpoint, NetId)> {
+) -> Result<Option<(SchematicEndpoint, NetId)>, KiCadSchematicImportError> {
     for symbol in &layout.symbols {
         let instance = circuit
             .instances
             .iter()
-            .find(|candidate| candidate.id == symbol.instance)?;
-        let unit = layout.symbol_unit(symbol)?;
+            .find(|candidate| candidate.id == symbol.instance)
+            .ok_or_else(|| {
+                KiCadSchematicImportError::InvalidIdentifier(symbol.instance.as_str().into())
+            })?;
+        let Some(unit) = layout.symbol_unit(symbol) else {
+            continue;
+        };
         for pin in &unit.pins {
-            if endpoint_pin_point(symbol, pin) == *point {
+            if schematic_points_equal(&endpoint_pin_point(symbol, pin), point).ok_or_else(|| {
+                KiCadSchematicImportError::IndeterminateGeometry(format!(
+                    "symbol {} pin {} incidence",
+                    symbol.id.as_str(),
+                    pin.pin.as_str()
+                ))
+            })? {
                 let net = instance
                     .pins
                     .iter()
-                    .find(|binding| binding.pin == pin.pin)?
+                    .find(|binding| binding.pin == pin.pin)
+                    .ok_or_else(|| {
+                        KiCadSchematicImportError::InvalidIdentifier(pin.pin.as_str().into())
+                    })?
                     .net
                     .clone();
-                return Some((
+                return Ok(Some((
                     SchematicEndpoint::Pin {
                         symbol: symbol.id.clone(),
                         pin: pin.pin.clone(),
                     },
                     net,
-                ));
+                )));
             }
         }
     }
     for port in &layout.ports {
-        if port.position == *point {
+        if schematic_points_equal(&port.position, point).ok_or_else(|| {
+            KiCadSchematicImportError::IndeterminateGeometry(format!(
+                "port {} incidence",
+                port.port.as_str()
+            ))
+        })? {
             let net = circuit
                 .ports
                 .iter()
-                .find(|candidate| candidate.id == port.port)?
+                .find(|candidate| candidate.id == port.port)
+                .ok_or_else(|| {
+                    KiCadSchematicImportError::InvalidIdentifier(port.port.as_str().into())
+                })?
                 .net
                 .clone();
-            return Some((SchematicEndpoint::Port(port.port.clone()), net));
+            return Ok(Some((SchematicEndpoint::Port(port.port.clone()), net)));
         }
     }
     for port in &layout.sheet_ports {
-        if port.position == *point {
-            return Some((
+        if schematic_points_equal(&port.position, point).ok_or_else(|| {
+            KiCadSchematicImportError::IndeterminateGeometry(format!(
+                "sheet port {} incidence",
+                port.id.as_str()
+            ))
+        })? {
+            return Ok(Some((
                 SchematicEndpoint::SheetPort(port.id.clone()),
                 port.net.clone(),
-            ));
+            )));
         }
     }
-    None
+    Ok(None)
+}
+
+fn schematic_points_equal(first: &SchematicPoint, second: &SchematicPoint) -> Option<bool> {
+    Some(first.x.predicate_eq(&second.x)? && first.y.predicate_eq(&second.y)?)
+}
+
+fn any_schematic_point_equal(points: &[SchematicPoint], target: &SchematicPoint) -> Option<bool> {
+    let mut indeterminate = false;
+    for point in points {
+        match schematic_points_equal(point, target) {
+            Some(true) => return Some(true),
+            Some(false) => {}
+            None => indeterminate = true,
+        }
+    }
+    if indeterminate { None } else { Some(false) }
 }
 
 fn ordered_sheets(sheets: &[SchematicSheet]) -> Vec<&SchematicSheet> {
@@ -2753,16 +2808,16 @@ fn generated_sheet_box(
     let mut min_y = points[0].y.clone();
     let mut max_y = points[0].y.clone();
     for point in &points[1..] {
-        if less_than(&point.x, &min_x) {
+        if less_than(&point.x, &min_x)? {
             min_x = point.x.clone();
         }
-        if less_than(&max_x, &point.x) {
+        if less_than(&max_x, &point.x)? {
             max_x = point.x.clone();
         }
-        if less_than(&point.y, &min_y) {
+        if less_than(&point.y, &min_y)? {
             min_y = point.y.clone();
         }
-        if less_than(&max_y, &point.y) {
+        if less_than(&max_y, &point.y)? {
             max_y = point.y.clone();
         }
     }
@@ -2777,8 +2832,9 @@ fn generated_sheet_box(
     Ok((origin, width, height))
 }
 
-fn less_than(left: &Real, right: &Real) -> bool {
-    (left.clone() - right.clone()).refine_sign_until(-128) == Some(RealSign::Negative)
+fn less_than(left: &Real, right: &Real) -> Result<bool, KiCadSchematicExportError> {
+    left.predicate_lt(right)
+        .ok_or(KiCadSchematicExportError::InvalidDesign)
 }
 
 fn valid_kicad_filename(filename: &str) -> bool {
@@ -2929,8 +2985,11 @@ fn simplify_polyline(points: Vec<SchematicPoint>) -> Vec<SchematicPoint> {
             let second_dy = point.y.clone() - middle.y.clone();
             let cross = first_dx.clone() * second_dy.clone() - first_dy.clone() * second_dx.clone();
             let dot = first_dx * second_dx + first_dy * second_dy;
-            if cross.refine_sign_until(-128) == Some(RealSign::Zero)
-                && dot.refine_sign_until(-128) != Some(RealSign::Negative)
+            if cross.predicate_sign() == Some(RealSign::Zero)
+                && matches!(
+                    dot.predicate_sign(),
+                    Some(RealSign::Zero | RealSign::Positive)
+                )
             {
                 result.pop();
             } else {
@@ -3076,7 +3135,7 @@ fn pin_lead_length(unit: &SchematicSymbolUnit, pin: &SchematicPinPlacement) -> R
         SchematicPinSide::Top => -half_height - pin.position.y.clone(),
         SchematicPinSide::Bottom => pin.position.y.clone() - half_height,
     };
-    if candidate.refine_sign_until(-128) == Some(RealSign::Positive) {
+    if candidate.predicate_sign() == Some(RealSign::Positive) {
         candidate
     } else {
         Real::from(0)

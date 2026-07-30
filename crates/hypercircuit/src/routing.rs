@@ -4,6 +4,7 @@
 //! geometry and its certification. This module preserves that boundary in both
 //! directions without making either crate infer the other's identities.
 
+use crate::predicate::RealPredicateExt as _;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -196,6 +197,8 @@ pub enum RoutingAdapterError {
     UnknownCandidateNet(RoutingNetId),
     /// Candidate via did not retain a drill diameter.
     MissingCandidateViaDrill(usize),
+    /// Candidate/existing via geometry could not be compared exactly.
+    IndeterminateCandidateVia(usize),
     /// Generated route/via identity collided while appending a solution.
     IdentityCollision(String),
 }
@@ -223,6 +226,9 @@ impl std::fmt::Display for RoutingAdapterError {
             }
             Self::MissingCandidateViaDrill(index) => {
                 write!(formatter, "candidate via {index} has no drill diameter")
+            }
+            Self::IndeterminateCandidateVia(index) => {
+                write!(formatter, "candidate via {index} geometry is indeterminate")
             }
             Self::IdentityCollision(identity) => {
                 write!(formatter, "routed feature identity collides: {identity}")
@@ -527,22 +533,31 @@ impl RoutingSolution {
                 .drill_diameter()
                 .cloned()
                 .ok_or(RoutingAdapterError::MissingCandidateViaDrill(index))?;
-            if let Some((existing_index, existing)) =
-                problem
-                    .existing_vias
-                    .iter()
-                    .enumerate()
-                    .find(|(existing_index, existing)| {
-                        !retained_existing.contains(existing_index)
-                            && existing.net == net
-                            && existing.start_layer == via.start_layer()
-                            && existing.end_layer == via.end_layer()
-                            && existing.center == *via.center()
-                            && existing.land_diameter == *via.land_diameter()
-                            && existing.drill_diameter == drill_diameter
-                            && existing.plating == via_plating(via.drill_intent())
-                    })
-            {
+            let mut matching_existing = None;
+            for (existing_index, existing) in problem.existing_vias.iter().enumerate() {
+                if retained_existing.contains(&existing_index)
+                    || existing.net != net
+                    || existing.start_layer != via.start_layer()
+                    || existing.end_layer != via.end_layer()
+                    || existing.plating != via_plating(via.drill_intent())
+                {
+                    continue;
+                }
+                let geometry_matches = existing
+                    .center
+                    .x
+                    .predicate_eq(&via.center().x)
+                    .zip(existing.center.y.predicate_eq(&via.center().y))
+                    .zip(existing.land_diameter.predicate_eq(via.land_diameter()))
+                    .zip(existing.drill_diameter.predicate_eq(&drill_diameter))
+                    .map(|(((x, y), land), drill)| x && y && land && drill)
+                    .ok_or(RoutingAdapterError::IndeterminateCandidateVia(index))?;
+                if geometry_matches {
+                    matching_existing = Some((existing_index, existing));
+                    break;
+                }
+            }
+            if let Some((existing_index, existing)) = matching_existing {
                 retained_existing.insert(existing_index);
                 vias.push(existing.clone());
                 continue;
@@ -661,7 +676,7 @@ fn euclidean_mst_lower_bound(points: &[&Point2]) -> Option<Real> {
             };
             selected = match selected {
                 Some((best_index, best_distance)) => {
-                    if distance.partial_cmp(best_distance)? == Ordering::Less {
+                    if distance.predicate_cmp(best_distance)? == Ordering::Less {
                         Some((index, distance))
                     } else {
                         Some((best_index, best_distance))
@@ -679,7 +694,7 @@ fn euclidean_mst_lower_bound(points: &[&Point2]) -> Option<Real> {
             }
             let distance = euclidean_distance(points[selected_index], points[index])?;
             let replace = match &best[index] {
-                Some(current) => distance.partial_cmp(current)? == Ordering::Less,
+                Some(current) => distance.predicate_cmp(current)? == Ordering::Less,
                 None => true,
             };
             if replace {
@@ -704,7 +719,7 @@ fn exact_ratio(numerator: Option<&Real>, denominator: Option<&Real>) -> Option<R
     let (Some(numerator), Some(denominator)) = (numerator, denominator) else {
         return None;
     };
-    if denominator.partial_cmp(&Real::zero()) != Some(Ordering::Greater) {
+    if denominator.predicate_cmp(&Real::zero()) != Some(Ordering::Greater) {
         return None;
     }
     (numerator.clone() / denominator.clone()).ok()
@@ -788,5 +803,8 @@ fn is_orthogonal_loop(vertices: &[Point2]) -> bool {
             .iter()
             .zip(vertices.iter().cycle().skip(1))
             .take(vertices.len())
-            .all(|(start, end)| start.x == end.x || start.y == end.y)
+            .all(|(start, end)| {
+                start.x.predicate_eq(&end.x) == Some(true)
+                    || start.y.predicate_eq(&end.y) == Some(true)
+            })
 }

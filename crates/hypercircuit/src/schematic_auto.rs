@@ -1,5 +1,7 @@
 //! Deterministic connectivity-derived schematic layout.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::fmt::{Display, Formatter};
 
@@ -250,7 +252,7 @@ fn validate_policy(policy: &SchematicAutoLayoutPolicy) -> Result<(), SchematicAu
             &policy.lead_length,
         ]
         .into_iter()
-        .any(|value| value.structural_facts().sign != Some(RealSign::Positive))
+        .any(|value| value.predicate_sign() != Some(RealSign::Positive))
     {
         return Err(SchematicAutoLayoutError::InvalidPolicy);
     }

@@ -1,14 +1,15 @@
 //! Gerber X2, Excellon, and IPC-D-356 package generation from certified
 //! materialized geometry and retained semantic identities.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter, Write};
 #[cfg(feature = "drc")]
 use std::path::Path;
 
-#[cfg(feature = "drc")]
-use csgrs::io::gerber::FromGerber;
-use csgrs::{csg::CSG, io::gerber::ToGerber, sketch::Profile};
+use csgrs::curve;
+use hypercurve::CurveRegion2;
 use hyperreal::Real;
 use sha2::{Digest, Sha256};
 
@@ -706,8 +707,7 @@ impl FabricationPackage {
                 });
             };
             let profile = scale_profile(profile, &millimeter_factor);
-            let gerber = profile
-                .to_gerber()
+            let gerber = csgrs::io::gerber::export_gerber(&profile)
                 .map_err(|error| FabricationPackageError::Gerber(format!("{error:?}")))?;
             let function = if position == 0 {
                 format!("Copper,L{},Top", position + 1)
@@ -731,8 +731,7 @@ impl FabricationPackage {
                 });
             };
             let profile = scale_profile(profile, &millimeter_factor);
-            let gerber = profile
-                .to_gerber()
+            let gerber = csgrs::io::gerber::export_gerber(&profile)
                 .map_err(|error| FabricationPackageError::Gerber(format!("{error:?}")))?;
             let (suffix, function, polarity) = process_file_role(image.role);
             files.push(FabricationFile {
@@ -1027,8 +1026,12 @@ fn audit_gerber(file: &FabricationFile, audit: &mut FabricationCamRoundTripRepor
                 detail: "Gerber coordinate format is missing".into(),
             });
     }
-    let geometry_nonempty = match Profile::from_gerber(&file.bytes) {
-        Ok(profile) if !profile.is_empty() => true,
+    let geometry_nonempty = match csgrs::io::gerber::import_gerber(&file.bytes) {
+        Ok((region, strings, paths))
+            if !region.is_empty() || !strings.is_empty() || !paths.is_empty() =>
+        {
+            true
+        }
         Ok(_) => {
             audit
                 .issues
@@ -1173,8 +1176,14 @@ fn audit_ipc356(
             if point.net != expected.net
                 || point.reference.as_deref() != Some(expected.reference.as_str())
                 || point.pin.as_deref() != Some(expected.pin.as_str())
-                || expected_x.as_ref() != Some(&point.location[0])
-                || expected_y.as_ref() != Some(&point.location[1])
+                || expected_x
+                    .as_ref()
+                    .and_then(|expected| expected.predicate_eq(&point.location[0]))
+                    != Some(true)
+                || expected_y
+                    .as_ref()
+                    .and_then(|expected| expected.predicate_eq(&point.location[1]))
+                    != Some(true)
                 || point.feature_type != expected_kind
             {
                 audit.issues.push(FabricationCamRoundTripIssue::Ipc356 {
@@ -1226,10 +1235,8 @@ fn add_x2_attributes(gerber: Vec<u8>, function: &str, polarity: &str) -> Vec<u8>
     output
 }
 
-fn scale_profile(profile: &Profile, factor: &Real) -> Profile {
-    profile
-        .clone()
-        .scale(factor.clone(), factor.clone(), Real::one())
+fn scale_profile(profile: &CurveRegion2, factor: &Real) -> CurveRegion2 {
+    curve::scaled(profile, factor.clone(), factor.clone())
 }
 
 fn process_file_role(role: ProcessLayerRole) -> (&'static str, &'static str, &'static str) {
@@ -1427,17 +1434,21 @@ fn linear_board_size(layout: &PcbLayout, millimeter_factor: &Real) -> Option<[f6
     let mut min_y = first.y.clone();
     let mut max_y = first.y.clone();
     for point in points.iter().skip(1) {
-        if point.x < min_x {
-            min_x = point.x.clone();
+        match point.x.predicate_cmp(&min_x)? {
+            std::cmp::Ordering::Less => min_x = point.x.clone(),
+            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => {}
         }
-        if point.x > max_x {
-            max_x = point.x.clone();
+        match point.x.predicate_cmp(&max_x)? {
+            std::cmp::Ordering::Greater => max_x = point.x.clone(),
+            std::cmp::Ordering::Equal | std::cmp::Ordering::Less => {}
         }
-        if point.y < min_y {
-            min_y = point.y.clone();
+        match point.y.predicate_cmp(&min_y)? {
+            std::cmp::Ordering::Less => min_y = point.y.clone(),
+            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => {}
         }
-        if point.y > max_y {
-            max_y = point.y.clone();
+        match point.y.predicate_cmp(&max_y)? {
+            std::cmp::Ordering::Greater => max_y = point.y.clone(),
+            std::cmp::Ordering::Equal | std::cmp::Ordering::Less => {}
         }
     }
     Some([

@@ -1,5 +1,6 @@
 //! Versioned project/provider manifests for reproducible CLI workflows.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -292,7 +293,7 @@ impl ProjectPcbMaterial {
     ) -> Result<Real, ProjectManifestError> {
         let value = Real::from_str(source.trim())
             .map_err(|_| self.invalid(format!("`{field}` is not an exact scalar: {source:?}")))?;
-        let sign = value.refine_sign_until(-64);
+        let sign = value.predicate_sign();
         let valid = if allow_zero {
             matches!(sign, Some(RealSign::Positive | RealSign::Zero))
         } else {

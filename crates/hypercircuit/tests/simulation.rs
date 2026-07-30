@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use hypercircuit::{
@@ -11,6 +12,13 @@ use hypercircuit::{
     TransientRunPolicy, TransientRunStatus, TransientSession, TransientSessionStatus,
     TransientStepDecisionKind,
 };
+use hyperlimit::compare_reals;
+
+fn real_order(left: &Real, right: &Real) -> Ordering {
+    compare_reals(left, right)
+        .value()
+        .expect("test comparison must be decided by the centralized predicate policy")
+}
 
 fn parameter(name: &str, value: i64, unit: &str) -> CircuitParameter {
     CircuitParameter {
@@ -332,10 +340,12 @@ fn adaptive_transient_run_rejects_then_refines_to_the_exact_stop_time() {
             .iter()
             .filter(|decision| decision.kind == TransientStepDecisionKind::Accepted)
             .all(|decision| {
-                decision
-                    .maximum_error_ratio
-                    .as_ref()
-                    .is_some_and(|ratio| ratio <= &Real::one())
+                decision.maximum_error_ratio.as_ref().is_some_and(|ratio| {
+                    matches!(
+                        real_order(ratio, &Real::one()),
+                        Ordering::Less | Ordering::Equal
+                    )
+                })
             })
     );
     assert_eq!(report.samples.last().unwrap().time, Real::one());
@@ -1032,13 +1042,22 @@ fn mixed_linear_reactive_diode_run_replays_every_nonlinear_endpoint() {
     assert_eq!(report.nonlinear_steps.len(), 4);
     assert!(report.nonlinear_steps.iter().all(|step| step.iterations > 0
         && step.replay_accepted
-        && step.maximum_kcl_residual >= Real::zero()
-        && step.maximum_branch_residual >= Real::zero()));
+        && matches!(
+            real_order(&step.maximum_kcl_residual, &Real::zero()),
+            Ordering::Equal | Ordering::Greater
+        )
+        && matches!(
+            real_order(&step.maximum_branch_residual, &Real::zero()),
+            Ordering::Equal | Ordering::Greater
+        )));
     let waveform = report
         .unknown_waveform(&MnaUnknown::NetVoltage(NetId::new("OUT").unwrap()))
         .unwrap();
     assert_eq!(waveform[0].1, Real::zero());
-    assert!(waveform[1].1 > Real::zero());
-    assert!(waveform[3].1 > waveform[1].1);
-    assert!(waveform[3].1 < Real::one());
+    assert_eq!(real_order(&waveform[1].1, &Real::zero()), Ordering::Greater);
+    assert_eq!(
+        real_order(&waveform[3].1, &waveform[1].1),
+        Ordering::Greater
+    );
+    assert_eq!(real_order(&waveform[3].1, &Real::one()), Ordering::Less);
 }

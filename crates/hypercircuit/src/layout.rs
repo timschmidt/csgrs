@@ -3,8 +3,9 @@
 //! These objects retain electrical identity, package intent, placement, and
 //! manufacturable feature parameters before geometry is materialized. Routes
 //! and vias lower to `hyperpath` carriers for certification; the optional
-//! `geometry` feature lowers the same retained objects to `csgrs::Profile`.
+//! `geometry` lowers the same retained objects to native Hypercurve regions.
 
+use crate::predicate::RealPredicateExt as _;
 use std::{
     cell::RefCell,
     cmp::Ordering,
@@ -317,15 +318,19 @@ impl BoardContour {
             || self
                 .segments
                 .iter()
-                .any(|segment| segment.start() == segment.end())
+                .any(|segment| points_equal(segment.start(), segment.end()) != Some(false))
         {
             return false;
         }
         self.segments
             .iter()
             .zip(self.segments.iter().cycle().skip(1))
-            .all(|(left, right)| left.end() == right.start())
+            .all(|(left, right)| points_equal(left.end(), right.start()) == Some(true))
     }
+}
+
+fn points_equal(first: &Point2, second: &Point2) -> Option<bool> {
+    Some(first.x.predicate_eq(&second.x)? && first.y.predicate_eq(&second.y)?)
 }
 
 impl From<Vec<Point2>> for BoardContour {
@@ -426,12 +431,9 @@ impl BoardBoundaryGeometry {
         clearance: Real,
         policy: &CurvePolicy,
     ) -> Result<Classification<Self>, BoardBoundaryGeometryError> {
-        if let Some((_, cached)) = self
-            .insets
-            .borrow()
-            .iter()
-            .find(|(candidate, _)| candidate == &clearance)
-        {
+        if let Some((_, cached)) = self.insets.borrow().iter().find(|(candidate, _)| {
+            candidate.predicate_cmp(&clearance) == Some(std::cmp::Ordering::Equal)
+        }) {
             return Ok(cached.clone());
         }
         let result = match self
@@ -535,7 +537,7 @@ impl BoardBoundaryGeometry {
                         return Ok(Some(Classification::Uncertain(reason)));
                     }
                 };
-                match distance_squared.partial_cmp(&required_squared) {
+                match distance_squared.predicate_cmp(&required_squared) {
                     Some(Ordering::Less) => {
                         return Ok(Some(Classification::Decided(false)));
                     }
@@ -685,7 +687,7 @@ impl BoardBoundaryGeometry {
                         return Ok(Some(Classification::Uncertain(reason)));
                     }
                 };
-                match distance_squared.partial_cmp(&required_squared) {
+                match distance_squared.predicate_cmp(&required_squared) {
                     Some(Ordering::Less) => {
                         return Ok(Some(Classification::Decided(false)));
                     }
@@ -771,10 +773,10 @@ impl BoardBoundaryGeometry {
 
 fn curve_point_in_closed_box(point: &CurvePoint2, min: &Point2, max: &Point2) -> Option<bool> {
     Some(
-        point.x().partial_cmp(&min.x)? != Ordering::Less
-            && point.x().partial_cmp(&max.x)? != Ordering::Greater
-            && point.y().partial_cmp(&min.y)? != Ordering::Less
-            && point.y().partial_cmp(&max.y)? != Ordering::Greater,
+        point.x().predicate_cmp(&min.x)? != Ordering::Less
+            && point.x().predicate_cmp(&max.x)? != Ordering::Greater
+            && point.y().predicate_cmp(&min.y)? != Ordering::Less
+            && point.y().predicate_cmp(&max.y)? != Ordering::Greater,
     )
 }
 
@@ -789,8 +791,8 @@ fn point_line_segment_distance_squared(
     let px = point.x() - line.start().x();
     let py = point.y() - line.start().y();
     let projection = px.clone() * dx.clone() + py.clone() * dy.clone();
-    let projection_order = projection.partial_cmp(&Real::zero());
-    let length_order = projection.partial_cmp(&length_squared);
+    let projection_order = projection.predicate_cmp(&Real::zero());
+    let length_order = projection.predicate_cmp(&length_squared);
     match (projection_order, length_order) {
         (Some(Ordering::Less | Ordering::Equal), _) => {
             Ok(Classification::Decided(px.clone() * px + py.clone() * py))
@@ -815,8 +817,14 @@ fn point_arc_distance_squared(
     policy: &CurvePolicy,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
     let radial = point.distance_squared(arc.center());
-    if radial.partial_cmp(&Real::zero()) == Some(Ordering::Equal) {
-        return Ok(Classification::Decided(arc.radius_squared_ref().clone()));
+    match radial.predicate_cmp(&Real::zero()) {
+        Some(Ordering::Equal) => {
+            return Ok(Classification::Decided(arc.radius_squared_ref().clone()));
+        }
+        Some(Ordering::Greater) => {}
+        Some(Ordering::Less) | None => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
+        }
     }
     let radial_length = radial.sqrt().map_err(|error| {
         BoardBoundaryGeometryError::new(format!("point-to-arc radial root failed: {error:?}"))
@@ -883,8 +891,8 @@ fn closest_point_on_line_segment(
     let length_squared = dx.clone() * dx.clone() + dy.clone() * dy.clone();
     let projection = (point.x() - line.start().x()) * dx + (point.y() - line.start().y()) * dy;
     match (
-        projection.partial_cmp(&Real::zero()),
-        projection.partial_cmp(&length_squared),
+        projection.predicate_cmp(&Real::zero()),
+        projection.predicate_cmp(&length_squared),
     ) {
         (Some(Ordering::Less | Ordering::Equal), _) => {
             Ok(Classification::Decided(line.start().clone()))
@@ -913,7 +921,7 @@ fn classified_minimum_many<const N: usize>(
             return Ok(value);
         };
         minimum = Some(match minimum {
-            Some(current) => match current.partial_cmp(&value) {
+            Some(current) => match current.predicate_cmp(&value) {
                 Some(Ordering::Less | Ordering::Equal) => current,
                 Some(Ordering::Greater) => value,
                 None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -930,7 +938,7 @@ fn classified_minimum(
     first: Real,
     second: Real,
 ) -> Result<Classification<Real>, BoardBoundaryGeometryError> {
-    Ok(match first.partial_cmp(&second) {
+    Ok(match first.predicate_cmp(&second) {
         Some(Ordering::Less | Ordering::Equal) => Classification::Decided(first),
         Some(Ordering::Greater) => Classification::Decided(second),
         None => Classification::Uncertain(UncertaintyReason::Ordering),
@@ -2651,7 +2659,9 @@ impl PcbLayout {
                     .as_ref()
                     .is_none_or(is_strictly_positive);
                 let valid_primitive = match &graphic.primitive {
-                    LandPatternGraphicPrimitive::Line { start, end } => start != end,
+                    LandPatternGraphicPrimitive::Line { start, end } => {
+                        points_equal(start, end) == Some(false)
+                    }
                     LandPatternGraphicPrimitive::Circle { radius, .. } => {
                         is_strictly_positive(radius)
                     }
@@ -2679,9 +2689,18 @@ impl PcbLayout {
             }
             for (model_index, model) in pattern.models.iter().enumerate() {
                 if model.uri.trim().is_empty()
-                    || model.transform.scale_x == Real::zero()
-                    || model.transform.scale_y == Real::zero()
-                    || model.transform.scale_z == Real::zero()
+                    || !matches!(
+                        model.transform.scale_x.predicate_cmp(&Real::zero()),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                    )
+                    || !matches!(
+                        model.transform.scale_y.predicate_cmp(&Real::zero()),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                    )
+                    || !matches!(
+                        model.transform.scale_z.predicate_cmp(&Real::zero()),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
+                    )
                 {
                     issues.push(LayoutValidationIssue::InvalidPcb3dModelReference {
                         land_pattern: pattern.id.clone(),
@@ -2814,7 +2833,13 @@ impl PcbLayout {
                 PlacementConstraintKind::AlignX { instances }
                 | PlacementConstraintKind::AlignY { instances } => instances.len() < 2,
                 PlacementConstraintKind::Within { min, max, .. } => {
-                    !(min.x <= max.x && min.y <= max.y)
+                    !matches!(
+                        min.x.predicate_cmp(&max.x),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    ) || !matches!(
+                        min.y.predicate_cmp(&max.y),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    )
                 }
                 PlacementConstraintKind::WithinDistance {
                     subject,
@@ -2867,18 +2892,20 @@ impl PcbLayout {
                     route.id.clone(),
                 ));
             }
-            if route
-                .segments
-                .windows(2)
-                .any(|pair| pair[0].end() != pair[1].start())
-            {
+            if route.segments.windows(2).any(|pair| {
+                pair[0].end().x.predicate_eq(&pair[1].start().x) != Some(true)
+                    || pair[0].end().y.predicate_eq(&pair[1].start().y) != Some(true)
+            }) {
                 issues.push(LayoutValidationIssue::DisconnectedRoute(route.id.clone()));
             }
             if route.segments.iter().any(|segment| {
                 matches!(
                     segment,
                     PcbRouteSegment::CircularArc(arc)
-                        if route.width >= arc.radius().clone() + arc.radius().clone()
+                        if route
+                            .width
+                            .predicate_cmp(&(arc.radius().clone() + arc.radius().clone()))
+                            != Some(std::cmp::Ordering::Less)
                 )
             }) {
                 issues.push(LayoutValidationIssue::InvalidRouteArcWidth(
@@ -2903,7 +2930,10 @@ impl PcbLayout {
                     .any(|layer| !routing_layers.contains(&TraceLayer(layer)))
                 || !is_strictly_positive(&via.land_diameter)
                 || !is_strictly_positive(&via.drill_diameter)
-                || via.drill_diameter > via.land_diameter
+                || !matches!(
+                    via.drill_diameter.predicate_cmp(&via.land_diameter),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
                 || [&via.mask.front, &via.mask.back]
                     .into_iter()
                     .any(|mask| match mask {
@@ -2969,8 +2999,16 @@ impl PcbLayout {
                     && is_non_negative(&stitching.edge_clearance)
                     && is_strictly_positive(&stitching.land_diameter)
                     && is_strictly_positive(&stitching.drill_diameter)
-                    && stitching.drill_diameter <= stitching.land_diameter
-                    && stitching.pitch >= required_pitch
+                    && matches!(
+                        stitching
+                            .drill_diameter
+                            .predicate_cmp(&stitching.land_diameter),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    )
+                    && matches!(
+                        stitching.pitch.predicate_cmp(&required_pitch),
+                        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
+                    )
                     && stitching.start_layer <= zone.layer
                     && zone.layer <= stitching.end_layer
                     && stitching.start_layer < stitching.end_layer
@@ -3033,7 +3071,10 @@ impl PcbLayout {
                     });
             if !is_strictly_positive(&style.land_diameter)
                 || !is_strictly_positive(&style.drill_diameter)
-                || style.drill_diameter > style.land_diameter
+                || !matches!(
+                    style.drill_diameter.predicate_cmp(&style.land_diameter),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                )
                 || style.plating != Plating::Plated
                 || !spans_valid
                 || !mask_valid
@@ -3131,7 +3172,7 @@ impl PcbLayout {
                     !is_strictly_positive(&neckdown.trace_width)
                         || !is_strictly_positive(&neckdown.spacing)
                         || !is_strictly_positive(&neckdown.maximum_transition_length)
-                        || neckdown.spacing.partial_cmp(&pair.spacing)
+                        || neckdown.spacing.predicate_cmp(&pair.spacing)
                             != Some(std::cmp::Ordering::Less)
                 })
             {
@@ -3401,7 +3442,19 @@ impl PcbLayout {
                 }
                 PlacementConstraintKind::Within { instance, min, max } => {
                     let inside = resolved.get(instance).is_some_and(|point| {
-                        min.x <= point.x && point.x <= max.x && min.y <= point.y && point.y <= max.y
+                        matches!(
+                            min.x.predicate_cmp(&point.x),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        ) && matches!(
+                            point.x.predicate_cmp(&max.x),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        ) && matches!(
+                            min.y.predicate_cmp(&point.y),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        ) && matches!(
+                            point.y.predicate_cmp(&max.y),
+                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                        )
                     });
                     if !inside {
                         issues.push(PlacementResolutionIssue::OutsideRegion(
@@ -3419,7 +3472,11 @@ impl PcbLayout {
                         .is_some_and(|(subject, anchor)| {
                             let dx = subject.x - anchor.x;
                             let dy = subject.y - anchor.y;
-                            dx.clone() * dx + dy.clone() * dy <= maximum.clone() * maximum.clone()
+                            matches!(
+                                (dx.clone() * dx + dy.clone() * dy)
+                                    .predicate_cmp(&(maximum.clone() * maximum.clone())),
+                                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                            )
                         });
                     if !within {
                         issues.push(PlacementResolutionIssue::OutsideDistance(
@@ -3433,7 +3490,9 @@ impl PcbLayout {
                 } => {
                     let allowed = placements.iter().any(|placement| {
                         placement.instance == *instance
-                            && rotations_degrees.contains(&placement.rotation_degrees)
+                            && rotations_degrees.iter().any(|rotation| {
+                                rotation.predicate_eq(&placement.rotation_degrees) == Some(true)
+                            })
                     });
                     if !allowed {
                         issues.push(PlacementResolutionIssue::DisallowedRotation(
@@ -3594,12 +3653,12 @@ fn aligned<'a>(
 }
 
 fn is_strictly_positive(value: &Real) -> bool {
-    value.structural_facts().sign == Some(RealSign::Positive)
+    value.predicate_sign() == Some(RealSign::Positive)
 }
 
 fn is_non_negative(value: &Real) -> bool {
     matches!(
-        value.structural_facts().sign,
+        value.predicate_sign(),
         Some(RealSign::Zero | RealSign::Positive)
     )
 }

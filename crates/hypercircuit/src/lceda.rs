@@ -5,6 +5,7 @@
 //! exact-to-decimal projection, and reports semantic details for which the
 //! current record vocabulary has no faithful representation.
 
+use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::io::{self, Write};
@@ -2242,12 +2243,12 @@ fn update_extrema(
     minimum: &mut Real,
     maximum: &mut Real,
 ) -> Result<(), LcedaExportError> {
-    match (value.clone() - minimum.clone()).refine_sign_until(-64) {
+    match (value.clone() - minimum.clone()).predicate_sign() {
         Some(RealSign::Negative) => *minimum = value.clone(),
         Some(RealSign::Zero | RealSign::Positive) => {}
         None => return Err(LcedaExportError::NonFiniteScalar(field.to_owned())),
     }
-    match (value.clone() - maximum.clone()).refine_sign_until(-64) {
+    match (value.clone() - maximum.clone()).predicate_sign() {
         Some(RealSign::Positive) => *maximum = value.clone(),
         Some(RealSign::Zero | RealSign::Negative) => {}
         None => return Err(LcedaExportError::NonFiniteScalar(field.to_owned())),

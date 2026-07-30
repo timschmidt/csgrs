@@ -1,5 +1,7 @@
 #![cfg(feature = "layout")]
 
+use std::cmp::Ordering;
+
 use hypercircuit::{
     AdapterKind, BoardContour, BoardId, BoardOutline, BoardSide, Circuit, CircuitId,
     CircuitInstance, CircuitInstanceId, ComponentId, CopperZone, DeviceModel, DeviceModelId,
@@ -23,7 +25,14 @@ use hypercircuit::{
     ViaStyleSpan, ZoneId,
 };
 use hyperlattice::Point2;
+use hyperlimit::compare_reals;
 use hyperpath::{ArcDirection, ExplicitCircularArc, LinePathSegment, TraceLayer};
+
+fn real_order(left: &Real, right: &Real) -> Ordering {
+    compare_reals(left, right)
+        .value()
+        .expect("test comparison must be decided by the centralized predicate policy")
+}
 use serde_json::json;
 
 fn p(x: i64, y: i64) -> Point2 {
@@ -553,7 +562,13 @@ fn feature_aligned_grid_routes_exact_off_lattice_terminals_and_audits_injection(
         .find(|net| net.net.as_str() == "A")
         .unwrap();
     assert_eq!(net.euclidean_mst_lower_bound, Some(Real::from(7)));
-    assert!(net.routed_length.as_ref().unwrap() >= net.euclidean_mst_lower_bound.as_ref().unwrap());
+    assert!(matches!(
+        real_order(
+            net.routed_length.as_ref().unwrap(),
+            net.euclidean_mst_lower_bound.as_ref().unwrap(),
+        ),
+        Ordering::Equal | Ordering::Greater
+    ));
 }
 
 #[test]
@@ -1073,7 +1088,8 @@ fn octilinear_router_accounts_for_crossing_diagonal_cells_and_reports_exact_qual
             };
             let dx = line.end().x.clone() - line.start().x.clone();
             let dy = line.end().y.clone() - line.start().y.clone();
-            dx.clone() * dx.clone() == dy.clone() * dy.clone() && dx != Real::zero()
+            real_order(&(dx.clone() * dx.clone()), &(dy.clone() * dy.clone())) == Ordering::Equal
+                && real_order(&dx, &Real::zero()) != Ordering::Equal
         })
     }));
     let mut problem = RoutingProblemReport::from_layout(&circuit, &layout).unwrap();
@@ -2492,9 +2508,13 @@ fn electrically_unmapped_placed_pads_remain_physical_routing_obstacles() {
         .find(|net| net.net.as_str() == "A")
         .unwrap();
     assert_eq!(net.euclidean_mst_lower_bound, Some(Real::from(6)));
-    assert!(
-        net.routed_length.as_ref().unwrap() > net.euclidean_mst_lower_bound.as_ref().unwrap(),
-        "{net:?}"
+    assert_eq!(
+        real_order(
+            net.routed_length.as_ref().unwrap(),
+            net.euclidean_mst_lower_bound.as_ref().unwrap(),
+        ),
+        Ordering::Greater,
+        "{net:?}",
     );
 }
 
@@ -2937,7 +2957,7 @@ fn accepted_autoroute_materializes_with_source_identity() {
         assert!(handoff.board.copper.iter().any(|feature| {
             feature.kind == hyperdrc::kicad::CopperKind::Segment
                 && feature
-                    .sketch
+                    .region
                     .metadata()
                     .as_ref()
                     .is_some_and(|metadata| metadata.name.starts_with("route:negotiated-"))
@@ -2945,7 +2965,7 @@ fn accepted_autoroute_materializes_with_source_identity() {
         assert!(handoff.board.copper.iter().any(|feature| {
             feature.kind == hyperdrc::kicad::CopperKind::Via
                 && feature
-                    .sketch
+                    .region
                     .metadata()
                     .as_ref()
                     .is_some_and(|metadata| metadata.name.starts_with("via:negotiated-"))

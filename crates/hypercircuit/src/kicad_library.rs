@@ -1,5 +1,7 @@
 //! Standalone KiCad symbol/footprint library import into portable part definitions.
 
+use crate::predicate::RealPredicateExt as _;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::path::Path;
@@ -639,14 +641,19 @@ impl LibraryImporter {
         let mut min_y = first.y.clone();
         let mut max_y = first.y.clone();
         for point in points.iter().skip(1) {
-            min_x = min_real(&min_x, &point.x);
-            max_x = max_real(&max_x, &point.x);
-            min_y = min_real(&min_y, &point.y);
-            max_y = max_real(&max_y, &point.y);
+            min_x = min_real(&min_x, &point.x)?;
+            max_x = max_real(&max_x, &point.x)?;
+            min_y = min_real(&min_y, &point.y)?;
+            max_y = max_real(&max_y, &point.y)?;
         }
         let mut width = max_x - min_x;
         let mut height = max_y - min_y;
-        if width <= Real::zero() {
+        if width.predicate_le(&Real::zero()).ok_or_else(|| {
+            KiCadLibraryImportError::InvalidNumber {
+                field: "symbol.bounds.width".into(),
+                token: "indeterminate".into(),
+            }
+        })? {
             width = self.options.minimum_symbol_body_extent.clone();
             self.omissions
                 .push(KiCadLibraryImportOmission::MinimumSymbolBodyExtent {
@@ -654,7 +661,12 @@ impl LibraryImporter {
                     axis: "x".into(),
                 });
         }
-        if height <= Real::zero() {
+        if height.predicate_le(&Real::zero()).ok_or_else(|| {
+            KiCadLibraryImportError::InvalidNumber {
+                field: "symbol.bounds.height".into(),
+                token: "indeterminate".into(),
+            }
+        })? {
             height = self.options.minimum_symbol_body_extent.clone();
             self.omissions
                 .push(KiCadLibraryImportOmission::MinimumSymbolBodyExtent {
@@ -707,7 +719,7 @@ impl LibraryImporter {
             let shape_name = pad.atom_at(3).unwrap_or("rect");
             let shape = match shape_name {
                 "circle" => PadShape::Circle {
-                    diameter: max_real(&width, &height),
+                    diameter: max_real(&width, &height)?,
                 },
                 "rect" => PadShape::Rectangle {
                     width: width.clone(),
@@ -729,7 +741,7 @@ impl LibraryImporter {
                     PadShape::RoundedRectangle {
                         width: width.clone(),
                         height: height.clone(),
-                        corner_radius: min_real(&width, &height) * ratio,
+                        corner_radius: min_real(&width, &height)? * ratio,
                     }
                 }
                 shape => {
@@ -859,11 +871,17 @@ impl LibraryImporter {
         if drill.atom_at(1) == Some("oval") {
             let width = self.number_at(drill, 2, &format!("footprint.pads[{index}].drill.x"))?;
             let height = self.number_at(drill, 3, &format!("footprint.pads[{index}].drill.y"))?;
-            let half_length = ((max_real(&width, &height) - min_real(&width, &height))
+            let half_length = ((max_real(&width, &height)? - min_real(&width, &height)?)
                 / Real::from(2))
             .map_err(|_| KiCadLibraryImportError::Parse("invalid slot drill".into()))?;
-            let cutter = min_real(&width, &height);
-            let (start, end) = if width >= height {
+            let cutter = min_real(&width, &height)?;
+            let width_is_longer = width.predicate_ge(&height).ok_or_else(|| {
+                KiCadLibraryImportError::InvalidNumber {
+                    field: format!("footprint.pads[{index}].drill"),
+                    token: "indeterminate slot ordering".into(),
+                }
+            })?;
+            let (start, end) = if width_is_longer {
                 (
                     Point2::new(-half_length.clone(), Real::zero()),
                     Point2::new(half_length, Real::zero()),
@@ -1009,8 +1027,15 @@ impl LibraryImporter {
             .map(|token| self.number(token, &format!("{field}.stroke")))
             .transpose()?;
         match width {
-            Some(width) if width > Real::zero() => Ok((width, false)),
-            _ => Ok((self.options.default_symbol_stroke_width.clone(), true)),
+            Some(width) => match width.predicate_gt(&Real::zero()) {
+                Some(true) => Ok((width, false)),
+                Some(false) => Ok((self.options.default_symbol_stroke_width.clone(), true)),
+                None => Err(KiCadLibraryImportError::InvalidNumber {
+                    field: field.into(),
+                    token: "indeterminate stroke width".into(),
+                }),
+            },
+            None => Ok((self.options.default_symbol_stroke_width.clone(), true)),
         }
     }
 
@@ -1209,8 +1234,14 @@ fn validate_options(
     options: &KiCadPartLibraryImportOptions,
 ) -> Result<(), KiCadLibraryImportError> {
     if options.export_name.trim().is_empty()
-        || options.default_symbol_stroke_width <= Real::zero()
-        || options.minimum_symbol_body_extent <= Real::zero()
+        || options
+            .default_symbol_stroke_width
+            .predicate_gt(&Real::zero())
+            != Some(true)
+        || options
+            .minimum_symbol_body_extent
+            .predicate_gt(&Real::zero())
+            != Some(true)
         || options.copper_layers.is_empty()
     {
         return Err(KiCadLibraryImportError::InvalidOptions(
@@ -1261,19 +1292,25 @@ fn unique_name(base: &str, used: &mut BTreeSet<String>, index: usize) -> String 
     candidate
 }
 
-fn max_real(left: &Real, right: &Real) -> Real {
-    if left >= right {
-        left.clone()
-    } else {
-        right.clone()
+fn max_real(left: &Real, right: &Real) -> Result<Real, KiCadLibraryImportError> {
+    match left.predicate_cmp(right) {
+        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => Ok(left.clone()),
+        Some(std::cmp::Ordering::Less) => Ok(right.clone()),
+        None => Err(KiCadLibraryImportError::InvalidNumber {
+            field: "geometry ordering".into(),
+            token: "indeterminate".into(),
+        }),
     }
 }
 
-fn min_real(left: &Real, right: &Real) -> Real {
-    if left <= right {
-        left.clone()
-    } else {
-        right.clone()
+fn min_real(left: &Real, right: &Real) -> Result<Real, KiCadLibraryImportError> {
+    match left.predicate_cmp(right) {
+        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(left.clone()),
+        Some(std::cmp::Ordering::Greater) => Ok(right.clone()),
+        None => Err(KiCadLibraryImportError::InvalidNumber {
+            field: "geometry ordering".into(),
+            token: "indeterminate".into(),
+        }),
     }
 }
 

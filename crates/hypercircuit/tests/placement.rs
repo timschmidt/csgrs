@@ -1,5 +1,7 @@
 #![cfg(feature = "layout")]
 
+use std::cmp::Ordering;
+
 use hypercircuit::{
     AdapterKind, BoardContour, BoardId, BoardOutline, BoardSide, Circuit, CircuitId,
     CircuitInstance, CircuitInstanceId, ComponentId, DeviceModel, DeviceModelId, DeviceModelKind,
@@ -12,7 +14,14 @@ use hypercircuit::{
     Plating, Real, RouteDirection, RouteId, StackupLayer, StackupLayerKind, TransientPolicy,
 };
 use hyperlattice::Point2;
+use hyperlimit::compare_reals;
 use hyperpath::{ArcDirection, ExplicitCircularArc, LinePathSegment, TraceLayer};
+
+fn real_order(left: &Real, right: &Real) -> Ordering {
+    compare_reals(left, right)
+        .value()
+        .expect("test comparison must be decided by the centralized predicate policy")
+}
 
 fn p(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -153,9 +162,12 @@ fn deterministic_search_moves_only_the_colliding_unconstrained_package() {
     assert_eq!(report.moves[0].instance.as_str(), "U2");
     assert_eq!(report.placements[0].position, p(5, 5));
     assert_eq!(report.placements[1].position, p(13, 5));
-    assert!(
-        report.moves[0].accepted_score.connectivity_length
-            < report.moves[0].authored_score.connectivity_length
+    assert_eq!(
+        real_order(
+            &report.moves[0].accepted_score.connectivity_length,
+            &report.moves[0].authored_score.connectivity_length,
+        ),
+        Ordering::Less
     );
 
     let applied = report.apply_to(&layout);
@@ -227,16 +239,30 @@ fn regional_search_keeps_the_package_envelope_out_of_board_cutouts() {
     let report = layout.solve_placement(&circuit, &PlacementSolvePolicy::default());
     assert!(report.is_solved(), "{:?}", report.issues);
     let center = &report.placements[1].position;
-    assert!(p(9, 1).x <= center.x && center.x <= p(16, 9).x);
-    assert!(p(9, 1).y <= center.y && center.y <= p(16, 9).y);
+    assert!(matches!(
+        real_order(&p(9, 1).x, &center.x),
+        Ordering::Less | Ordering::Equal
+    ));
+    assert!(matches!(
+        real_order(&center.x, &p(16, 9).x),
+        Ordering::Less | Ordering::Equal
+    ));
+    assert!(matches!(
+        real_order(&p(9, 1).y, &center.y),
+        Ordering::Less | Ordering::Equal
+    ));
+    assert!(matches!(
+        real_order(&center.y, &p(16, 9).y),
+        Ordering::Less | Ordering::Equal
+    ));
 
     // The retained body spans one unit around its origin. It must be separated
     // from the cutout rectangle, including its boundary.
     assert!(
-        center.x.clone() + Real::one() < Real::from(10)
-            || center.x.clone() - Real::one() > Real::from(13)
-            || center.y.clone() + Real::one() < Real::from(3)
-            || center.y.clone() - Real::one() > Real::from(7),
+        real_order(&(center.x.clone() + Real::one()), &Real::from(10)) == Ordering::Less
+            || real_order(&(center.x.clone() - Real::one()), &Real::from(13)) == Ordering::Greater
+            || real_order(&(center.y.clone() + Real::one()), &Real::from(3)) == Ordering::Less
+            || real_order(&(center.y.clone() - Real::one()), &Real::from(7)) == Ordering::Greater,
         "accepted envelope overlaps the cutout at {center:?}"
     );
 }
@@ -261,8 +287,12 @@ fn optional_optimization_improves_a_legal_authored_connectivity_cost() {
         .find(|movement| movement.instance.as_str() == "U2")
         .unwrap();
     assert_eq!(movement.to, p(13, 5));
-    assert!(
-        movement.accepted_score.connectivity_length < movement.authored_score.connectivity_length
+    assert_eq!(
+        real_order(
+            &movement.accepted_score.connectivity_length,
+            &movement.authored_score.connectivity_length,
+        ),
+        Ordering::Less
     );
 }
 
@@ -308,13 +338,21 @@ fn routability_aware_optimization_reduces_exact_net_box_congestion() {
         .iter()
         .find(|movement| movement.instance.as_str() == "U2")
         .unwrap();
-    assert!(
-        movement.accepted_score.routing_congestion < movement.authored_score.routing_congestion,
-        "{movement:#?}"
+    assert_eq!(
+        real_order(
+            &movement.accepted_score.routing_congestion,
+            &movement.authored_score.routing_congestion,
+        ),
+        Ordering::Less,
+        "{movement:#?}",
     );
-    assert!(
-        movement.accepted_score.density_pressure < movement.authored_score.density_pressure,
-        "{movement:#?}"
+    assert_eq!(
+        real_order(
+            &movement.accepted_score.density_pressure,
+            &movement.authored_score.density_pressure,
+        ),
+        Ordering::Less,
+        "{movement:#?}",
     );
     let solved = report.apply_to(&layout);
     let routed = solved
