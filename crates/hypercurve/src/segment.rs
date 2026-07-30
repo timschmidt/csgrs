@@ -343,7 +343,19 @@ impl LineSeg2 {
 
     /// Returns the point at affine parameter `t`, where `0` is start and `1` is end.
     pub fn point_at(&self, t: Real) -> Point2 {
-        self.start.lerp(&self.end, t)
+        let interpolated = self.start.lerp(&self.end, t);
+        Point2::new(
+            if self.start.x() == self.end.x() {
+                self.start.x().clone()
+            } else {
+                interpolated.x().clone()
+            },
+            if self.start.y() == self.end.y() {
+                self.start.y().clone()
+            } else {
+                interpolated.y().clone()
+            },
+        )
     }
 
     /// Returns this segment with traversal direction reversed.
