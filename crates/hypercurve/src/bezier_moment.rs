@@ -89,6 +89,15 @@ impl BezierAreaMoments2 {
         }
     }
 
+    /// Returns the exact Green-theorem contribution of one oriented line
+    /// segment.
+    ///
+    /// This is image geometry, independent of any nonuniform rational
+    /// parameterization that may retain the same finite line.
+    pub fn line_contribution(start: &Point2, end: &Point2) -> CurveResult<Self> {
+        area_moments_for_controls(&[start, end])
+    }
+
     /// Returns the exact signed-area boundary contribution.
     pub fn signed_area(&self) -> &Real {
         &self.signed_area

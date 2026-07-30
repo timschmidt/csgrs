@@ -6355,8 +6355,14 @@ impl BezierSubcurve2 {
         match self {
             Self::Quadratic(curve) => curve.area_moments_contribution().map(Some),
             Self::Cubic(curve) => curve.area_moments_contribution().map(Some),
-            Self::RationalQuadratic(curve) => curve.area_moments_contribution(),
-            Self::Rational(curve) => curve.area_moments_contribution(),
+            Self::RationalQuadratic(curve) => match curve.area_moments_contribution()? {
+                Some(moments) => Ok(Some(moments)),
+                None => rational_line_area_moments_contribution(self),
+            },
+            Self::Rational(curve) => match curve.area_moments_contribution()? {
+                Some(moments) => Ok(Some(moments)),
+                None => rational_line_area_moments_contribution(self),
+            },
         }
     }
 
@@ -6390,6 +6396,22 @@ fn rational_line_signed_area_contribution(curve: &RationalBezier2) -> CurveResul
     }
     let twice_area = curve.start().x() * curve.end().y() - curve.start().y() * curve.end().x();
     Ok(Some((twice_area / Real::from(2_i8))?))
+}
+
+fn rational_line_area_moments_contribution(
+    curve: &BezierSubcurve2,
+) -> CurveResult<Option<BezierAreaMoments2>> {
+    let (start, end) = curve.endpoints();
+    let Ok(line) = LineSeg2::try_new(start, end) else {
+        return Ok(None);
+    };
+    if !matches!(
+        subcurve_relation_to_line_with_contacts(curve, &line, None, &CurvePolicy::certified()),
+        Classification::Decided(BezierLineContactRelation::OnSupportingLine)
+    ) {
+        return Ok(None);
+    }
+    BezierAreaMoments2::line_contribution(line.start(), line.end()).map(Some)
 }
 
 #[cfg(test)]
@@ -6588,6 +6610,38 @@ mod tests {
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
         assert!(region.line_image_region.get().is_none());
+    }
+
+    #[test]
+    fn nonuniform_rational_line_images_use_exact_geometric_moments() {
+        let expected = BezierAreaMoments2::line_contribution(&p(2, 0), &p(4, 2)).unwrap();
+        let quadratic = BezierSubcurve2::RationalQuadratic(
+            RationalQuadraticBezier2::try_new(
+                p(2, 0),
+                p(3, 1),
+                p(4, 2),
+                Real::one(),
+                Real::from(2),
+                Real::from(3),
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            quadratic.area_moments_contribution().unwrap(),
+            Some(expected.clone())
+        );
+
+        let rational = BezierSubcurve2::Rational(
+            RationalBezier2::try_new(
+                vec![p(2, 0), p(3, 1), p(4, 2)],
+                vec![Real::one(), Real::from(3), Real::from(5)],
+            )
+            .unwrap(),
+        );
+        assert_eq!(
+            rational.area_moments_contribution().unwrap(),
+            Some(expected)
+        );
     }
 
     #[test]
