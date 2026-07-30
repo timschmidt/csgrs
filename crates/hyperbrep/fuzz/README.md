@@ -83,7 +83,10 @@ noncanonical geometric order. A holed affine-tensor cap cohort varies operand,
 trace order, and trace direction while two disjoint exact inverse-pcurve
 fragments author one paired outer/inner bridge partition. A curved contained
 region cohort varies an exact rational boundary while affine tensor inversion,
-curved identity-shared topology, and untrusted replay remain exact.
+curved identity-shared topology, and untrusted replay remain exact. A
+multi-hole cohort threads three material fragments across two inner wires and
+checks deterministic bridge-cycle authorship, wire compaction, exact volume,
+and replay.
 Certificate-backed volume and exact persistence must survive every complete
 edit/republication pipeline. The retained regression corpus includes the
 multi-trace cylinder case that previously exposed exponential serialization

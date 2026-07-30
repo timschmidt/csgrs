@@ -254,10 +254,11 @@ The clean-break implementation currently provides:
   face boundary onto a contained affine-image rational Bézier or NURBS tensor
   through exact auxiliary-plane sections. The tensor's native rational graph
   pcurves remain authoritative in either graph operand order; no inverse
-  fitting or planar replacement is used. When one boundary support crosses a
-  tensor-face hole, its disjoint material fragments author one exact paired
-  outer/inner bridge edit: the consumed inner wire becomes the second
-  descendant's outer wire and both new edges remain identity-shared.
+  fitting or planar replacement is used. When one boundary support crosses
+  tensor-face holes, its disjoint material fragments author one exact
+  boundary-component bridge cycle. Crossed components compact into the two
+  descendant outer wires, surplus wire slots are retired through an explicit
+  old-to-new ID map, and every bridge edge remains identity-shared.
   Constant-weight affine tensor carriers also invert rational Bézier and NURBS
   region boundaries directly through a certified native-parameter plane,
   retaining curved pcurves without fitting. Unrepresented inverse images remain

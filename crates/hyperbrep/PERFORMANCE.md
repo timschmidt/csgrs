@@ -178,6 +178,10 @@ certificate deliberately rebases rational Bézier patch construction from
   four exact boundary attachments, paired outer/inner bridge authorship,
   identity-shared descendants, exact volume, and full revalidation:
   `3.992495 ms/iteration`;
+- three affine-tensor inverse-pcurve fragments threading two face holes, six
+  exact boundary attachments, generalized bridge-cycle authorship, explicit
+  wire-arena compaction, exact volume, and full revalidation:
+  `8.555741 ms/iteration`;
 - disjoint cuboid 6×6 face intersection graph with 36 certified broad-phase
   rejections: `11.423 us/iteration`;
 - overlapping cuboid intersection graph with exact transverse trim clipping

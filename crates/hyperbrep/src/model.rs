@@ -589,36 +589,45 @@ pub struct CurveFaceSplit {
     pub face: FaceSplit,
 }
 
-/// Stable identifiers produced by two exact curves that bridge one inner wire
-/// to the outer wire and partition the annular material between them.
+/// Identifiers produced by an exact boundary-component bridge cycle.
+///
+/// Two bridges connect one inner wire to the outer wire. More generally, one
+/// support threading several holes produces one bridge per retained material
+/// fragment. The crossed boundary wires form a cycle and are compacted into
+/// the two descendant outer wires.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct BridgePairFaceSplit {
+pub struct BoundaryBridgeFaceSplit {
     /// Newly appended bridge edges in canonical trace order.
-    pub edges: [EdgeId; 2],
+    pub edges: Vec<EdgeId>,
     /// Oppositely directed uses of each bridge, in first-face then second-face
     /// order.
-    pub edge_uses: [[EdgeUseId; 2]; 2],
-    /// First boundary wire; this retains the source face's outer-wire ID.
+    pub edge_uses: Vec<[EdgeUseId; 2]>,
+    /// First descendant boundary wire after compaction.
     pub first_wire: WireId,
-    /// Second boundary wire; this retains the consumed inner-wire ID.
+    /// Second descendant boundary wire after compaction.
     pub second_wire: WireId,
+    /// Complete pre-edit wire-ID map after compaction.
+    ///
+    /// Each index is an old [`WireId`]. Surviving records name their new ID;
+    /// crossed components retired into the descendant loops map to `None`.
+    pub wire_remap: Vec<Option<WireId>>,
     /// First descendant retaining the source face ID.
     pub first_face: FaceId,
     /// Newly appended second descendant.
     pub second_face: FaceId,
 }
 
-/// Per-trace evidence for one member of a paired outer/inner bridge split.
+/// Per-trace evidence for one member of a boundary-component bridge cycle.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct BridgeCurveFaceSplit {
+pub struct BoundaryBridgeCurveSplit {
     /// Optional canonical edge split that attached the curve start.
     pub start_edge: Option<EdgeSplit>,
     /// Optional canonical edge split that attached the curve end.
     pub end_edge: Option<EdgeSplit>,
-    /// Index of this trace's bridge in [`BridgePairFaceSplit::edges`].
+    /// Index of this trace's bridge in [`BoundaryBridgeFaceSplit::edges`].
     pub bridge_index: usize,
-    /// Shared paired-bridge topology result.
-    pub face: BridgePairFaceSplit,
+    /// Shared bridge-cycle topology result.
+    pub face: BoundaryBridgeFaceSplit,
 }
 
 /// Stable result of one exact retained surface-curve split.
@@ -626,8 +635,8 @@ pub struct BridgeCurveFaceSplit {
 pub enum SurfaceCurveFaceSplit {
     /// An open trace attached to the source face's outer boundary.
     Open(CurveFaceSplit),
-    /// One of two open traces joining the outer boundary to one inner wire.
-    Bridge(BridgeCurveFaceSplit),
+    /// One member of a bridge cycle joining crossed boundary components.
+    Bridge(BoundaryBridgeCurveSplit),
     /// A closed trace wholly inside the source face's material region.
     Closed(ClosedSurfaceCurveFaceSplit),
 }
@@ -641,8 +650,8 @@ impl SurfaceCurveFaceSplit {
         }
     }
 
-    /// Returns paired outer/inner bridge evidence for this trace.
-    pub const fn bridge(&self) -> Option<&BridgeCurveFaceSplit> {
+    /// Returns boundary-component bridge evidence for this trace.
+    pub const fn bridge(&self) -> Option<&BoundaryBridgeCurveSplit> {
         match self {
             Self::Bridge(split) => Some(split),
             Self::Open(_) | Self::Closed(_) => None,
@@ -2834,17 +2843,17 @@ impl Model {
             }
         }
 
-        if ordered.len() == 2
+        if ordered.len() >= 2
             && split_parameters
                 .iter()
                 .all(|parameters| parameters.len() == 2)
         {
-            let bridges = [
-                (ordered[0].source_index, &ordered[0].intersection),
-                (ordered[1].source_index, &ordered[1].intersection),
-            ];
+            let bridges = ordered
+                .iter()
+                .map(|trace| (trace.source_index, &trace.intersection))
+                .collect::<Vec<_>>();
             if let Some(result) =
-                self.split_face_by_surface_bridge_pair(face_id, bridges, operand)?
+                self.split_face_by_surface_bridge_cycle(face_id, &bridges, operand)?
             {
                 return Ok(result);
             }
@@ -2994,10 +3003,10 @@ impl Model {
         ))
     }
 
-    fn split_face_by_surface_bridge_pair(
+    fn split_face_by_surface_bridge_cycle(
         &self,
         face_id: FaceId,
-        bridges: [(usize, &SurfaceIntersectionCurve); 2],
+        bridges: &[(usize, &SurfaceIntersectionCurve)],
         operand: SurfaceIntersectionOperand,
     ) -> Result<Option<(Self, FacePartition)>, TopologyEditError> {
         let face = self.face(face_id).expect("surface split prevalidates face");
@@ -3012,7 +3021,7 @@ impl Model {
             return Ok(None);
         }
 
-        let mut endpoint_wires = Vec::with_capacity(2);
+        let mut endpoint_wires = Vec::with_capacity(bridges.len());
         for (_, bridge) in bridges {
             let start = bridge.curve().start()?;
             let end = bridge.curve().end()?;
@@ -3029,28 +3038,57 @@ impl Model {
             let Some((end_wire, _)) = locate(Endpoint::End, &end)? else {
                 return Ok(None);
             };
-            if start_wire == end_wire
-                || (start_wire != *outer && end_wire != *outer)
-                || (start_wire == *outer && !inner_wires.contains(&end_wire))
-                || (end_wire == *outer && !inner_wires.contains(&start_wire))
-            {
+            if start_wire == end_wire {
                 return Ok(None);
             }
             endpoint_wires.push((start_wire, end_wire));
         }
-        let target_inner = if endpoint_wires[0].0 == *outer {
-            endpoint_wires[0].1
-        } else {
-            endpoint_wires[0].0
-        };
-        let second_inner = if endpoint_wires[1].0 == *outer {
-            endpoint_wires[1].1
-        } else {
-            endpoint_wires[1].0
-        };
-        if target_inner != second_inner {
+        let mut wire_incidence = std::collections::HashMap::<WireId, Vec<usize>>::new();
+        for (bridge_index, (start_wire, end_wire)) in endpoint_wires.iter().enumerate() {
+            wire_incidence
+                .entry(*start_wire)
+                .or_default()
+                .push(bridge_index);
+            wire_incidence
+                .entry(*end_wire)
+                .or_default()
+                .push(bridge_index);
+        }
+        if !wire_incidence.contains_key(outer)
+            || wire_incidence
+                .values()
+                .any(|incidence| incidence.len() != 2)
+            || wire_incidence
+                .keys()
+                .any(|wire| *wire != *outer && !inner_wires.contains(wire))
+            || wire_incidence.len() != bridges.len()
+        {
             return Ok(None);
         }
+        let mut visited_wires = std::collections::HashSet::new();
+        let mut frontier = vec![*outer];
+        while let Some(wire) = frontier.pop() {
+            if !visited_wires.insert(wire) {
+                continue;
+            }
+            for bridge_index in &wire_incidence[&wire] {
+                let (start_wire, end_wire) = endpoint_wires[*bridge_index];
+                frontier.push(if start_wire == wire {
+                    end_wire
+                } else {
+                    start_wire
+                });
+            }
+        }
+        if visited_wires.len() != wire_incidence.len() {
+            return Ok(None);
+        }
+        let target_inner = wire_incidence
+            .keys()
+            .copied()
+            .filter(|wire| *wire != *outer)
+            .min_by_key(|wire| wire.index())
+            .expect("a bridge cycle through the outer wire contains an inner wire");
 
         struct AttachedBridge {
             source_index: usize,
@@ -3064,7 +3102,7 @@ impl Model {
         }
 
         let mut staged = self.clone();
-        let mut attached = Vec::with_capacity(2);
+        let mut attached = Vec::with_capacity(bridges.len());
         for (source_index, bridge) in bridges {
             let start = bridge.curve().start()?;
             let end = bridge.curve().end()?;
@@ -3075,8 +3113,8 @@ impl Model {
                 staged.attach_face_boundary_split_endpoint(face_id, Endpoint::End, &end)?;
             staged = next;
             attached.push(AttachedBridge {
-                source_index,
-                intersection: bridge.clone(),
+                source_index: *source_index,
+                intersection: (*bridge).clone(),
                 start_vertex,
                 end_vertex,
                 start_edge,
@@ -3086,25 +3124,22 @@ impl Model {
             });
         }
 
-        let outer_vertex = |bridge: &AttachedBridge| {
-            if bridge.start_wire == *outer {
-                bridge.start_vertex
-            } else {
-                debug_assert_eq!(bridge.end_wire, *outer);
-                bridge.end_vertex
-            }
-        };
-        let inner_vertex = |bridge: &AttachedBridge| {
-            if bridge.start_wire == target_inner {
-                bridge.start_vertex
-            } else {
-                debug_assert_eq!(bridge.end_wire, target_inner);
-                bridge.end_vertex
-            }
-        };
-        let outer_vertices = [outer_vertex(&attached[0]), outer_vertex(&attached[1])];
-        let inner_vertices = [inner_vertex(&attached[0]), inner_vertex(&attached[1])];
-        if outer_vertices[0] == outer_vertices[1] || inner_vertices[0] == inner_vertices[1] {
+        let mut attached_incidence =
+            std::collections::HashMap::<WireId, Vec<(usize, VertexId)>>::new();
+        for (bridge_index, bridge) in attached.iter().enumerate() {
+            attached_incidence
+                .entry(bridge.start_wire)
+                .or_default()
+                .push((bridge_index, bridge.start_vertex));
+            attached_incidence
+                .entry(bridge.end_wire)
+                .or_default()
+                .push((bridge_index, bridge.end_vertex));
+        }
+        if attached_incidence
+            .values()
+            .any(|incidence| incidence.len() != 2 || incidence[0].1 == incidence[1].1)
+        {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
 
@@ -3151,17 +3186,18 @@ impl Model {
             }
             path
         };
-
-        let outer_uses = wire_uses(&staged, *outer);
-        let inner_uses = wire_uses(&staged, target_inner);
-        let outer_indices = [
-            unique_index(&staged, &outer_uses, outer_vertices[0])?,
-            unique_index(&staged, &outer_uses, outer_vertices[1])?,
-        ];
-        let inner_indices = [
-            unique_index(&staged, &inner_uses, inner_vertices[0])?,
-            unique_index(&staged, &inner_uses, inner_vertices[1])?,
-        ];
+        let mut boundary_uses = std::collections::HashMap::<WireId, Vec<EdgeUseId>>::new();
+        let mut boundary_indices = std::collections::HashMap::<(WireId, usize), usize>::new();
+        for (wire, incidence) in &attached_incidence {
+            let uses = wire_uses(&staged, *wire);
+            for (bridge_index, vertex) in incidence {
+                boundary_indices.insert(
+                    (*wire, *bridge_index),
+                    unique_index(&staged, &uses, *vertex)?,
+                );
+            }
+            boundary_uses.insert(*wire, uses);
+        }
 
         struct AuthoredBridge {
             curve: Curve3,
@@ -3196,9 +3232,9 @@ impl Model {
 
         let mut staged = staged;
         let data = Arc::make_mut(&mut staged.data);
-        let mut bridge_edges = Vec::with_capacity(2);
-        let mut bridge_forward_uses = Vec::with_capacity(2);
-        let mut bridge_reverse_uses = Vec::with_capacity(2);
+        let mut bridge_edges = Vec::with_capacity(bridges.len());
+        let mut bridge_forward_uses = Vec::with_capacity(bridges.len());
+        let mut bridge_reverse_uses = Vec::with_capacity(bridges.len());
         for bridge in &authored {
             let curve_id = Curve3Id::from_index(data.curves.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
@@ -3221,7 +3257,7 @@ impl Model {
             let (scale, offset) = bridge
                 .correspondence
                 .affine_coefficients()
-                .expect("paired bridge requires affine correspondence");
+                .expect("boundary bridge requires affine correspondence");
             let reverse_correspondence = ParameterCorrespondence::affine(
                 -scale.clone(),
                 scale * (bridge.pcurve.domain_start() + bridge.pcurve.domain_end()) + offset,
@@ -3257,14 +3293,81 @@ impl Model {
                 bridge_reverse_uses[index]
             }
         };
-        let mut first_path = cyclic_path(&outer_uses, outer_indices[0], outer_indices[1]);
-        first_path.push(bridge_use(1, outer_vertices[1], inner_vertices[1]));
-        first_path.extend(cyclic_path(&inner_uses, inner_indices[1], inner_indices[0]));
-        first_path.push(bridge_use(0, inner_vertices[0], outer_vertices[0]));
-        let mut second_path = cyclic_path(&outer_uses, outer_indices[1], outer_indices[0]);
-        second_path.push(bridge_use(0, outer_vertices[0], inner_vertices[0]));
-        second_path.extend(cyclic_path(&inner_uses, inner_indices[0], inner_indices[1]));
-        second_path.push(bridge_use(1, inner_vertices[1], outer_vertices[1]));
+        let first_bridge = &attached[0];
+        let first_from_start = first_bridge.start_wire.index() < first_bridge.end_wire.index();
+        let build_path =
+            |from_start: bool| -> Result<(Vec<EdgeUseId>, Vec<EdgeUseId>), TopologyEditError> {
+                let (start_wire, start_vertex, mut current_wire, first_end_vertex) = if from_start {
+                    (
+                        first_bridge.start_wire,
+                        first_bridge.start_vertex,
+                        first_bridge.end_wire,
+                        first_bridge.end_vertex,
+                    )
+                } else {
+                    (
+                        first_bridge.end_wire,
+                        first_bridge.end_vertex,
+                        first_bridge.start_wire,
+                        first_bridge.start_vertex,
+                    )
+                };
+                let mut path = vec![bridge_use(0, start_vertex, first_end_vertex)];
+                let mut bridge_uses = vec![None; attached.len()];
+                bridge_uses[0] = Some(path[0]);
+                let mut current_bridge = 0;
+                let mut visited = std::collections::HashSet::from([0]);
+                loop {
+                    let incidence = &attached_incidence[&current_wire];
+                    let (next_bridge, next_vertex) = incidence
+                        .iter()
+                        .copied()
+                        .find(|(bridge_index, _)| *bridge_index != current_bridge)
+                        .expect("validated bridge-cycle degree");
+                    let uses = &boundary_uses[&current_wire];
+                    path.extend(cyclic_path(
+                        uses,
+                        boundary_indices[&(current_wire, current_bridge)],
+                        boundary_indices[&(current_wire, next_bridge)],
+                    ));
+                    if next_bridge == 0 {
+                        if current_wire != start_wire || next_vertex != start_vertex {
+                            return Err(TopologyEditError::DegenerateFaceSplit);
+                        }
+                        break;
+                    }
+                    if !visited.insert(next_bridge) {
+                        return Err(TopologyEditError::DegenerateFaceSplit);
+                    }
+                    let bridge = &attached[next_bridge];
+                    let (next_wire, opposite_vertex) = if bridge.start_wire == current_wire
+                        && bridge.start_vertex == next_vertex
+                    {
+                        (bridge.end_wire, bridge.end_vertex)
+                    } else if bridge.end_wire == current_wire && bridge.end_vertex == next_vertex {
+                        (bridge.start_wire, bridge.start_vertex)
+                    } else {
+                        return Err(TopologyEditError::DegenerateFaceSplit);
+                    };
+                    let use_id = bridge_use(next_bridge, next_vertex, opposite_vertex);
+                    path.push(use_id);
+                    bridge_uses[next_bridge] = Some(use_id);
+                    current_bridge = next_bridge;
+                    current_wire = next_wire;
+                }
+                if visited.len() != attached.len() {
+                    return Err(TopologyEditError::DegenerateFaceSplit);
+                }
+                Ok((
+                    path,
+                    bridge_uses
+                        .into_iter()
+                        .map(|edge_use| edge_use.expect("visited bridge has one use"))
+                        .collect(),
+                ))
+            };
+        let (first_path, first_face_bridge_uses) = build_path(first_from_start)?;
+        let (second_path, second_face_bridge_uses) = build_path(!first_from_start)?;
 
         data.wires[outer.index()].edge_uses = first_path;
         data.wires[target_inner.index()].edge_uses = second_path;
@@ -3300,7 +3403,7 @@ impl Model {
         let remaining_inner = inner_wires
             .iter()
             .copied()
-            .filter(|wire| *wire != target_inner)
+            .filter(|wire| !attached_incidence.contains_key(wire))
             .collect::<Vec<_>>();
         let first_region = staged.build_model_wire_curve_path(*outer)?;
         let second_region = staged.build_model_wire_curve_path(target_inner)?;
@@ -3350,27 +3453,31 @@ impl Model {
             outer: target_inner,
             inner: second_inner,
         };
+        let retired_wires = attached_incidence
+            .keys()
+            .copied()
+            .filter(|wire| *wire != *outer && *wire != target_inner)
+            .collect::<std::collections::HashSet<_>>();
+        let wire_remap = compact_wire_arena(data, &retired_wires)?;
+        let first_wire = wire_remap[outer.index()]
+            .expect("the source outer wire survives bridge-cycle compaction");
+        let second_wire = wire_remap[target_inner.index()]
+            .expect("the selected second wire survives bridge-cycle compaction");
         reset_model_caches(data);
         let staged = staged
             .revalidated()
             .map_err(TopologyEditError::Validation)?;
 
-        let first_face_bridge_uses = [
-            bridge_use(0, inner_vertices[0], outer_vertices[0]),
-            bridge_use(1, outer_vertices[1], inner_vertices[1]),
-        ];
-        let second_face_bridge_uses = [
-            bridge_use(0, outer_vertices[0], inner_vertices[0]),
-            bridge_use(1, inner_vertices[1], outer_vertices[1]),
-        ];
-        let split = BridgePairFaceSplit {
-            edges: [bridge_edges[0], bridge_edges[1]],
-            edge_uses: [
-                [first_face_bridge_uses[0], second_face_bridge_uses[0]],
-                [first_face_bridge_uses[1], second_face_bridge_uses[1]],
-            ],
-            first_wire: *outer,
-            second_wire: target_inner,
+        let split = BoundaryBridgeFaceSplit {
+            edges: bridge_edges,
+            edge_uses: first_face_bridge_uses
+                .into_iter()
+                .zip(second_face_bridge_uses)
+                .map(|(first, second)| [first, second])
+                .collect(),
+            first_wire,
+            second_wire,
+            wire_remap,
             first_face: face_id,
             second_face,
         };
@@ -3380,7 +3487,7 @@ impl Model {
             .map(|(bridge_index, bridge)| FaceTracePartition {
                 source_index: bridge.source_index,
                 segments: vec![bridge.intersection.curve().clone()],
-                splits: vec![SurfaceCurveFaceSplit::Bridge(BridgeCurveFaceSplit {
+                splits: vec![SurfaceCurveFaceSplit::Bridge(BoundaryBridgeCurveSplit {
                     start_edge: bridge.start_edge,
                     end_edge: bridge.end_edge,
                     bridge_index,
@@ -6956,6 +7063,46 @@ impl Edit {
 fn reset_model_caches(data: &mut ModelData) {
     data.bounds = OnceLock::new();
     data.face_contours = (0..data.faces.len()).map(|_| OnceLock::new()).collect();
+}
+
+fn compact_wire_arena(
+    data: &mut ModelData,
+    retired: &std::collections::HashSet<WireId>,
+) -> Result<Vec<Option<WireId>>, BuildError> {
+    let mut remap = vec![None; data.wires.len()];
+    let mut compacted = Vec::with_capacity(data.wires.len().saturating_sub(retired.len()));
+    for (index, wire) in std::mem::take(&mut data.wires).into_iter().enumerate() {
+        let old =
+            WireId::from_index(index).ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
+        if retired.contains(&old) {
+            continue;
+        }
+        let new = WireId::from_index(compacted.len())
+            .ok_or(BuildError::CapacityExceeded(EntityKind::Wire))?;
+        remap[index] = Some(new);
+        compacted.push(wire);
+    }
+    let remap_wire = |wire: WireId| {
+        remap
+            .get(wire.index())
+            .copied()
+            .flatten()
+            .ok_or(BuildError::InvalidReference {
+                kind: EntityKind::Wire,
+                index: wire.index(),
+            })
+    };
+    for face in &mut data.faces {
+        let FaceBoundary::Trimmed { outer, inner } = &mut face.boundary else {
+            continue;
+        };
+        *outer = remap_wire(*outer)?;
+        for wire in inner {
+            *wire = remap_wire(*wire)?;
+        }
+    }
+    data.wires = compacted;
+    Ok(remap)
 }
 
 struct FaceLineMaterial {

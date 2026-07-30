@@ -6501,6 +6501,126 @@ mod tests {
     }
 
     #[test]
+    fn bridge_cycle_compacts_two_crossed_holes_into_two_exact_descendants() {
+        let eighth = (Real::one() / Real::from(8)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let three_eighths = (Real::from(3) / Real::from(8)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let five_eighths = (Real::from(5) / Real::from(8)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let seven_eighths = (Real::from(7) / Real::from(8)).unwrap();
+        let lower = vec![
+            crate::Point2::new(quarter.clone(), eighth.clone()),
+            crate::Point2::new(three_quarters.clone(), eighth),
+            crate::Point2::new(three_quarters.clone(), three_eighths.clone()),
+            crate::Point2::new(quarter.clone(), three_eighths),
+        ];
+        let upper = vec![
+            crate::Point2::new(quarter.clone(), five_eighths.clone()),
+            crate::Point2::new(three_quarters.clone(), five_eighths),
+            crate::Point2::new(three_quarters, seven_eighths.clone()),
+            crate::Point2::new(quarter, seven_eighths),
+        ];
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[lower, upper]);
+        let points = [
+            hypercurve::Point2::new(half.clone(), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(2)),
+            hypercurve::Point2::new(half, Real::from(2)),
+        ];
+        let outer = CurvePath2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    Curve2::from(
+                        LineSeg2::try_new(
+                            points[index].clone(),
+                            points[(index + 1) % points.len()].clone(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("one support threading two holes is represented");
+        assert_eq!(traces.len(), 3);
+
+        let (first, first_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let (second, second_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::Second)
+            .unwrap();
+        let reversed = traces
+            .iter()
+            .rev()
+            .map(SurfaceIntersectionCurve::reversed)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        let (reordered, reordered_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &reversed, SurfaceIntersectionOperand::First)
+            .unwrap();
+        for partition in [&first_partition, &second_partition, &reordered_partition] {
+            assert_eq!(partition.faces.len(), 2);
+            assert!(partition.traces.iter().all(|trace| {
+                let [split] = trace.splits.as_slice() else {
+                    return false;
+                };
+                split.bridge().is_some_and(|bridge| {
+                    bridge.face.edges.len() == 3
+                        && bridge
+                            .face
+                            .wire_remap
+                            .iter()
+                            .filter(|wire| wire.is_none())
+                            .count()
+                            == 1
+                })
+            }));
+        }
+        assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
+        assert_eq!(first.to_json().unwrap(), reordered.to_json().unwrap());
+        assert_eq!(first.counts().wires + 1, tensor.counts().wires);
+        assert_eq!(
+            first_partition
+                .faces
+                .iter()
+                .map(|face| first.face(*face).unwrap().inner().len())
+                .sum::<usize>(),
+            0
+        );
+        assert_eq!(
+            compare_reals(
+                &first.solid_volume(solid).unwrap(),
+                &(Real::from(3) / Real::from(4)).unwrap()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let json = first.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
     fn intersection_graph_retains_exact_sphere_carrier_intersections() {
         let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
         let (second, second_solid) = crate::builder::sphere(Real::from(2)).unwrap();

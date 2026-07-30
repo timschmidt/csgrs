@@ -176,6 +176,140 @@ fuzz_target!(|bytes: &[u8]| {
         );
         return;
     }
+    if bytes[0] == b'm' {
+        let eighth = (Real::one() / Real::from(8)).expect("eight is nonzero");
+        let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+        let three_eighths = (Real::from(3) / Real::from(8)).expect("eight is nonzero");
+        let half = (Real::one() / Real::from(2)).expect("two is nonzero");
+        let five_eighths = (Real::from(5) / Real::from(8)).expect("eight is nonzero");
+        let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        let seven_eighths = (Real::from(7) / Real::from(8)).expect("eight is nonzero");
+        let outer = [
+            hyperbrep::Point2::new(Real::zero(), Real::zero()),
+            hyperbrep::Point2::new(Real::one(), Real::zero()),
+            hyperbrep::Point2::new(Real::one(), Real::one()),
+            hyperbrep::Point2::new(Real::zero(), Real::one()),
+        ];
+        let holes = [
+            vec![
+                hyperbrep::Point2::new(quarter.clone(), eighth.clone()),
+                hyperbrep::Point2::new(three_quarters.clone(), eighth.clone()),
+                hyperbrep::Point2::new(three_quarters.clone(), three_eighths.clone()),
+                hyperbrep::Point2::new(quarter.clone(), three_eighths.clone()),
+            ],
+            vec![
+                hyperbrep::Point2::new(quarter.clone(), five_eighths.clone()),
+                hyperbrep::Point2::new(three_quarters.clone(), five_eighths.clone()),
+                hyperbrep::Point2::new(three_quarters.clone(), seven_eighths.clone()),
+                hyperbrep::Point2::new(quarter.clone(), seven_eighths.clone()),
+            ],
+        ];
+        let (source, solid) =
+            builder::extrude_region(&outer, &holes, Real::zero(), Real::one())
+                .expect("two-hole unit extrusion is constructible");
+        let face = source
+            .shell(source.solid(solid).expect("validated solid").outer())
+            .expect("validated shell")
+            .faces()[1];
+        let surface_id = source.face(face).expect("validated cap").surface();
+        let tensor_surface = Surface::rational_bezier(
+            vec![
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::one(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+                ],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .expect("affine tensor surface is constructible");
+        let mut edit = source.edit();
+        edit.replace_surface(surface_id, tensor_surface.clone())
+            .expect("affine cap replacement is valid");
+        let tensor = edit.commit().expect("two-hole tensor cap certifies");
+        let support = Surface::plane(
+            hyperbrep::Point3::new(half, Real::zero(), Real::one()),
+            Vector3::y(),
+            Vector3::z(),
+        )
+        .expect("boundary support plane is constructible");
+        let SurfaceSurfaceIntersection::Curve(trace) = tensor_surface
+            .intersect_surface(&support)
+            .expect("affine tensor section is exact")
+        else {
+            panic!("affine tensor section retains one curve");
+        };
+        let mut traces = vec![
+            trace
+                .subcurve(&Real::zero(), &eighth)
+                .expect("first material bridge"),
+            trace
+                .subcurve(&three_eighths, &five_eighths)
+                .expect("middle material bridge"),
+            trace
+                .subcurve(&seven_eighths, &Real::one())
+                .expect("last material bridge"),
+        ];
+        if bytes[1] & 1 != 0 {
+            traces.reverse();
+            traces = traces
+                .into_iter()
+                .map(|trace| trace.reversed().expect("exact trace reversal"))
+                .collect();
+        }
+        let operand = if bytes[2] & 1 == 0 {
+            SurfaceIntersectionOperand::First
+        } else {
+            SurfaceIntersectionOperand::Second
+        };
+        let source_wires = tensor.counts().wires;
+        let (edited, partition) = tensor
+            .split_face_by_surface_curves(face, &traces, operand)
+            .expect("bridge cycle partitions both threaded holes");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(edited.counts().wires + 1, source_wires);
+        assert!(partition.traces.iter().all(|trace| {
+            trace
+                .splits
+                .first()
+                .and_then(hyperbrep::SurfaceCurveFaceSplit::bridge)
+                .is_some_and(|bridge| {
+                    bridge.face.edges.len() == 3
+                        && bridge
+                            .face
+                            .wire_remap
+                            .iter()
+                            .filter(|wire| wire.is_none())
+                            .count()
+                            == 1
+                })
+        }));
+        let expected = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        assert_eq!(
+            hyperlimit::compare_reals(
+                &edited
+                    .solid_volume(solid)
+                    .expect("bridge-cycle edit keeps its certificate"),
+                &expected,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let json = edited.to_json().expect("bridge-cycle model serializes");
+        assert_eq!(
+            RawModel::from_json(&json)
+                .expect("bridge-cycle JSON decodes")
+                .validate()
+                .expect("bridge-cycle JSON fully revalidates")
+                .to_json()
+                .expect("bridge-cycle replay serializes"),
+            json
+        );
+        return;
+    }
     if bytes[0] == 0xa7 {
         let (tensor, tensor_face) = builder::rational_bezier_patch(
             vec![

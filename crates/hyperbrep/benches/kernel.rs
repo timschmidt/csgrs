@@ -1943,6 +1943,101 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
+    let eighth = (Real::one() / Real::from(8)).expect("eight is nonzero");
+    let three_eighths = (Real::from(3) / Real::from(8)).expect("eight is nonzero");
+    let five_eighths = (Real::from(5) / Real::from(8)).expect("eight is nonzero");
+    let seven_eighths = (Real::from(7) / Real::from(8)).expect("eight is nonzero");
+    let threaded_holes = [
+        vec![
+            hyperbrep::Point2::new(quarter.clone(), eighth.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), eighth.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), three_eighths.clone()),
+            hyperbrep::Point2::new(quarter.clone(), three_eighths.clone()),
+        ],
+        vec![
+            hyperbrep::Point2::new(quarter.clone(), five_eighths.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), five_eighths.clone()),
+            hyperbrep::Point2::new(three_quarters.clone(), seven_eighths.clone()),
+            hyperbrep::Point2::new(quarter.clone(), seven_eighths.clone()),
+        ],
+    ];
+    let (threaded_source, threaded_solid) =
+        builder::extrude_region(&outer, &threaded_holes, Real::zero(), Real::one())
+            .expect("benchmark two-hole extrusion");
+    let threaded_face = threaded_source
+        .shell(
+            threaded_source
+                .solid(threaded_solid)
+                .expect("benchmark two-hole solid")
+                .outer(),
+        )
+        .expect("benchmark two-hole shell")
+        .faces()[1];
+    let threaded_surface_id = threaded_source
+        .face(threaded_face)
+        .expect("benchmark two-hole cap")
+        .surface();
+    let threaded_tensor_surface = Surface::rational_bezier(
+        vec![
+            vec![point(0, 0, 1), point(1, 0, 1)],
+            vec![point(0, 1, 1), point(1, 1, 1)],
+        ],
+        vec![vec![Real::one(), Real::one()]; 2],
+    )
+    .expect("benchmark two-hole tensor surface");
+    let mut edit = threaded_source.edit();
+    edit.replace_surface(threaded_surface_id, threaded_tensor_surface.clone())
+        .expect("benchmark two-hole tensor replacement");
+    let threaded_tensor = edit.commit().expect("benchmark certified two-hole tensor");
+    let SurfaceSurfaceIntersection::Curve(threaded_trace) = threaded_tensor_surface
+        .intersect_surface(&boundary_support)
+        .expect("benchmark threaded inverse tensor pcurve")
+    else {
+        panic!("threaded affine tensor support must retain one exact trace");
+    };
+    let threaded_traces = [
+        threaded_trace
+            .subcurve(&Real::zero(), &eighth)
+            .expect("benchmark first bridge"),
+        threaded_trace
+            .subcurve(&three_eighths, &five_eighths)
+            .expect("benchmark middle bridge"),
+        threaded_trace
+            .subcurve(&seven_eighths, &Real::one())
+            .expect("benchmark last bridge"),
+    ];
+    let threaded_source_wires = threaded_tensor.counts().wires;
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = threaded_tensor
+            .split_face_by_surface_curves(
+                threaded_face,
+                black_box(&threaded_traces),
+                SurfaceIntersectionOperand::First,
+            )
+            .expect("benchmark multi-hole bridge cycle");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(partitioned.counts().wires + 1, threaded_source_wires);
+        assert_eq!(
+            compare_reals(
+                &partitioned
+                    .solid_volume(threaded_solid)
+                    .expect("benchmark threaded tensor volume"),
+                &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/multi_hole_affine_tensor_bridge_cycle_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     const BOOLEAN_ITERATIONS: usize = 250;
     let (first_box, first_box_solid) =
         builder::cuboid(point(0, 0, 0), point(2, 2, 2)).expect("first graph cuboid");
