@@ -7,22 +7,20 @@
 
 use crate::predicate::RealPredicateExt as _;
 use std::{
-    cell::RefCell,
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
     fmt::{Display, Formatter},
-    rc::Rc,
 };
 
 use hypercurve::{
     Aabb2 as CurveAabb2, CircularArc2, Classification, CubicBezier2, Curve2, CurveGeometry2,
-    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
-    Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
+    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
+    LineSeg2, Point2 as CurvePoint2, RegionPointLocation, UncertaintyReason,
 };
 use hyperlattice::Point2;
 use hyperpath::{
-    CubicBezier, ExplicitCircularArc, LinePathSegment, NetId as RoutingNetId, PcbTrace,
-    PcbViaStack, SpecctraRoute, SpecctraRouteArc, SpecctraRouteBezier, SweptLineSegment,
+    CubicBezier, ExplicitCircularArc, LinePathSegment, LinePathSegmentError, NetId as RoutingNetId,
+    PcbTrace, PcbViaStack, SpecctraRoute, SpecctraRouteArc, SpecctraRouteBezier, SweptLineSegment,
     TraceLayer, ViaDrillIntent,
 };
 use hyperreal::{Real, RealSign};
@@ -274,18 +272,19 @@ impl BoardContour {
     }
 
     /// Promotes polygon vertices into exact closing line segments.
-    pub fn polygon(vertices: Vec<Point2>) -> Self {
+    pub fn polygon(vertices: Vec<Point2>) -> Result<Self, LinePathSegmentError> {
         if vertices.is_empty() {
-            return Self::default();
+            return Ok(Self::default());
         }
         let mut segments = Vec::with_capacity(vertices.len());
         for index in 0..vertices.len() {
             segments.push(BoardContourSegment::Line(LinePathSegment::new(
                 vertices[index].clone(),
                 vertices[(index + 1) % vertices.len()].clone(),
-            )));
+                crate::PREDICATE_POLICY,
+            )?));
         }
-        Self { segments }
+        Ok(Self { segments })
     }
 
     /// Ordered exact contour segments.
@@ -333,8 +332,10 @@ fn points_equal(first: &Point2, second: &Point2) -> Option<bool> {
     Some(first.x.predicate_eq(&second.x)? && first.y.predicate_eq(&second.y)?)
 }
 
-impl From<Vec<Point2>> for BoardContour {
-    fn from(vertices: Vec<Point2>) -> Self {
+impl TryFrom<Vec<Point2>> for BoardContour {
+    type Error = LinePathSegmentError;
+
+    fn try_from(vertices: Vec<Point2>) -> Result<Self, Self::Error> {
         Self::polygon(vertices)
     }
 }
@@ -343,13 +344,28 @@ impl From<Vec<Point2>> for BoardContour {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BoardBoundaryGeometryError {
     context: String,
+    policy_blocked: bool,
 }
 
 impl BoardBoundaryGeometryError {
     fn new(context: impl Into<String>) -> Self {
         Self {
             context: context.into(),
+            policy_blocked: false,
         }
+    }
+
+    fn from_curve(context: &str, error: ExactCurveError) -> Self {
+        Self {
+            context: format!("{context}: {error:?}"),
+            policy_blocked: matches!(error, ExactCurveError::Blocked(_)),
+        }
+    }
+
+    /// Whether the operation was blocked specifically by the selected exact
+    /// predicate policy and may therefore be retried under APPROXIMATE_512.
+    pub const fn is_policy_blocked(&self) -> bool {
+        self.policy_blocked
     }
 }
 
@@ -372,11 +388,7 @@ pub struct BoardBoundaryGeometry {
     region: CurveRegion2,
     contour_paths: Vec<CurvePath2>,
     exterior_bounds: CurveAabb2,
-    insets: BoardBoundaryInsetCache,
 }
-
-type BoardBoundaryInset = (Real, Classification<BoardBoundaryGeometry>);
-type BoardBoundaryInsetCache = Rc<RefCell<Vec<BoardBoundaryInset>>>;
 
 impl std::fmt::Debug for BoardBoundaryGeometry {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
@@ -425,59 +437,48 @@ impl BoardBoundaryGeometry {
     /// Contracts the filled substrate by an exact non-negative clearance.
     ///
     /// Polynomial/rational offsets that Hypercurve cannot represent remain an
-    /// explicit `Uncertain(Unsupported)` classification.
+    /// explicit uncertainty classification.
     pub fn inset(
         &self,
         clearance: Real,
         policy: &CurvePolicy,
     ) -> Result<Classification<Self>, BoardBoundaryGeometryError> {
-        if let Some((_, cached)) = self.insets.borrow().iter().find(|(candidate, _)| {
-            candidate.predicate_cmp(&clearance) == Some(std::cmp::Ordering::Equal)
-        }) {
-            return Ok(cached.clone());
-        }
-        let result = match self
-            .region
-            .offset(-clearance.clone(), policy)
-            .map_err(|error| {
-                BoardBoundaryGeometryError::new(format!("board inset failed: {error:?}"))
-            })? {
-            Classification::Decided(region) => {
-                let contour_paths = match region.materialized_boundary_paths().map_err(|error| {
-                    BoardBoundaryGeometryError::new(format!(
-                        "board inset boundary extraction failed: {error:?}"
-                    ))
-                })? {
-                    Classification::Decided(paths) => paths,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let exterior_bounds = contour_paths
-                    .first()
-                    .ok_or_else(|| {
-                        BoardBoundaryGeometryError::new(
-                            "board inset collapsed to an empty substrate",
-                        )
-                    })?
-                    .bounds()
-                    .map_err(|error| {
-                        BoardBoundaryGeometryError::new(format!(
-                            "board inset bounds failed: {error:?}"
-                        ))
-                    })?
-                    .clone();
-                Ok(Classification::Decided(Self {
-                    region,
-                    contour_paths,
-                    exterior_bounds,
-                    insets: Rc::new(RefCell::new(Vec::new())),
-                }))
+        let region = match self.region.offset(-clearance.clone(), policy) {
+            Ok(outcome) => outcome.into_value(),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
             }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }?;
-        self.insets.borrow_mut().push((clearance, result.clone()));
-        Ok(result)
+            Err(error) => {
+                return Err(BoardBoundaryGeometryError::new(format!(
+                    "board inset failed: {error:?}"
+                )));
+            }
+        };
+        let contour_paths = match region.materialized_boundary_paths().map_err(|error| {
+            BoardBoundaryGeometryError::new(format!(
+                "board inset boundary extraction failed: {error:?}"
+            ))
+        })? {
+            Classification::Decided(paths) => paths,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let exterior_bounds = contour_paths
+            .first()
+            .ok_or_else(|| {
+                BoardBoundaryGeometryError::new("board inset collapsed to an empty substrate")
+            })?
+            .bounds()
+            .map_err(|error| {
+                BoardBoundaryGeometryError::new(format!("board inset bounds failed: {error:?}"))
+            })?
+            .clone();
+        Ok(Classification::Decided(Self {
+            region,
+            contour_paths,
+            exterior_bounds,
+        }))
     }
 
     /// Convenience classification for a closed-clearance disc centered at `point`.
@@ -1008,21 +1009,24 @@ impl BoardOutline {
     ///
     /// Structural validation remains authoritative for positive, nondegenerate
     /// dimensions so this constructor does not introduce a second geometry policy.
-    pub fn rectangle(width: Real, height: Real) -> Self {
-        Self {
+    pub fn rectangle(width: Real, height: Real) -> Result<Self, LinePathSegmentError> {
+        Ok(Self {
             exterior: vec![
                 Point2::new(Real::zero(), Real::zero()),
                 Point2::new(width.clone(), Real::zero()),
                 Point2::new(width.clone(), height.clone()),
                 Point2::new(Real::zero(), height),
             ]
-            .into(),
+            .try_into()?,
             cutouts: Vec::new(),
-        }
+        })
     }
 
     /// Builds the canonical exact exterior-minus-cutouts query carrier.
-    pub fn boundary_geometry(&self) -> Result<BoardBoundaryGeometry, BoardBoundaryGeometryError> {
+    pub fn boundary_geometry(
+        &self,
+        policy: &CurvePolicy,
+    ) -> Result<BoardBoundaryGeometry, BoardBoundaryGeometryError> {
         let mut contour_paths = Vec::with_capacity(1 + self.cutouts.len());
         contour_paths.push(board_contour_curve_path(&self.exterior, "board exterior")?);
         for (index, cutout) in self.cutouts.iter().enumerate() {
@@ -1042,8 +1046,9 @@ impl BoardOutline {
             &contour_paths,
             &roles,
             &fill_rules,
+            policy,
         )
-        .map_err(|error| BoardBoundaryGeometryError::new(format!("board outline: {error:?}")))?;
+        .map_err(|error| BoardBoundaryGeometryError::from_curve("board outline", error))?;
         let exterior_bounds = contour_paths[0]
             .bounds()
             .map_err(|error| {
@@ -1054,7 +1059,6 @@ impl BoardOutline {
             region,
             contour_paths,
             exterior_bounds,
-            insets: Rc::new(RefCell::new(Vec::new())),
         })
     }
 }
@@ -1587,8 +1591,17 @@ impl PcbRoute {
         for segment in &self.segments {
             match segment {
                 PcbRouteSegment::Line(segment) => {
-                    let swept = SweptLineSegment::new(segment.clone(), self.width.clone())?;
-                    traces.push(PcbTrace::new(net, self.layer, swept));
+                    let swept = SweptLineSegment::new(
+                        segment.clone(),
+                        self.width.clone(),
+                        crate::PREDICATE_POLICY,
+                    )?;
+                    traces.push(PcbTrace::new(
+                        net,
+                        self.layer,
+                        swept,
+                        crate::PREDICATE_POLICY,
+                    ));
                 }
                 PcbRouteSegment::CircularArc(arc) => arcs.push(SpecctraRouteArc {
                     net,
@@ -1663,6 +1676,7 @@ impl PcbVia {
             self.land_diameter.clone(),
             self.drill_diameter.clone(),
             intent,
+            crate::PREDICATE_POLICY,
         )
     }
 }

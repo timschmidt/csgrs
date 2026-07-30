@@ -19,6 +19,7 @@ pub fn run(slug: &str, source: &str) -> Result<(), Box<dyn Error>> {
     let started = Instant::now();
     let materialized = layout.materialize(
         &document.circuit,
+        &hypercircuit::MaterializationContext::STRICT,
         MaterializationOptions {
             circular_segments: 8,
             aggregate_layer_images: false,

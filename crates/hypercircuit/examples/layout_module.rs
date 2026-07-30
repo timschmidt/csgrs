@@ -106,7 +106,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
                 point(0, 0),
                 point(2, 0),
-            ))],
+                hyperlimit::PredicatePolicy::STRICT,
+            )?)],
         }],
         vias: Vec::new(),
         zones: Vec::new(),
@@ -116,7 +117,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let board = PcbLayout {
         id: BoardId::new("module-board")?,
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(30, 0), point(30, 10), point(0, 10)].into(),
+            exterior: vec![point(0, 0), point(30, 0), point(30, 10), point(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {

@@ -12,7 +12,7 @@ fn point(x: i64, y: i64) -> Point2 {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "phase-tuned-pair",
-        BoardOutline::rectangle(Real::from(12), Real::from(10)),
+        BoardOutline::rectangle(Real::from(12), Real::from(10))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let positive = design.signal("DATA+")?;
@@ -22,11 +22,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     design.route(
         &positive,
-        Route::new("data-p", TraceLayer(0), Real::one()).line(point(2, 4), point(8, 4)),
+        Route::new("data-p", TraceLayer(0), Real::one()).line(point(2, 4), point(8, 4))?,
     )?;
     design.route(
         &negative,
-        Route::new("data-n", TraceLayer(0), Real::one()).line(point(2, 6), point(8, 6)),
+        Route::new("data-n", TraceLayer(0), Real::one()).line(point(2, 6), point(8, 6))?,
     )?;
 
     let checked = design.finish()?;

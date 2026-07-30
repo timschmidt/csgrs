@@ -71,7 +71,10 @@ impl PcbLayout {
     pub fn realize_stitching_vias(&self) -> ZoneStitchingReport {
         let mut report = ZoneStitchingReport::default();
         let mut occupied = self.vias.clone();
-        let board_boundary = self.outline.boundary_geometry().ok();
+        let board_boundary = self
+            .outline
+            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+            .ok();
         for zone in &self.zones {
             let Some(policy) = &zone.stitching else {
                 continue;
@@ -210,7 +213,7 @@ fn candidate_status(
         return CandidateStatus::Indeterminate;
     };
     match board_boundary
-        .contains_disc(center, boundary_radius.clone(), &CurvePolicy::certified())
+        .contains_disc(center, boundary_radius.clone(), &CurvePolicy::STRICT)
         .ok()
     {
         Some(Classification::Decided(true)) => {}
@@ -265,14 +268,18 @@ fn polygon_bounds(points: &[Point2]) -> Option<(Point2, Point2)> {
 }
 
 fn circle_within_polygon(points: &[Point2], center: &Point2, radius: &Real) -> Option<bool> {
-    if classify_point_ring_even_odd(points, center).value()? != RingPointLocation::Inside {
+    if classify_point_ring_even_odd(points, center, crate::PREDICATE_POLICY).value()?
+        != RingPointLocation::Inside
+    {
         return Some(false);
     }
     polygon_edges_clear(points, center, radius)
 }
 
 fn circle_disjoint_from_polygon(points: &[Point2], center: &Point2, radius: &Real) -> Option<bool> {
-    if classify_point_ring_even_odd(points, center).value()? != RingPointLocation::Outside {
+    if classify_point_ring_even_odd(points, center, crate::PREDICATE_POLICY).value()?
+        != RingPointLocation::Outside
+    {
         return Some(false);
     }
     polygon_edges_clear(points, center, radius)

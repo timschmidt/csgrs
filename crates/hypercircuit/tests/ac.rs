@@ -534,7 +534,8 @@ fn fluent_declarative_rc_design_executes_the_same_ac_sweep() {
 
     let mut design = Design::new(
         "fluent-ac",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();

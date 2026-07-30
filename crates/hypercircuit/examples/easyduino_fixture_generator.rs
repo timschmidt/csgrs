@@ -47,6 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let started = Instant::now();
         let materialization = layout.materialize(
             &document.circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 circular_segments: 8,
                 aggregate_layer_images: false,

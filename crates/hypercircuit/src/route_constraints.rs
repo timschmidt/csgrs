@@ -737,9 +737,19 @@ impl PcbLayout {
                                 .map(|(x, y)| x && y)
                             {
                                 Some(true) => {}
-                                Some(false) => replacements.push(PcbRouteSegment::Line(
-                                    LinePathSegment::new(pair[0].clone(), pair[1].clone()),
-                                )),
+                                Some(false) => match LinePathSegment::new(
+                                    pair[0].clone(),
+                                    pair[1].clone(),
+                                    crate::PREDICATE_POLICY,
+                                ) {
+                                    Ok(segment) => {
+                                        replacements.push(PcbRouteSegment::Line(segment));
+                                    }
+                                    Err(_) => {
+                                        replacement_indeterminate = true;
+                                        break;
+                                    }
+                                },
                                 None => {
                                     replacement_indeterminate = true;
                                     break;
@@ -1001,6 +1011,7 @@ impl PcbLayout {
         &self,
         circuit: &Circuit,
         group: &PhaseTuningGroupId,
+        context: &crate::MaterializationContext,
         options: MaterializationOptions,
     ) -> PhaseTuningReport {
         let mut without_zones = self.clone();
@@ -1023,7 +1034,7 @@ impl PcbLayout {
         let Some(candidate) = report.apply_to(self) else {
             return reject_realized_phase(report, PhaseTuningIssue::InvalidContract);
         };
-        let materialized = match candidate.materialize(circuit, options.clone()) {
+        let materialized = match candidate.materialize(circuit, context, options.clone()) {
             Ok(materialized) => materialized,
             Err(error) => {
                 return reject_realized_phase(
@@ -1203,10 +1214,7 @@ fn realized_zone_intrusion_probe(
             };
             for probe in probes {
                 let probe = hypercurve::Point2::new(probe.x, probe.y);
-                match zone
-                    .classify_point(&probe, &CurvePolicy::certified())
-                    .ok()?
-                {
+                match zone.classify_point(&probe, &CurvePolicy::STRICT).ok()? {
                     Classification::Decided(
                         RegionPointLocation::Inside | RegionPointLocation::Boundary,
                     ) => return Some(true),
@@ -1589,7 +1597,9 @@ fn route_polygon_collision_issue(
             ));
         };
         for endpoint in [line.start(), line.end()] {
-            let Some(location) = classify_point_ring_even_odd(boundary, endpoint).value() else {
+            let Some(location) =
+                classify_point_ring_even_odd(boundary, endpoint, crate::PREDICATE_POLICY).value()
+            else {
                 return Some(PhaseTuningIssue::IndeterminateClearance {
                     route: route.id.clone(),
                     obstacle: obstacle.clone(),
@@ -1750,7 +1760,7 @@ fn tuning_synthesis_candidates(
     let mut candidates = Vec::new();
     let boundary = layout
         .outline
-        .boundary_geometry()
+        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
         .map_err(|_| PhaseTuningSynthesisIssue::IndeterminateBoardBoundary(net.clone()))?;
     let mut indeterminate_boundary = false;
     for route in layout.routes.iter().filter(|route| &route.net == net) {
@@ -1797,7 +1807,7 @@ fn tuning_synthesis_candidates(
                             &pair[0],
                             &pair[1],
                             route_radius.clone(),
-                            &CurvePolicy::certified(),
+                            &CurvePolicy::STRICT,
                         )
                         .ok()?
                     {
@@ -1998,7 +2008,9 @@ fn direction_sign(value: &Real) -> Option<Real> {
 
 fn polyline_inside_region(points: &[Point2], region: &[Point2]) -> Option<bool> {
     for point in points {
-        if classify_point_ring_even_odd(region, point).value()? == RingPointLocation::Outside {
+        if classify_point_ring_even_odd(region, point, crate::PREDICATE_POLICY).value()?
+            == RingPointLocation::Outside
+        {
             return Some(false);
         }
     }
@@ -2009,6 +2021,7 @@ fn polyline_inside_region(points: &[Point2], region: &[Point2]) -> Option<bool> 
                 &segment[1],
                 &region[index],
                 &region[(index + 1) % region.len()],
+                crate::PREDICATE_POLICY,
             )
             .value()?
                 == SegmentIntersection::Proper

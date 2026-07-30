@@ -215,7 +215,7 @@ impl RoutingProblemReport {
 
         let boundary = layout
             .outline
-            .boundary_geometry()
+            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
             .map_err(|error| TscircuitRoutingError::InvalidGeometry(error.to_string()))?;
         let (bounds_min, bounds_max) = boundary.exterior_bounds();
         if !is_axis_aligned_rectangle(&layout.outline.exterior) {
@@ -395,13 +395,28 @@ impl TscircuitRoutingImportReport {
                                     ))
                                 })?;
                             if !same_point {
-                                let centerline =
-                                    LinePathSegment::new(prior.point, wire.point.clone());
-                                let swept = SweptLineSegment::new(centerline, wire.width.clone())
-                                    .map_err(|error| {
-                                    TscircuitRoutingError::Hyperpath(error.into())
+                                let centerline = LinePathSegment::new(
+                                    prior.point,
+                                    wire.point.clone(),
+                                    crate::PREDICATE_POLICY,
+                                )
+                                .map_err(|_| {
+                                    TscircuitRoutingError::Hyperpath(
+                                        "line endpoint ordering is unresolved".into(),
+                                    )
                                 })?;
-                                route_geometry.push(PcbTrace::new(routing_net, wire.layer, swept));
+                                let swept = SweptLineSegment::new(
+                                    centerline,
+                                    wire.width.clone(),
+                                    crate::PREDICATE_POLICY,
+                                )
+                                .map_err(|error| TscircuitRoutingError::Hyperpath(error.into()))?;
+                                route_geometry.push(PcbTrace::new(
+                                    routing_net,
+                                    wire.layer,
+                                    swept,
+                                    crate::PREDICATE_POLICY,
+                                ));
                             }
                         }
                         previous = Some(wire);
@@ -433,6 +448,7 @@ impl TscircuitRoutingImportReport {
                                 options.via_land_diameter.clone(),
                                 options.via_drill_diameter.clone(),
                                 drill_intent(options.via_plating),
+                                crate::PREDICATE_POLICY,
                             )
                             .map_err(|error| TscircuitRoutingError::Hyperpath(error.into()))?,
                         );

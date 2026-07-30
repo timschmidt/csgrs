@@ -608,7 +608,7 @@ impl PcbLayout {
             .map_err(NegotiatedRouterError::InvalidProblem)?;
         let boundary = self
             .outline
-            .boundary_geometry()
+            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (board_min, board_max) = boundary.exterior_bounds();
         let coarse_pitch = policy.route_policy.grid_pitch.clone()
@@ -947,7 +947,10 @@ pub(crate) fn placement_pin_access_report(
             return report;
         }
     };
-    let boundary = match layout.outline.boundary_geometry() {
+    let boundary = match layout
+        .outline
+        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+    {
         Ok(boundary) => boundary,
         Err(error) => {
             report
@@ -1301,7 +1304,7 @@ impl Grid {
     ) -> Result<Self, NegotiatedRouterError> {
         let boundary = layout
             .outline
-            .boundary_geometry()
+            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
             .map_err(|error| NegotiatedRouterError::InvalidBoardBoundary(error.to_string()))?;
         let (min, max) = boundary.exterior_bounds();
         let (
@@ -4245,8 +4248,10 @@ fn route_direction(direction: Direction) -> RouteDirection {
 }
 
 fn edge_touches_region(start: &Point2, end: &Point2, boundary: &[Point2]) -> Option<bool> {
-    if classify_point_ring_even_odd(boundary, start).value()? != RingPointLocation::Outside
-        || classify_point_ring_even_odd(boundary, end).value()? != RingPointLocation::Outside
+    if classify_point_ring_even_odd(boundary, start, crate::PREDICATE_POLICY).value()?
+        != RingPointLocation::Outside
+        || classify_point_ring_even_odd(boundary, end, crate::PREDICATE_POLICY).value()?
+            != RingPointLocation::Outside
     {
         return Some(true);
     }
@@ -4256,6 +4261,7 @@ fn edge_touches_region(start: &Point2, end: &Point2, boundary: &[Point2]) -> Opt
             end,
             &boundary[index],
             &boundary[(index + 1) % boundary.len()],
+            crate::PREDICATE_POLICY,
         )
         .value()?
         .intersects()
@@ -4764,7 +4770,7 @@ fn point_is_legal(
     layer: Option<TraceLayer>,
 ) -> Option<bool> {
     match boundary
-        .contains_disc(point, radius.clone(), &CurvePolicy::certified())
+        .contains_disc(point, radius.clone(), &CurvePolicy::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}
@@ -4794,7 +4800,7 @@ fn segment_is_legal(
     layer: TraceLayer,
 ) -> Option<bool> {
     match boundary
-        .contains_segment(start, end, radius.clone(), &CurvePolicy::certified())
+        .contains_segment(start, end, radius.clone(), &CurvePolicy::STRICT)
         .ok()?
     {
         Classification::Decided(true) => {}
@@ -5148,8 +5154,10 @@ fn capsule_disjoint_from_polygon(
     radius: &Real,
 ) -> Option<bool> {
     if points.len() < 3
-        || classify_point_ring_even_odd(points, start).value()? != RingPointLocation::Outside
-        || classify_point_ring_even_odd(points, end).value()? != RingPointLocation::Outside
+        || classify_point_ring_even_odd(points, start, crate::PREDICATE_POLICY).value()?
+            != RingPointLocation::Outside
+        || classify_point_ring_even_odd(points, end, crate::PREDICATE_POLICY).value()?
+            != RingPointLocation::Outside
     {
         return Some(false);
     }
@@ -5166,7 +5174,8 @@ fn segment_clear_of_ring(
     for index in 0..ring.len() {
         let a = &ring[index];
         let b = &ring[(index + 1) % ring.len()];
-        if classify_segment_intersection(start, end, a, b).value()? != SegmentIntersection::Disjoint
+        if classify_segment_intersection(start, end, a, b, crate::PREDICATE_POLICY).value()?
+            != SegmentIntersection::Disjoint
         {
             return Some(false);
         }
@@ -5191,7 +5200,9 @@ pub(crate) fn segment_segment_distance_squared(
     c: &Point2,
     d: &Point2,
 ) -> Option<Real> {
-    if classify_segment_intersection(a, b, c, d).value()? != SegmentIntersection::Disjoint {
+    if classify_segment_intersection(a, b, c, d, crate::PREDICATE_POLICY).value()?
+        != SegmentIntersection::Disjoint
+    {
         return Some(Real::zero());
     }
     [
@@ -5238,7 +5249,9 @@ pub(crate) fn point_segment_distance_squared(
 }
 
 fn circle_disjoint_from_polygon(points: &[Point2], center: &Point2, radius: &Real) -> Option<bool> {
-    if classify_point_ring_even_odd(points, center).value()? != RingPointLocation::Outside {
+    if classify_point_ring_even_odd(points, center, crate::PREDICATE_POLICY).value()?
+        != RingPointLocation::Outside
+    {
         return Some(false);
     }
     polygon_edges_clear(points, center, radius)
@@ -5450,6 +5463,7 @@ fn lower_routes(
                                 via_style.land_diameter.clone(),
                                 via_style.drill_diameter.clone(),
                                 via_drill_intent(via_style.plating),
+                                crate::PREDICATE_POLICY,
                             )
                             .map_err(|_| NegotiatedRouterError::InvalidPolicy)?,
                         );
@@ -5529,13 +5543,16 @@ fn emit_planar_spans(
             let segment = LinePathSegment::new(
                 context.grid.point(nodes[start]),
                 context.grid.point(nodes[index - 1]),
-            );
-            let swept = SweptLineSegment::new(segment, width.clone())
+                crate::PREDICATE_POLICY,
+            )
+            .map_err(|_| NegotiatedRouterError::IndeterminatePredicate)?;
+            let swept = SweptLineSegment::new(segment, width.clone(), crate::PREDICATE_POLICY)
                 .map_err(|_| NegotiatedRouterError::InvalidPolicy)?;
             output.push(PcbTrace::new(
                 routing_net,
                 context.grid.layers[nodes[start].layer],
                 swept,
+                crate::PREDICATE_POLICY,
             ));
             start = index - 1;
             if let (Some(next_width), Some(next_direction)) = (next_width, next_direction) {

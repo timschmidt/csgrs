@@ -1,6 +1,6 @@
 {
   "schema": "org.hypercircuit.semantic",
-  "version": 28,
+  "version": 30,
   "design_revision": 0,
   "circuit": {
     "id": "easyduino-rp2040",
@@ -2915,6 +2915,21 @@
     "bundles": [],
     "endpoints": []
   },
+  "design_intent": {
+    "origins": [],
+    "nets": [],
+    "roles": [],
+    "resolved_parts": []
+  },
+  "test_intent": {
+    "requirements": [],
+    "access": [],
+    "boundary_scan_chains": [],
+    "programming_targets": [],
+    "fixture_constraints": [],
+    "power_domains": []
+  },
+  "panel": null,
   "event_trace": [],
   "transient_run": null,
   "schematic": null,
@@ -3035,18 +3050,18 @@
                 68
               ],
               "denominator": [
-                948569792,
-                48
+                1897139584,
+                96
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3054,15 +3069,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3227,18 +3239,18 @@
                 68
               ],
               "denominator": [
-                948569792,
-                48
+                1897139584,
+                96
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3246,15 +3258,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3419,18 +3428,18 @@
                 68
               ],
               "denominator": [
-                948569792,
-                48
+                1897139584,
+                96
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3438,15 +3447,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3611,18 +3617,18 @@
                 68
               ],
               "denominator": [
-                948569792,
-                48
+                1897139584,
+                96
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3630,15 +3636,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }

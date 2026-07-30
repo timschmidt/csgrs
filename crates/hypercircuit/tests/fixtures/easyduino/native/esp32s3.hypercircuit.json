@@ -1,6 +1,6 @@
 {
   "schema": "org.hypercircuit.semantic",
-  "version": 28,
+  "version": 30,
   "design_revision": 0,
   "circuit": {
     "id": "easyduino-esp32s3",
@@ -2585,6 +2585,21 @@
     "bundles": [],
     "endpoints": []
   },
+  "design_intent": {
+    "origins": [],
+    "nets": [],
+    "roles": [],
+    "resolved_parts": []
+  },
+  "test_intent": {
+    "requirements": [],
+    "access": [],
+    "boundary_scan_chains": [],
+    "programming_targets": [],
+    "fixture_constraints": [],
+    "power_domains": []
+  },
+  "panel": null,
   "event_trace": [],
   "transient_run": null,
   "schematic": null,

@@ -27,7 +27,8 @@ fn point(x: i64, y: i64) -> Point2 {
 fn reusable_part_definition_lowers_library_records_once_for_many_instances() {
     let mut design = Design::new(
         "reusable-parts",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -162,7 +163,8 @@ fn reusable_part_definition_lowers_library_records_once_for_many_instances() {
 fn fluent_design_lowers_to_checked_simulation_and_layout_intent() {
     let mut design = Design::new(
         "fluent-divider",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::two_layer(
             (Real::from(35) / Real::from(1_000)).unwrap(),
             (Real::from(153) / Real::from(100)).unwrap(),
@@ -273,7 +275,8 @@ fn fluent_design_lowers_to_checked_simulation_and_layout_intent() {
 fn connection_batches_are_atomic_and_part_physical_requirements_fail_early() {
     let mut design = Design::new(
         "authoring-errors",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -332,13 +335,15 @@ fn connection_batches_are_atomic_and_part_physical_requirements_fail_early() {
 fn typed_handles_cannot_cross_design_boundaries() {
     let mut left = Design::new(
         "left",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
     let mut right = Design::new(
         "left",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -362,7 +367,8 @@ fn typed_handles_cannot_cross_design_boundaries() {
 fn structural_diagnostics_point_back_to_part_and_escape_hatch_call_sites() {
     let mut design = Design::new(
         "source-aware",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -410,7 +416,8 @@ fn structural_diagnostics_point_back_to_part_and_escape_hatch_call_sites() {
 fn authoring_source_map_round_trips_independently_of_semantic_ir() {
     let design = Design::new(
         "source-map-json",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -423,7 +430,8 @@ fn authoring_source_map_round_trips_independently_of_semantic_ir() {
 fn incremental_connections_chain_visible_symbols_and_report_schematic_mutations() {
     let mut design = Design::new(
         "incremental-schematic",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -479,7 +487,8 @@ fn incremental_connections_chain_visible_symbols_and_report_schematic_mutations(
 fn fluent_nonlinear_parts_extract_and_execute_retained_device_laws() {
     let mut diode_design = Design::new(
         "fluent-diode",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -527,7 +536,8 @@ fn fluent_nonlinear_parts_extract_and_execute_retained_device_laws() {
 
     let mut mosfet_design = Design::new(
         "fluent-mosfet",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -594,7 +604,8 @@ fn fluent_nonlinear_parts_extract_and_execute_retained_device_laws() {
 fn fluent_source_waveforms_drive_exact_transient_runs_and_reject_misuse() {
     let mut design = Design::new(
         "fluent-transient",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap()
@@ -687,7 +698,8 @@ fn fluent_source_waveforms_drive_exact_transient_runs_and_reject_misuse() {
 
     let mut invalid = Design::new(
         "invalid-stimulus",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -729,7 +741,8 @@ fn fluent_source_waveforms_drive_exact_transient_runs_and_reject_misuse() {
 fn typed_buses_slices_and_ports_preserve_order_and_scope() {
     let mut design = Design::new(
         "fluent-interface",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -805,7 +818,8 @@ fn typed_buses_slices_and_ports_preserve_order_and_scope() {
 
     let mut other = Design::new(
         "fluent-interface",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -824,7 +838,8 @@ fn typed_buses_slices_and_ports_preserve_order_and_scope() {
 fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
     let mut design = Design::new(
         "fluent-copper",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::two_layer(
             Real::one(),
             Real::one(),
@@ -838,7 +853,9 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
     let route = design
         .route(
             &signal,
-            Route::new("signal-route", TraceLayer(0), Real::one()).line(point(1, 2), point(8, 2)),
+            Route::new("signal-route", TraceLayer(0), Real::one())
+                .line(point(1, 2), point(8, 2))
+                .unwrap(),
         )
         .unwrap();
     let via = design
@@ -888,6 +905,7 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
             &signal,
             Route::new("signal-route", TraceLayer(0), Real::one())
                 .line(point(1, 3), point(8, 3))
+                .unwrap()
         ),
         Err(DesignBuildError::DuplicateRoute(route)) if route == "signal-route"
     ));
@@ -896,7 +914,9 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
             &signal,
             Route::new("broken", TraceLayer(0), Real::one())
                 .line(point(1, 2), point(3, 2))
+                .unwrap()
                 .line(point(4, 2), point(8, 2))
+                .unwrap()
         ),
         Err(DesignBuildError::InvalidRoute(route)) if route == "broken"
     ));
@@ -905,6 +925,7 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
             &signal,
             Route::new("missing-layer", TraceLayer(2), Real::one())
                 .line(point(1, 2), point(8, 2))
+                .unwrap()
         ),
         Err(DesignBuildError::InvalidRoute(route)) if route == "missing-layer"
     ));
@@ -973,7 +994,8 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
 
     let mut other = Design::new(
         "fluent-copper",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -981,7 +1003,9 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
     assert_eq!(
         design.route(
             &foreign,
-            Route::new("foreign", TraceLayer(0), Real::one()).line(point(1, 2), point(8, 2))
+            Route::new("foreign", TraceLayer(0), Real::one())
+                .line(point(1, 2), point(8, 2))
+                .unwrap()
         ),
         Err(DesignBuildError::ForeignHandle)
     );
@@ -1025,7 +1049,8 @@ fn fluent_routing_vias_zones_and_keepouts_lower_atomically_with_sources() {
 fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
     let mut design = Design::new(
         "fluent-placement-rules",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -1183,7 +1208,8 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
 
     let mut other = Design::new(
         "fluent-placement-rules",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -1213,7 +1239,8 @@ fn typed_placement_rules_cover_every_retained_constraint_family_atomically() {
 fn typed_routing_policy_builders_retain_inheritance_vias_and_pairs_atomically() {
     let mut design = Design::new(
         "fluent-routing-policy",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::two_layer(
             Real::one(),
             Real::one(),
@@ -1345,7 +1372,8 @@ fn typed_routing_policy_builders_retain_inheritance_vias_and_pairs_atomically() 
 
     let mut other = Design::new(
         "fluent-routing-policy",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -1383,7 +1411,8 @@ fn typed_routing_policy_builders_retain_inheritance_vias_and_pairs_atomically() 
 fn typed_phase_tuning_builders_retain_and_realize_one_atomic_pair() {
     let mut design = Design::new(
         "fluent-phase-tuning",
-        BoardOutline::rectangle(Real::from(12), Real::from(10)),
+        BoardOutline::rectangle(Real::from(12), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -1398,13 +1427,17 @@ fn typed_phase_tuning_builders_retain_and_realize_one_atomic_pair() {
     let positive_route = design
         .route(
             &positive,
-            Route::new("data-p", TraceLayer(0), Real::one()).line(point(2, 4), point(8, 4)),
+            Route::new("data-p", TraceLayer(0), Real::one())
+                .line(point(2, 4), point(8, 4))
+                .unwrap(),
         )
         .unwrap();
     let negative_route = design
         .route(
             &negative,
-            Route::new("data-n", TraceLayer(0), Real::one()).line(point(2, 6), point(8, 6)),
+            Route::new("data-n", TraceLayer(0), Real::one())
+                .line(point(2, 6), point(8, 6))
+                .unwrap(),
         )
         .unwrap();
     let positive_tuning = design

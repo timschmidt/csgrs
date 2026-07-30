@@ -77,7 +77,11 @@ fn main() {
             );
             let stage = Instant::now();
             let materialized = layout
-                .materialize(&document.circuit, options.materialization)
+                .materialize(
+                    &document.circuit,
+                    &options.materialization_context,
+                    options.materialization,
+                )
                 .unwrap();
             println!(
                 "easyduino-full-pipeline/{slug}: materialization {:?}",
@@ -204,7 +208,12 @@ fn main() {
                 "Easyduino {slug} placement is not satisfied"
             );
             layout.placements.clone_from(&placement.placements);
-            match layout.materialize(&document.circuit, ReleaseOptions::default().materialization) {
+            let options = ReleaseOptions::default();
+            match layout.materialize(
+                &document.circuit,
+                &options.materialization_context,
+                options.materialization,
+            ) {
                 Ok(report) => {
                     let mut aggregate_blockers = 0;
                     for image in &report.copper_layers {

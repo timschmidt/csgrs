@@ -523,7 +523,11 @@ impl LcedaProImportReport {
                             "route.{id}.segment[{index}]"
                         )));
                     }
-                    *segment = hyperpath::LinePathSegment::new(start, end).into();
+                    *segment = hyperpath::LinePathSegment::new(start, end, crate::PREDICATE_POLICY)
+                        .map_err(|_| {
+                            LcedaImportError::InvalidField(format!("route.{id}.segment[{index}]"))
+                        })?
+                        .into();
                     route.width = physical_field(
                         &record.body,
                         "width",
@@ -664,8 +668,14 @@ impl LcedaProImportReport {
                         continue;
                     }
                     let mut segments = target.segments().to_vec();
-                    segments[index] =
-                        BoardContourSegment::Line(hyperpath::LinePathSegment::new(start, end));
+                    segments[index] = BoardContourSegment::Line(
+                        hyperpath::LinePathSegment::new(start, end, crate::PREDICATE_POLICY)
+                            .map_err(|_| {
+                                LcedaImportError::InvalidField(format!(
+                                    "outline.{contour}.segment[{index}]"
+                                ))
+                            })?,
+                    );
                     *target = BoardContour::from_segments(segments);
                     outline_segments += 1;
                 }

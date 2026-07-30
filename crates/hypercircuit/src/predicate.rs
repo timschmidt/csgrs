@@ -19,18 +19,21 @@ pub(crate) trait RealPredicateExt {
     }
 
     /// Decide `self <= other`, preserving an undecided comparison as `None`.
+    #[cfg(feature = "layout")]
     fn predicate_le(&self, other: &Self) -> Option<bool> {
         self.predicate_cmp(other)
             .map(|value| value != Ordering::Greater)
     }
 
     /// Decide `self > other`, preserving an undecided comparison as `None`.
+    #[cfg(feature = "layout")]
     fn predicate_gt(&self, other: &Self) -> Option<bool> {
         self.predicate_cmp(other)
             .map(|value| value == Ordering::Greater)
     }
 
     /// Decide `self >= other`, preserving an undecided comparison as `None`.
+    #[cfg(feature = "layout")]
     fn predicate_ge(&self, other: &Self) -> Option<bool> {
         self.predicate_cmp(other)
             .map(|value| value != Ordering::Less)
@@ -52,12 +55,12 @@ pub(crate) trait RealPredicateExt {
 impl RealPredicateExt for Real {
     #[inline]
     fn predicate_cmp(&self, other: &Self) -> Option<Ordering> {
-        compare_reals(self, other).value()
+        compare_reals(self, other, crate::PREDICATE_POLICY).value()
     }
 
     #[inline]
     fn predicate_sign(&self) -> Option<RealSign> {
-        match classify_real_sign(self) {
+        match classify_real_sign(self, crate::PREDICATE_POLICY) {
             PredicateOutcome::Decided {
                 value: Sign::Negative,
                 ..

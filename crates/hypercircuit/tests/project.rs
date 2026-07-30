@@ -49,7 +49,8 @@ fn nested_layout_transforms_compose_mirroring_and_orientation_exactly() {
 fn recursive_checked_modules_compile_through_circuit_and_layout_hierarchy() {
     let mut leaf = Design::new(
         "leaf-circuit",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -83,7 +84,8 @@ fn recursive_checked_modules_compile_through_circuit_and_layout_hierarchy() {
 
     let mut middle_design = Design::new(
         "middle-circuit",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -113,7 +115,8 @@ fn recursive_checked_modules_compile_through_circuit_and_layout_hierarchy() {
 
     let mut root_design = Design::new(
         "root-circuit",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -161,7 +164,8 @@ fn recursive_checked_modules_compile_through_circuit_and_layout_hierarchy() {
 fn module_bindings_reject_missing_duplicate_and_foreign_interfaces_atomically() {
     let mut child_design = Design::new(
         "child",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -173,7 +177,8 @@ fn module_bindings_reject_missing_duplicate_and_foreign_interfaces_atomically() 
 
     let mut parent_design = Design::new(
         "parent",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -203,7 +208,8 @@ fn module_bindings_reject_missing_duplicate_and_foreign_interfaces_atomically() 
 
     let mut foreign_design = Design::new(
         "parent",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();

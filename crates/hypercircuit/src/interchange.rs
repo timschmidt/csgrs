@@ -1069,9 +1069,11 @@ fn decode_board_contour<E: serde::de::Error>(
     segments
         .into_iter()
         .map(|segment| match segment {
-            ExactBoardContourSegment::Line { start, end } => Ok(BoardContourSegment::Line(
-                LinePathSegment::new(start.into(), end.into()),
-            )),
+            ExactBoardContourSegment::Line { start, end } => {
+                LinePathSegment::new(start.into(), end.into(), crate::PREDICATE_POLICY)
+                    .map(BoardContourSegment::Line)
+                    .map_err(|error| E::custom(format!("{error:?}")))
+            }
             ExactBoardContourSegment::CircularArc {
                 center,
                 radius,
@@ -1088,6 +1090,7 @@ fn decode_board_contour<E: serde::de::Error>(
                 } else {
                     ArcDirection::Cw
                 },
+                crate::PREDICATE_POLICY,
             )
             .map(BoardContourSegment::CircularArc)
             .map_err(|error| E::custom(format!("{error:?}"))),
@@ -1244,9 +1247,11 @@ pub(crate) mod route_segments {
         Vec::<ExactRouteSegment>::deserialize(deserializer)?
             .into_iter()
             .map(|segment| match segment {
-                ExactRouteSegment::Line { start, end } => Ok(PcbRouteSegment::Line(
-                    LinePathSegment::new(start.into(), end.into()),
-                )),
+                ExactRouteSegment::Line { start, end } => {
+                    LinePathSegment::new(start.into(), end.into(), crate::PREDICATE_POLICY)
+                        .map(PcbRouteSegment::Line)
+                        .map_err(|error| serde::de::Error::custom(format!("{error:?}")))
+                }
                 ExactRouteSegment::CircularArc {
                     center,
                     radius,
@@ -1263,6 +1268,7 @@ pub(crate) mod route_segments {
                     } else {
                         ArcDirection::Cw
                     },
+                    crate::PREDICATE_POLICY,
                 )
                 .map(PcbRouteSegment::CircularArc)
                 .map_err(|error| serde::de::Error::custom(format!("{error:?}"))),

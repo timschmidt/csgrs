@@ -780,10 +780,14 @@ fn transform_segment(
     route: &RouteId,
 ) -> Result<PcbRouteSegment, LayoutCompositionError> {
     Ok(match segment {
-        PcbRouteSegment::Line(line) => PcbRouteSegment::Line(LinePathSegment::new(
-            transform.transform_point(line.start()),
-            transform.transform_point(line.end()),
-        )),
+        PcbRouteSegment::Line(line) => PcbRouteSegment::Line(
+            LinePathSegment::new(
+                transform.transform_point(line.start()),
+                transform.transform_point(line.end()),
+                crate::PREDICATE_POLICY,
+            )
+            .map_err(|_| LayoutCompositionError::RouteTransform(route.clone()))?,
+        ),
         PcbRouteSegment::CircularArc(arc) => {
             let direction = match (transform.side, arc.direction()) {
                 (BoardSide::Front, direction) => direction,
@@ -797,6 +801,7 @@ fn transform_segment(
                     transform.transform_point(arc.start()),
                     transform.transform_point(arc.end()),
                     direction,
+                    crate::PREDICATE_POLICY,
                 )
                 .map_err(|_| LayoutCompositionError::RouteTransform(route.clone()))?,
             )

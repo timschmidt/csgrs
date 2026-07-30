@@ -86,7 +86,9 @@ fn fixture() -> (Circuit, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)].into(),
+            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -168,8 +170,12 @@ fn fixture() -> (Circuit, PcbLayout) {
             layer: front,
             width: Real::from(1),
             segments: vec![
-                LinePathSegment::new(p(5, 5), p(10, 5)).into(),
-                LinePathSegment::new(p(10, 5), p(15, 8)).into(),
+                LinePathSegment::new(p(5, 5), p(10, 5), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+                LinePathSegment::new(p(10, 5), p(15, 8), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
             ],
         }],
         vias: vec![PcbVia {
@@ -284,6 +290,7 @@ fn newly_routed_vias_report_missing_process_intent() {
         Real::from(2),
         Real::one(),
         ViaDrillIntent::Plated,
+        hyperlimit::PredicatePolicy::STRICT,
     )
     .unwrap();
     let candidate = SpecctraRoute::with_vias(Vec::new(), vec![proposed]);
@@ -362,7 +369,8 @@ fn assembly_views_derive_bom_and_pick_and_place_from_retained_identities() {
     let panel = PanelDefinition {
         id: "panel-1".into(),
         frame: CoordinateFrame2::panel_default(),
-        outline: BoardOutline::rectangle(Real::from(100), Real::from(50)),
+        outline: BoardOutline::rectangle(Real::from(100), Real::from(50))
+            .expect("integer rectangle coordinates are strictly orderable"),
         thickness: Real::from(2),
         minimum_web: Real::one(),
         minimum_rail: Real::from(3),

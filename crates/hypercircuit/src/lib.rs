@@ -9,6 +9,10 @@
 //! through exact residual definitions or return explicit uncertainty. See the
 //! crate README for the MNA, circuit-simulation, and exact-computation sources.
 
+/// Hypercircuit accepts only strictly certified scalar, route, and topology decisions.
+pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::STRICT;
+
 pub mod ac;
 pub mod adapter;
 #[cfg(feature = "layout")]
@@ -305,15 +309,16 @@ pub use manufacturing_release::{
 };
 #[cfg(feature = "geometry")]
 pub use materialize::{
-    CopperFeatureKind, DrillHit, GeometryMaterializationError, LayerImage, MaterializationOptions,
-    MaterializationProjection, MaterializedCopperFeature, MaterializedCopperIdentity,
-    MaterializedProcessFeature, Pcb3dAssemblyOmission, Pcb3dAssemblyReport, Pcb3dComponentBody,
-    Pcb3dComponentBodyMetadata, Pcb3dComponentModel, Pcb3dComponentModelMetadata,
-    Pcb3dCoordinateEncoding, Pcb3dGltfError, Pcb3dGltfReport, Pcb3dLayer, Pcb3dLayerKind,
-    Pcb3dLayerMetadata, Pcb3dModelResolutionEvidence, Pcb3dModelResolver, Pcb3dSceneObject,
-    Pcb3dSceneObjectKind, Pcb3dSubtractionEvidence, Pcb3dSubtractionKind, PcbMaterializationReport,
-    ProcessFeatureKind, ProcessLayerImage, ProcessLayerRole, ProcessMaterializationOmission,
-    ProductionTextEvidence, ProductionTextPolicy, ZoneMaterializationEvidence,
+    CopperFeatureKind, DrillHit, GeometryMaterializationError, LayerImage, MaterializationContext,
+    MaterializationOptions, MaterializationProjection, MaterializedCopperFeature,
+    MaterializedCopperIdentity, MaterializedProcessFeature, Pcb3dAssemblyOmission,
+    Pcb3dAssemblyReport, Pcb3dComponentBody, Pcb3dComponentBodyMetadata, Pcb3dComponentModel,
+    Pcb3dComponentModelMetadata, Pcb3dCoordinateEncoding, Pcb3dGltfError, Pcb3dGltfReport,
+    Pcb3dLayer, Pcb3dLayerKind, Pcb3dLayerMetadata, Pcb3dModelResolutionEvidence,
+    Pcb3dModelResolver, Pcb3dSceneObject, Pcb3dSceneObjectKind, Pcb3dSubtractionEvidence,
+    Pcb3dSubtractionKind, PcbMaterializationReport, ProcessFeatureKind, ProcessLayerImage,
+    ProcessLayerRole, ProcessMaterializationOmission, ProductionTextEvidence, ProductionTextPolicy,
+    ZoneMaterializationEvidence,
 };
 pub use mna::{LinearMnaSystem, LinearSolveReport, LinearStamp, MnaUnknown, ResidualReplayReport};
 pub use model::{

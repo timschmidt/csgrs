@@ -1694,7 +1694,7 @@
       {
         "check": "net-constraint-readiness",
         "check_version": 1,
-        "finding_count": 252,
+        "finding_count": 264,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
         "status": "failed",
@@ -1757,7 +1757,7 @@
   },
   "finding_counts": {
     "authored-component-readiness": 65,
-    "net-constraint-readiness": 252,
+    "net-constraint-readiness": 264,
     "stackup-readiness": 9
   },
   "handoff_omissions": [
@@ -1915,6 +1915,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:b975197e6b4665d618eed9bb606a7dab5f51b7c58c028fd13fddb77b350c4040",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:813d3faf00639cbd017133d3f8d6ad223246fbd03a9c1d8f795ef45dbb795c8b",
       "severity": "error",
       "subjects": []
     },
@@ -2274,7 +2280,25 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:89606c9c2650ffc04ceadfc5596b37d2071c1308cdca5552e600df6780423495",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:8aef8a833c93362582a26cc613ed45c294682bebeeb338993f023307fb17e3bf",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:5b2f14f797be86cd0f0e149678e0400424fa51d7f8a9cca67ffe510469ab6f74",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:2bcf750a7b1636b6241649188e1891a1406b9b447e451b98431fc5cbaecfc110",
       "severity": "error",
       "subjects": []
     },
@@ -2311,6 +2335,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:ae0822ed17999591dd6e40e49e045f4f8ab5bcf5494dcd8867a814351baa8612",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:84c386c5db166530cf5ccc4ebebd107fed844df14086f5f412f174c4fd61d2cd",
       "severity": "error",
       "subjects": []
     },
@@ -2676,6 +2706,12 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:0883b90be4ac20208fe747618ce45208d6026f6f0eb9e9ac18f8062d8a92ec37",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:605c793cc347208211054e6b6f87712ccf8edc4c91951bbdf48e36c8666733b3",
       "severity": "error",
       "subjects": []
@@ -2725,6 +2761,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:330b5f1bf1190ea738969763e0df273eec79a096054635143fd0d08d84e8264d",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:e719472ff01d967f547ad942f6ec01557270baa34dca963853dceb263a0fe3b7",
       "severity": "error",
       "subjects": []
     },
@@ -2934,6 +2976,12 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:a8e6addc0fbcd5e16f12daa9fa93a15c3ebd674458bb3391f6c8ae3a6d1f8f21",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:c26aa3cb511ba7e91026b3ba49e9625b5a2d44c15537e84b5429ad40b8a7a1ab",
       "severity": "error",
       "subjects": []
@@ -3048,6 +3096,12 @@
     },
     {
       "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d1e8cc830cef5ae52e3db374c5a1028a174fcb8453ad74e5319367dbc7517598",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
       "evidence_id": "sha256:2fa498daeac9b7a1892eea2c4ed094e826670caac762cb38447cc63c5cccd02d",
       "severity": "error",
       "subjects": []
@@ -3151,6 +3205,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:0b05b293c399ac96fbd9cb8a0d26fa770f8dc54d7188fb6f53f4671c4950720e",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:efc6d65f5961e7da5985305541c0acfef73c7f9d5732194a614d24246303c01d",
       "severity": "error",
       "subjects": []
     },
@@ -3361,6 +3421,18 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:cfa7ba01282dd52030b025dda792dbdf3a1f4202d4ac96a661cf8f62867d19a1",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:d849c433f24f312b88939aa7d67d58252197e42c86ada6b92022de45b29a37b3",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:f7e1a1dc63744f9d8f258c50f557dbe4252ec0aa99c9be2ff05a9253414cfb85",
       "severity": "error",
       "subjects": []
     },

@@ -43,7 +43,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layout = PcbLayout {
         id: BoardId::new("main")?,
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(40, 0), point(40, 25), point(0, 25)].into(),
+            exterior: vec![point(0, 0), point(40, 0), point(40, 25), point(0, 25)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -62,7 +64,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             net: signal,
             layer: front,
             width: Real::from(1),
-            segments: vec![LinePathSegment::new(point(5, 5), point(30, 20)).into()],
+            segments: vec![
+                LinePathSegment::new(
+                    point(5, 5),
+                    point(30, 20),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+                .expect("integer line endpoints are strictly orderable")
+                .into(),
+            ],
         }],
         vias: Vec::new(),
         zones: Vec::new(),

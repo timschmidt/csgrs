@@ -994,7 +994,11 @@ impl Importer {
                 let start =
                     transform(self.point_child(primitive, "start", &format!("{field}.start"))?);
                 let end = transform(self.point_child(primitive, "end", &format!("{field}.end"))?);
-                edges.push(BoardContourSegment::Line(LinePathSegment::new(start, end)));
+                edges.push(BoardContourSegment::Line(
+                    LinePathSegment::new(start, end, crate::PREDICATE_POLICY).map_err(|_| {
+                        KiCadImportError::IndeterminateGeometry(format!("{field}.line"))
+                    })?,
+                ));
             }
             Some("gr_arc" | "fp_arc") => {
                 let start =
@@ -1046,7 +1050,13 @@ impl Importer {
                 net,
                 layer,
                 width,
-                segments: vec![LinePathSegment::new(start, end).into()],
+                segments: vec![
+                    LinePathSegment::new(start, end, crate::PREDICATE_POLICY)
+                        .map_err(|_| {
+                            KiCadImportError::IndeterminateGeometry(format!("route[{index}]"))
+                        })?
+                        .into(),
+                ],
             });
         }
         let arc_nodes = self.root.named_children("arc").cloned().collect::<Vec<_>>();
@@ -1734,7 +1744,7 @@ fn stitch_board_contours(
             let candidate = if import_points_equal(candidate.start(), &end)? {
                 candidate
             } else {
-                reverse_board_segment(candidate)
+                reverse_board_segment(candidate)?
             };
             end = candidate.end().clone();
             segments.push(candidate);
@@ -1756,12 +1766,20 @@ fn import_points_equal(first: &Point2, second: &Point2) -> Result<bool, KiCadImp
         .ok_or_else(|| KiCadImportError::IndeterminateGeometry("board contour incidence".into()))
 }
 
-fn reverse_board_segment(segment: BoardContourSegment) -> BoardContourSegment {
-    match segment {
-        BoardContourSegment::Line(line) => BoardContourSegment::Line(LinePathSegment::new(
-            line.end().clone(),
-            line.start().clone(),
-        )),
+fn reverse_board_segment(
+    segment: BoardContourSegment,
+) -> Result<BoardContourSegment, KiCadImportError> {
+    Ok(match segment {
+        BoardContourSegment::Line(line) => BoardContourSegment::Line(
+            LinePathSegment::new(
+                line.end().clone(),
+                line.start().clone(),
+                crate::PREDICATE_POLICY,
+            )
+            .map_err(|_| {
+                KiCadImportError::IndeterminateGeometry("reversed board contour line".into())
+            })?,
+        ),
         BoardContourSegment::CircularArc(arc) => {
             let direction = match arc.direction() {
                 ArcDirection::Cw => ArcDirection::Ccw,
@@ -1774,8 +1792,11 @@ fn reverse_board_segment(segment: BoardContourSegment) -> BoardContourSegment {
                     arc.end().clone(),
                     arc.start().clone(),
                     direction,
+                    crate::PREDICATE_POLICY,
                 )
-                .expect("reversing a valid arc preserves its circle"),
+                .map_err(|_| {
+                    KiCadImportError::IndeterminateGeometry("reversed board contour arc".into())
+                })?,
             )
         }
         BoardContourSegment::CubicBezier(bezier) => {
@@ -1786,7 +1807,7 @@ fn reverse_board_segment(segment: BoardContourSegment) -> BoardContourSegment {
                 bezier.start().clone(),
             ))
         }
-    }
+    })
 }
 
 fn order_contours_by_exact_area(
@@ -1894,5 +1915,13 @@ fn exact_arc_through(start: Point2, mid: Point2, end: Point2) -> Option<Explicit
         RealSign::Negative => ArcDirection::Cw,
         RealSign::Zero => return None,
     };
-    ExplicitCircularArc::new(center, radius, start, end, direction).ok()
+    ExplicitCircularArc::new(
+        center,
+        radius,
+        start,
+        end,
+        direction,
+        crate::PREDICATE_POLICY,
+    )
+    .ok()
 }

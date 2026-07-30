@@ -7,7 +7,7 @@ use hypercircuit::{
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "rc-low-pass",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let input = design.signal("IN")?;

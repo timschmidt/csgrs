@@ -3,7 +3,7 @@ use hypercircuit::{BoardOutline, Design, PcbStackup, Real, parts};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "source-diagnostics",
-        BoardOutline::rectangle(Real::from(20), Real::from(12)),
+        BoardOutline::rectangle(Real::from(20), Real::from(12))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let signal = design.signal("SIGNAL")?;

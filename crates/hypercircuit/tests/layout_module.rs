@@ -100,7 +100,9 @@ fn board() -> PcbLayout {
     PcbLayout {
         id: BoardId::new("module-board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![point(0, -5), point(30, -5), point(30, 10), point(0, 10)].into(),
+            exterior: vec![point(0, -5), point(30, -5), point(30, 10), point(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -131,6 +133,7 @@ fn module() -> LayoutModule {
         point(2, 0),
         point(3, 1),
         ArcDirection::Ccw,
+        hyperlimit::PredicatePolicy::STRICT,
     )
     .unwrap();
     LayoutModule {
@@ -178,7 +181,14 @@ fn module() -> LayoutModule {
             layer: TraceLayer(0),
             width: Real::one(),
             segments: vec![
-                PcbRouteSegment::Line(LinePathSegment::new(point(0, 0), point(2, 0))),
+                PcbRouteSegment::Line(
+                    LinePathSegment::new(
+                        point(0, 0),
+                        point(2, 0),
+                        hyperlimit::PredicatePolicy::STRICT,
+                    )
+                    .expect("integer line endpoints are strictly orderable"),
+                ),
                 PcbRouteSegment::CircularArc(arc),
                 PcbRouteSegment::CubicBezier(CubicBezier::new(
                     point(3, 1),
@@ -436,6 +446,7 @@ fn reusable_layout_modules_compose_to_flat_hyperpath_ready_intent() {
         let materialized = materialization_fixture
             .materialize(
                 &report.circuit,
+                &hypercircuit::MaterializationContext::STRICT,
                 hypercircuit::MaterializationOptions::default(),
             )
             .unwrap();

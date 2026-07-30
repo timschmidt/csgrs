@@ -72,7 +72,9 @@ fn fixture() -> SemanticDocument {
     let layout = PcbLayout {
         id: BoardId::new("editor-board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(10, 0), point(10, 10), point(0, 10)].into(),
+            exterior: vec![point(0, 0), point(10, 0), point(10, 10), point(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -120,10 +122,14 @@ fn fixture() -> SemanticDocument {
             net: signal.clone(),
             layer: TraceLayer(0),
             width: Real::one(),
-            segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                point(1, 1),
-                point(4, 1),
-            ))],
+            segments: vec![PcbRouteSegment::Line(
+                LinePathSegment::new(
+                    point(1, 1),
+                    point(4, 1),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+                .expect("integer line endpoints are strictly orderable"),
+            )],
         }],
         vias: vec![PcbVia {
             id: ViaId::new("via-1").unwrap(),
@@ -166,7 +172,10 @@ fn route(id: &str, start: Point2, end: Point2) -> PcbRoute {
         net: NetId::new("SIGNAL").unwrap(),
         layer: TraceLayer(0),
         width: Real::one(),
-        segments: vec![PcbRouteSegment::Line(LinePathSegment::new(start, end))],
+        segments: vec![PcbRouteSegment::Line(
+            LinePathSegment::new(start, end, hyperlimit::PredicatePolicy::STRICT)
+                .expect("integer route endpoints are strictly orderable"),
+        )],
     }
 }
 
@@ -242,8 +251,22 @@ fn exact_editor_batch_commits_once_and_survives_json_and_kicad() {
     let mut document = fixture();
     let boundary = vec![point(2, 2), point(8, 2), point(8, 8), point(2, 8)];
     let centerline = vec![
-        PcbRouteSegment::Line(LinePathSegment::new(point(1, 1), point(3, 2))),
-        PcbRouteSegment::Line(LinePathSegment::new(point(3, 2), point(5, 2))),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(1, 1),
+                point(3, 2),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(3, 2),
+                point(5, 2),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
     ];
     let edit = batch(vec![
         DesignEdit::SetPlacementTransform {
@@ -359,8 +382,22 @@ fn stale_or_invalid_batches_leave_the_document_unchanged() {
         .apply_edit_batch(&batch(vec![DesignEdit::SetRouteSegments {
             route: RouteId::new("route-1").unwrap(),
             segments: vec![
-                PcbRouteSegment::Line(LinePathSegment::new(point(1, 1), point(2, 1))),
-                PcbRouteSegment::Line(LinePathSegment::new(point(3, 1), point(4, 1))),
+                PcbRouteSegment::Line(
+                    LinePathSegment::new(
+                        point(1, 1),
+                        point(2, 1),
+                        hyperlimit::PredicatePolicy::STRICT,
+                    )
+                    .expect("integer line endpoints are strictly orderable"),
+                ),
+                PcbRouteSegment::Line(
+                    LinePathSegment::new(
+                        point(3, 1),
+                        point(4, 1),
+                        hyperlimit::PredicatePolicy::STRICT,
+                    )
+                    .expect("integer line endpoints are strictly orderable"),
+                ),
             ],
         }]))
         .unwrap_err();
@@ -383,8 +420,22 @@ fn reversible_history_round_trips_and_keeps_revisions_monotonic() {
     let original = fixture();
     let original_segments = original.pcb.as_ref().unwrap().routes[0].segments.clone();
     let edited_segments = vec![
-        PcbRouteSegment::Line(LinePathSegment::new(point(1, 1), point(2, 2))),
-        PcbRouteSegment::Line(LinePathSegment::new(point(2, 2), point(4, 1))),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(1, 1),
+                point(2, 2),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(2, 2),
+                point(4, 1),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
     ];
     let mut history = DesignHistory::new(original).unwrap();
     let authored = DesignEditBatch {
@@ -765,7 +816,9 @@ fn board_configuration_keepouts_and_land_patterns_edit_reversibly() {
         scope: KeepoutScope::Components,
     };
     let changed_outline = BoardOutline {
-        exterior: vec![point(-1, -1), point(11, -1), point(11, 11), point(-1, 11)].into(),
+        exterior: vec![point(-1, -1), point(11, -1), point(11, 11), point(-1, 11)]
+            .try_into()
+            .expect("integer polygon coordinates are strictly orderable"),
         cutouts: Vec::new(),
     };
     let mut history = DesignHistory::new(original.clone()).unwrap();
@@ -2357,8 +2410,22 @@ fn concurrent_commits_rebase_disjoint_fields_and_reject_overlapping_writes() {
         .unwrap();
 
     let routed = vec![
-        PcbRouteSegment::Line(LinePathSegment::new(point(1, 1), point(2, 2))),
-        PcbRouteSegment::Line(LinePathSegment::new(point(2, 2), point(4, 1))),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(1, 1),
+                point(2, 2),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
+        PcbRouteSegment::Line(
+            LinePathSegment::new(
+                point(2, 2),
+                point(4, 1),
+                hyperlimit::PredicatePolicy::STRICT,
+            )
+            .expect("integer line endpoints are strictly orderable"),
+        ),
     ];
     let rebased = history
         .commit_concurrent(DesignEditBatch {

@@ -47,7 +47,9 @@ fn fixture() -> SemanticDocument {
     let pcb = PcbLayout {
         id: BoardId::new("main-board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(40, 0), point(40, 30), point(0, 30)].into(),
+            exterior: vec![point(0, 0), point(40, 0), point(40, 30), point(0, 30)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {

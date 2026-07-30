@@ -115,7 +115,8 @@ fn package_lock_json_round_trips_exact_coordinates_and_provenance() {
 fn portable_part_library_publishes_locks_loads_and_instantiates_without_duplication() {
     let mut source_design = Design::new(
         "library-source",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();
@@ -201,7 +202,8 @@ fn portable_part_library_publishes_locks_loads_and_instantiates_without_duplicat
 
     let mut design = Design::new(
         "library-consumer",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();

@@ -52,7 +52,9 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
     let layout = PcbLayout {
         id: BoardId::new("fab").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)].into(),
+            exterior: vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -97,7 +99,11 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
     };
 
     let mut materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     materialized.drills.push(DrillHit {
         source: "mounting-slot".into(),
@@ -129,6 +135,7 @@ fn certified_layer_images_emit_x2_copper_and_plated_excellon_files() {
     let feature_only = layout
         .materialize(
             &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 aggregate_layer_images: false,
                 ..MaterializationOptions::default()
@@ -428,7 +435,9 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     let layout = PcbLayout {
         id: BoardId::new("process").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(1, 0), p(1, 1), p(0, 1)].into(),
+            exterior: vec![p(0, 0), p(1, 0), p(1, 1), p(0, 1)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -522,7 +531,11 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     };
 
     let unresolved_text = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     assert!(
         unresolved_text
@@ -538,6 +551,7 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     let materialized = layout
         .materialize(
             &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 production_text: Some(ProductionTextPolicy {
                     font_name: "ttf-parser-demo".into(),
@@ -637,6 +651,7 @@ fn pad_and_artwork_intent_emit_unit_aware_mask_paste_and_legend_images() {
     let rejected = layout
         .materialize(
             &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 production_text: Some(ProductionTextPolicy {
                     font_name: "invalid-font".into(),

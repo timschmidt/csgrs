@@ -1104,8 +1104,11 @@ impl Route {
     }
 
     /// Appends one exact straight centerline segment.
-    pub fn line(self, start: Point2, end: Point2) -> Self {
-        self.segment(LinePathSegment::new(start, end))
+    pub fn line(self, start: Point2, end: Point2) -> Result<Self, DesignBuildError> {
+        let route = self.id.clone();
+        let segment = LinePathSegment::new(start, end, crate::PREDICATE_POLICY)
+            .map_err(|_| DesignBuildError::InvalidRoute(route))?;
+        Ok(self.segment(segment))
     }
 
     /// Appends one exact directed circular arc.

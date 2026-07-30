@@ -10,7 +10,7 @@ use hyperpath::TraceLayer;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "reusable-parts",
-        BoardOutline::rectangle(Real::from(24), Real::from(12)),
+        BoardOutline::rectangle(Real::from(24), Real::from(12))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let common = design.ground("GND")?;

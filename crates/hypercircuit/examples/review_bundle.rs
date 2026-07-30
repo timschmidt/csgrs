@@ -123,7 +123,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let mut design = Design::new(
         "review-bundle",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))?,
         stackup,
     )?;
     let output_net = design.signal("OUT")?;
@@ -165,14 +165,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     design.connect(&ground, [source.pin("neg")?, load.pin("2")?])?;
     design.route(
         &output_net,
-        Route::new("out", front, Real::one()).line(point(9, 10), point(21, 10)),
+        Route::new("out", front, Real::one()).line(point(9, 10), point(21, 10))?,
     )?;
     design.route(
         &ground,
         Route::new("ground", front, Real::one())
-            .line(point(5, 10), point(5, 16))
-            .line(point(5, 16), point(25, 16))
-            .line(point(25, 16), point(25, 10)),
+            .line(point(5, 10), point(5, 16))?
+            .line(point(5, 16), point(25, 16))?
+            .line(point(25, 16), point(25, 10))?,
     )?;
 
     let checked = design.finish()?;
@@ -182,9 +182,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pcb = checked
         .layout
         .to_svg(&checked.circuit, PcbSvgOptions::default())?;
-    let materialized = checked
-        .layout
-        .materialize(&checked.circuit, MaterializationOptions::default())?;
+    let materialized = checked.layout.materialize(
+        &checked.circuit,
+        &hypercircuit::MaterializationContext::STRICT,
+        MaterializationOptions::default(),
+    )?;
     let package_obj = b"v 0 0 0\nv 1 0 0\nv 1 1 0\nv 0 1 0\nv 0 0 1\nv 1 0 1\nv 1 1 1\nv 0 1 1\n\
 f 1 4 3 2\nf 5 6 7 8\nf 1 2 6 5\nf 2 3 7 6\nf 3 4 8 7\nf 4 1 5 8\n";
     let mut resolver = |reference: &Pcb3dModelReference| {

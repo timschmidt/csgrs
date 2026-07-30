@@ -18,7 +18,7 @@ use hyperlimit::compare_reals;
 use hyperpath::{ArcDirection, ExplicitCircularArc, LinePathSegment, TraceLayer};
 
 fn real_order(left: &Real, right: &Real) -> Ordering {
-    compare_reals(left, right)
+    compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT)
         .value()
         .expect("test comparison must be decided by the centralized predicate policy")
 }
@@ -99,7 +99,9 @@ fn fixture() -> (Circuit, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("placement").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(20, 0), p(20, 20), p(0, 20)].into(),
+            exterior: vec![p(0, 0), p(20, 0), p(20, 20), p(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -178,18 +180,25 @@ fn deterministic_search_moves_only_the_colliding_unconstrained_package() {
 fn placement_search_uses_exact_arc_board_envelopes() {
     let (circuit, mut layout) = fixture();
     layout.outline.exterior = BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(20, 0)).into(),
-        LinePathSegment::new(p(20, 0), p(20, 20)).into(),
+        LinePathSegment::new(p(0, 0), p(20, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(20, 0), p(20, 20), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         ExplicitCircularArc::new(
             p(10, 20),
             Real::from(10),
             p(20, 20),
             p(0, 20),
             ArcDirection::Ccw,
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .unwrap()
         .into(),
-        LinePathSegment::new(p(0, 20), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 20), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ]);
     let report = layout.solve_placement(&circuit, &PlacementSolvePolicy::default());
     assert!(report.is_solved(), "{:?}", report.issues);
@@ -226,7 +235,11 @@ fn fixed_collisions_are_reported_without_breaking_constraints() {
 #[test]
 fn regional_search_keeps_the_package_envelope_out_of_board_cutouts() {
     let (circuit, mut layout) = fixture();
-    layout.outline.cutouts = vec![vec![p(10, 3), p(13, 3), p(13, 7), p(10, 7)].into()];
+    layout.outline.cutouts = vec![
+        vec![p(10, 3), p(13, 3), p(13, 7), p(10, 7)]
+            .try_into()
+            .expect("integer polygon coordinates are strictly orderable"),
+    ];
     layout.placement_constraints = vec![PlacementConstraint {
         id: PlacementConstraintId::new("u2-region").unwrap(),
         kind: PlacementConstraintKind::Within {
@@ -502,6 +515,7 @@ fn pin_access_audit_observes_escape_policy_keepouts_and_foreign_pads() {
                 p(12, 10),
                 p(10, 12),
                 ArcDirection::Ccw,
+                hyperlimit::PredicatePolicy::STRICT,
             )
             .unwrap(),
         )],
@@ -535,7 +549,9 @@ fn pin_access_audit_observes_escape_policy_keepouts_and_foreign_pads() {
 fn retained_rotation_and_side_choices_are_searched_and_audited() {
     let (circuit, mut layout) = fixture();
     layout.placements.truncate(1);
-    layout.outline.exterior = vec![p(0, 0), p(4, 0), p(4, 10), p(0, 10)].into();
+    layout.outline.exterior = vec![p(0, 0), p(4, 0), p(4, 10), p(0, 10)]
+        .try_into()
+        .expect("integer polygon coordinates are strictly orderable");
     layout.placements[0].position = p(2, 5);
     layout.land_patterns[0].body.as_mut().unwrap().outline =
         vec![p(-2, -1), p(2, -1), p(2, 1), p(-2, 1)];
@@ -595,7 +611,11 @@ fn solved_placement_is_clean_under_hyperdrc_component_readiness() {
     let report = layout.solve_placement(&circuit, &PlacementSolvePolicy::default());
     let solved = report.apply_to(&layout);
     let materialized = solved
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let readiness = HyperDrcHandoff::from_materialization(&solved, &materialized)
         .run_readiness(&DrcReadinessPolicy::default());

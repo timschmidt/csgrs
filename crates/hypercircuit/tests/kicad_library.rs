@@ -171,7 +171,8 @@ fn native_library_pair_imports_to_one_portable_part_and_checked_design() {
 
     let mut design = Design::new(
         "native-library-consumer",
-        BoardOutline::rectangle(Real::from(10), Real::from(8)),
+        BoardOutline::rectangle(Real::from(10), Real::from(8))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();

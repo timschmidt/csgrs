@@ -29,7 +29,7 @@ use hyperlimit::compare_reals;
 use hyperpath::{ArcDirection, ExplicitCircularArc, LinePathSegment, TraceLayer};
 
 fn real_order(left: &Real, right: &Real) -> Ordering {
-    compare_reals(left, right)
+    compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT)
         .value()
         .expect("test comparison must be decided by the centralized predicate policy")
 }
@@ -105,7 +105,9 @@ fn fixture(two_layers: bool) -> (Circuit, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("negotiated-router").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)].into(),
+            exterior: vec![p(0, 0), p(10, 0), p(10, 10), p(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup { layers },
@@ -244,20 +246,20 @@ fn exact_route_quality_report_measures_stretch_and_typed_incompleteness() {
                 net: NetId::new("A").unwrap(),
                 layer: TraceLayer(0),
                 width: Real::one(),
-                segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                    p(2, 5),
-                    p(8, 5),
-                ))],
+                segments: vec![PcbRouteSegment::Line(
+                    LinePathSegment::new(p(2, 5), p(8, 5), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable"),
+                )],
             },
             PcbRoute {
                 id: RouteId::new("quality-b").unwrap(),
                 net: NetId::new("B").unwrap(),
                 layer: TraceLayer(0),
                 width: Real::one(),
-                segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                    p(5, 2),
-                    p(5, 8),
-                ))],
+                segments: vec![PcbRouteSegment::Line(
+                    LinePathSegment::new(p(5, 2), p(5, 8), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable"),
+                )],
             },
         ],
         vias: Vec::new(),
@@ -293,10 +295,10 @@ fn exact_route_quality_report_measures_stretch_and_typed_incompleteness() {
                 net: NetId::new("B").unwrap(),
                 layer: TraceLayer(0),
                 width: Real::one(),
-                segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                    p(5, 2),
-                    p(6, 8),
-                ))],
+                segments: vec![PcbRouteSegment::Line(
+                    LinePathSegment::new(p(5, 2), p(6, 8), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable"),
+                )],
             },
         ],
         vias: Vec::new(),
@@ -575,18 +577,25 @@ fn feature_aligned_grid_routes_exact_off_lattice_terminals_and_audits_injection(
 fn negotiated_router_uses_exact_arc_board_clearance() {
     let (circuit, mut layout) = fixture(false);
     layout.outline.exterior = BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(10, 0)).into(),
-        LinePathSegment::new(p(10, 0), p(10, 10)).into(),
+        LinePathSegment::new(p(0, 0), p(10, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(10, 0), p(10, 10), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         ExplicitCircularArc::new(
             p(5, 10),
             Real::from(5),
             p(10, 10),
             p(0, 10),
             ArcDirection::Ccw,
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .unwrap()
         .into(),
-        LinePathSegment::new(p(0, 10), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 10), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ]);
     let report = layout
         .negotiated_autoroute(
@@ -609,7 +618,9 @@ fn negotiated_router_uses_exact_arc_board_clearance() {
 #[test]
 fn locally_refined_grid_adds_dense_channel_capacity_without_a_global_fine_mesh() {
     let (circuit, mut layout) = fixture(false);
-    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)].into();
+    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)]
+        .try_into()
+        .expect("integer polygon coordinates are strictly orderable");
     for (instance, position) in [
         ("A0", p(2, 4)),
         ("A1", p(10, 4)),
@@ -669,7 +680,11 @@ fn locally_refined_grid_adds_dense_channel_capacity_without_a_global_fine_mesh()
     assert!(routed.validate(&circuit).is_valid());
     #[cfg(feature = "geometry")]
     routed
-        .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            hypercircuit::MaterializationOptions::default(),
+        )
         .unwrap();
 
     assert_eq!(
@@ -706,7 +721,9 @@ fn locally_refined_grid_adds_dense_channel_capacity_without_a_global_fine_mesh()
 #[test]
 fn adaptive_router_synthesizes_exact_capacity_after_a_coarse_channel_failure() {
     let (circuit, mut layout) = fixture(false);
-    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)].into();
+    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)]
+        .try_into()
+        .expect("integer polygon coordinates are strictly orderable");
     for (instance, position) in [
         ("A0", p(2, 6)),
         ("A1", p(10, 6)),
@@ -780,7 +797,11 @@ fn adaptive_router_synthesizes_exact_capacity_after_a_coarse_channel_failure() {
     assert!(routed.validate(&circuit).is_valid());
     #[cfg(feature = "geometry")]
     routed
-        .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            hypercircuit::MaterializationOptions::default(),
+        )
         .unwrap();
 
     let limited = layout
@@ -814,7 +835,9 @@ fn adaptive_router_synthesizes_exact_capacity_after_a_coarse_channel_failure() {
 #[test]
 fn sparse_octilinear_crossings_share_one_generalized_diagonal_cell() {
     let (circuit, mut layout) = fixture(false);
-    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)].into();
+    layout.outline.exterior = vec![p(0, 0), p(12, 0), p(12, 12), p(0, 12)]
+        .try_into()
+        .expect("integer polygon coordinates are strictly orderable");
     for (instance, position) in [
         ("A0", p(4, 4)),
         ("A1", p(8, 8)),
@@ -979,7 +1002,11 @@ fn bounded_any_angle_visibility_routes_and_accounts_for_exact_crossing_clearance
     assert!(routed.validate(&circuit).is_valid());
     #[cfg(feature = "geometry")]
     routed
-        .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            hypercircuit::MaterializationOptions::default(),
+        )
         .unwrap();
 
     assert_eq!(
@@ -1109,7 +1136,11 @@ fn octilinear_router_accounts_for_crossing_diagonal_cells_and_reports_exact_qual
     assert!(routed.validate(&circuit).is_valid());
     #[cfg(feature = "geometry")]
     routed
-        .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            hypercircuit::MaterializationOptions::default(),
+        )
         .unwrap();
 }
 
@@ -1464,7 +1495,11 @@ fn named_via_style_drives_search_emission_and_use_evidence() {
     #[cfg(feature = "geometry")]
     {
         let materialized = routed
-            .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+            .materialize(
+                &circuit,
+                &hypercircuit::MaterializationContext::STRICT,
+                hypercircuit::MaterializationOptions::default(),
+            )
             .unwrap();
         assert!(materialized.drills.iter().all(|drill| {
             drill.plating == Plating::Plated
@@ -1669,10 +1704,10 @@ fn exact_length_tuning_inserts_a_bounded_serpentine_and_replays_idempotently() {
         net: NetId::new("A").unwrap(),
         layer: TraceLayer(0),
         width: Real::one(),
-        segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-            p(2, 5),
-            p(8, 5),
-        ))],
+        segments: vec![PcbRouteSegment::Line(
+            LinePathSegment::new(p(2, 5), p(8, 5), hyperlimit::PredicatePolicy::STRICT)
+                .expect("integer line endpoints are strictly orderable"),
+        )],
     });
     let pattern = LengthTuningPatternId::new("a-serpentine").unwrap();
     layout
@@ -1726,20 +1761,20 @@ fn install_differential_phase_tuning(layout: &mut PcbLayout) -> PhaseTuningGroup
             net: NetId::new("A").unwrap(),
             layer: TraceLayer(0),
             width: Real::one(),
-            segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                p(2, 4),
-                p(8, 4),
-            ))],
+            segments: vec![PcbRouteSegment::Line(
+                LinePathSegment::new(p(2, 4), p(8, 4), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable"),
+            )],
         },
         PcbRoute {
             id: negative_route.clone(),
             net: NetId::new("B").unwrap(),
             layer: TraceLayer(0),
             width: Real::one(),
-            segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-                p(2, 6),
-                p(8, 6),
-            ))],
+            segments: vec![PcbRouteSegment::Line(
+                LinePathSegment::new(p(2, 6), p(8, 6), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable"),
+            )],
         },
     ]);
     let positive_pattern = LengthTuningPatternId::new("a-phase-pattern").unwrap();
@@ -1913,10 +1948,10 @@ fn phase_tuning_synthesis_retains_its_candidate_certification_bound() {
         net: NetId::new("C").unwrap(),
         layer: TraceLayer(0),
         width: Real::one(),
-        segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-            p(3, 5),
-            p(7, 5),
-        ))],
+        segments: vec![PcbRouteSegment::Line(
+            LinePathSegment::new(p(3, 5), p(7, 5), hyperlimit::PredicatePolicy::STRICT)
+                .expect("integer line endpoints are strictly orderable"),
+        )],
     });
     let report = layout.synthesize_phase_tuning(
         &circuit,
@@ -1960,10 +1995,10 @@ fn phase_group_collision_rejects_every_member_without_partial_application() {
         net: NetId::new("C").unwrap(),
         layer: TraceLayer(0),
         width: Real::one(),
-        segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-            p(3, 5),
-            p(4, 5),
-        ))],
+        segments: vec![PcbRouteSegment::Line(
+            LinePathSegment::new(p(3, 5), p(4, 5), hyperlimit::PredicatePolicy::STRICT)
+                .expect("integer line endpoints are strictly orderable"),
+        )],
     });
     assert!(layout.validate(&circuit).is_valid());
 
@@ -2131,6 +2166,7 @@ fn phase_group_rejects_a_foreign_copper_zone_atomically() {
         let repoured = layout.realize_phase_tuning_with_realized_zones(
             &circuit,
             &group,
+            &hypercircuit::MaterializationContext::STRICT,
             hypercircuit::MaterializationOptions::default(),
         );
         assert_eq!(repoured.status, PhaseTuningStatus::Applied, "{repoured:#?}");
@@ -2147,7 +2183,11 @@ fn phase_group_rejects_a_foreign_copper_zone_atomically() {
         let tuned = repoured.apply_to(&layout).unwrap();
         assert!(tuned.validate(&circuit).is_valid());
         tuned
-            .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+            .materialize(
+                &circuit,
+                &hypercircuit::MaterializationContext::STRICT,
+                hypercircuit::MaterializationOptions::default(),
+            )
             .unwrap();
 
         let mut stricter = layout.clone();
@@ -2175,6 +2215,7 @@ fn phase_group_rejects_a_foreign_copper_zone_atomically() {
         let blocked = stricter.realize_phase_tuning_with_realized_zones(
             &circuit,
             &group,
+            &hypercircuit::MaterializationContext::STRICT,
             hypercircuit::MaterializationOptions::default(),
         );
         assert_eq!(blocked.status, PhaseTuningStatus::Rejected);
@@ -2375,10 +2416,10 @@ fn nonselected_copper_is_preserved_and_treated_as_a_fixed_obstacle() {
         net: NetId::new("B").unwrap(),
         layer: TraceLayer(0),
         width: Real::one(),
-        segments: vec![PcbRouteSegment::Line(LinePathSegment::new(
-            p(5, 1),
-            p(5, 9),
-        ))],
+        segments: vec![PcbRouteSegment::Line(
+            LinePathSegment::new(p(5, 1), p(5, 9), hyperlimit::PredicatePolicy::STRICT)
+                .expect("integer line endpoints are strictly orderable"),
+        )],
     });
     let report = layout
         .negotiated_autoroute(
@@ -2654,7 +2695,11 @@ fn differential_pair_routes_atomically_with_translated_traces_and_vias() {
     #[cfg(feature = "geometry")]
     {
         let materialized = routed
-            .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+            .materialize(
+                &circuit,
+                &hypercircuit::MaterializationContext::STRICT,
+                hypercircuit::MaterializationOptions::default(),
+            )
             .unwrap();
         for net in ["A", "B"] {
             assert!(materialized.copper_features.iter().any(|feature| {
@@ -2940,7 +2985,11 @@ fn accepted_autoroute_materializes_with_source_identity() {
         .unwrap();
     let routed = report.apply_to(&layout).unwrap();
     let materialized = routed
-        .materialize(&circuit, hypercircuit::MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            hypercircuit::MaterializationOptions::default(),
+        )
         .unwrap();
     assert!(materialized.copper_features.iter().any(|feature| {
         feature.kind == hypercircuit::CopperFeatureKind::Route

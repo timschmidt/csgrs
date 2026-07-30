@@ -534,7 +534,10 @@ impl PcbLayout {
         }
         report.placements = resolved.placements;
 
-        let board_boundary = match self.outline.boundary_geometry() {
+        let board_boundary = match self
+            .outline
+            .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        {
             Ok(boundary) => boundary,
             Err(error) => {
                 report
@@ -1422,7 +1425,7 @@ fn envelope_inside_board(bounds: &Bounds, boundary: &BoardBoundaryGeometry) -> O
         .contains_axis_aligned_box(
             &Point2::new(bounds.min_x.clone(), bounds.min_y.clone()),
             &Point2::new(bounds.max_x.clone(), bounds.max_y.clone()),
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .ok()?
     {

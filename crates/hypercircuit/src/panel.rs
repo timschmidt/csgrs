@@ -535,7 +535,8 @@ mod tests {
         PanelBoardInstance {
             id: id.into(),
             board: BoardId::new(id).unwrap(),
-            outline: BoardOutline::rectangle(Real::from(10), Real::from(10)),
+            outline: BoardOutline::rectangle(Real::from(10), Real::from(10))
+                .expect("integer rectangle coordinates are strictly orderable"),
             transform: RigidTransform2::new([Real::from(x), Real::from(5)], 0, false).unwrap(),
         }
     }
@@ -545,7 +546,8 @@ mod tests {
         let mut panel = PanelDefinition {
             id: "p1".into(),
             frame: CoordinateFrame2::panel_default(),
-            outline: BoardOutline::rectangle(Real::from(40), Real::from(20)),
+            outline: BoardOutline::rectangle(Real::from(40), Real::from(20))
+                .expect("integer rectangle coordinates are strictly orderable"),
             thickness: Real::from(2),
             minimum_web: Real::from(2),
             minimum_rail: Real::from(3),
@@ -579,14 +581,16 @@ mod tests {
         let panel = PanelDefinition {
             id: "p1".into(),
             frame: CoordinateFrame2::panel_default(),
-            outline: BoardOutline::rectangle(Real::from(40), Real::from(40)),
+            outline: BoardOutline::rectangle(Real::from(40), Real::from(40))
+                .expect("integer rectangle coordinates are strictly orderable"),
             thickness: Real::from(2),
             minimum_web: Real::one(),
             minimum_rail: Real::from(3),
             children: vec![PanelBoardInstance {
                 id: "unit-a".into(),
                 board: board.clone(),
-                outline: BoardOutline::rectangle(Real::from(10), Real::from(10)),
+                outline: BoardOutline::rectangle(Real::from(10), Real::from(10))
+                    .expect("integer rectangle coordinates are strictly orderable"),
                 transform: RigidTransform2::new([Real::from(20), Real::from(20)], 1, true).unwrap(),
             }],
             rails: Vec::new(),

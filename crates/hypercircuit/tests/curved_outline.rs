@@ -29,36 +29,55 @@ fn circuit() -> Circuit {
 
 fn exterior() -> BoardContour {
     BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(10, 0)).into(),
-        LinePathSegment::new(p(10, 0), p(10, 10)).into(),
+        LinePathSegment::new(p(0, 0), p(10, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(10, 0), p(10, 10), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         ExplicitCircularArc::new(
             p(5, 10),
             Real::from(5),
             p(10, 10),
             p(0, 10),
             ArcDirection::Ccw,
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .unwrap()
         .into(),
-        LinePathSegment::new(p(0, 10), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 10), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ])
 }
 
 fn cubic_cutout() -> BoardContour {
     BoardContour::from_segments(vec![
-        LinePathSegment::new(p(2, 2), p(4, 2)).into(),
-        LinePathSegment::new(p(4, 2), p(4, 4)).into(),
+        LinePathSegment::new(p(2, 2), p(4, 2), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(4, 2), p(4, 4), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         CubicBezier::new(p(4, 4), p(4, 5), p(2, 5), p(2, 4)).into(),
-        LinePathSegment::new(p(2, 4), p(2, 2)).into(),
+        LinePathSegment::new(p(2, 4), p(2, 2), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ])
 }
 
 fn cubic_exterior() -> BoardContour {
     BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(10, 0)).into(),
-        LinePathSegment::new(p(10, 0), p(10, 10)).into(),
+        LinePathSegment::new(p(0, 0), p(10, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(10, 0), p(10, 10), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         CubicBezier::new(p(10, 10), p(10, 12), p(0, 12), p(0, 10)).into(),
-        LinePathSegment::new(p(0, 10), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 10), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ])
 }
 
@@ -140,47 +159,53 @@ fn mixed_curve_board_contours_round_trip_and_render_without_chord_loss() {
 
     let placement = layout.solve_placement(&circuit, &PlacementSolvePolicy::default());
     assert!(placement.issues.is_empty(), "{:?}", placement.issues);
-    let boundary = layout.outline.boundary_geometry().unwrap();
+    let boundary = layout
+        .outline
+        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .unwrap();
     assert_eq!(
         boundary
-            .classify_point(&p(3, 3), &CurvePolicy::certified())
+            .classify_point(&p(3, 3), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         boundary
-            .contains_axis_aligned_box(&p(5, 5), &p(7, 7), &CurvePolicy::certified())
+            .contains_axis_aligned_box(&p(5, 5), &p(7, 7), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided(true)
     );
     assert_eq!(
         boundary
-            .contains_axis_aligned_box(&p(1, 1), &p(3, 3), &CurvePolicy::certified())
+            .contains_axis_aligned_box(&p(1, 1), &p(3, 3), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided(false)
     );
     let mut arc_layout = layout.clone();
     arc_layout.outline.cutouts.clear();
-    let arc_boundary = arc_layout.outline.boundary_geometry().unwrap();
+    let arc_boundary = arc_layout
+        .outline
+        .boundary_geometry(&hypercurve::CurvePolicy::STRICT)
+        .unwrap();
     let disc = arc_boundary
-        .contains_disc(&p(5, 5), Real::one(), &CurvePolicy::certified())
+        .contains_disc(&p(5, 5), Real::one(), &CurvePolicy::STRICT)
         .unwrap();
     assert_eq!(disc, Classification::Decided(true), "{disc:?}");
     assert_eq!(
         arc_boundary
-            .contains_disc(&p(5, 14), Real::from(2), &CurvePolicy::certified())
+            .contains_disc(&p(5, 14), Real::from(2), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided(false)
     );
     assert_eq!(
         arc_boundary
-            .contains_segment(&p(2, 2), &p(8, 2), Real::one(), &CurvePolicy::certified())
+            .contains_segment(&p(2, 2), &p(8, 2), Real::one(), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Decided(true)
     );
     assert_eq!(
         boundary
-            .contains_disc(&p(6, 6), Real::one(), &CurvePolicy::certified())
+            .contains_disc(&p(6, 6), Real::one(), &CurvePolicy::STRICT)
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Unsupported)
     );
@@ -198,9 +223,15 @@ fn disconnected_mixed_contours_fail_structural_validation() {
     let circuit = circuit();
     let mut layout = layout(false);
     layout.outline.exterior = BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(10, 0)).into(),
-        LinePathSegment::new(p(10, 1), p(0, 10)).into(),
-        LinePathSegment::new(p(0, 10), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 0), p(10, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(10, 1), p(0, 10), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(0, 10), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ]);
     assert!(
         layout
@@ -222,7 +253,11 @@ fn arc_board_profile_materializes_exactly_and_emits_cam_arcs() {
     let circuit = circuit();
     let layout = layout(false);
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     assert!(!materialized.substrate.is_empty());
 
@@ -280,7 +315,11 @@ fn cubic_board_profile_requires_an_explicit_cam_projection_policy() {
     let circuit = circuit();
     let layout = layout(true);
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let error = FabricationPackage::from_materialization(&layout, &materialized).unwrap_err();
     assert!(
@@ -292,7 +331,11 @@ fn cubic_board_profile_requires_an_explicit_cam_projection_policy() {
     let mut projected_layout = layout;
     projected_layout.outline.exterior = cubic_exterior();
     let materialized = projected_layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     for chord_error in [0.0, f64::NAN] {
         let error = FabricationPackage::from_materialization_with_options(

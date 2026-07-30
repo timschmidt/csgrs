@@ -36,7 +36,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layout = PcbLayout {
         id: BoardId::new("kicad-stackup-rules")?,
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(40, 0), point(40, 25), point(0, 25)].into(),
+            exterior: vec![point(0, 0), point(40, 0), point(40, 25), point(0, 25)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {

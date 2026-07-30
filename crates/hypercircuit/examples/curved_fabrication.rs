@@ -15,16 +15,52 @@ fn point(x: i64, y: i64) -> Point2 {
 
 fn main() {
     let exterior = BoardContour::from_segments(vec![
-        LinePathSegment::new(point(0, 0), point(40, 0)).into(),
-        LinePathSegment::new(point(40, 0), point(40, 25)).into(),
+        LinePathSegment::new(
+            point(0, 0),
+            point(40, 0),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
+        LinePathSegment::new(
+            point(40, 0),
+            point(40, 25),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
         CubicBezier::new(point(40, 25), point(40, 30), point(0, 30), point(0, 25)).into(),
-        LinePathSegment::new(point(0, 25), point(0, 0)).into(),
+        LinePathSegment::new(
+            point(0, 25),
+            point(0, 0),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
     ]);
     let cutout = BoardContour::from_segments(vec![
-        LinePathSegment::new(point(15, 10), point(25, 10)).into(),
-        LinePathSegment::new(point(25, 10), point(25, 15)).into(),
+        LinePathSegment::new(
+            point(15, 10),
+            point(25, 10),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
+        LinePathSegment::new(
+            point(25, 10),
+            point(25, 15),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
         CubicBezier::new(point(25, 15), point(25, 18), point(15, 18), point(15, 15)).into(),
-        LinePathSegment::new(point(15, 15), point(15, 10)).into(),
+        LinePathSegment::new(
+            point(15, 15),
+            point(15, 10),
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .expect("integer line endpoints are strictly orderable")
+        .into(),
     ]);
     let layout = PcbLayout {
         id: BoardId::new("curved-fabrication").unwrap(),

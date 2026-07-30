@@ -11,7 +11,7 @@ use hypercircuit::{
 use hyperlimit::compare_reals;
 
 fn real_order(left: &Real, right: &Real) -> Ordering {
-    compare_reals(left, right)
+    compare_reals(left, right, hyperlimit::PredicatePolicy::STRICT)
         .value()
         .expect("test comparison must be decided by the centralized predicate policy")
 }

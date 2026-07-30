@@ -107,7 +107,8 @@ fn narrow_horizontal_two_pad_body() -> Footprint {
 fn fluent_release_design() -> hypercircuit::CheckedDesign {
     let mut design = Design::new(
         "fluent-release",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         hypercircuit::PcbStackup::two_layer(
             (Real::from(35) / Real::from(1_000)).unwrap(),
             (Real::from(153) / Real::from(100)).unwrap(),
@@ -164,7 +165,9 @@ fn fluent_release_design() -> hypercircuit::CheckedDesign {
     design
         .route(
             &supply,
-            Route::new("supply-route", TraceLayer(0), Real::one()).line(point(5, 3), point(25, 3)),
+            Route::new("supply-route", TraceLayer(0), Real::one())
+                .line(point(5, 3), point(25, 3))
+                .unwrap(),
         )
         .unwrap();
     design
@@ -172,8 +175,11 @@ fn fluent_release_design() -> hypercircuit::CheckedDesign {
             &ground,
             Route::new("ground-route", TraceLayer(0), Real::one())
                 .line(point(5, 7), point(5, 10))
+                .unwrap()
                 .line(point(5, 10), point(25, 10))
-                .line(point(25, 10), point(25, 7)),
+                .unwrap()
+                .line(point(25, 10), point(25, 7))
+                .unwrap(),
         )
         .unwrap();
     design
@@ -196,7 +202,8 @@ fn fluent_release_design() -> hypercircuit::CheckedDesign {
 fn offset_uncertain_release_design() -> hypercircuit::CheckedDesign {
     let mut design = Design::new(
         "offset-uncertain-release",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         hypercircuit::PcbStackup::two_layer(
             (Real::from(35) / Real::from(1_000)).unwrap(),
             (Real::from(153) / Real::from(100)).unwrap(),
@@ -244,8 +251,11 @@ fn offset_uncertain_release_design() -> hypercircuit::CheckedDesign {
             &supply,
             Route::new("supply-route", TraceLayer(0), Real::one())
                 .line(point(4, 6), point(4, 3))
+                .unwrap()
                 .line(point(4, 3), point(21, 3))
-                .line(point(21, 3), point(21, 6)),
+                .unwrap()
+                .line(point(21, 3), point(21, 6))
+                .unwrap(),
         )
         .unwrap();
     design
@@ -253,8 +263,11 @@ fn offset_uncertain_release_design() -> hypercircuit::CheckedDesign {
             &ground,
             Route::new("ground-route", TraceLayer(0), Real::one())
                 .line(point(6, 6), point(6, 10))
+                .unwrap()
                 .line(point(6, 10), point(23, 10))
-                .line(point(23, 10), point(23, 6)),
+                .unwrap()
+                .line(point(23, 10), point(23, 6))
+                .unwrap(),
         )
         .unwrap();
     design
@@ -285,7 +298,8 @@ fn hierarchical_release_project() -> CheckedProject {
     };
     let mut load_design = Design::new(
         "load-circuit",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         stackup(),
     )
     .unwrap();
@@ -318,7 +332,8 @@ fn hierarchical_release_project() -> CheckedProject {
 
     let mut root_design = Design::new(
         "hierarchical-release",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         stackup(),
     )
     .unwrap();
@@ -677,7 +692,8 @@ fn panel_release_expands_components_and_test_access_without_losing_child_identit
     let panel = PanelDefinition {
         id: "panel-a".into(),
         frame: CoordinateFrame2::panel_default(),
-        outline: BoardOutline::rectangle(Real::from(200), Real::from(200)),
+        outline: BoardOutline::rectangle(Real::from(200), Real::from(200))
+            .expect("integer rectangle coordinates are strictly orderable"),
         thickness: Real::from(2),
         minimum_web: Real::one(),
         minimum_rail: Real::from(3),

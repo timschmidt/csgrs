@@ -35,7 +35,9 @@ fn fixture(maximum_vias: usize) -> (Circuit, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("stitching").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(20, 0), p(20, 20), p(0, 20)].into(),
+            exterior: vec![p(0, 0), p(20, 0), p(20, 20), p(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -160,7 +162,11 @@ fn deterministic_stitching_vias_feed_every_release_boundary() {
     );
 
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     assert_eq!(materialized.drills.len(), 8);
     assert_eq!(materialized.stitching_realizations, stitching.evidence);
@@ -190,18 +196,25 @@ fn deterministic_stitching_vias_feed_every_release_boundary() {
 fn stitching_uses_exact_arc_board_clearance_without_indeterminate_candidates() {
     let (circuit, mut layout) = fixture(100);
     layout.outline.exterior = BoardContour::from_segments(vec![
-        LinePathSegment::new(p(0, 0), p(20, 0)).into(),
-        LinePathSegment::new(p(20, 0), p(20, 20)).into(),
+        LinePathSegment::new(p(0, 0), p(20, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
+        LinePathSegment::new(p(20, 0), p(20, 20), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
         ExplicitCircularArc::new(
             p(10, 20),
             Real::from(10),
             p(20, 20),
             p(0, 20),
             ArcDirection::Ccw,
+            hyperlimit::PredicatePolicy::STRICT,
         )
         .unwrap()
         .into(),
-        LinePathSegment::new(p(0, 20), p(0, 0)).into(),
+        LinePathSegment::new(p(0, 20), p(0, 0), hyperlimit::PredicatePolicy::STRICT)
+            .expect("integer line endpoints are strictly orderable")
+            .into(),
     ]);
     assert!(layout.validate(&circuit).is_valid());
     let report = layout.realize_stitching_vias();

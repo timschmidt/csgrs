@@ -115,8 +115,14 @@ fn fixture() -> (Circuit, SchematicLayout, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("main-board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(30, 0), point(30, 20), point(0, 20)].into(),
-            cutouts: vec![vec![point(20, 10), point(22, 10), point(22, 12), point(20, 12)].into()],
+            exterior: vec![point(0, 0), point(30, 0), point(30, 20), point(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
+            cutouts: vec![
+                vec![point(20, 10), point(22, 10), point(22, 12), point(20, 12)]
+                    .try_into()
+                    .expect("integer polygon coordinates are strictly orderable"),
+            ],
         },
         stackup: PcbStackup {
             layers: vec![
@@ -181,7 +187,15 @@ fn fixture() -> (Circuit, SchematicLayout, PcbLayout) {
             net: signal.clone(),
             layer: front,
             width: Real::from(1),
-            segments: vec![LinePathSegment::new(point(5, 5), point(15, 8)).into()],
+            segments: vec![
+                LinePathSegment::new(
+                    point(5, 5),
+                    point(15, 8),
+                    hyperlimit::PredicatePolicy::STRICT,
+                )
+                .expect("integer line endpoints are strictly orderable")
+                .into(),
+            ],
         }],
         vias: vec![PcbVia {
             id: ViaId::new("signal-via").unwrap(),

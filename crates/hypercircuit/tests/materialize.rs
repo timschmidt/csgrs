@@ -30,7 +30,9 @@ fn multi_segment_orthogonal_route_materializes_as_one_source_feature() {
     let layout = PcbLayout {
         id: BoardId::new("orthogonal-route").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)].into(),
+            exterior: vec![p(0, 0), p(20, 0), p(20, 10), p(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -50,11 +52,21 @@ fn multi_segment_orthogonal_route_materializes_as_one_source_feature() {
             layer,
             width: Real::one(),
             segments: vec![
-                LinePathSegment::new(p(2, 2), p(8, 2)).into(),
-                LinePathSegment::new(p(8, 2), p(8, 6)).into(),
-                LinePathSegment::new(p(8, 6), p(12, 6)).into(),
-                LinePathSegment::new(p(12, 6), p(12, 2)).into(),
-                LinePathSegment::new(p(12, 2), p(18, 2)).into(),
+                LinePathSegment::new(p(2, 2), p(8, 2), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+                LinePathSegment::new(p(8, 2), p(8, 6), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+                LinePathSegment::new(p(8, 6), p(12, 6), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+                LinePathSegment::new(p(12, 6), p(12, 2), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+                LinePathSegment::new(p(12, 2), p(18, 2), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
             ],
         }],
         vias: Vec::new(),
@@ -64,7 +76,11 @@ fn multi_segment_orthogonal_route_materializes_as_one_source_feature() {
     };
 
     let report = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let route_features = report
         .copper_features
@@ -98,7 +114,9 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
     let layout = PcbLayout {
         id: BoardId::new("main").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)].into(),
+            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -132,14 +150,22 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
                 net: signal.clone(),
                 layer: front,
                 width: Real::from(2),
-                segments: vec![LinePathSegment::new(p(4, 4), p(15, 4)).into()],
+                segments: vec![
+                    LinePathSegment::new(p(4, 4), p(15, 4), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
+                ],
             },
             PcbRoute {
                 id: RouteId::new("foreign-route").unwrap(),
                 net: foreign,
                 layer: back,
                 width: Real::one(),
-                segments: vec![LinePathSegment::new(p(12, 10), p(20, 10)).into()],
+                segments: vec![
+                    LinePathSegment::new(p(12, 10), p(20, 10), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
+                ],
             },
         ],
         vias: vec![PcbVia {
@@ -182,7 +208,11 @@ fn declarative_board_materializes_source_addressable_copper_and_drills() {
     };
 
     let report = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     assert_eq!(report.copper_features.len(), 5);
     assert!(report.copper_features.iter().any(|feature| matches!(
@@ -399,7 +429,9 @@ fn zone_island_policy_prunes_unconnected_and_exact_undersized_components() {
     let layout = PcbLayout {
         id: BoardId::new("island-policy").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(-1, -1), p(21, -1), p(21, 11), p(-1, 11)].into(),
+            exterior: vec![p(-1, -1), p(21, -1), p(21, 11), p(-1, 11)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -418,7 +450,11 @@ fn zone_island_policy_prunes_unconnected_and_exact_undersized_components() {
             net: ground.clone(),
             layer,
             width: Real::one(),
-            segments: vec![LinePathSegment::new(p(5, 5), p(7, 5)).into()],
+            segments: vec![
+                LinePathSegment::new(p(5, 5), p(7, 5), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
+            ],
         }],
         vias: Vec::new(),
         zones: vec![CopperZone {
@@ -450,7 +486,11 @@ fn zone_island_policy_prunes_unconnected_and_exact_undersized_components() {
     };
 
     let report = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let evidence = &report.zone_realizations[0];
     assert_eq!(evidence.initial_islands, 3);

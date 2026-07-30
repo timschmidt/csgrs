@@ -27,13 +27,21 @@ fn fixture() -> (Circuit, PcbLayout) {
         is_ground: false,
     });
     let layer = TraceLayer(0);
-    let arc =
-        ExplicitCircularArc::new(p(5, 5), Real::from(5), p(5, 0), p(10, 5), ArcDirection::Ccw)
-            .unwrap();
+    let arc = ExplicitCircularArc::new(
+        p(5, 5),
+        Real::from(5),
+        p(5, 0),
+        p(10, 5),
+        ArcDirection::Ccw,
+        hyperlimit::PredicatePolicy::STRICT,
+    )
+    .unwrap();
     let layout = PcbLayout {
         id: BoardId::new("curved-route").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(-2, -2), p(17, -2), p(17, 8), p(-2, 8)].into(),
+            exterior: vec![p(-2, -2), p(17, -2), p(17, 8), p(-2, 8)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -53,7 +61,9 @@ fn fixture() -> (Circuit, PcbLayout) {
             layer,
             width: Real::one(),
             segments: vec![
-                LinePathSegment::new(p(0, 0), p(5, 0)).into(),
+                LinePathSegment::new(p(0, 0), p(5, 0), hyperlimit::PredicatePolicy::STRICT)
+                    .expect("integer line endpoints are strictly orderable")
+                    .into(),
                 arc.into(),
                 CubicBezier::new(p(10, 5), p(11, 6), p(14, 6), p(15, 5)).into(),
             ],
@@ -83,6 +93,7 @@ fn exact_mixed_line_arc_bezier_route_survives_native_workflow_boundaries() {
     let materialized = layout
         .materialize(
             &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 route_bezier_chord_error: 0.05,
                 ..MaterializationOptions::default()

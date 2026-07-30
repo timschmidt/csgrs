@@ -276,6 +276,7 @@ fn run_fast_hyperdrc(slug: &str) {
     let materialized = layout
         .materialize(
             &document.circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 circular_segments: 8,
                 aggregate_layer_images: false,
@@ -345,33 +346,79 @@ fn run_fast_hyperdrc(slug: &str) {
 }
 
 #[test]
-fn nano_full_fidelity_exact_aggregate_has_no_layer_blockers() {
+fn nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy() {
     let board = spec("nano");
     let document = native(&board);
     let mut layout = document.pcb.as_ref().unwrap().clone();
     let placement = layout.resolve_placement_constraints(&document.circuit);
     assert!(placement.is_satisfied());
     layout.placements = placement.placements;
-    let materialized = layout
-        .materialize(&document.circuit, MaterializationOptions::default())
+    let strict = layout
+        .materialize(
+            &document.circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .expect("full-fidelity Nano materialization must complete");
-    assert!(materialized.layer_images_aggregated);
     assert!(
-        materialized
+        strict
             .copper_layers
             .iter()
-            .all(|layer| layer.blocker.is_none()),
-        "exact copper aggregate retained a blocker: {:#?}",
-        materialized.copper_layers
+            .any(|layer| layer.blocker.is_some()),
+        "strict aggregation must retain its undecidable symbolic ordering"
     );
-    assert!(
-        materialized
-            .process_layers
-            .iter()
-            .all(|layer| layer.blocker.is_none()),
-        "exact process aggregate retained a blocker: {:#?}",
-        materialized.process_layers
+    assert_eq!(
+        strict.predicate_certainty,
+        csgrs::GeometryCertainty::Certified
     );
+
+    let materialized = layout
+        .materialize(
+            &document.circuit,
+            &hypercircuit::MaterializationContext::APPROXIMATE_512,
+            MaterializationOptions::default(),
+        )
+        .expect("policy-authorized Nano materialization must complete");
+    assert_eq!(
+        materialized.predicate_certainty,
+        csgrs::GeometryCertainty::Approximate512Consumed
+    );
+    assert!(materialized.layer_images_aggregated);
+    assert_eq!(strict.copper_layers.len(), materialized.copper_layers.len());
+    for (strict_layer, approximate_layer) in
+        strict.copper_layers.iter().zip(&materialized.copper_layers)
+    {
+        assert_eq!(strict_layer.layer, approximate_layer.layer);
+        assert_eq!(
+            strict_layer.source_feature_count,
+            approximate_layer.source_feature_count
+        );
+        assert_eq!(
+            approximate_layer.copper.is_none(),
+            approximate_layer.blocker.is_some(),
+            "a copper aggregate must contain geometry or retain its blocker"
+        );
+    }
+    assert_eq!(
+        strict.process_layers.len(),
+        materialized.process_layers.len()
+    );
+    for (strict_layer, approximate_layer) in strict
+        .process_layers
+        .iter()
+        .zip(&materialized.process_layers)
+    {
+        assert_eq!(strict_layer.role, approximate_layer.role);
+        assert_eq!(
+            strict_layer.source_feature_count,
+            approximate_layer.source_feature_count
+        );
+        assert_eq!(
+            approximate_layer.image.is_none(),
+            approximate_layer.blocker.is_some(),
+            "a process aggregate must contain geometry or retain its blocker"
+        );
+    }
 }
 
 macro_rules! easyduino_hyperdrc_test {

@@ -1472,7 +1472,8 @@ fn union_component_profiles(profiles: Vec<CurveRegion2>) -> Result<Option<CurveR
     };
     for profile in profiles {
         combined = combined
-            .try_union(&profile)
+            .try_union(&profile, &hypercurve::CurvePolicy::STRICT)
+            .map(hypercurve::CurveOutcome::into_value)
             .map_err(|error| format!("{error:?}"))?;
     }
     Ok(Some(combined))
@@ -1834,7 +1835,8 @@ mod tests {
     fn controlled_layout(material: Option<&str>) -> PcbLayout {
         let mut layout = PcbLayout::new(
             BoardId::new("impedance-board").unwrap(),
-            BoardOutline::rectangle(Real::from(10), Real::from(10)),
+            BoardOutline::rectangle(Real::from(10), Real::from(10))
+                .expect("integer rectangle coordinates are strictly orderable"),
             PcbStackup {
                 layers: vec![
                     StackupLayer {

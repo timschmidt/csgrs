@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut source = Design::new(
         "library-source",
-        BoardOutline::rectangle(Real::from(10), Real::from(10)),
+        BoardOutline::rectangle(Real::from(10), Real::from(10))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let definition = source.define_part(
@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut consumer = Design::new(
         "library-consumer",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))?,
         PcbStackup::single_layer(Real::one(), None),
     )?;
     let common = consumer.ground("GND")?;

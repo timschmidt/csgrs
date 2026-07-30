@@ -12,7 +12,7 @@ use serde_json::json;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "tscircuit-router-handoff",
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))?,
         PcbStackup::two_layer(
             (Real::from(35) / Real::from(1_000))?,
             (Real::from(153) / Real::from(100))?,

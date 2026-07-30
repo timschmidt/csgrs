@@ -60,7 +60,9 @@ fn main() {
     let layout = PcbLayout {
         id: BoardId::new("advanced-routing").unwrap(),
         outline: BoardOutline {
-            exterior: vec![point(0, 0), point(10, 0), point(10, 10), point(0, 10)].into(),
+            exterior: vec![point(0, 0), point(10, 0), point(10, 10), point(0, 10)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {

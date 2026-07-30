@@ -11,7 +11,7 @@ use hyperpath::TraceLayer;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut design = Design::new(
         "fluent-demo",
-        BoardOutline::rectangle(Real::from(30), Real::from(18)),
+        BoardOutline::rectangle(Real::from(30), Real::from(18))?,
         PcbStackup::two_layer(
             (Real::from(35) / Real::from(1_000))?,
             (Real::from(153) / Real::from(100))?,
@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Route::new("vcc-route", TraceLayer(0), Real::one()).line(
             Point2::new(Real::from(2), Real::from(9)),
             Point2::new(Real::from(14), Real::from(9)),
-        ),
+        )?,
     )?;
     design.via(
         &supply,

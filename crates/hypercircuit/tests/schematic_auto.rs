@@ -189,7 +189,8 @@ fn checked_fluent_design_can_replace_an_empty_drawing_and_render_it() {
 
     let mut design = Design::new(
         "fluent-auto-schematic",
-        BoardOutline::rectangle(Real::from(30), Real::from(20)),
+        BoardOutline::rectangle(Real::from(30), Real::from(20))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::single_layer(Real::one(), None),
     )
     .unwrap();

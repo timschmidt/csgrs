@@ -4,34 +4,209 @@
 //! products with source ids and net identities, so a boolean union never
 //! destroys the information needed by `hyperdrc` or an interchange adapter.
 
-use crate::predicate::RealPredicateExt as _;
+use std::cell::Cell;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::io::{BufReader, Cursor};
 
-use csgrs::AttributedMesh;
 use csgrs::curve::{self, CurveRegionExt};
 use csgrs::solid::{self, SolidExt};
+use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
-    CircularArc2, Classification, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
-    CurveRegionLoopRole, CurveString2, FillRule, LineSeg2, OffsetCap, Point2 as CurvePoint2,
-    Segment2,
+    BooleanOp, CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveOutcome,
+    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole, CurveString2, ExactCurveError,
+    ExactCurveResult, FillRule, LineSeg2, OffsetCap, Point2 as CurvePoint2, Segment2,
 };
 use hyperlattice::Point2;
+use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 use hyperpath::TraceLayer;
 use hyperreal::Real;
 use sha2::{Digest, Sha256};
 
 use crate::layout::{
-    BoardSide, CopperZone, CopperZoneConnection, CopperZoneFill, DrillShape, KeepoutScope,
-    LandPatternGraphic, LandPatternGraphicPrimitive, LandPatternPad, LayerRole, PadShape,
-    Pcb3dModelFormat, Pcb3dModelReference, PcbLayout, PcbPlacement, Plating, ViaMaskDisposition,
+    BoardBoundaryGeometryError, BoardSide, CopperZone, CopperZoneConnection, CopperZoneFill,
+    DrillShape, KeepoutScope, LandPatternGraphic, LandPatternGraphicPrimitive, LandPatternPad,
+    LayerRole, PadShape, Pcb3dModelFormat, Pcb3dModelReference, PcbLayout, PcbPlacement, Plating,
+    ViaMaskDisposition,
 };
 use crate::{
     Circuit, CircuitInstanceId, LandPatternGraphicId, LandPatternId, NetId, PadId, PinRef, RouteId,
     ViaId, ZoneId,
 };
+
+/// Immutable predicate policy selected for one PCB materialization operation.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct MaterializationContext {
+    predicates: PredicatePolicy,
+}
+
+impl MaterializationContext {
+    /// Strict materialization: every topology decision must be certified.
+    pub const STRICT: Self = Self::new(PredicatePolicy::STRICT);
+
+    /// Materialization may consume Hyperlimit's terminal 512-bit interpretation.
+    pub const APPROXIMATE_512: Self = Self::new(PredicatePolicy::APPROXIMATE_512);
+
+    /// Construct a materialization context with the selected predicate policy.
+    pub const fn new(predicates: PredicatePolicy) -> Self {
+        Self { predicates }
+    }
+
+    /// Return the selected Hyperlimit predicate policy.
+    pub const fn predicate_policy(self) -> PredicatePolicy {
+        self.predicates
+    }
+
+    /// Derive the matching CSG curve/mesh operation context.
+    pub const fn geometry_context(self) -> GeometryContext {
+        GeometryContext::new(self.predicates)
+    }
+}
+
+struct MaterializationDecisions {
+    predicates: PredicatePolicy,
+    curves: CurvePolicy,
+    certainty: Cell<GeometryCertainty>,
+}
+
+impl MaterializationDecisions {
+    fn new(context: &MaterializationContext) -> Self {
+        let predicates = context.predicate_policy();
+        Self {
+            predicates,
+            curves: if predicates == PredicatePolicy::APPROXIMATE_512 {
+                CurvePolicy::APPROXIMATE_512
+            } else {
+                CurvePolicy::STRICT
+            },
+            certainty: Cell::new(GeometryCertainty::Certified),
+        }
+    }
+
+    fn curve_policy(&self) -> &CurvePolicy {
+        &self.curves
+    }
+
+    fn geometry_context(&self) -> GeometryContext {
+        GeometryContext::new(self.predicates)
+    }
+
+    fn certainty(&self) -> GeometryCertainty {
+        self.certainty.get()
+    }
+
+    fn observe(&self, certainty: GeometryCertainty) {
+        if certainty == GeometryCertainty::Approximate512Consumed {
+            self.certainty
+                .set(GeometryCertainty::Approximate512Consumed);
+        }
+    }
+
+    fn observe_curve(&self, certainty: CurveCertainty) {
+        if certainty == CurveCertainty::Approximate512Consumed {
+            self.observe(GeometryCertainty::Approximate512Consumed);
+        }
+    }
+
+    fn consume<T, E>(&self, result: Result<CurveOutcome<T>, E>) -> Result<T, E> {
+        result.map(|outcome| {
+            self.observe_curve(outcome.certainty);
+            outcome.value
+        })
+    }
+
+    fn consume_geometry<T, E>(&self, result: Result<GeometryOutcome<T>, E>) -> Result<T, E> {
+        result.map(|outcome| {
+            self.observe(outcome.certainty);
+            outcome.value
+        })
+    }
+
+    fn curve_operation<T>(
+        &self,
+        mut evaluate: impl FnMut(&CurvePolicy) -> ExactCurveResult<T>,
+    ) -> ExactCurveResult<T> {
+        if self.curves != CurvePolicy::APPROXIMATE_512 {
+            return evaluate(&self.curves);
+        }
+        match evaluate(&CurvePolicy::STRICT) {
+            Ok(value) => Ok(value),
+            Err(ExactCurveError::Blocked(_)) => evaluate(&self.curves).inspect(|_| {
+                self.observe(GeometryCertainty::Approximate512Consumed);
+            }),
+            Err(error) => Err(error),
+        }
+    }
+
+    fn boundary_operation<T>(
+        &self,
+        mut evaluate: impl FnMut(&CurvePolicy) -> Result<T, BoardBoundaryGeometryError>,
+    ) -> Result<T, BoardBoundaryGeometryError> {
+        if self.curves != CurvePolicy::APPROXIMATE_512 {
+            return evaluate(&self.curves);
+        }
+        match evaluate(&CurvePolicy::STRICT) {
+            Ok(value) => Ok(value),
+            Err(error) if error.is_policy_blocked() => evaluate(&self.curves).inspect(|_| {
+                self.observe(GeometryCertainty::Approximate512Consumed);
+            }),
+            Err(error) => Err(error),
+        }
+    }
+
+    fn classify<T, E>(
+        &self,
+        mut evaluate: impl FnMut(&CurvePolicy) -> Result<Classification<T>, E>,
+    ) -> Result<Classification<T>, E> {
+        if self.curves != CurvePolicy::APPROXIMATE_512 {
+            return evaluate(&self.curves);
+        }
+        match evaluate(&CurvePolicy::STRICT)? {
+            decided @ Classification::Decided(_) => Ok(decided),
+            Classification::Uncertain(_) => evaluate(&self.curves).inspect(|classification| {
+                if classification.is_decided() {
+                    self.observe(GeometryCertainty::Approximate512Consumed);
+                }
+            }),
+        }
+    }
+
+    fn classify_value<T>(
+        &self,
+        mut evaluate: impl FnMut(&CurvePolicy) -> Classification<T>,
+    ) -> Classification<T> {
+        if self.curves != CurvePolicy::APPROXIMATE_512 {
+            return evaluate(&self.curves);
+        }
+        match evaluate(&CurvePolicy::STRICT) {
+            decided @ Classification::Decided(_) => decided,
+            Classification::Uncertain(_) => {
+                let classification = evaluate(&self.curves);
+                if classification.is_decided() {
+                    self.observe(GeometryCertainty::Approximate512Consumed);
+                }
+                classification
+            }
+        }
+    }
+
+    fn compare_reals(&self, left: &Real, right: &Real) -> Option<Ordering> {
+        match hyperlimit::compare_reals(left, right, self.predicates) {
+            PredicateOutcome::Decided {
+                value, certainty, ..
+            } => {
+                if certainty == Certainty::Approximate {
+                    self.certainty
+                        .set(GeometryCertainty::Approximate512Consumed);
+                }
+                Some(value)
+            }
+            PredicateOutcome::Unknown { .. } => None,
+        }
+    }
+}
 
 /// Options controlling finite display approximations at materialization boundaries.
 #[derive(Clone, Debug, PartialEq)]
@@ -325,6 +500,10 @@ pub struct DrillHit {
 pub struct PcbMaterializationReport {
     /// Substrate region after applying authored cutouts.
     pub substrate: CurveRegion2,
+    /// Predicate policy selected for this materialization.
+    pub predicate_policy: PredicatePolicy,
+    /// Weakest predicate certainty consumed by completed materialization paths.
+    pub predicate_certainty: GeometryCertainty,
     /// Whether CAM-oriented copper and process layer images were aggregated.
     ///
     /// Individual exact source features remain complete when this is false,
@@ -538,8 +717,22 @@ pub enum Pcb3dAssemblyOmission {
     SolderMaskSubtractionFailed { layer: String, detail: String },
     /// A custom physical layer used the board planform because no shape policy exists.
     CustomLayerUsesBoardPlanform(String),
+    /// A decided physical-layer profile could not be extruded without losing geometry.
+    LayerExtrusionFailed {
+        /// Authored stackup layer.
+        layer: String,
+        /// Native exact extrusion diagnostic.
+        detail: String,
+    },
     /// A declared package body outline could not produce material topology.
     InvalidComponentBody(String),
+    /// A valid package body profile could not be extruded without losing geometry.
+    ComponentBodyExtrusionFailed {
+        /// Logical placed instance.
+        instance: String,
+        /// Native exact extrusion diagnostic.
+        detail: String,
+    },
     /// An external package model was retained, but no resolver was supplied.
     ExternalPackageModelNotLoaded {
         /// Logical placed instance.
@@ -587,6 +780,10 @@ pub enum Pcb3dAssemblyOmission {
 /// Exact-Z 3D review assembly plus explicit unrealized detail.
 #[derive(Clone, Debug)]
 pub struct Pcb3dAssemblyReport {
+    /// Predicate policy inherited from materialization and used by 3D realization.
+    pub predicate_policy: PredicatePolicy,
+    /// Weakest predicate certainty consumed by materialization and 3D realization.
+    pub predicate_certainty: GeometryCertainty,
     /// Independently inspectable physical layers in front-to-back order.
     pub layers: Vec<Pcb3dLayer>,
     /// Placed component body envelopes in logical-instance order.
@@ -656,6 +853,10 @@ pub enum Pcb3dCoordinateEncoding {
 /// One complete named glTF scene plus semantic object and omission evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Pcb3dGltfReport {
+    /// Predicate policy inherited from the source assembly.
+    pub predicate_policy: PredicatePolicy,
+    /// Weakest predicate certainty consumed by the source assembly.
+    pub predicate_certainty: GeometryCertainty,
     /// Self-contained glTF 2.0 JSON with an embedded binary buffer.
     pub gltf: String,
     /// Stable semantic identity for every emitted node/mesh.
@@ -738,8 +939,10 @@ impl PcbLayout {
     pub fn materialize(
         &self,
         circuit: &Circuit,
+        context: &MaterializationContext,
         options: MaterializationOptions,
     ) -> Result<PcbMaterializationReport, GeometryMaterializationError> {
+        let decisions = MaterializationDecisions::new(context);
         if !circuit.validate().is_valid() || !self.validate(circuit).is_valid() {
             return Err(GeometryMaterializationError::InvalidSourceModel);
         }
@@ -752,9 +955,11 @@ impl PcbLayout {
             return Err(GeometryMaterializationError::InvalidSourceModel);
         }
 
-        let boundary = self.outline.boundary_geometry().map_err(|error| {
-            GeometryMaterializationError::InvalidPolygon(format!("board outline: {error}"))
-        })?;
+        let boundary = decisions
+            .boundary_operation(|policy| self.outline.boundary_geometry(policy))
+            .map_err(|error| {
+                GeometryMaterializationError::InvalidPolygon(format!("board outline: {error}"))
+            })?;
         let substrate = boundary.region().clone();
 
         let mut copper_features = Vec::new();
@@ -764,18 +969,19 @@ impl PcbLayout {
         let mut zone_realizations = Vec::new();
         let mut drills = Vec::new();
         let stitching = self.realize_stitching_vias();
-        materialize_placements(
-            self,
-            circuit,
-            &options,
-            &mut copper_features,
-            &mut process_features,
-            &mut process_omissions,
-            &mut drills,
-        )?;
+        {
+            let mut placement_materialization = PlacementMaterialization {
+                decisions: &decisions,
+                copper_features: &mut copper_features,
+                process_features: &mut process_features,
+                process_omissions: &mut process_omissions,
+                drills: &mut drills,
+            };
+            materialize_placements(self, circuit, &options, &mut placement_materialization)?;
+        }
 
         for route in &self.routes {
-            let (profile, route_projections) = route_profile(route, &options)?;
+            let (profile, route_projections) = route_profile(route, &options, &decisions)?;
             projections.extend(route_projections);
             copper_features.push(MaterializedCopperFeature {
                 source: format!("route:{}", route.id.as_str()),
@@ -870,7 +1076,8 @@ impl PcbLayout {
                 .then_with(|| left.id.as_str().cmp(right.id.as_str()))
         });
         for zone in zones {
-            let (profile, evidence) = materialize_zone(self, zone, &substrate, &copper_features)?;
+            let (profile, evidence) =
+                materialize_zone(self, zone, &substrate, &copper_features, &decisions)?;
             copper_features.push(MaterializedCopperFeature {
                 source: format!("zone:{}", zone.id.as_str()),
                 net: Some(zone.net.clone()),
@@ -884,12 +1091,12 @@ impl PcbLayout {
         }
 
         let copper_layers = if options.aggregate_layer_images {
-            union_layer_images(&copper_features)
+            union_layer_images(&copper_features, &decisions)
         } else {
             Vec::new()
         };
         let process_layers = if options.aggregate_layer_images {
-            union_process_images(&process_features)
+            union_process_images(&process_features, &decisions)
         } else {
             Vec::new()
         };
@@ -903,6 +1110,8 @@ impl PcbLayout {
         }
         Ok(PcbMaterializationReport {
             substrate,
+            predicate_policy: context.predicate_policy(),
+            predicate_certainty: decisions.certainty(),
             layer_images_aggregated: options.aggregate_layer_images,
             copper_features,
             copper_layers,
@@ -930,13 +1139,15 @@ fn materialize_zone(
     zone: &CopperZone,
     substrate: &CurveRegion2,
     existing: &[MaterializedCopperFeature],
+    decisions: &MaterializationDecisions,
 ) -> Result<(CurveRegion2, ZoneMaterializationEvidence), GeometryMaterializationError> {
     let source = format!("zone:{}", zone.id.as_str());
-    let boundary = polygon_profile(&zone.boundary, &source)?;
+    let boundary = polygon_profile(&zone.boundary, &source, decisions)?;
     let boundary = zone_boolean(
         &source,
         "clip to substrate",
-        boundary.try_intersection(substrate),
+        decisions,
+        boundary.try_intersection(substrate, decisions.curve_policy()),
     )?;
     let profile = match &zone.fill {
         CopperZoneFill::Solid => boundary.clone(),
@@ -951,6 +1162,7 @@ fn materialize_zone(
             line_width,
             gap,
             angle_degrees,
+            decisions,
         )?,
     };
     let mut keepout_profiles = Vec::new();
@@ -969,6 +1181,7 @@ fn materialize_zone(
         let keepout_profile = polygon_profile(
             &keepout.boundary,
             &format!("zone {} keepout {}", zone.id.as_str(), keepout.id.as_str()),
+            decisions,
         )?;
         hard_negative_profiles.push(keepout_profile.clone());
         keepout_profiles.push((keepout.id.as_str(), keepout_profile));
@@ -986,6 +1199,7 @@ fn materialize_zone(
                 &format!("foreign clearance for {}", feature.source),
                 &feature.profile,
                 &zone.clearance,
+                decisions,
             )?;
             hard_negative_profiles.push(clearance);
             cleared_foreign_features += 1;
@@ -1005,6 +1219,7 @@ fn materialize_zone(
                     &format!("same-net isolation for {}", feature.source),
                     &feature.profile,
                     &zone.clearance,
+                    decisions,
                 )?;
                 hard_negative_profiles.push(clearance);
                 treated_same_net_lands += 1;
@@ -1019,6 +1234,7 @@ fn materialize_zone(
                     &format!("thermal air gap for {}", feature.source),
                     &feature.profile,
                     air_gap,
+                    decisions,
                 )?;
                 thermal_gap_profiles.push(clearance.clone());
                 let spokes = thermal_spoke_mask(
@@ -1027,17 +1243,19 @@ fn materialize_zone(
                     spoke_width,
                     *spoke_count,
                     &clearance,
+                    decisions,
                 )?;
-                let mut spokes = if axis_aligned_rectangle_contains_region(&zone.boundary, &spokes)
-                {
-                    spokes
-                } else {
-                    zone_boolean(
-                        &source,
-                        &format!("clip thermal spokes to boundary for {}", feature.source),
-                        spokes.try_intersection(&boundary),
-                    )?
-                };
+                let mut spokes =
+                    if axis_aligned_rectangle_contains_region(&zone.boundary, &spokes, decisions) {
+                        spokes
+                    } else {
+                        zone_boolean(
+                            &source,
+                            &format!("clip thermal spokes to boundary for {}", feature.source),
+                            decisions,
+                            spokes.try_intersection(&boundary, decisions.curve_policy()),
+                        )?
+                    };
                 if let MaterializedCopperIdentity::Via(via_id) = &feature.identity
                     && let Some(via) = layout.vias.iter().find(|via| &via.id == via_id)
                 {
@@ -1049,13 +1267,15 @@ fn materialize_zone(
                         },
                         plating: via.plating,
                     };
-                    let cutter = preview_drill_profile(&drill, 4)?;
-                    spokes = subtract_drill_exact(&spokes, &drill, &cutter).map_err(|error| {
-                        GeometryMaterializationError::Boolean(format!(
-                            "{source} exact thermal spoke drill for {}: {error}",
-                            feature.source
-                        ))
-                    })?;
+                    let cutter = preview_drill_profile(&drill, 4, decisions)?;
+                    spokes = subtract_drill_exact(&spokes, &drill, &cutter, decisions).map_err(
+                        |error| {
+                            GeometryMaterializationError::Boolean(format!(
+                                "{source} exact thermal spoke drill for {}: {error}",
+                                feature.source
+                            ))
+                        },
+                    )?;
                 }
                 positive_additions.push(spokes);
                 treated_same_net_lands += 1;
@@ -1077,6 +1297,7 @@ fn materialize_zone(
             &thermal_gap_profiles,
             &positive_additions,
             &hard_negative_profiles,
+            decisions,
         )?
     } else {
         let mut positive_profiles = Vec::with_capacity(1 + positive_additions.len());
@@ -1087,7 +1308,7 @@ fn materialize_zone(
             negative_profiles.extend(
                 hard_negative_profiles
                     .iter()
-                    .filter(|negative| profiles_may_intersect(positive, negative))
+                    .filter(|negative| profiles_may_intersect(positive, negative, decisions))
                     .cloned(),
             );
         }
@@ -1096,9 +1317,10 @@ fn materialize_zone(
             "compose exact fill",
             &positive_profiles,
             &negative_profiles,
+            decisions,
         )?
     };
-    let (profile, islands) = apply_zone_island_policy(&source, zone, profile, existing)?;
+    let (profile, islands) = apply_zone_island_policy(&source, zone, profile, existing, decisions)?;
 
     Ok((
         profile,
@@ -1142,15 +1364,17 @@ fn apply_zone_island_policy(
     zone: &CopperZone,
     profile: CurveRegion2,
     existing: &[MaterializedCopperFeature],
+    decisions: &MaterializationDecisions,
 ) -> Result<(CurveRegion2, ZoneIslandRealization), GeometryMaterializationError> {
-    let policy = CurvePolicy::certified();
     let region = &profile;
     if !zone.islands.remove_unconnected && zone.islands.minimum_area.is_none() {
-        let retained = match region.loop_roles(&policy).map_err(|error| {
-            GeometryMaterializationError::ZoneIsland(format!(
-                "{source} retained loop classification: {error}"
-            ))
-        })? {
+        let retained = match decisions
+            .classify(|attempt| region.loop_roles(attempt))
+            .map_err(|error| {
+                GeometryMaterializationError::ZoneIsland(format!(
+                    "{source} retained loop classification: {error}"
+                ))
+            })? {
             Classification::Decided(roles) => roles
                 .iter()
                 .filter(|role| **role == CurveRegionLoopRole::Material)
@@ -1170,11 +1394,13 @@ fn apply_zone_island_policy(
             },
         ));
     }
-    let components = match region.boundary_profiles(&policy).map_err(|error| {
-        GeometryMaterializationError::ZoneIsland(format!(
-            "{source} boundary profile extraction: {error}"
-        ))
-    })? {
+    let components = match decisions
+        .classify(|attempt| region.boundary_profiles(attempt))
+        .map_err(|error| {
+            GeometryMaterializationError::ZoneIsland(format!(
+                "{source} boundary profile extraction: {error}"
+            ))
+        })? {
         Classification::Decided(components) => components
             .iter()
             .map(|component| {
@@ -1232,21 +1458,27 @@ fn apply_zone_island_policy(
                 .copied()
                 .unwrap_or(FillRule::NonZero)
         }));
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &component_paths,
-            &roles,
-            &rules,
-        )
-        .map_err(|error| {
-            GeometryMaterializationError::ZoneIsland(format!(
-                "{source} component {index} reconstruction: {error}"
-            ))
-        })?;
-        let area = match region.filled_area(&policy).map_err(|error| {
-            GeometryMaterializationError::ZoneIsland(format!(
-                "{source} component {index} area: {error}"
-            ))
-        })? {
+        let region = decisions
+            .curve_operation(|policy| {
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &component_paths,
+                    &roles,
+                    &rules,
+                    policy,
+                )
+            })
+            .map_err(|error| {
+                GeometryMaterializationError::ZoneIsland(format!(
+                    "{source} component {index} reconstruction: {error}"
+                ))
+            })?;
+        let area = match decisions
+            .classify(|attempt| region.filled_area(attempt))
+            .map_err(|error| {
+                GeometryMaterializationError::ZoneIsland(format!(
+                    "{source} component {index} area: {error}"
+                ))
+            })? {
             Classification::Decided(Some(area)) => area,
             Classification::Decided(None) => {
                 return Err(GeometryMaterializationError::ZoneIsland(format!(
@@ -1261,7 +1493,7 @@ fn apply_zone_island_policy(
         };
         let below_area = match &zone.islands.minimum_area {
             Some(minimum) => {
-                area.predicate_cmp(minimum).ok_or_else(|| {
+                decisions.compare_reals(&area, minimum).ok_or_else(|| {
                     GeometryMaterializationError::ZoneIsland(format!(
                         "{source} component {index} area ordering"
                     ))
@@ -1278,7 +1510,8 @@ fn apply_zone_island_policy(
                 let intersection = zone_boolean(
                     source,
                     &format!("classify island {index} connection to {}", feature.source),
-                    component_profile.try_intersection(&feature.profile),
+                    decisions,
+                    component_profile.try_intersection(&feature.profile, decisions.curve_policy()),
                 )?;
                 if !intersection.is_empty() {
                     connected = true;
@@ -1307,7 +1540,8 @@ fn apply_zone_island_policy(
             Some(current) => zone_boolean(
                 source,
                 &format!("merge retained island {index}"),
-                current.try_union(&component_profile),
+                decisions,
+                current.try_union(&component_profile, decisions.curve_policy()),
             )?,
             None => component_profile,
         });
@@ -1324,15 +1558,16 @@ fn hatch_zone(
     line_width: &Real,
     gap: &Real,
     angle_degrees: &Real,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    let (center, extent) = zone_center_extent(points)?;
+    let (center, extent) = zone_center_extent(points, decisions)?;
     let pitch = line_width.clone() + gap.clone();
     let mut offset = -extent.clone();
     let mut stripes: Option<CurveRegion2> = None;
     loop {
-        match offset.predicate_le(&extent) {
-            Some(true) => {}
-            Some(false) => break,
+        match decisions.compare_reals(&offset, &extent) {
+            Some(Ordering::Less | Ordering::Equal) => {}
+            Some(Ordering::Greater) => break,
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
         let stripe = curve::translated(
@@ -1340,7 +1575,7 @@ fn hatch_zone(
             Real::zero(),
             offset.clone(),
         );
-        let stripe = match angle_degrees.predicate_cmp(&Real::zero()) {
+        let stripe = match decisions.compare_reals(angle_degrees, &Real::zero()) {
             Some(Ordering::Equal) => stripe,
             Some(_) => curve::rotated(&stripe, angle_degrees.clone()),
             None => return Err(GeometryMaterializationError::Arithmetic),
@@ -1348,9 +1583,12 @@ fn hatch_zone(
         let stripe = curve::translated(&stripe, center.x.clone(), center.y.clone());
         stripes = Some(match stripes {
             None => stripe,
-            Some(existing) => {
-                zone_boolean(source, "merge hatch stripes", existing.try_union(&stripe))?
-            }
+            Some(existing) => zone_boolean(
+                source,
+                "merge hatch stripes",
+                decisions,
+                existing.try_union(&stripe, decisions.curve_policy()),
+            )?,
         });
         offset += pitch.clone();
     }
@@ -1360,7 +1598,8 @@ fn hatch_zone(
     zone_boolean(
         source,
         "clip hatch to boundary",
-        stripes.try_intersection(boundary),
+        decisions,
+        stripes.try_intersection(boundary, decisions.curve_policy()),
     )
 }
 
@@ -1370,8 +1609,9 @@ fn thermal_spoke_mask(
     width: &Real,
     count: u8,
     clearance: &CurveRegion2,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    let (_, extent) = zone_center_extent(zone_boundary)?;
+    let (_, extent) = zone_center_extent(zone_boundary, decisions)?;
     let span = extent.clone() + extent.clone();
     let spokes = if count == 4 {
         let horizontal = curve::translated(
@@ -1387,7 +1627,8 @@ fn thermal_spoke_mask(
         zone_boolean(
             "thermal-spokes",
             "merge exact orthogonal spoke masks",
-            horizontal.try_union(&vertical),
+            decisions,
+            horizontal.try_union(&vertical, decisions.curve_policy()),
         )?
     } else {
         let step = (Real::from(360) / Real::from(count))
@@ -1402,7 +1643,8 @@ fn thermal_spoke_mask(
                 Some(existing) => zone_boolean(
                     "thermal-spokes",
                     "merge spoke masks",
-                    existing.try_union(&spoke),
+                    decisions,
+                    existing.try_union(&spoke, decisions.curve_policy()),
                 )?,
             });
         }
@@ -1426,11 +1668,15 @@ fn thermal_spoke_mask(
     zone_boolean(
         "thermal-spokes",
         "clip spoke masks to land clearance bounds",
-        spokes.try_intersection(&clip),
+        decisions,
+        spokes.try_intersection(&clip, decisions.curve_policy()),
     )
 }
 
-fn zone_center_extent(points: &[Point2]) -> Result<(Point2, Real), GeometryMaterializationError> {
+fn zone_center_extent(
+    points: &[Point2],
+    decisions: &MaterializationDecisions,
+) -> Result<(Point2, Real), GeometryMaterializationError> {
     let first = points
         .first()
         .ok_or_else(|| GeometryMaterializationError::InvalidPolygon("empty zone".into()))?;
@@ -1439,22 +1685,22 @@ fn zone_center_extent(points: &[Point2]) -> Result<(Point2, Real), GeometryMater
     let mut max_x = first.x.clone();
     let mut max_y = first.y.clone();
     for point in points.iter().skip(1) {
-        match point.x.predicate_cmp(&min_x) {
+        match decisions.compare_reals(&point.x, &min_x) {
             Some(Ordering::Less) => min_x = point.x.clone(),
             Some(_) => {}
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
-        match point.y.predicate_cmp(&min_y) {
+        match decisions.compare_reals(&point.y, &min_y) {
             Some(Ordering::Less) => min_y = point.y.clone(),
             Some(_) => {}
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
-        match point.x.predicate_cmp(&max_x) {
+        match decisions.compare_reals(&point.x, &max_x) {
             Some(Ordering::Greater) => max_x = point.x.clone(),
             Some(_) => {}
             None => return Err(GeometryMaterializationError::Arithmetic),
         }
-        match point.y.predicate_cmp(&max_y) {
+        match decisions.compare_reals(&point.y, &max_y) {
             Some(Ordering::Greater) => max_y = point.y.clone(),
             Some(_) => {}
             None => return Err(GeometryMaterializationError::Arithmetic),
@@ -1471,7 +1717,11 @@ fn zone_center_extent(points: &[Point2]) -> Result<(Point2, Real), GeometryMater
     Ok((center, extent))
 }
 
-fn axis_aligned_rectangle_contains_region(points: &[Point2], region: &CurveRegion2) -> bool {
+fn axis_aligned_rectangle_contains_region(
+    points: &[Point2],
+    region: &CurveRegion2,
+    decisions: &MaterializationDecisions,
+) -> bool {
     let points = if points.len() == 5 && points.first() == points.last() {
         &points[..4]
     } else {
@@ -1494,12 +1744,12 @@ fn axis_aligned_rectangle_contains_region(points: &[Point2], region: &CurveRegio
     if xs.len() != 2 || ys.len() != 2 {
         return false;
     }
-    let (min_x, max_x) = match xs[0].predicate_cmp(xs[1]) {
+    let (min_x, max_x) = match decisions.compare_reals(xs[0], xs[1]) {
         Some(Ordering::Less) => (xs[0], xs[1]),
         Some(Ordering::Greater) => (xs[1], xs[0]),
         Some(Ordering::Equal) | None => return false,
     };
-    let (min_y, max_y) = match ys[0].predicate_cmp(ys[1]) {
+    let (min_y, max_y) = match decisions.compare_reals(ys[0], ys[1]) {
         Some(Ordering::Less) => (ys[0], ys[1]),
         Some(Ordering::Greater) => (ys[1], ys[0]),
         Some(Ordering::Equal) | None => return false,
@@ -1509,7 +1759,8 @@ fn axis_aligned_rectangle_contains_region(points: &[Point2], region: &CurveRegio
             points
                 .iter()
                 .filter(|point| {
-                    point.x.predicate_eq(x) == Some(true) && point.y.predicate_eq(y) == Some(true)
+                    decisions.compare_reals(&point.x, x) == Some(Ordering::Equal)
+                        && decisions.compare_reals(&point.y, y) == Some(Ordering::Equal)
                 })
                 .count()
                 != 1
@@ -1518,26 +1769,32 @@ fn axis_aligned_rectangle_contains_region(points: &[Point2], region: &CurveRegio
         return false;
     }
 
-    let Ok(Classification::Decided(bounds)) = region.bounds(&CurvePolicy::certified()) else {
+    let Ok(Classification::Decided(bounds)) = decisions.classify(|policy| region.bounds(policy))
+    else {
         return false;
     };
     matches!(
-        bounds.min_x().predicate_cmp(min_x),
+        decisions.compare_reals(bounds.min_x(), min_x),
         Some(Ordering::Equal | Ordering::Greater)
     ) && matches!(
-        bounds.max_x().predicate_cmp(max_x),
+        decisions.compare_reals(bounds.max_x(), max_x),
         Some(Ordering::Equal | Ordering::Less)
     ) && matches!(
-        bounds.min_y().predicate_cmp(min_y),
+        decisions.compare_reals(bounds.min_y(), min_y),
         Some(Ordering::Equal | Ordering::Greater)
     ) && matches!(
-        bounds.max_y().predicate_cmp(max_y),
+        decisions.compare_reals(bounds.max_y(), max_y),
         Some(Ordering::Equal | Ordering::Less)
     )
 }
 
-fn profiles_may_intersect(left: &CurveRegion2, right: &CurveRegion2) -> bool {
-    left.try_intersection(right)
+fn profiles_may_intersect(
+    left: &CurveRegion2,
+    right: &CurveRegion2,
+    decisions: &MaterializationDecisions,
+) -> bool {
+    decisions
+        .consume(left.try_intersection(right, decisions.curve_policy()))
         .map(|intersection| !intersection.is_empty())
         .unwrap_or(true)
 }
@@ -1547,18 +1804,26 @@ fn zone_offset(
     operation: &str,
     profile: &CurveRegion2,
     distance: &Real,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    curve::offset(profile, distance.clone()).map_err(|error| {
-        GeometryMaterializationError::Boolean(format!("{source} {operation}: {error}"))
-    })
+    decisions
+        .consume(curve::offset(
+            profile,
+            distance.clone(),
+            decisions.curve_policy(),
+        ))
+        .map_err(|error| {
+            GeometryMaterializationError::Boolean(format!("{source} {operation}: {error}"))
+        })
 }
 
 fn zone_boolean(
     source: &str,
     operation: &str,
-    result: Result<CurveRegion2, csgrs::errors::CurveBooleanError>,
+    decisions: &MaterializationDecisions,
+    result: Result<CurveOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    result.map_err(|error| {
+    decisions.consume(result).map_err(|error| {
         GeometryMaterializationError::Boolean(format!("{source} {operation}: {error:?}"))
     })
 }
@@ -1568,8 +1833,9 @@ fn zone_compound(
     operation: &str,
     positive: &[CurveRegion2],
     negative: &[CurveRegion2],
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
-    exact_compound_composition(positive, negative).map_err(|error| {
+    exact_compound_composition(positive, negative, decisions).map_err(|error| {
         GeometryMaterializationError::Boolean(format!("{source} {operation}: {error}"))
     })
 }
@@ -1580,6 +1846,7 @@ fn regularized_zone_composition(
     thermal_gaps: &[CurveRegion2],
     positive_additions: &[CurveRegion2],
     hard_cuts: &[CurveRegion2],
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     // Preserve authored CSG priority exactly: thermal gaps cut the base,
     // spokes restore selected material, and hard keepouts remain dominant.
@@ -1587,21 +1854,24 @@ fn regularized_zone_composition(
         profile = zone_boolean(
             source,
             &format!("regularize thermal gap {index}"),
-            profile.try_difference(gap),
+            decisions,
+            profile.try_difference(gap, decisions.curve_policy()),
         )?;
     }
     for (index, addition) in positive_additions.iter().enumerate() {
         profile = zone_boolean(
             source,
             &format!("regularize positive addition {index}"),
-            profile.try_union(addition),
+            decisions,
+            profile.try_union(addition, decisions.curve_policy()),
         )?;
     }
     for (index, cut) in hard_cuts.iter().enumerate() {
         profile = zone_boolean(
             source,
             &format!("regularize hard cut {index}"),
-            profile.try_difference(cut),
+            decisions,
+            profile.try_difference(cut, decisions.curve_policy()),
         )?;
     }
     Ok(profile)
@@ -1638,6 +1908,9 @@ impl PcbMaterializationReport {
         layout: &PcbLayout,
         mut resolver: Option<&mut dyn Pcb3dModelResolver>,
     ) -> Pcb3dAssemblyReport {
+        let context = MaterializationContext::new(self.predicate_policy);
+        let decisions = MaterializationDecisions::new(&context);
+        decisions.observe(self.predicate_certainty);
         let mut layers = Vec::new();
         let mut omissions = Vec::new();
         let mut subtractions = Vec::new();
@@ -1654,7 +1927,7 @@ impl PcbMaterializationReport {
             .rposition(|layer| matches!(layer.kind, crate::StackupLayerKind::Conductor(_)));
         let mut drill_profiles = Vec::new();
         for drill in &self.drills {
-            match preview_drill_profile(drill, self.preview_circular_segments) {
+            match preview_drill_profile(drill, self.preview_circular_segments, &decisions) {
                 Ok(profile) => drill_profiles.push((drill, profile)),
                 Err(error) => omissions.push(Pcb3dAssemblyOmission::InvalidDrillGeometry {
                     source: drill.source.clone(),
@@ -1738,7 +2011,9 @@ impl PcbMaterializationReport {
                                 blocker: blocker.clone(),
                             });
                         } else if let Some(openings) = &image.image {
-                            match profile.try_difference(openings) {
+                            match decisions
+                                .consume(profile.try_difference(openings, decisions.curve_policy()))
+                            {
                                 Ok(realized) => {
                                     profile = realized;
                                     subtractions.push(Pcb3dSubtractionEvidence {
@@ -1760,7 +2035,7 @@ impl PcbMaterializationReport {
                     }
                 }
                 for (drill_index, (drill, cutter)) in drill_profiles.iter().enumerate() {
-                    match subtract_drill_exact(&profile, drill, cutter) {
+                    match subtract_drill_exact(&profile, drill, cutter, &decisions) {
                         Ok(realized) => {
                             profile = realized;
                             subtractions.push(Pcb3dSubtractionEvidence {
@@ -1798,6 +2073,7 @@ impl PcbMaterializationReport {
                                                     &current,
                                                     replay_drill,
                                                     replay_cutter,
+                                                    &decisions,
                                                 )
                                                 .map_err(|error| {
                                                     format!("feature {}: {error}", feature.source)
@@ -1806,8 +2082,11 @@ impl PcbMaterializationReport {
                                         }
                                         rebuilt = rebuilt.and_then(|aggregate| {
                                             drilled.and_then(|drilled| match aggregate {
-                                                Some(aggregate) => aggregate
-                                                    .try_union(&drilled)
+                                                Some(aggregate) => decisions
+                                                    .consume(aggregate.try_union(
+                                                        &drilled,
+                                                        decisions.curve_policy(),
+                                                    ))
                                                     .map(Some)
                                                     .map_err(|error| format!("{error:?}")),
                                                 None => Ok(Some(drilled)),
@@ -1857,13 +2136,24 @@ impl PcbMaterializationReport {
                     z_start: z_start.clone(),
                     thickness: layer.thickness.clone(),
                 };
-                let geometry = curve::extrude(&profile, layer.thickness.clone()).translated(
-                    Real::zero(),
-                    Real::zero(),
-                    z_start.clone(),
-                );
-                let solid = AttributedMesh::from_uniform(geometry, metadata.clone());
-                layers.push(Pcb3dLayer { metadata, solid });
+                match decisions.consume_geometry(curve::try_extrude(
+                    &profile,
+                    layer.thickness.clone(),
+                    &decisions.geometry_context(),
+                )) {
+                    Ok(geometry) => {
+                        let geometry =
+                            geometry.translated(Real::zero(), Real::zero(), z_start.clone());
+                        let solid = AttributedMesh::from_uniform(geometry, metadata.clone());
+                        layers.push(Pcb3dLayer { metadata, solid });
+                    }
+                    Err(error) => {
+                        omissions.push(Pcb3dAssemblyOmission::LayerExtrusionFailed {
+                            layer: layer.name.clone(),
+                            detail: error.to_string(),
+                        });
+                    }
+                }
             }
             z_start += layer.thickness.clone();
         }
@@ -1882,7 +2172,7 @@ impl PcbMaterializationReport {
                     .iter()
                     .map(|point| placement.transform_point(point))
                     .collect::<Vec<_>>();
-                match polygon_profile(&outline, placement.instance.as_str()) {
+                match polygon_profile(&outline, placement.instance.as_str(), &decisions) {
                     Ok(profile) => {
                         let body_z = match placement.side {
                             BoardSide::Front => z_start.clone() + body.standoff.clone(),
@@ -1894,13 +2184,25 @@ impl PcbMaterializationReport {
                             z_start: body_z.clone(),
                             height: body.height.clone(),
                         };
-                        let geometry = curve::extrude(&profile, body.height.clone()).translated(
-                            Real::zero(),
-                            Real::zero(),
-                            body_z,
-                        );
-                        let solid = AttributedMesh::from_uniform(geometry, metadata.clone());
-                        component_bodies.push(Pcb3dComponentBody { metadata, solid });
+                        match decisions.consume_geometry(curve::try_extrude(
+                            &profile,
+                            body.height.clone(),
+                            &decisions.geometry_context(),
+                        )) {
+                            Ok(geometry) => {
+                                let geometry =
+                                    geometry.translated(Real::zero(), Real::zero(), body_z);
+                                let solid =
+                                    AttributedMesh::from_uniform(geometry, metadata.clone());
+                                component_bodies.push(Pcb3dComponentBody { metadata, solid });
+                            }
+                            Err(error) => omissions.push(
+                                Pcb3dAssemblyOmission::ComponentBodyExtrusionFailed {
+                                    instance: placement.instance.as_str().into(),
+                                    detail: error.to_string(),
+                                },
+                            ),
+                        }
                     }
                     Err(_) => omissions.push(Pcb3dAssemblyOmission::InvalidComponentBody(
                         placement.instance.as_str().into(),
@@ -1933,6 +2235,8 @@ impl PcbMaterializationReport {
             }
         }
         Pcb3dAssemblyReport {
+            predicate_policy: self.predicate_policy,
+            predicate_certainty: decisions.certainty(),
             layers,
             component_bodies,
             component_models,
@@ -2176,6 +2480,8 @@ impl Pcb3dAssemblyReport {
         let gltf = csgrs::io::gltf::to_gltf_scene(scene_name, &geometry)
             .map_err(|error| Pcb3dGltfError::Geometry(error.to_string()))?;
         Ok(Pcb3dGltfReport {
+            predicate_policy: self.predicate_policy,
+            predicate_certainty: self.predicate_certainty,
             gltf,
             objects,
             coordinate_encoding: Pcb3dCoordinateEncoding::Ieee754Binary32,
@@ -2187,6 +2493,7 @@ impl Pcb3dAssemblyReport {
 fn preview_drill_profile(
     drill: &DrillHit,
     circular_segments: usize,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     match &drill.shape {
         DrillShape::Round { diameter } => {
@@ -2195,6 +2502,7 @@ fn preview_drill_profile(
                 diameter,
                 &half(diameter)?,
                 &drill.source,
+                decisions,
             )?;
             Ok(curve::translated(
                 &profile,
@@ -2208,6 +2516,7 @@ fn preview_drill_profile(
             width,
             circular_segments,
             &drill.source,
+            decisions,
         ),
     }
 }
@@ -2216,8 +2525,9 @@ fn subtract_drill_exact(
     profile: &CurveRegion2,
     drill: &DrillHit,
     cutter: &CurveRegion2,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, String> {
-    match profile.try_difference(cutter) {
+    match decisions.consume(profile.try_difference(cutter, decisions.curve_policy())) {
         Ok(realized) => Ok(realized),
         Err(whole_error) if matches!(drill.shape, DrillShape::Round { .. }) => {
             let sectors = exact_round_drill_sectors(drill).map_err(|sector_error| {
@@ -2225,9 +2535,13 @@ fn subtract_drill_exact(
             })?;
             let mut realized = profile.clone();
             for (index, sector) in sectors.iter().enumerate() {
-                realized = realized.try_difference(sector).map_err(|sector_error| {
-                    format!("whole cutter: {whole_error:?}; exact sector {index}: {sector_error:?}")
-                })?;
+                realized = decisions
+                    .consume(realized.try_difference(sector, decisions.curve_policy()))
+                    .map_err(|sector_error| {
+                        format!(
+                            "whole cutter: {whole_error:?}; exact sector {index}: {sector_error:?}"
+                        )
+                    })?;
             }
             Ok(realized)
         }
@@ -2300,15 +2614,21 @@ fn exact_round_drill_sectors(
         .collect()
 }
 
+struct PlacementMaterialization<'a> {
+    decisions: &'a MaterializationDecisions,
+    copper_features: &'a mut Vec<MaterializedCopperFeature>,
+    process_features: &'a mut Vec<MaterializedProcessFeature>,
+    process_omissions: &'a mut Vec<ProcessMaterializationOmission>,
+    drills: &'a mut Vec<DrillHit>,
+}
+
 fn materialize_placements(
     layout: &PcbLayout,
     circuit: &Circuit,
     options: &MaterializationOptions,
-    copper_features: &mut Vec<MaterializedCopperFeature>,
-    process_features: &mut Vec<MaterializedProcessFeature>,
-    process_omissions: &mut Vec<ProcessMaterializationOmission>,
-    drills: &mut Vec<DrillHit>,
+    materialization: &mut PlacementMaterialization<'_>,
 ) -> Result<(), GeometryMaterializationError> {
+    let decisions = materialization.decisions;
     let (front_layer, back_layer) = surface_copper_layers(layout)?;
     for placement in &layout.placements {
         let pattern = layout
@@ -2331,7 +2651,7 @@ fn materialize_placements(
                 .as_ref()
                 .and_then(|pin| instance.pins.iter().find(|binding| binding.pin == *pin))
                 .map(|binding| binding.net.clone());
-            let local_profile = pad_profile(pad, options)?;
+            let local_profile = pad_profile(pad, options, decisions)?;
             let profile = transform_pad_profile(local_profile.clone(), pad, placement);
             let source = format!(
                 "pad:{}:{}:{}",
@@ -2342,20 +2662,22 @@ fn materialize_placements(
             let mut surface_roles = Vec::new();
             for layer in &pad.copper_layers {
                 let placed = placed_layer(layout, *layer, placement.side);
-                copper_features.push(MaterializedCopperFeature {
-                    source: source.clone(),
-                    net: net.clone(),
-                    layer: placed,
-                    kind: CopperFeatureKind::Pad,
-                    identity: MaterializedCopperIdentity::Pad {
-                        instance: placement.instance.clone(),
-                        land_pattern: pattern.id.clone(),
-                        pad: pad.id.clone(),
-                        pin: pin.clone(),
-                    },
-                    anchor: transform_point(&pad.center, placement),
-                    profile: profile.clone(),
-                });
+                materialization
+                    .copper_features
+                    .push(MaterializedCopperFeature {
+                        source: source.clone(),
+                        net: net.clone(),
+                        layer: placed,
+                        kind: CopperFeatureKind::Pad,
+                        identity: MaterializedCopperIdentity::Pad {
+                            instance: placement.instance.clone(),
+                            land_pattern: pattern.id.clone(),
+                            pad: pad.id.clone(),
+                            pin: pin.clone(),
+                        },
+                        anchor: transform_point(&pad.center, placement),
+                        profile: profile.clone(),
+                    });
                 if placed == front_layer && !surface_roles.contains(&BoardSide::Front) {
                     surface_roles.push(BoardSide::Front);
                 }
@@ -2374,19 +2696,27 @@ fn materialize_placements(
                 let mask = if mask_margin.definitely_zero() {
                     local_profile.clone()
                 } else {
-                    curve::offset(&local_profile, mask_margin.clone()).map_err(|error| {
-                        GeometryMaterializationError::Boolean(format!(
-                            "{source} solder-mask offset: {error}"
+                    decisions
+                        .consume(curve::offset(
+                            &local_profile,
+                            mask_margin.clone(),
+                            decisions.curve_policy(),
                         ))
-                    })?
+                        .map_err(|error| {
+                            GeometryMaterializationError::Boolean(format!(
+                                "{source} solder-mask offset: {error}"
+                            ))
+                        })?
                 };
                 if !mask.is_empty() {
-                    process_features.push(MaterializedProcessFeature {
-                        source: format!("mask:{source}"),
-                        role: side_process_role(side, true),
-                        kind: ProcessFeatureKind::PadMaskOpening,
-                        profile: transform_pad_profile(mask, pad, placement),
-                    });
+                    materialization
+                        .process_features
+                        .push(MaterializedProcessFeature {
+                            source: format!("mask:{source}"),
+                            role: side_process_role(side, true),
+                            kind: ProcessFeatureKind::PadMaskOpening,
+                            profile: transform_pad_profile(mask, pad, placement),
+                        });
                 }
                 if pad.drill.is_none() {
                     let paste_margin = pad
@@ -2396,35 +2726,37 @@ fn materialize_placements(
                     let paste = if paste_margin.definitely_zero() {
                         local_profile.clone()
                     } else {
-                        curve::offset(&local_profile, paste_margin.clone()).map_err(|error| {
-                            GeometryMaterializationError::Boolean(format!(
-                                "{source} paste offset: {error}"
+                        decisions
+                            .consume(curve::offset(
+                                &local_profile,
+                                paste_margin.clone(),
+                                decisions.curve_policy(),
                             ))
-                        })?
+                            .map_err(|error| {
+                                GeometryMaterializationError::Boolean(format!(
+                                    "{source} paste offset: {error}"
+                                ))
+                            })?
                     };
                     if !paste.is_empty() {
-                        process_features.push(MaterializedProcessFeature {
-                            source: format!("paste:{source}"),
-                            role: side_process_role(side, false),
-                            kind: ProcessFeatureKind::PadPasteAperture,
-                            profile: transform_pad_profile(paste, pad, placement),
-                        });
+                        materialization
+                            .process_features
+                            .push(MaterializedProcessFeature {
+                                source: format!("paste:{source}"),
+                                role: side_process_role(side, false),
+                                kind: ProcessFeatureKind::PadPasteAperture,
+                                profile: transform_pad_profile(paste, pad, placement),
+                            });
                     }
                 }
             }
             if let Some(drill) = &pad.drill {
-                drills.push(transform_drill(pad, drill, placement));
+                materialization
+                    .drills
+                    .push(transform_drill(pad, drill, placement));
             }
         }
-        materialize_pattern_graphics(
-            layout,
-            pattern,
-            placement,
-            options,
-            copper_features,
-            process_features,
-            process_omissions,
-        )?;
+        materialize_pattern_graphics(layout, pattern, placement, options, materialization)?;
     }
     Ok(())
 }
@@ -2461,10 +2793,9 @@ fn materialize_pattern_graphics(
     pattern: &crate::LandPattern,
     placement: &PcbPlacement,
     options: &MaterializationOptions,
-    copper_features: &mut Vec<MaterializedCopperFeature>,
-    process_features: &mut Vec<MaterializedProcessFeature>,
-    omissions: &mut Vec<ProcessMaterializationOmission>,
+    materialization: &mut PlacementMaterialization<'_>,
 ) -> Result<(), GeometryMaterializationError> {
+    let decisions = materialization.decisions;
     for graphic in &pattern.graphics {
         let source = format!(
             "graphic:{}:{}:{}",
@@ -2474,37 +2805,52 @@ fn materialize_pattern_graphics(
         );
         match &graphic.layer {
             LayerRole::EdgeCuts => {
-                omissions.push(ProcessMaterializationOmission::PackageEdgeCuts { source });
+                materialization
+                    .process_omissions
+                    .push(ProcessMaterializationOmission::PackageEdgeCuts { source });
                 continue;
             }
             LayerRole::Custom(layer) => {
-                omissions.push(ProcessMaterializationOmission::CustomArtworkLayer {
-                    source,
-                    layer: layer.clone(),
-                });
+                materialization.process_omissions.push(
+                    ProcessMaterializationOmission::CustomArtworkLayer {
+                        source,
+                        layer: layer.clone(),
+                    },
+                );
                 continue;
             }
             LayerRole::Fabrication | LayerRole::Courtyard => continue,
             _ => {}
         }
-        let Some(profile) = graphic_profile(graphic, options, &source, omissions)? else {
+        let Some(profile) = graphic_profile(
+            graphic,
+            options,
+            &source,
+            materialization.process_omissions,
+            decisions,
+        )?
+        else {
             continue;
         };
         let profile = transform_local_profile(profile, placement);
         match &graphic.layer {
-            LayerRole::Copper(layer) => copper_features.push(MaterializedCopperFeature {
-                source,
-                net: None,
-                layer: placed_layer(layout, *layer, placement.side),
-                kind: CopperFeatureKind::Artwork,
-                identity: MaterializedCopperIdentity::Artwork {
-                    instance: placement.instance.clone(),
-                    land_pattern: pattern.id.clone(),
-                    graphic: graphic.id.clone(),
-                },
-                anchor: placement.position.clone(),
-                profile,
-            }),
+            LayerRole::Copper(layer) => {
+                materialization
+                    .copper_features
+                    .push(MaterializedCopperFeature {
+                        source,
+                        net: None,
+                        layer: placed_layer(layout, *layer, placement.side),
+                        kind: CopperFeatureKind::Artwork,
+                        identity: MaterializedCopperIdentity::Artwork {
+                            instance: placement.instance.clone(),
+                            land_pattern: pattern.id.clone(),
+                            graphic: graphic.id.clone(),
+                        },
+                        anchor: placement.position.clone(),
+                        profile,
+                    })
+            }
             LayerRole::FrontSolderMask
             | LayerRole::BackSolderMask
             | LayerRole::FrontPaste
@@ -2513,12 +2859,14 @@ fn materialize_pattern_graphics(
             | LayerRole::BackSilkscreen => {
                 let role = placed_process_role(&graphic.layer, placement.side)
                     .expect("matched production artwork role");
-                process_features.push(MaterializedProcessFeature {
-                    source,
-                    role,
-                    kind: ProcessFeatureKind::Artwork,
-                    profile,
-                });
+                materialization
+                    .process_features
+                    .push(MaterializedProcessFeature {
+                        source,
+                        role,
+                        kind: ProcessFeatureKind::Artwork,
+                        profile,
+                    });
             }
             LayerRole::EdgeCuts
             | LayerRole::Custom(_)
@@ -2557,6 +2905,7 @@ fn graphic_profile(
     options: &MaterializationOptions,
     source: &str,
     omissions: &mut Vec<ProcessMaterializationOmission>,
+    decisions: &MaterializationDecisions,
 ) -> Result<Option<CurveRegion2>, GeometryMaterializationError> {
     match &graphic.primitive {
         LandPatternGraphicPrimitive::Line { start, end } => {
@@ -2572,6 +2921,7 @@ fn graphic_profile(
                 width,
                 options.circular_segments,
                 source,
+                decisions,
             )
             .map(Some)
         }
@@ -2588,13 +2938,15 @@ fn graphic_profile(
                 options.circular_segments,
             );
             let inner_radius = radius.clone() - half_width;
-            let ring = match inner_radius.predicate_cmp(&Real::zero()) {
+            let ring = match decisions.compare_reals(&inner_radius, &Real::zero()) {
                 Some(Ordering::Less | Ordering::Equal) => outer,
                 Some(Ordering::Greater) => {
                     let inner = curve::circle(inner_radius, options.circular_segments);
-                    outer.try_difference(&inner).map_err(|error| {
-                        GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
-                    })?
+                    decisions
+                        .consume(outer.try_difference(&inner, decisions.curve_policy()))
+                        .map_err(|error| {
+                            GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
+                        })?
                 }
                 None => return Err(GeometryMaterializationError::Arithmetic),
             };
@@ -2606,9 +2958,14 @@ fn graphic_profile(
         }
         LandPatternGraphicPrimitive::Polygon { vertices, filled } => {
             if *filled {
-                let profile = polygon_profile(vertices, source)?;
+                let profile = polygon_profile(vertices, source, decisions)?;
                 if let Some(width) = &graphic.stroke_width {
-                    curve::offset(&profile, half(width)?)
+                    decisions
+                        .consume(curve::offset(
+                            &profile,
+                            half(width)?,
+                            decisions.curve_policy(),
+                        ))
                         .map(Some)
                         .map_err(|error| {
                             GeometryMaterializationError::Boolean(format!("{source}: {error}"))
@@ -2623,8 +2980,14 @@ fn graphic_profile(
                     });
                     return Ok(None);
                 };
-                stroked_polygon_profile(vertices, width, options.circular_segments, source)
-                    .map(Some)
+                stroked_polygon_profile(
+                    vertices,
+                    width,
+                    options.circular_segments,
+                    source,
+                    decisions,
+                )
+                .map(Some)
             }
         }
         LandPatternGraphicPrimitive::Text {
@@ -2670,6 +3033,7 @@ fn stroked_path_profile(
     width: &Real,
     _circular_segments: usize,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     let mut segments = points
         .windows(2)
@@ -2698,16 +3062,18 @@ fn stroked_path_profile(
     let centerline = CurveString2::try_new(segments).map_err(|error| {
         GeometryMaterializationError::InvalidRoute(format!("{source}: {error}"))
     })?;
-    match centerline
-        .offset_outline(half(width)?, OffsetCap::Round, &CurvePolicy::certified())
+    let half_width = half(width)?;
+    match decisions
+        .classify(|policy| centerline.offset_outline(half_width.clone(), OffsetCap::Round, policy))
         .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}")))?
     {
-        Classification::Decided(contour) => CurveRegion2::try_from_native_contours(
-            vec![contour],
-            Vec::new(),
-            &CurvePolicy::certified(),
-        )
-        .map_err(|error| GeometryMaterializationError::RouteOutline(format!("{source}: {error}"))),
+        Classification::Decided(contour) => decisions
+            .curve_operation(|policy| {
+                CurveRegion2::try_from_native_contours(vec![contour.clone()], Vec::new(), policy)
+            })
+            .map_err(|error| {
+                GeometryMaterializationError::RouteOutline(format!("{source}: {error}"))
+            }),
         Classification::Uncertain(reason) => Err(GeometryMaterializationError::RouteOutline(
             format!("{source}: {reason:?}"),
         )),
@@ -2719,6 +3085,7 @@ fn stroked_polygon_profile(
     width: &Real,
     circular_segments: usize,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     if points.len() < 3 {
         return Err(GeometryMaterializationError::InvalidPolygon(
@@ -2736,11 +3103,14 @@ fn stroked_polygon_profile(
             width,
             circular_segments,
             source,
+            decisions,
         )?;
         outline = Some(match outline {
-            Some(existing) => existing.try_union(&edge).map_err(|error| {
-                GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
-            })?,
+            Some(existing) => decisions
+                .consume(existing.try_union(&edge, decisions.curve_policy()))
+                .map_err(|error| {
+                    GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
+                })?,
             None => edge,
         });
     }
@@ -2750,11 +3120,16 @@ fn stroked_polygon_profile(
 fn pad_profile(
     pad: &LandPatternPad,
     _options: &MaterializationOptions,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     match &pad.shape {
-        PadShape::Circle { diameter } => {
-            exact_rounded_rectangle_profile(diameter, diameter, &half(diameter)?, pad.id.as_str())
-        }
+        PadShape::Circle { diameter } => exact_rounded_rectangle_profile(
+            diameter,
+            diameter,
+            &half(diameter)?,
+            pad.id.as_str(),
+            decisions,
+        ),
         PadShape::Rectangle { width, height } => Ok(center_pad_profile(
             curve::rectangle(width.clone(), height.clone()),
             width,
@@ -2764,16 +3139,36 @@ fn pad_profile(
             width,
             height,
             corner_radius,
-        } => exact_rounded_rectangle_profile(width, height, corner_radius, pad.id.as_str()),
+        } => exact_rounded_rectangle_profile(
+            width,
+            height,
+            corner_radius,
+            pad.id.as_str(),
+            decisions,
+        ),
         PadShape::Obround { width, height } => {
-            let radius = match width.predicate_cmp(height) {
-                Some(Ordering::Less | Ordering::Equal) => half(width)?,
-                Some(Ordering::Greater) => half(height)?,
-                None => return Err(GeometryMaterializationError::Arithmetic),
-            };
-            exact_rounded_rectangle_profile(width, height, &radius, pad.id.as_str())
+            let (profile_width, profile_height, radius) =
+                match decisions.compare_reals(width, height) {
+                    Some(Ordering::Less) => (width, height, half(width)?),
+                    Some(Ordering::Greater) => (width, height, half(height)?),
+                    Some(Ordering::Equal) => {
+                        // Equality is a topology decision owned by this operation.
+                        // Reuse one exact carrier after consuming that decision so
+                        // downstream arc/path validation does not independently
+                        // reinterpret two equivalent symbolic expressions.
+                        (width, width, half(width)?)
+                    }
+                    None => return Err(GeometryMaterializationError::Arithmetic),
+                };
+            exact_rounded_rectangle_profile(
+                profile_width,
+                profile_height,
+                &radius,
+                pad.id.as_str(),
+                decisions,
+            )
         }
-        PadShape::Polygon { vertices } => polygon_profile(vertices, pad.id.as_str()),
+        PadShape::Polygon { vertices } => polygon_profile(vertices, pad.id.as_str(), decisions),
     }
 }
 
@@ -2782,6 +3177,7 @@ fn exact_rounded_rectangle_profile(
     height: &Real,
     radius: &Real,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     let right = width - radius;
     let top = height - radius;
@@ -2794,7 +3190,7 @@ fn exact_rounded_rectangle_profile(
     let left_top = CurvePoint2::new(Real::zero(), top.clone());
     let left_bottom = CurvePoint2::new(Real::zero(), radius.clone());
     let mut curves = Vec::with_capacity(8);
-    push_exact_line(&mut curves, &bottom_left, &bottom_right, source)?;
+    push_exact_line(&mut curves, &bottom_left, &bottom_right, source, decisions)?;
     curves.push(Curve2::from(
         CircularArc2::try_from_center(
             bottom_right,
@@ -2804,7 +3200,7 @@ fn exact_rounded_rectangle_profile(
         )
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?,
     ));
-    push_exact_line(&mut curves, &right_bottom, &right_top, source)?;
+    push_exact_line(&mut curves, &right_bottom, &right_top, source, decisions)?;
     curves.push(Curve2::from(
         CircularArc2::try_from_center(
             right_top,
@@ -2814,7 +3210,7 @@ fn exact_rounded_rectangle_profile(
         )
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?,
     ));
-    push_exact_line(&mut curves, &top_right, &top_left, source)?;
+    push_exact_line(&mut curves, &top_right, &top_left, source, decisions)?;
     curves.push(Curve2::from(
         CircularArc2::try_from_center(
             top_left,
@@ -2824,7 +3220,7 @@ fn exact_rounded_rectangle_profile(
         )
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?,
     ));
-    push_exact_line(&mut curves, &left_top, &left_bottom, source)?;
+    push_exact_line(&mut curves, &left_top, &left_bottom, source, decisions)?;
     curves.push(Curve2::from(
         CircularArc2::try_from_center(
             left_bottom,
@@ -2846,9 +3242,10 @@ fn push_exact_line(
     start: &CurvePoint2,
     end: &CurvePoint2,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<(), GeometryMaterializationError> {
-    let same_point =
-        curve_points_equal(start, end).ok_or(GeometryMaterializationError::Arithmetic)?;
+    let same_point = curve_points_equal(start, end, decisions)
+        .ok_or(GeometryMaterializationError::Arithmetic)?;
     if !same_point {
         curves.push(Curve2::from(
             LineSeg2::try_new(start.clone(), end.clone())
@@ -2858,8 +3255,15 @@ fn push_exact_line(
     Ok(())
 }
 
-fn curve_points_equal(first: &CurvePoint2, second: &CurvePoint2) -> Option<bool> {
-    Some(first.x().predicate_eq(second.x())? && first.y().predicate_eq(second.y())?)
+fn curve_points_equal(
+    first: &CurvePoint2,
+    second: &CurvePoint2,
+    decisions: &MaterializationDecisions,
+) -> Option<bool> {
+    Some(
+        decisions.compare_reals(first.x(), second.x())? == Ordering::Equal
+            && decisions.compare_reals(first.y(), second.y())? == Ordering::Equal,
+    )
 }
 
 fn center_pad_profile(
@@ -2964,6 +3368,7 @@ fn placed_layer(layout: &PcbLayout, layer: TraceLayer, side: BoardSide) -> Trace
 fn route_profile(
     route: &crate::layout::PcbRoute,
     options: &MaterializationOptions,
+    decisions: &MaterializationDecisions,
 ) -> Result<(CurveRegion2, Vec<MaterializationProjection>), GeometryMaterializationError> {
     let source = route.id.as_str();
     let has_curve = route.segments.iter().any(|segment| {
@@ -2984,13 +3389,16 @@ fn route_profile(
                 &route.width,
                 options.circular_segments,
                 &format!("{source} segment {index}"),
+                decisions,
             )?;
             profile = Some(match profile {
-                Some(existing) => existing.try_union(&swept).map_err(|error| {
-                    GeometryMaterializationError::Boolean(format!(
-                        "{source} merge segment {index}: {error:?}"
-                    ))
-                })?,
+                Some(existing) => decisions
+                    .consume(existing.try_union(&swept, decisions.curve_policy()))
+                    .map_err(|error| {
+                        GeometryMaterializationError::Boolean(format!(
+                            "{source} merge segment {index}: {error:?}"
+                        ))
+                    })?,
                 None => swept,
             });
         }
@@ -3031,11 +3439,15 @@ fn route_profile(
                 } else {
                     (start_angle - end_angle).rem_euclid(std::f64::consts::TAU)
                 };
-                if (arc.start().x.predicate_eq(&arc.end().x))
-                    .zip(arc.start().y.predicate_eq(&arc.end().y))
-                    .map(|(x, y)| x && y)
+                let same_x = decisions
+                    .compare_reals(&arc.start().x, &arc.end().x)
                     .ok_or(GeometryMaterializationError::Arithmetic)?
-                {
+                    == Ordering::Equal;
+                let same_y = decisions
+                    .compare_reals(&arc.start().y, &arc.end().y)
+                    .ok_or(GeometryMaterializationError::Arithmetic)?
+                    == Ordering::Equal;
+                if same_x && same_y {
                     sweep = std::f64::consts::TAU;
                 }
                 let chord_error = options.route_arc_chord_error.min(radius);
@@ -3073,7 +3485,7 @@ fn route_profile(
             }
         }
     }
-    let profile = finite_stroked_polyline_profile(&points, &route.width, source)?;
+    let profile = finite_stroked_polyline_profile(&points, &route.width, source, decisions)?;
     let mut projections = Vec::new();
     if has_arc {
         projections.push(MaterializationProjection::CircularRoutePolyline {
@@ -3135,7 +3547,6 @@ pub(crate) fn project_cubic_bezier(
         control1,
         end,
         chord_error,
-        0,
         source,
         &mut sampled,
     )?;
@@ -3159,50 +3570,93 @@ fn flatten_cubic(
     control1: [f64; 2],
     end: [f64; 2],
     chord_error: f64,
-    depth: u8,
     source: &str,
     output: &mut Vec<[f64; 2]>,
 ) -> Result<(), GeometryMaterializationError> {
-    if cubic_flatness(start, control0, control1, end) <= chord_error {
-        output.push(end);
-        return Ok(());
+    type Cubic = [[f64; 2]; 4];
+
+    let midpoint = |left: [f64; 2], right: [f64; 2]| {
+        [
+            left[0] * 0.5 + right[0] * 0.5,
+            left[1] * 0.5 + right[1] * 0.5,
+        ]
+    };
+    let allocation_error = || {
+        GeometryMaterializationError::RouteOutline(format!(
+            "{source} cubic Bezier projection exceeds addressable memory"
+        ))
+    };
+    let mut pending = Vec::<Cubic>::new();
+    pending.try_reserve(1).map_err(|_| allocation_error())?;
+    pending.push([start, control0, control1, end]);
+
+    while let Some(segment @ [start, control0, control1, end]) = pending.pop() {
+        if cubic_within_chord_error(start, control0, control1, end, chord_error) {
+            output.try_reserve(1).map_err(|_| allocation_error())?;
+            output.push(end);
+            continue;
+        }
+
+        let a = midpoint(start, control0);
+        let b = midpoint(control0, control1);
+        let c = midpoint(control1, end);
+        let d = midpoint(a, b);
+        let e = midpoint(b, c);
+        let middle = midpoint(d, e);
+        let left = [start, a, d, middle];
+        let right = [middle, e, c, end];
+        if left == segment || right == segment {
+            return Err(GeometryMaterializationError::RouteOutline(format!(
+                "{source} cubic Bezier projection stagnated before meeting its chord error"
+            )));
+        }
+        pending.try_reserve(2).map_err(|_| allocation_error())?;
+        pending.push(right);
+        pending.push(left);
     }
-    if depth == 32 {
-        return Err(GeometryMaterializationError::RouteOutline(format!(
-            "{source} cubic Bezier exceeded adaptive projection depth"
-        )));
-    }
-    let midpoint =
-        |left: [f64; 2], right: [f64; 2]| [(left[0] + right[0]) / 2.0, (left[1] + right[1]) / 2.0];
-    let a = midpoint(start, control0);
-    let b = midpoint(control0, control1);
-    let c = midpoint(control1, end);
-    let d = midpoint(a, b);
-    let e = midpoint(b, c);
-    let middle = midpoint(d, e);
-    flatten_cubic(start, a, d, middle, chord_error, depth + 1, source, output)?;
-    flatten_cubic(middle, e, c, end, chord_error, depth + 1, source, output)
+    Ok(())
 }
 
-fn cubic_flatness(start: [f64; 2], control0: [f64; 2], control1: [f64; 2], end: [f64; 2]) -> f64 {
+fn cubic_within_chord_error(
+    start: [f64; 2],
+    control0: [f64; 2],
+    control1: [f64; 2],
+    end: [f64; 2],
+    chord_error: f64,
+) -> bool {
+    let scale = start
+        .into_iter()
+        .chain(control0)
+        .chain(control1)
+        .chain(end)
+        .map(f64::abs)
+        .fold(1.0_f64, f64::max);
+    let normalize = |point: [f64; 2]| [point[0] / scale, point[1] / scale];
+    let start = normalize(start);
+    let control0 = normalize(control0);
+    let control1 = normalize(control1);
+    let end = normalize(end);
     let dx = end[0] - start[0];
     let dy = end[1] - start[1];
     let chord = dx.hypot(dy);
-    if chord == 0.0 {
-        return (control0[0] - start[0])
+    let flatness = if chord == 0.0 {
+        (control0[0] - start[0])
             .hypot(control0[1] - start[1])
-            .max((control1[0] - start[0]).hypot(control1[1] - start[1]));
-    }
-    let distance = |point: [f64; 2]| {
-        (dy * point[0] - dx * point[1] + end[0] * start[1] - end[1] * start[0]).abs() / chord
+            .max((control1[0] - start[0]).hypot(control1[1] - start[1]))
+    } else {
+        let distance = |point: [f64; 2]| {
+            (dy * (point[0] - start[0]) - dx * (point[1] - start[1])).abs() / chord
+        };
+        distance(control0).max(distance(control1))
     };
-    distance(control0).max(distance(control1))
+    flatness <= chord_error / scale
 }
 
 fn finite_stroked_polyline_profile(
     points: &[Point2],
     width: &Real,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     let finite = |value: &Real| {
         value
@@ -3288,10 +3742,10 @@ fn finite_stroked_polyline_profile(
         .into_iter()
         .map(finite_profile_point)
         .collect::<Result<Vec<_>, GeometryMaterializationError>>()?;
-    match polygon_profile(&outline, source) {
+    match polygon_profile(&outline, source, decisions) {
         Ok(profile) => Ok(profile),
         Err(GeometryMaterializationError::InvalidPolygon(_)) => {
-            finite_swept_polyline_profile(&points, half_width, source)
+            finite_swept_polyline_profile(&points, half_width, source, decisions)
         }
         Err(error) => Err(error),
     }
@@ -3301,16 +3755,19 @@ fn finite_swept_polyline_profile(
     points: &[[f64; 2]],
     half_width: f64,
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     let mut swept = None::<CurveRegion2>;
     let mut add_profile =
         |profile: CurveRegion2, description: &str| -> Result<(), GeometryMaterializationError> {
             swept = Some(match swept.take() {
-                Some(existing) => existing.try_union(&profile).map_err(|error| {
-                    GeometryMaterializationError::Boolean(format!(
-                        "{source} swept-polyline {description}: {error:?}"
-                    ))
-                })?,
+                Some(existing) => decisions
+                    .consume(existing.try_union(&profile, decisions.curve_policy()))
+                    .map_err(|error| {
+                        GeometryMaterializationError::Boolean(format!(
+                            "{source} swept-polyline {description}: {error:?}"
+                        ))
+                    })?,
                 None => profile,
             });
             Ok(())
@@ -3336,7 +3793,7 @@ fn finite_swept_polyline_profile(
         .map(finite_profile_point)
         .collect::<Result<Vec<_>, GeometryMaterializationError>>()?;
         add_profile(
-            polygon_profile(&rectangle, source)?,
+            polygon_profile(&rectangle, source, decisions)?,
             &format!("segment {index}"),
         )?;
     }
@@ -3352,7 +3809,10 @@ fn finite_swept_polyline_profile(
                 ])
             })
             .collect::<Result<Vec<_>, GeometryMaterializationError>>()?;
-        add_profile(polygon_profile(&joint, source)?, &format!("joint {index}"))?;
+        add_profile(
+            polygon_profile(&joint, source, decisions)?,
+            &format!("joint {index}"),
+        )?;
     }
 
     swept.ok_or_else(|| GeometryMaterializationError::InvalidRoute(source.to_owned()))
@@ -3368,28 +3828,34 @@ fn finite_profile_point(point: [f64; 2]) -> Result<Point2, GeometryMaterializati
 fn polygon_profile(
     vertices: &[Point2],
     source: &str,
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     if vertices.len() < 3 {
         return Err(GeometryMaterializationError::InvalidPolygon(
             source.to_owned(),
         ));
     }
-    let vertices = vertices.iter().map(curve_point).collect::<Vec<_>>();
-    let profile = curve::polygon_points(&vertices);
-    if profile.is_empty() {
-        Err(GeometryMaterializationError::InvalidPolygon(
-            source.to_owned(),
-        ))
-    } else {
-        Ok(profile)
-    }
+    let coordinates = vertices
+        .iter()
+        .map(|point| [point.x.clone(), point.y.clone()])
+        .collect::<Vec<_>>();
+    let contour = Contour2::from_real_ring(&coordinates)
+        .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
+    decisions
+        .curve_operation(|policy| {
+            CurveRegion2::try_from_native_material_contours(vec![contour.clone()], policy)
+        })
+        .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))
 }
 
 fn curve_point(point: &Point2) -> CurvePoint2 {
     CurvePoint2::new(point.x.clone(), point.y.clone())
 }
 
-fn union_layer_images(features: &[MaterializedCopperFeature]) -> Vec<LayerImage> {
+fn union_layer_images(
+    features: &[MaterializedCopperFeature],
+    decisions: &MaterializationDecisions,
+) -> Vec<LayerImage> {
     let mut images = BTreeMap::<TraceLayer, Vec<CurveRegion2>>::new();
     for feature in features {
         images
@@ -3401,7 +3867,7 @@ fn union_layer_images(features: &[MaterializedCopperFeature]) -> Vec<LayerImage>
         .into_iter()
         .map(|(layer, profiles)| {
             let source_feature_count = profiles.len();
-            let (copper, blocker) = match exact_compound_union(&profiles) {
+            let (copper, blocker) = match exact_compound_union(&profiles, decisions) {
                 Ok(profile) => (Some(profile), None),
                 Err(error) => (None, Some(error)),
             };
@@ -3415,7 +3881,10 @@ fn union_layer_images(features: &[MaterializedCopperFeature]) -> Vec<LayerImage>
         .collect()
 }
 
-fn union_process_images(features: &[MaterializedProcessFeature]) -> Vec<ProcessLayerImage> {
+fn union_process_images(
+    features: &[MaterializedProcessFeature],
+    decisions: &MaterializationDecisions,
+) -> Vec<ProcessLayerImage> {
     let mut images = BTreeMap::<ProcessLayerRole, Vec<CurveRegion2>>::new();
     for feature in features {
         images
@@ -3427,7 +3896,7 @@ fn union_process_images(features: &[MaterializedProcessFeature]) -> Vec<ProcessL
         .into_iter()
         .map(|(role, profiles)| {
             let source_feature_count = profiles.len();
-            let (image, blocker) = match exact_compound_union(&profiles) {
+            let (image, blocker) = match exact_compound_union(&profiles, decisions) {
                 Ok(profile) => (Some(profile), None),
                 Err(error) => (None, Some(error)),
             };
@@ -3441,15 +3910,85 @@ fn union_process_images(features: &[MaterializedProcessFeature]) -> Vec<ProcessL
         .collect()
 }
 
-fn exact_compound_union(profiles: &[CurveRegion2]) -> Result<CurveRegion2, String> {
-    exact_compound_composition(profiles, &[])
+fn exact_compound_union(
+    profiles: &[CurveRegion2],
+    decisions: &MaterializationDecisions,
+) -> Result<CurveRegion2, String> {
+    let profiles = profiles
+        .iter()
+        .filter(|profile| !profile.is_empty())
+        .collect::<Vec<_>>();
+    if profiles.is_empty() {
+        return Ok(CurveRegion2::empty());
+    }
+
+    let policy = decisions.curve_policy();
+    let bounds = profiles
+        .iter()
+        .map(|profile| {
+            match decisions
+                .classify(|attempt| profile.bounds(attempt))
+                .map_err(|error| error.to_string())?
+            {
+                Classification::Decided(bounds) => Ok(bounds),
+                Classification::Uncertain(reason) => {
+                    Err(format!("exact aggregate bounds were uncertain: {reason:?}"))
+                }
+            }
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    let mut parents = (0..profiles.len()).collect::<Vec<_>>();
+    fn root(parents: &mut [usize], mut index: usize) -> usize {
+        while parents[index] != index {
+            parents[index] = parents[parents[index]];
+            index = parents[index];
+        }
+        index
+    }
+    for left in 0..bounds.len() {
+        for right in left + 1..bounds.len() {
+            match decisions.classify_value(|attempt| bounds[left].overlaps(&bounds[right], attempt))
+            {
+                Classification::Decided(false) => {}
+                Classification::Decided(true) => {
+                    let left_root = root(&mut parents, left);
+                    let right_root = root(&mut parents, right);
+                    parents[right_root] = left_root;
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(format!(
+                        "exact aggregate bounds overlap was uncertain: {reason:?}"
+                    ));
+                }
+            }
+        }
+    }
+
+    let mut components = BTreeMap::<usize, Vec<&CurveRegion2>>::new();
+    for (index, profile) in profiles.iter().enumerate() {
+        let root = root(&mut parents, index);
+        components.entry(root).or_default().push(*profile);
+    }
+    let mut unions = Vec::with_capacity(components.len());
+    for component in components.into_values() {
+        let mut component = component.into_iter();
+        let first = component
+            .next()
+            .expect("each aggregate component contains a profile");
+        unions.push(component.try_fold(first.clone(), |aggregate, profile| {
+            decisions
+                .consume(aggregate.boolean_region(profile, BooleanOp::Union, policy))
+                .map_err(|error| format!("{error:?}"))
+        })?);
+    }
+    exact_compound_composition(&unions, &[], decisions)
 }
 
 fn exact_compound_composition(
     positive: &[CurveRegion2],
     negative: &[CurveRegion2],
+    decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, String> {
-    let policy = CurvePolicy::certified();
     let mut paths = Vec::new();
     let mut roles = Vec::new();
     let mut rules = Vec::new();
@@ -3465,8 +4004,8 @@ fn exact_compound_composition(
         else {
             return Err("exact aggregate boundary materialization was uncertain".to_owned());
         };
-        let Classification::Decided(profile_roles) = region
-            .loop_roles(&policy)
+        let Classification::Decided(profile_roles) = decisions
+            .classify(|attempt| region.loop_roles(attempt))
             .map_err(|error| error.to_string())?
         else {
             return Err("exact aggregate loop roles were uncertain".to_owned());
@@ -3492,9 +4031,13 @@ fn exact_compound_composition(
         roles.extend(profile_roles);
         rules.extend(profile_rules);
     }
-    let region =
-        CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(&paths, &roles, &rules)
-            .map_err(|error| error.to_string())?;
+    let region = decisions
+        .curve_operation(|policy| {
+            CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+                &paths, &roles, &rules, policy,
+            )
+        })
+        .map_err(|error| error.to_string())?;
     Ok(region)
 }
 
@@ -3505,17 +4048,19 @@ fn half(value: &Real) -> Result<Real, GeometryMaterializationError> {
 #[cfg(test)]
 mod tests {
     use super::{
-        MaterializationOptions, exact_compound_composition, pad_profile, transform_drill,
-        transform_pad_profile,
+        MaterializationContext, MaterializationDecisions, MaterializationOptions,
+        exact_compound_composition, exact_compound_union, pad_profile, project_cubic_bezier,
+        transform_drill, transform_pad_profile,
     };
     use crate::{
         BoardSide, CircuitInstanceId, DrillShape, LandPatternId, LandPatternPad, PadId, PadShape,
         PcbPlacement, Plating,
     };
+    use csgrs::GeometryCertainty;
     use csgrs::curve::{self, CurveRegionExt};
     use hypercurve::{Classification, CurveFamily2, CurveRegion2};
     use hyperlattice::Point2;
-    use hyperpath::TraceLayer;
+    use hyperpath::{CubicBezier, TraceLayer};
     use hyperreal::Real;
 
     fn rounded_pad(id: &str, center_x: i32) -> LandPatternPad {
@@ -3537,10 +4082,36 @@ mod tests {
     }
 
     #[test]
+    fn cubic_projection_handles_finite_coordinates_whose_raw_chord_overflows() {
+        let maximum = Real::try_from(f64::MAX).unwrap();
+        let third = Real::try_from(f64::MAX / 3.0).unwrap();
+        let curve = CubicBezier::new(
+            Point2::new(-maximum.clone(), Real::zero()),
+            Point2::new(-third.clone(), Real::zero()),
+            Point2::new(third, Real::zero()),
+            Point2::new(maximum, Real::zero()),
+        );
+
+        let projected = project_cubic_bezier(&curve, 1.0, "finite-overflow-chord")
+            .expect("a collinear finite cubic needs no recursive refinement");
+        assert_eq!(projected, vec![curve.end().clone()]);
+    }
+
+    #[test]
     fn rounded_pads_retain_exact_arcs_and_union_without_boolean_blockers() {
-        let first = pad_profile(&rounded_pad("1", 0), &MaterializationOptions::default()).unwrap();
-        let second_local =
-            pad_profile(&rounded_pad("2", 1), &MaterializationOptions::default()).unwrap();
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let first = pad_profile(
+            &rounded_pad("1", 0),
+            &MaterializationOptions::default(),
+            &decisions,
+        )
+        .unwrap();
+        let second_local = pad_profile(
+            &rounded_pad("2", 1),
+            &MaterializationOptions::default(),
+            &decisions,
+        )
+        .unwrap();
         let second = curve::translated(&second_local, Real::one(), Real::zero());
         let Classification::Decided(paths) = first.materialized_boundary_paths().unwrap() else {
             panic!("exact rounded pad boundary should materialize");
@@ -3552,20 +4123,57 @@ mod tests {
             )
         }));
         let union: CurveRegion2 = first
-            .try_union(&second)
-            .expect("overlapping exact rounded pads must union");
+            .try_union(&second, decisions.curve_policy())
+            .expect("overlapping exact rounded pads must union")
+            .into_value();
         assert!(!union.is_empty());
     }
 
     #[test]
+    fn approximate_materialization_marks_consumed_terminal_pad_ordering() {
+        let mut pad = rounded_pad("terminal", 0);
+        pad.shape = PadShape::Obround {
+            width: Real::pi() + Real::e(),
+            height: Real::e() + Real::pi(),
+        };
+
+        let strict = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        assert!(pad_profile(&pad, &MaterializationOptions::default(), &strict).is_err());
+        assert_eq!(strict.certainty(), GeometryCertainty::Certified);
+
+        let approximate = MaterializationDecisions::new(&MaterializationContext::APPROXIMATE_512);
+        let profile = pad_profile(&pad, &MaterializationOptions::default(), &approximate)
+            .expect("the authorized 512-bit terminal should decide equal obround dimensions");
+        assert!(!profile.is_empty());
+        assert_eq!(
+            approximate.certainty(),
+            GeometryCertainty::Approximate512Consumed
+        );
+    }
+
+    #[test]
     fn exact_compound_regions_replay_positive_and_negative_curve_loops() {
-        let first = pad_profile(&rounded_pad("1", 0), &MaterializationOptions::default()).unwrap();
-        let second = pad_profile(&rounded_pad("2", 4), &MaterializationOptions::default()).unwrap();
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let first = pad_profile(
+            &rounded_pad("1", 0),
+            &MaterializationOptions::default(),
+            &decisions,
+        )
+        .unwrap();
+        let second = pad_profile(
+            &rounded_pad("2", 4),
+            &MaterializationOptions::default(),
+            &decisions,
+        )
+        .unwrap();
         let second = curve::translated(&second, Real::from(4), Real::zero());
 
-        let difference =
-            exact_compound_composition(std::slice::from_ref(&first), std::slice::from_ref(&second))
-                .expect("exact signed difference must retain both curve-loop operands");
+        let difference = exact_compound_composition(
+            std::slice::from_ref(&first),
+            std::slice::from_ref(&second),
+            &decisions,
+        )
+        .expect("exact signed difference must retain both curve-loop operands");
         assert_eq!(
             curve::contains_xy(&difference, Real::from(-2), Real::zero()),
             Some(true)
@@ -3575,7 +4183,7 @@ mod tests {
             Some(false)
         );
 
-        let union = exact_compound_composition(&[first.clone(), second.clone()], &[])
+        let union = exact_compound_composition(&[first.clone(), second.clone()], &[], &decisions)
             .expect("exact signed union must retain both curve-loop operands");
         assert_eq!(
             curve::contains_xy(&union, Real::from(5), Real::zero()),
@@ -3585,6 +4193,7 @@ mod tests {
         let hard_cut = exact_compound_composition(
             &[first, curve::rectangle(Real::from(6), Real::one())],
             &[second.clone(), second],
+            &decisions,
         )
         .expect("a dominant exact cut must survive overlapping positive operands");
         let half = (Real::one() / Real::from(2_u8)).unwrap();
@@ -3596,6 +4205,7 @@ mod tests {
 
     #[test]
     fn disjoint_additive_compound_does_not_invent_coincident_holes() {
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
         let circle = curve::translated(
             &curve::circle(Real::from(3), 64),
             Real::from(15),
@@ -3606,14 +4216,43 @@ mod tests {
             Real::from(15),
             Real::from(15),
         );
-        let union = exact_compound_composition(&[circle, rectangle], &[]).unwrap();
-        let profiles = curve::finite_profiles(&union);
+        let union = exact_compound_composition(&[circle, rectangle], &[], &decisions).unwrap();
+        let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
+            .unwrap()
+            .into_value();
         assert_eq!(profiles.len(), 2);
         assert!(profiles.iter().all(|profile| profile.holes().is_empty()));
     }
 
     #[test]
+    fn overlapping_additive_union_does_not_reclassify_material_as_a_hole() {
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
+        let trace = curve::translated(
+            &curve::rectangle(Real::from(20), Real::one()),
+            Real::from(15),
+            Real::from(3),
+        );
+        let via_land = curve::translated(
+            &curve::circle((Real::from(3) / Real::from(2)).unwrap(), 64),
+            Real::from(15),
+            Real::from(3),
+        );
+
+        let union = exact_compound_union(&[trace, via_land], &decisions).unwrap();
+        let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
+            .unwrap()
+            .into_value();
+        assert_eq!(profiles.len(), 1);
+        assert!(profiles[0].holes().is_empty());
+        assert_eq!(
+            curve::contains_xy(&union, Real::from(15), Real::from(4)),
+            Some(true)
+        );
+    }
+
+    #[test]
     fn pad_local_rotation_precedes_translation_and_board_placement() {
+        let decisions = MaterializationDecisions::new(&MaterializationContext::STRICT);
         let pad = LandPatternPad {
             id: PadId::new("1").unwrap(),
             center: Point2::new(Real::from(10), Real::from(10)),
@@ -3641,11 +4280,13 @@ mod tests {
         };
 
         let profile = transform_pad_profile(
-            pad_profile(&pad, &MaterializationOptions::default()).unwrap(),
+            pad_profile(&pad, &MaterializationOptions::default(), &decisions).unwrap(),
             &pad,
             &placement,
         );
-        let profiles = curve::finite_profiles(&profile);
+        let profiles = curve::try_finite_profiles(&profile, &decisions.geometry_context())
+            .unwrap()
+            .into_value();
         let points = profiles[0].material().points();
         let bounds = points.iter().fold(
             [

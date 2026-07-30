@@ -21,7 +21,8 @@ fn project_fixture() -> SemanticDocument {
     );
     let pcb = PcbLayout {
         id: BoardId::new("cli-fixture").unwrap(),
-        outline: BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        outline: BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         stackup: PcbStackup::single_layer(Real::one(), None),
         land_patterns: Vec::new(),
         placements: Vec::new(),
@@ -53,7 +54,8 @@ fn controlled_impedance_project_fixture() -> SemanticDocument {
         |numerator, denominator| (Real::from(numerator) / Real::from(denominator)).unwrap();
     let mut pcb = PcbLayout::new(
         BoardId::new("controlled-cli-fixture").unwrap(),
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::two_layer(
             exact_ratio(35, 1_000),
             exact_ratio(18, 100),
@@ -70,7 +72,9 @@ fn controlled_impedance_project_fixture() -> SemanticDocument {
             LinePathSegment::new(
                 Point2::new(Real::one(), Real::from(5)),
                 Point2::new(Real::from(19), Real::from(5)),
+                hyperlimit::PredicatePolicy::STRICT,
             )
+            .expect("exact route endpoints are strictly orderable")
             .into(),
         ],
     });
@@ -116,7 +120,8 @@ fn differential_impedance_project_fixture() -> SemanticDocument {
         |numerator, denominator| (Real::from(numerator) / Real::from(denominator)).unwrap();
     let mut pcb = PcbLayout::new(
         BoardId::new("differential-cli-fixture").unwrap(),
-        BoardOutline::rectangle(Real::from(20), Real::from(10)),
+        BoardOutline::rectangle(Real::from(20), Real::from(10))
+            .expect("integer rectangle coordinates are strictly orderable"),
         PcbStackup::two_layer(
             exact_ratio(35, 1_000),
             exact_ratio(18, 100),
@@ -137,7 +142,9 @@ fn differential_impedance_project_fixture() -> SemanticDocument {
                 LinePathSegment::new(
                     Point2::new(Real::one(), y.clone()),
                     Point2::new(Real::from(19), y),
+                    hyperlimit::PredicatePolicy::STRICT,
                 )
+                .expect("exact route endpoints are strictly orderable")
                 .into(),
             ],
         });

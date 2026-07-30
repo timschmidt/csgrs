@@ -14,13 +14,15 @@ use crate::{
     DesignForTestIntent, DesignIntent, DrcReadinessPolicy, ErcReport,
     FabricationCamRoundTripReport, FabricationExportOptions, FabricationIntegrityIssue,
     FabricationPackage, FabricationPackageError, GeometryMaterializationError, HyperDrcHandoff,
-    HyperDrcReadinessReport, MaterializationOptions, PcbLayout, PcbMaterialPropertyLibrary,
-    PcbMaterializationReport, PlacementResolutionReport,
+    HyperDrcReadinessReport, MaterializationContext, MaterializationOptions, PcbLayout,
+    PcbMaterialPropertyLibrary, PcbMaterializationReport, PlacementResolutionReport,
 };
 
 /// Policies used to turn one checked design into review and release evidence.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ReleaseOptions {
+    /// Predicate policy selected for every topology decision in materialization.
+    pub materialization_context: MaterializationContext,
     /// Geometry projection and production-process defaults.
     pub materialization: MaterializationOptions,
     /// Native HyperDRC readiness thresholds.
@@ -29,6 +31,18 @@ pub struct ReleaseOptions {
     pub pcb_materials: PcbMaterialPropertyLibrary,
     /// Fabrication source-unit policy.
     pub fabrication: FabricationExportOptions,
+}
+
+impl Default for ReleaseOptions {
+    fn default() -> Self {
+        Self {
+            materialization_context: MaterializationContext::STRICT,
+            materialization: MaterializationOptions::default(),
+            drc: DrcReadinessPolicy::default(),
+            pcb_materials: PcbMaterialPropertyLibrary::default(),
+            fabrication: FabricationExportOptions::default(),
+        }
+    }
 }
 
 /// A release gate that remains open after all evidence was produced.
@@ -251,7 +265,11 @@ fn release_report(
     let mut resolved_layout = layout.clone();
     resolved_layout.placements.clone_from(&placement.placements);
     let erc = circuit.electrical_rule_check();
-    let materialization = resolved_layout.materialize(circuit, options.materialization)?;
+    let materialization = resolved_layout.materialize(
+        circuit,
+        &options.materialization_context,
+        options.materialization,
+    )?;
     let drc_handoff = HyperDrcHandoff::from_materialization_with_context(
         &resolved_layout,
         &materialization,

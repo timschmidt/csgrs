@@ -271,7 +271,9 @@ fn release_fixture() -> (Circuit, SchematicLayout, PcbLayout) {
     let layout = PcbLayout {
         id: BoardId::new("release-board").unwrap(),
         outline: BoardOutline {
-            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)].into(),
+            exterior: vec![p(0, 0), p(30, 0), p(30, 20), p(0, 20)]
+                .try_into()
+                .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup {
@@ -365,7 +367,11 @@ fn release_fixture() -> (Circuit, SchematicLayout, PcbLayout) {
                 net: output.clone(),
                 layer: front,
                 width: Real::one(),
-                segments: vec![LinePathSegment::new(p(5, 3), p(25, 3)).into()],
+                segments: vec![
+                    LinePathSegment::new(p(5, 3), p(25, 3), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
+                ],
             },
             PcbRoute {
                 id: RouteId::new("ground-route").unwrap(),
@@ -373,9 +379,15 @@ fn release_fixture() -> (Circuit, SchematicLayout, PcbLayout) {
                 layer: front,
                 width: Real::one(),
                 segments: vec![
-                    LinePathSegment::new(p(5, 7), p(5, 10)).into(),
-                    LinePathSegment::new(p(5, 10), p(25, 10)).into(),
-                    LinePathSegment::new(p(25, 10), p(25, 7)).into(),
+                    LinePathSegment::new(p(5, 7), p(5, 10), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
+                    LinePathSegment::new(p(5, 10), p(25, 10), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
+                    LinePathSegment::new(p(25, 10), p(25, 7), hyperlimit::PredicatePolicy::STRICT)
+                        .expect("integer line endpoints are strictly orderable")
+                        .into(),
                 ],
             },
         ],
@@ -467,7 +479,11 @@ fn representative_board_spans_authoring_review_verification_and_release_outputs(
     assert!(routed.replace_in(&layout).validate(&circuit).is_valid());
 
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     assert!(materialized.copper_features.iter().any(|feature| matches!(
         &feature.identity,
@@ -710,7 +726,11 @@ fn external_obj_vrml_and_gltf_package_models_resolve_with_digest_and_scene_ident
     layout.land_patterns[0].models.push(detail);
     layout.land_patterns[0].models.push(outline);
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let obj = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nv 0 0 1\nf 1 3 2\nf 1 2 4\nf 2 3 4\nf 3 1 4\n";
     let gltf = csgrs::io::gltf::to_gltf(&csgrs::solid::cube(Real::one()), "package-detail")
@@ -824,6 +844,7 @@ fn oversized_authored_mask_expansion_is_reported_by_native_hyperdrc() {
     let materialized = layout
         .materialize(
             &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
             MaterializationOptions {
                 default_solder_mask_margin: Real::one(),
                 ..MaterializationOptions::default()
@@ -883,7 +904,11 @@ fn overlapping_component_courtyards_are_release_blocking() {
     layout.placement_constraints.clear();
     layout.placements[1].position = layout.placements[0].position.clone();
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let drc = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
     let readiness = drc.run_readiness(&DrcReadinessPolicy::default());
@@ -902,7 +927,11 @@ fn component_keepouts_are_checked_against_placed_envelopes() {
     let (circuit, _, mut layout) = release_fixture();
     layout.keepouts[0].boundary = vec![p(3, 3), p(7, 3), p(7, 7), p(3, 7)];
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let drc = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
     let readiness = drc.run_readiness(&DrcReadinessPolicy::default());
@@ -923,7 +952,11 @@ fn package_body_is_an_explicit_fallback_when_no_courtyard_exists() {
     let (circuit, _, mut layout) = release_fixture();
     layout.land_patterns[0].graphics.clear();
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let drc = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
 
@@ -956,7 +989,11 @@ fn package_body_is_an_explicit_fallback_when_no_courtyard_exists() {
 fn authored_role_handoff_preserves_physical_endpoints_and_source_subjects() {
     let (circuit, _, layout) = release_fixture();
     let materialized = layout
-        .materialize(&circuit, MaterializationOptions::default())
+        .materialize(
+            &circuit,
+            &hypercircuit::MaterializationContext::STRICT,
+            MaterializationOptions::default(),
+        )
         .unwrap();
     let role_target = SemanticTarget::Instance {
         circuit: circuit.id.clone(),

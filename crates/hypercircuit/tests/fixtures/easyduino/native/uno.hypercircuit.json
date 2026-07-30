@@ -1,6 +1,6 @@
 {
   "schema": "org.hypercircuit.semantic",
-  "version": 28,
+  "version": 30,
   "design_revision": 0,
   "circuit": {
     "id": "easyduino-uno",
@@ -2365,6 +2365,21 @@
     "bundles": [],
     "endpoints": []
   },
+  "design_intent": {
+    "origins": [],
+    "nets": [],
+    "roles": [],
+    "resolved_parts": []
+  },
+  "test_intent": {
+    "requirements": [],
+    "access": [],
+    "boundary_scan_chains": [],
+    "programming_targets": [],
+    "fixture_constraints": [],
+    "power_domains": []
+  },
+  "panel": null,
   "event_trace": [],
   "transient_run": null,
   "schematic": null,
@@ -2812,18 +2827,18 @@
                 17
               ],
               "denominator": [
-                473784896,
-                24
+                947569792,
+                48
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -2831,15 +2846,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3004,18 +3016,18 @@
                 17
               ],
               "denominator": [
-                473784896,
-                24
+                947569792,
+                48
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3023,15 +3035,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3196,18 +3205,18 @@
                 17
               ],
               "denominator": [
-                473784896,
-                24
+                947569792,
+                48
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  1
+                  2
                 ],
                 "denominator": [
-                  2
+                  1
                 ]
               }
             },
@@ -3215,15 +3224,12 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        1
-                      ],
-                      "denominator": [
+                    "Int": [
+                      1,
+                      [
                         2
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3581,20 +3587,20 @@
                 13
               ],
               "denominator": [
-                3400533248,
-                2712
+                4117764352,
+                13563
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  2628975213,
-                  2146685558,
-                  54437
+                  259974177,
+                  2143493201,
+                  272187
                 ],
                 "denominator": [
-                  5
+                  1
                 ]
               }
             },
@@ -3602,17 +3608,14 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        2628975213,
-                        2146685558,
-                        54437
-                      ],
-                      "denominator": [
-                        5
+                    "Int": [
+                      1,
+                      [
+                        259974177,
+                        2143493201,
+                        272187
                       ]
-                    }
+                    ]
                   }
                 }
               }
@@ -3968,20 +3971,20 @@
                 13
               ],
               "denominator": [
-                3400533248,
-                2712
+                4117764352,
+                13563
               ]
             },
             "class": {
               "Sqrt": {
                 "sign": 1,
                 "numerator": [
-                  2628975213,
-                  2146685558,
-                  54437
+                  259974177,
+                  2143493201,
+                  272187
                 ],
                 "denominator": [
-                  5
+                  1
                 ]
               }
             },
@@ -3989,17 +3992,14 @@
               "internal": {
                 "Sqrt": {
                   "internal": {
-                    "Ratio": {
-                      "sign": 1,
-                      "numerator": [
-                        2628975213,
-                        2146685558,
-                        54437
-                      ],
-                      "denominator": [
-                        5
+                    "Int": [
+                      1,
+                      [
+                        259974177,
+                        2143493201,
+                        272187
                       ]
-                    }
+                    ]
                   }
                 }
               }

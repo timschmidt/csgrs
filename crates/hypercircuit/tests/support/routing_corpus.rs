@@ -106,7 +106,8 @@ fn terminal_case(
                 board_max.clone(),
                 Point2::new(Real::zero(), board_max.y.clone()),
             ]
-            .into(),
+            .try_into()
+            .expect("integer polygon coordinates are strictly orderable"),
             cutouts: Vec::new(),
         },
         stackup: PcbStackup { layers },
