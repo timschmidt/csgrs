@@ -8005,6 +8005,132 @@ mod tests {
     }
 
     #[test]
+    fn transverse_revolution_slab_intersection_retains_exact_profile_sections() {
+        let (revolution, revolution_solid) = crate::builder::revolve(&[
+            crate::Point2::new(Real::one(), Real::zero()),
+            crate::Point2::new(Real::from(4), Real::zero()),
+            crate::Point2::new(Real::from(4), Real::from(3)),
+            crate::Point2::new(Real::one(), Real::from(3)),
+        ])
+        .unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(p(-5, -5, 1), p(5, 5, 2)).unwrap();
+        let graph = intersection_graph(&revolution, revolution_solid, &slab, slab_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 16);
+        assert!(retained.iter().all(|trace| {
+            trace.curve().kind() == crate::Curve3Kind::CircleArc
+                && trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+
+        let (partitioned_revolution, revolution_partitions) =
+            graph.partition_first_faces().unwrap();
+        assert_eq!(revolution_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_revolution
+                    .solid_volume(revolution_solid)
+                    .unwrap(),
+                &revolution.solid_volume(revolution_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (partitioned_slab, slab_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(slab_partitions.len(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned_slab.solid_volume(slab_solid).unwrap(),
+                &slab.solid_volume(slab_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the transverse revolution slab must retain one exact solid");
+        };
+        let expected_volume = Real::from(15) * Real::pi();
+        let expected_area = Real::from(40) * Real::pi();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(Ordering::Equal)
+        );
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        assert!(model.certified_revolution_profile(solid).is_some());
+        for (point, expected) in [
+            (p(2, 0, 1), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    Real::from(2),
+                    Real::zero(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new(
+                    Real::from(5),
+                    Real::zero(),
+                    (Real::from(3) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+        for result in [
+            intersection(&revolution, revolution_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &revolution, revolution_solid).unwrap(),
+        ] {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("the standard API must retain the revolution slab clip");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
     fn axial_cone_rays_partition_an_exact_half_frustum_cut() {
         let (frustum, frustum_solid) =
             crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();

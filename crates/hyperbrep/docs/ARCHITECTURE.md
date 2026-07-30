@@ -103,6 +103,9 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
 - generators and constant-height circles on cones;
 - both circle directions on ring tori;
 - line and circular profile images on extrusion surfaces.
+- exact restricted meridians and constant-profile latitude circles on
+  revolution surfaces, including affine remapping between normalized edge
+  domains and the authoritative profile parameter.
 - rational Bézier and NURBS control-net rows/columns on tensor surfaces,
   including exact edge subintervals, interior iso-curves, and projectively
   equivalent weights.
@@ -138,7 +141,8 @@ families is recertified:
   half-space fast path for outer shells;
 - native line/arc extrusion prisms, including holes and disconnected models;
 - native line/arc profile revolutions, including exact inward profile
-  cavities and identity-shared periodic latitude/meridian edges;
+  cavities, exact profile-parameter subdivision grids, identity-shared
+  periodic latitude/meridian edges, and axis-normal planar annular caps;
 - multi-section polygon lofts whose spans independently carry either a
   positive homothetic certificate or an exact convex-correspondence
   certificate and native bilinear tensor sides;
@@ -188,6 +192,15 @@ the contour’s exact Green-theorem x-first-moment
 subtracts cavity moments, and reuses the retained contour for radial point
 classification. Circular-profile face area integrates radius times native arc
 length analytically.
+
+Subdivision does not change that certificate. Revolution descendants must tile
+four exact quarter-angle columns and every represented profile-parameter cell
+without overlap or omission; the retained v-range, not the untrimmed carrier
+domain, determines the reconstructed meridian segment. An axis-normal planar
+cap group is accepted only when its effective oriented normal is axial and its
+boundary is exactly two complete concentric circle loops. Their radii and
+axial coordinate reconstruct one radial profile segment, allowing selected
+revolution bands and planar annuli to form one ordinary certified solid.
 
 For a non-homothetic loft, corresponding edge vectors vary linearly in the
 section parameter. Consecutive-edge turns are therefore quadratic. HyperBREP
@@ -241,7 +254,15 @@ Finite spline/ruled carrier intersections retain one spatial `Curve3` and an
 exact pcurve on each surface operand. Hypercurve region trimming preserves the
 promoted Bézier span and top-level public parameter range for every fragment;
 HyperBREP intersects those ranges and uses exact `Curve3::subcurve`
-materialization. Plane/extrusion generator lines use the same principle with
+materialization. An axis-normal plane/revolution query first intersects the
+finite authored profile with the plane. Every isolated positive-radius
+profile point becomes its exact rotational orbit: one spatial circle, one
+native planar projection, and one constant-profile revolution pcurve sharing
+the circle-angle domain. Axis contacts remain isolated points. A contained
+profile interval, a mixed point-and-circle result, or multiple profile
+parameters covering the same spatial circle remains explicit unsupported
+evidence because the retained relation does not pretend those are one
+single-valued pcurve. Plane/extrusion generator lines use the same principle with
 an affine surface-parameter line. An axis-containing plane/cone relation is
 represented explicitly as two lower-bounded `SurfaceIntersectionRay` values,
 each carrying the authoritative spatial origin, direction, and minimum plus

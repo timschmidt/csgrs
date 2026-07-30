@@ -3044,6 +3044,12 @@ impl Surface {
             (SurfaceGeometry::Extrusion(surface), SurfaceGeometry::Plane(plane)) => {
                 intersect_plane_extrusion(plane, surface).map(swapped_curve_intersection)
             }
+            (SurfaceGeometry::Plane(plane), SurfaceGeometry::Revolution(surface)) => {
+                intersect_plane_revolution(plane, surface)
+            }
+            (SurfaceGeometry::Revolution(surface), SurfaceGeometry::Plane(plane)) => {
+                intersect_plane_revolution(plane, surface).map(swapped_curve_intersection)
+            }
             (SurfaceGeometry::Plane(plane), SurfaceGeometry::RationalBezier(surface)) => {
                 intersect_plane_rational_bezier_surface(plane, surface)
             }
@@ -4110,6 +4116,81 @@ fn intersect_plane_extrusion(
             ),
         ),
     )))
+}
+
+fn intersect_plane_revolution(
+    plane: &PlaneSurface,
+    surface: &RevolutionSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    let normal = plane.u.cross(&plane.v);
+    if decided_order(compare_reals(
+        &normal.cross(&surface.axis).norm_squared(),
+        &Real::zero(),
+    ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
+    let points = match plane_surface.intersect_curve(&surface.profile)? {
+        CurveSurfaceIntersection::None => return Ok(SurfaceSurfaceIntersection::None),
+        CurveSurfaceIntersection::Contained | CurveSurfaceIntersection::Overlap(_) => {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        CurveSurfaceIntersection::Points(points) => points,
+    };
+    let mut sections = Vec::with_capacity(points.len());
+    let mut singular = None;
+    let mut radii = Vec::<Real>::with_capacity(points.len());
+    for point in points {
+        let relative = &point.point - &surface.axis_origin;
+        let axial_parameter = relative.dot(&surface.axis);
+        let center = surface.axis_origin.clone() + surface.axis.clone() * axial_parameter.clone();
+        let radial = relative - surface.axis.clone() * axial_parameter;
+        let radius_squared = radial.norm_squared();
+        if decided_order(compare_reals(&radius_squared, &Real::zero()))? == Ordering::Equal {
+            if singular.replace(center).is_some() {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+            continue;
+        }
+        let radius = radius_squared
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        for existing in &radii {
+            if decided_order(compare_reals(existing, &radius))? == Ordering::Equal {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+        }
+        radii.push(radius.clone());
+        let radial_direction = (radial / &radius).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let curve = Curve3::circle_arc(
+            center,
+            radial_direction.clone(),
+            surface.axis.cross(&radial_direction),
+            radius,
+            Real::zero(),
+            Real::tau(),
+        )?;
+        let domain = curve.domain().clone();
+        sections.push(SurfaceIntersectionCurve::new(
+            curve.clone(),
+            SurfaceIntersectionPcurve::plane_projection(curve, plane),
+            SurfaceIntersectionPcurve::tensor_iso_v(domain, point.parameter),
+        ));
+    }
+    if let Some(point) = singular {
+        if sections.is_empty() {
+            return Ok(SurfaceSurfaceIntersection::Point(Box::new(point)));
+        }
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    Ok(match sections.len() {
+        0 => SurfaceSurfaceIntersection::None,
+        1 => SurfaceSurfaceIntersection::Curve(Box::new(
+            sections.pop().expect("one revolution section"),
+        )),
+        _ => SurfaceSurfaceIntersection::Curves(sections),
+    })
 }
 
 fn intersect_plane_nurbs_surface(
@@ -5920,7 +6001,16 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
     let xs = [&bounds.mins.x, &bounds.maxs.x];
     let ys = [&bounds.mins.y, &bounds.maxs.y];
     let zs = [&bounds.mins.z, &bounds.maxs.z];
-    let mut radius_squared = Real::zero();
+    let first_offset = Vector3::from_xyz(
+        xs[0] - &surface.axis_origin.x,
+        ys[0] - &surface.axis_origin.y,
+        zs[0] - &surface.axis_origin.z,
+    );
+    let first_axial = surface.axis.dot(&first_offset);
+    let first_radial = first_offset - surface.axis.clone() * first_axial.clone();
+    let mut axial_min = first_axial.clone();
+    let mut axial_max = first_axial;
+    let mut radius_squared = first_radial.norm_squared();
     for x in xs {
         for y in ys {
             for z in zs {
@@ -5929,15 +6019,44 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
                     y - &surface.axis_origin.y,
                     z - &surface.axis_origin.z,
                 );
-                let candidate = offset.norm_squared();
-                update_bound_max(&mut radius_squared, &candidate)?;
+                let axial = surface.axis.dot(&offset);
+                update_bound_min(&mut axial_min, &axial)?;
+                update_bound_max(&mut axial_max, &axial)?;
+                let radial = offset - surface.axis.clone() * axial;
+                update_bound_max(&mut radius_squared, &radial.norm_squared())?;
             }
         }
     }
     let radius = radius_squared
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
-    Ok(centered_cube_bounds(&surface.axis_origin, &radius))
+    let coordinate_bounds = |origin: &Real,
+                             axis_component: &Real|
+     -> GeometryResult<(Real, Real)> {
+        let first_axial = axis_component * &axial_min;
+        let second_axial = axis_component * &axial_max;
+        let (axial_low, axial_high) =
+            if decided_order(compare_reals(&first_axial, &second_axial))? == Ordering::Greater {
+                (second_axial, first_axial)
+            } else {
+                (first_axial, second_axial)
+            };
+        let radial_factor = (Real::one() - axis_component * axis_component)
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let radial_extent = &radius * radial_factor;
+        Ok((
+            origin + axial_low - &radial_extent,
+            origin + axial_high + radial_extent,
+        ))
+    };
+    let (min_x, max_x) = coordinate_bounds(&surface.axis_origin.x, &surface.axis.0[0])?;
+    let (min_y, max_y) = coordinate_bounds(&surface.axis_origin.y, &surface.axis.0[1])?;
+    let (min_z, max_z) = coordinate_bounds(&surface.axis_origin.z, &surface.axis.0[2])?;
+    Ok(Aabb::new(
+        Point3::new(min_x, min_y, min_z),
+        Point3::new(max_x, max_y, max_z),
+    ))
 }
 
 fn rotate_point_about_axis(
@@ -7094,10 +7213,135 @@ mod tests {
         let SurfaceBounds::Bounded(bounds) = revolution.bounds().unwrap() else {
             panic!("finite revolution must have conservative bounds");
         };
-        let radius = r(5).sqrt().unwrap();
+        assert_points_equal(&bounds.mins, &p(-2, -2, -1));
+        assert_points_equal(&bounds.maxs, &p(2, 2, 1));
+
+        let translated_axis = Surface::revolution(
+            Curve3::line(p(0, 4, 3), p(3, 4, 3)).unwrap(),
+            p(1, 2, 3),
+            Vector3::x(),
+        )
+        .unwrap();
+        let SurfaceBounds::Bounded(bounds) = translated_axis.bounds().unwrap() else {
+            panic!("an arbitrarily oriented finite revolution must remain bounded");
+        };
+        assert_points_equal(&bounds.mins, &p(0, 0, 1));
+        assert_points_equal(&bounds.maxs, &p(3, 4, 5));
+    }
+
+    #[test]
+    fn transverse_planes_retain_exact_revolution_profile_sections() {
+        let profile = Curve3::line(p(2, 0, -1), p(4, 0, 1)).unwrap();
+        let revolution = Surface::revolution(profile, Point3::origin(), Vector3::z()).unwrap();
+        let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        let SurfaceSurfaceIntersection::Curve(section) =
+            plane.intersect_surface(&revolution).unwrap()
+        else {
+            panic!("one transverse profile point must retain one revolution circle");
+        };
+        assert_points_equal(&section.curve().start().unwrap(), &p(3, 0, 0));
         assert_eq!(
-            compare_reals(&bounds.maxs.x, &radius).value(),
-            Some(Ordering::Equal)
+            section
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::CircularArc
+        );
+        assert_eq!(
+            section
+                .second_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::Line
+        );
+        for parameter in [Real::zero(), (Real::pi() / r(2)).unwrap()] {
+            let spatial = section.curve().point_at(&parameter).unwrap();
+            let plane_parameter = section.first_pcurve().point_at(&parameter).unwrap();
+            let revolution_parameter = section.second_pcurve().point_at(&parameter).unwrap();
+            assert_eq!(
+                compare_reals(&revolution_parameter.y, &q(1, 2)).value(),
+                Some(Ordering::Equal)
+            );
+            assert_points_equal(&plane.point_at(&plane_parameter).unwrap(), &spatial);
+            assert_points_equal(
+                &revolution.point_at(&revolution_parameter).unwrap(),
+                &spatial,
+            );
+        }
+        let SurfaceSurfaceIntersection::Curve(swapped) =
+            revolution.intersect_surface(&plane).unwrap()
+        else {
+            panic!("operand reversal must retain the revolution section");
+        };
+        let parameter = (Real::pi() / r(2)).unwrap();
+        let spatial = swapped.curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &revolution
+                .point_at(&swapped.first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+        assert_points_equal(
+            &plane
+                .point_at(&swapped.second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+
+        let semicircle = Curve3::circle_arc(
+            p(3, 0, 0),
+            Vector3::x(),
+            Vector3::z(),
+            Real::one(),
+            Real::zero(),
+            Real::pi(),
+        )
+        .unwrap();
+        let double = Surface::revolution(semicircle, Point3::origin(), Vector3::z()).unwrap();
+        let SurfaceSurfaceIntersection::Curves(sections) =
+            double.intersect_surface(&plane).unwrap()
+        else {
+            panic!("two profile contacts must retain two revolution circles");
+        };
+        assert_eq!(sections.len(), 2);
+        assert_points_equal(&sections[0].curve().start().unwrap(), &p(4, 0, 0));
+        assert_points_equal(&sections[1].curve().start().unwrap(), &p(2, 0, 0));
+
+        let disjoint = Surface::plane(p(0, 0, 2), Vector3::x(), Vector3::y()).unwrap();
+        assert!(matches!(
+            revolution.intersect_surface(&disjoint).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+        let singular = Surface::revolution(
+            Curve3::line(p(0, 0, -1), p(0, 0, 1)).unwrap(),
+            Point3::origin(),
+            Vector3::z(),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Point(point) = singular.intersect_surface(&plane).unwrap()
+        else {
+            panic!("a transverse revolution-axis contact must retain its singular point");
+        };
+        assert_points_equal(&point, &Point3::origin());
+
+        let coincident_profile = Surface::revolution(
+            Curve3::line(p(2, 0, 0), p(4, 0, 0)).unwrap(),
+            Point3::origin(),
+            Vector3::z(),
+        )
+        .unwrap();
+        assert_eq!(
+            coincident_profile.intersect_surface(&plane).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let axial = Surface::plane(Point3::origin(), Vector3::x(), Vector3::z()).unwrap();
+        assert_eq!(
+            revolution.intersect_surface(&axial).unwrap_err(),
+            GeometryError::UnsupportedIntersection
         );
     }
 

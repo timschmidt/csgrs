@@ -4212,15 +4212,10 @@ impl Model {
                 insert_sorted_real(&mut v_values, segment.end().y())
                     .map_err(build_error_geometry)?;
             }
-            if u_values.len() != 2
-                || v_values.len() != 2
-                || !real_values_equal(&v_values[0], profile.domain().start())
-                    .map_err(build_error_geometry)?
-                || !real_values_equal(&v_values[1], profile.domain().end())
-                    .map_err(build_error_geometry)?
-            {
+            if u_values.len() != 2 || v_values.len() != 2 {
                 return Err(GeometryError::UnsupportedMeasurement.into());
             }
+            let profile = profile.subcurve(&v_values[0], &v_values[1])?;
             let radial_at = |point: &Point3| {
                 let relative = point - &axis_origin;
                 let axial = axis.dot(&relative);
@@ -8126,10 +8121,25 @@ impl ModelBuilder {
         if real_values_equal(line.start().y(), line.end().y())? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let expected = surface.revolution_meridian_curve(line.start().x())?;
-        if !curve_parameterizations_equal(curve, &expected)? {
+        let (profile_start, profile_end) =
+            if decided_model_order(compare_reals(line.start().y(), line.end().y()))?
+                == std::cmp::Ordering::Less
+            {
+                (line.start().y(), line.end().y())
+            } else {
+                (line.end().y(), line.start().y())
+            };
+        let expected = surface
+            .revolution_meridian_curve(line.start().x())?
+            .subcurve(profile_start, profile_end)?;
+        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        if !curve_parameterizations_equal(&actual, &expected)? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
+        let edge_domain_span = edge.domain.end() - edge.domain.start();
+        let actual_span = actual.domain().end() - actual.domain().start();
+        let profile_span = profile_end - profile_start;
+        let expected_span = expected.domain().end() - expected.domain().start();
         for (pcurve_parameter, surface_parameter) in [
             (pcurve.domain_start(), line.start().y()),
             (pcurve.domain_end(), line.end().y()),
@@ -8140,9 +8150,15 @@ impl ModelBuilder {
                 edge_use.direction,
                 pcurve_parameter,
             )?;
+            let actual_parameter = actual.domain().start()
+                + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let expected_parameter = expected.domain().start()
+                + ((surface_parameter - profile_start) * &expected_span / &profile_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
             require_real_equal(
-                &edge_parameter,
-                surface_parameter,
+                &actual_parameter,
+                &expected_parameter,
                 BuildError::EdgeUseSupportMismatch,
             )?;
         }
@@ -13485,21 +13501,24 @@ impl ModelBuilder {
         orientation: Orientation,
     ) -> Result<Option<CertifiedRevolutionShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        if faces.len() < 8 || faces.len() % 4 != 0 {
+        if faces.len() < 8 {
             return Ok(None);
         }
         let mut groups: HashMap<SurfaceId, Vec<FaceId>> = HashMap::new();
+        let mut planar_faces = 0;
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
-            if face.orientation != orientation
-                || !face.inner().is_empty()
-                || self.surface_ref(face.surface)?.kind() != SurfaceKind::Revolution
-            {
-                return Ok(None);
+            match self.surface_ref(face.surface)?.kind() {
+                SurfaceKind::Revolution
+                    if face.orientation == orientation && face.inner().is_empty() =>
+                {
+                    groups.entry(face.surface).or_default().push(*face_id);
+                }
+                SurfaceKind::Plane => planar_faces += 1,
+                _ => return Ok(None),
             }
-            groups.entry(face.surface).or_default().push(*face_id);
         }
-        if groups.len() * 4 != faces.len() || groups.values().any(|group| group.len() != 4) {
+        if groups.is_empty() || groups.values().any(|group| group.len() < 4) {
             return Ok(None);
         }
 
@@ -13509,7 +13528,7 @@ impl ModelBuilder {
         let mut axis = None;
         let mut meridian_ray: Option<Vector3> = None;
         let mut angular_origin: Option<Real> = None;
-        let mut profile_segments = Vec::with_capacity(groups.len());
+        let mut profile_segments = Vec::with_capacity(groups.len() + planar_faces);
         for (surface_id, group) in groups {
             let SurfaceExactData::Revolution {
                 profile,
@@ -13576,15 +13595,106 @@ impl ModelBuilder {
                 }
                 Ok(Some(CurvePoint2::new(radius, axial)))
             };
-            let start_point = profile_curve.point_at(profile_curve.domain().start())?;
-            let end_point = profile_curve.point_at(profile_curve.domain().end())?;
+            let mut u_values = Vec::new();
+            let mut v_values = Vec::new();
+            let mut face_coordinates = Vec::with_capacity(group.len());
+            for face_id in group {
+                let outer = self
+                    .face_ref(face_id)?
+                    .outer()
+                    .expect("trimmed revolution face");
+                let wire = self.wire_ref(outer)?;
+                if wire.edge_uses.len() < 4 {
+                    return Ok(None);
+                }
+                let mut face_u = Vec::with_capacity(wire.edge_uses.len() * 2);
+                let mut face_v = Vec::with_capacity(wire.edge_uses.len() * 2);
+                let mut parameter_segments = Vec::with_capacity(wire.edge_uses.len());
+                for use_id in &self.wire_ref(outer)?.edge_uses {
+                    let pcurve = self.pcurve_ref(self.edge_use_ref(*use_id)?.pcurve)?;
+                    let Some(line) = pcurve.line_segment() else {
+                        return Ok(None);
+                    };
+                    let u_constant = real_values_equal(line.start().x(), line.end().x())?;
+                    let v_constant = real_values_equal(line.start().y(), line.end().y())?;
+                    if u_constant == v_constant {
+                        return Ok(None);
+                    }
+                    face_u.extend([line.start().x().clone(), line.end().x().clone()]);
+                    face_v.extend([line.start().y().clone(), line.end().y().clone()]);
+                    parameter_segments.push(Segment2::Line(line.clone()));
+                }
+                let (u_min, u_max) = exact_real_min_max(&face_u)?;
+                let (v_min, v_max) = exact_real_min_max(&face_v)?;
+                let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
+                let represented_area = contour
+                    .signed_area()
+                    .map_err(GeometryError::from)?
+                    .ok_or(BuildError::DegenerateShellVolume(shell))?
+                    .abs();
+                let rectangle_area = (&u_max - &u_min) * (&v_max - &v_min);
+                if !real_values_equal(&represented_area, &rectangle_area)? {
+                    return Ok(None);
+                }
+                insert_sorted_real(&mut u_values, &u_min)?;
+                insert_sorted_real(&mut u_values, &u_max)?;
+                insert_sorted_real(&mut v_values, &v_min)?;
+                insert_sorted_real(&mut v_values, &v_max)?;
+                face_coordinates.push((u_min, u_max, v_min, v_max));
+            }
+            if u_values.len() != 5 || v_values.len() < 2 {
+                return Ok(None);
+            }
+            for pair in u_values.windows(2) {
+                if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
+                    return Ok(None);
+                }
+            }
+            let mut covered_cells = HashSet::new();
+            for (u_min, u_max, v_min, v_max) in face_coordinates {
+                let u_start = exact_real_index(&u_values, &u_min)?;
+                let u_end = exact_real_index(&u_values, &u_max)?;
+                let v_start = exact_real_index(&v_values, &v_min)?;
+                let v_end = exact_real_index(&v_values, &v_max)?;
+                if u_end != u_start + 1 || v_start >= v_end {
+                    return Ok(None);
+                }
+                for v_cell in v_start..v_end {
+                    if !covered_cells.insert((u_start, v_cell)) {
+                        return Ok(None);
+                    }
+                }
+            }
+            if covered_cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
+                return Ok(None);
+            }
+            if !real_values_equal(
+                &(u_values[3].clone() + &quarter - &u_values[0]),
+                &(Real::from(2) * Real::pi()),
+            )? {
+                return Ok(None);
+            }
+            if let Some(expected) = &angular_origin {
+                if !real_values_equal(expected, &u_values[0])? {
+                    return Ok(None);
+                }
+            } else {
+                angular_origin = Some(u_values[0].clone());
+            }
+
+            let represented_profile = profile_curve.subcurve(
+                &v_values[0],
+                v_values.last().expect("revolution group has v values"),
+            )?;
+            let start_point = represented_profile.point_at(represented_profile.domain().start())?;
+            let end_point = represented_profile.point_at(represented_profile.domain().end())?;
             let Some(start) = to_profile_point(&start_point, true)? else {
                 return Ok(None);
             };
             let Some(end) = to_profile_point(&end_point, true)? else {
                 return Ok(None);
             };
-            let profile_segment = match profile_curve.exact_data() {
+            let profile_segment = match represented_profile.exact_data() {
                 Curve3ExactData::Line(_) => {
                     Segment2::Line(LineSeg2::try_new(start, end).map_err(GeometryError::from)?)
                 }
@@ -13607,8 +13717,8 @@ impl ModelBuilder {
                     {
                         return Ok(None);
                     }
-                    let tangent = profile_curve
-                        .derivative_at(profile_curve.domain().start(), 1)?
+                    let tangent = represented_profile
+                        .derivative_at(represented_profile.domain().start(), 1)?
                         .vector()
                         .clone();
                     let tangent_radial = ray.dot(&tangent);
@@ -13633,7 +13743,8 @@ impl ModelBuilder {
                     };
                     if !real_values_equal(
                         &sweep,
-                        &(profile_curve.domain().end() - profile_curve.domain().start()),
+                        &(represented_profile.domain().end()
+                            - represented_profile.domain().start()),
                     )? {
                         return Ok(None);
                     }
@@ -13642,54 +13753,23 @@ impl ModelBuilder {
                 _ => return Ok(None),
             };
             profile_segments.push(profile_segment);
-
-            let mut starts = Vec::with_capacity(4);
-            for face_id in group {
-                let outer = self
-                    .face_ref(face_id)?
-                    .outer()
-                    .expect("trimmed revolution face");
-                let mut u = Vec::new();
-                let mut v = Vec::new();
-                for use_id in &self.wire_ref(outer)?.edge_uses {
-                    let pcurve = self.pcurve_ref(self.edge_use_ref(*use_id)?.pcurve)?;
-                    let Some(line) = pcurve.line_segment() else {
-                        return Ok(None);
-                    };
-                    u.extend([line.start().x().clone(), line.end().x().clone()]);
-                    v.extend([line.start().y().clone(), line.end().y().clone()]);
-                }
-                let (u_min, u_max) = exact_real_min_max(&u)?;
-                let (v_min, v_max) = exact_real_min_max(&v)?;
-                if !real_values_equal(&(&u_max - &u_min), &quarter)?
-                    || !real_values_equal(&v_min, profile_curve.domain().start())?
-                    || !real_values_equal(&v_max, profile_curve.domain().end())?
-                {
-                    return Ok(None);
-                }
-                insert_sorted_real(&mut starts, &u_min)?;
-            }
-            if starts.len() != 4 {
+        }
+        if planar_faces > 0 {
+            if orientation != Orientation::Forward {
                 return Ok(None);
             }
-            for pair in starts.windows(2) {
-                if !real_values_equal(&(&pair[1] - &pair[0]), &quarter)? {
-                    return Ok(None);
-                }
-            }
-            if !real_values_equal(
-                &(&starts[3] + &quarter - &starts[0]),
-                &(Real::from(2) * Real::pi()),
-            )? {
+            let Some(planar_segments) = self.certified_revolution_planar_profile_segments(
+                faces,
+                axis_origin
+                    .as_ref()
+                    .expect("revolution side faces establish an axis origin"),
+                axis.as_ref()
+                    .expect("revolution side faces establish an axis"),
+            )?
+            else {
                 return Ok(None);
-            }
-            if let Some(expected) = &angular_origin {
-                if !real_values_equal(expected, &starts[0])? {
-                    return Ok(None);
-                }
-            } else {
-                angular_origin = Some(starts[0].clone());
-            }
+            };
+            profile_segments.extend(planar_segments);
         }
 
         let mut ordered = Vec::with_capacity(profile_segments.len());
@@ -13732,6 +13812,132 @@ impl ModelBuilder {
             profile: contour,
             voids: Vec::new(),
         }))
+    }
+
+    fn certified_revolution_planar_profile_segments(
+        &self,
+        faces: &[FaceId],
+        axis_origin: &Point3,
+        axis: &Vector3,
+    ) -> Result<Option<Vec<Segment2>>, BuildError> {
+        let groups = self.planar_face_groups(faces)?;
+        if groups.is_empty() {
+            return Ok(Some(Vec::new()));
+        }
+        let mut segments = Vec::with_capacity(groups.len());
+        for group in groups {
+            let Some(boundaries) = self.cap_boundary_use_loops(faces, &group)? else {
+                return Ok(None);
+            };
+            if boundaries.len() != 2 {
+                return Ok(None);
+            }
+            let mut center = None;
+            let mut normal_direction = None;
+            for index in &group {
+                let face = self.face_ref(faces[*index])?;
+                let surface = self.surface_ref(face.surface)?;
+                let Some(origin) = surface.plane_origin() else {
+                    return Ok(None);
+                };
+                let Some((u, v)) = surface.plane_directions() else {
+                    return Ok(None);
+                };
+                let normal = match face.orientation {
+                    Orientation::Forward => u.cross(v),
+                    Orientation::Reversed => -u.cross(v),
+                };
+                if decided_model_order(compare_reals(
+                    &normal.cross(axis).norm_squared(),
+                    &Real::zero(),
+                ))? != std::cmp::Ordering::Equal
+                {
+                    return Ok(None);
+                }
+                let direction =
+                    decided_model_order(compare_reals(&normal.dot(axis), &Real::zero()))?;
+                if !matches!(
+                    direction,
+                    std::cmp::Ordering::Less | std::cmp::Ordering::Greater
+                ) || normal_direction.is_some_and(|expected| expected != direction)
+                {
+                    return Ok(None);
+                }
+                normal_direction = Some(direction);
+                let axial = axis.dot(&(origin - axis_origin));
+                let candidate = axis_origin.clone() + axis.clone() * axial;
+                if let Some(expected) = &center {
+                    if !points_equal(expected, &candidate)? {
+                        return Ok(None);
+                    }
+                } else {
+                    center = Some(candidate);
+                }
+            }
+            let center = center.expect("nonempty planar face group");
+            let mut radii = Vec::with_capacity(2);
+            for boundary in boundaries {
+                let mut radius = None;
+                let mut sweep = Real::zero();
+                for edge_use_id in boundary {
+                    let edge_use = self.edge_use_ref(edge_use_id)?;
+                    let edge = self.edge_ref(edge_use.edge)?;
+                    let curve = self.curve_ref(edge.curve)?;
+                    let Curve3ExactData::EllipseArc(data) = curve.exact_data() else {
+                        return Ok(None);
+                    };
+                    if !data.circle || !points_equal(&data.center, &center)? {
+                        return Ok(None);
+                    }
+                    if let Some(expected) = &radius {
+                        if !real_values_equal(expected, &data.x_radius)?
+                            || !real_values_equal(expected, &data.y_radius)?
+                        {
+                            return Ok(None);
+                        }
+                    } else if !real_values_equal(&data.x_radius, &data.y_radius)? {
+                        return Ok(None);
+                    } else {
+                        radius = Some(data.x_radius);
+                    }
+                    sweep += edge.domain.end() - edge.domain.start();
+                }
+                if !real_values_equal(&sweep, &Real::tau())? {
+                    return Ok(None);
+                }
+                radii.push(radius.expect("nonempty cap boundary"));
+            }
+            if decided_model_order(compare_reals(&radii[0], &radii[1]))?
+                == std::cmp::Ordering::Equal
+            {
+                return Ok(None);
+            }
+            let (inner, outer) = if decided_model_order(compare_reals(&radii[0], &radii[1]))?
+                == std::cmp::Ordering::Less
+            {
+                (radii.remove(0), radii.remove(0))
+            } else {
+                (radii.remove(1), radii.remove(0))
+            };
+            let axial = axis.dot(&(&center - axis_origin));
+            let (start, end) = if normal_direction.expect("cap group has an effective normal")
+                == std::cmp::Ordering::Greater
+            {
+                (
+                    CurvePoint2::new(outer, axial.clone()),
+                    CurvePoint2::new(inner, axial),
+                )
+            } else {
+                (
+                    CurvePoint2::new(inner, axial.clone()),
+                    CurvePoint2::new(outer, axial),
+                )
+            };
+            segments.push(Segment2::Line(
+                LineSeg2::try_new(start, end).map_err(GeometryError::from)?,
+            ));
+        }
+        Ok(Some(segments))
     }
 
     fn certified_cylinder_side_faces(

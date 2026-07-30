@@ -86,6 +86,7 @@ strict-convexity certificate.
 | Plane / cone | Transverse lower none, apex point, or upper circle; axis-containing two lower-bounded upper-nappe generator rays with exact affine pcurves on both operands |
 | Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
+| Plane / revolution surface | Authored-axis transverse none, isolated axis point, or one/more exact profile-contact circles with native pcurves on both carriers |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
 | Plane / linear-extrusion rational Bézier tensor patch | None or one native rational Bézier iso-curve |
@@ -113,6 +114,14 @@ their trim evidence remain explicit. Native finite results use
 `Curve3`, both exact pcurves, and one shared public parameter domain. Exact
 affine composition reconciles unit-domain rational Bézier fragments with
 native-domain NURBS fragments.
+Authored-axis transverse plane/revolution intersections instead solve the
+exact finite profile/plane relation and orbit each isolated positive-radius
+profile point into one spatial circle. The planar pcurve is its native exact
+projection and the revolution pcurve is `(angle, constant-profile-parameter)`.
+Axis contact remains an isolated point. A contained profile interval,
+mixed singular-point/circle coverage, and coincident circles with distinct
+profile parameters remain explicit unsupported relations rather than losing
+their multiplicity.
 Authored-frame-aligned coaxial sphere/cylinder circles use constant-latitude
 and constant-height pcurves directly. The graph clips them across the four
 native cylinder patches and exactly coalesces adjacent common-support
@@ -185,6 +194,16 @@ Union, intersection, and difference reconstruct connected, disconnected, and
 holed profile results as native periodic revolution shells; contained
 subtraction retains inward toroidal-profile cavities that remain valid Boolean
 operands.
+
+A bounded authored-axis slab can also clip one polygonal revolution through
+the retained graph. Each transverse plane/profile contact is clipped across
+the four periodic revolution patches with both pcurves intact. Revolution
+descendants certify complete quarter-angle by represented-profile parameter
+grids, and each selected planar annulus certifies two complete concentric
+circle boundaries plus its effective axial normal. Standard intersection in
+either operand order therefore publishes the exact retained profile band with
+native area, first-moment volume, radial/profile classification, and
+byte-identical untrusted replay.
 
 Outputs may be empty, connected, disconnected, or holed. Native arcs are
 retained for lenses, annuli, and later Boolean operands. Hypercurve owns planar
@@ -405,6 +424,15 @@ authoritative `Real` interval and validates zero, one, or two native annular
 cap groups. Standard torus/slab intersection therefore stitches exact central
 bands and one-cap bands that close at a natural torus extremum, with analytic
 volume, point classification, rigid/reflection transforms, and persistence.
+
+Transverse plane/revolution cuts use the same authoritative spatial-circle
+transfer without assuming an analytic radius law. The revolution pcurve
+retains the exact profile root, side descendants tile only their represented
+profile interval, and stitched planar annuli reconstruct the radial cap
+segments in the certified Hypercurve profile. Normalized finite line edges are
+accepted through an exact affine edge-domain/profile-domain proof, so
+selection and stitching do not require the source meridian carrier to be
+copied wholesale.
 
 Closed rational-Bézier curve sweeps and translated prism shells retain their
 exact solid certificate after

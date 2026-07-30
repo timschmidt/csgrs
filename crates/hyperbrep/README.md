@@ -101,6 +101,7 @@ The clean-break implementation currently provides:
   circular-or-elliptic-arc/plane, circular-arc/sphere,
   transverse-circular-arc/cylinder-or-cone-or-torus, line/sphere, line/cylinder,
   line/cone, plane/sphere, and sphere/sphere intersections, plus certified
+  authored-axis transverse plane/revolution profile sections,
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
   parallel-cylinder intersections, and coaxial sphere/cylinder intersections
@@ -208,6 +209,13 @@ The clean-break implementation currently provides:
   solids with exact frustum volume. The z-prism fast path now requires a real
   translation-family certificate and cannot misclassify a two-layer frustum
   from its vertices alone;
+- authored-axis transverse plane/revolution cuts intersect the exact meridian
+  profile first, then orbit every isolated positive-radius contact into one
+  authoritative spatial circle with exact planar and constant-profile
+  pcurves. Exact profile-range grids recertify the retained revolution sides;
+  planar annular caps reconstruct the missing radial profile segments, so a
+  revolution/slab intersection survives standard stitching with exact area,
+  volume, classification, operand reversal, and persistence;
 - axis-containing plane/cone cuts retain two native lower-bounded generator
   rays. Each ray owns one authoritative spatial `Real` parameter plus exact
   affine parameter rays on both carriers; face trimming clamps that parameter
