@@ -24,7 +24,7 @@ use crate::geometry::{Plane3, Point3, intersect_three_planes};
 use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign_direct;
+use crate::resolve::{resolve_composite_policy, resolve_real_sign_direct};
 
 /// Feasibility report for a closed 3D halfspace system.
 #[derive(Clone, Debug, PartialEq)]
@@ -194,6 +194,15 @@ impl HalfspaceInfeasibilityCertificate {
 /// `Below | On`. Infeasibility is reported only when every active-set candidate
 /// and every replay comparison is exactly decided under the supplied policy.
 pub fn classify_halfspace_feasibility3_with_policy(
+    planes: &[Plane3],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<HalfspaceFeasibilityReport> {
+    resolve_composite_policy(policy, |policy| {
+        classify_halfspace_feasibility3_impl(planes, policy)
+    })
+}
+
+fn classify_halfspace_feasibility3_impl(
     planes: &[Plane3],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<HalfspaceFeasibilityReport> {

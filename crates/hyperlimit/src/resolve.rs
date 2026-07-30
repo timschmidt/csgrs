@@ -134,6 +134,33 @@ pub(crate) fn map_outcome<T, U>(
     }
 }
 
+/// Evaluate a composite predicate without allowing child certainty to vanish.
+///
+/// Composite classifiers often have several sufficient decision paths. Running
+/// the strict policy first means a result reached without terminal
+/// approximation keeps its original evidence. Only when strict evaluation is
+/// undecided do we replay with the caller-authorized approximation and mark the
+/// whole result approximate. This is reserved for composite implementations
+/// whose internal reports do not carry per-child certainty.
+pub(crate) fn resolve_composite_policy<T>(
+    policy: PredicatePolicy,
+    mut evaluate: impl FnMut(PredicatePolicy) -> PredicateOutcome<T>,
+) -> PredicateOutcome<T> {
+    if policy != PredicatePolicy::APPROXIMATE_512 {
+        return evaluate(policy);
+    }
+
+    match evaluate(PredicatePolicy::STRICT) {
+        decided @ PredicateOutcome::Decided { .. } => decided,
+        PredicateOutcome::Unknown { .. } => match evaluate(policy) {
+            PredicateOutcome::Decided { value, .. } => {
+                PredicateOutcome::decided(value, Certainty::Approximate, Escalation::Refined)
+            }
+            unknown @ PredicateOutcome::Unknown { .. } => unknown,
+        },
+    }
+}
+
 fn exact_evaluation(exact: impl FnOnce() -> Option<Sign>) -> Option<PredicateOutcome<Sign>> {
     exact().map(|sign| {
         crate::trace_dispatch!("hyperlimit", "exact_evaluation", "decided");

@@ -16,7 +16,7 @@ use crate::predicates::segment_plane::{
     intersect_segment_with_plane_values_with_policy, point_plane_value,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign_direct;
+use crate::resolve::{resolve_composite_policy, resolve_real_sign_direct};
 use hyperreal::Real;
 
 /// Derived orientation evidence for one ordered 3D triangle.
@@ -352,6 +352,19 @@ pub fn classify_segment_triangle3_intersection_report_with_policy(
     c: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
+    resolve_composite_policy(policy, |policy| {
+        classify_segment_triangle3_intersection_report_impl(p, q, a, b, c, policy)
+    })
+}
+
+fn classify_segment_triangle3_intersection_report_impl(
+    p: &Point3,
+    q: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
     crate::trace_dispatch!(
         "hyperlimit",
         "segment_triangle3_report",
@@ -574,6 +587,19 @@ fn classify_segment_triangle3_intersection_from_sides(
 /// before topology changes, while keeping the classic
 /// ray-plane-then-triangle-containment decomposition explicit.
 pub fn classify_ray_triangle3_intersection_report_with_policy(
+    origin: &Point3,
+    direction: &Point3,
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> PredicateOutcome<RayTriangleIntersectionReport> {
+    resolve_composite_policy(policy, |policy| {
+        classify_ray_triangle3_intersection_report_impl(origin, direction, a, b, c, policy)
+    })
+}
+
+fn classify_ray_triangle3_intersection_report_impl(
     origin: &Point3,
     direction: &Point3,
     a: &Point3,

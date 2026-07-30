@@ -802,10 +802,10 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[2]),
                 APPROX,
             );
-            black_box(match result {
-                TriangleDegeneracy::NonDegenerate => 1_i64,
-                TriangleDegeneracy::Degenerate => 0,
-                TriangleDegeneracy::Unknown => -1,
+            black_box(match result.value() {
+                Some(TriangleDegeneracy::NonDegenerate) => 1_i64,
+                Some(TriangleDegeneracy::Degenerate) => 0,
+                None => -1,
             })
         });
     });

@@ -10,7 +10,9 @@
 
 use crate::classify::{SegmentIntersection, TriangleLocation};
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{PredicateOutcome, PredicatePolicy, Sign};
+use crate::predicate::{
+    Certainty, Escalation, PredicateOutcome, PredicatePolicy, RefinementNeed, Sign,
+};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::ring::ring_area_sign_with_policy;
 use crate::predicates::segment::classify_segment_intersection_with_policy;
@@ -167,8 +169,6 @@ pub enum TriangleDegeneracy {
     NonDegenerate,
     /// All coordinate projections are exactly collinear.
     Degenerate,
-    /// A needed predicate could not be decided by the enabled exact route.
-    Unknown,
 }
 
 /// Classify whether three exact 3D points form a non-degenerate triangle.
@@ -182,7 +182,7 @@ pub fn classify_triangle3_degeneracy_with_policy(
     b: &Point3,
     c: &Point3,
     policy: PredicatePolicy,
-) -> TriangleDegeneracy {
+) -> PredicateOutcome<TriangleDegeneracy> {
     let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
     let projections = [[0, 1], [0, 2], [1, 2]].map(|[u, v]| {
         (
@@ -192,11 +192,18 @@ pub fn classify_triangle3_degeneracy_with_policy(
         )
     });
     let mut signs = [None; 3];
+    let mut zero_certainty = Certainty::Exact;
+    let mut zero_stage = Escalation::Exact;
+    let mut unknown = None;
 
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if let Some(sign) = super::orient::orient2d_certified_real_filter(a, b, c) {
             if sign != Sign::Zero {
-                return TriangleDegeneracy::NonDegenerate;
+                return PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
             }
             signs[index] = Some(Sign::Zero);
         }
@@ -206,7 +213,11 @@ pub fn classify_triangle3_degeneracy_with_policy(
             && let Some(sign) = super::orient::orient2d_exact_word_filter(a, b, c)
         {
             if sign != Sign::Zero {
-                return TriangleDegeneracy::NonDegenerate;
+                return PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
             }
             signs[index] = Some(Sign::Zero);
         }
@@ -216,7 +227,11 @@ pub fn classify_triangle3_degeneracy_with_policy(
             && let Some(sign) = super::exact::orient2d_coordinates(a, b, c)
         {
             if sign != Sign::Zero {
-                return TriangleDegeneracy::NonDegenerate;
+                return PredicateOutcome::decided(
+                    TriangleDegeneracy::NonDegenerate,
+                    Certainty::Exact,
+                    Escalation::Exact,
+                );
             }
             signs[index] = Some(Sign::Zero);
         }
@@ -224,20 +239,66 @@ pub fn classify_triangle3_degeneracy_with_policy(
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none() {
             let outcome = super::orient::orient2d_real_coordinates(a, b, c, policy);
-            match outcome.value() {
-                Some(Sign::Positive | Sign::Negative) => {
-                    return TriangleDegeneracy::NonDegenerate;
+            match outcome {
+                PredicateOutcome::Decided {
+                    value: Sign::Positive | Sign::Negative,
+                    certainty,
+                    stage,
+                } => {
+                    return PredicateOutcome::decided(
+                        TriangleDegeneracy::NonDegenerate,
+                        certainty,
+                        stage,
+                    );
                 }
-                Some(Sign::Zero) => signs[index] = Some(Sign::Zero),
-                None => {}
+                PredicateOutcome::Decided {
+                    value: Sign::Zero,
+                    certainty,
+                    stage,
+                } => {
+                    signs[index] = Some(Sign::Zero);
+                    zero_certainty = weaker_certainty(zero_certainty, certainty);
+                    zero_stage = later_stage(zero_stage, stage);
+                }
+                PredicateOutcome::Unknown { needed, stage } => {
+                    unknown.get_or_insert((needed, stage));
+                }
             }
         }
     }
 
     if signs.into_iter().all(|sign| sign == Some(Sign::Zero)) {
-        TriangleDegeneracy::Degenerate
+        PredicateOutcome::decided(TriangleDegeneracy::Degenerate, zero_certainty, zero_stage)
+    } else if let Some((needed, stage)) = unknown {
+        PredicateOutcome::unknown(needed, stage)
     } else {
-        TriangleDegeneracy::Unknown
+        PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided)
+    }
+}
+
+const fn weaker_certainty(left: Certainty, right: Certainty) -> Certainty {
+    match (left, right) {
+        (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
+        (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
+        (Certainty::Exact, Certainty::Exact) => Certainty::Exact,
+    }
+}
+
+const fn later_stage(left: Escalation, right: Escalation) -> Escalation {
+    if escalation_rank(left) >= escalation_rank(right) {
+        left
+    } else {
+        right
+    }
+}
+
+const fn escalation_rank(stage: Escalation) -> u8 {
+    match stage {
+        Escalation::Structural => 0,
+        Escalation::Filter => 1,
+        Escalation::Exact => 2,
+        Escalation::Refined => 3,
+        Escalation::Undecided => 4,
     }
 }
 
@@ -724,19 +785,41 @@ mod tests {
     fn triangle3_degeneracy_uses_projected_orientations() {
         let xy =
             crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0), APPROX);
-        assert_eq!(xy, TriangleDegeneracy::NonDegenerate);
+        assert_eq!(xy.value(), Some(TriangleDegeneracy::NonDegenerate));
 
         let xz =
             crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 0, 1), APPROX);
-        assert_eq!(xz, TriangleDegeneracy::NonDegenerate);
+        assert_eq!(xz.value(), Some(TriangleDegeneracy::NonDegenerate));
 
         let yz =
             crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1), APPROX);
-        assert_eq!(yz, TriangleDegeneracy::NonDegenerate);
+        assert_eq!(yz.value(), Some(TriangleDegeneracy::NonDegenerate));
 
         let degenerate =
             crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2), APPROX);
-        assert_eq!(degenerate, TriangleDegeneracy::Degenerate);
+        assert_eq!(degenerate.value(), Some(TriangleDegeneracy::Degenerate));
+    }
+
+    #[test]
+    fn triangle3_degeneracy_preserves_terminal_approximation_evidence() {
+        let left = Real::pi() + Real::e();
+        let right = Real::e() + Real::pi();
+        let a = p3(0, 0, 0);
+        let b = p3(1, 1, 0);
+        let c = Point3::new(left, right, Real::zero());
+
+        assert!(matches!(
+            crate::classify_triangle3_degeneracy(&a, &b, &c, PredicatePolicy::STRICT),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::classify_triangle3_degeneracy(&a, &b, &c, APPROX),
+            PredicateOutcome::Decided {
+                value: TriangleDegeneracy::Degenerate,
+                certainty: Certainty::Approximate,
+                ..
+            }
+        ));
     }
 
     #[test]

@@ -29,6 +29,7 @@ use crate::predicates::triangle::{
     classify_point_triangle_with_policy,
     classify_segment_triangle3_intersection_with_preclassified_sides,
 };
+use crate::resolve::resolve_composite_policy;
 
 /// Structural inconsistency in a retained triangle/triangle report.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -174,17 +175,32 @@ pub fn classify_triangle_triangle3_points_with_policy(
     right: [&Point3; 3],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<TriangleTriangleClassification> {
+    resolve_composite_policy(policy, |policy| {
+        classify_triangle_triangle3_points_impl(left, right, policy)
+    })
+}
+
+fn classify_triangle_triangle3_points_impl(
+    left: [&Point3; 3],
+    right: [&Point3; 3],
+    policy: PredicatePolicy,
+) -> PredicateOutcome<TriangleTriangleClassification> {
     crate::trace_dispatch!("hyperlimit", "triangle_triangle3", "plane-edge-composition");
 
     let left_degeneracy =
-        classify_triangle3_degeneracy_with_policy(left[0], left[1], left[2], policy);
+        match classify_triangle3_degeneracy_with_policy(left[0], left[1], left[2], policy) {
+            PredicateOutcome::Decided { value, .. } => value,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
     let right_degeneracy =
-        classify_triangle3_degeneracy_with_policy(right[0], right[1], right[2], policy);
-    if left_degeneracy == TriangleDegeneracy::Unknown
-        || right_degeneracy == TriangleDegeneracy::Unknown
-    {
-        return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
-    }
+        match classify_triangle3_degeneracy_with_policy(right[0], right[1], right[2], policy) {
+            PredicateOutcome::Decided { value, .. } => value,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return PredicateOutcome::unknown(needed, stage);
+            }
+        };
     if left_degeneracy == TriangleDegeneracy::Degenerate
         || right_degeneracy == TriangleDegeneracy::Degenerate
     {

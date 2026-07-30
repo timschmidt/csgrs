@@ -421,9 +421,14 @@ fn predicate_invariants(input: Input) {
     }
 
     let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r, APPROX);
-    assert_ne!(
-        triangle_degeneracy,
-        TriangleDegeneracy::Unknown,
+    assert!(
+        matches!(
+            triangle_degeneracy,
+            PredicateOutcome::Decided {
+                value: TriangleDegeneracy::NonDegenerate | TriangleDegeneracy::Degenerate,
+                ..
+            }
+        ),
         "rational 3D triangle degeneracy should be exactly decided"
     );
 
