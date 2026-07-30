@@ -9,7 +9,7 @@ use hyperlattice::{
     Vector4,
 };
 
-use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
+use crate::context::{CertaintyFact, DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, affine_projective_point_decision, axis_ref, compare_real_decision,
@@ -49,6 +49,7 @@ impl Triangle {
 #[derive(Debug, Default)]
 pub(crate) struct TriangleMeshFacts {
     input_plane_sources: Option<Arc<[TriangleSource]>>,
+    input_provenance_certainty: Option<MeshCertainty>,
     input_polygons: OnceLock<Option<Arc<[ConvexPolygon]>>>,
     exact_bounds: OnceLock<Option<ExactAabb>>,
     adjacency: OnceLock<Vec<Vec<usize>>>,
@@ -60,7 +61,8 @@ pub(crate) struct TriangleMeshFacts {
         OnceLock<Result<crate::gpu::ExactGpuMeshBuffers, crate::gpu::GpuMeshError>>,
     pub(crate) gpu_f32: OnceLock<Result<crate::gpu::GpuMeshBuffersF32, crate::gpu::GpuMeshError>>,
     pub(crate) gpu_f64: OnceLock<Result<crate::gpu::GpuMeshBuffersF64, crate::gpu::GpuMeshError>>,
-    certified_convex: OnceLock<MeshCertainty>,
+    valid_pwn: CertaintyFact,
+    certified_convex: CertaintyFact,
     axis_aligned_box: OnceLock<Option<ExactAabb>>,
     reversed_winding: OnceLock<TriangleMesh>,
 }
@@ -100,14 +102,17 @@ impl TriangleMesh {
         mut self,
         sources: Vec<TriangleSource>,
         polygons: Vec<ConvexPolygon>,
+        certainty: MeshCertainty,
     ) -> Self {
         debug_assert_eq!(sources.len(), self.triangles.len());
         if sources.len() == self.triangles.len() {
             let facts = TriangleMeshFacts {
                 input_plane_sources: Some(sources.into()),
+                input_provenance_certainty: Some(certainty),
                 ..TriangleMeshFacts::default()
             };
             let _ = facts.input_polygons.set(Some(polygons.into()));
+            facts.valid_pwn.record(certainty);
             self.facts = Arc::new(facts);
         }
         self
@@ -120,12 +125,26 @@ impl TriangleMesh {
         self.build_retained_input_planes(decisions)
     }
 
-    pub(crate) fn retained_input_polygons(&self) -> Option<&[ConvexPolygon]> {
+    pub(crate) fn retained_input_polygons(
+        &self,
+        decisions: &DecisionContext,
+    ) -> Option<&[ConvexPolygon]> {
+        if !self
+            .facts
+            .input_provenance_certainty
+            .is_some_and(|certainty| decisions.consume_fact(certainty))
+        {
+            return None;
+        }
         self.facts.input_polygons.get()?.as_deref()
     }
 
-    pub(crate) fn has_retained_input_plane_sources(&self) -> bool {
+    pub(crate) fn has_retained_input_plane_sources(&self, decisions: &DecisionContext) -> bool {
         self.facts.input_plane_sources.is_some()
+            && self
+                .facts
+                .input_provenance_certainty
+                .is_some_and(|certainty| decisions.consume_fact(certainty))
     }
 
     fn build_retained_input_planes(
@@ -135,7 +154,7 @@ impl TriangleMesh {
         let Some(sources) = self.facts.input_plane_sources.as_deref() else {
             return Ok(None);
         };
-        let Some(polygons) = self.retained_input_polygons() else {
+        let Some(polygons) = self.retained_input_polygons(decisions) else {
             return Ok(None);
         };
         if sources.len() != self.triangles.len() {
@@ -358,6 +377,62 @@ impl TriangleMesh {
         Ok(edges.values().all(|uses| *uses == [1, 1]))
     }
 
+    pub(crate) fn certify_valid_pwn_decision(
+        &self,
+        decisions: &DecisionContext,
+        mesh_index: usize,
+    ) -> HypermeshResult<()> {
+        if self.facts.valid_pwn.consume(decisions) {
+            return Ok(());
+        }
+
+        let local = decisions.isolated();
+        let result = self.compute_valid_pwn_decision(&local, mesh_index);
+        decisions.absorb(local.certainty());
+        result?;
+        self.facts.valid_pwn.record(local.certainty());
+        Ok(())
+    }
+
+    fn compute_valid_pwn_decision(
+        &self,
+        decisions: &DecisionContext,
+        mesh_index: usize,
+    ) -> HypermeshResult<()> {
+        if self.positions.is_empty() || self.triangles.is_empty() {
+            return Err(HypermeshError::EmptyMesh { mesh_index });
+        }
+        self.validate_triangle_indices()?;
+        for (triangle_index, triangle) in self.triangles.iter().enumerate() {
+            let [a, b, c] = triangle.indices();
+            if !Plane::decide_points_are_nondegenerate(
+                decisions,
+                &self.positions[a],
+                &self.positions[b],
+                &self.positions[c],
+            )? {
+                return Err(HypermeshError::DegenerateTriangle {
+                    mesh_index,
+                    triangle_index,
+                });
+            }
+        }
+        let balance = classify_indexed_edge_balance(decisions, &self.as_ref())?;
+        if balance.boundary_edges != 0 {
+            return Err(HypermeshError::OpenInput {
+                mesh_index,
+                boundary_edges: balance.boundary_edges,
+            });
+        }
+        if balance.unbalanced_edges != 0 {
+            return Err(HypermeshError::NonPwnInput {
+                mesh_index,
+                unbalanced_edges: balance.unbalanced_edges,
+            });
+        }
+        Ok(())
+    }
+
     /// Returns policy-certified exact bounds, or `None` for empty geometry.
     pub fn exact_bounds(
         &self,
@@ -467,7 +542,8 @@ impl TriangleMesh {
     }
 
     pub(crate) fn with_convexity_certainty(self, certainty: MeshCertainty) -> Self {
-        let _ = self.facts.certified_convex.set(certainty);
+        self.facts.valid_pwn.record(certainty);
+        self.facts.certified_convex.record(certainty);
         self
     }
 
@@ -486,16 +562,7 @@ impl TriangleMesh {
     }
 
     pub(crate) fn has_certified_convex_fact(&self, decisions: &DecisionContext) -> bool {
-        match self.facts.certified_convex.get().copied() {
-            Some(MeshCertainty::Certified) => true,
-            Some(MeshCertainty::Approximate512Consumed)
-                if decisions.policy() == hyperlimit::PredicatePolicy::APPROXIMATE_512 =>
-            {
-                decisions.absorb(MeshCertainty::Approximate512Consumed);
-                true
-            }
-            _ => false,
-        }
+        self.facts.certified_convex.consume(decisions)
     }
 
     /// Returns policy-certified bounds when the native rows form one complete
@@ -521,6 +588,9 @@ impl TriangleMesh {
         let bounds = self.compute_axis_aligned_box_bounds_decision(&local);
         decisions.absorb(local.certainty());
         let bounds = bounds?;
+        if bounds.is_some() {
+            self.facts.valid_pwn.record(local.certainty());
+        }
         if local.certainty() == crate::MeshCertainty::Certified {
             let _ = self.facts.axis_aligned_box.set(bounds.clone());
             return Ok(self.facts.axis_aligned_box.get().cloned().unwrap_or(bounds));
@@ -659,17 +729,20 @@ impl TriangleMesh {
                 })
                 .collect::<HypermeshResult<Vec<_>>>()?
         };
-        let mut transformed = Self::new(positions, self.triangles.to_vec());
+        let transformed = Self::new(positions, self.triangles.to_vec());
         let preserves_closed_convexity = matches!(
             matrix_facts.transform_kind,
             hyperlattice::Matrix4TransformKind::Identity
                 | hyperlattice::Matrix4TransformKind::AffineTranslation
         ) || matrix_facts.is_affine
             && matrix_facts.transform_kind == hyperlattice::Matrix4TransformKind::SignedPermutation;
-        if preserves_closed_convexity
-            && let Some(certainty) = self.facts.certified_convex.get().copied()
-        {
-            transformed = transformed.with_convexity_certainty(certainty);
+        if preserves_closed_convexity {
+            if let Some(certainty) = self.facts.valid_pwn.certainty() {
+                transformed.facts.valid_pwn.record(certainty);
+            }
+            if let Some(certainty) = self.facts.certified_convex.certainty() {
+                transformed.facts.certified_convex.record(certainty);
+            }
         }
         Ok(transformed)
     }
@@ -681,15 +754,21 @@ impl TriangleMesh {
     pub fn reversed_winding(&self) -> Self {
         self.facts
             .reversed_winding
-            .get_or_init(|| Self {
-                positions: Arc::clone(&self.positions),
-                triangles: self
-                    .triangles
-                    .iter()
-                    .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
-                    .collect::<Vec<_>>()
-                    .into(),
-                facts: Arc::new(TriangleMeshFacts::default()),
+            .get_or_init(|| {
+                let facts = Arc::new(TriangleMeshFacts::default());
+                if let Some(certainty) = self.facts.valid_pwn.certainty() {
+                    facts.valid_pwn.record(certainty);
+                }
+                Self {
+                    positions: Arc::clone(&self.positions),
+                    triangles: self
+                        .triangles
+                        .iter()
+                        .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
+                        .collect::<Vec<_>>()
+                        .into(),
+                    facts,
+                }
             })
             .clone()
     }
@@ -743,9 +822,12 @@ impl TriangleMesh {
             zero,
             one,
         ]);
-        let mut transformed = self.try_transformed_decision(decisions, &matrix)?;
-        if let Some(certainty) = self.facts.certified_convex.get().copied() {
-            transformed = transformed.with_convexity_certainty(certainty);
+        let transformed = self.try_transformed_decision(decisions, &matrix)?;
+        if let Some(certainty) = self.facts.valid_pwn.certainty() {
+            transformed.facts.valid_pwn.record(certainty);
+        }
+        if let Some(certainty) = self.facts.certified_convex.certainty() {
+            transformed.facts.certified_convex.record(certainty);
         }
         Ok(transformed)
     }
@@ -820,8 +902,11 @@ impl TriangleMesh {
         if self.is_closed_manifold() {
             let _ = mesh.facts.closed_manifold.set(true);
         }
-        if let Some(certainty) = self.facts.certified_convex.get().copied() {
-            let _ = mesh.facts.certified_convex.set(certainty);
+        if let Some(certainty) = self.facts.valid_pwn.certainty() {
+            mesh.facts.valid_pwn.record(certainty);
+        }
+        if let Some(certainty) = self.facts.certified_convex.certainty() {
+            mesh.facts.certified_convex.record(certainty);
         }
         Ok(mesh)
     }
@@ -2084,6 +2169,53 @@ mod tests {
             approximate.certainty(),
             MeshCertainty::Approximate512Consumed
         );
+
+        mesh.facts.certified_convex.record(MeshCertainty::Certified);
+        let upgraded_strict = DecisionContext::new(&strict_context);
+        assert!(mesh.has_certified_convex_fact(&upgraded_strict));
+        assert_eq!(upgraded_strict.certainty(), MeshCertainty::Certified);
+    }
+
+    #[test]
+    fn approximate_retained_provenance_is_not_reused_by_strict_operations() {
+        let mesh = TriangleMesh::new(Vec::new(), Vec::new()).with_boolean_provenance(
+            Vec::new(),
+            Vec::new(),
+            MeshCertainty::Approximate512Consumed,
+        );
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert!(mesh.retained_input_polygons(&strict).is_none());
+        assert!(!mesh.has_retained_input_plane_sources(&strict));
+        assert_eq!(strict.certainty(), MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(hyperlimit::PredicatePolicy::APPROXIMATE_512);
+        let approximate = DecisionContext::new(&approximate_context);
+        assert!(mesh.retained_input_polygons(&approximate).is_some());
+        assert!(mesh.has_retained_input_plane_sources(&approximate));
+        assert_eq!(
+            approximate.certainty(),
+            MeshCertainty::Approximate512Consumed
+        );
+    }
+
+    #[test]
+    fn strict_pwn_certification_upgrades_an_approximate_cached_fact() {
+        let mesh = tetrahedron_with_independent_face_indices();
+        mesh.facts
+            .valid_pwn
+            .record(MeshCertainty::Approximate512Consumed);
+
+        let strict_context = MeshContext::new(hyperlimit::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        mesh.certify_valid_pwn_decision(&strict, 0).unwrap();
+
+        assert_eq!(
+            mesh.facts.valid_pwn.certainty(),
+            Some(MeshCertainty::Certified)
+        );
+        assert_eq!(strict.certainty(), MeshCertainty::Certified);
     }
 
     fn tetrahedron_with_independent_face_indices() -> TriangleMesh {

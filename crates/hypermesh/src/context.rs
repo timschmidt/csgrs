@@ -1,6 +1,7 @@
 //! Immutable predicate policy and compact operation outcomes.
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::sync::atomic::{AtomicU8, Ordering};
 
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
 
@@ -61,10 +62,11 @@ impl<T> MeshOutcome<T> {
 }
 
 /// Operation-local owner of policy and aggregate predicate certainty.
-#[derive(Debug)]
 pub(crate) struct DecisionContext {
     policy: PredicatePolicy,
     certainty: Cell<MeshCertainty>,
+    pub(crate) rational_linear_form4_filters:
+        RefCell<crate::predicate::RationalLinearForm4FilterCache>,
 }
 
 impl DecisionContext {
@@ -72,6 +74,9 @@ impl DecisionContext {
         Self {
             policy: context.predicate_policy(),
             certainty: Cell::new(MeshCertainty::Certified),
+            rational_linear_form4_filters: RefCell::new(
+                crate::predicate::RationalLinearForm4FilterCache::new(),
+            ),
         }
     }
 
@@ -87,6 +92,9 @@ impl DecisionContext {
         Self {
             policy: self.policy,
             certainty: Cell::new(MeshCertainty::Certified),
+            rational_linear_form4_filters: RefCell::new(
+                crate::predicate::RationalLinearForm4FilterCache::new(),
+            ),
         }
     }
 
@@ -97,6 +105,19 @@ impl DecisionContext {
     pub(crate) fn absorb(&self, certainty: MeshCertainty) {
         if certainty == MeshCertainty::Approximate512Consumed {
             self.certainty.set(certainty);
+        }
+    }
+
+    pub(crate) fn consume_fact(&self, certainty: MeshCertainty) -> bool {
+        match certainty {
+            MeshCertainty::Certified => true,
+            MeshCertainty::Approximate512Consumed
+                if self.policy == PredicatePolicy::APPROXIMATE_512 =>
+            {
+                self.absorb(certainty);
+                true
+            }
+            MeshCertainty::Approximate512Consumed => false,
         }
     }
 
@@ -127,6 +148,40 @@ impl DecisionContext {
     }
 }
 
+const CERTIFIED_FACT: u8 = 1;
+const APPROXIMATE_512_FACT: u8 = 2;
+
+/// Monotonic reusable proof state that can be upgraded from approximate to
+/// certified when a later strict operation proves the same immutable fact.
+#[derive(Debug, Default)]
+pub(crate) struct CertaintyFact(AtomicU8);
+
+impl CertaintyFact {
+    pub(crate) fn record(&self, certainty: MeshCertainty) {
+        let bit = match certainty {
+            MeshCertainty::Certified => CERTIFIED_FACT,
+            MeshCertainty::Approximate512Consumed => APPROXIMATE_512_FACT,
+        };
+        self.0.fetch_or(bit, Ordering::Relaxed);
+    }
+
+    pub(crate) fn consume(&self, decisions: &DecisionContext) -> bool {
+        self.certainty()
+            .is_some_and(|certainty| decisions.consume_fact(certainty))
+    }
+
+    pub(crate) fn certainty(&self) -> Option<MeshCertainty> {
+        let facts = self.0.load(Ordering::Relaxed);
+        if facts & CERTIFIED_FACT != 0 {
+            Some(MeshCertainty::Certified)
+        } else if facts & APPROXIMATE_512_FACT != 0 {
+            Some(MeshCertainty::Approximate512Consumed)
+        } else {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -135,5 +190,6 @@ mod tests {
     fn policy_context_and_certainty_are_one_byte() {
         assert_eq!(core::mem::size_of::<MeshContext>(), 1);
         assert_eq!(core::mem::size_of::<MeshCertainty>(), 1);
+        assert_eq!(core::mem::size_of::<CertaintyFact>(), 1);
     }
 }

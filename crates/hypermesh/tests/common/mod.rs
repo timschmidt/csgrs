@@ -263,6 +263,7 @@ pub fn approximate_trace_segment(
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn approximate_classify_leaf_polygon(
     support: &Plane,
     leaf_edges: &[Plane],

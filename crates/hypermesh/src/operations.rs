@@ -278,7 +278,7 @@ fn compute_native_boolean(
         Err(error)
             if meshes
                 .iter()
-                .any(|mesh| mesh.retained_input_polygons().is_some())
+                .any(|mesh| mesh.retained_input_polygons(decisions).is_some())
                 && is_retryable_boolean_path_error(&error) =>
         {
             compute_native_boolean_with_polygon_reuse(
@@ -309,7 +309,7 @@ fn compute_native_boolean_with_polygon_reuse(
         .collect::<Vec<_>>();
     let planes = meshes
         .iter()
-        .any(|mesh| mesh.has_retained_input_plane_sources())
+        .any(|mesh| mesh.has_retained_input_plane_sources(decisions))
         .then(|| {
             meshes
                 .iter()
@@ -327,7 +327,7 @@ fn compute_native_boolean_with_polygon_reuse(
         .then(|| {
             meshes
                 .iter()
-                .map(|mesh| mesh.retained_input_polygons())
+                .map(|mesh| mesh.retained_input_polygons(decisions))
                 .collect::<Vec<_>>()
         })
         .filter(|polygons| polygons.iter().any(Option::is_some));
@@ -372,6 +372,8 @@ fn boolean_triangle_meshes_decision(
     config: EmberConfig,
 ) -> HypermeshResult<TriangleMesh> {
     if left.triangles.is_empty() || right.triangles.is_empty() {
+        certify_nonempty_shortcut_operand(decisions, left, 0)?;
+        certify_nonempty_shortcut_operand(decisions, right, 1)?;
         return Ok(match operation {
             BooleanOp::Union | BooleanOp::SymmetricDifference => {
                 if left.triangles.is_empty() {
@@ -387,6 +389,7 @@ fn boolean_triangle_meshes_decision(
     if Arc::ptr_eq(&left.positions, &right.positions)
         && Arc::ptr_eq(&left.triangles, &right.triangles)
     {
+        left.certify_valid_pwn_decision(decisions, 0)?;
         return Ok(match operation {
             BooleanOp::Union | BooleanOp::Intersection => left.clone(),
             BooleanOp::Difference | BooleanOp::SymmetricDifference => empty_triangle_mesh(),
@@ -405,6 +408,8 @@ fn boolean_triangle_meshes_decision(
         )),
         Some(false)
     ) {
+        left.certify_valid_pwn_decision(decisions, 0)?;
+        right.certify_valid_pwn_decision(decisions, 1)?;
         return Ok(match operation {
             BooleanOp::Union | BooleanOp::SymmetricDifference => {
                 merge_triangle_meshes(&[left, right])
@@ -472,7 +477,19 @@ fn boolean_triangle_meshes_decision(
             Err(error) => return Err(error),
         };
     let (mesh, provenance) = computation.into_native_materialization(decisions, operation)?;
-    materialize_boolean_mesh(mesh, provenance)
+    materialize_boolean_mesh(decisions, mesh, provenance)
+}
+
+fn certify_nonempty_shortcut_operand(
+    decisions: &DecisionContext,
+    mesh: &TriangleMesh,
+    mesh_index: usize,
+) -> HypermeshResult<()> {
+    if mesh.triangles.is_empty() {
+        Ok(())
+    } else {
+        mesh.certify_valid_pwn_decision(decisions, mesh_index)
+    }
 }
 
 fn axis_aligned_box_boolean_mesh(
@@ -963,6 +980,7 @@ fn input_triangle_planes(
 }
 
 fn materialize_boolean_mesh(
+    decisions: &DecisionContext,
     result: crate::output::BooleanMesh,
     polygons: Vec<ConvexPolygon>,
 ) -> HypermeshResult<TriangleMesh> {
@@ -971,7 +989,7 @@ fn materialize_boolean_mesh(
     }
     let sources = result.sources.clone();
     let mesh = result.into_triangle_mesh();
-    Ok(mesh.with_boolean_provenance(sources, polygons))
+    Ok(mesh.with_boolean_provenance(sources, polygons, decisions.certainty()))
 }
 
 fn empty_triangle_mesh() -> TriangleMesh {
@@ -2448,7 +2466,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<ProjectiveClip> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let plane_evidence = RationalPlane4PredicateEvidence::new(plane);
+        let plane_evidence = RationalPlane4PredicateEvidence::new(decisions, plane);
         let classifications = self
             .boundary
             .iter()
@@ -2718,7 +2736,7 @@ impl ProjectiveCycle {
         point_cache: &mut ProjectivePointCache,
     ) -> HypermeshResult<Self> {
         let plane_identity = point_cache.canonical_plane_identity(plane_identity);
-        let plane_evidence = RationalPlane4PredicateEvidence::new(plane);
+        let plane_evidence = RationalPlane4PredicateEvidence::new(decisions, plane);
         let classifications = self
             .boundary
             .iter()
@@ -3579,10 +3597,7 @@ fn compute_two_convex_inputs_projectively(
                 eprintln!("[DEBUG] projective triangulation failed: {error}");
             }
         });
-        match soup {
-            Ok(soup) => soup,
-            Err(error) => return Err(error),
-        }
+        soup?
     };
     Ok(Some(ConvexCandidate {
         classified,
@@ -4578,7 +4593,7 @@ fn cycle_satisfies_planes<'a>(
         }
         rational_plane_evidence.push((
             plane_index,
-            RationalPlane4PredicateEvidence::new(support_planes[plane_index]),
+            RationalPlane4PredicateEvidence::new(decisions, support_planes[plane_index]),
         ));
     }
     for entry in &cycle.boundary {
@@ -4980,6 +4995,81 @@ mod tests {
     }
 
     #[test]
+    fn algebraic_shortcuts_reject_invalid_nonempty_operands() {
+        let context = MeshContext::new(crate::PredicatePolicy::STRICT);
+        let open = TriangleMesh::new(
+            vec![p(0, 0, 0), p(1, 0, 0), p(0, 1, 0)],
+            vec![Triangle::new(0, 1, 2)],
+        );
+        let empty = TriangleMesh::new(Vec::new(), Vec::new());
+        let distant_box = box_from_bounds(&hyperlattice::Aabb::new(p(10, 10, 10), p(11, 11, 11)));
+
+        let identical = boolean_triangle_meshes(
+            &context,
+            &open,
+            &open,
+            BooleanOp::Union,
+            EmberConfig::default(),
+        );
+        assert_eq!(
+            identical.unwrap_err(),
+            HypermeshError::OpenInput {
+                mesh_index: 0,
+                boundary_edges: 3,
+            }
+        );
+
+        let empty_passthrough = boolean_triangle_meshes(
+            &context,
+            &empty,
+            &open,
+            BooleanOp::Union,
+            EmberConfig::default(),
+        );
+        assert_eq!(
+            empty_passthrough.unwrap_err(),
+            HypermeshError::OpenInput {
+                mesh_index: 1,
+                boundary_edges: 3,
+            }
+        );
+
+        let disjoint = boolean_triangle_meshes(
+            &context,
+            &open,
+            &distant_box,
+            BooleanOp::Union,
+            EmberConfig::default(),
+        );
+        assert_eq!(
+            disjoint.unwrap_err(),
+            HypermeshError::OpenInput {
+                mesh_index: 0,
+                boundary_edges: 3,
+            }
+        );
+
+        let degenerate = TriangleMesh::new(
+            vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)],
+            vec![Triangle::new(0, 1, 2)],
+        );
+        assert_eq!(
+            boolean_triangle_meshes(
+                &context,
+                &degenerate,
+                &degenerate,
+                BooleanOp::Intersection,
+                EmberConfig::default(),
+            )
+            .unwrap_err(),
+            HypermeshError::DegenerateTriangle {
+                mesh_index: 0,
+                triangle_index: 0,
+            }
+        );
+    }
+
+    #[test]
     fn exact_box_cell_boolean_covers_every_operation_and_geometric_relation() {
         let context = MeshContext::new(crate::PredicatePolicy::STRICT);
         let decisions = DecisionContext::new(&context);
@@ -5155,7 +5245,7 @@ mod tests {
         );
         assert!(
             first
-                .retained_input_polygons()
+                .retained_input_polygons(&crate::test_support::approximate_decisions())
                 .is_some_and(|polygons| !polygons.is_empty())
         );
 
@@ -5170,7 +5260,7 @@ mod tests {
         assert!(second.is_closed_manifold());
         assert!(
             second
-                .retained_input_polygons()
+                .retained_input_polygons(&crate::test_support::approximate_decisions())
                 .is_some_and(|polygons| !polygons.is_empty())
         );
     }
