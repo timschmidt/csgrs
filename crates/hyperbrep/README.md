@@ -72,7 +72,9 @@ The clean-break implementation currently provides:
   exact span injectivity and pairwise intersections certify simplicity,
   polynomial-equivalent boundary and nonuniform rational line-image moments
   drive exact volume, and genuinely curved rational unimplemented moments
-  remain explicit unsupported measurements;
+  remain explicit unsupported measurements; transverse clipping decomposes
+  multi-span NURBS meridians exactly and deduplicates contacts at shared knot
+  seams;
 - exact `builder::revolve_region` cavities as inward periodic shells with
   first-moment subtraction and radial/profile material classification;
 - exact `builder::sphere_with_voids` construction with inward complete-sphere

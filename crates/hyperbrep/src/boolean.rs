@@ -8210,6 +8210,106 @@ mod tests {
     }
 
     #[test]
+    fn transverse_multi_span_nurbs_revolution_deduplicates_exact_knot_seam() {
+        let cp = |x, y| hypercurve::Point2::new(Real::from(x), Real::from(y));
+        let profile = hypercurve::CurvePath2::try_new(vec![
+            hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+            hypercurve::Curve2::try_nurbs(
+                1,
+                vec![cp(4, 0), cp(5, 1), cp(4, 2)],
+                vec![Real::one(), Real::from(2), Real::from(3)],
+                vec![
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::from(2),
+                    Real::from(2),
+                ],
+            )
+            .unwrap(),
+            hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+            hypercurve::Curve2::from(hypercurve::LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let (revolution, revolution_solid) = crate::builder::revolve_path(&profile).unwrap();
+        let slab_min = p(-6, -6, 1);
+        let slab_max = Point3::new(
+            Real::from(6),
+            Real::from(6),
+            (Real::from(3) / Real::from(2)).unwrap(),
+        );
+        let (slab, slab_solid) = crate::builder::cuboid(slab_min, slab_max).unwrap();
+
+        let graph = intersection_graph(&revolution, revolution_solid, &slab, slab_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the multi-span NURBS knot-seam clip must retain one exact solid");
+        };
+        let expected = (Real::from(223) * Real::pi() / Real::from(24)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, expected_location) in [
+            (
+                Point3::new(
+                    Real::from(4),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(4)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(
+                    (Real::from(19) / Real::from(4)).unwrap(),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(4)).unwrap(),
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(
+                    Real::from(5),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(4)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(
+                model.classify_point(solid, &point).unwrap(),
+                expected_location
+            );
+        }
+        let json = model.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        for result in [
+            intersection(&revolution, revolution_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &revolution, revolution_solid).unwrap(),
+        ] {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("the standard API must retain the exact multi-span NURBS clip");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
     fn axial_cone_rays_partition_an_exact_half_frustum_cut() {
         let (frustum, frustum_solid) =
             crate::builder::cone_frustum(Real::from(4), Real::one(), Real::from(3)).unwrap();

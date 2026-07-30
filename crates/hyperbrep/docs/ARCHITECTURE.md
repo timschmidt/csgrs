@@ -285,9 +285,13 @@ the circle-angle domain. Axis contacts remain isolated points. A contained
 profile interval, a mixed point-and-circle result, or multiple profile
 parameters covering the same spatial circle remains explicit unsupported
 evidence because the retained relation does not pretend those are one
-single-valued pcurve. Plane/extrusion generator lines use the same principle with
-an affine surface-parameter line. An axis-containing plane/cone relation is
-represented explicitly as two lower-bounded `SurfaceIntersectionRay` values,
+single-valued pcurve. Finite NURBS meridians are decomposed into exact rational
+Bézier knot spans for the plane relation; isolated parameters are mapped back
+to the authoritative knot domain and contacts shared by adjacent spans are
+deduplicated before circle publication. Plane/extrusion generator lines use
+the same principle with an affine surface-parameter line. An axis-containing
+plane/cone relation is represented explicitly as two lower-bounded
+`SurfaceIntersectionRay` values,
 each carrying the authoritative spatial origin, direction, and minimum plus
 an affine parameter ray for both operands. Face clipping works directly in
 those retained parameter rays, intersects the exact trim intervals, clamps
