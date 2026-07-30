@@ -5977,23 +5977,15 @@ mod tests {
             .expect("graph partition result revalidates");
     }
 
-    fn unit_holed_affine_tensor_cap() -> (Model, SolidId, FaceId) {
-        let quarter = (Real::one() / Real::from(4)).unwrap();
-        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+    fn unit_affine_tensor_cap_with_holes(holes: &[Vec<crate::Point2>]) -> (Model, SolidId, FaceId) {
         let outer = [
             crate::Point2::new(Real::zero(), Real::zero()),
             crate::Point2::new(Real::one(), Real::zero()),
             crate::Point2::new(Real::one(), Real::one()),
             crate::Point2::new(Real::zero(), Real::one()),
         ];
-        let hole = vec![
-            crate::Point2::new(quarter.clone(), quarter.clone()),
-            crate::Point2::new(three_quarters.clone(), quarter.clone()),
-            crate::Point2::new(three_quarters.clone(), three_quarters.clone()),
-            crate::Point2::new(quarter, three_quarters),
-        ];
         let (source, solid) =
-            crate::builder::extrude_region(&outer, &[hole], Real::zero(), Real::one()).unwrap();
+            crate::builder::extrude_region(&outer, holes, Real::zero(), Real::one()).unwrap();
         let (face, surface, origin, u, v) = source
             .faces()
             .find_map(|(face_id, face)| {
@@ -6030,6 +6022,18 @@ mod tests {
             solid,
             face,
         )
+    }
+
+    fn unit_holed_affine_tensor_cap() -> (Model, SolidId, FaceId) {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let hole = vec![
+            crate::Point2::new(quarter.clone(), quarter.clone()),
+            crate::Point2::new(three_quarters.clone(), quarter.clone()),
+            crate::Point2::new(three_quarters.clone(), three_quarters.clone()),
+            crate::Point2::new(quarter, three_quarters),
+        ];
+        unit_affine_tensor_cap_with_holes(&[hole])
     }
 
     #[test]
@@ -6109,6 +6113,93 @@ mod tests {
             Some(Ordering::Equal)
         );
         let json = first.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn paired_bridge_partition_assigns_uncrossed_holes_to_one_exact_descendant() {
+        let eighth = (Real::one() / Real::from(8)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let three_eighths = (Real::from(3) / Real::from(8)).unwrap();
+        let five_eighths = (Real::from(5) / Real::from(8)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let seven_eighths = (Real::from(7) / Real::from(8)).unwrap();
+        let crossed = vec![
+            crate::Point2::new(eighth.clone(), quarter.clone()),
+            crate::Point2::new(three_eighths.clone(), quarter.clone()),
+            crate::Point2::new(three_eighths, three_quarters.clone()),
+            crate::Point2::new(eighth, three_quarters.clone()),
+        ];
+        let residual = vec![
+            crate::Point2::new(five_eighths.clone(), quarter.clone()),
+            crate::Point2::new(seven_eighths.clone(), quarter),
+            crate::Point2::new(seven_eighths, three_quarters.clone()),
+            crate::Point2::new(five_eighths, three_quarters),
+        ];
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[crossed, residual]);
+        let cut = (Real::one() / Real::from(4)).unwrap();
+        let points = [
+            hypercurve::Point2::new(cut.clone(), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(-1)),
+            hypercurve::Point2::new(Real::from(2), Real::from(2)),
+            hypercurve::Point2::new(cut, Real::from(2)),
+        ];
+        let outer = CurvePath2::try_new(
+            (0..points.len())
+                .map(|index| {
+                    Curve2::from(
+                        LineSeg2::try_new(
+                            points[index].clone(),
+                            points[(index + 1) % points.len()].clone(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("one crossed and one residual hole are represented");
+        assert_eq!(traces.len(), 2);
+        let (partitioned, partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(
+            partition
+                .faces
+                .iter()
+                .map(|face| partitioned.face(*face).unwrap().inner().len())
+                .sum::<usize>(),
+            1
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &(Real::from(3) / Real::from(4)).unwrap()
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let json = partitioned.to_json().unwrap();
         assert_eq!(
             crate::RawModel::from_json(&json)
                 .unwrap()
