@@ -26,6 +26,13 @@ pub enum HypermeshError {
         /// Point count supplied to the query.
         actual: usize,
     },
+    /// Boolean output triangles and their provenance rows are not parallel.
+    TriangleSourceCountMismatch {
+        /// Number of output triangles.
+        triangles: usize,
+        /// Number of source-provenance rows.
+        sources: usize,
+    },
     /// A collection size required by an operation cannot be represented.
     CapacityOverflow {
         /// Operation whose output size overflowed.
@@ -132,6 +139,10 @@ impl fmt::Display for HypermeshError {
             Self::PointCountMismatch { expected, actual } => write!(
                 f,
                 "point acceleration structure contains {expected} points but query supplied {actual}"
+            ),
+            Self::TriangleSourceCountMismatch { triangles, sources } => write!(
+                f,
+                "Boolean output contains {triangles} triangles but {sources} provenance rows"
             ),
             Self::CapacityOverflow { operation } => {
                 write!(f, "{operation} output size exceeds addressable capacity")

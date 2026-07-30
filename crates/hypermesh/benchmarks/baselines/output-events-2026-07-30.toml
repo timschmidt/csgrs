@@ -1,0 +1,119 @@
+date = "2026-07-30"
+direct_parent = "383f01ef"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+
+[correctness]
+crossing_grid_width = 17
+crossing_grid_height = 17
+independent_crossings = 289
+historical_fixed_pass_limit = 256
+event_bytes_x86_64 = 40
+
+[runtime.output_cube_parent]
+estimate_ns = 136180
+lower_ns = 135480
+upper_ns = 137020
+
+[runtime.output_cube_current]
+estimate_ns = 134810
+lower_ns = 134460
+upper_ns = 135220
+movement_percent = -1.01
+criterion_paired_movement_percent = -0.96
+criterion_classification = "within noise threshold"
+
+[size.general_release_native]
+parent_text_bytes = 3701085
+current_text_bytes = 3702133
+movement_percent = 0.0283
+
+[size.general_release_wasm]
+parent_wasm_opt_oz_bytes = 2591488
+current_wasm_opt_oz_bytes = 2592437
+movement_percent = 0.0366
+
+[size.immediate_release_native]
+parent_text_bytes = 3734901
+current_text_bytes = 3735941
+movement_percent = 0.0278
+
+[size.immediate_release_wasm]
+parent_wasm_opt_oz_bytes = 2606677
+current_wasm_opt_oz_bytes = 2607622
+movement_percent = 0.0363
+
+[size.general_size_native]
+parent_text_bytes = 1672707
+current_text_bytes = 1674267
+movement_percent = 0.0933
+
+[size.general_size_wasm]
+parent_wasm_opt_oz_bytes = 1084991
+current_wasm_opt_oz_bytes = 1086081
+movement_percent = 0.1005
+
+[size.immediate_size_native]
+parent_text_bytes = 1684711
+current_text_bytes = 1686255
+movement_percent = 0.0916
+
+[size.immediate_size_wasm]
+parent_wasm_opt_oz_bytes = 1095173
+current_wasm_opt_oz_bytes = 1096268
+movement_percent = 0.1000
+
+[artifacts.general_release_native]
+raw_bytes = 4316528
+text_bytes = 3702133
+gzip_9_bytes = 1721244
+brotli_11_bytes = 1285256
+sha256 = "9c19492c5fa41cfef04ee01e7b6dccbe2f65ff8cd45c1c07b9afe87bb76eac8e"
+
+[artifacts.general_release_wasm]
+raw_bytes = 3334170
+wasm_opt_oz_bytes = 2592437
+wasm_opt_oz_gzip_9_bytes = 896523
+wasm_opt_oz_brotli_11_bytes = 633854
+sha256 = "577f8d17fda61df09c986833f2c16b82af3def808029e74692f53cc18ed1a451"
+
+[artifacts.immediate_release_native]
+raw_bytes = 4351984
+text_bytes = 3735941
+gzip_9_bytes = 1737416
+brotli_11_bytes = 1300374
+sha256 = "b42bc14c8b9657248c6fbd7d3575903fa379476251e948fc99097a7a42d7d592"
+
+[artifacts.immediate_release_wasm]
+raw_bytes = 3351215
+wasm_opt_oz_bytes = 2607622
+wasm_opt_oz_gzip_9_bytes = 902413
+wasm_opt_oz_brotli_11_bytes = 639332
+sha256 = "05551b3cfe8723967e4468789bb9289c1d2f257574dcdb3b195300c2a1100c34"
+
+[artifacts.general_size_native]
+raw_bytes = 1910440
+text_bytes = 1674267
+gzip_9_bytes = 787157
+brotli_11_bytes = 639097
+sha256 = "432c139093d7aa4502d5c6ef53a1bbe5902d3cc28f4f538ab2f7f0c4ada7c855"
+
+[artifacts.general_size_wasm]
+raw_bytes = 1279212
+wasm_opt_oz_bytes = 1086081
+wasm_opt_oz_gzip_9_bytes = 450685
+wasm_opt_oz_brotli_11_bytes = 354826
+sha256 = "fc3e55d23be22df63ac8db1d4dcbd68c1ea9167cf209726d9770343f82af05cb"
+
+[artifacts.immediate_size_native]
+raw_bytes = 1922984
+text_bytes = 1686255
+gzip_9_bytes = 793297
+brotli_11_bytes = 643932
+sha256 = "282280a336f75a1f974a46f752ab8036cd030d828d4d8db160bd69ee919c2381"
+
+[artifacts.immediate_size_wasm]
+raw_bytes = 1289797
+wasm_opt_oz_bytes = 1096268
+wasm_opt_oz_gzip_9_bytes = 454825
+wasm_opt_oz_brotli_11_bytes = 357974
+sha256 = "bdd6b96ae7975a7ece270eecddd4b2a5aa4c6adf96b97d83f9198585c3bbacd8"

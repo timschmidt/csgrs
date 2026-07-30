@@ -2355,7 +2355,7 @@ pub(crate) fn resolve_tjunctions(
 
     loop {
         let split_tjunction = split_one_tjunction_pass(decisions, &mut soup)?;
-        let split_crossing = split_one_edge_crossing_pass(decisions, &mut soup)?;
+        let split_crossing = split_edge_crossing_events(decisions, &mut soup)?;
         if !split_tjunction && !split_crossing {
             return Ok(soup);
         }
@@ -2480,13 +2480,29 @@ fn remove_degenerate_and_duplicate_triangles(
     decisions: &DecisionContext,
     soup: &mut BooleanMesh,
 ) -> HypermeshResult<()> {
+    if soup.triangles.len() != soup.sources.len() {
+        return Err(HypermeshError::TriangleSourceCountMismatch {
+            triangles: soup.triangles.len(),
+            sources: soup.sources.len(),
+        });
+    }
+    if let Some(index) = soup
+        .triangles
+        .iter()
+        .flatten()
+        .find(|index| **index >= soup.vertices.len())
+        .copied()
+    {
+        return Err(HypermeshError::VertexIndexOutOfBounds {
+            index,
+            vertex_count: soup.vertices.len(),
+        });
+    }
     let mut seen = BTreeSet::new();
     let mut triangles = Vec::with_capacity(soup.triangles.len());
     let mut sources = Vec::with_capacity(soup.sources.len());
     for (triangle, source) in soup.triangles.drain(..).zip(soup.sources.drain(..)) {
-        let [Some(a), Some(b), Some(c)] = triangle.map(|index| soup.vertices.get(index)) else {
-            continue;
-        };
+        let [a, b, c] = triangle.map(|index| &soup.vertices[index]);
         if triangle[0] == triangle[1]
             || triangle[1] == triangle[2]
             || triangle[0] == triangle[2]
@@ -2659,11 +2675,23 @@ fn split_one_tjunction_pass(
     Ok(true)
 }
 
-fn split_one_edge_crossing_pass(
+fn split_edge_crossing_events(
     decisions: &DecisionContext,
     soup: &mut BooleanMesh,
 ) -> HypermeshResult<bool> {
+    let edge_capacity =
+        soup.triangles
+            .len()
+            .checked_mul(3)
+            .ok_or(HypermeshError::CapacityOverflow {
+                operation: "output edge crossing discovery",
+            })?;
     let mut edges = Vec::new();
+    edges
+        .try_reserve_exact(edge_capacity)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "output edge crossing discovery",
+        })?;
     for triangle in &soup.triangles {
         for edge in triangle_edges(*triangle) {
             edges.push(sorted_edge(edge));
@@ -2697,6 +2725,7 @@ fn split_one_edge_crossing_pass(
         }
     }
 
+    let mut events = Vec::new();
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
         for right in &bounded_edges[(left_index + 1)..] {
@@ -2728,14 +2757,23 @@ fn split_one_edge_crossing_pass(
             else {
                 continue;
             };
-
             let new_index = insert_or_find_vertex(decisions, soup, point)?;
-            split_edges_at_vertex(soup, &[left, right], new_index);
-            return Ok(true);
+            events
+                .try_reserve(1)
+                .map_err(|_| HypermeshError::CapacityOverflow {
+                    operation: "output edge crossing events",
+                })?;
+            events.push((left, right, new_index));
         }
     }
 
-    Ok(false)
+    if events.is_empty() {
+        return Ok(false);
+    }
+    for (left, right, new_index) in events {
+        split_edges_at_vertex(soup, &[left, right], new_index);
+    }
+    Ok(true)
 }
 
 struct ExactEdgeBounds {
@@ -2860,6 +2898,11 @@ fn insert_or_find_vertex(
         }
     }
     let index = soup.vertices.len();
+    soup.vertices
+        .try_reserve(1)
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "output intersection vertices",
+        })?;
     soup.vertices.push(vertex);
     Ok(index)
 }
@@ -3555,6 +3598,104 @@ mod tests {
             resolve_tjunctions(&crate::test_support::approximate_decisions(), &soup).unwrap();
 
         assert_eq!(resolved.triangles.len(), 2);
+    }
+
+    #[test]
+    fn crossing_discovery_batches_independent_events() {
+        let mut soup = BooleanMesh {
+            vertices: vec![
+                ov(-2, 0, 0),
+                ov(2, 0, 0),
+                ov(-2, -1, 0),
+                ov(0, -2, 0),
+                ov(0, 2, 0),
+                ov(1, -2, 0),
+                ov(8, 0, 0),
+                ov(12, 0, 0),
+                ov(8, -1, 0),
+                ov(10, -2, 0),
+                ov(10, 2, 0),
+                ov(11, -2, 0),
+            ],
+            triangles: vec![[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]],
+            sources: vec![TriangleSource::default(); 4],
+        };
+
+        assert!(
+            split_edge_crossing_events(&crate::test_support::approximate_decisions(), &mut soup)
+                .unwrap()
+        );
+        assert!(soup.vertices.contains(&ov(0, 0, 0)));
+        assert!(soup.vertices.contains(&ov(10, 0, 0)));
+    }
+
+    #[test]
+    fn crossing_discovery_batches_more_than_the_historical_pass_limit() {
+        let mut soup = BooleanMesh {
+            vertices: Vec::new(),
+            triangles: Vec::new(),
+            sources: Vec::new(),
+        };
+        for coordinate in 0..17_i32 {
+            let y = coordinate * 3;
+            let base = soup.vertices.len();
+            soup.vertices
+                .extend([ov(-1, y, 0), ov(49, y, 0), ov(-1, y - 1, 0)]);
+            soup.triangles.push([base, base + 1, base + 2]);
+            soup.sources.push(TriangleSource::default());
+
+            let x = coordinate * 3;
+            let base = soup.vertices.len();
+            soup.vertices
+                .extend([ov(x, -1, 0), ov(x, 49, 0), ov(x + 1, -1, 0)]);
+            soup.triangles.push([base, base + 1, base + 2]);
+            soup.sources.push(TriangleSource::default());
+        }
+
+        assert!(
+            split_edge_crossing_events(&crate::test_support::approximate_decisions(), &mut soup)
+                .unwrap()
+        );
+        for x in 0..17_i32 {
+            for y in 0..17_i32 {
+                assert!(soup.vertices.contains(&ov(x * 3, y * 3, 0)));
+            }
+        }
+    }
+
+    #[test]
+    fn internal_resolution_rejects_invalid_indices_and_provenance_lengths() {
+        let malformed_index = BooleanMesh {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
+            triangles: vec![[0, 1, 3]],
+            sources: vec![TriangleSource::default()],
+        };
+        assert_eq!(
+            resolve_tjunctions(
+                &crate::test_support::approximate_decisions(),
+                &malformed_index
+            ),
+            Err(HypermeshError::VertexIndexOutOfBounds {
+                index: 3,
+                vertex_count: 3,
+            })
+        );
+
+        let missing_source = BooleanMesh {
+            vertices: vec![ov(0, 0, 0), ov(1, 0, 0), ov(0, 1, 0)],
+            triangles: vec![[0, 1, 2]],
+            sources: Vec::new(),
+        };
+        assert_eq!(
+            resolve_tjunctions(
+                &crate::test_support::approximate_decisions(),
+                &missing_source
+            ),
+            Err(HypermeshError::TriangleSourceCountMismatch {
+                triangles: 1,
+                sources: 0,
+            })
+        );
     }
 
     #[test]
