@@ -25,11 +25,10 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use geo::{Area, Polygon};
 use hyperreal::Real;
 
 use crate::geometry::{
-    SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
+    Polygon, SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
     line_polygon, polygon_from_points, polygons_to_profile, rect_polygon, rounded_rect_polygon,
     trapezoid_polygon,
 };
@@ -165,7 +164,10 @@ fn parse_footprints(
             let pad_angle_absolute = footprint_angle + pad_angle;
             let polygons = pad_polygons(pad, shape, location, size, pad_angle_absolute)
                 .into_iter()
-                .filter(|polygon| polygon.unsigned_area() > 0.0)
+                .filter(|polygon| {
+                    crate::geometry::polygon_area_scalar(polygon)
+                        .is_some_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
+                })
                 .collect::<Vec<_>>();
 
             for layer in expand_copper_layers(&layers, declared_copper_layers) {
@@ -174,7 +176,7 @@ fn parse_footprints(
                         layer: layer.clone(),
                         net: net.clone(),
                         kind: CopperKind::Pad,
-                        sketch: polygons_to_profile(
+                        region: polygons_to_profile(
                             vec![polygon.clone()],
                             Some(LayerMetadata {
                                 name: "KiCad pad".to_string(),
@@ -382,7 +384,7 @@ fn parse_tracks_and_vias(
             layer,
             net: net_name(segment, nets),
             kind: CopperKind::Segment,
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![polygon],
                 Some(LayerMetadata {
                     name: "KiCad segment".to_string(),
@@ -420,7 +422,7 @@ fn parse_tracks_and_vias(
                 layer,
                 net: net.clone(),
                 kind: CopperKind::Via,
-                sketch: polygons_to_profile(
+                region: polygons_to_profile(
                     vec![circle_polygon(location, size / 2.0, 48)],
                     Some(LayerMetadata {
                         name: "KiCad via".to_string(),
@@ -466,7 +468,9 @@ fn drill_location_from_pad_scalar(
         .map(|point| point.exact)
         .unwrap_or_else(exact_origin);
     let location = rotate_translate_scalar(&offset, pad_location, pad_angle_degrees);
-    if offset != exact_origin() {
+    if crate::scalar::ne(&offset[0], &Scalar::zero())
+        || crate::scalar::ne(&offset[1], &Scalar::zero())
+    {
         log::trace!(
             "parsed KiCad pad drill offset: pad=({},{}) offset=({},{}) drill=({},{}) angle={}",
             pad_location[0],
@@ -501,7 +505,7 @@ fn parse_zones(root: &Sexp, nets: &HashMap<i32, String>, copper: &mut Vec<Copper
                     net: net.clone(),
                     kind: CopperKind::Zone,
                     location: location.clone(),
-                    sketch: polygons_to_profile(
+                    region: polygons_to_profile(
                         vec![polygon],
                         Some(LayerMetadata {
                             name: "KiCad zone".to_string(),
@@ -580,7 +584,7 @@ fn atom_values(list: Option<&Sexp>) -> Option<Vec<String>> {
 /// KiCad point parsed from decimal millimeter source tokens.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ParsedPoint2 {
-    /// Compatibility coordinates used by current `geo`/`csgrs` geometry.
+    /// Finite coordinates retained for parser diagnostics and reports.
     pub approximate: [f64; 2],
     /// Exact source-token coordinates.
     pub exact: [Real; 2],
@@ -691,9 +695,7 @@ fn midpoint_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> [Scalar; 2] {
 mod tests {
     use std::fs;
 
-    use geo::Area;
-
-    use crate::PcbSketchExt;
+    use crate::PcbRegionExt;
     use crate::Scalar;
     use crate::geometry::{SourceGridFacts, SourceUnit};
     use crate::sexp;
@@ -755,7 +757,7 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].location, [1.0, 2.0]);
-        assert!(!board.copper[0].sketch.to_multipolygon().0.is_empty());
+        assert!(!board.copper[0].region.to_multipolygon().0.is_empty());
         let _ = fs::remove_file(path);
     }
 
@@ -797,7 +799,7 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.sketch.to_multipolygon().unsigned_area())
+            .map(|feature| feature.region.to_multipolygon().unsigned_area())
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 55);
@@ -840,7 +842,7 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.sketch.to_multipolygon().unsigned_area())
+            .map(|feature| feature.region.to_multipolygon().unsigned_area())
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 16);
@@ -888,7 +890,7 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.sketch.to_multipolygon().unsigned_area())
+            .map(|feature| feature.region.to_multipolygon().unsigned_area())
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 17);
@@ -933,7 +935,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let pad_area = board.copper[0].sketch.to_multipolygon().unsigned_area();
+        let pad_area = board.copper[0].region.to_multipolygon().unsigned_area();
         let panel_area = board
             .panel_features
             .unwrap()
@@ -971,7 +973,7 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
 
         assert_eq!(board.copper.len(), 1);
-        let area = board.copper[0].sketch.to_multipolygon().unsigned_area();
+        let area = board.copper[0].region.to_multipolygon().unsigned_area();
         assert_eq!(board.copper[0].kind, CopperKind::Pad);
         assert_eq!(board.copper[0].net.as_deref(), Some("GND"));
         assert!(area > 1.94);
@@ -1000,7 +1002,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let multipolygon = board.copper[0].sketch.to_multipolygon();
+        let multipolygon = board.copper[0].region.to_multipolygon();
         let area = multipolygon.unsigned_area();
         let coords = &multipolygon.0[0].exterior().0;
 
@@ -1035,7 +1037,7 @@ mod tests {
         .unwrap();
 
         let board = load_kicad_pcb(&path).unwrap();
-        let multipolygon = board.copper[0].sketch.to_multipolygon();
+        let multipolygon = board.copper[0].region.to_multipolygon();
         let area = multipolygon.unsigned_area();
         let coords = &multipolygon.0[0].exterior().0;
 
@@ -1111,7 +1113,7 @@ mod tests {
                     && feature.location == [10.0, 22.0])
         );
         for feature in &board.copper {
-            assert!((feature.sketch.to_multipolygon().unsigned_area() - 8.0).abs() < 1.0e-9);
+            assert!((feature.region.to_multipolygon().unsigned_area() - 8.0).abs() < 1.0e-9);
         }
         let _ = fs::remove_file(path);
     }
@@ -1150,7 +1152,7 @@ mod tests {
             board
                 .copper
                 .iter()
-                .all(|feature| feature.sketch.to_multipolygon().unsigned_area() > 0.0)
+                .all(|feature| feature.region.to_multipolygon().unsigned_area() > 0.0)
         );
         let _ = fs::remove_file(path);
     }
@@ -1212,7 +1214,7 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.sketch.to_multipolygon().unsigned_area())
+            .map(|feature| feature.region.to_multipolygon().unsigned_area())
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 37);
@@ -1346,7 +1348,7 @@ mod tests {
             board
                 .copper
                 .iter()
-                .all(|feature| feature.sketch.to_multipolygon().unsigned_area() > 0.0)
+                .all(|feature| feature.region.to_multipolygon().unsigned_area() > 0.0)
         );
         let _ = fs::remove_file(path);
     }
@@ -1385,7 +1387,7 @@ mod tests {
         let total_area = board
             .copper
             .iter()
-            .map(|feature| feature.sketch.to_multipolygon().unsigned_area())
+            .map(|feature| feature.region.to_multipolygon().unsigned_area())
             .sum::<f64>();
 
         assert_eq!(board.copper.len(), 55);
@@ -1683,7 +1685,7 @@ mod tests {
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].kind, CopperKind::Zone);
         assert_eq!(board.copper[0].net.as_deref(), Some("PWR"));
-        assert!((board.copper[0].sketch.to_multipolygon().unsigned_area() - 2.0).abs() < 1.0e-9);
+        assert!((board.copper[0].region.to_multipolygon().unsigned_area() - 2.0).abs() < 1.0e-9);
         let _ = fs::remove_file(path);
     }
 

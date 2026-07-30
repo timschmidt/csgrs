@@ -8,13 +8,12 @@
 //! estimate conductor support from parsed 2D copper. They are release-readiness
 //! prompts, not ampacity, temperature-rise, or electromigration calculations.
 
-use geo::BoundingRect;
-
 use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::CopperSpatialIndex;
+use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbSketch, PcbSketchExt, Scalar};
+use crate::{PcbRegion, PcbRegionExt, Scalar};
 
 /// Warn when a likely high-current pad has weak local same-net copper support.
 ///
@@ -62,7 +61,7 @@ pub fn power_pad_entry_readiness(
         exact_supports += support_exact;
         if support.has_zone
             || support.via_count >= minimum_parallel_vias
-            || &support.maximum_segment_width >= minimum_entry_width
+            || crate::scalar::ge(&support.maximum_segment_width, minimum_entry_width)
         {
             continue;
         }
@@ -209,10 +208,10 @@ fn local_pad_support(
     broad_phase_distance: f64,
 ) -> (PadSupport, usize, usize) {
     let mut support = PadSupport::default();
-    let Some(pad_bounds) = pad.sketch.to_multipolygon().bounding_rect() else {
+    let Some(pad_bounds) = pad.region.to_multipolygon().bounding_rect() else {
         return (support, 0, 0);
     };
-    let pad_geometry = pad.sketch.to_multipolygon();
+    let pad_geometry = pad.region.to_multipolygon();
     let candidates = feature_index.same_layer_near_feature(pad, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -228,15 +227,15 @@ fn local_pad_support(
         {
             continue;
         }
-        let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
+        let Some(feature_bounds) = feature.region.to_multipolygon().bounding_rect() else {
             continue;
         };
         if !expanded_rects_overlap(&pad_bounds, &feature_bounds, broad_phase_distance) {
             continue;
         }
         exact_count += 1;
-        if polygon_boundary_distance_scalar(&pad_geometry, &feature.sketch.to_multipolygon())
-            .is_none_or(|distance| &distance > support_distance)
+        if polygon_boundary_distance_scalar(&pad_geometry, &feature.region.to_multipolygon())
+            .is_none_or(|distance| crate::scalar::gt(&distance, support_distance))
         {
             continue;
         }
@@ -245,8 +244,8 @@ fn local_pad_support(
             CopperKind::Zone => support.has_zone = true,
             CopperKind::Via => support.via_count += 1,
             CopperKind::Segment => {
-                let width = minimum_bounding_dimension_scalar(&feature.sketch);
-                if width > support.maximum_segment_width {
+                let width = minimum_bounding_dimension_scalar(&feature.region);
+                if crate::scalar::gt(&width, &support.maximum_segment_width) {
                     support.maximum_segment_width = width;
                 }
             }
@@ -264,10 +263,10 @@ fn has_nearby_return(
     return_distance: &Scalar,
     broad_phase_distance: f64,
 ) -> (bool, usize, usize) {
-    let Some(via_bounds) = via.sketch.to_multipolygon().bounding_rect() else {
+    let Some(via_bounds) = via.region.to_multipolygon().bounding_rect() else {
         return (false, 0, 0);
     };
-    let via_geometry = via.sketch.to_multipolygon();
+    let via_geometry = via.region.to_multipolygon();
     let candidates = return_index.same_layer_near_feature(via, broad_phase_distance);
     let candidate_count = candidates.len();
     let mut exact_count = 0usize;
@@ -275,7 +274,7 @@ fn has_nearby_return(
     let mut has_return = false;
     for feature_index in candidates {
         let feature = return_features[feature_index];
-        let Some(feature_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
+        let Some(feature_bounds) = feature.region.to_multipolygon().bounding_rect() else {
             continue;
         };
         if !expanded_rects_overlap(&via_bounds, &feature_bounds, broad_phase_distance) {
@@ -283,8 +282,8 @@ fn has_nearby_return(
         }
 
         exact_count += 1;
-        if polygon_boundary_distance_scalar(&via_geometry, &feature.sketch.to_multipolygon())
-            .is_some_and(|distance| &distance <= return_distance)
+        if polygon_boundary_distance_scalar(&via_geometry, &feature.region.to_multipolygon())
+            .is_some_and(|distance| crate::scalar::le(&distance, return_distance))
         {
             has_return = true;
             break;
@@ -305,23 +304,24 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn minimum_bounding_dimension_scalar(sketch: &PcbSketch) -> Scalar {
-    if let Some(bounds) = sketch.exact_bounds() {
+fn minimum_bounding_dimension_scalar(region: &PcbRegion) -> Scalar {
+    if let Some(bounds) = region.exact_bounds() {
         let width = &bounds[2] - &bounds[0];
         let height = &bounds[3] - &bounds[1];
-        return if width <= height { width } else { height };
+        return if crate::scalar::le(&width, &height) {
+            width
+        } else {
+            height
+        };
     }
-    sketch
-        .to_multipolygon()
-        .bounding_rect()
-        .and_then(|bounds| {
-            let width =
-                Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?;
-            let height =
-                Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?;
-            Some(if width <= height { width } else { height })
-        })
-        .unwrap_or_else(Scalar::zero)
+    let bounds = region.bounding_box();
+    let width = &bounds.maxs.x - &bounds.mins.x;
+    let height = &bounds.maxs.y - &bounds.mins.y;
+    if crate::scalar::le(&width, &height) {
+        width
+    } else {
+        height
+    }
 }
 
 fn looks_high_current_net(net: &str) -> bool {
@@ -343,7 +343,7 @@ fn looks_ground_net(net: &str) -> bool {
         || normalized.ends_with("-GND")
 }
 
-fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansion: f64) -> bool {
+fn expanded_rects_overlap(left: &Rect<f64>, right: &Rect<f64>, expansion: f64) -> bool {
     left.min().x - expansion <= right.max().x
         && left.max().x + expansion >= right.min().x
         && left.min().y - expansion <= right.max().y
@@ -386,7 +386,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test pad".to_string(),
@@ -404,7 +404,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: "test segment".to_string(),
@@ -422,7 +422,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test zone".to_string(),
@@ -440,7 +440,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, 0.10, 32)],
                 Some(LayerMetadata {
                     name: "test via".to_string(),

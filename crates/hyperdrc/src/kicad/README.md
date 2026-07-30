@@ -14,7 +14,7 @@ board outline geometry, and panel graphics.
 
 Important consequences:
 
-- Copper is stored as independent features with layer, net, kind, sketch, and
+- Copper is stored as independent features with layer, net, kind, region, and
   location so checks can filter and report without returning to raw
   S-expressions.
 - Wildcard copper layers are expanded from the board layer table when that
@@ -76,7 +76,7 @@ implemented checks:
   declarations where line or arc stroke width affects the simplified geometry.
 
 The model intentionally stores copper as independent features with layer, net,
-kind, sketch, and location. This keeps board-level checks simple: they can
+kind, region, and location. This keeps board-level checks simple: they can
 filter by layer, compare nets, aggregate copper by layer, and report point
 locations without returning to raw KiCad syntax.
 

@@ -9,17 +9,17 @@
 //! stackups, fixtures, plating notes, and chassis bonds. Treat suspect findings
 //! as prompts for mechanical drawing and fabrication-note verification.
 
-use csgrs::{csg::CSG, sketch::Profile};
-use geo::BoundingRect;
-
 use super::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use super::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect};
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex};
 use super::{difference_for_check, intersection_for_check};
-use crate::geometry::{multipolygon_to_shapes_scalar, polygon_bounds_scalar, polygons_to_profile};
+use crate::geometry::{
+    MultiPolygon, Polygon, Rect, multipolygon_to_shapes_scalar, polygon_bounds_scalar,
+    polygons_to_profile,
+};
 use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 /// Review likely mounting holes for nearby ground or chassis bonding copper.
 ///
@@ -58,9 +58,7 @@ pub fn mounting_hole_grounding_readiness(
     );
 
     for drill in likely_mounting_holes(board, grounding_distance) {
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let search_radius = drill_radius + grounding_distance;
         let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
         let has_grounding_intent = grounding_index
@@ -74,7 +72,7 @@ pub fn mounting_hole_grounding_readiness(
                 let feature = grounding_features[feature_index];
                 exact_distance_count += 1;
                 distance_scalar(&drill.location, &feature.location)
-                    .is_some_and(|distance| distance <= search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, &search_radius))
             });
         if has_grounding_intent {
             continue;
@@ -133,10 +131,8 @@ pub fn mounting_hole_copper_keepout_readiness(
     );
 
     for drill in likely_mounting_holes(board, keepout) {
-        let keepout_sketch = drill_keepout(drill, keepout);
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let keepout_region = drill_keepout(drill, keepout);
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
         let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
         for feature_index in copper_index.all_layers_near_circle(
@@ -160,8 +156,8 @@ pub fn mounting_hole_copper_keepout_readiness(
             // region as a circular keepout and report nearby non-ground copper
             // so the release package makes the grounding/isolation intent clear.
             let overlap = match intersection_for_check(
-                &keepout_sketch,
-                &feature.sketch,
+                &keepout_region,
+                &feature.region,
                 "mounting-hole-copper-keepout-readiness",
                 vec![feature.layer.clone()],
             ) {
@@ -171,8 +167,8 @@ pub fn mounting_hole_copper_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
-                    &keepout_sketch.to_multipolygon(),
-                    &feature.sketch.to_multipolygon(),
+                    &keepout_region.to_multipolygon(),
+                    &feature.region.to_multipolygon(),
                     keepout,
                 );
             if shapes.is_empty() && !fallback_hit {
@@ -244,10 +240,10 @@ pub fn mounting_hole_edge_clearance_readiness(
             continue;
         }
 
-        let keepout_sketch = drill_keepout(drill, edge_clearance);
+        let keepout_region = drill_keepout(drill, edge_clearance);
         exact_difference_count += 1;
         let outside_outline = match difference_for_check(
-            &keepout_sketch,
+            &keepout_region,
             outline,
             "mounting-hole-edge-clearance-readiness",
             vec![board.source.clone()],
@@ -320,9 +316,7 @@ pub fn mounting_hole_plating_intent_readiness(
             .net
             .as_deref()
             .is_some_and(looks_ground_or_chassis_net);
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let search_radius = drill_radius + grounding_distance;
         let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
         let has_grounding_copper = grounding_index
@@ -336,7 +330,7 @@ pub fn mounting_hole_plating_intent_readiness(
                 let feature = grounding_features[feature_index];
                 exact_distance_count += 1;
                 distance_scalar(&drill.location, &feature.location)
-                    .is_some_and(|distance| distance <= search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, &search_radius))
             });
         if drill_net_is_ground || has_grounding_copper {
             continue;
@@ -414,7 +408,7 @@ pub fn mounting_hole_distribution_readiness(
         holes.len()
     );
 
-    if &maximum_spacing >= minimum_spacing {
+    if crate::scalar::ge(&maximum_spacing, minimum_spacing) {
         return Vec::new();
     }
 
@@ -472,14 +466,10 @@ pub fn mounting_hole_spacing_readiness(
             let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
                 continue;
             };
-            let Ok(combined_radius) =
-                (&left.diameter + &right.diameter) / crate::scalar::scalar("2")
-            else {
-                continue;
-            };
+            let combined_radius = crate::scalar::half(&(&left.diameter + &right.diameter));
             let edge_spacing = center_spacing - combined_radius;
             exact_pair_count += 1;
-            if &edge_spacing >= minimum_edge_spacing {
+            if crate::scalar::ge(&edge_spacing, minimum_edge_spacing) {
                 continue;
             }
 
@@ -556,7 +546,7 @@ pub fn panel_feature_outline_readiness(
     for polygon in panel_features.to_multipolygon().0 {
         feature_count += 1;
         exact_boundary_count += 1;
-        let polygon_geometry = geo::MultiPolygon(vec![polygon.clone()]);
+        let polygon_geometry = MultiPolygon(vec![polygon.clone()]);
         let Some(boundary_distance) = outline_rect_bounds
             .as_ref()
             .and_then(|bounds| polygon_inside_rect_boundary_gap_scalar(&polygon, bounds))
@@ -564,7 +554,7 @@ pub fn panel_feature_outline_readiness(
         else {
             continue;
         };
-        if &boundary_distance <= edge_distance {
+        if crate::scalar::le(&boundary_distance, edge_distance) {
             continue;
         }
 
@@ -629,7 +619,7 @@ pub fn edge_plating_intent_readiness(
     let mut exact_boundary_count = 0_usize;
     let mut skipped_interior_count = 0_usize;
     for feature in selected_copper_features(board, selected_layers) {
-        let feature_geometry = feature.sketch.to_multipolygon();
+        let feature_geometry = feature.region.to_multipolygon();
         let boundary_candidate = if let Some(rect) = &outline_rect {
             feature_near_rect_outline(feature, rect, broad_phase_edge_distance)
         } else {
@@ -637,7 +627,7 @@ pub fn edge_plating_intent_readiness(
         };
         let reaches_outline = boundary_candidate
             && polygon_boundary_distance_scalar(&feature_geometry, &outline_geometry)
-                .is_some_and(|distance| &distance <= edge_distance);
+                .is_some_and(|distance| crate::scalar::le(&distance, edge_distance));
         exact_boundary_count += usize::from(boundary_candidate);
 
         if !reaches_outline
@@ -650,7 +640,7 @@ pub fn edge_plating_intent_readiness(
         }
 
         let outside_outline = match difference_for_check(
-            &feature.sketch,
+            &feature.region,
             outline,
             "edge-plating-intent-readiness",
             vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
@@ -740,14 +730,10 @@ pub fn castellation_pitch_readiness(
             let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
                 continue;
             };
-            let Ok(combined_radius) =
-                (&left.diameter + &right.diameter) / crate::scalar::scalar("2")
-            else {
-                continue;
-            };
+            let combined_radius = crate::scalar::half(&(&left.diameter + &right.diameter));
             let edge_spacing = center_spacing - combined_radius;
             exact_pair_count += 1;
-            if &edge_spacing >= minimum_edge_spacing {
+            if crate::scalar::ge(&edge_spacing, minimum_edge_spacing) {
                 continue;
             }
 
@@ -785,7 +771,7 @@ fn likely_mounting_holes<'a>(
     clearance_hint: &Scalar,
 ) -> Vec<&'a DrillFeature> {
     let one = crate::scalar::scalar("1");
-    let minimum_diameter = if clearance_hint >= &one {
+    let minimum_diameter = if crate::scalar::ge(clearance_hint, &one) {
         clearance_hint
     } else {
         &one
@@ -793,7 +779,7 @@ fn likely_mounting_holes<'a>(
     board
         .drills
         .iter()
-        .filter(|drill| !drill.plated && &drill.diameter >= minimum_diameter)
+        .filter(|drill| !drill.plated && crate::scalar::ge(&drill.diameter, minimum_diameter))
         .collect()
 }
 
@@ -802,7 +788,7 @@ fn likely_plated_mounting_holes<'a>(
     clearance_hint: &Scalar,
 ) -> Vec<&'a DrillFeature> {
     let one = crate::scalar::scalar("1");
-    let minimum_diameter = if clearance_hint >= &one {
+    let minimum_diameter = if crate::scalar::ge(clearance_hint, &one) {
         clearance_hint
     } else {
         &one
@@ -810,7 +796,7 @@ fn likely_plated_mounting_holes<'a>(
     board
         .drills
         .iter()
-        .filter(|drill| drill.plated && &drill.diameter >= minimum_diameter)
+        .filter(|drill| drill.plated && crate::scalar::ge(&drill.diameter, minimum_diameter))
         .collect()
 }
 
@@ -821,9 +807,9 @@ fn likely_hardware_holes<'a>(
     let quarter = spacing_hint * crate::scalar::scalar("0.25");
     let one = crate::scalar::scalar("1");
     let maximum = crate::scalar::scalar("3.2");
-    let minimum_diameter = if quarter < one {
+    let minimum_diameter = if crate::scalar::lt(&quarter, &one) {
         one
-    } else if quarter > maximum {
+    } else if crate::scalar::gt(&quarter, &maximum) {
         maximum
     } else {
         quarter
@@ -831,7 +817,7 @@ fn likely_hardware_holes<'a>(
     board
         .drills
         .iter()
-        .filter(|drill| drill.diameter >= minimum_diameter)
+        .filter(|drill| crate::scalar::ge(&drill.diameter, &minimum_diameter))
         .collect()
 }
 
@@ -867,7 +853,7 @@ fn plated_edge_holes<'a>(board: &'a BoardModel, edge_distance: &Scalar) -> Vec<&
                     &drill_keepout(drill, &Scalar::zero()).to_multipolygon(),
                     &outline_geometry,
                 )
-                .is_some_and(|distance| &distance <= edge_distance)
+                .is_some_and(|distance| crate::scalar::le(&distance, edge_distance))
         })
         .collect::<Vec<_>>();
     log::trace!(
@@ -881,33 +867,33 @@ fn plated_edge_holes<'a>(board: &'a BoardModel, edge_distance: &Scalar) -> Vec<&
 
 fn drill_near_rect_outline_scalar(
     drill: &DrillFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     edge_distance: &Scalar,
 ) -> bool {
-    let Ok(radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-        return true;
-    };
+    let radius = crate::scalar::half(&drill.diameter);
     let Some([min_x, min_y, max_x, max_y]) = rect_bounds_scalar(rect) else {
         return true;
     };
     let x = &drill.location[0];
     let y = &drill.location[1];
 
-    let outside_dx = if x < &min_x {
+    let outside_dx = if crate::scalar::lt(x, &min_x) {
         &min_x - x
-    } else if x > &max_x {
+    } else if crate::scalar::gt(x, &max_x) {
         x - &max_x
     } else {
         Scalar::zero()
     };
-    let outside_dy = if y < &min_y {
+    let outside_dy = if crate::scalar::lt(y, &min_y) {
         &min_y - y
-    } else if y > &max_y {
+    } else if crate::scalar::gt(y, &max_y) {
         y - &max_y
     } else {
         Scalar::zero()
     };
-    let boundary_gap = if outside_dx > Scalar::zero() || outside_dy > Scalar::zero() {
+    let boundary_gap = if crate::scalar::gt(&outside_dx, &Scalar::zero())
+        || crate::scalar::gt(&outside_dy, &Scalar::zero())
+    {
         let Some(outside_distance) = (&outside_dx * &outside_dx + &outside_dy * &outside_dy)
             .sqrt()
             .ok()
@@ -919,8 +905,14 @@ fn drill_near_rect_outline_scalar(
         let gaps = [x - &min_x, &max_x - x, y - &min_y, &max_y - y];
         let minimum_gap = gaps
             .into_iter()
-            .reduce(|left, right| if left <= right { left } else { right })
-            .unwrap_or_else(Scalar::zero);
+            .reduce(|left, right| {
+                if crate::scalar::le(&left, &right) {
+                    left
+                } else {
+                    right
+                }
+            })
+            .expect("the four exact rectangular edge gaps are nonempty");
         minimum_gap - radius
     };
 
@@ -928,15 +920,15 @@ fn drill_near_rect_outline_scalar(
     // outline. It avoids constructing drill CSG for every plated hole while
     // preserving the same circle-to-outline distance predicate used by the
     // general fallback.
-    &boundary_gap <= edge_distance
+    crate::scalar::le(&boundary_gap, edge_distance)
 }
 
 fn feature_near_rect_outline(
     feature: &CopperFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     edge_distance: f64,
 ) -> bool {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return true;
     };
     let min = rect.min();
@@ -980,15 +972,14 @@ fn feature_near_rect_outline(
     inside_gap <= edge_distance
 }
 
-fn drill_keepout(drill: &DrillFeature, keepout: &Scalar) -> PcbSketch {
-    let radius = (drill.diameter.clone() / crate::scalar::scalar("2"))
-        .map(|radius| radius + keepout)
-        .unwrap_or_else(|_| Scalar::zero());
-    PcbSketch::new(
-        Profile::circle(radius, 64).translate(
+fn drill_keepout(drill: &DrillFeature, keepout: &Scalar) -> PcbRegion {
+    let radius = crate::scalar::half(&drill.diameter) + keepout;
+    PcbRegion::new(
+        crate::translated_circle(
+            radius,
+            64,
             drill.location[0].clone(),
             drill.location[1].clone(),
-            Scalar::zero(),
         ),
         Some(LayerMetadata {
             name: "mounting-hole keepout".to_string(),
@@ -998,23 +989,21 @@ fn drill_keepout(drill: &DrillFeature, keepout: &Scalar) -> PcbSketch {
 
 fn drill_keepout_inside_rect_scalar(
     drill: &DrillFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     clearance: &Scalar,
 ) -> bool {
     let Some([min_x, min_y, max_x, max_y]) = rect_bounds_scalar(rect) else {
         return false;
     };
-    let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-        return false;
-    };
+    let drill_radius = crate::scalar::half(&drill.diameter);
     let radius = drill_radius + clearance;
-    &drill.location[0] - &radius >= min_x
-        && &drill.location[0] + &radius <= max_x
-        && &drill.location[1] - &radius >= min_y
-        && &drill.location[1] + &radius <= max_y
+    crate::scalar::ge(&(&drill.location[0] - &radius), &min_x)
+        && crate::scalar::le(&(&drill.location[0] + &radius), &max_x)
+        && crate::scalar::ge(&(&drill.location[1] - &radius), &min_y)
+        && crate::scalar::le(&(&drill.location[1] + &radius), &max_y)
 }
 
-fn rect_bounds_scalar(rect: &geo::Rect<f64>) -> Option<[Scalar; 4]> {
+fn rect_bounds_scalar(rect: &Rect<f64>) -> Option<[Scalar; 4]> {
     Some([
         Scalar::try_from(rect.min().x).ok()?,
         Scalar::try_from(rect.min().y).ok()?,
@@ -1024,11 +1013,15 @@ fn rect_bounds_scalar(rect: &geo::Rect<f64>) -> Option<[Scalar; 4]> {
 }
 
 fn polygon_inside_rect_boundary_gap_scalar(
-    polygon: &geo::Polygon<f64>,
+    polygon: &Polygon<f64>,
     rect: &[Scalar; 4],
 ) -> Option<Scalar> {
     let bounds = polygon_bounds_scalar(polygon)?;
-    if bounds[0] < rect[0] || bounds[1] < rect[1] || bounds[2] > rect[2] || bounds[3] > rect[3] {
+    if crate::scalar::lt(&bounds[0], &rect[0])
+        || crate::scalar::lt(&bounds[1], &rect[1])
+        || crate::scalar::gt(&bounds[2], &rect[2])
+        || crate::scalar::gt(&bounds[3], &rect[3])
+    {
         return None;
     }
     [
@@ -1038,7 +1031,13 @@ fn polygon_inside_rect_boundary_gap_scalar(
         &rect[3] - &bounds[3],
     ]
     .into_iter()
-    .reduce(|left, right| if left <= right { left } else { right })
+    .reduce(|left, right| {
+        if crate::scalar::le(&left, &right) {
+            left
+        } else {
+            right
+        }
+    })
 }
 
 fn mounting_hole_edge_violation(
@@ -1074,7 +1073,7 @@ fn maximum_exact_point_spread<'a>(
             let dx = &hull[right_index].location[0] - &hull[left_index].location[0];
             let dy = &hull[right_index].location[1] - &hull[left_index].location[1];
             let distance_squared = &dx * &dx + &dy * &dy;
-            if endpoints.is_none() || distance_squared > maximum_squared {
+            if endpoints.is_none() || crate::scalar::gt(&distance_squared, &maximum_squared) {
                 maximum_squared = distance_squared;
                 endpoints = Some([hull[left_index], hull[right_index]]);
             }
@@ -1086,16 +1085,17 @@ fn maximum_exact_point_spread<'a>(
 fn exact_point_hull<'a>(holes: &[&'a DrillFeature]) -> Vec<&'a DrillFeature> {
     let mut points = holes.to_vec();
     points.sort_by(|left, right| {
-        left.location[0]
-            .partial_cmp(&right.location[0])
-            .unwrap_or(std::cmp::Ordering::Equal)
+        crate::scalar::compare(&left.location[0], &right.location[0])
+            .expect("exact drill x coordinates must be comparable")
             .then_with(|| {
-                left.location[1]
-                    .partial_cmp(&right.location[1])
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.location[1], &right.location[1])
+                    .expect("exact drill y coordinates must be comparable")
             })
     });
-    points.dedup_by(|left, right| left.location == right.location);
+    points.dedup_by(|left, right| {
+        crate::scalar::eq(&left.location[0], &right.location[0])
+            && crate::scalar::eq(&left.location[1], &right.location[1])
+    });
     if points.len() <= 1 {
         return points;
     }
@@ -1103,7 +1103,10 @@ fn exact_point_hull<'a>(holes: &[&'a DrillFeature]) -> Vec<&'a DrillFeature> {
     let mut lower = Vec::new();
     for point in &points {
         while lower.len() >= 2
-            && exact_cross(lower[lower.len() - 2], lower[lower.len() - 1], point) <= Scalar::zero()
+            && crate::scalar::le(
+                &exact_cross(lower[lower.len() - 2], lower[lower.len() - 1], point),
+                &Scalar::zero(),
+            )
         {
             lower.pop();
         }
@@ -1113,7 +1116,10 @@ fn exact_point_hull<'a>(holes: &[&'a DrillFeature]) -> Vec<&'a DrillFeature> {
     let mut upper = Vec::new();
     for point in points.iter().rev() {
         while upper.len() >= 2
-            && exact_cross(upper[upper.len() - 2], upper[upper.len() - 1], point) <= Scalar::zero()
+            && crate::scalar::le(
+                &exact_cross(upper[upper.len() - 2], upper[upper.len() - 1], point),
+                &Scalar::zero(),
+            )
         {
             upper.pop();
         }
@@ -1280,7 +1286,7 @@ mod tests {
                 layer: "B.Cu".to_string(),
                 net: Some("SIG".to_string()),
                 kind: CopperKind::Pad,
-                sketch: polygons_to_profile(
+                region: polygons_to_profile(
                     vec![circle_polygon([10.8, 10.0], 0.4, 32)],
                     Some(LayerMetadata {
                         name: "B.Cu pad".to_string(),
@@ -1694,7 +1700,7 @@ mod tests {
                 layer: "B.Cu".to_string(),
                 net: Some("EDGE_PLATING".to_string()),
                 kind: CopperKind::Pad,
-                sketch: polygons_to_profile(
+                region: polygons_to_profile(
                     vec![circle_polygon([0.25, 5.0], 0.2, 32)],
                     Some(LayerMetadata {
                         name: "B.Cu copper".to_string(),
@@ -1842,7 +1848,7 @@ mod tests {
         }
     }
 
-    fn outline() -> crate::PcbSketch {
+    fn outline() -> crate::PcbRegion {
         polygons_to_profile(
             vec![crate::geometry::rect_polygon([5.0, 5.0], [10.0, 10.0], 0.0)],
             Some(LayerMetadata {
@@ -1856,7 +1862,7 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some(net.to_string()),
             kind,
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "F.Cu copper".to_string(),

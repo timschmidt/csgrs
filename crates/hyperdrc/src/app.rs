@@ -16,7 +16,7 @@ use crate::gerber_metadata::{
 use crate::io::{self, SourceRecord};
 use crate::readiness::{CheckCoverage, CheckRunDisposition, ReadinessRunner};
 use crate::report::{Diagnostic, Report, Severity, Violation, report_summary, report_to_geojson};
-use crate::{LayerMetadata, PcbSketch};
+use crate::{LayerMetadata, PcbRegion};
 use crate::{
     baseline, checks, conversion, excellon, github_annotations, html_report, ipc356, jsonl, junit,
     kicad, sarif, svg_overlay, waiver,
@@ -46,7 +46,7 @@ struct Layer {
     gerber_object_metadata: Vec<GerberObjectMetadata>,
     gerber_attribute_deletes: Vec<GerberAttributeDelete>,
     gerber_metadata_issues: Vec<GerberMetadataIssue>,
-    sketch: PcbSketch,
+    region: PcbRegion,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -705,7 +705,7 @@ fn run_checks(
     package_inputs: &PackageInputs,
 ) -> Result<(Vec<Violation>, CheckCoverage)> {
     let mut violations = Vec::new();
-    let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbSketch)>>>::new();
+    let board_copper_layers = std::cell::OnceCell::<Vec<Vec<(String, PcbRegion)>>>::new();
 
     let cached_board_copper_layers = || {
         board_copper_layers.get_or_init(|| {
@@ -730,7 +730,7 @@ fn run_checks(
                         let layer = &layers[layer_index];
                         violations.extend(checks::mask_island_keepout(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             &rules.keepout,
                             &rules.min_area,
                         ));
@@ -744,17 +744,17 @@ fn run_checks(
                         if ipc356_points.is_empty() {
                             violations.extend(checks::copper_overlap(
                                 &layer_name(left_layer),
-                                &left_layer.sketch,
+                                &left_layer.region,
                                 &layer_name(right_layer),
-                                &right_layer.sketch,
+                                &right_layer.region,
                                 &rules.min_area,
                             ));
                         } else {
                             violations.extend(checks::copper_overlap_with_ipc356(
                                 &layer_name(left_layer),
-                                &left_layer.sketch,
+                                &left_layer.region,
                                 &layer_name(right_layer),
-                                &right_layer.sketch,
+                                &right_layer.region,
                                 ipc356_points,
                                 &rules.min_area,
                             ));
@@ -782,7 +782,7 @@ fn run_checks(
                         let board = &layers[board_index];
                         violations.extend(checks::board_outline_sanity(
                             &layer_name(board),
-                            &board.sketch,
+                            &board.region,
                             &rules.min_area,
                         ));
                     }
@@ -810,7 +810,7 @@ fn run_checks(
                         let board = &layers[board_index];
                         violations.extend(checks::board_outline_fragments(
                             &layer_name(board),
-                            &board.sketch,
+                            &board.region,
                             &rules.min_area,
                         ));
                     }
@@ -830,7 +830,7 @@ fn run_checks(
                         violations.extend(
                             checks::board_outline_self_intersection_readiness_with_grid(
                                 &layer_name(board),
-                                &board.sketch,
+                                &board.region,
                                 board.gerber_coordinate_grid,
                             ),
                         );
@@ -854,7 +854,7 @@ fn run_checks(
                         let board = &layers[board_index];
                         violations.extend(checks::board_outline_notch_readiness_with_grid(
                             &layer_name(board),
-                            &board.sketch,
+                            &board.region,
                             board.gerber_coordinate_grid,
                         ));
                     }
@@ -873,7 +873,7 @@ fn run_checks(
                         let board = &layers[board_index];
                         violations.extend(checks::board_outline_duplicate_readiness_with_grid(
                             &layer_name(board),
-                            &board.sketch,
+                            &board.region,
                             board.gerber_coordinate_grid,
                         ));
                     }
@@ -892,7 +892,7 @@ fn run_checks(
                         let board = &layers[board_index];
                         violations.extend(checks::board_outline_nesting_readiness_with_grid(
                             &layer_name(board),
-                            &board.sketch,
+                            &board.region,
                             board.gerber_coordinate_grid,
                         ));
                     }
@@ -914,9 +914,9 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         violations.extend(checks::paste_overhang(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &rules.paste_tolerance,
                             &rules.min_area,
                         ));
@@ -930,9 +930,9 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         violations.extend(checks::paste_aperture_coverage(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &rules.min_area,
                         ));
                     }
@@ -945,9 +945,9 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         violations.extend(checks::paste_aperture_ratio(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &rules.min_paste_area_ratio,
                             &rules.max_paste_area_ratio,
                             &rules.min_area,
@@ -963,9 +963,9 @@ fn run_checks(
                         let min_copper_area = &rules.min_area * crate::scalar::scalar("50");
                         violations.extend(checks::thermal_pad_paste_windowpane_readiness(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &min_copper_area,
                             &rules.max_paste_area_ratio,
                             &rules.min_area,
@@ -981,7 +981,7 @@ fn run_checks(
                         let paste = &layers[paste_index];
                         violations.extend(checks::stencil_area_ratio_readiness(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &rules.stencil_thickness,
                             &rules.min_stencil_area_ratio,
                             &rules.min_area,
@@ -997,7 +997,7 @@ fn run_checks(
                         let paste = &layers[paste_index];
                         violations.extend(checks::paste_aperture_aspect_ratio_readiness(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &crate::scalar::scalar("4"),
                             &rules.min_area,
                         ));
@@ -1011,9 +1011,9 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         violations.extend(checks::tombstone_paste_imbalance_readiness(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &(&rules.min_width * crate::scalar::scalar("8")),
                             &crate::scalar::scalar("0.35"),
                             &rules.min_area,
@@ -1030,7 +1030,7 @@ fn run_checks(
                         for board in boards {
                             violations.extend(checks::paste_via_exposure_readiness(
                                 &layer_name(paste),
-                                &paste.sketch,
+                                &paste.region,
                                 board,
                                 kicad_copper_layers,
                                 &rules.min_area,
@@ -1047,7 +1047,7 @@ fn run_checks(
                         let paste = &layers[paste_index];
                         violations.extend(checks::minimum_paste_aperture(
                             &layer_name(paste),
-                            &paste.sketch,
+                            &paste.region,
                             &rules.min_width,
                             &rules.min_area,
                         ));
@@ -1071,7 +1071,7 @@ fn run_checks(
                         );
                         violations.extend(checks::paste_aperture_spacing(
                             &name,
-                            &paste.sketch,
+                            &paste.region,
                             &rules.min_width,
                             &rules.min_area,
                         ));
@@ -1089,9 +1089,9 @@ fn run_checks(
                             let mask = &layers[*mask_index];
                             violations.extend(checks::paste_mask_alignment(
                                 &layer_name(paste),
-                                &paste.sketch,
+                                &paste.region,
                                 &layer_name(mask),
-                                &mask.sketch,
+                                &mask.region,
                                 &rules.min_area,
                             ));
                         }
@@ -1105,9 +1105,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::exposed_copper(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_area,
                         ));
                     }
@@ -1120,9 +1120,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::solder_mask_opening_coverage(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_area,
                         ));
                     }
@@ -1135,9 +1135,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::solder_mask_opening_ratio_readiness(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_solder_mask_opening_area_ratio,
                             &rules.max_solder_mask_opening_area_ratio,
                             &rules.min_area,
@@ -1152,9 +1152,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::solder_mask_annular_ring_readiness(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_solder_mask_annular_ring,
                             &rules.min_area,
                         ));
@@ -1168,9 +1168,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::solder_mask_expansion(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.clearance,
                             &rules.min_area,
                         ));
@@ -1184,9 +1184,9 @@ fn run_checks(
                         let mask = &layers[mask_index];
                         violations.extend(checks::solder_mask_overlap_clearance(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.clearance,
                             &rules.min_area,
                         ));
@@ -1199,9 +1199,9 @@ fn run_checks(
                             let mask = &layers[*mask_index];
                             violations.extend(checks::solder_mask_board_edge_clearance(
                                 &layer_name(mask),
-                                &mask.sketch,
+                                &mask.region,
                                 &layer_name(board),
-                                &board.sketch,
+                                &board.region,
                                 &rules.clearance,
                                 &rules.min_area,
                             ));
@@ -1216,9 +1216,9 @@ fn run_checks(
                         let blocker = &layers[blocker_index];
                         violations.extend(checks::silkscreen_overlap(
                             &layer_name(silk),
-                            &silk.sketch,
+                            &silk.region,
                             &layer_name(blocker),
-                            &blocker.sketch,
+                            &blocker.region,
                             &rules.min_area,
                         ));
                     }
@@ -1231,9 +1231,9 @@ fn run_checks(
                         let blocker = &layers[blocker_index];
                         violations.extend(checks::silkscreen_clearance(
                             &layer_name(silk),
-                            &silk.sketch,
+                            &silk.region,
                             &layer_name(blocker),
-                            &blocker.sketch,
+                            &blocker.region,
                             &rules.clearance,
                             &rules.min_area,
                         ));
@@ -1246,9 +1246,9 @@ fn run_checks(
                             let silk = &layers[*silk_index];
                             violations.extend(checks::silkscreen_board_edge_clearance(
                                 &layer_name(silk),
-                                &silk.sketch,
+                                &silk.region,
                                 &layer_name(board),
-                                &board.sketch,
+                                &board.region,
                                 &rules.clearance,
                                 &rules.min_area,
                             ));
@@ -1270,7 +1270,7 @@ fn run_checks(
                         );
                         violations.extend(checks::silkscreen_min_width(
                             &name,
-                            &silk.sketch,
+                            &silk.region,
                             &rules.min_width,
                             &rules.min_area,
                         ));
@@ -1291,7 +1291,7 @@ fn run_checks(
                         );
                         violations.extend(checks::silkscreen_text_height_readiness(
                             &name,
-                            &silk.sketch,
+                            &silk.region,
                             &rules.min_silkscreen_text_height,
                             &rules.min_area,
                         ));
@@ -1315,7 +1315,7 @@ fn run_checks(
                         );
                         violations.extend(checks::min_copper_neck_width(
                             &name,
-                            &copper.sketch,
+                            &copper.region,
                             &rules.min_width,
                             &rules.min_area,
                         ));
@@ -1346,7 +1346,7 @@ fn run_checks(
                         let copper = &layers[copper_index];
                         violations.extend(checks::acid_trap_candidates(
                             &layer_name(copper),
-                            &copper.sketch,
+                            &copper.region,
                             &rules.acid_trap_angle,
                         ));
                     }
@@ -1374,29 +1374,29 @@ fn run_checks(
                     for layer in layers {
                         violations.extend(checks::layer_sanity(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             rules.max_layer_area.as_ref(),
                         ));
                         violations.extend(checks::tiny_layer_feature_readiness(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             &rules.min_area,
                         ));
                         violations.extend(checks::skinny_layer_feature_readiness(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             &rules.min_width,
                             &rules.min_area,
                         ));
                         violations.extend(checks::duplicate_layer_island_readiness(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             &rules.min_area,
                         ));
                     }
                     let explicit_layers = layers
                         .iter()
-                        .map(|layer| (layer_name(layer), &layer.sketch))
+                        .map(|layer| (layer_name(layer), &layer.region))
                         .collect::<Vec<_>>();
                     violations.extend(checks::duplicate_layer_geometry_readiness(
                         &explicit_layers,
@@ -1446,7 +1446,7 @@ fn run_checks(
                             .iter()
                             .map(|index| {
                                 let layer = &layers[*index];
-                                (layer_name(layer), layer.sketch.clone())
+                                (layer_name(layer), layer.region.clone())
                             })
                             .collect::<Vec<_>>();
                         violations.extend(checks::copper_balance(
@@ -1477,7 +1477,7 @@ fn run_checks(
                             .iter()
                             .map(|index| {
                                 let layer = &layers[*index];
-                                (layer_name(layer), layer.sketch.clone())
+                                (layer_name(layer), layer.region.clone())
                             })
                             .collect::<Vec<_>>();
                         violations.extend(checks::local_copper_density_readiness(
@@ -1507,7 +1507,7 @@ fn run_checks(
                     for layer in layers {
                         violations.extend(checks::mechanical_layer_geometry(
                             &layer_name(layer),
-                            &layer.sketch,
+                            &layer.region,
                             &rules.min_area,
                         ));
                     }
@@ -1527,7 +1527,7 @@ fn run_checks(
                         );
                         violations.extend(checks::solder_mask_sliver(
                             &name,
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_mask_width,
                             &rules.min_area,
                         ));
@@ -1538,7 +1538,7 @@ fn run_checks(
                         let mask = &layers[*mask_index];
                         violations.extend(checks::minimum_mask_opening(
                             &layer_name(mask),
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_mask_width,
                             &rules.min_area,
                         ));
@@ -1558,7 +1558,7 @@ fn run_checks(
                         );
                         violations.extend(checks::solder_mask_opening_spacing(
                             &name,
-                            &mask.sketch,
+                            &mask.region,
                             &rules.min_mask_width,
                             &rules.min_area,
                         ));
@@ -1663,7 +1663,7 @@ fn run_checks(
                             violations.extend(checks::board_outline_drill_clearance_with_grid(
                                 drill_source,
                                 &layer_name(outline),
-                                &outline.sketch,
+                                &outline.region,
                                 &board_drills,
                                 excellon_drills,
                                 &rules.drill_clearance,
@@ -2466,9 +2466,10 @@ fn run_checks(
                     }
                 }
                 Check::SelectiveWaveSolderKeepoutReadiness => {
-                    let keepout = if rules.assembly.selective_solder_keepout
-                        >= rules.assembly.wave_solder_keepout
-                    {
+                    let keepout = if crate::scalar::ge(
+                        &rules.assembly.selective_solder_keepout,
+                        &rules.assembly.wave_solder_keepout,
+                    ) {
                         &rules.assembly.selective_solder_keepout
                     } else {
                         &rules.assembly.wave_solder_keepout
@@ -3477,9 +3478,9 @@ fn run_board_edge_clearance(
             let copper = &layers[copper_index];
             violations.extend(checks::board_edge_clearance(
                 &layer_name(copper),
-                &copper.sketch,
+                &copper.region,
                 &layer_name(board),
-                &board.sketch,
+                &board.region,
                 &rules.clearance,
                 &rules.min_area,
             ));
@@ -3519,9 +3520,9 @@ fn run_board_outline_cutout_clearance(
             let subject = &layers[copper_index];
             violations.extend(checks::board_outline_cutout_clearance_with_grid(
                 &layer_name(subject),
-                &subject.sketch,
+                &subject.region,
                 &layer_name(outline),
-                &outline.sketch,
+                &outline.region,
                 &rules.clearance,
                 &rules.min_area,
                 subject
@@ -3883,7 +3884,7 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
                 .and_then(|name| name.to_str())
                 .unwrap_or("layer")
                 .to_string();
-            let sketch = PcbSketch::from_gerber(&bytes, Some(LayerMetadata { name }))
+            let region = PcbRegion::from_gerber(&bytes, Some(LayerMetadata { name }))
                 .with_context(|| format!("failed to parse Gerber {}", file.path.display()))?;
             let gerber_metadata_report = parse_gerber_metadata_report(&bytes);
             let gerber_coordinate_grid =
@@ -3914,7 +3915,7 @@ fn load_discovered_layers(files: &[io::DiscoveredFile]) -> Result<Vec<Layer>> {
                 gerber_object_metadata: gerber_metadata_report.object_attributes,
                 gerber_attribute_deletes: gerber_metadata_report.attribute_deletes,
                 gerber_metadata_issues: gerber_metadata_report.issues,
-                sketch,
+                region,
             })
         })
         .collect()
@@ -8267,7 +8268,7 @@ fn layer_pairs(layer_count: usize, raw_pairs: &[String]) -> Result<Vec<(usize, u
 }
 
 fn layer_name(layer: &Layer) -> String {
-    if let Some(metadata) = layer.sketch.metadata() {
+    if let Some(metadata) = layer.region.metadata() {
         return metadata.name.clone();
     }
 
@@ -8414,7 +8415,7 @@ pub(crate) mod tests {
             gerber_object_metadata: Vec::new(),
             gerber_attribute_deletes: Vec::new(),
             gerber_metadata_issues: Vec::new(),
-            sketch: empty_profile(None),
+            region: empty_profile(None),
         }
     }
 
@@ -8446,7 +8447,7 @@ pub(crate) mod tests {
                 layer: (*layer).to_string(),
                 net: None,
                 kind: kicad::CopperKind::Pad,
-                sketch: empty_profile(Some(crate::LayerMetadata {
+                region: empty_profile(Some(crate::LayerMetadata {
                     name: (*layer).to_string(),
                 })),
                 location: [crate::Scalar::zero(), crate::Scalar::zero()],

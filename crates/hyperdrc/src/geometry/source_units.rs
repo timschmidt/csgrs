@@ -165,10 +165,9 @@ impl SourceScalar {
         Some(Self { value, grid })
     }
 
-    /// Approximate this exact input for a finite legacy adapter.
+    /// Approximate this exact input for a finite parser/report adapter.
     ///
-    /// This method exists only while `geo`-based parser consumers are being
-    /// removed. New internal models must retain [`Self::value`] instead.
+    /// New internal decision models must retain [`Self::value`] instead.
     pub(crate) fn to_f64_compatibility(&self) -> Option<f64> {
         self.value.to_f64_lossy()
     }

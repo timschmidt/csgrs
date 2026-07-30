@@ -65,10 +65,35 @@ silently disappear because an adapter lacked data.
   selected check passed, failed, was inapplicable, uncertain, or skipped.
 - `RuleConfig`, `EffectiveRules`, `CapabilityProfile`, `Waiver`, and
   `BaselineFile` describe policy and review state.
-- `PcbSketch` is the current exact-aware profile compatibility carrier.
+- `PcbRegion` is the current exact-aware profile compatibility carrier.
   `PcbGeometryUncertainty` is returned when a geometry decision cannot be
   certified.
-- `Scalar` is `hyperreal::Real`, used for exact finite rule values.
+- `Scalar` is
+  [`hyperreal::Real`](https://github.com/timschmidt/hyperreal), used for exact
+  finite rule values.
+
+## Numerical and geometry crates
+
+HyperDRC uses repository-root links for related crates so readers land on each
+crate's own project rather than a source-file blob:
+
+- [CSGRS](https://github.com/timschmidt/csgrs) provides Gerber import and
+  curve-region adapters.
+- [Hyperreal](https://github.com/timschmidt/hyperreal) owns exact-aware scalar
+  arithmetic.
+- [Hyperlattice](https://github.com/timschmidt/hyperlattice) owns exact-aware
+  lattice and bounding-volume primitives.
+- [Hyperlimit](https://github.com/timschmidt/hyperlimit) owns certified
+  predicate policy.
+- [Hypercurve](https://github.com/timschmidt/hypercurve) owns exact curve and
+  filled-region topology.
+- [Hyperpath](https://github.com/timschmidt/hyperpath) owns exact PCB path
+  models.
+- [Hypermesh](https://github.com/timschmidt/hypermesh),
+  [Hypertri](https://github.com/timschmidt/hypertri),
+  [Hyperphysics](https://github.com/timschmidt/hyperphysics), and
+  [Hypersolve](https://github.com/timschmidt/hypersolve) support integration
+  and development checks.
 
 ## Installation
 
@@ -256,9 +281,9 @@ evidence can name the exact policy it used.
 
 ### Geometry and exact path handoffs
 
-- `PcbSketch::new`, `from_gerber`, `offset`, `try_union`,
+- `PcbRegion::new`, `from_gerber`, `offset`, `try_union`,
   `try_difference`, `try_intersection`, `try_xor`, `metadata`;
-- `PcbSketchExt` supplies conversions used by geometry checks;
+- `PcbRegionExt` supplies conversions used by geometry checks;
 - `exact_path_rules::certify_annular_ring` and
   `classify_via_drill_policy` delegate via geometry to Hyperpath while keeping
   DRC policy labels in HyperDRC;
@@ -293,9 +318,9 @@ remain the authoritative enumerations.
 - Exact decimal rule values are promoted to `Scalar`; source units, grids,
   hashes, transformations, parser diagnostics, waivers, and conversion
   provenance remain attached to evidence.
-- Geometry adapters are mixed-mode today. Hyperreal, Hyperlimit, Hypercurve,
-  and Hyperpath provide exact-aware decisions where wired; finite `geo` and
-  CSGRS CAM projections remain named adapter boundaries.
+- Geometry decisions use Hyperreal, Hyperlimit, Hypercurve, and Hyperpath.
+  Finite coordinate rings and CSGRS CAM projections remain named report and
+  interchange boundaries; they do not own filled-region topology.
 - Findings are conservative release-review evidence, not a substitute for a
   board fabricator's DFM/DRC pass or process warranty.
 - Full ODB++ and IPC-2581 import, glyph-accurate text, general custom-pad

@@ -8,14 +8,13 @@
 //! heuristics, not loop-area extraction or EMI simulation. Suspect findings need
 //! review against the schematic, regulator layout guide, and measured layout.
 
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
-use csgrs::csg::CSG;
 
 /// Review likely switching nodes for nearby non-ground copper.
 ///
@@ -62,13 +61,13 @@ pub fn switch_node_keepout_readiness(
             if neighbor.net.as_deref().is_some_and(looks_ground_net) {
                 continue;
             }
-            if !sketches_within_clearance(&switch_feature.sketch, &neighbor.sketch, &keepout) {
+            if !regiones_within_clearance(&switch_feature.region, &neighbor.region, &keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &switch_feature.sketch,
+                &switch_feature.region,
                 keepout.clone(),
                 "switch-node-keepout-readiness",
                 vec![switch_feature.layer.clone()],
@@ -78,7 +77,7 @@ pub fn switch_node_keepout_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "switch-node-keepout-readiness",
                 vec![switch_feature.layer.clone()],
             ) {
@@ -88,10 +87,10 @@ pub fn switch_node_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &switch_feature.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &switch_feature.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| distance <= keepout);
+                .is_some_and(|distance| crate::scalar::le(&distance, &keepout));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -139,7 +138,7 @@ pub fn inductor_copper_keepout_readiness(
     keepout: Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if keepout <= Scalar::zero() {
+    if crate::scalar::le(&keepout, &Scalar::zero()) {
         return Vec::new();
     }
 
@@ -177,13 +176,13 @@ pub fn inductor_copper_keepout_readiness(
             if inductor.net == neighbor.net {
                 continue;
             }
-            if !sketches_within_clearance(&inductor.sketch, &neighbor.sketch, &keepout) {
+            if !regiones_within_clearance(&inductor.region, &neighbor.region, &keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &inductor.sketch,
+                &inductor.region,
                 keepout.clone(),
                 "inductor-copper-keepout-readiness",
                 vec![inductor.layer.clone()],
@@ -193,7 +192,7 @@ pub fn inductor_copper_keepout_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "inductor-copper-keepout-readiness",
                 vec![inductor.layer.clone()],
             ) {
@@ -203,10 +202,10 @@ pub fn inductor_copper_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &inductor.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &inductor.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| distance <= keepout);
+                .is_some_and(|distance| crate::scalar::le(&distance, &keepout));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -252,9 +251,9 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn sketches_within_clearance(
-    left: &crate::PcbSketch,
-    right: &crate::PcbSketch,
+fn regiones_within_clearance(
+    left: &crate::PcbRegion,
+    right: &crate::PcbRegion,
     clearance: &Scalar,
 ) -> bool {
     if left.is_empty() || right.is_empty() {
@@ -264,10 +263,10 @@ fn sketches_within_clearance(
     let right_bounds = right.bounding_box();
 
     // Broad-phase culling before exact offset/intersection.
-    &left_bounds.mins.x - clearance <= right_bounds.maxs.x
-        && &left_bounds.maxs.x + clearance >= right_bounds.mins.x
-        && &left_bounds.mins.y - clearance <= right_bounds.maxs.y
-        && &left_bounds.maxs.y + clearance >= right_bounds.mins.y
+    crate::scalar::le(&(&left_bounds.mins.x - clearance), &right_bounds.maxs.x)
+        && crate::scalar::ge(&(&left_bounds.maxs.x + clearance), &right_bounds.mins.x)
+        && crate::scalar::le(&(&left_bounds.mins.y - clearance), &right_bounds.maxs.y)
+        && crate::scalar::ge(&(&left_bounds.maxs.y + clearance), &right_bounds.mins.y)
 }
 
 fn looks_switching_net(net: &str) -> bool {
@@ -507,7 +506,7 @@ mod tests {
                 crate::geometry::exact_real((min_x + max_x) / 2.0),
                 crate::geometry::exact_real((min_y + max_y) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
                     [max_x - min_x, max_y - min_y],

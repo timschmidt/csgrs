@@ -20,7 +20,7 @@ use super::impedance::{
 };
 use super::net_class::resolve_net_classes;
 use super::net_scope::{matching_class_indexes_for_feature, net_class_region_diagnostics};
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::constraint_policy::{
     DifferentialRole, FabricationCapabilityConfig, NetClassConfig, StackupConfig, StackupLayerKind,
@@ -29,7 +29,6 @@ use crate::constraint_policy::{
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 use crate::scalar::scalar;
-use csgrs::csg::CSG;
 
 /// Run the `stackup_readiness` design-readiness check or report helper.
 pub fn stackup_readiness(stackup: Option<&StackupConfig>, boards: &[BoardModel]) -> Vec<Violation> {
@@ -267,7 +266,7 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(finished_thickness), Some(minimum)) = (
         stackup.finished_thickness.as_ref(),
         capability.min_finished_thickness.as_ref(),
-    ) && finished_thickness < minimum
+    ) && crate::scalar::lt(finished_thickness, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
@@ -277,7 +276,7 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(finished_thickness), Some(maximum)) = (
         stackup.finished_thickness.as_ref(),
         capability.max_finished_thickness.as_ref(),
-    ) && finished_thickness > maximum
+    ) && crate::scalar::gt(finished_thickness, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
@@ -287,11 +286,11 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(finished_thickness), Some(preferred_minimum)) = (
         stackup.finished_thickness.as_ref(),
         capability.preferred_min_finished_thickness.as_ref(),
-    ) && finished_thickness < preferred_minimum
+    ) && crate::scalar::lt(finished_thickness, preferred_minimum)
         && capability
             .min_finished_thickness
             .as_ref()
-            .is_none_or(|minimum| finished_thickness >= minimum)
+            .is_none_or(|minimum| crate::scalar::ge(finished_thickness, minimum))
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
@@ -301,11 +300,11 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(finished_thickness), Some(preferred_maximum)) = (
         stackup.finished_thickness.as_ref(),
         capability.preferred_max_finished_thickness.as_ref(),
-    ) && finished_thickness > preferred_maximum
+    ) && crate::scalar::gt(finished_thickness, preferred_maximum)
         && capability
             .max_finished_thickness
             .as_ref()
-            .is_none_or(|maximum| finished_thickness <= maximum)
+            .is_none_or(|maximum| crate::scalar::le(finished_thickness, maximum))
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
@@ -349,7 +348,7 @@ fn stackup_fabrication_capability_readiness(
         if let (Some(weight), Some(minimum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.min_copper_weight_oz.as_ref(),
-        ) && weight < minimum
+        ) && crate::scalar::lt(weight, minimum)
         {
             violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
@@ -359,7 +358,7 @@ fn stackup_fabrication_capability_readiness(
         if let (Some(weight), Some(maximum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.max_copper_weight_oz.as_ref(),
-        ) && weight > maximum
+        ) && crate::scalar::gt(weight, maximum)
         {
             violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
@@ -369,11 +368,11 @@ fn stackup_fabrication_capability_readiness(
         if let (Some(weight), Some(preferred_minimum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.preferred_min_copper_weight_oz.as_ref(),
-        ) && weight < preferred_minimum
+        ) && crate::scalar::lt(weight, preferred_minimum)
             && capability
                 .min_copper_weight_oz
                 .as_ref()
-                .is_none_or(|minimum| weight >= minimum)
+                .is_none_or(|minimum| crate::scalar::ge(weight, minimum))
         {
             violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
@@ -383,11 +382,11 @@ fn stackup_fabrication_capability_readiness(
         if let (Some(weight), Some(preferred_maximum)) = (
             layer.copper_weight_oz.as_ref(),
             capability.preferred_max_copper_weight_oz.as_ref(),
-        ) && weight > preferred_maximum
+        ) && crate::scalar::gt(weight, preferred_maximum)
             && capability
                 .max_copper_weight_oz
                 .as_ref()
-                .is_none_or(|maximum| weight <= maximum)
+                .is_none_or(|maximum| crate::scalar::le(weight, maximum))
         {
             violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
@@ -397,11 +396,11 @@ fn stackup_fabrication_capability_readiness(
         if let (Some(weight), Some(cost_threshold)) = (
             layer.copper_weight_oz.as_ref(),
             capability.cost_escalation_copper_weight_oz.as_ref(),
-        ) && weight > cost_threshold
+        ) && crate::scalar::gt(weight, cost_threshold)
             && capability
                 .max_copper_weight_oz
                 .as_ref()
-                .is_none_or(|maximum| weight <= maximum)
+                .is_none_or(|maximum| crate::scalar::le(weight, maximum))
         {
             violations.push(stackup_metadata_violation(&format!(
                     "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
@@ -418,7 +417,7 @@ fn stackup_fabrication_capability_readiness(
             )
         }) {
             if let Some(thickness) = layer.dielectric_thickness.as_ref()
-                && thickness < minimum
+                && crate::scalar::lt(thickness, minimum)
             {
                 violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
@@ -435,11 +434,11 @@ fn stackup_fabrication_capability_readiness(
             )
         }) {
             if let Some(thickness) = layer.dielectric_thickness.as_ref()
-                && thickness < preferred_minimum
+                && crate::scalar::lt(thickness, preferred_minimum)
                 && capability
                     .min_dielectric_thickness
                     .as_ref()
-                    .is_none_or(|minimum| thickness >= minimum)
+                    .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
             {
                 violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
@@ -456,11 +455,11 @@ fn stackup_fabrication_capability_readiness(
             )
         }) {
             if let Some(thickness) = layer.dielectric_thickness.as_ref()
-                && thickness < cost_threshold
+                && crate::scalar::lt(thickness, cost_threshold)
                 && capability
                     .min_dielectric_thickness
                     .as_ref()
-                    .is_none_or(|minimum| thickness >= minimum)
+                    .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
             {
                 violations.push(stackup_metadata_violation(&format!(
                         "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
@@ -476,7 +475,7 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(value), Some(minimum)) = (
         stackup.material_dielectric_constant.as_ref(),
         capability.min_dielectric_constant.as_ref(),
-    ) && value < minimum
+    ) && crate::scalar::lt(value, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
@@ -486,7 +485,7 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(value), Some(maximum)) = (
         stackup.material_dielectric_constant.as_ref(),
         capability.max_dielectric_constant.as_ref(),
-    ) && value > maximum
+    ) && crate::scalar::gt(value, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
@@ -496,7 +495,7 @@ fn stackup_fabrication_capability_readiness(
     if let (Some(value), Some(maximum)) = (
         stackup.material_loss_tangent.as_ref(),
         capability.max_loss_tangent.as_ref(),
-    ) && value > maximum
+    ) && crate::scalar::gt(value, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
@@ -505,7 +504,7 @@ fn stackup_fabrication_capability_readiness(
     }
     if let (Some(value), Some(minimum)) =
         (stackup.material_tg_c.as_ref(), capability.min_tg_c.as_ref())
-        && value < minimum
+        && crate::scalar::lt(value, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
                 "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
@@ -775,11 +774,12 @@ fn net_via_geometry_constraints(
         let Some(via) = features.iter().copied().find(|feature| {
             feature.kind == CopperKind::Via
                 && feature.net.as_deref() == Some(net)
-                && feature.location == drill.location
+                && crate::scalar::eq(&feature.location[0], &drill.location[0])
+                && crate::scalar::eq(&feature.location[1], &drill.location[1])
         }) else {
             continue;
         };
-        let land_diameter = minimum_bounding_dimension(&via.sketch);
+        let land_diameter = minimum_bounding_dimension(&via.region);
         for class_index in matching_class_indexes_for_feature(net_classes, via) {
             let class = &net_classes[class_index];
             let style = class
@@ -788,7 +788,7 @@ fn net_via_geometry_constraints(
                 .map(|style| format!(" via style {style}"))
                 .unwrap_or_default();
             if let Some(preferred) = class.preferred_via_land_diameter.as_ref()
-                && &land_diameter != preferred
+                && crate::scalar::ne(&land_diameter, preferred)
             {
                 violations.push(Violation::new(
                     "net-via-policy-readiness",
@@ -804,7 +804,7 @@ fn net_via_geometry_constraints(
                 ));
             }
             if let Some(preferred) = class.preferred_via_drill_diameter.as_ref()
-                && &drill.diameter != preferred
+                && crate::scalar::ne(&drill.diameter, preferred)
             {
                 violations.push(Violation::new(
                     "net-via-policy-readiness",
@@ -838,8 +838,10 @@ fn net_width_constraints(
             let class = &net_classes[class_index];
             let Some(min_width) = class.min_width.as_ref() else {
                 if let Some(min_current_width) = class.min_current_width.as_ref() {
-                    let width = minimum_bounding_dimension(&feature.sketch);
-                    if width > Scalar::zero() && &width < min_current_width {
+                    let width = minimum_bounding_dimension(&feature.region);
+                    if crate::scalar::gt(&width, &Scalar::zero())
+                        && crate::scalar::lt(&width, min_current_width)
+                    {
                         violations.push(Violation::new(
                             "net-constraint-readiness",
                             Severity::Warning,
@@ -857,8 +859,8 @@ fn net_width_constraints(
                 }
                 continue;
             };
-            let width = minimum_bounding_dimension(&feature.sketch);
-            if width > Scalar::zero() && &width < min_width {
+            let width = minimum_bounding_dimension(&feature.region);
+            if crate::scalar::gt(&width, &Scalar::zero()) && crate::scalar::lt(&width, min_width) {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
                     Severity::Error,
@@ -874,8 +876,8 @@ fn net_width_constraints(
                 ));
             }
             if let Some(min_current_width) = class.min_current_width.as_ref()
-                && width > Scalar::zero()
-                && &width < min_current_width
+                && crate::scalar::gt(&width, &Scalar::zero())
+                && crate::scalar::lt(&width, min_current_width)
             {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
@@ -991,7 +993,7 @@ fn net_clearance_constraints(
         .iter()
         .copied()
         .filter_map(|feature| {
-            native_sketch_bounds_scalar(&feature.sketch).map(|bounds| {
+            native_region_bounds_scalar(&feature.region).map(|bounds| {
                 (
                     feature,
                     bounds,
@@ -1004,7 +1006,7 @@ fn net_clearance_constraints(
         |(left_feature, left_bounds, _), (right_feature, right_bounds, _)| {
             left_feature.layer.cmp(&right_feature.layer).then_with(|| {
                 scalar_cmp(&left_bounds.min_x, &right_bounds.min_x)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                    .expect("exact feature bounds must be comparable")
             })
         },
     );
@@ -1038,19 +1040,19 @@ fn net_clearance_constraints(
             };
             exact_pair_count += 1;
             let Some(left_geometry) = left_geometry
-                .get_or_init(|| PreparedBoundaryDistance::new(&left.sketch.to_multipolygon()))
+                .get_or_init(|| PreparedBoundaryDistance::new(&left.region.to_multipolygon()))
             else {
                 continue;
             };
             let Some(right_geometry) = right_geometry
-                .get_or_init(|| PreparedBoundaryDistance::new(&right.sketch.to_multipolygon()))
+                .get_or_init(|| PreparedBoundaryDistance::new(&right.region.to_multipolygon()))
             else {
                 continue;
             };
             let Some(gap) = left_geometry.distance_to(right_geometry) else {
                 continue;
             };
-            if gap < min_clearance {
+            if crate::scalar::lt(&gap, &min_clearance) {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
                     Severity::Error,
@@ -1303,7 +1305,7 @@ fn net_impedance_target_constraints(
         }
 
         let target_impedance_ohms = match class.target_impedance_ohms.as_ref() {
-            Some(target) if target > &Scalar::zero() => Some(target.clone()),
+            Some(target) if crate::scalar::gt(target, &Scalar::zero()) => Some(target.clone()),
             Some(target) => {
                 violations.push(Violation::new(
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
@@ -1337,7 +1339,9 @@ fn net_impedance_target_constraints(
         };
 
         let impedance_tolerance_ohms = match class.impedance_tolerance_ohms.as_ref() {
-            Some(tolerance) if tolerance > &Scalar::zero() => Some(tolerance.clone()),
+            Some(tolerance) if crate::scalar::gt(tolerance, &Scalar::zero()) => {
+                Some(tolerance.clone())
+            }
             Some(tolerance) => {
                 violations.push(Violation::new(
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
@@ -1393,7 +1397,7 @@ fn net_impedance_target_constraints(
                 continue;
             }
             single_ended_candidates += 1;
-            let trace_width = minimum_bounding_dimension(&feature.sketch);
+            let trace_width = minimum_bounding_dimension(&feature.region);
             let Some(estimate) =
                 estimate_single_ended_impedance(stackup, &feature.layer, trace_width.clone())
             else {
@@ -1414,7 +1418,7 @@ fn net_impedance_target_constraints(
             };
             estimated_segments += 1;
             let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
-            if delta > impedance_tolerance_ohms {
+            if crate::scalar::gt(&delta, &impedance_tolerance_ohms) {
                 violations.push(Violation::new(
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
@@ -1585,7 +1589,7 @@ fn differential_impedance_target_violations(
         };
 
         for positive in &pair_use.positive.features {
-            let positive_width = minimum_bounding_dimension(&positive.sketch);
+            let positive_width = minimum_bounding_dimension(&positive.region);
             let closest = pair_use
                 .negative
                 .features
@@ -1594,13 +1598,13 @@ fn differential_impedance_target_violations(
                 .filter(|negative| negative.layer == positive.layer)
                 .filter_map(|negative| {
                     polygon_boundary_distance_scalar(
-                        &positive.sketch.to_multipolygon(),
-                        &negative.sketch.to_multipolygon(),
+                        &positive.region.to_multipolygon(),
+                        &negative.region.to_multipolygon(),
                     )
                     .map(|gap| (negative, gap))
                 })
                 .min_by(|(_, left), (_, right)| {
-                    left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal)
+                    crate::scalar::compare(left, right).expect("exact pair gaps must be comparable")
                 });
             let Some((negative, gap)) = closest else {
                 report.unsupported_segments += 1;
@@ -1618,15 +1622,15 @@ fn differential_impedance_target_violations(
                 ));
                 continue;
             };
-            let negative_width = minimum_bounding_dimension(&negative.sketch);
+            let negative_width = minimum_bounding_dimension(&negative.region);
             let width_delta = (&positive_width - &negative_width).abs();
-            let maximum_width = if positive_width >= negative_width {
+            let maximum_width = if crate::scalar::ge(&positive_width, &negative_width) {
                 positive_width.clone()
             } else {
                 negative_width.clone()
             };
             let parsed_width_tolerance = maximum_width * scalar("0.000001") + scalar("0.000000001");
-            if width_delta > parsed_width_tolerance {
+            if crate::scalar::gt(&width_delta, &parsed_width_tolerance) {
                 report.unsupported_segments += 1;
                 report.violations.push(Violation::new(
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
@@ -1644,8 +1648,7 @@ fn differential_impedance_target_violations(
                 ));
                 continue;
             }
-            let trace_width = ((&positive_width + &negative_width) / scalar("2"))
-                .expect("two is a nonzero exact denominator");
+            let trace_width = crate::scalar::half(&(&positive_width + &negative_width));
             let Some(estimate) = estimate_equal_width_differential_impedance(
                 stackup,
                 &positive.layer,
@@ -1671,7 +1674,7 @@ fn differential_impedance_target_violations(
             };
             report.estimated_segments += 1;
             let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
-            if delta > impedance_tolerance_ohms {
+            if crate::scalar::gt(&delta, &impedance_tolerance_ohms) {
                 report.violations.push(Violation::new(
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
                     Severity::Warning,
@@ -1718,11 +1721,12 @@ fn consistent_differential_impedance_spec(
     let (Some(target), Some(tolerance)) = specifications.next()? else {
         return None;
     };
-    if target <= &Scalar::zero() || tolerance <= &Scalar::zero() {
+    if crate::scalar::le(target, &Scalar::zero()) || crate::scalar::le(tolerance, &Scalar::zero()) {
         return None;
     }
     if specifications.any(|(candidate_target, candidate_tolerance)| {
-        candidate_target != Some(target) || candidate_tolerance != Some(tolerance)
+        !optional_scalar_eq(candidate_target, Some(target))
+            || !optional_scalar_eq(candidate_tolerance, Some(tolerance))
     }) {
         return None;
     }
@@ -1845,8 +1849,11 @@ fn differential_pair_spacing_violations(
     let query_spacing = [min_spacing.as_ref(), max_spacing.as_ref()]
         .into_iter()
         .flatten()
-        .filter(|spacing| *spacing >= &Scalar::zero())
-        .max_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
+        .filter(|spacing| crate::scalar::ge(spacing, &Scalar::zero()))
+        .max_by(|left, right| {
+            crate::scalar::compare(left, right)
+                .expect("exact configured spacings must be comparable")
+        })
         .cloned()
         .unwrap_or_else(Scalar::zero);
     let negative_features = pair_use
@@ -1869,7 +1876,7 @@ fn differential_pair_spacing_violations(
 
     let mut negative_by_layer = BTreeMap::<&str, Vec<(&CopperFeature, ScalarBounds2)>>::new();
     for feature in &negative_features {
-        if let Some(bounds) = native_sketch_bounds_scalar(&feature.sketch) {
+        if let Some(bounds) = native_region_bounds_scalar(&feature.region) {
             negative_by_layer
                 .entry(feature.layer.as_str())
                 .or_default()
@@ -1878,7 +1885,7 @@ fn differential_pair_spacing_violations(
     }
     for features in negative_by_layer.values_mut() {
         features.sort_by(|(_, left), (_, right)| {
-            scalar_cmp(&left.min_x, &right.min_x).unwrap_or(std::cmp::Ordering::Equal)
+            scalar_cmp(&left.min_x, &right.min_x).expect("exact feature bounds must be comparable")
         });
     }
     let maximum_negative_width = negative_by_layer
@@ -1902,7 +1909,7 @@ fn differential_pair_spacing_violations(
         let Some(negative_candidates) = negative_by_layer.get(positive.layer.as_str()) else {
             continue;
         };
-        let Some(positive_bounds) = native_sketch_bounds_scalar(&positive.sketch) else {
+        let Some(positive_bounds) = native_region_bounds_scalar(&positive.region) else {
             continue;
         };
         let lower_x = &positive_bounds.min_x - &query_spacing - &maximum_negative_width;
@@ -1916,8 +1923,8 @@ fn differential_pair_spacing_violations(
                 continue;
             }
             let Some(gap) = polygon_boundary_distance_scalar(
-                &positive.sketch.to_multipolygon(),
-                &negative.sketch.to_multipolygon(),
+                &positive.region.to_multipolygon(),
+                &negative.region.to_multipolygon(),
             ) else {
                 continue;
             };
@@ -1929,13 +1936,13 @@ fn differential_pair_spacing_violations(
             };
             if closest_pair
                 .as_ref()
-                .is_none_or(|closest| gap < closest.gap)
+                .is_none_or(|closest| crate::scalar::lt(&gap, &closest.gap))
             {
                 closest_pair = Some(observed.clone());
             }
 
             if let Some(min_spacing) = min_spacing.as_ref()
-                && &gap < min_spacing
+                && crate::scalar::lt(&gap, min_spacing)
             {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
@@ -1953,7 +1960,7 @@ fn differential_pair_spacing_violations(
                 ));
             }
             if let Some(max_spacing) = max_spacing.as_ref()
-                && &gap <= max_spacing
+                && crate::scalar::le(&gap, max_spacing)
             {
                 has_pair_within_max = true;
             }
@@ -1965,7 +1972,7 @@ fn differential_pair_spacing_violations(
             closest_pair = first_same_layer_pair_gap(&positive_features, &negative_features);
         }
         if let (Some(max_spacing), Some(closest)) = (max_spacing.as_ref(), closest_pair)
-            && &closest.gap > max_spacing
+            && crate::scalar::gt(&closest.gap, max_spacing)
         {
             violations.push(Violation::new(
                 "net-constraint-readiness",
@@ -2013,8 +2020,8 @@ fn first_same_layer_pair_gap<'a>(
                 continue;
             }
             let gap = polygon_boundary_distance_scalar(
-                &positive.sketch.to_multipolygon(),
-                &negative.sketch.to_multipolygon(),
+                &positive.region.to_multipolygon(),
+                &negative.region.to_multipolygon(),
             );
             if let Some(gap) = gap {
                 return Some(DifferentialGap {
@@ -2053,7 +2060,7 @@ fn net_length_constraints(
             continue;
         }
         let estimated_length = estimated_feature_length(feature);
-        if estimated_length <= Scalar::zero() {
+        if crate::scalar::le(&estimated_length, &Scalar::zero()) {
             continue;
         }
 
@@ -2085,7 +2092,7 @@ fn net_length_constraints(
     for ((class_index, net), usage) in by_class_net {
         let class = &net_classes[class_index];
         if let Some(max_length) = usage.max_length.as_ref()
-            && &usage.estimated_length > max_length
+            && crate::scalar::gt(&usage.estimated_length, max_length)
         {
             violations.push(Violation::new(
                 "net-constraint-readiness",
@@ -2107,14 +2114,14 @@ fn net_length_constraints(
         let Some(max_pair_skew) = pair_use.max_pair_skew() else {
             continue;
         };
-        if pair_use.positive.estimated_length <= Scalar::zero()
-            || pair_use.negative.estimated_length <= Scalar::zero()
+        if crate::scalar::le(&pair_use.positive.estimated_length, &Scalar::zero())
+            || crate::scalar::le(&pair_use.negative.estimated_length, &Scalar::zero())
         {
             continue;
         }
         let skew =
             (&pair_use.positive.estimated_length - &pair_use.negative.estimated_length).abs();
-        if skew > max_pair_skew {
+        if crate::scalar::gt(&skew, &max_pair_skew) {
             violations.push(Violation::new(
                 "net-constraint-readiness",
                 Severity::Warning,
@@ -2153,13 +2160,15 @@ fn required_clearance<'a>(
             ]
             .into_iter()
             .flatten()
-            .max_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))?;
+            .max_by(|left, right| {
+                crate::scalar::compare(left, right)
+                    .expect("exact class clearances must be comparable")
+            })?;
             Some((class_name(class), clearance.clone()))
         })
         .max_by(|left, right| {
-            left.1
-                .partial_cmp(&right.1)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            crate::scalar::compare(&left.1, &right.1)
+                .expect("exact class clearances must be comparable")
         })
 }
 
@@ -2173,8 +2182,11 @@ fn maximum_configured_clearance(net_classes: &[NetClassConfig]) -> Option<Scalar
             ]
         })
         .flatten()
-        .filter(|clearance| *clearance >= &Scalar::zero())
-        .max_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal))
+        .filter(|clearance| crate::scalar::ge(clearance, &Scalar::zero()))
+        .max_by(|left, right| {
+            crate::scalar::compare(left, right)
+                .expect("exact configured clearances must be comparable")
+        })
         .cloned()
 }
 
@@ -2193,11 +2205,11 @@ fn is_blank(value: Option<&str>) -> bool {
 }
 
 fn invalid_positive(value: Option<&Scalar>) -> bool {
-    !value.is_some_and(|value| value > &Scalar::zero())
+    !value.is_some_and(|value| crate::scalar::gt(value, &Scalar::zero()))
 }
 
 fn invalid_non_negative(value: Option<&Scalar>) -> bool {
-    !value.is_some_and(|value| value >= &Scalar::zero())
+    !value.is_some_and(|value| crate::scalar::ge(value, &Scalar::zero()))
 }
 
 fn class_name(class: &NetClassConfig) -> &str {
@@ -2219,13 +2231,17 @@ fn layer_selected(layer: &str, selected_layers: &[String]) -> bool {
     selected_layers.is_empty() || selected_layers.iter().any(|selected| selected == layer)
 }
 
-fn minimum_bounding_dimension(sketch: &crate::PcbSketch) -> Scalar {
-    let Some(bounds) = native_sketch_bounds_scalar(sketch) else {
+fn minimum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
+    let Some(bounds) = native_region_bounds_scalar(region) else {
         return Scalar::zero();
     };
     let width = &bounds.max_x - &bounds.min_x;
     let height = &bounds.max_y - &bounds.min_y;
-    if width <= height { width } else { height }
+    if crate::scalar::le(&width, &height) {
+        width
+    } else {
+        height
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -2242,8 +2258,8 @@ struct ScalarBounds2 {
 /// certified sweep-extrema predicate. That can admit extra broad-phase
 /// candidates, but it can never discard a real violation. It also keeps sparse
 /// constraint indexing independent of finite polygon projection.
-fn native_sketch_bounds_scalar(sketch: &crate::PcbSketch) -> Option<ScalarBounds2> {
-    if let Some(bounds) = sketch.exact_bounds() {
+fn native_region_bounds_scalar(region: &crate::PcbRegion) -> Option<ScalarBounds2> {
+    if let Some(bounds) = region.exact_bounds() {
         return Some(ScalarBounds2 {
             min_x: bounds[0].clone(),
             min_y: bounds[1].clone(),
@@ -2252,34 +2268,26 @@ fn native_sketch_bounds_scalar(sketch: &crate::PcbSketch) -> Option<ScalarBounds
         });
     }
     let mut bounds = None;
-    let region = match sketch
-        .region_geometry()
-        .native_contours_fast_path(&hypercurve::CurvePolicy::certified())
-    {
-        Ok(hypercurve::Classification::Decided(region)) => region,
+    let native = match region.native_contours_fast_path(&hypercurve::CurvePolicy::certified()) {
+        Ok(hypercurve::Classification::Decided(native)) => native,
         Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => {
-            return Some(certified_sketch_bounds_scalar(sketch));
+            return Some(certified_region_bounds_scalar(region));
         }
     };
-    for contour in region
+    for contour in native
         .material_contours()
         .iter()
-        .chain(region.hole_contours())
+        .chain(native.hole_contours())
     {
         if include_native_segments(&mut bounds, contour.segments()).is_none() {
-            return Some(certified_sketch_bounds_scalar(sketch));
-        }
-    }
-    for wire in sketch.wires() {
-        if include_native_segments(&mut bounds, wire.segments()).is_none() {
-            return Some(certified_sketch_bounds_scalar(sketch));
+            return Some(certified_region_bounds_scalar(region));
         }
     }
     bounds
 }
 
-fn certified_sketch_bounds_scalar(sketch: &crate::PcbSketch) -> ScalarBounds2 {
-    let bounds = sketch.bounding_box();
+fn certified_region_bounds_scalar(region: &crate::PcbRegion) -> ScalarBounds2 {
+    let bounds = region.bounding_box();
     ScalarBounds2 {
         min_x: bounds.mins.x.clone(),
         min_y: bounds.mins.y.clone(),
@@ -2338,10 +2346,7 @@ fn include_exact_coordinate(
 }
 
 fn scalar_cmp(left: &Scalar, right: &Scalar) -> Option<std::cmp::Ordering> {
-    match (left.exact_rational_ref(), right.exact_rational_ref()) {
-        (Some(left), Some(right)) => left.partial_cmp(right),
-        _ => left.partial_cmp(right),
-    }
+    crate::scalar::compare(left, right)
 }
 
 fn scalar_lt(left: &Scalar, right: &Scalar) -> bool {
@@ -2370,13 +2375,17 @@ fn exact_bounds_may_be_within(
         && scalar_le(&right.min_y, &(&left.max_y + clearance))
 }
 
-fn maximum_bounding_dimension(sketch: &crate::PcbSketch) -> Scalar {
-    let Some(bounds) = native_sketch_bounds_scalar(sketch) else {
+fn maximum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
+    let Some(bounds) = native_region_bounds_scalar(region) else {
         return Scalar::zero();
     };
     let width = &bounds.max_x - &bounds.min_x;
     let height = &bounds.max_y - &bounds.min_y;
-    if width >= height { width } else { height }
+    if crate::scalar::ge(&width, &height) {
+        width
+    } else {
+        height
+    }
 }
 
 fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
@@ -2386,39 +2395,46 @@ fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
         // envelopes, including diagonal segments where an axis-aligned bounding
         // box underestimates length. This is still readiness metadata, not
         // routed-path reconstruction or a transmission-line delay model.
-        CopperKind::Segment => {
-            let edge_length = maximum_exterior_edge_length(&feature.sketch);
-            if edge_length > Scalar::zero() {
-                edge_length
-            } else {
-                maximum_bounding_dimension(&feature.sketch)
-            }
-        }
+        CopperKind::Segment => match maximum_exterior_edge_length(&feature.region) {
+            Some(edge_length) if crate::scalar::gt(&edge_length, &Scalar::zero()) => edge_length,
+            Some(_) | None => maximum_bounding_dimension(&feature.region),
+        },
         CopperKind::Via => Scalar::zero(),
         CopperKind::Pad | CopperKind::Zone | CopperKind::Artwork => Scalar::zero(),
     }
 }
 
-fn maximum_exterior_edge_length(sketch: &crate::PcbSketch) -> Scalar {
-    let region = match sketch
-        .region_geometry()
-        .native_contours_fast_path(&hypercurve::CurvePolicy::certified())
-    {
+fn maximum_exterior_edge_length(region: &crate::PcbRegion) -> Option<Scalar> {
+    let region = match region.native_contours_fast_path(&hypercurve::CurvePolicy::certified()) {
         Ok(hypercurve::Classification::Decided(region)) => region,
-        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return Scalar::zero(),
+        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return None,
     };
-    region
-        .material_contours()
-        .iter()
-        .flat_map(|contour| contour.segments())
-        .filter_map(|segment| {
-            let dx = segment.end().x() - segment.start().x();
-            let dy = segment.end().y() - segment.start().y();
-            (&dx * &dx + &dy * &dy).sqrt().ok()
-        })
-        .fold(Scalar::zero(), |maximum, length| {
-            if length > maximum { length } else { maximum }
-        })
+    Some(
+        region
+            .material_contours()
+            .iter()
+            .flat_map(|contour| contour.segments())
+            .filter_map(|segment| {
+                let dx = segment.end().x() - segment.start().x();
+                let dy = segment.end().y() - segment.start().y();
+                (&dx * &dx + &dy * &dy).sqrt().ok()
+            })
+            .fold(Scalar::zero(), |maximum, length| {
+                if crate::scalar::gt(&length, &maximum) {
+                    length
+                } else {
+                    maximum
+                }
+            }),
+    )
+}
+
+fn optional_scalar_eq(left: Option<&Scalar>, right: Option<&Scalar>) -> bool {
+    match (left, right) {
+        (Some(left), Some(right)) => crate::scalar::eq(left, right),
+        (None, None) => true,
+        (Some(_), None) | (None, Some(_)) => false,
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -2489,7 +2505,11 @@ impl<'a> DifferentialPairUse<'a> {
 
 fn option_max(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
     match (left, right) {
-        (Some(left), Some(right)) => Some(if left >= right { left } else { right }),
+        (Some(left), Some(right)) => Some(if crate::scalar::ge(&left, &right) {
+            left
+        } else {
+            right
+        }),
         (Some(value), None) | (None, Some(value)) => Some(value),
         (None, None) => None,
     }
@@ -2497,7 +2517,11 @@ fn option_max(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
 
 fn option_min(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
     match (left, right) {
-        (Some(left), Some(right)) => Some(if left <= right { left } else { right }),
+        (Some(left), Some(right)) => Some(if crate::scalar::le(&left, &right) {
+            left
+        } else {
+            right
+        }),
         (Some(value), None) | (None, Some(value)) => Some(value),
         (None, None) => None,
     }
@@ -2920,7 +2944,7 @@ mod tests {
             layer: "F.Cu".to_string(),
             net: Some("SIG".to_string()),
             kind: CopperKind::Segment,
-            sketch: polygons_to_profile(vec![polygon], None),
+            region: polygons_to_profile(vec![polygon], None),
             location: [crate::scalar::scalar("1.5"), crate::scalar::scalar("2")],
         }]);
 
@@ -3956,7 +3980,7 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind,
-            sketch: polygons_to_profile(vec![polygon], None),
+            region: polygons_to_profile(vec![polygon], None),
             location: [
                 crate::geometry::exact_real(center[0]),
                 crate::geometry::exact_real(center[1]),

@@ -72,19 +72,18 @@ pub use stencil::*;
 pub use thermal::*;
 
 use crate::report::{Severity, Violation};
-use crate::{PcbGeometryUncertainty, PcbSketch, Scalar};
-use hyperreal::RealSign;
+use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
 pub(crate) fn offset_for_check(
-    sketch: &PcbSketch,
+    region: &PcbRegion,
     distance: Scalar,
     requested_check: &str,
     layers: Vec<String>,
-) -> Result<PcbSketch, Box<Violation>> {
-    if distance.refine_sign_until(-128) == Some(RealSign::Zero) {
-        return Ok(sketch.clone());
+) -> Result<PcbRegion, Box<Violation>> {
+    if crate::scalar::sign(&distance) == Some(hyperlimit::Sign::Zero) {
+        return Ok(region.clone());
     }
-    sketch.offset(distance).map_err(|uncertainty| {
+    region.offset(distance).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,
             layers,
@@ -94,90 +93,62 @@ pub(crate) fn offset_for_check(
 }
 
 pub(crate) fn intersection_for_check(
-    left: &PcbSketch,
-    right: &PcbSketch,
+    left: &PcbRegion,
+    right: &PcbRegion,
     requested_check: &str,
     layers: Vec<String>,
-) -> Result<PcbSketch, Box<Violation>> {
-    left.try_intersection(right).map_err(|error| {
+) -> Result<PcbRegion, Box<Violation>> {
+    left.try_intersection(right).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,
             layers,
-            PcbGeometryUncertainty {
-                operation: "profile-intersection".into(),
-                source: left
-                    .metadata()
-                    .as_ref()
-                    .map(|metadata| metadata.name.clone()),
-                detail: error.to_string(),
-            },
+            uncertainty,
         ))
     })
 }
 
 pub(crate) fn difference_for_check(
-    left: &PcbSketch,
-    right: &PcbSketch,
+    left: &PcbRegion,
+    right: &PcbRegion,
     requested_check: &str,
     layers: Vec<String>,
-) -> Result<PcbSketch, Box<Violation>> {
-    left.try_difference(right).map_err(|error| {
+) -> Result<PcbRegion, Box<Violation>> {
+    left.try_difference(right).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,
             layers,
-            PcbGeometryUncertainty {
-                operation: "profile-difference".into(),
-                source: left
-                    .metadata()
-                    .as_ref()
-                    .map(|metadata| metadata.name.clone()),
-                detail: error.to_string(),
-            },
+            uncertainty,
         ))
     })
 }
 
 pub(crate) fn union_for_check(
-    left: &PcbSketch,
-    right: &PcbSketch,
+    left: &PcbRegion,
+    right: &PcbRegion,
     requested_check: &str,
     layers: Vec<String>,
-) -> Result<PcbSketch, Box<Violation>> {
-    left.try_union(right).map_err(|error| {
+) -> Result<PcbRegion, Box<Violation>> {
+    left.try_union(right).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,
             layers,
-            PcbGeometryUncertainty {
-                operation: "profile-union".into(),
-                source: left
-                    .metadata()
-                    .as_ref()
-                    .map(|metadata| metadata.name.clone()),
-                detail: error.to_string(),
-            },
+            uncertainty,
         ))
     })
 }
 
 #[allow(dead_code)] // Kept with the complete Boolean gateway set for future XOR-based checks.
 pub(crate) fn xor_for_check(
-    left: &PcbSketch,
-    right: &PcbSketch,
+    left: &PcbRegion,
+    right: &PcbRegion,
     requested_check: &str,
     layers: Vec<String>,
-) -> Result<PcbSketch, Box<Violation>> {
-    left.try_xor(right).map_err(|error| {
+) -> Result<PcbRegion, Box<Violation>> {
+    left.try_xor(right).map_err(|uncertainty| {
         Box::new(geometry_uncertainty_violation(
             requested_check,
             layers,
-            PcbGeometryUncertainty {
-                operation: "profile-xor".into(),
-                source: left
-                    .metadata()
-                    .as_ref()
-                    .map(|metadata| metadata.name.clone()),
-                detail: error.to_string(),
-            },
+            uncertainty,
         ))
     })
 }
@@ -204,6 +175,34 @@ fn geometry_uncertainty_violation(
 mod exact_math_audit_tests {
     use std::fs;
     use std::path::Path;
+
+    use hypercurve::CurveRegion2;
+
+    use super::intersection_for_check;
+    use crate::PcbRegion;
+
+    #[test]
+    fn construction_failure_is_reported_instead_of_intersecting_as_empty() {
+        let failed = PcbRegion::new(CurveRegion2::empty(), None)
+            .with_exact_construction_error("regression sentinel");
+        let valid = PcbRegion::new(CurveRegion2::empty(), None);
+
+        let violation = intersection_for_check(
+            &failed,
+            &valid,
+            "construction-failure-regression",
+            vec!["F.Cu".to_string()],
+        )
+        .expect_err("failed exact construction must block Boolean evaluation");
+
+        assert_eq!(violation.check, "geometry-uncertainty");
+        assert!(
+            violation
+                .message
+                .as_deref()
+                .is_some_and(|message| message.contains("regression sentinel"))
+        );
+    }
 
     #[test]
     fn production_geometry_uses_fallible_boolean_gateways() {

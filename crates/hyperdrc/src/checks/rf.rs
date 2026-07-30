@@ -10,9 +10,7 @@
 //! suspect for custom naming schemes, shields, and intentional copper near
 //! radiators. Verify findings against the RF layout plan or measured constraints.
 
-use geo::BoundingRect;
-
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::spatial::CopperSpatialIndex;
@@ -76,13 +74,13 @@ pub fn rf_keepout_readiness(
             {
                 continue;
             }
-            if !sketches_within_clearance(&rf.sketch, &neighbor.sketch, broad_phase_clearance) {
+            if !regiones_within_clearance(&rf.region, &neighbor.region, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &rf.sketch,
+                &rf.region,
                 clearance.clone(),
                 "rf-keepout-readiness",
                 vec![rf.layer.clone()],
@@ -92,7 +90,7 @@ pub fn rf_keepout_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "rf-keepout-readiness",
                 vec![rf.layer.clone()],
             ) {
@@ -102,10 +100,10 @@ pub fn rf_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &rf.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &rf.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= clearance)
+                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
             {
                 vec![
                     rf.location_f64_compatibility_required(),
@@ -161,7 +159,7 @@ pub fn antenna_copper_keepout_readiness(
     keepout: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if keepout <= &Scalar::zero() {
+    if crate::scalar::le(keepout, &Scalar::zero()) {
         return Vec::new();
     }
 
@@ -194,13 +192,13 @@ pub fn antenna_copper_keepout_readiness(
             if antenna_index == neighbor_index || antenna.net == neighbor.net {
                 continue;
             }
-            if !sketches_within_clearance(&antenna.sketch, &neighbor.sketch, broad_phase_keepout) {
+            if !regiones_within_clearance(&antenna.region, &neighbor.region, broad_phase_keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &antenna.sketch,
+                &antenna.region,
                 keepout.clone(),
                 "antenna-copper-keepout-readiness",
                 vec![antenna.layer.clone()],
@@ -210,7 +208,7 @@ pub fn antenna_copper_keepout_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "antenna-copper-keepout-readiness",
                 vec![antenna.layer.clone()],
             ) {
@@ -220,10 +218,10 @@ pub fn antenna_copper_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &antenna.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &antenna.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= keepout)
+                .is_some_and(|distance| crate::scalar::le(&distance, keepout))
             {
                 vec![
                     antenna.location_f64_compatibility_required(),
@@ -318,7 +316,7 @@ pub fn rf_via_fence_readiness(
             let ground = ground_vias[ground_index];
             ground.net.as_deref().is_some_and(looks_ground_net)
                 && distance_scalar(&feature.location, &ground.location)
-                    .is_some_and(|distance| &distance <= fence_distance)
+                    .is_some_and(|distance| crate::scalar::le(&distance, fence_distance))
         });
         if has_fence {
             continue;
@@ -361,9 +359,9 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn sketches_within_clearance(
-    left: &crate::PcbSketch,
-    right: &crate::PcbSketch,
+fn regiones_within_clearance(
+    left: &crate::PcbRegion,
+    right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
     let Some(left_bounds) = left.geometry().bounding_rect() else {
@@ -773,7 +771,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),
@@ -796,7 +794,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),

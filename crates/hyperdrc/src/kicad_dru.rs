@@ -171,7 +171,7 @@ fn push_rule(
     min_mm: &Scalar,
     condition: &str,
 ) {
-    if min_mm <= &Scalar::zero() {
+    if crate::scalar::le(min_mm, &Scalar::zero()) {
         return;
     }
     text.push_str(&format!(

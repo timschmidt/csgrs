@@ -79,11 +79,11 @@ pub(super) fn estimate_single_ended_impedance(
     layer_name: &str,
     trace_width: Scalar,
 ) -> Option<TraceImpedanceEstimate> {
-    if trace_width <= Scalar::zero() {
+    if crate::scalar::le(&trace_width, &Scalar::zero()) {
         return None;
     }
     let dielectric_constant = stackup.material_dielectric_constant.as_ref()?;
-    if dielectric_constant <= &Scalar::zero() {
+    if crate::scalar::le(dielectric_constant, &Scalar::zero()) {
         return None;
     }
 
@@ -168,7 +168,7 @@ pub(super) fn estimate_equal_width_differential_impedance(
     trace_width: Scalar,
     pair_gap: Scalar,
 ) -> Option<DifferentialImpedanceEstimate> {
-    if pair_gap <= Scalar::zero() {
+    if crate::scalar::le(&pair_gap, &Scalar::zero()) {
         return None;
     }
     let single = estimate_single_ended_impedance(stackup, layer_name, trace_width.clone())?;
@@ -181,29 +181,30 @@ pub(super) fn estimate_equal_width_differential_impedance(
         ),
         ImpedanceModel::CenteredStripline => (
             DifferentialImpedanceModel::EdgeCoupledCenteredStripline,
-            (&single.dielectric_height / scalar("2")).ok()?,
+            crate::scalar::half(&single.dielectric_height),
             scalar("0.347"),
             scalar("2.9"),
         ),
     };
     let width_ratio = (&trace_width / &dielectric_height).ok()?;
     let gap_ratio = (&pair_gap / &dielectric_height).ok()?;
-    if width_ratio < scalar("0.1")
-        || width_ratio > scalar("10")
-        || gap_ratio < scalar("0.1")
-        || gap_ratio > scalar("10")
-        || single.dielectric_constant < Scalar::one()
-        || single.dielectric_constant > scalar("18")
+    if crate::scalar::lt(&width_ratio, &scalar("0.1"))
+        || crate::scalar::gt(&width_ratio, &scalar("10"))
+        || crate::scalar::lt(&gap_ratio, &scalar("0.1"))
+        || crate::scalar::gt(&gap_ratio, &scalar("10"))
+        || crate::scalar::lt(&single.dielectric_constant, &Scalar::one())
+        || crate::scalar::gt(&single.dielectric_constant, &scalar("18"))
     {
         return None;
     }
 
     let coupling = Scalar::one() - amplitude * (-decay * gap_ratio).exp().ok()?;
-    if coupling <= Scalar::zero() || coupling >= Scalar::one() {
+    if crate::scalar::le(&coupling, &Scalar::zero()) || crate::scalar::ge(&coupling, &Scalar::one())
+    {
         return None;
     }
     let impedance_ohms = scalar("2") * single.impedance_ohms * coupling;
-    (impedance_ohms > Scalar::zero()).then_some(DifferentialImpedanceEstimate {
+    crate::scalar::gt(&impedance_ohms, &Scalar::zero()).then_some(DifferentialImpedanceEstimate {
         impedance_ohms,
         model,
         trace_width,
@@ -232,13 +233,13 @@ fn dielectric_height_between(
             continue;
         }
         let thickness = layer.dielectric_thickness.as_ref()?;
-        if thickness <= &Scalar::zero() {
+        if crate::scalar::le(thickness, &Scalar::zero()) {
             return None;
         }
         height += thickness;
     }
 
-    (height > Scalar::zero()).then_some(height)
+    crate::scalar::gt(&height, &Scalar::zero()).then_some(height)
 }
 
 fn hammerstad_jensen_microstrip_ohms(
@@ -246,32 +247,32 @@ fn hammerstad_jensen_microstrip_ohms(
     dielectric_height: &Scalar,
     dielectric_constant: &Scalar,
 ) -> Option<Scalar> {
-    if trace_width <= &Scalar::zero()
-        || dielectric_height <= &Scalar::zero()
-        || dielectric_constant <= &Scalar::zero()
+    if crate::scalar::le(trace_width, &Scalar::zero())
+        || crate::scalar::le(dielectric_height, &Scalar::zero())
+        || crate::scalar::le(dielectric_constant, &Scalar::zero())
     {
         return None;
     }
 
     let width_to_height = (trace_width / dielectric_height).ok()?;
-    if width_to_height <= Scalar::zero() {
+    if crate::scalar::le(&width_to_height, &Scalar::zero()) {
         return None;
     }
 
-    let correction = if width_to_height < Scalar::one() {
+    let correction = if crate::scalar::lt(&width_to_height, &Scalar::one()) {
         let difference = Scalar::one() - &width_to_height;
         scalar("0.04") * (&difference * &difference)
     } else {
         Scalar::zero()
     };
-    let mean_dielectric = ((dielectric_constant + Scalar::one()) / scalar("2")).ok()?;
-    let contrast = ((dielectric_constant - Scalar::one()) / scalar("2")).ok()?;
+    let mean_dielectric = crate::scalar::half(&(dielectric_constant + Scalar::one()));
+    let contrast = crate::scalar::half(&(dielectric_constant - Scalar::one()));
     let reciprocal_term = (scalar("12") / &width_to_height).ok()?;
     let root_factor = (Scalar::one() + reciprocal_term).pow(scalar("-0.5")).ok()?;
     let effective_dielectric_constant = mean_dielectric + contrast * root_factor + correction;
     let dielectric_root = effective_dielectric_constant.sqrt().ok()?;
 
-    let impedance = if width_to_height <= Scalar::one() {
+    let impedance = if crate::scalar::le(&width_to_height, &Scalar::one()) {
         let scale = (scalar("60") / dielectric_root).ok()?;
         let reciprocal_width = (scalar("8") / &width_to_height).ok()?;
         let logarithm = (reciprocal_width + scalar("0.25") * &width_to_height)
@@ -284,15 +285,20 @@ fn hammerstad_jensen_microstrip_ohms(
         ((scalar("120") * Scalar::pi()) / (dielectric_root * shape)).ok()?
     };
 
-    (impedance > Scalar::zero()).then_some(impedance)
+    crate::scalar::gt(&impedance, &Scalar::zero()).then_some(impedance)
 }
 
 fn approximately_centered_between_planes(upper_height: &Scalar, lower_height: &Scalar) -> bool {
-    if upper_height <= &Scalar::zero() || lower_height <= &Scalar::zero() {
+    if crate::scalar::le(upper_height, &Scalar::zero())
+        || crate::scalar::le(lower_height, &Scalar::zero())
+    {
         return false;
     }
-    let average = ((upper_height + lower_height) / scalar("2")).expect("nonzero exact denominator");
-    (upper_height - lower_height).abs() <= average * scalar("0.10")
+    let average = crate::scalar::half(&(upper_height + lower_height));
+    crate::scalar::le(
+        &(upper_height - lower_height).abs(),
+        &(average * scalar("0.10")),
+    )
 }
 
 fn wheeler_centered_stripline_ohms(
@@ -300,15 +306,15 @@ fn wheeler_centered_stripline_ohms(
     plane_spacing: &Scalar,
     dielectric_constant: &Scalar,
 ) -> Option<Scalar> {
-    if trace_width <= &Scalar::zero()
-        || plane_spacing <= &Scalar::zero()
-        || dielectric_constant <= &Scalar::zero()
+    if crate::scalar::le(trace_width, &Scalar::zero())
+        || crate::scalar::le(plane_spacing, &Scalar::zero())
+        || crate::scalar::le(dielectric_constant, &Scalar::zero())
     {
         return None;
     }
 
     let width_to_spacing = (trace_width / plane_spacing).ok()?;
-    if width_to_spacing <= Scalar::zero() {
+    if crate::scalar::le(&width_to_spacing, &Scalar::zero()) {
         return None;
     }
 
@@ -320,7 +326,7 @@ fn wheeler_centered_stripline_ohms(
     let dielectric_root = dielectric_constant.clone().sqrt().ok()?;
     let denominator = dielectric_root * (width_to_spacing + scalar("0.441"));
     let impedance = (numerator / denominator).ok()?;
-    (impedance > Scalar::zero()).then_some(impedance)
+    crate::scalar::gt(&impedance, &Scalar::zero()).then_some(impedance)
 }
 
 #[cfg(test)]

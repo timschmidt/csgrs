@@ -28,10 +28,12 @@ This split keeps geometry helpers small and predictable:
 - [`primitives.rs`](primitives.rs) builds common PCB shapes: circles,
   rectangles, trapezoids, rounded and chamfered rectangles, traces, arcs,
   Bezier strokes, transforms, and polygons from point lists.
-- [`sketch.rs`](sketch.rs) converts `geo` polygons into `csgrs::Profile`
-  values while preserving layer metadata.
-- [`violations.rs`](violations.rs) converts `geo` multipolygons into reportable
-  violation shapes, including area filtering and hole preservation.
+- [`region.rs`](region.rs) combines exact-backed polygon inputs into native
+  [Hypercurve](https://github.com/timschmidt/hypercurve) filled regions while
+  preserving layer metadata.
+- [`violations.rs`](violations.rs) projects exact-backed multipolygons into
+  reportable violation shapes, including exact area filtering and hole
+  preservation.
 
 ## Responsibilities
 
@@ -49,10 +51,13 @@ vendor-specific geometry edge cases.
 
 ## Working With Profiles
 
-`hyperdrc` uses `PcbSketch`, an alias around `csgrs::Profile<LayerMetadata>`, as
-the common geometry container. Parser modules build profiles, check modules
-combine them with offsets and booleans, and report modules convert resulting
-polygons into stable violation records.
+`hyperdrc` uses `PcbRegion`, an exact
+[Hypercurve](https://github.com/timschmidt/hypercurve) filled-region carrier
+with PCB metadata, as the common geometry container.
+[CSGRS](https://github.com/timschmidt/csgrs) remains an explicit import and
+adapter boundary. Parser modules build regions, check modules combine them with
+offsets and booleans, and report modules convert finite boundary views into
+stable violation records.
 
 When adding geometry helpers:
 

@@ -37,7 +37,8 @@ pub(super) fn arc_center_start_angle(
 /// This is the parser-aware companion to [`arc_center_start_angle`]. The
 /// returned center and sweep are still `f64` compatibility geometry for the
 /// existing polygon stroker, but the collinearity decision consumes retained
-/// decimal-token [`Real`](hyperreal::Real) values whenever possible so the
+/// decimal-token [`Real`](https://github.com/timschmidt/hyperreal) values
+/// whenever possible so the
 /// topology predicate retains source precision.
 pub(super) fn arc_center_start_angle_source(
     start: &ParsedPoint2,
@@ -137,7 +138,7 @@ fn exact_arc_orientation(start: [f64; 2], mid: [f64; 2], end: [f64; 2]) -> Optio
     let start = lift_point(start, provenance)?;
     let mid = lift_point(mid, provenance)?;
     let end = lift_point(end, provenance)?;
-    orient2_with_policy(&start, &mid, &end, PredicatePolicy::STRICT).value()
+    orient2_with_policy(&start, &mid, &end, PredicatePolicy).value()
 }
 
 fn exact_arc_orientation_source(
@@ -148,7 +149,7 @@ fn exact_arc_orientation_source(
     let start = exact_point(start);
     let mid = exact_point(mid);
     let end = exact_point(end);
-    orient2_with_policy(&start, &mid, &end, PredicatePolicy::STRICT).value()
+    orient2_with_policy(&start, &mid, &end, PredicatePolicy).value()
 }
 
 fn exact_point(point: &ParsedPoint2) -> Point2 {

@@ -4,9 +4,9 @@
 //! footprint copper. This module keeps fill/stroke interpretation in one place
 //! so those parser paths do not drift apart.
 
-use geo::Polygon;
-
-use crate::geometry::{arc_line_polygons, circle_polygon, line_polygon, polygon_from_points};
+use crate::geometry::{
+    Polygon, arc_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+};
 use crate::sexp::Sexp;
 
 /// Return whether a KiCad graphic primitive should be treated as filled.

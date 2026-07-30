@@ -520,7 +520,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
         if let Some((tool, diameter)) = parse_tool_definition(normalized, &units_scale) {
             let raw_tool = tool.clone();
             match tool_diameter.get(&tool) {
-                Some(previous) if previous == &diameter => {
+                Some(previous) if crate::scalar::eq(previous, &diameter) => {
                     tool_table.duplicate_definitions += 1;
                     issues.push(ExcellonIssue {
                         line: line_number,
@@ -544,7 +544,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                     });
                 }
                 None => {
-                    if diameter <= Scalar::zero() {
+                    if crate::scalar::le(&diameter, &Scalar::zero()) {
                         tool_table.non_positive_definitions += 1;
                         issues.push(ExcellonIssue {
                             line: line_number,
@@ -587,7 +587,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                             continue;
                         };
 
-                        if diameter <= &Scalar::zero() {
+                        if crate::scalar::le(diameter, &Scalar::zero()) {
                             hits.hits_without_diameter += 1;
                             issues.push(ExcellonIssue {
                                 line: line_number,
@@ -674,7 +674,7 @@ pub fn parse_excellon_report(input: &str, source: &Path) -> ExcellonReport {
                 });
                 continue;
             };
-            if diameter <= &Scalar::zero() {
+            if crate::scalar::le(diameter, &Scalar::zero()) {
                 hits.hits_without_diameter += 1;
                 issues.push(ExcellonIssue {
                     line: line_number,
@@ -808,13 +808,26 @@ fn record_drill(
     }
     summary.min_diameter = Some(summary.min_diameter.as_ref().map_or_else(
         || exact_diameter.clone(),
-        |current| current.min(exact_diameter).clone(),
+        |current| {
+            hyperlimit::real_min_with_policy(current, exact_diameter, hyperlimit::PredicatePolicy)
+                .value()
+                .expect("parsed Excellon diameters have a decidable minimum")
+                .clone()
+        },
     ));
     summary.max_diameter = Some(summary.max_diameter.as_ref().map_or_else(
         || exact_diameter.clone(),
-        |current| current.max(exact_diameter).clone(),
+        |current| {
+            hyperlimit::real_max_with_policy(current, exact_diameter, hyperlimit::PredicatePolicy)
+                .value()
+                .expect("parsed Excellon diameters have a decidable maximum")
+                .clone()
+        },
     ));
-    if !unique_diameters.iter().any(|value| value == exact_diameter) {
+    if !unique_diameters
+        .iter()
+        .any(|value| crate::scalar::eq(value, exact_diameter))
+    {
         unique_diameters.push(exact_diameter.clone());
     }
     drills.push(drill);

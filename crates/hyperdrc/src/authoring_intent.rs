@@ -10,7 +10,7 @@ use crate::checks::intersection_for_check;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperKind};
 use crate::report::{FindingSubject, Severity, Violation};
-use crate::{PcbSketch, PcbSketchExt, Scalar};
+use crate::{PcbRegion, PcbRegionExt, Scalar};
 
 /// Refined electrical kind supplied by a native authoring system.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -193,7 +193,7 @@ pub fn authored_functional_role_readiness(roles: &[AuthoredFunctionalRole]) -> V
                 );
                 continue;
             };
-            if maximum <= &Scalar::zero()
+            if crate::scalar::le(maximum, &Scalar::zero())
                 || !locations_within(&left.locations, &right.locations, maximum)
             {
                 let locations = left
@@ -253,7 +253,7 @@ fn locations_within(left: &[[Scalar; 2]], right: &[[Scalar; 2]], maximum: &Scala
         right.iter().any(|right| {
             let dx = &left[0] - &right[0];
             let dy = &left[1] - &right[1];
-            &dx * &dx + &dy * &dy <= maximum_squared
+            crate::scalar::le(&(&dx * &dx + &dy * &dy), &maximum_squared)
         })
     })
 }
@@ -277,7 +277,7 @@ pub struct AuthoredKeepout {
     /// Stable source identity from the authoring model.
     pub source: String,
     /// Exact-aware keepout profile.
-    pub sketch: PcbSketch,
+    pub region: PcbRegion,
     /// Excluded feature family/layers.
     pub scope: AuthoredKeepoutScope,
 }
@@ -323,7 +323,7 @@ pub struct AuthoredComponentEnvelope {
     /// Board side on which the envelope is mounted.
     pub side: AuthoredComponentSide,
     /// Exact-aware board-space envelope profile.
-    pub sketch: PcbSketch,
+    pub region: PcbRegion,
     /// Whether the envelope came from courtyard or body intent.
     pub kind: AuthoredComponentEnvelopeKind,
 }
@@ -348,8 +348,8 @@ pub fn authored_keepout_readiness(
                 continue;
             }
             let intersection = match intersection_for_check(
-                &keepout.sketch,
-                &feature.sketch,
+                &keepout.region,
+                &feature.region,
                 "authored-keepout-readiness",
                 vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
             ) {
@@ -389,7 +389,7 @@ pub fn authored_routed_slot_readiness(
     slots
         .iter()
         .filter_map(|slot| {
-            let (severity, message) = if slot.width <= Scalar::zero() {
+            let (severity, message) = if crate::scalar::le(&slot.width, &Scalar::zero()) {
                 (
                     Severity::Error,
                     format!(
@@ -397,7 +397,7 @@ pub fn authored_routed_slot_readiness(
                         slot.source
                     ),
                 )
-            } else if &slot.width < minimum_route_width {
+            } else if crate::scalar::lt(&slot.width, minimum_route_width) {
                 (
                     Severity::Warning,
                     format!(
@@ -462,8 +462,8 @@ pub fn authored_component_readiness(
             }
             if let Err(uncertainty) = append_component_intersection(
                 &mut violations,
-                &left.sketch,
-                &right.sketch,
+                &left.region,
+                &right.region,
                 minimum_report_area,
                 vec![
                     format!("component:{}", left.source),
@@ -485,8 +485,8 @@ pub fn authored_component_readiness(
         for component in components {
             if let Err(uncertainty) = append_component_intersection(
                 &mut violations,
-                &keepout.sketch,
-                &component.sketch,
+                &keepout.region,
+                &component.region,
                 minimum_report_area,
                 vec![
                     format!("keepout:{}", keepout.source),
@@ -506,8 +506,8 @@ pub fn authored_component_readiness(
 
 fn append_component_intersection(
     violations: &mut Vec<Violation>,
-    left: &PcbSketch,
-    right: &PcbSketch,
+    left: &PcbRegion,
+    right: &PcbRegion,
     minimum_report_area: &Scalar,
     layers: Vec<String>,
     message: String,
@@ -555,15 +555,15 @@ fn slot_midpoint(slot: &AuthoredRoutedSlot) -> Option<[f64; 2]> {
 
 #[cfg(test)]
 mod tests {
-    use csgrs::sketch::Profile;
+    use csgrs::curve;
 
     use super::*;
     use crate::kicad::{CopperFeature, DrillFeature};
     use crate::{LayerMetadata, scalar::scalar};
 
-    fn square(name: &str) -> PcbSketch {
-        PcbSketch::new(
-            Profile::rectangle(Scalar::from(2), Scalar::from(2)),
+    fn square(name: &str) -> PcbRegion {
+        PcbRegion::new(
+            curve::rectangle(Scalar::from(2), Scalar::from(2)),
             Some(LayerMetadata { name: name.into() }),
         )
     }
@@ -634,7 +634,7 @@ mod tests {
                 layer: "F.Cu".into(),
                 net: Some("SIGNAL".into()),
                 kind: CopperKind::Segment,
-                sketch: square("route"),
+                region: square("route"),
                 location: [Scalar::zero(), Scalar::zero()],
             }],
             drills: Vec::<DrillFeature>::new(),
@@ -643,7 +643,7 @@ mod tests {
         };
         let keepout = AuthoredKeepout {
             source: "antenna".into(),
-            sketch: square("keepout"),
+            region: square("keepout"),
             scope: AuthoredKeepoutScope::Copper(vec!["F.Cu".into()]),
         };
         let findings = authored_keepout_readiness(&board, &[keepout], &Scalar::zero());
@@ -673,19 +673,19 @@ mod tests {
         let front_a = AuthoredComponentEnvelope {
             source: "U1".into(),
             side: AuthoredComponentSide::Front,
-            sketch: square("U1-courtyard"),
+            region: square("U1-courtyard"),
             kind: AuthoredComponentEnvelopeKind::Courtyard,
         };
         let front_b = AuthoredComponentEnvelope {
             source: "U2".into(),
             side: AuthoredComponentSide::Front,
-            sketch: square("U2-body"),
+            region: square("U2-body"),
             kind: AuthoredComponentEnvelopeKind::Body,
         };
         let back = AuthoredComponentEnvelope {
             source: "U3".into(),
             side: AuthoredComponentSide::Back,
-            sketch: square("U3-body"),
+            region: square("U3-body"),
             kind: AuthoredComponentEnvelopeKind::Body,
         };
         let findings = authored_component_readiness(
@@ -711,7 +711,7 @@ mod tests {
 
         let keepout = AuthoredKeepout {
             source: "antenna-body".into(),
-            sketch: square("component-keepout"),
+            region: square("component-keepout"),
             scope: AuthoredKeepoutScope::Components,
         };
         let findings =

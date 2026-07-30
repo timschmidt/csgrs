@@ -1,25 +1,30 @@
 //! Geometry constructors used by parsers and checks.
 //!
-//! The module exposes a small, stable API over `geo` polygons. Submodules keep
-//! Profile/report conversion code separate from primitive polygon generation.
+//! The module exposes exact Hypercurve-backed regions plus explicit finite
+//! report projections. Primitive construction and report conversion stay
+//! separate from topology decisions.
 
 mod primitives;
-mod sketch;
+mod region;
 mod source_units;
+mod types;
 mod violations;
 
 pub use primitives::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
     polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
 };
-pub use sketch::{empty_profile, polygon_to_profile, polygons_to_profile};
+pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,
 };
+pub use types::{Coord, LineString, MultiPolygon, Polygon, Rect};
 #[cfg(test)]
 pub use violations::multipolygon_to_shapes;
 pub use violations::multipolygon_to_shapes_scalar;
-pub(crate) use violations::{multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar};
+pub(crate) use violations::{
+    balanced_scalar_sum, multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar,
+};
 
 pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value)
@@ -28,16 +33,15 @@ pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
 
 #[cfg(test)]
 mod tests {
-    use geo::{Area, Coord, LineString, MultiPolygon, Polygon};
     use proptest::prelude::*;
 
     use super::{
-        arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon,
-        empty_profile, line_polygon, multipolygon_to_shapes, polygon_from_points,
-        polygon_to_profile, polygons_to_profile, rect_polygon, rounded_rect_polygon,
-        transform_polygon, trapezoid_polygon,
+        Coord, LineString, MultiPolygon, Polygon, arc_line_polygons, bezier_line_polygons,
+        chamfered_rect_polygon, circle_polygon, empty_profile, line_polygon,
+        multipolygon_to_shapes, polygon_from_points, polygon_to_profile, polygons_to_profile,
+        rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
     };
-    use crate::{LayerMetadata, PcbSketchExt};
+    use crate::{LayerMetadata, PcbRegionExt};
 
     const EPS: f64 = 1.0e-9;
 
@@ -118,8 +122,8 @@ mod tests {
 
     #[test]
     fn profile_constructors_promote_input_bounds_once_for_exact_broad_phases() {
-        let sketch = polygons_to_profile(vec![rect_polygon([3.0, -2.0], [4.0, 6.0], 0.0)], None);
-        let bounds = sketch
+        let region = polygons_to_profile(vec![rect_polygon([3.0, -2.0], [4.0, 6.0], 0.0)], None);
+        let bounds = region
             .exact_bounds()
             .expect("finite input polygons should retain promoted exact bounds");
 
@@ -131,15 +135,15 @@ mod tests {
 
     #[test]
     fn profile_constructors_accept_empty_polygon_lists_without_losing_metadata() {
-        let sketch = polygons_to_profile(
+        let region = polygons_to_profile(
             Vec::new(),
             Some(LayerMetadata {
                 name: "empty multi".to_string(),
             }),
         );
 
-        assert_eq!(sketch.metadata().as_ref().unwrap().name, "empty multi");
-        assert!(sketch.to_multipolygon().0.is_empty());
+        assert_eq!(region.metadata().as_ref().unwrap().name, "empty multi");
+        assert!(region.to_multipolygon().0.is_empty());
     }
 
     #[test]
@@ -524,20 +528,28 @@ mod tests {
         let transformed = transform_polygon(&polygon, [1.0, 2.0], f64::NAN);
 
         assert_eq!(polygon.exterior().0, transformed.exterior().0);
+        assert!(
+            transformed
+                .exact_construction_error()
+                .is_some_and(|detail| detail.contains("non-finite"))
+        );
     }
 
     #[test]
     fn transform_polygon_rejects_invalid_transform_inputs_without_panic() {
         let polygon = rect_polygon([0.0, 0.0], [2.0, 2.0], 0.0);
 
-        assert_eq!(
+        for transformed in [
             transform_polygon(&polygon, [f64::INFINITY, 0.0], 30.0),
-            polygon
-        );
-        assert_eq!(
             transform_polygon(&polygon, [0.0, 0.0], f64::INFINITY),
-            polygon
-        );
+        ] {
+            assert_eq!(transformed, polygon);
+            assert!(
+                transformed
+                    .exact_construction_error()
+                    .is_some_and(|detail| detail.contains("non-finite"))
+            );
+        }
     }
 
     #[test]

@@ -8,15 +8,14 @@
 //! default readiness sweeps, but suspect for waiver-quality decisions until the
 //! stackup, adjacent reference layer, and source CAD constraints are reviewed.
 
-use geo::BoundingRect;
-
 use super::difference_for_check;
 use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::CopperSpatialIndex;
+use crate::geometry::Rect;
 use crate::geometry::{multipolygon_to_shapes_scalar, polygons_to_profile};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegionExt, Scalar};
 
 /// Warn when a likely high-speed segment crosses separated ground-zone islands.
 ///
@@ -42,7 +41,7 @@ pub fn split_plane_crossing_readiness(
         .iter()
         .filter_map(|feature| {
             feature
-                .sketch
+                .region
                 .to_multipolygon()
                 .bounding_rect()
                 .map(|bounds| GroundZone { feature, bounds })
@@ -70,11 +69,11 @@ pub fn split_plane_crossing_readiness(
             continue;
         }
         candidate_segments += 1;
-        let Some(segment_bounds) = feature.sketch.to_multipolygon().bounding_rect() else {
+        let Some(segment_bounds) = feature.region.to_multipolygon().bounding_rect() else {
             continue;
         };
 
-        let segment_geometry = feature.sketch.to_multipolygon();
+        let segment_geometry = feature.region.to_multipolygon();
         let candidates = ground_index.same_layer_near_feature(feature, broad_phase_distance);
         candidate_ground_zones += candidates.len();
         let nearby = candidates
@@ -87,9 +86,9 @@ pub fn split_plane_crossing_readiness(
                 exact_ground_zones += 1;
                 polygon_boundary_distance_scalar(
                     &segment_geometry,
-                    &zone.feature.sketch.to_multipolygon(),
+                    &zone.feature.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= search_distance)
+                .is_some_and(|distance| crate::scalar::le(&distance, search_distance))
             })
             .collect::<Vec<_>>();
         if nearby.len() < 2
@@ -100,7 +99,7 @@ pub fn split_plane_crossing_readiness(
 
         let ground_polygons = nearby
             .iter()
-            .flat_map(|zone| zone.feature.sketch.to_multipolygon().0)
+            .flat_map(|zone| zone.feature.region.to_multipolygon().0)
             .collect::<Vec<_>>();
         let ground = polygons_to_profile(
             ground_polygons,
@@ -109,7 +108,7 @@ pub fn split_plane_crossing_readiness(
             }),
         );
         let uncovered = match difference_for_check(
-            &feature.sketch,
+            &feature.region,
             &ground,
             "split-plane-crossing-readiness",
             vec![feature.layer.clone(), "nearby KiCad ground zones".into()],
@@ -199,20 +198,26 @@ pub fn return_path_proximity_readiness(
             continue;
         };
 
-        let feature_geometry = feature.sketch.to_multipolygon();
+        let feature_geometry = feature.region.to_multipolygon();
         let nearest_distance = candidate_ground_indexes
             .into_iter()
             .filter_map(|ground_index| {
                 exact_pairs += 1;
                 polygon_boundary_distance_scalar(
                     &feature_geometry,
-                    &ground_features[ground_index].sketch.to_multipolygon(),
+                    &ground_features[ground_index].region.to_multipolygon(),
                 )
             })
-            .reduce(|left, right| if left <= right { left } else { right });
+            .reduce(|left, right| {
+                if crate::scalar::le(&left, &right) {
+                    left
+                } else {
+                    right
+                }
+            });
         if nearest_distance
             .as_ref()
-            .is_some_and(|distance| distance <= maximum_return_distance)
+            .is_some_and(|distance| crate::scalar::le(distance, maximum_return_distance))
         {
             continue;
         }
@@ -267,7 +272,7 @@ fn return_path_proximity_violation(
 #[derive(Clone, Copy)]
 struct GroundZone<'a> {
     feature: &'a CopperFeature,
-    bounds: geo::Rect<f64>,
+    bounds: Rect<f64>,
 }
 
 fn has_separated_ground_islands(
@@ -276,16 +281,16 @@ fn has_separated_ground_islands(
     broad_phase_distance: f64,
 ) -> bool {
     for (index, left) in zones.iter().enumerate() {
-        let left_geometry = left.feature.sketch.to_multipolygon();
+        let left_geometry = left.feature.region.to_multipolygon();
         for right in zones.iter().skip(index + 1) {
             if !expanded_rects_overlap(&left.bounds, &right.bounds, broad_phase_distance) {
                 return true;
             }
             if polygon_boundary_distance_scalar(
                 &left_geometry,
-                &right.feature.sketch.to_multipolygon(),
+                &right.feature.region.to_multipolygon(),
             )
-            .is_some_and(|distance| &distance > search_distance)
+            .is_some_and(|distance| crate::scalar::gt(&distance, search_distance))
             {
                 return true;
             }
@@ -329,7 +334,7 @@ fn looks_high_speed_net(net: &str) -> bool {
     tokens.iter().any(|token| normalized.contains(token))
 }
 
-fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansion: f64) -> bool {
+fn expanded_rects_overlap(left: &Rect<f64>, right: &Rect<f64>, expansion: f64) -> bool {
     left.min().x - expansion <= right.max().x
         && left.max().x + expansion >= right.min().x
         && left.min().y - expansion <= right.max().y
@@ -373,7 +378,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: "test segment".to_string(),
@@ -391,7 +396,7 @@ mod tests {
                 crate::geometry::exact_real(center[0]),
                 crate::geometry::exact_real(center[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(center, size, 0.0)],
                 Some(LayerMetadata {
                     name: "test zone".to_string(),
@@ -540,7 +545,7 @@ mod tests {
                 net: Some("USB_DP".to_string()),
                 kind: CopperKind::Via,
                 location: [crate::scalar::scalar("8"), crate::Scalar::zero()],
-                sketch: polygons_to_profile(
+                region: polygons_to_profile(
                     vec![rect_polygon([8.0, 0.0], [0.20, 0.20], 0.0)],
                     Some(LayerMetadata {
                         name: "test via".to_string(),

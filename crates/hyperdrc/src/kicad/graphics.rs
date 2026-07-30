@@ -4,11 +4,11 @@
 //! not electrical copper. Keeping them separate makes the main loader easier to
 //! scan and keeps arc/outline reconstruction in one place.
 
-use geo::Polygon;
-use hyperlimit::{Point2, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, point2_equal_with_policy};
 
 use crate::geometry::{
-    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+    Polygon, arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon,
+    polygon_from_points,
 };
 use crate::sexp::Sexp;
 
@@ -201,7 +201,9 @@ fn same_point(left: &ParsedPoint2, right: &ParsedPoint2) -> bool {
     // a local tolerance.
     let left = exact_point(left);
     let right = exact_point(right);
-    point2_equal(&left, &right).value().unwrap_or(false)
+    point2_equal_with_policy(&left, &right, PredicatePolicy)
+        .value()
+        .unwrap_or(false)
 }
 
 fn exact_point(point: &ParsedPoint2) -> Point2 {

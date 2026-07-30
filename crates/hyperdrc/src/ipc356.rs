@@ -413,7 +413,7 @@ impl Ipc356DiameterStats {
         match &point.diameter {
             Some(diameter) => {
                 self.diameter_records += 1;
-                if diameter <= &Scalar::zero() {
+                if crate::scalar::le(diameter, &Scalar::zero()) {
                     self.non_positive_diameter_records += 1;
                 }
             }
@@ -427,35 +427,79 @@ impl Ipc356GeometryStats {
         self.point_records += 1;
         self.min_x = Some(self.min_x.as_ref().map_or_else(
             || point.location[0].clone(),
-            |value| value.min(&point.location[0]).clone(),
+            |value| {
+                hyperlimit::real_min_with_policy(
+                    value,
+                    &point.location[0],
+                    hyperlimit::PredicatePolicy,
+                )
+                .value()
+                .expect("parsed IPC-D-356 coordinates have a decidable minimum")
+                .clone()
+            },
         ));
         self.max_x = Some(self.max_x.as_ref().map_or_else(
             || point.location[0].clone(),
-            |value| value.max(&point.location[0]).clone(),
+            |value| {
+                hyperlimit::real_max_with_policy(
+                    value,
+                    &point.location[0],
+                    hyperlimit::PredicatePolicy,
+                )
+                .value()
+                .expect("parsed IPC-D-356 coordinates have a decidable maximum")
+                .clone()
+            },
         ));
         self.min_y = Some(self.min_y.as_ref().map_or_else(
             || point.location[1].clone(),
-            |value| value.min(&point.location[1]).clone(),
+            |value| {
+                hyperlimit::real_min_with_policy(
+                    value,
+                    &point.location[1],
+                    hyperlimit::PredicatePolicy,
+                )
+                .value()
+                .expect("parsed IPC-D-356 coordinates have a decidable minimum")
+                .clone()
+            },
         ));
         self.max_y = Some(self.max_y.as_ref().map_or_else(
             || point.location[1].clone(),
-            |value| value.max(&point.location[1]).clone(),
+            |value| {
+                hyperlimit::real_max_with_policy(
+                    value,
+                    &point.location[1],
+                    hyperlimit::PredicatePolicy,
+                )
+                .value()
+                .expect("parsed IPC-D-356 coordinates have a decidable maximum")
+                .clone()
+            },
         ));
         if let Some(diameter) = point
             .diameter
             .as_ref()
-            .filter(|diameter| *diameter > &Scalar::zero())
+            .filter(|diameter| crate::scalar::gt(diameter, &Scalar::zero()))
         {
-            self.min_positive_diameter = Some(
-                self.min_positive_diameter
-                    .as_ref()
-                    .map_or_else(|| diameter.clone(), |value| value.min(diameter).clone()),
-            );
-            self.max_positive_diameter = Some(
-                self.max_positive_diameter
-                    .as_ref()
-                    .map_or_else(|| diameter.clone(), |value| value.max(diameter).clone()),
-            );
+            self.min_positive_diameter = Some(self.min_positive_diameter.as_ref().map_or_else(
+                || diameter.clone(),
+                |value| {
+                    hyperlimit::real_min_with_policy(value, diameter, hyperlimit::PredicatePolicy)
+                        .value()
+                        .expect("parsed IPC-D-356 diameters have a decidable minimum")
+                        .clone()
+                },
+            ));
+            self.max_positive_diameter = Some(self.max_positive_diameter.as_ref().map_or_else(
+                || diameter.clone(),
+                |value| {
+                    hyperlimit::real_max_with_policy(value, diameter, hyperlimit::PredicatePolicy)
+                        .value()
+                        .expect("parsed IPC-D-356 diameters have a decidable maximum")
+                        .clone()
+                },
+            ));
         }
     }
 }

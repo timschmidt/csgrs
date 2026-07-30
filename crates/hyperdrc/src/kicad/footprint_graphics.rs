@@ -5,11 +5,10 @@
 //! are not expressible as ordinary pads. These graphics are parsed as unnetted
 //! copper so existing clearance and manufacturability checks can see them.
 
-use geo::Polygon;
-
 use crate::LayerMetadata;
 use crate::geometry::{
-    arc_line_polygons, bezier_line_polygons, line_polygon, polygons_to_profile, transform_polygon,
+    Polygon, arc_line_polygons, bezier_line_polygons, line_polygon, polygons_to_profile,
+    transform_polygon,
 };
 use crate::sexp::Sexp;
 
@@ -394,7 +393,7 @@ fn push_graphic_features(
                 layer: layer.clone(),
                 net: None,
                 kind,
-                sketch: polygons_to_profile(
+                region: polygons_to_profile(
                     vec![polygon.clone()],
                     Some(LayerMetadata {
                         name: metadata_name.to_string(),

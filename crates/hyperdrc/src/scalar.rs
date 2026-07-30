@@ -6,9 +6,72 @@
 
 use hyperreal::{Rational, Real};
 use serde::{Deserialize, Deserializer};
+use std::cmp::Ordering;
+
+use hyperlimit::{PredicatePolicy, Sign};
 
 /// HyperDRC's sole internal scalar type.
 pub type Scalar = Real;
+
+/// Compare two internal scalars through the workspace predicate policy.
+pub(crate) fn compare(left: &Scalar, right: &Scalar) -> Option<Ordering> {
+    compare_with_policy(left, right, hyperlimit::PredicatePolicy)
+}
+
+/// Compare two internal scalars through an explicit predicate policy.
+pub(crate) fn compare_with_policy(
+    left: &Scalar,
+    right: &Scalar,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    hyperlimit::compare_reals_with_policy(left, right, policy).value()
+}
+
+/// Classify an internal scalar sign through the workspace predicate policy.
+pub(crate) fn sign(value: &Scalar) -> Option<Sign> {
+    sign_with_policy(value, hyperlimit::PredicatePolicy)
+}
+
+/// Classify an internal scalar sign through an explicit predicate policy.
+pub(crate) fn sign_with_policy(value: &Scalar, policy: PredicatePolicy) -> Option<Sign> {
+    hyperlimit::classify_real_sign_with_policy(value, policy).value()
+}
+
+/// Whether two internal scalars are certified equal under the workspace policy.
+pub(crate) fn eq(left: &Scalar, right: &Scalar) -> bool {
+    compare(left, right) == Some(Ordering::Equal)
+}
+
+/// Whether two internal scalars are certified unequal under the workspace policy.
+pub(crate) fn ne(left: &Scalar, right: &Scalar) -> bool {
+    matches!(
+        compare(left, right),
+        Some(Ordering::Less | Ordering::Greater)
+    )
+}
+
+/// Whether `left < right` is certified under the workspace policy.
+pub(crate) fn lt(left: &Scalar, right: &Scalar) -> bool {
+    compare(left, right) == Some(Ordering::Less)
+}
+
+/// Whether `left <= right` is certified under the workspace policy.
+pub(crate) fn le(left: &Scalar, right: &Scalar) -> bool {
+    matches!(compare(left, right), Some(Ordering::Less | Ordering::Equal))
+}
+
+/// Whether `left > right` is certified under the workspace policy.
+pub(crate) fn gt(left: &Scalar, right: &Scalar) -> bool {
+    compare(left, right) == Some(Ordering::Greater)
+}
+
+/// Whether `left >= right` is certified under the workspace policy.
+pub(crate) fn ge(left: &Scalar, right: &Scalar) -> bool {
+    matches!(
+        compare(left, right),
+        Some(Ordering::Greater | Ordering::Equal)
+    )
+}
 
 /// Parse a source decimal directly into the exact scalar domain.
 ///
@@ -49,6 +112,16 @@ fn rational_power_of_ten(mut exponent: u32) -> Rational {
 /// Construct an exact scalar from a trusted decimal literal.
 pub fn scalar(token: &str) -> Scalar {
     parse_source_scalar(token).expect("trusted HyperDRC scalar literal must be a rational")
+}
+
+/// Divide an internal scalar by the exact, nonzero integer two.
+///
+/// Keeping this invariant operation infallible prevents callers from silently
+/// discarding geometry through a `Real` division error branch that cannot be
+/// reached for this denominator.
+pub(crate) fn half(value: &Scalar) -> Scalar {
+    (value.clone() / Scalar::from(2_u8))
+        .expect("division by the exact nonzero scalar two cannot fail")
 }
 
 /// Deserialize an optional JSON number directly into the exact scalar domain.

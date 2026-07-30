@@ -42,16 +42,17 @@ pub(super) fn maximum_point_spread(
         .map(|(exact, report)| ExactInputPoint { exact, report })
         .collect::<Vec<_>>();
     points.sort_by(|left, right| {
-        left.exact[0]
-            .partial_cmp(&right.exact[0])
+        crate::scalar::compare(&left.exact[0], &right.exact[0])
             .expect("exact point x coordinates must be comparable")
             .then_with(|| {
-                left.exact[1]
-                    .partial_cmp(&right.exact[1])
+                crate::scalar::compare(&left.exact[1], &right.exact[1])
                     .expect("exact point y coordinates must be comparable")
             })
     });
-    points.dedup_by(|left, right| left.exact == right.exact);
+    points.dedup_by(|left, right| {
+        crate::scalar::eq(&left.exact[0], &right.exact[0])
+            && crate::scalar::eq(&left.exact[1], &right.exact[1])
+    });
 
     let hull = convex_hull(points);
     let hull_points = hull.len();
@@ -112,20 +113,21 @@ fn hull_diameter(hull: &[ExactInputPoint]) -> (Scalar, Option<[[f64; 2]; 2]>, us
 
             for index in 0..count {
                 let next = (index + 1) % count;
-                while triangle_area2(&hull[index], &hull[next], &hull[(antipodal + 1) % count])
-                    > triangle_area2(&hull[index], &hull[next], &hull[antipodal])
-                {
+                while crate::scalar::gt(
+                    &triangle_area2(&hull[index], &hull[next], &hull[(antipodal + 1) % count]),
+                    &triangle_area2(&hull[index], &hull[next], &hull[antipodal]),
+                ) {
                     antipodal = (antipodal + 1) % count;
                     caliper_steps += 1;
                 }
 
                 let index_distance = squared_distance(&hull[index], &hull[antipodal]);
-                if index_distance > maximum_squared {
+                if crate::scalar::gt(&index_distance, &maximum_squared) {
                     maximum_squared = index_distance;
                     endpoints = Some([hull[index].report, hull[antipodal].report]);
                 }
                 let next_distance = squared_distance(&hull[next], &hull[antipodal]);
-                if next_distance > maximum_squared {
+                if crate::scalar::gt(&next_distance, &maximum_squared) {
                     maximum_squared = next_distance;
                     endpoints = Some([hull[next].report, hull[antipodal].report]);
                 }
@@ -133,7 +135,9 @@ fn hull_diameter(hull: &[ExactInputPoint]) -> (Scalar, Option<[[f64; 2]; 2]>, us
             }
 
             (
-                maximum_squared.sqrt().unwrap_or_else(|_| Scalar::zero()),
+                maximum_squared
+                    .sqrt()
+                    .expect("a squared exact point distance has a real square root"),
                 endpoints,
                 caliper_steps,
             )
@@ -159,13 +163,13 @@ fn orientation_is_nonpositive(
     left: &ExactInputPoint,
     right: &ExactInputPoint,
 ) -> bool {
-    cross(origin, left, right) <= Scalar::zero()
+    crate::scalar::le(&cross(origin, left, right), &Scalar::zero())
 }
 
 fn distance(left: &ExactInputPoint, right: &ExactInputPoint) -> Scalar {
     squared_distance(left, right)
         .sqrt()
-        .unwrap_or_else(|_| Scalar::zero())
+        .expect("a squared exact point distance has a real square root")
 }
 
 fn squared_distance(left: &ExactInputPoint, right: &ExactInputPoint) -> Scalar {

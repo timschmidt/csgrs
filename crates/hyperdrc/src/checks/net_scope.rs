@@ -132,7 +132,10 @@ impl RegionBounds {
         let (Ok(x), Ok(y)) = (Scalar::try_from(point[0]), Scalar::try_from(point[1])) else {
             return false;
         };
-        x >= self.min_x && x <= self.max_x && y >= self.min_y && y <= self.max_y
+        crate::scalar::ge(&x, &self.min_x)
+            && crate::scalar::le(&x, &self.max_x)
+            && crate::scalar::ge(&y, &self.min_y)
+            && crate::scalar::le(&y, &self.max_y)
     }
 }
 
@@ -143,7 +146,9 @@ fn region_bounds(region: &NetClassRegionConfig) -> Option<RegionBounds> {
         max_x: region.max_x.clone()?,
         max_y: region.max_y.clone()?,
     };
-    (bounds.min_x <= bounds.max_x && bounds.min_y <= bounds.max_y).then_some(bounds)
+    (crate::scalar::le(&bounds.min_x, &bounds.max_x)
+        && crate::scalar::le(&bounds.min_y, &bounds.max_y))
+    .then_some(bounds)
 }
 
 #[cfg(test)]
@@ -217,7 +222,7 @@ mod tests {
             layer: layer.to_string(),
             net: Some(net.to_string()),
             kind: CopperKind::Segment,
-            sketch: polygons_to_profile(vec![rect_polygon(location, [0.2, 0.2], 0.0)], None),
+            region: polygons_to_profile(vec![rect_polygon(location, [0.2, 0.2], 0.0)], None),
             location: [
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),

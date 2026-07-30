@@ -8,9 +8,6 @@
 //! inference, copper-area proxies, and via-count rules are suspect near heat
 //! spreaders, enclosures, unusual airflow, and package-specific requirements.
 
-use csgrs::{csg::CSG, sketch::Profile};
-use geo::BoundingRect;
-
 use crate::checks::distance::{polygon_boundaries_within_scalar, polygon_boundary_distance_scalar};
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::spread::maximum_point_spread;
@@ -18,7 +15,7 @@ use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
 ///
@@ -58,8 +55,8 @@ pub fn thermal_relief_readiness(
             }
 
             let overlap = match intersection_for_check(
-                &anchor.sketch,
-                &zone.sketch,
+                &anchor.region,
+                &zone.region,
                 "thermal-relief-readiness",
                 vec![anchor.layer.clone()],
             ) {
@@ -192,7 +189,7 @@ pub fn thermal_via_distribution_readiness(
     minimum_spread: &Scalar,
     anchor_tolerance: &Scalar,
 ) -> Vec<Violation> {
-    if minimum_vias < 2 || minimum_spread <= &Scalar::zero() {
+    if minimum_vias < 2 || crate::scalar::le(minimum_spread, &Scalar::zero()) {
         return Vec::new();
     }
 
@@ -247,7 +244,7 @@ pub fn thermal_via_distribution_readiness(
             spread.caliper_steps,
             spread.distance
         );
-        if &spread.distance >= minimum_spread {
+        if crate::scalar::ge(&spread.distance, minimum_spread) {
             continue;
         }
 
@@ -312,16 +309,16 @@ pub fn thermal_pad_via_readiness(
         if !looks_ground_net(net) && !looks_high_current_net(net) {
             continue;
         }
-        let Some((min_dimension, max_dimension)) = bounding_dimensions_scalar(&pad.sketch) else {
+        let Some((min_dimension, max_dimension)) = bounding_dimensions_scalar(&pad.region) else {
             continue;
         };
-        if &min_dimension < minimum_pad_dimension {
+        if crate::scalar::lt(&min_dimension, minimum_pad_dimension) {
             continue;
         }
         let Ok(aspect_ratio) = max_dimension / min_dimension else {
             continue;
         };
-        if aspect_ratio > crate::scalar::scalar("3") {
+        if crate::scalar::gt(&aspect_ratio, &crate::scalar::scalar("3")) {
             continue;
         }
 
@@ -335,8 +332,8 @@ pub fn thermal_pad_via_readiness(
             }
             exact_via_checks += 1;
             let overlap = match intersection_for_check(
-                &via.sketch,
-                &pad.sketch,
+                &via.region,
+                &pad.region,
                 "thermal-pad-via-readiness",
                 vec![pad.layer.clone()],
             ) {
@@ -436,7 +433,7 @@ pub fn thermal_copper_area_readiness(
         let has_nearby_same_net_zone = zone_candidates.into_iter().any(|zone_index| {
             same_net_zones[zone_index].net == feature.net
                 && point_distance_scalar(&feature.location, &same_net_zones[zone_index].location)
-                    .is_some_and(|distance| &distance <= search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, search_radius))
         });
         if has_nearby_same_net_zone {
             continue;
@@ -509,13 +506,13 @@ pub fn hot_component_spacing_readiness(
             if hot.net == neighbor.net || neighbor.net.as_deref().is_some_and(looks_ground_net) {
                 continue;
             }
-            if !sketches_within_clearance(&hot.sketch, &neighbor.sketch, broad_phase_spacing) {
+            if !regiones_within_clearance(&hot.region, &neighbor.region, broad_phase_spacing) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &hot.sketch,
+                &hot.region,
                 spacing.clone(),
                 "hot-component-spacing-readiness",
                 vec![hot.layer.clone()],
@@ -525,7 +522,7 @@ pub fn hot_component_spacing_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "hot-component-spacing-readiness",
                 vec![hot.layer.clone()],
             ) {
@@ -535,10 +532,10 @@ pub fn hot_component_spacing_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &hot.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &hot.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= spacing);
+                .is_some_and(|distance| crate::scalar::le(&distance, spacing));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -594,18 +591,15 @@ pub fn thermal_mechanical_keepout_readiness(
         .filter(|drill| !drill.plated)
         .collect::<Vec<_>>();
     mechanical_drills.sort_by(|left, right| {
-        left.location[0]
-            .partial_cmp(&right.location[0])
-            .unwrap_or(std::cmp::Ordering::Equal)
+        crate::scalar::compare(&left.location[0], &right.location[0])
+            .expect("exact drill x coordinates must be comparable")
             .then_with(|| {
-                left.location[1]
-                    .partial_cmp(&right.location[1])
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.location[1], &right.location[1])
+                    .expect("exact drill y coordinates must be comparable")
             })
             .then_with(|| {
-                left.diameter
-                    .partial_cmp(&right.diameter)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.diameter, &right.diameter)
+                    .expect("exact drill diameters must be comparable")
             })
     });
 
@@ -627,9 +621,7 @@ pub fn thermal_mechanical_keepout_readiness(
     let mut exact_pair_count = 0_usize;
 
     for drill in mechanical_drills {
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let keepout_radius = drill_radius + keepout;
         let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
         let center = drill.location_f64_compatibility_required();
@@ -644,11 +636,12 @@ pub fn thermal_mechanical_keepout_readiness(
         if candidates.is_empty() {
             continue;
         }
-        let keepout_sketch = PcbSketch::new(
-            Profile::circle(keepout_radius, 64).translate(
+        let keepout_region = PcbRegion::new(
+            crate::translated_circle(
+                keepout_radius,
+                64,
                 drill.location[0].clone(),
                 drill.location[1].clone(),
-                Scalar::zero(),
             ),
             Some(LayerMetadata {
                 name: "thermal mechanical keepout".to_string(),
@@ -659,8 +652,8 @@ pub fn thermal_mechanical_keepout_readiness(
             let hot = hot_features[hot_index];
             exact_pair_count += 1;
             let overlap = match intersection_for_check(
-                &keepout_sketch,
-                &hot.sketch,
+                &keepout_region,
+                &hot.region,
                 "thermal-mechanical-keepout-readiness",
                 vec![hot.layer.clone()],
             ) {
@@ -670,8 +663,8 @@ pub fn thermal_mechanical_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
-                    &keepout_sketch.to_multipolygon(),
-                    &hot.sketch.to_multipolygon(),
+                    &keepout_region.to_multipolygon(),
+                    &hot.region.to_multipolygon(),
                     &Scalar::zero(),
                 );
             if shapes.is_empty() && !fallback_hit {
@@ -740,22 +733,22 @@ fn copper_features_touch_scalar(
     requested_check: &str,
 ) -> Result<bool, Box<Violation>> {
     let overlap = intersection_for_check(
-        &left.sketch,
-        &right.sketch,
+        &left.region,
+        &right.region,
         requested_check,
         vec![left.layer.clone()],
     )?;
     Ok(!overlap.is_empty()
         || polygon_boundary_distance_scalar(
-            &left.sketch.to_multipolygon(),
-            &right.sketch.to_multipolygon(),
+            &left.region.to_multipolygon(),
+            &right.region.to_multipolygon(),
         )
-        .is_some_and(|distance| &distance <= tolerance))
+        .is_some_and(|distance| crate::scalar::le(&distance, tolerance)))
 }
 
 fn feature_contains_point_scalar(feature: &CopperFeature, point: &[Scalar; 2]) -> bool {
     feature
-        .sketch
+        .region
         .contains_xy(point[0].clone(), point[1].clone())
         == Some(true)
 }
@@ -782,17 +775,17 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn bounding_dimensions_scalar(sketch: &PcbSketch) -> Option<(Scalar, Scalar)> {
-    let (width, height) = if let Some(bounds) = sketch.exact_bounds() {
+fn bounding_dimensions_scalar(region: &PcbRegion) -> Option<(Scalar, Scalar)> {
+    let (width, height) = if let Some(bounds) = region.exact_bounds() {
         (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1])
     } else {
-        let bounds = sketch.geometry().bounding_rect()?;
+        let bounds = region.geometry().bounding_rect()?;
         (
             Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?,
             Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?,
         )
     };
-    Some(if width <= height {
+    Some(if crate::scalar::le(&width, &height) {
         (width, height)
     } else {
         (height, width)
@@ -805,7 +798,7 @@ fn point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scal
     (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
-fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
+fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64) -> bool {
     let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
@@ -820,7 +813,7 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return true;
     };
 
@@ -1408,7 +1401,7 @@ mod tests {
                 crate::geometry::exact_real((min_x + max_x) / 2.0),
                 crate::geometry::exact_real((min_y + max_y) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
                     [max_x - min_x, max_y - min_y],
@@ -1445,7 +1438,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),

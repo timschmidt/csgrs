@@ -4,9 +4,7 @@
 //! project settings. Until glyph rendering is modeled, readiness checks use a
 //! deterministic bounding box so copper/text presence is not silently dropped.
 
-use geo::Polygon;
-
-use crate::geometry::{rect_polygon, transform_polygon};
+use crate::geometry::{Polygon, rect_polygon, transform_polygon};
 use crate::sexp::Sexp;
 
 use super::xy_from_child;

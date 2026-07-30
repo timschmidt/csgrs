@@ -9,16 +9,13 @@
 //! for true net connectivity. Verify any release-blocking result against KiCad
 //! DRC, generated CAM data, and electrical test outputs.
 
-use csgrs::csg::CSG;
-use csgrs::sketch::Profile;
 use std::collections::BTreeMap;
 
-use geo::BoundingRect;
-
+use crate::geometry::Rect;
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 use super::intersection_for_check;
 use super::spatial::CopperSpatialIndex;
@@ -35,12 +32,12 @@ pub fn different_net_short_readiness(
     selected_layers: &[String],
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, geo::Rect<f64>)>> = BTreeMap::new();
+    let mut by_layer: BTreeMap<String, Vec<(&CopperFeature, Rect<f64>)>> = BTreeMap::new();
     for feature in selected_copper_features(board, selected_layers)
         .into_iter()
         .filter(|feature| feature.net.is_some())
     {
-        let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+        let Some(bounds) = feature.region.geometry().bounding_rect() else {
             continue;
         };
         by_layer
@@ -77,8 +74,8 @@ pub fn different_net_short_readiness(
                 }
 
                 let overlap = match intersection_for_check(
-                    &left.sketch,
-                    &right.sketch,
+                    &left.region,
+                    &right.region,
                     "different-net-short-readiness",
                     vec![left.layer.clone()],
                 ) {
@@ -157,7 +154,7 @@ pub fn same_net_drill_break_readiness(
             continue;
         };
         let drill_radius = drill_diameter / 2.0;
-        let mut drill_sketch = None;
+        let mut drill_region = None;
 
         for candidate_index in copper_index
             .all_layers_near_circle(drill.location_f64_compatibility_required(), drill_radius)
@@ -165,13 +162,13 @@ pub fn same_net_drill_break_readiness(
             candidate_pairs += 1;
             let feature = copper[candidate_index];
 
-            let drill_sketch = drill_sketch.get_or_insert_with(|| {
+            let drill_region = drill_region.get_or_insert_with(|| {
                 keepouts_built += 1;
-                drill_keepout_sketch(drill)
+                drill_keepout_region(drill)
             });
             let overlap = match intersection_for_check(
-                drill_sketch,
-                &feature.sketch,
+                drill_region,
+                &feature.region,
                 "same-net-drill-break-readiness",
                 vec![feature.layer.clone()],
             ) {
@@ -223,14 +220,14 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn drill_keepout_sketch(drill: &DrillFeature) -> PcbSketch {
-    let radius = (drill.diameter.clone() / Scalar::from(2))
-        .expect("positive integer division remains exact");
-    PcbSketch::new(
-        Profile::circle(radius, 32).translate(
+fn drill_keepout_region(drill: &DrillFeature) -> PcbRegion {
+    let radius = crate::scalar::half(&drill.diameter);
+    PcbRegion::new(
+        crate::translated_circle(
+            radius,
+            32,
             drill.location[0].clone(),
             drill.location[1].clone(),
-            Scalar::zero(),
         ),
         Some(LayerMetadata {
             name: "non-plated drill continuity keepout".to_string(),
@@ -238,7 +235,7 @@ fn drill_keepout_sketch(drill: &DrillFeature) -> PcbSketch {
     )
 }
 
-fn rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>) -> bool {
+fn rects_overlap(left: &Rect<f64>, right: &Rect<f64>) -> bool {
     left.min().x <= right.max().x
         && left.max().x >= right.min().x
         && left.min().y <= right.max().y
@@ -521,7 +518,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("segment should be valid")],
                 Some(LayerMetadata {
                     name: "segment".to_string(),
@@ -539,7 +536,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "zone".to_string(),
@@ -566,7 +563,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, size, 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),

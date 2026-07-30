@@ -1972,7 +1972,10 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                     Some(column) if parse_positive_dimension(cell(row, column)).is_some() => {
                         if parse_positive_dimension(cell(row, column))
                             .is_some_and(|height| {
-                                height > crate::scalar::scalar(TALL_COMPONENT_HEIGHT_MM)
+                                crate::scalar::gt(
+                                    &height,
+                                    &crate::scalar::scalar(TALL_COMPONENT_HEIGHT_MM),
+                                )
                             })
                         {
                             analysis
@@ -2360,7 +2363,9 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                     continue;
                 };
-                if matches!(label, "x" | "y") && numeric.abs() > crate::scalar::scalar("5000") {
+                if matches!(label, "x" | "y")
+                    && crate::scalar::gt(&numeric.abs(), &crate::scalar::scalar("5000"))
+                {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
                         Some(format!(
@@ -2371,8 +2376,8 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                 }
                 if label == "rotation"
-                    && (numeric < crate::scalar::scalar("-360")
-                        || numeric > crate::scalar::scalar("360"))
+                    && (crate::scalar::lt(&numeric, &crate::scalar::scalar("-360"))
+                        || crate::scalar::gt(&numeric, &crate::scalar::scalar("360")))
                 {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
@@ -3250,7 +3255,7 @@ fn parse_positive_dimension(value: &str) -> Option<Scalar> {
         .trim_end_matches("MM")
         .to_string();
     let numeric = crate::scalar::parse_source_scalar(&numeric)?;
-    (numeric > Scalar::zero()).then_some(numeric)
+    crate::scalar::gt(&numeric, &Scalar::zero()).then_some(numeric)
 }
 
 fn parse_non_negative_money(value: &str) -> Option<Scalar> {
@@ -3259,7 +3264,7 @@ fn parse_non_negative_money(value: &str) -> Option<Scalar> {
         .trim_start_matches('$')
         .replace([',', '€', '£'], "");
     let numeric = crate::scalar::parse_source_scalar(&compact)?;
-    (numeric >= Scalar::zero()).then_some(numeric)
+    crate::scalar::ge(&numeric, &Scalar::zero()).then_some(numeric)
 }
 
 fn normalize_side(side: &str) -> &'static str {

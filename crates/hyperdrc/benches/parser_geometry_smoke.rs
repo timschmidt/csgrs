@@ -4006,7 +4006,7 @@ fn bench_segment_on_layer(
             hyperdrc::Scalar::try_from((start[1] + end[1]) / 2.0)
                 .expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![line_polygon(start, end, width).expect("benchmark segment should be valid")],
             Some(LayerMetadata {
                 name: "bench segment".to_string(),
@@ -4048,7 +4048,7 @@ fn bench_unnetted_pad(location: [f64; 2], size: [f64; 2]) -> CopperFeature {
             hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
             hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench unnetted pad".to_string(),
@@ -4066,7 +4066,7 @@ fn bench_pad_on_layer(layer: &str, net: &str, location: [f64; 2], size: [f64; 2]
             hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
             hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench pad".to_string(),
@@ -4084,7 +4084,7 @@ fn bench_fiducial(location: [f64; 2], diameter: f64) -> CopperFeature {
             hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
             hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![rect_polygon(location, [diameter, diameter], 0.0)],
             Some(LayerMetadata {
                 name: "bench fiducial".to_string(),
@@ -4102,7 +4102,7 @@ fn bench_via(net: &str, location: [f64; 2], diameter: f64) -> CopperFeature {
             hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
             hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![circle_polygon(location, diameter / 2.0, 32)],
             Some(LayerMetadata {
                 name: "bench via".to_string(),
@@ -4144,7 +4144,7 @@ fn bench_zone(net: &str, location: [f64; 2], size: [f64; 2]) -> CopperFeature {
             hyperdrc::Scalar::try_from(location[0]).expect("finite benchmark coordinate"),
             hyperdrc::Scalar::try_from(location[1]).expect("finite benchmark coordinate"),
         ],
-        sketch: polygons_to_profile(
+        region: polygons_to_profile(
             vec![rect_polygon(location, size, 0.0)],
             Some(LayerMetadata {
                 name: "bench zone".to_string(),

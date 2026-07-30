@@ -7,15 +7,13 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use geo::BoundingRect;
-
 use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::{intersection_for_check, offset_for_check};
-use crate::geometry::multipolygon_to_shapes_scalar;
+use crate::geometry::{Rect, multipolygon_to_shapes_scalar};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbSketch, PcbSketchExt, Scalar};
+use crate::{PcbRegion, PcbRegionExt, Scalar};
 
 const DENSE_PAD_CLUSTER_MIN_PADS: usize = 16;
 
@@ -80,7 +78,7 @@ pub fn local_fiducial_readiness(
             .filter(|&index| {
                 exact_distance_count += 1;
                 exact_distance(&fiducials[index].location, &cluster_center)
-                    .is_some_and(|distance| &distance <= search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, search_radius))
             })
             .count();
         if nearby_fiducials >= 2 {
@@ -150,7 +148,7 @@ pub fn dense_pad_escape_readiness(
         let has_escape_via = via_candidates.into_iter().any(|index| {
             exact_distance_count += 1;
             exact_distance(&vias[index].location, &cluster_center)
-                .is_some_and(|distance| &distance <= via_search_radius)
+                .is_some_and(|distance| crate::scalar::le(&distance, via_search_radius))
         });
         if has_escape_via {
             continue;
@@ -228,7 +226,7 @@ fn dense_pad_via_spacing_readiness_with_stats(
     min_via_clearance: &Scalar,
     min_area: &Scalar,
 ) -> (Vec<Violation>, DensePadViaSpacingStats) {
-    if min_via_clearance <= &Scalar::zero() {
+    if crate::scalar::le(min_via_clearance, &Scalar::zero()) {
         return (Vec::new(), DensePadViaSpacingStats::default());
     }
 
@@ -269,7 +267,7 @@ fn dense_pad_via_spacing_readiness_with_stats(
             .filter(|via| {
                 exact_via_distance_count += 1;
                 exact_distance(&via.location, &cluster_center)
-                    .is_some_and(|distance| &distance <= via_search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, via_search_radius))
             })
         {
             let Some((pad, clearance, pad_candidates)) =
@@ -279,12 +277,12 @@ fn dense_pad_via_spacing_readiness_with_stats(
             };
             pad_candidate_count += pad_candidates;
             exact_pad_clearance_count += pad_candidates;
-            if &clearance >= min_via_clearance {
+            if crate::scalar::ge(&clearance, min_via_clearance) {
                 continue;
             }
 
             let keepout = match offset_for_check(
-                &via.sketch,
+                &via.region,
                 min_via_clearance.clone(),
                 "dense-pad-via-spacing-readiness",
                 vec![layer.clone(), via.layer.clone()],
@@ -304,7 +302,7 @@ fn dense_pad_via_spacing_readiness_with_stats(
             };
             let overlap = match intersection_for_check(
                 &keepout,
-                &pad.sketch,
+                &pad.region,
                 "dense-pad-via-spacing-readiness",
                 vec![layer.clone(), via.layer.clone()],
             ) {
@@ -379,7 +377,7 @@ pub fn dense_pad_mask_bridge_readiness(
     pitch_threshold: &Scalar,
     min_mask_web: &Scalar,
 ) -> Vec<Violation> {
-    if min_mask_web <= &Scalar::zero() {
+    if crate::scalar::le(min_mask_web, &Scalar::zero()) {
         return Vec::new();
     }
 
@@ -489,7 +487,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
         return false;
     }
 
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return false;
     };
     let width = bounds.max().x - bounds.min().x;
@@ -501,7 +499,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
 }
 
 fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: &Scalar) -> Option<Scalar> {
-    if threshold <= &Scalar::zero() {
+    if crate::scalar::le(threshold, &Scalar::zero()) {
         return None;
     }
 
@@ -523,8 +521,10 @@ fn minimum_feature_pitch_within(features: &[&CopperFeature], threshold: &Scalar)
                     let Some(pitch) = exact_distance(&feature.location, &candidate.location) else {
                         continue;
                     };
-                    if &pitch <= threshold
-                        && min_pitch.as_ref().is_none_or(|current| &pitch < current)
+                    if crate::scalar::le(&pitch, threshold)
+                        && min_pitch
+                            .as_ref()
+                            .is_none_or(|current| crate::scalar::lt(&pitch, current))
                     {
                         min_pitch = Some(pitch);
                     }
@@ -552,7 +552,7 @@ fn nearest_feature_pair_within<'a>(
     usize,
     usize,
 ) {
-    if threshold <= &Scalar::zero() {
+    if crate::scalar::le(threshold, &Scalar::zero()) {
         return (None, 0, 0);
     }
 
@@ -562,7 +562,7 @@ fn nearest_feature_pair_within<'a>(
     let mut candidate_pairs = 0_usize;
     let mut exact_pairs = 0_usize;
     for (left_index, left) in features.iter().enumerate() {
-        let Some(left_bounds) = left.sketch.geometry().bounding_rect() else {
+        let Some(left_bounds) = left.region.geometry().bounding_rect() else {
             continue;
         };
         for right_index in index.same_layer_near_feature(left, broad_threshold) {
@@ -571,20 +571,22 @@ fn nearest_feature_pair_within<'a>(
             }
             candidate_pairs += 1;
             let right = features[right_index];
-            let Some(right_bounds) = right.sketch.geometry().bounding_rect() else {
+            let Some(right_bounds) = right.region.geometry().bounding_rect() else {
                 continue;
             };
             if !rects_within_clearance(&left_bounds, &right_bounds, broad_threshold) {
                 continue;
             }
             exact_pairs += 1;
-            let clearance = copper_clearance(&left.sketch, &right.sketch);
-            if &clearance >= threshold {
+            let clearance = copper_clearance(&left.region, &right.region);
+            if crate::scalar::ge(&clearance, threshold) {
                 continue;
             }
             if nearest
                 .as_ref()
-                .is_none_or(|(_, _, current): &(_, _, Scalar)| &clearance < current)
+                .is_none_or(|(_, _, current): &(_, _, Scalar)| {
+                    crate::scalar::lt(&clearance, current)
+                })
             {
                 nearest = Some((*left, right, clearance));
             }
@@ -604,7 +606,7 @@ fn nearest_feature_pair_within<'a>(
     (nearest, candidate_pairs, exact_pairs)
 }
 
-fn rects_within_clearance(left: &geo::Rect<f64>, right: &geo::Rect<f64>, clearance: f64) -> bool {
+fn rects_within_clearance(left: &Rect<f64>, right: &Rect<f64>, clearance: f64) -> bool {
     left.min().x - clearance <= right.max().x
         && left.max().x + clearance >= right.min().x
         && left.min().y - clearance <= right.max().y
@@ -625,18 +627,17 @@ fn nearest_pad_to_via<'a>(
             let pad = pads[index];
             (
                 pad,
-                copper_clearance(&pad.sketch, &via.sketch),
+                copper_clearance(&pad.region, &via.region),
                 candidate_count,
             )
         })
         .min_by(|left, right| {
-            left.1
-                .partial_cmp(&right.1)
-                .unwrap_or(std::cmp::Ordering::Equal)
+            crate::scalar::compare(&left.1, &right.1)
+                .expect("exact pad clearances must be comparable")
         })
 }
 
-fn copper_clearance(left: &PcbSketch, right: &PcbSketch) -> Scalar {
+fn copper_clearance(left: &PcbRegion, right: &PcbRegion) -> Scalar {
     polygon_boundary_distance_scalar(&left.to_multipolygon(), &right.to_multipolygon())
         .unwrap_or_else(Scalar::zero)
 }
@@ -1065,7 +1066,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, [width, height], 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),
@@ -1083,7 +1084,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, [diameter, diameter], 0.0)],
                 Some(LayerMetadata {
                     name: "fiducial".to_string(),
@@ -1110,7 +1111,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "via".to_string(),

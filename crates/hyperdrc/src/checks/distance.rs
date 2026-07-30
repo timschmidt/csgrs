@@ -4,17 +4,19 @@
 //! fallbacks where two shapes are close but do not intersect.
 
 #[cfg(test)]
-use geo::Polygon;
-use geo::{Coord, LineString, MultiPolygon};
-use hyperlimit::{CircleSegmentRelation, Point2, SegmentIntersection, classify_circle_segment2};
+use crate::geometry::Polygon;
+use crate::geometry::{Coord, LineString, MultiPolygon};
+use hyperlimit::{
+    CircleSegmentRelation, Point2, PredicatePolicy, SegmentIntersection,
+    classify_circle_segment2_with_policy,
+};
 
 use crate::Scalar;
 use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
 
 /// Exact boundary distance over a finite polygon projection.
 ///
-/// The `geo` polygons are a named compatibility input from current rendering
-/// adapters. Every finite coordinate is lifted exactly as its IEEE-754 dyadic,
+/// Finite report coordinates are lifted exactly as their IEEE-754 dyadics,
 /// and all metric arithmetic after that boundary remains in [`Scalar`]. Empty
 /// or non-finite input has no distance and returns `None` instead of smuggling
 /// an infinity sentinel into the internal scalar domain.
@@ -186,14 +188,14 @@ fn point_segment_within_threshold_from_scalars(
     end: &[Scalar; 2],
     threshold: &Scalar,
 ) -> Option<bool> {
-    if threshold < &Scalar::zero() {
+    if crate::scalar::lt(threshold, &Scalar::zero()) {
         return Some(false);
     }
     let center = Point2::new(point[0].clone(), point[1].clone());
     let start = Point2::new(start[0].clone(), start[1].clone());
     let end = Point2::new(end[0].clone(), end[1].clone());
     let threshold_squared = threshold * threshold;
-    classify_circle_segment2(&center, &threshold_squared, &start, &end)
+    classify_circle_segment2_with_policy(&center, &threshold_squared, &start, &end, PredicatePolicy)
         .value()
         .map(|relation| relation != CircleSegmentRelation::Disjoint)
 }
@@ -274,7 +276,7 @@ impl PreparedBoundaryDistance {
         };
         let mut minimum_squared =
             lifted_segment_distance_squared(outer.first()?, indexed.first()?)?;
-        if minimum_squared == Scalar::zero() {
+        if crate::scalar::eq(&minimum_squared, &Scalar::zero()) {
             return Some(Scalar::zero());
         }
 
@@ -293,15 +295,17 @@ impl PreparedBoundaryDistance {
                         radius,
                     )
                     || lifted_segment_aabb_distance_squared(left_segment, right_segment)
-                        .is_some_and(|lower_bound| lower_bound >= minimum_squared)
+                        .is_some_and(|lower_bound| {
+                            crate::scalar::ge(&lower_bound, &minimum_squared)
+                        })
                 {
                     continue;
                 }
                 if let Some(distance) = lifted_segment_distance_squared(left_segment, right_segment)
-                    && distance < minimum_squared
+                    && crate::scalar::lt(&distance, &minimum_squared)
                 {
                     minimum_squared = distance;
-                    if minimum_squared == Scalar::zero() {
+                    if crate::scalar::eq(&minimum_squared, &Scalar::zero()) {
                         return Some(Scalar::zero());
                     }
                 }
@@ -319,7 +323,7 @@ fn conservative_sqrt_projection(squared: &Scalar) -> Option<f64> {
     );
     while provenance
         .lift_f64(projected)
-        .is_some_and(|lifted| lifted < *squared)
+        .is_some_and(|lifted| crate::scalar::lt(&lifted, squared))
     {
         projected = projected.next_up();
     }
@@ -365,7 +369,7 @@ impl LiftedSegment {
 }
 
 fn ordered_pair(left: &Scalar, right: &Scalar) -> Option<(Scalar, Scalar)> {
-    match left.partial_cmp(right)? {
+    match crate::scalar::compare(left, right)? {
         std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Some((left.clone(), right.clone())),
         std::cmp::Ordering::Greater => Some((right.clone(), left.clone())),
     }
@@ -386,11 +390,12 @@ fn exact_interval_gap(
     right_min: &Scalar,
     right_max: &Scalar,
 ) -> Option<Scalar> {
-    if left_max < right_min {
+    if crate::scalar::lt(left_max, right_min) {
         Some(right_min - left_max)
-    } else if right_max < left_min {
+    } else if crate::scalar::lt(right_max, left_min) {
         Some(left_min - right_max)
-    } else if left_min.partial_cmp(left_max).is_none() || right_min.partial_cmp(right_max).is_none()
+    } else if crate::scalar::compare(left_min, left_max).is_none()
+        || crate::scalar::compare(right_min, right_max).is_none()
     {
         None
     } else {
@@ -404,7 +409,14 @@ fn lifted_segment_distance_squared(left: &LiftedSegment, right: &LiftedSegment) 
     let b_start = Point2::new(right.start[0].clone(), right.start[1].clone());
     let b_end = Point2::new(right.end[0].clone(), right.end[1].clone());
     if !matches!(
-        hyperlimit::classify_segment_intersection(&a_start, &a_end, &b_start, &b_end).value(),
+        hyperlimit::classify_segment_intersection_with_policy(
+            &a_start,
+            &a_end,
+            &b_start,
+            &b_end,
+            PredicatePolicy,
+        )
+        .value(),
         Some(SegmentIntersection::Disjoint)
     ) {
         return Some(Scalar::zero());
@@ -428,16 +440,16 @@ fn point_segment_distance_squared_from_scalars(
     let dx = &end[0] - &start[0];
     let dy = &end[1] - &start[1];
     let length_squared = &dx * &dx + &dy * &dy;
-    if length_squared == Scalar::zero() {
+    if crate::scalar::eq(&length_squared, &Scalar::zero()) {
         return Some(scalar_point_distance_squared(point, start));
     }
 
     let point_dx = &point[0] - &start[0];
     let point_dy = &point[1] - &start[1];
     let numerator = point_dx * &dx + point_dy * &dy;
-    let t = if numerator <= Scalar::zero() {
+    let t = if crate::scalar::le(&numerator, &Scalar::zero()) {
         Scalar::zero()
-    } else if numerator >= length_squared {
+    } else if crate::scalar::ge(&numerator, &length_squared) {
         Scalar::one()
     } else {
         (numerator / &length_squared).ok()?
@@ -458,7 +470,11 @@ fn scalar_point_distance_squared(left: &[Scalar; 2], right: &[Scalar; 2]) -> Sca
 
 fn minimum_scalar(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
     match (left, right) {
-        (Some(left), Some(right)) => Some(if left <= right { left } else { right }),
+        (Some(left), Some(right)) => Some(if crate::scalar::le(&left, &right) {
+            left
+        } else {
+            right
+        }),
         (Some(value), None) | (None, Some(value)) => Some(value),
         (None, None) => None,
     }
@@ -650,14 +666,16 @@ fn segments_intersect_with_grid(
         return false;
     };
 
-    // Clearance geometry still arrives from `geo`/`csgrs` as finite f64 edge
+    // Clearance report geometry arrives as finite f64 edge
     // coordinates, but f64 must remain an I/O compatibility boundary rather
     // than a topology kernel. IEEE-754 coordinates are lifted to exact dyadic
     // `Real`s, then the closed-segment classifier routes orientation and
     // interval tests through `hyperlimit`. Combinatorial decisions use exact
     // predicates; approximate coordinates only describe inputs or report
     // metric magnitudes.
-    match hyperlimit::classify_segment_intersection(&a, &b, &c, &d).value() {
+    match hyperlimit::classify_segment_intersection_with_policy(&a, &b, &c, &d, PredicatePolicy)
+        .value()
+    {
         Some(SegmentIntersection::Disjoint) => false,
         Some(_) => true,
         // A strict predicate over lifted finite dyadics should decide. If a
@@ -711,7 +729,7 @@ fn exact_coords_equal_with_grid(
     let Some(right) = lift_coord(right, provenance) else {
         return false;
     };
-    hyperlimit::point2_equal(&left, &right)
+    hyperlimit::point2_equal_with_policy(&left, &right, PredicatePolicy)
         .value()
         .unwrap_or(false)
 }
@@ -759,7 +777,7 @@ fn coords_are_finite_3(first: Coord<f64>, second: Coord<f64>, third: Coord<f64>)
 
 #[cfg(test)]
 mod tests {
-    use geo::{Coord, LineString, MultiPolygon, Polygon};
+    use crate::geometry::{Coord, LineString, MultiPolygon, Polygon};
 
     use crate::geometry::{SourceGridFacts, SourceUnit};
 

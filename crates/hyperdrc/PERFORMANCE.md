@@ -48,7 +48,7 @@ hardening is not counted as a speedup.
 | Apache Parquet | `parquet_report` serializes the Arrow-shaped report; compression/encoding belongs to the library and was not reimplemented. |
 | Bentley, multidimensional binary search trees | The applicable associative-search idea is retained as private spatial broad phases. A k-d tree was not added alongside the existing conservative variable-radius grid because it would duplicate indexing without removing the exact narrow phase. |
 | Ericson, *Real-Time Collision Detection* | AABB rejection, uniform-grid candidates, and exact narrow-phase replay are retained throughout `checks::spatial`, `distance`, and geometry checks. |
-| Farin, CAGD | Bezier and arc construction is isolated in geometry/KiCad adapters; exact curve ownership is delegated to `hypercurve`. Flattened CAM checks do not reconstruct curves from polygons. |
+| Farin, CAGD | Bezier and arc construction is isolated in geometry/KiCad adapters; exact curve ownership is delegated to [Hypercurve](https://github.com/timschmidt/hypercurve). Flattened CAM checks do not reconstruct curves from polygons. |
 | GitHub workflow commands | `github_annotations` emits CI annotations from the already-built report; no analysis pass is repeated per sink. |
 | Hinnant, date algorithms | Date parsing and freshness evidence live in `date`/artifact checks. Date arithmetic is not a geometry hot path. |
 | KiCad S-expression format | `sexp` and `kicad` retain parsed board intent and exact decimal scalars. Parser throughput is measured, but replacing the format model with an ad-hoc scanner was rejected as an evidence loss. |

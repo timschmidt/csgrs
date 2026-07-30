@@ -4,25 +4,24 @@
 //! exact only for the narrow predicates they name, and callers still fall back
 //! to CSG for non-rectangular outlines, cutouts, or boundary candidates.
 
-use geo::BoundingRect;
 use hyperlimit::{PredicatePolicy, compare_reals_with_policy};
 
-use crate::geometry::{RuleGeometryProvenance, SourceGridFacts};
+use crate::geometry::{Rect, RuleGeometryProvenance, SourceGridFacts};
 use crate::kicad::CopperFeature;
 #[cfg(test)]
 use crate::kicad::DrillFeature;
-use crate::{PcbSketch, PcbSketchExt};
+use crate::{PcbRegion, PcbRegionExt};
 
 /// Return the board rectangle when the outline is one simple axis-aligned box.
-pub(super) fn axis_aligned_outline_rect(outline: &PcbSketch) -> Option<geo::Rect<f64>> {
+pub(super) fn axis_aligned_outline_rect(outline: &PcbRegion) -> Option<Rect<f64>> {
     axis_aligned_outline_rect_with_grid(outline, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
 }
 
 /// Return the board rectangle using retained source-grid facts for edge tests.
 pub(super) fn axis_aligned_outline_rect_with_grid(
-    outline: &PcbSketch,
+    outline: &PcbRegion,
     grid: SourceGridFacts,
-) -> Option<geo::Rect<f64>> {
+) -> Option<Rect<f64>> {
     let outline_geometry = outline.to_multipolygon();
     let [polygon] = outline_geometry.0.as_slice() else {
         return None;
@@ -52,7 +51,7 @@ pub(super) fn axis_aligned_outline_rect_with_grid(
 #[cfg(test)]
 pub(super) fn drill_keepout_inside_rect_with_grid(
     drill: &DrillFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     edge_clearance: f64,
     grid: SourceGridFacts,
 ) -> bool {
@@ -69,17 +68,17 @@ pub(super) fn drill_keepout_inside_rect_with_grid(
 }
 
 /// Return whether feature bounds are fully inside the rectangular board.
-pub(super) fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &geo::Rect<f64>) -> bool {
+pub(super) fn feature_bounds_inside_rect(feature: &CopperFeature, rect: &Rect<f64>) -> bool {
     feature_bounds_inside_rect_with_grid(feature, rect, SourceGridFacts::PRIMITIVE_FLOAT_EDGE)
 }
 
 /// Return whether feature bounds are inside a rectangle using retained grid facts.
 pub(super) fn feature_bounds_inside_rect_with_grid(
     feature: &CopperFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return false;
     };
     let min = rect.min();
@@ -98,7 +97,7 @@ pub(super) fn feature_bounds_inside_rect_with_grid(
 /// Return whether feature bounds are strictly outside an edge-clearance band.
 pub(super) fn feature_bounds_inside_rect_margin(
     feature: &CopperFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     margin: f64,
 ) -> bool {
     feature_bounds_inside_rect_margin_with_grid(
@@ -112,11 +111,11 @@ pub(super) fn feature_bounds_inside_rect_margin(
 /// Return whether feature bounds clear an edge band using retained grid facts.
 pub(super) fn feature_bounds_inside_rect_margin_with_grid(
     feature: &CopperFeature,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     margin: f64,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return false;
     };
     let min = rect.min();
@@ -141,7 +140,7 @@ pub(super) fn feature_bounds_inside_rect_margin_with_grid(
 fn circle_inside_rect_with_grid(
     center: [f64; 2],
     radius: f64,
-    rect: &geo::Rect<f64>,
+    rect: &Rect<f64>,
     grid: SourceGridFacts,
 ) -> bool {
     let min = rect.min();
@@ -189,7 +188,7 @@ fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<s
     let provenance = RuleGeometryProvenance::new("axis-aligned-outline-rect", grid);
     let left = provenance.lift_f64(left)?;
     let right = provenance.lift_f64(right)?;
-    compare_reals_with_policy(&left, &right, PredicatePolicy::STRICT).value()
+    compare_reals_with_policy(&left, &right, PredicatePolicy).value()
 }
 
 #[cfg(test)]
@@ -200,7 +199,7 @@ mod tests {
 
     use super::*;
 
-    fn sketch_rect(center: [f64; 2], size: [f64; 2]) -> PcbSketch {
+    fn region_rect(center: [f64; 2], size: [f64; 2]) -> PcbRegion {
         polygons_to_profile(
             vec![rect_polygon(center, size, 0.0)],
             Some(LayerMetadata {
@@ -218,13 +217,13 @@ mod tests {
                 crate::geometry::exact_real(center[0]),
                 crate::geometry::exact_real(center[1]),
             ],
-            sketch: sketch_rect(center, size),
+            region: region_rect(center, size),
         }
     }
 
     #[test]
     fn axis_aligned_outline_rect_accepts_simple_box() {
-        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let outline = region_rect([50.0, 50.0], [100.0, 100.0]);
 
         let rect =
             axis_aligned_outline_rect(&outline).expect("simple rectangle should be detected");
@@ -237,7 +236,7 @@ mod tests {
 
     #[test]
     fn axis_aligned_outline_rect_accepts_retained_gerber_grid() {
-        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let outline = region_rect([50.0, 50.0], [100.0, 100.0]);
         let grid = SourceGridFacts::source_grid(SourceUnit::Gerber, 1_000_000);
 
         let rect = axis_aligned_outline_rect_with_grid(&outline, grid)
@@ -269,7 +268,7 @@ mod tests {
 
     #[test]
     fn feature_margin_predicate_is_strict_at_edge_band_boundary() {
-        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let outline = region_rect([50.0, 50.0], [100.0, 100.0]);
         let rect =
             axis_aligned_outline_rect(&outline).expect("simple rectangle should be detected");
         let clearly_inside = copper_rect([50.0, 50.0], [10.0, 10.0]);
@@ -288,7 +287,7 @@ mod tests {
 
     #[test]
     fn drill_keepout_inside_rect_accepts_retained_excellon_grid() {
-        let outline = sketch_rect([50.0, 50.0], [100.0, 100.0]);
+        let outline = region_rect([50.0, 50.0], [100.0, 100.0]);
         let rect =
             axis_aligned_outline_rect(&outline).expect("simple rectangle should be detected");
         let drill = DrillFeature {

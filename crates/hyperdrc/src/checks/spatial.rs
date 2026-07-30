@@ -7,9 +7,8 @@
 
 use std::collections::HashMap;
 
-use geo::{BoundingRect, Polygon};
-
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
+use crate::geometry::{Polygon, Rect};
 use crate::kicad::{CopperFeature, DrillFeature};
 
 const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
@@ -215,7 +214,7 @@ impl<'a> CopperSpatialIndex<'a> {
 /// semantics while letting layer checks share tested spatial infrastructure.
 pub(super) struct LayerPolygonSpatialIndex {
     buckets: HashMap<(i64, i64), Vec<usize>>,
-    bounds: Vec<Option<geo::Rect<f64>>>,
+    bounds: Vec<Option<Rect<f64>>>,
     cell_size: f64,
     maximum_span: f64,
 }
@@ -294,7 +293,7 @@ impl LayerPolygonSpatialIndex {
             .collect()
     }
 
-    fn candidates_near_bounds(&self, bounds: geo::Rect<f64>, radius: f64) -> Vec<usize> {
+    fn candidates_near_bounds(&self, bounds: Rect<f64>, radius: f64) -> Vec<usize> {
         let query_radius = radius + rect_span(&bounds) / 2.0 + self.maximum_span / 2.0;
         let center = rect_center(&bounds);
         candidate_centers_within(&self.buckets, self.cell_size, center, query_radius)
@@ -559,21 +558,21 @@ fn squared_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     dx * dx + dy * dy
 }
 
-fn rect_center(bounds: &geo::Rect<f64>) -> [f64; 2] {
+fn rect_center(bounds: &Rect<f64>) -> [f64; 2] {
     [
         (bounds.min().x + bounds.max().x) / 2.0,
         (bounds.min().y + bounds.max().y) / 2.0,
     ]
 }
 
-fn rect_span(bounds: &geo::Rect<f64>) -> f64 {
+fn rect_span(bounds: &Rect<f64>) -> f64 {
     let width = bounds.max().x - bounds.min().x;
     let height = bounds.max().y - bounds.min().y;
     (width * width + height * height).sqrt()
 }
 
 fn feature_span(feature: &CopperFeature) -> f64 {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return 0.0;
     };
     let width = bounds.max().x - bounds.min().x;
@@ -750,7 +749,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),

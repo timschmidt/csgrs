@@ -354,8 +354,8 @@ Geometry tests verify low-level polygon construction:
   valid shapes, degenerate inputs, signed dimensions, non-finite coordinates,
   closed/open rings, clockwise/counterclockwise arcs, full-circle arcs, and
   zero-radius or zero-angle cases.
-- Sketch and multipolygon tests verify metadata preservation, hole preservation,
-  empty sketch handling, and strict area filtering.
+- Region and multipolygon tests verify metadata preservation, hole preservation,
+  empty region handling, and strict area filtering.
 - Property tests generate many circles, rectangles, lines, arcs, and transforms
   to assert positive finite area, expected area, radius preservation, one polygon
   per nonzero arc chord, edge-length preservation, and area preservation.

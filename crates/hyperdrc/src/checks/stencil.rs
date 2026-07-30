@@ -4,16 +4,13 @@
 //! review often combines flattened Gerber aperture geometry with richer KiCad
 //! via or drill context.
 
-use csgrs::{csg::CSG, sketch::Profile};
-use geo::Polygon;
-
 use crate::geometry::{
-    multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
+    Polygon, multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
     polygon_bounds_scalar, polygon_to_profile, polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
 use super::{intersection_for_check, union_for_check};
@@ -29,9 +26,9 @@ use super::{intersection_for_check, union_for_check};
 /// thermal pad candidate to scan every aperture.
 pub fn thermal_pad_paste_windowpane_readiness(
     paste_name: &str,
-    paste: &PcbSketch,
+    paste: &PcbRegion,
     copper_name: &str,
-    copper: &PcbSketch,
+    copper: &PcbRegion,
     min_copper_area: &Scalar,
     max_single_aperture_ratio: &Scalar,
     min_area: &Scalar,
@@ -45,7 +42,7 @@ pub fn thermal_pad_paste_windowpane_readiness(
         let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
             continue;
         };
-        if &copper_area < min_copper_area {
+        if crate::scalar::lt(&copper_area, min_copper_area) {
             continue;
         }
 
@@ -72,7 +69,7 @@ pub fn thermal_pad_paste_windowpane_readiness(
             let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
                 continue;
             };
-            if &overlap_area <= min_area {
+            if crate::scalar::le(&overlap_area, min_area) {
                 continue;
             }
             intersecting_apertures += 1;
@@ -83,7 +80,7 @@ pub fn thermal_pad_paste_windowpane_readiness(
         let Ok(ratio) = paste_area / copper_area else {
             continue;
         };
-        if intersecting_apertures >= 2 || &ratio <= max_single_aperture_ratio {
+        if intersecting_apertures >= 2 || crate::scalar::le(&ratio, max_single_aperture_ratio) {
             continue;
         }
 
@@ -122,12 +119,12 @@ pub fn thermal_pad_paste_windowpane_readiness(
 /// models become available.
 pub fn stencil_area_ratio_readiness(
     paste_name: &str,
-    paste: &PcbSketch,
+    paste: &PcbRegion,
     stencil_thickness: &Scalar,
     min_area_ratio: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
-    if stencil_thickness <= &Scalar::zero() {
+    if crate::scalar::le(stencil_thickness, &Scalar::zero()) {
         return Vec::new();
     }
 
@@ -136,7 +133,7 @@ pub fn stencil_area_ratio_readiness(
         let Some(aperture_area) = polygon_area_scalar(&polygon) else {
             continue;
         };
-        if &aperture_area <= min_area {
+        if crate::scalar::le(&aperture_area, min_area) {
             continue;
         }
         let Some(bounds) = polygon_bounds_scalar(&polygon) else {
@@ -144,18 +141,19 @@ pub fn stencil_area_ratio_readiness(
         };
         let width = &bounds[2] - &bounds[0];
         let height = &bounds[3] - &bounds[1];
-        if width <= Scalar::zero() || height <= Scalar::zero() {
+        if crate::scalar::le(&width, &Scalar::zero()) || crate::scalar::le(&height, &Scalar::zero())
+        {
             continue;
         }
 
         let wall_area = crate::scalar::scalar("2") * (width + height) * stencil_thickness;
-        if wall_area <= Scalar::zero() {
+        if crate::scalar::le(&wall_area, &Scalar::zero()) {
             continue;
         }
         let Ok(area_ratio) = aperture_area / wall_area else {
             continue;
         };
-        if &area_ratio >= min_area_ratio {
+        if crate::scalar::ge(&area_ratio, min_area_ratio) {
             continue;
         }
 
@@ -183,14 +181,14 @@ pub fn stencil_area_ratio_readiness(
 /// as a conservative proxy until explicit stencil thickness is modeled.
 pub fn paste_aperture_aspect_ratio_readiness(
     paste_name: &str,
-    paste: &PcbSketch,
+    paste: &PcbRegion,
     max_aspect_ratio: &Scalar,
     min_area: &Scalar,
 ) -> Vec<Violation> {
     let mut violations = Vec::new();
 
     for (island_index, polygon) in paste.to_multipolygon().0.into_iter().enumerate() {
-        if polygon_area_scalar(&polygon).is_none_or(|area| &area <= min_area) {
+        if polygon_area_scalar(&polygon).is_none_or(|area| crate::scalar::le(&area, min_area)) {
             continue;
         }
         let Some(bounds) = polygon_bounds_scalar(&polygon) else {
@@ -198,18 +196,18 @@ pub fn paste_aperture_aspect_ratio_readiness(
         };
         let width = &bounds[2] - &bounds[0];
         let height = &bounds[3] - &bounds[1];
-        let (min_dimension, max_dimension) = if width <= height {
+        let (min_dimension, max_dimension) = if crate::scalar::le(&width, &height) {
             (width, height)
         } else {
             (height, width)
         };
-        if min_dimension <= Scalar::zero() {
+        if crate::scalar::le(&min_dimension, &Scalar::zero()) {
             continue;
         }
         let Ok(aspect_ratio) = max_dimension / min_dimension else {
             continue;
         };
-        if &aspect_ratio <= max_aspect_ratio {
+        if crate::scalar::le(&aspect_ratio, max_aspect_ratio) {
             continue;
         }
 
@@ -243,9 +241,9 @@ pub fn paste_aperture_aspect_ratio_readiness(
 /// sparse stencil exports do not force every pad to intersect every aperture.
 pub fn tombstone_paste_imbalance_readiness(
     paste_name: &str,
-    paste: &PcbSketch,
+    paste: &PcbRegion,
     copper_name: &str,
-    copper: &PcbSketch,
+    copper: &PcbRegion,
     max_pair_gap: &Scalar,
     max_ratio_delta: &Scalar,
     min_area: &Scalar,
@@ -259,7 +257,7 @@ pub fn tombstone_paste_imbalance_readiness(
         let Some(area) = polygon_area_scalar(&polygon) else {
             continue;
         };
-        if &area <= min_area {
+        if crate::scalar::le(&area, min_area) {
             continue;
         }
         let Some(center) = polygon_center_scalar(&polygon) else {
@@ -316,11 +314,11 @@ pub fn tombstone_paste_imbalance_readiness(
             let (right_original_index, right_island, right_center, right_area, right_ratio) =
                 &islands[right_index];
             if exact_point_distance_scalar(left_center, right_center)
-                .is_none_or(|distance| &distance > max_pair_gap)
+                .is_none_or(|distance| crate::scalar::gt(&distance, max_pair_gap))
             {
                 continue;
             }
-            let (larger_area, smaller_area) = if left_area >= right_area {
+            let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
                 (left_area, right_area)
             } else {
                 (right_area, left_area)
@@ -328,11 +326,11 @@ pub fn tombstone_paste_imbalance_readiness(
             let Ok(area_ratio) = larger_area.clone() / smaller_area else {
                 continue;
             };
-            if area_ratio > crate::scalar::scalar("1.5") {
+            if crate::scalar::gt(&area_ratio, &crate::scalar::scalar("1.5")) {
                 continue;
             }
             let delta = (left_ratio - right_ratio).abs();
-            if &delta <= max_ratio_delta {
+            if crate::scalar::le(&delta, max_ratio_delta) {
                 continue;
             }
 
@@ -381,7 +379,7 @@ pub fn tombstone_paste_imbalance_readiness(
 /// variable because it can affect voiding and solder protrusion.
 pub fn paste_via_exposure_readiness(
     paste_name: &str,
-    paste: &PcbSketch,
+    paste: &PcbRegion,
     board: &BoardModel,
     selected_layers: &[String],
     min_area: &Scalar,
@@ -397,20 +395,21 @@ pub fn paste_via_exposure_readiness(
 
     for via in &vias {
         let via_opening = matching_plated_drill(board, via)
-            .and_then(|drill| {
-                let radius = (drill.diameter.clone() / crate::scalar::scalar("2")).ok()?;
-                Some(PcbSketch::new(
-                    Profile::circle(radius, 48).translate(
+            .map(|drill| {
+                let radius = crate::scalar::half(&drill.diameter);
+                PcbRegion::new(
+                    crate::translated_circle(
+                        radius,
+                        48,
                         drill.location[0].clone(),
                         drill.location[1].clone(),
-                        Scalar::zero(),
                     ),
                     Some(LayerMetadata {
                         name: "via drill opening".to_string(),
                     }),
-                ))
+                )
             })
-            .unwrap_or_else(|| via.sketch.clone());
+            .unwrap_or_else(|| via.region.clone());
         let via_polygons = via_opening.to_multipolygon().0;
         let paste_candidates = via_polygons
             .iter()
@@ -424,11 +423,11 @@ pub fn paste_via_exposure_readiness(
             .into_iter()
             .map(|index| paste_polygons[index].clone())
             .collect::<Vec<_>>();
-        let paste_candidate_sketch =
+        let paste_candidate_region =
             polygons_to_profile(paste_candidates, Some(metadata(paste_name)));
 
         let overlap = match intersection_for_check(
-            &paste_candidate_sketch,
+            &paste_candidate_region,
             &via_opening,
             "paste-via-exposure-readiness",
             vec![paste_name.to_string(), via.layer.clone()],
@@ -484,7 +483,8 @@ fn matching_plated_drill<'a>(
     feature: &CopperFeature,
 ) -> Option<&'a DrillFeature> {
     board.drills.iter().find(|drill| {
-        let matching_radius = if drill.diameter >= crate::scalar::scalar("0.05") {
+        let matching_radius = if crate::scalar::ge(&drill.diameter, &crate::scalar::scalar("0.05"))
+        {
             drill.diameter.clone()
         } else {
             crate::scalar::scalar("0.05")
@@ -492,16 +492,15 @@ fn matching_plated_drill<'a>(
         drill.plated
             && drill.net == feature.net
             && exact_point_distance_scalar(&drill.location, &feature.location)
-                .is_some_and(|distance| distance <= matching_radius)
+                .is_some_and(|distance| crate::scalar::le(&distance, &matching_radius))
     })
 }
 
 fn polygon_center_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 2]> {
     let bounds = polygon_bounds_scalar(polygon)?;
-    let two = crate::scalar::scalar("2");
     Some([
-        ((&bounds[0] + &bounds[2]) / &two).ok()?,
-        ((&bounds[1] + &bounds[3]) / &two).ok()?,
+        crate::scalar::half(&(&bounds[0] + &bounds[2])),
+        crate::scalar::half(&(&bounds[1] + &bounds[3])),
     ])
 }
 
@@ -546,16 +545,16 @@ mod tests {
         stencil_area_ratio_readiness, thermal_pad_paste_windowpane_readiness,
         tombstone_paste_imbalance_readiness,
     };
+    use crate::geometry::{Coord, LineString, Polygon};
     use crate::geometry::{circle_polygon, polygons_to_profile};
     use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
     use crate::scalar::scalar;
-    use crate::{LayerMetadata, PcbSketch};
-    use geo::{Coord, LineString, Polygon};
+    use crate::{LayerMetadata, PcbRegion};
 
     #[test]
     fn thermal_pad_paste_windowpane_readiness_reports_single_large_aperture() {
-        let copper = sketch("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
-        let paste = sketch("paste", vec![square(0.2, 0.2, 3.8, 3.8)]);
+        let copper = region("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
+        let paste = region("paste", vec![square(0.2, 0.2, 3.8, 3.8)]);
 
         let violations = thermal_pad_paste_windowpane_readiness(
             "paste",
@@ -582,8 +581,8 @@ mod tests {
 
     #[test]
     fn thermal_pad_paste_windowpane_readiness_accepts_split_or_small_apertures() {
-        let copper = sketch("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
-        let split_paste = sketch(
+        let copper = region("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
+        let split_paste = region(
             "paste",
             vec![
                 square(0.2, 0.2, 1.6, 1.6),
@@ -592,7 +591,7 @@ mod tests {
                 square(2.4, 2.4, 3.8, 3.8),
             ],
         );
-        let reduced_paste = sketch("paste", vec![square(0.2, 0.2, 2.0, 2.0)]);
+        let reduced_paste = region("paste", vec![square(0.2, 0.2, 2.0, 2.0)]);
 
         assert!(
             thermal_pad_paste_windowpane_readiness(
@@ -622,8 +621,8 @@ mod tests {
 
     #[test]
     fn thermal_pad_paste_windowpane_readiness_culls_sparse_paste_fields() {
-        let copper = sketch("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
-        let paste = sketch(
+        let copper = region("top", vec![square(0.0, 0.0, 4.0, 4.0)]);
+        let paste = region(
             "paste",
             (0..2_000)
                 .map(|index| {
@@ -654,7 +653,7 @@ mod tests {
 
     #[test]
     fn paste_aperture_aspect_ratio_readiness_reports_long_sliver_apertures() {
-        let paste = sketch("paste", vec![square(0.0, 0.0, 5.0, 0.5)]);
+        let paste = region("paste", vec![square(0.0, 0.0, 5.0, 0.5)]);
 
         let violations = paste_aperture_aspect_ratio_readiness(
             "paste",
@@ -675,7 +674,7 @@ mod tests {
 
     #[test]
     fn stencil_area_ratio_readiness_reports_low_area_ratio_apertures() {
-        let paste = sketch("paste", vec![square(0.0, 0.0, 0.18, 0.18)]);
+        let paste = region("paste", vec![square(0.0, 0.0, 0.18, 0.18)]);
 
         let violations = stencil_area_ratio_readiness(
             "paste",
@@ -697,7 +696,7 @@ mod tests {
 
     #[test]
     fn stencil_area_ratio_readiness_allows_printable_or_unconfigured_apertures() {
-        let paste = sketch(
+        let paste = region(
             "paste",
             vec![square(0.0, 0.0, 0.5, 0.5), square(1.0, 0.0, 1.05, 0.05)],
         );
@@ -726,7 +725,7 @@ mod tests {
 
     #[test]
     fn paste_aperture_aspect_ratio_readiness_allows_compact_apertures() {
-        let paste = sketch("paste", vec![square(0.0, 0.0, 1.5, 0.5)]);
+        let paste = region("paste", vec![square(0.0, 0.0, 1.5, 0.5)]);
 
         assert!(
             paste_aperture_aspect_ratio_readiness(
@@ -741,11 +740,11 @@ mod tests {
 
     #[test]
     fn tombstone_paste_imbalance_readiness_reports_neighboring_pad_imbalance() {
-        let copper = sketch(
+        let copper = region(
             "top",
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 2.4, 1.0)],
         );
-        let paste = sketch(
+        let paste = region(
             "paste",
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 1.9, 1.0)],
         );
@@ -772,19 +771,19 @@ mod tests {
 
     #[test]
     fn tombstone_paste_imbalance_readiness_allows_balanced_or_distant_pads() {
-        let balanced_copper = sketch(
+        let balanced_copper = region(
             "top",
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 2.4, 1.0)],
         );
-        let balanced_paste = sketch(
+        let balanced_paste = region(
             "paste",
             vec![square(0.1, 0.0, 0.9, 1.0), square(1.5, 0.0, 2.3, 1.0)],
         );
-        let distant_copper = sketch(
+        let distant_copper = region(
             "top",
             vec![square(0.0, 0.0, 1.0, 1.0), square(5.0, 0.0, 6.0, 1.0)],
         );
-        let distant_paste = sketch(
+        let distant_paste = region(
             "paste",
             vec![square(0.0, 0.0, 1.0, 1.0), square(5.0, 0.0, 5.5, 1.0)],
         );
@@ -825,8 +824,8 @@ mod tests {
             .collect::<Vec<_>>();
         copper_polygons.push(square(0.0, 0.0, 1.0, 1.0));
         copper_polygons.push(square(1.4, 0.0, 2.4, 1.0));
-        let copper = sketch("top", copper_polygons);
-        let paste = sketch(
+        let copper = region("top", copper_polygons);
+        let paste = region(
             "paste",
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 1.9, 1.0)],
         );
@@ -851,11 +850,11 @@ mod tests {
 
     #[test]
     fn tombstone_paste_imbalance_readiness_culls_sparse_paste_fields() {
-        let copper = sketch(
+        let copper = region(
             "top",
             vec![square(0.0, 0.0, 1.0, 1.0), square(1.4, 0.0, 2.4, 1.0)],
         );
-        let paste = sketch(
+        let paste = region(
             "paste",
             (0..2_000)
                 .map(|index| {
@@ -901,7 +900,7 @@ mod tests {
             board_outline: None,
             panel_features: None,
         };
-        let paste = sketch("paste", vec![square(-0.2, -0.2, 0.2, 0.2)]);
+        let paste = region("paste", vec![square(-0.2, -0.2, 0.2, 0.2)]);
 
         let violations = paste_via_exposure_readiness(
             "F.Paste",
@@ -944,8 +943,8 @@ mod tests {
             board_outline: None,
             panel_features: None,
         };
-        let distant_paste = sketch("paste", vec![square(1.0, 1.0, 1.4, 1.4)]);
-        let overlapping_paste = sketch("paste", vec![square(-0.2, -0.2, 0.2, 0.2)]);
+        let distant_paste = region("paste", vec![square(1.0, 1.0, 1.4, 1.4)]);
+        let overlapping_paste = region("paste", vec![square(-0.2, -0.2, 0.2, 0.2)]);
 
         assert!(
             paste_via_exposure_readiness(
@@ -986,7 +985,7 @@ mod tests {
             board_outline: None,
             panel_features: None,
         };
-        let paste = sketch(
+        let paste = region(
             "paste",
             (0..2_000)
                 .map(|index| {
@@ -1013,7 +1012,7 @@ mod tests {
         );
     }
 
-    fn sketch(name: &str, polygons: Vec<Polygon<f64>>) -> PcbSketch {
+    fn region(name: &str, polygons: Vec<Polygon<f64>>) -> PcbRegion {
         polygons_to_profile(
             polygons,
             Some(LayerMetadata {
@@ -1054,7 +1053,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, radius, 32)],
                 Some(LayerMetadata {
                     name: "feature".to_string(),

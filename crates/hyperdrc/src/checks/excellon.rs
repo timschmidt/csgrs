@@ -197,7 +197,7 @@ fn collect_plating_split_holes(report: &ExcellonReport, holes: &mut PlatingSplit
     for drill in &report.drills {
         if !(drill.location_f64_compatibility_required()[0].is_finite()
             && drill.location_f64_compatibility_required()[1].is_finite()
-            && drill.diameter > crate::Scalar::zero())
+            && crate::scalar::gt(&drill.diameter, &crate::Scalar::zero()))
         {
             continue;
         }
@@ -287,24 +287,26 @@ fn check_drill_diameter_outliers(report: &ExcellonReport, violations: &mut Vec<V
         .drills
         .iter()
         .map(|drill| drill.diameter.clone())
-        .filter(|diameter| diameter > &crate::Scalar::zero())
+        .filter(|diameter| crate::scalar::gt(diameter, &crate::Scalar::zero()))
         .collect::<Vec<_>>();
     if diameters.len() < 4 {
         return;
     }
-    diameters.sort_by(|left, right| left.partial_cmp(right).unwrap_or(std::cmp::Ordering::Equal));
+    diameters.sort_by(|left, right| {
+        crate::scalar::compare(left, right).expect("exact drill diameters must be comparable")
+    });
     let median = diameters[diameters.len() / 2].clone();
-    if median <= crate::Scalar::zero() {
+    if crate::scalar::le(&median, &crate::Scalar::zero()) {
         return;
     }
 
     let outliers = diameters
         .into_iter()
         .filter(|diameter| {
-            let tiny_outlier = diameter <= &crate::scalar::scalar("0.075")
-                && diameter * crate::scalar::scalar("8") < median;
-            let large_outlier = diameter >= &crate::scalar::scalar("6")
-                && diameter > &(&median * crate::scalar::scalar("8"));
+            let tiny_outlier = crate::scalar::le(diameter, &crate::scalar::scalar("0.075"))
+                && crate::scalar::lt(&(diameter * crate::scalar::scalar("8")), &median);
+            let large_outlier = crate::scalar::ge(diameter, &crate::scalar::scalar("6"))
+                && crate::scalar::gt(diameter, &(&median * crate::scalar::scalar("8")));
             tiny_outlier || large_outlier
         })
         .map(|diameter| format!("{diameter:#.6}"))

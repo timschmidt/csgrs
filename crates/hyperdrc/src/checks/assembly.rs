@@ -10,9 +10,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use csgrs::{csg::CSG, sketch::Profile};
-use geo::BoundingRect;
-
 use crate::checks::distance::{
     exact_point_polygon_boundary_within_scalar, polygon_boundaries_within_scalar,
     polygon_boundary_distance_scalar,
@@ -24,7 +21,7 @@ use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
-use crate::{LayerMetadata, PcbSketch, PcbSketchExt, Scalar};
+use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 const TESTPOINT_GRID_EPSILON: f64 = 1.0e-9;
 const FEATURE_GRID_EPSILON: f64 = 1.0e-9;
@@ -69,10 +66,10 @@ pub fn component_edge_clearance_readiness(
             }
             exact_checks += 1;
             let edge_gap = polygon_boundary_distance_scalar(
-                &feature.sketch.to_multipolygon(),
+                &feature.region.to_multipolygon(),
                 &outline.to_multipolygon(),
             )?;
-            (&edge_gap < clearance).then(|| {
+            crate::scalar::lt(&edge_gap, clearance).then(|| {
                 Violation::new(
                     "component-edge-clearance-readiness",
                     Severity::Warning,
@@ -121,18 +118,15 @@ pub fn component_hole_clearance_readiness(
         .filter(|drill| !drill.plated)
         .collect::<Vec<_>>();
     mechanical_drills.sort_by(|left, right| {
-        left.location[0]
-            .partial_cmp(&right.location[0])
-            .unwrap_or(std::cmp::Ordering::Equal)
+        crate::scalar::compare(&left.location[0], &right.location[0])
+            .expect("exact drill x coordinates must be comparable")
             .then_with(|| {
-                left.location[1]
-                    .partial_cmp(&right.location[1])
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.location[1], &right.location[1])
+                    .expect("exact drill y coordinates must be comparable")
             })
             .then_with(|| {
-                left.diameter
-                    .partial_cmp(&right.diameter)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.diameter, &right.diameter)
+                    .expect("exact drill diameters must be comparable")
             })
     });
 
@@ -154,9 +148,7 @@ pub fn component_hole_clearance_readiness(
     );
 
     for drill in mechanical_drills {
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let keepout_radius = drill_radius + clearance;
         let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
         let center = drill.location_f64_compatibility_required();
@@ -169,11 +161,12 @@ pub fn component_hole_clearance_readiness(
         if candidates.is_empty() {
             continue;
         }
-        let keepout = PcbSketch::new(
-            Profile::circle(keepout_radius, 64).translate(
+        let keepout = PcbRegion::new(
+            crate::translated_circle(
+                keepout_radius,
+                64,
                 drill.location[0].clone(),
                 drill.location[1].clone(),
-                Scalar::zero(),
             ),
             Some(LayerMetadata {
                 name: "mechanical hole keepout".to_string(),
@@ -184,7 +177,7 @@ pub fn component_hole_clearance_readiness(
             let pad = pads[pad_index];
             let overlap = match intersection_for_check(
                 &keepout,
-                &pad.sketch,
+                &pad.region,
                 "component-hole-clearance-readiness",
                 vec![pad.layer.clone()],
             ) {
@@ -195,7 +188,7 @@ pub fn component_hole_clearance_readiness(
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
                     &keepout.to_multipolygon(),
-                    &pad.sketch.to_multipolygon(),
+                    &pad.region.to_multipolygon(),
                     &Scalar::zero(),
                 );
             if shapes.is_empty() && !fallback_hit {
@@ -243,8 +236,8 @@ pub fn component_spacing_readiness(
         .filter(|feature| feature.kind == CopperKind::Pad)
         .filter(|feature| !likely_fiducial(feature))
         .filter(|feature| {
-            minimum_bounding_dimension_scalar(&feature.sketch)
-                .is_some_and(|dimension| &dimension >= minimum_pad_dimension)
+            minimum_bounding_dimension_scalar(&feature.region)
+                .is_some_and(|dimension| crate::scalar::ge(&dimension, minimum_pad_dimension))
         })
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
@@ -262,18 +255,18 @@ pub fn component_spacing_readiness(
     for (left_index, right_index) in candidate_pairs {
         let left = pads[left_index];
         let right = pads[right_index];
-        if !sketches_within_clearance(&left.sketch, &right.sketch, broad_phase_clearance) {
+        if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
             continue;
         }
         exact_pair_count += 1;
 
         let Some(gap) = polygon_boundary_distance_scalar(
-            &left.sketch.to_multipolygon(),
-            &right.sketch.to_multipolygon(),
+            &left.region.to_multipolygon(),
+            &right.region.to_multipolygon(),
         ) else {
             continue;
         };
-        if &gap >= clearance {
+        if crate::scalar::ge(&gap, clearance) {
             continue;
         }
 
@@ -333,8 +326,8 @@ pub fn connector_rework_clearance_readiness(
         .enumerate()
         .filter_map(|(index, feature)| {
             (feature.net.as_deref().is_some_and(looks_connector_net)
-                && minimum_bounding_dimension_scalar(&feature.sketch)
-                    .is_some_and(|dimension| &dimension >= minimum_pad_dimension))
+                && minimum_bounding_dimension_scalar(&feature.region)
+                    .is_some_and(|dimension| crate::scalar::ge(&dimension, minimum_pad_dimension)))
             .then_some(index)
         })
         .collect::<BTreeSet<_>>();
@@ -370,12 +363,12 @@ pub fn connector_rework_clearance_readiness(
         exact_pair_count += 1;
 
         let Some(gap) = polygon_boundary_distance_scalar(
-            &connector.sketch.to_multipolygon(),
-            &neighbor.sketch.to_multipolygon(),
+            &connector.region.to_multipolygon(),
+            &neighbor.region.to_multipolygon(),
         ) else {
             continue;
         };
-        if &gap >= clearance {
+        if crate::scalar::ge(&gap, clearance) {
             continue;
         }
 
@@ -429,13 +422,11 @@ pub fn pad_pair_asymmetry_readiness(
         .filter(|feature| feature.kind == CopperKind::Pad)
         .filter(|feature| !likely_fiducial(feature))
         .filter_map(|feature| {
-            let area = multipolygon_area_scalar(&feature.sketch.to_multipolygon())?;
-            let (_, max_dimension) = bounding_dimensions_scalar(&feature.sketch)?;
-            (area > Scalar::zero() && &max_dimension <= max_pad_dimension).then_some((
-                feature,
-                area,
-                max_dimension,
-            ))
+            let area = multipolygon_area_scalar(&feature.region.to_multipolygon())?;
+            let (_, max_dimension) = bounding_dimensions_scalar(&feature.region)?;
+            (crate::scalar::gt(&area, &Scalar::zero())
+                && crate::scalar::le(&max_dimension, max_pad_dimension))
+            .then_some((feature, area, max_dimension))
         })
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
@@ -460,22 +451,22 @@ pub fn pad_pair_asymmetry_readiness(
         if left.net.is_some() && left.net == right.net {
             continue;
         }
-        if !sketches_within_clearance(&left.sketch, &right.sketch, broad_phase_gap) {
+        if !regiones_within_clearance(&left.region, &right.region, broad_phase_gap) {
             continue;
         }
 
         let Some(gap) = polygon_boundary_distance_scalar(
-            &left.sketch.to_multipolygon(),
-            &right.sketch.to_multipolygon(),
+            &left.region.to_multipolygon(),
+            &right.region.to_multipolygon(),
         ) else {
             continue;
         };
-        if &gap > max_pair_gap {
+        if crate::scalar::gt(&gap, max_pair_gap) {
             continue;
         }
         exact_pair_count += 1;
 
-        let (larger_area, smaller_area) = if left_area >= right_area {
+        let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
             (left_area, right_area)
         } else {
             (right_area, left_area)
@@ -483,7 +474,7 @@ pub fn pad_pair_asymmetry_readiness(
         let Ok(area_ratio) = larger_area.clone() / smaller_area else {
             continue;
         };
-        if &area_ratio <= max_area_ratio {
+        if crate::scalar::le(&area_ratio, max_area_ratio) {
             continue;
         }
 
@@ -597,10 +588,7 @@ pub fn testpoint_accessibility_readiness(
         .filter(|feature| matches!(feature.kind, CopperKind::Pad | CopperKind::Via))
         .filter(|feature| copper_layer_access_side(&feature.layer).is_some())
         .collect::<Vec<_>>();
-    let side_parity_radius = (minimum_diameter.clone() / crate::scalar::scalar("2"))
-        .ok()
-        .map(|radius| radius + minimum_spacing)
-        .unwrap_or_else(|| minimum_spacing.clone());
+    let side_parity_radius = crate::scalar::half(minimum_diameter) + minimum_spacing;
     let side_parity_index = CopperSpatialIndex::new(
         &side_parity_features,
         scalar_broad_phase_radius(&side_parity_radius),
@@ -694,7 +682,7 @@ pub fn testpoint_accessibility_readiness(
         }
 
         match &point.diameter {
-            Some(diameter) if diameter < minimum_diameter => {
+            Some(diameter) if crate::scalar::lt(diameter, minimum_diameter) => {
                 violations.push(Violation::new(
                     "testpoint-accessibility-readiness",
                     Severity::Warning,
@@ -726,9 +714,7 @@ pub fn testpoint_accessibility_readiness(
 
         if let Some(outline) = &board.board_outline {
             let probe_diameter = effective_probe_diameter(point, minimum_diameter);
-            let Some(probe_radius) = (probe_diameter / crate::scalar::scalar("2")).ok() else {
-                continue;
-            };
+            let probe_radius = crate::scalar::half(&probe_diameter);
             let required_edge_band = probe_radius + edge_clearance;
             let x = point.location[0].clone();
             let y = point.location[1].clone();
@@ -820,13 +806,10 @@ fn testpoint_spacing_violations(
                         else {
                             continue;
                         };
-                        let Ok(combined_radius) =
-                            (left_diameter + right_diameter) / crate::scalar::scalar("2")
-                        else {
-                            continue;
-                        };
+                        let combined_radius =
+                            crate::scalar::half(&(left_diameter + right_diameter));
                         let edge_gap = center_distance - combined_radius;
-                        if &edge_gap >= minimum_spacing {
+                        if crate::scalar::ge(&edge_gap, minimum_spacing) {
                             continue;
                         }
 
@@ -886,14 +869,12 @@ pub fn testpoint_copper_clearance_readiness(
     let copper = selected_copper_features(board, selected_layers);
     let maximum_radius = points
         .iter()
-        .filter_map(|point| {
-            (effective_probe_diameter(point, minimum_diameter) / crate::scalar::scalar("2"))
-                .ok()
-                .map(|radius| radius + clearance)
+        .map(|point| {
+            crate::scalar::half(&effective_probe_diameter(point, minimum_diameter)) + clearance
         })
         .fold(None, |maximum: Option<Scalar>, radius| {
             Some(match maximum {
-                Some(maximum) if maximum >= radius => maximum,
+                Some(maximum) if crate::scalar::ge(&maximum, &radius) => maximum,
                 _ => radius,
             })
         })
@@ -912,12 +893,7 @@ pub fn testpoint_copper_clearance_readiness(
 
     for point in points {
         let probe_diameter = effective_probe_diameter(point, minimum_diameter);
-        let Some(keepout_radius) = (probe_diameter / crate::scalar::scalar("2"))
-            .ok()
-            .map(|radius| radius + clearance)
-        else {
-            continue;
-        };
+        let keepout_radius = crate::scalar::half(&probe_diameter) + clearance;
         let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
         let point_net = normalize_net(&point.net);
 
@@ -944,8 +920,8 @@ pub fn testpoint_copper_clearance_readiness(
             // IPC-D-356 testpoint metadata itself is complete.
             let x = point.location[0].clone();
             let y = point.location[1].clone();
-            let feature_geometry = feature.sketch.to_multipolygon();
-            let center_inside = feature.sketch.contains_xy(x, y) != Some(false);
+            let feature_geometry = feature.region.to_multipolygon();
+            let center_inside = feature.region.contains_xy(x, y) != Some(false);
             if !center_inside
                 && !exact_point_polygon_boundary_within_scalar(
                     &point.location,
@@ -1001,13 +977,13 @@ fn testpoint_side_parity_violation(
         Ipc356AccessSide::Both => return None,
     };
     let probe_diameter = effective_probe_diameter(point, minimum_diameter);
-    let minimum_search_spacing = if minimum_spacing >= &crate::scalar::scalar("0.25") {
-        minimum_spacing.clone()
-    } else {
-        crate::scalar::scalar("0.25")
-    };
-    let search_radius =
-        (probe_diameter / crate::scalar::scalar("2")).ok()? + minimum_search_spacing;
+    let minimum_search_spacing =
+        if crate::scalar::ge(minimum_spacing, &crate::scalar::scalar("0.25")) {
+            minimum_spacing.clone()
+        } else {
+            crate::scalar::scalar("0.25")
+        };
+    let search_radius = crate::scalar::half(&probe_diameter) + minimum_search_spacing;
     let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
     let point_net = normalize_net(&point.net);
     let mut nearby_sides = BTreeSet::new();
@@ -1026,7 +1002,7 @@ fn testpoint_side_parity_violation(
             continue;
         }
         if !exact_point_distance_scalar(&feature.location, &point.location)
-            .is_some_and(|distance| distance <= search_radius)
+            .is_some_and(|distance| crate::scalar::le(&distance, &search_radius))
         {
             continue;
         }
@@ -1113,7 +1089,10 @@ pub fn tooling_hole_readiness(
     let candidates = drills
         .iter()
         .filter(|drill| !drill.plated)
-        .filter(|drill| &drill.diameter >= minimum_diameter && &drill.diameter <= maximum_diameter)
+        .filter(|drill| {
+            crate::scalar::ge(&drill.diameter, minimum_diameter)
+                && crate::scalar::le(&drill.diameter, maximum_diameter)
+        })
         .collect::<Vec<_>>();
     let mut violations = Vec::new();
     let mut edge_checks = 0_usize;
@@ -1136,14 +1115,13 @@ pub fn tooling_hole_readiness(
     if let Some(outline) = &board.board_outline {
         for drill in &candidates {
             edge_checks += 1;
-            let Ok(radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-                continue;
-            };
-            let keepout = PcbSketch::new(
-                Profile::circle(radius, 64).translate(
+            let radius = crate::scalar::half(&drill.diameter);
+            let keepout = PcbRegion::new(
+                crate::translated_circle(
+                    radius,
+                    64,
                     drill.location[0].clone(),
                     drill.location[1].clone(),
-                    Scalar::zero(),
                 ),
                 Some(LayerMetadata {
                     name: "tooling hole".to_string(),
@@ -1155,7 +1133,7 @@ pub fn tooling_hole_readiness(
             ) else {
                 continue;
             };
-            if &edge_gap >= edge_clearance {
+            if crate::scalar::ge(&edge_gap, edge_clearance) {
                 continue;
             }
 
@@ -1203,7 +1181,7 @@ pub fn mouse_bite_readiness(
     drills.extend_from_slice(extra_drills);
     let candidates = drills
         .iter()
-        .filter(|drill| !drill.plated && &drill.diameter <= maximum_diameter)
+        .filter(|drill| !drill.plated && crate::scalar::le(&drill.diameter, maximum_diameter))
         .collect::<Vec<_>>();
     let candidate_points = candidates
         .iter()
@@ -1215,7 +1193,7 @@ pub fn mouse_bite_readiness(
     let mut neighbor_hits = 0_usize;
 
     for drill in &candidates {
-        if &drill.diameter >= minimum_diameter {
+        if crate::scalar::ge(&drill.diameter, minimum_diameter) {
             continue;
         }
 
@@ -1254,9 +1232,8 @@ pub fn mouse_bite_readiness(
             })
             .filter_map(|(right, distance)| Some((right, distance?)))
             .min_by(|left, right| {
-                left.1
-                    .partial_cmp(&right.1)
-                    .unwrap_or(std::cmp::Ordering::Equal)
+                crate::scalar::compare(&left.1, &right.1)
+                    .expect("exact feature distances must be comparable")
             })
         else {
             violations.push(Violation::new(
@@ -1272,7 +1249,9 @@ pub fn mouse_bite_readiness(
             ));
             continue;
         };
-        if &center_spacing >= minimum_spacing && &center_spacing <= maximum_spacing {
+        if crate::scalar::ge(&center_spacing, minimum_spacing)
+            && crate::scalar::le(&center_spacing, maximum_spacing)
+        {
             continue;
         }
 
@@ -1373,12 +1352,12 @@ pub fn fiducial_readiness(
                 }
                 exact_edge_checks += 1;
                 let Some(distance_to_edge) = polygon_boundary_distance_scalar(
-                    &candidate.sketch.to_multipolygon(),
+                    &candidate.region.to_multipolygon(),
                     &outline.to_multipolygon(),
                 ) else {
                     continue;
                 };
-                if &distance_to_edge >= edge_clearance {
+                if crate::scalar::ge(&distance_to_edge, edge_clearance) {
                     continue;
                 }
                 violations.push(Violation::new(
@@ -1447,7 +1426,7 @@ pub fn fiducial_keepout_readiness(
 
     for fiducial in fiducials {
         let keepout = match offset_for_check(
-            &fiducial.sketch,
+            &fiducial.region,
             clearance.clone(),
             "fiducial-keepout-readiness",
             vec![fiducial.layer.clone()],
@@ -1464,7 +1443,7 @@ pub fn fiducial_keepout_readiness(
             if fiducial.layer != blocker.layer {
                 continue;
             }
-            if !sketches_within_clearance(&fiducial.sketch, &blocker.sketch, broad_phase_clearance)
+            if !regiones_within_clearance(&fiducial.region, &blocker.region, broad_phase_clearance)
             {
                 continue;
             }
@@ -1476,7 +1455,7 @@ pub fn fiducial_keepout_readiness(
             // offset target region and reports same-layer copper intrusions.
             let overlap = match intersection_for_check(
                 &keepout,
-                &blocker.sketch,
+                &blocker.region,
                 "fiducial-keepout-readiness",
                 vec![fiducial.layer.clone()],
             ) {
@@ -1487,7 +1466,7 @@ pub fn fiducial_keepout_readiness(
             let fallback_hit = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
                     &keepout.to_multipolygon(),
-                    &blocker.sketch.to_multipolygon(),
+                    &blocker.region.to_multipolygon(),
                     &Scalar::zero(),
                 );
             if shapes.is_empty() && !fallback_hit {
@@ -1561,9 +1540,7 @@ pub fn selective_wave_solder_keepout_readiness(
     );
 
     for drill in solder_drills {
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let keepout_radius = drill_radius + keepout;
         let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
         let center = drill.location_f64_compatibility_required();
@@ -1577,11 +1554,12 @@ pub fn selective_wave_solder_keepout_readiness(
         if candidates.is_empty() {
             continue;
         }
-        let keepout_sketch = PcbSketch::new(
-            Profile::circle(keepout_radius, 64).translate(
+        let keepout_region = PcbRegion::new(
+            crate::translated_circle(
+                keepout_radius,
+                64,
                 drill.location[0].clone(),
                 drill.location[1].clone(),
-                Scalar::zero(),
             ),
             Some(LayerMetadata {
                 name: "selective/wave solder keepout".to_string(),
@@ -1591,8 +1569,8 @@ pub fn selective_wave_solder_keepout_readiness(
             let pad = pads[pad_index];
             exact_pair_count += 1;
             let overlap = match intersection_for_check(
-                &keepout_sketch,
-                &pad.sketch,
+                &keepout_region,
+                &pad.region,
                 "selective-wave-solder-keepout-readiness",
                 vec![pad.layer.clone()],
             ) {
@@ -1602,8 +1580,8 @@ pub fn selective_wave_solder_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let touching = shapes.is_empty()
                 && polygon_boundaries_within_scalar(
-                    &keepout_sketch.to_multipolygon(),
-                    &pad.sketch.to_multipolygon(),
+                    &keepout_region.to_multipolygon(),
+                    &pad.region.to_multipolygon(),
                     &Scalar::zero(),
                 );
             if shapes.is_empty() && !touching {
@@ -1690,8 +1668,8 @@ pub fn conformal_coating_keepout_readiness(
     let mut exact_pair_count = 0usize;
 
     for &no_coat in &no_coat_features {
-        let keepout_sketch = match offset_for_check(
-            &no_coat.sketch,
+        let keepout_region = match offset_for_check(
+            &no_coat.region,
             keepout.clone(),
             "conformal-coating-keepout-readiness",
             vec![no_coat.layer.clone()],
@@ -1711,7 +1689,7 @@ pub fn conformal_coating_keepout_readiness(
             if no_coat.layer != neighbor.layer {
                 continue;
             }
-            if !sketches_within_clearance(&no_coat.sketch, &neighbor.sketch, broad_phase_keepout) {
+            if !regiones_within_clearance(&no_coat.region, &neighbor.region, broad_phase_keepout) {
                 continue;
             }
             if no_coat.net.is_some() && no_coat.net == neighbor.net {
@@ -1719,8 +1697,8 @@ pub fn conformal_coating_keepout_readiness(
             }
             exact_pair_count += 1;
             let overlap = match intersection_for_check(
-                &keepout_sketch,
-                &neighbor.sketch,
+                &keepout_region,
+                &neighbor.region,
                 "conformal-coating-keepout-readiness",
                 vec![no_coat.layer.clone()],
             ) {
@@ -1776,29 +1754,29 @@ fn selected_copper_features<'a>(
         .collect()
 }
 
-fn minimum_bounding_dimension_scalar(sketch: &PcbSketch) -> Option<Scalar> {
-    bounding_dimensions_scalar(sketch).map(|(minimum, _)| minimum)
+fn minimum_bounding_dimension_scalar(region: &PcbRegion) -> Option<Scalar> {
+    bounding_dimensions_scalar(region).map(|(minimum, _)| minimum)
 }
 
-fn bounding_dimensions_scalar(sketch: &PcbSketch) -> Option<(Scalar, Scalar)> {
-    let (width, height) = if let Some(bounds) = sketch.exact_bounds() {
+fn bounding_dimensions_scalar(region: &PcbRegion) -> Option<(Scalar, Scalar)> {
+    let (width, height) = if let Some(bounds) = region.exact_bounds() {
         (&bounds[2] - &bounds[0], &bounds[3] - &bounds[1])
     } else {
-        let bounds = sketch.geometry().bounding_rect()?;
+        let bounds = region.geometry().bounding_rect()?;
         (
             Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?,
             Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?,
         )
     };
-    if width <= height {
+    if crate::scalar::le(&width, &height) {
         Some((width, height))
     } else {
         Some((height, width))
     }
 }
 
-fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
-    sketch.geometry().bounding_rect().map(|bounds| {
+fn bounding_dimensions(region: &PcbRegion) -> Option<(f64, f64)> {
+    region.geometry().bounding_rect().map(|bounds| {
         let width = bounds.max().x - bounds.min().x;
         let height = bounds.max().y - bounds.min().y;
         (width.min(height), width.max(height))
@@ -1807,7 +1785,7 @@ fn bounding_dimensions(sketch: &PcbSketch) -> Option<(f64, f64)> {
 
 fn feature_query_radius(feature: &CopperFeature, clearance: f64) -> f64 {
     feature
-        .sketch
+        .region
         .geometry()
         .bounding_rect()
         .map(|bounds| {
@@ -1829,7 +1807,7 @@ impl<'a> FeatureGridIndex<'a> {
     fn new(features: &'a [&'a CopperFeature], clearance: f64) -> Self {
         let maximum_dimension = features
             .iter()
-            .filter_map(|feature| bounding_dimensions(&feature.sketch).map(|(_, maximum)| maximum))
+            .filter_map(|feature| bounding_dimensions(&feature.region).map(|(_, maximum)| maximum))
             .fold(0.0_f64, f64::max);
         let cell_size = (maximum_dimension + clearance).max(FEATURE_GRID_EPSILON);
         let mut buckets: BTreeMap<(i64, i64), Vec<usize>> = BTreeMap::new();
@@ -1902,7 +1880,7 @@ fn same_layer_feature_candidate_pairs(
 
     let maximum_dimension = features
         .iter()
-        .filter_map(|feature| bounding_dimensions(&feature.sketch).map(|(_, maximum)| maximum))
+        .filter_map(|feature| bounding_dimensions(&feature.region).map(|(_, maximum)| maximum))
         .fold(0.0_f64, f64::max);
     let cell_size = (maximum_dimension + clearance).max(FEATURE_GRID_EPSILON);
     let mut buckets: BTreeMap<(String, i64, i64), Vec<usize>> = BTreeMap::new();
@@ -1954,7 +1932,7 @@ fn feature_bucket(location: [f64; 2], cell_size: f64) -> (i64, i64) {
     )
 }
 
-fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64) -> bool {
+fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64) -> bool {
     let Some(left_bounds) = left.geometry().bounding_rect() else {
         return true;
     };
@@ -1970,7 +1948,7 @@ fn sketches_within_clearance(left: &PcbSketch, right: &PcbSketch, clearance: f64
 }
 
 fn feature_may_touch_circle(feature: &CopperFeature, center: [f64; 2], radius: f64) -> bool {
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return true;
     };
 
@@ -1985,7 +1963,7 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
         return false;
     }
 
-    let Some(bounds) = feature.sketch.geometry().bounding_rect() else {
+    let Some(bounds) = feature.region.geometry().bounding_rect() else {
         return false;
     };
     let width = bounds.max().x - bounds.min().x;
@@ -2027,7 +2005,7 @@ fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
 
 fn effective_probe_diameter(point: &Ipc356Point, minimum: &Scalar) -> Scalar {
     match point.diameter.as_ref() {
-        Some(diameter) if diameter > minimum => diameter.clone(),
+        Some(diameter) if crate::scalar::gt(diameter, minimum) => diameter.clone(),
         _ => minimum.clone(),
     }
 }
@@ -2067,9 +2045,7 @@ fn process_drill_keepout_readiness(
     );
 
     for drill in drills {
-        let Ok(drill_radius) = drill.diameter.clone() / crate::scalar::scalar("2") else {
-            continue;
-        };
+        let drill_radius = crate::scalar::half(&drill.diameter);
         let keepout_radius = drill_radius + keepout;
         let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
         let center = drill.location_f64_compatibility_required();
@@ -2083,11 +2059,12 @@ fn process_drill_keepout_readiness(
         if candidates.is_empty() {
             continue;
         }
-        let keepout_sketch = PcbSketch::new(
-            Profile::circle(keepout_radius, 64).translate(
+        let keepout_region = PcbRegion::new(
+            crate::translated_circle(
+                keepout_radius,
+                64,
                 drill.location[0].clone(),
                 drill.location[1].clone(),
-                Scalar::zero(),
             ),
             Some(LayerMetadata {
                 name: format!("{process_label} keepout"),
@@ -2097,8 +2074,8 @@ fn process_drill_keepout_readiness(
             let pad = pads[pad_index];
             exact_pair_count += 1;
             let overlap = match intersection_for_check(
-                &keepout_sketch,
-                &pad.sketch,
+                &keepout_region,
+                &pad.region,
                 check,
                 vec![pad.layer.clone()],
             ) {
@@ -3171,7 +3148,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, [width, height], 0.0)],
                 Some(LayerMetadata {
                     name: "pad".to_string(),
@@ -3189,7 +3166,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(location, [diameter, diameter], 0.0)],
                 Some(LayerMetadata {
                     name: "fiducial".to_string(),

@@ -1,18 +1,17 @@
 //! Primitive polygon constructors.
 //!
-//! These functions intentionally return plain `geo` polygons. Higher-level
-//! modules decide whether to combine them into sketches or report shapes.
-//! f64 is used here as parser/report edge geometry while `csgrs` remains
-//! unported; topology-sensitive consumers should treat these polygons as
-//! compatibility inputs, not the long-term semantic numeric core.
+//! Constructors promote finite parser coordinates into exact Hypercurve-backed
+//! profiles immediately. The retained finite rings exist only for reports.
 
-use geo::{Coord, LineString, Polygon};
 use std::f64::consts::PI;
+
+use super::types::transform_exact_region;
+use super::{Coord, LineString, Polygon};
 
 /// Run the `circle_polygon` design-readiness check or report helper.
 pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon<f64> {
     if !(center[0].is_finite() && center[1].is_finite() && radius.is_finite()) {
-        return Polygon::new(geo::LineString(vec![]), vec![]);
+        return Polygon::new(LineString(vec![]), vec![]);
     }
 
     let segments = segments.max(16);
@@ -108,7 +107,7 @@ pub fn trapezoid_polygon(
 /// units as `size`. The value is clamped to half of the shorter side, matching
 /// the land-pattern constraint used by rounded SMT pads. The corner arcs are a
 /// deterministic polygonal approximation; downstream checks can then use the
-/// same `geo`/`csgrs` boolean pipeline as rectangular and circular pads.
+/// same exact Hypercurve Boolean pipeline as rectangular and circular pads.
 ///
 /// Uses an offset-region construction in the common polygonal geometry model.
 pub fn rounded_rect_polygon(
@@ -295,16 +294,38 @@ pub fn transform_polygon(
     angle_degrees: f64,
 ) -> Polygon<f64> {
     if !origin[0].is_finite() || !origin[1].is_finite() || !angle_degrees.is_finite() {
-        return polygon.clone();
+        return polygon
+            .clone()
+            .with_exact_construction_error("affine transform contains a non-finite parameter");
     }
 
-    let exterior = polygon
-        .exterior()
-        .0
-        .iter()
-        .map(|coord| rotate_translate([coord.x, coord.y], origin, angle_degrees))
-        .collect::<Vec<_>>();
-    let holes = polygon
+    let input_error = polygon.exact_construction_error().map(str::to_owned);
+    let angle = hyperreal::Real::try_from(angle_degrees).expect("finite angle promotes exactly")
+        * hyperreal::Real::pi()
+        / hyperreal::Real::from(180_u16);
+    let angle = angle.expect("180 is nonzero");
+    let exact = transform_exact_region(
+        polygon,
+        angle.clone().cos(),
+        angle.sin(),
+        hyperreal::Real::try_from(origin[0]).expect("finite origin promotes exactly"),
+        hyperreal::Real::try_from(origin[1]).expect("finite origin promotes exactly"),
+    );
+    let exterior = LineString(
+        polygon
+            .exterior()
+            .0
+            .iter()
+            .map(|coord| {
+                let point = rotate_translate([coord.x, coord.y], origin, angle_degrees);
+                Coord {
+                    x: point[0],
+                    y: point[1],
+                }
+            })
+            .collect(),
+    );
+    let interiors = polygon
         .interiors()
         .iter()
         .map(|ring| {
@@ -322,19 +343,19 @@ pub fn transform_polygon(
             )
         })
         .collect();
-
-    Polygon::new(
-        LineString(
-            exterior
-                .into_iter()
-                .map(|point| Coord {
-                    x: point[0],
-                    y: point[1],
-                })
-                .collect(),
-        ),
-        holes,
-    )
+    match exact {
+        Ok(exact) => {
+            let transformed = Polygon::from_exact_region(exact, exterior, interiors);
+            match input_error {
+                Some(error) => transformed.with_exact_construction_error(error),
+                None => transformed,
+            }
+        }
+        Err(error) => {
+            Polygon::from_exact_region(hypercurve::CurveRegion2::empty(), exterior, interiors)
+                .with_exact_construction_error(error)
+        }
+    }
 }
 
 /// Run the `arc_line_polygons` design-readiness check or report helper.

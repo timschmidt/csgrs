@@ -154,7 +154,7 @@ impl CapabilityProfile {
             return Err("capability profile identity and notice must be nonempty".into());
         }
         for (name, value) in self.scalar_limits() {
-            if value <= &Scalar::zero() {
+            if crate::scalar::le(value, &Scalar::zero()) {
                 return Err(format!("{name} must be positive"));
             }
             if !self.enforcement.contains_key(name) {

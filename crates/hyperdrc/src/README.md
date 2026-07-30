@@ -27,7 +27,7 @@ The source tree follows a few explicit boundaries:
   calls `hyperdrc::run_cli`; all substantive loading, checking, reporting, and
   exit-status decisions live in the library.
 - [`lib.rs`](lib.rs) exposes the docs.rs-facing library API, crate-level
-  documentation, shared PCB sketch aliases, parser/check/report modules, and
+  documentation, shared PCB region aliases, parser/check/report modules, and
   crate-root re-exports such as `run`, `run_cli`, `Cli`, and `Report`.
 - [`app.rs`](app.rs) is the runtime pipeline. It loads configuration, converts
   requested input packages, discovers and parses inputs, applies IPC-D-356 net
@@ -195,8 +195,10 @@ The source tree follows a few explicit boundaries:
   across generic layer, drill fabrication, board-context, mechanical, stencil,
   assembly, manifest, artifact, stackup/net-constraint, and surface-finish
   helper modules.
-- [geometry](geometry/README.md) contains geometry construction and conversion
-  helpers around `csgrs` and `geo`.
+- [geometry](geometry/README.md) contains exact
+  [Hypercurve](https://github.com/timschmidt/hypercurve) construction plus
+  finite report and [CSGRS](https://github.com/timschmidt/csgrs) interchange
+  adapters.
 - [kicad](kicad/README.md) contains the KiCad board model and parser helpers.
 
 ## Development Notes

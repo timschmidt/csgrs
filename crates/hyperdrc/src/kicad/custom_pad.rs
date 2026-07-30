@@ -5,9 +5,9 @@
 //! primitive geometry into conservative polygons for readiness checks; it does
 //! not attempt lossless copper boolean reconstruction.
 
-use geo::Polygon;
-
-use crate::geometry::{arc_line_polygons, bezier_line_polygons, line_polygon, transform_polygon};
+use crate::geometry::{
+    Polygon, arc_line_polygons, bezier_line_polygons, line_polygon, transform_polygon,
+};
 use crate::sexp::Sexp;
 
 use super::graphic_primitives::{
@@ -105,7 +105,7 @@ pub(super) fn custom_pad_polygons(
                 };
                 let width = stroke_width(primitive, 0.01);
                 // Custom-pad arc polygons remain a compatibility approximation
-                // for current `geo`/`csgrs` consumers, but the arc degeneracy
+                // for finite report consumers, but the arc degeneracy
                 // predicate now consumes retained decimal-token `Real`
                 // coordinates before sampling, separating certified topology
                 // decisions from approximation edges.

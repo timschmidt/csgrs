@@ -1490,7 +1490,9 @@ fn capture_scale_command(command: &str, line: usize, report: &mut GerberMetadata
     let Some(value) = command.strip_prefix("LS") else {
         return;
     };
-    let Some(scale) = parse_source_scalar(value).filter(|scale| scale > &Scalar::zero()) else {
+    let Some(scale) =
+        parse_source_scalar(value).filter(|scale| crate::scalar::gt(scale, &Scalar::zero()))
+    else {
         let kind = if value.is_empty() {
             GerberMetadataIssueKind::MissingImageCommandValue {
                 command: "LS".to_string(),
@@ -1901,7 +1903,7 @@ fn parse_positive_u32(value: &str) -> Option<u32> {
 }
 
 fn parse_non_negative_scalar(value: &str) -> Option<Scalar> {
-    parse_source_scalar(value).filter(|value| value >= &Scalar::zero())
+    parse_source_scalar(value).filter(|value| crate::scalar::ge(value, &Scalar::zero()))
 }
 
 fn parse_aperture_definition_value(value: &str, line: usize) -> Option<GerberApertureDefinition> {
@@ -2003,7 +2005,7 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 1 || values.len() == 2)
-                && values[0] >= Scalar::zero()
+                && crate::scalar::ge(&values[0], &Scalar::zero())
                 && optional_positive(values.get(1))
         }
         "R" | "O" => {
@@ -2011,8 +2013,8 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 2 || values.len() == 3)
-                && values[0] >= Scalar::zero()
-                && values[1] >= Scalar::zero()
+                && crate::scalar::ge(&values[0], &Scalar::zero())
+                && crate::scalar::ge(&values[1], &Scalar::zero())
                 && optional_positive(values.get(2))
         }
         "P" => {
@@ -2020,8 +2022,8 @@ fn valid_aperture_parameters(template: &str, parameters: Option<&str>) -> bool {
                 return false;
             };
             (values.len() == 2 || values.len() == 3 || values.len() == 4)
-                && values[0] >= Scalar::zero()
-                && values[1] >= Scalar::from(3)
+                && crate::scalar::ge(&values[0], &Scalar::zero())
+                && crate::scalar::ge(&values[1], &Scalar::from(3))
                 && values[1]
                     .fract_certified()
                     .is_ok_and(|fraction| fraction.definitely_zero())
@@ -2045,7 +2047,7 @@ fn parse_aperture_numeric_parameters(parameters: Option<&str>) -> Option<Vec<Sca
 }
 
 fn optional_positive(value: Option<&Scalar>) -> bool {
-    value.is_none_or(|value| value > &Scalar::zero())
+    value.is_none_or(|value| crate::scalar::gt(value, &Scalar::zero()))
 }
 
 fn same_aperture_definition(

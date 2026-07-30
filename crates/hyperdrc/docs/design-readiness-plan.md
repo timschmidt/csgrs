@@ -1,17 +1,21 @@
 # HyperDRC Design Readiness Plan
 
-This project starts as a command line Gerber and KiCad checker built on `csgrs`
-`Sketch` geometry. Gerber input covers layer-level polygon checks. KiCad input
+This project starts as a command line Gerber and KiCad checker built on
+[CSGRS](https://github.com/timschmidt/csgrs) region geometry. Gerber input
+covers layer-level polygon checks. KiCad input
 adds net, drill, pad, via, track, zone, and board-outline context for richer
 readiness checks. Excellon drill files are supported as an industry-standard
 sidecar input where possible.
 
 ## Numerical Backbone Policy
 
-HyperDRC should inherit the workspace numerical policy: hyperreal-backed
-geometry through `csgrs`, `hyperlattice`, and `hyperlimit` is the primary
-computational backbone for checks that affect geometry, clearance, topology, or
-readiness decisions.
+HyperDRC should inherit the workspace numerical policy: geometry through
+[Hyperreal](https://github.com/timschmidt/hyperreal),
+[CSGRS](https://github.com/timschmidt/csgrs),
+[Hyperlattice](https://github.com/timschmidt/hyperlattice), and
+[Hyperlimit](https://github.com/timschmidt/hyperlimit) is the primary
+computational backbone for checks that affect geometry, clearance, topology,
+or readiness decisions.
 
 f64 support is allowed only at explicit edges for Gerber/KiCad/Excellon parser
 interop, external CLI/library calls, reports, serialization, and language
@@ -27,11 +31,15 @@ governance, trace output, and user-facing reports. It should not own scalar
 arithmetic, vector/matrix kernels, exact predicates, curve booleans,
 triangulation topology, or CSG internals.
 
-During the future exact port, keep `csgrs` as the legacy geometry provider until
-its own migration is scheduled. New exact geometry should flow through the
-hyper stack instead: scalar facts in `hyperreal`, object-level algebra facts in
-`hyperlattice`, exact predicates in `hyperlimit`, curve/region operations in
-`hypercurve`, and triangulation in `hypertri`.
+During the future exact port, keep
+[CSGRS](https://github.com/timschmidt/csgrs) as the legacy geometry provider
+until its own migration is scheduled. New exact geometry should flow through
+the hyper stack instead: scalar facts in
+[Hyperreal](https://github.com/timschmidt/hyperreal), object-level algebra facts
+in [Hyperlattice](https://github.com/timschmidt/hyperlattice), exact predicates
+in [Hyperlimit](https://github.com/timschmidt/hyperlimit), curve/region
+operations in [Hypercurve](https://github.com/timschmidt/hypercurve), and
+triangulation in [Hypertri](https://github.com/timschmidt/hypertri).
 
 Parser and domain facts are still valuable and should be carried as metadata:
 source units/grid, layer/net, aperture primitive, pad/via kind, drill plating,

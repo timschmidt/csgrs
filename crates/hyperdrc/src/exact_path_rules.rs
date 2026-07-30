@@ -60,7 +60,7 @@ pub fn certify_annular_ring(
     let Some(drill) = via.drill_diameter() else {
         return AnnularRingStatus::UnknownNoDrill;
     };
-    if real_sign(minimum) == Some(RealSign::Negative) {
+    if real_sign(minimum, policy) == Some(RealSign::Negative) {
         return AnnularRingStatus::InvalidMinimum;
     }
     let required = drill.clone() + minimum.clone() * Real::from(2);
@@ -107,10 +107,28 @@ pub fn classify_via_drill_policy(
     }
 }
 
-fn real_sign(value: &Real) -> Option<RealSign> {
-    match compare_reals_with_policy(value, &Real::zero(), PredicatePolicy).value()? {
+fn real_sign(value: &Real, policy: PredicatePolicy) -> Option<RealSign> {
+    match compare_reals_with_policy(value, &Real::zero(), policy).value()? {
         Ordering::Less => Some(RealSign::Negative),
         Ordering::Equal => Some(RealSign::Zero),
         Ordering::Greater => Some(RealSign::Positive),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::real_sign;
+    use hyperlimit::PredicatePolicy;
+    use hyperreal::{Real, RealSign};
+
+    #[test]
+    fn scalar_guard_honors_the_callers_certainty_policy() {
+        let unresolved_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+
+        assert_eq!(real_sign(&unresolved_zero, PredicatePolicy::STRICT), None);
+        assert_eq!(
+            real_sign(&unresolved_zero, PredicatePolicy::APPROXIMATE_512),
+            Some(RealSign::Zero)
+        );
     }
 }

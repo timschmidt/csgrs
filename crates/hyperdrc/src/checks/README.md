@@ -191,10 +191,13 @@ or repeated-contour review items, and duplicate geometry across layers is
 reported so stale or double-exported fabrication layers appear during the same
 package sanity sweep.
 
-These checks mostly work by combining `csgrs` boolean operations with small
-role-specific heuristics. Morphological checks use an erode-and-grow pattern to
-detect thin copper, mask, and silkscreen features. Paste checks also compare
-paired paste/copper islands for basic aperture coverage and area ratio.
+These checks mostly work by combining
+[Hypercurve](https://github.com/timschmidt/hypercurve) exact Boolean operations
+with small role-specific heuristics, with
+[CSGRS](https://github.com/timschmidt/csgrs) retained at named import/adaptation
+boundaries. Morphological checks use an erode-and-grow pattern to detect thin
+copper, mask, and silkscreen features. Paste checks also compare paired
+paste/copper islands for basic aperture coverage and area ratio.
 
 ## Stencil Checks
 
@@ -232,7 +235,7 @@ hole, slot, castellation, or drill-table record:
 - `drill-spacing`
 - `drill-aspect-ratio`
 - `drill-table-consistency`
-- `drills_to_sketch` shared geometry adapter for panel and drill keepout checks
+- `drills_to_region` shared geometry adapter for panel and drill keepout checks
 
 These checks compare KiCad holes with sidecar Excellon and IPC-D-356 records,
 review plated versus non-plated intent, catch edge/castellation ambiguity,

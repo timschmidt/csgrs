@@ -10,13 +10,12 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use geo::BoundingRect;
-
 use super::distance::polygon_boundary_distance_scalar;
 use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
-use crate::{PcbSketchExt, Scalar};
+use crate::{PcbRegionExt, Scalar};
 
 /// Warn when inferred differential-pair segment widths look narrow or unbalanced.
 ///
@@ -45,7 +44,7 @@ pub fn differential_pair_width_readiness(
             continue;
         };
         let estimated_width = estimated_segment_width(feature);
-        if estimated_width <= Scalar::zero() {
+        if crate::scalar::le(&estimated_width, &Scalar::zero()) {
             continue;
         }
 
@@ -56,7 +55,7 @@ pub fn differential_pair_width_readiness(
             .push(feature.location_f64_compatibility_required());
         side_use.widths.push(estimated_width.clone());
 
-        if &estimated_width < minimum_segment_width {
+        if crate::scalar::lt(&estimated_width, minimum_segment_width) {
             violations.push(Violation::new(
                 "differential-pair-width-readiness",
                 Severity::Warning,
@@ -87,7 +86,7 @@ pub fn differential_pair_width_readiness(
             continue;
         };
         let delta = (&positive_width - &negative_width).abs();
-        if &delta <= maximum_side_width_delta {
+        if crate::scalar::le(&delta, maximum_side_width_delta) {
             continue;
         }
 
@@ -135,14 +134,16 @@ pub fn differential_pair_neckdown_readiness(
         };
         let estimated_width = estimated_segment_width(feature);
         let estimated_length = estimated_segment_length(feature);
-        if estimated_width <= Scalar::zero() || estimated_length <= Scalar::zero() {
+        if crate::scalar::le(&estimated_width, &Scalar::zero())
+            || crate::scalar::le(&estimated_length, &Scalar::zero())
+        {
             continue;
         }
-        if &estimated_width >= minimum_segment_width {
+        if crate::scalar::ge(&estimated_width, minimum_segment_width) {
             continue;
         }
         candidate_count += 1;
-        if &estimated_length <= maximum_neckdown_length {
+        if crate::scalar::le(&estimated_length, maximum_neckdown_length) {
             continue;
         }
 
@@ -193,7 +194,7 @@ pub fn differential_pair_skew_readiness(
             continue;
         };
         let estimated_length = estimated_segment_length(feature);
-        if estimated_length <= Scalar::zero() {
+        if crate::scalar::le(&estimated_length, &Scalar::zero()) {
             continue;
         }
 
@@ -214,13 +215,13 @@ pub fn differential_pair_skew_readiness(
 
     let mut violations = Vec::new();
     for (pair, usage) in pairs {
-        if usage.positive.estimated_length <= Scalar::zero()
-            || usage.negative.estimated_length <= Scalar::zero()
+        if crate::scalar::le(&usage.positive.estimated_length, &Scalar::zero())
+            || crate::scalar::le(&usage.negative.estimated_length, &Scalar::zero())
         {
             continue;
         }
         let skew = (&usage.positive.estimated_length - &usage.negative.estimated_length).abs();
-        if &skew <= maximum_pair_skew {
+        if crate::scalar::le(&skew, maximum_pair_skew) {
             continue;
         }
 
@@ -299,7 +300,7 @@ pub fn differential_pair_via_proximity_readiness(
                 .into_iter()
                 .filter(|index| {
                     exact_distance_scalar(&positive.exact, &usage.negative.locations[*index].exact)
-                        .is_some_and(|distance| &distance <= maximum_via_pair_gap)
+                        .is_some_and(|distance| crate::scalar::le(&distance, maximum_via_pair_gap))
                 })
                 .collect::<Vec<_>>();
             candidate_hits += nearby.len();
@@ -336,7 +337,7 @@ pub fn differential_pair_via_proximity_readiness(
                 .into_iter()
                 .filter(|index| {
                     exact_distance_scalar(&negative.exact, &usage.positive.locations[*index].exact)
-                        .is_some_and(|distance| &distance <= maximum_via_pair_gap)
+                        .is_some_and(|distance| crate::scalar::le(&distance, maximum_via_pair_gap))
                 })
                 .collect::<Vec<_>>();
             candidate_hits += nearby.len();
@@ -438,7 +439,7 @@ pub fn differential_pair_via_return_readiness(
                 .into_iter()
                 .filter(|index| {
                     exact_distance_scalar(&location.exact, &ground_vias[*index].location)
-                        .is_some_and(|distance| &distance <= stitching_distance)
+                        .is_some_and(|distance| crate::scalar::le(&distance, stitching_distance))
                 })
                 .collect::<Vec<_>>();
             candidate_hits += nearby_ground.len();
@@ -501,7 +502,7 @@ pub fn differential_pair_to_pair_spacing_readiness(
         let Some((pair, _side)) = differential_pair_key(net) else {
             continue;
         };
-        let Some(feature_bounds) = feature.sketch.geometry().bounding_rect() else {
+        let Some(feature_bounds) = feature.region.geometry().bounding_rect() else {
             continue;
         };
         features.push(feature);
@@ -543,12 +544,12 @@ pub fn differential_pair_to_pair_spacing_readiness(
             exact_pairs += 1;
             let right = features[right_index];
             let Some(gap) = polygon_boundary_distance_scalar(
-                &left.sketch.to_multipolygon(),
-                &right.sketch.to_multipolygon(),
+                &left.region.to_multipolygon(),
+                &right.region.to_multipolygon(),
             ) else {
                 continue;
             };
-            if &gap > minimum_pair_to_pair_gap {
+            if crate::scalar::gt(&gap, minimum_pair_to_pair_gap) {
                 continue;
             }
 
@@ -697,9 +698,9 @@ impl SideWidthUse {
     fn minimum_width(&self) -> Option<Scalar> {
         self.widths
             .iter()
-            .filter(|width| *width > &Scalar::zero())
+            .filter(|width| crate::scalar::gt(width, &Scalar::zero()))
             .fold(None, |minimum, width| match minimum {
-                Some(current) if width >= &current => Some(current),
+                Some(current) if crate::scalar::ge(width, &current) => Some(current),
                 _ => Some(width.clone()),
             })
     }
@@ -779,7 +780,7 @@ fn looks_ground_net(net: &str) -> bool {
         || normalized.contains("CHASSIS")
 }
 
-fn expanded_rects_overlap(left: &geo::Rect<f64>, right: &geo::Rect<f64>, expansion: f64) -> bool {
+fn expanded_rects_overlap(left: &Rect<f64>, right: &Rect<f64>, expansion: f64) -> bool {
     left.min().x - expansion <= right.max().x
         && left.max().x + expansion >= right.min().x
         && left.min().y - expansion <= right.max().y
@@ -796,12 +797,13 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
 
 fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
     let region = match feature
-        .sketch
-        .region_geometry()
+        .region
         .native_contours_fast_path(&hypercurve::CurvePolicy::certified())
     {
         Ok(hypercurve::Classification::Decided(region)) => region,
-        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return Scalar::zero(),
+        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => {
+            return maximum_bounding_dimension(&feature.region);
+        }
     };
     region
         .material_contours()
@@ -813,28 +815,43 @@ fn estimated_segment_length(feature: &CopperFeature) -> Scalar {
             (&dx * &dx + &dy * &dy).sqrt().ok()
         })
         .fold(Scalar::zero(), |maximum, length| {
-            if length > maximum { length } else { maximum }
+            if crate::scalar::gt(&length, &maximum) {
+                length
+            } else {
+                maximum
+            }
         })
 }
 
+fn maximum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
+    let bounds = region.bounding_box();
+    let width = &bounds.maxs.x - &bounds.mins.x;
+    let height = &bounds.maxs.y - &bounds.mins.y;
+    if crate::scalar::ge(&width, &height) {
+        width
+    } else {
+        height
+    }
+}
+
 fn estimated_segment_width(feature: &CopperFeature) -> Scalar {
-    if let Some(bounds) = feature.sketch.exact_bounds() {
+    if let Some(bounds) = feature.region.exact_bounds() {
         let width = &bounds[2] - &bounds[0];
         let height = &bounds[3] - &bounds[1];
-        return if width <= height { width } else { height };
+        return if crate::scalar::le(&width, &height) {
+            width
+        } else {
+            height
+        };
     }
-    feature
-        .sketch
-        .geometry()
-        .bounding_rect()
-        .and_then(|bounds| {
-            let width =
-                Scalar::try_from(bounds.max().x).ok()? - Scalar::try_from(bounds.min().x).ok()?;
-            let height =
-                Scalar::try_from(bounds.max().y).ok()? - Scalar::try_from(bounds.min().y).ok()?;
-            Some(if width <= height { width } else { height })
-        })
-        .unwrap_or_else(Scalar::zero)
+    let bounds = feature.region.bounding_box();
+    let width = &bounds.maxs.x - &bounds.mins.x;
+    let height = &bounds.maxs.y - &bounds.mins.y;
+    if crate::scalar::le(&width, &height) {
+        width
+    } else {
+        height
+    }
 }
 
 fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
@@ -1555,7 +1572,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test segment should be valid")],
                 Some(LayerMetadata {
                     name: layer.to_string(),
@@ -1573,7 +1590,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: layer.to_string(),

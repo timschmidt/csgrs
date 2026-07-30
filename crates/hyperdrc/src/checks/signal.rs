@@ -8,9 +8,7 @@
 //! return-current paths. Results are suspect around split planes, unusual net
 //! names, and intentional guard structures that are not parsed as copper.
 
-use geo::BoundingRect;
-
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::spatial::CopperSpatialIndex;
@@ -76,13 +74,13 @@ pub fn sensitive_net_spacing_readiness(
             {
                 continue;
             }
-            if !sketches_within_clearance(&sensitive.sketch, &noisy.sketch, broad_phase_clearance) {
+            if !regiones_within_clearance(&sensitive.region, &noisy.region, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &sensitive.sketch,
+                &sensitive.region,
                 clearance.clone(),
                 "sensitive-net-spacing-readiness",
                 vec![sensitive.layer.clone()],
@@ -92,7 +90,7 @@ pub fn sensitive_net_spacing_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &noisy.sketch,
+                &noisy.region,
                 "sensitive-net-spacing-readiness",
                 vec![sensitive.layer.clone()],
             ) {
@@ -102,10 +100,10 @@ pub fn sensitive_net_spacing_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &sensitive.sketch.to_multipolygon(),
-                    &noisy.sketch.to_multipolygon(),
+                    &sensitive.region.to_multipolygon(),
+                    &noisy.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= clearance)
+                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
             {
                 vec![
                     sensitive.location_f64_compatibility_required(),
@@ -308,9 +306,9 @@ pub fn mixed_signal_partition_readiness(
             {
                 continue;
             }
-            if !sketches_within_clearance(
-                &sensitive.sketch,
-                &digital.sketch,
+            if !regiones_within_clearance(
+                &sensitive.region,
+                &digital.region,
                 broad_phase_separation,
             ) {
                 continue;
@@ -342,7 +340,7 @@ pub fn mixed_signal_partition_readiness(
             }
 
             let expanded = match offset_for_check(
-                &sensitive.sketch,
+                &sensitive.region,
                 separation.clone(),
                 "mixed-signal-partition-readiness",
                 vec![sensitive.layer.clone()],
@@ -352,7 +350,7 @@ pub fn mixed_signal_partition_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &digital.sketch,
+                &digital.region,
                 "mixed-signal-partition-readiness",
                 vec![sensitive.layer.clone()],
             ) {
@@ -362,10 +360,10 @@ pub fn mixed_signal_partition_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &sensitive.sketch.to_multipolygon(),
-                    &digital.sketch.to_multipolygon(),
+                    &sensitive.region.to_multipolygon(),
+                    &digital.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= separation)
+                .is_some_and(|distance| crate::scalar::le(&distance, separation))
             {
                 vec![
                     sensitive.location_f64_compatibility_required(),
@@ -484,17 +482,17 @@ fn copper_features_touch(
     tolerance: &Scalar,
     requested_check: &str,
 ) -> Result<bool, Box<Violation>> {
-    if !sketches_within_clearance(
-        &left.sketch,
-        &right.sketch,
+    if !regiones_within_clearance(
+        &left.region,
+        &right.region,
         scalar_broad_phase_radius(tolerance),
     ) {
         return Ok(false);
     }
 
     let overlap = intersection_for_check(
-        &left.sketch,
-        &right.sketch,
+        &left.region,
+        &right.region,
         requested_check,
         vec![left.layer.clone()],
     )?;
@@ -503,10 +501,10 @@ fn copper_features_touch(
     }
 
     Ok(polygon_boundary_distance_scalar(
-        &left.sketch.to_multipolygon(),
-        &right.sketch.to_multipolygon(),
+        &left.region.to_multipolygon(),
+        &right.region.to_multipolygon(),
     )
-    .is_some_and(|distance| &distance <= tolerance))
+    .is_some_and(|distance| crate::scalar::le(&distance, tolerance)))
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
@@ -520,9 +518,9 @@ fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
     }
 }
 
-fn sketches_within_clearance(
-    left: &crate::PcbSketch,
-    right: &crate::PcbSketch,
+fn regiones_within_clearance(
+    left: &crate::PcbRegion,
+    right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
     let Some(left_bounds) = left.geometry().bounding_rect() else {
@@ -810,7 +808,7 @@ mod tests {
                 crate::geometry::exact_real((start[0] + end[0]) / 2.0),
                 crate::geometry::exact_real((start[1] + end[1]) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![line_polygon(start, end, width).expect("test line should be valid")],
                 Some(LayerMetadata {
                     name: "test line".to_string(),

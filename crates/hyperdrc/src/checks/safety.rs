@@ -8,9 +8,7 @@
 //! isolated domains, chassis strategies, and untranslated safety rules. Verify
 //! against creepage/clearance standards and the system grounding design.
 
-use geo::BoundingRect;
-
-use crate::PcbSketchExt;
+use crate::PcbRegionExt;
 use crate::Scalar;
 use crate::checks::distance::polygon_boundary_distance_scalar;
 use crate::checks::offset_for_check;
@@ -69,7 +67,7 @@ pub fn high_voltage_edge_readiness(
 
         exact_difference_count += 1;
         let intrusion = match difference_for_check(
-            &feature.sketch,
+            &feature.region,
             &allowed,
             "high-voltage-edge-readiness",
             vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
@@ -164,13 +162,13 @@ pub fn voltage_clearance_readiness(
             if right_high_voltage && right_index < left_index {
                 continue;
             }
-            if !sketches_within_clearance(&left.sketch, &right.sketch, broad_phase_clearance) {
+            if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &left.sketch,
+                &left.region,
                 clearance.clone(),
                 "voltage-clearance-readiness",
                 vec![left.layer.clone()],
@@ -180,7 +178,7 @@ pub fn voltage_clearance_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &right.sketch,
+                &right.region,
                 "voltage-clearance-readiness",
                 vec![left.layer.clone()],
             ) {
@@ -190,10 +188,10 @@ pub fn voltage_clearance_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let locations = if shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &left.sketch.to_multipolygon(),
-                    &right.sketch.to_multipolygon(),
+                    &left.region.to_multipolygon(),
+                    &right.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= clearance)
+                .is_some_and(|distance| crate::scalar::le(&distance, clearance))
             {
                 vec![
                     left.location_f64_compatibility_required(),
@@ -283,13 +281,13 @@ pub fn protective_earth_spacing_readiness(
             if hv.net == pe.net {
                 continue;
             }
-            if !sketches_within_clearance(&hv.sketch, &pe.sketch, broad_phase_clearance) {
+            if !regiones_within_clearance(&hv.region, &pe.region, broad_phase_clearance) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &hv.sketch,
+                &hv.region,
                 clearance.clone(),
                 "protective-earth-spacing-readiness",
                 vec![hv.layer.clone()],
@@ -299,7 +297,7 @@ pub fn protective_earth_spacing_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &pe.sketch,
+                &pe.region,
                 "protective-earth-spacing-readiness",
                 vec![hv.layer.clone()],
             ) {
@@ -309,10 +307,10 @@ pub fn protective_earth_spacing_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &hv.sketch.to_multipolygon(),
-                    &pe.sketch.to_multipolygon(),
+                    &hv.region.to_multipolygon(),
+                    &pe.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= clearance);
+                .is_some_and(|distance| crate::scalar::le(&distance, clearance));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -403,13 +401,13 @@ pub fn surge_protection_keepout_readiness(
             {
                 continue;
             }
-            if !sketches_within_clearance(&source.sketch, &neighbor.sketch, broad_phase_keepout) {
+            if !regiones_within_clearance(&source.region, &neighbor.region, broad_phase_keepout) {
                 continue;
             }
             exact_pair_count += 1;
 
             let expanded = match offset_for_check(
-                &source.sketch,
+                &source.region,
                 keepout.clone(),
                 "surge-protection-keepout-readiness",
                 vec![source.layer.clone()],
@@ -419,7 +417,7 @@ pub fn surge_protection_keepout_readiness(
             };
             let overlap = match intersection_for_check(
                 &expanded,
-                &neighbor.sketch,
+                &neighbor.region,
                 "surge-protection-keepout-readiness",
                 vec![source.layer.clone()],
             ) {
@@ -429,10 +427,10 @@ pub fn surge_protection_keepout_readiness(
             let shapes = multipolygon_to_shapes_scalar(&overlap.to_multipolygon(), min_area);
             let fallback_hit = shapes.is_empty()
                 && polygon_boundary_distance_scalar(
-                    &source.sketch.to_multipolygon(),
-                    &neighbor.sketch.to_multipolygon(),
+                    &source.region.to_multipolygon(),
+                    &neighbor.region.to_multipolygon(),
                 )
-                .is_some_and(|distance| &distance <= keepout);
+                .is_some_and(|distance| crate::scalar::le(&distance, keepout));
             if shapes.is_empty() && !fallback_hit {
                 continue;
             }
@@ -471,9 +469,9 @@ pub fn surge_protection_keepout_readiness(
     violations
 }
 
-fn sketches_within_clearance(
-    left: &crate::PcbSketch,
-    right: &crate::PcbSketch,
+fn regiones_within_clearance(
+    left: &crate::PcbRegion,
+    right: &crate::PcbRegion,
     clearance: f64,
 ) -> bool {
     let Some(left_bounds) = left.geometry().bounding_rect() else {
@@ -555,12 +553,12 @@ pub fn esd_protection_readiness(
         }
 
         let Some(edge_gap) = polygon_boundary_distance_scalar(
-            &feature.sketch.to_multipolygon(),
+            &feature.region.to_multipolygon(),
             &outline.to_multipolygon(),
         ) else {
             continue;
         };
-        if &edge_gap > edge_distance {
+        if crate::scalar::gt(&edge_gap, edge_distance) {
             continue;
         }
         edge_candidate_count += 1;
@@ -573,7 +571,7 @@ pub fn esd_protection_readiness(
             let protection = protection_features[protection_index];
             !std::ptr::eq(protection, feature)
                 && exact_point_distance_scalar(&feature.location, &protection.location)
-                    .is_some_and(|distance| &distance <= protection_search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, protection_search_radius))
         });
         if has_protection {
             continue;
@@ -659,7 +657,7 @@ pub fn esd_return_path_readiness(
             let return_feature = return_features[return_index];
             !std::ptr::eq(return_feature, feature)
                 && exact_point_distance_scalar(&feature.location, &return_feature.location)
-                    .is_some_and(|distance| &distance <= return_search_radius)
+                    .is_some_and(|distance| crate::scalar::le(&distance, return_search_radius))
         });
         if has_return {
             continue;
@@ -1290,7 +1288,7 @@ mod tests {
         }
     }
 
-    fn board_with_outline(outline: geo::Polygon<f64>) -> BoardModel {
+    fn board_with_outline(outline: crate::geometry::Polygon<f64>) -> BoardModel {
         BoardModel {
             source: "test".to_string(),
             copper: Vec::new(),
@@ -1305,7 +1303,7 @@ mod tests {
         }
     }
 
-    fn square(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> geo::Polygon<f64> {
+    fn square(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> crate::geometry::Polygon<f64> {
         rect_polygon(
             [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
             [max_x - min_x, max_y - min_y],
@@ -1330,7 +1328,7 @@ mod tests {
                 crate::geometry::exact_real((min_x + max_x) / 2.0),
                 crate::geometry::exact_real((min_y + max_y) / 2.0),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![rect_polygon(
                     [(min_x + max_x) / 2.0, (min_y + max_y) / 2.0],
                     [max_x - min_x, max_y - min_y],
@@ -1367,7 +1365,7 @@ mod tests {
                 crate::geometry::exact_real(location[0]),
                 crate::geometry::exact_real(location[1]),
             ],
-            sketch: polygons_to_profile(
+            region: polygons_to_profile(
                 vec![circle_polygon(location, diameter / 2.0, 32)],
                 Some(LayerMetadata {
                     name: "test disc".to_string(),
