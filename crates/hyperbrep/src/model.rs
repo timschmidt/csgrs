@@ -1188,13 +1188,15 @@ struct CertifiedSphereShell {
     center: Point3,
     radius: Real,
     voids: Vec<(Point3, Real)>,
-    clip: Option<CertifiedSphereClip>,
+    region: CertifiedSphereRegion,
 }
 
 #[derive(Clone, Debug)]
-enum CertifiedSphereClip {
+enum CertifiedSphereRegion {
+    Whole,
     Axial(CertifiedSphereAxialClip),
     Radial(CertifiedSphereRadialClip),
+    CylinderUnion(CertifiedSphereCylinderUnion),
 }
 
 #[derive(Clone, Debug)]
@@ -1209,6 +1211,15 @@ struct CertifiedSphereRadialClip {
     axis: Vector3,
     radius: Real,
     side: CertifiedSphereRadialSide,
+}
+
+#[derive(Clone, Debug)]
+struct CertifiedSphereCylinderUnion {
+    origin: Point3,
+    axis: Vector3,
+    radius: Real,
+    v_min: Real,
+    v_max: Real,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -3645,22 +3656,36 @@ impl Model {
                                 .transform_point3(&certificate.center)
                                 .map_err(|_| GeometryError::TransformFailure)?,
                             radius: certificate.radius.clone(),
-                            clip: certificate.clip.as_ref().map(|clip| match clip {
-                                CertifiedSphereClip::Axial(clip) => {
-                                    CertifiedSphereClip::Axial(CertifiedSphereAxialClip {
+                            region: match &certificate.region {
+                                CertifiedSphereRegion::Whole => CertifiedSphereRegion::Whole,
+                                CertifiedSphereRegion::Axial(clip) => {
+                                    CertifiedSphereRegion::Axial(CertifiedSphereAxialClip {
                                         axis: transform.transform_direction3(&clip.axis),
                                         min: clip.min.clone(),
                                         max: clip.max.clone(),
                                     })
                                 }
-                                CertifiedSphereClip::Radial(clip) => {
-                                    CertifiedSphereClip::Radial(CertifiedSphereRadialClip {
+                                CertifiedSphereRegion::Radial(clip) => {
+                                    CertifiedSphereRegion::Radial(CertifiedSphereRadialClip {
                                         axis: transform.transform_direction3(&clip.axis),
                                         radius: clip.radius.clone(),
                                         side: clip.side,
                                     })
                                 }
-                            }),
+                                CertifiedSphereRegion::CylinderUnion(union) => {
+                                    CertifiedSphereRegion::CylinderUnion(
+                                        CertifiedSphereCylinderUnion {
+                                            origin: transform
+                                                .transform_point3(&union.origin)
+                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                            axis: transform.transform_direction3(&union.axis),
+                                            radius: union.radius.clone(),
+                                            v_min: union.v_min.clone(),
+                                            v_max: union.v_max.clone(),
+                                        },
+                                    )
+                                }
+                            },
                             voids: certificate
                                 .voids
                                 .iter()
@@ -4188,7 +4213,7 @@ impl Model {
             return Ok(volume - excluded);
         }
         if let Some(sphere) = &self.data.certified_spheres[id.index()] {
-            if let Some(CertifiedSphereClip::Axial(clip)) = &sphere.clip {
+            if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
                 let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
                     let cubic = (height * height * height / Real::from(3))
                         .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -4196,7 +4221,7 @@ impl Model {
                 };
                 return Ok(antiderivative(&clip.max)? - antiderivative(&clip.min)?);
             }
-            if let Some(CertifiedSphereClip::Radial(clip)) = &sphere.clip {
+            if let CertifiedSphereRegion::Radial(clip) = &sphere.region {
                 let axial_half_height = (&sphere.radius * &sphere.radius
                     - &clip.radius * &clip.radius)
                     .sqrt()
@@ -4211,6 +4236,22 @@ impl Model {
                 return (Real::from(4) * Real::pi() * retained_cubic / Real::from(3))
                     .map_err(|_| GeometryError::ProjectiveDivision)
                     .map_err(QueryError::from);
+            }
+            if let CertifiedSphereRegion::CylinderUnion(union) = &sphere.region {
+                let axial_half_height = (&sphere.radius * &sphere.radius
+                    - &union.radius * &union.radius)
+                    .sqrt()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let cylinder_volume =
+                    Real::pi() * &union.radius * &union.radius * (&union.v_max - &union.v_min);
+                let sphere_outside_cylinder = (Real::from(4)
+                    * Real::pi()
+                    * &axial_half_height
+                    * &axial_half_height
+                    * axial_half_height
+                    / Real::from(3))
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+                return Ok(cylinder_volume + sphere_outside_cylinder);
             }
             let mut cubic_radius = &sphere.radius * &sphere.radius * &sphere.radius;
             for (_, radius) in &sphere.voids {
@@ -4597,7 +4638,10 @@ impl Model {
         sphere: &CertifiedSphereShell,
         point: &Point3,
     ) -> Result<SolidPointLocation, QueryError> {
-        let radial_boundary = if let Some(CertifiedSphereClip::Radial(clip)) = &sphere.clip {
+        if let CertifiedSphereRegion::CylinderUnion(union) = &sphere.region {
+            return self.classify_point_against_sphere_cylinder_union(sphere, union, point);
+        }
+        let radial_boundary = if let CertifiedSphereRegion::Radial(clip) = &sphere.region {
             let offset = point - &sphere.center;
             let axial = offset.dot(&clip.axis);
             let radial = offset - clip.axis.clone() * axial;
@@ -4621,7 +4665,7 @@ impl Model {
         } else {
             false
         };
-        let clip_orders = if let Some(CertifiedSphereClip::Axial(clip)) = &sphere.clip {
+        let clip_orders = if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
             let height = (point - &sphere.center).dot(&clip.axis);
             let min = decided_model_order(compare_reals(&height, &clip.min))?;
             let max = decided_model_order(compare_reals(&height, &clip.max))?;
@@ -4656,6 +4700,58 @@ impl Model {
             }
         }
         Ok(SolidPointLocation::Inside)
+    }
+
+    fn classify_point_against_sphere_cylinder_union(
+        &self,
+        sphere: &CertifiedSphereShell,
+        cylinder: &CertifiedSphereCylinderUnion,
+        point: &Point3,
+    ) -> Result<SolidPointLocation, QueryError> {
+        let sphere_order = decided_model_order(compare_reals(
+            &(point - &sphere.center).norm_squared(),
+            &(&sphere.radius * &sphere.radius),
+        ))?;
+        let offset = point - &cylinder.origin;
+        let axial = offset.dot(&cylinder.axis);
+        let axial_min = decided_model_order(compare_reals(&axial, &cylinder.v_min))?;
+        let axial_max = decided_model_order(compare_reals(&axial, &cylinder.v_max))?;
+        let cylinder_location =
+            if axial_min == std::cmp::Ordering::Less || axial_max == std::cmp::Ordering::Greater {
+                SolidPointLocation::Outside
+            } else {
+                let radial = offset - cylinder.axis.clone() * &axial;
+                match decided_model_order(compare_reals(
+                    &radial.norm_squared(),
+                    &(&cylinder.radius * &cylinder.radius),
+                ))? {
+                    std::cmp::Ordering::Greater => SolidPointLocation::Outside,
+                    std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
+                    std::cmp::Ordering::Less
+                        if axial_min == std::cmp::Ordering::Equal
+                            || axial_max == std::cmp::Ordering::Equal =>
+                    {
+                        SolidPointLocation::Boundary
+                    }
+                    std::cmp::Ordering::Less => SolidPointLocation::Inside,
+                }
+            };
+        let sphere_location = match sphere_order {
+            std::cmp::Ordering::Less => SolidPointLocation::Inside,
+            std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
+            std::cmp::Ordering::Greater => SolidPointLocation::Outside,
+        };
+        Ok(match (sphere_location, cylinder_location) {
+            (SolidPointLocation::Inside, _) | (_, SolidPointLocation::Inside) => {
+                SolidPointLocation::Inside
+            }
+            (SolidPointLocation::Boundary, _) | (_, SolidPointLocation::Boundary) => {
+                SolidPointLocation::Boundary
+            }
+            (SolidPointLocation::Outside, SolidPointLocation::Outside) => {
+                SolidPointLocation::Outside
+            }
+        })
     }
 
     fn classify_point_against_sphere_pair(
@@ -5427,7 +5523,9 @@ impl Model {
             .certified_spheres
             .get(solid.index())
             .and_then(Option::as_ref)
-            .filter(|sphere| sphere.voids.is_empty() && sphere.clip.is_none())
+            .filter(|sphere| {
+                sphere.voids.is_empty() && matches!(sphere.region, CertifiedSphereRegion::Whole)
+            })
             .map(|sphere| CertifiedSphereProfile {
                 center: sphere.center.clone(),
                 radius: sphere.radius.clone(),
@@ -9512,7 +9610,7 @@ impl ModelBuilder {
                 center,
                 radius,
                 voids: Vec::new(),
-                clip: None,
+                region: CertifiedSphereRegion::Whole,
             }))
     }
 
@@ -9675,7 +9773,7 @@ impl ModelBuilder {
                 center,
                 radius,
                 voids,
-                clip: None,
+                region: CertifiedSphereRegion::Whole,
             }));
         }
         if !solid.voids.is_empty() {
@@ -9701,10 +9799,15 @@ impl ModelBuilder {
             }
         }
         if !cylinder_faces.is_empty() {
-            if planar_faces != 0 {
-                return Ok(None);
+            if planar_faces == 0 {
+                return self.certified_sphere_cylinder_shell(shell, &sphere_faces, &cylinder_faces);
             }
-            return self.certified_sphere_cylinder_shell(shell, &sphere_faces, &cylinder_faces);
+            return self.certified_sphere_cylinder_union_shell(
+                shell,
+                faces,
+                &sphere_faces,
+                &cylinder_faces,
+            );
         }
         if sphere_faces.len() != 1 {
             return Ok(None);
@@ -9784,7 +9887,7 @@ impl ModelBuilder {
             center: cap.center,
             radius: cap.radius.clone(),
             voids: Vec::new(),
-            clip: Some(CertifiedSphereClip::Axial(CertifiedSphereAxialClip {
+            region: CertifiedSphereRegion::Axial(CertifiedSphereAxialClip {
                 axis: cap.axis,
                 min: if cap.upper {
                     height.clone()
@@ -9792,7 +9895,7 @@ impl ModelBuilder {
                     -cap.radius.clone()
                 },
                 max: if cap.upper { cap.radius } else { height },
-            })),
+            }),
         }))
     }
 
@@ -9854,11 +9957,11 @@ impl ModelBuilder {
             center,
             radius,
             voids: Vec::new(),
-            clip: Some(CertifiedSphereClip::Axial(CertifiedSphereAxialClip {
+            region: CertifiedSphereRegion::Axial(CertifiedSphereAxialClip {
                 axis,
                 min: expected_min,
                 max: expected_max,
-            })),
+            }),
         }))
     }
 
@@ -10062,11 +10165,174 @@ impl ModelBuilder {
             center,
             radius,
             voids: Vec::new(),
-            clip: Some(CertifiedSphereClip::Radial(CertifiedSphereRadialClip {
+            region: CertifiedSphereRegion::Radial(CertifiedSphereRadialClip {
                 axis: cylinder.axis,
                 radius: cylinder.radius,
                 side: radial_side,
-            })),
+            }),
+        }))
+    }
+
+    fn certified_sphere_cylinder_union_shell(
+        &self,
+        shell: ShellId,
+        faces: &[FaceId],
+        sphere_faces: &[FaceId],
+        cylinder_faces: &[FaceId],
+    ) -> Result<Option<CertifiedSphereShell>, BuildError> {
+        let [sphere_face_id] = sphere_faces else {
+            return Ok(None);
+        };
+        let sphere_face = self.face_ref(*sphere_face_id)?;
+        if sphere_face.orientation != Orientation::Forward {
+            return Ok(None);
+        }
+        let Some(lower_wire) = sphere_face.outer() else {
+            return Ok(None);
+        };
+        let [upper_wire] = sphere_face.inner() else {
+            return Ok(None);
+        };
+        let (lower_latitude, _) = self.spherical_trim_coordinates(lower_wire)?;
+        let (upper_latitude, _) = self.spherical_trim_coordinates(*upper_wire)?;
+        let SurfaceExactData::Sphere {
+            center,
+            axis,
+            radius,
+            ..
+        } = self.surface_ref(sphere_face.surface)?.exact_data()
+        else {
+            return Ok(None);
+        };
+        let Some(first_cylinder_face) = cylinder_faces.first() else {
+            return Ok(None);
+        };
+        let cylinder_surface_id = self.face_ref(*first_cylinder_face)?.surface;
+        if cylinder_faces
+            .iter()
+            .any(|face| self.face_ref(*face).map(|face| face.surface) != Ok(cylinder_surface_id))
+        {
+            return Ok(None);
+        }
+        let SurfaceExactData::Cylinder {
+            origin,
+            axis: cylinder_axis,
+            radius: cylinder_radius,
+            ..
+        } = self.surface_ref(cylinder_surface_id)?.exact_data()
+        else {
+            return Ok(None);
+        };
+        if !vectors_equal(&axis, &cylinder_axis)?
+            || decided_model_order(compare_reals(&cylinder_radius, &radius))?
+                != std::cmp::Ordering::Less
+        {
+            return Ok(None);
+        }
+        let center_offset = &center - &origin;
+        let center_parameter = center_offset.dot(&cylinder_axis);
+        let radial_offset = center_offset - cylinder_axis.clone() * &center_parameter;
+        if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+            != std::cmp::Ordering::Equal
+        {
+            return Ok(None);
+        }
+        let lower_height = &radius * lower_latitude.clone().sin();
+        let upper_height = &radius * upper_latitude.clone().sin();
+        if decided_model_order(compare_reals(&lower_height, &Real::zero()))?
+            != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(&upper_height, &Real::zero()))?
+                != std::cmp::Ordering::Greater
+            || !real_values_equal(&lower_height, &-upper_height.clone())?
+            || !real_values_equal(&(&radius * lower_latitude.clone().cos()), &cylinder_radius)?
+            || !real_values_equal(&(&radius * upper_latitude.clone().cos()), &cylinder_radius)?
+        {
+            return Ok(None);
+        }
+        let lower_intersection = &center_parameter + &lower_height;
+        let upper_intersection = &center_parameter + &upper_height;
+        let mut lower_faces = Vec::new();
+        let mut upper_faces = Vec::new();
+        for face in cylinder_faces {
+            let Some((face_min, face_max)) = self.cylinder_face_v_bounds(*face)? else {
+                return Ok(None);
+            };
+            if decided_model_order(compare_reals(&face_max, &lower_intersection))?
+                != std::cmp::Ordering::Greater
+            {
+                lower_faces.push(*face);
+            } else if decided_model_order(compare_reals(&face_min, &upper_intersection))?
+                != std::cmp::Ordering::Less
+            {
+                upper_faces.push(*face);
+            } else {
+                return Ok(None);
+            }
+        }
+        let Some(lower) =
+            self.certified_cylinder_side_faces(shell, &lower_faces, Orientation::Forward)?
+        else {
+            return Ok(None);
+        };
+        let Some(upper) =
+            self.certified_cylinder_side_faces(shell, &upper_faces, Orientation::Forward)?
+        else {
+            return Ok(None);
+        };
+        if !points_equal(&lower.origin, &upper.origin)?
+            || !vectors_equal(&lower.axis, &upper.axis)?
+            || !real_values_equal(&lower.radius, &upper.radius)?
+            || !real_values_equal(&lower.v_max, &lower_intersection)?
+            || !real_values_equal(&upper.v_min, &upper_intersection)?
+            || decided_model_order(compare_reals(
+                &(&lower.v_min - &center_parameter),
+                &-radius.clone(),
+            ))? != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(&(&upper.v_max - &center_parameter), &radius))?
+                != std::cmp::Ordering::Greater
+        {
+            return Ok(None);
+        }
+        let cap_groups = self.planar_face_groups(faces)?;
+        if cap_groups.len() != 2 {
+            return Ok(None);
+        }
+        let mut matched = [false; 2];
+        for group in &cap_groups {
+            let lower_match = self.certified_cylinder_cap_group(
+                faces,
+                group,
+                &lower,
+                &lower.v_min,
+                std::cmp::Ordering::Less,
+            )?;
+            let upper_match = self.certified_cylinder_cap_group(
+                faces,
+                group,
+                &upper,
+                &upper.v_max,
+                std::cmp::Ordering::Greater,
+            )?;
+            match (lower_match, upper_match) {
+                (true, false) if !matched[0] => matched[0] = true,
+                (false, true) if !matched[1] => matched[1] = true,
+                _ => return Ok(None),
+            }
+        }
+        if matched != [true, true] {
+            return Ok(None);
+        }
+        Ok(Some(CertifiedSphereShell {
+            center,
+            radius,
+            voids: Vec::new(),
+            region: CertifiedSphereRegion::CylinderUnion(CertifiedSphereCylinderUnion {
+                origin: lower.origin,
+                axis: lower.axis,
+                radius: lower.radius,
+                v_min: lower.v_min,
+                v_max: upper.v_max,
+            }),
         }))
     }
 
@@ -12774,6 +13040,91 @@ impl ModelBuilder {
         }))
     }
 
+    fn cylinder_face_v_bounds(&self, face_id: FaceId) -> Result<Option<(Real, Real)>, BuildError> {
+        let face = self.face_ref(face_id)?;
+        if self.surface_ref(face.surface)?.kind() != SurfaceKind::Cylinder {
+            return Ok(None);
+        }
+        let Some(outer) = face.outer() else {
+            return Ok(None);
+        };
+        let mut values = Vec::new();
+        for edge_use_id in &self.wire_ref(outer)?.edge_uses {
+            let Some(line) = self
+                .pcurve_ref(self.edge_use_ref(*edge_use_id)?.pcurve)?
+                .line_segment()
+            else {
+                return Ok(None);
+            };
+            values.extend([line.start().y().clone(), line.end().y().clone()]);
+        }
+        exact_real_min_max(&values).map(Some)
+    }
+
+    fn certified_cylinder_cap_group(
+        &self,
+        faces: &[FaceId],
+        cap_group: &[usize],
+        cylinder: &CertifiedCylinderShell,
+        cap_parameter: &Real,
+        expected_direction: std::cmp::Ordering,
+    ) -> Result<bool, BuildError> {
+        let Some(boundaries) = self.cap_boundary_use_loops(faces, cap_group)? else {
+            return Ok(false);
+        };
+        let [boundary] = boundaries.as_slice() else {
+            return Ok(false);
+        };
+        let expected_center = cylinder.origin.clone() + cylinder.axis.clone() * cap_parameter;
+        let mut sweep = Real::zero();
+        for edge_use_id in boundary {
+            let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
+            let Curve3ExactData::EllipseArc(circle) = self.curve_ref(edge.curve)?.exact_data()
+            else {
+                return Ok(false);
+            };
+            if !circle.circle
+                || !points_equal(&circle.center, &expected_center)?
+                || !real_values_equal(&circle.x_radius, &cylinder.radius)?
+                || !real_values_equal(&circle.y_radius, &cylinder.radius)?
+            {
+                return Ok(false);
+            }
+            sweep += edge.domain.end() - edge.domain.start();
+        }
+        if !real_values_equal(&sweep, &Real::tau())? {
+            return Ok(false);
+        }
+        for index in cap_group {
+            let face = self.face_ref(faces[*index])?;
+            let SurfaceExactData::Plane { origin, u, v } =
+                self.surface_ref(face.surface)?.exact_data()
+            else {
+                return Ok(false);
+            };
+            let normal = u.cross(&v);
+            if decided_model_order(compare_reals(
+                &normal.cross(&cylinder.axis).norm_squared(),
+                &Real::zero(),
+            ))? != std::cmp::Ordering::Equal
+                || !real_values_equal(
+                    &(origin - &cylinder.origin).dot(&cylinder.axis),
+                    cap_parameter,
+                )?
+            {
+                return Ok(false);
+            }
+            let oriented = match face.orientation {
+                Orientation::Forward => normal.dot(&cylinder.axis),
+                Orientation::Reversed => -normal.dot(&cylinder.axis),
+            };
+            if decided_model_order(compare_reals(&oriented, &Real::zero()))? != expected_direction {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
     fn certified_cylinder_sphere_component_shell(
         &self,
         shell: ShellId,
@@ -12854,60 +13205,14 @@ impl ModelBuilder {
         let [cap_group] = cap_groups.as_slice() else {
             return Ok(None);
         };
-        let Some(boundaries) = self.cap_boundary_use_loops(faces, cap_group)? else {
+        if !self.certified_cylinder_cap_group(
+            faces,
+            cap_group,
+            &cylinder,
+            &cap_parameter,
+            expected_cap_direction,
+        )? {
             return Ok(None);
-        };
-        let [boundary] = boundaries.as_slice() else {
-            return Ok(None);
-        };
-        let expected_center = cylinder.origin.clone() + cylinder.axis.clone() * &cap_parameter;
-        let mut sweep = Real::zero();
-        for edge_use_id in boundary {
-            let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
-            let Curve3ExactData::EllipseArc(circle) = self.curve_ref(edge.curve)?.exact_data()
-            else {
-                return Ok(None);
-            };
-            if !circle.circle
-                || !points_equal(&circle.center, &expected_center)?
-                || !real_values_equal(&circle.x_radius, &cylinder.radius)?
-                || !real_values_equal(&circle.y_radius, &cylinder.radius)?
-            {
-                return Ok(None);
-            }
-            sweep += edge.domain.end() - edge.domain.start();
-        }
-        if !real_values_equal(&sweep, &Real::tau())? {
-            return Ok(None);
-        }
-        for index in cap_group {
-            let face = self.face_ref(faces[*index])?;
-            let SurfaceExactData::Plane { origin, u, v } =
-                self.surface_ref(face.surface)?.exact_data()
-            else {
-                return Ok(None);
-            };
-            let normal = u.cross(&v);
-            if decided_model_order(compare_reals(
-                &normal.cross(&cylinder.axis).norm_squared(),
-                &Real::zero(),
-            ))? != std::cmp::Ordering::Equal
-                || !real_values_equal(
-                    &(origin - &cylinder.origin).dot(&cylinder.axis),
-                    &cap_parameter,
-                )?
-            {
-                return Ok(None);
-            }
-            let oriented = match face.orientation {
-                Orientation::Forward => normal.dot(&cylinder.axis),
-                Orientation::Reversed => -normal.dot(&cylinder.axis),
-            };
-            if decided_model_order(compare_reals(&oriented, &Real::zero()))?
-                != expected_cap_direction
-            {
-                return Ok(None);
-            }
         }
         cylinder.sphere_exclusion = Some(CertifiedCylinderSphereExclusion {
             center: sphere_cap.center,

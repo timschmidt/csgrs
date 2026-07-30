@@ -289,6 +289,18 @@ interval minus the enclosed spherical cap; classification applies the
 cylinder interval/radius predicate and then excludes the sphere. These mixed
 certificates are deliberately absent from the plain-cylinder profile fast
 paths.
+The regularized union uses the complementary topology: one forward spherical
+band joins complete lower and upper cylinder parameter grids and their two
+outward caps. Certification proves the two cylinder ranges terminate at the
+band's exact latitudes, both outer caps lie beyond the sphere poles, and all
+carriers share one axis and center line. Sphere query state is a closed
+`CertifiedSphereRegion` enum—whole, axial interval, radial side, or finite
+cylinder union—so union semantics cannot coexist accidentally with a clip.
+Volume is the cylinder volume plus the sphere material outside its radial
+core. Point classification combines the sphere and finite-cylinder predicates
+as a true union, making either carrier's boundary internal whenever the other
+predicate is strictly inside. Mixed union results advertise neither a plain
+sphere nor a plain cylinder optimization profile.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

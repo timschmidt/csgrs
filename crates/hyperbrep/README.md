@@ -182,7 +182,9 @@ The clean-break implementation currently provides:
   cylinder band as one exact genus-one solid with native area, volume,
   classification, transforms, and replay. Opposite cylinder-minus-sphere
   difference retains the two disconnected capped-cylinder ends, each with a
-  native reversed spherical cap and exact exclusion-aware queries;
+  native reversed spherical cap and exact exclusion-aware queries. Regular
+  union joins the spherical band to both capped cylinder ends as one exact
+  shell with true union classification and no false primitive profile;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

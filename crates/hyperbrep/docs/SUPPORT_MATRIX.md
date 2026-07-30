@@ -216,6 +216,15 @@ exclusion. Mixed results never advertise the plain-cylinder optimization
 profile. For a radius-2 cylinder on `[-4,4]` minus a concentric radius-3
 sphere, total area is `(76-20*sqrt(5))*pi` and total volume is
 `(20*sqrt(5)-12)*pi/3`.
+The regularized union of that same finite cylinder and sphere is one connected
+native shell: the central two-loop spherical band, complete lower and upper
+cylinder grids, and both planar caps. Its exact query certificate uses a
+closed sphere-region variant for finite-cylinder union, suppresses carrier
+boundaries that lie strictly inside the other operand, and is excluded from
+plain sphere/cylinder/prism optimization profiles. For the radius-3 sphere and
+radius-2 cylinder on `[-4,4]`, exact boundary area is
+`(40+4*sqrt(5))*pi` and exact volume is `(96+20*sqrt(5))*pi/3`, with
+operand reversal, rigid/reflection transforms, and persistence.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects

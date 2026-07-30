@@ -5386,6 +5386,171 @@ mod tests {
     }
 
     #[test]
+    fn coaxial_sphere_cylinder_union_stitches_one_exact_extended_shell() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(8)).unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(4),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Union)
+            .unwrap()
+        else {
+            panic!("the spherical band and two capped cylinder ends must form one exact solid");
+        };
+        let sqrt_five = Real::from(5).sqrt().unwrap();
+        let expected = ((Real::from(96) + Real::from(20) * sqrt_five.clone()) * Real::pi()
+            / Real::from(3))
+        .unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let expected_area = (Real::from(40) + Real::from(4) * sqrt_five.clone()) * Real::pi();
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, 0), SolidPointLocation::Inside),
+            (p(3, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 4), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::from(7) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(
+                    Real::from(2),
+                    Real::zero(),
+                    (Real::from(7) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(Real::from(2), Real::zero(), sqrt_five.clone()),
+                SolidPointLocation::Boundary,
+            ),
+            (p(0, 0, 3), SolidPointLocation::Inside),
+            (p(2, 0, 0), SolidPointLocation::Inside),
+            (
+                Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (p(0, 0, 5), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+
+        for (index, result) in [
+            union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
+            union(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid {
+                model: standard,
+                solid: standard_solid,
+            } = result
+            else {
+                panic!("standard union operand order {index} must retain one exact solid");
+            };
+            assert_eq!(
+                compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+            assert!(standard.certified_sphere_profile(standard_solid).is_none());
+            assert!(
+                standard
+                    .certified_cylinder_profile(standard_solid)
+                    .is_none()
+            );
+            assert!(
+                standard
+                    .certified_z_prism_profile(standard_solid)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+
+        let BooleanResult::Solid {
+            model: standard,
+            solid: standard_solid,
+        } = union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
+        else {
+            unreachable!("standard union was checked above");
+        };
+        let json = standard.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(standard_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = union(
+            &oriented_sphere,
+            sphere_solid,
+            &oriented_cylinder,
+            cylinder_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigid reorientation must retain one exact extended shell");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let reflected = standard
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(standard_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn axial_sphere_halfspace_intersection_stitches_an_exact_cap() {
         let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
         let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();
