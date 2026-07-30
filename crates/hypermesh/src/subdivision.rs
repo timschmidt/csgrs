@@ -45,9 +45,7 @@ use hyperlattice::{HomogeneousPoint3, Point3, Real, intersect_three_planes};
 use std::cell::RefCell;
 use std::sync::Arc;
 
-use hyperlimit::{
-    HalfspaceFeasibility, Plane3 as LimitPlane3, PredicateOutcome, classify_halfspace_feasibility3,
-};
+use hyperlimit::{HalfspaceFeasibility, Plane3 as LimitPlane3, classify_halfspace_feasibility3};
 
 /// Default subdivision depth budget.
 ///
@@ -9564,40 +9562,27 @@ fn halfspace_system_report(
     decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<Option<hyperlimit::HalfspaceFeasibilityReport>> {
-    match classify_halfspace_feasibility3(halfspaces, decisions.policy()) {
-        PredicateOutcome::Decided {
-            value, certainty, ..
-        } => {
-            decisions.absorb(if certainty == hyperlimit::Certainty::Approximate {
-                crate::context::MeshCertainty::Approximate512Consumed
-            } else {
-                crate::context::MeshCertainty::Certified
-            });
-            Ok(Some(value))
-        }
-        PredicateOutcome::Unknown { .. } => {
-            Err(crate::error::HypermeshError::UnknownClassification)
-        }
-    }
+    decisions
+        .decide(
+            classify_halfspace_feasibility3(halfspaces, decisions.policy()),
+            "halfspace feasibility",
+        )
+        .map(Some)
 }
 
 fn optional_halfspace_system_report(
     decisions: &DecisionContext,
     halfspaces: &[LimitPlane3],
 ) -> HypermeshResult<(Option<hyperlimit::HalfspaceFeasibilityReport>, bool)> {
-    match classify_halfspace_feasibility3(halfspaces, decisions.policy()) {
-        PredicateOutcome::Decided {
-            value, certainty, ..
-        } => {
-            decisions.absorb(if certainty == hyperlimit::Certainty::Approximate {
-                crate::context::MeshCertainty::Approximate512Consumed
-            } else {
-                crate::context::MeshCertainty::Certified
-            });
-            Ok((Some(value), false))
-        }
-        PredicateOutcome::Unknown { .. } => Ok((None, true)),
-    }
+    Ok(
+        match decisions.probe(classify_halfspace_feasibility3(
+            halfspaces,
+            decisions.policy(),
+        )) {
+            Some(report) => (Some(report), false),
+            None => (None, true),
+        },
+    )
 }
 
 fn active_planes_from_optional_halfspace_report(
