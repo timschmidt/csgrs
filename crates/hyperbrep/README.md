@@ -48,10 +48,11 @@ The clean-break implementation currently provides:
   directed-angular-sweep relations;
 - certified line/plane, circular-arc/plane, axial-line/cylinder,
   circular-edge/cylinder, generator-or-circle/cone, circular-edge/torus, and
-  line-or-circle/extrusion image agreement over complete parameter intervals;
-  exact line/circle/rational-Bézier/NURBS meridian and latitude-circle
-  agreement on revolution surfaces; plus rational Bézier/NURBS iso-boundary
-  agreement on tensor surfaces;
+  line/circle/rational-Bézier/NURBS profile-image agreement on extrusion
+  surfaces over complete parameter intervals; exact
+  line/circle/rational-Bézier/NURBS meridian and latitude-circle agreement on
+  revolution surfaces; plus rational Bézier/NURBS iso-boundary agreement on
+  tensor surfaces;
 - certified planar loop winding, inner-wire nesting, and exact positive shell
   volume;
 - connected closed wires, connected shells, closed-manifold solid checks, and
@@ -92,6 +93,11 @@ The clean-break implementation currently provides:
   tessellation; constant weights support arbitrary validated trims, while a
   rank-one positive weight matrix supports a complete patch through its two
   independent exact rational axis reparameterizations;
+- exact extrusion-face area for line profiles, circular profiles swept normal
+  to their plane, and rectangular trims of certified monotone rational
+  Bézier/NURBS line images; variable-speed curved profiles are explicit
+  unsupported measurements instead of being sampled or assigned a
+  start-derivative scale;
 - `builder::tensor_patch_shell` for mixed collections of exact rational
   Bézier/NURBS patch specifications; complete projectively identical
   boundaries are identity-stitched across faces, including reversed traversal

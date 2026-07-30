@@ -4392,13 +4392,13 @@ impl Model {
             SurfaceExactData::Cylinder { radius, .. } => radius,
             SurfaceExactData::Extrusion { profile, direction } => {
                 let profile = Curve3::from_exact_data(*profile)?;
-                profile
-                    .derivative_at(profile.domain().start(), 1)?
-                    .vector()
-                    .cross(&direction)
-                    .norm_squared()
-                    .sqrt()
-                    .map_err(|_| GeometryError::ElementaryFunction)?
+                return self.extrusion_face_area(
+                    face,
+                    outer,
+                    &profile,
+                    &direction,
+                    &parameter_area,
+                );
             }
             data @ (SurfaceExactData::RationalBezier { .. } | SurfaceExactData::Nurbs { .. }) => {
                 return affine_tensor_face_area(&data, &parameter_area)
@@ -4412,6 +4412,89 @@ impl Model {
         (double_area / Real::from(2))
             .map_err(|_| GeometryError::ProjectiveDivision)
             .map_err(QueryError::from)
+    }
+
+    fn extrusion_face_area(
+        &self,
+        face: &Face,
+        outer: WireId,
+        profile: &Curve3,
+        direction: &Vector3,
+        parameter_double_area: &Real,
+    ) -> Result<Real, QueryError> {
+        if let Some(scale) =
+            extrusion_constant_area_scale(profile, direction).map_err(build_error_geometry)?
+        {
+            return (parameter_double_area * scale / Real::from(2))
+                .map_err(|_| GeometryError::ProjectiveDivision)
+                .map_err(QueryError::from);
+        }
+        if !face.inner().is_empty()
+            || !certified_monotone_line_curve_image(profile).map_err(build_error_geometry)?
+        {
+            return Err(GeometryError::UnsupportedMeasurement.into());
+        }
+        let Some((u_min, u_max, v_min, v_max)) = self.axis_aligned_parameter_rectangle(outer)?
+        else {
+            return Err(GeometryError::UnsupportedMeasurement.into());
+        };
+        let rectangle_double_area = Real::from(2) * (&u_max - &u_min) * (&v_max - &v_min);
+        if !real_values_equal(parameter_double_area, &rectangle_double_area)
+            .map_err(build_error_geometry)?
+            || !profile.domain().contains(&u_min)?
+            || !profile.domain().contains(&u_max)?
+        {
+            return Err(GeometryError::UnsupportedMeasurement.into());
+        }
+        let restricted = profile.subcurve(&u_min, &u_max)?;
+        let start = restricted.point_at(restricted.domain().start())?;
+        let end = restricted.point_at(restricted.domain().end())?;
+        let swept_area = (&end - &start)
+            .cross(direction)
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?
+            * (v_max - v_min);
+        Ok(swept_area)
+    }
+
+    fn axis_aligned_parameter_rectangle(
+        &self,
+        wire: WireId,
+    ) -> Result<Option<(Real, Real, Real, Real)>, GeometryError> {
+        let wire = self.wire(wire).expect("validated wire ID");
+        if wire.edge_uses.len() != 4 {
+            return Ok(None);
+        }
+        let mut u_values = Vec::with_capacity(2);
+        let mut v_values = Vec::with_capacity(2);
+        for edge_use in &wire.edge_uses {
+            let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
+            let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve ID");
+            let Some(line) = pcurve.line_segment() else {
+                return Ok(None);
+            };
+            let constant_u = real_values_equal(line.start().x(), line.end().x())
+                .map_err(build_error_geometry)?;
+            let constant_v = real_values_equal(line.start().y(), line.end().y())
+                .map_err(build_error_geometry)?;
+            if constant_u == constant_v {
+                return Ok(None);
+            }
+            insert_sorted_real(&mut u_values, line.start().x()).map_err(build_error_geometry)?;
+            insert_sorted_real(&mut u_values, line.end().x()).map_err(build_error_geometry)?;
+            insert_sorted_real(&mut v_values, line.start().y()).map_err(build_error_geometry)?;
+            insert_sorted_real(&mut v_values, line.end().y()).map_err(build_error_geometry)?;
+        }
+        if u_values.len() != 2 || v_values.len() != 2 {
+            return Ok(None);
+        }
+        Ok(Some((
+            u_values.remove(0),
+            u_values.remove(0),
+            v_values.remove(0),
+            v_values.remove(0),
+        )))
     }
 
     fn signed_model_wire_double_area(&self, wire: WireId) -> Result<Real, GeometryError> {
@@ -7129,6 +7212,14 @@ impl ModelBuilder {
                     ParameterCorrespondence::Affine { .. },
                 ) => self.validate_extrusion_line_image(pcurve, surface)?,
                 (
+                    Curve3Kind::RationalBezier | Curve3Kind::Nurbs,
+                    CurveFamily2::Line,
+                    SurfaceKind::Extrusion,
+                    ParameterCorrespondence::Affine { .. },
+                ) => {
+                    self.validate_extrusion_profile_image(curve, edge, edge_use, pcurve, surface)?;
+                }
+                (
                     Curve3Kind::CircleArc,
                     CurveFamily2::Line,
                     SurfaceKind::Extrusion,
@@ -8181,6 +8272,72 @@ impl ModelBuilder {
         } else {
             Err(BuildError::EdgeUseSupportMismatch)
         }
+    }
+
+    fn validate_extrusion_profile_image(
+        &self,
+        curve: &Curve3,
+        edge: &Edge,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<(), BuildError> {
+        let line = pcurve
+            .line_segment()
+            .expect("line pcurve kind carries line geometry");
+        require_real_equal(
+            line.start().y(),
+            line.end().y(),
+            BuildError::EdgeUseSupportMismatch,
+        )?;
+        if real_values_equal(line.start().x(), line.end().x())? {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        }
+        let (profile_start, profile_end) =
+            if decided_model_order(compare_reals(line.start().x(), line.end().x()))?
+                == std::cmp::Ordering::Less
+            {
+                (line.start().x(), line.end().x())
+            } else {
+                (line.end().x(), line.start().x())
+            };
+        let (profile, direction) = surface
+            .extrusion_profile_and_direction()
+            .expect("extrusion kind carries extrusion geometry");
+        let offset = direction.clone() * line.start().y();
+        let expected = translated_curve(&profile.subcurve(profile_start, profile_end)?, &offset)?;
+        let actual = curve.subcurve(edge.domain.start(), edge.domain.end())?;
+        if !curve_parameterizations_equal(&actual, &expected)? {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        }
+
+        let edge_domain_span = edge.domain.end() - edge.domain.start();
+        let actual_span = actual.domain().end() - actual.domain().start();
+        let profile_span = profile_end - profile_start;
+        let expected_span = expected.domain().end() - expected.domain().start();
+        for (pcurve_parameter, surface_parameter) in [
+            (pcurve.domain_start(), line.start().x()),
+            (pcurve.domain_end(), line.end().x()),
+        ] {
+            let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
+                pcurve,
+                &edge.domain,
+                edge_use.direction,
+                pcurve_parameter,
+            )?;
+            let actual_parameter = actual.domain().start()
+                + ((&edge_parameter - edge.domain.start()) * &actual_span / &edge_domain_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let expected_parameter = expected.domain().start()
+                + ((surface_parameter - profile_start) * &expected_span / &profile_span)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?;
+            require_real_equal(
+                &actual_parameter,
+                &expected_parameter,
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+        }
+        Ok(())
     }
 
     fn validate_extrusion_circle_image(
@@ -15512,6 +15669,66 @@ fn rational_bezier_weights_proportional(
     Ok(true)
 }
 
+fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve3, BuildError> {
+    match curve.exact_data() {
+        Curve3ExactData::Line(data) => Ok(Curve3::line(data.start + offset, data.end + offset)?),
+        Curve3ExactData::RationalBezier {
+            control_points,
+            weights,
+        } => Ok(Curve3::rational_bezier(
+            control_points
+                .into_iter()
+                .map(|point| point + offset)
+                .collect(),
+            weights,
+        )?),
+        Curve3ExactData::Nurbs {
+            degree,
+            control_points,
+            weights,
+            knots,
+        } => Ok(Curve3::nurbs(
+            degree,
+            control_points
+                .into_iter()
+                .map(|point| point + offset)
+                .collect(),
+            weights,
+            knots,
+        )?),
+        Curve3ExactData::EllipseArc(mut data) => {
+            data.center = data.center + offset;
+            Ok(Curve3::from_exact_data(Curve3ExactData::EllipseArc(data))?)
+        }
+    }
+}
+
+fn extrusion_constant_area_scale(
+    profile: &Curve3,
+    direction: &Vector3,
+) -> Result<Option<Real>, BuildError> {
+    let constant = match profile.exact_data() {
+        Curve3ExactData::Line(_) => true,
+        Curve3ExactData::EllipseArc(data) if data.circle => {
+            let normal = data.x.cross(&data.y);
+            real_values_equal(&direction.cross(&normal).norm_squared(), &Real::zero())?
+        }
+        _ => false,
+    };
+    if !constant {
+        return Ok(None);
+    }
+    Ok(Some(
+        profile
+            .derivative_at(profile.domain().start(), 1)?
+            .vector()
+            .cross(direction)
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?,
+    ))
+}
+
 fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool, BuildError> {
     let control_points = match curve.exact_data() {
         Curve3ExactData::RationalBezier { control_points, .. }
@@ -17702,6 +17919,182 @@ mod tests {
         )
         .unwrap();
         assert!(!certified_monotone_line_curve_image(&backtracking).unwrap());
+    }
+
+    fn extrusion_rectangle(profile: Curve3, direction: Vector3, height: Real) -> (Model, FaceId) {
+        let mut builder = ModelBuilder::new();
+        let offset = direction.clone() * &height;
+        let start = profile.start().unwrap();
+        let end = profile.end().unwrap();
+        let top_start = start.clone() + &offset;
+        let top_end = end.clone() + &offset;
+        let vertices = [
+            builder.vertex(start.clone()).unwrap(),
+            builder.vertex(end.clone()).unwrap(),
+            builder.vertex(top_end.clone()).unwrap(),
+            builder.vertex(top_start.clone()).unwrap(),
+        ];
+        let profile_domain = profile.domain().clone();
+        let top_profile = translated_curve(&profile, &offset).unwrap();
+        let curves = [
+            builder.curve(profile.clone()).unwrap(),
+            builder.curve(Curve3::line(end, top_end).unwrap()).unwrap(),
+            builder.curve(top_profile).unwrap(),
+            builder
+                .curve(Curve3::line(start, top_start).unwrap())
+                .unwrap(),
+        ];
+        let edges = [
+            builder
+                .edge(vertices[0], vertices[1], curves[0], profile_domain.clone())
+                .unwrap(),
+            builder
+                .edge(vertices[1], vertices[2], curves[1], ParameterDomain::unit())
+                .unwrap(),
+            builder
+                .edge(vertices[3], vertices[2], curves[2], profile_domain.clone())
+                .unwrap(),
+            builder
+                .edge(vertices[0], vertices[3], curves[3], ParameterDomain::unit())
+                .unwrap(),
+        ];
+        let u_start = profile_domain.start().clone();
+        let u_end = profile_domain.end().clone();
+        let pcurve_points = [
+            (
+                CurvePoint2::new(u_start.clone(), Real::zero()),
+                CurvePoint2::new(u_end.clone(), Real::zero()),
+            ),
+            (
+                CurvePoint2::new(u_end.clone(), Real::zero()),
+                CurvePoint2::new(u_end.clone(), height.clone()),
+            ),
+            (
+                CurvePoint2::new(u_end.clone(), height.clone()),
+                CurvePoint2::new(u_start.clone(), height.clone()),
+            ),
+            (
+                CurvePoint2::new(u_start.clone(), height),
+                CurvePoint2::new(u_start.clone(), Real::zero()),
+            ),
+        ];
+        let profile_span = &u_end - &u_start;
+        let correspondences = [
+            ParameterCorrespondence::affine(profile_span.clone(), u_start.clone()).unwrap(),
+            ParameterCorrespondence::identity(),
+            ParameterCorrespondence::affine(-profile_span, u_end).unwrap(),
+            ParameterCorrespondence::affine(-Real::one(), Real::one()).unwrap(),
+        ];
+        let directions = [
+            Direction::Forward,
+            Direction::Forward,
+            Direction::Reversed,
+            Direction::Reversed,
+        ];
+        let mut uses = Vec::with_capacity(4);
+        for index in 0..4 {
+            let pcurve = builder
+                .pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        pcurve_points[index].0.clone(),
+                        pcurve_points[index].1.clone(),
+                    )
+                    .unwrap(),
+                )))
+                .unwrap();
+            uses.push(
+                builder
+                    .edge_use(
+                        edges[index],
+                        directions[index],
+                        pcurve,
+                        correspondences[index].clone(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let wire = builder.wire(uses).unwrap();
+        let surface = builder
+            .surface(Surface::extrusion(profile, direction).unwrap())
+            .unwrap();
+        let face = builder
+            .face(surface, Orientation::Forward, wire, Vec::new())
+            .unwrap();
+        builder.shell(vec![face]).unwrap();
+        (builder.finish().unwrap(), face)
+    }
+
+    #[test]
+    fn extrusion_area_certifies_rational_line_images_and_rejects_variable_speed_profiles() {
+        let profiles = [
+            Curve3::rational_bezier(
+                vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)],
+                vec![Real::one(), r(2), r(3)],
+            )
+            .unwrap(),
+            Curve3::nurbs(
+                2,
+                vec![p(0, 0, 0), p(1, 0, 0), p(2, 0, 0)],
+                vec![Real::one(), r(2), r(3)],
+                vec![r(2), r(2), r(2), r(5), r(5), r(5)],
+            )
+            .unwrap(),
+        ];
+        for profile in profiles {
+            let (model, face) = extrusion_rectangle(profile, Vector3::z(), r(3));
+            let area = model.face_area(face).unwrap();
+            assert_eq!(
+                compare_reals(&area, &r(6)).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+            let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(
+                compare_reals(&replayed.face_area(face).unwrap(), &r(6)).value(),
+                Some(std::cmp::Ordering::Equal)
+            );
+        }
+
+        let curved = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 1, 0), p(2, 0, 0)],
+            vec![Real::one(), r(2), r(3)],
+        )
+        .unwrap();
+        let (model, face) = extrusion_rectangle(curved, Vector3::z(), r(3));
+        assert_eq!(
+            model.face_area(face),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        );
+
+        let circle = Curve3::circle_arc(
+            p(0, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            r(2),
+            Real::zero(),
+            (Real::pi() / r(2)).unwrap(),
+        )
+        .unwrap();
+        let (normal_model, normal_face) = extrusion_rectangle(circle.clone(), Vector3::z(), r(3));
+        assert_eq!(
+            compare_reals(
+                &normal_model.face_area(normal_face).unwrap(),
+                &(r(3) * Real::pi()),
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let (oblique_model, oblique_face) = extrusion_rectangle(
+            circle,
+            Vector3::from_xyz(Real::one(), Real::zero(), Real::one()),
+            r(3),
+        );
+        assert_eq!(
+            oblique_model.face_area(oblique_face),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        );
     }
 
     #[test]
