@@ -1844,22 +1844,26 @@ impl SurfaceIntersectionPcurve {
                 coefficient_offset,
             ),
             SurfaceIntersectionPcurveMapping::TensorIsoV { constant } => {
+                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
+                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
                 let span = self.domain.end() - self.domain.start();
                 Ok(Some(vec![SurfacePcurveClipCarrier {
                     curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(self.domain.start().clone(), constant.clone()),
-                        CurvePoint2::new(self.domain.end().clone(), constant.clone()),
+                        CurvePoint2::new(source_start, constant.clone()),
+                        CurvePoint2::new(source_end, constant.clone()),
                     )?),
                     spatial_scale: span,
                     spatial_offset: self.domain.start().clone(),
                 }]))
             }
             SurfaceIntersectionPcurveMapping::TensorIsoU { constant } => {
+                let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
+                let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
                 let span = self.domain.end() - self.domain.start();
                 Ok(Some(vec![SurfacePcurveClipCarrier {
                     curve: Curve2::from(LineSeg2::try_new(
-                        CurvePoint2::new(constant.clone(), self.domain.start().clone()),
-                        CurvePoint2::new(constant.clone(), self.domain.end().clone()),
+                        CurvePoint2::new(constant.clone(), source_start),
+                        CurvePoint2::new(constant.clone(), source_end),
                     )?),
                     spatial_scale: span,
                     spatial_offset: self.domain.start().clone(),
@@ -5430,11 +5434,15 @@ fn intersect_coaxial_cones(
     first: &ConeSurface,
     second: &ConeSurface,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    if decided_order(compare_reals(
+    let cooriented = decided_order(compare_reals(
         &(&first.frame.z - &second.frame.z).norm_squared(),
         &Real::zero(),
-    ))? != Ordering::Equal
-    {
+    ))? == Ordering::Equal;
+    let counteroriented = decided_order(compare_reals(
+        &(&first.frame.z + &second.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? == Ordering::Equal;
+    if !cooriented && !counteroriented {
         return Err(GeometryError::UnsupportedIntersection);
     }
     let apex_offset = &second.apex - &first.apex;
@@ -5444,6 +5452,10 @@ fn intersect_coaxial_cones(
         != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    if counteroriented {
+        return intersect_counteroriented_coaxial_cones(first, second, axial_offset);
     }
 
     if decided_order(compare_reals(&first.semi_angle, &second.semi_angle))? == Ordering::Equal {
@@ -5498,6 +5510,60 @@ fn intersect_coaxial_cones(
     )))
 }
 
+fn intersect_counteroriented_coaxial_cones(
+    first: &ConeSurface,
+    second: &ConeSurface,
+    axial_offset: Real,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    let axial_order = decided_order(compare_reals(&axial_offset, &Real::zero()))?;
+    if axial_order == Ordering::Less {
+        return Ok(SurfaceSurfaceIntersection::None);
+    }
+    if axial_order == Ordering::Equal {
+        return Ok(SurfaceSurfaceIntersection::Point(Box::new(
+            first.apex.clone(),
+        )));
+    }
+
+    let first_sine = first.semi_angle.clone().sin();
+    let first_cosine = first.semi_angle.clone().cos();
+    let second_sine = second.semi_angle.clone().sin();
+    let second_cosine = second.semi_angle.clone().cos();
+    let denominator = &first_cosine * &second_sine + &first_sine * &second_cosine;
+    let first_slant = (&axial_offset * &second_sine / &denominator)
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let second_slant = (&axial_offset * &first_sine / denominator)
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let axial_height = &first_slant * &first_cosine;
+    let radius = &first_slant * &first_sine;
+    let center = first.apex.clone() + first.frame.z.clone() * axial_height;
+    let curve = Curve3::circle_arc(
+        center,
+        first.frame.x.clone(),
+        first.frame.y.clone(),
+        radius,
+        Real::zero(),
+        Real::tau(),
+    )?;
+    if !orthonormal_frames_mirrored(&first.frame, &second.frame)? {
+        return Ok(SurfaceSurfaceIntersection::Circle(curve));
+    }
+    let domain = curve.domain().clone();
+    Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+        SurfaceIntersectionCurve::new(
+            curve,
+            SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), first_slant),
+            SurfaceIntersectionPcurve::tensor_iso(
+                domain,
+                second_slant,
+                TensorAxis::V,
+                -Real::one(),
+                Real::tau(),
+            ),
+        ),
+    )))
+}
+
 fn orthonormal_frames_equal(
     first: &OrthonormalFrame3,
     second: &OrthonormalFrame3,
@@ -5512,6 +5578,25 @@ fn orthonormal_frames_equal(
                     &Real::zero(),
                 ))? == Ordering::Equal)
         })
+}
+
+fn orthonormal_frames_mirrored(
+    first: &OrthonormalFrame3,
+    second: &OrthonormalFrame3,
+) -> GeometryResult<bool> {
+    [
+        (&first.x, &second.x),
+        (&first.y, &-second.y.clone()),
+        (&first.z, &-second.z.clone()),
+    ]
+    .into_iter()
+    .try_fold(true, |matches, (first_axis, second_axis)| {
+        Ok(matches
+            && decided_order(compare_reals(
+                &(first_axis - second_axis).norm_squared(),
+                &Real::zero(),
+            ))? == Ordering::Equal)
+    })
 }
 
 fn intersect_spheres(
@@ -10633,13 +10718,68 @@ mod tests {
             Vector3::x(),
             -Vector3::y(),
             -Vector3::z(),
+            narrow_angle.clone(),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(counteroriented) =
+            wide.intersect_surface(&antiparallel).unwrap()
+        else {
+            panic!("facing coaxial cones must retain their exact common circle");
+        };
+        assert_points_equal(
+            &counteroriented.curve().start().unwrap(),
+            &Point3::new(q(5, 6), Real::zero(), q(5, 6)),
+        );
+        for parameter in [Real::zero(), Real::pi(), Real::tau()] {
+            let spatial = counteroriented.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &wide
+                    .point_at(&counteroriented.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &antiparallel
+                    .point_at(
+                        &counteroriented
+                            .second_pcurve()
+                            .point_at(&parameter)
+                            .unwrap(),
+                    )
+                    .unwrap(),
+                &spatial,
+            );
+        }
+        let second_materialized = counteroriented.second_pcurve().materialize().unwrap();
+        assert_eq!(second_materialized.curve().start().x(), &Real::tau());
+        assert_eq!(second_materialized.curve().end().x(), &Real::zero());
+
+        let opposite_shared_apex = Surface::cone(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            narrow_angle.clone(),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Point(point) =
+            wide.intersect_surface(&opposite_shared_apex).unwrap()
+        else {
+            panic!("opposite cones with one apex must meet at that apex");
+        };
+        assert_points_equal(&point, &Point3::origin());
+        let opening_away = Surface::cone(
+            Point3::new(Real::zero(), Real::zero(), q(-5, 2)),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
             narrow_angle,
         )
         .unwrap();
-        assert_eq!(
-            wide.intersect_surface(&antiparallel).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        assert!(matches!(
+            wide.intersect_surface(&opening_away).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
     }
 
     #[test]

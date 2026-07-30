@@ -117,7 +117,7 @@ The clean-break implementation currently provides:
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
   parallel-cylinder intersections, coaxial sphere/cylinder,
-  sphere/cone, cylinder/cone, and co-oriented coaxial cone/cone intersections
+  sphere/cone, cylinder/cone, and coaxial cone/cone intersections
   with retained two-surface pcurves when their authored frames align,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
   circles, exact ellipse curves, and typed mixed-dimensional component sets;
