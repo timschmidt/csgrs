@@ -2697,31 +2697,67 @@ impl Surface {
     /// bilinear tensor whose two native axes are independently Möbius
     /// reparameterized.
     ///
-    /// This deliberately recognizes only a `2×2` affine control lattice with
-    /// a positive rank-one weight matrix. Each native inverse is then
-    /// fractional-linear, and their two denominators are multiplied in
-    /// homogeneous Bernstein form. Higher-degree projective tensor inverses
-    /// are generally algebraic rather than rational and remain unsupported.
+    /// This deliberately recognizes only a degree-one `2×2` affine control
+    /// lattice with a positive rank-one weight matrix. Rational Bézier unit
+    /// domains and arbitrary active NURBS knot domains share the same
+    /// normalized fractional-linear inverse; its result is mapped back into
+    /// the authored native domain before the two denominators are multiplied
+    /// in homogeneous Bernstein form. Higher-degree projective tensor
+    /// inverses are generally algebraic rather than rational and remain
+    /// unsupported.
     pub(crate) fn affine_bilinear_inverse_pcurve(
         &self,
         curve: &Curve3,
     ) -> GeometryResult<Option<Curve2>> {
-        let SurfaceGeometry::RationalBezier(surface) = &self.data.geometry else {
-            return Ok(None);
-        };
-        if surface.control_points.len() != 2
-            || surface.weights.len() != 2
-            || surface
-                .control_points
-                .iter()
-                .zip(&surface.weights)
-                .any(|(points, weights)| points.len() != 2 || weights.len() != 2)
-        {
-            return Ok(None);
-        }
-        let first_weight = &surface.weights[0][0];
+        let (control_points, surface_weights, u_start, u_span, v_start, v_span) =
+            match &self.data.geometry {
+                SurfaceGeometry::RationalBezier(surface)
+                    if surface.control_points.len() == 2
+                        && surface.weights.len() == 2
+                        && surface
+                            .control_points
+                            .iter()
+                            .zip(&surface.weights)
+                            .all(|(points, weights)| points.len() == 2 && weights.len() == 2) =>
+                {
+                    (
+                        &surface.control_points,
+                        &surface.weights,
+                        Real::zero(),
+                        Real::one(),
+                        Real::zero(),
+                        Real::one(),
+                    )
+                }
+                SurfaceGeometry::Nurbs(surface)
+                    if surface.u_degree == 1
+                        && surface.v_degree == 1
+                        && surface.control_points.len() == 2
+                        && surface.weights.len() == 2
+                        && surface
+                            .control_points
+                            .iter()
+                            .zip(&surface.weights)
+                            .all(|(points, weights)| points.len() == 2 && weights.len() == 2) =>
+                {
+                    let u_start = surface.u_knots[1].clone();
+                    let u_end = surface.u_knots[2].clone();
+                    let v_start = surface.v_knots[1].clone();
+                    let v_end = surface.v_knots[2].clone();
+                    (
+                        &surface.control_points,
+                        &surface.weights,
+                        u_start.clone(),
+                        u_end - u_start,
+                        v_start.clone(),
+                        v_end - v_start,
+                    )
+                }
+                _ => return Ok(None),
+            };
+        let first_weight = &surface_weights[0][0];
         let mut nonconstant_weights = false;
-        for weight in surface.weights.iter().flatten().skip(1) {
+        for weight in surface_weights.iter().flatten().skip(1) {
             if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
                 nonconstant_weights = true;
                 break;
@@ -2730,22 +2766,22 @@ impl Surface {
         if !nonconstant_weights {
             return Ok(None);
         }
-        let origin = &surface.control_points[0][0];
-        let u = &surface.control_points[0][1] - origin;
-        let v = &surface.control_points[1][0] - origin;
+        let origin = &control_points[0][0];
+        let u = &control_points[0][1] - origin;
+        let v = &control_points[1][0] - origin;
         if decided_order(compare_reals(&u.cross(&v).norm_squared(), &Real::zero()))?
             != Ordering::Greater
             || !points_equal(
-                &surface.control_points[1][1],
+                &control_points[1][1],
                 &(origin.clone() + u.clone() + v.clone()),
             )?
             || decided_order(compare_reals(
-                &(&surface.weights[0][0] * &surface.weights[1][1]),
-                &(&surface.weights[0][1] * &surface.weights[1][0]),
+                &(&surface_weights[0][0] * &surface_weights[1][1]),
+                &(&surface_weights[0][1] * &surface_weights[1][0]),
             ))? != Ordering::Equal
         {
             return Ok(None);
-        }
+        };
         let Some(projected) = project_curve_to_plane_frame(curve, origin, &u, &v)? else {
             return Ok(None);
         };
@@ -2767,25 +2803,35 @@ impl Surface {
         let weights = projected.weights();
         let u_numerator = x
             .iter()
-            .map(|value| &surface.weights[0][0] * value)
+            .map(|value| &surface_weights[0][0] * value)
             .collect::<Vec<_>>();
         let u_denominator = weights
             .iter()
             .zip(&x)
             .map(|(weight, value)| {
-                &surface.weights[0][1] * (weight - value) + &surface.weights[0][0] * value
+                &surface_weights[0][1] * (weight - value) + &surface_weights[0][0] * value
             })
             .collect::<Vec<_>>();
         let v_numerator = y
             .iter()
-            .map(|value| &surface.weights[0][0] * value)
+            .map(|value| &surface_weights[0][0] * value)
             .collect::<Vec<_>>();
         let v_denominator = weights
             .iter()
             .zip(&y)
             .map(|(weight, value)| {
-                &surface.weights[1][0] * (weight - value) + &surface.weights[0][0] * value
+                &surface_weights[1][0] * (weight - value) + &surface_weights[0][0] * value
             })
+            .collect::<Vec<_>>();
+        let u_native_numerator = u_denominator
+            .iter()
+            .zip(&u_numerator)
+            .map(|(denominator, numerator)| &u_start * denominator + &u_span * numerator)
+            .collect::<Vec<_>>();
+        let v_native_numerator = v_denominator
+            .iter()
+            .zip(&v_numerator)
+            .map(|(denominator, numerator)| &v_start * denominator + &v_span * numerator)
             .collect::<Vec<_>>();
         let common_weights = bernstein_product(&u_denominator, &v_denominator)?;
         for weight in &common_weights {
@@ -2793,8 +2839,8 @@ impl Surface {
                 return Ok(None);
             }
         }
-        let u_homogeneous = bernstein_product(&u_numerator, &v_denominator)?;
-        let v_homogeneous = bernstein_product(&v_numerator, &u_denominator)?;
+        let u_homogeneous = bernstein_product(&u_native_numerator, &v_denominator)?;
+        let v_homogeneous = bernstein_product(&v_native_numerator, &u_denominator)?;
         let controls = u_homogeneous
             .iter()
             .zip(&v_homogeneous)
@@ -5687,29 +5733,80 @@ fn intersect_plane_nurbs_surface(
             Err(error) => return Err(error),
         }
     }
-    if surface.v_degree != 1 {
+    if surface.v_degree == 1
+        && let Some(direction) =
+            linear_tensor_v_direction(&surface.control_points, &surface.weights)?
+    {
+        let profile = Curve3::nurbs(
+            surface.u_degree,
+            surface.control_points[0].clone(),
+            surface.weights[0].clone(),
+            surface.u_knots.clone(),
+        )?;
+        let coefficient_offset = surface.v_knots[surface.v_degree].clone();
+        let coefficient_scale =
+            &surface.v_knots[surface.control_points.len()] - &coefficient_offset;
+        return intersect_plane_v_linear_tensor_iso(
+            plane,
+            profile,
+            &surface.control_points[0],
+            direction,
+            coefficient_scale,
+            coefficient_offset,
+        );
+    }
+    intersect_plane_projective_bilinear_nurbs(plane, surface)
+}
+
+fn intersect_plane_projective_bilinear_nurbs(
+    plane: &PlaneSurface,
+    surface: &NurbsSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    if surface.u_degree != 1
+        || surface.v_degree != 1
+        || surface.control_points.len() != 2
+        || surface.weights.len() != 2
+        || surface
+            .control_points
+            .iter()
+            .zip(&surface.weights)
+            .any(|(points, weights)| points.len() != 2 || weights.len() != 2)
+    {
         return Err(GeometryError::UnsupportedIntersection);
     }
-    let Some(direction) = linear_tensor_v_direction(&surface.control_points, &surface.weights)?
-    else {
-        return Err(GeometryError::UnsupportedIntersection);
+    let bezier = RationalBezierSurface {
+        control_points: surface.control_points.clone(),
+        weights: surface.weights.clone(),
+        homogeneous_controls: OnceLock::new(),
     };
-    let profile = Curve3::nurbs(
+    let intersection = intersect_plane_rational_bilinear(plane, &bezier)?;
+    let native = Surface::nurbs(
         surface.u_degree,
-        surface.control_points[0].clone(),
-        surface.weights[0].clone(),
+        surface.v_degree,
+        surface.control_points.clone(),
+        surface.weights.clone(),
         surface.u_knots.clone(),
+        surface.v_knots.clone(),
     )?;
-    let coefficient_offset = surface.v_knots[surface.v_degree].clone();
-    let coefficient_scale = &surface.v_knots[surface.control_points.len()] - &coefficient_offset;
-    intersect_plane_v_linear_tensor_iso(
-        plane,
-        profile,
-        &surface.control_points[0],
-        direction,
-        coefficient_scale,
-        coefficient_offset,
-    )
+    let remap = |mut section: SurfaceIntersectionCurve| -> GeometryResult<_> {
+        let Some(pcurve) = native.affine_bilinear_inverse_pcurve(&section.curve)? else {
+            return Err(GeometryError::UnsupportedIntersection);
+        };
+        section.second_pcurve = SurfaceIntersectionPcurve::retained_curve(pcurve)?;
+        Ok(section)
+    };
+    Ok(match intersection {
+        SurfaceSurfaceIntersection::Curve(section) => {
+            SurfaceSurfaceIntersection::Curve(Box::new(remap(*section)?))
+        }
+        SurfaceSurfaceIntersection::Curves(sections) => SurfaceSurfaceIntersection::Curves(
+            sections
+                .into_iter()
+                .map(remap)
+                .collect::<GeometryResult<Vec<_>>>()?,
+        ),
+        other => other,
+    })
 }
 
 fn linear_tensor_u_direction(
@@ -10178,6 +10275,45 @@ mod tests {
             let uv = pcurve.point_at(&parameter).unwrap();
             assert_points_equal(
                 &surface
+                    .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
+                    .unwrap(),
+                &curve.point_at(&parameter).unwrap(),
+            );
+        }
+
+        let nurbs = Surface::nurbs(
+            1,
+            1,
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![vec![r(1), r(2)], vec![r(3), r(6)]],
+            vec![r(2), r(2), r(5), r(5)],
+            vec![r(-3), r(-3), r(7), r(7)],
+        )
+        .unwrap();
+        let native = nurbs
+            .affine_bilinear_inverse_pcurve(&curve)
+            .unwrap()
+            .expect("degree-one NURBS uses the same exact Möbius inverse");
+        let CurveGeometry2::RationalBezier(native_inverse) = native.geometry() else {
+            panic!("native-domain Möbius inverse remains rational Bézier");
+        };
+        assert_eq!(native_inverse.degree(), 4);
+        let assert_curve_point = |actual: &CurvePoint2, expected: CurvePoint2| {
+            assert_eq!(
+                compare_reals(actual.x(), expected.x()).value(),
+                Some(Ordering::Equal)
+            );
+            assert_eq!(
+                compare_reals(actual.y(), expected.y()).value(),
+                Some(Ordering::Equal)
+            );
+        };
+        assert_curve_point(native.start(), CurvePoint2::new(r(2), r(-2)));
+        assert_curve_point(native.end(), CurvePoint2::new(r(5), r(2)));
+        for parameter in [Real::zero(), q(1, 2), Real::one()] {
+            let uv = native.point_at(&parameter).unwrap();
+            assert_points_equal(
+                &nurbs
                     .point_at(&Point2::new(uv.x().clone(), uv.y().clone()))
                     .unwrap(),
                 &curve.point_at(&parameter).unwrap(),

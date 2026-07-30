@@ -1893,6 +1893,42 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
+    let (native_projective_tensor, native_projective_tensor_face) = builder::nurbs_patch(
+        1,
+        1,
+        vec![
+            vec![point(0, 0, 1), point(1, 0, 1)],
+            vec![point(0, 1, 1), point(1, 1, 1)],
+        ],
+        vec![
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(6)],
+        ],
+        vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+        vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
+    )
+    .expect("benchmark native-domain projective NURBS tensor");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
+            black_box(&native_projective_tensor),
+            native_projective_tensor_face,
+            black_box(&curved_plane),
+            curved_plane_face,
+        )
+        .expect("benchmark exact native-domain Möbius contained-region partition")
+        .expect("benchmark native-domain Möbius inverse boundary is represented");
+        assert_eq!(partition.faces.len(), 2);
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/native_nurbs_mobius_inverse_pcurve_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     let circle_center = CurvePoint2::new(half.clone(), half.clone());
     let circle_right = CurvePoint2::new(&half + &quarter, half.clone());
     let circle_left = CurvePoint2::new(&half - &quarter, half.clone());

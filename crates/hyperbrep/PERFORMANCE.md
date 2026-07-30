@@ -177,6 +177,10 @@ certificate deliberately rebases rational Bézier patch construction from
 - rank-one projective affine-bilinear certification, two exact Möbius inverse
   coordinates, homogeneous Bernstein denominator product, identity-shared
   face partition, and full model revalidation: `1.556065 ms/iteration`;
+- degree-one projective affine NURBS certification over authored
+  `[2, 5] × [-3, 7]` active knot domains, native-coordinate Möbius inverse,
+  identity-shared face partition, and full model revalidation:
+  `2.076926 ms/iteration`;
 - circular rational-span normalization, one closed NURBS inverse pcurve,
   identity-shared inner/outer topology, and full model revalidation:
   `1.082481 ms/iteration`;

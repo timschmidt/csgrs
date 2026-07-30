@@ -6470,6 +6470,89 @@ mod tests {
                 .unwrap(),
             json
         );
+
+        let (nurbs, nurbs_face) = crate::builder::nurbs_patch(
+            1,
+            1,
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![
+                vec![Real::one(), Real::from(2)],
+                vec![Real::from(3), Real::from(6)],
+            ],
+            vec![Real::from(2), Real::from(2), Real::from(5), Real::from(5)],
+            vec![Real::from(-3), Real::from(-3), Real::from(7), Real::from(7)],
+        )
+        .unwrap();
+        let nurbs_traces =
+            contained_face_boundary_traces_from_plane(&nurbs, nurbs_face, &plane, plane_face)
+                .unwrap()
+                .expect("degree-one projective NURBS inverse is Möbius-rational");
+        assert_eq!(nurbs_traces.len(), 1);
+        let native = nurbs_traces[0].first_pcurve().materialize().unwrap();
+        let hypercurve::CurveGeometry2::RationalBezier(native_inverse) = native.curve().geometry()
+        else {
+            panic!("native-domain Möbius inverse retains a rational Bézier pcurve");
+        };
+        assert_eq!(native_inverse.degree(), 4);
+        let mut forged_controls = native_inverse.control_points().to_vec();
+        forged_controls[2] = hypercurve::Point2::new(
+            forged_controls[2].x() + (Real::one() / Real::from(100)).unwrap(),
+            forged_controls[2].y().clone(),
+        );
+        let forged = Curve2::from(
+            RationalBezier2::try_new(forged_controls, native_inverse.weights().to_vec()).unwrap(),
+        );
+        let forged_trace = SurfaceIntersectionCurve::from_exact_pcurves(
+            nurbs_traces[0].curve().clone(),
+            forged.clone(),
+            forged,
+        )
+        .unwrap();
+        assert!(
+            nurbs
+                .split_face_by_surface_curves(
+                    nurbs_face,
+                    &[forged_trace],
+                    SurfaceIntersectionOperand::First,
+                )
+                .is_err(),
+            "an endpoint-preserving native-domain Möbius inverse forgery must not publish"
+        );
+        let (first_nurbs, first_nurbs_partition) = nurbs
+            .split_face_by_surface_curves(
+                nurbs_face,
+                &nurbs_traces,
+                SurfaceIntersectionOperand::First,
+            )
+            .unwrap();
+        let (second_nurbs, second_nurbs_partition) = nurbs
+            .split_face_by_surface_curves(
+                nurbs_face,
+                &nurbs_traces,
+                SurfaceIntersectionOperand::Second,
+            )
+            .unwrap();
+        assert_eq!(first_nurbs_partition.faces.len(), 2);
+        assert_eq!(second_nurbs_partition.faces.len(), 2);
+        assert_eq!(
+            first_nurbs.to_json().unwrap(),
+            second_nurbs.to_json().unwrap()
+        );
+        let (partitioned_nurbs, contained_nurbs_partition) =
+            partition_contained_face_by_plane_region(&nurbs, nurbs_face, &plane, plane_face)
+                .unwrap()
+                .expect("native-domain Möbius pcurve partitions the NURBS tensor");
+        assert_eq!(contained_nurbs_partition.faces.len(), 2);
+        let json = partitioned_nurbs.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
     }
 
     #[test]

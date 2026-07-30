@@ -8012,6 +8012,12 @@ impl ModelBuilder {
                     CurveFamily2::RationalBezier,
                     SurfaceKind::RationalBezier,
                     ParameterCorrespondence::Affine { .. },
+                )
+                | (
+                    Curve3Kind::RationalBezier,
+                    CurveFamily2::RationalBezier,
+                    SurfaceKind::Nurbs,
+                    ParameterCorrespondence::Affine { .. },
                 ) => {
                     self.validate_rational_tensor_graph_image(
                         curve, edge, edge_use, pcurve, surface,
