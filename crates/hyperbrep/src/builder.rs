@@ -5894,19 +5894,24 @@ mod tests {
         .unwrap();
         let (rational_model, rational_solid) = revolve_path(&rational_profile).unwrap();
         assert_eq!(rational_model.faces().count(), 16);
+        let rational_volume = rational_model.solid_volume(rational_solid).unwrap();
         assert_eq!(
-            rational_model.solid_volume(rational_solid).unwrap_err(),
-            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+            compare_reals(&rational_volume, &Real::zero()).value(),
+            Some(std::cmp::Ordering::Greater)
         );
         let rational_json = rational_model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&rational_json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), rational_json);
         assert_eq!(
-            crate::RawModel::from_json(&rational_json)
-                .unwrap()
-                .validate()
-                .unwrap()
-                .to_json()
-                .unwrap(),
-            rational_json
+            compare_reals(
+                &rebuilt.solid_volume(rational_solid).unwrap(),
+                &rational_volume,
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
         );
     }
 
@@ -5985,7 +5990,7 @@ mod tests {
     }
 
     #[test]
-    fn revolution_path_retains_genuinely_rational_profile_without_fake_measurement() {
+    fn revolution_path_measures_genuinely_rational_profile_exactly() {
         let cp = |x, y| CurvePoint2::new(r(x), r(y));
         let rational = hypercurve::RationalQuadraticBezier2::try_new(
             cp(4, 0),
@@ -6005,9 +6010,13 @@ mod tests {
         .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
 
+        let expected =
+            (r(22) * Real::pi() * &(r(81) + r(4) * Real::from(3).sqrt().unwrap() * Real::pi())
+                / r(81))
+            .unwrap();
         assert_eq!(
-            model.solid_volume(solid).unwrap_err(),
-            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
             model.classify_point(solid, &p(3, 0, 1)).unwrap(),
@@ -6024,8 +6033,8 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            rebuilt.solid_volume(solid).unwrap_err(),
-            crate::QueryError::Geometry(GeometryError::UnsupportedMeasurement)
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            Some(std::cmp::Ordering::Equal)
         );
     }
 

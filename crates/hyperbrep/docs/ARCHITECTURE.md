@@ -207,14 +207,17 @@ piecewise-Bézier spline carriers before topology publication. This retains the
 source parameter intervals and rational images while avoiding a degenerate
 one-vertex closed edge. Hypercurve classifies the radial/axial boundary
 directly and supplies exact Green-theorem area moments for polynomial and
-polynomial-equivalent Bézier fragments. A nonuniform rational span certified
-to have an exact finite line image uses that line's geometric moment,
-independent of its projective speed. HyperBREP applies the same exact Pappus
-factor and cavity subtraction. Genuinely curved rational first moments and the
-general radius-times-spline-speed face integral are explicit unsupported
-measurements until symbolic integrators exist. Native-only contours remain the
-sole input to the optimized coaxial-profile Boolean path; curved profiles use
-the retained face graph instead of claiming compatibility geometry.
+polynomial-equivalent Bézier fragments. Finite rational quadratics use exact
+homogeneous Green integrals with denominator `W^4`, reduced symbolically to
+rational endpoint terms and certified `atan`/`ln` inverse-quadratic branches.
+A nonuniform rational span certified to have an exact finite line image uses
+that line's geometric moment, independent of its projective speed. HyperBREP
+applies the same exact Pappus factor and cavity subtraction. Genuinely rational
+degree-three-and-higher first moments and the general
+radius-times-spline-speed face integral are explicit unsupported measurements
+until symbolic integrators exist. Native-only contours remain the sole input
+to the optimized coaxial-profile Boolean path; curved profiles use the
+retained face graph instead of claiming compatibility geometry.
 
 Subdivision does not change that certificate. Revolution descendants must tile
 four exact quarter-angle columns and every represented profile-parameter cell
