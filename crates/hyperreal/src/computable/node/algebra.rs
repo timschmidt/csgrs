@@ -135,11 +135,6 @@ impl Computable {
         (argument.exact_sign()? == orientation).then_some((orientation, argument))
     }
 
-    pub(crate) fn half_pi_minus_atan_argument(&self) -> Option<Computable> {
-        let (orientation, argument) = self.signed_half_pi_minus_atan_argument()?;
-        (orientation == Sign::Plus).then_some(argument)
-    }
-
     fn pi_rational_multiple(&self) -> Option<Rational> {
         let Approximation::Multiply(left, right) = &self.internal.approximation else {
             return None;

@@ -165,6 +165,29 @@ impl Computable {
 
     /// Arctangent of this number.
     pub fn atan(self) -> Computable {
+        if let Some((scale, radicand)) = self.exact_pure_quadratic_surd()
+            && radicand == Rational::new(3)
+        {
+            let magnitude = if scale.sign() == Sign::Minus {
+                scale.clone().neg()
+            } else {
+                scale.clone()
+            };
+            let denominator = if magnitude.is_one() {
+                Some(3)
+            } else if magnitude == Rational::fraction(1, 3).expect("three is nonzero") {
+                Some(6)
+            } else {
+                None
+            };
+            if let Some(denominator) = denominator {
+                let numerator = if scale.sign() == Sign::Minus { -1 } else { 1 };
+                crate::trace_dispatch!("computable", "atan", "quadratic-surd-pi-anchor");
+                return Self::pi().multiply_rational(
+                    Rational::fraction(numerator, denominator).expect("denominator is nonzero"),
+                );
+            }
+        }
         if let Some(rational) = self.exact_rational() {
             if rational.sign() == Sign::NoSign {
                 crate::trace_dispatch!("computable", "atan", "exact-zero");

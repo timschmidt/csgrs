@@ -1695,13 +1695,35 @@ mod tests {
         );
         let angle = Computable::pi().multiply(normalized).shift_right(1);
 
-        let retained = angle
-            .half_pi_minus_atan_argument()
+        let (orientation, retained) = angle
+            .signed_half_pi_minus_atan_argument()
             .expect("pi/2 - atan argument must remain structurally available");
+        assert_eq!(orientation, Sign::Plus);
         let expected = argument
             .atan_argument()
             .expect("the test expression is an atan node");
         assert!(Arc::ptr_eq(&retained.internal, &expected.internal));
+    }
+
+    #[test]
+    fn quadratic_surd_atan_anchors_survive_computable_composition() {
+        let root_three = Computable::sqrt_rational(Rational::new(3));
+        let inverse_root_three = root_three.clone().inverse();
+        let third_pi = Computable::pi().multiply_rational(
+            Rational::fraction(1, 3).expect("three is nonzero"),
+        );
+        let sixth_pi = Computable::pi().multiply_rational(
+            Rational::fraction(1, 6).expect("six is nonzero"),
+        );
+
+        assert!(Computable::internal_structural_eq(
+            &root_three.atan(),
+            &third_pi,
+        ));
+        assert!(Computable::internal_structural_eq(
+            &inverse_root_three.atan(),
+            &sixth_pi,
+        ));
     }
 
     #[test]
