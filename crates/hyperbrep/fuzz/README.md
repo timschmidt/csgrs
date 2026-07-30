@@ -4,7 +4,8 @@
 ownership transitions. `analytic_solid_roundtrip` varies cylinder, sphere,
 cone-frustum, torus, off-axis polygonal and line/arc-profile revolutions,
 affine linear-sweep, and
-fixed-frame rational-Bézier curved-sweep paths, plus alternating
+fixed-frame rational-Bézier curved-sweep paths, explicit positive
+polynomial-taper moving frames, plus alternating
 two-/three-section homothetic/convex-corresponding loft dimensions
 plus partial
 sphere, oriented coaxial cylinder, coincident cone-frustum, and coaxial
@@ -46,6 +47,8 @@ topology, and a two-face projectively stitched patch shell is persisted and
 revalidated. The same exact patch is also sent through byte-varied explicit
 boundary subdivision and shared-midpoint chordal derivation; every returned
 index must address its retained exact parameter/source-image pair. It also
+builds a byte-scaled complete affine tensor patch with separable positive
+weights, checks its exact area before and after untrusted replay, and
 intersects an exact rational Bézier extrusion with a transverse plane and a
 line extrusion with a parallel plane, exercising the retained native
 projected curve, both exact pcurve images, and lifted-line paths.

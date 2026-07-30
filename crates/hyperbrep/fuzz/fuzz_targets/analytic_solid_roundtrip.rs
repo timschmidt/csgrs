@@ -11,7 +11,7 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     }
     let positive = |index: usize| Real::from(i32::from(bytes[index]) + 1);
-    let built = match bytes[0] % 13 {
+    let built = match bytes[0] % 14 {
         0 => builder::cylinder(positive(1), positive(2)).ok(),
         1 => {
             let top = positive(1);
@@ -241,6 +241,38 @@ fuzz_target!(|bytes: &[u8]| {
             };
             builder::revolve_contour(&profile).ok()
         }
+        12 => {
+            let width = positive(1);
+            let depth = positive(2);
+            let height = positive(3);
+            let Ok(frame) = hyperbrep::RationalBezierSweepFrame::try_new(
+                vec![
+                    hyperbrep::Point3::origin(),
+                    hyperbrep::Point3::new(Real::zero(), Real::zero(), height),
+                ],
+                vec![
+                    Vector3::x(),
+                    Vector3::from_xyz(positive(1), Real::zero(), Real::zero()),
+                ],
+                vec![
+                    Vector3::y(),
+                    Vector3::from_xyz(Real::zero(), positive(2), Real::zero()),
+                ],
+                vec![Real::one(), Real::one()],
+            ) else {
+                return;
+            };
+            builder::sweep_moving_frame(
+                &[
+                    hyperbrep::Point2::new(Real::zero(), Real::zero()),
+                    hyperbrep::Point2::new(width.clone(), Real::zero()),
+                    hyperbrep::Point2::new(width, depth.clone()),
+                    hyperbrep::Point2::new(Real::zero(), depth),
+                ],
+                frame,
+            )
+            .ok()
+        }
         _ => {
             let width = positive(1);
             let depth = positive(2);
@@ -343,7 +375,7 @@ fuzz_target!(|bytes: &[u8]| {
     let _ = decoded.solid_volume(solid);
     let _ = boolean::intersection_graph(&model, solid, &decoded, solid);
 
-    if bytes[0] % 13 == 1 {
+    if bytes[0] % 14 == 1 {
         let Ok((frustum, frustum_solid)) =
             builder::cone_frustum(Real::from(4), Real::one(), Real::from(3))
         else {
@@ -834,6 +866,61 @@ fuzz_target!(|bytes: &[u8]| {
     }
     let crossing_width = positive(1);
     let crossing_depth = positive(2);
+    let affine_weights = vec![
+        vec![positive(1), &positive(1) * Real::from(2)],
+        vec![
+            &positive(1) * positive(2),
+            &positive(1) * positive(2) * Real::from(2),
+        ],
+    ];
+    let Ok((affine_patch, affine_face)) = builder::rational_bezier_patch(
+        vec![
+            vec![
+                hyperbrep::Point3::origin(),
+                hyperbrep::Point3::new(crossing_width.clone(), Real::zero(), Real::zero()),
+            ],
+            vec![
+                hyperbrep::Point3::new(Real::zero(), crossing_depth.clone(), Real::zero()),
+                hyperbrep::Point3::new(
+                    crossing_width.clone(),
+                    crossing_depth.clone(),
+                    Real::zero(),
+                ),
+            ],
+        ],
+        affine_weights,
+    ) else {
+        return;
+    };
+    let expected_affine_area = &crossing_width * &crossing_depth;
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &affine_patch
+                .face_area(affine_face)
+                .expect("separable affine patch has exact area"),
+            &expected_affine_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+    let affine_json = affine_patch
+        .to_json()
+        .expect("separable affine patch serializes");
+    let replayed_affine = RawModel::from_json(&affine_json)
+        .expect("separable affine patch JSON parses")
+        .validate()
+        .expect("separable affine patch JSON revalidates");
+    assert_eq!(
+        hyperlimit::compare_reals(
+            &replayed_affine
+                .face_area(affine_face)
+                .expect("replayed separable affine patch has exact area"),
+            &expected_affine_area,
+        )
+        .value(),
+        Some(std::cmp::Ordering::Equal)
+    );
+
     let Ok((crossing_patch, crossing_face)) = builder::rational_bezier_patch(
         vec![
             vec![

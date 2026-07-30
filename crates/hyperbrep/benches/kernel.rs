@@ -317,6 +317,56 @@ fn main() {
         elapsed / CURVED_SWEEP_ITERATIONS as u32,
     );
 
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..CURVED_SWEEP_ITERATIONS {
+        let profile = [
+            hyperbrep::Point2::new(Real::zero(), Real::zero()),
+            hyperbrep::Point2::new(Real::from(2), Real::zero()),
+            hyperbrep::Point2::new(Real::from(2), Real::from(2)),
+            hyperbrep::Point2::new(Real::zero(), Real::from(2)),
+        ];
+        let frame = hyperbrep::RationalBezierSweepFrame::try_new(
+            vec![point(0, 0, 0), point(0, 0, 3)],
+            vec![
+                Vector3::x(),
+                Vector3::from_xyz(Real::from(2), Real::zero(), Real::zero()),
+            ],
+            vec![
+                Vector3::y(),
+                Vector3::from_xyz(Real::zero(), Real::from(2), Real::zero()),
+            ],
+            vec![Real::one(), Real::one()],
+        )
+        .expect("benchmark moving sweep frame");
+        let (model, solid) = builder::sweep_moving_frame(black_box(&profile), black_box(frame))
+            .expect("benchmark moving-frame sweep");
+        let volume = model.solid_volume(solid).expect("benchmark volume");
+        assert_eq!(
+            compare_reals(&volume, &Real::from(28)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        checksum += usize::from(
+            model
+                .classify_point(
+                    solid,
+                    &Point3::new(
+                        (Real::from(3) / Real::from(2)).unwrap(),
+                        (Real::from(3) / Real::from(2)).unwrap(),
+                        (Real::from(3) / Real::from(2)).unwrap(),
+                    ),
+                )
+                .expect("benchmark classification")
+                == SolidPointLocation::Inside,
+        );
+        black_box(model);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/moving_frame_taper_build_measure_classify: {CURVED_SWEEP_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / CURVED_SWEEP_ITERATIONS as u32,
+    );
+
     const LOFT_ITERATIONS: usize = 250;
     let started = Instant::now();
     let mut checksum = 0_usize;
@@ -705,6 +755,59 @@ fn main() {
     println!(
         "spline_kernel/nurbs_patch_build_validate: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / SPLINE_ITERATIONS as u32,
+    );
+
+    const TENSOR_AREA_ITERATIONS: usize = 1_000;
+    let affine_controls = vec![
+        vec![point(0, 0, 0), point(2, 0, 0), point(4, 0, 0)],
+        vec![point(0, 3, 0), point(2, 3, 0), point(4, 3, 0)],
+        vec![point(0, 6, 0), point(2, 6, 0), point(4, 6, 0)],
+    ];
+    let separable_weights = vec![
+        vec![Real::from(2), Real::from(4), Real::from(6)],
+        vec![Real::from(5), Real::from(10), Real::from(15)],
+        vec![Real::from(7), Real::from(14), Real::from(21)],
+    ];
+    let (affine_bezier, affine_bezier_face) =
+        builder::rational_bezier_patch(affine_controls.clone(), separable_weights.clone())
+            .expect("benchmark separably parameterized Bézier patch");
+    let native_knots = vec![
+        Real::from(2),
+        Real::from(2),
+        Real::from(2),
+        Real::from(5),
+        Real::from(5),
+        Real::from(5),
+    ];
+    let (affine_nurbs, affine_nurbs_face) = builder::nurbs_patch(
+        2,
+        2,
+        affine_controls,
+        separable_weights,
+        native_knots.clone(),
+        native_knots,
+    )
+    .expect("benchmark separably parameterized NURBS patch");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_AREA_ITERATIONS {
+        for (model, face) in [
+            (&affine_bezier, affine_bezier_face),
+            (&affine_nurbs, affine_nurbs_face),
+        ] {
+            let area = black_box(model)
+                .face_area(face)
+                .expect("benchmark exact tensor area");
+            checksum += usize::from(
+                compare_reals(&area, &Real::from(24)).value() == Some(std::cmp::Ordering::Equal),
+            );
+            black_box(area);
+        }
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/separable_affine_tensor_exact_area: {TENSOR_AREA_ITERATIONS} paired iterations in {elapsed:?} ({:?}/pair), checksum={checksum}",
+        elapsed / TENSOR_AREA_ITERATIONS as u32,
     );
 
     let stitched_specs = vec![

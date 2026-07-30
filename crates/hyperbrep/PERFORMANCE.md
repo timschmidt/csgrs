@@ -91,6 +91,9 @@ certificate deliberately rebases rational Bézier patch construction from
 - fixed-frame nonuniform-weight rational Bézier curved sweep with four native
   tensor translation sides, Bernstein affine-progress certification, exact
   volume, and exact section classification: `306.620 us/iteration`;
+- explicit moving-frame polynomial taper with native tensor sides, exact
+  Bernstein area-law integration, volume, and section classification:
+  `387.317 us/iteration`;
 - homothetic loft build + exact volume + classification:
   `343.839 us/iteration`;
 - convex corresponding non-homothetic loft with four native bilinear sides,
@@ -111,6 +114,9 @@ certificate deliberately rebases rational Bézier patch construction from
   `947.797 us/iteration`;
 - rational Bézier patch build + validation: `74.365 us/iteration`;
 - NURBS patch build + validation: `323.509 us/iteration`;
+- paired complete rational Bézier and native-domain NURBS affine-image area
+  queries under separable positive projective weights:
+  `18.645 us/paired iteration`;
 - two-face rational Bézier patch shell construction with projective boundary
   matching, identity stitching, and full validation: `76.707 us/iteration`;
 - explicit tensor-face chordal derivation with four exact samples per boundary
