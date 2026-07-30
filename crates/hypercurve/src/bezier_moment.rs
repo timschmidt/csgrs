@@ -18,8 +18,8 @@
 //! kernel. Cubic weights extend that reduction with exact rational-root,
 //! Cardano, trigonometric, and repeated-factor partial-fraction branches.
 //! Higher-degree rational weight polynomials through degree eight use the same
-//! partial-fraction kernel when exact rational-root deflation splits them
-//! completely.
+//! partial-fraction kernel when exact rational-root deflation leaves only
+//! linear factors and at most one certified irreducible quadratic.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -39,6 +39,7 @@ use crate::{
 #[derive(Default)]
 pub(crate) struct RationalQuadraticAreaIntegralCache {
     inverse_quadratic_integrals: Vec<([Real; 3], Real)>,
+    inverse_quadratic_power_integrals: Vec<([Real; 3], Vec<Real>)>,
 }
 
 impl RationalQuadraticAreaIntegralCache {
@@ -63,6 +64,65 @@ impl RationalQuadraticAreaIntegralCache {
         self.inverse_quadratic_integrals
             .push((denominator.clone(), integral.clone()));
         Ok(Some(integral))
+    }
+
+    fn inverse_quadratic_power_integral(
+        &mut self,
+        denominator: &[Real; 3],
+        delta: &Real,
+        power: usize,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<Real>> {
+        if power == 0 {
+            return Err(CurveError::InvalidBezierPolynomial);
+        }
+        let index = if let Some(index) = self
+            .inverse_quadratic_power_integrals
+            .iter()
+            .position(|(cached_denominator, _)| cached_denominator == denominator)
+        {
+            index
+        } else {
+            let Some(first) = self.inverse_quadratic_integral(denominator, delta, policy)? else {
+                return Ok(None);
+            };
+            self.inverse_quadratic_power_integrals
+                .push((denominator.clone(), vec![first]));
+            self.inverse_quadratic_power_integrals.len() - 1
+        };
+        let (_, integrals) = &mut self.inverse_quadratic_power_integrals[index];
+        while integrals.len() < power {
+            let current_power = integrals.len() + 1;
+            let previous = integrals[current_power - 2].clone();
+            let exponent = 1_i32
+                .checked_sub(
+                    i32::try_from(current_power)
+                        .map_err(|_| CurveError::InvalidBezierPolynomial)?,
+                )
+                .ok_or(CurveError::InvalidBezierPolynomial)?;
+            let q0 = denominator[0].clone();
+            let q1 = &denominator[0] + &denominator[1] + &denominator[2];
+            let endpoint = ((Real::from(2_i8) * &denominator[2] + &denominator[1])
+                * integer_power(&q1, exponent)?
+                - &denominator[1] * integer_power(&q0, exponent)?)
+                / &(Real::from(
+                    i32::try_from(current_power - 1)
+                        .map_err(|_| CurveError::InvalidBezierPolynomial)?,
+                ) * delta);
+            let recurrence = (Real::from(2_i8)
+                * &denominator[2]
+                * Real::from(
+                    i32::try_from(2 * current_power - 3)
+                        .map_err(|_| CurveError::InvalidBezierPolynomial)?,
+                )
+                * previous)
+                / &(Real::from(
+                    i32::try_from(current_power - 1)
+                        .map_err(|_| CurveError::InvalidBezierPolynomial)?,
+                ) * delta);
+            integrals.push(endpoint? + recurrence?);
+        }
+        Ok(Some(integrals[power - 1].clone()))
     }
 
     #[cfg(test)]
@@ -466,10 +526,10 @@ impl RationalBezier2 {
     /// specialize to the retained conic kernel. Other arbitrary-degree
     /// carriers are integrated when exact Bernstein conversion certifies that
     /// their weight polynomial has degree at most two, is a cubic with an
-    /// exactly classified discriminant, or has degree at most eight and splits
-    /// completely into exact rational linear factors. `None` means another
-    /// genuinely rational integral is not implemented; it does not approximate
-    /// one.
+    /// exactly classified discriminant, or has degree at most eight and exact
+    /// rational-root deflation leaves at most one irreducible quadratic
+    /// factor. `None` means another genuinely rational integral is not
+    /// implemented; it does not approximate one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -488,10 +548,11 @@ impl RationalBezier2 {
     /// or supported low-degree-weight rational Béziers.
     ///
     /// Cubic weight polynomials use exact Cardano or repeated-factor reduction.
-    /// Completely rationally split weight polynomials through degree eight use
-    /// exact multiplicity-aware partial fractions. `None` is an explicit
-    /// unsupported symbolic integral for any remaining weight polynomial,
-    /// never a finite approximation.
+    /// Higher weight polynomials through degree eight use exact
+    /// multiplicity-aware partial fractions when rational-root deflation leaves
+    /// at most one irreducible quadratic. `None` is an explicit unsupported
+    /// symbolic integral for any remaining weight polynomial, never a finite
+    /// approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -990,16 +1051,16 @@ fn integrate_polynomial_over_low_degree_weight_power(
         }
         4 => integrate_polynomial_over_cubic_power(numerator, denominator, power, policy, cache),
         5..=9 => {
-            let Some(factors) = exact_rational_polynomial_linear_factors(denominator, policy)?
-            else {
+            let Some(factors) = exact_rational_polynomial_factors(denominator, policy)? else {
                 return Ok(None);
             };
-            integrate_polynomial_over_linear_factors_power(
+            integrate_polynomial_over_factored_power(
                 numerator,
                 denominator,
                 power,
                 &factors,
                 policy,
+                cache,
             )
         }
         _ => Ok(None),
@@ -1256,13 +1317,14 @@ fn integrate_polynomial_over_cubic_power(
         Some(_) => {}
         None => return Ok(None),
     }
-    if let Some(factors) = exact_rational_polynomial_linear_factors(denominator, policy)? {
-        return integrate_polynomial_over_linear_factors_power(
+    if let Some(factors) = exact_rational_polynomial_factors(denominator, policy)? {
+        return integrate_polynomial_over_factored_power(
             numerator,
             denominator,
             power,
             &factors,
             policy,
+            cache,
         );
     }
     let (_, _, cardano_discriminant) = cubic_cardano_data(denominator)?;
@@ -1273,6 +1335,7 @@ fn integrate_polynomial_over_cubic_power(
                 denominator,
                 power,
                 policy,
+                cache,
             );
         }
         Some(_) => {}
@@ -1440,30 +1503,69 @@ fn integrate_polynomial_over_repeated_cubic_power(
     denominator: &[Real],
     power: usize,
     policy: &CurvePolicy,
+    cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let Some(factors) = repeated_cubic_linear_factors(denominator, policy)? else {
         return Ok(None);
     };
-    integrate_polynomial_over_linear_factors_power(numerator, denominator, power, &factors, policy)
+    let factors = factors
+        .into_iter()
+        .map(|(root, multiplicity)| ExactPolynomialFactor::Linear { root, multiplicity })
+        .collect::<Vec<_>>();
+    integrate_polynomial_over_factored_power(numerator, denominator, power, &factors, policy, cache)
 }
 
-fn integrate_polynomial_over_linear_factors_power(
+#[derive(Clone)]
+enum ExactPolynomialFactor {
+    Linear {
+        root: Real,
+        multiplicity: usize,
+    },
+    IrreducibleQuadratic {
+        denominator: [Real; 3],
+        multiplicity: usize,
+    },
+}
+
+impl ExactPolynomialFactor {
+    fn degree_with_multiplicity(&self) -> usize {
+        match self {
+            Self::Linear { multiplicity, .. } => *multiplicity,
+            Self::IrreducibleQuadratic { multiplicity, .. } => 2 * multiplicity,
+        }
+    }
+}
+
+enum PartialFractionIntegral {
+    Linear {
+        root: Real,
+        power: usize,
+    },
+    QuadraticConstant {
+        denominator: [Real; 3],
+        power: usize,
+    },
+    QuadraticLinear {
+        denominator: [Real; 3],
+        power: usize,
+    },
+}
+
+fn integrate_polynomial_over_factored_power(
     numerator: &[Real],
     denominator: &[Real],
     power: usize,
-    factors: &[(Real, usize)],
+    factors: &[ExactPolynomialFactor],
     policy: &CurvePolicy,
+    cache: &mut RationalQuadraticAreaIntegralCache,
 ) -> CurveResult<Option<Real>> {
     let denominator_degree = denominator
         .len()
         .checked_sub(1)
         .ok_or(CurveError::InvalidBezierPolynomial)?;
-    if factors
-        .iter()
-        .try_fold(0_usize, |total, (_, multiplicity)| {
-            total.checked_add(*multiplicity)
-        })
-        != Some(denominator_degree)
+    if factors.iter().try_fold(0_usize, |total, factor| {
+        total.checked_add(factor.degree_with_multiplicity())
+    }) != Some(denominator_degree)
     {
         return Err(CurveError::InvalidBezierPolynomial);
     }
@@ -1476,24 +1578,66 @@ fn integrate_polynomial_over_linear_factors_power(
         .checked_mul(power)
         .ok_or(CurveError::InvalidBezierPolynomial)?;
     let mut entries = Vec::with_capacity(dimension);
-    for (root, multiplicity) in factors {
-        let maximum_exponent = multiplicity
-            .checked_mul(power)
-            .ok_or(CurveError::InvalidBezierPolynomial)?;
-        for exponent in 1..=maximum_exponent {
-            let factor = [Real::zero() - root, Real::one()];
-            let factor_power = polynomial_integer_power(&factor, exponent);
-            let Some((basis, factor_remainder)) =
-                polynomial_division(&denominator_power, &factor_power, policy)?
-            else {
-                return Ok(None);
-            };
-            if factor_remainder.iter().any(|coefficient| {
-                compare_reals(coefficient, &Real::zero(), policy) != Some(std::cmp::Ordering::Equal)
-            }) {
-                return Ok(None);
+    for factor in factors {
+        match factor {
+            ExactPolynomialFactor::Linear { root, multiplicity } => {
+                let maximum_exponent = multiplicity
+                    .checked_mul(power)
+                    .ok_or(CurveError::InvalidBezierPolynomial)?;
+                for exponent in 1..=maximum_exponent {
+                    let factor = [Real::zero() - root, Real::one()];
+                    let factor_power = polynomial_integer_power(&factor, exponent);
+                    let Some((basis, factor_remainder)) =
+                        polynomial_division(&denominator_power, &factor_power, policy)?
+                    else {
+                        return Ok(None);
+                    };
+                    if !polynomial_is_certified_zero(&factor_remainder, policy) {
+                        return Ok(None);
+                    }
+                    entries.push((
+                        PartialFractionIntegral::Linear {
+                            root: root.clone(),
+                            power: exponent,
+                        },
+                        basis,
+                    ));
+                }
             }
-            entries.push((root.clone(), exponent, basis));
+            ExactPolynomialFactor::IrreducibleQuadratic {
+                denominator,
+                multiplicity,
+                ..
+            } => {
+                let maximum_exponent = multiplicity
+                    .checked_mul(power)
+                    .ok_or(CurveError::InvalidBezierPolynomial)?;
+                for exponent in 1..=maximum_exponent {
+                    let factor_power = polynomial_integer_power(denominator, exponent);
+                    let Some((basis, factor_remainder)) =
+                        polynomial_division(&denominator_power, &factor_power, policy)?
+                    else {
+                        return Ok(None);
+                    };
+                    if !polynomial_is_certified_zero(&factor_remainder, policy) {
+                        return Ok(None);
+                    }
+                    entries.push((
+                        PartialFractionIntegral::QuadraticConstant {
+                            denominator: denominator.clone(),
+                            power: exponent,
+                        },
+                        basis.clone(),
+                    ));
+                    entries.push((
+                        PartialFractionIntegral::QuadraticLinear {
+                            denominator: denominator.clone(),
+                            power: exponent,
+                        },
+                        polynomial_product(&basis, &[Real::zero(), Real::one()]),
+                    ));
+                }
+            }
         }
     }
     if entries.len() != dimension {
@@ -1501,7 +1645,7 @@ fn integrate_polynomial_over_linear_factors_power(
     }
     let mut augmented = vec![vec![Real::zero(); dimension + 1]; dimension];
     for (row, values) in augmented.iter_mut().enumerate() {
-        for (column, (_, _, basis)) in entries.iter().enumerate() {
+        for (column, (_, basis)) in entries.iter().enumerate() {
             values[column] = coefficient(basis, row);
         }
         values[dimension] = coefficient(&remainder, row);
@@ -1510,14 +1654,44 @@ fn integrate_polynomial_over_linear_factors_power(
         return Ok(None);
     };
     let mut integral = integrate_polynomial(&quotient)?;
-    for (coefficient, (root, exponent, _)) in solution.into_iter().zip(entries) {
-        let Some(factor_integral) = integrate_inverse_linear_factor(&root, exponent, policy)?
-        else {
+    for (coefficient, (term, _)) in solution.into_iter().zip(entries) {
+        let factor_integral = match term {
+            PartialFractionIntegral::Linear { root, power } => {
+                integrate_inverse_linear_factor(&root, power, policy)?
+            }
+            PartialFractionIntegral::QuadraticConstant { denominator, power } => {
+                integrate_linear_over_irreducible_quadratic_power(
+                    &Real::one(),
+                    &Real::zero(),
+                    &denominator,
+                    power,
+                    policy,
+                    cache,
+                )?
+            }
+            PartialFractionIntegral::QuadraticLinear { denominator, power } => {
+                integrate_linear_over_irreducible_quadratic_power(
+                    &Real::zero(),
+                    &Real::one(),
+                    &denominator,
+                    power,
+                    policy,
+                    cache,
+                )?
+            }
+        };
+        let Some(factor_integral) = factor_integral else {
             return Ok(None);
         };
         integral += coefficient * factor_integral;
     }
     Ok(Some(integral))
+}
+
+fn polynomial_is_certified_zero(polynomial: &[Real], policy: &CurvePolicy) -> bool {
+    polynomial.iter().all(|coefficient| {
+        compare_reals(coefficient, &Real::zero(), policy) == Some(std::cmp::Ordering::Equal)
+    })
 }
 
 fn repeated_cubic_linear_factors(
@@ -1576,10 +1750,47 @@ fn integrate_inverse_linear_factor(
     Ok(Some(integral))
 }
 
-fn exact_rational_polynomial_linear_factors(
+fn integrate_linear_over_irreducible_quadratic_power(
+    constant: &Real,
+    linear: &Real,
+    denominator: &[Real; 3],
+    power: usize,
+    policy: &CurvePolicy,
+    cache: &mut RationalQuadraticAreaIntegralCache,
+) -> CurveResult<Option<Real>> {
+    let delta =
+        Real::from(4_i8) * &denominator[2] * &denominator[0] - &denominator[1] * &denominator[1];
+    if compare_reals(&delta, &Real::zero(), policy) != Some(std::cmp::Ordering::Greater) {
+        return Ok(None);
+    }
+    let alpha = (linear.clone() / &(Real::from(2_i8) * &denominator[2]))?;
+    let beta = constant - &(&alpha * &denominator[1]);
+    let q0 = denominator[0].clone();
+    let q1 = &denominator[0] + &denominator[1] + &denominator[2];
+    let derivative_integral = if power == 1 {
+        let ratio = (q1 / q0)?;
+        if compare_reals(&ratio, &Real::zero(), policy) != Some(std::cmp::Ordering::Greater) {
+            return Ok(None);
+        }
+        ratio.ln()?
+    } else {
+        let exponent = 1_i32
+            .checked_sub(i32::try_from(power).map_err(|_| CurveError::InvalidBezierPolynomial)?)
+            .ok_or(CurveError::InvalidBezierPolynomial)?;
+        ((integer_power(&q1, exponent)? - integer_power(&q0, exponent)?) / Real::from(exponent))?
+    };
+    let Some(inverse_integral) =
+        cache.inverse_quadratic_power_integral(denominator, &delta, power, policy)?
+    else {
+        return Ok(None);
+    };
+    Ok(Some(alpha * derivative_integral + beta * inverse_integral))
+}
+
+fn exact_rational_polynomial_factors(
     polynomial: &[Real],
     policy: &CurvePolicy,
-) -> CurveResult<Option<Vec<(Real, usize)>>> {
+) -> CurveResult<Option<Vec<ExactPolynomialFactor>>> {
     if polynomial.len() < 2 {
         return Err(CurveError::InvalidBezierPolynomial);
     }
@@ -1587,7 +1798,24 @@ fn exact_rational_polynomial_linear_factors(
     let mut factors = Vec::with_capacity(polynomial.len() - 1);
     while remaining.len() > 1 {
         let Some(root) = exact_rational_polynomial_root(&remaining) else {
-            return Ok(None);
+            if remaining.len() != 3 {
+                return Ok(None);
+            }
+            let denominator = [
+                remaining[0].clone(),
+                remaining[1].clone(),
+                remaining[2].clone(),
+            ];
+            let delta = Real::from(4_i8) * &denominator[2] * &denominator[0]
+                - &denominator[1] * &denominator[1];
+            if compare_reals(&delta, &Real::zero(), policy) != Some(std::cmp::Ordering::Greater) {
+                return Ok(None);
+            }
+            factors.push(ExactPolynomialFactor::IrreducibleQuadratic {
+                denominator,
+                multiplicity: 1,
+            });
+            return Ok(Some(factors));
         };
         let factor = [Real::zero() - &root, Real::one()];
         let mut multiplicity = 0_usize;
@@ -1619,7 +1847,7 @@ fn exact_rational_polynomial_linear_factors(
         if multiplicity == 0 {
             return Ok(None);
         }
-        factors.push((root, multiplicity));
+        factors.push(ExactPolynomialFactor::Linear { root, multiplicity });
     }
     Ok(Some(factors))
 }
@@ -2551,6 +2779,29 @@ mod tests {
                 Real::from(4_i8),
                 Real::from(8_i8),
                 Real::from(16_i8),
+            ],
+        )
+        .unwrap();
+
+        assert_rational_moments_are_exactly_additive(&curve);
+    }
+
+    #[test]
+    fn mixed_linear_quadratic_quartic_weight_moments_are_exactly_additive() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                point(4, 0),
+                point(6, 0),
+                point(6, 1),
+                point(6, 2),
+                point(4, 2),
+            ],
+            vec![
+                Real::one(),
+                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                (Real::from(7_i8) / Real::from(3_i8)).unwrap(),
+                Real::from(4_i8),
+                Real::from(8_i8),
             ],
         )
         .unwrap();

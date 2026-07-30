@@ -148,8 +148,9 @@ exact signatures.
   polynomial and rational area moments for conics, exact homogeneous degree
   elevations, arbitrary-degree carriers with at-most-quadratic weight
   polynomials, cubic-weight carriers with exactly classified discriminants,
-  and completely rationally split weight carriers through degree eight, plus
-  certified flattening, fitting, and split materialization.
+  and degree-eight-or-lower weight carriers whose rational-root deflation
+  leaves at most one irreducible quadratic, plus certified flattening, fitting,
+  and split materialization.
 - Parallel and offset entry points include `parallel_left`, `parallel_right`,
   `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and
