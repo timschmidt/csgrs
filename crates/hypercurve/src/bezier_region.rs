@@ -1056,11 +1056,12 @@ impl BezierBoundaryLoop2 {
     /// fragment has an implemented symbolic integral.
     ///
     /// Polynomial Béziers, polynomial-equivalent rational Béziers, finite
-    /// rational quadratics, their exact homogeneous degree elevations, and
+    /// rational quadratics, their exact homogeneous degree elevations,
     /// arbitrary-degree rational carriers with at-most-quadratic weight
-    /// polynomials are integrated directly. `None` preserves another
-    /// genuinely rational boundary whose first-moment integral is not yet
-    /// implemented; it never requests a flattening tolerance.
+    /// polynomials, and square-free cubic-weight carriers are integrated
+    /// directly. `None` preserves another genuinely rational boundary whose
+    /// first-moment integral is not yet implemented; it never requests a
+    /// flattening tolerance.
     pub fn area_moments(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
