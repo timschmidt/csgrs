@@ -6,7 +6,9 @@ mod support;
 
 use csgrs::curve::{self, CurveRegionExt};
 use csgrs::solid;
+use csgrs::GeometryContext;
 use hyperlattice::{Point3, Real, Vector3};
+use hyperlimit::PredicatePolicy;
 use hypermesh::TriangleMesh;
 use libfuzzer_sys::fuzz_target;
 
@@ -21,11 +23,11 @@ fn tolerance() -> Real {
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
     let min = real(min);
     let max = real(max);
-    let value = hyperlimit::real_max(&value, &min)
+    let value = hyperlimit::real_max(&value, &min, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order");
-    hyperlimit::real_min(&value, &max)
+    hyperlimit::real_min(&value, &max, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -33,7 +35,7 @@ fn clamp_real(value: Real, min: f64, max: f64) -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    hyperlimit::real_max(&value, &tolerance)
+    hyperlimit::real_max(&value, &tolerance, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -57,18 +59,28 @@ fuzz_target!(|bytes: &[u8]| {
     let width = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let height = at_least_tolerance(decode_real(bytes, &mut idx).abs());
     let region = curve::rectangle(width.clone(), height.clone());
+    let context = if bytes[0] & 1 == 0 {
+        GeometryContext::STRICT
+    } else {
+        GeometryContext::APPROXIMATE_512
+    };
     let tag = bytes[idx % bytes.len()] % 6;
     idx += 1;
     let mesh = match tag {
-        0 => curve::extrude(&region, decode_real(bytes, &mut idx)),
-        1 => curve::extrude_vector(
+        0 => curve::try_extrude(&region, decode_real(bytes, &mut idx), &context)
+            .map(csgrs::GeometryOutcome::into_value)
+            .unwrap_or_else(|_| solid::empty()),
+        1 => curve::try_extrude_vector(
             &region,
             Vector3::from_xyz(
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
             ),
-        ),
+            &context,
+        )
+        .map(csgrs::GeometryOutcome::into_value)
+        .unwrap_or_else(|_| solid::empty()),
         2 => {
             let angle = clamp_real(decode_real(bytes, &mut idx), -720.0, 720.0);
             let segments = (bytes[idx % bytes.len()] as usize % 16) + 2;
@@ -80,10 +92,11 @@ fuzz_target!(|bytes: &[u8]| {
                     &Real::one(),
                     &width,
                     &Real::zero(),
+                    &context.curve_policy(),
                 )
                 .unwrap_or_else(|_| curve::empty());
-            match curve::revolve(&translated, angle, segments) {
-                Ok(mesh) => mesh,
+            match curve::revolve(&translated, angle, segments, &context) {
+                Ok(outcome) => outcome.into_value(),
                 Err(_) => solid_empty(),
             }
         },
@@ -98,7 +111,9 @@ fuzz_target!(|bytes: &[u8]| {
                     decode_real(bytes, &mut idx),
                 ));
             }
-            curve::sweep(&region, &path)
+            curve::try_sweep(&region, &path, &context)
+                .map(csgrs::GeometryOutcome::into_value)
+                .unwrap_or_else(|_| solid::empty())
         },
         4 => {
             let z = at_least_tolerance(decode_real(bytes, &mut idx).abs());
@@ -130,8 +145,16 @@ fuzz_target!(|bytes: &[u8]| {
                 at_least_tolerance(decode_real(bytes, &mut idx).abs()),
             ];
             let slices = usize::from(bytes[idx % bytes.len()] % 16) + 1;
-            curve::extrude_twisted(&region, extrusion_height, twist, scale, slices)
-                .unwrap_or_else(|_| solid::empty())
+            curve::extrude_twisted(
+                &region,
+                extrusion_height,
+                twist,
+                scale,
+                slices,
+                &context,
+            )
+            .map(csgrs::GeometryOutcome::into_value)
+            .unwrap_or_else(|_| solid::empty())
         },
     };
 

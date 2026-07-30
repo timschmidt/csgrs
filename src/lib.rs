@@ -52,6 +52,7 @@ pub mod adapter;
 pub mod attributed;
 #[cfg(feature = "attributed")]
 pub use attributed::{AttributeAlignmentError, AttributedMesh};
+pub mod context;
 #[cfg(feature = "curve")]
 pub mod curve;
 pub mod errors;
@@ -67,8 +68,16 @@ pub mod solid;
 
 pub mod voxels;
 
+pub use context::{GeometryCertainty, GeometryContext, GeometryOutcome};
 pub use hypermesh::TriangleMesh;
 pub use hyperreal::Real;
+
+pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::STRICT;
+pub(crate) const MESH_CONTEXT: hypermesh::MeshContext =
+    hypermesh::MeshContext::new(PREDICATE_POLICY);
+pub(crate) const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
+    hypertri::TriangulationContext::new(PREDICATE_POLICY);
 
 #[cfg(feature = "wasm")]
 pub mod wasm;

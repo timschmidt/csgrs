@@ -1,4 +1,7 @@
-use hypermesh::TriangleMesh;
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshContext, TriangleMesh};
+
+const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
 pub fn validate_triangle_mesh(mesh: &TriangleMesh, require_closed_solid: bool) {
     assert!(
@@ -16,13 +19,19 @@ pub fn validate_triangle_mesh(mesh: &TriangleMesh, require_closed_solid: bool) {
         }),
         "mesh materialized a non-finite exact position"
     );
+    let unique = mesh
+        .has_unique_nondegenerate_triangles(&MESH_CONTEXT)
+        .expect("strict exact triangle validation must decide");
     assert!(
-        mesh.has_unique_nondegenerate_triangles(),
+        unique.value,
         "mesh materialized duplicate or degenerate exact triangle geometry"
     );
     if require_closed_solid && !mesh.triangles.is_empty() {
+        let closed = mesh
+            .is_closed_manifold_geometry(&MESH_CONTEXT)
+            .expect("strict exact manifold validation must decide");
         assert!(
-            mesh.is_closed_manifold_geometry(),
+            closed.value,
             "solid constructor materialized an open, inconsistent, or geometrically non-manifold boundary"
         );
     }

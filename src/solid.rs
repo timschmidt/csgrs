@@ -4,13 +4,14 @@
 //! constructors, transforms, and Boolean composition all accept or return the
 //! native Hypermesh type.
 
+use crate::context::GeometryDecisions;
 use crate::errors::ValidationError;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::{BooleanOp, EmberConfig, HypermeshResult, Plane, Triangle, TriangleMesh};
 use hyperreal::RealSign;
 use std::cell::RefCell;
 use std::num::NonZeroU32;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 enum PrimitiveParameters {
@@ -179,7 +180,7 @@ fn nonnegative(value: &Real) -> bool {
 fn exact_point3_equal(left: &Point3, right: &Point3) -> Option<bool> {
     let left = hyperlimit::Point3::new(left.x.clone(), left.y.clone(), left.z.clone());
     let right = hyperlimit::Point3::new(right.x.clone(), right.y.clone(), right.z.clone());
-    hyperlimit::point3_equal(&left, &right).value()
+    hyperlimit::point3_equal(&left, &right, crate::PREDICATE_POLICY).value()
 }
 
 fn sampled_circle(count: usize) -> Option<Vec<(Real, Real)>> {
@@ -893,8 +894,13 @@ pub fn teardrop_cylinder(
     length: Real,
     height: Real,
     shape_segments: usize,
-) -> TriangleMesh {
-    crate::curve::extrude(&crate::curve::teardrop(width, length, shape_segments), height)
+    context: &crate::GeometryContext,
+) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
+    crate::curve::try_extrude(
+        &crate::curve::teardrop(width, length, shape_segments),
+        height,
+        context,
+    )
 }
 
 /// Extruded involute spur gear.
@@ -907,8 +913,9 @@ pub fn spur_gear_involute(
     backlash: Real,
     segments_per_flank: usize,
     thickness: Real,
-) -> TriangleMesh {
-    crate::curve::extrude(
+    context: &crate::GeometryContext,
+) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
+    crate::curve::try_extrude(
         &crate::curve::involute_gear(
             module,
             teeth,
@@ -918,6 +925,7 @@ pub fn spur_gear_involute(
             segments_per_flank,
         ),
         thickness,
+        context,
     )
 }
 
@@ -930,8 +938,9 @@ pub fn spur_gear_cycloid(
     clearance: Real,
     segments_per_flank: usize,
     thickness: Real,
-) -> TriangleMesh {
-    crate::curve::extrude(
+    context: &crate::GeometryContext,
+) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
+    crate::curve::try_extrude(
         &crate::curve::cycloidal_gear(
             module,
             teeth,
@@ -940,6 +949,7 @@ pub fn spur_gear_cycloid(
             segments_per_flank,
         ),
         thickness,
+        context,
     )
 }
 
@@ -956,7 +966,8 @@ pub fn helical_involute_gear(
     thickness: Real,
     helix_angle_degrees: Real,
     slices: usize,
-) -> TriangleMesh {
+    context: &crate::GeometryContext,
+) -> Result<crate::GeometryOutcome<TriangleMesh>, ValidationError> {
     let region = crate::curve::involute_gear(
         module,
         teeth,
@@ -971,8 +982,8 @@ pub fn helical_involute_gear(
         helix_angle_degrees,
         [Real::one(), Real::one()],
         slices,
+        context,
     )
-    .unwrap_or_else(|_| empty())
 }
 
 /// Builds native triangle geometry from polygon index rows.
@@ -1037,8 +1048,9 @@ pub fn polyhedron(
                 hypertri::Point2::new(axis_x.dot(&offset), axis_y.dot(&offset))
             })
             .collect::<Vec<_>>();
-        let indices = hypertri::earcut(&projected, &[])
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+        let indices = hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &projected, &[])
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?
+            .into_value();
         triangles.extend(indices.chunks_exact(3).map(|triangle| {
             Triangle::new(face[triangle[0]], face[triangle[1]], face[triangle[2]])
         }));
@@ -1052,7 +1064,14 @@ pub fn boolean(
     right: &TriangleMesh,
     operation: BooleanOp,
 ) -> HypermeshResult<TriangleMesh> {
-    hypermesh::boolean_triangle_meshes(left, right, operation, EmberConfig::default())
+    hypermesh::boolean_triangle_meshes(
+        &crate::MESH_CONTEXT,
+        left,
+        right,
+        operation,
+        EmberConfig::default(),
+    )
+    .map(hypermesh::MeshOutcome::into_value)
 }
 
 /// Applies a homogeneous transform and returns native geometry.
@@ -1063,8 +1082,9 @@ pub fn try_transform(
     let orientation = crate::hyper_math::hreal_sign(&matrix.determinant())
         .ok_or(ValidationError::InvalidArguments)?;
     let transformed = mesh
-        .try_transformed(matrix)
-        .ok_or(ValidationError::InvalidArguments)?;
+        .try_transformed(&crate::MESH_CONTEXT, matrix)
+        .map_err(|_| ValidationError::InvalidArguments)?
+        .into_value();
     match orientation {
         RealSign::Positive => Ok(transformed),
         RealSign::Negative => Ok(transformed.reversed_winding()),
@@ -1078,8 +1098,9 @@ fn try_transform_with_known_orientation(
     reverse_winding: bool,
 ) -> Result<TriangleMesh, ValidationError> {
     let transformed = mesh
-        .try_transformed(matrix)
-        .ok_or(ValidationError::InvalidArguments)?;
+        .try_transformed(&crate::MESH_CONTEXT, matrix)
+        .map_err(|_| ValidationError::InvalidArguments)?
+        .into_value();
     Ok(if reverse_winding {
         transformed.reversed_winding()
     } else {
@@ -1099,8 +1120,9 @@ pub fn try_rotate(
     y: Real,
     z: Real,
 ) -> Result<TriangleMesh, ValidationError> {
-    mesh.try_rotated_xyz_degrees(x, y, z)
-        .ok_or(ValidationError::InvalidArguments)
+    mesh.try_rotated_xyz_degrees(&crate::MESH_CONTEXT, x, y, z)
+        .map(hypermesh::MeshOutcome::into_value)
+        .map_err(|_| ValidationError::InvalidArguments)
 }
 
 /// Rotates native geometry by Euler angles in degrees.
@@ -1147,8 +1169,9 @@ pub fn try_mirror(
     plane: &Plane,
 ) -> Result<TriangleMesh, ValidationError> {
     let matrix = plane
-        .reflection_matrix()
-        .map_err(|_| ValidationError::InvalidArguments)?;
+        .reflection_matrix(&crate::MESH_CONTEXT)
+        .map_err(|_| ValidationError::InvalidArguments)?
+        .into_value();
     // A valid plane reflection always reverses orientation.
     try_transform_with_known_orientation(mesh, &matrix, true)
 }
@@ -1159,7 +1182,10 @@ pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> TriangleMesh {
 }
 
 /// Uniformly subdivides every native triangle.
-pub fn subdivide(mesh: &TriangleMesh, levels: NonZeroU32) -> TriangleMesh {
+pub fn subdivide(
+    mesh: &TriangleMesh,
+    levels: NonZeroU32,
+) -> hypermesh::HypermeshResult<TriangleMesh> {
     mesh.subdivide_triangles(levels)
 }
 
@@ -1272,7 +1298,7 @@ pub fn gyroid_solid(
     wall_thickness: Real,
 ) -> TriangleMesh {
     crate::implicit::tpms::gyroid_solid(
-        bounding_box(bounds),
+        &bounding_box(bounds),
         resolution,
         scale,
         iso_value,
@@ -1290,7 +1316,7 @@ pub fn schwarz_p_solid(
     wall_thickness: Real,
 ) -> TriangleMesh {
     crate::implicit::tpms::schwarz_p_solid(
-        bounding_box(bounds),
+        &bounding_box(bounds),
         resolution,
         scale,
         iso_value,
@@ -1308,7 +1334,7 @@ pub fn schwarz_d_solid(
     wall_thickness: Real,
 ) -> TriangleMesh {
     crate::implicit::tpms::schwarz_d_solid(
-        bounding_box(bounds),
+        &bounding_box(bounds),
         resolution,
         scale,
         iso_value,
@@ -1324,7 +1350,7 @@ pub fn gyroid(
     scale: Real,
     iso_value: Real,
 ) -> TriangleMesh {
-    crate::implicit::tpms::gyroid(bounding_box(bounds), resolution, scale, iso_value)
+    crate::implicit::tpms::gyroid(&bounding_box(bounds), resolution, scale, iso_value)
 }
 
 /// Samples a bounded Schwarz-P level surface.
@@ -1335,7 +1361,7 @@ pub fn schwarz_p(
     scale: Real,
     iso_value: Real,
 ) -> TriangleMesh {
-    crate::implicit::tpms::schwarz_p(bounding_box(bounds), resolution, scale, iso_value)
+    crate::implicit::tpms::schwarz_p(&bounding_box(bounds), resolution, scale, iso_value)
 }
 
 /// Samples a bounded Schwarz-D level surface.
@@ -1346,25 +1372,25 @@ pub fn schwarz_d(
     scale: Real,
     iso_value: Real,
 ) -> TriangleMesh {
-    crate::implicit::tpms::schwarz_d(bounding_box(bounds), resolution, scale, iso_value)
+    crate::implicit::tpms::schwarz_d(&bounding_box(bounds), resolution, scale, iso_value)
 }
 
 /// Exact bounds of native triangle positions.
-pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<&Aabb, ValidationError> {
-    static EMPTY_BOUNDS: OnceLock<Aabb> = OnceLock::new();
-    match mesh.exact_bounds() {
+pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Aabb, ValidationError> {
+    match mesh
+        .exact_bounds(&crate::MESH_CONTEXT)
+        .map_err(|_| ValidationError::InvalidArguments)?
+        .into_value()
+    {
         Some(bounds) => Ok(bounds),
-        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => {
-            Ok(EMPTY_BOUNDS.get_or_init(Aabb::origin))
-        },
+        None if mesh.positions.is_empty() && mesh.triangles.is_empty() => Ok(Aabb::origin()),
         None => Err(ValidationError::InvalidArguments),
     }
 }
 
 /// Exact bounds, using the origin box only for empty or invalid geometry.
-pub fn bounding_box(mesh: &TriangleMesh) -> &Aabb {
-    static FALLBACK_BOUNDS: OnceLock<Aabb> = OnceLock::new();
-    try_bounding_box(mesh).unwrap_or_else(|_| FALLBACK_BOUNDS.get_or_init(Aabb::origin))
+pub fn bounding_box(mesh: &TriangleMesh) -> Aabb {
+    try_bounding_box(mesh).unwrap_or_else(|_| Aabb::origin())
 }
 
 /// Translates the center of the exact bounds to the origin.
@@ -1449,7 +1475,11 @@ pub fn merge(meshes: &[TriangleMesh]) -> TriangleMesh {
 fn union_copies(copies: Vec<TriangleMesh>) -> TriangleMesh {
     let pairwise_disjoint = copies
         .iter()
-        .map(TriangleMesh::exact_bounds)
+        .map(|mesh| {
+            mesh.exact_bounds(&crate::MESH_CONTEXT)
+                .ok()
+                .and_then(|outcome| outcome.into_value())
+        })
         .collect::<Option<Vec<_>>>()
         .is_some_and(|bounds| {
             bounds.iter().enumerate().all(|(left_index, left)| {
@@ -1460,6 +1490,7 @@ fn union_copies(copies: Vec<TriangleMesh>) -> TriangleMesh {
                             &left.maxs,
                             &right.mins,
                             &right.maxs,
+                            crate::PREDICATE_POLICY,
                         )
                         .value(),
                         Some(false)
@@ -1594,7 +1625,8 @@ pub fn contains_point(
     mesh: &TriangleMesh,
     point: &Point3,
 ) -> hypermesh::HypermeshResult<bool> {
-    mesh.contains_point(point)
+    mesh.contains_point(&crate::MESH_CONTEXT, point)
+        .map(hypermesh::MeshOutcome::into_value)
 }
 
 /// Exact ray intersections sorted by ray parameter.
@@ -1602,8 +1634,15 @@ pub fn ray_intersections(
     mesh: &TriangleMesh,
     origin: &Point3,
     direction: &Vector3,
-) -> hypermesh::HypermeshResult<Vec<(Point3, Real)>> {
-    mesh.ray_intersections(origin, direction)
+    context: &crate::GeometryContext,
+) -> hypermesh::HypermeshResult<crate::GeometryOutcome<Vec<(Point3, Real)>>> {
+    let decisions = GeometryDecisions::new(context);
+    let hits = decisions.consume_mesh(mesh.ray_intersections(
+        decisions.mesh_context(),
+        origin,
+        direction,
+    )?);
+    Ok(decisions.finish(hits))
 }
 
 /// Exact intersections between native triangle geometry and a polyline.
@@ -1611,7 +1650,8 @@ pub fn polyline_intersections(
     mesh: &TriangleMesh,
     polyline: &[Point3],
 ) -> hypermesh::HypermeshResult<Vec<Point3>> {
-    mesh.polyline_intersections(polyline)
+    mesh.polyline_intersections(&crate::MESH_CONTEXT, polyline)
+        .map(hypermesh::MeshOutcome::into_value)
 }
 
 /// Exact dihedral angle between two indexed triangles.
@@ -1622,7 +1662,9 @@ pub fn dihedral_angle(
     first: hypermesh::Triangle,
     second: hypermesh::Triangle,
 ) -> Option<Real> {
-    mesh.dihedral_angle(first, second)
+    mesh.dihedral_angle(&crate::MESH_CONTEXT, first, second)
+        .ok()
+        .map(hypermesh::MeshOutcome::into_value)
 }
 
 /// Exact uniform-density mass properties through Hyperphysics.
@@ -1650,7 +1692,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
     }) {
         return region;
     }
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut output = CurveRegion2::empty();
     for triangle in mesh.triangles.iter() {
         let [a, b, c] = triangle.indices();
@@ -1670,7 +1712,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             .iter()
             .map(|[x, y]| hyperlimit::Point2::new(x.clone(), y.clone()))
             .collect::<Vec<_>>();
-        match hyperlimit::ring_area_sign(&limit).value() {
+        match hyperlimit::ring_area_sign(&limit, crate::PREDICATE_POLICY).value() {
             Some(hyperlimit::Sign::Negative) => points.swap(1, 2),
             Some(hyperlimit::Sign::Positive) => {},
             Some(hyperlimit::Sign::Zero) => continue,
@@ -1691,7 +1733,7 @@ pub fn flatten(mesh: &TriangleMesh) -> hypercurve::CurveRegion2 {
             else {
                 return CurveRegion2::empty();
             };
-            union
+            union.into_value()
         };
     }
     FLATTEN_CACHE.with_borrow_mut(|entries| {
@@ -1833,7 +1875,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
         chains.push(chain);
     }
 
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut region = if coplanar_triangles.is_empty() {
         CurveRegion2::empty()
     } else {
@@ -1871,7 +1913,7 @@ pub fn slice_z(mesh: &TriangleMesh, z: Real) -> SliceResult {
                 else {
                     return empty_result();
                 };
-                union
+                union.into_value()
             };
         } else {
             let Ok(wire) = CurveString2::from_real_point_iter(points) else {
@@ -1915,7 +1957,8 @@ pub fn to_bevy_mesh(mesh: &TriangleMesh) -> bevy_mesh::Mesh {
 
 /// Exact convex hull of all native mesh positions.
 pub fn convex_hull(mesh: &TriangleMesh) -> HypermeshResult<TriangleMesh> {
-    mesh.convex_hull()
+    mesh.convex_hull(&crate::MESH_CONTEXT)
+        .map(hypermesh::MeshOutcome::into_value)
 }
 
 /// Exact Minkowski sum of two native triangle meshes.
@@ -1941,7 +1984,8 @@ pub fn minkowski_sum(
             ));
         }
     }
-    hypermesh::convex_hull(&points)
+    hypermesh::convex_hull(&crate::MESH_CONTEXT, &points)
+        .map(hypermesh::MeshOutcome::into_value)
         .map_err(|error| ValidationError::Geometry(error.to_string()))
 }
 
@@ -2024,8 +2068,9 @@ pub fn loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError> {
                 hypertri::Point2::new(axis_x.dot(&offset), axis_y.dot(&offset))
             })
             .collect::<Vec<_>>();
-        let flat = hypertri::earcut(&points, &[])
-            .map_err(|error| ValidationError::Geometry(error.to_string()))?;
+        let flat = hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &points, &[])
+            .map_err(|error| ValidationError::Geometry(error.to_string()))?
+            .into_value();
         Ok(flat
             .chunks_exact(3)
             .map(|triangle| [triangle[0], triangle[1], triangle[2]])
@@ -2210,7 +2255,7 @@ mod tests {
     fn constructors_return_native_hypermesh_geometry() {
         let mesh: TriangleMesh = cube(Real::from(2_u8));
         assert_eq!(mesh.triangles.len(), 12);
-        hypermesh::polygon_soup(&[mesh.as_ref()])
+        hypermesh::polygon_soup(&crate::MESH_CONTEXT, &[mesh.as_ref()])
             .expect("native cube must satisfy Hypermesh's input contract");
     }
 
@@ -2259,7 +2304,15 @@ mod tests {
             let mut shapes = shapes;
             shapes.extend([
                 torus(two.clone(), one.clone(), 12, 8),
-                teardrop_cylinder(two.clone(), Real::from(3_u8), one.clone(), 12),
+                teardrop_cylinder(
+                    two.clone(),
+                    Real::from(3_u8),
+                    one.clone(),
+                    12,
+                    &crate::GeometryContext::STRICT,
+                )
+                .expect("teardrop extrusion")
+                .into_value(),
                 spur_gear_involute(
                     one.clone(),
                     16,
@@ -2268,7 +2321,10 @@ mod tests {
                     Real::zero(),
                     3,
                     one.clone(),
-                ),
+                    &crate::GeometryContext::STRICT,
+                )
+                .expect("involute gear extrusion")
+                .into_value(),
                 spur_gear_cycloid(
                     one.clone(),
                     16,
@@ -2276,7 +2332,10 @@ mod tests {
                     Real::zero(),
                     3,
                     one.clone(),
-                ),
+                    &crate::GeometryContext::STRICT,
+                )
+                .expect("cycloidal gear extrusion")
+                .into_value(),
                 helical_involute_gear(
                     one,
                     16,
@@ -2287,7 +2346,10 @@ mod tests {
                     Real::from(2_u8),
                     Real::from(15_u8),
                     3,
-                ),
+                    &crate::GeometryContext::STRICT,
+                )
+                .expect("helical gear extrusion")
+                .into_value(),
             ]);
             shapes
         };
@@ -2298,11 +2360,17 @@ mod tests {
                 "closed indexed solid catalog entry {index}"
             );
             assert!(
-                shape.has_unique_nondegenerate_triangles(),
+                shape
+                    .has_unique_nondegenerate_triangles(&crate::MESH_CONTEXT)
+                    .expect("solid boundary predicate")
+                    .into_value(),
                 "solid catalog entry {index} contains duplicate or degenerate exact triangles"
             );
             assert!(
-                shape.is_closed_manifold_geometry(),
+                shape
+                    .is_closed_manifold_geometry(&crate::MESH_CONTEXT)
+                    .expect("solid boundary predicate")
+                    .into_value(),
                 "solid catalog entry {index} is not an exact geometric two-manifold"
             );
             assert!(
@@ -2385,9 +2453,19 @@ mod tests {
             .try_union(&right)
             .expect("native cube union must be certified");
         assert!(!result.triangles.is_empty());
-        assert!(result.has_unique_nondegenerate_triangles());
-        assert!(result.is_closed_manifold_geometry());
-        hypermesh::polygon_soup(&[result.as_ref()])
+        assert!(
+            result
+                .has_unique_nondegenerate_triangles(&crate::MESH_CONTEXT)
+                .unwrap()
+                .into_value()
+        );
+        assert!(
+            result
+                .is_closed_manifold_geometry(&crate::MESH_CONTEXT)
+                .unwrap()
+                .into_value()
+        );
+        hypermesh::polygon_soup(&crate::MESH_CONTEXT, &[result.as_ref()])
             .expect("native Boolean output must be reusable as Hypermesh input");
     }
 
@@ -2427,8 +2505,18 @@ mod tests {
         ];
         let tilted_loft = loft(&[bottom.clone(), tilted]).expect("independently planar caps");
         assert!(tilted_loft.is_closed_manifold());
-        assert!(tilted_loft.has_unique_nondegenerate_triangles());
-        assert!(tilted_loft.is_closed_manifold_geometry());
+        assert!(
+            tilted_loft
+                .has_unique_nondegenerate_triangles(&crate::MESH_CONTEXT)
+                .unwrap()
+                .into_value()
+        );
+        assert!(
+            tilted_loft
+                .is_closed_manifold_geometry(&crate::MESH_CONTEXT)
+                .unwrap()
+                .into_value()
+        );
 
         let nonplanar = vec![
             point(0, 0, 1),

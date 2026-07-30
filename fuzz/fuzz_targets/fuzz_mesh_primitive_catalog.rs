@@ -4,8 +4,9 @@
 
 mod support;
 
-use csgrs::solid;
+use csgrs::{GeometryContext, solid};
 use hyperlattice::{Point3, Real, Vector3};
+use hyperlimit::PredicatePolicy;
 use libfuzzer_sys::fuzz_target;
 
 fn real(value: f64) -> Real {
@@ -18,7 +19,7 @@ fn tolerance() -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    hyperlimit::real_max(&value, &tolerance)
+    hyperlimit::real_max(&value, &tolerance, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -49,6 +50,11 @@ fuzz_target!(|bytes: &[u8]| {
     idx += 1;
     let teeth = (bytes[idx % bytes.len()] as usize % 24) + 1;
     let positive_b = at_least_tolerance(b.abs());
+    let context = if bytes[0] & 1 == 0 {
+        GeometryContext::STRICT
+    } else {
+        GeometryContext::APPROXIMATE_512
+    };
 
     let mesh = match tag {
         0 => solid::cuboid(a, b, c),
@@ -68,7 +74,9 @@ fuzz_target!(|bytes: &[u8]| {
         8 => solid::octahedron(a),
         9 => solid::icosahedron(a),
         10 => solid::torus(a, b, segments, segments),
-        11 => solid::teardrop_cylinder(a, b, c, segments),
+        11 => solid::teardrop_cylinder(a, b, c, segments, &context)
+            .map(csgrs::GeometryOutcome::into_value)
+            .unwrap_or_else(|_| solid::empty()),
         12 => solid::spur_gear_involute(
             a,
             teeth,
@@ -77,8 +85,13 @@ fuzz_target!(|bytes: &[u8]| {
             real(0.01) * b,
             segments,
             c,
-        ),
-        13 => solid::spur_gear_cycloid(a, teeth, positive_b, b, segments, c),
+            &context,
+        )
+        .map(csgrs::GeometryOutcome::into_value)
+        .unwrap_or_else(|_| solid::empty()),
+        13 => solid::spur_gear_cycloid(a, teeth, positive_b, b, segments, c, &context)
+            .map(csgrs::GeometryOutcome::into_value)
+            .unwrap_or_else(|_| solid::empty()),
         _ => solid::helical_involute_gear(
             a,
             teeth,
@@ -89,7 +102,10 @@ fuzz_target!(|bytes: &[u8]| {
             c,
             b,
             segments,
-        ),
+            &context,
+        )
+        .map(csgrs::GeometryOutcome::into_value)
+        .unwrap_or_else(|_| solid::empty()),
     };
 
     support::validate_triangle_mesh(&mesh, true);

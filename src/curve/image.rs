@@ -153,7 +153,7 @@ pub(crate) fn try_from_image(
     }
 
     let region =
-        CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::certified())?;
+        CurveRegion2::try_from_native_contours(material, holes, &CurvePolicy::STRICT)?;
     Ok(RasterTraceReport {
         region,
         width: img.width(),
@@ -290,7 +290,7 @@ mod tests {
 
     fn assert_role_counts(region: &CurveRegion2, expected: (usize, usize)) {
         let actual = region
-            .loop_role_counts(&CurvePolicy::default())
+            .loop_role_counts(&CurvePolicy::STRICT)
             .expect("raster topology should classify");
         assert_eq!(actual, Classification::Decided(expected));
     }

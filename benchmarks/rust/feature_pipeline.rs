@@ -13,11 +13,11 @@ use csgrs::parts::{
 };
 use csgrs::solid::MetaBall;
 use csgrs::{
-    AttributedMesh, Real, TriangleMesh, curve,
+    AttributedMesh, GeometryContext, Real, TriangleMesh, curve,
     curve::CurveRegionExt,
     solid::{self, SolidExt},
 };
-use hypercurve::{CurveRegion2, Point2};
+use hypercurve::{CurvePolicy, CurveRegion2, Point2};
 use hyperlattice::{Matrix4, Point3, Vector3};
 use hypersdf::SdfExpr;
 use image::{GrayImage, Luma};
@@ -29,6 +29,12 @@ fn mesh_measurement(mesh: &TriangleMesh, work_units: usize) -> Measurement {
         mesh.triangles.len() as u64,
         (mesh.triangles.len() as u64).rotate_left(17) ^ mesh.positions.len() as u64,
     )
+}
+
+fn compound_region(
+    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
+) -> CurveRegion2 {
+    result.expect("compound curve Boolean").into_value()
 }
 
 fn boolean_results(
@@ -104,7 +110,7 @@ fn main() {
             ),
             solid::octahedron(Real::from(4)),
             solid::icosahedron(Real::from(4)),
-            curve::extrude(
+            curve::try_extrude(
                 &curve::involute_gear(
                     Real::from(2),
                     12,
@@ -114,11 +120,17 @@ fn main() {
                     4,
                 ),
                 Real::from(2),
-            ),
-            curve::extrude(
+                &GeometryContext::STRICT,
+            )
+            .expect("involute extrusion")
+            .into_value(),
+            curve::try_extrude(
                 &curve::cycloidal_gear(Real::from(2), 12, Real::from(1), Real::zero(), 4),
                 Real::from(2),
-            ),
+                &GeometryContext::STRICT,
+            )
+            .expect("cycloidal extrusion")
+            .into_value(),
         ];
         let triangles = meshes.iter().map(|mesh| mesh.triangles.len()).sum::<usize>();
         Measurement::new(meshes.len() as u64, triangles as u64, triangles as u64)
@@ -144,11 +156,33 @@ fn main() {
             curve::teardrop(Real::from(6), Real::from(10), 24),
             curve::egg(Real::from(6), Real::from(10), 24),
             curve::squircle(Real::from(8), Real::from(6), 24),
-            curve::keyhole(Real::from(4), Real::from(2), Real::from(6), 24),
-            curve::reuleaux(3, Real::from(6), 24),
-            curve::ring(Real::from(6), Real::from(2), 24),
+            compound_region(curve::keyhole(
+                Real::from(4),
+                Real::from(2),
+                Real::from(6),
+                24,
+                &GeometryContext::APPROXIMATE_512,
+            )),
+            compound_region(curve::reuleaux(
+                3,
+                Real::from(6),
+                24,
+                &GeometryContext::APPROXIMATE_512,
+            )),
+            compound_region(curve::ring(
+                Real::from(6),
+                Real::from(2),
+                24,
+                &GeometryContext::APPROXIMATE_512,
+            )),
             curve::heart(Real::from(8), Real::from(8), 32),
-            curve::crescent(Real::from(6), Real::from(4), Real::from(3), 24),
+            compound_region(curve::crescent(
+                Real::from(6),
+                Real::from(4),
+                Real::from(3),
+                24,
+                &GeometryContext::APPROXIMATE_512,
+            )),
             curve::involute_gear(
                 Real::from(2),
                 20,
@@ -191,24 +225,50 @@ fn main() {
     );
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
-            curve_left.try_union(&curve_right).expect("union"),
-            curve_left.try_difference(&curve_right).expect("difference"),
             curve_left
-                .try_intersection(&curve_right)
-                .expect("intersection"),
-            curve_left.try_xor(&curve_right).expect("xor"),
+                .try_union(&curve_right, &CurvePolicy::STRICT)
+                .expect("union")
+                .into_value(),
+            curve_left
+                .try_difference(&curve_right, &CurvePolicy::STRICT)
+                .expect("difference")
+                .into_value(),
+            curve_left
+                .try_intersection(&curve_right, &CurvePolicy::STRICT)
+                .expect("intersection")
+                .into_value(),
+            curve_left
+                .try_xor(&curve_right, &CurvePolicy::STRICT)
+                .expect("xor")
+                .into_value(),
         ];
         let contours = results.iter().map(CurveRegion2::len).sum::<usize>();
         Measurement::new(128, contours as u64, contours as u64)
     });
     config.run("feature", "profile_triangulate", "circle_64", 8, || {
-        let triangles = curve::triangulate(black_box(&curve_left)).triangles.len();
+        let triangles =
+            curve::try_triangulate(black_box(&curve_left), &GeometryContext::STRICT)
+                .expect("triangulation")
+                .into_value()
+                .triangles
+                .len();
         Measurement::new(64, triangles as u64, triangles as u64)
     });
     config.run("feature", "profile_offset", "sharp_and_round", 2, || {
-        let sharp = curve::offset(black_box(&curve_left), Real::one()).expect("offset");
-        let rounded = curve::offset_rounded(black_box(&curve_left), Real::one())
-            .expect("rounded offset");
+        let sharp = curve::offset(
+            black_box(&curve_left),
+            Real::one(),
+            &hypercurve::CurvePolicy::STRICT,
+        )
+        .expect("offset")
+        .into_value();
+        let rounded = curve::offset_rounded(
+            black_box(&curve_left),
+            Real::one(),
+            &hypercurve::CurvePolicy::STRICT,
+        )
+        .expect("rounded offset")
+        .into_value();
         Measurement::new(128, (sharp.len() + rounded.len()) as u64, sharp.len() as u64)
     });
     config.run("feature", "profile_transform", "all_csg_helpers", 4, || {
@@ -226,6 +286,7 @@ fn main() {
                     &Real::zero(),
                     &Real::zero(),
                     &Real::zero(),
+                    &CurvePolicy::STRICT,
                 )
                 .expect("rotation"),
             source
@@ -236,6 +297,7 @@ fn main() {
                     &Real::from(3),
                     &Real::zero(),
                     &Real::zero(),
+                    &CurvePolicy::STRICT,
                 )
                 .expect("scale"),
             curve::transformed(
@@ -274,28 +336,39 @@ fn main() {
         "extrude_revolve_twist_sweep_loft",
         1,
         || {
-            let extrusion = curve::extrude(&curve_left, Real::from(10));
+            let extrusion =
+                curve::try_extrude(&curve_left, Real::from(10), &GeometryContext::STRICT)
+                    .expect("extrusion")
+                    .into_value();
             let radial = curve::transformed(
                 &curve::rectangle(Real::from(3), Real::from(8)),
                 &Matrix4::affine_translation([Real::from(5), Real::zero(), Real::zero()]),
             );
-            let revolution = curve::revolve(&radial, Real::from(360), 32).expect("revolution");
+            let revolution =
+                curve::revolve(&radial, Real::from(360), 32, &GeometryContext::STRICT)
+                    .expect("revolution")
+                    .into_value();
             let twist = curve::extrude_twisted(
                 &curve_right,
                 Real::from(12),
                 Real::from(90),
                 [Real::one(), Real::one()],
                 16,
+                &GeometryContext::STRICT,
             )
-            .expect("twisted extrusion");
-            let sweep = curve::sweep(
+            .expect("twisted extrusion")
+            .into_value();
+            let sweep = curve::try_sweep(
                 &curve::circle(Real::one(), 24),
                 &[
                     Point3::origin(),
                     Point3::new(Real::zero(), Real::zero(), Real::from(4)),
                     Point3::new(Real::from(3), Real::zero(), Real::from(8)),
                 ],
-            );
+                &GeometryContext::STRICT,
+            )
+            .expect("sweep")
+            .into_value();
             let loft = solid::loft(&[square_loop(0, 2), square_loop(8, 4)]).expect("loft");
             let triangles = [&extrusion, &revolution, &twist, &sweep, &loft]
                 .into_iter()
@@ -352,14 +425,21 @@ fn main() {
             let subdivided = solid::subdivide(
                 black_box(&mesh),
                 NonZeroU32::new(1).expect("one is nonzero"),
-            );
-            let first = subdivided.laplacian_smooth(&Real::try_from(0.4).unwrap(), 2);
-            let smoothed = first.laplacian_smooth(&Real::try_from(-0.41).unwrap(), 2);
+            )
+            .expect("valid subdivision");
+            let first = subdivided
+                .laplacian_smooth(&Real::try_from(0.4).unwrap(), 2)
+                .expect("valid smoothing");
+            let smoothed = first
+                .laplacian_smooth(&Real::try_from(-0.41).unwrap(), 2)
+                .expect("valid smoothing");
             mesh_measurement(&smoothed, mesh.triangles.len())
         },
     );
     config.run("feature", "mesh_topology", "connectivity_manifold", 4, || {
-        let (vertices, _) = black_box(&mesh).connectivity_counts();
+        let (vertices, _) = black_box(&mesh)
+            .connectivity_counts()
+            .expect("valid connectivity");
         Measurement::new(
             mesh.triangles.len() as u64,
             vertices as u64,
@@ -381,8 +461,10 @@ fn main() {
             &mesh,
             &Point3::new(Real::from(-20), Real::zero(), Real::zero()),
             &Vector3::x(),
+            &GeometryContext::APPROXIMATE_512,
         )
-        .expect("certified ray intersections");
+        .expect("policy-authorized ray intersections")
+        .value;
         let mass = solid::exact_mass_properties(&mesh, Real::one()).expect("mass");
         let graphics = ScalarMesh::<RawReal>::from_native(mesh.clone())
             .graphics_mesh()
@@ -398,8 +480,10 @@ fn main() {
             &mesh,
             &Point3::new(Real::from(-20), Real::zero(), Real::zero()),
             &Vector3::x(),
+            &GeometryContext::APPROXIMATE_512,
         )
-        .expect("certified ray intersections");
+        .expect("policy-authorized ray intersections")
+        .value;
         Measurement::new(
             mesh.triangles.len() as u64,
             hits.len() as u64,
@@ -665,7 +749,12 @@ fn main() {
             triangles as u64,
         )
     });
-    let io_curve = curve::ring(Real::from(8), Real::from(2), 48);
+    let io_curve = compound_region(curve::ring(
+        Real::from(8),
+        Real::from(2),
+        48,
+        &GeometryContext::APPROXIMATE_512,
+    ));
     config.run("feature", "profile_io", "svg_gerber_roundtrip", 1, || {
         let svg = csgrs::io::svg::export_svg(&io_curve, &[], &[]).expect("SVG");
         let gerber = csgrs::io::gerber::export_gerber(&io_curve).expect("Gerber");

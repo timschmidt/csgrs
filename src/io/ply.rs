@@ -35,7 +35,7 @@ pub fn to_ply(mesh: &TriangleMesh, comment: &str) -> Result<String, IoError> {
         return Ok(output);
     }
     let buffers = mesh
-        .exact_gpu_mesh_buffers()
+        .to_exact_gpu_mesh_buffers()
         .map_err(|error| IoError::Geometry {
             format: "PLY",
             detail: error.to_string(),

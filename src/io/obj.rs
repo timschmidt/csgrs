@@ -74,13 +74,6 @@ fn triangulate_face(
     triangulate_planar_face(positions, face, "OBJ").map_err(|error| malformed(line, error))
 }
 
-fn retain_import_facts(mesh: &TriangleMesh) {
-    let _ = mesh.exact_bounds();
-    let _ = mesh.adjacency();
-    let _ = mesh.connectivity_counts();
-    let _ = mesh.is_closed_manifold();
-}
-
 /// Import OBJ vertex and face records into native triangle geometry.
 pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
     let mut positions = Vec::new();
@@ -111,9 +104,7 @@ pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
             _ => {},
         }
     }
-    let mesh = TriangleMesh::new(positions, triangles);
-    retain_import_facts(&mesh);
-    Ok(mesh)
+    Ok(TriangleMesh::new(positions, triangles))
 }
 
 /// Imports OBJ geometry with an optional per-position authored-normal sidecar.
@@ -213,7 +204,6 @@ pub fn from_obj_attributed<R: BufRead>(
     }
 
     let geometry = TriangleMesh::new(positions, triangles);
-    retain_import_facts(&geometry);
     let metadata = vec![(); geometry.triangles.len()];
     let attributed = crate::AttributedMesh::with_authored_normals(
         geometry,

@@ -18,10 +18,11 @@ use std::{
 };
 
 use csgrs::{
-    AttributedMesh, Real, curve,
+    AttributedMesh, GeometryContext, Real, curve,
     solid::{self, SolidExt},
 };
 use hyperlattice::{Matrix4, Point3, Vector3};
+use hyperlimit::PredicatePolicy;
 use hypermesh::{Plane, Triangle, TriangleMesh};
 use support::{Config, Measurement};
 
@@ -58,7 +59,8 @@ fn geometry_measurement(mesh: &TriangleMesh, input_facets: usize) -> Measurement
         for index in triangle.indices() {
             corners += 1;
             let position = &mesh.positions[index];
-            if let Some(position) = finite_positions.map(|positions| positions[index]) {
+            if let Some(position) = finite_positions.as_ref().map(|positions| positions[index])
+            {
                 for coordinate in position {
                     checksum = checksum.rotate_left(7)
                         ^ ((coordinate * 1_000_000_000.0).round() as i64 as u64);
@@ -158,7 +160,9 @@ fn run_generated_corpus(config: &Config, case: &str, path: &Path) {
         )
     });
     config.run("corpus", "connectivity", case, 1, || {
-        let (vertices, adjacency) = black_box(source).connectivity_counts();
+        let (vertices, adjacency) = black_box(source)
+            .connectivity_counts()
+            .expect("corpus connectivity");
         Measurement::new(
             input as u64,
             vertices as u64,
@@ -272,7 +276,7 @@ fn orient_closed_triangle_mesh(source: &TriangleMesh) -> TriangleMesh {
                 .map(|index| &source.positions[index]);
             sum + a.to_vector().dot(&b.to_vector().cross(&c.to_vector()))
         });
-        match hyperlimit::classify_real_sign(&signed_volume).value() {
+        match hyperlimit::classify_real_sign(&signed_volume, PredicatePolicy::STRICT).value() {
             Some(hyperlimit::Sign::Negative) => {
                 for triangle_index in component {
                     let triangle = &mut triangles[triangle_index];
@@ -568,7 +572,13 @@ fn run() {
 
     let profile = curve::circle(Real::from(6_u8), 64);
     config.run("kernel", "extrude", "circle_64", 8, || {
-        let mesh = curve::extrude(black_box(&profile), Real::from(20_u8));
+        let mesh = curve::try_extrude(
+            black_box(&profile),
+            Real::from(20_u8),
+            &csgrs::GeometryContext::STRICT,
+        )
+        .expect("extrusion")
+        .into_value();
         measurement(&mesh, 64)
     });
 
@@ -621,7 +631,8 @@ fn run() {
         measurement(&mesh, facet_count(&analysis_source))
     });
     config.run("kernel", "subdivide", "sphere_medium_level1", 2, || {
-        let mesh = solid::subdivide(black_box(&analysis_source), NonZeroU32::new(1).unwrap());
+        let mesh = solid::subdivide(black_box(&analysis_source), NonZeroU32::new(1).unwrap())
+            .expect("valid subdivision");
         measurement(&mesh, facet_count(&analysis_source))
     });
     config.run("kernel", "renormalize", "sphere_medium", 4, || {
@@ -655,7 +666,7 @@ fn run() {
     });
     config.run("kernel", "graphics_buffers", "sphere_medium", 16, || {
         let graphics = black_box(&analysis_source)
-            .exact_gpu_mesh_buffers()
+            .to_exact_gpu_mesh_buffers()
             .expect("exact graphics conversion must remain valid");
         Measurement::new(
             facet_count(&analysis_source) as u64,
@@ -664,7 +675,9 @@ fn run() {
         )
     });
     config.run("kernel", "connectivity", "sphere_medium", 8, || {
-        let (vertices, adjacency) = black_box(&analysis_source).connectivity_counts();
+        let (vertices, adjacency) = black_box(&analysis_source)
+            .connectivity_counts()
+            .expect("sphere connectivity");
         Measurement::new(
             facet_count(&analysis_source) as u64,
             vertices as u64,
@@ -694,8 +707,10 @@ fn run() {
             black_box(&analysis_source),
             &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
             &Vector3::x(),
+            &GeometryContext::APPROXIMATE_512,
         )
-        .expect("certified ray intersections");
+        .expect("policy-authorized ray intersections")
+        .value;
         Measurement::new(
             facet_count(&analysis_source) as u64,
             hits.len() as u64,
@@ -734,6 +749,7 @@ fn run() {
             .find(|triangle| {
                 hyperlimit::classify_real_sign(
                     &first_normal.dot(&triangle_normal(&box_mesh, *triangle)),
+                    PredicatePolicy::STRICT,
                 )
                 .value()
                     == Some(hyperlimit::Sign::Zero)
@@ -816,7 +832,9 @@ fn run() {
             "yeahright_control_genus131",
             1,
             || {
-                let (vertices, adjacency) = black_box(&yeahright_source).connectivity_counts();
+                let (vertices, adjacency) = black_box(&yeahright_source)
+                    .connectivity_counts()
+                    .expect("YeahRight connectivity");
                 Measurement::new(
                     yeahright_input as u64,
                     vertices as u64,

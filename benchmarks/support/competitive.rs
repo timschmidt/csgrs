@@ -10,7 +10,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hyperlattice::Point3;
-use hypermesh::Triangle;
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshContext, Triangle};
 use manifold_rust::{
     manifold::Manifold as ManifoldRs,
     types::{Error as ManifoldError, MeshGL64},
@@ -19,6 +20,7 @@ use three_d_asset::{Indices, Positions, TriMesh};
 
 const TOLERANCE: f64 = 1.0e-8;
 const KEY_SCALE: f64 = 1.0e9;
+const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 pub const LARGE_SUBDIVISIONS: usize = 16;
 pub const LARGE_TRIANGLES_PER_MESH: usize = 12 * LARGE_SUBDIVISIONS * LARGE_SUBDIVISIONS;
 pub const YEAHRIGHT_SUBDIVISIONS: usize = 2;
@@ -200,8 +202,8 @@ pub fn prepare_yeahright(case: &MeshPair) -> Prepared {
 
 fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     let direct = to_csgrs(mesh);
-    if let Ok(direct) = direct.clone().try_certify_convex() {
-        return direct;
+    if let Ok(direct) = direct.clone().try_certify_convex(&MESH_CONTEXT) {
+        return direct.into_value();
     }
 
     // YeahRight is distributed as a decimal serialization of a CGAL convex
@@ -210,6 +212,7 @@ fn to_convex_csgrs(mesh: &RawMesh) -> TriangleMesh {
     let hull = solid::convex_hull(&direct).expect("fixture point cloud spans 3D");
     if hull.triangles.len() < mesh.triangles.len() {
         solid::subdivide(&hull, NonZeroU32::new(1).expect("one is nonzero"))
+            .expect("convex benchmark subdivision")
     } else {
         hull
     }

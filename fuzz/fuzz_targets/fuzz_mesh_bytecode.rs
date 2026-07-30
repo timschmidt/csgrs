@@ -4,6 +4,7 @@
 
 use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
+use hyperlimit::PredicatePolicy;
 use hypermesh::TriangleMesh;
 use libfuzzer_sys::fuzz_target;
 
@@ -18,11 +19,11 @@ fn tolerance() -> Real {
 fn clamp_real(value: Real, min: f64, max: f64) -> Real {
     let min = real(min);
     let max = real(max);
-    let value = hyperlimit::real_max(&value, &min)
+    let value = hyperlimit::real_max(&value, &min, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order");
-    hyperlimit::real_min(&value, &max)
+    hyperlimit::real_min(&value, &max, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -30,7 +31,7 @@ fn clamp_real(value: Real, min: f64, max: f64) -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    hyperlimit::real_max(&value, &tolerance)
+    hyperlimit::real_max(&value, &tolerance, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -149,7 +150,10 @@ fuzz_target!(|bytes: &[u8]| {
                 let lambda = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
                 let iterations = bytes[idx % bytes.len()] as usize % 3;
                 idx += 1;
-                stack.push(mesh.laplacian_smooth(&lambda, iterations));
+                stack.push(
+                    mesh.laplacian_smooth(&lambda, iterations)
+                        .expect("generated mesh indices remain valid during smoothing"),
+                );
             },
             _ => {
                 let Some(mesh) = stack.pop() else { continue };
@@ -157,7 +161,10 @@ fuzz_target!(|bytes: &[u8]| {
                 let mu = clamp_real(decode_real(bytes, &mut idx), -1.0, 1.0);
                 let iterations = bytes[idx % bytes.len()] as usize % 3;
                 idx += 1;
-                stack.push(mesh.taubin_smooth(&lambda, &mu, iterations));
+                stack.push(
+                    mesh.taubin_smooth(&lambda, &mu, iterations)
+                        .expect("generated mesh indices remain valid during smoothing"),
+                );
             },
         }
     }

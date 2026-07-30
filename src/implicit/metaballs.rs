@@ -415,12 +415,16 @@ impl MetaballSampleField {
 
 fn record_metaball_finite_sample(diagnostics: &mut MetaballDiagnostics, value: &Real) {
     diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
-        Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
+        Some(current) => hyperlimit::real_min(&current, value, crate::PREDICATE_POLICY)
+            .value()
+            .cloned(),
         None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
         None => None,
     };
     diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
-        Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
+        Some(current) => hyperlimit::real_max(&current, value, crate::PREDICATE_POLICY)
+            .value()
+            .cloned(),
         None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
         None => None,
     };
@@ -463,14 +467,26 @@ fn metaball_bounds_hreal(
     for bounds in bounds {
         let (next_min, next_max) = bounds?;
         min_pt = HPoint3::new(
-            real_min(&min_pt.x, &next_min.x).value().cloned()?,
-            real_min(&min_pt.y, &next_min.y).value().cloned()?,
-            real_min(&min_pt.z, &next_min.z).value().cloned()?,
+            real_min(&min_pt.x, &next_min.x, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
+            real_min(&min_pt.y, &next_min.y, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
+            real_min(&min_pt.z, &next_min.z, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
         );
         max_pt = HPoint3::new(
-            real_max(&max_pt.x, &next_max.x).value().cloned()?,
-            real_max(&max_pt.y, &next_max.y).value().cloned()?,
-            real_max(&max_pt.z, &next_max.z).value().cloned()?,
+            real_max(&max_pt.x, &next_max.x, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
+            real_max(&max_pt.y, &next_max.y, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
+            real_max(&max_pt.z, &next_max.z, crate::PREDICATE_POLICY)
+                .value()
+                .cloned()?,
         );
     }
     Some((min_pt, max_pt))

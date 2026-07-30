@@ -3,7 +3,10 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hyperlattice::{Point3, Real};
-use hypermesh::Triangle;
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshContext, Triangle};
+
+const CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
 fn r(value: f64) -> Real {
     Real::try_from(value).expect("test values must be finite")
@@ -37,25 +40,42 @@ fn boolean_pipeline_accepts_hyperreal_transforms() {
     let a = solid::center(&solid::cube(r(2.0)));
     let b = solid::cube(r(1.1)).translated(r(0.4), r(0.2), r(0.1));
 
-    let direct = hypermesh::boolean_native_meshes(
-        &[&a, &b],
+    let direct = hypermesh::boolean_triangle_meshes(
+        &CONTEXT,
+        &a,
+        &b,
         hypermesh::BooleanOp::Difference,
         hypermesh::EmberConfig::default(),
     )
-    .expect("direct difference");
-    assert!(direct.has_unique_nondegenerate_triangles());
+    .expect("direct difference")
+    .into_value();
+    assert!(
+        direct
+            .has_unique_nondegenerate_triangles(&CONTEXT)
+            .unwrap()
+            .into_value()
+    );
     let difference = a.try_difference(&b).expect("difference");
     let intersection = b.try_intersection(&a).expect("intersection");
     let result = difference.try_union(&intersection).expect("union");
 
     for mesh in [&difference, &intersection, &result] {
-        assert!(mesh.has_unique_nondegenerate_triangles());
-        assert!(mesh.is_closed_manifold_geometry());
+        assert!(
+            mesh.has_unique_nondegenerate_triangles(&CONTEXT)
+                .unwrap()
+                .into_value()
+        );
+        assert!(
+            mesh.is_closed_manifold_geometry(&CONTEXT)
+                .unwrap()
+                .into_value()
+        );
     }
     assert!(!result.triangles.is_empty());
     let bounds = solid::bounding_box(&result);
     assert_eq!(
-        hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x).value(),
+        hyperlimit::compare_reals(&bounds.maxs.x, &bounds.mins.x, PredicatePolicy::STRICT)
+            .value(),
         Some(std::cmp::Ordering::Greater)
     );
 }
@@ -91,12 +111,21 @@ fn exact_near_plane_translation_is_preserved_by_native_geometry() {
 fn curve_offset_and_extrude_keep_hyperreal_scalars() {
     let region = curve::square(r(2.0));
     #[cfg(feature = "offset")]
-    let region = curve::offset(&region, r(0.125)).expect("offset");
-    let mesh = curve::extrude(&region, r(0.75));
+    let region = curve::offset(&region, r(0.125), &hypercurve::CurvePolicy::STRICT)
+        .expect("offset")
+        .into_value();
+    let mesh = curve::try_extrude(&region, r(0.75), &csgrs::GeometryContext::STRICT)
+        .expect("extrude")
+        .into_value();
 
     assert!(!mesh.triangles.is_empty());
     assert!(matches!(
-        hyperlimit::compare_reals(&solid::bounding_box(&mesh).maxs.z, &r(0.75)).value(),
+        hyperlimit::compare_reals(
+            &solid::bounding_box(&mesh).maxs.z,
+            &r(0.75),
+            PredicatePolicy::STRICT,
+        )
+        .value(),
         Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
     ));
 }

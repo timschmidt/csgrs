@@ -28,6 +28,12 @@ fn native_curve_catalog_subset_extrudes_with_hyperreal_scalars() {
     ];
 
     for region in curves {
-        assert!(!curve::extrude(&region, r(0.2)).triangles.is_empty());
+        assert!(
+            !curve::try_extrude(&region, r(0.2), &csgrs::GeometryContext::STRICT)
+                .expect("extrude")
+                .into_value()
+                .triangles
+                .is_empty()
+        );
     }
 }

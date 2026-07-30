@@ -1,7 +1,7 @@
 //! Extrude, vector-extrude, revolve, loft, and sweep curves into meshes.
 
 use csgrs::{
-    TriangleMesh, curve,
+    GeometryContext, TriangleMesh, curve,
     io::stl::to_stl_binary,
     solid::{self, SolidExt},
 };
@@ -17,15 +17,22 @@ fn main() {
     let circle = curve::circle(r(0.5), 32);
     let star = curve::star(5, r(1.2), r(0.45));
 
-    write_mesh(&curve::extrude(&square, r(1.0)), "square_extrude");
     write_mesh(
-        &curve::extrude_vector(&star, v3(0.4, 0.25, 1.0)),
+        &curve::try_extrude(&square, r(1.0), &GeometryContext::STRICT)
+            .unwrap()
+            .into_value(),
+        "square_extrude",
+    );
+    write_mesh(
+        &curve::try_extrude_vector(&star, v3(0.4, 0.25, 1.0), &GeometryContext::STRICT)
+            .unwrap()
+            .into_value(),
         "star_vector_extrude",
     );
-    let revolved =
-        curve::revolve(&circle, r(360.0), 48)
-            .unwrap()
-            .translated(r(1.5), r(0.0), r(0.0));
+    let revolved = curve::revolve(&circle, r(360.0), 48, &GeometryContext::STRICT)
+        .unwrap()
+        .into_value()
+        .translated(r(1.5), r(0.0), r(0.0));
     write_mesh(&revolved, "circle_revolve");
 
     let path = (0..40)
@@ -34,7 +41,12 @@ fn main() {
             p3(t.cos() * 0.6, t.sin() * 0.6, i as f64 * 0.04)
         })
         .collect::<Vec<_>>();
-    write_mesh(&curve::sweep(&curve::circle(r(0.08), 12), &path), "sweep");
+    write_mesh(
+        &curve::try_sweep(&curve::circle(r(0.08), 12), &path, &GeometryContext::STRICT)
+            .unwrap()
+            .into_value(),
+        "sweep",
+    );
 
     let bottom = vec![
         p3(-0.5, -0.5, 0.0),

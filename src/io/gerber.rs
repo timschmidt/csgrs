@@ -202,7 +202,7 @@ pub fn export_gerber_with_options(
                 detail: format!("invalid projection configuration: {error}"),
             })?;
         match region
-            .project_to_finite_profiles(&projection_options, &CurvePolicy::certified())
+            .project_to_finite_profiles(&projection_options, &CurvePolicy::STRICT)
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: format!("native region projection failed: {error}"),
@@ -435,12 +435,14 @@ impl ImportState {
                 Polarity::Dark => self.pending_dark.push(curve),
                 Polarity::Clear => {
                     self.flush_pending_dark()?;
-                    self.curve = self.curve.try_difference(&curve).map_err(|error| {
-                        IoError::Geometry {
+                    self.curve = self
+                        .curve
+                        .try_difference(&curve, &CurvePolicy::STRICT)
+                        .map(hypercurve::CurveOutcome::into_value)
+                        .map_err(|error| IoError::Geometry {
                             format: "Gerber",
                             detail: error.to_string(),
-                        }
-                    })?;
+                        })?;
                 },
             }
         }
@@ -466,10 +468,14 @@ impl ImportState {
                     next.push(left);
                     break;
                 };
-                next.push(left.try_union(&right).map_err(|error| IoError::Geometry {
-                    format: "Gerber",
-                    detail: error.to_string(),
-                })?);
+                next.push(
+                    left.try_union(&right, &CurvePolicy::STRICT)
+                        .map(hypercurve::CurveOutcome::into_value)
+                        .map_err(|error| IoError::Geometry {
+                            format: "Gerber",
+                            detail: error.to_string(),
+                        })?,
+                );
             }
             level = next;
         }
@@ -480,7 +486,8 @@ impl ImportState {
             dark
         } else {
             self.curve
-                .try_union(&dark)
+                .try_union(&dark, &CurvePolicy::STRICT)
+                .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
                     detail: error.to_string(),
@@ -762,7 +769,7 @@ impl RegionBuilder {
             .collect::<Result<Vec<_>, _>>()?;
         let region = match CurveRegion2::try_from_native_boundary_contours(
             contours,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
@@ -930,14 +937,15 @@ impl ImageTransform {
         ) else {
             return false;
         };
-        hyperlimit::compare_reals(&a, &b).value() == Some(Ordering::Equal)
+        hyperlimit::compare_reals(&a, &b, crate::PREDICATE_POLICY).value()
+            == Some(Ordering::Equal)
     }
 
     fn reverses_orientation(self) -> Option<bool> {
         let x = self.apply_vector(Coord { x: 1.0, y: 0.0 });
         let y = self.apply_vector(Coord { x: 0.0, y: 1.0 });
         let determinant = Real::try_from(x.x * y.y - x.y * y.x).ok()?;
-        hyperlimit::classify_real_sign(&determinant)
+        hyperlimit::classify_real_sign(&determinant, crate::PREDICATE_POLICY)
             .value()
             .map(|sign| sign == hyperlimit::Sign::Negative)
     }
@@ -1103,7 +1111,8 @@ fn add_aperture_hole(
     hole: CurveRegion2,
 ) -> Result<CurveRegion2, IoError> {
     outer
-        .try_difference(&hole)
+        .try_difference(&hole, &CurvePolicy::STRICT)
+        .map(hypercurve::CurveOutcome::into_value)
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: format!("aperture-hole subtraction failed: {error}"),
@@ -1584,7 +1593,7 @@ fn polygon_from_coords(mut points: Vec<Coord<f64>>) -> Result<CurveRegion2, IoEr
         format: "Gerber",
         detail: format!("invalid finite contour: {error}"),
     })?;
-    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::certified())
+    CurveRegion2::try_from_native_material_contours(vec![contour], &CurvePolicy::STRICT)
         .map_err(|error| IoError::Geometry {
             format: "Gerber",
             detail: error.to_string(),
@@ -1776,7 +1785,7 @@ fn is_left_turn(origin: Coord<f64>, a: Coord<f64>, b: Coord<f64>) -> Result<bool
             field: "hull point",
             target: "Real",
         })?;
-    match hyperlimit::orient2(&origin, &a, &b).value() {
+    match hyperlimit::orient2(&origin, &a, &b, crate::PREDICATE_POLICY).value() {
         Some(hyperlimit::Sign::Positive) => Ok(true),
         Some(hyperlimit::Sign::Zero | hyperlimit::Sign::Negative) => Ok(false),
         None => Err(IoError::Geometry {

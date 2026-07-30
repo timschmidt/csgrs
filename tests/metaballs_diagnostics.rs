@@ -1,5 +1,6 @@
 use csgrs::solid::{self, MetaBall};
 use hyperlattice::{Point3, Real};
+use hyperlimit::PredicatePolicy;
 use std::collections::HashMap;
 
 fn r(value: f64) -> Real {
@@ -74,7 +75,7 @@ fn metaball_influence_at_center_is_finite_hyperreal_value() {
         .expect("valid metaball influence");
 
     assert_eq!(
-        hyperlimit::compare_reals(&influence, &r(0.0)).value(),
+        hyperlimit::compare_reals(&influence, &r(0.0), PredicatePolicy::STRICT).value(),
         Some(std::cmp::Ordering::Greater)
     );
 }

@@ -5,7 +5,7 @@
 
 use csgrs::solid::MetaBall;
 use csgrs::{
-    TriangleMesh, curve,
+    GeometryContext, TriangleMesh, curve,
     solid::{self, SolidExt},
 };
 use hypercurve::CurveRegion2;
@@ -53,7 +53,12 @@ fn render_readme_curves() {
     );
     render_curve("star", &curve::star(5, r(1.1), r(0.45)));
     render_curve("heart", &curve::heart(r(2.0), r(1.8), 160));
-    render_curve("ring", &curve::ring(r(1.4), r(0.35), 96));
+    render_curve(
+        "ring",
+        &curve::ring(r(1.4), r(0.35), 96, &GeometryContext::APPROXIMATE_512)
+            .expect("ring Boolean")
+            .into_value(),
+    );
     render_curve("pie_slice", &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64));
 }
 
@@ -72,16 +77,33 @@ fn render_readme_meshes() {
     );
 
     let star = curve::star(5, r(1.0), r(0.45));
-    render_mesh("extrude", &curve::extrude(&star, r(0.65)));
+    render_mesh(
+        "extrude",
+        &curve::try_extrude(&star, r(0.65), &csgrs::GeometryContext::STRICT)
+            .expect("extrude")
+            .into_value(),
+    );
     render_mesh(
         "extrude_vector",
-        &curve::extrude_vector(&star, v3(0.45, 0.25, 0.9)),
+        &curve::try_extrude_vector(
+            &star,
+            v3(0.45, 0.25, 0.9),
+            &csgrs::GeometryContext::STRICT,
+        )
+        .expect("vector extrude")
+        .into_value(),
     );
     render_mesh(
         "revolve",
-        &curve::revolve(&curve::circle(r(0.18), 32), r(265.0), 32)
-            .expect("revolve")
-            .translated(r(1.0), r(0.0), r(0.0)),
+        &curve::revolve(
+            &curve::circle(r(0.18), 32),
+            r(265.0),
+            32,
+            &csgrs::GeometryContext::STRICT,
+        )
+        .expect("revolve")
+        .into_value()
+        .translated(r(1.0), r(0.0), r(0.0)),
     );
 
     render_mesh("inverse", &solid::inverse(&solid::sphere(r(1.0), 32, 16)));
@@ -129,7 +151,9 @@ fn cube_minus_translated_sphere() -> TriangleMesh {
 
 fn render_curve(name: &str, region: &CurveRegion2) {
     let mut image = RgbaImage::from_pixel(SIZE, SIZE, BG);
-    let profiles = curve::finite_profiles(region);
+    let profiles = curve::try_finite_profiles(region, &csgrs::GeometryContext::STRICT)
+        .expect("finite curve profiles")
+        .into_value();
     let wires = Vec::<Vec<[Real; 2]>>::new();
     let Some(bounds) = curve_bounds(&profiles, &wires) else {
         save_image(name, &image);

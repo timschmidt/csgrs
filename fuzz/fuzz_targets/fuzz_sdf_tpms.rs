@@ -5,6 +5,7 @@
 use csgrs::solid;
 use hyperlattice::{Point3, Real};
 use hyperlimit::Point3 as HPoint3;
+use hyperlimit::PredicatePolicy;
 use hypermesh::TriangleMesh;
 use hypersdf::SdfExpr;
 use libfuzzer_sys::fuzz_target;
@@ -15,7 +16,7 @@ fn real(value: f64) -> Real {
 
 fn at_least(value: Real, minimum: f64) -> Real {
     let minimum = real(minimum);
-    hyperlimit::real_max(&value, &minimum)
+    hyperlimit::real_max(&value, &minimum, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -68,7 +69,8 @@ fuzz_target!(|bytes: &[u8]| {
         1 => {
             let center = hpoint3(Real::zero(), Real::zero(), Real::zero());
             let max_radius_squared = real(10.0);
-            let radius_squared = hyperlimit::real_min(&period, &max_radius_squared)
+            let radius_squared =
+                hyperlimit::real_min(&period, &max_radius_squared, PredicatePolicy::STRICT)
                 .value()
                 .cloned()
                 .expect("decoded rationals have decidable order");

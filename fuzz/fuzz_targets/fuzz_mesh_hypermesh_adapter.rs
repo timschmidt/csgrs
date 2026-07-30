@@ -6,8 +6,11 @@ use std::collections::BTreeMap;
 
 use csgrs::solid;
 use hyperlattice::{Point3, Real, Vector3};
-use hypermesh::TriangleMesh;
+use hyperlimit::PredicatePolicy;
+use hypermesh::{MeshContext, TriangleMesh};
 use libfuzzer_sys::fuzz_target;
+
+const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
 fn real(value: f64) -> Real {
     Real::try_from(value).expect("fuzz decoder clamps to finite values")
@@ -19,7 +22,7 @@ fn tolerance() -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    hyperlimit::real_max(&value, &tolerance)
+    hyperlimit::real_max(&value, &tolerance, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -97,7 +100,7 @@ fuzz_target!(|bytes: &[u8]| {
     let mut idx = 0usize;
     let mesh = decode_mesh(bytes, &mut idx);
     let buffers = mesh
-        .exact_gpu_mesh_buffers()
+        .to_exact_gpu_mesh_buffers()
         .expect("csgrs primitives have finite renderer projections");
 
     assert_eq!(buffers.vertices.len(), mesh.positions.len());
@@ -110,7 +113,7 @@ fuzz_target!(|bytes: &[u8]| {
     for index in &buffers.indices {
         assert!((*index as usize) < vertex_count);
     }
-    hypermesh::polygon_soup(&[mesh.as_ref()])
+    hypermesh::polygon_soup(&MESH_CONTEXT, &[mesh.as_ref()])
         .expect("csgrs primitives remain valid reusable Hypermesh input");
     assert_eq!(
         mesh.is_closed_manifold(),

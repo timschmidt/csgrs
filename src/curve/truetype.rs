@@ -117,7 +117,8 @@ pub(crate) fn text_region(text: &str, font_data: &[u8], scale: Real) -> CurveReg
                     let Some(ring) = ring else {
                         return CurveRegion2::empty();
                     };
-                    let orientation = hyperlimit::ring_area_sign(&ring).value();
+                    let orientation =
+                        hyperlimit::ring_area_sign(&ring, crate::PREDICATE_POLICY).value();
                     let Ok(contour) = Contour2::from_finite_ring(&closed_pts) else {
                         return CurveRegion2::empty();
                     };
@@ -142,7 +143,7 @@ pub(crate) fn text_region(text: &str, font_data: &[u8], scale: Real) -> CurveReg
     CurveRegion2::try_from_native_contours(
         material_contours,
         hole_contours,
-        &CurvePolicy::certified(),
+        &CurvePolicy::STRICT,
     )
     .unwrap_or_else(|_| CurveRegion2::empty())
 }

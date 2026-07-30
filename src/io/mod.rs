@@ -175,8 +175,6 @@ pub(crate) fn triangulate_planar_face(
     face: &[usize],
     format: &'static str,
 ) -> Result<Vec<hypermesh::Triangle>, IoError> {
-    use hypertri::kernel::{ExactKernel, Kernel};
-
     if face.len() < 3 || face.iter().any(|&index| index >= positions.len()) {
         return Err(IoError::Geometry {
             format,
@@ -190,24 +188,38 @@ pub(crate) fn triangulate_planar_face(
         .iter()
         .map(|&index| &positions[index])
         .collect::<Vec<_>>();
-    let support = (1..points.len() - 1)
-        .find(|&index| {
-            hypermesh::Plane::points_are_nondegenerate(
-                points[0],
-                points[index],
-                points[index + 1],
-            )
-        })
-        .ok_or_else(|| IoError::Geometry {
+    let mut support = None;
+    for index in 1..points.len() - 1 {
+        if hypermesh::Plane::points_are_nondegenerate(
+            &crate::MESH_CONTEXT,
+            points[0],
+            points[index],
+            points[index + 1],
+        )
+        .map_err(|error| IoError::Geometry {
             format,
-            detail: "face is degenerate".into(),
-        })?;
+            detail: error.to_string(),
+        })?
+        .into_value()
+        {
+            support = Some(index);
+            break;
+        }
+    }
+    let support = support.ok_or_else(|| IoError::Geometry {
+        format,
+        detail: "face is degenerate".into(),
+    })?;
     let plane = hypermesh::Plane::from_points(points[0], points[support], points[support + 1]);
     let planar =
         points
             .iter()
             .try_fold(true, |planar, point| {
-                match hyperlimit::classify_real_sign(&plane.expression_at_point(point)).value()
+                match hyperlimit::classify_real_sign(
+                    &plane.expression_at_point(point),
+                    crate::PREDICATE_POLICY,
+                )
+                .value()
                 {
                     Some(hyperlimit::Sign::Zero) => Ok(planar),
                     Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Positive) => Ok(false),
@@ -240,6 +252,7 @@ pub(crate) fn triangulate_planar_face(
         match hyperlimit::compare_reals(
             &normal[candidate].clone().abs(),
             &normal[axis].clone().abs(),
+            crate::PREDICATE_POLICY,
         )
         .value()
         {
@@ -264,18 +277,21 @@ pub(crate) fn triangulate_planar_face(
     let mut winding = None;
     let mut weakly_convex = true;
     for index in 0..projected.len() {
-        let turn = ExactKernel::orient2(
+        let [a, b, c] = [
             &projected[index],
             &projected[(index + 1) % projected.len()],
             &projected[(index + 2) % projected.len()],
-        )
-        .map_err(|error| IoError::Geometry {
-            format,
-            detail: format!("face orientation failed: {error}"),
-        })?;
+        ];
+        let determinant = (&b.x - &a.x) * (&c.y - &a.y) - (&b.y - &a.y) * (&c.x - &a.x);
+        let turn = hyperlimit::classify_real_sign(&determinant, crate::PREDICATE_POLICY)
+            .value()
+            .ok_or_else(|| IoError::Geometry {
+                format,
+                detail: "face orientation is indeterminate".into(),
+            })?;
         match winding {
-            None if turn != hypertri::Sign::Zero => winding = Some(turn),
-            Some(expected) if turn != hypertri::Sign::Zero && turn != expected => {
+            None if turn != hyperlimit::Sign::Zero => winding = Some(turn),
+            Some(expected) if turn != hyperlimit::Sign::Zero && turn != expected => {
                 weakly_convex = false;
             },
             _ => {},
@@ -295,28 +311,30 @@ pub(crate) fn triangulate_planar_face(
             area + current.x.clone() * next.y.clone() - next.x.clone() * current.y.clone()
         },
     );
-    let reverse_output = match hyperlimit::classify_real_sign(&signed_area).value() {
-        Some(hyperlimit::Sign::Negative) => true,
-        Some(hyperlimit::Sign::Positive) => false,
-        Some(hyperlimit::Sign::Zero) => {
-            return Err(IoError::Geometry {
-                format,
-                detail: "projected face has zero signed area".into(),
-            });
-        },
-        None => {
-            return Err(IoError::Geometry {
-                format,
-                detail: "projected face winding is indeterminate".into(),
-            });
-        },
-    };
-    hypertri::earcut(&projected, &[])
+    let reverse_output =
+        match hyperlimit::classify_real_sign(&signed_area, crate::PREDICATE_POLICY).value() {
+            Some(hyperlimit::Sign::Negative) => true,
+            Some(hyperlimit::Sign::Positive) => false,
+            Some(hyperlimit::Sign::Zero) => {
+                return Err(IoError::Geometry {
+                    format,
+                    detail: "projected face has zero signed area".into(),
+                });
+            },
+            None => {
+                return Err(IoError::Geometry {
+                    format,
+                    detail: "projected face winding is indeterminate".into(),
+                });
+            },
+        };
+    hypertri::earcut(&crate::TRIANGULATION_CONTEXT, &projected, &[])
         .map_err(|error| IoError::Geometry {
             format,
             detail: format!("face triangulation failed: {error}"),
         })
-        .map(|indices| {
+        .map(|outcome| {
+            let indices = outcome.into_value();
             indices
                 .chunks_exact(3)
                 .map(|row| {
