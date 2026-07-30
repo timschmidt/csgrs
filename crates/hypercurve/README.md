@@ -147,8 +147,8 @@ exact signatures.
   line/curve contacts, curve/curve intersection, length bounds, exact
   polynomial and rational area moments for conics, exact homogeneous degree
   elevations, arbitrary-degree carriers with at-most-quadratic weight
-  polynomials, and square-free cubic-weight carriers, certified flattening,
-  fitting, and split materialization.
+  polynomials, and cubic-weight carriers with exactly classified
+  discriminants, plus certified flattening, fitting, and split materialization.
 - Parallel and offset entry points include `parallel_left`, `parallel_right`,
   `offset_preflight`, `offset_left_staged`, `offset_right_staged`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and
