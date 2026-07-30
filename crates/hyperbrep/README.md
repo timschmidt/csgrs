@@ -95,11 +95,13 @@ The clean-break implementation currently provides:
 - exact affine `builder::{sweep, sweep_region}` for polygonal linear-path
   sweeps in an explicit model-space profile frame, including through-holes
   and shear without a hidden moving-frame policy;
-- exact `builder::sweep_curve` for fixed-frame polygon sweeps along rational
-  Bézier paths whose normalized profile-plane progress is proven affine and
-  strictly positive by Bernstein coefficient identity; lateral curvature is
-  unrestricted, side faces are native tensor rational Bézier translation
-  surfaces, and no moving frame or sampling policy is inferred;
+- exact `builder::{sweep_curve, sweep_curve_region}` for fixed-frame polygon
+  or through-hole region sweeps along rational Bézier paths whose normalized
+  profile-plane progress is proven affine and strictly positive by Bernstein
+  coefficient identity; cap holes remain inner wires in one genus shell,
+  lateral curvature is unrestricted, side faces are native tensor rational
+  Bézier translation surfaces, and no moving frame or sampling policy is
+  inferred;
 - exact multi-section `builder::loft` for vertex-corresponding polygons:
   every span independently retains planar homothetic sides or certifies convex
   non-homothetic interpolation with native bilinear tensor patches;

@@ -1437,6 +1437,7 @@ enum CertifiedLoftInterpolation {
 #[derive(Clone, Debug)]
 struct CertifiedCurveSweepShell {
     profile: Contour2,
+    holes: Vec<Contour2>,
     u: Vector3,
     v: Vector3,
     path: Curve3,
@@ -4027,6 +4028,7 @@ impl Model {
                     .map(|certificate| {
                         Ok(CertifiedCurveSweepShell {
                             profile: certificate.profile.clone(),
+                            holes: certificate.holes.clone(),
                             u: transform.transform_direction3(&certificate.u),
                             v: transform.transform_direction3(&certificate.v),
                             path: certificate.path.transformed(transform)?,
@@ -4584,12 +4586,19 @@ impl Model {
             return Ok(jacobian * &loft.parameter_volume);
         }
         if let Some(sweep) = &self.data.certified_curve_sweeps[id.index()] {
-            let area = sweep
+            let mut area = sweep
                 .profile
                 .signed_area()
                 .map_err(GeometryError::from)?
                 .ok_or(GeometryError::UnsupportedMeasurement)?
                 .abs();
+            for hole in &sweep.holes {
+                area -= hole
+                    .signed_area()
+                    .map_err(GeometryError::from)?
+                    .ok_or(GeometryError::UnsupportedMeasurement)?
+                    .abs();
+            }
             let path_start = sweep.path.point_at(sweep.path.domain().start())?;
             let path_end = sweep.path.point_at(sweep.path.domain().end())?;
             let progress = sweep.u.cross(&sweep.v).dot(&(path_end - path_start)).abs();
@@ -4889,17 +4898,30 @@ impl Model {
                 return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
             }
         };
-        Ok(match location {
-            ContourPointLocation::Outside => SolidPointLocation::Outside,
-            ContourPointLocation::Boundary => SolidPointLocation::Boundary,
-            ContourPointLocation::Inside
-                if lower_order == std::cmp::Ordering::Equal
-                    || upper_order == std::cmp::Ordering::Equal =>
-            {
-                SolidPointLocation::Boundary
+        match location {
+            ContourPointLocation::Outside => return Ok(SolidPointLocation::Outside),
+            ContourPointLocation::Boundary => return Ok(SolidPointLocation::Boundary),
+            ContourPointLocation::Inside => {}
+        }
+        for hole in &sweep.holes {
+            match hole.classify_point(&profile_point, &CurvePolicy::certified()) {
+                Classification::Decided(ContourPointLocation::Inside) => {
+                    return Ok(SolidPointLocation::Outside);
+                }
+                Classification::Decided(ContourPointLocation::Boundary) => {
+                    return Ok(SolidPointLocation::Boundary);
+                }
+                Classification::Decided(ContourPointLocation::Outside) => {}
+                Classification::Uncertain(reason) => {
+                    return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+                }
             }
-            ContourPointLocation::Inside => SolidPointLocation::Inside,
-        })
+        }
+        if lower_order == std::cmp::Ordering::Equal || upper_order == std::cmp::Ordering::Equal {
+            Ok(SolidPointLocation::Boundary)
+        } else {
+            Ok(SolidPointLocation::Inside)
+        }
     }
 
     fn classify_point_against_sphere(
@@ -11837,10 +11859,9 @@ impl ModelBuilder {
         }
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
-            if !matches!(
-                self.surface_ref(face.surface)?.kind(),
-                SurfaceKind::Plane | SurfaceKind::RationalBezier
-            ) || !face.inner().is_empty()
+            let kind = self.surface_ref(face.surface)?.kind();
+            if !matches!(kind, SurfaceKind::Plane | SurfaceKind::RationalBezier)
+                || (kind == SurfaceKind::RationalBezier && !face.inner().is_empty())
             {
                 return Ok(None);
             }
@@ -11915,12 +11936,11 @@ impl ModelBuilder {
         let Some(upper_boundaries) = self.cap_boundary_use_loops(faces, upper_group)? else {
             return Ok(None);
         };
-        if lower_boundaries.len() != 1 || upper_boundaries.len() != 1 {
-            return Ok(None);
-        }
-        let lower_boundary = &lower_boundaries[0];
-        let upper_boundary = &upper_boundaries[0];
-        if lower_boundary.len() < 3 || upper_boundary.len() < 3 {
+        if lower_boundaries.is_empty()
+            || lower_boundaries.len() != upper_boundaries.len()
+            || lower_boundaries.iter().any(|boundary| boundary.len() < 3)
+            || upper_boundaries.iter().any(|boundary| boundary.len() < 3)
+        {
             return Ok(None);
         }
 
@@ -12038,17 +12058,36 @@ impl ModelBuilder {
             }
         }
 
-        let mut ordered_boundary = lower_boundary
+        let ordered_boundaries = lower_boundaries
             .iter()
-            .map(|edge_use| self.directed_vertices(*edge_use).map(|vertices| vertices.0))
-            .collect::<Result<Vec<_>, _>>()?;
-        ordered_boundary.reverse();
-        let ordered_corners = ordered_boundary
+            .map(|boundary| {
+                let mut ordered = boundary
+                    .iter()
+                    .map(|edge_use| self.directed_vertices(*edge_use).map(|vertices| vertices.0))
+                    .collect::<Result<Vec<_>, _>>()?;
+                ordered.reverse();
+                Ok(ordered)
+            })
+            .collect::<Result<Vec<_>, BuildError>>()?;
+        let ordered_corner_boundaries = ordered_boundaries
             .iter()
-            .copied()
-            .filter(|vertex| correspondence.contains_key(vertex))
+            .map(|boundary| {
+                boundary
+                    .iter()
+                    .copied()
+                    .filter(|vertex| correspondence.contains_key(vertex))
+                    .collect::<Vec<_>>()
+            })
             .collect::<Vec<_>>();
-        if ordered_corners.len() != count
+        let ordered_corners = ordered_corner_boundaries
+            .iter()
+            .flatten()
+            .copied()
+            .collect::<Vec<_>>();
+        if ordered_corner_boundaries
+            .iter()
+            .any(|boundary| boundary.len() < 3)
+            || ordered_corners.len() != count
             || ordered_corners
                 .iter()
                 .copied()
@@ -12081,97 +12120,112 @@ impl ModelBuilder {
             return Ok(None);
         }
         let mut represented_surfaces = HashSet::with_capacity(count);
-        for index in 0..count {
-            let start = ordered_corners[index];
-            let end = ordered_corners[(index + 1) % count];
-            let start_offset = self.vertex_ref(start)?.point() - &reference_point;
-            let end_offset = self.vertex_ref(end)?.point() - &reference_point;
-            let mut matching = None;
-            for (surface_id, group) in &side_groups {
-                let restricted_surface = self.restricted_curve_sweep_side_surface(
-                    *surface_id,
-                    &path_parameter_start,
-                    &path_parameter_end,
-                )?;
-                let SurfaceExactData::RationalBezier {
-                    control_points,
-                    weights,
-                } = restricted_surface.exact_data()
-                else {
-                    unreachable!("side surface kind was checked");
+        for ordered_corners in &ordered_corner_boundaries {
+            for index in 0..ordered_corners.len() {
+                let start = ordered_corners[index];
+                let end = ordered_corners[(index + 1) % ordered_corners.len()];
+                let start_offset = self.vertex_ref(start)?.point() - &reference_point;
+                let end_offset = self.vertex_ref(end)?.point() - &reference_point;
+                let mut matching = None;
+                for (surface_id, group) in &side_groups {
+                    let restricted_surface = self.restricted_curve_sweep_side_surface(
+                        *surface_id,
+                        &path_parameter_start,
+                        &path_parameter_end,
+                    )?;
+                    let SurfaceExactData::RationalBezier {
+                        control_points,
+                        weights,
+                    } = restricted_surface.exact_data()
+                    else {
+                        unreachable!("side surface kind was checked");
+                    };
+                    if translated_rational_bezier_surface_equal(
+                        &control_points,
+                        &weights,
+                        &path_controls,
+                        &path_weights,
+                        &start_offset,
+                        &end_offset,
+                    )? && matching.replace((*surface_id, group)).is_some()
+                    {
+                        return Ok(None);
+                    }
+                }
+                let Some((surface_id, group)) = matching else {
+                    return Ok(None);
                 };
-                if translated_rational_bezier_surface_equal(
-                    &control_points,
-                    &weights,
-                    &path_controls,
-                    &path_weights,
-                    &start_offset,
-                    &end_offset,
-                )? && matching.replace((*surface_id, group)).is_some()
+                if !represented_surfaces.insert(surface_id)
+                    || !self.certifies_tensor_face_group(
+                        faces,
+                        group,
+                        &Real::zero(),
+                        &Real::one(),
+                        &path_parameter_start,
+                        &path_parameter_end,
+                    )?
                 {
                     return Ok(None);
                 }
-            }
-            let Some((surface_id, group)) = matching else {
-                return Ok(None);
-            };
-            if !represented_surfaces.insert(surface_id)
-                || !self.certifies_tensor_face_group(
-                    faces,
-                    group,
-                    &Real::zero(),
-                    &Real::one(),
-                    &path_parameter_start,
-                    &path_parameter_end,
-                )?
-            {
-                return Ok(None);
             }
         }
         if represented_surfaces.len() != side_groups.len() {
             return Ok(None);
         }
 
-        let reference_position = ordered_boundary
+        let contours = ordered_boundaries
             .iter()
-            .position(|vertex| *vertex == reference)
-            .expect("lower cap boundary contains every connector");
-        ordered_boundary.rotate_left(reference_position);
-        let profile_points = ordered_boundary
-            .iter()
-            .map(|vertex| {
-                project_point_to_plane_frame(
-                    self.vertex_ref(*vertex)?.point(),
-                    &reference_point,
-                    &lower_u,
-                    &lower_v,
+            .map(|boundary| {
+                let points = boundary
+                    .iter()
+                    .map(|vertex| {
+                        project_point_to_plane_frame(
+                            self.vertex_ref(*vertex)?.point(),
+                            &reference_point,
+                            &lower_u,
+                            &lower_v,
+                        )
+                    })
+                    .collect::<Result<Vec<_>, BuildError>>()?;
+                Ok(Contour2::try_new(
+                    (0..points.len())
+                        .map(|index| {
+                            LineSeg2::try_new(
+                                points[index].clone(),
+                                points[(index + 1) % points.len()].clone(),
+                            )
+                            .map(Segment2::Line)
+                            .map_err(GeometryError::from)
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
                 )
+                .map_err(GeometryError::from)?)
             })
-            .collect::<Result<Vec<_>, _>>()?;
-        let profile = Contour2::try_new(
-            (0..profile_points.len())
-                .map(|index| {
-                    LineSeg2::try_new(
-                        profile_points[index].clone(),
-                        profile_points[(index + 1) % profile_points.len()].clone(),
-                    )
-                    .map(Segment2::Line)
-                    .map_err(GeometryError::from)
-                })
-                .collect::<Result<Vec<_>, _>>()?,
-        )
-        .map_err(GeometryError::from)?;
-        let area = profile.signed_area().map_err(GeometryError::from)?.ok_or(
-            BuildError::DegenerateShellVolume(
-                self.face_shell[faces[0].index()].expect("shell faces are assigned"),
-            ),
-        )?;
-        if decided_model_order(compare_reals(&area, &Real::zero()))? != std::cmp::Ordering::Greater
-        {
-            return Ok(None);
+            .collect::<Result<Vec<_>, BuildError>>()?;
+        let mut profile = None;
+        let mut holes = Vec::new();
+        for contour in contours {
+            let area = contour.signed_area().map_err(GeometryError::from)?.ok_or(
+                BuildError::DegenerateShellVolume(
+                    self.face_shell[faces[0].index()].expect("shell faces are assigned"),
+                ),
+            )?;
+            match decided_model_order(compare_reals(&area, &Real::zero()))? {
+                std::cmp::Ordering::Greater => {
+                    if profile.replace(contour).is_some() {
+                        return Ok(None);
+                    }
+                }
+                std::cmp::Ordering::Less => holes.push(contour),
+                std::cmp::Ordering::Equal => return Ok(None),
+            }
         }
+        let Some(profile) = profile else {
+            return Ok(None);
+        };
         Ok(Some(CertifiedCurveSweepShell {
             profile,
+            holes,
             u: lower_u,
             v: lower_v,
             path,
@@ -12768,6 +12822,7 @@ impl ModelBuilder {
         }
         Ok(Some(CertifiedCurveSweepShell {
             profile,
+            holes: Vec::new(),
             u: lower_u,
             v: lower_v,
             path,

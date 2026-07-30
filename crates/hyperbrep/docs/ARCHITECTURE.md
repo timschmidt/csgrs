@@ -151,10 +151,11 @@ families is recertified:
 - multi-section polygon lofts whose spans independently carry either a
   positive homothetic certificate or an exact convex-correspondence
   certificate and native bilinear tensor sides;
-- fixed-frame rational Bézier path sweeps whose connector curves are exact
-  translates, whose tensor sides reproduce the complete translated control
-  net, and whose normalized profile-plane progress is certified affine and
-  strictly positive by exact Bernstein coefficient identities;
+- fixed-frame rational Bézier path sweeps of polygonal regions, including
+  through-holes whose cap loops and tensor walls form one genus shell; their
+  connector curves are exact translates, tensor sides reproduce the complete
+  translated control net, and normalized profile-plane progress is certified
+  affine and strictly positive by exact Bernstein coefficient identities;
 - analytic cylinders;
 - complete closed-surface spheres, spherical voids, exact plane-capped axial
   sphere segments, and exact two-cap sphere/sphere Boolean shells;
@@ -257,8 +258,11 @@ connector path and every translated connector and tensor side from topology.
 It proves that projection of the rational Bézier path onto `u × v` is exactly
 affine in `t`, not merely monotone at samples. This makes section inversion
 exact, excludes folds through the profile planes, and leaves lateral path
-curvature unrestricted. Moving frames and corner-continuity policies are not
-inferred.
+curvature unrestricted. For a region sweep it additionally reconstructs one
+positive outer contour and every negative cap-hole contour, proves every side
+group tiles its complete tensor boundary, and classifies and measures the
+outer-minus-hole material section. Moving frames and corner-continuity
+policies are not inferred.
 
 ## Queries and operations
 

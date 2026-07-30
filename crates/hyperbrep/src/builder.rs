@@ -2113,7 +2113,33 @@ pub fn sweep_curve(
     v: Vector3,
     path: Curve3,
 ) -> Result<(Model, SolidId), ConstructionError> {
-    let profile = normalize_profile(profile, true)?;
+    sweep_curve_region(profile, &[], u, v, path)
+}
+
+/// Sweeps one exact polygonal region with through-holes along a rational
+/// Bézier path in a fixed frame.
+///
+/// The outer loop and holes obey the same exact nesting contract as
+/// [`extrude_region`]. All loops share the authored path and fixed `u`/`v`
+/// frame. The result is one genus shell: cap holes are inner wires and their
+/// tensor side walls face the removed material. No detached void shell,
+/// moving frame, sampling, or corner policy is inferred.
+pub fn sweep_curve_region(
+    outer: &[Point2],
+    holes: &[Vec<Point2>],
+    u: Vector3,
+    v: Vector3,
+    path: Curve3,
+) -> Result<(Model, SolidId), ConstructionError> {
+    let outer = normalize_profile(outer, true)?;
+    let holes = holes
+        .iter()
+        .map(|hole| normalize_profile(hole, false))
+        .collect::<Result<Vec<_>, _>>()?;
+    validate_profile_nesting(&outer, &holes)?;
+    let mut loops = Vec::with_capacity(holes.len() + 1);
+    loops.push(outer);
+    loops.extend(holes);
     let normal = u.cross(&v);
     if decided_construction_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
         != std::cmp::Ordering::Greater
@@ -2129,16 +2155,24 @@ pub fn sweep_curve(
     };
     certify_sweep_path_progress(&path_controls, &path_weights, &normal)?;
 
-    let count = profile.len();
+    let count = loops.iter().map(Vec::len).sum::<usize>();
+    let mut loop_offsets = Vec::with_capacity(loops.len());
+    let mut offset_index = 0;
+    for profile in &loops {
+        loop_offsets.push(offset_index);
+        offset_index += profile.len();
+    }
     let path_start = path_controls[0].clone();
     let path_end = path_controls[path_controls.len() - 1].clone();
     let offset = |point: &Point2| u.clone() * &point.x + v.clone() * &point.y;
-    let lower_points = profile
+    let lower_points = loops
         .iter()
+        .flatten()
         .map(|point| path_start.clone() + offset(point))
         .collect::<Vec<_>>();
-    let upper_points = profile
+    let upper_points = loops
         .iter()
+        .flatten()
         .map(|point| path_end.clone() + offset(point))
         .collect::<Vec<_>>();
 
@@ -2156,79 +2190,102 @@ pub fn sweep_curve(
     let mut lower_edges = Vec::with_capacity(count);
     let mut upper_edges = Vec::with_capacity(count);
     let mut path_edges = Vec::with_capacity(count);
-    for index in 0..count {
-        let next = (index + 1) % count;
-        let lower_curve = builder.curve(Curve3::line(
-            lower_points[index].clone(),
-            lower_points[next].clone(),
-        )?)?;
-        lower_edges.push(builder.edge(
-            lower_vertices[index],
-            lower_vertices[next],
-            lower_curve,
-            ParameterDomain::unit(),
-        )?);
-        let upper_curve = builder.curve(Curve3::line(
-            upper_points[index].clone(),
-            upper_points[next].clone(),
-        )?)?;
-        upper_edges.push(builder.edge(
-            upper_vertices[index],
-            upper_vertices[next],
-            upper_curve,
-            ParameterDomain::unit(),
-        )?);
-        let translated_controls = path_controls
-            .iter()
-            .map(|control| control.clone() + offset(&profile[index]))
-            .collect();
-        let translated_path = builder.curve(Curve3::rational_bezier(
-            translated_controls,
-            path_weights.clone(),
-        )?)?;
-        path_edges.push(builder.edge(
-            lower_vertices[index],
-            upper_vertices[index],
-            translated_path,
-            ParameterDomain::unit(),
-        )?);
+    for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
+        for local in 0..profile.len() {
+            let index = profile_offset + local;
+            let next = profile_offset + (local + 1) % profile.len();
+            let lower_curve = builder.curve(Curve3::line(
+                lower_points[index].clone(),
+                lower_points[next].clone(),
+            )?)?;
+            lower_edges.push(builder.edge(
+                lower_vertices[index],
+                lower_vertices[next],
+                lower_curve,
+                ParameterDomain::unit(),
+            )?);
+            let upper_curve = builder.curve(Curve3::line(
+                upper_points[index].clone(),
+                upper_points[next].clone(),
+            )?)?;
+            upper_edges.push(builder.edge(
+                upper_vertices[index],
+                upper_vertices[next],
+                upper_curve,
+                ParameterDomain::unit(),
+            )?);
+            let translated_controls = path_controls
+                .iter()
+                .map(|control| control.clone() + offset(&profile[local]))
+                .collect();
+            let translated_path = builder.curve(Curve3::rational_bezier(
+                translated_controls,
+                path_weights.clone(),
+            )?)?;
+            path_edges.push(builder.edge(
+                lower_vertices[index],
+                upper_vertices[index],
+                translated_path,
+                ParameterDomain::unit(),
+            )?);
+        }
     }
 
     let lower_surface = builder.surface(Surface::plane(path_start, u.clone(), v.clone())?)?;
-    let mut lower_uses = Vec::with_capacity(count);
-    for index in (0..count).rev() {
-        let next = (index + 1) % count;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            LineSeg2::try_new(curve_point(&profile[next]), curve_point(&profile[index]))
-                .map_err(GeometryError::from)?,
-        )))?;
-        lower_uses.push(builder.edge_use(
-            lower_edges[index],
-            Direction::Reversed,
-            pcurve,
-            ParameterCorrespondence::affine(-Real::one(), Real::one())?,
-        )?);
+    let mut lower_wires = Vec::with_capacity(loops.len());
+    for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
+        let mut lower_uses = Vec::with_capacity(profile.len());
+        for local in (0..profile.len()).rev() {
+            let index = profile_offset + local;
+            let next = (local + 1) % profile.len();
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(curve_point(&profile[next]), curve_point(&profile[local]))
+                    .map_err(GeometryError::from)?,
+            )))?;
+            lower_uses.push(builder.edge_use(
+                lower_edges[index],
+                Direction::Reversed,
+                pcurve,
+                ParameterCorrespondence::affine(-Real::one(), Real::one())?,
+            )?);
+        }
+        lower_wires.push(builder.wire(lower_uses)?);
     }
-    let lower_wire = builder.wire(lower_uses)?;
-    let lower_face = builder.face(lower_surface, Orientation::Reversed, lower_wire, Vec::new())?;
+    let lower_outer = lower_wires.remove(0);
+    let lower_face = builder.face(
+        lower_surface,
+        Orientation::Reversed,
+        lower_outer,
+        lower_wires,
+    )?;
 
     let upper_surface = builder.surface(Surface::plane(path_end, u.clone(), v.clone())?)?;
-    let mut upper_uses = Vec::with_capacity(count);
-    for index in 0..count {
-        let next = (index + 1) % count;
-        let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-            LineSeg2::try_new(curve_point(&profile[index]), curve_point(&profile[next]))
-                .map_err(GeometryError::from)?,
-        )))?;
-        upper_uses.push(builder.edge_use(
-            upper_edges[index],
-            Direction::Forward,
-            pcurve,
-            ParameterCorrespondence::identity(),
-        )?);
+    let mut upper_wires = Vec::with_capacity(loops.len());
+    for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
+        let mut upper_uses = Vec::with_capacity(profile.len());
+        for local in 0..profile.len() {
+            let index = profile_offset + local;
+            let next = (local + 1) % profile.len();
+            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                LineSeg2::try_new(curve_point(&profile[local]), curve_point(&profile[next]))
+                    .map_err(GeometryError::from)?,
+            )))?;
+            upper_uses.push(builder.edge_use(
+                upper_edges[index],
+                Direction::Forward,
+                pcurve,
+                ParameterCorrespondence::identity(),
+            )?);
+        }
+        upper_wires.push(builder.wire(upper_uses)?);
     }
-    let upper_wire = builder.wire(upper_uses)?;
-    let upper_face = builder.face(upper_surface, Orientation::Forward, upper_wire, Vec::new())?;
+    let upper_outer = upper_wires.remove(0);
+    let upper_face = builder.face(
+        upper_surface,
+        Orientation::Forward,
+        upper_outer,
+        upper_wires,
+    )?;
 
     let parameter_corners = [
         CurvePoint2::new(Real::zero(), Real::zero()),
@@ -2237,54 +2294,57 @@ pub fn sweep_curve(
         CurvePoint2::new(Real::zero(), Real::one()),
     ];
     let mut faces = vec![lower_face, upper_face];
-    for index in 0..count {
-        let next = (index + 1) % count;
-        let start_offset = offset(&profile[index]);
-        let end_offset = offset(&profile[next]);
-        let surface_controls = path_controls
-            .iter()
-            .map(|control| {
-                vec![
-                    control.clone() + &start_offset,
-                    control.clone() + &end_offset,
-                ]
-            })
-            .collect::<Vec<_>>();
-        let surface_weights = path_weights
-            .iter()
-            .map(|weight| vec![weight.clone(), weight.clone()])
-            .collect::<Vec<_>>();
-        let surface =
-            builder.surface(Surface::rational_bezier(surface_controls, surface_weights)?)?;
-        let specs = [
-            (lower_edges[index], Direction::Forward, 0, 1),
-            (path_edges[next], Direction::Forward, 1, 2),
-            (upper_edges[index], Direction::Reversed, 2, 3),
-            (path_edges[index], Direction::Reversed, 3, 0),
-        ];
-        let mut uses = Vec::with_capacity(4);
-        for (edge, direction, start, end) in specs {
-            let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                LineSeg2::try_new(
-                    parameter_corners[start].clone(),
-                    parameter_corners[end].clone(),
-                )
-                .map_err(GeometryError::from)?,
-            )))?;
-            uses.push(builder.edge_use(
-                edge,
-                direction,
-                pcurve,
-                match direction {
-                    Direction::Forward => ParameterCorrespondence::identity(),
-                    Direction::Reversed => {
-                        ParameterCorrespondence::affine(-Real::one(), Real::one())?
-                    }
-                },
-            )?);
+    for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
+        for local in 0..profile.len() {
+            let index = profile_offset + local;
+            let next = profile_offset + (local + 1) % profile.len();
+            let start_offset = offset(&profile[local]);
+            let end_offset = offset(&profile[(local + 1) % profile.len()]);
+            let surface_controls = path_controls
+                .iter()
+                .map(|control| {
+                    vec![
+                        control.clone() + &start_offset,
+                        control.clone() + &end_offset,
+                    ]
+                })
+                .collect::<Vec<_>>();
+            let surface_weights = path_weights
+                .iter()
+                .map(|weight| vec![weight.clone(), weight.clone()])
+                .collect::<Vec<_>>();
+            let surface =
+                builder.surface(Surface::rational_bezier(surface_controls, surface_weights)?)?;
+            let specs = [
+                (lower_edges[index], Direction::Forward, 0, 1),
+                (path_edges[next], Direction::Forward, 1, 2),
+                (upper_edges[index], Direction::Reversed, 2, 3),
+                (path_edges[index], Direction::Reversed, 3, 0),
+            ];
+            let mut uses = Vec::with_capacity(4);
+            for (edge, direction, start, end) in specs {
+                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
+                    LineSeg2::try_new(
+                        parameter_corners[start].clone(),
+                        parameter_corners[end].clone(),
+                    )
+                    .map_err(GeometryError::from)?,
+                )))?;
+                uses.push(builder.edge_use(
+                    edge,
+                    direction,
+                    pcurve,
+                    match direction {
+                        Direction::Forward => ParameterCorrespondence::identity(),
+                        Direction::Reversed => {
+                            ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                        }
+                    },
+                )?);
+            }
+            let wire = builder.wire(uses)?;
+            faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
         }
-        let wire = builder.wire(uses)?;
-        faces.push(builder.face(surface, Orientation::Forward, wire, Vec::new())?);
     }
     let shell = builder.shell(faces)?;
     let solid = builder.solid(shell, Vec::new())?;
@@ -7209,6 +7269,70 @@ mod tests {
             )
             .unwrap_err(),
             ConstructionError::UnsupportedSweepPath
+        );
+    }
+
+    #[test]
+    fn curved_sweep_region_retains_exact_through_hole_certificate() {
+        let outer = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
+        let hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
+        let path = Curve3::rational_bezier(
+            vec![p(0, 0, 0), p(1, 0, 1), p(0, 0, 4)],
+            vec![Real::one(), r(2), r(3)],
+        )
+        .unwrap();
+        let half = (Real::one() / r(2)).unwrap();
+        let path_midpoint = path.point_at(&half).unwrap();
+        let (model, solid) =
+            sweep_curve_region(&outer, &[hole], Vector3::x(), Vector3::y(), path).unwrap();
+        assert_eq!(
+            model.counts(),
+            ModelCounts {
+                vertices: 16,
+                curves: 24,
+                pcurves: 48,
+                surfaces: 10,
+                edges: 24,
+                edge_uses: 48,
+                wires: 12,
+                faces: 10,
+                shells: 1,
+                solids: 1,
+            }
+        );
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &r(48)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (profile_point, expected) in [
+            ((half.clone(), half.clone()), SolidPointLocation::Inside),
+            ((r(2), r(2)), SolidPointLocation::Outside),
+            ((r(1), r(2)), SolidPointLocation::Boundary),
+            ((Real::zero(), r(2)), SolidPointLocation::Boundary),
+        ] {
+            let point = Point3::new(
+                &path_midpoint.x + profile_point.0,
+                &path_midpoint.y + profile_point.1,
+                path_midpoint.z.clone(),
+            );
+            assert_eq!(model.classify_point(solid, &point).unwrap(), expected);
+        }
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(48)).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        let scaled = rebuilt
+            .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1152)).value(),
+            Some(std::cmp::Ordering::Equal)
         );
     }
 
