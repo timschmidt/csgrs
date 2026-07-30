@@ -37,17 +37,9 @@ pub fn intersect_homogeneous_line_plane(
     hyperlattice::intersect_homogeneous_line_plane(line, plane)
 }
 
-/// Classifies whether a homogeneous point lies on a plane.
-pub fn classify_homogeneous_point_plane(
-    point: &HomogeneousPoint3,
-    plane: &Plane3,
-) -> PredicateOutcome<bool> {
-    classify_homogeneous_point_plane_with_policy(point, plane, PredicatePolicy)
-}
-
 /// Classifies homogeneous point/plane incidence with an explicit predicate
 /// policy.
-pub(crate) fn classify_homogeneous_point_plane_with_policy(
+pub fn classify_homogeneous_point_plane_with_policy(
     point: &HomogeneousPoint3,
     plane: &Plane3,
     policy: PredicatePolicy,
@@ -129,6 +121,8 @@ mod tests {
     use super::*;
     use crate::{Point3, Real};
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn r(value: i32) -> Real {
         value.into()
     }
@@ -153,7 +147,7 @@ mod tests {
 
         for plane in [&x_eq_1, &y_eq_2, &z_eq_3] {
             assert_eq!(
-                classify_homogeneous_point_plane(&point, plane).value(),
+                crate::classify_homogeneous_point_plane(&point, plane, APPROX).value(),
                 Some(true)
             );
         }
@@ -195,11 +189,11 @@ mod tests {
 
         assert_eq!(point_at_infinity.w, r(0));
         assert_eq!(
-            classify_homogeneous_point_plane(&point_at_infinity, &x_eq_1).value(),
+            crate::classify_homogeneous_point_plane(&point_at_infinity, &x_eq_1, APPROX).value(),
             Some(true)
         );
         assert_eq!(
-            classify_homogeneous_point_plane(&point_at_infinity, &y_eq_2).value(),
+            crate::classify_homogeneous_point_plane(&point_at_infinity, &y_eq_2, APPROX).value(),
             Some(true)
         );
     }

@@ -3,6 +3,8 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 fn p(values: &[i64]) -> Vec<Real> {
     values.iter().copied().map(Real::from).collect()
 }
@@ -18,7 +20,7 @@ fn decided(outcome: PredicateOutcome<Sign>) -> Sign {
 #[test]
 fn orient_d_decides_exact_3d_and_4d_simplex_signs() {
     let tetra = vec![p(&[0, 0, 0]), p(&[1, 0, 0]), p(&[0, 1, 0]), p(&[0, 0, 1])];
-    assert_eq!(decided(orient_d(&tetra)), Sign::Positive);
+    assert_eq!(decided(orient_d(&tetra, APPROX)), Sign::Positive);
 
     let simplex4 = vec![
         p(&[0, 0, 0, 0]),
@@ -27,14 +29,14 @@ fn orient_d_decides_exact_3d_and_4d_simplex_signs() {
         p(&[0, 0, 1, 0]),
         p(&[0, 0, 0, 1]),
     ];
-    assert_eq!(decided(orient_d(&simplex4)), Sign::Positive);
+    assert_eq!(decided(orient_d(&simplex4, APPROX)), Sign::Positive);
 }
 
 #[test]
 fn affine_independence_reports_zero_for_dependent_simplex() {
     let dependent = vec![p(&[0, 0, 0]), p(&[1, 0, 0]), p(&[2, 0, 0]), p(&[3, 0, 0])];
     assert_eq!(
-        affine_independent_d(&dependent),
+        affine_independent_d(&dependent, APPROX),
         PredicateOutcome::decided(
             false,
             hyperlimit::Certainty::Exact,
@@ -47,11 +49,15 @@ fn affine_independence_reports_zero_for_dependent_simplex() {
 fn insphere_d_decides_exact_inside_and_boundary_cases() {
     let simplex = vec![p(&[0, 0]), p(&[1, 0]), p(&[0, 1])];
     assert_eq!(
-        decided(insphere_d(&simplex, &[q(1, 4), q(1, 4)])),
+        decided(insphere_d(&simplex, &[q(1, 4), q(1, 4)], APPROX)),
         Sign::Positive
     );
     assert_eq!(
-        decided(insphere_d(&simplex, &[Real::from(1), Real::from(1)])),
+        decided(insphere_d(
+            &simplex,
+            &[Real::from(1), Real::from(1)],
+            APPROX
+        )),
         Sign::Zero
     );
 }
@@ -59,11 +65,11 @@ fn insphere_d_decides_exact_inside_and_boundary_cases() {
 #[test]
 fn invalid_nd_predicate_arity_is_explicit_unknown() {
     assert_eq!(
-        orient_d(&[p(&[0, 0]), p(&[1, 0])]),
+        orient_d(&[p(&[0, 0]), p(&[1, 0])], APPROX),
         PredicateOutcome::unknown(RefinementNeed::Unsupported, hyperlimit::Escalation::Exact)
     );
     assert_eq!(
-        hyperlimit::orient_d(&[p(&[0, 0]), p(&[1, 0])]),
+        hyperlimit::orient_d(&[p(&[0, 0]), p(&[1, 0])], APPROX),
         PredicateOutcome::unknown(RefinementNeed::Unsupported, hyperlimit::Escalation::Exact)
     );
 }

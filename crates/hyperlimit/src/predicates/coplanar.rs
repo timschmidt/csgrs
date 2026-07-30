@@ -10,12 +10,12 @@
 
 use crate::classify::{SegmentIntersection, TriangleLocation};
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{PredicateOutcome, Sign};
-use crate::predicates::orient::orient2d;
-use crate::predicates::ring::ring_area_sign;
-use crate::predicates::segment::classify_segment_intersection;
-use crate::predicates::segment_plane::segment_parameter_from_axis;
-use crate::predicates::triangle::classify_point_triangle;
+use crate::predicate::{PredicateOutcome, PredicatePolicy, Sign};
+use crate::predicates::orient::orient2d_with_policy;
+use crate::predicates::ring::ring_area_sign_with_policy;
+use crate::predicates::segment::classify_segment_intersection_with_policy;
+use crate::predicates::segment_plane::segment_parameter_from_axis_with_policy;
+use crate::predicates::triangle::classify_point_triangle_with_policy;
 use hyperreal::Real;
 
 /// Coordinate projection used for exact coplanar overlap.
@@ -145,12 +145,13 @@ impl CoplanarTriangleClassification {
         points: &[Point3],
         left: [usize; 3],
         right: [usize; 3],
+        policy: PredicatePolicy,
     ) -> Result<(), CoplanarTriangleValidationError> {
         self.validate()?;
         if !indices_in_range(points, left) || !indices_in_range(points, right) {
             return Err(CoplanarTriangleValidationError::SourceReplayMismatch);
         }
-        let replay = classify_coplanar_triangles(points, left, right);
+        let replay = classify_coplanar_triangles_with_policy(points, left, right, policy);
         if self == &replay {
             Ok(())
         } else {
@@ -176,7 +177,12 @@ pub enum TriangleDegeneracy {
 /// every projection has zero orientation, the three 3D points are collinear.
 /// This uses exact determinant predicates in every coordinate projection.
 #[inline]
-pub fn classify_triangle3_degeneracy(a: &Point3, b: &Point3, c: &Point3) -> TriangleDegeneracy {
+pub fn classify_triangle3_degeneracy_with_policy(
+    a: &Point3,
+    b: &Point3,
+    c: &Point3,
+    policy: PredicatePolicy,
+) -> TriangleDegeneracy {
     let coordinates = [[&a.x, &a.y, &a.z], [&b.x, &b.y, &b.z], [&c.x, &c.y, &c.z]];
     let projections = [[0, 1], [0, 2], [1, 2]].map(|[u, v]| {
         (
@@ -217,12 +223,7 @@ pub fn classify_triangle3_degeneracy(a: &Point3, b: &Point3, c: &Point3) -> Tria
     }
     for (index, (a, b, c)) in projections.iter().copied().enumerate() {
         if signs[index].is_none() {
-            let outcome = super::orient::orient2d_real_coordinates(
-                a,
-                b,
-                c,
-                crate::predicate::PredicatePolicy::STRICT,
-            );
+            let outcome = super::orient::orient2d_real_coordinates(a, b, c, policy);
             match outcome.value() {
                 Some(Sign::Positive | Sign::Negative) => {
                     return TriangleDegeneracy::NonDegenerate;
@@ -242,10 +243,11 @@ pub fn classify_triangle3_degeneracy(a: &Point3, b: &Point3, c: &Point3) -> Tria
 
 /// Classify two already-coplanar indexed triangles by exact projected 2D
 /// predicates.
-pub fn classify_coplanar_triangles(
+pub fn classify_coplanar_triangles_with_policy(
     points: &[Point3],
     left: [usize; 3],
     right: [usize; 3],
+    policy: PredicatePolicy,
 ) -> CoplanarTriangleClassification {
     if !indices_in_range(points, left) || !indices_in_range(points, right) {
         return CoplanarTriangleClassification {
@@ -258,15 +260,16 @@ pub fn classify_coplanar_triangles(
     }
     let left_points = [&points[left[0]], &points[left[1]], &points[left[2]]];
     let right_points = [&points[right[0]], &points[right[1]], &points[right[2]]];
-    classify_coplanar_triangle_points(left_points, right_points)
+    classify_coplanar_triangle_points_with_policy(left_points, right_points, policy)
 }
 
 /// Classify two already-coplanar triangles by exact projected 2D predicates.
-pub fn classify_coplanar_triangle_points(
+pub fn classify_coplanar_triangle_points_with_policy(
     left: [&Point3; 3],
     right: [&Point3; 3],
+    policy: PredicatePolicy,
 ) -> CoplanarTriangleClassification {
-    let Some(projection) = choose_coplanar_projection(left) else {
+    let Some(projection) = choose_coplanar_projection_with_policy(left, policy) else {
         return CoplanarTriangleClassification {
             projection: None,
             relation: CoplanarTriangleRelation::Unknown,
@@ -284,11 +287,12 @@ pub fn classify_coplanar_triangle_points(
 
     for left_edge in triangle_edges2(&left2) {
         for right_edge in triangle_edges2(&right2) {
-            match classify_segment_intersection(
+            match classify_segment_intersection_with_policy(
                 left_edge[0],
                 left_edge[1],
                 right_edge[0],
                 right_edge[1],
+                policy,
             ) {
                 PredicateOutcome::Decided { value, .. } => {
                     if value.is_proper_crossing() || value.has_positive_length_overlap() {
@@ -305,11 +309,11 @@ pub fn classify_coplanar_triangle_points(
         }
     }
 
-    let right_vertices_in_left = classify_vertices_in_triangle(&left2, &right2);
+    let right_vertices_in_left = classify_vertices_in_triangle(&left2, &right2, policy);
     if right_vertices_in_left.iter().any(Option::is_none) {
         return unknown_with_projection(projection, edge_intersections);
     }
-    let left_vertices_in_right = classify_vertices_in_triangle(&right2, &left2);
+    let left_vertices_in_right = classify_vertices_in_triangle(&right2, &left2, policy);
     if left_vertices_in_right.iter().any(Option::is_none) {
         return unknown_with_projection(projection, edge_intersections);
     }
@@ -345,14 +349,17 @@ pub fn classify_coplanar_triangle_points(
 
 /// Choose a coordinate projection whose triangle orientation is certified
 /// nonzero.
-pub fn choose_coplanar_projection(triangle: [&Point3; 3]) -> Option<CoplanarProjection> {
+pub fn choose_coplanar_projection_with_policy(
+    triangle: [&Point3; 3],
+    policy: PredicatePolicy,
+) -> Option<CoplanarProjection> {
     for projection in [
         CoplanarProjection::Xy,
         CoplanarProjection::Xz,
         CoplanarProjection::Yz,
     ] {
         let projected = project_triangle3(triangle, projection);
-        let outcome = orient2d(&projected[0], &projected[1], &projected[2]);
+        let outcome = orient2d_with_policy(&projected[0], &projected[1], &projected[2], policy);
         if matches!(outcome.value(), Some(Sign::Positive | Sign::Negative)) {
             return Some(projection);
         }
@@ -380,15 +387,16 @@ pub fn project_triangle3(points: [&Point3; 3], projection: CoplanarProjection) -
 
 /// Return the signed doubled projected polygon area under a coordinate
 /// projection.
-pub fn projected_polygon_area2_sign(
+pub fn projected_polygon_area2_sign_with_policy(
     points: &[Point3],
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> crate::PredicateOutcome<Sign> {
     let ring = points
         .iter()
         .map(|point| project_point3(point, projection))
         .collect::<Vec<_>>();
-    ring_area_sign(&ring)
+    ring_area_sign_with_policy(&ring, policy)
 }
 
 /// Return the exact doubled projected polygon area under a coordinate
@@ -408,12 +416,15 @@ pub fn projected_polygon_area2_value(points: &[Point3], projection: CoplanarProj
 
 /// Return the absolute doubled projected polygon area under a coordinate
 /// projection.
-pub fn projected_polygon_area2_abs_value(
+pub fn projected_polygon_area2_abs_value_with_policy(
     points: &[Point3],
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> Option<Real> {
     let signed = projected_polygon_area2_value(points, projection);
-    match crate::predicates::order::compare_reals(&signed, &Real::from(0)).value()? {
+    match crate::predicates::order::compare_reals_with_policy(&signed, &Real::from(0), policy)
+        .value()?
+    {
         core::cmp::Ordering::Less => Some(Real::from(0) - &signed),
         core::cmp::Ordering::Equal | core::cmp::Ordering::Greater => Some(signed),
     }
@@ -438,13 +449,24 @@ pub fn projected_vector3(from: &Point3, to: &Point3, projection: CoplanarProject
 
 /// Return whether `left` is a smaller counter-clockwise turn from `base` than
 /// `right`, using exact 2D cross/dot comparisons.
-pub fn ccw_projected_turn_less(base: &Point2, left: &Point2, right: &Point2) -> Option<bool> {
-    let left_bucket = ccw_turn_bucket(base, left)?;
-    let right_bucket = ccw_turn_bucket(base, right)?;
+pub fn ccw_projected_turn_less_with_policy(
+    base: &Point2,
+    left: &Point2,
+    right: &Point2,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let left_bucket = ccw_turn_bucket(base, left, policy)?;
+    let right_bucket = ccw_turn_bucket(base, right, policy)?;
     if left_bucket != right_bucket {
         return Some(left_bucket < right_bucket);
     }
-    match crate::predicates::order::compare_reals(&cross2(left, right), &Real::from(0)).value()? {
+    match crate::predicates::order::compare_reals_with_policy(
+        &cross2(left, right),
+        &Real::from(0),
+        policy,
+    )
+    .value()?
+    {
         core::cmp::Ordering::Greater => Some(true),
         core::cmp::Ordering::Less | core::cmp::Ordering::Equal => Some(false),
     }
@@ -452,31 +474,39 @@ pub fn ccw_projected_turn_less(base: &Point2, left: &Point2, right: &Point2) -> 
 
 /// Classify a 3D point after projecting it and a 3D triangle to a coordinate
 /// plane.
-pub fn classify_point_projected_triangle3(
+pub fn classify_point_projected_triangle3_with_policy(
     point: &Point3,
     triangle: [&Point3; 3],
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<TriangleLocation> {
     let query = project_point3(point, projection);
     let a = project_point3(triangle[0], projection);
     let b = project_point3(triangle[1], projection);
     let c = project_point3(triangle[2], projection);
-    classify_point_triangle(&a, &b, &c, &query)
+    classify_point_triangle_with_policy(&a, &b, &c, &query, policy)
 }
 
 /// Construct the exact 3D point where a segment crosses a projected 3D line.
 ///
 /// Callers should only consume this helper after exact predicates have
 /// certified the segment/line topology.
-pub fn intersect_segment_with_projected_line3(
+pub fn intersect_segment_with_projected_line3_with_policy(
     segment_start: &Point3,
     segment_end: &Point3,
     line_start: &Point3,
     line_end: &Point3,
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> Option<Point3> {
-    let parameter =
-        projected_line_parameter3(segment_start, segment_end, line_start, line_end, projection)?;
+    let parameter = projected_line_parameter3_with_policy(
+        segment_start,
+        segment_end,
+        line_start,
+        line_end,
+        projection,
+        policy,
+    )?;
     Some(interpolate_projected_point3(
         segment_start,
         segment_end,
@@ -502,17 +532,18 @@ pub fn orient2d_value(a: &Point2, b: &Point2, c: &Point2) -> Real {
 /// incidence by itself; callers should first use a predicate such as
 /// `point_on_segment` on the projected points. This keeps construction
 /// recovery behind predicate evidence.
-pub fn projected_segment_parameter3(
+pub fn projected_segment_parameter3_with_policy(
     point: &Point3,
     start: &Point3,
     end: &Point3,
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> Option<Real> {
     let point = project_point3(point, projection);
     let start = project_point3(start, projection);
     let end = project_point3(end, projection);
-    segment_parameter_from_axis(&point.x, &start.x, &end.x)
-        .or_else(|| segment_parameter_from_axis(&point.y, &start.y, &end.y))
+    segment_parameter_from_axis_with_policy(&point.x, &start.x, &end.x, policy)
+        .or_else(|| segment_parameter_from_axis_with_policy(&point.y, &start.y, &end.y, policy))
 }
 
 /// Return the exact parameter where a projected 3D segment crosses a projected
@@ -522,12 +553,13 @@ pub fn projected_segment_parameter3(
 /// orientation determinants against the supporting line. This is a
 /// construction helper, not a predicate: callers must only consume the result
 /// after segment/line topology has been certified by exact predicates.
-pub fn projected_line_parameter3(
+pub fn projected_line_parameter3_with_policy(
     segment_start: &Point3,
     segment_end: &Point3,
     line_start: &Point3,
     line_end: &Point3,
     projection: CoplanarProjection,
+    policy: PredicatePolicy,
 ) -> Option<Real> {
     let a = project_point3(line_start, projection);
     let b = project_point3(line_end, projection);
@@ -537,7 +569,8 @@ pub fn projected_line_parameter3(
     let d1 = orient2d_value(&a, &b, &p1);
     let denominator = d0.clone() - &d1;
     if matches!(
-        crate::predicates::order::compare_reals(&denominator, &Real::from(0)).value(),
+        crate::predicates::order::compare_reals_with_policy(&denominator, &Real::from(0), policy,)
+            .value(),
         Some(core::cmp::Ordering::Equal) | None
     ) {
         return None;
@@ -554,15 +587,23 @@ fn interpolate_projected_point3(start: &Point3, end: &Point3, t: &Real) -> Point
     )
 }
 
-fn ccw_turn_bucket(base: &Point2, candidate: &Point2) -> Option<u8> {
-    match crate::predicates::order::compare_reals(&cross2(base, candidate), &Real::from(0))
-        .value()?
+fn ccw_turn_bucket(base: &Point2, candidate: &Point2, policy: PredicatePolicy) -> Option<u8> {
+    match crate::predicates::order::compare_reals_with_policy(
+        &cross2(base, candidate),
+        &Real::from(0),
+        policy,
+    )
+    .value()?
     {
         core::cmp::Ordering::Greater => Some(0),
         core::cmp::Ordering::Less => Some(1),
         core::cmp::Ordering::Equal => {
-            match crate::predicates::order::compare_reals(&dot2(base, candidate), &Real::from(0))
-                .value()?
+            match crate::predicates::order::compare_reals_with_policy(
+                &dot2(base, candidate),
+                &Real::from(0),
+                policy,
+            )
+            .value()?
             {
                 core::cmp::Ordering::Greater | core::cmp::Ordering::Equal => Some(0),
                 core::cmp::Ordering::Less => Some(1),
@@ -625,11 +666,33 @@ fn triangle_edges2(tri: &[Point2; 3]) -> [[&Point2; 2]; 3] {
 fn classify_vertices_in_triangle(
     triangle: &[Point2; 3],
     query: &[Point2; 3],
+    policy: PredicatePolicy,
 ) -> [Option<TriangleLocation>; 3] {
     [
-        classify_point_triangle(&triangle[0], &triangle[1], &triangle[2], &query[0]).value(),
-        classify_point_triangle(&triangle[0], &triangle[1], &triangle[2], &query[1]).value(),
-        classify_point_triangle(&triangle[0], &triangle[1], &triangle[2], &query[2]).value(),
+        classify_point_triangle_with_policy(
+            &triangle[0],
+            &triangle[1],
+            &triangle[2],
+            &query[0],
+            policy,
+        )
+        .value(),
+        classify_point_triangle_with_policy(
+            &triangle[0],
+            &triangle[1],
+            &triangle[2],
+            &query[1],
+            policy,
+        )
+        .value(),
+        classify_point_triangle_with_policy(
+            &triangle[0],
+            &triangle[1],
+            &triangle[2],
+            &query[2],
+            policy,
+        )
+        .value(),
     ]
 }
 
@@ -651,22 +714,28 @@ mod tests {
     use super::*;
     use crate::Real;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     #[test]
     fn triangle3_degeneracy_uses_projected_orientations() {
-        let xy = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0));
+        let xy =
+            crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 1, 0), APPROX);
         assert_eq!(xy, TriangleDegeneracy::NonDegenerate);
 
-        let xz = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 0, 1));
+        let xz =
+            crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 0, 0), &p3(0, 0, 1), APPROX);
         assert_eq!(xz, TriangleDegeneracy::NonDegenerate);
 
-        let yz = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1));
+        let yz =
+            crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(0, 1, 0), &p3(0, 0, 1), APPROX);
         assert_eq!(yz, TriangleDegeneracy::NonDegenerate);
 
-        let degenerate = classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2));
+        let degenerate =
+            crate::classify_triangle3_degeneracy(&p3(0, 0, 0), &p3(1, 1, 1), &p3(2, 2, 2), APPROX);
         assert_eq!(degenerate, TriangleDegeneracy::Degenerate);
     }
 
@@ -697,21 +766,24 @@ mod tests {
             p3(1, 5, 0),
         ];
 
-        let disjoint = classify_coplanar_triangles(&disjoint_points, [0, 1, 2], [3, 4, 5]);
-        let touching = classify_coplanar_triangles(&touching_points, [0, 1, 2], [3, 4, 5]);
-        let overlapping = classify_coplanar_triangles(&overlapping_points, [0, 1, 2], [3, 4, 5]);
+        let disjoint =
+            crate::classify_coplanar_triangles(&disjoint_points, [0, 1, 2], [3, 4, 5], APPROX);
+        let touching =
+            crate::classify_coplanar_triangles(&touching_points, [0, 1, 2], [3, 4, 5], APPROX);
+        let overlapping =
+            crate::classify_coplanar_triangles(&overlapping_points, [0, 1, 2], [3, 4, 5], APPROX);
 
         assert_eq!(disjoint.relation, CoplanarTriangleRelation::Disjoint);
         assert_eq!(touching.relation, CoplanarTriangleRelation::Touching);
         assert_eq!(overlapping.relation, CoplanarTriangleRelation::Overlapping);
         disjoint
-            .validate_against_sources(&disjoint_points, [0, 1, 2], [3, 4, 5])
+            .validate_against_sources(&disjoint_points, [0, 1, 2], [3, 4, 5], APPROX)
             .unwrap();
         touching
-            .validate_against_sources(&touching_points, [0, 1, 2], [3, 4, 5])
+            .validate_against_sources(&touching_points, [0, 1, 2], [3, 4, 5], APPROX)
             .unwrap();
         overlapping
-            .validate_against_sources(&overlapping_points, [0, 1, 2], [3, 4, 5])
+            .validate_against_sources(&overlapping_points, [0, 1, 2], [3, 4, 5], APPROX)
             .unwrap();
     }
 
@@ -723,16 +795,23 @@ mod tests {
         let half = (Real::from(1) / &Real::from(2)).unwrap();
 
         assert_eq!(
-            projected_segment_parameter3(&midpoint, &start, &end, CoplanarProjection::Xy),
+            crate::projected_segment_parameter3(
+                &midpoint,
+                &start,
+                &end,
+                CoplanarProjection::Xy,
+                APPROX
+            ),
             Some(half.clone())
         );
 
-        let crossing = projected_line_parameter3(
+        let crossing = crate::projected_line_parameter3(
             &p3(0, -2, 0),
             &p3(0, 2, 0),
             &p3(-1, 0, 0),
             &p3(1, 0, 0),
             CoplanarProjection::Xy,
+            APPROX,
         );
         assert_eq!(crossing, Some(half));
     }

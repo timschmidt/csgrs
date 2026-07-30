@@ -10,8 +10,9 @@
 use crate::classify::PlaneSide;
 use crate::geometry::{Plane3, Point3};
 use crate::oriented_plane3_evidence;
-use crate::predicates::order::compare_reals;
-use crate::predicates::orient::orient3d;
+use crate::predicate::PredicatePolicy;
+use crate::predicates::order::compare_reals_with_policy;
+use crate::predicates::orient::orient3d_with_policy;
 use hyperreal::Real;
 
 /// Exact segment relation to an oriented plane.
@@ -122,7 +123,7 @@ pub struct SegmentPlaneParameterRatio {
 
 impl SegmentPlaneIntersection {
     /// Validate relation, endpoint-side, and construction-field consistency.
-    pub fn validate(&self) -> Result<(), SegmentPlaneValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SegmentPlaneValidationError> {
         match self.relation {
             SegmentPlaneRelation::Unknown => {
                 if self.endpoint_sides.iter().all(Option::is_some) {
@@ -170,7 +171,7 @@ impl SegmentPlaneIntersection {
                 if !self
                     .parameter
                     .as_ref()
-                    .is_some_and(|parameter| real_eq(parameter, &expected))
+                    .is_some_and(|parameter| real_eq(parameter, &expected, policy))
                 {
                     return Err(SegmentPlaneValidationError::MissingEndpointConstruction);
                 }
@@ -190,14 +191,14 @@ impl SegmentPlaneIntersection {
                     return Err(SegmentPlaneValidationError::UnexpectedConstructionFailureReason);
                 }
                 let parameter = self.parameter.as_ref().expect("checked above");
-                if !real_between_open_unit(parameter) {
+                if !real_between_open_unit(parameter, policy) {
                     return Err(SegmentPlaneValidationError::ProperCrossingParameterOutOfRange);
                 }
                 let Some(ratio) = self.parameter_ratio.as_ref() else {
                     return Err(SegmentPlaneValidationError::MissingProperCrossingRatio);
                 };
                 if matches!(
-                    compare_reals(&ratio.denominator, &Real::from(0)).value(),
+                    compare_reals_with_policy(&ratio.denominator, &Real::from(0), policy).value(),
                     Some(core::cmp::Ordering::Equal) | None
                 ) {
                     return Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch);
@@ -205,7 +206,7 @@ impl SegmentPlaneIntersection {
                 let Some(ratio_parameter) = (&ratio.numerator / &ratio.denominator).ok() else {
                     return Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch);
                 };
-                if !real_eq(&ratio_parameter, parameter) {
+                if !real_eq(&ratio_parameter, parameter, policy) {
                     return Err(SegmentPlaneValidationError::ProperCrossingRatioMismatch);
                 }
                 Ok(())
@@ -231,9 +232,10 @@ impl SegmentPlaneIntersection {
         c: &Point3,
         p0: &Point3,
         p1: &Point3,
+        policy: PredicatePolicy,
     ) -> Result<(), SegmentPlaneValidationError> {
-        self.validate()?;
-        let replay = intersect_segment_with_oriented_plane(a, b, c, p0, p1);
+        self.validate(policy)?;
+        let replay = intersect_segment_with_oriented_plane_with_policy(a, b, c, p0, p1, policy);
         if self == &replay {
             Ok(())
         } else {
@@ -271,14 +273,18 @@ impl SegmentPlaneIntersection {
 }
 
 /// Intersect a closed segment with an oriented point-defined plane.
-pub fn intersect_segment_with_oriented_plane(
+pub fn intersect_segment_with_oriented_plane_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
     p0: &Point3,
     p1: &Point3,
+    policy: PredicatePolicy,
 ) -> SegmentPlaneIntersection {
-    let outcomes = [orient3d(a, b, c, p0), orient3d(a, b, c, p1)];
+    let outcomes = [
+        orient3d_with_policy(a, b, c, p0, policy),
+        orient3d_with_policy(a, b, c, p1, policy),
+    ];
     let sides = [
         outcomes[0].value().map(PlaneSide::from),
         outcomes[1].value().map(PlaneSide::from),
@@ -287,29 +293,34 @@ pub fn intersect_segment_with_oriented_plane(
     let evidence = oriented_plane3_evidence(a, b, c);
     let d0 = point_plane_value(evidence.plane(), p0);
     let d1 = point_plane_value(evidence.plane(), p1);
-    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides)
+    intersect_segment_with_plane_values_with_policy(&d0, &d1, p0, p1, sides, policy)
 }
 
 /// Intersect a closed segment with an explicit oriented plane.
-pub fn intersect_segment_with_plane(
+pub fn intersect_segment_with_plane_with_policy(
     plane: &Plane3,
     p0: &Point3,
     p1: &Point3,
+    policy: PredicatePolicy,
 ) -> SegmentPlaneIntersection {
     let d0 = point_plane_value(plane, p0);
     let d1 = point_plane_value(plane, p1);
-    let sides = [plane_side_from_value(&d0), plane_side_from_value(&d1)];
-    intersect_segment_with_plane_values(&d0, &d1, p0, p1, sides)
+    let sides = [
+        plane_side_from_value(&d0, policy),
+        plane_side_from_value(&d1, policy),
+    ];
+    intersect_segment_with_plane_values_with_policy(&d0, &d1, p0, p1, sides, policy)
 }
 
 /// Build a segment/plane event from already-computed exact endpoint plane
 /// values and side facts.
-pub fn intersect_segment_with_plane_values(
+pub fn intersect_segment_with_plane_values_with_policy(
     d0: &Real,
     d1: &Real,
     p0: &Point3,
     p1: &Point3,
     sides: [Option<PlaneSide>; 2],
+    policy: PredicatePolicy,
 ) -> SegmentPlaneIntersection {
     let Some([side0, side1]) = transpose_sides(sides) else {
         return event(
@@ -341,7 +352,7 @@ pub fn intersect_segment_with_plane_values(
             SegmentPlaneEventConstruction::none(),
         ),
         (PlaneSide::Above, PlaneSide::Below) | (PlaneSide::Below, PlaneSide::Above) => {
-            match construct_segment_plane_crossing_from_values(d0, d1, p0, p1) {
+            match construct_segment_plane_crossing_from_values_with_policy(d0, d1, p0, p1, policy) {
                 Ok((parameter, ratio, point)) => event(
                     SegmentPlaneRelation::ProperCrossing,
                     sides,
@@ -358,15 +369,16 @@ pub fn intersect_segment_with_plane_values(
 }
 
 /// Construct the exact proper crossing point from endpoint plane values.
-pub fn construct_segment_plane_crossing_from_values(
+pub fn construct_segment_plane_crossing_from_values_with_policy(
     d0: &Real,
     d1: &Real,
     p0: &Point3,
     p1: &Point3,
+    policy: PredicatePolicy,
 ) -> Result<(Real, SegmentPlaneParameterRatio, Point3), SegmentPlaneConstructionFailure> {
     let denominator = d0.clone() - d1;
     if matches!(
-        compare_reals(&denominator, &Real::from(0)).value(),
+        compare_reals_with_policy(&denominator, &Real::from(0), policy).value(),
         Some(core::cmp::Ordering::Equal)
     ) {
         return Err(SegmentPlaneConstructionFailure::ZeroDenominator);
@@ -399,10 +411,15 @@ pub fn point_plane_value(plane: &Plane3, point: &Point3) -> Real {
 }
 
 /// Return a segment parameter from one nonconstant coordinate axis.
-pub fn segment_parameter_from_axis(point: &Real, start: &Real, end: &Real) -> Option<Real> {
+pub fn segment_parameter_from_axis_with_policy(
+    point: &Real,
+    start: &Real,
+    end: &Real,
+    policy: PredicatePolicy,
+) -> Option<Real> {
     let denominator = end.clone() - start;
     if matches!(
-        compare_reals(&denominator, &Real::from(0)).value(),
+        compare_reals_with_policy(&denominator, &Real::from(0), policy).value(),
         Some(core::cmp::Ordering::Equal) | None
     ) {
         return None;
@@ -410,8 +427,8 @@ pub fn segment_parameter_from_axis(point: &Real, start: &Real, end: &Real) -> Op
     ((point.clone() - start) / &denominator).ok()
 }
 
-fn plane_side_from_value(value: &Real) -> Option<PlaneSide> {
-    match compare_reals(value, &Real::from(0)).value()? {
+fn plane_side_from_value(value: &Real, policy: PredicatePolicy) -> Option<PlaneSide> {
+    match compare_reals_with_policy(value, &Real::from(0), policy).value()? {
         core::cmp::Ordering::Less => Some(PlaneSide::Below),
         core::cmp::Ordering::Equal => Some(PlaneSide::On),
         core::cmp::Ordering::Greater => Some(PlaneSide::Above),
@@ -500,21 +517,21 @@ fn opposite_strict_sides(sides: [Option<PlaneSide>; 2]) -> bool {
     )
 }
 
-fn real_eq(left: &Real, right: &Real) -> bool {
+fn real_eq(left: &Real, right: &Real, policy: PredicatePolicy) -> bool {
     matches!(
-        compare_reals(left, right).value(),
+        compare_reals_with_policy(left, right, policy).value(),
         Some(core::cmp::Ordering::Equal)
     )
 }
 
-fn real_between_open_unit(value: &Real) -> bool {
+fn real_between_open_unit(value: &Real, policy: PredicatePolicy) -> bool {
     let zero = Real::from(0);
     let one = Real::from(1);
     matches!(
-        compare_reals(value, &zero).value(),
+        compare_reals_with_policy(value, &zero, policy).value(),
         Some(core::cmp::Ordering::Greater)
     ) && matches!(
-        compare_reals(value, &one).value(),
+        compare_reals_with_policy(value, &one, policy).value(),
         Some(core::cmp::Ordering::Less)
     )
 }
@@ -524,18 +541,21 @@ mod tests {
     use super::*;
     use crate::Real;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p3(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     #[test]
     fn segment_plane_constructs_proper_crossing_as_ratio() {
-        let event = intersect_segment_with_oriented_plane(
+        let event = crate::intersect_segment_with_oriented_plane(
             &p3(0, 0, 0),
             &p3(1, 0, 0),
             &p3(0, 1, 0),
             &p3(0, 0, -1),
             &p3(0, 0, 1),
+            APPROX,
         );
         assert_eq!(event.relation, SegmentPlaneRelation::ProperCrossing);
         let half = (Real::from(1) / &Real::from(2)).unwrap();
@@ -548,6 +568,7 @@ mod tests {
                 &p3(0, 1, 0),
                 &p3(0, 0, -1),
                 &p3(0, 0, 1),
+                APPROX,
             )
             .unwrap();
     }
@@ -558,15 +579,39 @@ mod tests {
         let b = p3(1, 0, 0);
         let c = p3(0, 1, 0);
         assert_eq!(
-            intersect_segment_with_oriented_plane(&a, &b, &c, &p3(0, 0, 0), &p3(0, 0, 2)).relation,
+            crate::intersect_segment_with_oriented_plane(
+                &a,
+                &b,
+                &c,
+                &p3(0, 0, 0),
+                &p3(0, 0, 2),
+                APPROX
+            )
+            .relation,
             SegmentPlaneRelation::EndpointOnPlane
         );
         assert_eq!(
-            intersect_segment_with_oriented_plane(&a, &b, &c, &p3(0, 0, 1), &p3(1, 0, 1)).relation,
+            crate::intersect_segment_with_oriented_plane(
+                &a,
+                &b,
+                &c,
+                &p3(0, 0, 1),
+                &p3(1, 0, 1),
+                APPROX
+            )
+            .relation,
             SegmentPlaneRelation::Disjoint
         );
         assert_eq!(
-            intersect_segment_with_oriented_plane(&a, &b, &c, &p3(0, 0, 0), &p3(1, 0, 0)).relation,
+            crate::intersect_segment_with_oriented_plane(
+                &a,
+                &b,
+                &c,
+                &p3(0, 0, 0),
+                &p3(1, 0, 0),
+                APPROX
+            )
+            .relation,
             SegmentPlaneRelation::Coplanar
         );
     }

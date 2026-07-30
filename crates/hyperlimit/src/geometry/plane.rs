@@ -147,14 +147,16 @@ impl TrianglePlaneReport {
         points: &[Point3],
         face: [usize; 3],
         query: [usize; 3],
+        policy: PredicatePolicy,
     ) -> Result<(), TrianglePlaneReportValidationError> {
         self.validate()?;
         if !triangle_indices_in_range(points, face) || !triangle_indices_in_range(points, query) {
             return Err(TrianglePlaneReportValidationError::SourceReplayMismatch);
         }
-        let replay = classify_triangle_against_oriented_plane(
+        let replay = classify_triangle_against_oriented_plane_with_policy(
             [&points[face[0]], &points[face[1]], &points[face[2]]],
             [&points[query[0]], &points[query[1]], &points[query[2]]],
+            policy,
         );
         if self == &replay {
             Ok(())
@@ -193,8 +195,8 @@ pub struct PlaneAabbReport {
 
 impl PlaneAabbReport {
     /// Validate retained extrema ordering, signs, and derived relation.
-    pub fn validate(&self) -> Result<(), PlaneAabbReportValidationError> {
-        match compare_reals_with_policy(&self.lower_value, &self.upper_value, PredicatePolicy) {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), PlaneAabbReportValidationError> {
+        match compare_reals_with_policy(&self.lower_value, &self.upper_value, policy) {
             PredicateOutcome::Decided {
                 value: Ordering::Greater,
                 ..
@@ -205,8 +207,8 @@ impl PlaneAabbReport {
             }
         }
 
-        if sign_real_default(&self.lower_value) != Some(self.lower_sign)
-            || sign_real_default(&self.upper_value) != Some(self.upper_sign)
+        if sign_real_with_policy(&self.lower_value, policy) != Some(self.lower_sign)
+            || sign_real_with_policy(&self.upper_value, policy) != Some(self.upper_sign)
         {
             return Err(PlaneAabbReportValidationError::ExtremumSignMismatch);
         }
@@ -226,7 +228,7 @@ impl PlaneAabbReport {
         max: &Point3,
         policy: PredicatePolicy,
     ) -> Result<(), PlaneAabbReportValidationError> {
-        self.validate()?;
+        self.validate(policy)?;
         match classify_plane_aabb3_report_with_policy(plane, min, max, policy) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(PlaneAabbReportValidationError::SourceReplayMismatch),
@@ -322,16 +324,6 @@ pub fn plane3_evidence(plane: &Plane3) -> Plane3Evidence {
         filter,
         rational_filter,
     }
-}
-
-/// Classify a point against an explicit plane using retained evidence.
-#[inline]
-pub fn classify_point_plane_with_evidence(
-    point: &Point3,
-    plane: &Plane3,
-    evidence: &Plane3Evidence,
-) -> PredicateOutcome<PlaneSide> {
-    classify_point_plane_with_evidence_and_policy(point, plane, evidence, PredicatePolicy)
 }
 
 /// Classify a point using retained explicit-plane evidence and a policy.
@@ -438,15 +430,6 @@ pub fn oriented_plane3_evidence(a: &Point3, b: &Point3, c: &Point3) -> OrientedP
     }
 }
 
-/// Classify a point using retained oriented-plane evidence.
-#[inline]
-pub fn classify_point_oriented_plane_with_evidence(
-    point: &Point3,
-    evidence: &OrientedPlane3Evidence,
-) -> PredicateOutcome<PlaneSide> {
-    classify_point_oriented_plane_with_evidence_and_policy(point, evidence, PredicatePolicy)
-}
-
 /// Classify a point using retained oriented-plane evidence and a policy.
 #[inline]
 pub fn classify_point_oriented_plane_with_evidence_and_policy(
@@ -511,13 +494,8 @@ fn classify_point_plane_with_facts(
     classify_point_plane_real(point, plane, Some(facts), policy)
 }
 
-/// Classify a point relative to a plane.
-pub fn classify_point_plane(point: &Point3, plane: &Plane3) -> PredicateOutcome<PlaneSide> {
-    classify_point_plane_with_policy(point, plane, PredicatePolicy)
-}
-
 /// Classify a point relative to a plane with an explicit escalation policy.
-pub(crate) fn classify_point_plane_with_policy(
+pub fn classify_point_plane_with_policy(
     point: &Point3,
     plane: &Plane3,
     policy: PredicatePolicy,
@@ -640,18 +618,9 @@ fn classify_point_plane_with_filter(
     classify_point_plane_without_filter_with_policy(point, plane, policy)
 }
 
-/// Classify a closed segment relative to a plane.
-pub fn classify_plane_segment(
-    plane: &Plane3,
-    start: &Point3,
-    end: &Point3,
-) -> PredicateOutcome<PlaneSegmentRelation> {
-    classify_plane_segment_with_policy(plane, start, end, PredicatePolicy)
-}
-
 /// Classify a closed segment relative to a plane with an explicit escalation
 /// policy.
-pub(crate) fn classify_plane_segment_with_policy(
+pub fn classify_plane_segment_with_policy(
     plane: &Plane3,
     start: &Point3,
     end: &Point3,
@@ -697,18 +666,8 @@ pub(crate) fn classify_plane_segment_with_policy(
     )
 }
 
-/// Classify a triangle relative to a plane.
-pub fn classify_plane_triangle(
-    plane: &Plane3,
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> PredicateOutcome<PlaneTriangleRelation> {
-    classify_plane_triangle_with_policy(plane, a, b, c, PredicatePolicy)
-}
-
 /// Classify a triangle relative to a plane with an explicit escalation policy.
-pub(crate) fn classify_plane_triangle_with_policy(
+pub fn classify_plane_triangle_with_policy(
     plane: &Plane3,
     a: &Point3,
     b: &Point3,
@@ -767,18 +726,9 @@ pub(crate) fn classify_plane_triangle_with_policy(
     PredicateOutcome::decided(relation, certainty, stage)
 }
 
-/// Classify a query triangle against an oriented plane triangle and retain the
-/// three point/plane predicate certificates.
-pub fn classify_triangle_against_oriented_plane(
-    plane: [&Point3; 3],
-    query: [&Point3; 3],
-) -> TrianglePlaneReport {
-    classify_triangle_against_oriented_plane_with_policy(plane, query, PredicatePolicy)
-}
-
 /// Classify a query triangle against an oriented plane triangle with an
 /// explicit predicate policy and retained per-vertex side facts.
-pub(crate) fn classify_triangle_against_oriented_plane_with_policy(
+pub fn classify_triangle_against_oriented_plane_with_policy(
     plane: [&Point3; 3],
     query: [&Point3; 3],
     policy: PredicatePolicy,
@@ -834,25 +784,6 @@ fn triangle_indices_in_range(points: &[Point3], indices: [usize; 3]) -> bool {
     indices.iter().all(|&index| index < points.len())
 }
 
-/// Classify a closed 3D AABB relative to a plane.
-pub fn classify_plane_aabb3(
-    plane: &Plane3,
-    min: &Point3,
-    max: &Point3,
-) -> PredicateOutcome<PlaneAabbRelation> {
-    classify_plane_aabb3_with_policy(plane, min, max, PredicatePolicy)
-}
-
-/// Classify a closed 3D AABB relative to a plane and retain exact
-/// support-extrema evidence.
-pub fn classify_plane_aabb3_report(
-    plane: &Plane3,
-    min: &Point3,
-    max: &Point3,
-) -> PredicateOutcome<PlaneAabbReport> {
-    classify_plane_aabb3_report_with_policy(plane, min, max, PredicatePolicy)
-}
-
 /// Classify a closed 3D AABB relative to a plane with an explicit escalation
 /// policy.
 ///
@@ -861,7 +792,7 @@ pub fn classify_plane_aabb3_report(
 /// selecting the lower/upper contribution for each source axis, then certifies
 /// only those two extrema. It preserves exact `Real` arithmetic while avoiding
 /// eight point-plane classifications.
-pub(crate) fn classify_plane_aabb3_with_policy(
+pub fn classify_plane_aabb3_with_policy(
     plane: &Plane3,
     min: &Point3,
     max: &Point3,
@@ -877,13 +808,13 @@ pub(crate) fn classify_plane_aabb3_with_policy(
     }
 }
 
-/// Policy-controlled report-bearing variant of [`classify_plane_aabb3`].
+/// Policy-controlled report-bearing AABB/plane classifier.
 ///
 /// This evaluates the plane expression only at the selected minimum and maximum
 /// support corners. The retained `axis_term_orderings` document which bound was
 /// chosen on each axis, so callers can audit the interval reduction
 /// without enumerating all eight corners.
-pub(crate) fn classify_plane_aabb3_report_with_policy(
+pub fn classify_plane_aabb3_report_with_policy(
     plane: &Plane3,
     min: &Point3,
     max: &Point3,
@@ -1022,8 +953,8 @@ fn plane_aabb_relation_from_extrema(lower_sign: Sign, upper_sign: Sign) -> Plane
     }
 }
 
-fn sign_real_default(value: &Real) -> Option<Sign> {
-    resolve_real_sign_direct(value, PredicatePolicy, RefinementNeed::RealRefinement).value()
+fn sign_real_with_policy(value: &Real, policy: PredicatePolicy) -> Option<Sign> {
+    resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement).value()
 }
 
 fn point3_from_coords(coordinates: [&Real; 3]) -> Point3 {
@@ -1170,19 +1101,9 @@ fn absorb_trace(
     *stage = max_stage(*stage, value_stage);
 }
 
-/// Classify a point relative to the oriented plane through `a`, `b`, and `c`.
-pub fn classify_point_oriented_plane(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<PlaneSide> {
-    classify_point_oriented_plane_with_policy(a, b, c, point, PredicatePolicy)
-}
-
 /// Classify a point relative to the oriented plane through `a`, `b`, and `c`
 /// with an explicit escalation policy.
-pub(crate) fn classify_point_oriented_plane_with_policy(
+pub fn classify_point_oriented_plane_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -1214,6 +1135,8 @@ mod tests {
     #[cfg(feature = "dispatch-trace")]
     use hyperreal::Rational;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     #[cfg(feature = "dispatch-trace")]
     fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
         static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
@@ -1237,11 +1160,11 @@ mod tests {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
         assert_eq!(
-            classify_point_plane(&p3(0.0, 0.0, 3.0), &plane).value(),
+            crate::classify_point_plane(&p3(0.0, 0.0, 3.0), &plane, APPROX).value(),
             Some(PlaneSide::Above)
         );
         assert_eq!(
-            classify_point_plane(&p3(0.0, 0.0, 1.0), &plane).value(),
+            crate::classify_point_plane(&p3(0.0, 0.0, 1.0), &plane, APPROX).value(),
             Some(PlaneSide::Below)
         );
     }
@@ -1251,23 +1174,28 @@ mod tests {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
         assert_eq!(
-            classify_plane_segment(&plane, &p3(0.0, 0.0, 0.0), &p3(1.0, 0.0, 1.0)).value(),
+            crate::classify_plane_segment(&plane, &p3(0.0, 0.0, 0.0), &p3(1.0, 0.0, 1.0), APPROX)
+                .value(),
             Some(PlaneSegmentRelation::Below)
         );
         assert_eq!(
-            classify_plane_segment(&plane, &p3(0.0, 0.0, 3.0), &p3(1.0, 0.0, 4.0)).value(),
+            crate::classify_plane_segment(&plane, &p3(0.0, 0.0, 3.0), &p3(1.0, 0.0, 4.0), APPROX)
+                .value(),
             Some(PlaneSegmentRelation::Above)
         );
         assert_eq!(
-            classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 2.0)).value(),
+            crate::classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 2.0), APPROX)
+                .value(),
             Some(PlaneSegmentRelation::Coplanar)
         );
         assert_eq!(
-            classify_plane_segment(&plane, &p3(0.0, 0.0, 1.0), &p3(1.0, 0.0, 3.0)).value(),
+            crate::classify_plane_segment(&plane, &p3(0.0, 0.0, 1.0), &p3(1.0, 0.0, 3.0), APPROX)
+                .value(),
             Some(PlaneSegmentRelation::Crossing)
         );
         assert_eq!(
-            classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0)).value(),
+            crate::classify_plane_segment(&plane, &p3(0.0, 0.0, 2.0), &p3(1.0, 0.0, 3.0), APPROX)
+                .value(),
             Some(PlaneSegmentRelation::EndpointTouch)
         );
     }
@@ -1277,51 +1205,56 @@ mod tests {
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0));
 
         assert_eq!(
-            classify_plane_triangle(
+            crate::classify_plane_triangle(
                 &plane,
                 &p3(0.0, 0.0, 0.0),
                 &p3(1.0, 0.0, 1.0),
-                &p3(0.0, 1.0, 1.0)
+                &p3(0.0, 1.0, 1.0),
+                APPROX
             )
             .value(),
             Some(PlaneTriangleRelation::Below)
         );
         assert_eq!(
-            classify_plane_triangle(
+            crate::classify_plane_triangle(
                 &plane,
                 &p3(0.0, 0.0, 3.0),
                 &p3(1.0, 0.0, 4.0),
-                &p3(0.0, 1.0, 3.0)
+                &p3(0.0, 1.0, 3.0),
+                APPROX
             )
             .value(),
             Some(PlaneTriangleRelation::Above)
         );
         assert_eq!(
-            classify_plane_triangle(
+            crate::classify_plane_triangle(
                 &plane,
                 &p3(0.0, 0.0, 2.0),
                 &p3(1.0, 0.0, 2.0),
-                &p3(0.0, 1.0, 2.0)
+                &p3(0.0, 1.0, 2.0),
+                APPROX
             )
             .value(),
             Some(PlaneTriangleRelation::Coplanar)
         );
         assert_eq!(
-            classify_plane_triangle(
+            crate::classify_plane_triangle(
                 &plane,
                 &p3(0.0, 0.0, 1.0),
                 &p3(1.0, 0.0, 3.0),
-                &p3(0.0, 1.0, 1.0)
+                &p3(0.0, 1.0, 1.0),
+                APPROX
             )
             .value(),
             Some(PlaneTriangleRelation::Split)
         );
         assert_eq!(
-            classify_plane_triangle(
+            crate::classify_plane_triangle(
                 &plane,
                 &p3(0.0, 0.0, 2.0),
                 &p3(1.0, 0.0, 3.0),
                 &p3(0.0, 1.0, 3.0),
+                APPROX
             )
             .value(),
             Some(PlaneTriangleRelation::BoundaryTouch)
@@ -1333,19 +1266,23 @@ mod tests {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
 
         assert_eq!(
-            classify_plane_aabb3(&plane, &p3(0.0, 2.0, 0.0), &p3(1.0, 3.0, 1.0)).value(),
+            crate::classify_plane_aabb3(&plane, &p3(0.0, 2.0, 0.0), &p3(1.0, 3.0, 1.0), APPROX)
+                .value(),
             Some(PlaneAabbRelation::Below)
         );
         assert_eq!(
-            classify_plane_aabb3(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0)).value(),
+            crate::classify_plane_aabb3(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0), APPROX)
+                .value(),
             Some(PlaneAabbRelation::Above)
         );
         assert_eq!(
-            classify_plane_aabb3(&plane, &p3(0.0, 0.0, 0.0), &p3(2.0, 2.0, 2.0)).value(),
+            crate::classify_plane_aabb3(&plane, &p3(0.0, 0.0, 0.0), &p3(2.0, 2.0, 2.0), APPROX)
+                .value(),
             Some(PlaneAabbRelation::Intersecting)
         );
         assert_eq!(
-            classify_plane_aabb3(&plane, &p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0)).value(),
+            crate::classify_plane_aabb3(&plane, &p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0), APPROX)
+                .value(),
             Some(PlaneAabbRelation::Below)
         );
     }
@@ -1355,7 +1292,7 @@ mod tests {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
         let min = p3(0.0, 0.0, 0.0);
         let max = p3(2.0, 2.0, 2.0);
-        let report = classify_plane_aabb3_report(&plane, &min, &max)
+        let report = crate::classify_plane_aabb3_report(&plane, &min, &max, APPROX)
             .value()
             .expect("exact rational plane/AABB report should decide");
 
@@ -1368,9 +1305,9 @@ mod tests {
             report.axis_term_orderings,
             [Ordering::Less, Ordering::Greater, Ordering::Less]
         );
-        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(report.validate(APPROX), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&plane, &min, &max, PredicatePolicy),
+            report.validate_against_sources(&plane, &min, &max, APPROX,),
             Ok(())
         );
     }
@@ -1378,29 +1315,44 @@ mod tests {
     #[test]
     fn plane_aabb3_report_distinguishes_strict_sides_and_reversed_bounds() {
         let plane = Plane3::new(p3(1.0, -2.0, 1.0), real(-1.0));
-        let below = classify_plane_aabb3_report(&plane, &p3(0.0, 2.0, 0.0), &p3(1.0, 3.0, 1.0))
-            .value()
-            .expect("below box should decide");
-        let above = classify_plane_aabb3_report(&plane, &p3(3.0, 0.0, 1.0), &p3(4.0, 0.0, 2.0))
-            .value()
-            .expect("above box should decide");
-        let reversed = classify_plane_aabb3_report(&plane, &p3(1.0, 3.0, 1.0), &p3(0.0, 2.0, 0.0))
-            .value()
-            .expect("reversed caller bounds should preserve endpoint set");
+        let below = crate::classify_plane_aabb3_report(
+            &plane,
+            &p3(0.0, 2.0, 0.0),
+            &p3(1.0, 3.0, 1.0),
+            APPROX,
+        )
+        .value()
+        .expect("below box should decide");
+        let above = crate::classify_plane_aabb3_report(
+            &plane,
+            &p3(3.0, 0.0, 1.0),
+            &p3(4.0, 0.0, 2.0),
+            APPROX,
+        )
+        .value()
+        .expect("above box should decide");
+        let reversed = crate::classify_plane_aabb3_report(
+            &plane,
+            &p3(1.0, 3.0, 1.0),
+            &p3(0.0, 2.0, 0.0),
+            APPROX,
+        )
+        .value()
+        .expect("reversed caller bounds should preserve endpoint set");
 
         assert_eq!(below.relation, PlaneAabbRelation::Below);
         assert_eq!(below.upper_sign, Sign::Negative);
-        assert_eq!(below.validate(), Ok(()));
+        assert_eq!(below.validate(APPROX), Ok(()));
         assert_eq!(above.relation, PlaneAabbRelation::Above);
         assert_eq!(above.lower_sign, Sign::Positive);
-        assert_eq!(above.validate(), Ok(()));
+        assert_eq!(above.validate(APPROX), Ok(()));
         assert_eq!(reversed.relation, PlaneAabbRelation::Below);
-        assert_eq!(reversed.validate(), Ok(()));
+        assert_eq!(reversed.validate(APPROX), Ok(()));
 
         let mut forged = above.clone();
         forged.relation = PlaneAabbRelation::Intersecting;
         assert_eq!(
-            forged.validate(),
+            forged.validate(APPROX),
             Err(PlaneAabbReportValidationError::RelationMismatch)
         );
     }
@@ -1412,7 +1364,7 @@ mod tests {
         let c = p3(0.0, 1.0, 0.0);
 
         assert_eq!(
-            classify_point_oriented_plane(&a, &b, &c, &p3(0.0, 0.0, 1.0)).value(),
+            crate::classify_point_oriented_plane(&a, &b, &c, &p3(0.0, 0.0, 1.0), APPROX).value(),
             Some(PlaneSide::Below)
         );
     }
@@ -1441,8 +1393,8 @@ mod tests {
         assert_eq!(evidence.facts(), facts);
         let point = Point3::new(0.into(), 3.into(), 0.into());
         assert_eq!(
-            classify_point_plane_with_evidence(&point, &plane, &evidence).value(),
-            classify_point_plane(&point, &plane).value()
+            crate::classify_point_plane_with_evidence(&point, &plane, &evidence, APPROX).value(),
+            crate::classify_point_plane(&point, &plane, APPROX).value()
         );
     }
 
@@ -1457,9 +1409,12 @@ mod tests {
         let expected =
             PredicateOutcome::decided(PlaneSide::On, Certainty::Exact, Escalation::Exact);
 
-        assert_eq!(classify_point_plane(&point, &plane), expected);
         assert_eq!(
-            classify_point_plane_with_evidence(&point, &plane, &evidence),
+            crate::classify_point_plane(&point, &plane, APPROX),
+            expected
+        );
+        assert_eq!(
+            crate::classify_point_plane_with_evidence(&point, &plane, &evidence, APPROX),
             expected
         );
     }
@@ -1489,11 +1444,12 @@ mod tests {
             );
 
             assert_eq!(
-                classify_point_plane(&point, &plane).value(),
+                crate::classify_point_plane(&point, &plane, APPROX).value(),
                 expected.value()
             );
             assert_eq!(
-                classify_point_plane_with_evidence(&point, &plane, &evidence).value(),
+                crate::classify_point_plane_with_evidence(&point, &plane, &evidence, APPROX)
+                    .value(),
                 expected.value()
             );
         }
@@ -1513,8 +1469,9 @@ mod tests {
             p3(0.1, 0.2, 0.38 * 0.1 + 0.24 * 0.2),
         ] {
             assert_eq!(
-                classify_point_oriented_plane_with_evidence(&point, &evidence).value(),
-                classify_point_oriented_plane(&a, &b, &c, &point).value()
+                crate::classify_point_oriented_plane_with_evidence(&point, &evidence, APPROX)
+                    .value(),
+                crate::classify_point_oriented_plane(&a, &b, &c, &point, APPROX).value()
             );
         }
     }
@@ -1527,7 +1484,7 @@ mod tests {
         let point = Point3::new(Real::pi(), 0.into(), 0.into());
 
         assert_eq!(
-            classify_point_plane(&point, &plane),
+            crate::classify_point_plane(&point, &plane, APPROX),
             PredicateOutcome::decided(PlaneSide::Below, Certainty::Exact, Escalation::Structural)
         );
     }

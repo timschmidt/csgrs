@@ -13,11 +13,6 @@ use crate::real::sub_ref;
 use crate::resolve::{map_outcome, resolve_real_sign_direct};
 use hyperreal::{CertifiedRealOrdering, Problem, Rational, Real, RealOrderingCertificate};
 
-/// Decide the sign of one Real value through the predicate pipeline.
-pub fn classify_real_sign(value: &Real) -> PredicateOutcome<Sign> {
-    classify_real_sign_with_policy(value, PredicatePolicy)
-}
-
 /// Decide the sign of one Real value with an explicit predicate policy.
 pub fn classify_real_sign_with_policy(
     value: &Real,
@@ -26,19 +21,14 @@ pub fn classify_real_sign_with_policy(
     resolve_real_sign_direct(value, policy, RefinementNeed::RealRefinement)
 }
 
-/// Construct a reciprocal after deciding nonzero status through the shared
+/// Construct a reciprocal after deciding nonzero status through the supplied
 /// predicate policy.
 ///
 /// The returned outcome retains the certainty and escalation stage of the
 /// denominator decision. This is the construction counterpart to
-/// [`classify_real_sign`]: downstream exact geometry can reuse one policy
+/// [`classify_real_sign_with_policy`]: downstream exact geometry can reuse one policy
 /// decision instead of asking `Real` division to repeat the same potentially
 /// expensive refinement for every coordinate.
-pub fn reciprocal_real(value: &Real) -> Result<PredicateOutcome<Real>, Problem> {
-    reciprocal_real_with_policy(value, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`reciprocal_real`].
 pub fn reciprocal_real_with_policy(
     value: &Real,
     policy: PredicatePolicy,
@@ -64,10 +54,6 @@ pub fn reciprocal_real_with_policy(
 /// batches the common exact-rational path while preserving the weakest
 /// certainty and latest escalation stage when either value needs the general
 /// resolver.
-pub fn classify_real_sign_pair(left: &Real, right: &Real) -> PredicateOutcome<(Sign, Sign)> {
-    classify_real_sign_pair_with_policy(left, right, PredicatePolicy)
-}
-
 /// Decide two Real signs with an explicit predicate policy.
 pub fn classify_real_sign_pair_with_policy(
     left: &Real,
@@ -109,12 +95,6 @@ pub fn classify_real_sign_pair_with_policy(
             PredicateOutcome::unknown(needed, stage)
         }
     }
-}
-
-/// Compare two Real values by deciding the sign of `left - right`.
-#[inline]
-pub fn compare_reals(left: &Real, right: &Real) -> PredicateOutcome<Ordering> {
-    compare_reals_with_policy(left, right, PredicatePolicy)
 }
 
 /// Compare two Real values with an explicit predicate escalation policy.
@@ -185,12 +165,7 @@ pub fn compare_reals_with_policy(
     }
 }
 
-/// Return whether `left <= right` under the exact Real ordering predicate.
-pub fn real_le(left: &Real, right: &Real) -> PredicateOutcome<bool> {
-    real_le_with_policy(left, right, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`real_le`].
+/// Return whether `left <= right` under the policy-controlled Real ordering predicate.
 pub fn real_le_with_policy(
     left: &Real,
     right: &Real,
@@ -201,12 +176,7 @@ pub fn real_le_with_policy(
     })
 }
 
-/// Return whether `left >= right` under the exact Real ordering predicate.
-pub fn real_ge(left: &Real, right: &Real) -> PredicateOutcome<bool> {
-    real_ge_with_policy(left, right, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`real_ge`].
+/// Return whether `left >= right` under the policy-controlled Real ordering predicate.
 pub fn real_ge_with_policy(
     left: &Real,
     right: &Real,
@@ -217,12 +187,7 @@ pub fn real_ge_with_policy(
     })
 }
 
-/// Return the smaller of two Real references using the exact ordering predicate.
-pub fn real_min<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
-    real_min_with_policy(left, right, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`real_min`].
+/// Return the smaller of two Real references using the policy-controlled ordering predicate.
 pub fn real_min_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
@@ -237,12 +202,7 @@ pub fn real_min_with_policy<'a>(
     })
 }
 
-/// Return the larger of two Real references using the exact ordering predicate.
-pub fn real_max<'a>(left: &'a Real, right: &'a Real) -> PredicateOutcome<&'a Real> {
-    real_max_with_policy(left, right, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`real_max`].
+/// Return the larger of two Real references using the policy-controlled ordering predicate.
 pub fn real_max_with_policy<'a>(
     left: &'a Real,
     right: &'a Real,
@@ -257,12 +217,7 @@ pub fn real_max_with_policy<'a>(
     })
 }
 
-/// Clamp a Real value to an exact Real interval.
-pub fn real_clamp(value: Real, min: &Real, max: &Real) -> PredicateOutcome<Real> {
-    real_clamp_with_policy(value, min, max, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`real_clamp`].
+/// Clamp a Real value to an interval under an explicit predicate policy.
 pub fn real_clamp_with_policy(
     value: Real,
     min: &Real,
@@ -336,11 +291,6 @@ pub fn real_clamp_with_policy(
     }
 }
 
-/// Compare two 2D points lexicographically by `(x, y)`.
-pub fn compare_point2_lexicographic(left: &Point2, right: &Point2) -> PredicateOutcome<Ordering> {
-    compare_point2_lexicographic_with_policy(left, right, PredicatePolicy)
-}
-
 /// Compare two 2D points lexicographically by `(x, y)` with an explicit policy.
 ///
 /// This is useful for deterministic exact event queues and canonical endpoint
@@ -370,11 +320,6 @@ pub fn compare_point2_lexicographic_with_policy(
         },
         decided_or_unknown => decided_or_unknown,
     }
-}
-
-/// Return whether two 2D points have equal coordinates.
-pub fn point2_equal(left: &Point2, right: &Point2) -> PredicateOutcome<bool> {
-    point2_equal_with_policy(left, right, PredicatePolicy)
 }
 
 /// Return whether two 2D points have equal coordinates with an explicit
@@ -415,15 +360,10 @@ pub fn point2_equal_with_policy(
     )
 }
 
-/// Compare two 3D points lexicographically by `(x, y, z)`.
-pub fn compare_point3_lexicographic(left: &Point3, right: &Point3) -> PredicateOutcome<Ordering> {
-    compare_point3_lexicographic_with_policy(left, right, PredicatePolicy)
-}
-
 /// Compare two 3D points lexicographically by `(x, y, z)` with an explicit
 /// policy.
 ///
-/// This is the 3D counterpart to [`compare_point2_lexicographic`]. It composes
+/// This is the 3D counterpart to [`compare_point2_lexicographic_with_policy`]. It composes
 /// exact Real ordering predicates for deterministic canonicalization and
 /// equality decisions without routing coordinate equality through an unrelated
 /// geometric primitive such as a zero-radius sphere.
@@ -471,16 +411,11 @@ pub fn compare_point3_lexicographic_with_policy(
     }
 }
 
-/// Return whether two 3D points have equal coordinates.
-pub fn point3_equal(left: &Point3, right: &Point3) -> PredicateOutcome<bool> {
-    point3_equal_with_policy(left, right, PredicatePolicy)
-}
-
 /// Return whether two 3D points have equal coordinates with an explicit
 /// predicate escalation policy.
 ///
 /// Point equality is an exact predicate over Real coordinate differences.
-/// Keeping the 3D form beside [`point2_equal`] gives callers a direct semantic
+/// Keeping the 3D form beside [`point2_equal_with_policy`] gives callers a direct semantic
 /// API for vertex identity and normal-row deduplication instead of requiring a
 /// zero-radius sphere classification.
 pub fn point3_equal_with_policy(
@@ -548,6 +483,8 @@ fn stage_rank(stage: Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn real(value: i32) -> hyperreal::Real {
         hyperreal::Real::from(value)
     }
@@ -555,7 +492,7 @@ mod tests {
     #[test]
     fn paired_signs_batch_exact_rationals_and_preserve_unknowns() {
         assert_eq!(
-            classify_real_sign_pair(&real(-1), &real(0)).value(),
+            crate::classify_real_sign_pair(&real(-1), &real(0), APPROX).value(),
             Some((Sign::Negative, Sign::Zero))
         );
 
@@ -569,15 +506,15 @@ mod tests {
     #[test]
     fn real_ordering_uses_exact_difference_sign() {
         assert_eq!(
-            compare_reals(&real(1), &real(2)).value(),
+            crate::compare_reals(&real(1), &real(2), APPROX).value(),
             Some(Ordering::Less)
         );
         assert_eq!(
-            compare_reals(&real(2), &real(2)).value(),
+            crate::compare_reals(&real(2), &real(2), APPROX).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&real(3), &real(2)).value(),
+            crate::compare_reals(&real(3), &real(2), APPROX).value(),
             Some(Ordering::Greater)
         );
     }
@@ -588,7 +525,7 @@ mod tests {
         let right = Point2::new(real(1), real(5));
 
         assert_eq!(
-            compare_point2_lexicographic(&left, &right).value(),
+            crate::compare_point2_lexicographic(&left, &right, APPROX).value(),
             Some(Ordering::Less)
         );
     }
@@ -599,8 +536,14 @@ mod tests {
         let same = Point2::new(real(1), real(4));
         let different = Point2::new(real(1), real(5));
 
-        assert_eq!(point2_equal(&left, &same).value(), Some(true));
-        assert_eq!(point2_equal(&left, &different).value(), Some(false));
+        assert_eq!(
+            crate::point2_equal(&left, &same, APPROX).value(),
+            Some(true)
+        );
+        assert_eq!(
+            crate::point2_equal(&left, &different, APPROX).value(),
+            Some(false)
+        );
     }
 
     #[test]
@@ -609,7 +552,7 @@ mod tests {
         let right = Point3::new(real(1), real(4), real(7));
 
         assert_eq!(
-            compare_point3_lexicographic(&left, &right).value(),
+            crate::compare_point3_lexicographic(&left, &right, APPROX).value(),
             Some(Ordering::Less)
         );
     }
@@ -620,8 +563,14 @@ mod tests {
         let same = Point3::new(real(1), real(4), real(6));
         let different = Point3::new(real(1), real(4), real(7));
 
-        assert_eq!(point3_equal(&left, &same).value(), Some(true));
-        assert_eq!(point3_equal(&left, &different).value(), Some(false));
+        assert_eq!(
+            crate::point3_equal(&left, &same, APPROX).value(),
+            Some(true)
+        );
+        assert_eq!(
+            crate::point3_equal(&left, &different, APPROX).value(),
+            Some(false)
+        );
     }
 
     #[test]
@@ -630,26 +579,38 @@ mod tests {
         let mid = real(2);
         let high = real(3);
 
-        assert_eq!(real_le(&low, &mid).value(), Some(true));
-        assert_eq!(real_ge(&high, &mid).value(), Some(true));
-        assert_eq!(real_min(&high, &low).value(), Some(&low));
-        assert_eq!(real_max(&high, &low).value(), Some(&high));
-        assert_eq!(real_clamp(mid.clone(), &low, &high).value(), Some(mid));
-        assert_eq!(real_clamp(real(0), &low, &high).value(), Some(low.clone()));
-        assert_eq!(real_clamp(real(4), &low, &high).value(), Some(high));
+        assert_eq!(crate::real_le(&low, &mid, APPROX).value(), Some(true));
+        assert_eq!(crate::real_ge(&high, &mid, APPROX).value(), Some(true));
+        assert_eq!(crate::real_min(&high, &low, APPROX).value(), Some(&low));
+        assert_eq!(crate::real_max(&high, &low, APPROX).value(), Some(&high));
+        assert_eq!(
+            crate::real_clamp(mid.clone(), &low, &high, APPROX).value(),
+            Some(mid)
+        );
+        assert_eq!(
+            crate::real_clamp(real(0), &low, &high, APPROX).value(),
+            Some(low.clone())
+        );
+        assert_eq!(
+            crate::real_clamp(real(4), &low, &high, APPROX).value(),
+            Some(high)
+        );
     }
 
     #[test]
     fn reciprocal_reuses_the_policy_nonzero_decision() {
-        let reciprocal = reciprocal_real(&real(2))
+        let reciprocal = crate::reciprocal_real(&real(2), APPROX)
             .expect("two is nonzero")
             .value()
             .expect("the reciprocal is decided");
         assert_eq!(
-            compare_reals(&(real(2) * reciprocal), &real(1)).value(),
+            crate::compare_reals(&(real(2) * reciprocal), &real(1), APPROX).value(),
             Some(Ordering::Equal)
         );
-        assert_eq!(reciprocal_real(&real(0)), Err(Problem::DivideByZero));
+        assert_eq!(
+            crate::reciprocal_real(&real(0), APPROX),
+            Err(Problem::DivideByZero)
+        );
 
         let undecidable = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
         assert!(matches!(

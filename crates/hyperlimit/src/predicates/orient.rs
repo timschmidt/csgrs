@@ -16,11 +16,6 @@ use hyperreal::{
     RationalLinearForm4Filter, RationalLinearForm4Query, Real, RealExactSetFacts, ZeroKnowledge,
 };
 
-/// Orientation of three 2D points.
-pub fn orient2d(a: &Point2, b: &Point2, c: &Point2) -> PredicateOutcome<Sign> {
-    orient2d_with_policy(a, b, c, PredicatePolicy)
-}
-
 /// Orientation of three 2D points with an explicit escalation policy.
 pub fn orient2d_with_policy(
     a: &Point2,
@@ -119,12 +114,6 @@ pub(crate) fn orient2d_exact_word_filter(
     Some(crate::real::map_real_sign(sign))
 }
 
-/// Orientation of four 3D points. Positive means `d` is on the positive side
-/// of the oriented plane through `a`, `b`, and `c`.
-pub fn orient3d(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> PredicateOutcome<Sign> {
-    orient3d_with_policy(a, b, c, d, PredicatePolicy)
-}
-
 /// Orientation of four 3D points with an explicit escalation policy.
 pub fn orient3d_with_policy(
     a: &Point3,
@@ -201,18 +190,9 @@ pub fn orient3d_with_policy(
     )
 }
 
-/// Classify `point` relative to the oriented line from `from` to `to`.
-pub fn classify_point_line(
-    from: &Point2,
-    to: &Point2,
-    point: &Point2,
-) -> PredicateOutcome<LineSide> {
-    classify_point_line_with_policy(from, to, point, PredicatePolicy)
-}
-
 /// Classify `point` relative to the oriented line from `from` to `to` with an
 /// explicit escalation policy.
-pub(crate) fn classify_point_line_with_policy(
+pub fn classify_point_line_with_policy(
     from: &Point2,
     to: &Point2,
     point: &Point2,
@@ -502,16 +482,6 @@ pub fn line2_orientation_with_facts(
     }
 }
 
-/// Classify `point` against `from -> to` using retained line evidence.
-pub fn classify_point_line_with_orientation(
-    from: &Point2,
-    to: &Point2,
-    point: &Point2,
-    orientation: &Line2Orientation,
-) -> PredicateOutcome<LineSide> {
-    classify_point_line_with_orientation_and_policy(from, to, point, orientation, PredicatePolicy)
-}
-
 /// Classify a point using retained line evidence and an explicit policy.
 ///
 /// `orientation` must have been derived from the same ordered endpoints with
@@ -560,17 +530,12 @@ pub fn classify_point_line_with_orientation_and_policy(
     map_outcome(orient2d_real_expr(from, to, point, policy), LineSide::from)
 }
 
-/// In-circle predicate for four 2D points.
+/// In-circle predicate for four 2D points with an explicit escalation policy.
 ///
 /// Positive means `d` lies inside the oriented circumcircle through `a`, `b`,
 /// and `c` when those three points are counter-clockwise. Reversing the
 /// orientation of `a`, `b`, and `c` reverses the sign.
-pub fn incircle2d(a: &Point2, b: &Point2, c: &Point2, d: &Point2) -> PredicateOutcome<Sign> {
-    incircle2d_with_policy(a, b, c, d, PredicatePolicy)
-}
-
-/// In-circle predicate for four 2D points with an explicit escalation policy.
-pub(crate) fn incircle2d_with_policy(
+pub fn incircle2d_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -721,17 +686,6 @@ pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Eviden
     }
 }
 
-/// Test `point` against an oriented circle using retained evidence.
-pub fn incircle2d_with_evidence(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    point: &Point2,
-    evidence: &Incircle2Evidence,
-) -> PredicateOutcome<Sign> {
-    incircle2d_with_evidence_and_policy(a, b, c, point, evidence, PredicatePolicy)
-}
-
 /// Test a point using retained circle evidence and an explicit policy.
 ///
 /// `evidence` must have been derived from the same ordered source points with
@@ -790,23 +744,12 @@ pub fn incircle2d_with_evidence_and_policy(
     )
 }
 
-/// In-sphere predicate for five 3D points.
+/// In-sphere predicate for five 3D points with an explicit escalation policy.
 ///
 /// Positive means `e` lies inside the oriented circumsphere through `a`, `b`,
 /// `c`, and `d` when the tetrahedron orientation matches the exact kernel's
 /// convention. Reversing that orientation reverses the sign.
-pub fn insphere3d(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-    e: &Point3,
-) -> PredicateOutcome<Sign> {
-    insphere3d_with_policy(a, b, c, d, e, PredicatePolicy)
-}
-
-/// In-sphere predicate for five 3D points with an explicit escalation policy.
-pub(crate) fn insphere3d_with_policy(
+pub fn insphere3d_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -1053,18 +996,6 @@ pub fn insphere3_evidence(a: &Point3, b: &Point3, c: &Point3, d: &Point3) -> Ins
         lift_coeff,
         constant,
     }
-}
-
-/// Test `point` against an oriented sphere using retained evidence.
-pub fn insphere3d_with_evidence(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-    point: &Point3,
-    evidence: &Insphere3Evidence,
-) -> PredicateOutcome<Sign> {
-    insphere3d_with_evidence_and_policy(a, b, c, d, point, evidence, PredicatePolicy)
 }
 
 /// Test a point using retained sphere evidence and an explicit policy.
@@ -1464,6 +1395,8 @@ mod tests {
     use hyperreal::Rational;
     use proptest::prelude::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     #[cfg(feature = "dispatch-trace")]
     fn dispatch_trace_test_lock() -> &'static std::sync::Mutex<()> {
         static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
@@ -1499,7 +1432,10 @@ mod tests {
         let a = p2(0.0, 0.0);
         let b = p2(1.0, 0.0);
         let c = p2(0.0, 1.0);
-        assert_eq!(orient2d(&a, &b, &c).value(), Some(Sign::Positive));
+        assert_eq!(
+            orient2d_with_policy(&a, &b, &c, APPROX).value(),
+            Some(Sign::Positive)
+        );
     }
 
     #[test]
@@ -1557,7 +1493,10 @@ mod tests {
         let b = p3(1.0, 0.0, 0.0);
         let c = p3(0.0, 1.0, 0.0);
         let d = p3(0.0, 0.0, 1.0);
-        assert_eq!(orient3d(&a, &b, &c, &d).value(), Some(Sign::Negative));
+        assert_eq!(
+            orient3d_with_policy(&a, &b, &c, &d, APPROX).value(),
+            Some(Sign::Negative)
+        );
     }
 
     #[cfg(feature = "dispatch-trace")]
@@ -1847,8 +1786,9 @@ mod tests {
         assert!(orientation.facts().fixed_coordinates_shared_denominator);
         for point in [p2(-0.75, -0.5), p2(0.5, 0.25), p2(0.125, 0.125)] {
             assert_eq!(
-                classify_point_line_with_orientation(&a, &b, &point, &orientation).value(),
-                classify_point_line(&a, &b, &point).value()
+                crate::classify_point_line_with_orientation(&a, &b, &point, &orientation, APPROX)
+                    .value(),
+                crate::classify_point_line(&a, &b, &point, APPROX).value()
             );
         }
     }
@@ -1975,7 +1915,7 @@ mod tests {
                 RefinementNeed::RealRefinement,
             )
             .value(),
-            incircle2d_with_evidence(&a, &b, &c, &query, &evidence).value()
+            incircle2d_with_evidence_and_policy(&a, &b, &c, &query, &evidence, APPROX,).value()
         );
 
         let p = rp3(0, 0, 0);
@@ -2035,7 +1975,8 @@ mod tests {
                 RefinementNeed::RealRefinement,
             )
             .value(),
-            insphere3d_with_evidence(&p, &q, &r, &s, &sphere_query, &sphere).value()
+            insphere3d_with_evidence_and_policy(&p, &q, &r, &s, &sphere_query, &sphere, APPROX,)
+                .value()
         );
     }
 
@@ -2051,8 +1992,8 @@ mod tests {
         );
         for point in [p2(0.2, 0.1), p2(0.95, 0.0), p2(0.82, 0.0)] {
             assert_eq!(
-                incircle2d_with_evidence(&a, &b, &c, &point, &evidence).value(),
-                incircle2d(&a, &b, &c, &point).value()
+                incircle2d_with_evidence_and_policy(&a, &b, &c, &point, &evidence, APPROX,).value(),
+                incircle2d_with_policy(&a, &b, &c, &point, APPROX,).value()
             );
         }
     }
@@ -2070,8 +2011,9 @@ mod tests {
         );
         for point in [p3(0.1, 0.1, 0.1), p3(1.1, 0.0, 0.0), p3(0.82, 0.0, 0.0)] {
             assert_eq!(
-                insphere3d_with_evidence(&a, &b, &c, &d, &point, &evidence).value(),
-                insphere3d(&a, &b, &c, &d, &point).value()
+                insphere3d_with_evidence_and_policy(&a, &b, &c, &d, &point, &evidence, APPROX,)
+                    .value(),
+                insphere3d_with_policy(&a, &b, &c, &d, &point, APPROX,).value()
             );
         }
     }

@@ -38,28 +38,23 @@ pub type Incircle2dCase = (Point2, Point2, Point2, Point2);
 /// [`crate::insphere3_batch`] and, with the `parallel` feature,
 /// `crate::insphere3_batch_parallel`.
 pub type Insphere3dCase = (Point3, Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`classify_point_plane_batch`] and
-/// `classify_point_plane_batch_parallel` when the `parallel` feature is
+/// Case tuple accepted by [`crate::classify_point_plane_batch`] and
+/// `crate::classify_point_plane_batch_parallel` when the `parallel` feature is
 /// enabled.
 pub type PointPlaneCase = (Point3, Plane3);
-/// Case tuple accepted by [`classify_segment3_intersection_batch`].
+/// Case tuple accepted by [`crate::classify_segment3_intersection_batch`].
 pub type Segment3IntersectionCase = (Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`classify_segment_triangle3_intersection_batch`].
+/// Case tuple accepted by [`crate::classify_segment_triangle3_intersection_batch`].
 pub type SegmentTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`classify_ray_triangle3_intersection_batch`].
+/// Case tuple accepted by [`crate::classify_ray_triangle3_intersection_batch`].
 pub type RayTriangle3IntersectionCase = (Point3, Point3, Point3, Point3, Point3);
-/// Case tuple accepted by [`classify_circle_line2_batch`].
+/// Case tuple accepted by [`crate::classify_circle_line2_batch`].
 pub type CircleLine2Case = (Point2, Real, Point2, Point2);
-/// Case tuple accepted by [`classify_circle_segment2_batch`].
+/// Case tuple accepted by [`crate::classify_circle_segment2_batch`].
 pub type CircleSegment2Case = (Point2, Real, Point2, Point2);
 
-/// Evaluate a batch of 2D orientation predicates.
-pub fn orient2d_batch(cases: &[Orient2dCase]) -> Vec<PredicateOutcome<Sign>> {
-    orient2d_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of 2D orientation predicates with an explicit policy.
-pub(crate) fn orient2d_batch_with_policy(
+pub fn orient2d_batch_with_policy(
     cases: &[Orient2dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
@@ -70,13 +65,8 @@ pub(crate) fn orient2d_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of line-side classifications.
-pub fn classify_point_line_batch(cases: &[Orient2dCase]) -> Vec<PredicateOutcome<LineSide>> {
-    classify_point_line_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of line-side classifications with an explicit policy.
-pub(crate) fn classify_point_line_batch_with_policy(
+pub fn classify_point_line_batch_with_policy(
     cases: &[Orient2dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<LineSide>> {
@@ -87,13 +77,8 @@ pub(crate) fn classify_point_line_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of 3D orientation predicates.
-pub fn orient3d_batch(cases: &[Orient3dCase]) -> Vec<PredicateOutcome<Sign>> {
-    orient3d_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of 3D orientation predicates with an explicit policy.
-pub(crate) fn orient3d_batch_with_policy(
+pub fn orient3d_batch_with_policy(
     cases: &[Orient3dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
@@ -104,13 +89,8 @@ pub(crate) fn orient3d_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of explicit point-plane classifications.
-pub fn classify_point_plane_batch(cases: &[PointPlaneCase]) -> Vec<PredicateOutcome<PlaneSide>> {
-    classify_point_plane_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of explicit point-plane classifications with an explicit policy.
-pub(crate) fn classify_point_plane_batch_with_policy(
+pub fn classify_point_plane_batch_with_policy(
     cases: &[PointPlaneCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<PlaneSide>> {
@@ -121,15 +101,8 @@ pub(crate) fn classify_point_plane_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of oriented-plane classifications.
-pub fn classify_point_oriented_plane_batch(
-    cases: &[Orient3dCase],
-) -> Vec<PredicateOutcome<PlaneSide>> {
-    classify_point_oriented_plane_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of oriented-plane classifications with an explicit policy.
-pub(crate) fn classify_point_oriented_plane_batch_with_policy(
+pub fn classify_point_oriented_plane_batch_with_policy(
     cases: &[Orient3dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<PlaneSide>> {
@@ -144,13 +117,8 @@ pub(crate) fn classify_point_oriented_plane_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of 2D in-circle predicates.
-pub fn incircle2d_batch(cases: &[Incircle2dCase]) -> Vec<PredicateOutcome<Sign>> {
-    incircle2d_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of 2D in-circle predicates with an explicit policy.
-pub(crate) fn incircle2d_batch_with_policy(
+pub fn incircle2d_batch_with_policy(
     cases: &[Incircle2dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
@@ -161,13 +129,8 @@ pub(crate) fn incircle2d_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of 3D in-sphere predicates.
-pub fn insphere3d_batch(cases: &[Insphere3dCase]) -> Vec<PredicateOutcome<Sign>> {
-    insphere3d_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of 3D in-sphere predicates with an explicit policy.
-pub(crate) fn insphere3d_batch_with_policy(
+pub fn insphere3d_batch_with_policy(
     cases: &[Insphere3dCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Sign>> {
@@ -178,20 +141,13 @@ pub(crate) fn insphere3d_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of closed 3D segment/segment relation predicates.
-pub fn classify_segment3_intersection_batch(
-    cases: &[Segment3IntersectionCase],
-) -> Vec<PredicateOutcome<Segment3Intersection>> {
-    classify_segment3_intersection_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of closed 3D segment/segment relation predicates with an
 /// explicit policy.
 ///
 /// Batch APIs are scheduling helpers only: every item still returns its own
 /// exact predicate outcome and provenance. Batching can reuse object structure
 /// but cannot turn unknown or lossy answers into topology.
-pub(crate) fn classify_segment3_intersection_batch_with_policy(
+pub fn classify_segment3_intersection_batch_with_policy(
     cases: &[Segment3IntersectionCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<Segment3Intersection>> {
@@ -202,16 +158,9 @@ pub(crate) fn classify_segment3_intersection_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of closed segment/triangle relation predicates.
-pub fn classify_segment_triangle3_intersection_batch(
-    cases: &[SegmentTriangle3IntersectionCase],
-) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
-    classify_segment_triangle3_intersection_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of closed segment/triangle relation predicates with an
 /// explicit policy.
-pub(crate) fn classify_segment_triangle3_intersection_batch_with_policy(
+pub fn classify_segment_triangle3_intersection_batch_with_policy(
     cases: &[SegmentTriangle3IntersectionCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
@@ -228,16 +177,9 @@ pub(crate) fn classify_segment_triangle3_intersection_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of ray/triangle relation predicates.
-pub fn classify_ray_triangle3_intersection_batch(
-    cases: &[RayTriangle3IntersectionCase],
-) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
-    classify_ray_triangle3_intersection_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of ray/triangle relation predicates with an explicit
 /// policy.
-pub(crate) fn classify_ray_triangle3_intersection_batch_with_policy(
+pub fn classify_ray_triangle3_intersection_batch_with_policy(
     cases: &[RayTriangle3IntersectionCase],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
@@ -254,15 +196,8 @@ pub(crate) fn classify_ray_triangle3_intersection_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of circle/line relation predicates.
-pub fn classify_circle_line2_batch(
-    cases: &[CircleLine2Case],
-) -> Vec<PredicateOutcome<CircleLineRelation>> {
-    classify_circle_line2_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of circle/line relation predicates with an explicit policy.
-pub(crate) fn classify_circle_line2_batch_with_policy(
+pub fn classify_circle_line2_batch_with_policy(
     cases: &[CircleLine2Case],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<CircleLineRelation>> {
@@ -275,16 +210,9 @@ pub(crate) fn classify_circle_line2_batch_with_policy(
         .collect()
 }
 
-/// Evaluate a batch of circle/segment relation predicates.
-pub fn classify_circle_segment2_batch(
-    cases: &[CircleSegment2Case],
-) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
-    classify_circle_segment2_batch_with_policy(cases, PredicatePolicy)
-}
-
 /// Evaluate a batch of circle/segment relation predicates with an explicit
 /// policy.
-pub(crate) fn classify_circle_segment2_batch_with_policy(
+pub fn classify_circle_segment2_batch_with_policy(
     cases: &[CircleSegment2Case],
     policy: PredicatePolicy,
 ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
@@ -301,13 +229,8 @@ pub(crate) fn classify_circle_segment2_batch_with_policy(
 mod parallel {
     use super::*;
 
-    /// Evaluate a batch of 2D orientation predicates in parallel.
-    pub fn orient2d_batch_parallel(cases: &[Orient2dCase]) -> Vec<PredicateOutcome<Sign>> {
-        orient2d_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of 2D orientation predicates in parallel with an explicit policy.
-    pub(crate) fn orient2d_batch_parallel_with_policy(
+    pub fn orient2d_batch_parallel_with_policy(
         cases: &[Orient2dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<Sign>> {
@@ -318,15 +241,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of line-side classifications in parallel.
-    pub fn classify_point_line_batch_parallel(
-        cases: &[Orient2dCase],
-    ) -> Vec<PredicateOutcome<LineSide>> {
-        classify_point_line_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of line-side classifications in parallel with an explicit policy.
-    pub(crate) fn classify_point_line_batch_parallel_with_policy(
+    pub fn classify_point_line_batch_parallel_with_policy(
         cases: &[Orient2dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<LineSide>> {
@@ -337,13 +253,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of 3D orientation predicates in parallel.
-    pub fn orient3d_batch_parallel(cases: &[Orient3dCase]) -> Vec<PredicateOutcome<Sign>> {
-        orient3d_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of 3D orientation predicates in parallel with an explicit policy.
-    pub(crate) fn orient3d_batch_parallel_with_policy(
+    pub fn orient3d_batch_parallel_with_policy(
         cases: &[Orient3dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<Sign>> {
@@ -354,15 +265,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of explicit point-plane classifications in parallel.
-    pub fn classify_point_plane_batch_parallel(
-        cases: &[PointPlaneCase],
-    ) -> Vec<PredicateOutcome<PlaneSide>> {
-        classify_point_plane_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of explicit point-plane classifications in parallel with an explicit policy.
-    pub(crate) fn classify_point_plane_batch_parallel_with_policy(
+    pub fn classify_point_plane_batch_parallel_with_policy(
         cases: &[PointPlaneCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<PlaneSide>> {
@@ -373,15 +277,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of oriented-plane classifications in parallel.
-    pub fn classify_point_oriented_plane_batch_parallel(
-        cases: &[Orient3dCase],
-    ) -> Vec<PredicateOutcome<PlaneSide>> {
-        classify_point_oriented_plane_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of oriented-plane classifications in parallel with an explicit policy.
-    pub(crate) fn classify_point_oriented_plane_batch_parallel_with_policy(
+    pub fn classify_point_oriented_plane_batch_parallel_with_policy(
         cases: &[Orient3dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<PlaneSide>> {
@@ -398,13 +295,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of 2D in-circle predicates in parallel.
-    pub fn incircle2d_batch_parallel(cases: &[Incircle2dCase]) -> Vec<PredicateOutcome<Sign>> {
-        incircle2d_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of 2D in-circle predicates in parallel with an explicit policy.
-    pub(crate) fn incircle2d_batch_parallel_with_policy(
+    pub fn incircle2d_batch_parallel_with_policy(
         cases: &[Incircle2dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<Sign>> {
@@ -415,13 +307,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of 3D in-sphere predicates in parallel.
-    pub fn insphere3d_batch_parallel(cases: &[Insphere3dCase]) -> Vec<PredicateOutcome<Sign>> {
-        insphere3d_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of 3D in-sphere predicates in parallel with an explicit policy.
-    pub(crate) fn insphere3d_batch_parallel_with_policy(
+    pub fn insphere3d_batch_parallel_with_policy(
         cases: &[Insphere3dCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<Sign>> {
@@ -432,15 +319,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of closed 3D segment/segment relation predicates in parallel.
-    pub fn classify_segment3_intersection_batch_parallel(
-        cases: &[Segment3IntersectionCase],
-    ) -> Vec<PredicateOutcome<Segment3Intersection>> {
-        classify_segment3_intersection_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of closed 3D segment/segment relation predicates in parallel with an explicit policy.
-    pub(crate) fn classify_segment3_intersection_batch_parallel_with_policy(
+    pub fn classify_segment3_intersection_batch_parallel_with_policy(
         cases: &[Segment3IntersectionCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<Segment3Intersection>> {
@@ -451,15 +331,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of closed segment/triangle relation predicates in parallel.
-    pub fn classify_segment_triangle3_intersection_batch_parallel(
-        cases: &[SegmentTriangle3IntersectionCase],
-    ) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
-        classify_segment_triangle3_intersection_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of closed segment/triangle relation predicates in parallel with an explicit policy.
-    pub(crate) fn classify_segment_triangle3_intersection_batch_parallel_with_policy(
+    pub fn classify_segment_triangle3_intersection_batch_parallel_with_policy(
         cases: &[SegmentTriangle3IntersectionCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<SegmentTriangleIntersection>> {
@@ -476,15 +349,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of ray/triangle relation predicates in parallel.
-    pub fn classify_ray_triangle3_intersection_batch_parallel(
-        cases: &[RayTriangle3IntersectionCase],
-    ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
-        classify_ray_triangle3_intersection_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of ray/triangle relation predicates in parallel with an explicit policy.
-    pub(crate) fn classify_ray_triangle3_intersection_batch_parallel_with_policy(
+    pub fn classify_ray_triangle3_intersection_batch_parallel_with_policy(
         cases: &[RayTriangle3IntersectionCase],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<RayTriangleIntersection>> {
@@ -497,15 +363,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of circle/line relation predicates in parallel.
-    pub fn classify_circle_line2_batch_parallel(
-        cases: &[CircleLine2Case],
-    ) -> Vec<PredicateOutcome<CircleLineRelation>> {
-        classify_circle_line2_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of circle/line relation predicates in parallel with an explicit policy.
-    pub(crate) fn classify_circle_line2_batch_parallel_with_policy(
+    pub fn classify_circle_line2_batch_parallel_with_policy(
         cases: &[CircleLine2Case],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<CircleLineRelation>> {
@@ -518,15 +377,8 @@ mod parallel {
             .collect()
     }
 
-    /// Evaluate a batch of circle/segment relation predicates in parallel.
-    pub fn classify_circle_segment2_batch_parallel(
-        cases: &[CircleSegment2Case],
-    ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {
-        classify_circle_segment2_batch_parallel_with_policy(cases, PredicatePolicy)
-    }
-
     /// Evaluate a batch of circle/segment relation predicates in parallel with an explicit policy.
-    pub(crate) fn classify_circle_segment2_batch_parallel_with_policy(
+    pub fn classify_circle_segment2_batch_parallel_with_policy(
         cases: &[CircleSegment2Case],
         policy: PredicatePolicy,
     ) -> Vec<PredicateOutcome<CircleSegmentRelation>> {

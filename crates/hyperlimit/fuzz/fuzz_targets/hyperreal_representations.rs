@@ -8,6 +8,8 @@ use hyperlimit::{
 use hyperreal::{Rational, Real, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 fuzz_target!(|_data: &[u8]| {
     let values = representative_values();
     for left in &values {
@@ -16,23 +18,23 @@ fuzz_target!(|_data: &[u8]| {
             let b = Point2::new(left + Real::one(), right.clone());
             let c = Point2::new(left.clone(), right + Real::one());
 
-            let orientation = orient2(&a, &b, &c);
-            let reversed = orient2(&a, &c, &b);
+            let orientation = orient2(&a, &b, &c, APPROX);
+            let reversed = orient2(&a, &c, &b, APPROX);
             assert_eq!(
                 orientation.value().map(|sign| sign.reversed()),
                 reversed.value()
             );
             assert_eq!(
-                orient2_batch(&[(a.clone(), b.clone(), c.clone())])[0].value(),
+                orient2_batch(&[(a.clone(), b.clone(), c.clone())], APPROX)[0].value(),
                 orientation.value()
             );
             assert_eq!(
-                classify_point_line(&a, &b, &a).value(),
+                classify_point_line(&a, &b, &a, APPROX).value(),
                 Some(hyperlimit::LineSide::On)
             );
 
-            let _ = classify_real_sign(left);
-            let _ = compare_reals(left, right);
+            let _ = classify_real_sign(left, APPROX);
+            let _ = compare_reals(left, right, APPROX);
         }
     }
 });

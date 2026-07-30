@@ -13,7 +13,7 @@ use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{orient2d_with_policy, orient3d_with_policy};
 use crate::predicates::segment_plane::{
     SegmentPlaneIntersection, SegmentPlaneRelation, SegmentPlaneValidationError,
-    intersect_segment_with_plane_values, point_plane_value,
+    intersect_segment_with_plane_values_with_policy, point_plane_value,
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::resolve_real_sign_direct;
@@ -82,9 +82,9 @@ pub struct SegmentTriangleIntersectionReport {
 
 impl SegmentTriangleIntersectionReport {
     /// Validate retained construction and classification facts.
-    pub fn validate(&self) -> Result<(), SegmentTriangleValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SegmentTriangleValidationError> {
         self.plane_event
-            .validate()
+            .validate(policy)
             .map_err(SegmentTriangleValidationError::PlaneEventInvalid)?;
         let expected =
             relation_from_segment_plane_event(&self.plane_event, self.triangle_location)?;
@@ -105,7 +105,7 @@ impl SegmentTriangleIntersectionReport {
         c: &Point3,
         policy: PredicatePolicy,
     ) -> Result<(), SegmentTriangleValidationError> {
-        self.validate()?;
+        self.validate(policy)?;
         match classify_segment_triangle3_intersection_report_with_policy(p, q, a, b, c, policy) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SegmentTriangleValidationError::SourceReplayMismatch),
@@ -186,7 +186,7 @@ pub struct RayTriangleIntersectionReport {
 
 impl RayTriangleIntersectionReport {
     /// Validate retained construction and classification facts.
-    pub fn validate(&self) -> Result<(), RayTriangleValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), RayTriangleValidationError> {
         match (self.point.is_some(), self.parameter.is_some()) {
             (true, false) => return Err(RayTriangleValidationError::InvalidParameter),
             (false, true) => return Err(RayTriangleValidationError::UnexpectedCandidate),
@@ -194,12 +194,12 @@ impl RayTriangleIntersectionReport {
         }
 
         if let Some(parameter) = self.parameter.as_ref() {
-            assert_ray_parameter_nonnegative(parameter)?;
+            assert_ray_parameter_nonnegative(parameter, policy)?;
         }
 
         match (self.parameter_ratio.as_ref(), self.parameter.as_ref()) {
             (Some(ratio), Some(parameter)) => {
-                validate_ray_parameter_ratio(ratio, parameter)?;
+                validate_ray_parameter_ratio(ratio, parameter, policy)?;
                 if self.origin_side == Some(PlaneSide::On)
                     || self.direction_sign == Some(Sign::Zero)
                 {
@@ -208,7 +208,7 @@ impl RayTriangleIntersectionReport {
             }
             (Some(_), None) => return Err(RayTriangleValidationError::InvalidParameterRatio),
             (None, Some(parameter)) => {
-                validate_ray_origin_parameter(self.origin_side, parameter)?;
+                validate_ray_origin_parameter(self.origin_side, parameter, policy)?;
             }
             (None, None) => {}
         }
@@ -231,7 +231,7 @@ impl RayTriangleIntersectionReport {
         c: &Point3,
         policy: PredicatePolicy,
     ) -> Result<(), RayTriangleValidationError> {
-        self.validate()?;
+        self.validate(policy)?;
         match classify_ray_triangle3_intersection_report_with_policy(
             origin, direction, a, b, c, policy,
         ) {
@@ -246,19 +246,9 @@ impl RayTriangleIntersectionReport {
     }
 }
 
-/// Classify `point` relative to triangle `abc`.
-pub fn classify_point_triangle(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    point: &Point2,
-) -> PredicateOutcome<TriangleLocation> {
-    classify_point_triangle_with_policy(a, b, c, point, PredicatePolicy)
-}
-
 /// Classify `point` relative to triangle `abc` with an explicit escalation
 /// policy.
-pub(crate) fn classify_point_triangle_with_policy(
+pub fn classify_point_triangle_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -268,20 +258,15 @@ pub(crate) fn classify_point_triangle_with_policy(
     classify_point_triangle_impl(a, b, c, point, policy, None, None)
 }
 
-/// Classify `point` relative to the 3D triangle `abc`.
-pub fn classify_point_triangle3(
+/// Derive reusable orientation evidence for ordered triangle `abc`.
+pub fn triangle3_orientation(
     a: &Point3,
     b: &Point3,
     c: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<Triangle3Location> {
-    classify_point_triangle3_with_policy(a, b, c, point, PredicatePolicy)
-}
-
-/// Derive reusable orientation evidence for ordered triangle `abc`.
-pub fn triangle3_orientation(a: &Point3, b: &Point3, c: &Point3) -> Triangle3Orientation {
+    policy: PredicatePolicy,
+) -> Triangle3Orientation {
     let normal = triangle3_normal(a, b, c);
-    let normal_signs = triangle3_normal_signs_outcome(&normal, PredicatePolicy::STRICT);
+    let normal_signs = triangle3_normal_signs_outcome(&normal, policy);
     Triangle3Orientation {
         normal,
         normal_signs,
@@ -299,16 +284,11 @@ pub fn classify_point_triangle3_with_orientation(
     c: &Point3,
     point: &Point3,
     orientation: &Triangle3Orientation,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<Triangle3Location> {
-    classify_point_triangle3_impl(
-        a,
-        b,
-        c,
-        point,
-        PredicatePolicy::STRICT,
-        &orientation.normal,
-        orientation.normal_signs,
-    )
+    let normal_signs = reusable_outcome(orientation.normal_signs, policy)
+        .unwrap_or_else(|| triangle3_normal_signs_outcome(&orientation.normal, policy));
+    classify_point_triangle3_impl(a, b, c, point, policy, &orientation.normal, normal_signs)
 }
 
 /// Classify `point` relative to the 3D triangle `abc` with an explicit
@@ -318,7 +298,7 @@ pub fn classify_point_triangle3_with_orientation(
 /// certifies that `point` is on the supporting plane. Containment is decided by
 /// exact signs of `normal . ((edge_end - edge_start) x (point - edge_start))`
 /// for each oriented edge.
-pub(crate) fn classify_point_triangle3_with_policy(
+pub fn classify_point_triangle3_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -330,22 +310,13 @@ pub(crate) fn classify_point_triangle3_with_policy(
     classify_point_triangle3_impl(a, b, c, point, policy, &normal, normal_signs)
 }
 
-/// Decide the sign of a triangle winding normal dotted with a reference normal.
+/// Decide the policy-controlled sign of a triangle winding normal dotted with a
+/// reference normal.
 ///
 /// The triangle normal is `(b - a) x (c - a)`. The returned sign is positive
 /// when that winding agrees with `reference_normal`, negative when it is
 /// reversed, and zero when the dot product is exactly zero.
-pub fn triangle3_winding_normal_sign(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    reference_normal: &Point3,
-) -> PredicateOutcome<Sign> {
-    triangle3_winding_normal_sign_with_policy(a, b, c, reference_normal, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`triangle3_winding_normal_sign`].
-pub(crate) fn triangle3_winding_normal_sign_with_policy(
+pub fn triangle3_winding_normal_sign_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -365,38 +336,15 @@ pub(crate) fn triangle3_winding_normal_sign_with_policy(
     resolve_real_sign_direct(&dot, policy, RefinementNeed::RealRefinement)
 }
 
-/// Classify the intersection of a closed 3D segment `pq` with triangle `abc`.
-pub fn classify_segment_triangle3_intersection(
-    p: &Point3,
-    q: &Point3,
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> PredicateOutcome<SegmentTriangleIntersection> {
-    classify_segment_triangle3_intersection_with_policy(p, q, a, b, c, PredicatePolicy)
-}
-
-/// Classify a closed 3D segment against a triangle and retain exact
-/// construction evidence.
-pub fn classify_segment_triangle3_intersection_report(
-    p: &Point3,
-    q: &Point3,
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> PredicateOutcome<SegmentTriangleIntersectionReport> {
-    classify_segment_triangle3_intersection_report_with_policy(p, q, a, b, c, PredicatePolicy)
-}
-
 /// Policy-controlled report-bearing variant of
-/// [`classify_segment_triangle3_intersection`].
+/// [`classify_segment_triangle3_intersection_with_policy`].
 ///
 /// Endpoint signs are first certified against the triangle's supporting plane.
 /// A single candidate point is retained only for endpoint-on-plane and proper
 /// crossing events, using an exact segment/plane determinant ratio. The candidate is then replayed
 /// through the exact 3D point/triangle classifier before the coarse relation is
 /// accepted.
-pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
+pub fn classify_segment_triangle3_intersection_report_with_policy(
     p: &Point3,
     q: &Point3,
     a: &Point3,
@@ -425,7 +373,8 @@ pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
     ];
     let d0 = point_plane_value(&plane, p);
     let d1 = point_plane_value(&plane, q);
-    let plane_event = intersect_segment_with_plane_values(&d0, &d1, p, q, sides);
+    let plane_event =
+        intersect_segment_with_plane_values_with_policy(&d0, &d1, p, q, sides, policy);
 
     match plane_event.relation {
         SegmentPlaneRelation::Unknown => {
@@ -484,7 +433,7 @@ pub(crate) fn classify_segment_triangle3_intersection_report_with_policy(
 /// the existing exact point/triangle classifier. Coplanar cases are reported as
 /// a first-class exact relation instead of being projected with a primitive
 /// tolerance, keeping planar arrangement ownership in higher crates.
-pub(crate) fn classify_segment_triangle3_intersection_with_policy(
+pub fn classify_segment_triangle3_intersection_with_policy(
     p: &Point3,
     q: &Point3,
     a: &Point3,
@@ -614,41 +563,8 @@ fn classify_segment_triangle3_intersection_from_sides(
     }
 }
 
-/// Classify the intersection of a 3D ray with triangle `abc`.
-///
-/// `direction` is a direction vector, not a second point. A zero direction is
-/// treated as a degenerate ray whose only possible intersection is its origin.
-pub fn classify_ray_triangle3_intersection(
-    origin: &Point3,
-    direction: &Point3,
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> PredicateOutcome<RayTriangleIntersection> {
-    classify_ray_triangle3_intersection_with_policy(origin, direction, a, b, c, PredicatePolicy)
-}
-
-/// Classify a 3D ray against a triangle and retain exact construction
-/// evidence.
-pub fn classify_ray_triangle3_intersection_report(
-    origin: &Point3,
-    direction: &Point3,
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-) -> PredicateOutcome<RayTriangleIntersectionReport> {
-    classify_ray_triangle3_intersection_report_with_policy(
-        origin,
-        direction,
-        a,
-        b,
-        c,
-        PredicatePolicy,
-    )
-}
-
 /// Policy-controlled report-bearing variant of
-/// [`classify_ray_triangle3_intersection`].
+/// [`classify_ray_triangle3_intersection_with_policy`].
 ///
 /// The ray first certifies the origin side and the sign of
 /// `normal . direction` against the triangle's supporting plane. A candidate is
@@ -657,7 +573,7 @@ pub fn classify_ray_triangle3_intersection_report(
 /// nonnegative. The retained ratio and point/triangle replay preserve evidence
 /// before topology changes, while keeping the classic
 /// ray-plane-then-triangle-containment decomposition explicit.
-pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
+pub fn classify_ray_triangle3_intersection_report_with_policy(
     origin: &Point3,
     direction: &Point3,
     a: &Point3,
@@ -778,7 +694,7 @@ pub(crate) fn classify_ray_triangle3_intersection_report_with_policy(
 /// `-(plane(origin))` and `normal.direction`. The actual candidate point is
 /// constructed only after the parameter is certified nonnegative. The final triangle
 /// containment reuses the existing exact edge-halfspace classifier.
-pub(crate) fn classify_ray_triangle3_intersection_with_policy(
+pub fn classify_ray_triangle3_intersection_with_policy(
     origin: &Point3,
     direction: &Point3,
     a: &Point3,
@@ -863,20 +779,9 @@ fn classify_point_triangle3_impl(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
-/// Classify `point` relative to tetrahedron `abcd`.
-pub fn classify_point_tetrahedron(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<TetrahedronLocation> {
-    classify_point_tetrahedron_with_policy(a, b, c, d, point, PredicatePolicy)
-}
-
 /// Classify `point` relative to tetrahedron `abcd` with an explicit predicate
 /// escalation policy.
-pub(crate) fn classify_point_tetrahedron_with_policy(
+pub fn classify_point_tetrahedron_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -946,17 +851,6 @@ pub(crate) fn classify_point_tetrahedron_with_policy(
     PredicateOutcome::decided(location, certainty, stage)
 }
 
-/// Classify `point` relative to triangle `abc` using cached structural facts.
-pub fn classify_point_triangle_with_facts(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    point: &Point2,
-    facts: Triangle2Facts,
-) -> PredicateOutcome<TriangleLocation> {
-    classify_point_triangle_with_policy_and_facts(a, b, c, point, PredicatePolicy, facts)
-}
-
 /// Classify `point` relative to triangle `abc` using a retained orientation.
 ///
 /// `orientation` must be the exact [`crate::orient2`] outcome for the same
@@ -969,16 +863,10 @@ pub fn classify_point_triangle_with_orientation(
     c: &Point2,
     point: &Point2,
     orientation: PredicateOutcome<Sign>,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<TriangleLocation> {
-    classify_point_triangle_impl(
-        a,
-        b,
-        c,
-        point,
-        PredicatePolicy::STRICT,
-        None,
-        Some(orientation),
-    )
+    let orientation = reusable_outcome(orientation, policy);
+    classify_point_triangle_impl(a, b, c, point, policy, None, orientation)
 }
 
 /// Classify `point` relative to triangle `abc` with both an explicit policy and
@@ -987,13 +875,13 @@ pub fn classify_point_triangle_with_orientation(
 /// Cached facts can certify structurally degenerate triangles without building
 /// the orientation determinant. Non-degenerate containment still uses exact
 /// orientation signs for the three triangle edges.
-pub(crate) fn classify_point_triangle_with_policy_and_facts(
+pub fn classify_point_triangle_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     c: &Point2,
     point: &Point2,
-    policy: PredicatePolicy,
     facts: Triangle2Facts,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<TriangleLocation> {
     classify_point_triangle_impl(a, b, c, point, policy, Some(facts), None)
 }
@@ -1102,6 +990,17 @@ fn classify_point_triangle_impl(
     };
 
     PredicateOutcome::decided(location, certainty, stage)
+}
+
+#[inline]
+fn reusable_outcome<T: Copy>(
+    outcome: PredicateOutcome<T>,
+    policy: PredicatePolicy,
+) -> Option<PredicateOutcome<T>> {
+    match outcome {
+        PredicateOutcome::Decided { certainty, .. } if !policy.accepts(certainty) => None,
+        outcome => Some(outcome),
+    }
 }
 
 fn triangle_orientation_with_optional_facts(
@@ -1386,8 +1285,11 @@ fn relation_from_constructed_ray_triangle_point(
     }
 }
 
-fn assert_ray_parameter_nonnegative(parameter: &Real) -> Result<(), RayTriangleValidationError> {
-    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy) {
+fn assert_ray_parameter_nonnegative(
+    parameter: &Real,
+    policy: PredicatePolicy,
+) -> Result<(), RayTriangleValidationError> {
+    match compare_reals_with_policy(parameter, &Real::from(0), policy) {
         PredicateOutcome::Decided {
             value: Ordering::Less,
             ..
@@ -1400,10 +1302,11 @@ fn assert_ray_parameter_nonnegative(parameter: &Real) -> Result<(), RayTriangleV
 fn validate_ray_parameter_ratio(
     ratio: &RayTriangleParameterRatio,
     parameter: &Real,
+    policy: PredicatePolicy,
 ) -> Result<(), RayTriangleValidationError> {
     let quotient = (&ratio.numerator / &ratio.denominator)
         .map_err(|_| RayTriangleValidationError::InvalidParameterRatio)?;
-    match compare_reals_with_policy(&quotient, parameter, PredicatePolicy) {
+    match compare_reals_with_policy(&quotient, parameter, policy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             ..
@@ -1416,11 +1319,12 @@ fn validate_ray_parameter_ratio(
 fn validate_ray_origin_parameter(
     origin_side: Option<PlaneSide>,
     parameter: &Real,
+    policy: PredicatePolicy,
 ) -> Result<(), RayTriangleValidationError> {
     if origin_side != Some(PlaneSide::On) {
         return Err(RayTriangleValidationError::InvalidParameter);
     }
-    match compare_reals_with_policy(parameter, &Real::from(0), PredicatePolicy) {
+    match compare_reals_with_policy(parameter, &Real::from(0), policy) {
         PredicateOutcome::Decided {
             value: Ordering::Equal,
             ..
@@ -1644,6 +1548,8 @@ fn stage_rank(stage: Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn real(value: f64) -> hyperreal::Real {
         hyperreal::Real::try_from(value).expect("finite test Real")
     }
@@ -1664,7 +1570,7 @@ mod tests {
         let point = p2(0.5, 0.5);
 
         assert_eq!(
-            classify_point_triangle(&a, &b, &c, &point).value(),
+            crate::classify_point_triangle(&a, &b, &c, &point, APPROX).value(),
             Some(TriangleLocation::Inside)
         );
     }
@@ -1677,7 +1583,7 @@ mod tests {
         let point = p2(1.0, 0.0);
 
         assert_eq!(
-            classify_point_triangle(&a, &b, &c, &point).value(),
+            crate::classify_point_triangle(&a, &b, &c, &point, APPROX).value(),
             Some(TriangleLocation::OnEdge)
         );
     }
@@ -1689,23 +1595,23 @@ mod tests {
         let c = p3(0.0, 2.0, 0.0);
 
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(0.5, 0.5, 0.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(0.5, 0.5, 0.0), APPROX).value(),
             Some(Triangle3Location::Inside)
         );
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(1.0, 0.0, 0.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(1.0, 0.0, 0.0), APPROX).value(),
             Some(Triangle3Location::OnEdge)
         );
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(0.0, 0.0, 0.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(0.0, 0.0, 0.0), APPROX).value(),
             Some(Triangle3Location::OnVertex)
         );
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(2.0, 2.0, 0.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(2.0, 2.0, 0.0), APPROX).value(),
             Some(Triangle3Location::Outside)
         );
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(0.5, 0.5, 1.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(0.5, 0.5, 1.0), APPROX).value(),
             Some(Triangle3Location::OffPlane)
         );
     }
@@ -1719,11 +1625,11 @@ mod tests {
         let down = p3(0.0, 0.0, -1.0);
 
         assert_eq!(
-            triangle3_winding_normal_sign(&a, &b, &c, &up).value(),
+            crate::triangle3_winding_normal_sign(&a, &b, &c, &up, APPROX).value(),
             Some(Sign::Positive)
         );
         assert_eq!(
-            triangle3_winding_normal_sign(&a, &b, &c, &down).value(),
+            crate::triangle3_winding_normal_sign(&a, &b, &c, &down, APPROX).value(),
             Some(Sign::Negative)
         );
     }
@@ -1733,19 +1639,20 @@ mod tests {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(2.0, 0.0, 0.0);
         let c = p3(0.0, 2.0, 0.0);
-        let orientation = triangle3_orientation(&a, &b, &c);
+        let orientation = crate::triangle3_orientation(&a, &b, &c, APPROX);
 
         assert!(matches!(
             orientation.normal_signs(),
             PredicateOutcome::Decided { .. }
         ));
         assert_eq!(
-            classify_point_triangle3_with_orientation(
+            crate::classify_point_triangle3_with_orientation(
                 &a,
                 &b,
                 &c,
                 &p3(0.25, 0.25, 0.0),
                 &orientation,
+                APPROX
             )
             .value(),
             Some(Triangle3Location::Inside)
@@ -1759,45 +1666,49 @@ mod tests {
         let c = p3(0.0, 4.0, 0.0);
 
         assert_eq!(
-            classify_segment_triangle3_intersection(
+            crate::classify_segment_triangle3_intersection(
                 &p3(1.0, 1.0, -1.0),
                 &p3(1.0, 1.0, 1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(SegmentTriangleIntersection::Proper)
         );
         assert_eq!(
-            classify_segment_triangle3_intersection(
+            crate::classify_segment_triangle3_intersection(
                 &p3(4.0, 0.0, -1.0),
                 &p3(4.0, 0.0, 1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(SegmentTriangleIntersection::BoundaryTouch)
         );
         assert_eq!(
-            classify_segment_triangle3_intersection(
+            crate::classify_segment_triangle3_intersection(
                 &p3(5.0, 5.0, -1.0),
                 &p3(5.0, 5.0, 1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(SegmentTriangleIntersection::Disjoint)
         );
         assert_eq!(
-            classify_segment_triangle3_intersection(
+            crate::classify_segment_triangle3_intersection(
                 &p3(1.0, 1.0, 0.0),
                 &p3(2.0, 1.0, 0.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(SegmentTriangleIntersection::Coplanar)
@@ -1811,9 +1722,10 @@ mod tests {
         let c = p3(0.0, 4.0, 0.0);
         let p = p3(1.0, 1.0, -1.0);
         let q = p3(1.0, 1.0, 1.0);
-        let report = classify_segment_triangle3_intersection_report(&p, &q, &a, &b, &c)
-            .value()
-            .expect("exact crossing should decide");
+        let report =
+            crate::classify_segment_triangle3_intersection_report(&p, &q, &a, &b, &c, APPROX)
+                .value()
+                .expect("exact crossing should decide");
 
         assert_eq!(report.relation, SegmentTriangleIntersection::Proper);
         assert_eq!(
@@ -1823,9 +1735,9 @@ mod tests {
         assert!(report.has_candidate_point());
         assert_eq!(report.triangle_location, Some(Triangle3Location::Inside));
         assert!(report.plane_event.parameter_ratio.is_some());
-        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(report.validate(APPROX), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&p, &q, &a, &b, &c, PredicatePolicy),
+            report.validate_against_sources(&p, &q, &a, &b, &c, APPROX,),
             Ok(())
         );
     }
@@ -1835,21 +1747,23 @@ mod tests {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(4.0, 0.0, 0.0);
         let c = p3(0.0, 4.0, 0.0);
-        let endpoint = classify_segment_triangle3_intersection_report(
+        let endpoint = crate::classify_segment_triangle3_intersection_report(
             &p3(4.0, 0.0, 0.0),
             &p3(4.0, 0.0, 3.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("endpoint touch should decide");
-        let coplanar = classify_segment_triangle3_intersection_report(
+        let coplanar = crate::classify_segment_triangle3_intersection_report(
             &p3(1.0, 1.0, 0.0),
             &p3(2.0, 1.0, 0.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("coplanar segment should decide");
@@ -1866,14 +1780,14 @@ mod tests {
             endpoint.triangle_location,
             Some(Triangle3Location::OnVertex)
         );
-        assert_eq!(endpoint.validate(), Ok(()));
+        assert_eq!(endpoint.validate(APPROX), Ok(()));
         assert_eq!(coplanar.relation, SegmentTriangleIntersection::Coplanar);
         assert_eq!(
             coplanar.plane_event.relation,
             SegmentPlaneRelation::Coplanar
         );
         assert_eq!(coplanar.triangle_location, None);
-        assert_eq!(coplanar.validate(), Ok(()));
+        assert_eq!(coplanar.validate(APPROX), Ok(()));
     }
 
     #[test]
@@ -1883,45 +1797,49 @@ mod tests {
         let c = p3(0.0, 4.0, 0.0);
 
         assert_eq!(
-            classify_ray_triangle3_intersection(
+            crate::classify_ray_triangle3_intersection(
                 &p3(1.0, 1.0, -2.0),
                 &p3(0.0, 0.0, 1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(RayTriangleIntersection::Proper)
         );
         assert_eq!(
-            classify_ray_triangle3_intersection(
+            crate::classify_ray_triangle3_intersection(
                 &p3(1.0, 1.0, -2.0),
                 &p3(0.0, 0.0, -1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(RayTriangleIntersection::Disjoint)
         );
         assert_eq!(
-            classify_ray_triangle3_intersection(
+            crate::classify_ray_triangle3_intersection(
                 &p3(4.0, 0.0, -2.0),
                 &p3(0.0, 0.0, 1.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(RayTriangleIntersection::BoundaryTouch)
         );
         assert_eq!(
-            classify_ray_triangle3_intersection(
+            crate::classify_ray_triangle3_intersection(
                 &p3(1.0, 1.0, 0.0),
                 &p3(1.0, 0.0, 0.0),
                 &a,
                 &b,
                 &c,
+                APPROX
             )
             .value(),
             Some(RayTriangleIntersection::Coplanar)
@@ -1935,9 +1853,11 @@ mod tests {
         let c = p3(0.0, 4.0, 0.0);
         let origin = p3(1.0, 1.0, -2.0);
         let direction = p3(0.0, 0.0, 1.0);
-        let report = classify_ray_triangle3_intersection_report(&origin, &direction, &a, &b, &c)
-            .value()
-            .expect("exact ray crossing should decide");
+        let report = crate::classify_ray_triangle3_intersection_report(
+            &origin, &direction, &a, &b, &c, APPROX,
+        )
+        .value()
+        .expect("exact ray crossing should decide");
 
         assert_eq!(report.relation, RayTriangleIntersection::Proper);
         assert_eq!(report.origin_side, Some(PlaneSide::Below));
@@ -1947,9 +1867,9 @@ mod tests {
         assert_eq!(report.point, Some(p3(1.0, 1.0, 0.0)));
         assert_eq!(report.triangle_location, Some(Triangle3Location::Inside));
         assert!(report.has_candidate_point());
-        assert_eq!(report.validate(), Ok(()));
+        assert_eq!(report.validate(APPROX), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&origin, &direction, &a, &b, &c, PredicatePolicy),
+            report.validate_against_sources(&origin, &direction, &a, &b, &c, APPROX,),
             Ok(())
         );
     }
@@ -1959,21 +1879,23 @@ mod tests {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(4.0, 0.0, 0.0);
         let c = p3(0.0, 4.0, 0.0);
-        let origin_touch = classify_ray_triangle3_intersection_report(
+        let origin_touch = crate::classify_ray_triangle3_intersection_report(
             &p3(1.0, 1.0, 0.0),
             &p3(0.0, 0.0, 1.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("origin touch should decide");
-        let coplanar = classify_ray_triangle3_intersection_report(
+        let coplanar = crate::classify_ray_triangle3_intersection_report(
             &p3(1.0, 1.0, 0.0),
             &p3(1.0, 0.0, 0.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("coplanar ray should decide");
@@ -1988,16 +1910,16 @@ mod tests {
             origin_touch.triangle_location,
             Some(Triangle3Location::Inside)
         );
-        assert_eq!(origin_touch.validate(), Ok(()));
+        assert_eq!(origin_touch.validate(APPROX), Ok(()));
         assert_eq!(coplanar.relation, RayTriangleIntersection::Coplanar);
         assert!(!coplanar.has_candidate_point());
         assert_eq!(coplanar.triangle_location, None);
-        assert_eq!(coplanar.validate(), Ok(()));
+        assert_eq!(coplanar.validate(APPROX), Ok(()));
 
         let mut forged_origin_touch = origin_touch.clone();
         forged_origin_touch.parameter = Some(Real::from(1));
         assert_eq!(
-            forged_origin_touch.validate(),
+            forged_origin_touch.validate(APPROX),
             Err(RayTriangleValidationError::InvalidParameter)
         );
     }
@@ -2007,43 +1929,46 @@ mod tests {
         let a = p3(0.0, 0.0, 0.0);
         let b = p3(4.0, 0.0, 0.0);
         let c = p3(0.0, 4.0, 0.0);
-        let wrong_direction = classify_ray_triangle3_intersection_report(
+        let wrong_direction = crate::classify_ray_triangle3_intersection_report(
             &p3(1.0, 1.0, 1.0),
             &p3(0.0, 0.0, 1.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("wrong-direction ray should decide");
-        let parallel_disjoint = classify_ray_triangle3_intersection_report(
+        let parallel_disjoint = crate::classify_ray_triangle3_intersection_report(
             &p3(1.0, 1.0, 1.0),
             &p3(1.0, 0.0, 0.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("parallel disjoint ray should decide");
-        let outside_candidate = classify_ray_triangle3_intersection_report(
+        let outside_candidate = crate::classify_ray_triangle3_intersection_report(
             &p3(5.0, 5.0, -1.0),
             &p3(0.0, 0.0, 1.0),
             &a,
             &b,
             &c,
+            APPROX,
         )
         .value()
         .expect("outside crossing candidate should decide");
 
         assert_eq!(wrong_direction.relation, RayTriangleIntersection::Disjoint);
         assert!(!wrong_direction.has_candidate_point());
-        assert_eq!(wrong_direction.validate(), Ok(()));
+        assert_eq!(wrong_direction.validate(APPROX), Ok(()));
         assert_eq!(
             parallel_disjoint.relation,
             RayTriangleIntersection::Disjoint
         );
         assert!(!parallel_disjoint.has_candidate_point());
-        assert_eq!(parallel_disjoint.validate(), Ok(()));
+        assert_eq!(parallel_disjoint.validate(APPROX), Ok(()));
         assert_eq!(
             outside_candidate.relation,
             RayTriangleIntersection::Disjoint
@@ -2053,7 +1978,7 @@ mod tests {
             outside_candidate.triangle_location,
             Some(Triangle3Location::Outside)
         );
-        assert_eq!(outside_candidate.validate(), Ok(()));
+        assert_eq!(outside_candidate.validate(APPROX), Ok(()));
     }
 
     #[test]
@@ -2063,7 +1988,7 @@ mod tests {
         let c = p3(2.0, 2.0, 2.0);
 
         assert_eq!(
-            classify_point_triangle3(&a, &b, &c, &p3(1.0, 1.0, 1.0)).value(),
+            crate::classify_point_triangle3(&a, &b, &c, &p3(1.0, 1.0, 1.0), APPROX).value(),
             Some(Triangle3Location::Degenerate)
         );
     }
@@ -2076,23 +2001,23 @@ mod tests {
         let d = p3(0.0, 0.0, 1.0);
 
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.1, 0.1, 0.1)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.1, 0.1, 0.1), APPROX).value(),
             Some(TetrahedronLocation::Inside)
         );
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.2, 0.2, 0.0)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.2, 0.2, 0.0), APPROX).value(),
             Some(TetrahedronLocation::OnFace)
         );
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.5, 0.0, 0.0)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.5, 0.0, 0.0), APPROX).value(),
             Some(TetrahedronLocation::OnEdge)
         );
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.0, 0.0, 0.0)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.0, 0.0, 0.0), APPROX).value(),
             Some(TetrahedronLocation::OnVertex)
         );
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(1.0, 1.0, 1.0)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(1.0, 1.0, 1.0), APPROX).value(),
             Some(TetrahedronLocation::Outside)
         );
     }
@@ -2105,7 +2030,7 @@ mod tests {
         let d = p3(1.0, 1.0, 0.0);
 
         assert_eq!(
-            classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.25, 0.25, 0.0)).value(),
+            crate::classify_point_tetrahedron(&a, &b, &c, &d, &p3(0.25, 0.25, 0.0), APPROX).value(),
             Some(TetrahedronLocation::Degenerate)
         );
     }
@@ -2118,7 +2043,7 @@ mod tests {
         let point = p2(1.0, 1.0);
 
         assert_eq!(
-            classify_point_triangle(&a, &b, &c, &point).value(),
+            crate::classify_point_triangle(&a, &b, &c, &point, APPROX).value(),
             Some(TriangleLocation::Degenerate)
         );
     }
@@ -2134,7 +2059,7 @@ mod tests {
 
         assert_eq!(facts.known_degenerate(), Some(true));
         assert_eq!(
-            classify_point_triangle_with_policy_and_facts(&a, &b, &c, &point, policy, facts)
+            classify_point_triangle_with_policy_and_facts(&a, &b, &c, &point, facts, policy)
                 .value(),
             Some(TriangleLocation::Degenerate)
         );
@@ -2148,18 +2073,34 @@ mod tests {
         let inside = p2(1.0, 1.0);
         let outside = p2(3.0, 3.0);
 
-        let orientation = crate::orient2(&a, &b, &c);
+        let orientation = crate::orient2(&a, &b, &c, APPROX);
         assert_eq!(orientation.value(), Some(Sign::Positive));
         assert_eq!(
             crate::geometry::triangle2_facts(&a, &b, &c).known_non_degenerate(),
             Some(true)
         );
         assert_eq!(
-            classify_point_triangle_with_orientation(&a, &b, &c, &inside, orientation).value(),
+            crate::classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &c,
+                &inside,
+                orientation,
+                APPROX
+            )
+            .value(),
             Some(TriangleLocation::Inside)
         );
         assert_eq!(
-            classify_point_triangle_with_orientation(&a, &b, &c, &outside, orientation).value(),
+            crate::classify_point_triangle_with_orientation(
+                &a,
+                &b,
+                &c,
+                &outside,
+                orientation,
+                APPROX
+            )
+            .value(),
             Some(TriangleLocation::Outside)
         );
     }

@@ -6,6 +6,8 @@ use hyperlimit::{
     compare_reals, incircle2, orient2, orient2_batch, orient3,
 };
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 type Real = hyperreal::Real;
 
 fn real(value: f64) -> Real {
@@ -46,17 +48,23 @@ fn unknown_zero() -> Real {
 #[test]
 fn strict_predicates_decide_scalar_signs_and_ordering() {
     assert_eq!(
-        classify_real_sign(&rational(-7, 3)).value(),
+        classify_real_sign(&rational(-7, 3), APPROX).value(),
         Some(Sign::Negative)
     );
     assert_eq!(
-        compare_reals(&rational(2, 3), &rational(5, 7)).value(),
+        compare_reals(&rational(2, 3), &rational(5, 7), APPROX).value(),
         Some(core::cmp::Ordering::Less)
     );
 
     let near_pi = Real::pi() - Real::new(hyperreal::Rational::fraction(103_993, 33_102).unwrap());
-    assert_eq!(classify_real_sign(&near_pi).value(), Some(Sign::Positive));
-    assert_eq!(classify_real_sign(&near_pi).value(), Some(Sign::Positive));
+    assert_eq!(
+        classify_real_sign(&near_pi, APPROX).value(),
+        Some(Sign::Positive)
+    );
+    assert_eq!(
+        classify_real_sign(&near_pi, APPROX).value(),
+        Some(Sign::Positive)
+    );
 }
 
 #[test]
@@ -381,14 +389,21 @@ fn orient2d_handles_exact_degenerate_and_near_degenerate_cases() {
     let a = p2(0.0, 0.0);
     let b = p2(1.0, 0.0);
 
-    assert_eq!(decided(orient2(&a, &b, &p2(0.0, 1.0))), Sign::Positive);
-    assert_eq!(decided(orient2(&a, &b, &p2(0.0, -1.0))), Sign::Negative);
-    assert_eq!(decided(orient2(&a, &b, &p2(0.5, 0.0))), Sign::Zero);
+    assert_eq!(
+        decided(orient2(&a, &b, &p2(0.0, 1.0), APPROX)),
+        Sign::Positive
+    );
+    assert_eq!(
+        decided(orient2(&a, &b, &p2(0.0, -1.0), APPROX)),
+        Sign::Negative
+    );
+    assert_eq!(decided(orient2(&a, &b, &p2(0.5, 0.0), APPROX)), Sign::Zero);
     assert_eq!(
         decided(orient2(
             &a,
             &b,
             &Point2::new(real(0.5), real(f64::from_bits(1))),
+            APPROX
         )),
         Sign::Positive
     );
@@ -400,12 +415,18 @@ fn orientation_sign_changes_under_coordinate_permutation() {
     let b = p2(5.0, -7.0);
     let c = p2(11.0, 13.0);
 
-    assert_eq!(decided(orient2(&a, &b, &c)), decided(orient2(&b, &c, &a)));
     assert_eq!(
-        decided(orient2(&a, &b, &c)).reversed(),
-        decided(orient2(&a, &c, &b))
+        decided(orient2(&a, &b, &c, APPROX)),
+        decided(orient2(&b, &c, &a, APPROX))
     );
-    assert_eq!(decided(classify_point_line(&a, &b, &c)), LineSide::Left);
+    assert_eq!(
+        decided(orient2(&a, &b, &c, APPROX)).reversed(),
+        decided(orient2(&a, &c, &b, APPROX))
+    );
+    assert_eq!(
+        decided(classify_point_line(&a, &b, &c, APPROX)),
+        LineSide::Left
+    );
 }
 
 #[test]
@@ -421,10 +442,10 @@ fn batch_predicates_match_scalar_predicates_on_hostile_rows() {
     ];
 
     assert_eq!(
-        orient2_batch(&cases),
+        orient2_batch(&cases, APPROX),
         cases
             .iter()
-            .map(|(a, b, c)| orient2(a, b, c))
+            .map(|(a, b, c)| orient2(a, b, c, APPROX))
             .collect::<Vec<_>>()
     );
 }
@@ -436,15 +457,15 @@ fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
     let c = p3(0.0, 1.0, 0.0);
 
     assert_eq!(
-        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, 1.0))),
+        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, 1.0), APPROX)),
         Sign::Negative
     );
     assert_eq!(
-        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, -1.0))),
+        decided(orient3(&a, &b, &c, &p3(0.0, 0.0, -1.0), APPROX)),
         Sign::Positive
     );
     assert_eq!(
-        decided(orient3(&a, &b, &c, &p3(0.25, 0.25, 0.0))),
+        decided(orient3(&a, &b, &c, &p3(0.25, 0.25, 0.0), APPROX)),
         Sign::Zero
     );
 
@@ -453,7 +474,8 @@ fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
             &a,
             &b,
             &c,
-            &p3(0.0, 0.0, 1.0)
+            &p3(0.0, 0.0, 1.0),
+            APPROX
         )),
         PlaneSide::Below
     );
@@ -461,6 +483,7 @@ fn orient3d_and_plane_classification_agree_on_sides_and_degeneracy() {
         decided(classify_point_plane(
             &p3(0.0, 0.0, 3.0),
             &Plane3::new(p3(0.0, 0.0, 1.0), real(-2.0)),
+            APPROX
         )),
         PlaneSide::Above
     );
@@ -473,12 +496,15 @@ fn incircle_detects_inside_outside_and_on_circle_cases() {
     let c = p2(-1.0, 0.0);
 
     assert_eq!(
-        decided(incircle2(&a, &b, &c, &p2(0.0, 0.0))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, 0.0), APPROX)),
         Sign::Positive
     );
     assert_eq!(
-        decided(incircle2(&a, &b, &c, &p2(0.0, 2.0))),
+        decided(incircle2(&a, &b, &c, &p2(0.0, 2.0), APPROX)),
         Sign::Negative
     );
-    assert_eq!(decided(incircle2(&a, &b, &c, &p2(0.0, -1.0))), Sign::Zero);
+    assert_eq!(
+        decided(incircle2(&a, &b, &c, &p2(0.0, -1.0), APPROX)),
+        Sign::Zero
+    );
 }

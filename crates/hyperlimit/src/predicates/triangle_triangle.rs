@@ -21,8 +21,8 @@ use crate::predicate::PredicatePolicy;
 use crate::predicate::{Escalation, PredicateOutcome, RefinementNeed};
 use crate::predicates::coplanar::{
     CoplanarTriangleClassification, CoplanarTriangleRelation, TriangleDegeneracy,
-    choose_coplanar_projection, classify_coplanar_triangle_points, classify_triangle3_degeneracy,
-    project_point3, project_triangle3,
+    choose_coplanar_projection_with_policy, classify_coplanar_triangle_points_with_policy,
+    classify_triangle3_degeneracy_with_policy, project_point3, project_triangle3,
 };
 use crate::predicates::segment::classify_segment_intersection_with_policy;
 use crate::predicates::triangle::{
@@ -155,18 +155,6 @@ impl TriangleTriangleClassification {
     }
 }
 
-/// Classify two closed 3D triangles using the default predicate policy.
-pub fn classify_triangle_triangle3(
-    a0: &Point3,
-    a1: &Point3,
-    a2: &Point3,
-    b0: &Point3,
-    b1: &Point3,
-    b2: &Point3,
-) -> PredicateOutcome<TriangleTriangleClassification> {
-    classify_triangle_triangle3_with_policy(a0, a1, a2, b0, b1, b2, PredicatePolicy)
-}
-
 /// Classify two closed 3D triangles using an explicit predicate policy.
 pub fn classify_triangle_triangle3_with_policy(
     a0: &Point3,
@@ -188,8 +176,10 @@ pub fn classify_triangle_triangle3_points_with_policy(
 ) -> PredicateOutcome<TriangleTriangleClassification> {
     crate::trace_dispatch!("hyperlimit", "triangle_triangle3", "plane-edge-composition");
 
-    let left_degeneracy = classify_triangle3_degeneracy(left[0], left[1], left[2]);
-    let right_degeneracy = classify_triangle3_degeneracy(right[0], right[1], right[2]);
+    let left_degeneracy =
+        classify_triangle3_degeneracy_with_policy(left[0], left[1], left[2], policy);
+    let right_degeneracy =
+        classify_triangle3_degeneracy_with_policy(right[0], right[1], right[2], policy);
     if left_degeneracy == TriangleDegeneracy::Unknown
         || right_degeneracy == TriangleDegeneracy::Unknown
     {
@@ -226,7 +216,7 @@ pub fn classify_triangle_triangle3_points_with_policy(
     if right_against_left_plane == PlaneTriangleRelation::Coplanar
         && left_against_right_plane == PlaneTriangleRelation::Coplanar
     {
-        let coplanar = classify_coplanar_triangle_points(left, right);
+        let coplanar = classify_coplanar_triangle_points_with_policy(left, right, policy);
         let Some(relation) = relation_from_coplanar(coplanar.relation) else {
             return PredicateOutcome::unknown(RefinementNeed::Unsupported, Escalation::Undecided);
         };
@@ -418,7 +408,7 @@ fn coplanar_segment_intersects_triangle(
     triangle: [&Point3; 3],
     policy: PredicatePolicy,
 ) -> Result<bool, PredicateOutcome<TriangleTriangleClassification>> {
-    let Some(projection) = choose_coplanar_projection(triangle) else {
+    let Some(projection) = choose_coplanar_projection_with_policy(triangle, policy) else {
         return Err(PredicateOutcome::unknown(
             RefinementNeed::Unsupported,
             Escalation::Undecided,
@@ -561,12 +551,14 @@ mod tests {
     use super::*;
     use hyperreal::Real;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p3(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
     fn classify(left: [&Point3; 3], right: [&Point3; 3]) -> TriangleTriangleClassification {
-        classify_triangle_triangle3_points_with_policy(left, right, PredicatePolicy)
+        classify_triangle_triangle3_points_with_policy(left, right, APPROX)
             .value()
             .expect("integer triangle pair should decide")
     }
@@ -599,11 +591,7 @@ mod tests {
         assert!(report.edge_report_count() >= 6);
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_triangles(
-                [&a[0], &a[1], &a[2]],
-                [&b[0], &b[1], &b[2]],
-                PredicatePolicy
-            ),
+            report.validate_against_triangles([&a[0], &a[1], &a[2]], [&b[0], &b[1], &b[2]], APPROX),
             Ok(())
         );
     }

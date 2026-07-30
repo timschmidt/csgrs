@@ -7,6 +7,8 @@ use hyperlimit::{
 };
 use hyperreal::{Rational, Real};
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 fn r(value: i64) -> Real {
     Real::from(value)
 }
@@ -28,30 +30,33 @@ fn witnessed_support_dop_builds_replays_and_refreshes() {
     let mut points = vec![p3(0, 0, 0), p3(4, 1, 0), p3(-2, 3, 0)];
     let axes = SupportDopAxis3::orthogonal_axes();
 
-    let mut dop = WitnessedSupportDop3::from_points(&points, &axes).unwrap();
+    let mut dop = WitnessedSupportDop3::from_points(&points, &axes, APPROX).unwrap();
 
     assert_eq!(dop.vertex_count, points.len());
     assert_eq!(dop.slabs[0].min.vertex, 2);
     assert_eq!(dop.slabs[0].max.vertex, 1);
     assert_eq!(dop.slabs[1].min.vertex, 0);
     assert_eq!(dop.slabs[1].max.vertex, 2);
-    dop.validate_against_points(&points).unwrap();
+    dop.validate_against_points(&points, APPROX).unwrap();
 
     let classifier = dop.to_support_dop3();
     assert_eq!(classifier.slabs()[0].min_witness, Some(2));
     assert_eq!(classifier.slabs()[0].max_witness, Some(1));
 
     points[1] = p3(6, 1, 0);
-    let report = dop.refresh_for_changed_vertices(&points, &[1]).unwrap();
+    let report = dop
+        .refresh_for_changed_vertices(&points, &[1], APPROX)
+        .unwrap();
 
     assert_eq!(report.changed_vertices, 1);
     assert_eq!(report.axis_count, axes.len());
     assert_eq!(dop.slabs[0].max.vertex, 1);
     assert_eq!(dop.slabs[0].max.distance, r(6));
-    dop.validate_against_points(&points).unwrap();
+    dop.validate_against_points(&points, APPROX).unwrap();
 
     assert_eq!(
-        WitnessedSupportDop3::from_points(&points, &[SupportDopAxis3::new([0, 0, 0])]).unwrap_err(),
+        WitnessedSupportDop3::from_points(&points, &[SupportDopAxis3::new([0, 0, 0])], APPROX,)
+            .unwrap_err(),
         SupportDopValidationError::ZeroAxis
     );
 }
@@ -71,17 +76,19 @@ fn triangle_plane_classifier_retains_sides_and_replays_sources() {
     let above_query = classify_triangle_against_oriented_plane(
         [&points[0], &points[1], &points[2]],
         [&points[3], &points[4], &points[5]],
+        APPROX,
     );
     assert_eq!(above_query.relation, TrianglePlaneRelation::StrictlyBelow);
     assert_eq!(above_query.vertex_sides, [Some(PlaneSide::Below); 3]);
     above_query.validate().unwrap();
     above_query
-        .validate_against_sources(&points, [0, 1, 2], [3, 4, 5])
+        .validate_against_sources(&points, [0, 1, 2], [3, 4, 5], APPROX)
         .unwrap();
 
     let straddling = classify_triangle_against_oriented_plane(
         [&points[0], &points[1], &points[2]],
         [&points[0], &points[3], &points[6]],
+        APPROX,
     );
     assert_eq!(straddling.relation, TrianglePlaneRelation::Straddling);
     assert_eq!(
@@ -99,7 +106,7 @@ fn triangle_plane_classifier_retains_sides_and_replays_sources() {
 fn projected_planar_helpers_cover_area_turns_and_intersections() {
     let square = vec![p3(0, 0, 0), p3(4, 0, 0), p3(4, 3, 0), p3(0, 3, 0)];
     assert_eq!(
-        projected_polygon_area2_abs_value(&square, CoplanarProjection::Xy),
+        projected_polygon_area2_abs_value(&square, CoplanarProjection::Xy, APPROX),
         Some(r(24))
     );
 
@@ -114,6 +121,7 @@ fn projected_planar_helpers_cover_area_turns_and_intersections() {
             &Point3::new(r(2), r(1), r(0)),
             [&square[0], &square[1], &square[2]],
             CoplanarProjection::Xy,
+            APPROX
         )
         .value(),
         Some(TriangleLocation::Inside)
@@ -125,12 +133,13 @@ fn projected_planar_helpers_cover_area_turns_and_intersections() {
         &p3(2, -1, 0),
         &p3(2, 1, 0),
         CoplanarProjection::Xy,
+        APPROX,
     )
     .unwrap();
     assert_eq!(intersection, p3(2, 0, 0));
 
     assert_eq!(
-        ccw_projected_turn_less(&p2(1, 0), &p2(0, 1), &p2(0, -1)),
+        ccw_projected_turn_less(&p2(1, 0), &p2(0, 1), &p2(0, -1), APPROX),
         Some(true)
     );
 }

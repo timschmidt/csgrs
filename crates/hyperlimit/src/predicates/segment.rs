@@ -16,31 +16,13 @@ use crate::resolve::{map_outcome, resolve_real_sign_direct};
 use core::cmp::Ordering;
 use hyperreal::Real;
 
-/// Classify `point` relative to the closed segment `ab`.
-pub fn classify_point_segment(
-    a: &Point2,
-    b: &Point2,
-    point: &Point2,
-) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_with_policy(a, b, point, PredicatePolicy)
-}
-
-/// Classify `point` relative to the closed 3D segment `ab`.
-pub fn classify_point_segment3(
-    a: &Point3,
-    b: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment3_with_policy(a, b, point, PredicatePolicy)
-}
-
 /// Classify `point` relative to the closed 3D segment `ab` with an explicit
 /// predicate escalation policy.
 ///
 /// Collinearity is certified by the three exact components of
 /// `(b - a) x (point - a)`. Interval containment then uses exact coordinate
 /// comparisons on all three axes.
-pub(crate) fn classify_point_segment3_with_policy(
+pub fn classify_point_segment3_with_policy(
     a: &Point3,
     b: &Point3,
     point: &Point3,
@@ -106,17 +88,6 @@ pub(crate) fn classify_collinear_point_segment_with_policy(
     }
 }
 
-/// Classify `point` relative to the closed segment `ab` using cached segment
-/// structural facts.
-pub fn classify_point_segment_with_facts(
-    a: &Point2,
-    b: &Point2,
-    point: &Point2,
-    segment_facts: Segment2Facts,
-) -> PredicateOutcome<PointSegmentLocation> {
-    classify_point_segment_with_policy_and_facts(a, b, point, PredicatePolicy, segment_facts)
-}
-
 /// Classify `point` relative to the closed segment `ab` with both an explicit
 /// policy and cached segment structural facts.
 ///
@@ -128,8 +99,8 @@ pub fn classify_point_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     point: &Point2,
-    policy: PredicatePolicy,
     segment_facts: Segment2Facts,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<PointSegmentLocation> {
     classify_point_segment_impl(a, b, point, policy, Some(segment_facts))
 }
@@ -169,19 +140,9 @@ fn classify_point_segment_impl(
     }
 }
 
-/// Return whether `point` lies on the closed segment `ab`.
-pub fn point_on_segment(a: &Point2, b: &Point2, point: &Point2) -> PredicateOutcome<bool> {
-    point_on_segment_with_policy(a, b, point, PredicatePolicy)
-}
-
-/// Return whether `point` lies on the closed 3D segment `ab`.
-pub fn point_on_segment3(a: &Point3, b: &Point3, point: &Point3) -> PredicateOutcome<bool> {
-    point_on_segment3_with_policy(a, b, point, PredicatePolicy)
-}
-
 /// Return whether `point` lies on the closed 3D segment `ab` with an explicit
 /// predicate escalation policy.
-pub(crate) fn point_on_segment3_with_policy(
+pub fn point_on_segment3_with_policy(
     a: &Point3,
     b: &Point3,
     point: &Point3,
@@ -199,7 +160,7 @@ pub(crate) fn point_on_segment3_with_policy(
 
 /// Return whether `point` lies on the closed segment `ab` with an explicit
 /// predicate escalation policy.
-pub(crate) fn point_on_segment_with_policy(
+pub fn point_on_segment_with_policy(
     a: &Point2,
     b: &Point2,
     point: &Point2,
@@ -215,27 +176,16 @@ pub(crate) fn point_on_segment_with_policy(
     }
 }
 
-/// Return whether `point` lies on the closed segment `ab` using cached segment
-/// structural facts.
-pub fn point_on_segment_with_facts(
-    a: &Point2,
-    b: &Point2,
-    point: &Point2,
-    segment_facts: Segment2Facts,
-) -> PredicateOutcome<bool> {
-    point_on_segment_with_policy_and_facts(a, b, point, PredicatePolicy, segment_facts)
-}
-
 /// Return whether `point` lies on the closed segment `ab` with both an explicit
 /// policy and cached segment structural facts.
-pub(crate) fn point_on_segment_with_policy_and_facts(
+pub fn point_on_segment_with_policy_and_facts(
     a: &Point2,
     b: &Point2,
     point: &Point2,
-    policy: PredicatePolicy,
     segment_facts: Segment2Facts,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
-    match classify_point_segment_with_policy_and_facts(a, b, point, policy, segment_facts) {
+    match classify_point_segment_with_policy_and_facts(a, b, point, segment_facts, policy) {
         PredicateOutcome::Decided {
             value,
             certainty,
@@ -243,26 +193,6 @@ pub(crate) fn point_on_segment_with_policy_and_facts(
         } => PredicateOutcome::decided(value.is_on_segment(), certainty, stage),
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
-}
-
-/// Classify the intersection of closed segments `ab` and `cd`.
-pub fn classify_segment_intersection(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    d: &Point2,
-) -> PredicateOutcome<SegmentIntersection> {
-    classify_segment_intersection_with_policy(a, b, c, d, PredicatePolicy)
-}
-
-/// Construct the exact point where two closed 2D segments cross properly.
-pub fn proper_segment_intersection_point(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    d: &Point2,
-) -> PredicateOutcome<Option<Point2>> {
-    proper_segment_intersection_point_with_policy(a, b, c, d, PredicatePolicy)
 }
 
 /// Construct the exact point where two closed 2D segments cross properly with
@@ -320,16 +250,6 @@ pub fn proper_segment_intersection_point_with_policy(
     )
 }
 
-/// Classify the intersection of closed 3D segments `ab` and `cd`.
-pub fn classify_segment3_intersection(
-    a: &Point3,
-    b: &Point3,
-    c: &Point3,
-    d: &Point3,
-) -> PredicateOutcome<Segment3Intersection> {
-    classify_segment3_intersection_with_policy(a, b, c, d, PredicatePolicy)
-}
-
 /// Classify the intersection of closed 3D segments `ab` and `cd` with an
 /// explicit predicate escalation policy.
 ///
@@ -340,7 +260,7 @@ pub fn classify_segment3_intersection(
 /// division. The parallel branch reduces to exact collinear point/segment
 /// tests. Exact signs decide the combinatorial relation, with explicit
 /// skew/coplanar separation in 3D.
-pub(crate) fn classify_segment3_intersection_with_policy(
+pub fn classify_segment3_intersection_with_policy(
     a: &Point3,
     b: &Point3,
     c: &Point3,
@@ -475,27 +395,6 @@ pub fn classify_segment_intersection_with_policy(
     classify_segment_intersection_impl(a, b, c, d, policy, None, None)
 }
 
-/// Classify the intersection of closed segments `ab` and `cd` using cached
-/// structural facts for both segments.
-pub fn classify_segment_intersection_with_facts(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    d: &Point2,
-    first_facts: Segment2Facts,
-    second_facts: Segment2Facts,
-) -> PredicateOutcome<SegmentIntersection> {
-    classify_segment_intersection_with_policy_and_facts(
-        a,
-        b,
-        c,
-        d,
-        PredicatePolicy,
-        first_facts,
-        second_facts,
-    )
-}
-
 /// Classify the intersection of closed segments `ab` and `cd` with both an
 /// explicit policy and cached structural facts for both segments.
 ///
@@ -508,9 +407,9 @@ pub fn classify_segment_intersection_with_policy_and_facts(
     b: &Point2,
     c: &Point2,
     d: &Point2,
-    policy: PredicatePolicy,
     first_facts: Segment2Facts,
     second_facts: Segment2Facts,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<SegmentIntersection> {
     classify_segment_intersection_impl(a, b, c, d, policy, Some(first_facts), Some(second_facts))
 }
@@ -1141,6 +1040,8 @@ fn stage_rank(stage: Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn real(value: i32) -> hyperreal::Real {
         hyperreal::Real::from(value)
     }
@@ -1159,19 +1060,19 @@ mod tests {
         let b = p2(4, 0);
 
         assert_eq!(
-            classify_point_segment(&a, &b, &p2(2, 0)).value(),
+            crate::classify_point_segment(&a, &b, &p2(2, 0), APPROX).value(),
             Some(PointSegmentLocation::OnSegment)
         );
         assert_eq!(
-            classify_point_segment(&a, &b, &p2(4, 0)).value(),
+            crate::classify_point_segment(&a, &b, &p2(4, 0), APPROX).value(),
             Some(PointSegmentLocation::OnEndpoint)
         );
         assert_eq!(
-            classify_point_segment(&a, &b, &p2(5, 0)).value(),
+            crate::classify_point_segment(&a, &b, &p2(5, 0), APPROX).value(),
             Some(PointSegmentLocation::CollinearOutside)
         );
         assert_eq!(
-            classify_point_segment(&a, &b, &p2(2, 1)).value(),
+            crate::classify_point_segment(&a, &b, &p2(2, 1), APPROX).value(),
             Some(PointSegmentLocation::OffLine)
         );
     }
@@ -1182,40 +1083,71 @@ mod tests {
         let b = p3(4, 4, 4);
 
         assert_eq!(
-            classify_point_segment3(&a, &b, &p3(2, 2, 2)).value(),
+            crate::classify_point_segment3(&a, &b, &p3(2, 2, 2), APPROX).value(),
             Some(PointSegmentLocation::OnSegment)
         );
         assert_eq!(
-            classify_point_segment3(&a, &b, &p3(4, 4, 4)).value(),
+            crate::classify_point_segment3(&a, &b, &p3(4, 4, 4), APPROX).value(),
             Some(PointSegmentLocation::OnEndpoint)
         );
         assert_eq!(
-            classify_point_segment3(&a, &b, &p3(5, 5, 5)).value(),
+            crate::classify_point_segment3(&a, &b, &p3(5, 5, 5), APPROX).value(),
             Some(PointSegmentLocation::CollinearOutside)
         );
         assert_eq!(
-            classify_point_segment3(&a, &b, &p3(2, 2, 3)).value(),
+            crate::classify_point_segment3(&a, &b, &p3(2, 2, 3), APPROX).value(),
             Some(PointSegmentLocation::OffLine)
         );
-        assert_eq!(point_on_segment3(&a, &b, &p3(2, 2, 2)).value(), Some(true));
+        assert_eq!(
+            crate::point_on_segment3(&a, &b, &p3(2, 2, 2), APPROX).value(),
+            Some(true)
+        );
     }
 
     #[test]
     fn segment_classifier_reports_proper_endpoint_overlap_and_identical() {
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 4), &p2(0, 4), &p2(4, 0)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 4),
+                &p2(0, 4),
+                &p2(4, 0),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::Proper)
         );
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(4, 0), &p2(6, 0)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(4, 0),
+                &p2(6, 0),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::EndpointTouch)
         );
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(2, 0), &p2(6, 0)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(2, 0),
+                &p2(6, 0),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::CollinearOverlap)
         );
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(4, 0), &p2(0, 0)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(4, 0),
+                &p2(0, 0),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::Identical)
         );
     }
@@ -1223,11 +1155,25 @@ mod tests {
     #[test]
     fn proper_segment_intersection_point_constructs_exact_crossing() {
         assert_eq!(
-            proper_segment_intersection_point(&p2(0, 0), &p2(4, 4), &p2(0, 4), &p2(4, 0)).value(),
+            crate::proper_segment_intersection_point(
+                &p2(0, 0),
+                &p2(4, 4),
+                &p2(0, 4),
+                &p2(4, 0),
+                APPROX
+            )
+            .value(),
             Some(Some(p2(2, 2)))
         );
         assert_eq!(
-            proper_segment_intersection_point(&p2(0, 0), &p2(4, 0), &p2(4, 0), &p2(6, 0)).value(),
+            crate::proper_segment_intersection_point(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(4, 0),
+                &p2(6, 0),
+                APPROX
+            )
+            .value(),
             Some(None)
         );
     }
@@ -1235,11 +1181,25 @@ mod tests {
     #[test]
     fn segment_classifier_reports_disjoint_collinear_and_skew_cases() {
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(5, 0), &p2(6, 0)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(5, 0),
+                &p2(6, 0),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::Disjoint)
         );
         assert_eq!(
-            classify_segment_intersection(&p2(0, 0), &p2(4, 0), &p2(5, 1), &p2(6, 1)).value(),
+            crate::classify_segment_intersection(
+                &p2(0, 0),
+                &p2(4, 0),
+                &p2(5, 1),
+                &p2(6, 1),
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::Disjoint)
         );
     }
@@ -1250,15 +1210,26 @@ mod tests {
         let facts = crate::geometry::segment2_facts(&endpoint, &endpoint);
 
         assert_eq!(
-            classify_point_segment_with_facts(&endpoint, &endpoint, &endpoint, facts).value(),
+            crate::classify_point_segment_with_facts(
+                &endpoint, &endpoint, &endpoint, facts, APPROX
+            )
+            .value(),
             Some(PointSegmentLocation::OnEndpoint)
         );
         assert_eq!(
-            classify_point_segment_with_facts(&endpoint, &endpoint, &p2(2, 4), facts).value(),
+            crate::classify_point_segment_with_facts(
+                &endpoint,
+                &endpoint,
+                &p2(2, 4),
+                facts,
+                APPROX
+            )
+            .value(),
             Some(PointSegmentLocation::CollinearOutside)
         );
         assert_eq!(
-            point_on_segment_with_facts(&endpoint, &endpoint, &endpoint, facts).value(),
+            crate::point_on_segment_with_facts(&endpoint, &endpoint, &endpoint, facts, APPROX)
+                .value(),
             Some(true)
         );
     }
@@ -1272,13 +1243,14 @@ mod tests {
         let segment_facts = crate::geometry::segment2_facts(&start, &end);
 
         assert_eq!(
-            classify_segment_intersection_with_facts(
+            crate::classify_segment_intersection_with_facts(
                 &point,
                 &point,
                 &start,
                 &end,
                 point_facts,
-                segment_facts
+                segment_facts,
+                APPROX
             )
             .value(),
             Some(SegmentIntersection::EndpointTouch)
@@ -1287,25 +1259,27 @@ mod tests {
         let other_point = p2(9, 0);
         let other_facts = crate::geometry::segment2_facts(&other_point, &other_point);
         assert_eq!(
-            classify_segment_intersection_with_facts(
+            crate::classify_segment_intersection_with_facts(
                 &point,
                 &point,
                 &other_point,
                 &other_point,
                 point_facts,
-                other_facts
+                other_facts,
+                APPROX
             )
             .value(),
             Some(SegmentIntersection::Disjoint)
         );
         assert_eq!(
-            classify_segment_intersection_with_facts(
+            crate::classify_segment_intersection_with_facts(
                 &point,
                 &point,
                 &point,
                 &point,
                 point_facts,
-                point_facts
+                point_facts,
+                APPROX
             )
             .value(),
             Some(SegmentIntersection::Identical)
@@ -1319,15 +1293,23 @@ mod tests {
         let facts = crate::geometry::segment2_facts(&a, &b);
         assert_eq!(facts.known_degenerate(), Some(false));
         assert_eq!(
-            classify_point_segment_with_facts(&a, &b, &p2(2, 0), facts).value(),
+            crate::classify_point_segment_with_facts(&a, &b, &p2(2, 0), facts, APPROX).value(),
             Some(PointSegmentLocation::OnSegment)
         );
 
         let point = p2(2, 0);
         let point_facts = crate::geometry::segment2_facts(&point, &point);
         assert_eq!(
-            classify_segment_intersection_with_facts(&a, &b, &point, &point, facts, point_facts,)
-                .value(),
+            crate::classify_segment_intersection_with_facts(
+                &a,
+                &b,
+                &point,
+                &point,
+                facts,
+                point_facts,
+                APPROX
+            )
+            .value(),
             Some(SegmentIntersection::EndpointTouch)
         );
     }
@@ -1338,32 +1320,59 @@ mod tests {
         let b = p3(0, 0, 3);
 
         assert_eq!(
-            classify_point_segment3(&a, &b, &p3(0, 0, 2)).value(),
+            crate::classify_point_segment3(&a, &b, &p3(0, 0, 2), APPROX).value(),
             Some(PointSegmentLocation::OnSegment)
         );
-        assert_eq!(point_on_segment3(&a, &b, &p3(0, 1, 2)).value(), Some(false));
+        assert_eq!(
+            crate::point_on_segment3(&a, &b, &p3(0, 1, 2), APPROX).value(),
+            Some(false)
+        );
     }
 
     #[test]
     fn segment3_classifier_distinguishes_skew_coplanar_and_crossing_cases() {
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(2, -1, 0), &p3(2, 1, 0))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(2, -1, 0),
+                &p3(2, 1, 0),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::Proper)
         );
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(4, 0, 0), &p3(4, 2, 0))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(4, 0, 0),
+                &p3(4, 2, 0),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::EndpointTouch)
         );
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(5, 1, 0), &p3(6, 1, 0))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(5, 1, 0),
+                &p3(6, 1, 0),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::CoplanarDisjoint)
         );
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 0, 0), &p3(2, -1, 1), &p3(2, 1, 1))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 0, 0),
+                &p3(2, -1, 1),
+                &p3(2, 1, 1),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::SkewDisjoint)
         );
     }
@@ -1371,18 +1380,36 @@ mod tests {
     #[test]
     fn segment3_classifier_reports_collinear_overlap_and_identical() {
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(2, 2, 2), &p3(6, 6, 6))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 4, 4),
+                &p3(2, 2, 2),
+                &p3(6, 6, 6),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::CollinearOverlap)
         );
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(4, 4, 4), &p3(0, 0, 0))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 4, 4),
+                &p3(4, 4, 4),
+                &p3(0, 0, 0),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::Identical)
         );
         assert_eq!(
-            classify_segment3_intersection(&p3(0, 0, 0), &p3(4, 4, 4), &p3(5, 5, 5), &p3(6, 6, 6))
-                .value(),
+            crate::classify_segment3_intersection(
+                &p3(0, 0, 0),
+                &p3(4, 4, 4),
+                &p3(5, 5, 5),
+                &p3(6, 6, 6),
+                APPROX
+            )
+            .value(),
             Some(Segment3Intersection::CoplanarDisjoint)
         );
     }
@@ -1395,7 +1422,7 @@ mod tests {
         let d = p3(2, 1, 0);
 
         assert_eq!(
-            classify_segment3_intersection(&a, &b, &c, &d).value(),
+            crate::classify_segment3_intersection(&a, &b, &c, &d, APPROX).value(),
             Some(Segment3Intersection::Proper)
         );
     }

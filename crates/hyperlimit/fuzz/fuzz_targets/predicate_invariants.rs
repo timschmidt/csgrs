@@ -37,6 +37,8 @@ use hyperlimit::{
 use hyperreal::{Rational, Real};
 use libfuzzer_sys::fuzz_target;
 
+const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
 #[derive(Clone, Copy, Debug, Arbitrary)]
 struct RawPoint {
     x_num: i16,
@@ -106,9 +108,9 @@ fn predicate_invariants(input: Input) {
     let s = input.s.into_point();
     let t = input.t.into_point();
 
-    let abc = orient2d(&a, &b, &c);
-    let bca = orient2d(&b, &c, &a);
-    let bac = orient2d(&b, &a, &c);
+    let abc = orient2d(&a, &b, &c, APPROX);
+    let bca = orient2d(&b, &c, &a, APPROX);
+    let bac = orient2d(&b, &a, &c, APPROX);
 
     if let (Some(abc), Some(bca), Some(bac)) = (abc.value(), bca.value(), bac.value()) {
         assert_eq!(abc, bca, "cyclic orientation should preserve sign");
@@ -123,37 +125,37 @@ fn predicate_invariants(input: Input) {
         (a.clone(), b.clone(), c.clone()),
         (b.clone(), a.clone(), c.clone()),
     ];
-    let batch = orient2d_batch(&batch_cases);
-    assert_eq!(batch[0].value(), orient2d(&a, &b, &c).value());
-    assert_eq!(batch[1].value(), orient2d(&b, &a, &c).value());
+    let batch = orient2d_batch(&batch_cases, APPROX);
+    assert_eq!(batch[0].value(), orient2d(&a, &b, &c, APPROX).value());
+    assert_eq!(batch[1].value(), orient2d(&b, &a, &c, APPROX).value());
 
-    let line_side = classify_point_line(&a, &b, &c).value();
-    if let Some(sign) = orient2d(&a, &b, &c).value() {
+    let line_side = classify_point_line(&a, &b, &c, APPROX).value();
+    if let Some(sign) = orient2d(&a, &b, &c, APPROX).value() {
         assert_eq!(line_side, Some(LineSide::from(sign)));
     }
 
     let ring = [a.clone(), b.clone(), c.clone(), d.clone()];
     let reversed_ring = [d.clone(), c.clone(), b.clone(), a.clone()];
-    let ring_location = classify_point_ring_even_odd(&ring, &a).value();
+    let ring_location = classify_point_ring_even_odd(&ring, &a, APPROX).value();
     assert_eq!(
-        classify_point_ring_even_odd(&reversed_ring, &a).value(),
+        classify_point_ring_even_odd(&reversed_ring, &a, APPROX).value(),
         ring_location,
         "even-odd point/ring classification must be invariant under ring reversal"
     );
-    if let Some(report) = classify_point_ring_even_odd_report(&ring, &a).value() {
+    if let Some(report) = classify_point_ring_even_odd_report(&ring, &a, APPROX).value() {
         assert_eq!(
             Some(report.location),
             ring_location,
             "even-odd report relation must match scalar classifier"
         );
         report
-            .validate_against_sources(&ring, &a, PredicatePolicy::default())
+            .validate_against_sources(&ring, &a, APPROX)
             .expect("even-odd ring report must replay against exact sources");
     }
 
     let orientation = hyperlimit::line2_orientation(&a, &b);
     assert_eq!(
-        hyperlimit::classify_point_line_with_orientation(&a, &b, &c, &orientation).value(),
+        hyperlimit::classify_point_line_with_orientation(&a, &b, &c, &orientation, APPROX).value(),
         line_side
     );
 
@@ -161,31 +163,31 @@ fn predicate_invariants(input: Input) {
         (a.clone(), b.clone(), c.clone()),
         (a.clone(), b.clone(), d.clone()),
     ];
-    let line_batch = classify_point_line_batch(&line_batch_cases);
+    let line_batch = classify_point_line_batch(&line_batch_cases, APPROX);
     assert_eq!(
         line_batch[0].value(),
-        classify_point_line(&a, &b, &c).value()
+        classify_point_line(&a, &b, &c, APPROX).value()
     );
     assert_eq!(
         line_batch[1].value(),
-        classify_point_line(&a, &b, &d).value()
+        classify_point_line(&a, &b, &d, APPROX).value()
     );
 
     // Any input site lies exactly on its own circumcircle. Degenerate fixed
     // triples may make the circle predicate zero for broader reasons, but the
     // boundary-site law must always hold when the predicate decides.
-    assert_decided_zero(incircle2d(&a, &b, &c, &a));
-    assert_decided_zero(incircle2d(&a, &b, &c, &b));
-    assert_decided_zero(incircle2d(&a, &b, &c, &c));
-    assert_decided_zero(insphere3d(&p, &q, &r, &s, &p));
-    assert_decided_zero(insphere3d(&p, &q, &r, &s, &q));
-    assert_decided_zero(insphere3d(&p, &q, &r, &s, &r));
-    assert_decided_zero(insphere3d(&p, &q, &r, &s, &s));
+    assert_decided_zero(incircle2d(&a, &b, &c, &a, APPROX));
+    assert_decided_zero(incircle2d(&a, &b, &c, &b, APPROX));
+    assert_decided_zero(incircle2d(&a, &b, &c, &c, APPROX));
+    assert_decided_zero(insphere3d(&p, &q, &r, &s, &p, APPROX));
+    assert_decided_zero(insphere3d(&p, &q, &r, &s, &q, APPROX));
+    assert_decided_zero(insphere3d(&p, &q, &r, &s, &r, APPROX));
+    assert_decided_zero(insphere3d(&p, &q, &r, &s, &s, APPROX));
 
     let incircle_evidence = incircle2_evidence(&a, &b, &c);
     assert_eq!(
-        incircle2d_with_evidence(&a, &b, &c, &d, &incircle_evidence).value(),
-        incircle2d(&a, &b, &c, &d).value(),
+        incircle2d_with_evidence(&a, &b, &c, &d, &incircle_evidence, APPROX).value(),
+        incircle2d(&a, &b, &c, &d, APPROX).value(),
         "retained in-circle evidence must agree with the scalar predicate"
     );
     assert!(
@@ -205,8 +207,8 @@ fn predicate_invariants(input: Input) {
 
     let insphere_evidence = insphere3_evidence(&p, &q, &r, &s);
     assert_eq!(
-        insphere3d_with_evidence(&p, &q, &r, &s, &t, &insphere_evidence).value(),
-        insphere3d(&p, &q, &r, &s, &t).value(),
+        insphere3d_with_evidence(&p, &q, &r, &s, &t, &insphere_evidence, APPROX).value(),
+        insphere3d(&p, &q, &r, &s, &t, APPROX).value(),
         "retained in-sphere evidence must agree with the scalar predicate"
     );
     assert!(
@@ -224,7 +226,7 @@ fn predicate_invariants(input: Input) {
         "rational lifted-sphere coefficients should have decidable zero status"
     );
 
-    let interval = certified_interval_sign(&a.x, &b.x);
+    let interval = certified_interval_sign(&a.x, &b.x, APPROX);
     let ax_sign = sign_of_rational(&a.x);
     let bx_sign = sign_of_rational(&b.x);
     if ax_sign == bx_sign {
@@ -236,17 +238,17 @@ fn predicate_invariants(input: Input) {
     }
 
     let radius = rational((input.a.x_num.unsigned_abs() % 7) as i16, input.a.x_den);
-    let ball = certified_ball_sign(&a.x, &radius);
+    let ball = certified_ball_sign(&a.x, &radius, APPROX);
     let lower = a.x.clone() - radius.clone();
     let upper = a.x.clone() + radius;
     assert_eq!(
         ball.and_then(PredicateOutcome::value),
-        certified_interval_sign(&lower, &upper).and_then(PredicateOutcome::value),
+        certified_interval_sign(&lower, &upper, APPROX).and_then(PredicateOutcome::value),
         "certified ball signs must agree with their exact interval enclosure"
     );
 
-    let strict = hyperlimit::orient2_with_policy(&a, &b, &c, PredicatePolicy::STRICT);
-    if let Some(sign) = orient2d(&a, &b, &c).value() {
+    let strict = hyperlimit::orient2(&a, &b, &c, PredicatePolicy::STRICT);
+    if let Some(sign) = orient2d(&a, &b, &c, APPROX).value() {
         // The explicit strict policy and convenience entry point must preserve
         // the same exact-rational orientation decision.
         assert_eq!(strict.value(), Some(sign));
@@ -256,8 +258,8 @@ fn predicate_invariants(input: Input) {
     let common_b = common_scale_point3(input.q.x_num, input.q.y_num, input.q.z_num);
     let common_c = common_scale_point3(input.r.x_num, input.r.y_num, input.r.z_num);
     let common_d = common_scale_point3(input.s.x_num, input.s.y_num, input.s.z_num);
-    let common = hyperlimit::orient3(&common_a, &common_b, &common_c, &common_d);
-    let swapped = hyperlimit::orient3(&common_b, &common_a, &common_c, &common_d);
+    let common = hyperlimit::orient3(&common_a, &common_b, &common_c, &common_d, APPROX);
+    let swapped = hyperlimit::orient3(&common_b, &common_a, &common_c, &common_d, APPROX);
     if let (Some(sign), Some(swapped)) = (common.value(), swapped.value()) {
         // These generated points all use one unreduced prime denominator, so
         // they cover the common-scale rational-vector regime before scalar
@@ -278,7 +280,7 @@ fn predicate_invariants(input: Input) {
     );
     for plane in [&x_plane, &y_plane, &z_plane] {
         assert_eq!(
-            classify_homogeneous_point_plane(&homogeneous, plane).value(),
+            classify_homogeneous_point_plane(&homogeneous, plane, APPROX).value(),
             Some(true),
             "homogeneous intersection point must satisfy each source plane"
         );
@@ -290,53 +292,53 @@ fn predicate_invariants(input: Input) {
         "two-plane line plus third-plane intersection should match direct plane triple"
     );
 
-    let segment_relation = classify_segment3_intersection(&p, &q, &r, &s).value();
+    let segment_relation = classify_segment3_intersection(&p, &q, &r, &s, APPROX).value();
     let segment_batch_cases = [(p.clone(), q.clone(), r.clone(), s.clone())];
     assert_eq!(
-        classify_segment3_intersection_batch(&segment_batch_cases)[0].value(),
+        classify_segment3_intersection_batch(&segment_batch_cases, APPROX)[0].value(),
         segment_relation,
         "3D segment batch relation must match scalar relation"
     );
     assert_eq!(
         segment_relation,
-        classify_segment3_intersection(&r, &s, &p, &q).value(),
+        classify_segment3_intersection(&r, &s, &p, &q, APPROX).value(),
         "3D segment intersection classification must be symmetric under segment exchange"
     );
     assert_eq!(
         segment_relation,
-        classify_segment3_intersection(&q, &p, &r, &s).value(),
+        classify_segment3_intersection(&q, &p, &r, &s, APPROX).value(),
         "3D segment intersection classification must be invariant under endpoint reversal"
     );
 
     let zero = Real::from(0);
     assert_eq!(
-        compare_point_line3_distance_squared(&p, &p, &q, &zero).value(),
+        compare_point_line3_distance_squared(&p, &p, &q, &zero, APPROX).value(),
         Some(core::cmp::Ordering::Equal),
         "a source endpoint has zero squared distance to its generated line"
     );
     assert_eq!(
-        compare_point_segment3_distance_squared(&p, &p, &q, &zero).value(),
+        compare_point_segment3_distance_squared(&p, &p, &q, &zero, APPROX).value(),
         Some(core::cmp::Ordering::Equal),
         "a source endpoint has zero squared distance to its generated segment"
     );
     assert_eq!(
-        compare_point_plane_distance_squared(&p, &z_plane, &zero).value(),
+        compare_point_plane_distance_squared(&p, &z_plane, &zero, APPROX).value(),
         Some(core::cmp::Ordering::Equal),
         "a coordinate-plane source point has zero squared distance to its plane"
     );
     assert_eq!(
-        classify_sphere3_intersection(&p, &zero, &p, &zero).value(),
+        classify_sphere3_intersection(&p, &zero, &p, &zero, APPROX).value(),
         Some(SphereIntersection::Touching),
         "equal zero-radius spheres touch exactly at their shared center"
     );
     assert_eq!(
-        classify_aabb3_sphere_intersection(&p, &p, &p, &zero).value(),
+        classify_aabb3_sphere_intersection(&p, &p, &p, &zero, APPROX).value(),
         Some(AabbSphereIntersection::Touching),
         "zero-volume AABB and zero-radius sphere touch exactly at their shared point"
     );
-    if let Some(report) = classify_plane_aabb3_report(&z_plane, &p, &p).value() {
+    if let Some(report) = classify_plane_aabb3_report(&z_plane, &p, &p, APPROX).value() {
         assert_eq!(
-            report.validate_against_sources(&z_plane, &p, &p, PredicatePolicy::default()),
+            report.validate_against_sources(&z_plane, &p, &p, APPROX,),
             Ok(()),
             "point-sized AABB plane report must replay exact support extrema"
         );
@@ -348,11 +350,13 @@ fn predicate_invariants(input: Input) {
     }
 
     let ray_direction = Point3::new(&q.x - &p.x, &q.y - &p.y, &q.z - &p.z);
-    let segment_triangle = classify_segment_triangle3_intersection(&p, &q, &p, &r, &s).value();
-    let ray_triangle = classify_ray_triangle3_intersection(&p, &ray_direction, &p, &r, &s).value();
+    let segment_triangle =
+        classify_segment_triangle3_intersection(&p, &q, &p, &r, &s, APPROX).value();
+    let ray_triangle =
+        classify_ray_triangle3_intersection(&p, &ray_direction, &p, &r, &s, APPROX).value();
     let segment_triangle_batch = [(p.clone(), q.clone(), p.clone(), r.clone(), s.clone())];
     assert_eq!(
-        classify_segment_triangle3_intersection_batch(&segment_triangle_batch)[0].value(),
+        classify_segment_triangle3_intersection_batch(&segment_triangle_batch, APPROX)[0].value(),
         segment_triangle,
         "segment/triangle batch relation must match scalar relation"
     );
@@ -364,7 +368,7 @@ fn predicate_invariants(input: Input) {
         s.clone(),
     )];
     assert_eq!(
-        classify_ray_triangle3_intersection_batch(&ray_triangle_batch)[0].value(),
+        classify_ray_triangle3_intersection_batch(&ray_triangle_batch, APPROX)[0].value(),
         ray_triangle,
         "ray/triangle batch relation must match scalar relation"
     );
@@ -375,7 +379,8 @@ fn predicate_invariants(input: Input) {
             "ray from the segment start toward the segment end must preserve endpoint-triangle incidence"
         );
     }
-    if let Some(report) = classify_segment_triangle3_intersection_report(&p, &q, &p, &r, &s).value()
+    if let Some(report) =
+        classify_segment_triangle3_intersection_report(&p, &q, &p, &r, &s, APPROX).value()
     {
         assert_eq!(
             Some(report.relation),
@@ -383,7 +388,7 @@ fn predicate_invariants(input: Input) {
             "segment/triangle report relation must match scalar classifier"
         );
         report
-            .validate_against_sources(&p, &q, &p, &r, &s, PredicatePolicy::default())
+            .validate_against_sources(&p, &q, &p, &r, &s, APPROX)
             .expect("segment/triangle report must replay against exact sources");
         if report.relation.intersects()
             && report.relation != hyperlimit::SegmentTriangleIntersection::Coplanar
@@ -395,7 +400,7 @@ fn predicate_invariants(input: Input) {
         }
     }
     if let Some(report) =
-        classify_ray_triangle3_intersection_report(&p, &ray_direction, &p, &r, &s).value()
+        classify_ray_triangle3_intersection_report(&p, &ray_direction, &p, &r, &s, APPROX).value()
     {
         assert_eq!(
             Some(report.relation),
@@ -403,7 +408,7 @@ fn predicate_invariants(input: Input) {
             "ray/triangle report relation must match scalar classifier"
         );
         report
-            .validate_against_sources(&p, &ray_direction, &p, &r, &s, PredicatePolicy::default())
+            .validate_against_sources(&p, &ray_direction, &p, &r, &s, APPROX)
             .expect("ray/triangle report must replay against exact sources");
         if report.relation.intersects()
             && report.relation != hyperlimit::RayTriangleIntersection::Coplanar
@@ -415,19 +420,19 @@ fn predicate_invariants(input: Input) {
         }
     }
 
-    let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r);
+    let triangle_degeneracy = classify_triangle3_degeneracy(&p, &q, &r, APPROX);
     assert_ne!(
         triangle_degeneracy,
         TriangleDegeneracy::Unknown,
         "rational 3D triangle degeneracy should be exactly decided"
     );
 
-    let segment_plane = intersect_segment_with_oriented_plane(&p, &q, &r, &s, &t);
+    let segment_plane = intersect_segment_with_oriented_plane(&p, &q, &r, &s, &t, APPROX);
     segment_plane
-        .validate()
+        .validate(APPROX)
         .expect("segment/plane event must be internally coherent");
     segment_plane
-        .validate_against_sources(&p, &q, &r, &s, &t)
+        .validate_against_sources(&p, &q, &r, &s, &t, APPROX)
         .expect("segment/plane event must replay against its source points");
     if segment_plane.relation == SegmentPlaneRelation::ProperCrossing {
         assert!(
@@ -444,12 +449,12 @@ fn predicate_invariants(input: Input) {
         Point3::new(&a.x + &Real::from(1), a.y.clone(), 0.into()),
         Point3::new(a.x.clone(), &a.y + &Real::from(1), 0.into()),
     ];
-    let coplanar = classify_coplanar_triangles(&lifted, [0, 1, 2], [3, 4, 5]);
+    let coplanar = classify_coplanar_triangles(&lifted, [0, 1, 2], [3, 4, 5], APPROX);
     coplanar
-        .validate_against_sources(&lifted, [0, 1, 2], [3, 4, 5])
+        .validate_against_sources(&lifted, [0, 1, 2], [3, 4, 5], APPROX)
         .expect("coplanar classifier must validate and replay");
     if let Some(tri_tri) = classify_triangle_triangle3(
-        &lifted[0], &lifted[1], &lifted[2], &lifted[3], &lifted[4], &lifted[5],
+        &lifted[0], &lifted[1], &lifted[2], &lifted[3], &lifted[4], &lifted[5], APPROX,
     )
     .value()
     {
@@ -457,11 +462,11 @@ fn predicate_invariants(input: Input) {
             .validate_against_triangles(
                 [&lifted[0], &lifted[1], &lifted[2]],
                 [&lifted[3], &lifted[4], &lifted[5]],
-                PredicatePolicy::default(),
+                APPROX,
             )
             .expect("triangle/triangle report must replay against exact sources");
         let swapped = classify_triangle_triangle3(
-            &lifted[3], &lifted[4], &lifted[5], &lifted[0], &lifted[1], &lifted[2],
+            &lifted[3], &lifted[4], &lifted[5], &lifted[0], &lifted[1], &lifted[2], APPROX,
         )
         .value()
         .expect("swapped exact triangle pair should decide");
@@ -478,6 +483,7 @@ fn predicate_invariants(input: Input) {
             &Point3::new(0.into(), 0.into(), 0.into()),
             &Point3::new(4.into(), 0.into(), 0.into()),
             CoplanarProjection::Xy,
+            APPROX
         ),
         Some(exact_half.clone()),
         "projected segment parameter should preserve exact affine ratios"
@@ -489,6 +495,7 @@ fn predicate_invariants(input: Input) {
             &Point3::new((-1).into(), 0.into(), 0.into()),
             &Point3::new(1.into(), 0.into(), 0.into()),
             CoplanarProjection::Xy,
+            APPROX
         ),
         Some(exact_half),
         "projected line crossing parameter should preserve determinant ratios"
@@ -496,25 +503,25 @@ fn predicate_invariants(input: Input) {
 
     let unit_x_from_a = Point2::new(&a.x + &Real::from(1), a.y.clone());
     assert_eq!(
-        classify_circle_line2(&a, &zero, &a, &unit_x_from_a).value(),
+        classify_circle_line2(&a, &zero, &a, &unit_x_from_a, APPROX).value(),
         Some(hyperlimit::CircleLineRelation::Tangent),
         "zero-radius circle centered on a nondegenerate line has one boundary contact"
     );
     let circle_line_batch = [(a.clone(), zero.clone(), a.clone(), unit_x_from_a.clone())];
     assert_eq!(
-        classify_circle_line2_batch(&circle_line_batch)[0].value(),
-        classify_circle_line2(&a, &zero, &a, &unit_x_from_a).value(),
+        classify_circle_line2_batch(&circle_line_batch, APPROX)[0].value(),
+        classify_circle_line2(&a, &zero, &a, &unit_x_from_a, APPROX).value(),
         "circle/line batch relation must match scalar relation"
     );
     assert_eq!(
-        classify_circle_segment2(&a, &zero, &a, &a).value(),
+        classify_circle_segment2(&a, &zero, &a, &a, APPROX).value(),
         Some(hyperlimit::CircleSegmentRelation::Tangent),
         "zero-radius circle and degenerate segment at the center touch exactly once"
     );
     let circle_segment_batch = [(a.clone(), zero.clone(), a.clone(), a.clone())];
     assert_eq!(
-        classify_circle_segment2_batch(&circle_segment_batch)[0].value(),
-        classify_circle_segment2(&a, &zero, &a, &a).value(),
+        classify_circle_segment2_batch(&circle_segment_batch, APPROX)[0].value(),
+        classify_circle_segment2(&a, &zero, &a, &a, APPROX).value(),
         "circle/segment batch relation must match scalar relation"
     );
 
@@ -525,7 +532,8 @@ fn predicate_invariants(input: Input) {
         Point2::new(0.into(), 1.into()),
     ];
     assert_eq!(
-        classify_point_convex_polygon2(&unit_square, &Point2::new(0.into(), 0.into())).value(),
+        classify_point_convex_polygon2(&unit_square, &Point2::new(0.into(), 0.into()), APPROX)
+            .value(),
         Some(hyperlimit::ConvexPointLocation::Boundary),
         "convex polygon composition must retain exact boundary points"
     );
@@ -540,7 +548,8 @@ fn predicate_invariants(input: Input) {
     assert_eq!(
         classify_point_convex_planes3(
             &unit_cube_planes,
-            &Point3::new(0.into(), 0.into(), 0.into())
+            &Point3::new(0.into(), 0.into(), 0.into()),
+            APPROX
         )
         .value(),
         Some(hyperlimit::ConvexPointLocation::Boundary),
@@ -554,10 +563,10 @@ fn predicate_invariants(input: Input) {
         Point3::new(1.into(), 1.into(), 1.into()),
     ];
     let dop_points = [p.clone(), q.clone(), r.clone(), s.clone(), t.clone()];
-    if let Some(dop) = SupportDop3::from_points(&dop_axes, &dop_points).value() {
+    if let Some(dop) = SupportDop3::from_points(&dop_axes, &dop_points, APPROX).value() {
         for point in &dop_points {
             assert!(
-                dop.classify_point(point)
+                dop.classify_point(point, APPROX)
                     .value()
                     .is_some_and(|location| location.is_inside_or_boundary()),
                 "support k-DOP built from exact points must contain every source witness"
@@ -604,7 +613,8 @@ fn predicate_invariants(input: Input) {
         unit_dop
             .classify_aabb3(
                 &Point3::new(1.into(), 0.into(), 0.into()),
-                &Point3::new(2.into(), 1.into(), 1.into())
+                &Point3::new(2.into(), 1.into(), 1.into()),
+                APPROX,
             )
             .value(),
         Some(SupportDopRelation::BoundaryTouch),
@@ -614,6 +624,7 @@ fn predicate_invariants(input: Input) {
         .classify_aabb3_report(
             &Point3::new(1.into(), 0.into(), 0.into()),
             &Point3::new(2.into(), 1.into(), 1.into()),
+            APPROX,
         )
         .value()
     {
@@ -627,7 +638,8 @@ fn predicate_invariants(input: Input) {
                 .validate_against_sources(
                     &unit_dop,
                     &Point3::new(1.into(), 0.into(), 0.into()),
-                    &Point3::new(2.into(), 1.into(), 1.into())
+                    &Point3::new(2.into(), 1.into(), 1.into()),
+                    APPROX,
                 )
                 .is_ok(),
             "support-DOP/AABB report evidence must replay from exact sources"
@@ -637,7 +649,8 @@ fn predicate_invariants(input: Input) {
         unit_dop
             .classify_aabb3(
                 &Point3::new(2.into(), 0.into(), 0.into()),
-                &Point3::new(3.into(), 1.into(), 1.into())
+                &Point3::new(3.into(), 1.into(), 1.into()),
+                APPROX,
             )
             .value(),
         Some(SupportDopRelation::Separated),
@@ -647,6 +660,7 @@ fn predicate_invariants(input: Input) {
         .classify_aabb3_report(
             &Point3::new(2.into(), 0.into(), 0.into()),
             &Point3::new(3.into(), 1.into(), 1.into()),
+            APPROX,
         )
         .value()
     {
@@ -656,14 +670,15 @@ fn predicate_invariants(input: Input) {
                 .validate_against_sources(
                     &unit_dop,
                     &Point3::new(2.into(), 0.into(), 0.into()),
-                    &Point3::new(3.into(), 1.into(), 1.into())
+                    &Point3::new(3.into(), 1.into(), 1.into()),
+                    APPROX,
                 )
                 .is_ok(),
             "separating support-DOP/AABB report must replay its terminal slab"
         );
     }
     let unit_plane = Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), (-1).into());
-    if let Some(report) = unit_dop.classify_plane3_report(&unit_plane).value() {
+    if let Some(report) = unit_dop.classify_plane3_report(&unit_plane, APPROX).value() {
         assert_eq!(
             report.relation,
             SupportDopPlaneRelation::Intersecting,
@@ -671,13 +686,16 @@ fn predicate_invariants(input: Input) {
         );
         assert!(
             report
-                .validate_against_sources(&unit_dop, &unit_plane)
+                .validate_against_sources(&unit_dop, &unit_plane, APPROX,)
                 .is_ok(),
             "support-DOP/plane feasibility evidence must replay from exact sources"
         );
     }
     let outside_plane = Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), (-2).into());
-    if let Some(report) = unit_dop.classify_plane3_report(&outside_plane).value() {
+    if let Some(report) = unit_dop
+        .classify_plane3_report(&outside_plane, APPROX)
+        .value()
+    {
         assert_eq!(
             report.relation,
             SupportDopPlaneRelation::Below,
@@ -685,7 +703,7 @@ fn predicate_invariants(input: Input) {
         );
         assert!(
             report
-                .validate_against_sources(&unit_dop, &outside_plane)
+                .validate_against_sources(&unit_dop, &outside_plane, APPROX,)
                 .is_ok(),
             "one-sided support-DOP/plane evidence must replay"
         );
@@ -699,14 +717,16 @@ fn predicate_invariants(input: Input) {
         Plane3::new(Point3::new(0.into(), 0.into(), 1.into()), -&p.z),
         Plane3::new(Point3::new(0.into(), 0.into(), (-1).into()), p.z.clone()),
     ];
-    if let Some(feasibility) = classify_halfspace_feasibility3(&fixed_point_halfspaces).value() {
+    if let Some(feasibility) =
+        classify_halfspace_feasibility3(&fixed_point_halfspaces, APPROX).value()
+    {
         assert!(
             feasibility.is_feasible(),
             "coordinate halfspaces that pin a generated point must be feasible"
         );
         assert_eq!(
             feasibility
-                .validate_against_planes(&fixed_point_halfspaces)
+                .validate_against_planes(&fixed_point_halfspaces, APPROX,)
                 .value(),
             Some(true),
             "halfspace feasibility witness must replay through point-plane predicates"
@@ -716,7 +736,7 @@ fn predicate_invariants(input: Input) {
         Plane3::new(Point3::new(1.into(), 0.into(), 0.into()), 1.into()),
         Plane3::new(Point3::new((-1).into(), 0.into(), 0.into()), 0.into()),
     ];
-    if let Some(report) = classify_halfspace_feasibility3(&impossible_halfspaces).value() {
+    if let Some(report) = classify_halfspace_feasibility3(&impossible_halfspaces, APPROX).value() {
         assert_eq!(
             report.status,
             hyperlimit::HalfspaceFeasibility::Infeasible,
@@ -728,7 +748,7 @@ fn predicate_invariants(input: Input) {
         );
         assert_eq!(
             report
-                .validate_against_planes(&impossible_halfspaces)
+                .validate_against_planes(&impossible_halfspaces, APPROX,)
                 .value(),
             Some(true),
             "halfspace infeasibility certificate must replay exactly"

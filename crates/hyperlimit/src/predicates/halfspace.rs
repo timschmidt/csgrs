@@ -77,14 +77,17 @@ impl HalfspaceFeasibilityReport {
     /// Infeasible reports replay their Farkas certificate when present; an
     /// older or deliberately compact infeasible report without a certificate is
     /// structurally valid but not proof-producing.
-    pub fn validate_against_planes(&self, planes: &[Plane3]) -> PredicateOutcome<bool> {
-        let policy = PredicatePolicy;
+    pub fn validate_against_planes(
+        &self,
+        planes: &[Plane3],
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<bool> {
         match (&self.status, &self.witness) {
             (HalfspaceFeasibility::Feasible, Some(witness)) => {
                 point_satisfies_halfspaces(witness, planes, policy)
             }
             (HalfspaceFeasibility::Infeasible, None) => match &self.infeasibility_certificate {
-                Some(certificate) => certificate.validate_against_planes(planes),
+                Some(certificate) => certificate.validate_against_planes(planes, policy),
                 None => PredicateOutcome::decided(true, Certainty::Exact, Escalation::Structural),
             },
             _ => PredicateOutcome::decided(false, Certainty::Exact, Escalation::Structural),
@@ -112,8 +115,11 @@ pub struct HalfspaceInfeasibilityCertificate {
 
 impl HalfspaceInfeasibilityCertificate {
     /// Replay the Farkas certificate against a source plane list.
-    pub fn validate_against_planes(&self, planes: &[Plane3]) -> PredicateOutcome<bool> {
-        let policy = PredicatePolicy;
+    pub fn validate_against_planes(
+        &self,
+        planes: &[Plane3],
+        policy: PredicatePolicy,
+    ) -> PredicateOutcome<bool> {
         let mut normal_sum = Point3::new(Real::from(0), Real::from(0), Real::from(0));
         let mut offset_sum = Real::from(0);
         let mut saw_positive_multiplier = false;
@@ -180,13 +186,6 @@ impl HalfspaceInfeasibilityCertificate {
     }
 }
 
-/// Decide feasibility of `normal . point + offset <= 0` halfspaces.
-pub fn classify_halfspace_feasibility3(
-    planes: &[Plane3],
-) -> PredicateOutcome<HalfspaceFeasibilityReport> {
-    classify_halfspace_feasibility3_with_policy(planes, PredicatePolicy)
-}
-
 /// Decide feasibility of 3D halfspaces with an explicit predicate policy.
 ///
 /// The search checks the origin, closest points on every plane, closest points
@@ -194,7 +193,7 @@ pub fn classify_halfspace_feasibility3(
 /// candidate is accepted only after all halfspace predicates certify
 /// `Below | On`. Infeasibility is reported only when every active-set candidate
 /// and every replay comparison is exactly decided under the supplied policy.
-pub(crate) fn classify_halfspace_feasibility3_with_policy(
+pub fn classify_halfspace_feasibility3_with_policy(
     planes: &[Plane3],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<HalfspaceFeasibilityReport> {

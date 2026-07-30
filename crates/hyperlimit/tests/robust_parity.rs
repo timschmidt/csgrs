@@ -2,6 +2,8 @@ use hyperlimit::{Point2, Point3, Sign, incircle2, insphere3, orient2, orient3};
 use proptest::prelude::*;
 use robust::{Coord, Coord3D};
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 fn point2(values: &[f64]) -> Point2 {
     Point2::try_from_f64_array([values[0], values[1]]).unwrap()
 }
@@ -50,7 +52,7 @@ proptest! {
             coord2(&coordinates[2..4]),
             coord2(&coordinates[4..6]),
         ));
-        prop_assert_eq!(orient2(&a, &b, &c).value(), Some(expected));
+        prop_assert_eq!(orient2(&a, &b, &c, APPROX).value(), Some(expected));
     }
 
     #[test]
@@ -67,7 +69,7 @@ proptest! {
             coord3(&coordinates[6..9]),
             coord3(&coordinates[9..12]),
         ));
-        prop_assert_eq!(orient3(&a, &b, &c, &d).value(), Some(expected));
+        prop_assert_eq!(orient3(&a, &b, &c, &d, APPROX).value(), Some(expected));
     }
 
     #[test]
@@ -84,7 +86,7 @@ proptest! {
             coord2(&coordinates[4..6]),
             coord2(&coordinates[6..8]),
         ));
-        prop_assert_eq!(incircle2(&a, &b, &c, &d).value(), Some(expected));
+        prop_assert_eq!(incircle2(&a, &b, &c, &d, APPROX).value(), Some(expected));
     }
 
     #[test]
@@ -103,6 +105,6 @@ proptest! {
             coord3(&coordinates[9..12]),
             coord3(&coordinates[12..15]),
         ));
-        prop_assert_eq!(insphere3(&a, &b, &c, &d, &e).value(), Some(expected));
+        prop_assert_eq!(insphere3(&a, &b, &c, &d, &e, APPROX).value(), Some(expected));
     }
 }

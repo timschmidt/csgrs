@@ -30,17 +30,12 @@ pub fn classify_ball_sign_with_policy(
     }
 }
 
-/// Try to certify a sign from an exact closed ball enclosure.
+/// Try to certify a sign from an exact closed ball enclosure with policy.
 ///
 /// Returns `Some` only when the nonnegative ball certifies a sign. Use
 /// [`classify_ball_sign_with_policy`] when invalid-radius and inconclusive
 /// outcomes must remain distinct.
-pub fn certified_ball_sign(center: &Real, radius: &Real) -> Option<PredicateOutcome<Sign>> {
-    certified_ball_sign_with_policy(center, radius, PredicatePolicy)
-}
-
-/// Try to certify a sign from an exact closed ball enclosure with policy.
-pub(crate) fn certified_ball_sign_with_policy(
+pub fn certified_ball_sign_with_policy(
     center: &Real,
     radius: &Real,
     policy: PredicatePolicy,
@@ -51,17 +46,12 @@ pub(crate) fn certified_ball_sign_with_policy(
     }
 }
 
-/// Try to certify a sign from an exact closed interval enclosure.
+/// Try to certify a sign from an exact closed interval enclosure with policy.
 ///
 /// Returns `Some` only when the interval proves a sign. This shape is intended
 /// for predicate filter callbacks such as `resolve_real_sign(..., || {
 /// certified_interval_sign_with_policy(...) }, ...)`.
-pub fn certified_interval_sign(first: &Real, second: &Real) -> Option<PredicateOutcome<Sign>> {
-    certified_interval_sign_with_policy(first, second, PredicatePolicy)
-}
-
-/// Try to certify a sign from an exact closed interval enclosure with policy.
-pub(crate) fn certified_interval_sign_with_policy(
+pub fn certified_interval_sign_with_policy(
     first: &Real,
     second: &Real,
     policy: PredicatePolicy,
@@ -222,10 +212,12 @@ fn ordering_rank(ordering: Ordering) -> i8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     #[test]
     fn certified_interval_sign_decides_strict_and_zero_enclosures() {
         assert_eq!(
-            certified_interval_sign(&Real::from(1), &Real::from(3)),
+            crate::certified_interval_sign(&Real::from(1), &Real::from(3), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Positive,
                 Certainty::Filtered,
@@ -233,7 +225,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            certified_interval_sign(&Real::from(-7), &Real::from(-2)),
+            crate::certified_interval_sign(&Real::from(-7), &Real::from(-2), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Negative,
                 Certainty::Filtered,
@@ -241,7 +233,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            certified_interval_sign(&Real::from(0), &Real::from(0)),
+            crate::certified_interval_sign(&Real::from(0), &Real::from(0), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Zero,
                 Certainty::Filtered,
@@ -249,7 +241,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            certified_interval_sign(&Real::from(-1), &Real::from(1)),
+            crate::certified_interval_sign(&Real::from(-1), &Real::from(1), APPROX),
             None
         );
     }
@@ -257,7 +249,7 @@ mod tests {
     #[test]
     fn certified_ball_sign_decides_strict_zero_and_crossing_balls() {
         assert_eq!(
-            certified_ball_sign(&Real::from(5), &Real::from(2)),
+            crate::certified_ball_sign(&Real::from(5), &Real::from(2), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Positive,
                 Certainty::Filtered,
@@ -265,7 +257,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            certified_ball_sign(&Real::from(-5), &Real::from(2)),
+            crate::certified_ball_sign(&Real::from(-5), &Real::from(2), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Negative,
                 Certainty::Filtered,
@@ -273,14 +265,17 @@ mod tests {
             ))
         );
         assert_eq!(
-            certified_ball_sign(&Real::from(0), &Real::from(0)),
+            crate::certified_ball_sign(&Real::from(0), &Real::from(0), APPROX),
             Some(PredicateOutcome::decided(
                 Sign::Zero,
                 Certainty::Filtered,
                 Escalation::Filter
             ))
         );
-        assert_eq!(certified_ball_sign(&Real::from(1), &Real::from(2)), None);
+        assert_eq!(
+            crate::certified_ball_sign(&Real::from(1), &Real::from(2), APPROX),
+            None
+        );
     }
 
     #[test]
@@ -296,11 +291,7 @@ mod tests {
             None
         );
         assert_eq!(
-            certified_interval_sign_with_policy(
-                &undecidable,
-                &undecidable,
-                PredicatePolicy::APPROXIMATE_512,
-            ),
+            certified_interval_sign_with_policy(&undecidable, &undecidable, APPROX,),
             Some(PredicateOutcome::decided(
                 Sign::Zero,
                 Certainty::Approximate,
@@ -308,11 +299,7 @@ mod tests {
             ))
         );
         assert_eq!(
-            classify_ball_sign_with_policy(
-                &undecidable,
-                &Real::zero(),
-                PredicatePolicy::APPROXIMATE_512,
-            ),
+            classify_ball_sign_with_policy(&undecidable, &Real::zero(), APPROX,),
             PredicateOutcome::decided(Sign::Zero, Certainty::Approximate, Escalation::Filter,)
         );
     }

@@ -15,15 +15,6 @@ use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use hyperreal::{Rational, Real};
 
-/// Compare squared distances from `anchor` to `left` and `right`.
-pub fn compare_point2_distance_squared(
-    anchor: &Point2,
-    left: &Point2,
-    right: &Point2,
-) -> PredicateOutcome<Ordering> {
-    compare_point2_distance_squared_with_policy(anchor, left, right, PredicatePolicy)
-}
-
 /// Compare squared distances from `anchor` to `left` and `right` with an
 /// explicit predicate escalation policy.
 ///
@@ -32,7 +23,7 @@ pub fn compare_point2_distance_squared(
 /// avoids constructing a square root and asks the Real sign resolver to
 /// certify `|anchor-left|^2 - |anchor-right|^2`. This standard distance-ordering
 /// reduction keeps the final sign decision exact.
-pub(crate) fn compare_point2_distance_squared_with_policy(
+pub fn compare_point2_distance_squared_with_policy(
     anchor: &Point2,
     left: &Point2,
     right: &Point2,
@@ -46,22 +37,13 @@ pub(crate) fn compare_point2_distance_squared_with_policy(
     compare_reals_with_policy(&left_distance, &right_distance, policy)
 }
 
-/// Compare squared 3D distances from `anchor` to `left` and `right`.
-pub fn compare_point3_distance_squared(
-    anchor: &Point3,
-    left: &Point3,
-    right: &Point3,
-) -> PredicateOutcome<Ordering> {
-    compare_point3_distance_squared_with_policy(anchor, left, right, PredicatePolicy)
-}
-
 /// Compare squared 3D distances from `anchor` to `left` and `right` with an
 /// explicit predicate escalation policy.
 ///
-/// This is the 3D lift of [`compare_point2_distance_squared`]. It compares
+/// This is the 3D lift of [`compare_point2_distance_squared_with_policy`]. It compares
 /// `|anchor-left|^2` and `|anchor-right|^2` through exact `Real` predicates,
 /// avoiding square-root construction and primitive-float tie decisions.
-pub(crate) fn compare_point3_distance_squared_with_policy(
+pub fn compare_point3_distance_squared_with_policy(
     anchor: &Point3,
     left: &Point3,
     right: &Point3,
@@ -73,16 +55,6 @@ pub(crate) fn compare_point3_distance_squared_with_policy(
     let left_distance = squared_distance3(anchor, left);
     let right_distance = squared_distance3(anchor, right);
     compare_reals_with_policy(&left_distance, &right_distance, policy)
-}
-
-/// Classify the relation between a 2D circle boundary and an infinite line.
-pub fn classify_circle_line2(
-    center: &Point2,
-    radius_squared: &Real,
-    a: &Point2,
-    b: &Point2,
-) -> PredicateOutcome<CircleLineRelation> {
-    classify_circle_line2_with_policy(center, radius_squared, a, b, PredicatePolicy)
 }
 
 /// Classify the relation between a 2D circle boundary and an infinite line
@@ -142,16 +114,6 @@ pub fn classify_circle_line2_with_policy(
         }
         PredicateOutcome::Unknown { needed, stage } => PredicateOutcome::unknown(needed, stage),
     }
-}
-
-/// Classify the relation between a 2D circle boundary and a closed segment.
-pub fn classify_circle_segment2(
-    center: &Point2,
-    radius_squared: &Real,
-    a: &Point2,
-    b: &Point2,
-) -> PredicateOutcome<CircleSegmentRelation> {
-    classify_circle_segment2_with_policy(center, radius_squared, a, b, PredicatePolicy)
 }
 
 /// Classify the relation between a 2D circle boundary and a closed segment
@@ -283,23 +245,6 @@ pub fn classify_circle_segment2_with_policy(
 }
 
 /// Compare the squared distance from `point` to the infinite 3D line `ab`
-/// against `threshold_squared`.
-pub fn compare_point_line3_distance_squared(
-    point: &Point3,
-    a: &Point3,
-    b: &Point3,
-    threshold_squared: &Real,
-) -> PredicateOutcome<Ordering> {
-    compare_point_line3_distance_squared_with_policy(
-        point,
-        a,
-        b,
-        threshold_squared,
-        PredicatePolicy,
-    )
-}
-
-/// Compare the squared distance from `point` to the infinite 3D line `ab`
 /// against `threshold_squared` with an explicit predicate policy.
 ///
 /// The predicate avoids constructing the projected point or dividing by
@@ -307,7 +252,7 @@ pub fn compare_point_line3_distance_squared(
 /// `threshold_squared * |b-a|^2`. This is the standard squared-distance
 /// reduction for point-line queries in computational geometry with a
 /// division-free exact decision boundary.
-pub(crate) fn compare_point_line3_distance_squared_with_policy(
+pub fn compare_point_line3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
     b: &Point3,
@@ -348,29 +293,12 @@ pub(crate) fn compare_point_line3_distance_squared_with_policy(
 }
 
 /// Compare the squared distance from `point` to the closed 3D segment `ab`
-/// against `threshold_squared`.
-pub fn compare_point_segment3_distance_squared(
-    point: &Point3,
-    a: &Point3,
-    b: &Point3,
-    threshold_squared: &Real,
-) -> PredicateOutcome<Ordering> {
-    compare_point_segment3_distance_squared_with_policy(
-        point,
-        a,
-        b,
-        threshold_squared,
-        PredicatePolicy,
-    )
-}
-
-/// Compare the squared distance from `point` to the closed 3D segment `ab`
 /// against `threshold_squared` with an explicit predicate policy.
 ///
 /// Projection signs select the closest endpoint or the interior line-distance
 /// branch exactly. No square roots, normalized direction vectors, or
 /// primitive-float tolerances are used.
-pub(crate) fn compare_point_segment3_distance_squared_with_policy(
+pub fn compare_point_segment3_distance_squared_with_policy(
     point: &Point3,
     a: &Point3,
     b: &Point3,
@@ -443,21 +371,6 @@ pub(crate) fn compare_point_segment3_distance_squared_with_policy(
 }
 
 /// Compare the squared distance from `point` to `plane` against
-/// `threshold_squared`.
-pub fn compare_point_plane_distance_squared(
-    point: &Point3,
-    plane: &crate::plane::Plane3,
-    threshold_squared: &Real,
-) -> PredicateOutcome<Ordering> {
-    compare_point_plane_distance_squared_with_policy(
-        point,
-        plane,
-        threshold_squared,
-        PredicatePolicy,
-    )
-}
-
-/// Compare the squared distance from `point` to `plane` against
 /// `threshold_squared` with an explicit predicate policy.
 ///
 /// The signed plane expression is squared and compared against
@@ -465,7 +378,7 @@ pub fn compare_point_plane_distance_squared(
 /// plane or constructs a square root. Degenerate zero-normal planes fall back
 /// to comparing the squared offset expression directly, making invalid input
 /// behavior explicit and exact rather than tolerance-defined.
-pub(crate) fn compare_point_plane_distance_squared_with_policy(
+pub fn compare_point_plane_distance_squared_with_policy(
     point: &Point3,
     plane: &crate::plane::Plane3,
     threshold_squared: &Real,
@@ -494,22 +407,6 @@ pub(crate) fn compare_point_plane_distance_squared_with_policy(
     compare_reals_with_policy(&numerator, &scaled_threshold, policy)
 }
 
-/// Classify the intersection of two closed explicit 3D spheres.
-pub fn classify_sphere3_intersection(
-    first_center: &Point3,
-    first_radius: &Real,
-    second_center: &Point3,
-    second_radius: &Real,
-) -> PredicateOutcome<SphereIntersection> {
-    classify_sphere3_intersection_with_policy(
-        first_center,
-        first_radius,
-        second_center,
-        second_radius,
-        PredicatePolicy,
-    )
-}
-
 /// Classify the intersection of two closed explicit 3D spheres with an
 /// explicit predicate policy.
 ///
@@ -517,7 +414,7 @@ pub fn classify_sphere3_intersection(
 /// decided by `|c0-c1|^2` versus `(r0+r1)^2`. Negative radii are rejected as
 /// unsupported domain input instead of being silently reinterpreted, keeping
 /// invalid or undecidable geometric states explicit.
-pub(crate) fn classify_sphere3_intersection_with_policy(
+pub fn classify_sphere3_intersection_with_policy(
     first_center: &Point3,
     first_radius: &Real,
     second_center: &Point3,
@@ -555,23 +452,6 @@ pub(crate) fn classify_sphere3_intersection_with_policy(
     }
 }
 
-/// Classify the intersection of a closed 3D AABB and an explicit sphere whose
-/// radius is supplied squared.
-pub fn classify_aabb3_sphere_intersection(
-    min: &Point3,
-    max: &Point3,
-    center: &Point3,
-    radius_squared: &Real,
-) -> PredicateOutcome<AabbSphereIntersection> {
-    classify_aabb3_sphere_intersection_with_policy(
-        min,
-        max,
-        center,
-        radius_squared,
-        PredicatePolicy,
-    )
-}
-
 /// Classify the intersection of a closed 3D AABB and an explicit sphere with
 /// an explicit predicate policy.
 ///
@@ -579,7 +459,7 @@ pub fn classify_aabb3_sphere_intersection(
 /// violations, which is the standard AABB/sphere broad-phase predicate. Each
 /// axis comparison is exact and inclusive, and the final comparison stays in
 /// squared-distance form.
-pub(crate) fn classify_aabb3_sphere_intersection_with_policy(
+pub fn classify_aabb3_sphere_intersection_with_policy(
     min: &Point3,
     max: &Point3,
     center: &Point3,
@@ -607,22 +487,13 @@ pub(crate) fn classify_aabb3_sphere_intersection_with_policy(
     }
 }
 
-/// Classify a point relative to an explicit 3D sphere with squared radius.
-pub fn classify_point_sphere3(
-    center: &Point3,
-    radius_squared: &Real,
-    point: &Point3,
-) -> PredicateOutcome<SpherePointLocation> {
-    classify_point_sphere3_with_policy(center, radius_squared, point, PredicatePolicy)
-}
-
 /// Classify a point relative to an explicit 3D sphere with squared radius and
 /// an explicit predicate escalation policy.
 ///
 /// The API accepts squared radius so callers do not need to construct square
 /// roots. Domain validation for nonnegative radius remains with the caller that
 /// owns the sphere object; this predicate only certifies the distance relation.
-pub(crate) fn classify_point_sphere3_with_policy(
+pub fn classify_point_sphere3_with_policy(
     center: &Point3,
     radius_squared: &Real,
     point: &Point3,
@@ -1373,6 +1244,8 @@ fn distance_stage_rank(stage: crate::predicate::Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
@@ -1445,15 +1318,15 @@ mod tests {
         let also_near = p2(-3, -4);
 
         assert_eq!(
-            compare_point2_distance_squared(&anchor, &near, &far).value(),
+            crate::compare_point2_distance_squared(&anchor, &near, &far, APPROX).value(),
             Some(Ordering::Less)
         );
         assert_eq!(
-            compare_point2_distance_squared(&anchor, &near, &also_near).value(),
+            crate::compare_point2_distance_squared(&anchor, &near, &also_near, APPROX).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point2_distance_squared(&anchor, &far, &near).value(),
+            crate::compare_point2_distance_squared(&anchor, &far, &near, APPROX).value(),
             Some(Ordering::Greater)
         );
     }
@@ -1466,15 +1339,15 @@ mod tests {
         let also_near = p3(-1, -2, -2);
 
         assert_eq!(
-            compare_point3_distance_squared(&anchor, &near, &far).value(),
+            crate::compare_point3_distance_squared(&anchor, &near, &far, APPROX).value(),
             Some(Ordering::Less)
         );
         assert_eq!(
-            compare_point3_distance_squared(&anchor, &near, &also_near).value(),
+            crate::compare_point3_distance_squared(&anchor, &near, &also_near, APPROX).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point3_distance_squared(&anchor, &far, &near).value(),
+            crate::compare_point3_distance_squared(&anchor, &far, &near, APPROX).value(),
             Some(Ordering::Greater)
         );
     }
@@ -1485,15 +1358,15 @@ mod tests {
         let radius_squared = hyperreal::Real::from(25);
 
         assert_eq!(
-            classify_point_sphere3(&center, &radius_squared, &p3(1, 2, 2)).value(),
+            crate::classify_point_sphere3(&center, &radius_squared, &p3(1, 2, 2), APPROX).value(),
             Some(SpherePointLocation::Inside)
         );
         assert_eq!(
-            classify_point_sphere3(&center, &radius_squared, &p3(3, 4, 0)).value(),
+            crate::classify_point_sphere3(&center, &radius_squared, &p3(3, 4, 0), APPROX).value(),
             Some(SpherePointLocation::On)
         );
         assert_eq!(
-            classify_point_sphere3(&center, &radius_squared, &p3(6, 0, 0)).value(),
+            crate::classify_point_sphere3(&center, &radius_squared, &p3(6, 0, 0), APPROX).value(),
             Some(SpherePointLocation::Outside)
         );
     }
@@ -1505,15 +1378,18 @@ mod tests {
         let b = p3(2, 0, 0);
 
         assert_eq!(
-            compare_point_line3_distance_squared(&point, &a, &b, &Real::from(24)).value(),
+            crate::compare_point_line3_distance_squared(&point, &a, &b, &Real::from(24), APPROX)
+                .value(),
             Some(Ordering::Greater)
         );
         assert_eq!(
-            compare_point_line3_distance_squared(&point, &a, &b, &Real::from(25)).value(),
+            crate::compare_point_line3_distance_squared(&point, &a, &b, &Real::from(25), APPROX)
+                .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point_line3_distance_squared(&point, &a, &b, &Real::from(26)).value(),
+            crate::compare_point_line3_distance_squared(&point, &a, &b, &Real::from(26), APPROX)
+                .value(),
             Some(Ordering::Less)
         );
     }
@@ -1524,19 +1400,23 @@ mod tests {
         let radius_squared = Real::from(25);
 
         assert_eq!(
-            classify_circle_line2(&center, &radius_squared, &p2(-10, 0), &p2(10, 0)).value(),
+            crate::classify_circle_line2(&center, &radius_squared, &p2(-10, 0), &p2(10, 0), APPROX)
+                .value(),
             Some(CircleLineRelation::Secant)
         );
         assert_eq!(
-            classify_circle_line2(&center, &radius_squared, &p2(-10, 5), &p2(10, 5)).value(),
+            crate::classify_circle_line2(&center, &radius_squared, &p2(-10, 5), &p2(10, 5), APPROX)
+                .value(),
             Some(CircleLineRelation::Tangent)
         );
         assert_eq!(
-            classify_circle_line2(&center, &radius_squared, &p2(-10, 6), &p2(10, 6)).value(),
+            crate::classify_circle_line2(&center, &radius_squared, &p2(-10, 6), &p2(10, 6), APPROX)
+                .value(),
             Some(CircleLineRelation::Disjoint)
         );
         assert_eq!(
-            classify_circle_line2(&center, &radius_squared, &p2(1, 1), &p2(1, 1)).value(),
+            crate::classify_circle_line2(&center, &radius_squared, &p2(1, 1), &p2(1, 1), APPROX)
+                .value(),
             Some(CircleLineRelation::DegenerateLine)
         );
     }
@@ -1547,19 +1427,47 @@ mod tests {
         let radius_squared = Real::from(25);
 
         assert_eq!(
-            classify_circle_segment2(&center, &radius_squared, &p2(-10, 0), &p2(10, 0)).value(),
+            crate::classify_circle_segment2(
+                &center,
+                &radius_squared,
+                &p2(-10, 0),
+                &p2(10, 0),
+                APPROX
+            )
+            .value(),
             Some(CircleSegmentRelation::Secant)
         );
         assert_eq!(
-            classify_circle_segment2(&center, &radius_squared, &p2(-10, 5), &p2(10, 5)).value(),
+            crate::classify_circle_segment2(
+                &center,
+                &radius_squared,
+                &p2(-10, 5),
+                &p2(10, 5),
+                APPROX
+            )
+            .value(),
             Some(CircleSegmentRelation::Tangent)
         );
         assert_eq!(
-            classify_circle_segment2(&center, &radius_squared, &p2(-2, 0), &p2(2, 0)).value(),
+            crate::classify_circle_segment2(
+                &center,
+                &radius_squared,
+                &p2(-2, 0),
+                &p2(2, 0),
+                APPROX
+            )
+            .value(),
             Some(CircleSegmentRelation::ContainedInside)
         );
         assert_eq!(
-            classify_circle_segment2(&center, &radius_squared, &p2(6, 0), &p2(10, 0)).value(),
+            crate::classify_circle_segment2(
+                &center,
+                &radius_squared,
+                &p2(6, 0),
+                &p2(10, 0),
+                APPROX
+            )
+            .value(),
             Some(CircleSegmentRelation::Disjoint)
         );
     }
@@ -1570,15 +1478,36 @@ mod tests {
         let b = p3(10, 0, 0);
 
         assert_eq!(
-            compare_point_segment3_distance_squared(&p3(5, 3, 4), &a, &b, &Real::from(25)).value(),
+            crate::compare_point_segment3_distance_squared(
+                &p3(5, 3, 4),
+                &a,
+                &b,
+                &Real::from(25),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point_segment3_distance_squared(&p3(13, 4, 0), &a, &b, &Real::from(25)).value(),
+            crate::compare_point_segment3_distance_squared(
+                &p3(13, 4, 0),
+                &a,
+                &b,
+                &Real::from(25),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point_segment3_distance_squared(&p3(-1, 0, 0), &a, &b, &Real::from(0)).value(),
+            crate::compare_point_segment3_distance_squared(
+                &p3(-1, 0, 0),
+                &a,
+                &b,
+                &Real::from(0),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Greater)
         );
     }
@@ -1589,15 +1518,18 @@ mod tests {
         let point = p3(0, 0, 5);
 
         assert_eq!(
-            compare_point_plane_distance_squared(&point, &plane, &Real::from(3)).value(),
+            crate::compare_point_plane_distance_squared(&point, &plane, &Real::from(3), APPROX)
+                .value(),
             Some(Ordering::Greater)
         );
         assert_eq!(
-            compare_point_plane_distance_squared(&point, &plane, &Real::from(4)).value(),
+            crate::compare_point_plane_distance_squared(&point, &plane, &Real::from(4), APPROX)
+                .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point_plane_distance_squared(&point, &plane, &Real::from(5)).value(),
+            crate::compare_point_plane_distance_squared(&point, &plane, &Real::from(5), APPROX)
+                .value(),
             Some(Ordering::Less)
         );
     }
@@ -1609,17 +1541,35 @@ mod tests {
         let zero_normal_plane = crate::plane::Plane3::new(p3(0, 0, 0), Real::from(5));
 
         assert_eq!(
-            compare_point_line3_distance_squared(&point, &anchor, &anchor, &Real::from(25)).value(),
+            crate::compare_point_line3_distance_squared(
+                &point,
+                &anchor,
+                &anchor,
+                &Real::from(25),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_point_segment3_distance_squared(&point, &anchor, &anchor, &Real::from(24))
-                .value(),
+            crate::compare_point_segment3_distance_squared(
+                &point,
+                &anchor,
+                &anchor,
+                &Real::from(24),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Greater)
         );
         assert_eq!(
-            compare_point_plane_distance_squared(&point, &zero_normal_plane, &Real::from(25))
-                .value(),
+            crate::compare_point_plane_distance_squared(
+                &point,
+                &zero_normal_plane,
+                &Real::from(25),
+                APPROX
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -1630,21 +1580,48 @@ mod tests {
         let second = p3(3, 4, 0);
 
         assert_eq!(
-            classify_sphere3_intersection(&first, &Real::from(2), &second, &Real::from(2)).value(),
+            crate::classify_sphere3_intersection(
+                &first,
+                &Real::from(2),
+                &second,
+                &Real::from(2),
+                APPROX
+            )
+            .value(),
             Some(SphereIntersection::Disjoint)
         );
         assert_eq!(
-            classify_sphere3_intersection(&first, &Real::from(2), &second, &Real::from(3)).value(),
+            crate::classify_sphere3_intersection(
+                &first,
+                &Real::from(2),
+                &second,
+                &Real::from(3),
+                APPROX
+            )
+            .value(),
             Some(SphereIntersection::Touching)
         );
         assert_eq!(
-            classify_sphere3_intersection(&first, &Real::from(4), &second, &Real::from(3)).value(),
+            crate::classify_sphere3_intersection(
+                &first,
+                &Real::from(4),
+                &second,
+                &Real::from(3),
+                APPROX
+            )
+            .value(),
             Some(SphereIntersection::Overlapping)
         );
         assert!(
-            classify_sphere3_intersection(&first, &Real::from(-1), &second, &Real::from(3))
-                .value()
-                .is_none()
+            crate::classify_sphere3_intersection(
+                &first,
+                &Real::from(-1),
+                &second,
+                &Real::from(3),
+                APPROX
+            )
+            .value()
+            .is_none()
         );
     }
 
@@ -1654,15 +1631,36 @@ mod tests {
         let max = p3(2, 2, 2);
 
         assert_eq!(
-            classify_aabb3_sphere_intersection(&min, &max, &p3(5, 2, 2), &Real::from(4)).value(),
+            crate::classify_aabb3_sphere_intersection(
+                &min,
+                &max,
+                &p3(5, 2, 2),
+                &Real::from(4),
+                APPROX
+            )
+            .value(),
             Some(AabbSphereIntersection::Disjoint)
         );
         assert_eq!(
-            classify_aabb3_sphere_intersection(&min, &max, &p3(5, 2, 2), &Real::from(9)).value(),
+            crate::classify_aabb3_sphere_intersection(
+                &min,
+                &max,
+                &p3(5, 2, 2),
+                &Real::from(9),
+                APPROX
+            )
+            .value(),
             Some(AabbSphereIntersection::Touching)
         );
         assert_eq!(
-            classify_aabb3_sphere_intersection(&min, &max, &p3(1, 1, 1), &Real::from(1)).value(),
+            crate::classify_aabb3_sphere_intersection(
+                &min,
+                &max,
+                &p3(1, 1, 1),
+                &Real::from(1),
+                APPROX
+            )
+            .value(),
             Some(AabbSphereIntersection::Overlapping)
         );
     }

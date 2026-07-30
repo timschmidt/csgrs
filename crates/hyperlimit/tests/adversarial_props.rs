@@ -12,6 +12,8 @@ use hyperlimit::{
 };
 use proptest::prelude::*;
 
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 type Real = hyperreal::Real;
 
 fn real(value: f64) -> Real {
@@ -66,9 +68,9 @@ proptest! {
 
     #[test]
     fn orient2d_is_cyclic_and_reverses_on_swap(a in point2(), b in point2(), c in point2()) {
-        let abc = value(orient2(&a, &b, &c));
-        let bca = value(orient2(&b, &c, &a));
-        let acb = value(orient2(&a, &c, &b));
+        let abc = value(orient2(&a, &b, &c, APPROX));
+        let bca = value(orient2(&b, &c, &a, APPROX));
+        let acb = value(orient2(&a, &c, &b, APPROX));
 
         prop_assert_eq!(abc, bca);
         if let (Some(sign), Some(swapped)) = (abc, acb) {
@@ -78,8 +80,8 @@ proptest! {
 
     #[test]
     fn classify_point_line_matches_orient2d_sign(a in point2(), b in point2(), c in point2()) {
-        let orient = value(orient2(&a, &b, &c));
-        let side = value(classify_point_line(&a, &b, &c));
+        let orient = value(orient2(&a, &b, &c, APPROX));
+        let side = value(classify_point_line(&a, &b, &c, APPROX));
 
         if let Some(sign) = orient {
             prop_assert_eq!(side, Some(sign.into()));
@@ -89,18 +91,18 @@ proptest! {
     #[test]
     fn orient2d_batch_matches_scalar_for_generated_cases(cases in prop::collection::vec((point2(), point2(), point2()), 0..64)) {
         prop_assert_eq!(
-            orient2_batch(&cases),
+            orient2_batch(&cases, APPROX),
             cases
                 .iter()
-                .map(|(a, b, c)| orient2(a, b, c))
+                .map(|(a, b, c)| orient2(a, b, c, APPROX))
                 .collect::<Vec<_>>()
         );
     }
 
     #[test]
     fn orient3d_reverses_when_two_vertices_swap(a in point3(), b in point3(), c in point3(), d in point3()) {
-        let abcd = value(orient3(&a, &b, &c, &d));
-        let bacd = value(orient3(&b, &a, &c, &d));
+        let abcd = value(orient3(&a, &b, &c, &d, APPROX));
+        let bacd = value(orient3(&b, &a, &c, &d, APPROX));
 
         if let (Some(sign), Some(swapped)) = (abcd, bacd) {
             prop_assert_eq!(sign.reversed(), swapped);
@@ -119,7 +121,7 @@ proptest! {
             PlaneSide::On
         };
 
-        prop_assert_eq!(value(classify_point_plane(&point, &plane)), Some(expected));
+        prop_assert_eq!(value(classify_point_plane(&point, &plane, APPROX)), Some(expected));
     }
 
     #[test]
@@ -128,7 +130,7 @@ proptest! {
         let b = p2((x0 + dx) as f64, (y0 + dy) as f64);
         let c = p2((x0 + t * dx) as f64, (y0 + t * dy) as f64);
 
-        if let Some(sign) = value(orient2(&a, &b, &c)) {
+        if let Some(sign) = value(orient2(&a, &b, &c, APPROX)) {
             prop_assert_eq!(sign, Sign::Zero);
         }
     }
@@ -140,7 +142,7 @@ proptest! {
         let c = p3(0.0, 1.0, 0.0);
         let d = p3(x, y, 0.0);
 
-        if let Some(sign) = value(orient3(&a, &b, &c, &d)) {
+        if let Some(sign) = value(orient3(&a, &b, &c, &d, APPROX)) {
             prop_assert_eq!(sign, Sign::Zero);
         }
     }
@@ -164,7 +166,7 @@ proptest! {
         prop_assert_eq!(point.to_affine_point().unwrap(), p3(x as f64, y as f64, z as f64));
         for plane in [&x_plane, &y_plane, &z_plane] {
             prop_assert_eq!(
-                classify_homogeneous_point_plane(&point, plane).value(),
+                classify_homogeneous_point_plane(&point, plane, APPROX).value(),
                 Some(true)
             );
         }
@@ -183,14 +185,14 @@ proptest! {
         // Symmetry is the minimum metamorphic law for a segment/segment
         // classifier. The oracle is the exact relation itself under operand
         // exchange, not an approximate closest-point computation.
-        let relation = classify_segment3_intersection(&a, &b, &c, &d).value();
+        let relation = classify_segment3_intersection(&a, &b, &c, &d, APPROX).value();
         prop_assert_eq!(
             relation,
-            classify_segment3_intersection(&c, &d, &a, &b).value()
+            classify_segment3_intersection(&c, &d, &a, &b, APPROX).value()
         );
         prop_assert_eq!(
             relation,
-            classify_segment3_intersection(&b, &a, &c, &d).value()
+            classify_segment3_intersection(&b, &a, &c, &d, APPROX).value()
         );
     }
 
@@ -201,25 +203,25 @@ proptest! {
     ) {
         let zero = Real::from(0);
         prop_assert_eq!(
-            compare_point_line3_distance_squared(&a, &a, &b, &zero).value(),
+            compare_point_line3_distance_squared(&a, &a, &b, &zero, APPROX).value(),
             Some(std::cmp::Ordering::Equal)
         );
         prop_assert_eq!(
-            compare_point_segment3_distance_squared(&a, &a, &b, &zero).value(),
+            compare_point_segment3_distance_squared(&a, &a, &b, &zero, APPROX).value(),
             Some(std::cmp::Ordering::Equal)
         );
 
         let plane = Plane3::new(p3(0.0, 0.0, 1.0), -a.z.clone());
         prop_assert_eq!(
-            compare_point_plane_distance_squared(&a, &plane, &zero).value(),
+            compare_point_plane_distance_squared(&a, &plane, &zero, APPROX).value(),
             Some(std::cmp::Ordering::Equal)
         );
         prop_assert_eq!(
-            classify_sphere3_intersection(&a, &zero, &a, &zero).value(),
+            classify_sphere3_intersection(&a, &zero, &a, &zero, APPROX).value(),
             Some(SphereIntersection::Touching)
         );
         prop_assert_eq!(
-            classify_aabb3_sphere_intersection(&a, &a, &a, &zero).value(),
+            classify_aabb3_sphere_intersection(&a, &a, &a, &zero, APPROX).value(),
             Some(AabbSphereIntersection::Touching)
         );
     }
@@ -239,13 +241,13 @@ proptest! {
         let expected_segment_intersects = x + y <= 40;
 
         prop_assert_eq!(
-            classify_segment_triangle3_intersection(&below, &above, &a, &b, &c)
+            classify_segment_triangle3_intersection(&below, &above, &a, &b, &c, APPROX)
                 .value()
                 .map(|relation| relation.intersects()),
             Some(expected_segment_intersects)
         );
         prop_assert_eq!(
-            classify_ray_triangle3_intersection(&below, &direction, &a, &b, &c)
+            classify_ray_triangle3_intersection(&below, &direction, &a, &b, &c, APPROX)
                 .value()
                 .map(|relation| relation.intersects()),
             Some(expected_segment_intersects)
@@ -255,8 +257,8 @@ proptest! {
                 compare_point_plane_distance_squared(
                     &point,
                     &Plane3::new(p3(0.0, 0.0, 1.0), Real::from(0)),
-                    &Real::from(0)
-                ).value(),
+                    &Real::from(0),
+                APPROX).value(),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -282,11 +284,11 @@ proptest! {
         };
 
         prop_assert_eq!(
-            classify_circle_line2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64)).value(),
+            classify_circle_line2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64), APPROX).value(),
             Some(line_relation)
         );
         prop_assert_eq!(
-            classify_circle_segment2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64)).value(),
+            classify_circle_segment2(&center, &radius_squared, &p2(-10.0, y as f64), &p2(10.0, y as f64), APPROX).value(),
             Some(segment_relation)
         );
     }
@@ -304,7 +306,7 @@ proptest! {
             ConvexPointLocation::Outside
         };
         prop_assert_eq!(
-            classify_point_convex_polygon2(&square, &p2(x as f64, y as f64)).value(),
+            classify_point_convex_polygon2(&square, &p2(x as f64, y as f64), APPROX).value(),
             Some(expected_2d)
         );
 
@@ -326,7 +328,7 @@ proptest! {
             ConvexPointLocation::Outside
         };
         prop_assert_eq!(
-            classify_point_convex_planes3(&planes, &p3(x as f64, y as f64, z as f64)).value(),
+            classify_point_convex_planes3(&planes, &p3(x as f64, y as f64, z as f64), APPROX).value(),
             Some(expected_3d)
         );
     }
@@ -346,7 +348,7 @@ proptest! {
             Sign::Zero
         };
 
-        if let Some(sign) = value(incircle2(&a, &b, &c, &d)) {
+        if let Some(sign) = value(incircle2(&a, &b, &c, &d, APPROX)) {
             prop_assert_eq!(sign, expected);
         }
     }
@@ -370,14 +372,14 @@ proptest! {
             scale2i(&c, scale),
         );
         prop_assert_eq!(
-            value(orient2(&a, &b, &c)),
-            value(orient2(&scaled.0, &scaled.1, &scaled.2))
+            value(orient2(&a, &b, &c, APPROX)),
+            value(orient2(&scaled.0, &scaled.1, &scaled.2, APPROX))
         );
 
         let reflected = (reflect_x(&a), reflect_x(&b), reflect_x(&c));
         if let (Some(sign), Some(reflected_sign)) = (
-            value(orient2(&a, &b, &c)),
-            value(orient2(&reflected.0, &reflected.1, &reflected.2)),
+            value(orient2(&a, &b, &c, APPROX)),
+            value(orient2(&reflected.0, &reflected.1, &reflected.2, APPROX)),
         ) {
             prop_assert_eq!(sign.reversed(), reflected_sign);
         }
@@ -404,13 +406,13 @@ proptest! {
         );
 
         prop_assert_eq!(
-            value(incircle2(&a, &b, &c, &d)),
+            value(incircle2(&a, &b, &c, &d, APPROX)),
             value(incircle2(
                 &moved_scaled.0,
                 &moved_scaled.1,
                 &moved_scaled.2,
                 &moved_scaled.3,
-            ))
+            APPROX))
         );
     }
 }

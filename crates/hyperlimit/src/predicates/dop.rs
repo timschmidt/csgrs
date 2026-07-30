@@ -153,9 +153,9 @@ impl SupportDopExpansionReport {
     }
 
     /// Validate internal report consistency.
-    pub fn validate(&self) -> Result<(), SupportDopValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopValidationError> {
         if !matches!(
-            compare_real_default(&self.expansion, &Real::from(0)),
+            compare_real_with_policy(&self.expansion, &Real::from(0), policy),
             Some(Ordering::Greater | Ordering::Equal)
         ) {
             return Err(SupportDopValidationError::NegativeExpansion);
@@ -164,7 +164,7 @@ impl SupportDopExpansionReport {
             SupportDopExpansionKind::None => {
                 if self.expanded_slabs != 0
                     || !matches!(
-                        compare_real_default(&self.expansion, &Real::from(0)),
+                        compare_real_with_policy(&self.expansion, &Real::from(0), policy),
                         Some(Ordering::Equal)
                     )
                 {
@@ -247,6 +247,7 @@ impl WitnessedSupportDop3 {
         points: &[Point3],
         axes: &[SupportDopAxis3],
         expansion: SupportDopExpansionReport,
+        policy: PredicatePolicy,
     ) -> Result<Self, SupportDopValidationError> {
         if points.is_empty() {
             return Err(SupportDopValidationError::EmptyPointSet);
@@ -257,17 +258,17 @@ impl WitnessedSupportDop3 {
         if expansion.axis_count != axes.len() {
             return Err(SupportDopValidationError::ExpansionAxisCountMismatch);
         }
-        expansion.validate()?;
+        expansion.validate(policy)?;
         let slabs = axes
             .iter()
-            .map(|&axis| compute_witnessed_slab(points, axis))
+            .map(|&axis| compute_witnessed_slab(points, axis, policy))
             .collect::<Result<Vec<_>, _>>()?;
         let support = Self {
             vertex_count: points.len(),
             slabs,
             expansion,
         };
-        support.validate_against_points(points)?;
+        support.validate_against_points(points, policy)?;
         Ok(support)
     }
 
@@ -275,8 +276,14 @@ impl WitnessedSupportDop3 {
     pub fn from_points(
         points: &[Point3],
         axes: &[SupportDopAxis3],
+        policy: PredicatePolicy,
     ) -> Result<Self, SupportDopValidationError> {
-        Self::from_points_with_expansion(points, axes, SupportDopExpansionReport::exact(axes.len()))
+        Self::from_points_with_expansion(
+            points,
+            axes,
+            SupportDopExpansionReport::exact(axes.len()),
+            policy,
+        )
     }
 
     /// Return this witnessed carrier as the predicate-level support-DOP
@@ -294,6 +301,7 @@ impl WitnessedSupportDop3 {
     pub fn validate_against_points(
         &self,
         points: &[Point3],
+        policy: PredicatePolicy,
     ) -> Result<(), SupportDopValidationError> {
         if points.is_empty() {
             return Err(SupportDopValidationError::EmptyPointSet);
@@ -307,9 +315,9 @@ impl WitnessedSupportDop3 {
         if self.expansion.axis_count != self.slabs.len() {
             return Err(SupportDopValidationError::ExpansionAxisCountMismatch);
         }
-        self.expansion.validate()?;
+        self.expansion.validate(policy)?;
         for slab in &self.slabs {
-            validate_witnessed_slab(slab, points)?;
+            validate_witnessed_slab(slab, points, policy)?;
         }
         Ok(())
     }
@@ -319,6 +327,7 @@ impl WitnessedSupportDop3 {
         &mut self,
         points: &[Point3],
         changed_vertices: &[usize],
+        policy: PredicatePolicy,
     ) -> Result<SupportDopRefreshReport, SupportDopValidationError> {
         if self.vertex_count != points.len() {
             return Err(SupportDopValidationError::VertexCountMismatch);
@@ -346,7 +355,7 @@ impl WitnessedSupportDop3 {
                 .iter()
                 .any(|&vertex| vertex == slab.min.vertex || vertex == slab.max.vertex);
             if witness_invalidated {
-                *slab = compute_witnessed_slab(points, slab.axis)?;
+                *slab = compute_witnessed_slab(points, slab.axis, policy)?;
                 report.axes_rebuilt += 1;
                 report.invalidated_witness_axes += 1;
                 continue;
@@ -356,14 +365,14 @@ impl WitnessedSupportDop3 {
             for &vertex in changed_vertices {
                 let distance = support_distance_on_integer_axis(&points[vertex], slab.axis);
                 if matches!(
-                    compare_real_default(&distance, &slab.min.distance),
+                    compare_real_with_policy(&distance, &slab.min.distance, policy),
                     Some(Ordering::Less)
                 ) {
                     slab.min = support_witness(vertex, &points[vertex], distance.clone());
                     extended = true;
                 }
                 if matches!(
-                    compare_real_default(&distance, &slab.max.distance),
+                    compare_real_with_policy(&distance, &slab.max.distance, policy),
                     Some(Ordering::Greater)
                 ) {
                     slab.max = support_witness(vertex, &points[vertex], distance);
@@ -378,7 +387,7 @@ impl WitnessedSupportDop3 {
             }
         }
 
-        self.validate_against_points(points)?;
+        self.validate_against_points(points, policy)?;
         Ok(report)
     }
 }
@@ -546,7 +555,7 @@ pub struct SupportDopAabb3Report {
 
 impl SupportDopAabb3Report {
     /// Validate retained slab evidence and the derived coarse relation.
-    pub fn validate(&self) -> Result<(), SupportDopAabb3ValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopAabb3ValidationError> {
         if self.slab_count == 0 {
             return if self.relation == SupportDopRelation::Degenerate
                 && self.terminal_slab.is_none()
@@ -565,9 +574,8 @@ impl SupportDopAabb3Report {
                 return Err(SupportDopAabb3ValidationError::SlabIndexMismatch);
             }
 
-            let slab_bounds_valid =
-                decided_bool(validate_slab_bounds(&slab_report.slab, PredicatePolicy))
-                    .ok_or(SupportDopAabb3ValidationError::SlabBoundsInvalid)?;
+            let slab_bounds_valid = decided_bool(validate_slab_bounds(&slab_report.slab, policy))
+                .ok_or(SupportDopAabb3ValidationError::SlabBoundsInvalid)?;
 
             if !slab_bounds_valid {
                 if slab_report.relation != SupportDopRelation::Degenerate {
@@ -591,11 +599,11 @@ impl SupportDopAabb3Report {
                 .query_max
                 .as_ref()
                 .ok_or(SupportDopAabb3ValidationError::MissingQueryInterval)?;
-            let query_interval_valid =
-                match compare_reals_with_policy(query_min, query_max, PredicatePolicy) {
-                    PredicateOutcome::Decided { value, .. } => value != Ordering::Greater,
-                    PredicateOutcome::Unknown { .. } => false,
-                };
+            let query_interval_valid = match compare_reals_with_policy(query_min, query_max, policy)
+            {
+                PredicateOutcome::Decided { value, .. } => value != Ordering::Greater,
+                PredicateOutcome::Unknown { .. } => false,
+            };
             if !query_interval_valid {
                 return Err(SupportDopAabb3ValidationError::QueryIntervalInvalid);
             }
@@ -605,7 +613,7 @@ impl SupportDopAabb3Report {
                 query_max,
                 &slab_report.slab.min,
                 &slab_report.slab.max,
-                PredicatePolicy,
+                policy,
             ) {
                 PredicateOutcome::Decided { value, .. } => value,
                 PredicateOutcome::Unknown { .. } => {
@@ -661,9 +669,10 @@ impl SupportDopAabb3Report {
         dop: &SupportDop3,
         min: &Point3,
         max: &Point3,
+        policy: PredicatePolicy,
     ) -> Result<(), SupportDopAabb3ValidationError> {
-        self.validate()?;
-        match dop.classify_aabb3_report(min, max) {
+        self.validate(policy)?;
+        match dop.classify_aabb3_report(min, max, policy) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SupportDopAabb3ValidationError::SourceReplayMismatch),
         }
@@ -728,7 +737,7 @@ pub struct SupportDopPlane3Report {
 
 impl SupportDopPlane3Report {
     /// Validate retained halfspace evidence and the derived coarse relation.
-    pub fn validate(&self) -> Result<(), SupportDopPlane3ValidationError> {
+    pub fn validate(&self, policy: PredicatePolicy) -> Result<(), SupportDopPlane3ValidationError> {
         if self.slab_count == 0 {
             return if self.relation == SupportDopPlaneRelation::Degenerate
                 && self.slab_halfspaces.is_empty()
@@ -762,7 +771,9 @@ impl SupportDopPlane3Report {
             .carrier_feasibility
             .as_ref()
             .ok_or(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch)?;
-        if !decided_bool(carrier.validate_against_planes(&self.slab_halfspaces)).unwrap_or(false) {
+        if !decided_bool(carrier.validate_against_planes(&self.slab_halfspaces, policy))
+            .unwrap_or(false)
+        {
             return Err(SupportDopPlane3ValidationError::CarrierFeasibilityMismatch);
         }
 
@@ -788,13 +799,13 @@ impl SupportDopPlane3Report {
 
         let below_planes =
             side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Below);
-        if !decided_bool(below.validate_against_planes(&below_planes)).unwrap_or(false) {
+        if !decided_bool(below.validate_against_planes(&below_planes, policy)).unwrap_or(false) {
             return Err(SupportDopPlane3ValidationError::BelowFeasibilityMismatch);
         }
 
         let above_planes =
             side_halfspaces(&self.slab_halfspaces, &self.plane, PlaneQuerySide::Above);
-        if !decided_bool(above.validate_against_planes(&above_planes)).unwrap_or(false) {
+        if !decided_bool(above.validate_against_planes(&above_planes, policy)).unwrap_or(false) {
             return Err(SupportDopPlane3ValidationError::AboveFeasibilityMismatch);
         }
 
@@ -814,9 +825,10 @@ impl SupportDopPlane3Report {
         &self,
         dop: &SupportDop3,
         plane: &Plane3,
+        policy: PredicatePolicy,
     ) -> Result<(), SupportDopPlane3ValidationError> {
-        self.validate()?;
-        match dop.classify_plane3_report(plane) {
+        self.validate(policy)?;
+        match dop.classify_plane3_report(plane, policy) {
             PredicateOutcome::Decided { value, .. } if &value == self => Ok(()),
             _ => Err(SupportDopPlane3ValidationError::SourceReplayMismatch),
         }
@@ -836,13 +848,9 @@ impl SupportDop3 {
     /// Every bound is selected by exact Real ordering and records a source
     /// witness index. Empty axis or point lists produce a structurally
     /// degenerate empty carrier instead of guessing a topology result.
-    pub fn from_points(axes: &[Point3], points: &[Point3]) -> PredicateOutcome<Self> {
-        Self::from_points_with_policy(axes, points, PredicatePolicy)
-    }
-
     /// Build exact support slabs from axes and source points with an explicit
     /// predicate policy.
-    pub(crate) fn from_points_with_policy(
+    pub fn from_points(
         axes: &[Point3],
         points: &[Point3],
         policy: PredicatePolicy,
@@ -906,18 +914,13 @@ impl SupportDop3 {
         self.source_point_count
     }
 
-    /// Classify a point against every retained slab.
-    pub fn classify_point(&self, point: &Point3) -> PredicateOutcome<ConvexPointLocation> {
-        self.classify_point_with_policy(point, PredicatePolicy)
-    }
-
     /// Classify a point against every retained slab with an explicit policy.
     ///
     /// The inside convention is inclusive: a point is inside when every exact
     /// projection lies between the retained slab bounds. Boundary status is
     /// reported separately so downstream topology can distinguish strict
     /// interior from support contact.
-    pub(crate) fn classify_point_with_policy(
+    pub fn classify_point(
         &self,
         point: &Point3,
         policy: PredicatePolicy,
@@ -995,15 +998,6 @@ impl SupportDop3 {
         )
     }
 
-    /// Classify an AABB by exact projection intervals against each slab.
-    pub fn classify_aabb3(
-        &self,
-        min: &Point3,
-        max: &Point3,
-    ) -> PredicateOutcome<SupportDopRelation> {
-        self.classify_aabb3_with_policy(min, max, PredicatePolicy)
-    }
-
     /// Classify an AABB by exact projection intervals with an explicit policy.
     ///
     /// This is a conservative support-slab relation, not a full constructive
@@ -1011,13 +1005,13 @@ impl SupportDop3 {
     /// proves disjointness. A non-separated result certifies only that all
     /// retained support intervals overlap, which is the reusable bounding-volume
     /// predicate that downstream mesh, voxel, and packing crates can replay.
-    pub(crate) fn classify_aabb3_with_policy(
+    pub fn classify_aabb3(
         &self,
         min: &Point3,
         max: &Point3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<SupportDopRelation> {
-        match self.classify_aabb3_report_with_policy(min, max, policy) {
+        match self.classify_aabb3_report(min, max, policy) {
             PredicateOutcome::Decided {
                 value,
                 certainty,
@@ -1027,22 +1021,13 @@ impl SupportDop3 {
         }
     }
 
-    /// Classify an AABB and retain exact per-slab projection evidence.
-    pub fn classify_aabb3_report(
-        &self,
-        min: &Point3,
-        max: &Point3,
-    ) -> PredicateOutcome<SupportDopAabb3Report> {
-        self.classify_aabb3_report_with_policy(min, max, PredicatePolicy)
-    }
-
     /// Classify an AABB with an explicit policy and retain replayable evidence.
     ///
-    /// This is the report-bearing form of [`Self::classify_aabb3_with_policy`].
+    /// This is the report-bearing form of [`Self::classify_aabb3`].
     /// It records the exact support interval of the query box on each visited
     /// k-DOP axis and stops at the first terminal slab, matching the coarse
     /// classifier's scheduling while preserving object-level evidence.
-    pub(crate) fn classify_aabb3_report_with_policy(
+    pub fn classify_aabb3_report(
         &self,
         min: &Point3,
         max: &Point3,
@@ -1183,18 +1168,13 @@ impl SupportDop3 {
         )
     }
 
-    /// Classify this retained DOP relative to an oriented plane.
-    pub fn classify_plane3(&self, plane: &Plane3) -> PredicateOutcome<SupportDopPlaneRelation> {
-        self.classify_plane3_with_policy(plane, PredicatePolicy)
-    }
-
     /// Classify this retained DOP relative to an oriented plane with a policy.
-    pub(crate) fn classify_plane3_with_policy(
+    pub fn classify_plane3(
         &self,
         plane: &Plane3,
         policy: PredicatePolicy,
     ) -> PredicateOutcome<SupportDopPlaneRelation> {
-        match self.classify_plane3_report_with_policy(plane, policy) {
+        match self.classify_plane3_report(plane, policy) {
             PredicateOutcome::Decided {
                 value,
                 certainty,
@@ -1204,15 +1184,6 @@ impl SupportDop3 {
         }
     }
 
-    /// Classify this retained DOP relative to an oriented plane and retain
-    /// exact halfspace feasibility evidence.
-    pub fn classify_plane3_report(
-        &self,
-        plane: &Plane3,
-    ) -> PredicateOutcome<SupportDopPlane3Report> {
-        self.classify_plane3_report_with_policy(plane, PredicatePolicy)
-    }
-
     /// Classify this retained DOP relative to an oriented plane with an
     /// explicit policy and retain exact feasibility evidence.
     ///
@@ -1220,8 +1191,8 @@ impl SupportDop3 {
     /// support slabs are first replayed as exact halfspaces, then the carrier
     /// and both closed sides of the query plane are certified by the
     /// halfspace-feasibility predicate. The result follows the same
-    /// report-first discipline as [`Self::classify_aabb3_report_with_policy`].
-    pub(crate) fn classify_plane3_report_with_policy(
+    /// report-first discipline as [`Self::classify_aabb3_report`].
+    pub fn classify_plane3_report(
         &self,
         plane: &Plane3,
         policy: PredicatePolicy,
@@ -1354,25 +1325,28 @@ impl SupportDop3 {
 }
 
 /// Build an exact support k-DOP from axis directions and source points.
-pub fn support_dop3_from_points(
+pub fn support_dop3_from_points_with_policy(
     axes: &[Point3],
     points: &[Point3],
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<SupportDop3> {
-    SupportDop3::from_points(axes, points)
+    SupportDop3::from_points(axes, points, policy)
 }
 
 /// Build a witnessed exact support k-DOP from integer axis directions and
 /// source points.
-pub fn witnessed_support_dop3_from_points(
+pub fn witnessed_support_dop3_from_points_with_policy(
     points: &[Point3],
     axes: &[SupportDopAxis3],
+    policy: PredicatePolicy,
 ) -> Result<WitnessedSupportDop3, SupportDopValidationError> {
-    WitnessedSupportDop3::from_points(points, axes)
+    WitnessedSupportDop3::from_points(points, axes, policy)
 }
 
 fn compute_witnessed_slab(
     points: &[Point3],
     axis: SupportDopAxis3,
+    policy: PredicatePolicy,
 ) -> Result<WitnessedSupportSlab3, SupportDopValidationError> {
     axis.validate()?;
     let first = points
@@ -1384,13 +1358,13 @@ fn compute_witnessed_slab(
     for (vertex, point) in points.iter().enumerate().skip(1) {
         let distance = support_distance_on_integer_axis(point, axis);
         if matches!(
-            compare_real_default(&distance, &min.distance),
+            compare_real_with_policy(&distance, &min.distance, policy),
             Some(Ordering::Less)
         ) {
             min = support_witness(vertex, point, distance.clone());
         }
         if matches!(
-            compare_real_default(&distance, &max.distance),
+            compare_real_with_policy(&distance, &max.distance, policy),
             Some(Ordering::Greater)
         ) {
             max = support_witness(vertex, point, distance);
@@ -1402,23 +1376,24 @@ fn compute_witnessed_slab(
 fn validate_witnessed_slab(
     slab: &WitnessedSupportSlab3,
     points: &[Point3],
+    policy: PredicatePolicy,
 ) -> Result<(), SupportDopValidationError> {
     slab.axis.validate()?;
-    validate_support_witness(&slab.min, slab.axis, points)?;
-    validate_support_witness(&slab.max, slab.axis, points)?;
-    match compare_real_default(&slab.min.distance, &slab.max.distance) {
+    validate_support_witness(&slab.min, slab.axis, points, policy)?;
+    validate_support_witness(&slab.max, slab.axis, points, policy)?;
+    match compare_real_with_policy(&slab.min.distance, &slab.max.distance, policy) {
         Some(Ordering::Less | Ordering::Equal) => {}
         Some(Ordering::Greater) => return Err(SupportDopValidationError::WitnessNotMinimal),
         None => return Err(SupportDopValidationError::UnknownSlabOrder),
     }
     for point in points {
         let distance = support_distance_on_integer_axis(point, slab.axis);
-        match compare_real_default(&distance, &slab.min.distance) {
+        match compare_real_with_policy(&distance, &slab.min.distance, policy) {
             Some(Ordering::Less) => return Err(SupportDopValidationError::WitnessNotMinimal),
             Some(Ordering::Equal | Ordering::Greater) => {}
             None => return Err(SupportDopValidationError::UnknownSlabOrder),
         }
-        match compare_real_default(&distance, &slab.max.distance) {
+        match compare_real_with_policy(&distance, &slab.max.distance, policy) {
             Some(Ordering::Greater) => return Err(SupportDopValidationError::WitnessNotMaximal),
             Some(Ordering::Less | Ordering::Equal) => {}
             None => return Err(SupportDopValidationError::UnknownSlabOrder),
@@ -1431,6 +1406,7 @@ fn validate_support_witness(
     retained: &SupportWitness3,
     axis: SupportDopAxis3,
     points: &[Point3],
+    policy: PredicatePolicy,
 ) -> Result<(), SupportDopValidationError> {
     let point = points
         .get(retained.vertex)
@@ -1440,7 +1416,7 @@ fn validate_support_witness(
     }
     let replay_distance = support_distance_on_integer_axis(point, axis);
     if !matches!(
-        compare_real_default(&replay_distance, &retained.distance),
+        compare_real_with_policy(&replay_distance, &retained.distance, policy),
         Some(Ordering::Equal)
     ) {
         return Err(SupportDopValidationError::WitnessDistanceMismatch);
@@ -1462,8 +1438,12 @@ fn support_distance_on_integer_axis(point: &Point3, axis: SupportDopAxis3) -> Re
         + point.z.clone() * Real::from(axis.direction[2])
 }
 
-fn compare_real_default(left: &Real, right: &Real) -> Option<Ordering> {
-    compare_reals_with_policy(left, right, PredicatePolicy).value()
+fn compare_real_with_policy(
+    left: &Real,
+    right: &Real,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    compare_reals_with_policy(left, right, policy).value()
 }
 
 fn validate_slab_bounds(slab: &SupportSlab3, policy: PredicatePolicy) -> PredicateOutcome<bool> {

@@ -26,16 +26,7 @@ use hyperreal::Real;
 /// coordinate-borrowed form lets curve and broad-phase crates reuse the
 /// canonical Hyperlimit cascade without cloning their own point carriers into
 /// [`Point2`].
-#[inline]
-pub fn point_in_ordered_aabb2_coordinates(
-    min: [&Real; 2],
-    max: [&Real; 2],
-    point: [&Real; 2],
-) -> PredicateOutcome<bool> {
-    point_in_ordered_aabb2_coordinates_with_policy(min, max, point, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`point_in_ordered_aabb2_coordinates`].
+/// Policy-controlled ordered-coordinate AABB predicate.
 #[inline]
 pub fn point_in_ordered_aabb2_coordinates_with_policy(
     min: [&Real; 2],
@@ -90,23 +81,7 @@ pub fn point_in_ordered_aabb2_coordinates_with_policy(
 ///
 /// Both min/max pairs must already be ordered on every axis. Edge and corner
 /// contact count as intersection.
-#[inline]
-pub fn ordered_aabb2s_intersect_coordinates(
-    first_min: [&Real; 2],
-    first_max: [&Real; 2],
-    second_min: [&Real; 2],
-    second_max: [&Real; 2],
-) -> PredicateOutcome<bool> {
-    ordered_aabb2s_intersect_coordinates_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
-/// Policy-controlled variant of [`ordered_aabb2s_intersect_coordinates`].
+/// Policy-controlled ordered-coordinate AABB intersection predicate.
 #[inline]
 pub fn ordered_aabb2s_intersect_coordinates_with_policy(
     first_min: [&Real; 2],
@@ -151,15 +126,6 @@ pub fn ordered_aabb2s_intersect_coordinates_with_policy(
     PredicateOutcome::decided(true, trace.certainty, trace.stage)
 }
 
-/// Classify a point relative to a closed 2D axis-aligned box.
-pub fn classify_point_aabb2(
-    min: &Point2,
-    max: &Point2,
-    point: &Point2,
-) -> PredicateOutcome<Aabb2PointLocation> {
-    classify_point_aabb2_with_policy(min, max, point, PredicatePolicy)
-}
-
 /// Classify a point relative to a closed 2D axis-aligned box with an explicit
 /// predicate escalation policy.
 ///
@@ -168,7 +134,7 @@ pub fn classify_point_aabb2(
 /// broad-phase filters for arrangements, curve intersection, and triangulation
 /// candidate pruning. Boxes reduce candidate sets, but final topology still
 /// belongs to orientation and incidence predicates.
-pub(crate) fn classify_point_aabb2_with_policy(
+pub fn classify_point_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
     point: &Point2,
@@ -214,14 +180,9 @@ pub(crate) fn classify_point_aabb2_with_policy(
     PredicateOutcome::decided(location, trace.certainty, trace.stage)
 }
 
-/// Return whether a point lies in a closed 2D axis-aligned box.
-pub fn point_in_aabb2(min: &Point2, max: &Point2, point: &Point2) -> PredicateOutcome<bool> {
-    point_in_aabb2_with_policy(min, max, point, PredicatePolicy)
-}
-
 /// Return whether a point lies in a closed 2D axis-aligned box with an explicit
 /// predicate escalation policy.
-pub(crate) fn point_in_aabb2_with_policy(
+pub fn point_in_aabb2_with_policy(
     min: &Point2,
     max: &Point2,
     point: &Point2,
@@ -238,23 +199,12 @@ pub(crate) fn point_in_aabb2_with_policy(
 }
 
 /// Return whether a point lies in the closed axis-aligned bounding box of a
-/// 2D triangle.
-pub fn point_in_triangle2_aabb(
-    a: &Point2,
-    b: &Point2,
-    c: &Point2,
-    point: &Point2,
-) -> PredicateOutcome<bool> {
-    point_in_triangle2_aabb_with_policy(a, b, c, point, PredicatePolicy)
-}
-
-/// Return whether a point lies in the closed axis-aligned bounding box of a
 /// 2D triangle with an explicit predicate escalation policy.
 ///
 /// This is a rejection filter for downstream exact triangle predicates. Every
 /// min/max and interval decision is exact, preserving the boundary between
 /// filters and final topology.
-pub(crate) fn point_in_triangle2_aabb_with_policy(
+pub fn point_in_triangle2_aabb_with_policy(
     a: &Point2,
     b: &Point2,
     c: &Point2,
@@ -291,15 +241,6 @@ pub(crate) fn point_in_triangle2_aabb_with_policy(
     };
 
     PredicateOutcome::decided(y.is_inside_or_boundary(), trace.certainty, trace.stage)
-}
-
-/// Classify a point relative to a closed 3D axis-aligned box.
-pub fn classify_point_aabb3(
-    min: &Point3,
-    max: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<Aabb3PointLocation> {
-    classify_point_aabb3_with_policy(min, max, point, PredicatePolicy)
 }
 
 /// Classify a point relative to a closed 3D axis-aligned box with an explicit
@@ -402,11 +343,6 @@ pub fn classify_point_aabb3_with_policy(
     PredicateOutcome::decided(location, trace.certainty, trace.stage)
 }
 
-/// Return whether a point lies in a closed 3D axis-aligned box.
-pub fn point_in_aabb3(min: &Point3, max: &Point3, point: &Point3) -> PredicateOutcome<bool> {
-    point_in_aabb3_with_policy(min, max, point, PredicatePolicy)
-}
-
 /// Return whether a point lies in the relative interior of an ordered 3D box.
 ///
 /// `min` and `max` must be ordered on every axis. Positive-width axes use open
@@ -414,16 +350,7 @@ pub fn point_in_aabb3(min: &Point3, max: &Point3, point: &Point3) -> PredicateOu
 /// the relative-interior predicate used by lower-dimensional subdivision
 /// cells embedded in 3D.
 #[inline]
-pub fn point_in_ordered_aabb3_relative_interior(
-    min: &Point3,
-    max: &Point3,
-    point: &Point3,
-) -> PredicateOutcome<bool> {
-    point_in_ordered_aabb3_relative_interior_with_policy(min, max, point, PredicatePolicy)
-}
-
-#[inline]
-fn point_in_ordered_aabb3_relative_interior_with_policy(
+pub fn point_in_ordered_aabb3_relative_interior_with_policy(
     min: &Point3,
     max: &Point3,
     point: &Point3,
@@ -502,7 +429,7 @@ fn point_in_ordered_aabb3_relative_interior_with_policy(
 
 /// Return whether a point lies in a closed 3D axis-aligned box with an explicit
 /// predicate escalation policy.
-pub(crate) fn point_in_aabb3_with_policy(
+pub fn point_in_aabb3_with_policy(
     min: &Point3,
     max: &Point3,
     point: &Point3,
@@ -518,29 +445,13 @@ pub(crate) fn point_in_aabb3_with_policy(
     }
 }
 
-/// Classify the intersection relation between two closed 2D axis-aligned boxes.
-pub fn classify_aabb2_intersection(
-    first_min: &Point2,
-    first_max: &Point2,
-    second_min: &Point2,
-    second_max: &Point2,
-) -> PredicateOutcome<Aabb2Intersection> {
-    classify_aabb2_intersection_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
 /// Classify the intersection relation between two closed 2D axis-aligned boxes
 /// with an explicit predicate escalation policy.
 ///
 /// `Touching` covers edge and corner contact with zero area. `Overlapping`
 /// means both coordinate intervals overlap over positive length, so the box
 /// intersection has positive area.
-pub(crate) fn classify_aabb2_intersection_with_policy(
+pub fn classify_aabb2_intersection_with_policy(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
@@ -552,49 +463,28 @@ pub(crate) fn classify_aabb2_intersection_with_policy(
         first_max,
         second_min,
         second_max,
-        policy,
         crate::geometry::aabb2_facts(first_min, first_max),
         crate::geometry::aabb2_facts(second_min, second_max),
+        policy,
     )
 }
 
 /// Classify the intersection relation between two closed 2D axis-aligned boxes
-/// with caller-cached structural facts.
+/// with an explicit policy and caller-cached structural facts.
 ///
 /// The facts are used only after exact interval predicates prove both axes
 /// intersect. A structurally zero-area input box cannot have a positive-area
 /// box intersection, so the final relation is `Touching` rather than
 /// `Overlapping`. This is a local exact specialization of the box broad phase;
 /// uncertain extent facts do not decide topology by themselves.
-pub fn classify_aabb2_intersection_with_facts(
+pub fn classify_aabb2_intersection_with_policy_and_facts(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
     second_max: &Point2,
     first_facts: Aabb2Facts,
     second_facts: Aabb2Facts,
-) -> PredicateOutcome<Aabb2Intersection> {
-    classify_aabb2_intersection_with_policy_and_facts(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-        first_facts,
-        second_facts,
-    )
-}
-
-/// Classify the intersection relation between two closed 2D axis-aligned boxes
-/// with both an explicit policy and caller-cached structural facts.
-pub(crate) fn classify_aabb2_intersection_with_policy_and_facts(
-    first_min: &Point2,
-    first_max: &Point2,
-    second_min: &Point2,
-    second_max: &Point2,
     policy: PredicatePolicy,
-    first_facts: Aabb2Facts,
-    second_facts: Aabb2Facts,
 ) -> PredicateOutcome<Aabb2Intersection> {
     let mut trace = DecisionTrace::default();
 
@@ -653,25 +543,9 @@ pub(crate) fn classify_aabb2_intersection_with_policy_and_facts(
     PredicateOutcome::decided(relation, trace.certainty, trace.stage)
 }
 
-/// Return whether two closed 2D axis-aligned boxes intersect.
-pub fn aabb2s_intersect(
-    first_min: &Point2,
-    first_max: &Point2,
-    second_min: &Point2,
-    second_max: &Point2,
-) -> PredicateOutcome<bool> {
-    aabb2s_intersect_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
 /// Return whether two closed 2D axis-aligned boxes intersect with an explicit
 /// predicate escalation policy.
-pub(crate) fn aabb2s_intersect_with_policy(
+pub fn aabb2s_intersect_with_policy(
     first_min: &Point2,
     first_max: &Point2,
     second_min: &Point2,
@@ -690,22 +564,6 @@ pub(crate) fn aabb2s_intersect_with_policy(
     }
 }
 
-/// Classify the intersection relation between two closed 3D axis-aligned boxes.
-pub fn classify_aabb3_intersection(
-    first_min: &Point3,
-    first_max: &Point3,
-    second_min: &Point3,
-    second_max: &Point3,
-) -> PredicateOutcome<Aabb3Intersection> {
-    classify_aabb3_intersection_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
 /// Classify the intersection relation between two closed 3D axis-aligned boxes
 /// with an explicit predicate escalation policy.
 ///
@@ -713,7 +571,7 @@ pub fn classify_aabb3_intersection(
 /// It is a certified broad-phase predicate: `Disjoint` may reject a pair, while
 /// `Touching` and `Overlapping` are still only candidates for exact
 /// narrow-phase predicates before topology is mutated.
-pub(crate) fn classify_aabb3_intersection_with_policy(
+pub fn classify_aabb3_intersection_with_policy(
     first_min: &Point3,
     first_max: &Point3,
     second_min: &Point3,
@@ -849,45 +707,13 @@ pub(crate) fn classify_aabb3_intersection_with_policy(
     PredicateOutcome::decided(relation, trace.certainty, trace.stage)
 }
 
-/// Return whether two closed 3D axis-aligned boxes intersect inclusively.
-pub fn aabb3s_intersect(
-    first_min: &Point3,
-    first_max: &Point3,
-    second_min: &Point3,
-    second_max: &Point3,
-) -> PredicateOutcome<bool> {
-    aabb3s_intersect_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
 /// Return whether two ordered closed 3D boxes intersect inclusively.
 ///
 /// Both min/max pairs must already be ordered on every axis. Skipping interval
 /// normalization makes this the canonical broad-phase predicate for retained
 /// AABB structures.
 #[inline]
-pub fn ordered_aabb3s_intersect(
-    first_min: &Point3,
-    first_max: &Point3,
-    second_min: &Point3,
-    second_max: &Point3,
-) -> PredicateOutcome<bool> {
-    ordered_aabb3s_intersect_with_policy(
-        first_min,
-        first_max,
-        second_min,
-        second_max,
-        PredicatePolicy,
-    )
-}
-
-#[inline]
-fn ordered_aabb3s_intersect_with_policy(
+pub fn ordered_aabb3s_intersect_with_policy(
     first_min: &Point3,
     first_max: &Point3,
     second_min: &Point3,
@@ -908,18 +734,19 @@ fn ordered_aabb3s_intersect_with_policy(
 ///
 /// Both min/max pairs must already be ordered on every axis.
 #[inline]
-pub fn ordered_aabb3_contains(
+pub fn ordered_aabb3_contains_with_policy(
     outer_min: &Point3,
     outer_max: &Point3,
     inner_min: &Point3,
     inner_max: &Point3,
+    policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
     ordered_aabb3_pairwise_relation(
         outer_min,
         outer_max,
         inner_min,
         inner_max,
-        PredicatePolicy,
+        policy,
         OrderedAabb3Relation::Contains,
     )
 }
@@ -990,7 +817,7 @@ fn ordered_aabb3_pairwise_relation(
 
 /// Return whether two closed 3D axis-aligned boxes intersect with an explicit
 /// predicate escalation policy.
-pub(crate) fn aabb3s_intersect_with_policy(
+pub fn aabb3s_intersect_with_policy(
     first_min: &Point3,
     first_max: &Point3,
     second_min: &Point3,
@@ -1161,6 +988,8 @@ fn stage_rank(stage: Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
@@ -1179,18 +1008,21 @@ mod tests {
         let max = p2(4, 3);
 
         assert_eq!(
-            classify_point_aabb2(&min, &max, &p2(2, 1)).value(),
+            crate::classify_point_aabb2(&min, &max, &p2(2, 1), APPROX).value(),
             Some(Aabb2PointLocation::Inside)
         );
         assert_eq!(
-            classify_point_aabb2(&min, &max, &p2(4, 1)).value(),
+            crate::classify_point_aabb2(&min, &max, &p2(4, 1), APPROX).value(),
             Some(Aabb2PointLocation::Boundary)
         );
         assert_eq!(
-            classify_point_aabb2(&max, &min, &p2(5, 1)).value(),
+            crate::classify_point_aabb2(&max, &min, &p2(5, 1), APPROX).value(),
             Some(Aabb2PointLocation::Outside)
         );
-        assert_eq!(point_in_aabb2(&min, &max, &p2(4, 1)).value(), Some(true));
+        assert_eq!(
+            crate::point_in_aabb2(&min, &max, &p2(4, 1), APPROX).value(),
+            Some(true)
+        );
     }
 
     #[test]
@@ -1200,11 +1032,11 @@ mod tests {
         let c = p2(2, -1);
 
         assert_eq!(
-            point_in_triangle2_aabb(&a, &b, &c, &p2(2, 1)).value(),
+            crate::point_in_triangle2_aabb(&a, &b, &c, &p2(2, 1), APPROX).value(),
             Some(true)
         );
         assert_eq!(
-            point_in_triangle2_aabb(&a, &b, &c, &p2(5, 1)).value(),
+            crate::point_in_triangle2_aabb(&a, &b, &c, &p2(5, 1), APPROX).value(),
             Some(false)
         );
     }
@@ -1212,19 +1044,22 @@ mod tests {
     #[test]
     fn aabb_intersection_distinguishes_disjoint_touching_and_overlap() {
         assert_eq!(
-            classify_aabb2_intersection(&p2(0, 0), &p2(2, 2), &p2(3, 0), &p2(5, 2)).value(),
+            crate::classify_aabb2_intersection(&p2(0, 0), &p2(2, 2), &p2(3, 0), &p2(5, 2), APPROX)
+                .value(),
             Some(Aabb2Intersection::Disjoint)
         );
         assert_eq!(
-            classify_aabb2_intersection(&p2(0, 0), &p2(2, 2), &p2(2, 1), &p2(4, 3)).value(),
+            crate::classify_aabb2_intersection(&p2(0, 0), &p2(2, 2), &p2(2, 1), &p2(4, 3), APPROX)
+                .value(),
             Some(Aabb2Intersection::Touching)
         );
         assert_eq!(
-            classify_aabb2_intersection(&p2(0, 0), &p2(3, 3), &p2(2, 1), &p2(4, 4)).value(),
+            crate::classify_aabb2_intersection(&p2(0, 0), &p2(3, 3), &p2(2, 1), &p2(4, 4), APPROX)
+                .value(),
             Some(Aabb2Intersection::Overlapping)
         );
         assert_eq!(
-            aabb2s_intersect(&p2(0, 0), &p2(2, 2), &p2(2, 2), &p2(5, 5)).value(),
+            crate::aabb2s_intersect(&p2(0, 0), &p2(2, 2), &p2(2, 2), &p2(5, 5), APPROX).value(),
             Some(true)
         );
     }
@@ -1232,22 +1067,47 @@ mod tests {
     #[test]
     fn aabb3_intersection_distinguishes_disjoint_touching_and_overlap() {
         assert_eq!(
-            classify_aabb3_intersection(&p3(0, 0, 0), &p3(2, 2, 2), &p3(3, 0, 0), &p3(5, 2, 2))
-                .value(),
+            crate::classify_aabb3_intersection(
+                &p3(0, 0, 0),
+                &p3(2, 2, 2),
+                &p3(3, 0, 0),
+                &p3(5, 2, 2),
+                APPROX
+            )
+            .value(),
             Some(Aabb3Intersection::Disjoint)
         );
         assert_eq!(
-            classify_aabb3_intersection(&p3(0, 0, 0), &p3(2, 2, 2), &p3(2, 1, 1), &p3(4, 3, 3))
-                .value(),
+            crate::classify_aabb3_intersection(
+                &p3(0, 0, 0),
+                &p3(2, 2, 2),
+                &p3(2, 1, 1),
+                &p3(4, 3, 3),
+                APPROX
+            )
+            .value(),
             Some(Aabb3Intersection::Touching)
         );
         assert_eq!(
-            classify_aabb3_intersection(&p3(0, 0, 0), &p3(3, 3, 3), &p3(2, 1, 1), &p3(4, 4, 4))
-                .value(),
+            crate::classify_aabb3_intersection(
+                &p3(0, 0, 0),
+                &p3(3, 3, 3),
+                &p3(2, 1, 1),
+                &p3(4, 4, 4),
+                APPROX
+            )
+            .value(),
             Some(Aabb3Intersection::Overlapping)
         );
         assert_eq!(
-            aabb3s_intersect(&p3(0, 0, 0), &p3(2, 2, 2), &p3(2, 2, 2), &p3(5, 5, 5)).value(),
+            crate::aabb3s_intersect(
+                &p3(0, 0, 0),
+                &p3(2, 2, 2),
+                &p3(2, 2, 2),
+                &p3(5, 5, 5),
+                APPROX
+            )
+            .value(),
             Some(true)
         );
     }
@@ -1258,18 +1118,21 @@ mod tests {
         let max = p3(4, 3, 2);
 
         assert_eq!(
-            classify_point_aabb3(&min, &max, &p3(2, 1, 1)).value(),
+            crate::classify_point_aabb3(&min, &max, &p3(2, 1, 1), APPROX).value(),
             Some(Aabb3PointLocation::Inside)
         );
         assert_eq!(
-            classify_point_aabb3(&min, &max, &p3(4, 1, 1)).value(),
+            crate::classify_point_aabb3(&min, &max, &p3(4, 1, 1), APPROX).value(),
             Some(Aabb3PointLocation::Boundary)
         );
         assert_eq!(
-            classify_point_aabb3(&max, &min, &p3(5, 1, 1)).value(),
+            crate::classify_point_aabb3(&max, &min, &p3(5, 1, 1), APPROX).value(),
             Some(Aabb3PointLocation::Outside)
         );
-        assert_eq!(point_in_aabb3(&min, &max, &p3(4, 1, 1)).value(), Some(true));
+        assert_eq!(
+            crate::point_in_aabb3(&min, &max, &p3(4, 1, 1), APPROX).value(),
+            Some(true)
+        );
     }
 
     #[test]
@@ -1280,27 +1143,54 @@ mod tests {
         let inner_max = p3(3, 0, 3);
 
         assert_eq!(
-            ordered_aabb3s_intersect(&outer_min, &outer_max, &inner_min, &inner_max).value(),
+            crate::ordered_aabb3s_intersect(&outer_min, &outer_max, &inner_min, &inner_max, APPROX)
+                .value(),
             Some(true)
         );
         assert_eq!(
-            ordered_aabb3_contains(&outer_min, &outer_max, &inner_min, &inner_max).value(),
+            crate::ordered_aabb3_contains(&outer_min, &outer_max, &inner_min, &inner_max, APPROX)
+                .value(),
             Some(true)
         );
         assert_eq!(
-            ordered_aabb3s_intersect(&outer_min, &outer_max, &p3(5, 1, 1), &p3(6, 2, 2)).value(),
+            crate::ordered_aabb3s_intersect(
+                &outer_min,
+                &outer_max,
+                &p3(5, 1, 1),
+                &p3(6, 2, 2),
+                APPROX
+            )
+            .value(),
             Some(false)
         );
         assert_eq!(
-            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(2, 0, 2)).value(),
+            crate::point_in_ordered_aabb3_relative_interior(
+                &inner_min,
+                &inner_max,
+                &p3(2, 0, 2),
+                APPROX
+            )
+            .value(),
             Some(true)
         );
         assert_eq!(
-            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(1, 0, 2)).value(),
+            crate::point_in_ordered_aabb3_relative_interior(
+                &inner_min,
+                &inner_max,
+                &p3(1, 0, 2),
+                APPROX
+            )
+            .value(),
             Some(false)
         );
         assert_eq!(
-            point_in_ordered_aabb3_relative_interior(&inner_min, &inner_max, &p3(2, 1, 2)).value(),
+            crate::point_in_ordered_aabb3_relative_interior(
+                &inner_min,
+                &inner_max,
+                &p3(2, 1, 2),
+                APPROX
+            )
+            .value(),
             Some(false)
         );
     }
@@ -1321,31 +1211,34 @@ mod tests {
             [&point.x, &point.y]
         }
         assert_eq!(
-            ordered_aabb2s_intersect_coordinates(
+            crate::ordered_aabb2s_intersect_coordinates(
                 coordinates(&outer_min),
                 coordinates(&outer_max),
                 coordinates(&touching_min),
                 coordinates(&touching_max),
+                APPROX
             )
             .value(),
             Some(true)
         );
         assert_eq!(
-            ordered_aabb2s_intersect_coordinates(
+            crate::ordered_aabb2s_intersect_coordinates(
                 coordinates(&outer_min),
                 coordinates(&outer_max),
                 coordinates(&disjoint_min),
                 coordinates(&disjoint_max),
+                APPROX
             )
             .value(),
             Some(false)
         );
         for (point, expected) in [(&inside, true), (&boundary, true), (&outside, false)] {
             assert_eq!(
-                point_in_ordered_aabb2_coordinates(
+                crate::point_in_ordered_aabb2_coordinates(
                     coordinates(&outer_min),
                     coordinates(&outer_max),
                     coordinates(point),
+                    APPROX
                 )
                 .value(),
                 Some(expected)
@@ -1362,10 +1255,13 @@ mod tests {
         assert!(facts.known_segment());
         assert!(facts.has_sparse_extent_support());
         assert_eq!(
-            classify_point_aabb2(&min, &max, &p2(3, 0)).value(),
+            crate::classify_point_aabb2(&min, &max, &p2(3, 0), APPROX).value(),
             Some(Aabb2PointLocation::Boundary)
         );
-        assert_eq!(point_in_aabb2(&min, &max, &p2(6, 0)).value(), Some(false));
+        assert_eq!(
+            crate::point_in_aabb2(&min, &max, &p2(6, 0), APPROX).value(),
+            Some(false)
+        );
     }
 
     #[test]
@@ -1384,31 +1280,33 @@ mod tests {
         assert!(point_facts.known_point());
         assert!(segment_facts.known_segment());
         assert_eq!(
-            classify_aabb2_intersection_with_facts(
+            crate::classify_aabb2_intersection_with_facts(
                 &point_min,
                 &point_max,
                 &segment_min,
                 &segment_max,
                 point_facts,
                 segment_facts,
+                APPROX
             )
             .value(),
             Some(Aabb2Intersection::Touching)
         );
         assert_eq!(
-            classify_aabb2_intersection_with_facts(
+            crate::classify_aabb2_intersection_with_facts(
                 &segment_min,
                 &segment_max,
                 &area_min,
                 &area_max,
                 segment_facts,
                 area_facts,
+                APPROX
             )
             .value(),
             Some(Aabb2Intersection::Touching)
         );
         assert_eq!(
-            aabb2s_intersect(&area_min, &area_max, &point_min, &point_max).value(),
+            crate::aabb2s_intersect(&area_min, &area_max, &point_min, &point_max, APPROX).value(),
             Some(true)
         );
     }
@@ -1421,19 +1319,19 @@ mod tests {
         let other_max = p3(6, 3, 3);
 
         assert_eq!(
-            classify_point_aabb3(&min, &max, &p3(2, 2, 2)).value(),
+            crate::classify_point_aabb3(&min, &max, &p3(2, 2, 2), APPROX).value(),
             Some(Aabb3PointLocation::Inside)
         );
         assert_eq!(
-            point_in_aabb3(&min, &max, &p3(5, 2, 2)).value(),
+            crate::point_in_aabb3(&min, &max, &p3(5, 2, 2), APPROX).value(),
             Some(false)
         );
         assert_eq!(
-            classify_aabb3_intersection(&min, &max, &other_min, &other_max).value(),
+            crate::classify_aabb3_intersection(&min, &max, &other_min, &other_max, APPROX).value(),
             Some(Aabb3Intersection::Touching)
         );
         assert_eq!(
-            aabb3s_intersect(&min, &max, &other_min, &other_max).value(),
+            crate::aabb3s_intersect(&min, &max, &other_min, &other_max, APPROX).value(),
             Some(true)
         );
     }

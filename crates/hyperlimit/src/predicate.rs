@@ -331,48 +331,55 @@ pub enum RefinementNeed {
 }
 
 /// Predicate escalation policy shared with downstream geometry algorithms.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct PredicatePolicy {
-    final_approximation_precision: Option<i32>,
-}
+///
+/// The private byte representation keeps operation contexts compact and prevents
+/// callers from constructing policy states that Hyperlimit does not understand.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct PredicatePolicy(u8);
 
 impl PredicatePolicy {
     /// Topology is decided only by exact or certified-refinement paths.
-    pub const STRICT: Self = Self {
-        final_approximation_precision: None,
-    };
+    pub const STRICT: Self = Self(0);
 
     /// Permit one terminal 512-bit approximation after certification is
     /// exhausted.
-    pub const APPROXIMATE_512: Self = Self {
-        final_approximation_precision: Some(-512),
-    };
+    pub const APPROXIMATE_512: Self = Self(1);
 
     /// Lowest binary precision Real refinement may request.
     pub const MAX_REFINEMENT_PRECISION: i32 = -512;
 
     /// Terminal approximation precision, when one is authorized.
     pub const fn final_approximation_precision(self) -> Option<i32> {
-        self.final_approximation_precision
+        match self.0 {
+            0 => None,
+            1 => Some(Self::MAX_REFINEMENT_PRECISION),
+            _ => unreachable!(),
+        }
+    }
+
+    /// Return whether this policy permits a result at `certainty`.
+    pub const fn accepts(self, certainty: Certainty) -> bool {
+        !matches!((self.0, certainty), (0, Certainty::Approximate))
     }
 }
-
-impl Default for PredicatePolicy {
-    fn default() -> Self {
-        Self::APPROXIMATE_512
-    }
-}
-
-/// Temporary workspace-wide predicate policy.
-///
-/// Existing call sites use this value directly. Keeping it centralized makes
-/// returning to [`PredicatePolicy::STRICT`] a one-line policy change.
-#[allow(non_upper_case_globals)]
-pub const PredicatePolicy: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn predicate_policy_is_one_byte_and_has_no_hidden_state() {
+        assert_eq!(core::mem::size_of::<PredicatePolicy>(), 1);
+        assert_eq!(
+            PredicatePolicy::STRICT.final_approximation_precision(),
+            None
+        );
+        assert_eq!(
+            PredicatePolicy::APPROXIMATE_512.final_approximation_precision(),
+            Some(PredicatePolicy::MAX_REFINEMENT_PRECISION)
+        );
+    }
 
     #[test]
     fn boolean_outcome_combinators_preserve_certainty_and_short_circuit_unknowns() {

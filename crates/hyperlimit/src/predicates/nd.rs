@@ -17,12 +17,7 @@ use crate::resolve::resolve_real_sign_direct;
 /// The determinant is built from edge vectors relative to the first point. The
 /// function returns [`PredicateOutcome::Unknown`] when dimensions/arity are
 /// invalid or when the active policy cannot decide the exact sign.
-pub fn orient_d(points: &[Vec<Real>]) -> PredicateOutcome<Sign> {
-    orient_d_with_policy(points, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`orient_d`].
-pub(crate) fn orient_d_with_policy(
+pub fn orient_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
@@ -43,12 +38,7 @@ pub(crate) fn orient_d_with_policy(
 /// dimension. The returned sign is the raw lifted determinant sign under row
 /// layout `[x_0, ..., x_d, ||x||^2, 1]`; triangulation code remains responsible
 /// for applying its orientation convention.
-pub fn insphere_d(simplex: &[Vec<Real>], query: &[Real]) -> PredicateOutcome<Sign> {
-    insphere_d_with_policy(simplex, query, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`insphere_d`].
-pub(crate) fn insphere_d_with_policy(
+pub fn insphere_d_with_policy(
     simplex: &[Vec<Real>],
     query: &[Real],
     policy: PredicatePolicy,
@@ -65,12 +55,7 @@ pub(crate) fn insphere_d_with_policy(
 }
 
 /// Returns whether a `dimension + 1` point set is affinely independent.
-pub fn affine_independent_d(points: &[Vec<Real>]) -> PredicateOutcome<bool> {
-    affine_independent_d_with_policy(points, PredicatePolicy)
-}
-
-/// Policy-controlled variant of [`affine_independent_d`].
-pub(crate) fn affine_independent_d_with_policy(
+pub fn affine_independent_d_with_policy(
     points: &[Vec<Real>],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
@@ -340,6 +325,8 @@ fn determinant_minor(
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn next_coordinate(state: &mut u64) -> Real {
         *state ^= *state << 13;
         *state ^= *state >> 7;
@@ -443,7 +430,10 @@ mod tests {
             vec![Real::zero(), Real::one()],
         ];
         assert_eq!(orient_d_exact_rational_sign(&points, 2), None);
-        assert_eq!(orient_d(&points).value(), Some(Sign::Positive));
+        assert_eq!(
+            crate::orient_d(&points, APPROX).value(),
+            Some(Sign::Positive)
+        );
     }
 
     #[test]

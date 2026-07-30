@@ -12,14 +12,6 @@ use crate::predicate::{Certainty, Escalation, PredicateOutcome, Sign};
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::ring::ring_area_sign_with_policy;
 
-/// Classify a point relative to a closed ordered convex 2D polygon.
-pub fn classify_point_convex_polygon2(
-    vertices: &[Point2],
-    point: &Point2,
-) -> PredicateOutcome<ConvexPointLocation> {
-    classify_point_convex_polygon2_with_policy(vertices, point, PredicatePolicy)
-}
-
 /// Classify a point relative to a closed ordered convex 2D polygon with an
 /// explicit predicate policy.
 ///
@@ -28,7 +20,7 @@ pub fn classify_point_convex_polygon2(
 /// orientation signs. This is the classical halfspace characterization of
 /// convex polygons. Invalid nonconvex ordering is not guessed here because
 /// topology ownership belongs to `hypercurve`, `hypertri`, or mesh crates.
-pub(crate) fn classify_point_convex_polygon2_with_policy(
+pub fn classify_point_convex_polygon2_with_policy(
     vertices: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -97,15 +89,6 @@ pub(crate) fn classify_point_convex_polygon2_with_policy(
 }
 
 /// Classify a point relative to a closed convex 3D polyhedron represented as
-/// oriented bounding planes.
-pub fn classify_point_convex_planes3(
-    planes: &[Plane3],
-    point: &Point3,
-) -> PredicateOutcome<ConvexPointLocation> {
-    classify_point_convex_planes3_with_policy(planes, point, PredicatePolicy)
-}
-
-/// Classify a point relative to a closed convex 3D polyhedron represented as
 /// oriented bounding planes with an explicit predicate policy.
 ///
 /// The inside convention is `PlaneSide::Below` or `PlaneSide::On` for every
@@ -113,7 +96,7 @@ pub fn classify_point_convex_planes3(
 /// topology owner: callers that store faces with the opposite normal must flip
 /// their planes before calling. The composition reuses exact point-plane
 /// predicates rather than converting planes to primitive approximations.
-pub(crate) fn classify_point_convex_planes3_with_policy(
+pub fn classify_point_convex_planes3_with_policy(
     planes: &[Plane3],
     point: &Point3,
     policy: PredicatePolicy,
@@ -195,6 +178,8 @@ mod tests {
     use super::*;
     use hyperreal::Real;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
     }
@@ -208,15 +193,15 @@ mod tests {
         let square = vec![p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
 
         assert_eq!(
-            classify_point_convex_polygon2(&square, &p2(2, 2)).value(),
+            crate::classify_point_convex_polygon2(&square, &p2(2, 2), APPROX).value(),
             Some(ConvexPointLocation::Inside)
         );
         assert_eq!(
-            classify_point_convex_polygon2(&square, &p2(4, 2)).value(),
+            crate::classify_point_convex_polygon2(&square, &p2(4, 2), APPROX).value(),
             Some(ConvexPointLocation::Boundary)
         );
         assert_eq!(
-            classify_point_convex_polygon2(&square, &p2(5, 2)).value(),
+            crate::classify_point_convex_polygon2(&square, &p2(5, 2), APPROX).value(),
             Some(ConvexPointLocation::Outside)
         );
     }
@@ -233,15 +218,15 @@ mod tests {
         ];
 
         assert_eq!(
-            classify_point_convex_planes3(&planes, &p3(2, 2, 2)).value(),
+            crate::classify_point_convex_planes3(&planes, &p3(2, 2, 2), APPROX).value(),
             Some(ConvexPointLocation::Inside)
         );
         assert_eq!(
-            classify_point_convex_planes3(&planes, &p3(4, 2, 2)).value(),
+            crate::classify_point_convex_planes3(&planes, &p3(4, 2, 2), APPROX).value(),
             Some(ConvexPointLocation::Boundary)
         );
         assert_eq!(
-            classify_point_convex_planes3(&planes, &p3(5, 2, 2)).value(),
+            crate::classify_point_convex_planes3(&planes, &p3(5, 2, 2), APPROX).value(),
             Some(ConvexPointLocation::Outside)
         );
     }

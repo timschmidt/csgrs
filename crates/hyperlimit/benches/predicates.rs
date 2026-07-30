@@ -41,6 +41,7 @@ use hyperlimit::{
 use robust::{Coord, Coord3D};
 
 const BATCH: usize = 512;
+const APPROX: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::APPROXIMATE_512;
 
 type Orient2Case = (Point2, Point2, Point2);
 type Orient3Case = (Point3, Point3, Point3, Point3);
@@ -108,10 +109,10 @@ fn bench_point2_equality(c: &mut Criterion) {
     let unequal = rational_point2(17, 3, -30, 7);
     let mut group = c.benchmark_group("point2_equality");
     group.bench_function("equal_exact_rational", |bench| {
-        bench.iter(|| point2_equal(black_box(&left), black_box(&equal)))
+        bench.iter(|| point2_equal(black_box(&left), black_box(&equal), APPROX))
     });
     group.bench_function("unequal_y_exact_rational", |bench| {
-        bench.iter(|| point2_equal(black_box(&left), black_box(&unequal)))
+        bench.iter(|| point2_equal(black_box(&left), black_box(&unequal), APPROX))
     });
     group.finish();
 }
@@ -123,13 +124,13 @@ fn bench_real_sign_pair(c: &mut Criterion) {
     group.bench_function("composed_scalar_cascades", |bench| {
         bench.iter(|| {
             (
-                classify_real_sign(black_box(&left)),
-                classify_real_sign(black_box(&right)),
+                classify_real_sign(black_box(&left), APPROX),
+                classify_real_sign(black_box(&right), APPROX),
             )
         })
     });
     group.bench_function("paired_cascade", |bench| {
-        bench.iter(|| classify_real_sign_pair(black_box(&left), black_box(&right)))
+        bench.iter(|| classify_real_sign_pair(black_box(&left), black_box(&right), APPROX))
     });
     group.finish();
 }
@@ -143,7 +144,13 @@ fn bench_line2_immediate(c: &mut Criterion) {
     let mut group = c.benchmark_group("line2_immediate");
     group.bench_function("point_with_orientation", |bench| {
         bench.iter(|| {
-            classify_point_line_with_orientation(&from, &to, black_box(&query), &orientation)
+            classify_point_line_with_orientation(
+                &from,
+                &to,
+                black_box(&query),
+                &orientation,
+                APPROX,
+            )
         })
     });
     group.finish();
@@ -165,6 +172,7 @@ fn bench_lifted_predicate_immediate(c: &mut Criterion) {
                 &circle_c,
                 black_box(&circle_query),
                 &circle_evidence,
+                APPROX,
             )
         })
     });
@@ -187,6 +195,7 @@ fn bench_lifted_predicate_immediate(c: &mut Criterion) {
                 &sphere_d,
                 black_box(&sphere_query),
                 &sphere_evidence,
+                APPROX,
             )
         })
     });
@@ -201,10 +210,10 @@ fn bench_halfspace_immediate(c: &mut Criterion) {
     ];
     let mut group = c.benchmark_group("halfspace3_immediate");
     group.bench_function("feasible", |bench| {
-        bench.iter(|| classify_halfspace_feasibility3(black_box(&feasible)))
+        bench.iter(|| classify_halfspace_feasibility3(black_box(&feasible), APPROX))
     });
     group.bench_function("infeasible", |bench| {
-        bench.iter(|| classify_halfspace_feasibility3(black_box(&infeasible)))
+        bench.iter(|| classify_halfspace_feasibility3(black_box(&infeasible), APPROX))
     });
     group.finish();
 }
@@ -214,7 +223,7 @@ fn bench_triangle3_immediate(c: &mut Criterion) {
     let b = rational_point3(4, 1, 0, 1, 0, 1);
     let vertex_c = rational_point3(0, 1, 4, 1, 0, 1);
     let query = rational_point3(1, 1, 1, 1, 0, 1);
-    let orientation = triangle3_orientation(&a, &b, &vertex_c);
+    let orientation = triangle3_orientation(&a, &b, &vertex_c, APPROX);
 
     let mut group = c.benchmark_group("triangle3_immediate");
     group.bench_function("point_with_orientation", |bench| {
@@ -225,6 +234,7 @@ fn bench_triangle3_immediate(c: &mut Criterion) {
                 &vertex_c,
                 black_box(&query),
                 &orientation,
+                APPROX,
             )
         })
     });
@@ -236,7 +246,7 @@ fn bench_triangle2_immediate(c: &mut Criterion) {
     let b = rational_point2(4, 1, 0, 1);
     let vertex_c = rational_point2(0, 1, 4, 1);
     let query = rational_point2(1, 1, 1, 1);
-    let orientation = orient2d(&a, &b, &vertex_c);
+    let orientation = orient2d(&a, &b, &vertex_c, APPROX);
 
     let mut group = c.benchmark_group("triangle2_immediate");
     group.bench_function("point_with_orientation", |bench| {
@@ -247,6 +257,7 @@ fn bench_triangle2_immediate(c: &mut Criterion) {
                 &vertex_c,
                 black_box(&query),
                 orientation,
+                APPROX,
             )
         })
     });
@@ -264,7 +275,9 @@ fn bench_segment2_immediate(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("segment2_immediate");
     group.bench_function("point_with_facts", |bench| {
-        bench.iter(|| classify_point_segment_with_facts(&start, &end, black_box(&query), facts))
+        bench.iter(|| {
+            classify_point_segment_with_facts(&start, &end, black_box(&query), facts, APPROX)
+        })
     });
     group.bench_function("intersection_with_facts", |bench| {
         bench.iter(|| {
@@ -275,6 +288,7 @@ fn bench_segment2_immediate(c: &mut Criterion) {
                 black_box(&point_end),
                 facts,
                 point_facts,
+                APPROX,
             )
         })
     });
@@ -290,7 +304,7 @@ fn bench_segment3_immediate(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("segment3_immediate");
     group.bench_function("point", |bench| {
-        bench.iter(|| classify_point_segment3(&first_start, &first_end, black_box(&query)))
+        bench.iter(|| classify_point_segment3(&first_start, &first_end, black_box(&query), APPROX))
     });
     group.bench_function("intersection", |bench| {
         bench.iter(|| {
@@ -299,6 +313,7 @@ fn bench_segment3_immediate(c: &mut Criterion) {
                 &first_end,
                 black_box(&second_start),
                 black_box(&second_end),
+                APPROX,
             )
         })
     });
@@ -312,14 +327,19 @@ fn bench_explicit_sphere_immediate(c: &mut Criterion) {
 
     let mut group = c.benchmark_group("explicit_sphere_immediate");
     group.bench_function("point", |bench| {
-        bench.iter(|| classify_point_sphere3(&center, &radius_squared, black_box(&query)))
+        bench.iter(|| classify_point_sphere3(&center, &radius_squared, black_box(&query), APPROX))
     });
     group.bench_function("point2_distance_ordering_dyadic", |bench| {
         let anchor = rational_point2(0, 1, 0, 1);
         let left = rational_point2(3, 1, 4, 1);
         let right = rational_point2(5, 1, 1, 1);
         bench.iter(|| {
-            compare_point2_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+            compare_point2_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
         })
     });
     group.bench_function("point3_distance_ordering_dyadic", |bench| {
@@ -327,7 +347,12 @@ fn bench_explicit_sphere_immediate(c: &mut Criterion) {
         let left = rational_point3(3, 1, 4, 1, 1, 1);
         let right = rational_point3(5, 1, 1, 1, 2, 1);
         bench.iter(|| {
-            compare_point3_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+            compare_point3_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
         })
     });
     group.finish();
@@ -359,6 +384,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&second_2d_max),
                 black_box(first_2d_facts),
                 black_box(second_2d_facts),
+                APPROX,
             )
         })
     });
@@ -369,6 +395,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box([&first_2d_max.x, &first_2d_max.y]),
                 black_box([&second_2d_min.x, &second_2d_min.y]),
                 black_box([&second_2d_max.x, &second_2d_max.y]),
+                APPROX,
             )
         })
     });
@@ -378,6 +405,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box([&first_2d_min.x, &first_2d_min.y]),
                 black_box([&first_2d_max.x, &first_2d_max.y]),
                 black_box([&query_2d.x, &query_2d.y]),
+                APPROX,
             )
         })
     });
@@ -388,6 +416,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&first_3d_max),
                 black_box(&second_3d_min),
                 black_box(&second_3d_max),
+                APPROX,
             )
         })
     });
@@ -397,6 +426,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&first_3d_min),
                 black_box(&first_3d_max),
                 black_box(&query_3d),
+                APPROX,
             )
         })
     });
@@ -407,6 +437,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&first_3d_max),
                 black_box(&second_3d_min),
                 black_box(&second_3d_max),
+                APPROX,
             )
         })
     });
@@ -417,6 +448,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&first_3d_max),
                 black_box(&contained_3d_min),
                 black_box(&contained_3d_max),
+                APPROX,
             )
         })
     });
@@ -426,6 +458,7 @@ fn bench_aabb_immediate(c: &mut Criterion) {
                 black_box(&first_3d_min),
                 black_box(&first_3d_max),
                 black_box(&query_3d),
+                APPROX,
             )
         })
     });
@@ -502,6 +535,7 @@ fn bench_filter_cost_breakdown(c: &mut Criterion) {
                     black_box(a),
                     black_box(b),
                     black_box(c),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -629,7 +663,7 @@ fn bench_plane_composition_filters(c: &mut Criterion) {
             let mut score = 0_i64;
             for (a, b, _) in &cases {
                 score += i64::from(
-                    classify_plane_segment(black_box(&plane), black_box(a), black_box(b))
+                    classify_plane_segment(black_box(&plane), black_box(a), black_box(b), APPROX)
                         .value()
                         .is_some(),
                 );
@@ -647,6 +681,7 @@ fn bench_plane_composition_filters(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some(),
@@ -671,9 +706,14 @@ fn bench_plane_composition_filters(c: &mut Criterion) {
             let mut score = 0_i64;
             for (a, b, _) in &rational_cases {
                 score += i64::from(
-                    classify_plane_segment(black_box(&rational_plane), black_box(a), black_box(b))
-                        .value()
-                        .is_some(),
+                    classify_plane_segment(
+                        black_box(&rational_plane),
+                        black_box(a),
+                        black_box(b),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some(),
                 );
             }
             black_box(score)
@@ -689,6 +729,7 @@ fn bench_plane_composition_filters(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some(),
@@ -704,10 +745,10 @@ fn bench_nd_symbolic_scale(c: &mut Criterion) {
     let mut group = c.benchmark_group("nd_symbolic_scale");
     let (simplex, center) = symbolic_orthogonal_simplex4();
     group.bench_function("orient_d/4d_dense_pi", |bench| {
-        bench.iter(|| black_box(orient_d(black_box(&simplex))))
+        bench.iter(|| black_box(orient_d(black_box(&simplex), APPROX)))
     });
     group.bench_function("insphere_d/4d_dense_pi_center", |bench| {
-        bench.iter(|| black_box(insphere_d(black_box(&simplex), black_box(&center))))
+        bench.iter(|| black_box(insphere_d(black_box(&simplex), black_box(&center), APPROX)))
     });
     group.finish();
 }
@@ -745,6 +786,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 &noncoplanar_right[0],
                 &noncoplanar_right[1],
                 &noncoplanar_right[2],
+                APPROX,
             ));
         },
     );
@@ -758,6 +800,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[0]),
                 black_box(&points[1]),
                 black_box(&points[2]),
+                APPROX,
             );
             black_box(match result {
                 TriangleDegeneracy::NonDegenerate => 1_i64,
@@ -774,6 +817,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[2]),
                 black_box(&segment_start),
                 black_box(&segment_end),
+                APPROX,
             );
             black_box(match event.relation {
                 SegmentPlaneRelation::ProperCrossing => 3_i64,
@@ -798,6 +842,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                     black_box(&points[4]),
                     black_box(&points[5]),
                 ],
+                APPROX,
             );
             black_box((report.relation, report.vertex_sides))
         });
@@ -805,7 +850,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
     group.bench_function("coplanar_triangles/projected_overlap", |bench| {
         bench.iter(|| {
             let classification =
-                classify_coplanar_triangles(black_box(&points), [0, 1, 2], [3, 4, 5]);
+                classify_coplanar_triangles(black_box(&points), [0, 1, 2], [3, 4, 5], APPROX);
             black_box(match classification.relation {
                 CoplanarTriangleRelation::Disjoint => 0_i64,
                 CoplanarTriangleRelation::Touching => 1,
@@ -823,6 +868,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[3]),
                 black_box(&points[4]),
                 black_box(&points[5]),
+                APPROX,
             );
             black_box(match classification.value().map(|report| report.relation) {
                 Some(TriangleTriangleIntersection::Degenerate) => -2_i64,
@@ -845,6 +891,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&noncoplanar_right[0]),
                 black_box(&noncoplanar_right[1]),
                 black_box(&noncoplanar_right[2]),
+                APPROX,
             );
             black_box(match classification.value().map(|report| report.relation) {
                 Some(TriangleTriangleIntersection::NonCoplanarIntersection) => 1_i64,
@@ -861,6 +908,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[0]),
                 black_box(&points[1]),
                 CoplanarProjection::Xy,
+                APPROX,
             );
             let line_t = projected_line_parameter3(
                 black_box(&segment_start),
@@ -868,6 +916,7 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
                 black_box(&points[0]),
                 black_box(&points[1]),
                 CoplanarProjection::Xy,
+                APPROX,
             );
             black_box((segment_t, line_t))
         });
@@ -892,12 +941,12 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
         let query_min = rational_point3(1, 1, 1, 1, 1, 1);
         let query_max = rational_point3(2, 1, 2, 1, 2, 1);
         bench.iter(|| {
-            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud))
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
                 .value()
                 .expect("benchmark support DOP should decide");
             black_box(
                 match dop
-                    .classify_aabb3(black_box(&query_min), black_box(&query_max))
+                    .classify_aabb3(black_box(&query_min), black_box(&query_max), APPROX)
                     .value()
                 {
                     Some(SupportDopRelation::Degenerate) => -2,
@@ -929,14 +978,14 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
         let query_min = rational_point3(1, 1, 1, 1, 1, 1);
         let query_max = rational_point3(2, 1, 2, 1, 2, 1);
         bench.iter(|| {
-            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud))
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
                 .value()
                 .expect("benchmark support DOP should decide");
             let report = dop
-                .classify_aabb3_report(black_box(&query_min), black_box(&query_max))
+                .classify_aabb3_report(black_box(&query_min), black_box(&query_max), APPROX)
                 .value()
                 .expect("benchmark support DOP report should decide");
-            black_box(match report.validate() {
+            black_box(match report.validate(APPROX) {
                 Ok(()) => report.slab_reports.len() as i64,
                 Err(_) => -1,
             })
@@ -961,14 +1010,14 @@ fn bench_hypermesh_port_helpers(c: &mut Criterion) {
         ];
         let plane = hyperlimit::Plane3::new(rational_point3(1, 1, 1, 1, 0, 1), (-3).into());
         bench.iter(|| {
-            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud))
+            let dop = support_dop3_from_points(black_box(&axes), black_box(&cloud), APPROX)
                 .value()
                 .expect("benchmark support DOP should decide");
             let report = dop
-                .classify_plane3_report(black_box(&plane))
+                .classify_plane3_report(black_box(&plane), APPROX)
                 .value()
                 .expect("benchmark support DOP plane report should decide");
-            black_box(match report.validate() {
+            black_box(match report.validate(APPROX) {
                 Ok(()) => report.slab_halfspaces.len() as i64,
                 Err(_) => -1,
             })
@@ -987,6 +1036,7 @@ fn bench_certified_filters(c: &mut Criterion) {
                 score += maybe_sign_score(black_box(certified_ball_sign(
                     black_box(center),
                     black_box(radius),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1203,6 +1253,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(a),
                     black_box(b),
                     black_box(c),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1220,6 +1271,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(a),
                     black_box(b),
                     black_box(c),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1236,6 +1288,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1252,6 +1305,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1268,6 +1322,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1285,6 +1340,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(c),
                     black_box(d),
                     black_box(e),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1302,9 +1358,9 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(z_plane),
                 ));
                 score += i64::from(point.coordinate_facts().all_exact_rational);
-                score += bool_score(classify_homogeneous_point_plane(&point, x_plane));
-                score += bool_score(classify_homogeneous_point_plane(&point, y_plane));
-                score += bool_score(classify_homogeneous_point_plane(&point, z_plane));
+                score += bool_score(classify_homogeneous_point_plane(&point, x_plane, APPROX));
+                score += bool_score(classify_homogeneous_point_plane(&point, y_plane, APPROX));
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane, APPROX));
             }
             black_box(score)
         });
@@ -1316,7 +1372,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                 let line = black_box(intersect_two_planes(black_box(x_plane), black_box(y_plane)));
                 let point = black_box(line.intersect_plane(black_box(z_plane)));
                 score += i64::from(line.coordinate_facts().all_exact_rational);
-                score += bool_score(classify_homogeneous_point_plane(&point, z_plane));
+                score += bool_score(classify_homogeneous_point_plane(&point, z_plane, APPROX));
             }
             black_box(score)
         });
@@ -1335,6 +1391,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1348,7 +1405,12 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         let left = rational_point2(7, 11, 13, 17);
         let right = rational_point2(-19, 23, 29, 31);
         b.iter(|| {
-            compare_point2_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+            compare_point2_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
         });
     });
     group.bench_function("distance_ordering/point3_non_dyadic", |b| {
@@ -1356,7 +1418,12 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         let left = rational_point3(7, 11, 13, 17, -19, 23);
         let right = rational_point3(29, 31, -37, 41, 43, 47);
         b.iter(|| {
-            compare_point3_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+            compare_point3_distance_squared(
+                black_box(&anchor),
+                black_box(&left),
+                black_box(&right),
+                APPROX,
+            )
         });
     });
     group.bench_function("distance3/point_feature_scaled_thresholds", |b| {
@@ -1368,17 +1435,20 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                     black_box(a),
                     black_box(b),
                     black_box(&threshold),
+                    APPROX,
                 )));
                 score += ordering_score(black_box(compare_point_segment3_distance_squared(
                     black_box(point),
                     black_box(a),
                     black_box(b),
                     black_box(&threshold),
+                    APPROX,
                 )));
                 score += ordering_score(black_box(compare_point_plane_distance_squared(
                     black_box(point),
                     black_box(plane),
                     black_box(&threshold),
+                    APPROX,
                 )));
                 score += i64::from(
                     black_box(classify_sphere3_intersection(
@@ -1386,6 +1456,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(&threshold),
                         black_box(b),
                         black_box(&threshold),
+                        APPROX,
                     ))
                     .value()
                     .is_some_and(|relation| relation.intersects()),
@@ -1396,6 +1467,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(b),
                         black_box(point),
                         black_box(&threshold),
+                        APPROX,
                     ))
                     .value()
                     .is_some_and(|relation| relation.intersects()),
@@ -1411,9 +1483,14 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
             let mut score = 0_i64;
             for (plane, min, max) in &plane_aabb_cases {
                 score += i64::from(
-                    classify_plane_aabb3_report(black_box(plane), black_box(min), black_box(max))
-                        .value()
-                        .is_some_and(|report| report.validate().is_ok()),
+                    classify_plane_aabb3_report(
+                        black_box(plane),
+                        black_box(min),
+                        black_box(max),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| report.validate(APPROX).is_ok()),
                 );
             }
             black_box(score)
@@ -1433,6 +1510,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some_and(|relation| relation.intersects()),
@@ -1444,6 +1522,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some_and(|relation| relation.intersects()),
@@ -1463,10 +1542,11 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some_and(|report| {
-                        report.relation.intersects() && report.validate().is_ok()
+                        report.relation.intersects() && report.validate(APPROX).is_ok()
                     }),
                 );
             }
@@ -1485,10 +1565,11 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(a),
                         black_box(b),
                         black_box(c),
+                        APPROX,
                     )
                     .value()
                     .is_some_and(|report| {
-                        report.relation.intersects() && report.validate().is_ok()
+                        report.relation.intersects() && report.validate(APPROX).is_ok()
                     }),
                 );
             }
@@ -1507,6 +1588,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(radius_squared),
                         black_box(a),
                         black_box(b),
+                        APPROX,
                     )
                     .value()
                     .is_some(),
@@ -1517,6 +1599,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
                         black_box(radius_squared),
                         black_box(a),
                         black_box(b),
+                        APPROX,
                     )
                     .value()
                     .is_some(),
@@ -1531,7 +1614,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         b.iter(|| {
             let mut score = 0_i64;
             for _ in 0..64 {
-                score += sign_score(black_box(ring_area_sign(black_box(&polygon))));
+                score += sign_score(black_box(ring_area_sign(black_box(&polygon), APPROX)));
             }
             black_box(score)
         });
@@ -1544,14 +1627,14 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
             let mut score = 0_i64;
             for (_, _, point) in &orient2_points {
                 score += i64::from(
-                    classify_point_convex_polygon2(black_box(&polygon), black_box(point))
+                    classify_point_convex_polygon2(black_box(&polygon), black_box(point), APPROX)
                         .value()
                         .is_some_and(|location| location.is_inside_or_boundary()),
                 );
             }
             for (_, _, _, point) in &orient3_points {
                 score += i64::from(
-                    classify_point_convex_planes3(black_box(&planes), black_box(point))
+                    classify_point_convex_planes3(black_box(&planes), black_box(point), APPROX)
                         .value()
                         .is_some_and(|location| location.is_inside_or_boundary()),
                 );
@@ -1564,11 +1647,15 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
             let mut score = 0_i64;
             for (_, _, point) in &orient2_points {
                 score += i64::from(
-                    classify_point_ring_even_odd_report(black_box(&polygon), black_box(point))
-                        .value()
-                        .is_some_and(|report| {
-                            report.location.is_inside_or_boundary() && report.validate().is_ok()
-                        }),
+                    classify_point_ring_even_odd_report(
+                        black_box(&polygon),
+                        black_box(point),
+                        APPROX,
+                    )
+                    .value()
+                    .is_some_and(|report| {
+                        report.location.is_inside_or_boundary() && report.validate().is_ok()
+                    }),
                 );
             }
             black_box(score)
@@ -1582,11 +1669,11 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
             Plane3::new(rational_point3(-1, 1, 0, 1, 0, 1), rational_real(0, 1)),
         ];
         b.iter(|| {
-            let feasible_status = classify_halfspace_feasibility3(black_box(&feasible))
+            let feasible_status = classify_halfspace_feasibility3(black_box(&feasible), APPROX)
                 .value()
                 .map(|report| report.is_feasible())
                 .unwrap_or(false);
-            let infeasible_status = classify_halfspace_feasibility3(black_box(&infeasible))
+            let infeasible_status = classify_halfspace_feasibility3(black_box(&infeasible), APPROX)
                 .value()
                 .map(|report| report.infeasibility_certificate.is_some())
                 .unwrap_or(true);
@@ -1602,7 +1689,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         b.iter(|| {
             let mut score = 0_i64;
             for case in &orient_d_cases {
-                score += sign_score(black_box(orient_d(black_box(case))));
+                score += sign_score(black_box(orient_d(black_box(case), APPROX)));
             }
             black_box(score)
         });
@@ -1613,7 +1700,11 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         b.iter(|| {
             let mut score = 0_i64;
             for (simplex, query) in &insphere_d_cases {
-                score += sign_score(black_box(insphere_d(black_box(simplex), black_box(query))));
+                score += sign_score(black_box(insphere_d(
+                    black_box(simplex),
+                    black_box(query),
+                    APPROX,
+                )));
             }
             black_box(score)
         });
@@ -1623,7 +1714,7 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
         b.iter(|| {
             let mut score = 0_i64;
             for case in &orient_d_cases {
-                score += bool_score(black_box(affine_independent_d(black_box(case))));
+                score += bool_score(black_box(affine_independent_d(black_box(case), APPROX)));
             }
             black_box(score)
         });
@@ -1659,6 +1750,7 @@ fn bench_shared_scale_views(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1676,6 +1768,7 @@ fn bench_shared_scale_views(c: &mut Criterion) {
                         c,
                         black_box(d),
                         &evidence,
+                        APPROX,
                     )));
                 }
                 black_box(score)
@@ -1694,6 +1787,7 @@ fn bench_shared_scale_views(c: &mut Criterion) {
                     black_box(c),
                     black_box(d),
                     black_box(e),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1712,6 +1806,7 @@ fn bench_shared_scale_views(c: &mut Criterion) {
                         d,
                         black_box(e),
                         &evidence,
+                        APPROX,
                     )));
                 }
                 black_box(score)
@@ -1731,7 +1826,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
         "transformed_predicates/orient2d/exact_rational_affine",
         &orient_cases,
         |(a, b, c)| {
-            black_box(sign_score(orient2d(a, b, c)));
+            black_box(sign_score(orient2d(a, b, c, APPROX)));
         },
     );
     group.bench_function("orient2d/exact_rational_affine", |bench| {
@@ -1742,6 +1837,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                     black_box(a),
                     black_box(b),
                     black_box(c),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1760,6 +1856,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                     b,
                     point,
                     &orientation,
+                    APPROX,
                 )));
             },
         );
@@ -1774,6 +1871,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                             b,
                             black_box(point),
                             &orientation,
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -1790,7 +1888,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
             &oriented_plane_cases,
             |(_, _, _, point)| {
                 black_box(plane_score(classify_point_oriented_plane_with_evidence(
-                    point, &evidence,
+                    point, &evidence, APPROX,
                 )));
             },
         );
@@ -1804,6 +1902,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                             plane_score(black_box(classify_point_oriented_plane_with_evidence(
                                 black_box(point),
                                 &evidence,
+                                APPROX,
                             )));
                     }
                     black_box(score)
@@ -1820,7 +1919,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
         "transformed_predicates/incircle2d/exact_rational_affine",
         &incircle_cases,
         |(a, b, c, d)| {
-            black_box(sign_score(incircle2d(a, b, c, d)));
+            black_box(sign_score(incircle2d(a, b, c, d, APPROX)));
         },
     );
     group.bench_function("incircle2d/exact_rational_affine", |bench| {
@@ -1832,6 +1931,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                     black_box(b),
                     black_box(c),
                     black_box(d),
+                    APPROX,
                 )));
             }
             black_box(score)
@@ -1843,7 +1943,9 @@ fn bench_transformed_predicates(c: &mut Criterion) {
             "transformed_predicates/incircle2d/evidence_exact_rational_affine",
             &incircle_cases,
             |(_, _, _, d)| {
-                black_box(sign_score(incircle2d_with_evidence(a, b, c, d, &evidence)));
+                black_box(sign_score(incircle2d_with_evidence(
+                    a, b, c, d, &evidence, APPROX,
+                )));
             },
         );
         group.bench_function("incircle2d/evidence_exact_rational_affine", |bench| {
@@ -1856,6 +1958,7 @@ fn bench_transformed_predicates(c: &mut Criterion) {
                         c,
                         black_box(d),
                         &evidence,
+                        APPROX,
                     )));
                 }
                 black_box(score)
@@ -1874,7 +1977,7 @@ fn bench_orient2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
             format!("orient2d/{label}/{}", workload.name()),
             &cases,
             |(a, b, d)| {
-                black_box(sign_score(orient2d(a, b, d)));
+                black_box(sign_score(orient2d(a, b, d, APPROX)));
             },
         );
         group.bench_with_input(
@@ -1888,6 +1991,7 @@ fn bench_orient2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
                             black_box(a),
                             black_box(b),
                             black_box(d),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -1906,7 +2010,7 @@ fn bench_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hype
             format!("classify_point_line/{label}/{}", workload.name()),
             &cases,
             |(a, b, d)| {
-                black_box(line_score(classify_point_line(a, b, d)));
+                black_box(line_score(classify_point_line(a, b, d, APPROX)));
             },
         );
         group.bench_with_input(
@@ -1920,6 +2024,7 @@ fn bench_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -> hype
                             black_box(a),
                             black_box(b),
                             black_box(d),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -1938,7 +2043,7 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
             format!("classify_point_line_fixed/{label}/{}", workload.name()),
             &cases,
             |(a, b, point)| {
-                black_box(line_score(classify_point_line(a, b, point)));
+                black_box(line_score(classify_point_line(a, b, point, APPROX)));
             },
         );
         group.bench_with_input(
@@ -1952,6 +2057,7 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
                             black_box(a),
                             black_box(b),
                             black_box(point),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -1972,6 +2078,7 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
                         line_b,
                         point,
                         &orientation,
+                        APPROX,
                     )));
                 },
             );
@@ -1987,6 +2094,7 @@ fn bench_fixed_line_side(c: &mut Criterion, label: &'static str, real: fn(f64) -
                                 line_b,
                                 black_box(point),
                                 &orientation,
+                                APPROX,
                             )));
                         }
                         black_box(score)
@@ -2007,7 +2115,7 @@ fn bench_orient3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
             format!("orient3d/{label}/{}", workload.name()),
             &cases,
             |(a, b, c, d)| {
-                black_box(sign_score(orient3d(a, b, c, d)));
+                black_box(sign_score(orient3d(a, b, c, d, APPROX)));
             },
         );
         group.bench_with_input(
@@ -2022,6 +2130,7 @@ fn bench_orient3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyper
                             black_box(b),
                             black_box(c),
                             black_box(d),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -2040,7 +2149,7 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
             format!("classify_point_plane/{label}/{}", workload.name()),
             &cases,
             |(point, plane)| {
-                black_box(plane_score(classify_point_plane(point, plane)));
+                black_box(plane_score(classify_point_plane(point, plane, APPROX)));
             },
         );
         group.bench_with_input(
@@ -2053,6 +2162,7 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                         score += plane_score(black_box(classify_point_plane(
                             black_box(point),
                             black_box(plane),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -2066,7 +2176,7 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                 &cases,
                 |(point, _)| {
                     black_box(plane_score(classify_point_plane_with_evidence(
-                        point, plane, &evidence,
+                        point, plane, &evidence, APPROX,
                     )));
                 },
             );
@@ -2081,6 +2191,7 @@ fn bench_explicit_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                                 black_box(point),
                                 plane,
                                 &evidence,
+                                APPROX,
                             )));
                         }
                         black_box(score)
@@ -2100,7 +2211,9 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
             format!("classify_point_oriented_plane/{label}/{}", workload.name()),
             &cases,
             |(a, b, c, point)| {
-                black_box(plane_score(classify_point_oriented_plane(a, b, c, point)));
+                black_box(plane_score(classify_point_oriented_plane(
+                    a, b, c, point, APPROX,
+                )));
             },
         );
         group.bench_with_input(
@@ -2115,6 +2228,7 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                             black_box(b),
                             black_box(c),
                             black_box(point),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -2131,7 +2245,7 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                 &cases,
                 |(_, _, _, point)| {
                     black_box(plane_score(classify_point_oriented_plane_with_evidence(
-                        point, &evidence,
+                        point, &evidence, APPROX,
                     )));
                 },
             );
@@ -2146,6 +2260,7 @@ fn bench_oriented_plane(c: &mut Criterion, label: &'static str, real: fn(f64) ->
                                 classify_point_oriented_plane_with_evidence(
                                     black_box(point),
                                     &evidence,
+                                    APPROX,
                                 ),
                             ));
                         }
@@ -2166,7 +2281,7 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
             format!("incircle2d/{label}/{}", workload.name()),
             &cases,
             |(a, b, c, d)| {
-                black_box(sign_score(incircle2d(a, b, c, d)));
+                black_box(sign_score(incircle2d(a, b, c, d, APPROX)));
             },
         );
         group.bench_with_input(
@@ -2181,6 +2296,7 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                             black_box(b),
                             black_box(c),
                             black_box(d),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -2194,7 +2310,7 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                 &cases,
                 |(_, _, _, d)| {
                     black_box(sign_score(incircle2d_with_evidence(
-                        source_a, source_b, source_c, d, &evidence,
+                        source_a, source_b, source_c, d, &evidence, APPROX,
                     )));
                 },
             );
@@ -2211,6 +2327,7 @@ fn bench_incircle2d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                                 source_c,
                                 black_box(d),
                                 &evidence,
+                                APPROX,
                             )));
                         }
                         black_box(score)
@@ -2230,7 +2347,7 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
             format!("insphere3d/{label}/{}", workload.name()),
             &cases,
             |(a, b, c, d, e)| {
-                black_box(sign_score(insphere3d(a, b, c, d, e)));
+                black_box(sign_score(insphere3d(a, b, c, d, e, APPROX)));
             },
         );
         group.bench_with_input(
@@ -2246,6 +2363,7 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                             black_box(c),
                             black_box(d),
                             black_box(e),
+                            APPROX,
                         )));
                     }
                     black_box(score)
@@ -2259,7 +2377,7 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                 &cases,
                 |(_, _, _, _, e)| {
                     black_box(sign_score(insphere3d_with_evidence(
-                        source_a, source_b, source_c, source_d, e, &evidence,
+                        source_a, source_b, source_c, source_d, e, &evidence, APPROX,
                     )));
                 },
             );
@@ -2277,6 +2395,7 @@ fn bench_insphere3d(c: &mut Criterion, label: &'static str, real: fn(f64) -> hyp
                                 source_d,
                                 black_box(e),
                                 &evidence,
+                                APPROX,
                             )));
                         }
                         black_box(score)

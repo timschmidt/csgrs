@@ -192,25 +192,15 @@ impl RingEvenOddReport {
     }
 }
 
-/// Build structural facts for a closed polygonal ring.
-pub fn ring2_facts(points: &[Point2]) -> Ring2Facts {
-    ring2_facts_with_policy(points, PredicatePolicy)
-}
-
 /// Build structural facts for a closed polygonal ring with an explicit policy.
-pub(crate) fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
+pub fn ring2_facts_with_policy(points: &[Point2], policy: PredicatePolicy) -> Ring2Facts {
     let refs: Vec<_> = points.iter().collect();
     ring2_facts_refs(&refs, policy)
 }
 
-/// Build structural facts for a closed polygonal ring stored as indices.
-pub fn indexed_ring2_facts(points: &[Point2], ring: &[usize]) -> Option<Ring2Facts> {
-    indexed_ring2_facts_with_policy(points, ring, PredicatePolicy)
-}
-
 /// Build structural facts for an indexed closed polygonal ring with an explicit
 /// policy.
-pub(crate) fn indexed_ring2_facts_with_policy(
+pub fn indexed_ring2_facts_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -255,28 +245,15 @@ fn ring2_facts_refs(points: &[&Point2], policy: PredicatePolicy) -> Ring2Facts {
     facts
 }
 
-/// Classify local turn consistency for a closed polygonal ring.
-pub fn ring_convexity(points: &[Point2]) -> RingConvexity {
-    ring_convexity_with_policy(points, PredicatePolicy)
-}
-
 /// Classify local turn consistency for a closed polygonal ring with a policy.
-pub(crate) fn ring_convexity_with_policy(
-    points: &[Point2],
-    policy: PredicatePolicy,
-) -> RingConvexity {
+pub fn ring_convexity_with_policy(points: &[Point2], policy: PredicatePolicy) -> RingConvexity {
     let refs: Vec<_> = points.iter().collect();
     ring_convexity_refs(&refs, policy)
 }
 
-/// Classify local turn consistency for an indexed closed polygonal ring.
-pub fn indexed_ring_convexity(points: &[Point2], ring: &[usize]) -> Option<RingConvexity> {
-    indexed_ring_convexity_with_policy(points, ring, PredicatePolicy)
-}
-
 /// Classify local turn consistency for an indexed closed polygonal ring with a
 /// policy.
-pub(crate) fn indexed_ring_convexity_with_policy(
+pub fn indexed_ring_convexity_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -293,13 +270,9 @@ pub(crate) fn indexed_ring_convexity_with_policy(
 /// formula. This function keeps the determinant
 /// in `hyperlimit` because orientation/winding is a predicate-level decision;
 /// ring storage and material/hole roles belong in `hypercurve` or `hypertri`.
-pub fn ring_area_sign(points: &[Point2]) -> PredicateOutcome<Sign> {
-    ring_area_sign_with_policy(points, PredicatePolicy)
-}
-
 /// Return the sign of twice the signed area of a closed polygonal ring with an
 /// explicit predicate escalation policy.
-pub(crate) fn ring_area_sign_with_policy(
+pub fn ring_area_sign_with_policy(
     points: &[Point2],
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Sign> {
@@ -307,14 +280,9 @@ pub(crate) fn ring_area_sign_with_policy(
     ring_area_sign_refs(&refs, policy)
 }
 
-/// Return the sign of twice the signed area of an indexed closed polygonal ring.
-pub fn indexed_ring_area_sign(points: &[Point2], ring: &[usize]) -> PredicateOutcome<Sign> {
-    indexed_ring_area_sign_with_policy(points, ring, PredicatePolicy)
-}
-
 /// Return the sign of twice the signed area of an indexed closed polygonal ring
 /// with an explicit predicate escalation policy.
-pub(crate) fn indexed_ring_area_sign_with_policy(
+pub fn indexed_ring_area_sign_with_policy(
     points: &[Point2],
     ring: &[usize],
     policy: PredicatePolicy,
@@ -390,23 +358,6 @@ fn exact_rational_ring_area_sign(points: &[&Point2]) -> Option<PredicateOutcome<
     ))
 }
 
-/// Classify a point against a closed polygonal ring by the even-odd rule.
-pub fn classify_point_ring_even_odd(
-    ring: &[Point2],
-    point: &Point2,
-) -> PredicateOutcome<RingPointLocation> {
-    classify_point_ring_even_odd_with_policy(ring, point, PredicatePolicy)
-}
-
-/// Classify a point against a closed polygonal ring and retain exact
-/// even-odd evidence.
-pub fn classify_point_ring_even_odd_report(
-    ring: &[Point2],
-    point: &Point2,
-) -> PredicateOutcome<RingEvenOddReport> {
-    classify_point_ring_even_odd_report_with_policy(ring, point, PredicatePolicy)
-}
-
 /// Classify a point against a closed polygonal ring by the even-odd rule with an
 /// explicit predicate escalation policy.
 ///
@@ -414,7 +365,7 @@ pub fn classify_point_ring_even_odd_report(
 /// classification. Interior parity is then decided by an orientation-form ray
 /// crossing test so no edge/ray intersection coordinate is constructed. Every
 /// crossing decision is certified through exact signs.
-pub(crate) fn classify_point_ring_even_odd_with_policy(
+pub fn classify_point_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -430,8 +381,8 @@ pub(crate) fn classify_point_ring_even_odd_with_policy(
 }
 
 /// Policy-controlled report-bearing variant of
-/// [`classify_point_ring_even_odd`].
-pub(crate) fn classify_point_ring_even_odd_report_with_policy(
+/// [`classify_point_ring_even_odd_with_policy`].
+pub fn classify_point_ring_even_odd_report_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -441,28 +392,8 @@ pub(crate) fn classify_point_ring_even_odd_report_with_policy(
 }
 
 /// Classify a point against an indexed closed polygonal ring by the even-odd
-/// rule.
-pub fn classify_point_indexed_ring_even_odd(
-    points: &[Point2],
-    ring: &[usize],
-    point: &Point2,
-) -> PredicateOutcome<RingPointLocation> {
-    classify_point_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy)
-}
-
-/// Classify a point against an indexed closed polygonal ring and retain exact
-/// even-odd evidence.
-pub fn classify_point_indexed_ring_even_odd_report(
-    points: &[Point2],
-    ring: &[usize],
-    point: &Point2,
-) -> PredicateOutcome<RingEvenOddReport> {
-    classify_point_indexed_ring_even_odd_report_with_policy(points, ring, point, PredicatePolicy)
-}
-
-/// Classify a point against an indexed closed polygonal ring by the even-odd
 /// rule with an explicit predicate escalation policy.
-pub(crate) fn classify_point_indexed_ring_even_odd_with_policy(
+pub fn classify_point_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,
@@ -479,8 +410,8 @@ pub(crate) fn classify_point_indexed_ring_even_odd_with_policy(
 }
 
 /// Policy-controlled report-bearing variant of
-/// [`classify_point_indexed_ring_even_odd`].
-pub(crate) fn classify_point_indexed_ring_even_odd_report_with_policy(
+/// [`classify_point_indexed_ring_even_odd_with_policy`].
+pub fn classify_point_indexed_ring_even_odd_report_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,
@@ -623,14 +554,8 @@ fn classify_point_ring_even_odd_report_refs(
 }
 
 /// Return whether `point` is inside or on the boundary of `ring` by the
-/// even-odd rule.
-pub fn point_in_ring_even_odd(ring: &[Point2], point: &Point2) -> PredicateOutcome<bool> {
-    point_in_ring_even_odd_with_policy(ring, point, PredicatePolicy)
-}
-
-/// Return whether `point` is inside or on the boundary of `ring` by the
 /// even-odd rule with an explicit predicate escalation policy.
-pub(crate) fn point_in_ring_even_odd_with_policy(
+pub fn point_in_ring_even_odd_with_policy(
     ring: &[Point2],
     point: &Point2,
     policy: PredicatePolicy,
@@ -646,18 +571,8 @@ pub(crate) fn point_in_ring_even_odd_with_policy(
 }
 
 /// Return whether `point` is inside or on the boundary of an indexed ring by
-/// the even-odd rule.
-pub fn point_in_indexed_ring_even_odd(
-    points: &[Point2],
-    ring: &[usize],
-    point: &Point2,
-) -> PredicateOutcome<bool> {
-    point_in_indexed_ring_even_odd_with_policy(points, ring, point, PredicatePolicy)
-}
-
-/// Return whether `point` is inside or on the boundary of an indexed ring by
 /// the even-odd rule with an explicit predicate escalation policy.
-pub(crate) fn point_in_indexed_ring_even_odd_with_policy(
+pub fn point_in_indexed_ring_even_odd_with_policy(
     points: &[Point2],
     ring: &[usize],
     point: &Point2,
@@ -850,6 +765,8 @@ fn stage_rank(stage: Escalation) -> u8 {
 mod tests {
     use super::*;
 
+    const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
+
     fn p2(x: i32, y: i32) -> Point2 {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
@@ -867,10 +784,19 @@ mod tests {
         let cw = [p2(0, 0), p2(0, 3), p2(4, 3), p2(4, 0)];
         let line = [p2(0, 0), p2(1, 1), p2(2, 2)];
 
-        assert_eq!(ring_area_sign(&ccw).value(), Some(Sign::Positive));
-        assert_eq!(ring_area_sign(&cw).value(), Some(Sign::Negative));
-        assert_eq!(ring_area_sign(&line).value(), Some(Sign::Zero));
-        assert_eq!(ring_area_sign(&[]).value(), Some(Sign::Zero));
+        assert_eq!(
+            crate::ring_area_sign(&ccw, APPROX).value(),
+            Some(Sign::Positive)
+        );
+        assert_eq!(
+            crate::ring_area_sign(&cw, APPROX).value(),
+            Some(Sign::Negative)
+        );
+        assert_eq!(
+            crate::ring_area_sign(&line, APPROX).value(),
+            Some(Sign::Zero)
+        );
+        assert_eq!(crate::ring_area_sign(&[], APPROX).value(), Some(Sign::Zero));
     }
 
     #[test]
@@ -881,7 +807,7 @@ mod tests {
             rational_p2(40, 40, 11),
             rational_p2(0, 40, 11),
         ];
-        let outcome = ring_area_sign(&ring);
+        let outcome = crate::ring_area_sign(&ring, APPROX);
         assert!(matches!(
             outcome,
             PredicateOutcome::Decided {
@@ -897,25 +823,28 @@ mod tests {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
 
         assert_eq!(
-            classify_point_ring_even_odd(&ring, &p2(2, 2)).value(),
+            crate::classify_point_ring_even_odd(&ring, &p2(2, 2), APPROX).value(),
             Some(RingPointLocation::Inside)
         );
         assert_eq!(
-            classify_point_ring_even_odd(&ring, &p2(5, 2)).value(),
+            crate::classify_point_ring_even_odd(&ring, &p2(5, 2), APPROX).value(),
             Some(RingPointLocation::Outside)
         );
         assert_eq!(
-            classify_point_ring_even_odd(&ring, &p2(4, 2)).value(),
+            crate::classify_point_ring_even_odd(&ring, &p2(4, 2), APPROX).value(),
             Some(RingPointLocation::Boundary)
         );
-        assert_eq!(point_in_ring_even_odd(&ring, &p2(4, 2)).value(), Some(true));
+        assert_eq!(
+            crate::point_in_ring_even_odd(&ring, &p2(4, 2), APPROX).value(),
+            Some(true)
+        );
     }
 
     #[test]
     fn point_ring_even_odd_report_retains_crossing_parity() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = p2(2, 2);
-        let report = classify_point_ring_even_odd_report(&ring, &point)
+        let report = crate::classify_point_ring_even_odd_report(&ring, &point, APPROX)
             .value()
             .expect("axis-aligned square containment should decide exactly");
 
@@ -934,7 +863,7 @@ mod tests {
         );
         assert_eq!(report.validate(), Ok(()));
         assert_eq!(
-            report.validate_against_sources(&ring, &point, PredicatePolicy),
+            report.validate_against_sources(&ring, &point, APPROX,),
             Ok(())
         );
     }
@@ -943,7 +872,7 @@ mod tests {
     fn point_ring_even_odd_report_keeps_boundary_and_parity_distinct() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let point = p2(4, 2);
-        let report = classify_point_ring_even_odd_report(&ring, &point)
+        let report = crate::classify_point_ring_even_odd_report(&ring, &point, APPROX)
             .value()
             .expect("edge boundary should decide exactly");
 
@@ -964,10 +893,10 @@ mod tests {
     #[test]
     fn point_ring_even_odd_report_handles_vertex_straddles_without_double_counting() {
         let diamond = [p2(0, 2), p2(2, 4), p2(4, 2), p2(2, 0)];
-        let inside = classify_point_ring_even_odd_report(&diamond, &p2(2, 2))
+        let inside = crate::classify_point_ring_even_odd_report(&diamond, &p2(2, 2), APPROX)
             .value()
             .expect("diamond interior should decide exactly");
-        let outside = classify_point_ring_even_odd_report(&diamond, &p2(5, 2))
+        let outside = crate::classify_point_ring_even_odd_report(&diamond, &p2(5, 2), APPROX)
             .value()
             .expect("diamond exterior should decide exactly");
 
@@ -982,7 +911,7 @@ mod tests {
     #[test]
     fn point_ring_even_odd_report_retains_collinear_outside_edge_evidence() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
-        let report = classify_point_ring_even_odd_report(&ring, &p2(6, 0))
+        let report = crate::classify_point_ring_even_odd_report(&ring, &p2(6, 0), APPROX)
             .value()
             .expect("collinear exterior point should decide exactly");
 
@@ -999,15 +928,16 @@ mod tests {
         let points = [p2(9, 9), p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4)];
         let ring = [1, 2, 3, 4];
         let point = p2(2, 2);
-        let report = classify_point_indexed_ring_even_odd_report(&points, &ring, &point)
-            .value()
-            .expect("indexed square containment should decide exactly");
+        let report =
+            crate::classify_point_indexed_ring_even_odd_report(&points, &ring, &point, APPROX)
+                .value()
+                .expect("indexed square containment should decide exactly");
 
         assert_eq!(report.location, RingPointLocation::Inside);
         assert_eq!(report.crossing_count, 1);
         assert_eq!(report.validate(), Ok(()));
         assert!(
-            classify_point_indexed_ring_even_odd_report(&points, &[1, 99], &point)
+            crate::classify_point_indexed_ring_even_odd_report(&points, &[1, 99], &point, APPROX)
                 .value()
                 .is_none()
         );
@@ -1018,7 +948,7 @@ mod tests {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 4), p2(0, 4), p2(0, 0)];
 
         assert_eq!(
-            classify_point_ring_even_odd(&ring, &p2(1, 1)).value(),
+            crate::classify_point_ring_even_odd(&ring, &p2(1, 1), APPROX).value(),
             Some(RingPointLocation::Inside)
         );
     }
@@ -1026,7 +956,7 @@ mod tests {
     #[test]
     fn ring_facts_count_raw_edges_but_classify_open_turns() {
         let ring = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3), p2(0, 0)];
-        let facts = ring2_facts(&ring);
+        let facts = crate::ring2_facts(&ring, APPROX);
 
         assert_eq!(facts.vertex_count, 5);
         assert_eq!(facts.known_degenerate_edges, 1);
@@ -1042,17 +972,17 @@ mod tests {
         let ring = [1, 2, 3, 4];
 
         assert_eq!(
-            indexed_ring_area_sign(&points, &ring).value(),
+            crate::indexed_ring_area_sign(&points, &ring, APPROX).value(),
             Some(Sign::Positive)
         );
         assert_eq!(
-            classify_point_indexed_ring_even_odd(&points, &ring, &p2(2, 2)).value(),
+            crate::classify_point_indexed_ring_even_odd(&points, &ring, &p2(2, 2), APPROX).value(),
             Some(RingPointLocation::Inside)
         );
         assert_eq!(
-            indexed_ring_convexity(&points, &ring),
+            crate::indexed_ring_convexity(&points, &ring, APPROX),
             Some(RingConvexity::LocallyConvex)
         );
-        assert!(indexed_ring2_facts(&points, &[1, 99]).is_none());
+        assert!(crate::indexed_ring2_facts(&points, &[1, 99], APPROX).is_none());
     }
 }
