@@ -115,7 +115,7 @@ strict-convexity certificate.
 | Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
 | Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
-| Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; or one/multiple exact bounded rational-quartic branches, including retained denominator poles. Complete two-dimensional overlap remains explicit |
+| Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; one/multiple exact bounded rational-quartic branches, including retained denominator poles; or exact containment of the complete bounded tensor surface |
 
 Transverse plane/extrusion intersections apply the exact affine projection
 along the authored extrusion direction; named conics whose projection needs a
@@ -202,13 +202,17 @@ rational-quadratic pcurve. Homogeneous substitution carries every authored
 surface weight into an exact rational-quartic spatial curve whose five controls
 and weights are derived without fitting. A strict one-sided weighted
 plane-value control hull proves disjointness; a complete zero hull is a
-two-dimensional overlap and remains explicitly unsupported. A sign-definite
-hull with zero controls exactly returns its one/multiple corner points or
-boundary iso-lines. Mixed sections are clipped in UV through the same exact
-tensor rectangle path used by translation graphs before the retained graph is
-composed spatially. Therefore an off-domain denominator pole cannot suppress a
-valid represented fragment. A retained denominator pole partitions its graph
-axis together with exact contacts against solved coordinates zero and one;
+two-dimensional overlap and returns `ContainedSurface` naming the complete
+bounded tensor operand. It is not conflated with equal complete carriers.
+Face-pair enumeration retains this exact carrier relation; general
+two-dimensional face-region clipping remains `NotAvailable` trim evidence. A
+sign-definite hull with zero controls exactly returns its one/multiple corner
+points or boundary iso-lines. Mixed sections are clipped in UV through the
+same exact tensor rectangle path used by translation graphs before the
+retained graph is composed spatially. Therefore an off-domain denominator
+pole cannot suppress a valid represented fragment. A retained denominator
+pole partitions its graph axis together with exact contacts against solved
+coordinates zero and one;
 constant-sign cells inside the tensor rectangle become separate exact
 rational-quadratic/rational-quartic branches. A common numerator/denominator
 root factors exactly into one or two native iso-lines, including crossing
@@ -225,8 +229,9 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone sections, non-axial torus quartics, complete bilinear
-plane/tensor overlap, and the rest of the analytic/spline pair matrix.
+oblique cone sections, non-axial torus quartics, two-dimensional clipping
+between contained tensor and bounded plane face regions, and the rest of the
+analytic/spline pair matrix.
 
 ## Booleans
 

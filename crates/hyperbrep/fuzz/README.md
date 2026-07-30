@@ -39,9 +39,10 @@ retained rational-quadratic parameter graphs compose to exact
 rational-quartic spatial curves, and complete or partial splits are replayed
 byte-for-byte. A second non-separable weighted bilinear cohort alternates two
 bounded denominator-pole branches, a factorized crossing, an endpoint-pole
-branch, and two isolated opposite-corner contacts; every retained curve is
-evaluated, topology-ready branch/crossing sets are partitioned, and exact JSON
-is replayed byte-for-byte. Complete
+branch, two isolated opposite-corner contacts, and complete bounded tensor
+containment in the plane; every retained curve is evaluated, topology-ready
+branch/crossing sets are partitioned, and exact JSON is replayed
+byte-for-byte. Complete
 rational-Bézier and single- or multi-span NURBS graph sections in both tensor
 directions
 also drive

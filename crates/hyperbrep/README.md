@@ -349,8 +349,9 @@ The clean-break implementation currently provides:
   partition sign-changing relations into one or more bounded retained
   branches. Common numerator/denominator roots factor into native crossing
   iso-lines, while sign-definite zero sets return exact boundary iso-lines or
-  one/multiple isolated corner points. Only a complete two-dimensional plane
-  overlap remains explicit rather than being collapsed to a curve result;
+  one/multiple isolated corner points. A complete zero hull returns
+  `ContainedSurface` with the exact bounded operand instead of being
+  misreported as coincidence or collapsed to a curve result;
 - exact `Surface::iso_curve` extraction in either tensor direction and
   `Model::split_face_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS

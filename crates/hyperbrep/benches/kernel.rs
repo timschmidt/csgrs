@@ -1232,6 +1232,36 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let contained_tensor = Surface::rational_bezier(
+        vec![
+            vec![point(0, 0, 0), point(2, 0, 0)],
+            vec![point(0, 2, 0), point(2, 2, 0)],
+        ],
+        vec![
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(4)],
+        ],
+    )
+    .expect("benchmark plane-contained weighted bilinear tensor");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let SurfaceSurfaceIntersection::ContainedSurface(
+            SurfaceIntersectionOperand::Second,
+        ) = black_box(&pole_plane)
+            .intersect_surface(black_box(&contained_tensor))
+            .expect("benchmark exact bounded tensor containment")
+        else {
+            panic!("planar weighted tensor must retain its exact contained-surface relation");
+        };
+        checksum += 1;
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/rational_bilinear_tensor_plane_complete_containment: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     const TENSOR_GRAPH_SPLIT_ITERATIONS: usize = 100;
     let (graph_patch, graph_face) = builder::rational_bezier_patch(
         vec![

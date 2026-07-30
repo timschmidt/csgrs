@@ -392,9 +392,13 @@ relation into one or two native iso-lines instead. For a sign-definite
 Bernstein hull, the zero-control mask exactly distinguishes one corner, two
 opposite corners, one boundary edge, or two boundary edges; the public
 `Point`, `Points`, `Curve`, and `Curves` results retain those dimensions
-without a compatibility wrapper. Only a complete zero hull, which is
-two-dimensional containment rather than a curve intersection, stays explicit
-unsupported evidence.
+without a compatibility wrapper. A complete zero hull is two-dimensional
+containment rather than a curve intersection; it returns
+`ContainedSurface(operand)`, naming the complete bounded tensor domain that
+forms the intersection. This is distinct from `Coincident`, which remains
+reserved for equal complete carriers. Face-pair enumeration retains the exact
+containment relation even where clipping two overlapping face regions is not
+yet available and therefore leaves trim evidence explicit.
 
 `boolean::intersect_faces` owns this face-pair operation:
 validated open-shell faces and solid-owned faces use the same certified bounds,

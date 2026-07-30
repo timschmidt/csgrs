@@ -1246,6 +1246,9 @@ pub enum SurfaceSurfaceIntersection {
     None,
     /// The surfaces denote the same complete carrier.
     Coincident,
+    /// The intersection is the complete bounded domain of one surface,
+    /// exactly contained in the other surface's carrier.
+    ContainedSurface(SurfaceIntersectionOperand),
     /// The surfaces touch at one exact point.
     Point(Box<Point3>),
     /// The surfaces meet at multiple isolated exact points.
@@ -1339,14 +1342,22 @@ pub struct SurfaceIntersectionCurve {
     second_pcurve: SurfaceIntersectionPcurve,
 }
 
-/// Selects which retained pcurve belongs to an operand of a surface
-/// intersection.
+/// Identifies an operand of a surface intersection.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum SurfaceIntersectionOperand {
-    /// Use the pcurve on the first surface passed to the intersection query.
+    /// The first surface passed to the intersection query.
     First,
-    /// Use the pcurve on the second surface passed to the intersection query.
+    /// The second surface passed to the intersection query.
     Second,
+}
+
+impl SurfaceIntersectionOperand {
+    const fn swapped(self) -> Self {
+        match self {
+            Self::First => Self::Second,
+            Self::Second => Self::First,
+        }
+    }
 }
 
 /// Exact surface-parameter image of a retained intersection curve.
@@ -3877,6 +3888,9 @@ fn swapped_curve_intersection(
         SurfaceSurfaceIntersection::Components(components) => {
             SurfaceSurfaceIntersection::Components(Box::new((*components).swapped()))
         }
+        SurfaceSurfaceIntersection::ContainedSurface(operand) => {
+            SurfaceSurfaceIntersection::ContainedSurface(operand.swapped())
+        }
         other => other,
     }
 }
@@ -4351,7 +4365,9 @@ fn intersect_plane_rational_bilinear(
         return Ok(SurfaceSurfaceIntersection::None);
     }
     if orders.iter().all(|order| *order == Ordering::Equal) {
-        return Err(GeometryError::UnsupportedIntersection);
+        return Ok(SurfaceSurfaceIntersection::ContainedSurface(
+            SurfaceIntersectionOperand::Second,
+        ));
     }
     if let Some(intersection) =
         sign_definite_bilinear_boundary_intersection(plane, surface, &orders)?
@@ -11250,6 +11266,75 @@ mod tests {
             boundary_pair[1].first_pcurve().point_at(&r(1)).unwrap(),
             Point2::new(r(1), r(1))
         );
+
+        let planar_controls = vec![
+            vec![p(0, 0, 0), p(2, 0, 0)],
+            vec![p(0, 2, 0), p(2, 2, 0)],
+        ];
+        let planar_weights = vec![vec![r(1), r(2)], vec![r(3), r(4)]];
+        let planar =
+            Surface::rational_bezier(planar_controls.clone(), planar_weights).unwrap();
+        assert!(matches!(
+            plane.intersect_surface(&planar).unwrap(),
+            SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
+        ));
+        assert!(matches!(
+            planar.intersect_surface(&plane).unwrap(),
+            SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::First)
+        ));
+        let containment_translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
+        assert!(matches!(
+            plane
+                .transformed(&containment_translation, false)
+                .unwrap()
+                .intersect_surface(
+                    &planar
+                        .transformed(&containment_translation, false)
+                        .unwrap()
+                )
+                .unwrap(),
+            SurfaceSurfaceIntersection::ContainedSurface(SurfaceIntersectionOperand::Second)
+        ));
+
+        let (planar_patch, planar_face) = crate::builder::rational_bezier_patch(
+            planar_controls,
+            vec![vec![r(1), r(1)], vec![r(1), r(1)]],
+        )
+        .unwrap();
+        let patch_surface = planar_patch
+            .surface(planar_patch.face(planar_face).unwrap().surface())
+            .unwrap();
+        let (cube, cube_solid) = crate::builder::cuboid(p(-1, -1, 0), p(3, 3, 1)).unwrap();
+        let cube_faces = cube
+            .shell(cube.solid(cube_solid).unwrap().outer())
+            .unwrap()
+            .faces();
+        let containing_face = cube_faces
+            .iter()
+            .copied()
+            .find(|cube_face| {
+                let cube_surface = cube
+                    .surface(cube.face(*cube_face).unwrap().surface())
+                    .unwrap();
+                matches!(
+                    patch_surface.intersect_surface(cube_surface),
+                    Ok(SurfaceSurfaceIntersection::ContainedSurface(
+                        SurfaceIntersectionOperand::First
+                    ))
+                )
+            })
+            .expect("one cuboid cap plane must contain the complete tensor carrier");
+        let face_pair =
+            crate::boolean::intersect_faces(&planar_patch, planar_face, &cube, containing_face)
+                .unwrap()
+                .expect("contained tensor/plane carriers must retain an exact face relation");
+        assert!(matches!(
+            face_pair.relation(),
+            crate::FacePairRelation::Exact(SurfaceSurfaceIntersection::ContainedSurface(
+                SurfaceIntersectionOperand::First
+            ))
+        ));
+        assert!(matches!(face_pair.trim(), crate::FacePairTrim::NotAvailable));
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         let translated_surface = surface.transformed(&translation, false).unwrap();

@@ -702,7 +702,7 @@ fuzz_target!(|bytes: &[u8]| {
     let rational = |numerator: i32, denominator: i32| {
         (Real::from(numerator) / Real::from(denominator)).expect("fixed nonzero fuzz denominator")
     };
-    let plane_values = match bytes[2] % 4 {
+    let plane_values = match bytes[2] % 5 {
         0 => [
             [rational(3, 16), rational(-5, 16)],
             [rational(-5, 16), rational(3, 16)],
@@ -712,7 +712,11 @@ fuzz_target!(|bytes: &[u8]| {
             [rational(-1, 4), rational(1, 4)],
         ],
         2 => [[Real::one(), -Real::one()], [Real::one(), Real::one()]],
-        _ => [[Real::zero(), Real::one()], [Real::one(), Real::zero()]],
+        3 => [[Real::zero(), Real::one()], [Real::one(), Real::zero()]],
+        _ => [
+            [Real::zero(), Real::zero()],
+            [Real::zero(), Real::zero()],
+        ],
     };
     let pole_weights = vec![
         vec![Real::one(), Real::from(2)],
@@ -759,6 +763,10 @@ fuzz_target!(|bytes: &[u8]| {
             let _ = points;
             Vec::new()
         }
+        Ok(SurfaceSurfaceIntersection::ContainedSurface(operand)) => {
+            let _ = operand;
+            Vec::new()
+        }
         _ => Vec::new(),
     };
     let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
@@ -767,7 +775,7 @@ fuzz_target!(|bytes: &[u8]| {
         let _ = curve.first_pcurve().point_at(&parameter);
         let _ = curve.second_pcurve().point_at(&parameter);
     }
-    if bytes[2] % 4 < 3 && !retained.is_empty() {
+    if bytes[2] % 5 < 3 && !retained.is_empty() {
         let Ok((patch, face)) = builder::rational_bezier_patch(pole_controls, pole_weights) else {
             return;
         };
