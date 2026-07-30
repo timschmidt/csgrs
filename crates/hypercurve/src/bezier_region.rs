@@ -27,7 +27,7 @@ use crate::bezier_topology::exact_polynomial_line_contact_relation_from_directio
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::region_nesting::ExactCurveWorkspace2;
 use crate::{
-    Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierArrangementGraph2,
+    Aabb2, Axis2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
     BezierArrangementTraversal2, BezierEndpointPointImage2, BezierFlatteningOptions,
     BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallelVerificationOptions,
@@ -1050,6 +1050,29 @@ impl BezierBoundaryLoop2 {
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         self.signed_area_with_cache(&mut rational_quadratic_cache)
+    }
+
+    /// Returns exact signed area and first moments when every retained boundary
+    /// fragment has an implemented symbolic integral.
+    ///
+    /// Polynomial Béziers and polynomial-equivalent rational Béziers are
+    /// integrated directly. `None` preserves a genuinely rational boundary
+    /// whose first-moment integral is not yet implemented; it never requests a
+    /// flattening tolerance.
+    pub fn area_moments(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+        if self.fragments.is_empty() {
+            return Err(CurveError::Topology(
+                "Bezier boundary loop moments require nonempty fragments".to_owned(),
+            ));
+        }
+        let mut total = BezierAreaMoments2::zero();
+        for fragment in &self.fragments {
+            let Some(contribution) = fragment.area_moments_contribution()? else {
+                return Ok(None);
+            };
+            total = total.plus(&contribution);
+        }
+        Ok(Some(total))
     }
 
     fn signed_area_with_cache(
@@ -6323,6 +6346,17 @@ impl BezierSubcurve2 {
                 Some(area) => Ok(Some(area)),
                 None => rational_line_signed_area_contribution(curve),
             },
+        }
+    }
+
+    /// Returns exact signed-area and first-moment contributions when the
+    /// fragment has an implemented symbolic integral.
+    pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+        match self {
+            Self::Quadratic(curve) => curve.area_moments_contribution().map(Some),
+            Self::Cubic(curve) => curve.area_moments_contribution().map(Some),
+            Self::RationalQuadratic(curve) => curve.area_moments_contribution(),
+            Self::Rational(curve) => curve.area_moments_contribution(),
         }
     }
 

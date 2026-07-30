@@ -104,7 +104,7 @@ impl BezierAreaMoments2 {
         &self.y_moment
     }
 
-    fn plus(&self, other: &Self) -> Self {
+    pub(crate) fn plus(&self, other: &Self) -> Self {
         Self {
             signed_area: &self.signed_area + &other.signed_area,
             x_moment: &self.x_moment + &other.x_moment,
@@ -361,6 +361,20 @@ impl RationalQuadraticBezier2 {
         rational_quadratic_signed_area_contribution(self, None)
     }
 
+    /// Returns exact area and first moments when equal projective weights
+    /// certify that this rational quadratic is polynomial.
+    ///
+    /// `None` means the current exact object model has no implemented finite
+    /// first-moment integral for this genuinely rational conic. No sampled or
+    /// flattened fallback is used.
+    pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+        let weights = self.weights();
+        if !weights.iter().all(|weight| *weight == weights[0]) {
+            return Ok(None);
+        }
+        area_moments_for_controls(&self.control_points()).map(Some)
+    }
+
     pub(crate) fn signed_area_contribution_with_cache(
         &self,
         cache: &mut RationalQuadraticAreaIntegralCache,
@@ -387,6 +401,22 @@ impl RationalBezier2 {
         }
         let controls = self.control_points().iter().collect::<Vec<_>>();
         signed_area_for_controls(&controls).map(Some)
+    }
+
+    /// Returns exact area and first moments when uniform projective weights
+    /// certify that this rational Bézier is polynomial.
+    ///
+    /// `None` is an explicit unsupported symbolic integral for a genuinely
+    /// rational image, never a finite approximation.
+    pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
+        let Some(first_weight) = self.weights().first() else {
+            return Err(CurveError::InvalidRationalBezier);
+        };
+        if !self.weights().iter().all(|weight| weight == first_weight) {
+            return Ok(None);
+        }
+        let controls = self.control_points().iter().collect::<Vec<_>>();
+        area_moments_for_controls(&controls).map(Some)
     }
 }
 
@@ -1001,6 +1031,55 @@ mod tests {
             RationalBezier2::try_new(controls, vec![Real::one(), 2.into(), 3.into(), 4.into()])
                 .expect("positive nonuniform weights are valid");
         assert_eq!(nonuniform.signed_area_contribution().unwrap(), None);
+        assert_eq!(nonuniform.area_moments_contribution().unwrap(), None);
+    }
+
+    #[test]
+    fn uniform_weight_rational_beziers_use_exact_polynomial_moments() {
+        let quadratic_controls = [point(1, 0), point(3, 4), point(5, 0)];
+        let quadratic = QuadraticBezier2::new(
+            quadratic_controls[0].clone(),
+            quadratic_controls[1].clone(),
+            quadratic_controls[2].clone(),
+        );
+        let rational_quadratic = RationalQuadraticBezier2::try_new(
+            quadratic_controls[0].clone(),
+            quadratic_controls[1].clone(),
+            quadratic_controls[2].clone(),
+            Real::from(7_i8),
+            Real::from(7_i8),
+            Real::from(7_i8),
+        )
+        .unwrap();
+        assert_eq!(
+            rational_quadratic.area_moments_contribution().unwrap(),
+            Some(quadratic.area_moments_contribution().unwrap())
+        );
+
+        let cubic_controls = vec![point(1, 0), point(2, 4), point(4, 4), point(5, 0)];
+        let cubic = CubicBezier2::new(
+            cubic_controls[0].clone(),
+            cubic_controls[1].clone(),
+            cubic_controls[2].clone(),
+            cubic_controls[3].clone(),
+        );
+        let rational =
+            RationalBezier2::try_new(cubic_controls, vec![Real::from(-3_i8); 4]).unwrap();
+        assert_eq!(
+            rational.area_moments_contribution().unwrap(),
+            Some(cubic.area_moments_contribution().unwrap())
+        );
+
+        let nonuniform = RationalQuadraticBezier2::try_new(
+            point(1, 0),
+            point(3, 4),
+            point(5, 0),
+            Real::one(),
+            Real::from(2_i8),
+            Real::one(),
+        )
+        .unwrap();
+        assert_eq!(nonuniform.area_moments_contribution().unwrap(), None);
     }
 
     #[test]
