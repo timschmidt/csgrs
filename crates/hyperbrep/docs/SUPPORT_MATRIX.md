@@ -84,7 +84,7 @@ strict-convexity certificate.
 | Sphere / sphere | None, coincident, tangent point, full circle |
 | Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines |
 | Plane / cone | Transverse lower none, apex point, or upper circle |
-| Plane / torus | Transverse none, tangent circle, or two circles |
+| Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
@@ -118,6 +118,16 @@ and constant-height pcurves directly. The graph clips them across the four
 native cylinder patches and exactly coalesces adjacent common-support
 fragments before partitioning the boundaryless sphere; both partitioned
 operands retain certified volume and byte-identical persistence.
+An axis-containing plane/ring-torus pair returns two native minor-radius
+meridian circles. Their exact planar circular pcurves and constant-longitude
+torus pcurves share the spatial curve domain. The graph clips an oblique
+axial cutter across all four periodic torus latitude cells per circle and
+partitions both torus and planar operands exactly. Parallel-to-axis planes
+retain the exact outer point tangency at `major_radius + minor_radius` and are
+certified disjoint when strictly farther away; interior offset and general
+oblique torus sections remain explicit unsupported quartic cases. A selected
+half-torus is not yet published because it requires a closed longitude-region
+solid certificate rather than the existing latitude-band certificate.
 
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control
@@ -130,7 +140,8 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone/torus sections and the rest of the analytic/spline pair matrix.
+oblique cone sections, non-axial torus quartics, and the rest of the
+analytic/spline pair matrix.
 
 ## Booleans
 

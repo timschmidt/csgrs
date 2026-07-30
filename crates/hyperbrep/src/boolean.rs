@@ -7930,6 +7930,60 @@ mod tests {
     }
 
     #[test]
+    fn axial_torus_graph_partitions_both_exact_meridian_supports() {
+        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let (cutter, cutter_solid) = crate::builder::cuboid(p(0, -5, -5), p(5, 5, 5)).unwrap();
+        let diagonal = (Real::one() / Real::from(2).sqrt().unwrap()).unwrap();
+        let rotation = Matrix4::affine_orthonormal(
+            [
+                [diagonal.clone(), -diagonal.clone(), Real::zero()],
+                [diagonal.clone(), diagonal, Real::zero()],
+                [Real::zero(), Real::zero(), Real::one()],
+            ],
+            [Real::zero(), Real::zero(), Real::zero()],
+        );
+        let cutter = cutter.transformed(&rotation).unwrap();
+
+        let graph = intersection_graph(&torus, torus_solid, &cutter, cutter_solid).unwrap();
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match pair.trim() {
+                FacePairTrim::SurfaceCurveFragments(fragments) => Some(fragments),
+                _ => None,
+            })
+            .flatten()
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|trace| {
+            trace.curve().kind() == crate::Curve3Kind::CircleArc
+                && trace.first_pcurve().materialize().is_ok()
+                && trace.second_pcurve().materialize().is_ok()
+        }));
+
+        let (partitioned_torus, torus_partitions) = graph.partition_first_faces().unwrap();
+        assert_eq!(torus_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_torus.solid_volume(torus_solid).unwrap(),
+                &torus.solid_volume(torus_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let (partitioned_cutter, cutter_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(cutter_partitions.len(), 1);
+        assert_eq!(
+            compare_reals(
+                &partitioned_cutter.solid_volume(cutter_solid).unwrap(),
+                &cutter.solid_volume(cutter_solid).unwrap(),
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn transverse_torus_central_band_stitches_as_an_exact_solid() {
         let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
         let half = (Real::one() / Real::from(2)).unwrap();

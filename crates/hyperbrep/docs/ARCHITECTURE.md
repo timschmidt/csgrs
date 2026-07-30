@@ -332,6 +332,16 @@ operation enum. Its volume uses one exact piecewise overlap integral split at
 locations by the corresponding Boolean truth table. Invisible material beyond
 the selected spherical pole is represented by a certified effective interval,
 preventing discarded source faces from becoming false query boundaries.
+An axis-containing plane cuts a ring torus into two exact native meridian
+circles. Each result retains a planar circular pcurve and a constant-longitude
+torus pcurve over the same `Real` parameter domain. The carrier predicate also
+retains exact point tangency at `major_radius + minor_radius` and certifies
+strictly exterior parallel-to-axis planes as disjoint before graph
+construction. Oblique-through-axis graph fixtures prove
+that the two circles clip into eight patch-local fragments, partition every
+periodic torus cell, and author two closed planar loops while preserving both
+source volumes. Publishing the selected half-torus remains a separate closed
+longitude-region certificate rather than an inferred general-shell result.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

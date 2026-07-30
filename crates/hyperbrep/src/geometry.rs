@@ -4694,12 +4694,83 @@ fn intersect_plane_torus(
     torus: &TorusSurface,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let normal = plane.u.cross(&plane.v);
-    if decided_order(compare_reals(
+    let axis_cross_normal_order = decided_order(compare_reals(
         &torus.frame.z.cross(&normal).norm_squared(),
         &Real::zero(),
-    ))? != Ordering::Equal
-    {
-        return Err(GeometryError::UnsupportedIntersection);
+    ))?;
+    if axis_cross_normal_order != Ordering::Equal {
+        let axis_dot_normal = torus.frame.z.dot(&normal);
+        let center_separation = normal.dot(&(&torus.center - &plane.origin));
+        if decided_order(compare_reals(&axis_dot_normal, &Real::zero()))? != Ordering::Equal {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        if decided_order(compare_reals(&center_separation, &Real::zero()))? != Ordering::Equal {
+            let distance_squared = ((&center_separation * &center_separation)
+                / normal.norm_squared())
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+            let outer_radius = &torus.major_radius + &torus.minor_radius;
+            match decided_order(compare_reals(
+                &distance_squared,
+                &(&outer_radius * &outer_radius),
+            ))? {
+                Ordering::Greater => return Ok(SurfaceSurfaceIntersection::None),
+                Ordering::Equal => {
+                    let projection_scale = (center_separation / normal.norm_squared())
+                        .map_err(|_| GeometryError::ProjectiveDivision)?;
+                    return Ok(SurfaceSurfaceIntersection::Point(Box::new(
+                        torus.center.clone() - normal.clone() * projection_scale,
+                    )));
+                }
+                Ordering::Less => {}
+            }
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+
+        let radial = normal
+            .cross(&torus.frame.z)
+            .normalize()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let normalize_angle = |angle: Real| -> GeometryResult<Real> {
+            Ok(
+                if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                    angle + Real::tau()
+                } else {
+                    angle
+                },
+            )
+        };
+        let section = |radial: Vector3| -> GeometryResult<SurfaceIntersectionCurve> {
+            let u = normalize_angle(
+                radial
+                    .dot(&torus.frame.y)
+                    .try_atan2(radial.dot(&torus.frame.x))
+                    .map_err(|_| GeometryError::ElementaryFunction)?,
+            )?;
+            let curve = Curve3::circle_arc(
+                torus.center.clone() + radial.clone() * &torus.major_radius,
+                radial,
+                torus.frame.z.clone(),
+                torus.minor_radius.clone(),
+                Real::zero(),
+                Real::tau(),
+            )?;
+            let domain = curve.domain().clone();
+            Ok(SurfaceIntersectionCurve::new(
+                curve.clone(),
+                SurfaceIntersectionPcurve::plane_projection(curve, plane),
+                SurfaceIntersectionPcurve::tensor_iso(
+                    domain,
+                    u,
+                    TensorAxis::U,
+                    Real::one(),
+                    Real::zero(),
+                ),
+            ))
+        };
+        return Ok(SurfaceSurfaceIntersection::Curves(vec![
+            section(radial.clone())?,
+            section(-radial)?,
+        ]));
     }
     let axial_height = (normal.dot(&(&plane.origin - &torus.center)) / normal.dot(&torus.frame.z))
         .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -9015,8 +9086,113 @@ mod tests {
             cone.intersect_surface(&axial_plane).unwrap_err(),
             GeometryError::UnsupportedIntersection
         );
+    }
+
+    #[test]
+    fn axial_plane_through_ring_torus_retains_two_exact_meridian_circles() {
+        let torus = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let plane = Surface::plane(Point3::origin(), Vector3::y(), Vector3::z()).unwrap();
+        let SurfaceSurfaceIntersection::Curves(sections) = torus.intersect_surface(&plane).unwrap()
+        else {
+            panic!("an axial plane through a ring torus must retain two meridian circles");
+        };
+        assert_eq!(sections.len(), 2);
+        assert_points_equal(&sections[0].curve().start().unwrap(), &p(0, -4, 0));
+        assert_points_equal(&sections[1].curve().start().unwrap(), &p(0, 4, 0));
+
+        for section in &sections {
+            assert_eq!(section.curve().kind(), Curve3Kind::CircleArc);
+            assert_eq!(
+                section
+                    .first_pcurve()
+                    .materialize()
+                    .unwrap()
+                    .curve()
+                    .family(),
+                CurveFamily2::Line
+            );
+            assert_eq!(
+                section
+                    .second_pcurve()
+                    .materialize()
+                    .unwrap()
+                    .curve()
+                    .family(),
+                CurveFamily2::CircularArc
+            );
+            for parameter in [Real::zero(), (Real::pi() / r(2)).unwrap(), Real::pi()] {
+                let point = section.curve().point_at(&parameter).unwrap();
+                assert_points_equal(
+                    &torus
+                        .point_at(&section.first_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &point,
+                );
+                assert_points_equal(
+                    &plane
+                        .point_at(&section.second_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &point,
+                );
+            }
+        }
+
+        let SurfaceSurfaceIntersection::Curves(swapped) = plane.intersect_surface(&torus).unwrap()
+        else {
+            panic!("operand reversal must retain both meridian circles");
+        };
+        assert_eq!(swapped.len(), 2);
         assert_eq!(
-            torus.intersect_surface(&axial_plane).unwrap_err(),
+            swapped[0]
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::CircularArc
+        );
+        assert_eq!(
+            swapped[0]
+                .second_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            CurveFamily2::Line
+        );
+
+        let offset = Surface::plane(p(1, 0, 0), Vector3::y(), Vector3::z()).unwrap();
+        assert_eq!(
+            torus.intersect_surface(&offset).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let separated = Surface::plane(p(5, 0, 0), Vector3::y(), Vector3::z()).unwrap();
+        assert!(matches!(
+            torus.intersect_surface(&separated).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+        let tangent = Surface::plane(p(4, 0, 0), Vector3::y(), Vector3::z()).unwrap();
+        let SurfaceSurfaceIntersection::Point(point) = torus.intersect_surface(&tangent).unwrap()
+        else {
+            panic!("an outer-radius axial plane must retain the exact tangent point");
+        };
+        assert_points_equal(&point, &p(4, 0, 0));
+        let oblique = Surface::plane(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::from_xyz(Real::zero(), Real::one(), Real::one()),
+        )
+        .unwrap();
+        assert_eq!(
+            torus.intersect_surface(&oblique).unwrap_err(),
             GeometryError::UnsupportedIntersection
         );
     }

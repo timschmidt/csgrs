@@ -145,6 +145,11 @@ The clean-break implementation currently provides:
 - exact transverse torus/slab intersection through retained concentric
   latitudes, one or two native annular caps, periodic parameter-cell
   certification, and analytic band measurement/classification;
+- exact axis-containing plane/ring-torus carrier intersection as two native
+  meridian circles with one authoritative spatial parameter and exact pcurves
+  on both carriers. Parallel-to-axis planes retain exact outer tangency and
+  certify strict outer separation, while an oblique axial cutter partitions
+  all periodic torus cells plus both planar loops without tolerance sewing;
 - exact coaxial polygonal-revolution Booleans through Hypercurve radial/axial
   regions, including reversed axes, disconnected outputs, and retained
   toroidal-profile cavities;
