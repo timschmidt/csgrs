@@ -1055,10 +1055,10 @@ impl BezierBoundaryLoop2 {
     /// Returns exact signed area and first moments when every retained boundary
     /// fragment has an implemented symbolic integral.
     ///
-    /// Polynomial Béziers and polynomial-equivalent rational Béziers are
-    /// integrated directly. `None` preserves a genuinely rational boundary
-    /// whose first-moment integral is not yet implemented; it never requests a
-    /// flattening tolerance.
+    /// Polynomial Béziers, polynomial-equivalent rational Béziers, and finite
+    /// rational quadratics are integrated directly. `None` preserves a
+    /// higher-degree genuinely rational boundary whose first-moment integral
+    /// is not yet implemented; it never requests a flattening tolerance.
     pub fn area_moments(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         if self.fragments.is_empty() {
             return Err(CurveError::Topology(
