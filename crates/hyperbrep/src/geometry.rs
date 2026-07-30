@@ -2568,6 +2568,131 @@ impl Surface {
         Ok(Some(Self::plane(origin.clone(), u, v)?))
     }
 
+    /// Returns the exact plane whose authored coordinates are this tensor's
+    /// native parameters when the tensor is a constant-weight affine image.
+    ///
+    /// The certificate checks every rational Bézier control against its
+    /// Bernstein lattice, or every NURBS control against its normalized
+    /// Greville lattice. Nonconstant projective weights and non-affine control
+    /// nets remain explicit unsupported cases.
+    pub(crate) fn affine_parameter_plane(&self) -> GeometryResult<Option<Self>> {
+        let (
+            control_points,
+            weights,
+            u_coordinates,
+            v_coordinates,
+            u_start,
+            u_span,
+            v_start,
+            v_span,
+        ) = match &self.data.geometry {
+            SurfaceGeometry::RationalBezier(surface) => {
+                let u_count = surface.control_points[0].len();
+                let v_count = surface.control_points.len();
+                let u_denominator = Real::from(
+                    u128::try_from(u_count - 1).expect("usize is representable as u128"),
+                );
+                let v_denominator = Real::from(
+                    u128::try_from(v_count - 1).expect("usize is representable as u128"),
+                );
+                let coordinates = |count: usize, denominator: &Real| -> GeometryResult<Vec<Real>> {
+                    (0..count)
+                        .map(|index| {
+                            (Real::from(
+                                u128::try_from(index).expect("usize is representable as u128"),
+                            ) / denominator)
+                                .map_err(|_| GeometryError::ProjectiveDivision)
+                        })
+                        .collect()
+                };
+                (
+                    &surface.control_points,
+                    &surface.weights,
+                    coordinates(u_count, &u_denominator)?,
+                    coordinates(v_count, &v_denominator)?,
+                    Real::zero(),
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                )
+            }
+            SurfaceGeometry::Nurbs(surface) => {
+                let u_count = surface.control_points[0].len();
+                let v_count = surface.control_points.len();
+                let u_start = surface.u_knots[surface.u_degree].clone();
+                let u_end = surface.u_knots[u_count].clone();
+                let v_start = surface.v_knots[surface.v_degree].clone();
+                let v_end = surface.v_knots[v_count].clone();
+                let u_span = &u_end - &u_start;
+                let v_span = &v_end - &v_start;
+                (
+                    &surface.control_points,
+                    &surface.weights,
+                    normalized_greville_coordinates(
+                        u_count,
+                        surface.u_degree,
+                        &surface.u_knots,
+                        &u_start,
+                        &u_span,
+                    )?,
+                    normalized_greville_coordinates(
+                        v_count,
+                        surface.v_degree,
+                        &surface.v_knots,
+                        &v_start,
+                        &v_span,
+                    )?,
+                    u_start,
+                    u_span,
+                    v_start,
+                    v_span,
+                )
+            }
+            SurfaceGeometry::Plane(_)
+            | SurfaceGeometry::Cylinder(_)
+            | SurfaceGeometry::Sphere(_)
+            | SurfaceGeometry::Cone(_)
+            | SurfaceGeometry::Torus(_)
+            | SurfaceGeometry::Extrusion(_)
+            | SurfaceGeometry::Revolution(_) => return Ok(None),
+        };
+        let first_weight = &weights[0][0];
+        for weight in weights.iter().flatten().skip(1) {
+            if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                return Ok(None);
+            }
+        }
+        let image_origin = &control_points[0][0];
+        let image_u = &control_points[0][control_points[0].len() - 1] - image_origin;
+        let image_v = &control_points[control_points.len() - 1][0] - image_origin;
+        if decided_order(compare_reals(
+            &image_u.cross(&image_v).norm_squared(),
+            &Real::zero(),
+        ))? != Ordering::Greater
+        {
+            return Ok(None);
+        }
+        for (row, v_coordinate) in control_points.iter().zip(&v_coordinates) {
+            for (point, u_coordinate) in row.iter().zip(&u_coordinates) {
+                let expected = image_origin.clone()
+                    + image_u.clone() * u_coordinate
+                    + image_v.clone() * v_coordinate;
+                if !points_equal(point, &expected)? {
+                    return Ok(None);
+                }
+            }
+        }
+        let parameter_u = divide_vector_by_real(image_u, &u_span)?;
+        let parameter_v = divide_vector_by_real(image_v, &v_span)?;
+        let parameter_origin =
+            image_origin.clone() - parameter_u.clone() * &u_start - parameter_v.clone() * &v_start;
+        Ok(Some(Self::plane(
+            parameter_origin,
+            parameter_u,
+            parameter_v,
+        )?))
+    }
+
     /// Extracts one exact tensor-product iso-curve.
     ///
     /// Rational Bézier surfaces collapse the orthogonal homogeneous control
@@ -4010,6 +4135,33 @@ pub(crate) fn project_curve_to_plane_frame(
             )?)))
         }
         Curve3ExactData::EllipseArc(_) => Ok(None),
+    }
+}
+
+pub(crate) fn lift_curve_from_plane_frame(
+    curve: &Curve2,
+    origin: &Point3,
+    u: &Vector3,
+    v: &Vector3,
+) -> GeometryResult<Option<Curve3>> {
+    let lift = |point: &CurvePoint2| origin.clone() + u.clone() * point.x() + v.clone() * point.y();
+    match curve.geometry() {
+        CurveGeometry2::Line(line) => Ok(Some(Curve3::line(lift(line.start()), lift(line.end()))?)),
+        CurveGeometry2::RationalBezier(curve) => Ok(Some(Curve3::rational_bezier(
+            curve.control_points().iter().map(lift).collect(),
+            curve.weights().to_vec(),
+        )?)),
+        CurveGeometry2::Nurbs(curve) => Ok(Some(Curve3::nurbs(
+            curve.degree(),
+            curve.control_points().iter().map(lift).collect(),
+            curve.weights().to_vec(),
+            curve.knots().to_vec(),
+        )?)),
+        CurveGeometry2::CircularArc(_)
+        | CurveGeometry2::QuadraticBezier(_)
+        | CurveGeometry2::CubicBezier(_)
+        | CurveGeometry2::RationalQuadraticBezier(_)
+        | CurveGeometry2::PolynomialBSpline(_) => Ok(None),
     }
 }
 
@@ -8496,6 +8648,25 @@ fn divide_vector_by_real(vector: Vector3, denominator: &Real) -> GeometryResult<
     ))
 }
 
+fn normalized_greville_coordinates(
+    count: usize,
+    degree: usize,
+    knots: &[Real],
+    domain_start: &Real,
+    domain_span: &Real,
+) -> GeometryResult<Vec<Real>> {
+    let degree_scalar = Real::from(u128::try_from(degree).expect("usize is representable as u128"));
+    (0..count)
+        .map(|index| {
+            let sum = knots[index + 1..=index + degree]
+                .iter()
+                .fold(Real::zero(), |sum, knot| sum + knot);
+            let greville = (sum / &degree_scalar).map_err(|_| GeometryError::ProjectiveDivision)?;
+            ((greville - domain_start) / domain_span).map_err(|_| GeometryError::ProjectiveDivision)
+        })
+        .collect()
+}
+
 fn binomial_real(n: usize, k: usize) -> GeometryResult<Real> {
     let k = k.min(n - k);
     let mut result = Real::one();
@@ -9728,6 +9899,44 @@ mod tests {
             mirrored_original.z,
         );
         assert_points_equal(&reflected.point_at(&parameter).unwrap(), &expected);
+    }
+
+    #[test]
+    fn affine_tensor_parameter_planes_retain_native_bezier_and_nurbs_coordinates() {
+        let bezier = Surface::rational_bezier(
+            vec![vec![p(2, 3, 5), p(6, 3, 7)], vec![p(2, 9, 8), p(6, 9, 10)]],
+            vec![vec![r(2), r(2)], vec![r(2), r(2)]],
+        )
+        .unwrap();
+        let bezier_parameters = bezier.affine_parameter_plane().unwrap().unwrap();
+        let parameter = Point2::new(q(1, 3), q(2, 5));
+        assert_points_equal(
+            &bezier.point_at(&parameter).unwrap(),
+            &bezier_parameters.point_at(&parameter).unwrap(),
+        );
+
+        let nurbs = Surface::nurbs(
+            1,
+            1,
+            vec![vec![p(2, 3, 5), p(6, 3, 7)], vec![p(2, 9, 8), p(6, 9, 10)]],
+            vec![vec![r(3), r(3)], vec![r(3), r(3)]],
+            vec![r(2), r(2), r(4), r(4)],
+            vec![r(5), r(5), r(9), r(9)],
+        )
+        .unwrap();
+        let nurbs_parameters = nurbs.affine_parameter_plane().unwrap().unwrap();
+        let native_parameter = Point2::new(r(3), r(7));
+        assert_points_equal(
+            &nurbs.point_at(&native_parameter).unwrap(),
+            &nurbs_parameters.point_at(&native_parameter).unwrap(),
+        );
+
+        let projective = Surface::rational_bezier(
+            vec![vec![p(0, 0, 0), p(1, 0, 0)], vec![p(0, 1, 0), p(1, 1, 0)]],
+            vec![vec![r(1), r(2)], vec![r(1), r(2)]],
+        )
+        .unwrap();
+        assert!(projective.affine_parameter_plane().unwrap().is_none());
     }
 
     #[test]

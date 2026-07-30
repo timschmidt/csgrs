@@ -176,6 +176,89 @@ fuzz_target!(|bytes: &[u8]| {
         );
         return;
     }
+    if bytes[0] == 0xa7 {
+        let (tensor, tensor_face) = builder::rational_bezier_patch(
+            vec![
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::one(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+                ],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .expect("unit affine tensor patch is constructible");
+        let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+        let half = (Real::one() / Real::from(2)).expect("two is nonzero");
+        let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        let start = hypercurve::Point2::new(Real::zero(), quarter);
+        let end = hypercurve::Point2::new(Real::one(), three_quarters);
+        let control_y = if bytes[1] & 1 == 0 {
+            Real::zero()
+        } else {
+            Real::one()
+        };
+        let outer = hypercurve::CurvePath2::try_new(vec![
+            hypercurve::Curve2::from(hypercurve::QuadraticBezier2::new(
+                start.clone(),
+                hypercurve::Point2::new(half, control_y),
+                end.clone(),
+            )),
+            hypercurve::Curve2::from(
+                hypercurve::LineSeg2::try_new(
+                    end,
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                )
+                .expect("curved region right edge"),
+            ),
+            hypercurve::Curve2::from(
+                hypercurve::LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                )
+                .expect("curved region upper edge"),
+            ),
+            hypercurve::Curve2::from(
+                hypercurve::LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                    start,
+                )
+                .expect("curved region left edge"),
+            ),
+        ])
+        .expect("curved plane region is simple");
+        let (plane, plane_face) = builder::planar_face(
+            &outer,
+            &[],
+            hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+            Vector3::x(),
+            Vector3::y(),
+        )
+        .expect("curved plane region is constructible");
+        let (edited, partition) = hyperbrep::partition_contained_face_by_plane_region(
+            &tensor,
+            tensor_face,
+            &plane,
+            plane_face,
+        )
+        .expect("curved affine inverse pcurve is certified")
+        .expect("curved boundary partitions the tensor interior");
+        assert_eq!(partition.faces.len(), 2);
+        let json = edited.to_json().expect("curved tensor split serializes");
+        assert_eq!(
+            RawModel::from_json(&json)
+                .expect("curved tensor JSON decodes")
+                .validate()
+                .expect("curved tensor JSON fully revalidates")
+                .to_json()
+                .expect("curved tensor replay serializes"),
+            json
+        );
+        return;
+    }
     let use_cylinder = bytes[0] & 2 != 0;
     let split_face = bytes[0] & 1 != 0;
     let (model, solid) = if use_cylinder {

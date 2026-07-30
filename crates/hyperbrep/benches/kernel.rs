@@ -5,7 +5,7 @@ use hyperbrep::{
     Curve3, Direction, Model, Point3, RawModel, Real, SolidPointLocation, Surface,
     SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
-use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2};
+use hypercurve::{Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2};
 use hyperlimit::compare_reals;
 
 fn point(x: i32, y: i32, z: i32) -> Point3 {
@@ -1803,7 +1803,62 @@ fn main() {
     );
 
     let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+    let half = (Real::one() / Real::from(2)).expect("two is nonzero");
     let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+    let curve_start = CurvePoint2::new(Real::zero(), quarter.clone());
+    let curve_end = CurvePoint2::new(Real::one(), three_quarters.clone());
+    let curved_region = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            curve_start.clone(),
+            CurvePoint2::new(half, Real::zero()),
+            curve_end.clone(),
+        )),
+        Curve2::from(
+            LineSeg2::try_new(curve_end, CurvePoint2::new(Real::one(), Real::from(2)))
+                .expect("benchmark curved region right edge"),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(Real::one(), Real::from(2)),
+                CurvePoint2::new(Real::zero(), Real::from(2)),
+            )
+            .expect("benchmark curved region upper edge"),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(CurvePoint2::new(Real::zero(), Real::from(2)), curve_start)
+                .expect("benchmark curved region left edge"),
+        ),
+    ])
+    .expect("benchmark curved region");
+    let (curved_plane, curved_plane_face) = builder::planar_face(
+        &curved_region,
+        &[],
+        point(0, 0, 1),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .expect("benchmark curved plane region");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
+            black_box(&affine_tensor),
+            affine_tensor_face,
+            black_box(&curved_plane),
+            curved_plane_face,
+        )
+        .expect("benchmark exact curved contained-region partition")
+        .expect("benchmark curved boundary is represented");
+        assert_eq!(partition.faces.len(), 2);
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/curved_affine_tensor_inverse_pcurve_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     let outer = [
         hyperbrep::Point2::new(Real::zero(), Real::zero()),
         hyperbrep::Point2::new(Real::one(), Real::zero()),

@@ -7943,6 +7943,9 @@ impl ModelBuilder {
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
+        if self.validate_affine_tensor_parameter_image(curve, edge_use, pcurve, surface)? {
+            return Ok(());
+        }
         let SurfaceExactData::RationalBezier {
             control_points: surface_points,
             weights: surface_weights,
@@ -8033,6 +8036,9 @@ impl ModelBuilder {
         pcurve: &Pcurve,
         surface: &Surface,
     ) -> Result<(), BuildError> {
+        if self.validate_affine_tensor_parameter_image(curve, edge_use, pcurve, surface)? {
+            return Ok(());
+        }
         let SurfaceExactData::Nurbs {
             u_degree,
             v_degree,
@@ -8135,6 +8141,34 @@ impl ModelBuilder {
             &coefficient_offset,
             SurfaceIsoAxis::U,
         )
+    }
+
+    fn validate_affine_tensor_parameter_image(
+        &self,
+        curve: &Curve3,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<bool, BuildError> {
+        let Some(parameter_plane) = surface.affine_parameter_plane()? else {
+            return Ok(false);
+        };
+        let oriented_pcurve = match edge_use.direction {
+            Direction::Forward => pcurve.clone(),
+            Direction::Reversed => pcurve.reversed()?,
+        };
+        let origin = parameter_plane
+            .plane_origin()
+            .expect("affine parameter certificate is a plane");
+        let (u, v) = parameter_plane
+            .plane_directions()
+            .expect("affine parameter certificate is a plane");
+        let Some(expected) =
+            crate::geometry::lift_curve_from_plane_frame(oriented_pcurve.curve(), origin, u, v)?
+        else {
+            return Ok(false);
+        };
+        curve_parameterizations_equal(curve, &expected)
     }
 
     fn tensor_graph_profile_interval(
@@ -9925,10 +9959,9 @@ impl ModelBuilder {
         let face_set = faces.iter().copied().collect::<HashSet<_>>();
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
-            if !matches!(
-                self.surface_ref(face.surface)?.kind(),
-                SurfaceKind::Plane | SurfaceKind::Extrusion
-            ) {
+            if self.surface_ref(face.surface)?.kind() != SurfaceKind::Extrusion
+                && self.canonical_prism_plane(face.surface)?.is_none()
+            {
                 return Ok(false);
             }
             for wire in face.boundary_wires() {
@@ -9944,7 +9977,7 @@ impl ModelBuilder {
                     if incident.len() != 2 {
                         return Ok(false);
                     }
-                    let mut support = None;
+                    let mut support = None::<Surface>;
                     for incident_use in incident {
                         let Some(wire) = self.edge_use_wire[incident_use.index()] else {
                             return Ok(false);
@@ -9956,19 +9989,20 @@ impl ModelBuilder {
                             return Ok(false);
                         }
                         let incident_face = self.face_ref(incident_face)?;
-                        if self.surface_ref(incident_face.surface)?.kind() != SurfaceKind::Plane {
+                        let Some(incident_support) =
+                            self.canonical_prism_plane(incident_face.surface)?
+                        else {
                             return Ok(false);
-                        }
-                        if let Some(expected) = support {
+                        };
+                        if let Some(expected) = &support {
                             if !matches!(
-                                self.surface_ref(expected)?
-                                    .intersect_surface(self.surface_ref(incident_face.surface)?)?,
+                                expected.intersect_surface(&incident_support)?,
                                 crate::SurfaceSurfaceIntersection::Coincident
                             ) {
                                 return Ok(false);
                             }
                         } else {
-                            support = Some(incident_face.surface);
+                            support = Some(incident_support);
                         }
                     }
                 }

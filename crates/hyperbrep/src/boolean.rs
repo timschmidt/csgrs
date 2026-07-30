@@ -2466,6 +2466,50 @@ pub fn intersect_faces(
     intersect_face_carriers(first_model, first_face, second_model, second_face)
 }
 
+/// Partitions one rational Bézier or NURBS face by the exact boundary of a
+/// coplanar trimmed plane region.
+///
+/// Affine tensor carriers retain native inverse pcurves without fitting. A
+/// returned `None` means the boundary family or tensor parameterization is not
+/// represented exactly by the current kernel.
+pub fn partition_contained_face_by_plane_region(
+    contained_model: &Model,
+    contained_face: FaceId,
+    plane_model: &Model,
+    plane_face: FaceId,
+) -> Result<Option<(Model, FacePartition)>, BooleanError> {
+    if contained_model.face(contained_face).is_none() {
+        return Err(QueryError::InvalidReference {
+            kind: crate::EntityKind::Face,
+            index: contained_face.index(),
+        }
+        .into());
+    }
+    if plane_model.face(plane_face).is_none() {
+        return Err(QueryError::InvalidReference {
+            kind: crate::EntityKind::Face,
+            index: plane_face.index(),
+        }
+        .into());
+    }
+    let Some(traces) = contained_face_boundary_traces_from_plane(
+        contained_model,
+        contained_face,
+        plane_model,
+        plane_face,
+    )?
+    else {
+        return Ok(None);
+    };
+    if traces.is_empty() {
+        return Ok(None);
+    }
+    contained_model
+        .split_face_by_surface_curves(contained_face, &traces, SurfaceIntersectionOperand::First)
+        .map(Some)
+        .map_err(BooleanError::from)
+}
+
 fn intersect_face_carriers(
     first_model: &Model,
     first_face: FaceId,
@@ -2942,6 +2986,7 @@ fn contained_face_boundary_traces_from_plane(
     ) {
         return Ok(None);
     }
+    let affine_parameter_plane = contained_surface.affine_parameter_plane()?;
 
     let mut support_planes = Vec::<Surface>::new();
     let mut traces = Vec::new();
@@ -2958,13 +3003,47 @@ fn contained_face_boundary_traces_from_plane(
             let edge = plane_model
                 .edge(edge_use.edge())
                 .expect("validated plane edge");
-            if plane_model
+            let edge_curve = plane_model
                 .curve(edge.curve())
-                .expect("validated plane edge curve")
-                .kind()
-                != crate::Curve3Kind::Line
-            {
-                return Ok(None);
+                .expect("validated plane edge curve");
+            if edge_curve.kind() != crate::Curve3Kind::Line {
+                if !matches!(
+                    edge_curve.kind(),
+                    crate::Curve3Kind::RationalBezier | crate::Curve3Kind::Nurbs
+                ) {
+                    return Ok(None);
+                }
+                let Some(parameter_plane) = &affine_parameter_plane else {
+                    return Ok(None);
+                };
+                let curve = edge_curve.subcurve(edge.domain().start(), edge.domain().end())?;
+                let parameter_origin = parameter_plane
+                    .plane_origin()
+                    .expect("affine parameter certificate is a plane");
+                let (parameter_u, parameter_v) = parameter_plane
+                    .plane_directions()
+                    .expect("affine parameter certificate is a plane");
+                let Some(pcurve) = crate::geometry::project_curve_to_plane_frame(
+                    &curve,
+                    parameter_origin,
+                    parameter_u,
+                    parameter_v,
+                )?
+                else {
+                    return Ok(None);
+                };
+                let candidate =
+                    SurfaceIntersectionCurve::from_exact_pcurves(curve, pcurve.clone(), pcurve)?;
+                if !push_contained_face_curve_fragments(
+                    contained_model,
+                    contained_face,
+                    candidate,
+                    false,
+                    &mut traces,
+                )? {
+                    return Ok(None);
+                }
+                continue;
             }
             let start = plane_model
                 .vertex(edge.start())
@@ -3014,56 +3093,73 @@ fn contained_face_boundary_traces_from_plane(
                 | SurfaceSurfaceIntersection::Components(_) => return Ok(None),
             };
             for candidate in candidates {
-                let intervals = match retained_curve_face_intervals(
+                if !push_contained_face_curve_fragments(
                     contained_model,
                     contained_face,
-                    candidate.first_pcurve(),
-                    candidate.curve().domain(),
+                    candidate,
+                    true,
+                    &mut traces,
                 )? {
-                    Classification::Decided(Some(intervals)) => intervals,
-                    Classification::Decided(None) => return Ok(None),
-                    Classification::Uncertain(reason) => {
-                        return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
-                    }
-                };
-                for (start, end) in coalesce_parameter_intervals(intervals)? {
-                    let fragment = candidate.subcurve(&start, &end)?;
-                    let midpoint = ((fragment.curve().domain().start()
-                        + fragment.curve().domain().end())
-                        / Real::from(2))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
-                    let parameter = fragment.first_pcurve().point_at(&midpoint)?;
-                    let parameter = hypercurve::Point2::new(parameter.x, parameter.y);
-                    match contained_model
-                        .classify_surface_parameter_on_face(contained_face, &parameter)?
-                    {
-                        Classification::Decided(ContourPointLocation::Inside) => {}
-                        Classification::Decided(
-                            ContourPointLocation::Boundary | ContourPointLocation::Outside,
-                        ) => continue,
-                        Classification::Uncertain(reason) => {
-                            return Err(
-                                GeometryError::PlanarClassificationUnresolved(reason).into()
-                            );
-                        }
-                    }
-                    if fragment.curve().canonical_line()?.is_none() {
-                        return Ok(None);
-                    }
-                    // Both graph operand selectors address the same contained
-                    // face here. Preserve its native tensor pcurve in both
-                    // slots so caller operand order cannot change topology.
-                    let pcurve = fragment.first_pcurve().clone();
-                    traces.push(SurfaceIntersectionCurve::new(
-                        fragment.curve().clone(),
-                        pcurve.clone(),
-                        pcurve,
-                    ));
+                    return Ok(None);
                 }
             }
         }
     }
     Ok(Some(traces))
+}
+
+fn push_contained_face_curve_fragments(
+    contained_model: &Model,
+    contained_face: FaceId,
+    candidate: SurfaceIntersectionCurve,
+    require_line_image: bool,
+    traces: &mut Vec<SurfaceIntersectionCurve>,
+) -> Result<bool, BooleanError> {
+    let intervals = match retained_curve_face_intervals(
+        contained_model,
+        contained_face,
+        candidate.first_pcurve(),
+        candidate.curve().domain(),
+    )? {
+        Classification::Decided(Some(intervals)) => intervals,
+        Classification::Decided(None) => return Ok(false),
+        Classification::Uncertain(UncertaintyReason::Boundary) if require_line_image => {
+            return Ok(true);
+        }
+        Classification::Uncertain(reason) => {
+            return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+        }
+    };
+    for (start, end) in coalesce_parameter_intervals(intervals)? {
+        let fragment = candidate.subcurve(&start, &end)?;
+        let midpoint = ((fragment.curve().domain().start() + fragment.curve().domain().end())
+            / Real::from(2))
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let parameter = fragment.first_pcurve().point_at(&midpoint)?;
+        let parameter = hypercurve::Point2::new(parameter.x, parameter.y);
+        match contained_model.classify_surface_parameter_on_face(contained_face, &parameter)? {
+            Classification::Decided(ContourPointLocation::Inside) => {}
+            Classification::Decided(
+                ContourPointLocation::Boundary | ContourPointLocation::Outside,
+            ) => continue,
+            Classification::Uncertain(reason) => {
+                return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+            }
+        }
+        if require_line_image && fragment.curve().canonical_line()?.is_none() {
+            return Ok(false);
+        }
+        // Both graph operand selectors address the same contained face here.
+        // Preserve its native tensor pcurve in both slots so caller operand
+        // order cannot change topology.
+        let pcurve = fragment.first_pcurve().clone();
+        traces.push(SurfaceIntersectionCurve::new(
+            fragment.curve().clone(),
+            pcurve.clone(),
+            pcurve,
+        ));
+    }
+    Ok(true)
 }
 
 fn lift_planar_line_image(
@@ -6034,6 +6130,199 @@ mod tests {
             crate::Point2::new(quarter, three_quarters),
         ];
         unit_affine_tensor_cap_with_holes(&[hole])
+    }
+
+    #[test]
+    fn curved_surface_region_partitions_constant_weight_affine_tensor_from_exact_pcurve() {
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[]);
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let curve_start = hypercurve::Point2::new(Real::zero(), quarter);
+        let curve_end = hypercurve::Point2::new(Real::one(), three_quarters);
+        let curved = Curve2::from(hypercurve::QuadraticBezier2::new(
+            curve_start.clone(),
+            hypercurve::Point2::new(half, Real::zero()),
+            curve_end.clone(),
+        ));
+        let outer = CurvePath2::try_new(vec![
+            curved,
+            Curve2::from(
+                LineSeg2::try_new(
+                    curve_end,
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                    curve_start,
+                )
+                .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("affine tensor inverse of a rational boundary is exact");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::RationalBezier);
+        assert!(traces[0].curve().canonical_line().unwrap().is_none());
+        assert_eq!(
+            traces[0]
+                .first_pcurve()
+                .materialize()
+                .unwrap()
+                .curve()
+                .family(),
+            hypercurve::CurveFamily2::RationalBezier
+        );
+
+        let (first, first_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let (second, second_partition) = tensor
+            .split_face_by_surface_curves(tensor_face, &traces, SurfaceIntersectionOperand::Second)
+            .unwrap();
+        assert_eq!(first_partition.faces.len(), 2);
+        assert_eq!(second_partition.faces.len(), 2);
+        assert!(matches!(
+            first_partition.traces[0].splits.as_slice(),
+            [crate::SurfaceCurveFaceSplit::Open(_)]
+        ));
+        assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
+        assert_eq!(
+            compare_reals(&first.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        let json = first.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn curved_nurbs_region_partitions_constant_weight_affine_nurbs_tensor() {
+        let (source, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[]);
+        let source_surface = source.face(tensor_face).unwrap().surface();
+        let tensor_surface = Surface::nurbs(
+            1,
+            1,
+            vec![vec![p(0, 0, 1), p(1, 0, 1)], vec![p(0, 1, 1), p(1, 1, 1)]],
+            vec![vec![Real::one(), Real::one()]; 2],
+            vec![Real::zero(), Real::zero(), Real::one(), Real::one()],
+            vec![Real::zero(), Real::zero(), Real::one(), Real::one()],
+        )
+        .unwrap();
+        let mut edit = source.edit();
+        edit.replace_surface(source_surface, tensor_surface)
+            .unwrap();
+        let tensor = edit.commit().unwrap();
+
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let curve_start = hypercurve::Point2::new(Real::zero(), quarter);
+        let curve_end = hypercurve::Point2::new(Real::one(), three_quarters);
+        let curved = Curve2::try_nurbs(
+            2,
+            vec![
+                curve_start.clone(),
+                hypercurve::Point2::new(half, Real::zero()),
+                curve_end.clone(),
+            ],
+            vec![Real::one(), Real::from(2), Real::one()],
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            ],
+        )
+        .unwrap();
+        let outer = CurvePath2::try_new(vec![
+            curved,
+            Curve2::from(
+                LineSeg2::try_new(
+                    curve_end,
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::one(), Real::from(2)),
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                )
+                .unwrap(),
+            ),
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::new(Real::zero(), Real::from(2)),
+                    curve_start,
+                )
+                .unwrap(),
+            ),
+        ])
+        .unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("affine NURBS tensor inverse of a NURBS boundary is exact");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::Nurbs);
+        let (partitioned, partition) =
+            partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("public contained-region partition is exact");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
     }
 
     #[test]

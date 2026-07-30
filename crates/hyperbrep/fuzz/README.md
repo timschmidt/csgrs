@@ -81,7 +81,9 @@ endpoints require exact canonical boundary-edge splits. It also partitions a
 cap with parallel, crossing, or three-way concurrent exact traces supplied in
 noncanonical geometric order. A holed affine-tensor cap cohort varies operand,
 trace order, and trace direction while two disjoint exact inverse-pcurve
-fragments author one paired outer/inner bridge partition.
+fragments author one paired outer/inner bridge partition. A curved contained
+region cohort varies an exact rational boundary while affine tensor inversion,
+curved identity-shared topology, and untrusted replay remain exact.
 Certificate-backed volume and exact persistence must survive every complete
 edit/republication pipeline. The retained regression corpus includes the
 multi-trace cylinder case that previously exposed exponential serialization

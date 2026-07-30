@@ -24,6 +24,7 @@ pub mod tessellation;
 pub use boolean::{
     BooleanError, BooleanOperation, BooleanResult, ClassifiedFace, FacePairIntersection,
     FacePairRelation, FacePairTrim, FaceSelection, FaceSelectionAction, SolidIntersectionGraph,
+    partition_contained_face_by_plane_region,
 };
 pub use builder::{Axis, ConstructionError, LoftSection, RationalBezierSweepFrame, TensorPatch};
 pub use error::{GeometryError, GeometryResult};
