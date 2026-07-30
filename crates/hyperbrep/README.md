@@ -72,8 +72,11 @@ The clean-break implementation currently provides:
   exact span injectivity and pairwise intersections certify simplicity,
   polynomial-equivalent, rational-quadratic, exact homogeneous degree-elevated
   conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational
-  line-image moments drive exact volume, while higher weight-degree rational
-  moments remain explicit unsupported measurements; transverse clipping
+  line-image moments drive exact volume. Arbitrary-degree weight polynomials
+  also use exact multiplicity-aware partial fractions when rational-root
+  deflation leaves linear factors, a power of one irreducible quadratic, or
+  two irreducible quadratics; other residual factors remain explicit
+  unsupported measurements. Transverse clipping
   decomposes multi-span NURBS meridians exactly and deduplicates contacts at
   shared knot seams;
 - exact `builder::revolve_region` cavities as inward periodic shells with

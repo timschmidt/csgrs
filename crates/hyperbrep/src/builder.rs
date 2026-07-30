@@ -6254,6 +6254,76 @@ mod tests {
     }
 
     #[test]
+    fn revolution_path_measures_arbitrary_degree_split_weight_profile() {
+        let cp = |x, y| CurvePoint2::new(r(x), r(y));
+        let controls = vec![
+            cp(4, 0),
+            cp(5, 0),
+            cp(6, 0),
+            cp(6, 0),
+            cp(6, 1),
+            cp(6, 1),
+            cp(6, 2),
+            cp(6, 2),
+            cp(5, 2),
+            cp(4, 2),
+        ];
+        let rational = hypercurve::RationalBezier2::try_new(
+            controls.clone(),
+            vec![
+                Real::one(),
+                r(2),
+                r(4),
+                r(8),
+                r(16),
+                r(32),
+                r(64),
+                r(128),
+                r(256),
+                r(512),
+            ],
+        )
+        .unwrap();
+        let polynomial_equivalent =
+            hypercurve::RationalBezier2::try_new(controls, vec![Real::one(); 10]).unwrap();
+        let profile = |curve| {
+            CurvePath2::try_new(vec![
+                Curve2::from(LineSeg2::try_new(cp(2, 0), cp(4, 0)).unwrap()),
+                Curve2::from(curve),
+                Curve2::from(LineSeg2::try_new(cp(4, 2), cp(2, 2)).unwrap()),
+                Curve2::from(LineSeg2::try_new(cp(2, 2), cp(2, 0)).unwrap()),
+            ])
+            .unwrap()
+        };
+        let (model, solid) = revolve_path(&profile(rational)).unwrap();
+        let (reference, reference_solid) = revolve_path(&profile(polynomial_equivalent)).unwrap();
+        let expected_volume = reference.solid_volume(reference_solid).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(3, 0, 1)).unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            model.classify_point(solid, &p(7, 0, 1)).unwrap(),
+            SolidPointLocation::Outside
+        );
+
+        let json = model.to_json().unwrap();
+        let rebuilt = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(rebuilt.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected_volume).value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn revolution_path_measures_mixed_factor_quartic_weight_profile() {
         let cp = |x, y| CurvePoint2::new(r(x), r(y));
         let rational = hypercurve::RationalBezier2::try_new(
