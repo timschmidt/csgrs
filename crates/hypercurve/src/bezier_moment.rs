@@ -17,6 +17,9 @@
 //! to degree two or less use polynomial division followed by the same Hermite
 //! kernel. Cubic weights extend that reduction with exact rational-root,
 //! Cardano, trigonometric, and repeated-factor partial-fraction branches.
+//! Higher-degree rational weight polynomials through degree eight use the same
+//! partial-fraction kernel when exact rational-root deflation splits them
+//! completely.
 //! This preserves the exact object structure required by exact-computation discipline, and supplies
 //! the area facts needed by fitting/simplification pipelines discussed by Raph
 //! Bezier approximation analysis. The polynomial and rational
@@ -462,8 +465,9 @@ impl RationalBezier2 {
     /// Nonuniform degree-two carriers and exact degree elevations of them
     /// specialize to the retained conic kernel. Other arbitrary-degree
     /// carriers are integrated when exact Bernstein conversion certifies that
-    /// their weight polynomial has degree at most two, or is a cubic with an
-    /// exactly classified discriminant. `None` means another
+    /// their weight polynomial has degree at most two, is a cubic with an
+    /// exactly classified discriminant, or has degree at most eight and splits
+    /// completely into exact rational linear factors. `None` means another
     /// genuinely rational integral is not implemented; it does not approximate
     /// one.
     pub fn signed_area_contribution(&self) -> CurveResult<Option<Real>> {
@@ -483,9 +487,11 @@ impl RationalBezier2 {
     /// Returns exact area and first moments for polynomial-equivalent, conic,
     /// or supported low-degree-weight rational Béziers.
     ///
-    /// Cubic weight polynomials use exact Cardano or repeated-factor
-    /// reduction. `None` is an explicit unsupported symbolic integral for any
-    /// remaining weight polynomial, never a finite approximation.
+    /// Cubic weight polynomials use exact Cardano or repeated-factor reduction.
+    /// Completely rationally split weight polynomials through degree eight use
+    /// exact multiplicity-aware partial fractions. `None` is an explicit
+    /// unsupported symbolic integral for any remaining weight polynomial,
+    /// never a finite approximation.
     pub fn area_moments_contribution(&self) -> CurveResult<Option<BezierAreaMoments2>> {
         let Some(first_weight) = self.weights().first() else {
             return Err(CurveError::InvalidRationalBezier);
@@ -514,7 +520,7 @@ fn rational_bezier_quadratic_weight_signed_area(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<Real>> {
     let policy = CurvePolicy::certified();
-    let Some((nx, ny, w)) = rational_bezier_low_degree_weight_power_coordinates(curve, &policy)?
+    let Some((nx, ny, w)) = rational_bezier_supported_weight_power_coordinates(curve, &policy)?
     else {
         return Ok(None);
     };
@@ -537,7 +543,7 @@ fn rational_bezier_quadratic_weight_area_moments(
     curve: &RationalBezier2,
 ) -> CurveResult<Option<BezierAreaMoments2>> {
     let policy = CurvePolicy::certified();
-    let Some((nx, ny, w)) = rational_bezier_low_degree_weight_power_coordinates(curve, &policy)?
+    let Some((nx, ny, w)) = rational_bezier_supported_weight_power_coordinates(curve, &policy)?
     else {
         return Ok(None);
     };
@@ -592,10 +598,12 @@ fn rational_bezier_quadratic_weight_area_moments(
     }))
 }
 
-fn rational_bezier_low_degree_weight_power_coordinates(
+fn rational_bezier_supported_weight_power_coordinates(
     curve: &RationalBezier2,
     policy: &CurvePolicy,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>, Vec<Real>)>> {
+    const MAX_SYMBOLIC_WEIGHT_DEGREE: usize = 8;
+
     let Some(first_sign) = compare_reals(&curve.weights()[0], &Real::zero(), policy) else {
         return Ok(None);
     };
@@ -639,7 +647,7 @@ fn rational_bezier_low_degree_weight_power_coordinates(
             None => return Ok(None),
         }
     }
-    if weight_power.len() > 4 {
+    if weight_power.len() > MAX_SYMBOLIC_WEIGHT_DEGREE + 1 {
         return Ok(None);
     }
     Ok(Some((nx, ny, weight_power)))
@@ -981,6 +989,19 @@ fn integrate_polynomial_over_low_degree_weight_power(
             }
         }
         4 => integrate_polynomial_over_cubic_power(numerator, denominator, power, policy, cache),
+        5..=9 => {
+            let Some(factors) = exact_rational_polynomial_linear_factors(denominator, policy)?
+            else {
+                return Ok(None);
+            };
+            integrate_polynomial_over_linear_factors_power(
+                numerator,
+                denominator,
+                power,
+                &factors,
+                policy,
+            )
+        }
         _ => Ok(None),
     }
 }
@@ -1235,6 +1256,15 @@ fn integrate_polynomial_over_cubic_power(
         Some(_) => {}
         None => return Ok(None),
     }
+    if let Some(factors) = exact_rational_polynomial_linear_factors(denominator, policy)? {
+        return integrate_polynomial_over_linear_factors_power(
+            numerator,
+            denominator,
+            power,
+            &factors,
+            policy,
+        );
+    }
     let (_, _, cardano_discriminant) = cubic_cardano_data(denominator)?;
     match compare_reals(&cardano_discriminant, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Equal) => {
@@ -1345,7 +1375,7 @@ fn integrate_quadratic_over_cubic(
     let half_q = (depressed_q.clone() / Real::from(2_i8))?;
     match compare_reals(&cardano_discriminant, &Real::zero(), policy) {
         Some(std::cmp::Ordering::Greater) => {
-            let root = if let Some(root) = exact_rational_cubic_root(denominator) {
+            let root = if let Some(root) = exact_rational_polynomial_root(denominator) {
                 root
             } else {
                 let square_root = cardano_discriminant.sqrt()?;
@@ -1414,15 +1444,44 @@ fn integrate_polynomial_over_repeated_cubic_power(
     let Some(factors) = repeated_cubic_linear_factors(denominator, policy)? else {
         return Ok(None);
     };
+    integrate_polynomial_over_linear_factors_power(numerator, denominator, power, &factors, policy)
+}
+
+fn integrate_polynomial_over_linear_factors_power(
+    numerator: &[Real],
+    denominator: &[Real],
+    power: usize,
+    factors: &[(Real, usize)],
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Real>> {
+    let denominator_degree = denominator
+        .len()
+        .checked_sub(1)
+        .ok_or(CurveError::InvalidBezierPolynomial)?;
+    if factors
+        .iter()
+        .try_fold(0_usize, |total, (_, multiplicity)| {
+            total.checked_add(*multiplicity)
+        })
+        != Some(denominator_degree)
+    {
+        return Err(CurveError::InvalidBezierPolynomial);
+    }
     let denominator_power = polynomial_integer_power(denominator, power);
     let Some((quotient, remainder)) = polynomial_division(numerator, &denominator_power, policy)?
     else {
         return Ok(None);
     };
-    let mut entries = Vec::with_capacity(3 * power);
+    let dimension = denominator_degree
+        .checked_mul(power)
+        .ok_or(CurveError::InvalidBezierPolynomial)?;
+    let mut entries = Vec::with_capacity(dimension);
     for (root, multiplicity) in factors {
-        for exponent in 1..=multiplicity * power {
-            let factor = [Real::zero() - &root, Real::one()];
+        let maximum_exponent = multiplicity
+            .checked_mul(power)
+            .ok_or(CurveError::InvalidBezierPolynomial)?;
+        for exponent in 1..=maximum_exponent {
+            let factor = [Real::zero() - root, Real::one()];
             let factor_power = polynomial_integer_power(&factor, exponent);
             let Some((basis, factor_remainder)) =
                 polynomial_division(&denominator_power, &factor_power, policy)?
@@ -1437,7 +1496,6 @@ fn integrate_polynomial_over_repeated_cubic_power(
             entries.push((root.clone(), exponent, basis));
         }
     }
-    let dimension = 3 * power;
     if entries.len() != dimension {
         return Err(CurveError::InvalidBezierPolynomial);
     }
@@ -1518,13 +1576,61 @@ fn integrate_inverse_linear_factor(
     Ok(Some(integral))
 }
 
-fn exact_rational_cubic_root(denominator: &[Real]) -> Option<Real> {
+fn exact_rational_polynomial_linear_factors(
+    polynomial: &[Real],
+    policy: &CurvePolicy,
+) -> CurveResult<Option<Vec<(Real, usize)>>> {
+    if polynomial.len() < 2 {
+        return Err(CurveError::InvalidBezierPolynomial);
+    }
+    let mut remaining = polynomial.to_vec();
+    let mut factors = Vec::with_capacity(polynomial.len() - 1);
+    while remaining.len() > 1 {
+        let Some(root) = exact_rational_polynomial_root(&remaining) else {
+            return Ok(None);
+        };
+        let factor = [Real::zero() - &root, Real::one()];
+        let mut multiplicity = 0_usize;
+        loop {
+            let Some((quotient, factor_remainder)) =
+                polynomial_division(&remaining, &factor, policy)?
+            else {
+                return Ok(None);
+            };
+            if factor_remainder.iter().any(|coefficient| {
+                compare_reals(coefficient, &Real::zero(), policy) != Some(std::cmp::Ordering::Equal)
+            }) {
+                break;
+            }
+            remaining = quotient;
+            multiplicity = multiplicity
+                .checked_add(1)
+                .ok_or(CurveError::InvalidBezierPolynomial)?;
+            if remaining.len() <= 1
+                || compare_reals(
+                    &evaluate_polynomial(&remaining, &root),
+                    &Real::zero(),
+                    policy,
+                ) != Some(std::cmp::Ordering::Equal)
+            {
+                break;
+            }
+        }
+        if multiplicity == 0 {
+            return Ok(None);
+        }
+        factors.push((root, multiplicity));
+    }
+    Ok(Some(factors))
+}
+
+fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
     const MAX_RATIONAL_ROOT_FACTOR: u64 = 1_000_000_000;
 
-    if denominator.len() != 4 {
+    if polynomial.len() < 2 {
         return None;
     }
-    let coefficients = denominator
+    let coefficients = polynomial
         .iter()
         .map(Real::exact_rational)
         .collect::<Option<Vec<_>>>()?;
@@ -1557,7 +1663,7 @@ fn exact_rational_cubic_root(denominator: &[Real]) -> Option<Real> {
         }
     }
     let constant = integer_coefficients[0].abs().to_u64()?;
-    let leading = integer_coefficients[3].abs().to_u64()?;
+    let leading = integer_coefficients.last()?.abs().to_u64()?;
     if constant == 0
         || leading == 0
         || constant > MAX_RATIONAL_ROOT_FACTOR
@@ -1577,7 +1683,7 @@ fn exact_rational_cubic_root(denominator: &[Real]) -> Option<Real> {
                 let candidate = Real::new(
                     hyperreal::Rational::fraction(signed_numerator, *factor_denominator).ok()?,
                 );
-                if evaluate_polynomial(denominator, &candidate).definitely_zero() {
+                if evaluate_polynomial(polynomial, &candidate).definitely_zero() {
                     return Some(candidate);
                 }
             }
@@ -2283,7 +2389,7 @@ mod tests {
     #[test]
     fn cubic_weight_moments_with_one_real_root_are_exactly_additive() {
         assert_eq!(
-            exact_rational_cubic_root(&[Real::one(), Real::one(), Real::one(), Real::one(),]),
+            exact_rational_polynomial_root(&[Real::one(), Real::one(), Real::one(), Real::one(),]),
             Some(Real::from(-1_i8))
         );
         let one_third = (Real::one() / Real::from(3_i8)).unwrap();
@@ -2422,6 +2528,29 @@ mod tests {
                 Real::from(2_i8),
                 Real::from(4_i8),
                 Real::from(8_i8),
+            ],
+        )
+        .unwrap();
+
+        assert_rational_moments_are_exactly_additive(&curve);
+    }
+
+    #[test]
+    fn fully_split_quartic_weight_moments_are_exactly_additive() {
+        let curve = RationalBezier2::try_new(
+            vec![
+                point(4, 0),
+                point(6, 0),
+                point(6, 1),
+                point(6, 2),
+                point(4, 2),
+            ],
+            vec![
+                Real::one(),
+                Real::from(2_i8),
+                Real::from(4_i8),
+                Real::from(8_i8),
+                Real::from(16_i8),
             ],
         )
         .unwrap();
