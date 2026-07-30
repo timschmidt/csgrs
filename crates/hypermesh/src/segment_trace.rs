@@ -96,7 +96,7 @@ use probe_geometry::{
 #[cfg(test)]
 use probe_reachability::*;
 use probe_reachability::{
-    cached_definition_no_detour_reachability_with,
+    cached_definition_reachability_with,
     plane_replacement_path_reaches_adjacent_cell_without_step_detours_with_caches,
     probe_reaches_adjacent_cell, probe_reaches_adjacent_cell_from_interior_with_caches,
     probe_reaches_adjacent_cell_with_definition_search,
@@ -303,13 +303,13 @@ pub(crate) struct LeafProbeQueryCaches {
     plane_replacement_reachability_steps: PlaneReplacementReachabilityStepCache,
     plane_replacement_no_nested_ordering_warmups: PlaneReplacementNoNestedOrderingWarmupCache,
     definition_cycle_guard_reachability: DefinitionCycleGuardReachabilityCache,
-    definition_no_step_detour_reachability: DefinitionNoDetourReachabilityCache,
-    definition_no_plane_replacement_cycle_guard: DefinitionNoPlaneReplacementCycleGuardCache,
-    definition_no_plane_replacement_reachability: DefinitionNoPlaneReplacementReachabilityCache,
+    definition_no_step_detour_reachability: DefinitionReachabilityCache,
+    definition_no_plane_replacement_cycle_guard: DefinitionCycleGuardReachabilityCache,
+    definition_no_plane_replacement_reachability: DefinitionReachabilityCache,
     no_step_detour_target_families: DetourTargetFamilyCache,
-    definition_full_no_detour_reachability: DefinitionNoDetourReachabilityCache,
+    definition_full_no_detour_reachability: DefinitionReachabilityCache,
     definition_no_detour_trace: Vec<DefinitionNoDetourTraceCacheEntry>,
-    definition_no_detour_reachability: DefinitionNoDetourReachabilityCache,
+    definition_no_detour_reachability: DefinitionReachabilityCache,
     detour_target_families: DetourTargetFamilyCache,
 }
 
@@ -519,7 +519,7 @@ struct DefinitionNoDetourTraceCacheEntry {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct DefinitionNoDetourReachabilityCacheEntry {
+struct DefinitionReachabilityCacheEntry {
     start: Point3,
     end: Point3,
     start_definitions: Vec<[Plane; 3]>,
@@ -528,12 +528,12 @@ struct DefinitionNoDetourReachabilityCacheEntry {
 }
 
 #[derive(Default)]
-struct DefinitionNoDetourReachabilityCache {
-    entries: Vec<DefinitionNoDetourReachabilityCacheEntry>,
+struct DefinitionReachabilityCache {
+    entries: Vec<DefinitionReachabilityCacheEntry>,
     buckets: Vec<DefinitionReachabilityBucket>,
 }
 
-impl DefinitionNoDetourReachabilityCache {
+impl DefinitionReachabilityCache {
     #[cfg(test)]
     fn len(&self) -> usize {
         self.entries.len()
@@ -541,8 +541,8 @@ impl DefinitionNoDetourReachabilityCache {
 }
 
 #[cfg(test)]
-impl From<Vec<DefinitionNoDetourReachabilityCacheEntry>> for DefinitionNoDetourReachabilityCache {
-    fn from(entries: Vec<DefinitionNoDetourReachabilityCacheEntry>) -> Self {
+impl From<Vec<DefinitionReachabilityCacheEntry>> for DefinitionReachabilityCache {
+    fn from(entries: Vec<DefinitionReachabilityCacheEntry>) -> Self {
         let mut cache = Self::default();
         for entry in entries {
             let index = cache.entries.len();
@@ -585,100 +585,18 @@ struct DefinitionCycleGuardReachabilityCache {
     buckets: Vec<DefinitionReachabilityBucket>,
 }
 
+impl DefinitionCycleGuardReachabilityCache {
+    #[cfg(test)]
+    fn len(&self) -> usize {
+        self.entries.len()
+    }
+}
+
 #[cfg(test)]
 impl From<Vec<DefinitionCycleGuardReachabilityCacheEntry>>
     for DefinitionCycleGuardReachabilityCache
 {
     fn from(entries: Vec<DefinitionCycleGuardReachabilityCacheEntry>) -> Self {
-        let mut cache = Self::default();
-        for entry in entries {
-            let index = cache.entries.len();
-            push_definition_reachability_bucket_entry(
-                &mut cache.buckets,
-                &entry.start,
-                &entry.end,
-                &entry.start_definitions,
-                &entry.end_definitions,
-                index,
-            );
-            cache.entries.push(entry);
-        }
-        cache
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct DefinitionNoPlaneReplacementCycleGuardCacheEntry {
-    start: Point3,
-    end: Point3,
-    start_definitions: Vec<[Plane; 3]>,
-    end_definitions: Vec<[Plane; 3]>,
-    visited_points: Vec<VisitedDefinitionPoint>,
-    result: HypermeshResult<bool>,
-}
-
-#[derive(Default)]
-struct DefinitionNoPlaneReplacementCycleGuardCache {
-    entries: Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>,
-    buckets: Vec<DefinitionReachabilityBucket>,
-}
-
-impl DefinitionNoPlaneReplacementCycleGuardCache {
-    #[cfg(test)]
-    fn len(&self) -> usize {
-        self.entries.len()
-    }
-}
-
-#[cfg(test)]
-impl From<Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>>
-    for DefinitionNoPlaneReplacementCycleGuardCache
-{
-    fn from(entries: Vec<DefinitionNoPlaneReplacementCycleGuardCacheEntry>) -> Self {
-        let mut cache = Self::default();
-        for entry in entries {
-            let index = cache.entries.len();
-            push_definition_reachability_bucket_entry(
-                &mut cache.buckets,
-                &entry.start,
-                &entry.end,
-                &entry.start_definitions,
-                &entry.end_definitions,
-                index,
-            );
-            cache.entries.push(entry);
-        }
-        cache
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct DefinitionNoPlaneReplacementReachabilityCacheEntry {
-    start: Point3,
-    end: Point3,
-    start_definitions: Vec<[Plane; 3]>,
-    end_definitions: Vec<[Plane; 3]>,
-    result: HypermeshResult<bool>,
-}
-
-#[derive(Default)]
-struct DefinitionNoPlaneReplacementReachabilityCache {
-    entries: Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>,
-    buckets: Vec<DefinitionReachabilityBucket>,
-}
-
-impl DefinitionNoPlaneReplacementReachabilityCache {
-    #[cfg(test)]
-    fn len(&self) -> usize {
-        self.entries.len()
-    }
-}
-
-#[cfg(test)]
-impl From<Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>>
-    for DefinitionNoPlaneReplacementReachabilityCache
-{
-    fn from(entries: Vec<DefinitionNoPlaneReplacementReachabilityCacheEntry>) -> Self {
         let mut cache = Self::default();
         for entry in entries {
             let index = cache.entries.len();

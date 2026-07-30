@@ -1,0 +1,265 @@
+schema = 1
+date = "2026-07-30"
+direct_parent = "cced5ea30785ba31f528900df0ef8aab6cf4e337"
+policy = "explicit MeshContext; STRICT and APPROXIMATE_512"
+host = "AMD Ryzen 7 5800X3D 8-Core Processor"
+kernel = "Linux 7.0.4-100.fc43.x86_64"
+rustc = "1.97.0 (2d8144b78 2026-07-07)"
+llvm = "22.1.6"
+
+[dependencies.hyperreal]
+commit = "cc87212c6c4a0b1bf20399a8ec2816fd837a82a0"
+frozen_tree_sha256 = "90b091be9b15204968086e9910ea748006a84c2a1d3bbddcd990d43d9bcbace6"
+
+[dependencies.hyperlattice]
+commit = "91d300239500116efbef0fe9da9e1b564d37adfb"
+frozen_tree_sha256 = "5d3d194184519be0f7436990ad293abcc10c3b174ddab2e65bc9df8d889925dc"
+
+[dependencies.hyperlimit]
+commit = "e68bb9da6087587c32f4dbc118fe422672714c75"
+frozen_tree_sha256 = "dfbaa6b618f8419383684a431df61bde7297fa369610074a25fce93fcaa5b9ea"
+
+[correctness]
+focused_plain_cache_tests = 5
+focused_cycle_guard_cache_tests = 11
+all_feature_library_tests = 1043
+no_default_library_tests = 1042
+strict_and_approximate_policy_tests = 8
+all_feature_integration_failures = 0
+no_default_integration_failures = 0
+ignored_external_or_benchmark_tests = 7
+dispatch_segment_and_winding_events = 201
+
+[runtime.criterion_octahedron_union.parent_first]
+estimate_ns = 2845300
+lower_ns = 2834400
+upper_ns = 2857700
+
+[runtime.criterion_octahedron_union.current_first]
+estimate_ns = 2835200
+lower_ns = 2828900
+upper_ns = 2842500
+movement_percent = -0.3550
+
+[runtime.criterion_octahedron_union.parent_second]
+estimate_ns = 2876200
+lower_ns = 2841400
+upper_ns = 2906700
+
+[runtime.criterion_octahedron_union.current_second]
+estimate_ns = 2858300
+lower_ns = 2851400
+upper_ns = 2865900
+movement_percent = -0.6223
+
+[runtime.perf_parent]
+repetitions = 10
+operations_per_repetition = 256
+classifications_per_repetition = 8192
+instructions = 6276869737
+cycles = 3033975073
+task_clock_ms = 720.29
+branches = 1132940834
+branch_misses = 25557769
+minor_faults = 309
+
+[runtime.perf_current]
+repetitions = 10
+operations_per_repetition = 256
+classifications_per_repetition = 8192
+instructions = 6277526527
+instructions_movement_percent = 0.0105
+cycles = 3049724526
+cycles_movement_percent = 0.5191
+task_clock_ms = 724.93
+task_clock_movement_percent = 0.6442
+branches = 1132988952
+branches_movement_percent = 0.0042
+branch_misses = 25337806
+branch_misses_movement_percent = -0.8607
+minor_faults = 313
+
+[memory.parent]
+operations = 256
+allocations = 3944566
+temporary_allocations = 38146
+peak_heap_kib = 471.83
+peak_rss_with_heaptrack_mib = 9.20
+leaked_kib = 126.59
+
+[memory.current]
+operations = 256
+allocations = 3944566
+temporary_allocations = 38146
+peak_heap_kib = 471.83
+peak_rss_with_heaptrack_mib = 9.14
+leaked_kib = 126.59
+
+[competitive.overlapping_box_union]
+historical_hypermesh_ns = 618600
+current_hypermesh_ns = 4917
+boolmesh_ns = 66344
+manifold_rust_ns = 59579
+historical_speedup = 125.81
+boolmesh_speedup = 13.49
+manifold_rust_speedup = 12.12
+
+[source]
+added_lines_excluding_preexisting_formatting = 212
+removed_lines_excluding_preexisting_formatting = 609
+reproducible_probe_lines = 29
+net_total_lines = -368
+net_production_lines = -274
+net_test_lines = -123
+
+[callgraph.parent]
+nodes = 7736
+edges = 19134
+
+[callgraph.current]
+nodes = 7716
+edges = 19064
+
+[probe_native_text]
+parent_bytes = 4301066
+current_bytes = 4294170
+movement_bytes = -6896
+movement_percent = -0.1603
+
+[size.default_general_release_native]
+parent_bytes = 3727325
+current_bytes = 3722117
+movement_bytes = -5208
+movement_percent = -0.1397
+
+[size.default_general_release_wasm]
+parent_bytes = 2616459
+current_bytes = 2615280
+movement_bytes = -1179
+movement_percent = -0.0451
+
+[size.default_immediate_release_native]
+parent_bytes = 3760581
+current_bytes = 3755381
+movement_bytes = -5200
+movement_percent = -0.1383
+
+[size.default_immediate_release_wasm]
+parent_bytes = 2631476
+current_bytes = 2630366
+movement_bytes = -1110
+movement_percent = -0.0422
+
+[size.default_general_size_native]
+parent_bytes = 1695299
+current_bytes = 1694939
+movement_bytes = -360
+movement_percent = -0.0212
+
+[size.default_general_size_wasm]
+parent_bytes = 1103049
+current_bytes = 1102521
+movement_bytes = -528
+movement_percent = -0.0479
+
+[size.default_immediate_size_native]
+parent_bytes = 1707223
+current_bytes = 1706839
+movement_bytes = -384
+movement_percent = -0.0225
+
+[size.default_immediate_size_wasm]
+parent_bytes = 1113204
+current_bytes = 1112674
+movement_bytes = -530
+movement_percent = -0.0476
+
+[size.all_general_release_native]
+parent_bytes = 3859530
+current_bytes = 3854346
+movement_bytes = -5184
+movement_percent = -0.1343
+
+[size.all_general_release_wasm]
+parent_bytes = 2695379
+current_bytes = 2694197
+movement_bytes = -1182
+movement_percent = -0.0439
+
+[size.all_immediate_release_native]
+parent_bytes = 3893346
+current_bytes = 3888162
+movement_bytes = -5184
+movement_percent = -0.1332
+
+[size.all_immediate_release_wasm]
+parent_bytes = 2710804
+current_bytes = 2709631
+movement_bytes = -1173
+movement_percent = -0.0433
+
+[size.all_general_size_native]
+parent_bytes = 1695579
+current_bytes = 1695195
+movement_bytes = -384
+movement_percent = -0.0226
+
+[size.all_general_size_wasm]
+parent_bytes = 1100611
+current_bytes = 1099685
+movement_bytes = -926
+movement_percent = -0.0841
+
+[size.all_immediate_size_native]
+parent_bytes = 1707455
+current_bytes = 1707111
+movement_bytes = -344
+movement_percent = -0.0201
+
+[size.all_immediate_size_wasm]
+parent_bytes = 1110668
+current_bytes = 1109628
+movement_bytes = -1040
+movement_percent = -0.0936
+
+[artifacts.default_general_release_native.parent]
+raw_bytes = 4345360
+sha256 = "bb1a6d27b44d58ac4721704442ef1b15664f64941da04572ff2a0616f1e5818d"
+
+[artifacts.default_general_release_native.current]
+raw_bytes = 4340104
+sha256 = "0673fe68e4e36fc1aa41968f1e016007eed8d1a5ba70c9b2928177a141f408eb"
+
+[artifacts.default_general_release_wasm.parent]
+sha256 = "ab3588a6f5cebe3e1d14b9c7dfaaa44bc3b7e6b89faf8bded5397cc979796576"
+
+[artifacts.default_general_release_wasm.current]
+sha256 = "e93e36993787d49c7a7766db0dab30fc571d8240e95bf2d011ca8a96bb487bc0"
+
+[artifacts.default_immediate_release_native.parent]
+raw_bytes = 4380272
+sha256 = "c530db959aff0371417f7148fc2b56c2c4b6668612a51607dcbec10a4d31ec60"
+
+[artifacts.default_immediate_release_native.current]
+raw_bytes = 4375016
+sha256 = "868abcb85051fbe867dbf9a38292a3663a6b102bcbe849753b08dda95e85ff5c"
+
+[artifacts.default_immediate_release_wasm.parent]
+sha256 = "bfabf3b7c648c4b8c4a1f4ec29604a1eab308fb19f205381d2f59237cb18dd2a"
+
+[artifacts.default_immediate_release_wasm.current]
+sha256 = "5b56804c24808099a43c5e30bc3147245b7ebc4f3bc8abe93e0c1a7c556e7cb5"
+
+[artifacts.all_general_release_native.parent]
+raw_bytes = 4482176
+sha256 = "18311fc2fecc1fdcab2812b22c14b6327d4cf3e3596cd8890007d9c3508acede"
+
+[artifacts.all_general_release_native.current]
+raw_bytes = 4477000
+sha256 = "09cdf771a78c2e114031f23e689a1d8a12cbf486ba563900b4b64c1577b4ec7f"
+
+[artifacts.all_general_release_wasm.parent]
+sha256 = "1cb3ad0cfbba8b6548d426b2d543e52c328d90e9f98731489ceb8e4bf99183d0"
+
+[artifacts.all_general_release_wasm.current]
+sha256 = "2e16d1859dea72e686236d4dfaef3a15b1bc06d6cdc8698a72bfa141473a059c"
