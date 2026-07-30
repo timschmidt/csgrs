@@ -301,6 +301,18 @@ core. Point classification combines the sphere and finite-cylinder predicates
 as a true union, making either carrier's boundary internal whenever the other
 predicate is strictly inside. Mixed union results advertise neither a plain
 sphere nor a plain cylinder optimization profile.
+Strict no-contact containment uses the whole native operand shells rather than
+authoring intersection topology. A sphere contains a finite cylinder only
+when the exact maximum corner-distance certificate—maximum axial endpoint
+distance and radial axis-offset plus cylinder radius—is strictly below the
+sphere radius. A finite cylinder contains a sphere only when both axial
+clearances and the radial axis-offset clearance are strict. The nontrivial
+difference reverses the contained shell and assigns it by this certificate
+before any planar representative-point fallback. Sphere void state is a
+closed sphere-or-finite-cylinder enum; cylinder spherical subtraction is a
+closed whole-void-or-intersecting-component enum. This makes exact volume,
+classification, rigid transforms, and replay share the same topology proof,
+while mixed-void results remain excluded from primitive optimization profiles.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

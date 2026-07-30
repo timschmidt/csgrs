@@ -184,7 +184,10 @@ The clean-break implementation currently provides:
   difference retains the two disconnected capped-cylinder ends, each with a
   native reversed spherical cap and exact exclusion-aware queries. Regular
   union joins the spherical band to both capped cylinder ends as one exact
-  shell with true union classification and no false primitive profile;
+  shell with true union classification and no false primitive profile.
+  Strict cross-family containment regularizes the complete Boolean truth
+  table in either direction; the nontrivial difference retains the contained
+  finite cylinder or sphere as one native inward void with exact queries;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

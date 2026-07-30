@@ -1167,14 +1167,20 @@ struct CertifiedCylinderShell {
     radius: Real,
     v_min: Real,
     v_max: Real,
-    sphere_exclusion: Option<CertifiedCylinderSphereExclusion>,
+    sphere_subtraction: Option<CertifiedCylinderSphereSubtraction>,
 }
 
 #[derive(Clone, Debug)]
-struct CertifiedCylinderSphereExclusion {
-    center: Point3,
-    radius: Real,
-    side: CertifiedCylinderSphereComponentSide,
+enum CertifiedCylinderSphereSubtraction {
+    Void {
+        center: Point3,
+        radius: Real,
+    },
+    Component {
+        center: Point3,
+        radius: Real,
+        side: CertifiedCylinderSphereComponentSide,
+    },
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1187,8 +1193,23 @@ enum CertifiedCylinderSphereComponentSide {
 struct CertifiedSphereShell {
     center: Point3,
     radius: Real,
-    voids: Vec<(Point3, Real)>,
+    voids: Vec<CertifiedSphereVoid>,
     region: CertifiedSphereRegion,
+}
+
+#[derive(Clone, Debug)]
+enum CertifiedSphereVoid {
+    Sphere { center: Point3, radius: Real },
+    Cylinder(Box<CertifiedSphereCylinderVoid>),
+}
+
+#[derive(Clone, Debug)]
+struct CertifiedSphereCylinderVoid {
+    origin: Point3,
+    axis: Vector3,
+    radius: Real,
+    v_min: Real,
+    v_max: Real,
 }
 
 #[derive(Clone, Debug)]
@@ -3625,16 +3646,31 @@ impl Model {
                             radius: certificate.radius.clone(),
                             v_min: certificate.v_min.clone(),
                             v_max: certificate.v_max.clone(),
-                            sphere_exclusion: certificate
-                                .sphere_exclusion
+                            sphere_subtraction: certificate
+                                .sphere_subtraction
                                 .as_ref()
-                                .map(|exclusion| {
-                                    Ok::<_, GeometryError>(CertifiedCylinderSphereExclusion {
-                                        center: transform
-                                            .transform_point3(&exclusion.center)
-                                            .map_err(|_| GeometryError::TransformFailure)?,
-                                        radius: exclusion.radius.clone(),
-                                        side: exclusion.side,
+                                .map(|subtraction| {
+                                    Ok::<_, GeometryError>(match subtraction {
+                                        CertifiedCylinderSphereSubtraction::Void {
+                                            center,
+                                            radius,
+                                        } => CertifiedCylinderSphereSubtraction::Void {
+                                            center: transform
+                                                .transform_point3(center)
+                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                            radius: radius.clone(),
+                                        },
+                                        CertifiedCylinderSphereSubtraction::Component {
+                                            center,
+                                            radius,
+                                            side,
+                                        } => CertifiedCylinderSphereSubtraction::Component {
+                                            center: transform
+                                                .transform_point3(center)
+                                                .map_err(|_| GeometryError::TransformFailure)?,
+                                            radius: radius.clone(),
+                                            side: *side,
+                                        },
                                     })
                                 })
                                 .transpose()?,
@@ -3689,13 +3725,33 @@ impl Model {
                             voids: certificate
                                 .voids
                                 .iter()
-                                .map(|(center, radius)| {
-                                    Ok((
-                                        transform
-                                            .transform_point3(center)
-                                            .map_err(|_| GeometryError::TransformFailure)?,
-                                        radius.clone(),
-                                    ))
+                                .map(|void| {
+                                    Ok(match void {
+                                        CertifiedSphereVoid::Sphere { center, radius } => {
+                                            CertifiedSphereVoid::Sphere {
+                                                center: transform
+                                                    .transform_point3(center)
+                                                    .map_err(|_| GeometryError::TransformFailure)?,
+                                                radius: radius.clone(),
+                                            }
+                                        }
+                                        CertifiedSphereVoid::Cylinder(cylinder) => {
+                                            CertifiedSphereVoid::Cylinder(Box::new(
+                                                CertifiedSphereCylinderVoid {
+                                                    origin: transform
+                                                        .transform_point3(&cylinder.origin)
+                                                        .map_err(|_| {
+                                                            GeometryError::TransformFailure
+                                                        })?,
+                                                    axis: transform
+                                                        .transform_direction3(&cylinder.axis),
+                                                    radius: cylinder.radius.clone(),
+                                                    v_min: cylinder.v_min.clone(),
+                                                    v_max: cylinder.v_max.clone(),
+                                                },
+                                            ))
+                                        }
+                                    })
                                 })
                                 .collect::<Result<Vec<_>, GeometryError>>()?,
                         })
@@ -4191,23 +4247,32 @@ impl Model {
                 * &cylinder.radius
                 * &cylinder.radius
                 * (&cylinder.v_max - &cylinder.v_min);
-            let Some(exclusion) = &cylinder.sphere_exclusion else {
+            let Some(subtraction) = &cylinder.sphere_subtraction else {
                 return Ok(volume);
             };
-            let center_parameter = (&exclusion.center - &cylinder.origin).dot(&cylinder.axis);
-            let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
-                let cubic = (height * height * height / Real::from(3))
-                    .map_err(|_| GeometryError::ProjectiveDivision)?;
-                Ok(Real::pi() * (&exclusion.radius * &exclusion.radius * height - cubic))
-            };
-            let excluded = match exclusion.side {
-                CertifiedCylinderSphereComponentSide::Lower => {
-                    let upper = &cylinder.v_max - &center_parameter;
-                    antiderivative(&upper)? - antiderivative(&-exclusion.radius.clone())?
-                }
-                CertifiedCylinderSphereComponentSide::Upper => {
-                    let lower = &cylinder.v_min - &center_parameter;
-                    antiderivative(&exclusion.radius)? - antiderivative(&lower)?
+            let excluded = match subtraction {
+                CertifiedCylinderSphereSubtraction::Void { radius, .. } => sphere_volume(radius)?,
+                CertifiedCylinderSphereSubtraction::Component {
+                    center,
+                    radius,
+                    side,
+                } => {
+                    let center_parameter = (center - &cylinder.origin).dot(&cylinder.axis);
+                    let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                        let cubic = (height * height * height / Real::from(3))
+                            .map_err(|_| GeometryError::ProjectiveDivision)?;
+                        Ok(Real::pi() * (radius * radius * height - cubic))
+                    };
+                    match side {
+                        CertifiedCylinderSphereComponentSide::Lower => {
+                            let upper = &cylinder.v_max - &center_parameter;
+                            antiderivative(&upper)? - antiderivative(&-radius.clone())?
+                        }
+                        CertifiedCylinderSphereComponentSide::Upper => {
+                            let lower = &cylinder.v_min - &center_parameter;
+                            antiderivative(radius)? - antiderivative(&lower)?
+                        }
+                    }
                 }
             };
             return Ok(volume - excluded);
@@ -4253,13 +4318,19 @@ impl Model {
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
                 return Ok(cylinder_volume + sphere_outside_cylinder);
             }
-            let mut cubic_radius = &sphere.radius * &sphere.radius * &sphere.radius;
-            for (_, radius) in &sphere.voids {
-                cubic_radius -= radius * radius * radius;
+            let mut volume = sphere_volume(&sphere.radius)?;
+            for void in &sphere.voids {
+                volume -= match void {
+                    CertifiedSphereVoid::Sphere { radius, .. } => sphere_volume(radius)?,
+                    CertifiedSphereVoid::Cylinder(cylinder) => {
+                        Real::pi()
+                            * &cylinder.radius
+                            * &cylinder.radius
+                            * (&cylinder.v_max - &cylinder.v_min)
+                    }
+                };
             }
-            return (Real::from(4) * Real::pi() * cubic_radius / Real::from(3))
-                .map_err(|_| GeometryError::ProjectiveDivision)
-                .map_err(QueryError::from);
+            return Ok(volume);
         }
         if let Some(pair) = &self.data.certified_sphere_pairs[id.index()] {
             let first_volume = sphere_volume(&pair.first_radius)?;
@@ -4456,10 +4527,16 @@ impl Model {
         if radial_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
-        if let Some(exclusion) = &cylinder.sphere_exclusion {
+        if let Some(subtraction) = &cylinder.sphere_subtraction {
+            let (center, radius) = match subtraction {
+                CertifiedCylinderSphereSubtraction::Void { center, radius }
+                | CertifiedCylinderSphereSubtraction::Component { center, radius, .. } => {
+                    (center, radius)
+                }
+            };
             match decided_model_order(compare_reals(
-                &(point - &exclusion.center).norm_squared(),
-                &(&exclusion.radius * &exclusion.radius),
+                &(point - center).norm_squared(),
+                &(radius * radius),
             ))? {
                 std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
                 std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
@@ -4690,13 +4767,48 @@ impl Model {
         {
             return Ok(SolidPointLocation::Boundary);
         }
-        for (center, radius) in &sphere.voids {
-            let distance_squared = (point - center).norm_squared();
-            let radius_squared = radius * radius;
-            match decided_model_order(compare_reals(&distance_squared, &radius_squared))? {
-                std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
-                std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
-                std::cmp::Ordering::Greater => {}
+        for void in &sphere.voids {
+            let location = match void {
+                CertifiedSphereVoid::Sphere { center, radius } => {
+                    match decided_model_order(compare_reals(
+                        &(point - center).norm_squared(),
+                        &(radius * radius),
+                    ))? {
+                        std::cmp::Ordering::Less => SolidPointLocation::Inside,
+                        std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
+                        std::cmp::Ordering::Greater => SolidPointLocation::Outside,
+                    }
+                }
+                CertifiedSphereVoid::Cylinder(cylinder) => {
+                    let offset = point - &cylinder.origin;
+                    let axial = offset.dot(&cylinder.axis);
+                    let min = decided_model_order(compare_reals(&axial, &cylinder.v_min))?;
+                    let max = decided_model_order(compare_reals(&axial, &cylinder.v_max))?;
+                    if min == std::cmp::Ordering::Less || max == std::cmp::Ordering::Greater {
+                        SolidPointLocation::Outside
+                    } else {
+                        let radial = offset - cylinder.axis.clone() * &axial;
+                        match decided_model_order(compare_reals(
+                            &radial.norm_squared(),
+                            &(&cylinder.radius * &cylinder.radius),
+                        ))? {
+                            std::cmp::Ordering::Greater => SolidPointLocation::Outside,
+                            std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
+                            std::cmp::Ordering::Less
+                                if min == std::cmp::Ordering::Equal
+                                    || max == std::cmp::Ordering::Equal =>
+                            {
+                                SolidPointLocation::Boundary
+                            }
+                            std::cmp::Ordering::Less => SolidPointLocation::Inside,
+                        }
+                    }
+                }
+            };
+            match location {
+                SolidPointLocation::Inside => return Ok(SolidPointLocation::Outside),
+                SolidPointLocation::Boundary => return Ok(SolidPointLocation::Boundary),
+                SolidPointLocation::Outside => {}
             }
         }
         Ok(SolidPointLocation::Inside)
@@ -5419,7 +5531,7 @@ impl Model {
                 .certified_cylinders
                 .get(solid_id.index())
                 .and_then(Option::as_ref)
-                .is_some_and(|cylinder| cylinder.sphere_exclusion.is_none())
+                .is_some_and(|cylinder| cylinder.sphere_subtraction.is_none())
             || shell.faces.iter().all(|face| {
                 matches!(
                     self.surface(self.face(*face).expect("validated shell face").surface())
@@ -5540,7 +5652,7 @@ impl Model {
             .certified_cylinders
             .get(solid.index())
             .and_then(Option::as_ref)
-            .filter(|cylinder| cylinder.sphere_exclusion.is_none())
+            .filter(|cylinder| cylinder.sphere_subtraction.is_none())
             .map(|cylinder| CertifiedCylinderProfile {
                 origin: cylinder.origin.clone(),
                 axis: cylinder.axis.clone(),
@@ -6213,18 +6325,14 @@ impl ModelBuilder {
             }
             self.validate_closed_shell(*shell)?;
         }
-        let sphere = match self.certified_sphere_shell(outer)? {
-            Some(sphere) => Some(sphere),
-            None if voids.is_empty() => self.certified_sphere_segment_shell(outer)?,
-            None => None,
+        let candidate = Solid {
+            outer,
+            voids: voids.clone(),
         };
+        let sphere = self.certified_sphere_solid(&candidate)?;
         let sphere_pair = self.certified_sphere_pair_shell(outer)?;
         let revolution = self.certified_revolution_shell(outer)?;
-        let cylinder = if voids.is_empty() {
-            self.certified_cylinder_shell(outer)?
-        } else {
-            None
-        };
+        let cylinder = self.certified_cylinder_solid(&candidate)?;
         let analytic_closed =
             sphere.is_some() || sphere_pair.is_some() || revolution.is_some() || cylinder.is_some();
         let simple_prism = if analytic_closed {
@@ -6291,20 +6399,29 @@ impl ModelBuilder {
             let revolution_void = self
                 .certified_oriented_revolution_shell(*void_shell, Orientation::Reversed)?
                 .is_some();
-            if !sphere_void && !revolution_void {
+            let cylinder_void = self
+                .certified_oriented_cylinder_shell(*void_shell, Orientation::Reversed)?
+                .is_some();
+            if !sphere_void && !revolution_void && !cylinder_void {
                 self.validate_void_shell_orientation(*void_shell)?;
             }
-            let simple_prism_void = if sphere_void || revolution_void {
+            let simple_prism_void = if sphere_void || revolution_void || cylinder_void {
                 false
             } else {
                 self.certify_simple_prism_shell(*void_shell)?
             };
-            let general_planar_void = if sphere_void || revolution_void || simple_prism_void {
-                false
-            } else {
-                self.certify_planar_shell_non_self_intersection(*void_shell)?
-            };
-            if !sphere_void && !revolution_void && !simple_prism_void && !general_planar_void {
+            let general_planar_void =
+                if sphere_void || revolution_void || cylinder_void || simple_prism_void {
+                    false
+                } else {
+                    self.certify_planar_shell_non_self_intersection(*void_shell)?
+                };
+            if !sphere_void
+                && !revolution_void
+                && !cylinder_void
+                && !simple_prism_void
+                && !general_planar_void
+            {
                 return Err(BuildError::UnsupportedSolidShell(*void_shell));
             }
         }
@@ -6361,13 +6478,7 @@ impl ModelBuilder {
         let certified_cylinders = self
             .solids
             .iter()
-            .map(|solid| {
-                if solid.voids.is_empty() {
-                    self.certified_cylinder_shell(solid.outer)
-                } else {
-                    Ok(None)
-                }
-            })
+            .map(|solid| self.certified_cylinder_solid(solid))
             .collect::<Result<Vec<_>, _>>()
             .map_err(|error| ValidationReport {
                 errors: vec![error],
@@ -8540,7 +8651,8 @@ impl ModelBuilder {
                 let Some((center, radius)) =
                     self.certified_oriented_sphere_shell(*void_shell, Orientation::Reversed)?
                 else {
-                    return Err(BuildError::UnsupportedSolidShell(*void_shell));
+                    sphere_voids.clear();
+                    break;
                 };
                 let clearance = &outer_radius - &radius;
                 if decided_model_order(compare_reals(&clearance, &Real::zero()))?
@@ -8554,22 +8666,51 @@ impl ModelBuilder {
                 }
                 sphere_voids.push((*void_shell, center, radius));
             }
-            for first_index in 0..sphere_voids.len() {
-                for second_index in (first_index + 1)..sphere_voids.len() {
-                    let (first_shell, first_center, first_radius) = &sphere_voids[first_index];
-                    let (second_shell, second_center, second_radius) = &sphere_voids[second_index];
-                    let radius_sum = first_radius + second_radius;
-                    if decided_model_order(compare_reals(
-                        &(first_center - second_center).norm_squared(),
-                        &(&radius_sum * &radius_sum),
-                    ))? != std::cmp::Ordering::Greater
-                    {
-                        return Err(BuildError::IntersectingVoidShells {
-                            first: *first_shell,
-                            second: *second_shell,
-                        });
+            if sphere_voids.len() == voids.len() {
+                for first_index in 0..sphere_voids.len() {
+                    for second_index in (first_index + 1)..sphere_voids.len() {
+                        let (first_shell, first_center, first_radius) = &sphere_voids[first_index];
+                        let (second_shell, second_center, second_radius) =
+                            &sphere_voids[second_index];
+                        let radius_sum = first_radius + second_radius;
+                        if decided_model_order(compare_reals(
+                            &(first_center - second_center).norm_squared(),
+                            &(&radius_sum * &radius_sum),
+                        ))? != std::cmp::Ordering::Greater
+                        {
+                            return Err(BuildError::IntersectingVoidShells {
+                                first: *first_shell,
+                                second: *second_shell,
+                            });
+                        }
                     }
                 }
+                return Ok(());
+            }
+            let [void_shell] = voids else {
+                return Err(BuildError::UnsupportedSolidShell(voids[0]));
+            };
+            let Some(cylinder) =
+                self.certified_oriented_cylinder_shell(*void_shell, Orientation::Reversed)?
+            else {
+                return Err(BuildError::UnsupportedSolidShell(*void_shell));
+            };
+            if !self.sphere_strictly_contains_cylinder(&outer_center, &outer_radius, &cylinder)? {
+                return Err(BuildError::VoidShellOutside(*void_shell));
+            }
+            return Ok(());
+        }
+        if let Some(cylinder) = self.certified_cylinder_shell(outer)? {
+            let [void_shell] = voids else {
+                return Err(BuildError::UnsupportedSolidShell(voids[0]));
+            };
+            let Some((center, radius)) =
+                self.certified_oriented_sphere_shell(*void_shell, Orientation::Reversed)?
+            else {
+                return Err(BuildError::UnsupportedSolidShell(*void_shell));
+            };
+            if !self.cylinder_strictly_contains_sphere(&cylinder, &center, &radius)? {
+                return Err(BuildError::VoidShellOutside(*void_shell));
             }
             return Ok(());
         }
@@ -9600,20 +9741,6 @@ impl ModelBuilder {
         Ok(None)
     }
 
-    fn certified_sphere_shell(
-        &self,
-        shell: ShellId,
-    ) -> Result<Option<CertifiedSphereShell>, BuildError> {
-        Ok(self
-            .certified_oriented_sphere_shell(shell, Orientation::Forward)?
-            .map(|(center, radius)| CertifiedSphereShell {
-                center,
-                radius,
-                voids: Vec::new(),
-                region: CertifiedSphereRegion::Whole,
-            }))
-    }
-
     fn certified_spherical_cap_face(
         &self,
         face_id: FaceId,
@@ -9762,12 +9889,35 @@ impl ModelBuilder {
         {
             let mut voids = Vec::with_capacity(solid.voids.len());
             for shell in &solid.voids {
-                let Some(void) =
+                if let Some((void_center, void_radius)) =
                     self.certified_oriented_sphere_shell(*shell, Orientation::Reversed)?
+                {
+                    voids.push(CertifiedSphereVoid::Sphere {
+                        center: void_center,
+                        radius: void_radius,
+                    });
+                    continue;
+                }
+                if solid.voids.len() != 1 {
+                    return Ok(None);
+                }
+                let Some(cylinder) =
+                    self.certified_oriented_cylinder_shell(*shell, Orientation::Reversed)?
                 else {
                     return Ok(None);
                 };
-                voids.push(void);
+                if !self.sphere_strictly_contains_cylinder(&center, &radius, &cylinder)? {
+                    return Ok(None);
+                }
+                voids.push(CertifiedSphereVoid::Cylinder(Box::new(
+                    CertifiedSphereCylinderVoid {
+                        origin: cylinder.origin,
+                        axis: cylinder.axis,
+                        radius: cylinder.radius,
+                        v_min: cylinder.v_min,
+                        v_max: cylinder.v_max,
+                    },
+                )));
             }
             return Ok(Some(CertifiedSphereShell {
                 center,
@@ -9780,6 +9930,68 @@ impl ModelBuilder {
             return Ok(None);
         }
         self.certified_sphere_segment_shell(solid.outer)
+    }
+
+    fn sphere_strictly_contains_cylinder(
+        &self,
+        sphere_center: &Point3,
+        sphere_radius: &Real,
+        cylinder: &CertifiedCylinderShell,
+    ) -> Result<bool, BuildError> {
+        if cylinder.sphere_subtraction.is_some() {
+            return Ok(false);
+        }
+        let offset = sphere_center - &cylinder.origin;
+        let center_parameter = offset.dot(&cylinder.axis);
+        let radial = offset - cylinder.axis.clone() * &center_parameter;
+        let radial_distance = radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let maximum_radial = radial_distance + &cylinder.radius;
+        let lower_height = (&cylinder.v_min - &center_parameter).abs();
+        let upper_height = (&cylinder.v_max - center_parameter).abs();
+        let maximum_height = if decided_model_order(compare_reals(&lower_height, &upper_height))?
+            == std::cmp::Ordering::Greater
+        {
+            lower_height
+        } else {
+            upper_height
+        };
+        Ok(decided_model_order(compare_reals(
+            &(&maximum_radial * &maximum_radial + &maximum_height * &maximum_height),
+            &(sphere_radius * sphere_radius),
+        ))? == std::cmp::Ordering::Less)
+    }
+
+    fn cylinder_strictly_contains_sphere(
+        &self,
+        cylinder: &CertifiedCylinderShell,
+        sphere_center: &Point3,
+        sphere_radius: &Real,
+    ) -> Result<bool, BuildError> {
+        if cylinder.sphere_subtraction.is_some() {
+            return Ok(false);
+        }
+        let offset = sphere_center - &cylinder.origin;
+        let center_parameter = offset.dot(&cylinder.axis);
+        let radial = offset - cylinder.axis.clone() * &center_parameter;
+        let radial_distance = radial
+            .norm_squared()
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        Ok(decided_model_order(compare_reals(
+            &(&radial_distance + sphere_radius),
+            &cylinder.radius,
+        ))? == std::cmp::Ordering::Less
+            && decided_model_order(compare_reals(
+                &cylinder.v_min,
+                &(&center_parameter - sphere_radius),
+            ))? == std::cmp::Ordering::Less
+            && decided_model_order(compare_reals(
+                &(&center_parameter + sphere_radius),
+                &cylinder.v_max,
+            ))? == std::cmp::Ordering::Less)
     }
 
     fn certified_sphere_segment_shell(
@@ -13036,7 +13248,7 @@ impl ModelBuilder {
             radius,
             v_min,
             v_max,
-            sphere_exclusion: None,
+            sphere_subtraction: None,
         }))
     }
 
@@ -13214,7 +13426,7 @@ impl ModelBuilder {
         )? {
             return Ok(None);
         }
-        cylinder.sphere_exclusion = Some(CertifiedCylinderSphereExclusion {
+        cylinder.sphere_subtraction = Some(CertifiedCylinderSphereSubtraction::Component {
             center: sphere_cap.center,
             radius: sphere_cap.radius,
             side,
@@ -13222,9 +13434,10 @@ impl ModelBuilder {
         Ok(Some(cylinder))
     }
 
-    fn certified_cylinder_shell(
+    fn certified_oriented_cylinder_shell(
         &self,
         shell: ShellId,
+        orientation: Orientation,
     ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
         let mut side_faces = Vec::new();
@@ -13242,6 +13455,9 @@ impl ModelBuilder {
             }
         }
         if !sphere_faces.is_empty() {
+            if orientation != Orientation::Forward {
+                return Ok(None);
+            }
             return self.certified_cylinder_sphere_component_shell(
                 shell,
                 faces,
@@ -13253,8 +13469,7 @@ impl ModelBuilder {
         if cap_groups.len() != 2 || side_faces.len() < 3 {
             return Ok(None);
         }
-        let Some(cylinder) =
-            self.certified_cylinder_side_faces(shell, &side_faces, Orientation::Forward)?
+        let Some(cylinder) = self.certified_cylinder_side_faces(shell, &side_faces, orientation)?
         else {
             return Ok(None);
         };
@@ -13313,10 +13528,67 @@ impl ModelBuilder {
                 return Ok(None);
             }
             matched_centers[center_index] = true;
+            let outward = if center_index == 0 {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Greater
+            };
+            let expected_direction = if orientation == Orientation::Forward {
+                outward
+            } else {
+                outward.reverse()
+            };
+            let cap_parameter = if center_index == 0 {
+                &cylinder.v_min
+            } else {
+                &cylinder.v_max
+            };
+            if !self.certified_cylinder_cap_group(
+                faces,
+                &cap_group,
+                &cylinder,
+                cap_parameter,
+                expected_direction,
+            )? {
+                return Ok(None);
+            }
         }
         if matched_centers != [true, true] {
             return Ok(None);
         }
+        Ok(Some(cylinder))
+    }
+
+    fn certified_cylinder_shell(
+        &self,
+        shell: ShellId,
+    ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
+        self.certified_oriented_cylinder_shell(shell, Orientation::Forward)
+    }
+
+    fn certified_cylinder_solid(
+        &self,
+        solid: &Solid,
+    ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
+        let Some(mut cylinder) = self.certified_cylinder_shell(solid.outer)? else {
+            return Ok(None);
+        };
+        if solid.voids.is_empty() {
+            return Ok(Some(cylinder));
+        }
+        let [void_shell] = solid.voids.as_slice() else {
+            return Ok(None);
+        };
+        let Some((center, radius)) =
+            self.certified_oriented_sphere_shell(*void_shell, Orientation::Reversed)?
+        else {
+            return Ok(None);
+        };
+        if !self.cylinder_strictly_contains_sphere(&cylinder, &center, &radius)? {
+            return Ok(None);
+        }
+        cylinder.sphere_subtraction =
+            Some(CertifiedCylinderSphereSubtraction::Void { center, radius });
         Ok(Some(cylinder))
     }
 
@@ -13843,6 +14115,15 @@ impl ModelBuilder {
         voids: &[ShellId],
     ) -> Result<(), BuildError> {
         self.validate_void_shell_nesting(outer, voids)
+    }
+
+    pub(crate) fn shell_is_planar(&self, shell: ShellId) -> Result<bool, BuildError> {
+        for face in &self.shell_ref(shell)?.faces {
+            if self.surface_ref(self.face_ref(*face)?.surface)?.kind() != SurfaceKind::Plane {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 }
 

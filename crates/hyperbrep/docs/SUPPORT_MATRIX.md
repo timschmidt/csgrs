@@ -225,6 +225,16 @@ plain sphere/cylinder/prism optimization profiles. For the radius-3 sphere and
 radius-2 cylinder on `[-4,4]`, exact boundary area is
 `(40+4*sqrt(5))*pi` and exact volume is `(96+20*sqrt(5))*pi/3`, with
 operand reversal, rigid/reflection transforms, and persistence.
+Strict sphere/finite-cylinder containment is also regularized without
+fabricating a carrier intersection. Union retains the outer operand,
+intersection retains the inner operand, inner-minus-outer is empty, and
+outer-minus-inner retains one native reversed cross-family void shell.
+Containment is certified from exact radial and axial clearances, not sampled
+points. A radius-3 sphere minus a centered radius-1 cylinder on `[-1,1]` has
+area `42*pi` and volume `34*pi`; a radius-2 cylinder on `[-2,2]` minus a
+centered radius-1 sphere has area `28*pi` and volume `44*pi/3`. Both mixed
+voids retain exact classification, rigid/reflection transforms, persistence,
+operand-order symmetry for union/intersection, and no false primitive profile.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects
