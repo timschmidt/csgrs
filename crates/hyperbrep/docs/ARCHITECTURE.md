@@ -115,7 +115,9 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
   control-for-control rather than accepted from endpoint incidence.
 - positive-weight `2×2` rational Bézier plane sections, reconstructed by exact
   rational-quadratic parameter-graph substitution into the complete
-  weighted rational-quartic spatial control net.
+  weighted rational-quartic spatial control net. Sign-changing graph
+  denominators are partitioned at exact poles and tensor-boundary contacts;
+  factorized relations retain their native iso-lines.
 
 `builder::tensor_patch_shell` applies the same whole-curve certificate before
 sharing topology. Matching endpoint vertices alone never sew patches: degrees,
@@ -379,8 +381,20 @@ is `Σ wᵢⱼPᵢⱼCᵢⱼ`, its denominator is `Σ wᵢⱼCᵢⱼ`, and both 
 five-control rational quartic. Mixed graphs are clipped in the unit parameter
 rectangle before spatial composition, so a pole in the off-domain rational
 surface extension cannot invalidate a represented in-domain fragment.
-Denominator poles on the retained graph, two-dimensional containment, and
-cases needing an algebraic-only boundary stay explicit unsupported evidence.
+If the denominator changes sign in the retained interval, HyperBREP inserts
+the exact roots of the denominator, numerator, and numerator-plus-denominator.
+Those roots are respectively graph poles and contacts with the solved
+coordinate's zero and one boundaries. Each resulting open interval has
+constant membership and denominator sign, so one exact midpoint comparison
+selects the bounded cells before local positive-weight rational quadratics are
+composed spatially. A common numerator/denominator root factors the bilinear
+relation into one or two native iso-lines instead. For a sign-definite
+Bernstein hull, the zero-control mask exactly distinguishes one corner, two
+opposite corners, one boundary edge, or two boundary edges; the public
+`Point`, `Points`, `Curve`, and `Curves` results retain those dimensions
+without a compatibility wrapper. Only a complete zero hull, which is
+two-dimensional containment rather than a curve intersection, stays explicit
+unsupported evidence.
 
 `boolean::intersect_faces` owns this face-pair operation:
 validated open-shell faces and solid-owned faces use the same certified bounds,
@@ -560,7 +574,10 @@ Weighted bilinear sections use the stronger direct construction proof:
 validation orients the retained rational-quadratic pcurve, recomposes all five
 weighted rational-quartic spatial controls, and requires complete
 parameterization equality. This applies unchanged after represented rectangle
-clipping and rejects an endpoint-preserving middle-control forgery.
+clipping or exact pole-cell partitioning and rejects an endpoint-preserving
+middle-control forgery. Factorized and sign-definite boundary components use
+native tensor iso-curves, so their existing complete-control proof remains the
+authoritative validator.
 
 `Model::split_face_by_surface_curves` accepts retained intersection objects
 directly, uses an explicit operand selector for their first or second pcurve,

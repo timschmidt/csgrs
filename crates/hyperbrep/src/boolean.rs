@@ -130,7 +130,10 @@ pub enum FacePairTrim {
     /// Finite native surface-curve fragments retain their exact spatial curve
     /// and the matching pcurve on each face carrier.
     SurfaceCurveFragments(Vec<SurfaceIntersectionCurve>),
-    /// Exact mixed-dimensional components survive both face trims.
+    /// Multiple exact components survive both face trims.
+    ///
+    /// Either collection may be empty, but `Components` is used only when the
+    /// retained result cannot be expressed by a singular trim variant.
     Components {
         /// Isolated exact point contacts.
         point_contacts: Vec<Point3>,
@@ -696,7 +699,9 @@ fn partition_graph_faces(
                     return Err(BooleanError::FacePartitionUnsupported { face });
                 }
                 FacePairRelation::Exact(
-                    SurfaceSurfaceIntersection::None | SurfaceSurfaceIntersection::Point(_),
+                    SurfaceSurfaceIntersection::None
+                    | SurfaceSurfaceIntersection::Point(_)
+                    | SurfaceSurfaceIntersection::Points(_),
                 ) => {}
                 FacePairRelation::Exact(_) => {
                     return Err(BooleanError::FacePartitionUnsupported { face });
@@ -2389,6 +2394,7 @@ fn trim_face_pair_intersection(
             SurfaceSurfaceIntersection::Point(point) => {
                 Ok(FacePairTrim::PointContact(point.as_ref().clone()))
             }
+            SurfaceSurfaceIntersection::Points(points) => Ok(point_contacts_trim(points.clone())),
             SurfaceSurfaceIntersection::Curve(curve) => {
                 Ok(FacePairTrim::SurfaceCurveFragments(vec![
                     curve.as_ref().clone(),
@@ -2445,6 +2451,20 @@ fn trim_face_pair_intersection(
     }
     if let SurfaceSurfaceIntersection::Point(point) = intersection {
         return trim_point_contact(first_model, first_face, second_model, second_face, point);
+    }
+    if let SurfaceSurfaceIntersection::Points(points) = intersection {
+        let mut retained = Vec::new();
+        for point in points {
+            match trim_point_contact(first_model, first_face, second_model, second_face, point)? {
+                FacePairTrim::PointContact(point) => retained.push(point),
+                FacePairTrim::NoContact => {}
+                FacePairTrim::Unresolved(reason) => {
+                    return Ok(FacePairTrim::Unresolved(reason));
+                }
+                _ => return Ok(FacePairTrim::NotAvailable),
+            }
+        }
+        return Ok(point_contacts_trim(retained));
     }
     if let SurfaceSurfaceIntersection::Circle(curve) | SurfaceSurfaceIntersection::Ellipse(curve) =
         intersection
@@ -2582,6 +2602,17 @@ fn trim_face_pair_intersection(
     } else {
         FacePairTrim::CurveFragments(common_fragments)
     })
+}
+
+fn point_contacts_trim(mut points: Vec<Point3>) -> FacePairTrim {
+    match points.len() {
+        0 => FacePairTrim::NoContact,
+        1 => FacePairTrim::PointContact(points.pop().expect("one retained point contact")),
+        _ => FacePairTrim::Components {
+            point_contacts: points,
+            surface_curve_fragments: Vec::new(),
+        },
+    }
 }
 
 fn trim_intersection_components(

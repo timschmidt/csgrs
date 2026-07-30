@@ -345,14 +345,18 @@ The clean-break implementation currently provides:
   homogeneous plane numerator to an exact rational-quadratic parameter graph
   and composes it with the weighted surface into an exact rational-quartic
   spatial curve, again without sampling or fitting.
-  Partial sections with `Real`-represented tensor-boundary roots are returned
-  as one or more exact retained curves; non-representable algebraic boundaries
-  remain explicit rather than approximated;
+  Exact roots against both tensor boundaries and every graph-denominator pole
+  partition sign-changing relations into one or more bounded retained
+  branches. Common numerator/denominator roots factor into native crossing
+  iso-lines, while sign-definite zero sets return exact boundary iso-lines or
+  one/multiple isolated corner points. Only a complete two-dimensional plane
+  overlap remains explicit rather than being collapsed to a curve result;
 - exact `Surface::iso_curve` extraction in either tensor direction and
   `Model::split_face_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS
   translation-tensor graph sections in either axis, plus complete or clipped
-  weighted bilinear rational-Bézier graph sections; full homogeneous
+  weighted bilinear rational-Bézier graph sections, including bounded
+  pole-separated branches and factorized crossing iso-lines; full homogeneous
   controls, native NURBS domains and knots, and exact rational-Bézier or
   multi-span NURBS graph pcurves,
   curved-loop simplicity, same-boundary two-edge pockets, and orientation are

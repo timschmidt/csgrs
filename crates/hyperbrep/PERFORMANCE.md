@@ -134,6 +134,10 @@ certificate deliberately rebases rational Bézier patch construction from
 - non-separable positive-weight rational bilinear tensor / oblique-plane exact
   rational-quartic spatial section, rational-quadratic graph construction, and
   midpoint evaluation: `32.671 us/iteration`;
+- non-separable positive-weight rational bilinear tensor / plane intersection
+  with one retained denominator pole, two bounded rational-quartic branches,
+  and spatial plus pcurve midpoint evaluation on both components:
+  `69.205 us/iteration`;
 - complete non-isoparametric rational tensor section, graph-control
   recertification, curved-loop validation, identity-shared face split, and full
   model revalidation: `180.175 us/iteration`;

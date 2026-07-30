@@ -1248,6 +1248,8 @@ pub enum SurfaceSurfaceIntersection {
     Coincident,
     /// The surfaces touch at one exact point.
     Point(Box<Point3>),
+    /// The surfaces meet at multiple isolated exact points.
+    Points(Vec<Point3>),
     /// Two planes meet in an unbounded exact line.
     Line(Box<SurfaceIntersectionLine>),
     /// The surfaces meet in multiple unbounded exact lines.
@@ -4351,6 +4353,11 @@ fn intersect_plane_rational_bilinear(
     if orders.iter().all(|order| *order == Ordering::Equal) {
         return Err(GeometryError::UnsupportedIntersection);
     }
+    if let Some(intersection) =
+        sign_definite_bilinear_boundary_intersection(plane, surface, &orders)?
+    {
+        return Ok(intersection);
+    }
 
     for parameter_axis in [TensorAxis::V, TensorAxis::U] {
         let Some(pcurve) = bilinear_plane_parameter_graph(&values, parameter_axis)? else {
@@ -4363,7 +4370,87 @@ fn intersect_plane_rational_bilinear(
         }
         return clip_rational_bilinear_parameter_graph(plane, surface, &pcurve);
     }
-    Err(GeometryError::UnsupportedIntersection)
+    intersect_plane_bilinear_pole_branches(plane, surface, &values)
+}
+
+fn sign_definite_bilinear_boundary_intersection(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    orders: &[Ordering],
+) -> GeometryResult<Option<SurfaceSurfaceIntersection>> {
+    let has_positive = orders.contains(&Ordering::Greater);
+    let has_negative = orders.contains(&Ordering::Less);
+    if has_positive && has_negative {
+        return Ok(None);
+    }
+
+    let zeros = [
+        orders[0] == Ordering::Equal,
+        orders[1] == Ordering::Equal,
+        orders[2] == Ordering::Equal,
+        orders[3] == Ordering::Equal,
+    ];
+    let zero_count = zeros.iter().filter(|zero| **zero).count();
+    debug_assert!((1..=3).contains(&zero_count));
+    match zero_count {
+        1 => {
+            let index = zeros
+                .iter()
+                .position(|zero| *zero)
+                .expect("one sign-definite bilinear zero");
+            Ok(Some(SurfaceSurfaceIntersection::Point(Box::new(
+                bilinear_corner(surface, index),
+            ))))
+        }
+        2 if zeros[0] && zeros[1] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
+            rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::U, &Real::zero())?,
+        )))),
+        2 if zeros[2] && zeros[3] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
+            rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::U, &Real::one())?,
+        )))),
+        2 if zeros[0] && zeros[2] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
+            rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::V, &Real::zero())?,
+        )))),
+        2 if zeros[1] && zeros[3] => Ok(Some(SurfaceSurfaceIntersection::Curve(Box::new(
+            rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::V, &Real::one())?,
+        )))),
+        2 => Ok(Some(SurfaceSurfaceIntersection::Points(
+            zeros
+                .iter()
+                .enumerate()
+                .filter(|(_, zero)| **zero)
+                .map(|(index, _)| bilinear_corner(surface, index))
+                .collect(),
+        ))),
+        3 => {
+            let nonzero = zeros
+                .iter()
+                .position(|zero| !*zero)
+                .expect("one nonzero sign-definite bilinear corner");
+            let constant = if nonzero < 2 {
+                Real::one()
+            } else {
+                Real::zero()
+            };
+            let horizontal =
+                rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::U, &constant)?;
+            let constant = if nonzero % 2 == 0 {
+                Real::one()
+            } else {
+                Real::zero()
+            };
+            let vertical =
+                rational_bilinear_iso_section(plane, surface, SurfaceIsoAxis::V, &constant)?;
+            Ok(Some(SurfaceSurfaceIntersection::Curves(vec![
+                horizontal, vertical,
+            ])))
+        }
+        _ => unreachable!("all-zero bilinear relations are handled as overlap"),
+    }
+}
+
+fn bilinear_corner(surface: &RationalBezierSurface, index: usize) -> Point3 {
+    surface.control_points[index / 2][index % 2].clone()
 }
 
 fn rational_bilinear_section(
@@ -4426,21 +4513,54 @@ fn bilinear_plane_parameter_graph(
     values: &[[Real; 2]; 2],
     parameter_axis: TensorAxis,
 ) -> GeometryResult<Option<Curve2>> {
-    let (first_offset, second_offset, first_denominator, second_denominator) = match parameter_axis
-    {
-        TensorAxis::V => (
-            values[0][0].clone(),
-            values[1][0].clone(),
-            &values[0][1] - &values[0][0],
-            &values[1][1] - &values[1][0],
-        ),
-        TensorAxis::U => (
-            values[0][0].clone(),
-            values[0][1].clone(),
-            &values[1][0] - &values[0][0],
-            &values[1][1] - &values[0][1],
-        ),
-    };
+    let coefficients = bilinear_graph_coefficients(values, parameter_axis);
+    bilinear_parameter_graph_from_endpoints(
+        coefficients.first_offset,
+        coefficients.second_offset,
+        coefficients.first_denominator,
+        coefficients.second_denominator,
+        &Real::zero(),
+        &Real::one(),
+        parameter_axis,
+    )
+}
+
+struct BilinearGraphCoefficients {
+    first_offset: Real,
+    second_offset: Real,
+    first_denominator: Real,
+    second_denominator: Real,
+}
+
+fn bilinear_graph_coefficients(
+    values: &[[Real; 2]; 2],
+    parameter_axis: TensorAxis,
+) -> BilinearGraphCoefficients {
+    match parameter_axis {
+        TensorAxis::V => BilinearGraphCoefficients {
+            first_offset: values[0][0].clone(),
+            second_offset: values[1][0].clone(),
+            first_denominator: &values[0][1] - &values[0][0],
+            second_denominator: &values[1][1] - &values[1][0],
+        },
+        TensorAxis::U => BilinearGraphCoefficients {
+            first_offset: values[0][0].clone(),
+            second_offset: values[0][1].clone(),
+            first_denominator: &values[1][0] - &values[0][0],
+            second_denominator: &values[1][1] - &values[0][1],
+        },
+    }
+}
+
+fn bilinear_parameter_graph_from_endpoints(
+    first_offset: Real,
+    second_offset: Real,
+    first_denominator: Real,
+    second_denominator: Real,
+    first_parameter: &Real,
+    second_parameter: &Real,
+    parameter_axis: TensorAxis,
+) -> GeometryResult<Option<Curve2>> {
     let first_order = decided_order(compare_reals(&first_denominator, &Real::zero()))?;
     let second_order = decided_order(compare_reals(&second_denominator, &Real::zero()))?;
     let sign = match (first_order, second_order) {
@@ -4458,18 +4578,20 @@ fn bilinear_plane_parameter_graph(
             .map_err(|_| GeometryError::ProjectiveDivision)?,
         (&numerators[1] / &second_denominator).map_err(|_| GeometryError::ProjectiveDivision)?,
     ];
-    let middle_parameter =
-        (&first_denominator / &denominator_sum).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let middle_parameter = ((first_parameter * &second_denominator
+        + second_parameter * &first_denominator)
+        / &denominator_sum)
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
     let controls = match parameter_axis {
         TensorAxis::V => vec![
-            CurvePoint2::new(solved_controls[0].clone(), Real::zero()),
+            CurvePoint2::new(solved_controls[0].clone(), first_parameter.clone()),
             CurvePoint2::new(solved_controls[1].clone(), middle_parameter),
-            CurvePoint2::new(solved_controls[2].clone(), Real::one()),
+            CurvePoint2::new(solved_controls[2].clone(), second_parameter.clone()),
         ],
         TensorAxis::U => vec![
-            CurvePoint2::new(Real::zero(), solved_controls[0].clone()),
+            CurvePoint2::new(first_parameter.clone(), solved_controls[0].clone()),
             CurvePoint2::new(middle_parameter, solved_controls[1].clone()),
-            CurvePoint2::new(Real::one(), solved_controls[2].clone()),
+            CurvePoint2::new(second_parameter.clone(), solved_controls[2].clone()),
         ],
     };
     let weights = vec![
@@ -4480,6 +4602,224 @@ fn bilinear_plane_parameter_graph(
     Ok(Some(Curve2::from(RationalBezier2::try_new(
         controls, weights,
     )?)))
+}
+
+fn intersect_plane_bilinear_pole_branches(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    values: &[[Real; 2]; 2],
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    for parameter_axis in [TensorAxis::V, TensorAxis::U] {
+        let coefficients = bilinear_graph_coefficients(values, parameter_axis);
+        let first_offset = &coefficients.first_offset;
+        let second_offset = &coefficients.second_offset;
+        let first_denominator = &coefficients.first_denominator;
+        let second_denominator = &coefficients.second_denominator;
+        let first_denominator_order =
+            decided_order(compare_reals(first_denominator, &Real::zero()))?;
+        let second_denominator_order =
+            decided_order(compare_reals(second_denominator, &Real::zero()))?;
+        if first_denominator_order == Ordering::Equal && second_denominator_order == Ordering::Equal
+        {
+            continue;
+        }
+        if let Some(pole) = linear_root_in_unit_interval(first_denominator, second_denominator)?
+            && decided_order(compare_reals(
+                &linear_value(first_offset, second_offset, &pole),
+                &Real::zero(),
+            ))? == Ordering::Equal
+        {
+            return factorized_bilinear_sections(
+                plane,
+                surface,
+                parameter_axis,
+                &pole,
+                &coefficients,
+            );
+        }
+
+        let mut boundaries = vec![Real::zero(), Real::one()];
+        for (first, second) in [
+            (first_offset, second_offset),
+            (
+                &(first_offset + first_denominator),
+                &(second_offset + second_denominator),
+            ),
+            (first_denominator, second_denominator),
+        ] {
+            if let Some(root) = linear_root_in_unit_interval(first, second)? {
+                insert_sorted_real_unique(&mut boundaries, root)?;
+            }
+        }
+
+        let mut sections = Vec::new();
+        for interval in boundaries.windows(2) {
+            let start = &interval[0];
+            let end = &interval[1];
+            if decided_order(compare_reals(start, end))? != Ordering::Less {
+                continue;
+            }
+            let midpoint =
+                ((start + end) / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+            let midpoint_denominator =
+                linear_value(first_denominator, second_denominator, &midpoint);
+            if decided_order(compare_reals(&midpoint_denominator, &Real::zero()))?
+                == Ordering::Equal
+            {
+                continue;
+            }
+            let midpoint_solved = (-linear_value(first_offset, second_offset, &midpoint)
+                / midpoint_denominator)
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            if decided_order(compare_reals(&midpoint_solved, &Real::zero()))? == Ordering::Less
+                || decided_order(compare_reals(&midpoint_solved, &Real::one()))?
+                    == Ordering::Greater
+            {
+                continue;
+            }
+
+            let start_denominator = linear_value(first_denominator, second_denominator, start);
+            let end_denominator = linear_value(first_denominator, second_denominator, end);
+            let Some(pcurve) = bilinear_parameter_graph_from_endpoints(
+                linear_value(first_offset, second_offset, start),
+                linear_value(first_offset, second_offset, end),
+                start_denominator,
+                end_denominator,
+                start,
+                end,
+                parameter_axis,
+            )?
+            else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            sections.push(rational_bilinear_section(plane, surface, pcurve)?);
+        }
+        if !sections.is_empty() {
+            return match sections.len() {
+                1 => Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                    sections.pop().expect("one retained bilinear pole branch"),
+                ))),
+                _ => Ok(SurfaceSurfaceIntersection::Curves(sections)),
+            };
+        }
+    }
+    Err(GeometryError::UnsupportedIntersection)
+}
+
+fn factorized_bilinear_sections(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    parameter_axis: TensorAxis,
+    pole: &Real,
+    coefficients: &BilinearGraphCoefficients,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    let pole_iso_axis = match parameter_axis {
+        TensorAxis::V => SurfaceIsoAxis::U,
+        TensorAxis::U => SurfaceIsoAxis::V,
+    };
+    let mut sections = vec![rational_bilinear_iso_section(
+        plane,
+        surface,
+        pole_iso_axis,
+        pole,
+    )?];
+
+    let sample = if decided_order(compare_reals(pole, &Real::zero()))? == Ordering::Equal {
+        Real::one()
+    } else {
+        Real::zero()
+    };
+    let sample_denominator = linear_value(
+        &coefficients.first_denominator,
+        &coefficients.second_denominator,
+        &sample,
+    );
+    if decided_order(compare_reals(&sample_denominator, &Real::zero()))? != Ordering::Equal {
+        let solved = (-linear_value(
+            &coefficients.first_offset,
+            &coefficients.second_offset,
+            &sample,
+        ) / sample_denominator)
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        if decided_order(compare_reals(&solved, &Real::zero()))? != Ordering::Less
+            && decided_order(compare_reals(&solved, &Real::one()))? != Ordering::Greater
+        {
+            let solved_iso_axis = match parameter_axis {
+                TensorAxis::V => SurfaceIsoAxis::V,
+                TensorAxis::U => SurfaceIsoAxis::U,
+            };
+            sections.push(rational_bilinear_iso_section(
+                plane,
+                surface,
+                solved_iso_axis,
+                &solved,
+            )?);
+        }
+    }
+    match sections.len() {
+        1 => Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+            sections.pop().expect("one retained factorized iso-line"),
+        ))),
+        _ => Ok(SurfaceSurfaceIntersection::Curves(sections)),
+    }
+}
+
+fn rational_bilinear_iso_section(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    axis: SurfaceIsoAxis,
+    constant: &Real,
+) -> GeometryResult<SurfaceIntersectionCurve> {
+    let carrier =
+        Surface::rational_bezier(surface.control_points.clone(), surface.weights.clone())?;
+    let spatial = carrier.iso_curve(axis, constant)?;
+    let pcurve = match axis {
+        SurfaceIsoAxis::U => Curve2::from(LineSeg2::try_new(
+            CurvePoint2::new(Real::zero(), constant.clone()),
+            CurvePoint2::new(Real::one(), constant.clone()),
+        )?),
+        SurfaceIsoAxis::V => Curve2::from(LineSeg2::try_new(
+            CurvePoint2::new(constant.clone(), Real::zero()),
+            CurvePoint2::new(constant.clone(), Real::one()),
+        )?),
+    };
+    Ok(SurfaceIntersectionCurve::new(
+        spatial.clone(),
+        SurfaceIntersectionPcurve::plane_projection(spatial, plane),
+        SurfaceIntersectionPcurve::retained_curve(pcurve)?,
+    ))
+}
+
+fn linear_root_in_unit_interval(first: &Real, second: &Real) -> GeometryResult<Option<Real>> {
+    let delta = second - first;
+    if decided_order(compare_reals(&delta, &Real::zero()))? == Ordering::Equal {
+        return Ok(None);
+    }
+    let root = (-first / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
+    if decided_order(compare_reals(&root, &Real::zero()))? == Ordering::Less
+        || decided_order(compare_reals(&root, &Real::one()))? == Ordering::Greater
+    {
+        Ok(None)
+    } else {
+        Ok(Some(root))
+    }
+}
+
+fn linear_value(first: &Real, second: &Real, parameter: &Real) -> Real {
+    first + (second - first) * parameter
+}
+
+fn insert_sorted_real_unique(values: &mut Vec<Real>, value: Real) -> GeometryResult<()> {
+    let mut insertion = 0;
+    while insertion < values.len() {
+        match decided_order(compare_reals(&value, &values[insertion]))? {
+            Ordering::Less => break,
+            Ordering::Equal => return Ok(()),
+            Ordering::Greater => insertion += 1,
+        }
+    }
+    values.insert(insertion, value);
+    Ok(())
 }
 
 fn rational_curve_controls_inside_unit_square(curve: &Curve2) -> GeometryResult<bool> {
@@ -10335,10 +10675,27 @@ mod tests {
         ));
         let pole_plane =
             Surface::plane(Point3::new(r(0), r(0), q(1, 4)), Vector3::x(), Vector3::y()).unwrap();
-        assert!(matches!(
-            surface.intersect_surface(&pole_plane),
-            Err(GeometryError::UnsupportedIntersection)
-        ));
+        let SurfaceSurfaceIntersection::Curve(pole_branch) =
+            surface.intersect_surface(&pole_plane).unwrap()
+        else {
+            panic!("retained polynomial bilinear pole branch must be exact");
+        };
+        assert_eq!(
+            pole_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(1), q(1, 4))
+        );
+        assert_eq!(
+            pole_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(1, 4), r(1))
+        );
+        assert_points_equal(
+            &pole_branch.curve().point_at(&r(0)).unwrap(),
+            &Point3::new(r(2), q(1, 2), q(1, 4)),
+        );
+        assert_points_equal(
+            &pole_branch.curve().point_at(&r(1)).unwrap(),
+            &Point3::new(q(1, 2), r(2), q(1, 4)),
+        );
 
         let off_domain_pole_surface = Surface::rational_bezier(
             vec![
@@ -10571,10 +10928,27 @@ mod tests {
         ));
         let pole_plane =
             Surface::plane(Point3::new(r(0), r(0), q(1, 4)), Vector3::x(), Vector3::y()).unwrap();
-        assert!(matches!(
-            surface.intersect_surface(&pole_plane),
-            Err(GeometryError::UnsupportedIntersection)
-        ));
+        let SurfaceSurfaceIntersection::Curve(pole_branch) =
+            surface.intersect_surface(&pole_plane).unwrap()
+        else {
+            panic!("retained weighted bilinear pole branch must be exact");
+        };
+        assert_eq!(
+            pole_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(1), q(1, 7))
+        );
+        assert_eq!(
+            pole_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(1, 5), r(1))
+        );
+        assert_points_equal(
+            &pole_branch.curve().point_at(&r(0)).unwrap(),
+            &Point3::new(r(2), q(1, 2), q(1, 4)),
+        );
+        assert_points_equal(
+            &pole_branch.curve().point_at(&r(1)).unwrap(),
+            &Point3::new(q(1, 2), r(2), q(1, 4)),
+        );
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         let translated_surface = surface.transformed(&translation, false).unwrap();
@@ -10654,6 +11028,276 @@ mod tests {
                 .to_json()
                 .unwrap(),
             partial_json
+        );
+    }
+
+    #[test]
+    fn bilinear_poles_partition_into_exact_bounded_branches() {
+        let controls = vec![
+            vec![
+                Point3::new(r(0), r(0), q(3, 16)),
+                Point3::new(r(2), r(0), q(-5, 16)),
+            ],
+            vec![
+                Point3::new(r(0), r(2), q(-5, 16)),
+                Point3::new(r(2), r(2), q(3, 16)),
+            ],
+        ];
+        let weights = vec![vec![r(1), r(1)], vec![r(1), r(1)]];
+        let surface = Surface::rational_bezier(controls.clone(), weights.clone()).unwrap();
+        let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        let SurfaceSurfaceIntersection::Curves(branches) =
+            surface.intersect_surface(&plane).unwrap()
+        else {
+            panic!("checkerboard bilinear section must retain two bounded pole branches");
+        };
+        assert_eq!(branches.len(), 2);
+        for (branch, expected_start, expected_end, spatial_start, spatial_end) in [
+            (
+                &branches[0],
+                Point2::new(q(3, 8), r(0)),
+                Point2::new(r(0), q(3, 8)),
+                Point3::new(q(3, 4), r(0), r(0)),
+                Point3::new(r(0), q(3, 4), r(0)),
+            ),
+            (
+                &branches[1],
+                Point2::new(r(1), q(5, 8)),
+                Point2::new(q(5, 8), r(1)),
+                Point3::new(r(2), q(5, 4), r(0)),
+                Point3::new(q(5, 4), r(2), r(0)),
+            ),
+        ] {
+            assert_eq!(
+                branch.first_pcurve().point_at(&r(0)).unwrap(),
+                expected_start
+            );
+            assert_eq!(branch.first_pcurve().point_at(&r(1)).unwrap(), expected_end);
+            assert_points_equal(&branch.curve().point_at(&r(0)).unwrap(), &spatial_start);
+            assert_points_equal(&branch.curve().point_at(&r(1)).unwrap(), &spatial_end);
+            for numerator in 0_i64..=8 {
+                let parameter = q(numerator, 8);
+                let surface_parameter = branch.first_pcurve().point_at(&parameter).unwrap();
+                assert_points_equal(
+                    &branch.curve().point_at(&parameter).unwrap(),
+                    &surface.point_at(&surface_parameter).unwrap(),
+                );
+            }
+        }
+
+        let SurfaceSurfaceIntersection::Curves(swapped) =
+            plane.intersect_surface(&surface).unwrap()
+        else {
+            panic!("pole branches must survive operand reversal");
+        };
+        assert_eq!(swapped.len(), 2);
+        for (original, reversed_operands) in branches.iter().zip(&swapped) {
+            assert_eq!(
+                original.first_pcurve().point_at(&q(1, 2)).unwrap(),
+                reversed_operands
+                    .second_pcurve()
+                    .point_at(&q(1, 2))
+                    .unwrap()
+            );
+            assert_points_equal(
+                &original.curve().point_at(&q(1, 2)).unwrap(),
+                &reversed_operands.curve().point_at(&q(1, 2)).unwrap(),
+            );
+        }
+
+        let endpoint_pole_surface = Surface::rational_bezier(
+            vec![vec![p(0, 0, 1), p(2, 0, -1)], vec![p(0, 2, 1), p(2, 2, 1)]],
+            weights.clone(),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(endpoint_branch) =
+            endpoint_pole_surface.intersect_surface(&plane).unwrap()
+        else {
+            panic!("a branch leaving the patch before an endpoint pole must be retained");
+        };
+        assert_eq!(
+            endpoint_branch.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(q(1, 2), r(0))
+        );
+        assert_eq!(
+            endpoint_branch.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(1), q(1, 2))
+        );
+
+        let factorized_controls = vec![
+            vec![
+                Point3::new(r(0), r(0), q(1, 4)),
+                Point3::new(r(2), r(0), q(-1, 4)),
+            ],
+            vec![
+                Point3::new(r(0), r(2), q(-1, 4)),
+                Point3::new(r(2), r(2), q(1, 4)),
+            ],
+        ];
+        let factorized =
+            Surface::rational_bezier(factorized_controls.clone(), weights.clone()).unwrap();
+        let SurfaceSurfaceIntersection::Curves(factorized_lines) =
+            factorized.intersect_surface(&plane).unwrap()
+        else {
+            panic!("factorized bilinear relation must retain both exact iso-lines");
+        };
+        assert_eq!(factorized_lines.len(), 2);
+        assert_eq!(
+            factorized_lines[0].first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(0), q(1, 2))
+        );
+        assert_eq!(
+            factorized_lines[0].first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(1), q(1, 2))
+        );
+        assert_eq!(
+            factorized_lines[1].first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(q(1, 2), r(0))
+        );
+        assert_eq!(
+            factorized_lines[1].first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(1, 2), r(1))
+        );
+        let (factorized_patch, factorized_face) =
+            crate::builder::rational_bezier_patch(factorized_controls, weights.clone()).unwrap();
+        let (factorized_partition, factorized_record) = factorized_patch
+            .split_face_by_surface_curves(
+                factorized_face,
+                &factorized_lines,
+                SurfaceIntersectionOperand::First,
+            )
+            .unwrap();
+        assert_eq!(factorized_record.faces.len(), 4);
+        assert_eq!(factorized_partition.counts().faces, 4);
+        let factorized_json = factorized_partition.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&factorized_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            factorized_json
+        );
+
+        let boundary_surface = |heights: [[i32; 2]; 2]| {
+            Surface::rational_bezier(
+                vec![
+                    vec![p(0, 0, heights[0][0]), p(2, 0, heights[0][1])],
+                    vec![p(0, 2, heights[1][0]), p(2, 2, heights[1][1])],
+                ],
+                vec![vec![r(1), r(1)], vec![r(1), r(1)]],
+            )
+            .unwrap()
+        };
+        let SurfaceSurfaceIntersection::Point(single_corner) = boundary_surface([[0, 1], [1, 1]])
+            .intersect_surface(&plane)
+            .unwrap()
+        else {
+            panic!("one zero Bernstein corner must be one exact point");
+        };
+        assert_eq!(*single_corner, p(0, 0, 0));
+
+        let opposite_corners = boundary_surface([[0, 1], [1, 0]]);
+        let SurfaceSurfaceIntersection::Points(points) =
+            opposite_corners.intersect_surface(&plane).unwrap()
+        else {
+            panic!("opposite zero Bernstein corners must be two exact points");
+        };
+        assert_eq!(points, vec![p(0, 0, 0), p(2, 2, 0)]);
+        let SurfaceSurfaceIntersection::Points(swapped_points) =
+            plane.intersect_surface(&opposite_corners).unwrap()
+        else {
+            panic!("multiple exact points must survive operand reversal");
+        };
+        assert_eq!(swapped_points, points);
+
+        let SurfaceSurfaceIntersection::Curve(boundary_edge) = boundary_surface([[0, 0], [1, 1]])
+            .intersect_surface(&plane)
+            .unwrap()
+        else {
+            panic!("two adjacent zero Bernstein corners must retain their boundary iso-line");
+        };
+        assert_eq!(
+            boundary_edge.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(0), r(0))
+        );
+        assert_eq!(
+            boundary_edge.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(1), r(0))
+        );
+
+        let SurfaceSurfaceIntersection::Curves(boundary_pair) = boundary_surface([[1, 0], [0, 0]])
+            .intersect_surface(&plane)
+            .unwrap()
+        else {
+            panic!("three zero Bernstein corners must retain both opposite boundary iso-lines");
+        };
+        assert_eq!(boundary_pair.len(), 2);
+        assert_eq!(
+            boundary_pair[0].first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(0), r(1))
+        );
+        assert_eq!(
+            boundary_pair[0].first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(1), r(1))
+        );
+        assert_eq!(
+            boundary_pair[1].first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(1), r(0))
+        );
+        assert_eq!(
+            boundary_pair[1].first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(r(1), r(1))
+        );
+
+        let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
+        let translated_surface = surface.transformed(&translation, false).unwrap();
+        let translated_plane = plane.transformed(&translation, false).unwrap();
+        let SurfaceSurfaceIntersection::Curves(translated) = translated_surface
+            .intersect_surface(&translated_plane)
+            .unwrap()
+        else {
+            panic!("translated pole branches must retain their exact construction");
+        };
+        assert_eq!(translated.len(), 2);
+        for (original, translated) in branches.iter().zip(&translated) {
+            let expected =
+                original.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+            assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
+        }
+
+        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
+        let SurfaceSurfaceIntersection::Curves(patch_branches) =
+            patch_surface.intersect_surface(&plane).unwrap()
+        else {
+            panic!("pole-branch patch must retain two topology-ready curves");
+        };
+        let (partitioned, partition) = patch
+            .split_face_by_surface_curves(face, &patch_branches, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(partition.faces.len(), 3);
+        assert_eq!(partition.traces.len(), 2);
+        assert_eq!(partitioned.counts().faces, 3);
+        let mut caller_reversed = patch_branches.clone();
+        caller_reversed.reverse();
+        let (reverse_partitioned, _) = patch
+            .split_face_by_surface_curves(face, &caller_reversed, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(
+            reverse_partitioned.to_json().unwrap(),
+            partitioned.to_json().unwrap()
+        );
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
         );
     }
 

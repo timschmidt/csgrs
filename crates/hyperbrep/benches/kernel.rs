@@ -1185,6 +1185,53 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let fraction = |numerator: i32, denominator: i32| {
+        (Real::from(numerator) / Real::from(denominator)).expect("benchmark rational denominator")
+    };
+    let pole_branch_tensor = Surface::rational_bezier(
+        vec![
+            vec![
+                Point3::new(Real::zero(), Real::zero(), fraction(3, 16)),
+                Point3::new(Real::from(2), Real::zero(), fraction(-5, 32)),
+            ],
+            vec![
+                Point3::new(Real::zero(), Real::from(2), fraction(-5, 48)),
+                Point3::new(Real::from(2), Real::from(2), fraction(3, 64)),
+            ],
+        ],
+        vec![
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(4)],
+        ],
+    )
+    .expect("benchmark weighted rational bilinear pole tensor");
+    let pole_plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y())
+        .expect("benchmark bilinear pole plane");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let SurfaceSurfaceIntersection::Curves(branches) = black_box(&pole_branch_tensor)
+            .intersect_surface(black_box(&pole_plane))
+            .expect("benchmark exact bounded bilinear pole branches")
+        else {
+            panic!("weighted bilinear pole tensor must retain two exact branches");
+        };
+        assert_eq!(branches.len(), 2);
+        for branch in &branches {
+            black_box(branch.curve().point_at(black_box(&midpoint)))
+                .expect("benchmark bounded rational-quartic branch evaluation");
+            black_box(branch.first_pcurve().point_at(black_box(&midpoint)))
+                .expect("benchmark bounded rational-quadratic branch evaluation");
+            checksum += 1;
+        }
+        black_box(branches);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/rational_bilinear_tensor_plane_two_pole_branches: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     const TENSOR_GRAPH_SPLIT_ITERATIONS: usize = 100;
     let (graph_patch, graph_face) = builder::rational_bezier_patch(
         vec![

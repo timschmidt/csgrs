@@ -699,6 +699,92 @@ fuzz_target!(|bytes: &[u8]| {
             }
         }
     }
+    let rational = |numerator: i32, denominator: i32| {
+        (Real::from(numerator) / Real::from(denominator)).expect("fixed nonzero fuzz denominator")
+    };
+    let plane_values = match bytes[2] % 4 {
+        0 => [
+            [rational(3, 16), rational(-5, 16)],
+            [rational(-5, 16), rational(3, 16)],
+        ],
+        1 => [
+            [rational(1, 4), rational(-1, 4)],
+            [rational(-1, 4), rational(1, 4)],
+        ],
+        2 => [[Real::one(), -Real::one()], [Real::one(), Real::one()]],
+        _ => [[Real::zero(), Real::one()], [Real::one(), Real::zero()]],
+    };
+    let pole_weights = vec![
+        vec![Real::one(), Real::from(2)],
+        vec![Real::from(3), Real::from(4)],
+    ];
+    let pole_controls = vec![
+        vec![
+            hyperbrep::Point3::new(Real::zero(), Real::zero(), plane_values[0][0].clone()),
+            hyperbrep::Point3::new(
+                Real::from(2),
+                Real::zero(),
+                (&plane_values[0][1] / Real::from(2)).expect("fixed nonzero fuzz denominator"),
+            ),
+        ],
+        vec![
+            hyperbrep::Point3::new(
+                Real::zero(),
+                Real::from(2),
+                (&plane_values[1][0] / Real::from(3)).expect("fixed nonzero fuzz denominator"),
+            ),
+            hyperbrep::Point3::new(
+                Real::from(2),
+                Real::from(2),
+                (&plane_values[1][1] / Real::from(4)).expect("fixed nonzero fuzz denominator"),
+            ),
+        ],
+    ];
+    let Ok(pole_tensor) = Surface::rational_bezier(pole_controls.clone(), pole_weights.clone())
+    else {
+        return;
+    };
+    let Ok(pole_plane) = Surface::plane(hyperbrep::Point3::origin(), Vector3::x(), Vector3::y())
+    else {
+        return;
+    };
+    let retained = match pole_tensor.intersect_surface(&pole_plane) {
+        Ok(SurfaceSurfaceIntersection::Curve(curve)) => vec![*curve],
+        Ok(SurfaceSurfaceIntersection::Curves(curves)) => curves,
+        Ok(SurfaceSurfaceIntersection::Point(point)) => {
+            let _ = point;
+            Vec::new()
+        }
+        Ok(SurfaceSurfaceIntersection::Points(points)) => {
+            let _ = points;
+            Vec::new()
+        }
+        _ => Vec::new(),
+    };
+    let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
+    for curve in &retained {
+        let _ = curve.curve().point_at(&parameter);
+        let _ = curve.first_pcurve().point_at(&parameter);
+        let _ = curve.second_pcurve().point_at(&parameter);
+    }
+    if bytes[2] % 4 < 3 && !retained.is_empty() {
+        let Ok((patch, face)) = builder::rational_bezier_patch(pole_controls, pole_weights) else {
+            return;
+        };
+        if let Ok((split, _)) =
+            patch.split_face_by_surface_curves(face, &retained, SurfaceIntersectionOperand::First)
+        {
+            let Ok(json) = split.to_json() else {
+                return;
+            };
+            let Ok(replayed) = RawModel::from_json(&json).and_then(RawModel::validate) else {
+                panic!("validated pole-branch bilinear split failed persistence replay");
+            };
+            if replayed.to_json().ok().as_deref() != Some(json.as_str()) {
+                panic!("pole-branch bilinear split replay changed exact persistence");
+            }
+        }
+    }
     if bytes[0] % 7 == 3 {
         let Ok((graph_patch, graph_face)) = builder::rational_bezier_patch(
             vec![
