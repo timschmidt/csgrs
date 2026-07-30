@@ -551,7 +551,8 @@ impl TriangleMesh {
         }
 
         let mut corners = [false; 8];
-        for point in self.positions.iter() {
+        let mut position_corners = [0_u8; 8];
+        for (position_index, point) in self.positions.iter().enumerate() {
             let mut corner = 0;
             for axis in 0..3 {
                 let value = axis_ref(point, axis);
@@ -566,49 +567,59 @@ impl TriangleMesh {
             if std::mem::replace(&mut corners[corner], true) {
                 return Ok(None);
             }
+            position_corners[position_index] = corner as u8;
         }
         if corners.iter().any(|present| !present) {
             return Ok(None);
         }
 
         let mut face_triangles = [0_u8; 6];
+        let mut face_corner_masks = [0_u8; 6];
         for triangle in self.triangles.iter() {
             let [a, b, c] = triangle.indices();
-            let Some(points) = Option::zip(
-                Option::zip(self.positions.get(a), self.positions.get(b)),
-                self.positions.get(c),
+            let Some(corners) = Option::zip(
+                Option::zip(position_corners.get(a), position_corners.get(b)),
+                position_corners.get(c),
             )
-            .map(|((a, b), c)| [a, b, c]) else {
+            .map(|((a, b), c)| [*a, *b, *c]) else {
                 return Ok(None);
             };
+            let corner_mask = corners
+                .into_iter()
+                .fold(0_u8, |mask, corner| mask | (1_u8 << corner));
+            if corner_mask.count_ones() != 3 {
+                return Ok(None);
+            }
             let mut face = None;
             for axis in 0..3 {
-                let minimum = axis_ref(&bounds.mins, axis);
-                let points_match = |value: &Real| -> HypermeshResult<bool> {
-                    for point in points {
-                        if !compare_real_decision(decisions, axis_ref(point, axis), value)?.is_eq()
-                        {
-                            return Ok(false);
-                        }
-                    }
-                    Ok(true)
-                };
-                if points_match(minimum)? {
-                    face = Some(axis * 2);
-                    break;
-                }
-                let maximum = axis_ref(&bounds.maxs, axis);
-                if points_match(maximum)? {
-                    face = Some(axis * 2 + 1);
+                let side = (corners[0] >> axis) & 1;
+                if corners.iter().all(|corner| ((corner >> axis) & 1) == side) {
+                    face = Some((axis, side));
                     break;
                 }
             }
-            let Some(face) = face else {
+            let Some((axis, side)) = face else {
                 return Ok(None);
             };
+            let first_axis = (axis + 1) % 3;
+            let second_axis = (axis + 2) % 3;
+            let coordinate = |corner: u8, axis| i8::from(((corner >> axis) & 1) != 0);
+            let orientation = (coordinate(corners[1], first_axis)
+                - coordinate(corners[0], first_axis))
+                * (coordinate(corners[2], second_axis) - coordinate(corners[0], second_axis))
+                - (coordinate(corners[1], second_axis) - coordinate(corners[0], second_axis))
+                    * (coordinate(corners[2], first_axis) - coordinate(corners[0], first_axis));
+            if orientation != if side == 0 { -1 } else { 1 } {
+                return Ok(None);
+            }
+            let face = axis * 2 + usize::from(side);
             face_triangles[face] = face_triangles[face].saturating_add(1);
+            face_corner_masks[face] |= corner_mask;
         }
-        Ok((face_triangles == [2; 6]).then_some(bounds))
+        Ok(
+            (face_triangles == [2; 6] && face_corner_masks == [0x55, 0xaa, 0x33, 0xcc, 0x0f, 0xf0])
+                .then_some(bounds),
+        )
     }
 
     /// Applies an exact homogeneous transform under the selected predicate

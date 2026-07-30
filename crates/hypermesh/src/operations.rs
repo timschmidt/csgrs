@@ -9,18 +9,18 @@ use hyperlattice::{
 };
 use hyperreal::RationalLinearForm4Query;
 
-use crate::context::{DecisionContext, MeshContext, MeshOutcome};
+use crate::context::{DecisionContext, MeshCertainty, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{
     Aabb, Classification, Plane, affine_projective_point_decision, axis_mut, axis_ref,
     compare_real_decision,
 };
 use crate::mesh::{
-    Triangle, TriangleMesh, TriangleMeshRef, build_polygon_soup_with_certified_convex_inputs,
-    build_polygon_soup_with_deferred_edges,
+    OutputVertex, Triangle, TriangleMesh, TriangleMeshRef,
+    build_polygon_soup_with_certified_convex_inputs, build_polygon_soup_with_deferred_edges,
 };
 use crate::output::{
-    ARRANGEMENT_CLASSIFICATION, BooleanResult, ClassifiedPolygon,
+    ARRANGEMENT_CLASSIFICATION, BooleanMesh, BooleanResult, ClassifiedPolygon, TriangleSource,
     certify_output_polygon_closure_decision,
 };
 use crate::polygon::{
@@ -238,6 +238,14 @@ pub fn boolean_mesh(
 ) -> HypermeshResult<MeshOutcome<crate::output::BooleanMesh>> {
     let decisions = DecisionContext::new(context);
     crate::trace_dispatch!("boolean-operation", "start");
+    if let [left, right] = meshes
+        && let (Some(left), Some(right)) = (left.native, right.native)
+        && let Some(soup) = axis_aligned_box_boolean_mesh(&decisions, left, right, operation)?
+    {
+        crate::trace_dispatch!("boolean-operation", "exact-box-cell");
+        crate::trace_dispatch!("boolean-operation", "complete");
+        return Ok(decisions.finish(soup));
+    }
     let computation = if let Some(native) = native_meshes(meshes) {
         compute_native_boolean(&decisions, &native, operation, config, false)?
     } else {
@@ -465,6 +473,438 @@ fn boolean_triangle_meshes_decision(
         };
     let (mesh, provenance) = computation.into_native_materialization(decisions, operation)?;
     materialize_boolean_mesh(mesh, provenance)
+}
+
+fn axis_aligned_box_boolean_mesh(
+    decisions: &DecisionContext,
+    left: &TriangleMesh,
+    right: &TriangleMesh,
+    operation: BooleanOp,
+) -> HypermeshResult<Option<BooleanMesh>> {
+    let (Some(left_bounds), Some(right_bounds)) = (
+        optional_predicate_fact(left.axis_aligned_box_bounds_decision(decisions))?,
+        optional_predicate_fact(right.axis_aligned_box_bounds_decision(decisions))?,
+    ) else {
+        return Ok(None);
+    };
+
+    match exact_box_cell_boolean_mesh(
+        decisions,
+        left,
+        right,
+        &left_bounds,
+        &right_bounds,
+        operation,
+    ) {
+        Ok(mesh) => Ok(Some(mesh)),
+        Err(HypermeshError::PredicateUndecided { .. }) => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+fn append_input_box_boolean_mesh(
+    result: &mut BooleanMesh,
+    mesh: &TriangleMesh,
+    source_mesh: isize,
+    source_triangle_offset: isize,
+) {
+    // The only callers hold fresh output and meshes accepted by the box
+    // detector, which proves 8 valid vertices and 12 valid triangles.
+    debug_assert_eq!(mesh.positions.len(), 8);
+    debug_assert_eq!(mesh.triangles.len(), 12);
+    let vertex_offset = result.vertices.len();
+    result.vertices.reserve(mesh.positions.len());
+    result
+        .vertices
+        .extend(mesh.positions.iter().map(|point| OutputVertex {
+            x: point.x.clone(),
+            y: point.y.clone(),
+            z: point.z.clone(),
+        }));
+    result.triangles.reserve(mesh.triangles.len());
+    result.sources.reserve(mesh.triangles.len());
+    for (triangle_index, triangle) in mesh.triangles.iter().enumerate() {
+        let [a, b, c] = triangle.indices();
+        result
+            .triangles
+            .push([vertex_offset + a, vertex_offset + b, vertex_offset + c]);
+        result.sources.push(TriangleSource {
+            mesh: source_mesh,
+            triangle: source_triangle_offset + triangle_index as isize,
+            orientation: 1,
+        });
+    }
+}
+
+struct BoxAxisCoordinates {
+    values: [Real; 4],
+    len: usize,
+}
+
+fn sorted_unique_box_coordinates(
+    decisions: &DecisionContext,
+    mut values: [Real; 4],
+) -> HypermeshResult<BoxAxisCoordinates> {
+    for index in 1..values.len() {
+        let mut cursor = index;
+        while cursor != 0 {
+            if compare_real_decision(decisions, &values[cursor], &values[cursor - 1])?.is_lt() {
+                values.swap(cursor, cursor - 1);
+                cursor -= 1;
+            } else {
+                break;
+            }
+        }
+    }
+    let mut len = 1;
+    for index in 1..values.len() {
+        if !compare_real_decision(decisions, &values[index], &values[len - 1])?.is_eq() {
+            values.swap(len, index);
+            len += 1;
+        }
+    }
+    if decisions.certainty() == MeshCertainty::Approximate512Consumed {
+        for left in 0..len {
+            for right in left + 1..len {
+                if !compare_real_decision(decisions, &values[left], &values[right])?.is_lt() {
+                    return Err(HypermeshError::UnknownClassification);
+                }
+            }
+        }
+    }
+    Ok(BoxAxisCoordinates { values, len })
+}
+
+fn box_grid_ranges(
+    decisions: &DecisionContext,
+    axes: &[BoxAxisCoordinates; 3],
+    bounds: &hyperlattice::Aabb,
+) -> HypermeshResult<[[usize; 2]; 3]> {
+    let mut ranges = [[0; 2]; 3];
+    for axis in 0..3 {
+        for (range_index, value) in [axis_ref(&bounds.mins, axis), axis_ref(&bounds.maxs, axis)]
+            .into_iter()
+            .enumerate()
+        {
+            let mut found = None;
+            for (index, candidate) in axes[axis].values[..axes[axis].len].iter().enumerate() {
+                if compare_real_decision(decisions, candidate, value)?.is_eq() {
+                    found = Some(index);
+                    break;
+                }
+            }
+            ranges[axis][range_index] = found.ok_or(HypermeshError::UnknownClassification)?;
+        }
+    }
+    Ok(ranges)
+}
+
+fn box_grid_vertex(
+    axes: &[BoxAxisCoordinates; 3],
+    coordinates: [usize; 3],
+    indices: &mut [usize; 64],
+    vertices: &mut Vec<OutputVertex>,
+) -> usize {
+    let slot = (coordinates[0] * axes[1].len + coordinates[1]) * axes[2].len + coordinates[2];
+    if indices[slot] != usize::MAX {
+        return indices[slot];
+    }
+    let index = vertices.len();
+    vertices.push(OutputVertex {
+        x: axes[0].values[coordinates[0]].clone(),
+        y: axes[1].values[coordinates[1]].clone(),
+        z: axes[2].values[coordinates[2]].clone(),
+    });
+    indices[slot] = index;
+    index
+}
+
+fn append_box_grid_face(
+    axes: &[BoxAxisCoordinates; 3],
+    ranges: &[[usize; 2]; 3],
+    axis: usize,
+    side: usize,
+    source_mesh: u8,
+    orientation: i8,
+    vertex_indices: &mut [usize; 64],
+    result: &mut BooleanMesh,
+) {
+    let first_axis = (axis + if side == 0 { 2 } else { 1 }) % 3;
+    let second_axis = (axis + if side == 0 { 1 } else { 2 }) % 3;
+    let mut face = [[ranges[0][0], ranges[1][0], ranges[2][0]]; 4];
+    for corner in &mut face {
+        corner[axis] = ranges[axis][side];
+    }
+    face[1][first_axis] = ranges[first_axis][1];
+    face[2][first_axis] = ranges[first_axis][1];
+    face[2][second_axis] = ranges[second_axis][1];
+    face[3][second_axis] = ranges[second_axis][1];
+    let face = face.map(|coordinates| {
+        box_grid_vertex(axes, coordinates, vertex_indices, &mut result.vertices)
+    });
+    result
+        .triangles
+        .extend([[face[0], face[1], face[2]], [face[0], face[2], face[3]]]);
+    result.sources.extend([
+        TriangleSource {
+            mesh: isize::from(source_mesh),
+            triangle: -1,
+            orientation,
+        },
+        TriangleSource {
+            mesh: isize::from(source_mesh),
+            triangle: -1,
+            orientation,
+        },
+    ]);
+}
+
+fn exact_box_cell_boolean_mesh(
+    decisions: &DecisionContext,
+    left_mesh: &TriangleMesh,
+    right_mesh: &TriangleMesh,
+    left: &hyperlattice::Aabb,
+    right: &hyperlattice::Aabb,
+    operation: BooleanOp,
+) -> HypermeshResult<BooleanMesh> {
+    let axes = [
+        sorted_unique_box_coordinates(
+            decisions,
+            [
+                left.mins.x.clone(),
+                left.maxs.x.clone(),
+                right.mins.x.clone(),
+                right.maxs.x.clone(),
+            ],
+        )?,
+        sorted_unique_box_coordinates(
+            decisions,
+            [
+                left.mins.y.clone(),
+                left.maxs.y.clone(),
+                right.mins.y.clone(),
+                right.maxs.y.clone(),
+            ],
+        )?,
+        sorted_unique_box_coordinates(
+            decisions,
+            [
+                left.mins.z.clone(),
+                left.maxs.z.clone(),
+                right.mins.z.clone(),
+                right.maxs.z.clone(),
+            ],
+        )?,
+    ];
+    let dimensions = [axes[0].len - 1, axes[1].len - 1, axes[2].len - 1];
+    let left_ranges = box_grid_ranges(decisions, &axes, left)?;
+    let right_ranges = box_grid_ranges(decisions, &axes, right)?;
+    if left_ranges
+        .iter()
+        .chain(&right_ranges)
+        .any(|range| range[0] >= range[1])
+    {
+        return Err(HypermeshError::UnknownClassification);
+    }
+    let cell_index = |x: usize, y: usize, z: usize| (x * dimensions[1] + y) * dimensions[2] + z;
+    let mut cell_inputs = [0_u8; 27];
+    for x in 0..dimensions[0] {
+        for y in 0..dimensions[1] {
+            for z in 0..dimensions[2] {
+                let coordinates = [x, y, z];
+                let in_box = |ranges: &[[usize; 2]; 3]| {
+                    coordinates[0] >= ranges[0][0]
+                        && coordinates[0] < ranges[0][1]
+                        && coordinates[1] >= ranges[1][0]
+                        && coordinates[1] < ranges[1][1]
+                        && coordinates[2] >= ranges[2][0]
+                        && coordinates[2] < ranges[2][1]
+                };
+                cell_inputs[cell_index(x, y, z)] =
+                    u8::from(in_box(&left_ranges)) | (u8::from(in_box(&right_ranges)) << 1);
+            }
+        }
+    }
+    let is_material = |inputs: u8| match operation {
+        BooleanOp::Union => inputs != 0,
+        BooleanOp::Intersection => inputs == 3,
+        BooleanOp::Difference => inputs == 1,
+        BooleanOp::SymmetricDifference => inputs == 1 || inputs == 2,
+    };
+    let cells = &cell_inputs[..dimensions.into_iter().product()];
+    if cells.iter().all(|inputs| !is_material(*inputs)) {
+        return Ok(BooleanMesh::default());
+    }
+    for (source_mesh, (mesh, source_bit, source_offset)) in [
+        (left_mesh, 1_u8, 0),
+        (right_mesh, 2_u8, left_mesh.triangles.len()),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        if cells
+            .iter()
+            .all(|inputs| is_material(*inputs) == (inputs & source_bit != 0))
+        {
+            let mut result = BooleanMesh::default();
+            append_input_box_boolean_mesh(
+                &mut result,
+                mesh,
+                source_mesh as isize,
+                source_offset as isize,
+            );
+            return Ok(result);
+        }
+    }
+    let mut separated = false;
+    for axis in 0..3 {
+        separated |= left_ranges[axis][1] < right_ranges[axis][0]
+            || right_ranges[axis][1] < left_ranges[axis][0];
+    }
+    if separated && matches!(operation, BooleanOp::Union | BooleanOp::SymmetricDifference) {
+        let mut result = BooleanMesh::default();
+        append_input_box_boolean_mesh(&mut result, left_mesh, 0, 0);
+        append_input_box_boolean_mesh(
+            &mut result,
+            right_mesh,
+            1,
+            left_mesh.triangles.len() as isize,
+        );
+        return Ok(result);
+    }
+
+    let mut material_ranges = [[usize::MAX, 0]; 3];
+    for x in 0..dimensions[0] {
+        for y in 0..dimensions[1] {
+            for z in 0..dimensions[2] {
+                if is_material(cell_inputs[cell_index(x, y, z)]) {
+                    for (axis, coordinate) in [x, y, z].into_iter().enumerate() {
+                        material_ranges[axis][0] = material_ranges[axis][0].min(coordinate);
+                        material_ranges[axis][1] = material_ranges[axis][1].max(coordinate + 1);
+                    }
+                }
+            }
+        }
+    }
+    let mut material_is_box = true;
+    'cells: for x in 0..dimensions[0] {
+        for y in 0..dimensions[1] {
+            for z in 0..dimensions[2] {
+                let coordinates = [x, y, z];
+                let inside_range = coordinates[0] >= material_ranges[0][0]
+                    && coordinates[0] < material_ranges[0][1]
+                    && coordinates[1] >= material_ranges[1][0]
+                    && coordinates[1] < material_ranges[1][1]
+                    && coordinates[2] >= material_ranges[2][0]
+                    && coordinates[2] < material_ranges[2][1];
+                if is_material(cell_inputs[cell_index(x, y, z)]) != inside_range {
+                    material_is_box = false;
+                    break 'cells;
+                }
+            }
+        }
+    }
+    if material_is_box {
+        let mut result = BooleanMesh {
+            vertices: Vec::with_capacity(8),
+            triangles: Vec::with_capacity(12),
+            sources: Vec::with_capacity(12),
+        };
+        let mut vertex_indices = [usize::MAX; 64];
+        for axis in 0..3 {
+            for side in 0..2 {
+                let mut inside = material_ranges.map(|range| range[0]);
+                inside[axis] = material_ranges[axis][side] - side;
+                let inputs = cell_inputs[cell_index(inside[0], inside[1], inside[2])];
+                let neighbor_inputs = if material_ranges[axis][side] == side * dimensions[axis] {
+                    0
+                } else {
+                    let mut neighbor = inside;
+                    neighbor[axis] = material_ranges[axis][side] - (1 - side);
+                    cell_inputs[cell_index(neighbor[0], neighbor[1], neighbor[2])]
+                };
+                let changed_inputs = inputs ^ neighbor_inputs;
+                let source_mesh = if changed_inputs & 1 != 0 { 0_u8 } else { 1_u8 };
+                let orientation = if inputs & (1_u8 << source_mesh) != 0 {
+                    1
+                } else {
+                    -1
+                };
+                append_box_grid_face(
+                    &axes,
+                    &material_ranges,
+                    axis,
+                    side,
+                    source_mesh,
+                    orientation,
+                    &mut vertex_indices,
+                    &mut result,
+                );
+            }
+        }
+        return Ok(result);
+    }
+
+    let mut result = BooleanMesh {
+        vertices: Vec::with_capacity(8),
+        triangles: Vec::with_capacity(12),
+        sources: Vec::with_capacity(12),
+    };
+    let mut vertex_indices = [usize::MAX; 64];
+    for x in 0..dimensions[0] {
+        for y in 0..dimensions[1] {
+            for z in 0..dimensions[2] {
+                let inputs = cell_inputs[cell_index(x, y, z)];
+                if !is_material(inputs) {
+                    continue;
+                }
+                let coordinates = [x, y, z];
+                for axis in 0..3 {
+                    for side in 0..2 {
+                        let neighbor_coordinate = if side == 0 {
+                            coordinates[axis].checked_sub(1)
+                        } else {
+                            (coordinates[axis] + 1 < dimensions[axis])
+                                .then_some(coordinates[axis] + 1)
+                        };
+                        let neighbor_inputs = neighbor_coordinate
+                            .map(|neighbor| {
+                                let mut neighbor_coordinates = coordinates;
+                                neighbor_coordinates[axis] = neighbor;
+                                cell_inputs[cell_index(
+                                    neighbor_coordinates[0],
+                                    neighbor_coordinates[1],
+                                    neighbor_coordinates[2],
+                                )]
+                            })
+                            .unwrap_or(0);
+                        if is_material(neighbor_inputs) {
+                            continue;
+                        }
+                        let changed_inputs = inputs ^ neighbor_inputs;
+                        let source_mesh = if changed_inputs & 1 != 0 { 0_u8 } else { 1_u8 };
+                        let orientation = if inputs & (1_u8 << source_mesh) != 0 {
+                            1
+                        } else {
+                            -1
+                        };
+                        let ranges = [[x, x + 1], [y, y + 1], [z, z + 1]];
+                        append_box_grid_face(
+                            &axes,
+                            &ranges,
+                            axis,
+                            side,
+                            source_mesh,
+                            orientation,
+                            &mut vertex_indices,
+                            &mut result,
+                        );
+                    }
+                }
+            }
+        }
+    }
+    Ok(result)
 }
 
 fn optional_predicate_fact<T>(result: HypermeshResult<Option<T>>) -> HypermeshResult<Option<T>> {
@@ -4480,6 +4920,19 @@ mod tests {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
 
+    fn signed_six_volume(mesh: &BooleanMesh) -> Real {
+        let mut volume = Real::zero();
+        for triangle in &mesh.triangles {
+            let a = &mesh.vertices[triangle[0]];
+            let b = &mesh.vertices[triangle[1]];
+            let c = &mesh.vertices[triangle[2]];
+            volume += &a.x * &(&b.y * &c.z - &b.z * &c.y)
+                + &a.y * &(&b.z * &c.x - &b.x * &c.z)
+                + &a.z * &(&b.x * &c.y - &b.y * &c.x);
+        }
+        volume
+    }
+
     #[test]
     fn boolean_materialization_removes_exact_duplicate_faces_before_certification() {
         let mut soup = crate::output::BooleanMesh {
@@ -4524,6 +4977,157 @@ mod tests {
                 .unwrap()
         );
         assert!(crate::output::boolean_mesh_closure_evidence(&certified).is_closed());
+    }
+
+    #[test]
+    fn exact_box_cell_boolean_covers_every_operation_and_geometric_relation() {
+        let context = MeshContext::new(crate::PredicatePolicy::STRICT);
+        let decisions = DecisionContext::new(&context);
+        let cases = [
+            (
+                "disjoint",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(1, 1, 1)),
+                hyperlattice::Aabb::new(p(2, 0, 0), p(3, 1, 1)),
+                [2_i64, 0, 1, 2],
+                [false; 4],
+            ),
+            (
+                "equal",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(2, 2, 2)),
+                hyperlattice::Aabb::new(p(0, 0, 0), p(2, 2, 2)),
+                [8, 8, 0, 0],
+                [false; 4],
+            ),
+            (
+                "left-contains-right",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+                hyperlattice::Aabb::new(p(1, 1, 1), p(3, 3, 3)),
+                [64, 8, 56, 56],
+                [false, false, true, true],
+            ),
+            (
+                "right-contains-left",
+                hyperlattice::Aabb::new(p(1, 1, 1), p(3, 3, 3)),
+                hyperlattice::Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+                [64, 8, 0, 56],
+                [false, false, false, true],
+            ),
+            (
+                "adjacent",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(2, 2, 2)),
+                hyperlattice::Aabb::new(p(2, 0, 0), p(4, 2, 2)),
+                [16, 0, 8, 16],
+                [true, false, false, true],
+            ),
+            (
+                "partial-contact",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(2, 2, 2)),
+                hyperlattice::Aabb::new(p(2, 1, 0), p(4, 3, 2)),
+                [16, 0, 8, 16],
+                [true, false, false, true],
+            ),
+            (
+                "overlap",
+                hyperlattice::Aabb::new(p(0, 0, 0), p(4, 4, 4)),
+                hyperlattice::Aabb::new(p(2, 1, 1), p(6, 3, 3)),
+                [72, 8, 56, 64],
+                [true; 4],
+            ),
+        ];
+        let operations = [
+            BooleanOp::Union,
+            BooleanOp::Intersection,
+            BooleanOp::Difference,
+            BooleanOp::SymmetricDifference,
+        ];
+
+        for (relation, left_bounds, right_bounds, expected_volumes, synthesized) in cases {
+            let left = box_from_bounds(&left_bounds);
+            let right = box_from_bounds(&right_bounds);
+            for (index, operation) in operations.into_iter().enumerate() {
+                let direct = axis_aligned_box_boolean_mesh(&decisions, &left, &right, operation)
+                    .unwrap()
+                    .expect("both inputs are certified axis-aligned boxes");
+                let public = boolean_mesh(
+                    &context,
+                    &[left.as_ref(), right.as_ref()],
+                    operation,
+                    EmberConfig::default(),
+                )
+                .unwrap();
+                assert_eq!(public.certainty, crate::MeshCertainty::Certified);
+                assert_eq!(public.value, direct);
+                assert!(
+                    direct
+                        .has_unique_nondegenerate_triangles_decision(&decisions)
+                        .unwrap(),
+                    "{relation}: {operation:?}"
+                );
+                let closure = crate::output::boolean_mesh_closure_evidence(&direct);
+                assert!(
+                    closure.has_no_boundary(),
+                    "{relation}: {operation:?}: {closure:?}"
+                );
+                assert_eq!(
+                    signed_six_volume(&direct),
+                    Real::from(6 * expected_volumes[index]),
+                    "{relation}: {operation:?}"
+                );
+                if !direct.triangles.is_empty() {
+                    assert_eq!(
+                        direct.sources.iter().all(|source| source.triangle == -1),
+                        synthesized[index],
+                        "{relation}: {operation:?}"
+                    );
+                }
+                if relation == "overlap" && operation == BooleanOp::Difference {
+                    assert!(
+                        direct
+                            .sources
+                            .iter()
+                            .any(|source| source.mesh == 1 && source.orientation == -1)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn exact_box_cell_boolean_obeys_terminal_equality_policy() {
+        let left_boundary = Real::pi() + Real::e();
+        let right_boundary = Real::e() + Real::pi();
+        let left_bounds = hyperlattice::Aabb::new(
+            Point3::origin(),
+            Point3::new(left_boundary, Real::one(), Real::one()),
+        );
+        let right_bounds = hyperlattice::Aabb::new(
+            Point3::new(right_boundary.clone(), Real::zero(), Real::zero()),
+            Point3::new(&right_boundary + &Real::one(), Real::one(), Real::one()),
+        );
+        let left = box_from_bounds(&left_bounds);
+        let right = box_from_bounds(&right_bounds);
+
+        let strict_context = MeshContext::new(crate::PredicatePolicy::STRICT);
+        let strict = DecisionContext::new(&strict_context);
+        assert_eq!(
+            axis_aligned_box_boolean_mesh(&strict, &left, &right, BooleanOp::Union).unwrap(),
+            None
+        );
+        assert_eq!(strict.certainty(), crate::MeshCertainty::Certified);
+
+        let approximate_context = MeshContext::new(crate::PredicatePolicy::APPROXIMATE_512);
+        let approximate = boolean_mesh(
+            &approximate_context,
+            &[left.as_ref(), right.as_ref()],
+            BooleanOp::Union,
+            EmberConfig::default(),
+        )
+        .unwrap();
+        assert_eq!(
+            approximate.certainty,
+            crate::MeshCertainty::Approximate512Consumed
+        );
+        assert!(crate::output::boolean_mesh_closure_evidence(&approximate.value).has_no_boundary());
     }
 
     #[test]

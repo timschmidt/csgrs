@@ -535,6 +535,9 @@ pub struct TriangleSource {
     /// Source mesh index.
     pub mesh: isize,
     /// Global source triangle index across the ordered input mesh streams.
+    ///
+    /// `-1` denotes a triangle synthesized from certified analytic source
+    /// geometry, such as an exact axis-aligned-box cell boundary.
     pub triangle: isize,
     /// `+1` when output orientation matches the source and `-1` when inverted.
     ///

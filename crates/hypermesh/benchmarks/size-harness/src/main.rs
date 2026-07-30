@@ -1,8 +1,8 @@
 use std::hint::black_box;
 
 use hypermesh::{
-    BooleanOp, EmberConfig, Point3, Real, Triangle, TriangleMesh, boolean_operation,
-    triangulate_and_resolve_certified,
+    BooleanOp, EmberConfig, MeshContext, Point3, PredicatePolicy, Real, Triangle, TriangleMesh,
+    boolean_operation, triangulate_and_resolve_certified,
 };
 
 fn tetrahedron(x_offset: i64) -> TriangleMesh {
@@ -33,19 +33,22 @@ fn selected_operation() -> BooleanOp {
 }
 
 fn main() -> hypermesh::HypermeshResult<()> {
+    let context = MeshContext::new(PredicatePolicy::APPROXIMATE_512);
     let first = tetrahedron(0);
     let second = tetrahedron(1);
     let result = boolean_operation(
+        black_box(&context),
         black_box(&[first.as_ref(), second.as_ref()]),
         black_box(selected_operation()),
         EmberConfig::default(),
     )?;
-    let triangles = triangulate_and_resolve_certified(black_box(&result))?;
+    let triangles =
+        triangulate_and_resolve_certified(black_box(&context), black_box(&result.value))?;
     println!(
         "{} polygons, {} vertices, {} triangles",
-        result.output().polygons.len(),
-        triangles.vertices.len(),
-        triangles.triangles.len()
+        result.value.output().polygons.len(),
+        triangles.value.vertices.len(),
+        triangles.value.triangles.len()
     );
     Ok(())
 }

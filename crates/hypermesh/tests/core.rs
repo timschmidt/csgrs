@@ -1057,10 +1057,13 @@ fn boolean_operation_accepts_input_mesh_refs() {
 }
 
 #[test]
-fn immediate_boolean_mesh_matches_each_polygon_boolean_operation() {
+fn general_immediate_boolean_mesh_matches_each_polygon_boolean_operation() {
     let left = cube_mesh(0, 2);
     let right = cube_mesh(1, 3);
-    let meshes = [left.as_ref(), right.as_ref()];
+    let meshes = [
+        TriangleMeshRef::new(&left.positions, &left.triangles),
+        TriangleMeshRef::new(&right.positions, &right.triangles),
+    ];
 
     for operation in [
         BooleanOp::Union,
@@ -1127,10 +1130,13 @@ fn certified_convex_immediate_paths_match_general_volume_and_direct_output() {
 }
 
 #[test]
-fn immediate_operations_preserve_coincident_mesh_winding_evidence() {
+fn general_immediate_operations_preserve_coincident_mesh_winding_evidence() {
     let left = cube_mesh(0, 2);
     let right = cube_mesh(0, 2);
-    let meshes = [left.as_ref(), right.as_ref()];
+    let meshes = [
+        TriangleMeshRef::new(&left.positions, &left.triangles),
+        TriangleMeshRef::new(&right.positions, &right.triangles),
+    ];
 
     for operation in [
         BooleanOp::Union,
@@ -1443,6 +1449,42 @@ fn disjoint_cube_difference_keeps_left_cube() {
     let difference_soup = approximate_triangulate_and_resolve_certified(&difference).unwrap();
     assert!(hypermesh::boolean_mesh_is_closed(&difference_soup));
     assert_boolean_mesh_on_cube_boundary(&difference_soup, 0, 2);
+}
+
+#[test]
+fn axis_aligned_box_fact_requires_complete_outward_face_triangulations() {
+    let strict = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::STRICT);
+    let valid = cube_mesh(0, 2);
+    assert!(
+        valid
+            .axis_aligned_box_bounds(&strict)
+            .unwrap()
+            .into_value()
+            .is_some()
+    );
+
+    let mut duplicate_face = valid.triangles.to_vec();
+    duplicate_face[1] = duplicate_face[0];
+    let duplicate_face = hypermesh::TriangleMesh::new(valid.positions.to_vec(), duplicate_face);
+    assert!(
+        duplicate_face
+            .axis_aligned_box_bounds(&strict)
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
+
+    let mut inward_face = valid.triangles.to_vec();
+    let [a, b, c] = inward_face[0].indices();
+    inward_face[0] = Triangle::new(a, c, b);
+    let inward_face = hypermesh::TriangleMesh::new(valid.positions.to_vec(), inward_face);
+    assert!(
+        inward_face
+            .axis_aligned_box_bounds(&strict)
+            .unwrap()
+            .into_value()
+            .is_none()
+    );
 }
 
 #[test]
