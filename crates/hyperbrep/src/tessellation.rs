@@ -48,6 +48,11 @@ impl ExactPlanarFaceTriangulation {
 /// split into four by exact parameter midpoints for each
 /// [`Self::interior_refinement_levels`] level.
 ///
+/// A seam-free complete sphere has no boundary pcurve. For that family,
+/// `boundary_segments` instead selects that many cells per angular quadrant
+/// and twice as many latitude bands; each refinement level doubles both
+/// counts. The resulting seam exists only in the independent artifact.
+///
 /// This policy deliberately contains no geometric tolerance: until a
 /// surface-specific enclosure proves a chord-error bound, such a tolerance
 /// would be a request rather than a certificate.
@@ -66,7 +71,7 @@ impl ChordalApproximationPolicy {
         }
     }
 
-    /// Returns the number of equal intervals sampled on every boundary use.
+    /// Returns boundary intervals per use, or cells per spherical quadrant.
     pub const fn boundary_segments(self) -> NonZeroUsize {
         self.boundary_segments
     }
@@ -148,7 +153,7 @@ pub enum TessellationError {
     UnsupportedSurface(SurfaceKind),
     /// A boundary is not composed exclusively of exact line pcurves.
     CurvedBoundary,
-    /// Chordal output requires an explicit finite outer boundary.
+    /// A boundaryless surface lacks a supported artifact-local parameter mesh.
     MissingFiniteBoundary,
     /// The requested uniform refinement exceeds addressable index storage.
     RefinementOverflow,
@@ -174,8 +179,9 @@ impl fmt::Display for TessellationError {
             Self::CurvedBoundary => {
                 formatter.write_str("exact planar tessellation requires line pcurves")
             }
-            Self::MissingFiniteBoundary => formatter
-                .write_str("chordal face approximation requires an explicit finite boundary"),
+            Self::MissingFiniteBoundary => formatter.write_str(
+                "boundaryless face lacks a supported artifact-local parameter tessellation",
+            ),
             Self::RefinementOverflow => {
                 formatter.write_str("chordal refinement exceeds addressable index storage")
             }
@@ -250,10 +256,11 @@ pub fn triangulate_planar_face(
 /// Derives an explicitly lossy chordal approximation of a trimmed face.
 ///
 /// Every supported surface family is accepted when the face has an explicit
-/// finite outer boundary. Boundary pcurves of every evaluable family are
-/// sampled at exact uniform parameters. All boundary and refinement parameters
-/// are computed with [`Real`]. Every output point is then evaluated exactly
-/// from the immutable source surface.
+/// finite outer boundary. A complete seam-free sphere is also accepted through
+/// an artifact-local periodic mesh. Boundary pcurves of every evaluable family
+/// are sampled at exact uniform parameters. All boundary and refinement
+/// parameters are computed with [`Real`]. Every output point is then evaluated
+/// exactly from the immutable source surface.
 ///
 /// Only vertices are certified to lie on the source. Triangle edges and
 /// interiors are model-space chords with no geometric error bound.
@@ -268,6 +275,9 @@ pub fn approximate_face_chordally(
     let surface = model
         .surface(face.surface())
         .expect("validated face surface ID");
+    if face.outer().is_none() && surface.kind() == SurfaceKind::Sphere {
+        return approximate_complete_sphere_chordally(face_id, surface, face.orientation(), policy);
+    }
     let (mut parameters, hole_indices) =
         sampled_boundaries(model, face_id, policy.boundary_segments.get(), false)?;
     let hypertri_points = parameters
@@ -295,6 +305,107 @@ pub fn approximate_face_chordally(
     Ok(ChordalFaceApproximation {
         source_face: face_id,
         source_surface_kind: surface.kind(),
+        policy,
+        parameters,
+        points,
+        triangles,
+    })
+}
+
+fn approximate_complete_sphere_chordally(
+    face_id: FaceId,
+    surface: &crate::Surface,
+    orientation: Orientation,
+    policy: ChordalApproximationPolicy,
+) -> Result<ChordalFaceApproximation, TessellationError> {
+    let mut segments_per_quadrant = policy.boundary_segments.get();
+    for _ in 0..policy.interior_refinement_levels {
+        segments_per_quadrant = segments_per_quadrant
+            .checked_mul(2)
+            .ok_or(TessellationError::RefinementOverflow)?;
+    }
+    let longitude_count = segments_per_quadrant
+        .checked_mul(4)
+        .ok_or(TessellationError::RefinementOverflow)?;
+    let latitude_band_count = segments_per_quadrant
+        .checked_mul(2)
+        .ok_or(TessellationError::RefinementOverflow)?;
+    let ring_count = latitude_band_count - 1;
+    let parameter_count = ring_count
+        .checked_mul(longitude_count)
+        .and_then(|count| count.checked_add(2))
+        .ok_or(TessellationError::RefinementOverflow)?;
+    let triangle_count = ring_count
+        .checked_mul(longitude_count)
+        .and_then(|count| count.checked_mul(2))
+        .ok_or(TessellationError::RefinementOverflow)?;
+
+    let pi = Real::pi();
+    let two_pi = &pi * Real::from(2);
+    let half_pi = (pi.clone() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let longitude_denominator = Real::from(
+        u128::try_from(longitude_count).map_err(|_| TessellationError::RefinementOverflow)?,
+    );
+    let latitude_denominator = Real::from(
+        u128::try_from(latitude_band_count).map_err(|_| TessellationError::RefinementOverflow)?,
+    );
+    let mut parameters = Vec::with_capacity(parameter_count);
+    parameters.push(Point2::new(Real::zero(), -half_pi.clone()));
+    for latitude_index in 1..latitude_band_count {
+        let latitude_fraction = (Real::from(
+            u128::try_from(latitude_index).map_err(|_| TessellationError::RefinementOverflow)?,
+        ) / &latitude_denominator)
+            .map_err(|_| GeometryError::ProjectiveDivision)?;
+        let latitude = -half_pi.clone() + &pi * latitude_fraction;
+        for longitude_index in 0..longitude_count {
+            let longitude_fraction = (Real::from(
+                u128::try_from(longitude_index)
+                    .map_err(|_| TessellationError::RefinementOverflow)?,
+            ) / &longitude_denominator)
+                .map_err(|_| GeometryError::ProjectiveDivision)?;
+            parameters.push(Point2::new(&two_pi * longitude_fraction, latitude.clone()));
+        }
+    }
+    parameters.push(Point2::new(Real::zero(), half_pi));
+
+    let south = 0;
+    let north = parameters.len() - 1;
+    let ring_start = |ring: usize| 1 + ring * longitude_count;
+    let mut triangles = Vec::with_capacity(triangle_count);
+    for longitude in 0..longitude_count {
+        let next = (longitude + 1) % longitude_count;
+        triangles.push([south, ring_start(0) + next, ring_start(0) + longitude]);
+    }
+    for ring in 0..ring_count - 1 {
+        let lower = ring_start(ring);
+        let upper = ring_start(ring + 1);
+        for longitude in 0..longitude_count {
+            let next = (longitude + 1) % longitude_count;
+            triangles.extend_from_slice(&[
+                [lower + longitude, lower + next, upper + next],
+                [lower + longitude, upper + next, upper + longitude],
+            ]);
+        }
+    }
+    let last_ring = ring_start(ring_count - 1);
+    for longitude in 0..longitude_count {
+        let next = (longitude + 1) % longitude_count;
+        triangles.push([last_ring + longitude, last_ring + next, north]);
+    }
+    if orientation == Orientation::Reversed {
+        for triangle in &mut triangles {
+            triangle.swap(1, 2);
+        }
+    }
+    debug_assert_eq!(parameters.len(), parameter_count);
+    debug_assert_eq!(triangles.len(), triangle_count);
+    let points = parameters
+        .iter()
+        .map(|parameter| surface.point_at(parameter))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(ChordalFaceApproximation {
+        source_face: face_id,
+        source_surface_kind: SurfaceKind::Sphere,
         policy,
         parameters,
         points,
@@ -715,13 +826,53 @@ mod tests {
     }
 
     #[test]
-    fn chordal_output_requires_an_explicit_finite_boundary() {
-        let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(2).unwrap(), 0);
+    fn chordal_output_derives_a_seam_without_mutating_a_whole_sphere() {
+        let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), 1);
+        let (sphere, _) = crate::builder::sphere(r(2)).unwrap();
+        let source_json = sphere.to_json().unwrap();
+        let face_id = FaceId::from_index(0).unwrap();
+        let artifact = approximate_face_chordally(&sphere, face_id, policy).unwrap();
+        assert_eq!(artifact.source_surface_kind(), SurfaceKind::Sphere);
+        assert_eq!(artifact.parameters().len(), 26);
+        assert_eq!(artifact.triangles().len(), 48);
+        let face = sphere.face(face_id).unwrap();
+        let surface = sphere.surface(face.surface()).unwrap();
+        for (parameter, point) in artifact.parameters().iter().zip(artifact.points()) {
+            assert_eq!(
+                point3_equal(point, &surface.point_at(parameter).unwrap()).value(),
+                Some(true)
+            );
+        }
+        for index in 0..artifact.parameters().len() {
+            assert!(
+                artifact
+                    .triangles()
+                    .iter()
+                    .flatten()
+                    .any(|retained| *retained == index)
+            );
+        }
+        for triangle in artifact.triangles() {
+            let [a, b, c] = triangle.map(|index| &artifact.points()[index]);
+            let normal = (b - a).cross(&(c - a));
+            let radial =
+                crate::Vector3::new([&a.x + &b.x + &c.x, &a.y + &b.y + &c.y, &a.z + &b.z + &c.z]);
+            assert_eq!(
+                compare_reals(&normal.dot(&radial), &Real::zero()).value(),
+                Some(std::cmp::Ordering::Greater)
+            );
+        }
+        assert_eq!(sphere.to_json().unwrap(), source_json);
+    }
+
+    #[test]
+    fn chordal_sphere_refinement_overflow_is_explicit() {
+        let policy = ChordalApproximationPolicy::uniform(NonZeroUsize::new(1).unwrap(), u8::MAX);
         let (sphere, _) = crate::builder::sphere(r(2)).unwrap();
         assert_eq!(
             approximate_face_chordally(&sphere, FaceId::from_index(0).unwrap(), policy)
                 .unwrap_err(),
-            TessellationError::MissingFiniteBoundary
+            TessellationError::RefinementOverflow
         );
     }
 }

@@ -502,11 +502,14 @@ line-bounded planar faces, including holes, through HyperTRI. It returns copied
 exact parameter/model-space vertices and oriented triangle indices.
 
 `tessellation::approximate_face_chordally` is a separate, visibly lossy API
-for any validated face with an explicit finite outer boundary. Its explicit
+for any validated face with an explicit finite outer boundary and for
+seam-free complete spherical faces. Its explicit
 `ChordalApproximationPolicy` uses only integer boundary segments and midpoint
 refinement levels; all generated parameters and surface evaluations use
 `hyperreal::Real`. `ChordalFaceApproximation` retains parameters beside points
 and certifies `ExactAtVerticesOnly`. Chord interiors have no claimed geometric
 error bound. Curved pcurve trims and analytic surfaces are supported without
-demoting their authoritative carriers. Whole periodic faces without explicit
-finite trimming, and surface-error-tolerance requests, remain rejected.
+demoting their authoritative carriers. A whole sphere receives only an
+artifact-local longitude seam and shared pole vertices; its authoritative
+BREP remains seam-free. Other whole periodic faces without explicit finite
+trimming, and surface-error-tolerance requests, remain rejected.
