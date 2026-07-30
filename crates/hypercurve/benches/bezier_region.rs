@@ -6,9 +6,9 @@ use hypercurve::{
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRegion2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    BulgeVertex2, Classification, Contour2, Curve2, CurveError, CurvePath2, CurvePolicy,
-    CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2, LineSeg2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BulgeVertex2, Classification, Contour2, Curve2, CurveBoundaryInteriorSide2, CurveError,
+    CurvePath2, CurvePolicy, CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, LineArcRegion2,
+    LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -61,14 +61,14 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<CurveRegio
     CurveRegionBoundaryLoop2::new(fragments)
 }
 
-fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
+fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurvePath2> {
     let points = [
         p(min_x, min_y),
         p(max_x, min_y),
         p(max_x, max_y),
         p(min_x, max_y),
     ];
-    let path = CurvePath2::try_new(
+    CurvePath2::try_new(
         (0..points.len())
             .map(|index| {
                 LineSeg2::try_new(
@@ -85,14 +85,19 @@ fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<
             "square benchmark path blocked: {:?}",
             blocker.reason()
         )),
-    })?;
-    CurveRegion2::try_from_boundary_paths(&[path]).map_err(|error| match error {
-        hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
-        hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
-            "square benchmark region blocked: {:?}",
-            blocker.reason()
-        )),
     })
+}
+
+fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
+    CurveRegion2::try_from_boundary_paths(&[square_path(min_x, min_y, max_x, max_y)?]).map_err(
+        |error| match error {
+            hypercurve::ExactCurveError::Invalid { cause, .. } => cause,
+            hypercurve::ExactCurveError::Blocked(blocker) => CurveError::Topology(format!(
+                "square benchmark region blocked: {:?}",
+                blocker.reason()
+            )),
+        },
+    )
 }
 
 fn algebraic_polynomial_parameter(
@@ -225,6 +230,41 @@ fn main() -> CurveResult<()> {
     println!(
         "curve_region_boolean_immediate_all_ops: {batch_region_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={batch_region_boolean_checksum}",
         elapsed / batch_region_boolean_iterations
+    );
+
+    let curved = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4))),
+        Curve2::from(LineSeg2::try_new(p(2, 4), p(-2, 4))?),
+    ])
+    .map_err(|error| CurveError::Topology(format!("curved benchmark path: {error}")))?;
+    let cutter = square_path(-3, 2, 3, 5)?;
+    let algebraic = curved
+        .boolean_region(
+            &cutter,
+            BooleanOp::Difference,
+            CurveBoundaryInteriorSide2::Left,
+            CurveBoundaryInteriorSide2::Left,
+            &policy,
+        )
+        .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?;
+    let crossing = square_region(-2, -1, 2, 1)?;
+    let curved_boolean_iterations = 100_u32;
+    let started = Instant::now();
+    let mut curved_boolean_checksum = 0_usize;
+    for _ in 0..curved_boolean_iterations {
+        let results = algebraic
+            .boolean_regions(&crossing, &policy)
+            .map_err(|error| CurveError::Topology(format!("curved benchmark: {error}")))?;
+        curved_boolean_checksum = curved_boolean_checksum.wrapping_add(black_box(
+            results.topology_fragment_count()
+                + results.topology_point_classification_count()
+                + results.union().boundary_loops().len(),
+        ));
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "curve_region_boolean_retained_algebraic_all_ops: {curved_boolean_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={curved_boolean_checksum}",
+        elapsed / curved_boolean_iterations
     );
 
     let algebraic_ray_loop = BezierBoundaryLoop2::new(vec![

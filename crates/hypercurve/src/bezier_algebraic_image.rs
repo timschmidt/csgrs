@@ -344,6 +344,42 @@ impl RationalBezierAlgebraicPointImage2 {
             .map(|source| source.curve.certified_bounds_classified(policy))
     }
 
+    pub(crate) fn same_injective_parametric_source_point(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> Option<Classification<bool>> {
+        let (Some(first), Some(second)) = (
+            self.data.parametric_source.as_ref(),
+            other.data.parametric_source.as_ref(),
+        ) else {
+            return None;
+        };
+        if first.curve != second.curve {
+            return None;
+        }
+        if first.parameter == second.parameter {
+            return Some(Classification::Decided(true));
+        }
+        let first_interval = first.parameter.interval();
+        let second_interval = second.parameter.interval();
+        // Validated algebraic isolators reject roots at either endpoint.
+        // Therefore intervals that only touch at one endpoint still contain
+        // distinct roots.
+        let intervals_disjoint = matches!(
+            compare_reals(first_interval.end(), second_interval.start(), policy),
+            Some(Ordering::Less | Ordering::Equal)
+        ) || matches!(
+            compare_reals(second_interval.end(), first_interval.start(), policy),
+            Some(Ordering::Less | Ordering::Equal)
+        );
+        if intervals_disjoint && first.curve.has_certified_injective_axis(policy) {
+            Some(Classification::Decided(false))
+        } else {
+            None
+        }
+    }
+
     /// Returns the final construction status.
     pub fn status(&self) -> BezierAlgebraicImageStatus {
         self.data.status
@@ -642,7 +678,17 @@ impl RationalQuadraticBezier2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurvePolicy,
     ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
-        rational_tangent_image(parameter, rational_tangent_coefficients(self), policy)
+        if let Some(images) = parameter.cached_rational_quadratic_derivative_images(self, 1) {
+            return Ok(images
+                .into_iter()
+                .next()
+                .expect("one retained derivative image was requested"));
+        }
+        let image = rational_tangent_image(parameter, rational_tangent_coefficients(self), policy)?;
+        if image.status() == BezierAlgebraicImageStatus::Transformed {
+            parameter.retain_rational_quadratic_derivative_images(self, vec![image.clone()]);
+        }
+        Ok(image)
     }
 
     /// Evaluates this rational quadratic's affine second derivative vector.

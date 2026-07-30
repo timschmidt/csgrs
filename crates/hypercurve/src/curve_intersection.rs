@@ -526,11 +526,16 @@ fn append_native_line_arc_contact(
             point: RationalBezierIntersectionPointEvidence2::Exact(hit.point.clone()),
             certified_transverse: false,
         };
-        if !contacts
-            .iter()
-            .any(|existing| same_contact(existing, &candidate, policy))
-        {
-            contacts.push(candidate);
+        match matching_contact_index(contacts, &candidate, policy) {
+            Classification::Decided(Some(_)) => {}
+            Classification::Decided(None) => contacts.push(candidate),
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    arc_curve.family(),
+                    reason,
+                ));
+            }
         }
     }
     if contacts.len() == contact_count {
@@ -661,11 +666,16 @@ fn build_native_arc_evidence(
                     point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
                     certified_transverse: false,
                 };
-                if !contacts
-                    .iter()
-                    .any(|existing| same_contact(existing, &candidate, policy))
-                {
-                    contacts.push(candidate);
+                match matching_contact_index(&contacts, &candidate, policy) {
+                    Classification::Decided(Some(_)) => {}
+                    Classification::Decided(None) => contacts.push(candidate),
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Intersection,
+                            first.family(),
+                            reason,
+                        ));
+                    }
                 }
             }
         }
@@ -887,11 +897,16 @@ fn append_native_arc_span_contact(
         point: RationalBezierIntersectionPointEvidence2::Exact(point.clone()),
         certified_transverse: false,
     };
-    if !contacts
-        .iter()
-        .any(|existing| same_contact(existing, &candidate, policy))
-    {
-        contacts.push(candidate);
+    match matching_contact_index(contacts, &candidate, policy) {
+        Classification::Decided(Some(_)) => {}
+        Classification::Decided(None) => contacts.push(candidate),
+        Classification::Uncertain(reason) => {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                first.family(),
+                reason,
+            ));
+        }
     }
     Ok(())
 }
@@ -1250,7 +1265,7 @@ impl CurveIntersectionContext {
             match span_contacts {
                 RationalBezierIntersectionContacts2::NoIntersection => {}
                 RationalBezierIntersectionContacts2::Contacts(span_contacts) => {
-                    append_unique_contacts(
+                    if let Classification::Uncertain(reason) = append_unique_contacts(
                         &mut contacts,
                         &span_contacts,
                         &first_span_range,
@@ -1258,7 +1273,14 @@ impl CurveIntersectionContext {
                         pair.first_span_index,
                         pair.second_span_index,
                         &self.data.policy,
-                    );
+                    ) {
+                        blockers.push(CurveIntersectionPairBlocker2 {
+                            first_span_index: pair.first_span_index,
+                            second_span_index: pair.second_span_index,
+                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
+                        });
+                        continue;
+                    }
                 }
                 RationalBezierIntersectionContacts2::Overlap(overlap) => {
                     overlaps.push(CurveIntersectionOverlap2 {
@@ -1273,7 +1295,7 @@ impl CurveIntersectionContext {
                     contacts: span_contacts,
                     candidates,
                 } => {
-                    append_unique_contacts(
+                    if let Classification::Uncertain(reason) = append_unique_contacts(
                         &mut contacts,
                         &span_contacts,
                         &first_span_range,
@@ -1281,7 +1303,14 @@ impl CurveIntersectionContext {
                         pair.first_span_index,
                         pair.second_span_index,
                         &self.data.policy,
-                    );
+                    ) {
+                        blockers.push(CurveIntersectionPairBlocker2 {
+                            first_span_index: pair.first_span_index,
+                            second_span_index: pair.second_span_index,
+                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
+                        });
+                        continue;
+                    }
                     blockers.push(CurveIntersectionPairBlocker2 {
                         first_span_index: pair.first_span_index,
                         second_span_index: pair.second_span_index,
@@ -1580,7 +1609,8 @@ fn append_unique_contacts(
     first_span_index: usize,
     second_span_index: usize,
     policy: &CurvePolicy,
-) {
+) -> Classification<()> {
+    let original_len = output.len();
     for contact in contacts {
         let candidate = CurveIntersectionContact2 {
             first: CurveIntersectionParameter2 {
@@ -1596,41 +1626,95 @@ fn append_unique_contacts(
             point: contact.point().clone(),
             certified_transverse: contact.is_certified_transverse(),
         };
-        if let Some(existing) = output
-            .iter_mut()
-            .find(|existing| same_contact(existing, &candidate, policy))
-        {
-            // A duplicate span-pair replay can contribute stronger evidence.
-            // Retain it even when the parameter pair is already present.
-            existing.certified_transverse |= candidate.certified_transverse;
-        } else {
-            output.push(candidate);
+        match matching_contact_index(output, &candidate, policy) {
+            Classification::Decided(Some(index)) => {
+                // A duplicate span-pair replay can contribute stronger evidence.
+                // Retain it even when the parameter pair is already present.
+                output[index].certified_transverse |= candidate.certified_transverse;
+            }
+            Classification::Decided(None) => output.push(candidate),
+            Classification::Uncertain(reason) => {
+                output.truncate(original_len);
+                return Classification::Uncertain(reason);
+            }
         }
     }
+    Classification::Decided(())
+}
+
+fn matching_contact_index(
+    contacts: &[CurveIntersectionContact2],
+    candidate: &CurveIntersectionContact2,
+    policy: &CurvePolicy,
+) -> Classification<Option<usize>> {
+    for (index, existing) in contacts.iter().enumerate() {
+        match same_contact(existing, candidate, policy) {
+            Classification::Decided(true) => return Classification::Decided(Some(index)),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        }
+    }
+    Classification::Decided(None)
 }
 
 fn same_contact(
     first: &CurveIntersectionContact2,
     second: &CurveIntersectionContact2,
     policy: &CurvePolicy,
-) -> bool {
-    same_curve_parameter(&first.first, &second.first, policy)
-        && same_curve_parameter(&first.second, &second.second, policy)
+) -> Classification<bool> {
+    let first_parameter = same_curve_parameter(&first.first, &second.first, policy);
+    if first_parameter == Classification::Decided(false) {
+        return Classification::Decided(false);
+    }
+    let second_parameter = same_curve_parameter(&first.second, &second.second, policy);
+    match (first_parameter, second_parameter) {
+        (Classification::Decided(false), _) | (_, Classification::Decided(false)) => {
+            Classification::Decided(false)
+        }
+        (Classification::Decided(true), Classification::Decided(true)) => {
+            Classification::Decided(true)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    }
 }
 
 fn same_curve_parameter(
     first: &CurveIntersectionParameter2,
     second: &CurveIntersectionParameter2,
     policy: &CurvePolicy,
-) -> bool {
+) -> Classification<bool> {
     if first == second {
-        return true;
+        return Classification::Decided(true);
+    }
+    if first.promoted_span_index == second.promoted_span_index
+        && first.span_range == second.span_range
+    {
+        return first
+            .local_parameter
+            .same_value(&second.local_parameter, policy)
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
+    let (first_start, first_end) = first.span_range.endpoints();
+    let (second_start, second_end) = second.span_range.endpoints();
+    if matches!(
+        compare_reals(first_end, second_start, policy),
+        Some(std::cmp::Ordering::Less)
+    ) || matches!(
+        compare_reals(second_end, first_start, policy),
+        Some(std::cmp::Ordering::Less)
+    ) {
+        return Classification::Decided(false);
     }
     let (Some(first), Some(second)) = (
         first.exact_curve_parameter(),
         second.exact_curve_parameter(),
     ) else {
-        return false;
+        return Classification::Uncertain(UncertaintyReason::Ordering);
     };
-    compare_reals(&first, &second, policy) == Some(std::cmp::Ordering::Equal)
+    match compare_reals(&first, &second, policy) {
+        Some(ordering) => Classification::Decided(ordering == std::cmp::Ordering::Equal),
+        None => Classification::Uncertain(UncertaintyReason::Ordering),
+    }
 }

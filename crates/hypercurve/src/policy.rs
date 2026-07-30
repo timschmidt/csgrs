@@ -36,7 +36,7 @@ impl CurvePolicy {
         Self {
             mode: NumericMode::Certified,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            predicate_policy: hyperlimit::PredicatePolicy,
             preview_tolerance: None,
         }
     }
@@ -51,7 +51,7 @@ impl CurvePolicy {
         Self {
             mode: NumericMode::EdgePreview,
             #[cfg(feature = "predicates")]
-            predicate_policy: hyperlimit::PredicatePolicy::APPROXIMATE_512,
+            predicate_policy: hyperlimit::PredicatePolicy,
             preview_tolerance: Some(PreviewTolerance {
                 absolute: absolute_tolerance,
                 relative: relative_tolerance,
@@ -63,5 +63,22 @@ impl CurvePolicy {
 impl Default for CurvePolicy {
     fn default() -> Self {
         Self::certified()
+    }
+}
+
+#[cfg(all(test, feature = "predicates"))]
+mod tests {
+    use super::CurvePolicy;
+
+    #[test]
+    fn curve_modes_follow_the_central_workspace_predicate_policy() {
+        assert_eq!(
+            CurvePolicy::certified().predicate_policy,
+            hyperlimit::PredicatePolicy
+        );
+        assert_eq!(
+            CurvePolicy::edge_preview(1.0e-6, 1.0e-6).predicate_policy,
+            hyperlimit::PredicatePolicy
+        );
     }
 }

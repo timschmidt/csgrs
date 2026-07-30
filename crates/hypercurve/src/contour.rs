@@ -39,6 +39,7 @@ pub struct Contour2 {
     fill_rule: FillRule,
     offset_provenance: Option<Arc<ContourOffsetProvenance2>>,
     signed_area_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
+    signed_x_first_moment_cache: Arc<OnceLock<CurveResult<Option<Real>>>>,
     exact_dyadic_line_aabbs_cache: Arc<OnceLock<Option<Arc<ExactDyadicLineAabbs>>>>,
 }
 
@@ -162,6 +163,7 @@ impl Contour2 {
             fill_rule,
             offset_provenance: None,
             signed_area_cache: Arc::new(OnceLock::new()),
+            signed_x_first_moment_cache: Arc::new(OnceLock::new()),
             exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
         })
     }
@@ -173,6 +175,7 @@ impl Contour2 {
             fill_rule,
             offset_provenance: None,
             signed_area_cache: Arc::new(OnceLock::new()),
+            signed_x_first_moment_cache: Arc::new(OnceLock::new()),
             exact_dyadic_line_aabbs_cache: Arc::new(OnceLock::new()),
         }
     }
@@ -539,6 +542,19 @@ impl Contour2 {
     pub fn signed_area(&self) -> CurveResult<Option<Real>> {
         self.signed_area_cache
             .get_or_init(|| compute_contour_signed_area(self.segments()))
+            .clone()
+    }
+
+    /// Returns the exact signed first moment `∬ x dA` of this contour.
+    ///
+    /// The boundary integral is `1/2 * ∮ x² dy`. Straight segments integrate
+    /// polynomially. Circular arcs retain their exact directed sweep and
+    /// integrate the trigonometric primitive from exact endpoint radial
+    /// coordinates. An unresolved arc sweep remains `None`; it is never
+    /// replaced by sampling.
+    pub fn signed_x_first_moment(&self) -> CurveResult<Option<Real>> {
+        self.signed_x_first_moment_cache
+            .get_or_init(|| compute_contour_signed_x_first_moment(self.segments()))
             .clone()
     }
 
@@ -1062,6 +1078,46 @@ fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real
     Ok(Some(area))
 }
 
+fn compute_contour_signed_x_first_moment(segments: &[Segment2]) -> CurveResult<Option<Real>> {
+    let mut moment = Real::zero();
+    for segment in segments {
+        let contribution = match segment {
+            Segment2::Line(line) => {
+                let x0 = line.start().x();
+                let x1 = line.end().x();
+                ((line.end().y() - line.start().y()) * (x0 * x0 + x0 * x1 + x1 * x1)
+                    / Real::from(6_i8))?
+            }
+            Segment2::Arc(arc) => {
+                let sweep = match arc.directed_sweep_angle()? {
+                    Classification::Decided(sweep) => sweep,
+                    Classification::Uncertain(_) => return Ok(None),
+                };
+                let signed_sweep = if arc.is_clockwise() { -sweep } else { sweep };
+                let radius = arc.radius_squared().sqrt()?;
+                let start_x = ((arc.start().x() - arc.center().x()) / &radius)?;
+                let start_y = ((arc.start().y() - arc.center().y()) / &radius)?;
+                let end_x = ((arc.end().x() - arc.center().x()) / &radius)?;
+                let end_y = ((arc.end().y() - arc.center().y()) / &radius)?;
+                let integral_cos = &end_y - &start_y;
+                let integral_cos_squared = (&signed_sweep / Real::from(2_i8))?
+                    + ((&end_x * &end_y - &start_x * &start_y) / Real::from(2_i8))?;
+                let integral_cos_cubed =
+                    &end_y - ((&end_y * &end_y * &end_y) / Real::from(3_i8))? - &start_y
+                        + ((&start_y * &start_y * &start_y) / Real::from(3_i8))?;
+                let center_x = arc.center().x();
+                let radius_squared = &radius * &radius;
+                ((center_x * center_x * &radius * integral_cos
+                    + Real::from(2_i8) * center_x * &radius_squared * integral_cos_squared
+                    + &radius_squared * &radius * integral_cos_cubed)
+                    / Real::from(2_i8))?
+            }
+        };
+        moment += contribution;
+    }
+    Ok(Some(moment))
+}
+
 fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
     let chord = line_signed_area_contribution(arc.start(), arc.end())?;
     let segment = match arc.bulge() {
@@ -1567,6 +1623,56 @@ mod tests {
         assert_eq!(contour.signed_area().unwrap(), Some(Real::from(4)));
         assert_eq!(clone.signed_area().unwrap(), Some(Real::from(4)));
         assert!(clone.signed_area_cache.get().is_some());
+    }
+
+    #[test]
+    fn line_and_arc_contours_retain_exact_signed_x_first_moment() {
+        let rectangle = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(point(0, 0), point(2, 0)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(point(2, 0), point(2, 2)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(point(2, 2), point(0, 2)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(point(0, 2), point(0, 0)).unwrap()),
+        ])
+        .unwrap();
+        assert_eq!(
+            rectangle.signed_x_first_moment().unwrap(),
+            Some(Real::from(4))
+        );
+
+        let center = point(3, 0);
+        let circle = Contour2::try_new(vec![
+            Segment2::Arc(
+                crate::CircularArc2::try_from_center(
+                    point(4, 0),
+                    point(2, 0),
+                    center.clone(),
+                    false,
+                )
+                .unwrap(),
+            ),
+            Segment2::Arc(
+                crate::CircularArc2::try_from_center(point(2, 0), point(4, 0), center, false)
+                    .unwrap(),
+            ),
+        ])
+        .unwrap();
+        assert_eq!(
+            circle.signed_x_first_moment().unwrap(),
+            Some(Real::from(3) * Real::pi())
+        );
+        let reversed = Contour2::try_new(
+            circle
+                .segments()
+                .iter()
+                .rev()
+                .map(Segment2::reversed)
+                .collect(),
+        )
+        .unwrap();
+        assert_eq!(
+            reversed.signed_x_first_moment().unwrap(),
+            Some(-(Real::from(3) * Real::pi()))
+        );
     }
 
     #[test]

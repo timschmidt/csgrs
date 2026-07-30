@@ -2,19 +2,19 @@
 
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_tangent_order::algebraic_endpoint_tangents_are_transverse;
 use crate::curve_intersection::CurveIntersectionContext;
 use crate::{
-    BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
+    Aabb2, BezierArrangementFragment2, BezierArrangementGraph2, BezierEndpointTangentImage2,
     BezierParameter2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Curve2, CurveError, CurveFamily2, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveOperation2,
     CurvePathBooleanOperand2, CurvePolicy, CurveRegion2, ExactCurveError, ExactCurveResult,
-    FillRule, RationalBezierIntersectionPointEvidence2, RationalBezierOverlapOrientation2,
-    RegionPointLocation, UncertaintyReason,
+    FillRule, RationalBezier2, RationalBezierIntersectionPointEvidence2,
+    RationalBezierOverlapOrientation2, RegionPointLocation, UncertaintyReason,
 };
 
 /// Stable identity for one retained region-boundary carrier.
@@ -106,6 +106,8 @@ struct RegionCarrier {
     end: BezierParameter2,
     reversed: bool,
     filled_side_is_left: bool,
+    image_is_injective: OnceLock<bool>,
+    bounds: OnceLock<Classification<Aabb2>>,
 }
 
 #[derive(Debug)]
@@ -119,6 +121,14 @@ struct RegionCarrierPair {
 struct CarrierEvent {
     parameter: BezierParameter2,
     topology_vertex: Option<usize>,
+}
+
+#[derive(Clone, Debug)]
+struct ContactVertex {
+    point: RationalBezierIntersectionPointEvidence2,
+    topology_vertex: usize,
+    carrier_indices: [usize; 2],
+    parameters: [BezierParameter2; 2],
 }
 
 #[derive(Clone, Debug)]
@@ -591,7 +601,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
     fn build_boolean_topology(&self) -> ExactCurveResult<CurveRegionBooleanTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
-        let mut contact_points = Vec::<(RationalBezierIntersectionPointEvidence2, usize)>::new();
+        let mut contact_points = Vec::<ContactVertex>::new();
         let mut next_topology_vertex = 0_usize;
         let mut contact_vertex_counts = Vec::<usize>::new();
         let mut transition_candidates = Vec::<Option<TransitionContactCandidate>>::new();
@@ -645,6 +655,28 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second_parameter,
                     &self.data.policy,
                 )?;
+                let mut matching_contact_vertex = None;
+                for existing in &contact_points {
+                    if contacts_decided_distinct_from_carriers(
+                        existing,
+                        [pair.first_carrier_index, pair.second_carrier_index],
+                        [first_parameter, second_parameter],
+                        &self.data.carriers,
+                        &self.data.policy,
+                    )? {
+                        continue;
+                    }
+                    match same_contact_point(&existing.point, contact.point(), &self.data.policy) {
+                        Classification::Decided(true) => {
+                            matching_contact_vertex = Some(existing.topology_vertex);
+                            break;
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Err(self.blocked(pair.first_carrier_index, reason));
+                        }
+                    }
+                }
                 let topology_vertex = match (first_existing, second_existing) {
                     (Some(first), Some(second)) if first != second => {
                         replace_topology_vertex(&mut events, &mut contact_points, second, first);
@@ -657,23 +689,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         first
                     }
                     (Some(vertex), _) | (_, Some(vertex)) => vertex,
-                    (None, None) => contact_points
-                        .iter()
-                        .find_map(|(point, vertex)| {
-                            same_contact_point(point, contact.point(), &self.data.policy)
-                                .then_some(*vertex)
-                        })
-                        .unwrap_or_else(|| {
-                            let vertex = next_topology_vertex;
-                            next_topology_vertex += 1;
-                            vertex
-                        }),
+                    (None, None) => matching_contact_vertex.unwrap_or_else(|| {
+                        let vertex = next_topology_vertex;
+                        next_topology_vertex += 1;
+                        vertex
+                    }),
                 };
-                if !contact_points
-                    .iter()
-                    .any(|(point, _)| same_contact_point(point, contact.point(), &self.data.policy))
-                {
-                    contact_points.push((contact.point().clone(), topology_vertex));
+                if matching_contact_vertex.is_none() {
+                    contact_points.push(ContactVertex {
+                        point: contact.point().clone(),
+                        topology_vertex,
+                        carrier_indices: [pair.first_carrier_index, pair.second_carrier_index],
+                        parameters: [first_parameter.clone(), second_parameter.clone()],
+                    });
                 }
                 if contact_vertex_counts.len() <= topology_vertex {
                     contact_vertex_counts.resize(topology_vertex + 1, 0);
@@ -876,7 +904,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     Some(location) => location,
                     None => {
                         let (start, end) = fragment_range(&split.fragment);
-                        let shared = overlaps.iter().any(|overlap| {
+                        let mut shared = false;
+                        for overlap in &overlaps {
                             let range = if overlap.first_carrier_index == carrier_index {
                                 Some(&overlap.first_range)
                             } else if overlap.second_carrier_index == carrier_index {
@@ -884,11 +913,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             } else {
                                 None
                             };
-                            range.is_some_and(|range| {
-                                range_contains_fragment(range, start, end, &self.data.policy)
-                                    .unwrap_or(false)
-                            })
-                        });
+                            if let Some(range) = range
+                                && range_contains_fragment(range, start, end, &self.data.policy)?
+                            {
+                                shared = true;
+                                break;
+                            }
+                        }
                         if shared {
                             RegionPointLocation::Boundary
                         } else {
@@ -1196,16 +1227,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
         operation: BooleanOp,
     ) -> ExactCurveResult<RegionFragmentAction> {
         let (start, end) = fragment_range(fragment);
-        let Some(overlap) = overlaps.iter().find(|overlap| {
+        let mut matching_overlap = None;
+        for overlap in overlaps {
             let range = if overlap.first_carrier_index == carrier_index {
-                &overlap.first_range
+                Some(&overlap.first_range)
             } else if overlap.second_carrier_index == carrier_index {
-                &overlap.second_range
+                Some(&overlap.second_range)
             } else {
-                return false;
+                None
             };
-            range_contains_fragment(range, start, end, &self.data.policy).unwrap_or(false)
-        }) else {
+            if let Some(range) = range
+                && range_contains_fragment(range, start, end, &self.data.policy)?
+            {
+                matching_overlap = Some(overlap);
+                break;
+            }
+        }
+        let Some(overlap) = matching_overlap else {
             return Err(self.blocked(carrier_index, UncertaintyReason::Boundary));
         };
         if carrier_index >= self.data.first_carrier_count {
@@ -1293,6 +1331,37 @@ fn carrier_bounds_decided_disjoint(first: &Curve2, second: &Curve2, policy: &Cur
     )
 }
 
+fn subcurve_has_certified_injective_axis(curve: &BezierSubcurve2, policy: &CurvePolicy) -> bool {
+    let rational = match curve {
+        BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
+            curve.control_points().into_iter().cloned().collect(),
+            vec![crate::Real::one(); 3],
+        ),
+        BezierSubcurve2::Cubic(curve) => RationalBezier2::try_new(
+            curve.control_points().into_iter().cloned().collect(),
+            vec![crate::Real::one(); 4],
+        ),
+        BezierSubcurve2::RationalQuadratic(curve) => RationalBezier2::try_new(
+            curve.control_points().into_iter().cloned().collect(),
+            curve.weights().into_iter().cloned().collect(),
+        ),
+        BezierSubcurve2::Rational(curve) => return curve.has_certified_injective_axis(policy),
+    };
+    rational.is_ok_and(|curve| curve.has_certified_injective_axis(policy))
+}
+
+fn subcurve_certified_outer_bounds(
+    curve: &BezierSubcurve2,
+    policy: &CurvePolicy,
+) -> Classification<Aabb2> {
+    match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(policy),
+        BezierSubcurve2::Cubic(curve) => curve.control_hull_box(policy),
+        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(policy),
+        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(policy),
+    }
+}
+
 fn build_region_carriers(
     region: &CurveRegion2,
     operand: CurvePathBooleanOperand2,
@@ -1354,6 +1423,8 @@ fn build_region_carriers(
                 end,
                 reversed,
                 filled_side_is_left: filled_sides[loop_index],
+                image_is_injective: OnceLock::new(),
+                bounds: OnceLock::new(),
             });
         }
     }
@@ -1779,7 +1850,7 @@ fn existing_event_vertex(
 
 fn replace_topology_vertex(
     events: &mut [Vec<CarrierEvent>],
-    contact_points: &mut [(RationalBezierIntersectionPointEvidence2, usize)],
+    contact_points: &mut [ContactVertex],
     from: usize,
     to: usize,
 ) {
@@ -1788,11 +1859,60 @@ fn replace_topology_vertex(
             event.topology_vertex = Some(to);
         }
     }
-    for (_, vertex) in contact_points {
-        if *vertex == from {
-            *vertex = to;
+    for contact in contact_points {
+        if contact.topology_vertex == from {
+            contact.topology_vertex = to;
         }
     }
+}
+
+fn contacts_decided_distinct_from_carriers(
+    existing: &ContactVertex,
+    carrier_indices: [usize; 2],
+    parameters: [&BezierParameter2; 2],
+    carriers: &[RegionCarrier],
+    policy: &CurvePolicy,
+) -> ExactCurveResult<bool> {
+    for existing_carrier in existing.carrier_indices {
+        for current_carrier in carrier_indices {
+            let existing_bounds = carriers[existing_carrier].bounds.get_or_init(|| {
+                subcurve_certified_outer_bounds(&carriers[existing_carrier].curve, policy)
+            });
+            let current_bounds = carriers[current_carrier].bounds.get_or_init(|| {
+                subcurve_certified_outer_bounds(&carriers[current_carrier].curve, policy)
+            });
+            if let (
+                Classification::Decided(existing_bounds),
+                Classification::Decided(current_bounds),
+            ) = (existing_bounds, current_bounds)
+                && existing_bounds.overlaps(current_bounds, policy)
+                    == Classification::Decided(false)
+            {
+                return Ok(true);
+            }
+        }
+    }
+    for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
+        let carrier = &carriers[existing_carrier];
+        let image_is_injective = carrier.image_is_injective.get() == Some(&true)
+            || subcurve_has_certified_injective_axis(&carrier.curve, policy);
+        if !image_is_injective {
+            continue;
+        }
+        let _ = carrier.image_is_injective.set(true);
+        for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
+            if existing_carrier == current_carrier
+                && decided_parameter_cmp(
+                    &existing.parameters[existing_slot],
+                    parameters[current_slot],
+                    policy,
+                )? != Ordering::Equal
+            {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn event_vertex(
@@ -2069,16 +2189,24 @@ fn same_contact_point(
     first: &RationalBezierIntersectionPointEvidence2,
     second: &RationalBezierIntersectionPointEvidence2,
     policy: &CurvePolicy,
-) -> bool {
+) -> Classification<bool> {
     match (first, second) {
         (
             RationalBezierIntersectionPointEvidence2::Exact(first),
             RationalBezierIntersectionPointEvidence2::Exact(second),
-        ) => crate::classify::is_zero(&first.distance_squared(second), policy) == Some(true),
+        ) => match crate::classify::is_zero(&first.distance_squared(second), policy) {
+            Some(equal) => Classification::Decided(equal),
+            None => Classification::Uncertain(UncertaintyReason::RealSign),
+        },
         (
             RationalBezierIntersectionPointEvidence2::Algebraic(first),
             RationalBezierIntersectionPointEvidence2::Algebraic(second),
         ) => {
+            if let Some(classification) =
+                first.same_injective_parametric_source_point(second, policy)
+            {
+                return classification;
+            }
             // A decided same-sign rational Bezier control hull contains the
             // entire affine curve image, so disjoint source hulls prove that
             // these retained point images cannot represent the same contact.
@@ -2096,11 +2224,11 @@ fn same_contact_point(
                     "contact-point-equality",
                     "source-bounds-disjoint",
                 );
-                return false;
+                return Classification::Decided(false);
             }
             let (Some(first), Some(second)) = (first.resolved(policy), second.resolved(policy))
             else {
-                return false;
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
             };
             let (Some(first_x), Some(first_y), Some(second_x), Some(second_y)) = (
                 first.x().and_then(|image| image.representation()),
@@ -2108,12 +2236,19 @@ fn same_contact_point(
                 second.x().and_then(|image| image.representation()),
                 second.y().and_then(|image| image.representation()),
             ) else {
-                return first == second;
+                return if first == second {
+                    Classification::Decided(true)
+                } else {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                };
             };
-            crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy)
-                == Some(true)
-                && crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy)
-                    == Some(true)
+            match (
+                crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy),
+                crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy),
+            ) {
+                (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                _ => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
         }
         (
             RationalBezierIntersectionPointEvidence2::Exact(exact),
@@ -2124,21 +2259,25 @@ fn same_contact_point(
             RationalBezierIntersectionPointEvidence2::Exact(exact),
         ) => {
             let Some(algebraic) = algebraic.resolved(policy) else {
-                return false;
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
             };
             let (Some(x), Some(y)) = (
                 algebraic.x().and_then(|image| image.representation()),
                 algebraic.y().and_then(|image| image.representation()),
             ) else {
-                return false;
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
             };
             let exact_x =
                 crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.x());
             let exact_y =
                 crate::bezier_algebraic_image::exact_real_algebraic_representation(exact.y());
-            crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy) == Some(true)
-                && crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy)
-                    == Some(true)
+            match (
+                crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
+                crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
+            ) {
+                (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                _ => Classification::Uncertain(UncertaintyReason::RealSign),
+            }
         }
     }
 }
@@ -2359,7 +2498,10 @@ mod certified_successor_tests {
                 .cached_rational_bezier_point_image(&second_curve)
                 .is_none()
         );
-        assert!(!same_contact_point(&first, &second, &policy));
+        assert_eq!(
+            same_contact_point(&first, &second, &policy),
+            Classification::Decided(false)
+        );
         assert!(
             parameter
                 .cached_rational_bezier_point_image(&first_curve)
@@ -2373,7 +2515,7 @@ mod certified_successor_tests {
     }
 
     #[test]
-    fn contact_point_bounds_preserve_overlapping_exact_comparison() {
+    fn identical_injective_source_parameters_compare_without_materialization() {
         let policy = CurvePolicy::certified();
         let parameter = sqrt_half_parameter(&policy);
         let curve = rational_line(0, 1);
@@ -2392,12 +2534,15 @@ mod certified_successor_tests {
             ),
         );
 
-        assert!(same_contact_point(&first, &second, &policy));
+        assert_eq!(
+            same_contact_point(&first, &second, &policy),
+            Classification::Decided(true)
+        );
         #[cfg(feature = "predicates")]
         assert!(
             parameter
                 .cached_rational_bezier_point_image(&curve)
-                .is_some()
+                .is_none()
         );
     }
 

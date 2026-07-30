@@ -81,8 +81,19 @@ fn curve_query_facts_summarize_segment_families_and_dependencies() {
     assert_eq!(facts.segment_kinds.lines, 1);
     assert_eq!(facts.segment_kinds.arcs, 1);
     assert_eq!(facts.segment_kinds.total(), 2);
-    assert_eq!(facts.decided_segment_box_count, 2);
-    assert!(facts.has_decided_curve_box);
+    #[cfg(feature = "predicates")]
+    {
+        assert_eq!(facts.decided_segment_box_count, 2);
+        assert!(facts.has_decided_curve_box);
+    }
+    #[cfg(not(feature = "predicates"))]
+    {
+        // Without Hyperlimit, the minimal build cannot certify every
+        // transcendental arc-cardinal comparison. Structural facts must expose
+        // that missing box instead of claiming an incomplete curve envelope.
+        assert_eq!(facts.decided_segment_box_count, 1);
+        assert!(!facts.has_decided_curve_box);
+    }
     assert!(!facts.all_exact_rational());
     assert!(
         facts

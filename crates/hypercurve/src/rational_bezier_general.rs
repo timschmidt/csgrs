@@ -1894,7 +1894,16 @@ impl RationalBezier2 {
             Classification::Decided(None) => return Ok(None),
             Classification::Uncertain(_) => return Ok(None),
         };
-        let other_basis = other.homogeneous_power_basis()?;
+        // Exact degree elevation preserves the authored local parameter, but
+        // carrying its redundant higher-degree basis into rational root-image
+        // transport can force dozens of unnecessary isolator refinements.
+        // Recover an exact linear homogeneous representative only for the
+        // allocation-light all-rational case. Every inverse-elevation step is
+        // replayed below; mixed and symbolic Real carriers retain the general
+        // certified path unchanged.
+        let reduced_other = other.exact_linear_homogeneous_representative(policy)?;
+        let parameter_curve = reduced_other.as_ref().unwrap_or(other);
+        let other_basis = parameter_curve.homogeneous_power_basis()?;
         let Some(substituted) = substitute_implicit_conic(conic, other_basis) else {
             return Ok(None);
         };
@@ -1918,7 +1927,7 @@ impl RationalBezier2 {
             )));
         }
         let simple_roots = polynomial.simple_root_classifications(&other_parameters, policy)?;
-        let parameter_map = match conic_parameter_map(self, other, policy)? {
+        let parameter_map = match conic_parameter_map(self, parameter_curve, policy)? {
             Classification::Decided(parameter_map) => parameter_map,
             Classification::Uncertain(reason) => {
                 return Ok(Some(Classification::Uncertain(reason)));
@@ -1948,6 +1957,7 @@ impl RationalBezier2 {
                 &primary_parameter_candidate,
                 polynomial.coefficients(),
                 parameter,
+                reduced_other.is_some(),
                 policy,
             )?;
             match mapped {
@@ -2002,6 +2012,38 @@ impl RationalBezier2 {
         Ok(Some(Classification::Decided(
             RationalBezierIntersectionContacts2::Contacts(contacts.into()),
         )))
+    }
+
+    fn exact_linear_homogeneous_representative(
+        &self,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Option<Self>> {
+        if self.degree() <= 1
+            || self
+                .weights()
+                .iter()
+                .any(|value| value.exact_rational_ref().is_none())
+            || self.control_points().iter().any(|point| {
+                point.x().exact_rational_ref().is_none() || point.y().exact_rational_ref().is_none()
+            })
+        {
+            return Ok(None);
+        }
+        let frame = match exact_linear_homogeneous_reduction(self.homogeneous_controls(), policy) {
+            Classification::Decided(Some(frame)) => frame,
+            Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
+        };
+        let mut controls = Vec::with_capacity(2);
+        let mut weights = Vec::with_capacity(2);
+        for point in frame {
+            let projected = match project_homogeneous(&point, policy) {
+                Classification::Decided(projected) => projected,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            controls.push(projected);
+            weights.push(point.weight);
+        }
+        Ok(Self::try_new(controls, weights).ok())
     }
 
     fn exact_line_image_intersection_contacts(
@@ -3744,12 +3786,16 @@ impl RationalBezier2 {
     }
 
     pub(crate) fn has_certified_injective_axis(&self, policy: &CurvePolicy) -> bool {
-        for axis in [Axis2::X, Axis2::Y] {
-            if self.has_certified_injective_axis_on(axis, policy) {
-                return true;
-            }
+        if self.data.lineage.root.image_is_injective.get() == Some(&true) {
+            return true;
         }
-        false
+        let injective = [Axis2::X, Axis2::Y]
+            .into_iter()
+            .any(|axis| self.has_certified_injective_axis_on(axis, policy));
+        if injective {
+            let _ = self.data.lineage.root.image_is_injective.set(true);
+        }
+        injective
     }
 
     fn has_certified_injective_axis_on(&self, axis: Axis2, policy: &CurvePolicy) -> bool {
@@ -4560,8 +4606,21 @@ fn conic_parameter_from_curve_parameter(
     primary_candidate: &ConicParameterCandidate2,
     source_polynomial: &[Real],
     curve_parameter: &BezierParameter2,
+    prefer_exact_image_polynomial: bool,
     policy: &CurvePolicy,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
+    #[cfg(feature = "predicates")]
+    if prefer_exact_image_polynomial {
+        match real_coefficient_rational_image_parameter(curve_parameter, primary_candidate, policy)?
+        {
+            Classification::Decided(Some(parameter)) => {
+                return Ok(Classification::Decided(Some(parameter)));
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
+    }
+    #[cfg(not(feature = "predicates"))]
+    let _ = prefer_exact_image_polynomial;
     let primary = conic_parameter_from_candidates(
         std::slice::from_ref(primary_candidate),
         curve_parameter,
@@ -5739,11 +5798,44 @@ fn exact_quadratic_homogeneous_reduction(
     source: &[HomogeneousPoint2],
     policy: &CurvePolicy,
 ) -> Classification<Option<[HomogeneousPoint2; 3]>> {
-    if source.len() < 3 {
+    let reduced = match exact_homogeneous_degree_reduction(source, 3, policy) {
+        Classification::Decided(Some(reduced)) => reduced,
+        Classification::Decided(None) => return Classification::Decided(None),
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 3]>>::try_into(reduced)
+    else {
+        return Classification::Decided(None);
+    };
+    Classification::Decided(Some(frame))
+}
+
+fn exact_linear_homogeneous_reduction(
+    source: &[HomogeneousPoint2],
+    policy: &CurvePolicy,
+) -> Classification<Option<[HomogeneousPoint2; 2]>> {
+    let reduced = match exact_homogeneous_degree_reduction(source, 2, policy) {
+        Classification::Decided(Some(reduced)) => reduced,
+        Classification::Decided(None) => return Classification::Decided(None),
+        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    };
+    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 2]>>::try_into(reduced)
+    else {
+        return Classification::Decided(None);
+    };
+    Classification::Decided(Some(frame))
+}
+
+fn exact_homogeneous_degree_reduction(
+    source: &[HomogeneousPoint2],
+    target_control_count: usize,
+    policy: &CurvePolicy,
+) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+    if target_control_count < 2 || source.len() < target_control_count {
         return Classification::Decided(None);
     }
     let mut current = source.to_vec();
-    while current.len() > 3 {
+    while current.len() > target_control_count {
         let degree = current.len() - 1;
         let Ok(degree_u64) = u64::try_from(degree) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -5804,11 +5896,7 @@ fn exact_quadratic_homogeneous_reduction(
         }
         current = reduced;
     }
-    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 3]>>::try_into(current)
-    else {
-        return Classification::Decided(None);
-    };
-    Classification::Decided(Some(frame))
+    Classification::Decided(Some(current))
 }
 
 impl HomogeneousPoint2 {
@@ -5913,6 +6001,43 @@ mod tests {
     #[cfg(feature = "predicates")]
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    #[cfg(feature = "predicates")]
+    fn exact_degree_elevated_line_recovers_linear_parameter_transport() {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let elevated = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), half.clone()),
+                Point2::new(third.clone(), half.clone()),
+                Point2::new(&third + &third, half.clone()),
+                Point2::new(Real::one(), half),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        let policy = CurvePolicy::certified();
+        let reduced = elevated
+            .exact_linear_homogeneous_representative(&policy)
+            .unwrap()
+            .expect("exact inverse elevation recovers the linear carrier");
+
+        assert_eq!(reduced.degree(), 1);
+        assert_eq!(reduced.start(), elevated.start());
+        assert_eq!(reduced.end(), elevated.end());
+
+        let symbolic_weights =
+            RationalBezier2::try_new(elevated.control_points().to_vec(), vec![Real::pi(); 4])
+                .unwrap();
+        assert!(
+            symbolic_weights
+                .exact_linear_homogeneous_representative(&policy)
+                .unwrap()
+                .is_none(),
+            "nonrational Real carriers retain the certified general path"
+        );
     }
 
     #[test]

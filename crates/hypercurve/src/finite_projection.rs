@@ -507,6 +507,44 @@ impl CurveRegion2 {
         }
         Ok(Classification::Decided(profiles))
     }
+
+    /// Projects this region only when exact loop roles and ownership are
+    /// decided before the finite boundary is crossed.
+    ///
+    /// Unlike [`Self::project_to_finite_profiles`], this mesh/topology-facing
+    /// variant does not infer export-only roles from finite winding or
+    /// containment when algebraic endpoints cannot inhabit [`Point2`].
+    pub fn project_to_finite_profiles_exact(
+        &self,
+        options: &FiniteProjectionOptions,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
+        if self.is_empty() {
+            return Ok(Classification::Decided(Vec::new()));
+        }
+        let rings = self
+            .boundary_loops()
+            .iter()
+            .map(|boundary| project_curve_region_loop(boundary, options, policy))
+            .collect::<CurveResult<Vec<_>>>()?;
+        match self.boundary_profiles(policy)? {
+            Classification::Decided(exact_profiles) => Ok(Classification::Decided(
+                exact_profiles
+                    .into_iter()
+                    .map(|profile| {
+                        let material = rings[profile.material_loop_index()].clone();
+                        let holes = profile
+                            .hole_loop_indices()
+                            .iter()
+                            .map(|index| rings[*index].clone())
+                            .collect();
+                        FiniteRegionProfile2::new(material, holes)
+                    })
+                    .collect(),
+            )),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
 }
 
 fn project_curve_region_loop_to_curve_path(
@@ -1059,16 +1097,22 @@ mod tests {
     #[test]
     fn projects_higher_order_region_after_exact_role_assignment() {
         let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()]).unwrap();
+        let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
+        let policy = CurvePolicy::certified();
         let profiles = region
-            .project_to_finite_profiles(
-                &FiniteProjectionOptions::try_new(1.0e-3).unwrap(),
-                &CurvePolicy::certified(),
-            )
+            .project_to_finite_profiles(&options, &policy)
+            .unwrap();
+        let exact_profiles = region
+            .project_to_finite_profiles_exact(&options, &policy)
             .unwrap();
         let Classification::Decided(profiles) = profiles else {
             panic!("cubic region roles should be decided");
         };
+        let Classification::Decided(exact_profiles) = exact_profiles else {
+            panic!("exact cubic region roles should be decided");
+        };
 
+        assert_eq!(profiles, exact_profiles);
         assert_eq!(profiles.len(), 1);
         assert!(profiles[0].material().points().len() > 5);
         assert!(profiles[0].holes().is_empty());

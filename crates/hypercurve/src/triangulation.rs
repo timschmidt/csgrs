@@ -65,16 +65,40 @@ pub fn triangulate_finite_rings(
 
     let indices = hypertri::earcut(&exact, &hole_indices)
         .map_err(|err| CurveError::Topology(err.to_string()))?;
-    Ok(indices
+    triangles_from_indices(&vertices, &indices)
+}
+
+fn triangles_from_indices(
+    vertices: &[[f64; 2]],
+    indices: &[usize],
+) -> CurveResult<Vec<FiniteTriangle2>> {
+    if !indices.len().is_multiple_of(3) {
+        return Err(CurveError::Topology(
+            "finite triangulation returned an incomplete triangle index group".into(),
+        ));
+    }
+    indices
         .chunks_exact(3)
-        .filter_map(|tri| {
-            Some([
-                *vertices.get(tri[0])?,
-                *vertices.get(tri[1])?,
-                *vertices.get(tri[2])?,
+        .map(|triangle| {
+            Ok([
+                *vertices.get(triangle[0]).ok_or_else(|| {
+                    CurveError::Topology(
+                        "finite triangulation returned a vertex index outside its profile".into(),
+                    )
+                })?,
+                *vertices.get(triangle[1]).ok_or_else(|| {
+                    CurveError::Topology(
+                        "finite triangulation returned a vertex index outside its profile".into(),
+                    )
+                })?,
+                *vertices.get(triangle[2]).ok_or_else(|| {
+                    CurveError::Topology(
+                        "finite triangulation returned a vertex index outside its profile".into(),
+                    )
+                })?,
             ])
         })
-        .collect())
+        .collect()
 }
 
 fn validate_no_repeated_ring_vertices(ring: &[[f64; 2]]) -> CurveResult<()> {
@@ -104,5 +128,17 @@ impl FiniteRegionProfile2 {
             .map(|hole| hole.points())
             .collect::<Vec<_>>();
         triangulate_finite_rings(self.material().points(), &hole_refs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::triangles_from_indices;
+
+    #[test]
+    fn invalid_triangulation_indices_are_not_silently_dropped() {
+        let vertices = [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]];
+        assert!(triangles_from_indices(&vertices, &[0, 1]).is_err());
+        assert!(triangles_from_indices(&vertices, &[0, 1, 3]).is_err());
     }
 }

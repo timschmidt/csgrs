@@ -1688,16 +1688,24 @@ pub(crate) fn intersect_contour_self_with_cached_aabbs(
             )?;
 
             for event in pair_events {
-                if is_contour_connectivity_event(
+                match is_contour_connectivity_event(
                     &event,
                     segments,
                     first_index,
                     second_index,
                     policy,
                 ) {
-                    continue;
+                    Classification::Decided(true) => continue,
+                    Classification::Decided(false) => events.push(event),
+                    Classification::Uncertain(reason) => append_uncertain(
+                        &mut events,
+                        first_index,
+                        second_index,
+                        &segments[first_index],
+                        &segments[second_index],
+                        reason,
+                    ),
                 }
-                events.push(event);
             }
         }
     }
@@ -1994,7 +2002,7 @@ fn is_contour_connectivity_event(
     first_index: usize,
     second_index: usize,
     policy: &CurvePolicy,
-) -> bool {
+) -> Classification<bool> {
     match event {
         ContourIntersection::Point(point) => {
             let forward_vertex =
@@ -2004,27 +2012,54 @@ fn is_contour_connectivity_event(
             forward_vertex
                 .into_iter()
                 .chain(closing_vertex)
-                .any(|shared| points_match_for_connectivity(&point.point, shared, policy))
+                .map(|shared| points_match_for_connectivity(&point.point, shared, policy))
+                .fold(Classification::Decided(false), combine_connectivity_match)
         }
-        ContourIntersection::Overlap(_) | ContourIntersection::Uncertain(_) => false,
+        ContourIntersection::Overlap(_) | ContourIntersection::Uncertain(_) => {
+            Classification::Decided(false)
+        }
     }
 }
 
-fn points_match_for_connectivity(point: &Point2, expected: &Point2, policy: &CurvePolicy) -> bool {
+fn points_match_for_connectivity(
+    point: &Point2,
+    expected: &Point2,
+    policy: &CurvePolicy,
+) -> Classification<bool> {
     let distance = point.distance_squared(expected);
-    if is_zero(&distance, policy) == Some(true) {
-        return true;
+    match is_zero(&distance, policy) {
+        Some(equal) => return Classification::Decided(equal),
+        None if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
+        None => {}
     }
 
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) =
-            (distance.to_f64_lossy(), policy.preview_tolerance)
-    {
+    if let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.preview_tolerance) {
         let tolerance = tolerance.absolute.max(tolerance.relative);
-        return distance.is_finite() && distance <= tolerance * tolerance;
+        if distance.is_finite() {
+            return Classification::Decided(distance <= tolerance * tolerance);
+        }
     }
 
-    false
+    Classification::Uncertain(UncertaintyReason::RealSign)
+}
+
+fn combine_connectivity_match(
+    accumulated: Classification<bool>,
+    next: Classification<bool>,
+) -> Classification<bool> {
+    match (accumulated, next) {
+        (Classification::Decided(true), _) | (_, Classification::Decided(true)) => {
+            Classification::Decided(true)
+        }
+        (Classification::Decided(false), Classification::Decided(false)) => {
+            Classification::Decided(false)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    }
 }
 
 fn insertion_index(
@@ -2044,6 +2079,24 @@ fn insertion_index(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unresolved_connectivity_is_not_relabelled_as_a_non_match() {
+        assert_eq!(
+            combine_connectivity_match(
+                Classification::Decided(false),
+                Classification::Uncertain(UncertaintyReason::RealSign),
+            ),
+            Classification::Uncertain(UncertaintyReason::RealSign),
+        );
+        assert_eq!(
+            combine_connectivity_match(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided(true),
+            ),
+            Classification::Decided(true),
+        );
+    }
 
     fn bbox(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> Aabb2 {
         Aabb2::new_unchecked(

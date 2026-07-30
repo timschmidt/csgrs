@@ -5,6 +5,7 @@ use crate::classify::is_zero;
 use crate::{
     ArcArcIntersection, Classification, Contour2, CurvePolicy, CurveResult, CurveString2,
     LineArcIntersection, LineLineIntersection, Point2, Segment2, SegmentIntersection,
+    UncertaintyReason,
 };
 
 impl CurveString2 {
@@ -194,7 +195,7 @@ fn line_line_has_contact(
         LineLineIntersection::None => Classification::Decided(false),
         LineLineIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
         LineLineIntersection::Point { point, .. } => {
-            Classification::Decided(!point_is_connectivity(point, connectivity_point, policy))
+            contact_is_non_connectivity(point, connectivity_point, policy)
         }
         LineLineIntersection::Overlap { .. } => Classification::Decided(true),
     }
@@ -208,18 +209,13 @@ fn line_arc_has_contact(
     match result {
         LineArcIntersection::None => Classification::Decided(false),
         LineArcIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
-        LineArcIntersection::Point(hit) => Classification::Decided(!point_is_connectivity(
-            &hit.point,
-            connectivity_point,
-            policy,
-        )),
-        LineArcIntersection::TwoPoints { first, second } => {
-            let first_is_connectivity =
-                point_is_connectivity(&first.point, connectivity_point, policy);
-            let second_is_connectivity =
-                point_is_connectivity(&second.point, connectivity_point, policy);
-            Classification::Decided(!(first_is_connectivity && second_is_connectivity))
+        LineArcIntersection::Point(hit) => {
+            contact_is_non_connectivity(&hit.point, connectivity_point, policy)
         }
+        LineArcIntersection::TwoPoints { first, second } => either_contact_is_non_connectivity(
+            contact_is_non_connectivity(&first.point, connectivity_point, policy),
+            contact_is_non_connectivity(&second.point, connectivity_point, policy),
+        ),
     }
 }
 
@@ -231,43 +227,82 @@ fn arc_arc_has_contact(
     match result {
         ArcArcIntersection::None => Classification::Decided(false),
         ArcArcIntersection::Uncertain { reason } => Classification::Uncertain(*reason),
-        ArcArcIntersection::Point(hit) => Classification::Decided(!point_is_connectivity(
-            &hit.point,
-            connectivity_point,
-            policy,
-        )),
-        ArcArcIntersection::TwoPoints { first, second } => {
-            let first_is_connectivity =
-                point_is_connectivity(&first.point, connectivity_point, policy);
-            let second_is_connectivity =
-                point_is_connectivity(&second.point, connectivity_point, policy);
-            Classification::Decided(!(first_is_connectivity && second_is_connectivity))
+        ArcArcIntersection::Point(hit) => {
+            contact_is_non_connectivity(&hit.point, connectivity_point, policy)
         }
+        ArcArcIntersection::TwoPoints { first, second } => either_contact_is_non_connectivity(
+            contact_is_non_connectivity(&first.point, connectivity_point, policy),
+            contact_is_non_connectivity(&second.point, connectivity_point, policy),
+        ),
         ArcArcIntersection::Overlap { .. } => Classification::Decided(true),
     }
 }
 
-fn point_is_connectivity(
+fn contact_is_non_connectivity(
     point: &Point2,
     connectivity_point: Option<&Point2>,
     policy: &CurvePolicy,
-) -> bool {
+) -> Classification<bool> {
     let Some(connectivity_point) = connectivity_point else {
-        return false;
+        return Classification::Decided(true);
     };
 
     let distance = point.distance_squared(connectivity_point);
-    if is_zero(&distance, policy) == Some(true) {
-        return true;
+    match is_zero(&distance, policy) {
+        Some(equal) => return Classification::Decided(!equal),
+        None if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) => {
+            return Classification::Uncertain(UncertaintyReason::RealSign);
+        }
+        None => {}
     }
 
-    if matches!(policy.mode, crate::policy::NumericMode::EdgePreview)
-        && let (Some(distance), Some(tolerance)) =
-            (distance.to_f64_lossy(), policy.preview_tolerance)
-    {
+    if let (Some(distance), Some(tolerance)) = (distance.to_f64_lossy(), policy.preview_tolerance) {
         let tolerance = tolerance.absolute.max(tolerance.relative);
-        return distance.is_finite() && distance <= tolerance * tolerance;
+        if distance.is_finite() {
+            return Classification::Decided(distance > tolerance * tolerance);
+        }
     }
 
-    false
+    Classification::Uncertain(UncertaintyReason::RealSign)
+}
+
+fn either_contact_is_non_connectivity(
+    first: Classification<bool>,
+    second: Classification<bool>,
+) -> Classification<bool> {
+    match (first, second) {
+        (Classification::Decided(true), _) | (_, Classification::Decided(true)) => {
+            Classification::Decided(true)
+        }
+        (Classification::Decided(false), Classification::Decided(false)) => {
+            Classification::Decided(false)
+        }
+        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+            Classification::Uncertain(reason)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::either_contact_is_non_connectivity;
+    use crate::{Classification, UncertaintyReason};
+
+    #[test]
+    fn unresolved_connectivity_is_not_relabelled_as_a_decided_contact() {
+        assert_eq!(
+            either_contact_is_non_connectivity(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided(false),
+            ),
+            Classification::Uncertain(UncertaintyReason::RealSign),
+        );
+        assert_eq!(
+            either_contact_is_non_connectivity(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided(true),
+            ),
+            Classification::Decided(true),
+        );
+    }
 }

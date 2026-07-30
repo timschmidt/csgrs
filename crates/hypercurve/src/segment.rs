@@ -915,6 +915,68 @@ impl CircularArc2 {
         )))
     }
 
+    /// Splits this arc at a strict interior directed-angular sweep fraction.
+    ///
+    /// Unlike splitting through the arc's rational-Bézier public parameter,
+    /// this operation retains the original angular lineage. Nested splits
+    /// therefore evaluate their endpoints from the root circle and do not
+    /// accumulate algebraically equivalent rational-projection expressions.
+    pub fn split_at_sweep_fraction(
+        &self,
+        fraction: &Real,
+        policy: &CurvePolicy,
+    ) -> CurveResult<Classification<(Self, Self)>> {
+        match compare_reals(fraction, &Real::zero(), policy) {
+            Some(Ordering::Greater) => {}
+            Some(_) => return Err(CurveError::InvalidCurveParameter),
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Ordering,
+                ));
+            }
+        }
+        match compare_reals(fraction, &Real::one(), policy) {
+            Some(Ordering::Less) => {}
+            Some(_) => return Err(CurveError::InvalidCurveParameter),
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::Ordering,
+                ));
+            }
+        }
+        let middle = match self.point_at_sweep_fraction(fraction, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let first_range = ParamRange::new(Real::zero(), fraction.clone());
+        let second_range = ParamRange::new(fraction.clone(), Real::one());
+        let first = match self.fragment_between_sweep_range(
+            self.start().clone(),
+            middle.clone(),
+            &first_range,
+            policy,
+        )? {
+            Classification::Decided(fragment) => fragment,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second = match self.fragment_between_sweep_range(
+            middle,
+            self.end().clone(),
+            &second_range,
+            policy,
+        )? {
+            Classification::Decided(fragment) => fragment,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided((first, second)))
+    }
+
     /// Returns the exact piecewise-rational public parameter at a directed
     /// angular sweep fraction.
     ///

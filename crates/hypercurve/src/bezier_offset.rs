@@ -2278,20 +2278,30 @@ fn construct_cubic_parallel_spans(
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
     let parallel = source.parallel_left(distance.clone())?;
-    if let Classification::Decided(candidate) = parallel.levien_cubic_candidate(policy)?
-        && let Classification::Decided(approximation) = parallel.verify_polynomial_candidate(
+    let candidate = match parallel.levien_cubic_candidate(policy) {
+        Ok(Classification::Decided(candidate)) => Some(candidate),
+        Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
+        Err(error) => return Err(error),
+    };
+    if let Some(candidate) = candidate {
+        let approximation = match parallel.verify_polynomial_candidate(
             candidate.curve().clone().into(),
             options,
             policy,
-        )?
-    {
-        trace.verification_leaf_count += approximation.leaf_count();
-        trace.spans.push(CertifiedBezierParallelSpan2 {
-            source_start,
-            source_end,
-            approximation,
-        });
-        return Ok(Classification::Decided(()));
+        ) {
+            Ok(Classification::Decided(approximation)) => Some(approximation),
+            Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
+            Err(error) => return Err(error),
+        };
+        if let Some(approximation) = approximation {
+            trace.verification_leaf_count += approximation.leaf_count();
+            trace.spans.push(CertifiedBezierParallelSpan2 {
+                source_start,
+                source_end,
+                approximation,
+            });
+            return Ok(Classification::Decided(()));
+        }
     }
     if depth >= options.max_depth {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -2340,15 +2350,23 @@ fn construct_cubic_reduced_half(
     trace: &mut ParallelPathConstructionTrace,
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
-    if let Classification::Decided(candidate) =
-        reduced.blend2d_offset_left_candidate(distance.clone(), policy)?
-    {
+    let candidate = match reduced.blend2d_offset_left_candidate(distance.clone(), policy) {
+        Ok(Classification::Decided(candidate)) => Some(candidate),
+        Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
+        Err(error) => return Err(error),
+    };
+    if let Some(candidate) = candidate {
         let parallel = source.parallel_left(distance.clone())?;
-        if let Classification::Decided(approximation) = parallel.verify_polynomial_candidate(
+        let approximation = match parallel.verify_polynomial_candidate(
             candidate.curve().clone().into(),
             options,
             policy,
-        )? {
+        ) {
+            Ok(Classification::Decided(approximation)) => Some(approximation),
+            Ok(Classification::Uncertain(_)) | Err(CurveError::Real(_)) => None,
+            Err(error) => return Err(error),
+        };
+        if let Some(approximation) = approximation {
             trace.verification_leaf_count += approximation.leaf_count();
             trace.spans.push(CertifiedBezierParallelSpan2 {
                 source_start,

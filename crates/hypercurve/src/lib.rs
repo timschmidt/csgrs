@@ -41,6 +41,7 @@ mod curve;
 mod curve_intersection;
 mod curve_path_intersection;
 mod curve_region_boolean;
+mod curve_region_trim;
 mod curve_string;
 mod error;
 mod events;
@@ -201,6 +202,7 @@ pub use curve_region_boolean::{
     CurveRegionIntersectionContact2, CurveRegionIntersectionOverlap2,
     CurveRegionIntersectionResult2,
 };
+pub use curve_region_trim::CurveRegionTrimFragment2;
 pub use curve_string::{
     CurveString2, CurveStringEndpoint2, CurveStringIntersection, CurveStringLinkKind2,
     CurveStringTrimPoint2,
@@ -362,6 +364,43 @@ mod tests {
         assert_eq!(arc.center(), &p(1, 0));
         assert!(arc.is_clockwise());
         assert_eq!(arc.bulge(), Some(&s(-1)));
+    }
+
+    #[test]
+    fn angular_arc_splits_retain_root_lineage_across_nested_edits() {
+        let arc = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap();
+        let Classification::Decided((first, second)) = arc
+            .split_at_sweep_fraction(&q(1, 3), &topology_policy())
+            .unwrap()
+        else {
+            panic!("exact rational sweep fraction must decide");
+        };
+        let sqrt_three_over_two = (s(3).sqrt().unwrap() / s(2)).unwrap();
+        let expected_first_cut = Point2::new(sqrt_three_over_two.clone(), q(1, 2));
+        assert_eq!(
+            crate::classify::is_zero(
+                &first.end().distance_squared(&expected_first_cut),
+                &topology_policy(),
+            ),
+            Some(true)
+        );
+        assert_eq!(first.end(), second.start());
+
+        let Classification::Decided((nested_first, nested_second)) = second
+            .split_at_sweep_fraction(&q(1, 2), &topology_policy())
+            .unwrap()
+        else {
+            panic!("nested exact rational sweep fraction must decide");
+        };
+        let expected_second_cut = Point2::new(q(1, 2), sqrt_three_over_two);
+        assert_eq!(
+            crate::classify::is_zero(
+                &nested_first.end().distance_squared(&expected_second_cut),
+                &topology_policy(),
+            ),
+            Some(true)
+        );
+        assert_eq!(nested_first.end(), nested_second.start());
     }
 
     #[test]

@@ -135,6 +135,17 @@ impl BezierSplitMaterialization2 {
     }
 }
 
+impl BezierSplitFragment2 {
+    /// Returns this fragment's boundaries in its promoted native span.
+    pub const fn parameter_range(&self) -> (&BezierParameter2, &BezierParameter2) {
+        match self {
+            Self::Materialized { start, end, .. }
+            | Self::AlgebraicEndpointImages { start, end, .. }
+            | Self::Unresolved { start, end } => (start, end),
+        }
+    }
+}
+
 impl BezierSubcurve2 {
     /// Returns the exact local-parameter start point.
     pub fn start(&self) -> &Point2 {

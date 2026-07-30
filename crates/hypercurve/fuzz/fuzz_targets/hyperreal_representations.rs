@@ -2,7 +2,7 @@
 
 #![no_main]
 
-use hypercurve::{LineSeg2, Point2, Similarity2};
+use hypercurve::{LineSeg2, Point2, PredicatePolicy, Similarity2};
 use hyperreal::{CertifiedRealEquality, Rational, Real, StructuralKind};
 use libfuzzer_sys::fuzz_target;
 
@@ -47,17 +47,18 @@ fn assert_point_bounded_equal(left: &Point2, right: &Point2) {
 }
 
 fn assert_bounded_equal(left: &Real, right: &Real) {
+    let precision = PredicatePolicy::MAX_REFINEMENT_PRECISION;
     if matches!(
-        left.certified_eq_until(right, -512),
+        left.certified_eq_until(right, precision),
         CertifiedRealEquality::Equal { .. }
     ) {
         return;
     }
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-512)
+        .certified_dyadic_interval(precision)
         .expect("bounded left value");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-512)
+        .certified_dyadic_interval(precision)
         .expect("bounded right value");
     assert!(left_lower <= right_upper && right_lower <= left_upper);
 }

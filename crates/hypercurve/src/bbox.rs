@@ -360,6 +360,23 @@ impl Aabb2 {
 
     /// Classifies whether this closed box contains `point`.
     pub fn contains_point(&self, point: &Point2, policy: &CurvePolicy) -> Classification<bool> {
+        #[cfg(feature = "predicates")]
+        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+            return match hyperlimit::point_in_ordered_aabb2_coordinates_with_policy(
+                [self.min_x(), self.min_y()],
+                [self.max_x(), self.max_y()],
+                [point.x(), point.y()],
+                policy.predicate_policy,
+            ) {
+                hyperlimit::PredicateOutcome::Decided { value, .. } => {
+                    Classification::Decided(value)
+                }
+                hyperlimit::PredicateOutcome::Unknown { .. } => {
+                    Classification::Uncertain(UncertaintyReason::Ordering)
+                }
+            };
+        }
+
         let Some(x_inside) = real_between(point.x(), self.min_x(), self.max_x(), policy) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
@@ -378,6 +395,24 @@ impl Aabb2 {
     /// Edge and corner contacts count as overlap. This inclusive convention is
     /// necessary for tangent, endpoint, and shared-boundary curve topology.
     pub fn overlaps(&self, other: &Self, policy: &CurvePolicy) -> Classification<bool> {
+        #[cfg(feature = "predicates")]
+        if !matches!(policy.mode, crate::policy::NumericMode::EdgePreview) {
+            return match hyperlimit::ordered_aabb2s_intersect_coordinates_with_policy(
+                [self.min_x(), self.min_y()],
+                [self.max_x(), self.max_y()],
+                [other.min_x(), other.min_y()],
+                [other.max_x(), other.max_y()],
+                policy.predicate_policy,
+            ) {
+                hyperlimit::PredicateOutcome::Decided { value, .. } => {
+                    Classification::Decided(value)
+                }
+                hyperlimit::PredicateOutcome::Unknown { .. } => {
+                    Classification::Uncertain(UncertaintyReason::Ordering)
+                }
+            };
+        }
+
         for (direction, (left, right)) in [
             (self.max_x(), other.min_x()),
             (other.max_x(), self.min_x()),

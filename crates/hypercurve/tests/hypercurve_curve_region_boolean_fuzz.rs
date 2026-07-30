@@ -1062,6 +1062,18 @@ fn retired_exact_curve_region_boolean_failures_remain_in_the_corpus() {
 }
 
 #[test]
+fn algebraic_polyline_contacts_preserve_exact_contact_distinction() {
+    let case = retired_algebraic_polyline_case();
+    exact_boolean_results(
+        "algebraic polyline contact distinction",
+        &case.first,
+        &case.second,
+        false,
+    )
+    .unwrap();
+}
+
+#[test]
 fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
     let specification = GeneratedRegion {
         origin_x: -4,

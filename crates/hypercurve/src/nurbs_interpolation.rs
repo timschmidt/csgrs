@@ -2,6 +2,7 @@
 
 use hypersolve::{BareissError, determinant_bareiss, solve_dense_linear_system_bareiss_multi_rhs};
 use std::cmp::Ordering;
+use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::{
     CurveError, CurveFamily2, CurveOperation2, CurvePolicy, ExactCurveError, ExactCurveResult,
@@ -9,6 +10,10 @@ use crate::{
 };
 
 const INTERPOLATION_SOLVE_PRECISION: i32 = -128;
+const MAX_RETAINED_UNIFORM_INTERPOLATION_SYSTEMS: usize = 8;
+
+static UNIFORM_INTERPOLATION_SYSTEMS: OnceLock<Mutex<Vec<Arc<InterpolationSystem>>>> =
+    OnceLock::new();
 
 #[derive(Clone, Copy)]
 enum DistanceParameterization {
@@ -19,6 +24,16 @@ enum DistanceParameterization {
 struct InterpolationCoordinateSolve {
     solution: Vec<Real>,
     residual_replayed: bool,
+}
+
+struct InterpolationSystem {
+    degree: usize,
+    point_count: usize,
+    parameters: Arc<[Real]>,
+    control_weights: Arc<[Real]>,
+    knots: Arc<[Real]>,
+    coefficient_matrix: Arc<[Vec<Real>]>,
+    denominators: Arc<[Real]>,
 }
 
 impl NurbsCurve2 {
@@ -47,14 +62,15 @@ impl NurbsCurve2 {
         degree: usize,
         data_points: Vec<Point2>,
     ) -> ExactCurveResult<NurbsCurve2> {
-        let parameters = uniform_interpolation_parameters(data_points.len())?;
-        let knots = averaged_interpolation_knots(degree, &data_points, &parameters)?;
-        interpolate_with_inputs(
+        let system = uniform_interpolation_system(degree, &data_points)?;
+        interpolate_with_precomputed_system(
             degree,
             data_points,
-            parameters,
-            vec![Real::one(); knots.len() - degree - 1],
-            knots,
+            &system.parameters,
+            system.control_weights.iter().cloned().collect(),
+            system.knots.iter().cloned().collect(),
+            &system.coefficient_matrix,
+            &system.denominators,
         )
     }
 
@@ -107,24 +123,64 @@ fn interpolate_with_inputs(
     knots: Vec<Real>,
 ) -> ExactCurveResult<NurbsCurve2> {
     validate_interpolation_inputs(degree, &data_points, &parameters, &control_weights, &knots)?;
-    let coefficient_matrix = parameters
+    let coefficient_matrix = build_interpolation_coefficient_matrix(
+        degree,
+        data_points.len(),
+        &parameters,
+        &control_weights,
+        &knots,
+    )?;
+    let denominators = interpolation_denominators(&coefficient_matrix)?;
+    interpolate_with_precomputed_system(
+        degree,
+        data_points,
+        &parameters,
+        control_weights,
+        knots,
+        &coefficient_matrix,
+        &denominators,
+    )
+}
+
+fn build_interpolation_coefficient_matrix(
+    degree: usize,
+    point_count: usize,
+    parameters: &[Real],
+    control_weights: &[Real],
+    knots: &[Real],
+) -> ExactCurveResult<Vec<Vec<Real>>> {
+    parameters
         .iter()
-        .map(|parameter| {
-            weighted_basis_row(
-                degree,
-                data_points.len(),
-                &knots,
-                &control_weights,
-                parameter,
-            )
+        .map(|parameter| weighted_basis_row(degree, point_count, knots, control_weights, parameter))
+        .collect()
+}
+
+fn interpolation_denominators(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Vec<Real>> {
+    coefficient_matrix
+        .iter()
+        .map(|row| {
+            let denominator = row.iter().fold(Real::zero(), |sum, value| sum + value);
+            certify_interpolation_denominator(&denominator)?;
+            Ok(denominator)
         })
-        .collect::<ExactCurveResult<Vec<_>>>()?;
+        .collect()
+}
+
+fn interpolate_with_precomputed_system(
+    degree: usize,
+    data_points: Vec<Point2>,
+    parameters: &[Real],
+    control_weights: Vec<Real>,
+    knots: Vec<Real>,
+    coefficient_matrix: &[Vec<Real>],
+    denominators: &[Real],
+) -> ExactCurveResult<NurbsCurve2> {
+    debug_assert_eq!(data_points.len(), coefficient_matrix.len());
+    debug_assert_eq!(data_points.len(), denominators.len());
     let mut rhs_x = Vec::with_capacity(data_points.len());
     let mut rhs_y = Vec::with_capacity(data_points.len());
-    for (point, row) in data_points.iter().zip(&coefficient_matrix) {
-        let denominator = row.iter().fold(Real::zero(), |sum, value| sum + value);
-        certify_interpolation_denominator(&denominator)?;
-        rhs_x.push(point.x() * &denominator);
+    for (point, denominator) in data_points.iter().zip(denominators) {
+        rhs_x.push(point.x() * denominator);
         rhs_y.push(point.y() * denominator);
     }
     let replay_residuals = coefficient_matrix
@@ -134,16 +190,16 @@ fn interpolate_with_inputs(
         .chain(&rhs_y)
         .all(|value| value.exact_rational_ref().is_some());
     let (x_solve, y_solve) = if replay_residuals {
-        solve_interpolation_coordinates_bareiss(&coefficient_matrix, &[rhs_x, rhs_y])?
+        solve_interpolation_coordinates_bareiss(coefficient_matrix, &[rhs_x, rhs_y])?
     } else {
-        let determinant = interpolation_determinant(&coefficient_matrix)?;
+        let determinant = interpolation_determinant(coefficient_matrix)?;
         let x_solve = solve_interpolation_coordinate_cramer_identity(
-            &coefficient_matrix,
+            coefficient_matrix,
             &rhs_x,
             &determinant,
         )?;
         let y_solve = solve_interpolation_coordinate_cramer_identity(
-            &coefficient_matrix,
+            coefficient_matrix,
             &rhs_y,
             &determinant,
         )?;
@@ -173,6 +229,59 @@ fn interpolate_with_inputs(
         }
     }
     Ok(curve)
+}
+
+fn uniform_interpolation_system(
+    degree: usize,
+    data_points: &[Point2],
+) -> ExactCurveResult<Arc<InterpolationSystem>> {
+    let point_count = data_points.len();
+    let systems = UNIFORM_INTERPOLATION_SYSTEMS.get_or_init(|| Mutex::new(Vec::new()));
+    if let Some(system) = systems
+        .lock()
+        .expect("uniform interpolation system cache mutex poisoned")
+        .iter()
+        .find(|system| system.degree == degree && system.point_count == point_count)
+    {
+        return Ok(Arc::clone(system));
+    }
+
+    let parameters = uniform_interpolation_parameters(point_count)?;
+    let knots = averaged_interpolation_knots(degree, data_points, &parameters)?;
+    let control_weights = vec![Real::one(); knots.len() - degree - 1];
+    validate_interpolation_inputs(degree, data_points, &parameters, &control_weights, &knots)?;
+    let coefficient_matrix = build_interpolation_coefficient_matrix(
+        degree,
+        point_count,
+        &parameters,
+        &control_weights,
+        &knots,
+    )?;
+    let denominators = interpolation_denominators(&coefficient_matrix)?;
+    let system = Arc::new(InterpolationSystem {
+        degree,
+        point_count,
+        parameters: parameters.into(),
+        control_weights: control_weights.into(),
+        knots: knots.into(),
+        coefficient_matrix: coefficient_matrix.into(),
+        denominators: denominators.into(),
+    });
+
+    let mut systems = systems
+        .lock()
+        .expect("uniform interpolation system cache mutex poisoned");
+    if let Some(retained) = systems
+        .iter()
+        .find(|retained| retained.degree == degree && retained.point_count == point_count)
+    {
+        return Ok(Arc::clone(retained));
+    }
+    if systems.len() == MAX_RETAINED_UNIFORM_INTERPOLATION_SYSTEMS {
+        let _ = systems.remove(0);
+    }
+    systems.push(Arc::clone(&system));
+    Ok(system)
 }
 
 fn interpolation_determinant(coefficient_matrix: &[Vec<Real>]) -> ExactCurveResult<Real> {
@@ -580,4 +689,35 @@ fn invalid_interpolation() -> ExactCurveError {
 
 fn blocked_interpolation(reason: UncertaintyReason) -> ExactCurveError {
     ExactCurveError::blocked(CurveOperation2::Interpolation, CurveFamily2::Nurbs, reason)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn point(x: i32, y: i32) -> Point2 {
+        Point2::new(x.into(), y.into())
+    }
+
+    #[test]
+    fn uniform_system_cache_is_exact_and_independent_of_data_coordinates() {
+        let first_points = vec![point(0, 0), point(1, 4), point(4, 3), point(6, 0)];
+        let second_points = vec![point(-2, 7), point(0, 1), point(5, -3), point(9, 2)];
+        let first_system = uniform_interpolation_system(3, &first_points).unwrap();
+        let second_system = uniform_interpolation_system(3, &second_points).unwrap();
+        assert!(Arc::ptr_eq(&first_system, &second_system));
+        assert!(
+            first_system
+                .coefficient_matrix
+                .iter()
+                .flatten()
+                .all(|value| value.exact_rational_ref().is_some())
+        );
+
+        let curve = NurbsCurve2::interpolate_uniform(3, second_points.clone()).unwrap();
+        for (parameter, expected) in first_system.parameters.iter().zip(second_points) {
+            let actual = curve.point_at(parameter).unwrap();
+            exact_point_equal(&actual, &expected).unwrap();
+        }
+    }
 }
