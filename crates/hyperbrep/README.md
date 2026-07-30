@@ -95,7 +95,8 @@ The clean-break implementation currently provides:
   construction;
 - retained exact bounds plus exact planar/spherical/cylindrical/conical/
   toroidal/extrusion/revolution face-area and
-  affine-prism/sphere/cylinder/frustum/torus/revolution solid-volume queries;
+  affine-prism/sphere/cylinder/frustum/full-or-planar-capped-torus/revolution
+  solid-volume queries;
 - cached exact solid point classification plus line/plane, plane/plane,
   circular-or-elliptic-arc/plane, circular-arc/sphere,
   transverse-circular-arc/cylinder-or-cone-or-torus, line/sphere, line/cylinder,
@@ -140,6 +141,9 @@ The clean-break implementation currently provides:
   slant-interval regularization, including two-solid interior cuts;
 - exact identical-torus Booleans across equivalent periodic frames, including
   reversed carrier axes;
+- exact transverse torus/slab intersection through retained concentric
+  latitudes, one or two native annular caps, periodic parameter-cell
+  certification, and analytic band measurement/classification;
 - exact coaxial polygonal-revolution Booleans through Hypercurve radial/axial
   regions, including reversed axes, disconnected outputs, and retained
   toroidal-profile cavities;

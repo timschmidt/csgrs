@@ -300,8 +300,12 @@ Transverse plane/torus cuts retain each concentric latitude as its own exact
 support, with a planar angular-sweep pcurve and constant torus-`v` pcurve.
 Multiple patch-local chains coalesce independently before nested planar-loop
 partitioning. Full-torus certification accepts exact latitude subdivisions by
-proving complete periodic parameter-grid coverage; planar-capped torus-band
-stitching remains the next certificate step.
+proving complete periodic parameter-grid coverage. Axial torus-band
+certification additionally proves exact latitude-cell coverage against one
+authoritative `Real` interval and validates zero, one, or two native annular
+cap groups. Standard torus/slab intersection therefore stitches exact central
+bands and one-cap bands that close at a natural torus extremum, with analytic
+volume, point classification, rigid/reflection transforms, and persistence.
 
 Closed rational-Bézier curve sweeps and translated prism shells retain their
 exact solid certificate after

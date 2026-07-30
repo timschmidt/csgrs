@@ -5708,6 +5708,126 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("the upper torus band must stitch through its natural tangent closure");
+        };
+        let expected = Real::from(2) * Real::pi() * Real::pi()
+            - (Real::from(3) * Real::pi() * Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn transverse_torus_central_band_stitches_as_an_exact_solid() {
+        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let (slab, slab_solid) = crate::builder::cuboid(
+            Point3::new(-Real::from(5), -Real::from(5), -half.clone()),
+            Point3::new(Real::from(5), Real::from(5), half),
+        )
+        .unwrap();
+        let graph = intersection_graph(&torus, torus_solid, &slab, slab_solid).unwrap();
+        let result = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap();
+        let BooleanResult::Solid { model, solid } = result else {
+            panic!("the transverse central torus band must be one exact solid");
+        };
+        let expected = Real::from(2) * Real::pi() * Real::pi()
+            + Real::from(3) * Real::pi() * Real::from(3).sqrt().unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(3, 0, 0), SolidPointLocation::Inside),
+            (
+                Point3::new(
+                    Real::from(3),
+                    Real::zero(),
+                    (Real::one() / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(
+                    Real::from(3),
+                    Real::zero(),
+                    (Real::from(3) / Real::from(4)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (p(4, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 0), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+        let json = model.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        assert_eq!(
+            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        for (index, result) in [
+            intersection(&torus, torus_solid, &slab, slab_solid).unwrap(),
+            intersection(&slab, slab_solid, &torus, torus_solid).unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let BooleanResult::Solid { model, solid } = result else {
+                panic!("operand order {index} must preserve the exact torus band");
+            };
+            assert_eq!(
+                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal),
+                "operand order {index}"
+            );
+        }
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_torus = torus.transformed(&cyclic).unwrap();
+        let oriented_slab = slab.transformed(&cyclic).unwrap();
+        let BooleanResult::Solid {
+            model: oriented,
+            solid: oriented_solid,
+        } = intersection(&oriented_torus, torus_solid, &oriented_slab, slab_solid).unwrap()
+        else {
+            panic!("rigidly oriented transverse clipping must retain one exact torus band");
+        };
+        assert_eq!(
+            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        let reflected = model
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        assert_eq!(
+            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

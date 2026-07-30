@@ -140,11 +140,23 @@ families is recertified:
 - complete closed-surface spheres, spherical voids, and exact two-cap
   sphere/sphere Boolean shells;
 - truncated cones that exclude the singular apex;
-- full periodic ring tori.
+- full periodic ring tori and exact axial torus bands closed by zero, one, or
+  two planar annular cap groups.
 
 Certificates are compact retained facts used for exact volume and point
 classification. They are rebuilt from geometry and topology after persistence.
 Supported transforms update the certificate directly and preserve its proof.
+
+Torus certification derives longitude/latitude rectangles from the current
+trimmed topology. Longitude cells must cover one complete period. Latitude
+cells are split at every exact trim and at the four canonical quarter angles,
+then must cover exactly the cells whose `r*sin(v)` image lies in the retained
+axial interval. Each planar cap group must expose two complete concentric
+circle loops with radii `R ± sqrt(r²-h²)` and the correct outward axial normal.
+This proves full tori, two-cap interior bands, and one-cap bands that close at
+a natural torus extremum. Volume uses the exact `Real` antiderivative of
+`4*pi*R*sqrt(r²-h²)`; classification combines the same axial interval with the
+ring-torus implicit predicate.
 
 Line/arc revolution certificates project every authored meridian carrier into
 one exact positive-radius radial/axial contour. Circular meridians are checked

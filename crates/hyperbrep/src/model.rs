@@ -1216,6 +1216,9 @@ struct CertifiedTorusShell {
     axis: Vector3,
     major_radius: Real,
     minor_radius: Real,
+    axial_min: Real,
+    axial_max: Real,
+    full: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -3163,6 +3166,9 @@ impl Model {
                             axis: transform.transform_direction3(&certificate.axis),
                             major_radius: certificate.major_radius.clone(),
                             minor_radius: certificate.minor_radius.clone(),
+                            axial_min: certificate.axial_min.clone(),
+                            axial_max: certificate.axial_max.clone(),
+                            full: certificate.full,
                         })
                     })
                     .transpose()
@@ -3586,12 +3592,20 @@ impl Model {
             });
         }
         if let Some(torus) = &self.data.certified_tori[id.index()] {
-            return Ok(Real::from(2)
-                * Real::pi()
-                * Real::pi()
-                * &torus.major_radius
-                * &torus.minor_radius
-                * &torus.minor_radius);
+            let antiderivative = |height: &Real| -> Result<Real, GeometryError> {
+                let radial = (&torus.minor_radius * &torus.minor_radius - height * height)
+                    .sqrt()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                let angle = (height / &torus.minor_radius)
+                    .map_err(|_| GeometryError::ProjectiveDivision)?
+                    .asin()
+                    .map_err(|_| GeometryError::ElementaryFunction)?;
+                Ok(Real::from(2)
+                    * Real::pi()
+                    * &torus.major_radius
+                    * (height * radial + &torus.minor_radius * &torus.minor_radius * angle))
+            };
+            return Ok(antiderivative(&torus.axial_max)? - antiderivative(&torus.axial_min)?);
         }
         if let Some(frustum) = &self.data.certified_cone_frustums[id.index()] {
             let sine = frustum.semi_angle.clone().sin();
@@ -4011,6 +4025,11 @@ impl Model {
     ) -> Result<SolidPointLocation, QueryError> {
         let offset = point - &torus.center;
         let axial = offset.dot(&torus.axis);
+        let min_order = decided_model_order(compare_reals(&axial, &torus.axial_min))?;
+        let max_order = decided_model_order(compare_reals(&axial, &torus.axial_max))?;
+        if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
+            return Ok(SolidPointLocation::Outside);
+        }
         let radial = offset - torus.axis.clone() * &axial;
         let radial_squared = radial.norm_squared();
         let major_squared = &torus.major_radius * &torus.major_radius;
@@ -4019,6 +4038,12 @@ impl Model {
         let left = &implicit_base * &implicit_base;
         let right = Real::from(4) * major_squared * radial_squared;
         Ok(match decided_model_order(compare_reals(&left, &right))? {
+            std::cmp::Ordering::Less
+                if min_order == std::cmp::Ordering::Equal
+                    || max_order == std::cmp::Ordering::Equal =>
+            {
+                SolidPointLocation::Boundary
+            }
             std::cmp::Ordering::Less => SolidPointLocation::Inside,
             std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
             std::cmp::Ordering::Greater => SolidPointLocation::Outside,
@@ -4732,6 +4757,7 @@ impl Model {
             .certified_tori
             .get(solid.index())
             .and_then(Option::as_ref)
+            .filter(|torus| torus.full)
             .map(|torus| CertifiedTorusProfile {
                 center: torus.center.clone(),
                 axis: torus.axis.clone(),
@@ -9007,21 +9033,37 @@ impl ModelBuilder {
         shell: ShellId,
     ) -> Result<Option<CertifiedTorusShell>, BuildError> {
         let faces = &self.shell_ref(shell)?.faces;
-        if faces.len() < 16 {
-            return Ok(None);
-        }
-        let mut surface_id = None;
-        let mut u_values = Vec::new();
-        let mut v_values = Vec::new();
-        let mut face_coordinates = Vec::with_capacity(faces.len());
+        let mut side_faces = Vec::new();
         for face_id in faces {
             let face = self.face_ref(*face_id)?;
-            if !face.inner().is_empty()
-                || face.orientation != Orientation::Forward
-                || self.surface_ref(face.surface)?.kind() != SurfaceKind::Torus
-            {
-                return Ok(None);
+            match self.surface_ref(face.surface)?.kind() {
+                SurfaceKind::Plane => {}
+                SurfaceKind::Torus
+                    if face.orientation == Orientation::Forward && face.inner().is_empty() =>
+                {
+                    side_faces.push(*face_id);
+                }
+                _ => return Ok(None),
             }
+        }
+        if side_faces.is_empty() {
+            return Ok(None);
+        }
+        let cap_groups = self.planar_face_groups(faces)?;
+        if cap_groups.len() > 2 {
+            return Ok(None);
+        }
+
+        let mut surface_id = None;
+        let mut u_values = Vec::new();
+        let quarter =
+            (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
+        let mut v_values = (0..=4)
+            .map(|index| &quarter * Real::from(index))
+            .collect::<Vec<_>>();
+        let mut face_coordinates = Vec::with_capacity(side_faces.len());
+        for face_id in &side_faces {
+            let face = self.face_ref(*face_id)?;
             match surface_id {
                 Some(expected) if expected != face.surface => return Ok(None),
                 Some(_) => {}
@@ -9075,18 +9117,75 @@ impl ModelBuilder {
             face_coordinates.push((u_min, u_max, v_min, v_max));
         }
         if u_values.len() < 5
-            || v_values.len() < 5
             || !real_values_equal(
                 &(u_values.last().expect("torus u grid") - &u_values[0]),
-                &Real::tau(),
-            )?
-            || !real_values_equal(
-                &(v_values.last().expect("torus v grid") - &v_values[0]),
                 &Real::tau(),
             )?
         {
             return Ok(None);
         }
+        let zero = Real::zero();
+        let tau = Real::tau();
+        for (_, _, v_min, v_max) in &face_coordinates {
+            if decided_model_order(compare_reals(v_min, &zero))? == std::cmp::Ordering::Less
+                || decided_model_order(compare_reals(v_max, &tau))? == std::cmp::Ordering::Greater
+            {
+                return Ok(None);
+            }
+        }
+
+        let SurfaceExactData::Torus {
+            center,
+            axis,
+            major_radius,
+            minor_radius,
+            ..
+        } = self
+            .surface_ref(surface_id.expect("torus shell has faces"))?
+            .exact_data()
+        else {
+            unreachable!("torus kind carries torus exact data");
+        };
+        let mut caps = Vec::with_capacity(cap_groups.len());
+        for group in &cap_groups {
+            let Some(cap) = self.certified_torus_cap_group(
+                faces,
+                group,
+                &center,
+                &axis,
+                &major_radius,
+                &minor_radius,
+            )?
+            else {
+                return Ok(None);
+            };
+            caps.push(cap);
+        }
+        let (axial_min, axial_max) = match caps.len() {
+            0 => (-minor_radius.clone(), minor_radius.clone()),
+            1 if caps[0].1 == std::cmp::Ordering::Less => (caps[0].0.clone(), minor_radius.clone()),
+            1 if caps[0].1 == std::cmp::Ordering::Greater => {
+                (-minor_radius.clone(), caps[0].0.clone())
+            }
+            1 => return Ok(None),
+            2 => {
+                if decided_model_order(compare_reals(&caps[0].0, &caps[1].0))?
+                    == std::cmp::Ordering::Greater
+                {
+                    caps.swap(0, 1);
+                }
+                if decided_model_order(compare_reals(&caps[0].0, &caps[1].0))?
+                    != std::cmp::Ordering::Less
+                    || caps[0].1 != std::cmp::Ordering::Less
+                    || caps[1].1 != std::cmp::Ordering::Greater
+                {
+                    return Ok(None);
+                }
+                (caps[0].0.clone(), caps[1].0.clone())
+            }
+            _ => unreachable!("at most two torus cap groups"),
+        };
+
         let mut cells = HashSet::new();
         for (u_min, u_max, v_min, v_max) in face_coordinates {
             let u_start = exact_real_index(&u_values, &u_min)?;
@@ -9104,27 +9203,146 @@ impl ModelBuilder {
                 }
             }
         }
-        if cells.len() != (u_values.len() - 1) * (v_values.len() - 1) {
-            return Ok(None);
+        for v_cell in 0..v_values.len() - 1 {
+            let first_height = &minor_radius * v_values[v_cell].clone().sin();
+            let second_height = &minor_radius * v_values[v_cell + 1].clone().sin();
+            let (cell_min, cell_max) = exact_real_min_max(&[first_height, second_height])?;
+            let expected = decided_model_order(compare_reals(&cell_min, &axial_min))?
+                != std::cmp::Ordering::Less
+                && decided_model_order(compare_reals(&cell_max, &axial_max))?
+                    != std::cmp::Ordering::Greater;
+            let actual = (0..u_values.len() - 1).all(|u_cell| cells.contains(&(u_cell, v_cell)));
+            let partial = (0..u_values.len() - 1).any(|u_cell| cells.contains(&(u_cell, v_cell)));
+            if actual != expected || (partial && !actual) {
+                return Ok(None);
+            }
         }
-        let SurfaceExactData::Torus {
-            center,
-            axis,
-            major_radius,
-            minor_radius,
-            ..
-        } = self
-            .surface_ref(surface_id.expect("torus shell has faces"))?
-            .exact_data()
-        else {
-            unreachable!("torus kind carries torus exact data");
-        };
         Ok(Some(CertifiedTorusShell {
             center,
             axis,
             major_radius,
             minor_radius,
+            axial_min,
+            axial_max,
+            full: cap_groups.is_empty(),
         }))
+    }
+
+    fn certified_torus_cap_group(
+        &self,
+        faces: &[FaceId],
+        group: &[usize],
+        center: &Point3,
+        axis: &Vector3,
+        major_radius: &Real,
+        minor_radius: &Real,
+    ) -> Result<Option<(Real, std::cmp::Ordering)>, BuildError> {
+        let Some(boundaries) = self.cap_boundary_use_loops(faces, group)? else {
+            return Ok(None);
+        };
+        if boundaries.len() != 2 {
+            return Ok(None);
+        }
+        let first_use = *boundaries[0].first().ok_or(BuildError::EmptyWire)?;
+        let first_edge = self.edge_ref(self.edge_use_ref(first_use)?.edge)?;
+        let Curve3ExactData::EllipseArc(first_circle) =
+            self.curve_ref(first_edge.curve)?.exact_data()
+        else {
+            return Ok(None);
+        };
+        if !first_circle.circle {
+            return Ok(None);
+        }
+        let axial = (&first_circle.center - center).dot(axis);
+        let expected_center = center.clone() + axis.clone() * &axial;
+        if !points_equal(&first_circle.center, &expected_center)?
+            || decided_model_order(compare_reals(&axial, &(-minor_radius.clone())))?
+                != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(&axial, minor_radius))? != std::cmp::Ordering::Less
+        {
+            return Ok(None);
+        }
+        let radial_offset = (minor_radius * minor_radius - &axial * &axial)
+            .sqrt()
+            .map_err(|_| GeometryError::ElementaryFunction)?;
+        let expected_radii = [major_radius - &radial_offset, major_radius + &radial_offset];
+        let mut matched_radii = [false; 2];
+        for boundary in &boundaries {
+            let mut sweep = Real::zero();
+            let mut radius_index = None;
+            for edge_use_id in boundary {
+                let edge = self.edge_ref(self.edge_use_ref(*edge_use_id)?.edge)?;
+                let Curve3ExactData::EllipseArc(circle) = self.curve_ref(edge.curve)?.exact_data()
+                else {
+                    return Ok(None);
+                };
+                if !circle.circle || !points_equal(&circle.center, &expected_center)? {
+                    return Ok(None);
+                }
+                let mut this_radius = None;
+                for (index, expected) in expected_radii.iter().enumerate() {
+                    if real_values_equal(&circle.x_radius, expected)?
+                        && real_values_equal(&circle.y_radius, expected)?
+                    {
+                        this_radius = Some(index);
+                        break;
+                    }
+                }
+                let Some(this_radius) = this_radius else {
+                    return Ok(None);
+                };
+                if radius_index.is_some_and(|index| index != this_radius) {
+                    return Ok(None);
+                }
+                radius_index = Some(this_radius);
+                sweep += edge.domain.end() - edge.domain.start();
+            }
+            if !real_values_equal(&sweep, &Real::tau())? {
+                return Ok(None);
+            }
+            let Some(radius_index) = radius_index else {
+                return Ok(None);
+            };
+            if matched_radii[radius_index] {
+                return Ok(None);
+            }
+            matched_radii[radius_index] = true;
+        }
+        if matched_radii != [true, true] {
+            return Ok(None);
+        }
+
+        let mut outward = None;
+        for index in group {
+            let face = self.face_ref(faces[*index])?;
+            let SurfaceExactData::Plane { origin, u, v } =
+                self.surface_ref(face.surface)?.exact_data()
+            else {
+                return Ok(None);
+            };
+            let normal = u.cross(&v);
+            let axial_normal = normal.dot(axis);
+            if decided_model_order(compare_reals(
+                &normal.cross(axis).norm_squared(),
+                &Real::zero(),
+            ))? != std::cmp::Ordering::Equal
+                || !real_values_equal(&(origin - center).dot(axis), &axial)?
+            {
+                return Ok(None);
+            }
+            let oriented_axial = match face.orientation {
+                Orientation::Forward => axial_normal,
+                Orientation::Reversed => -axial_normal,
+            };
+            let this_outward = decided_model_order(compare_reals(&oriented_axial, &Real::zero()))?;
+            if this_outward == std::cmp::Ordering::Equal
+                || outward.is_some_and(|expected| expected != this_outward)
+            {
+                return Ok(None);
+            }
+            outward = Some(this_outward);
+        }
+        Ok(outward.map(|outward| (axial, outward)))
     }
 
     fn certified_curve_sweep_shell(
