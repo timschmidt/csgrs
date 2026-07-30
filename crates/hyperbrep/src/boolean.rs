@@ -114,8 +114,8 @@ pub enum FacePairRelation {
 pub enum FacePairTrim {
     /// This carrier family does not yet have a trim-clipping implementation.
     NotAvailable,
-    /// Both faces are boundaryless complete carriers, so the complete exact
-    /// carrier relation lies on both faces.
+    /// Both faces are boundaryless and the complete relation has no more
+    /// specific retained point or parameterized-curve evidence.
     CompleteCarrier,
     /// Straight boundary fragments from coincident planar faces partition
     /// each face into exact coplanar ownership regions.
@@ -2385,7 +2385,27 @@ fn trim_face_pair_intersection(
     if face_is_boundaryless(first_model, first_face)
         && face_is_boundaryless(second_model, second_face)
     {
-        return Ok(FacePairTrim::CompleteCarrier);
+        return match intersection {
+            SurfaceSurfaceIntersection::Point(point) => {
+                Ok(FacePairTrim::PointContact(point.as_ref().clone()))
+            }
+            SurfaceSurfaceIntersection::Curve(curve) => {
+                Ok(FacePairTrim::SurfaceCurveFragments(vec![
+                    curve.as_ref().clone(),
+                ]))
+            }
+            SurfaceSurfaceIntersection::Curves(curves) => {
+                Ok(FacePairTrim::SurfaceCurveFragments(curves.clone()))
+            }
+            SurfaceSurfaceIntersection::Components(components) => trim_intersection_components(
+                first_model,
+                first_face,
+                second_model,
+                second_face,
+                components,
+            ),
+            _ => Ok(FacePairTrim::CompleteCarrier),
+        };
     }
     if matches!(intersection, SurfaceSurfaceIntersection::Coincident) {
         let first_traces =
@@ -5243,8 +5263,100 @@ mod tests {
         ));
         assert!(matches!(
             graph.intersections()[0].trim(),
-            FacePairTrim::CompleteCarrier
+            FacePairTrim::PointContact(_)
         ));
+    }
+
+    #[test]
+    fn axial_sphere_graph_partitions_both_whole_faces_from_retained_pcurves() {
+        let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let (second, second_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let second = second
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                Real::from(2),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&first, first_solid, &second, second_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let pair = &graph.intersections()[0];
+        let FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(curve)) = pair.relation()
+        else {
+            panic!("axial spheres must retain one exact two-pcurve circle");
+        };
+        let FacePairTrim::SurfaceCurveFragments(fragments) = pair.trim() else {
+            panic!("whole spheres must retain the complete parameterized circle");
+        };
+        assert_eq!(fragments.len(), 1);
+        assert_surface_fragment_replays(
+            &fragments[0],
+            face_surface(&first, pair.first_face()),
+            face_surface(&second, pair.second_face()),
+        );
+        assert!(curve.first_pcurve().materialize().is_ok());
+        assert!(curve.second_pcurve().materialize().is_ok());
+
+        let (partitioned_first, first_partitions) = graph.partition_first_faces().unwrap();
+        let (partitioned_second, second_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(first_partitions.len(), 1);
+        assert_eq!(second_partitions.len(), 1);
+        assert_eq!(first_partitions[0].traces.len(), 1);
+        assert_eq!(second_partitions[0].traces.len(), 1);
+        assert_eq!(partitioned_first.faces().count(), 2);
+        assert_eq!(partitioned_second.faces().count(), 2);
+        let expected_volume = (Real::from(32) * Real::pi() / Real::from(3)).unwrap();
+        assert_eq!(
+            compare_reals(
+                &partitioned_first.solid_volume(first_solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned_second.solid_volume(second_solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let (mirrored, mirrored_solid) = crate::builder::sphere(Real::from(2)).unwrap();
+        let mirrored = mirrored
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::from(2)],
+            ))
+            .unwrap();
+        let mirrored_graph =
+            intersection_graph(&first, first_solid, &mirrored, mirrored_solid).unwrap();
+        let mirrored_pair = &mirrored_graph.intersections()[0];
+        let FacePairRelation::Exact(SurfaceSurfaceIntersection::Curve(mirrored_curve)) =
+            mirrored_pair.relation()
+        else {
+            panic!("mirrored axial spheres must retain one exact curve");
+        };
+        let second_pcurve = mirrored_curve.second_pcurve().materialize().unwrap();
+        assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
+        assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+        let (partitioned_mirrored, mirrored_partitions) =
+            mirrored_graph.partition_second_faces().unwrap();
+        assert_eq!(mirrored_partitions.len(), 1);
+        assert_eq!(partitioned_mirrored.faces().count(), 2);
+        assert_eq!(
+            compare_reals(
+                &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
+                &expected_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
     }
 
     #[test]

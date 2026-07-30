@@ -184,7 +184,10 @@ The clean-break implementation currently provides:
   lines and exact rational-conic clipping against planar face regions, as the
   common input to general intersection-driven splitting; mixed point/curve
   relations clip each dimension independently and retain combined exact trim
-  evidence when both survive. Retained line, rational-Bézier, and NURBS
+  evidence when both survive. Whole boundaryless faces preserve retained point
+  and two-pcurve evidence instead of collapsing it to a generic complete
+  carrier marker, allowing authored-axis sphere/sphere circles to partition
+  both spheres directly into exact caps. Retained line, rational-Bézier, and NURBS
   fragments can be grouped by source face and
   applied through `partition_first_faces` or `partition_second_faces` as
   deterministic validated partitions on either operand. Unsupported transfer

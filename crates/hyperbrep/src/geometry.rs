@@ -5652,6 +5652,58 @@ fn intersect_spheres(
             let radius = circle_radius_squared
                 .sqrt()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
+            let first_axial = decided_order(compare_reals(
+                &normal.cross(&first.frame.z).norm_squared(),
+                &Real::zero(),
+            ))? == Ordering::Equal;
+            let second_axial = decided_order(compare_reals(
+                &normal.cross(&second.frame.z).norm_squared(),
+                &Real::zero(),
+            ))? == Ordering::Equal;
+            if first_axial && second_axial {
+                let curve = Curve3::circle_arc(
+                    center.clone(),
+                    first.frame.x.clone(),
+                    first.frame.y.clone(),
+                    radius,
+                    Real::zero(),
+                    Real::tau(),
+                )?;
+                let frames_equal = orthonormal_frames_equal(&first.frame, &second.frame)?;
+                let frames_mirrored = orthonormal_frames_mirrored(&first.frame, &second.frame)?;
+                if frames_equal || frames_mirrored {
+                    let first_height = (&center - &first.center).dot(&first.frame.z);
+                    let second_height = (&center - &second.center).dot(&second.frame.z);
+                    let first_latitude = (first_height / &first.radius)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .asin()
+                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                    let second_latitude = (second_height / &second.radius)
+                        .map_err(|_| GeometryError::ProjectiveDivision)?
+                        .asin()
+                        .map_err(|_| GeometryError::ElementaryFunction)?;
+                    let domain = curve.domain().clone();
+                    let second_pcurve = if frames_equal {
+                        SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), second_latitude)
+                    } else {
+                        SurfaceIntersectionPcurve::tensor_iso(
+                            domain.clone(),
+                            second_latitude,
+                            TensorAxis::V,
+                            -Real::one(),
+                            Real::tau(),
+                        )
+                    };
+                    return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                        SurfaceIntersectionCurve::new(
+                            curve,
+                            SurfaceIntersectionPcurve::tensor_iso_v(domain, first_latitude),
+                            second_pcurve,
+                        ),
+                    )));
+                }
+                return Ok(SurfaceSurfaceIntersection::Circle(curve));
+            }
             let (x, y) = normal
                 .orthonormal_basis_checked()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
@@ -10875,6 +10927,65 @@ mod tests {
             compare_reals(&second_radius_squared, &r(4)).value(),
             Some(Ordering::Equal)
         );
+
+        let axial_second =
+            Surface::sphere(p(0, 0, 2), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
+        let SurfaceSurfaceIntersection::Curve(axial_circle) =
+            sphere.intersect_surface(&axial_second).unwrap()
+        else {
+            panic!("authored-axis sphere centers must retain both latitude pcurves");
+        };
+        assert_points_equal(
+            &axial_circle.curve().start().unwrap(),
+            &Point3::new(r(3).sqrt().unwrap(), Real::zero(), Real::one()),
+        );
+        for parameter in [Real::zero(), Real::pi()] {
+            let spatial = axial_circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &sphere
+                    .point_at(&axial_circle.first_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+            assert_points_equal(
+                &axial_second
+                    .point_at(&axial_circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &spatial,
+            );
+        }
+
+        let mirrored_second =
+            Surface::sphere(p(0, 0, 2), Vector3::x(), -Vector3::y(), -Vector3::z(), r(2)).unwrap();
+        let SurfaceSurfaceIntersection::Curve(mirrored_circle) =
+            sphere.intersect_surface(&mirrored_second).unwrap()
+        else {
+            panic!("mirrored sphere frames must retain reversed longitude");
+        };
+        let second_pcurve = mirrored_circle.second_pcurve().materialize().unwrap();
+        assert_eq!(second_pcurve.curve().start().x(), &Real::tau());
+        assert_eq!(second_pcurve.curve().end().x(), &Real::zero());
+        for parameter in [Real::zero(), Real::pi()] {
+            let spatial = mirrored_circle.curve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &mirrored_second
+                    .point_at(
+                        &mirrored_circle
+                            .second_pcurve()
+                            .point_at(&parameter)
+                            .unwrap(),
+                    )
+                    .unwrap(),
+                &spatial,
+            );
+        }
+
+        let rotated_second =
+            Surface::sphere(p(0, 0, 2), Vector3::y(), -Vector3::x(), Vector3::z(), r(2)).unwrap();
+        assert!(matches!(
+            sphere.intersect_surface(&rotated_second).unwrap(),
+            SurfaceSurfaceIntersection::Circle(_)
+        ));
 
         let tangent =
             Surface::sphere(p(4, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
