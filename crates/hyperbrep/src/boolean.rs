@@ -5189,6 +5189,203 @@ mod tests {
     }
 
     #[test]
+    fn coaxial_cylinder_minus_sphere_stitches_two_exact_components() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(8)).unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(4),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap();
+        let BooleanResult::Solids { model, solids } = graph
+            .stitch_selected_faces(BooleanOperation::Difference)
+            .unwrap()
+        else {
+            panic!("the two cylindrical ends must remain disconnected exact solids");
+        };
+        assert_eq!(solids.len(), 2);
+        let sqrt_five = Real::from(5).sqrt().unwrap();
+        let expected = ((Real::from(20) * sqrt_five.clone() - Real::from(12)) * Real::pi()
+            / Real::from(3))
+        .unwrap();
+        let expected_component =
+            ((Real::from(10) * sqrt_five.clone() - Real::from(6)) * Real::pi() / Real::from(3))
+                .unwrap();
+        for solid in &solids {
+            assert_eq!(
+                compare_reals(&model.solid_volume(*solid).unwrap(), &expected_component).value(),
+                Some(Ordering::Equal)
+            );
+        }
+        let volume = solids
+            .iter()
+            .map(|solid| model.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&volume, &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let expected_area = (Real::from(76) - Real::from(20) * sqrt_five.clone()) * Real::pi();
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+
+        let top = *solids
+            .iter()
+            .find(|solid| {
+                model.classify_point(**solid, &p(0, 0, 3)).unwrap() == SolidPointLocation::Boundary
+            })
+            .expect("one component owns the upper spherical pole");
+        let bottom = *solids
+            .iter()
+            .find(|solid| **solid != top)
+            .expect("the other component is the lower end");
+        for (point, location) in [
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::from(7) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (p(0, 0, 3), SolidPointLocation::Boundary),
+            (p(0, 0, 4), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    Real::from(2),
+                    Real::zero(),
+                    (Real::from(7) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new(Real::from(2), Real::zero(), sqrt_five.clone()),
+                SolidPointLocation::Boundary,
+            ),
+            (p(0, 0, 5), SolidPointLocation::Outside),
+        ] {
+            assert_eq!(model.classify_point(top, &point).unwrap(), location);
+        }
+        assert_eq!(
+            model.classify_point(bottom, &p(0, 0, -3)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        assert_eq!(
+            model.classify_point(bottom, &p(0, 0, -4)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        assert_eq!(
+            model.classify_point(bottom, &p(0, 0, 0)).unwrap(),
+            SolidPointLocation::Outside
+        );
+
+        let BooleanResult::Solids {
+            model: standard,
+            solids: standard_solids,
+        } = difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap()
+        else {
+            panic!("the standard API must retain both exact cylinder ends");
+        };
+        assert_eq!(standard_solids.len(), 2);
+        for solid in &standard_solids {
+            assert!(standard.certified_cylinder_profile(*solid).is_none());
+            assert!(
+                standard
+                    .certified_z_prism_profile(*solid)
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        let standard_volume = standard_solids
+            .iter()
+            .map(|solid| standard.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&standard_volume, &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let json = standard.to_json().unwrap();
+        let decoded = crate::RawModel::from_json(&json)
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(decoded.to_json().unwrap(), json);
+        let decoded_volume = standard_solids
+            .iter()
+            .map(|solid| decoded.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&decoded_volume, &expected).value(),
+            Some(Ordering::Equal)
+        );
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        let BooleanResult::Solids {
+            model: oriented,
+            solids: oriented_solids,
+        } = difference(
+            &oriented_cylinder,
+            cylinder_solid,
+            &oriented_sphere,
+            sphere_solid,
+        )
+        .unwrap()
+        else {
+            panic!("rigid reorientation must retain both exact cylinder ends");
+        };
+        let oriented_volume = oriented_solids
+            .iter()
+            .map(|solid| oriented.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&oriented_volume, &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let reflected = standard
+            .transformed(&Matrix4::affine_nonuniform_scale([
+                Real::one(),
+                -Real::one(),
+                Real::one(),
+            ]))
+            .unwrap();
+        let reflected_volume = standard_solids
+            .iter()
+            .map(|solid| reflected.solid_volume(*solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&reflected_volume, &expected).value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
     fn axial_sphere_halfspace_intersection_stitches_an_exact_cap() {
         let (sphere, sphere_solid) = crate::builder::sphere(Real::from(2)).unwrap();
         let (slab, slab_solid) = crate::builder::cuboid(p(-3, -3, 1), p(3, 3, 3)).unwrap();

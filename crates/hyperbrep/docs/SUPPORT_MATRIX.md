@@ -206,6 +206,16 @@ band. The closed genus-one shell retains exact total face area and
 `4*pi*h³/3` volume, complementary radial-and-spherical classification,
 rigid/reflection transforms, and persistence. Here
 `h = sqrt(R²-cylinder_radius²)`.
+The opposite cylinder-minus-sphere difference is also exact when the finite
+cylinder caps lie strictly beyond both sphere poles. It returns two
+disconnected native components, each certified from a forward cylinder band,
+one planar cap, and one reversed spherical cap. Exact volume subtracts the
+spherical cap integral from the cylinder interval; point classification,
+face area, rigid/reflection transforms, and persistence retain that spherical
+exclusion. Mixed results never advertise the plain-cylinder optimization
+profile. For a radius-2 cylinder on `[-4,4]` minus a concentric radius-3
+sphere, total area is `(76-20*sqrt(5))*pi` and total volume is
+`(20*sqrt(5)-12)*pi/3`.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects

@@ -180,7 +180,9 @@ The clean-break implementation currently provides:
   transforms, operand reversal, and byte-identical replay. Complementary
   difference stitches the periodic two-loop spherical band to the inward
   cylinder band as one exact genus-one solid with native area, volume,
-  classification, transforms, and replay;
+  classification, transforms, and replay. Opposite cylinder-minus-sphere
+  difference retains the two disconnected capped-cylinder ends, each with a
+  native reversed spherical cap and exact exclusion-aware queries;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

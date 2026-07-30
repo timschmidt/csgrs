@@ -278,6 +278,17 @@ certificate records which side of the radial cylinder is material rather than
 inferring it from floating samples. For `sphere \ radial cylinder`, the exact
 volume is `4*pi*axial_half_height³/3`; point classification combines the same
 sphere predicate with the complementary radial inequality.
+For `radial cylinder \ sphere`, retained selection instead creates one
+component beyond each sphere/cylinder latitude. Every component contains a
+forward cylinder parameter grid, one outward planar cylinder cap, and one
+reversed spherical cap. Its cylinder certificate carries an explicit
+spherical exclusion and proves the common axis and center line, exact
+intersection height and radius, complete cylinder cells, and a planar cap
+strictly beyond the corresponding sphere pole. Volume is the exact cylinder
+interval minus the enclosed spherical cap; classification applies the
+cylinder interval/radius predicate and then excludes the sphere. These mixed
+certificates are deliberately absent from the plain-cylinder profile fast
+paths.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented
