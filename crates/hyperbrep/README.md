@@ -117,7 +117,8 @@ The clean-break implementation currently provides:
   transverse plane/cone/torus and
   perpendicular/oblique/axial-parallel plane/cylinder cuts,
   parallel-cylinder intersections, coaxial sphere/cylinder,
-  sphere/cone, cylinder/cone, cone/cone, and torus/torus intersections
+  sphere/cone/torus, cylinder/cone/torus, cone/cone-or-torus, and torus/torus
+  intersections
   with retained two-surface pcurves when their authored frames align or mirror,
   with retained multiplicity, overlaps, coincidence, tangent points, lines,
   circles, exact ellipse curves, and typed mixed-dimensional component sets;
@@ -162,6 +163,12 @@ The clean-break implementation currently provides:
   authored frames retain exact constant-latitude pcurves on both carriers;
   bounded periodic grids clip both circles into eight replayable patch traces
   and partition both shells without changing exact volume;
+- exact coaxial sphere/torus, cylinder/torus, and cone/torus relations through
+  one `Real`-only meridian primitive: circle/circle, vertical-line/circle, and
+  nonnegative-ray/circle solves distinguish separation, tangency, and two
+  native latitude circles. Matching or mirrored authored frames retain both
+  pcurves, and bounded sphere, cylinder, or frustum graphs partition both
+  operands, replay, persist, and preserve exact volume;
 - exact transverse torus/slab intersection through retained concentric
   latitudes, one or two native annular caps, periodic parameter-cell
   certification, and analytic band measurement/classification;

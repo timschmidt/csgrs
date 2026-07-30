@@ -7309,15 +7309,22 @@ mod tests {
         assert!(graph.intersections().is_empty());
 
         let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let torus = torus
+            .transformed(&Matrix4::affine_translation([
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+            ]))
+            .unwrap();
         let graph = intersection_graph(&sphere, sphere_solid, &torus, torus_solid).unwrap();
         assert!(!graph.intersections().is_empty());
-        assert!(
-            graph
-                .intersections()
-                .iter()
-                .all(|pair| matches!(pair.relation(), FacePairRelation::Unsupported))
-        );
-        assert_eq!(graph.unsupported_pairs(), graph.intersections().len());
+        let unsupported = graph
+            .intersections()
+            .iter()
+            .filter(|pair| matches!(pair.relation(), FacePairRelation::Unsupported))
+            .count();
+        assert!(unsupported > 0);
+        assert_eq!(graph.unsupported_pairs(), unsupported);
     }
 
     #[test]
@@ -8990,6 +8997,365 @@ mod tests {
             .value(),
             Some(Ordering::Equal)
         );
+    }
+
+    #[test]
+    fn coaxial_sphere_torus_graph_partitions_both_exact_latitude_supports() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &torus, torus_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) => Some((pair, curves, fragments)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        for (pair, curves, fragments) in retained {
+            assert_eq!(curves.len(), 2);
+            assert_eq!(fragments.len(), 1);
+            assert_surface_fragment_replays(
+                &fragments[0],
+                face_surface(&sphere, pair.first_face()),
+                face_surface(&torus, pair.second_face()),
+            );
+        }
+
+        let sphere_volume = sphere.solid_volume(sphere_solid).unwrap();
+        let torus_volume = torus.solid_volume(torus_solid).unwrap();
+        let (partitioned_sphere, sphere_partitions) = graph.partition_first_faces().unwrap();
+        let (partitioned_torus, torus_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(sphere_partitions.len(), 1);
+        assert_eq!(sphere_partitions[0].traces.len(), 2);
+        assert_eq!(torus_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
+                &sphere_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned_torus.solid_volume(torus_solid).unwrap(),
+                &torus_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for model in [&partitioned_sphere, &partitioned_torus] {
+            let json = model.to_json().unwrap();
+            let decoded = crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(decoded.to_json().unwrap(), json);
+        }
+
+        let (mirrored, mirrored_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let mirrored = mirrored
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::zero()],
+            ))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &mirrored, mirrored_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) => Some((curves, fragments)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|(curves, fragments)| {
+            curves.iter().all(|curve| {
+                let pcurve = curve.second_pcurve().materialize().unwrap();
+                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                    == Some(Ordering::Equal)
+                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                        == Some(Ordering::Equal)
+            }) && fragments.len() == 1
+        }));
+        let (partitioned_mirrored, mirrored_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(mirrored_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
+                &torus_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn coaxial_cylinder_torus_graph_partitions_both_exact_latitude_supports() {
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder((Real::from(7) / Real::from(2)).unwrap(), Real::from(4))
+                .unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(2),
+            ]))
+            .unwrap();
+        let (torus, torus_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let graph = intersection_graph(&cylinder, cylinder_solid, &torus, torus_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) if face_surface(&cylinder, pair.first_face()).kind()
+                    == crate::SurfaceKind::Cylinder =>
+                {
+                    Some((pair, curves, fragments))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        for (pair, curves, fragments) in retained {
+            assert_eq!(curves.len(), 2);
+            assert_eq!(fragments.len(), 1);
+            assert_surface_fragment_replays(
+                &fragments[0],
+                face_surface(&cylinder, pair.first_face()),
+                face_surface(&torus, pair.second_face()),
+            );
+        }
+
+        let cylinder_volume = cylinder.solid_volume(cylinder_solid).unwrap();
+        let torus_volume = torus.solid_volume(torus_solid).unwrap();
+        let (partitioned_cylinder, cylinder_partitions) = graph.partition_first_faces().unwrap();
+        let (partitioned_torus, torus_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(cylinder_partitions.len(), 4);
+        assert!(
+            cylinder_partitions
+                .iter()
+                .all(|partition| partition.traces.len() == 2)
+        );
+        assert_eq!(torus_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
+                &cylinder_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned_torus.solid_volume(torus_solid).unwrap(),
+                &torus_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for model in [&partitioned_cylinder, &partitioned_torus] {
+            let json = model.to_json().unwrap();
+            let decoded = crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(decoded.to_json().unwrap(), json);
+        }
+
+        let (mirrored, mirrored_solid) = crate::builder::torus(Real::from(3), Real::one()).unwrap();
+        let mirrored = mirrored
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::zero()],
+            ))
+            .unwrap();
+        let graph =
+            intersection_graph(&cylinder, cylinder_solid, &mirrored, mirrored_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) if face_surface(&cylinder, pair.first_face()).kind()
+                    == crate::SurfaceKind::Cylinder =>
+                {
+                    Some((curves, fragments))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|(curves, fragments)| {
+            curves.iter().all(|curve| {
+                let pcurve = curve.second_pcurve().materialize().unwrap();
+                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                    == Some(Ordering::Equal)
+                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                        == Some(Ordering::Equal)
+            }) && fragments.len() == 1
+        }));
+        let (partitioned_mirrored, mirrored_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(mirrored_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
+                &torus_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+    }
+
+    #[test]
+    fn coaxial_cone_torus_graph_partitions_both_exact_latitude_supports() {
+        let (frustum, frustum_solid) =
+            crate::builder::cone_frustum(Real::from(4), Real::from(2), Real::from(2)).unwrap();
+        let (torus, torus_solid) =
+            crate::builder::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap()).unwrap();
+        let torus = torus
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&frustum, frustum_solid, &torus, torus_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) if face_surface(&frustum, pair.first_face()).kind()
+                    == crate::SurfaceKind::Cone =>
+                {
+                    Some((pair, curves, fragments))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        for (pair, curves, fragments) in retained {
+            assert_eq!(curves.len(), 2);
+            assert_eq!(fragments.len(), 1);
+            assert!(curves.iter().all(|curve| {
+                let pcurve = curve.second_pcurve().materialize().unwrap();
+                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                    == Some(Ordering::Equal)
+                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                        == Some(Ordering::Equal)
+            }));
+            assert_surface_fragment_replays(
+                &fragments[0],
+                face_surface(&frustum, pair.first_face()),
+                face_surface(&torus, pair.second_face()),
+            );
+        }
+
+        let frustum_volume = frustum.solid_volume(frustum_solid).unwrap();
+        let torus_volume = torus.solid_volume(torus_solid).unwrap();
+        let (partitioned_frustum, frustum_partitions) = graph.partition_first_faces().unwrap();
+        let (partitioned_torus, torus_partitions) = graph.partition_second_faces().unwrap();
+        assert_eq!(frustum_partitions.len(), 4);
+        assert!(
+            frustum_partitions
+                .iter()
+                .all(|partition| partition.traces.len() == 2)
+        );
+        assert_eq!(torus_partitions.len(), 8);
+        assert_eq!(
+            compare_reals(
+                &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
+                &frustum_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        assert_eq!(
+            compare_reals(
+                &partitioned_torus.solid_volume(torus_solid).unwrap(),
+                &torus_volume,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        for model in [&partitioned_frustum, &partitioned_torus] {
+            let json = model.to_json().unwrap();
+            let decoded = crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(decoded.to_json().unwrap(), json);
+        }
+
+        let (matching, matching_solid) =
+            crate::builder::torus(Real::from(3), (Real::one() / Real::from(2)).unwrap()).unwrap();
+        let matching = matching
+            .transformed(&Matrix4::affine_orthonormal(
+                [
+                    [Real::one(), Real::zero(), Real::zero()],
+                    [Real::zero(), -Real::one(), Real::zero()],
+                    [Real::zero(), Real::zero(), -Real::one()],
+                ],
+                [Real::zero(), Real::zero(), Real::one()],
+            ))
+            .unwrap();
+        let graph = intersection_graph(&frustum, frustum_solid, &matching, matching_solid).unwrap();
+        assert_eq!(graph.unsupported_pairs(), 0);
+        let retained = graph
+            .intersections()
+            .iter()
+            .filter_map(|pair| match (pair.relation(), pair.trim()) {
+                (
+                    FacePairRelation::Exact(SurfaceSurfaceIntersection::Curves(curves)),
+                    FacePairTrim::SurfaceCurveFragments(fragments),
+                ) if face_surface(&frustum, pair.first_face()).kind()
+                    == crate::SurfaceKind::Cone =>
+                {
+                    Some((curves, fragments))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(retained.len(), 8);
+        assert!(retained.iter().all(|(curves, fragments)| {
+            curves.iter().all(|curve| {
+                let pcurve = curve.second_pcurve().materialize().unwrap();
+                compare_reals(pcurve.curve().start().x(), &Real::zero()).value()
+                    == Some(Ordering::Equal)
+                    && compare_reals(pcurve.curve().end().x(), &Real::tau()).value()
+                        == Some(Ordering::Equal)
+            }) && fragments.len() == 1
+        }));
     }
 
     #[test]

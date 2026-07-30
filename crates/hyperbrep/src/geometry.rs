@@ -3140,6 +3140,24 @@ impl Surface {
             (SurfaceGeometry::Torus(first), SurfaceGeometry::Torus(second)) => {
                 intersect_coaxial_tori(first, second)
             }
+            (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Torus(torus)) => {
+                intersect_coaxial_sphere_torus(sphere, torus)
+            }
+            (SurfaceGeometry::Torus(torus), SurfaceGeometry::Sphere(sphere)) => {
+                intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
+            }
+            (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Torus(torus)) => {
+                intersect_coaxial_cylinder_torus(cylinder, torus)
+            }
+            (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cylinder(cylinder)) => {
+                intersect_coaxial_cylinder_torus(cylinder, torus).map(swapped_curve_intersection)
+            }
+            (SurfaceGeometry::Cone(cone), SurfaceGeometry::Torus(torus)) => {
+                intersect_coaxial_cone_torus(cone, torus)
+            }
+            (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cone(cone)) => {
+                intersect_coaxial_cone_torus(cone, torus).map(swapped_curve_intersection)
+            }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Cone(cone)) => {
                 intersect_coaxial_cylinder_cone(cylinder, cone)
             }
@@ -5627,6 +5645,364 @@ fn orthonormal_frames_mirrored(
     })
 }
 
+enum MeridianCircleIntersection {
+    Coincident,
+    Points(Vec<(Real, Real)>),
+}
+
+fn intersect_meridian_circles(
+    first_center_x: &Real,
+    first_center_y: &Real,
+    first_radius: &Real,
+    second_center_x: &Real,
+    second_center_y: &Real,
+    second_radius: &Real,
+) -> GeometryResult<MeridianCircleIntersection> {
+    let displacement_x = second_center_x - first_center_x;
+    let displacement_y = second_center_y - first_center_y;
+    let distance_squared = &displacement_x * &displacement_x + &displacement_y * &displacement_y;
+    if decided_order(compare_reals(&distance_squared, &Real::zero()))? == Ordering::Equal {
+        return if decided_order(compare_reals(first_radius, second_radius))? == Ordering::Equal {
+            Ok(MeridianCircleIntersection::Coincident)
+        } else {
+            Ok(MeridianCircleIntersection::Points(Vec::new()))
+        };
+    }
+
+    let distance = distance_squared
+        .clone()
+        .sqrt()
+        .map_err(|_| GeometryError::ElementaryFunction)?;
+    let radius_sum = first_radius + second_radius;
+    let radius_difference = match decided_order(compare_reals(first_radius, second_radius))? {
+        Ordering::Less => second_radius - first_radius,
+        Ordering::Equal | Ordering::Greater => first_radius - second_radius,
+    };
+    if decided_order(compare_reals(&distance, &radius_sum))? == Ordering::Greater
+        || decided_order(compare_reals(&distance, &radius_difference))? == Ordering::Less
+    {
+        return Ok(MeridianCircleIntersection::Points(Vec::new()));
+    }
+
+    let along = ((first_radius * first_radius - second_radius * second_radius + &distance_squared)
+        / (Real::from(2) * &distance))
+        .map_err(|_| GeometryError::ProjectiveDivision)?;
+    let inverse_distance =
+        (Real::one() / distance).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let unit_x = displacement_x * &inverse_distance;
+    let unit_y = displacement_y * inverse_distance;
+    let base_x = first_center_x + &unit_x * &along;
+    let base_y = first_center_y + &unit_y * &along;
+    let transverse_squared = first_radius * first_radius - &along * &along;
+    let points = match decided_order(compare_reals(&transverse_squared, &Real::zero()))? {
+        Ordering::Less => Vec::new(),
+        Ordering::Equal => vec![(base_x, base_y)],
+        Ordering::Greater => {
+            let transverse = transverse_squared
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            vec![
+                (
+                    &base_x + &unit_y * &transverse,
+                    &base_y - &unit_x * &transverse,
+                ),
+                (base_x - unit_y * &transverse, base_y + unit_x * transverse),
+            ]
+        }
+    };
+    Ok(MeridianCircleIntersection::Points(points))
+}
+
+fn intersect_coaxial_sphere_torus(
+    sphere: &SphereSurface,
+    torus: &TorusSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    if decided_order(compare_reals(
+        &sphere.frame.z.cross(&torus.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let center_offset = &torus.center - &sphere.center;
+    let axial_offset = center_offset.dot(&sphere.frame.z);
+    let radial_offset = center_offset - sphere.frame.z.clone() * &axial_offset;
+    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+        != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    let profile_points = match intersect_meridian_circles(
+        &Real::zero(),
+        &Real::zero(),
+        &sphere.radius,
+        &torus.major_radius,
+        &axial_offset,
+        &torus.minor_radius,
+    )? {
+        MeridianCircleIntersection::Coincident => {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        MeridianCircleIntersection::Points(points) if points.is_empty() => {
+            return Ok(SurfaceSurfaceIntersection::None);
+        }
+        MeridianCircleIntersection::Points(points) => points,
+    };
+
+    let frames_equal = orthonormal_frames_equal(&sphere.frame, &torus.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&sphere.frame, &torus.frame)?;
+    let retain_pcurves = frames_equal || frames_mirrored;
+    let canonical_angle = |angle: Real| -> GeometryResult<Real> {
+        Ok(
+            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                angle + Real::tau()
+            } else {
+                angle
+            },
+        )
+    };
+    let mut curves = Vec::with_capacity(profile_points.len());
+    let mut retained = Vec::with_capacity(profile_points.len());
+    for (radial_distance, sphere_height) in profile_points {
+        let center = sphere.center.clone() + sphere.frame.z.clone() * &sphere_height;
+        let curve = Curve3::circle_arc(
+            center.clone(),
+            sphere.frame.x.clone(),
+            sphere.frame.y.clone(),
+            radial_distance.clone(),
+            Real::zero(),
+            Real::tau(),
+        )?;
+        if retain_pcurves {
+            let sphere_v = certified_atan2(sphere_height, radial_distance.clone())?;
+            let torus_v = canonical_angle(certified_atan2(
+                (&center - &torus.center).dot(&torus.frame.z),
+                radial_distance - &torus.major_radius,
+            )?)?;
+            let domain = curve.domain().clone();
+            retained.push(SurfaceIntersectionCurve::new(
+                curve,
+                SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), sphere_v),
+                angular_iso_v_pcurve(domain, torus_v, frames_mirrored),
+            ));
+        } else {
+            curves.push(curve);
+        }
+    }
+    if retain_pcurves {
+        Ok(match retained.len() {
+            1 => SurfaceSurfaceIntersection::Curve(Box::new(
+                retained.pop().expect("one retained sphere/torus circle"),
+            )),
+            _ => SurfaceSurfaceIntersection::Curves(retained),
+        })
+    } else {
+        Ok(match curves.len() {
+            1 => SurfaceSurfaceIntersection::Circle(curves.pop().expect("one sphere/torus circle")),
+            _ => SurfaceSurfaceIntersection::Circles(curves),
+        })
+    }
+}
+
+fn intersect_coaxial_cylinder_torus(
+    cylinder: &CylinderSurface,
+    torus: &TorusSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    if decided_order(compare_reals(
+        &cylinder.frame.z.cross(&torus.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let center_offset = &torus.center - &cylinder.origin;
+    let torus_height = center_offset.dot(&cylinder.frame.z);
+    let radial_offset = center_offset - cylinder.frame.z.clone() * &torus_height;
+    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+        != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    let radial_delta = &cylinder.radius - &torus.major_radius;
+    let height_squared = &torus.minor_radius * &torus.minor_radius - &radial_delta * &radial_delta;
+    let heights = match decided_order(compare_reals(&height_squared, &Real::zero()))? {
+        Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
+        Ordering::Equal => vec![torus_height],
+        Ordering::Greater => {
+            let height_offset = height_squared
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            vec![&torus_height - &height_offset, torus_height + height_offset]
+        }
+    };
+
+    let frames_equal = orthonormal_frames_equal(&cylinder.frame, &torus.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&cylinder.frame, &torus.frame)?;
+    let retain_pcurves = frames_equal || frames_mirrored;
+    let canonical_angle = |angle: Real| -> GeometryResult<Real> {
+        Ok(
+            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                angle + Real::tau()
+            } else {
+                angle
+            },
+        )
+    };
+    let mut curves = Vec::with_capacity(heights.len());
+    let mut retained = Vec::with_capacity(heights.len());
+    for cylinder_height in heights {
+        let center = cylinder.origin.clone() + cylinder.frame.z.clone() * &cylinder_height;
+        let curve = Curve3::circle_arc(
+            center.clone(),
+            cylinder.frame.x.clone(),
+            cylinder.frame.y.clone(),
+            cylinder.radius.clone(),
+            Real::zero(),
+            Real::tau(),
+        )?;
+        if retain_pcurves {
+            let torus_v = canonical_angle(certified_atan2(
+                (&center - &torus.center).dot(&torus.frame.z),
+                radial_delta.clone(),
+            )?)?;
+            let domain = curve.domain().clone();
+            retained.push(SurfaceIntersectionCurve::new(
+                curve,
+                SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), cylinder_height),
+                angular_iso_v_pcurve(domain, torus_v, frames_mirrored),
+            ));
+        } else {
+            curves.push(curve);
+        }
+    }
+    if retain_pcurves {
+        Ok(match retained.len() {
+            1 => SurfaceSurfaceIntersection::Curve(Box::new(
+                retained.pop().expect("one retained cylinder/torus circle"),
+            )),
+            _ => SurfaceSurfaceIntersection::Curves(retained),
+        })
+    } else {
+        Ok(match curves.len() {
+            1 => {
+                SurfaceSurfaceIntersection::Circle(curves.pop().expect("one cylinder/torus circle"))
+            }
+            _ => SurfaceSurfaceIntersection::Circles(curves),
+        })
+    }
+}
+
+fn intersect_coaxial_cone_torus(
+    cone: &ConeSurface,
+    torus: &TorusSurface,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    if decided_order(compare_reals(
+        &cone.frame.z.cross(&torus.frame.z).norm_squared(),
+        &Real::zero(),
+    ))? != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let center_offset = &torus.center - &cone.apex;
+    let torus_height = center_offset.dot(&cone.frame.z);
+    let radial_offset = center_offset - cone.frame.z.clone() * &torus_height;
+    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
+        != Ordering::Equal
+    {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+
+    let sine = cone.semi_angle.clone().sin();
+    let cosine = cone.semi_angle.clone().cos();
+    let projected_center = &torus.major_radius * &sine + &torus_height * &cosine;
+    let center_norm_squared =
+        &torus.major_radius * &torus.major_radius + &torus_height * &torus_height;
+    let transverse_distance_squared = center_norm_squared - &projected_center * &projected_center;
+    let discriminant = &torus.minor_radius * &torus.minor_radius - transverse_distance_squared;
+    let candidates = match decided_order(compare_reals(&discriminant, &Real::zero()))? {
+        Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
+        Ordering::Equal => vec![projected_center],
+        Ordering::Greater => {
+            let offset = discriminant
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            vec![&projected_center - &offset, projected_center + offset]
+        }
+    };
+    let slants = candidates
+        .into_iter()
+        .map(|slant| {
+            Ok((
+                decided_order(compare_reals(&slant, &Real::zero()))? == Ordering::Greater,
+                slant,
+            ))
+        })
+        .collect::<GeometryResult<Vec<_>>>()?
+        .into_iter()
+        .filter_map(|(positive, slant)| positive.then_some(slant))
+        .collect::<Vec<_>>();
+    if slants.is_empty() {
+        return Ok(SurfaceSurfaceIntersection::None);
+    }
+
+    let frames_equal = orthonormal_frames_equal(&cone.frame, &torus.frame)?;
+    let frames_mirrored = orthonormal_frames_mirrored(&cone.frame, &torus.frame)?;
+    let retain_pcurves = frames_equal || frames_mirrored;
+    let canonical_angle = |angle: Real| -> GeometryResult<Real> {
+        Ok(
+            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                angle + Real::tau()
+            } else {
+                angle
+            },
+        )
+    };
+    let mut curves = Vec::with_capacity(slants.len());
+    let mut retained = Vec::with_capacity(slants.len());
+    for slant in slants {
+        let axial_height = &slant * &cosine;
+        let radial_distance = &slant * &sine;
+        let center = cone.apex.clone() + cone.frame.z.clone() * axial_height;
+        let curve = Curve3::circle_arc(
+            center.clone(),
+            cone.frame.x.clone(),
+            cone.frame.y.clone(),
+            radial_distance.clone(),
+            Real::zero(),
+            Real::tau(),
+        )?;
+        if retain_pcurves {
+            let torus_v = canonical_angle(certified_atan2(
+                (&center - &torus.center).dot(&torus.frame.z),
+                radial_distance - &torus.major_radius,
+            )?)?;
+            let domain = curve.domain().clone();
+            retained.push(SurfaceIntersectionCurve::new(
+                curve,
+                SurfaceIntersectionPcurve::tensor_iso_v(domain.clone(), slant),
+                angular_iso_v_pcurve(domain, torus_v, frames_mirrored),
+            ));
+        } else {
+            curves.push(curve);
+        }
+    }
+    if retain_pcurves {
+        Ok(match retained.len() {
+            1 => SurfaceSurfaceIntersection::Curve(Box::new(
+                retained.pop().expect("one retained cone/torus circle"),
+            )),
+            _ => SurfaceSurfaceIntersection::Curves(retained),
+        })
+    } else {
+        Ok(match curves.len() {
+            1 => SurfaceSurfaceIntersection::Circle(curves.pop().expect("one cone/torus circle")),
+            _ => SurfaceSurfaceIntersection::Circles(curves),
+        })
+    }
+}
+
 fn intersect_coaxial_tori(
     first: &TorusSurface,
     second: &TorusSurface,
@@ -5647,65 +6023,21 @@ fn intersect_coaxial_tori(
         return Err(GeometryError::UnsupportedIntersection);
     }
 
-    let profile_x = &second.major_radius - &first.major_radius;
-    let profile_y = axial_offset;
-    let profile_distance_squared = &profile_x * &profile_x + &profile_y * &profile_y;
-    if decided_order(compare_reals(&profile_distance_squared, &Real::zero()))? == Ordering::Equal {
-        return if decided_order(compare_reals(&first.minor_radius, &second.minor_radius))?
-            == Ordering::Equal
-        {
-            Ok(SurfaceSurfaceIntersection::Coincident)
-        } else {
-            Ok(SurfaceSurfaceIntersection::None)
-        };
-    }
-
-    let profile_distance = profile_distance_squared
-        .clone()
-        .sqrt()
-        .map_err(|_| GeometryError::ElementaryFunction)?;
-    let radius_sum = &first.minor_radius + &second.minor_radius;
-    let radius_difference =
-        match decided_order(compare_reals(&first.minor_radius, &second.minor_radius))? {
-            Ordering::Less => &second.minor_radius - &first.minor_radius,
-            Ordering::Equal | Ordering::Greater => &first.minor_radius - &second.minor_radius,
-        };
-    if decided_order(compare_reals(&profile_distance, &radius_sum))? == Ordering::Greater
-        || decided_order(compare_reals(&profile_distance, &radius_difference))? == Ordering::Less
-    {
-        return Ok(SurfaceSurfaceIntersection::None);
-    }
-
-    let along = ((&first.minor_radius * &first.minor_radius
-        - &second.minor_radius * &second.minor_radius
-        + &profile_distance_squared)
-        / (Real::from(2) * &profile_distance))
-        .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let inverse_distance =
-        (Real::one() / profile_distance).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let unit_x = profile_x * &inverse_distance;
-    let unit_y = profile_y * inverse_distance;
-    let base_radius = &first.major_radius + &unit_x * &along;
-    let base_height = &unit_y * &along;
-    let transverse_squared = &first.minor_radius * &first.minor_radius - &along * &along;
-    let profile_points = match decided_order(compare_reals(&transverse_squared, &Real::zero()))? {
-        Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
-        Ordering::Equal => vec![(base_radius, base_height)],
-        Ordering::Greater => {
-            let transverse = transverse_squared
-                .sqrt()
-                .map_err(|_| GeometryError::ElementaryFunction)?;
-            vec![
-                (
-                    &base_radius + &unit_y * &transverse,
-                    &base_height - &unit_x * &transverse,
-                ),
-                (
-                    base_radius - unit_y * &transverse,
-                    base_height + unit_x * transverse,
-                ),
-            ]
+    let profile_points = match intersect_meridian_circles(
+        &first.major_radius,
+        &Real::zero(),
+        &first.minor_radius,
+        &second.major_radius,
+        &axial_offset,
+        &second.minor_radius,
+    )? {
+        MeridianCircleIntersection::Coincident => {
+            return Ok(SurfaceSurfaceIntersection::Coincident);
         }
+        MeridianCircleIntersection::Points(points) if points.is_empty() => {
+            return Ok(SurfaceSurfaceIntersection::None);
+        }
+        MeridianCircleIntersection::Points(points) => points,
     };
 
     let frames_equal = orthonormal_frames_equal(&first.frame, &second.frame)?;
@@ -11281,6 +11613,512 @@ mod tests {
         .unwrap();
         assert_eq!(
             first.intersect_surface(&off_axis).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+    }
+
+    #[test]
+    fn coaxial_sphere_torus_intersections_retain_native_latitude_circles() {
+        let sphere = Surface::sphere(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+        )
+        .unwrap();
+        let torus = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(circles) = sphere.intersect_surface(&torus).unwrap()
+        else {
+            panic!("a sphere cutting both sides of a torus profile must retain two latitudes");
+        };
+        assert_eq!(circles.len(), 2);
+        let height = (r(35).sqrt().unwrap() / r(6)).unwrap();
+        assert_points_equal(
+            &circles[0].curve().start().unwrap(),
+            &Point3::new(q(17, 6), Real::zero(), -height.clone()),
+        );
+        assert_points_equal(
+            &circles[1].curve().start().unwrap(),
+            &Point3::new(q(17, 6), Real::zero(), height),
+        );
+        for circle in &circles {
+            for parameter in [Real::zero(), q(2, 3), Real::pi()] {
+                let spatial = circle.curve().point_at(&parameter).unwrap();
+                assert_points_equal(
+                    &sphere
+                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+                assert_points_equal(
+                    &torus
+                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+            }
+        }
+        let SurfaceSurfaceIntersection::Curves(swapped) = torus.intersect_surface(&sphere).unwrap()
+        else {
+            panic!("operand reversal must retain both sphere/torus latitude circles");
+        };
+        let parameter = q(1, 4);
+        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &torus
+                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+        assert_points_equal(
+            &sphere
+                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+
+        let tangent_sphere = Surface::sphere(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(2),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(tangent) =
+            tangent_sphere.intersect_surface(&torus).unwrap()
+        else {
+            panic!("tangent meridian profiles must retain one spatial latitude");
+        };
+        assert_points_equal(&tangent.curve().start().unwrap(), &p(2, 0, 0));
+        for radius in [r(1), r(5)] {
+            let disjoint = Surface::sphere(
+                Point3::origin(),
+                Vector3::x(),
+                Vector3::y(),
+                Vector3::z(),
+                radius,
+            )
+            .unwrap();
+            assert!(matches!(
+                disjoint.intersect_surface(&torus).unwrap(),
+                SurfaceSurfaceIntersection::None
+            ));
+        }
+
+        let mirrored = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(mirrored_circles) =
+            sphere.intersect_surface(&mirrored).unwrap()
+        else {
+            panic!("mirrored sphere/torus frames must retain both pcurves");
+        };
+        for circle in mirrored_circles {
+            let torus_pcurve = circle.second_pcurve().materialize().unwrap();
+            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
+            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            let parameter = q(5, 7);
+            assert_points_equal(
+                &mirrored
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &circle.curve().point_at(&parameter).unwrap(),
+            );
+        }
+
+        let rotated_parameters = Surface::torus(
+            Point3::origin(),
+            Vector3::y(),
+            -Vector3::x(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert!(matches!(
+            sphere.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circles(_)
+        ));
+        let off_axis = Surface::torus(
+            p(1, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            sphere.intersect_surface(&off_axis).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let transverse = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::z(),
+            -Vector3::y(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            sphere.intersect_surface(&transverse).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+    }
+
+    #[test]
+    fn coaxial_cylinder_torus_intersections_retain_native_latitude_circles() {
+        let cylinder = Surface::cylinder(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            q(7, 2),
+        )
+        .unwrap();
+        let torus = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(circles) =
+            cylinder.intersect_surface(&torus).unwrap()
+        else {
+            panic!("a cylinder cutting both sides of a torus profile must retain two latitudes");
+        };
+        assert_eq!(circles.len(), 2);
+        let height = (r(3).sqrt().unwrap() / r(2)).unwrap();
+        assert_points_equal(
+            &circles[0].curve().start().unwrap(),
+            &Point3::new(q(7, 2), Real::zero(), -height.clone()),
+        );
+        assert_points_equal(
+            &circles[1].curve().start().unwrap(),
+            &Point3::new(q(7, 2), Real::zero(), height),
+        );
+        for circle in &circles {
+            for parameter in [Real::zero(), q(3, 5), Real::pi()] {
+                let spatial = circle.curve().point_at(&parameter).unwrap();
+                assert_points_equal(
+                    &cylinder
+                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+                assert_points_equal(
+                    &torus
+                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+            }
+        }
+        let SurfaceSurfaceIntersection::Curves(swapped) =
+            torus.intersect_surface(&cylinder).unwrap()
+        else {
+            panic!("operand reversal must retain both cylinder/torus latitude circles");
+        };
+        let parameter = q(4, 7);
+        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &torus
+                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+        assert_points_equal(
+            &cylinder
+                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+
+        let tangent = Surface::cylinder(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(4),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(tangent_circle) =
+            tangent.intersect_surface(&torus).unwrap()
+        else {
+            panic!("tangent cylinder/torus meridians must retain one latitude");
+        };
+        assert_points_equal(&tangent_circle.curve().start().unwrap(), &p(4, 0, 0));
+        for radius in [r(1), r(5)] {
+            let disjoint = Surface::cylinder(
+                Point3::origin(),
+                Vector3::x(),
+                Vector3::y(),
+                Vector3::z(),
+                radius,
+            )
+            .unwrap();
+            assert!(matches!(
+                disjoint.intersect_surface(&torus).unwrap(),
+                SurfaceSurfaceIntersection::None
+            ));
+        }
+
+        let mirrored = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(mirrored_circles) =
+            cylinder.intersect_surface(&mirrored).unwrap()
+        else {
+            panic!("mirrored cylinder/torus frames must retain both pcurves");
+        };
+        for circle in mirrored_circles {
+            let torus_pcurve = circle.second_pcurve().materialize().unwrap();
+            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
+            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            let parameter = q(6, 7);
+            assert_points_equal(
+                &mirrored
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &circle.curve().point_at(&parameter).unwrap(),
+            );
+        }
+
+        let rotated_parameters = Surface::torus(
+            Point3::origin(),
+            Vector3::y(),
+            -Vector3::x(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert!(matches!(
+            cylinder.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circles(_)
+        ));
+        let off_axis = Surface::torus(
+            p(1, 0, 0),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            cylinder.intersect_surface(&off_axis).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let transverse = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::z(),
+            -Vector3::y(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            cylinder.intersect_surface(&transverse).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+    }
+
+    #[test]
+    fn coaxial_cone_torus_intersections_retain_native_latitude_circles() {
+        let quarter_pi = (Real::pi() / r(4)).unwrap();
+        let cone = Surface::cone(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            quarter_pi.clone(),
+        )
+        .unwrap();
+        let torus = Surface::torus(
+            p(0, 0, 3),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(circles) = cone.intersect_surface(&torus).unwrap()
+        else {
+            panic!("a cone cutting both sides of a torus profile must retain two latitudes");
+        };
+        assert_eq!(circles.len(), 2);
+        let half_sqrt_two = (r(2).sqrt().unwrap() / r(2)).unwrap();
+        assert_points_equal(
+            &circles[0].curve().start().unwrap(),
+            &Point3::new(r(3) - &half_sqrt_two, Real::zero(), r(3) - &half_sqrt_two),
+        );
+        assert_points_equal(
+            &circles[1].curve().start().unwrap(),
+            &Point3::new(r(3) + &half_sqrt_two, Real::zero(), r(3) + &half_sqrt_two),
+        );
+        for circle in &circles {
+            for parameter in [Real::zero(), q(4, 5), Real::pi()] {
+                let spatial = circle.curve().point_at(&parameter).unwrap();
+                assert_points_equal(
+                    &cone
+                        .point_at(&circle.first_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+                assert_points_equal(
+                    &torus
+                        .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                        .unwrap(),
+                    &spatial,
+                );
+            }
+        }
+        let SurfaceSurfaceIntersection::Curves(swapped) = torus.intersect_surface(&cone).unwrap()
+        else {
+            panic!("operand reversal must retain both cone/torus latitude circles");
+        };
+        let parameter = q(3, 7);
+        let spatial = swapped[0].curve().point_at(&parameter).unwrap();
+        assert_points_equal(
+            &torus
+                .point_at(&swapped[0].first_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+        assert_points_equal(
+            &cone
+                .point_at(&swapped[0].second_pcurve().point_at(&parameter).unwrap())
+                .unwrap(),
+            &spatial,
+        );
+
+        let tangent_center_height = r(3) - r(2).sqrt().unwrap();
+        let tangent = Surface::torus(
+            Point3::new(Real::zero(), Real::zero(), tangent_center_height),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(tangent_circle) =
+            cone.intersect_surface(&tangent).unwrap()
+        else {
+            panic!("tangent cone/torus meridians must retain one latitude");
+        };
+        let tangent_coordinate = r(3) - &half_sqrt_two;
+        assert_points_equal(
+            &tangent_circle.curve().start().unwrap(),
+            &Point3::new(tangent_coordinate.clone(), Real::zero(), tangent_coordinate),
+        );
+        let disjoint = Surface::torus(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert!(matches!(
+            cone.intersect_surface(&disjoint).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+
+        let mirrored = Surface::torus(
+            p(0, 0, 3),
+            Vector3::x(),
+            -Vector3::y(),
+            -Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curves(mirrored_circles) =
+            cone.intersect_surface(&mirrored).unwrap()
+        else {
+            panic!("mirrored cone/torus frames must retain both pcurves");
+        };
+        for circle in mirrored_circles {
+            let torus_pcurve = circle.second_pcurve().materialize().unwrap();
+            assert_eq!(torus_pcurve.curve().start().x(), &Real::tau());
+            assert_eq!(torus_pcurve.curve().end().x(), &Real::zero());
+            let parameter = q(6, 7);
+            assert_points_equal(
+                &mirrored
+                    .point_at(&circle.second_pcurve().point_at(&parameter).unwrap())
+                    .unwrap(),
+                &circle.curve().point_at(&parameter).unwrap(),
+            );
+        }
+
+        let rotated_parameters = Surface::torus(
+            p(0, 0, 3),
+            Vector3::y(),
+            -Vector3::x(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert!(matches!(
+            cone.intersect_surface(&rotated_parameters).unwrap(),
+            SurfaceSurfaceIntersection::Circles(_)
+        ));
+        let off_axis = Surface::torus(
+            p(1, 0, 3),
+            Vector3::x(),
+            Vector3::y(),
+            Vector3::z(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            cone.intersect_surface(&off_axis).unwrap_err(),
+            GeometryError::UnsupportedIntersection
+        );
+        let transverse = Surface::torus(
+            p(0, 0, 3),
+            Vector3::x(),
+            Vector3::z(),
+            -Vector3::y(),
+            r(3),
+            r(1),
+        )
+        .unwrap();
+        assert_eq!(
+            cone.intersect_surface(&transverse).unwrap_err(),
             GeometryError::UnsupportedIntersection
         );
     }
