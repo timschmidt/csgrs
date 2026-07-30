@@ -6,9 +6,10 @@ use std::fmt;
 
 use hypercurve::{
     Aabb2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, Contour2,
-    ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveString2, ExactCurveError, FillRule,
-    LineArcIntersection, LineArcRegion2, LineLineIntersection, LineSeg2, RationalQuadraticBezier2,
-    RegionPointLocation, Segment2, UncertaintyReason,
+    ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2, CurveRegionLoopRole,
+    CurveString2, ExactCurveError, FillRule, LineArcIntersection, LineArcRegion2,
+    LineLineIntersection, LineSeg2, RationalQuadraticBezier2, RegionPointLocation, Segment2,
+    UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -124,6 +125,13 @@ pub enum FacePairTrim {
         first_traces: Vec<Curve3>,
         /// Traces to apply to the second face.
         second_traces: Vec<Curve3>,
+    },
+    /// An exact two-dimensional overlap in one face carrier's parameter space.
+    SurfaceRegion {
+        /// Operand whose surface parameters express `region`.
+        parameterized_on: SurfaceIntersectionOperand,
+        /// Exact filled overlap region in that surface parameter space.
+        region: CurveRegion2,
     },
     /// Exact curve fragments lie in the interiors or boundaries of both faces.
     CurveFragments(Vec<Curve3>),
@@ -576,6 +584,9 @@ fn partition_graph_planar_faces(
                     }
                 }
             }
+            FacePairTrim::SurfaceRegion { .. } => {
+                return Err(BooleanError::FacePartitionUnsupported { face });
+            }
             FacePairTrim::NotAvailable
             | FacePairTrim::CompleteCarrier
             | FacePairTrim::PointContact(_)
@@ -694,6 +705,9 @@ fn partition_graph_faces(
                 }
             }
             FacePairTrim::Unresolved(reason) => return Err(BooleanError::Unresolved(*reason)),
+            FacePairTrim::SurfaceRegion { .. } => {
+                return Err(BooleanError::FacePartitionUnsupported { face });
+            }
             FacePairTrim::NotAvailable | FacePairTrim::CompleteCarrier => match &pair.relation {
                 FacePairRelation::Unsupported => {
                     return Err(BooleanError::FacePartitionUnsupported { face });
@@ -2273,6 +2287,7 @@ pub fn intersection_graph(
                             FacePairTrim::NotAvailable
                             | FacePairTrim::CompleteCarrier
                             | FacePairTrim::CoincidentPlanar { .. }
+                            | FacePairTrim::SurfaceRegion { .. }
                             | FacePairTrim::PointContact(_)
                             | FacePairTrim::NoContact
                             | FacePairTrim::NoCurveInterior => {}
@@ -2449,6 +2464,15 @@ fn trim_face_pair_intersection(
             }
         });
     }
+    if let SurfaceSurfaceIntersection::ContainedSurface(contained) = intersection {
+        return trim_contained_surface_region(
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            *contained,
+        );
+    }
     if let SurfaceSurfaceIntersection::Point(point) = intersection {
         return trim_point_contact(first_model, first_face, second_model, second_face, point);
     }
@@ -2602,6 +2626,117 @@ fn trim_face_pair_intersection(
     } else {
         FacePairTrim::CurveFragments(common_fragments)
     })
+}
+
+fn trim_contained_surface_region(
+    first_model: &Model,
+    first_face: FaceId,
+    second_model: &Model,
+    second_face: FaceId,
+    contained: SurfaceIntersectionOperand,
+) -> Result<FacePairTrim, GeometryError> {
+    let (contained_model, contained_face, plane_model, plane_face, plane_operand) = match contained
+    {
+        SurfaceIntersectionOperand::First => (
+            first_model,
+            first_face,
+            second_model,
+            second_face,
+            SurfaceIntersectionOperand::Second,
+        ),
+        SurfaceIntersectionOperand::Second => (
+            second_model,
+            second_face,
+            first_model,
+            first_face,
+            SurfaceIntersectionOperand::First,
+        ),
+    };
+    let plane_surface = face_surface(plane_model, plane_face);
+    if plane_surface.kind() != crate::SurfaceKind::Plane {
+        return Ok(FacePairTrim::NotAvailable);
+    }
+    let Some(contained_region) =
+        project_face_region_to_plane(contained_model, contained_face, plane_surface)?
+    else {
+        return Ok(FacePairTrim::NotAvailable);
+    };
+    let region = if face_is_boundaryless(plane_model, plane_face) {
+        contained_region
+    } else {
+        let plane_region = CurveRegion2::try_from_line_arc_region(
+            &planar_face_region(plane_model, plane_face)?,
+            &CurvePolicy::certified(),
+        )?;
+        contained_region.boolean_region(
+            &plane_region,
+            BooleanOp::Intersection,
+            &CurvePolicy::certified(),
+        )?
+    };
+    if region.is_empty() {
+        Ok(FacePairTrim::NoContact)
+    } else {
+        Ok(FacePairTrim::SurfaceRegion {
+            parameterized_on: plane_operand,
+            region,
+        })
+    }
+}
+
+fn project_face_region_to_plane(
+    model: &Model,
+    face: FaceId,
+    plane: &Surface,
+) -> Result<Option<CurveRegion2>, GeometryError> {
+    let face = model.face(face).expect("validated contained face");
+    let Some(outer) = face.outer() else {
+        return Ok(None);
+    };
+    let origin = plane
+        .plane_origin()
+        .expect("contained-region target must be a plane");
+    let (u, v) = plane
+        .plane_directions()
+        .expect("contained-region target must be a plane");
+    let wires = std::iter::once(outer).chain(face.inner().iter().copied());
+    let mut paths = Vec::with_capacity(1 + face.inner().len());
+    for wire in wires {
+        let wire = model.wire(wire).expect("validated contained-face wire");
+        let mut projected = Vec::with_capacity(wire.edge_uses().len());
+        for edge_use in wire.edge_uses() {
+            let edge_use = model
+                .edge_use(*edge_use)
+                .expect("validated contained-face edge use");
+            let edge = model
+                .edge(edge_use.edge())
+                .expect("validated contained-face edge");
+            let curve = model
+                .curve(edge.curve())
+                .expect("validated contained-face spatial curve")
+                .subcurve(edge.domain().start(), edge.domain().end())?;
+            let curve = match edge_use.direction() {
+                crate::Direction::Forward => curve,
+                crate::Direction::Reversed => curve.reversed()?,
+            };
+            let Some(curve) = crate::geometry::project_curve_to_plane_frame(&curve, origin, u, v)?
+            else {
+                return Ok(None);
+            };
+            projected.push(curve);
+        }
+        paths.push(CurvePath2::try_new(projected)?);
+    }
+    let roles = std::iter::once(CurveRegionLoopRole::Material)
+        .chain(std::iter::repeat_n(
+            CurveRegionLoopRole::Hole,
+            face.inner().len(),
+        ))
+        .collect::<Vec<_>>();
+    let fill_rules = vec![FillRule::NonZero; paths.len()];
+    Ok(Some(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)?,
+    ))
 }
 
 fn point_contacts_trim(mut points: Vec<Point3>) -> FacePairTrim {
@@ -7373,6 +7508,7 @@ mod tests {
                 | FacePairTrim::SurfaceCurveFragments(_)
                 | FacePairTrim::Components { .. }
                 | FacePairTrim::CoincidentPlanar { .. }
+                | FacePairTrim::SurfaceRegion { .. }
                 | FacePairTrim::PointContact(_)
                 | FacePairTrim::NoContact
                 | FacePairTrim::NoCurveInterior

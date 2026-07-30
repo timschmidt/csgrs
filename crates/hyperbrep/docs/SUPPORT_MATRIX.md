@@ -204,8 +204,11 @@ and weights are derived without fitting. A strict one-sided weighted
 plane-value control hull proves disjointness; a complete zero hull is a
 two-dimensional overlap and returns `ContainedSurface` naming the complete
 bounded tensor operand. It is not conflated with equal complete carriers.
-Face-pair enumeration retains this exact carrier relation; general
-two-dimensional face-region clipping remains `NotAvailable` trim evidence. A
+Face-pair enumeration retains this exact carrier relation, projects the
+contained face's oriented exact boundary into plane parameters, and intersects
+the resulting `CurveRegion2` with the bounded plane face. Full, partial,
+holed, and empty results remain exact `SurfaceRegion` or `NoContact` trim
+evidence. A
 sign-definite hull with zero controls exactly returns its one/multiple corner
 points or boundary iso-lines. Mixed sections are clipped in UV through the
 same exact tensor rectangle path used by translation graphs before the
@@ -229,8 +232,8 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone sections, non-axial torus quartics, two-dimensional clipping
-between contained tensor and bounded plane face regions, and the rest of the
+oblique cone sections, non-axial torus quartics, region-driven partition and
+stitching for two-dimensional contained-face overlaps, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans

@@ -351,7 +351,10 @@ The clean-break implementation currently provides:
   iso-lines, while sign-definite zero sets return exact boundary iso-lines or
   one/multiple isolated corner points. A complete zero hull returns
   `ContainedSurface` with the exact bounded operand instead of being
-  misreported as coincidence or collapsed to a curve result;
+  misreported as coincidence or collapsed to a curve result. Face queries
+  project the contained face's exact oriented boundary into plane parameters
+  and retain the full, partial, holed, or empty overlap as a native
+  `CurveRegion2`;
 - exact `Surface::iso_curve` extraction in either tensor direction and
   `Model::split_face_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS

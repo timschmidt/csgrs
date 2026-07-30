@@ -42,7 +42,9 @@ bounded denominator-pole branches, a factorized crossing, an endpoint-pole
 branch, two isolated opposite-corner contacts, and complete bounded tensor
 containment in the plane; every retained curve is evaluated, topology-ready
 branch/crossing sets are partitioned, and exact JSON is replayed
-byte-for-byte. Complete
+byte-for-byte. The containment cohort also clips exact face regions across
+full coverage, partial overlap, and complete exclusion by a plane-face hole.
+Complete
 rational-Bézier and single- or multi-span NURBS graph sections in both tensor
 directions
 also drive

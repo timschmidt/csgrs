@@ -11334,7 +11334,127 @@ mod tests {
                 SurfaceIntersectionOperand::First
             ))
         ));
-        assert!(matches!(face_pair.trim(), crate::FacePairTrim::NotAvailable));
+        let crate::FacePairTrim::SurfaceRegion {
+            parameterized_on: SurfaceIntersectionOperand::Second,
+            region,
+        } = face_pair.trim()
+        else {
+            panic!("contained tensor/plane faces must retain an exact two-dimensional trim");
+        };
+        assert!(!region.is_empty());
+        assert!(matches!(
+            region.loop_role_counts(&CurvePolicy::certified()).unwrap(),
+            hypercurve::Classification::Decided((1, 0))
+        ));
+
+        let partial_points = [
+            CurvePoint2::new(r(1), r(-1)),
+            CurvePoint2::new(r(3), r(-1)),
+            CurvePoint2::new(r(3), r(3)),
+            CurvePoint2::new(r(1), r(3)),
+        ];
+        let partial_outline = hypercurve::CurvePath2::try_new(
+            (0..4)
+                .map(|index| {
+                    Curve2::from(
+                        LineSeg2::try_new(
+                            partial_points[index].clone(),
+                            partial_points[(index + 1) % 4].clone(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
+        )
+        .unwrap();
+        let (partial_plane, partial_face) = crate::builder::planar_face(
+            &partial_outline,
+            &[],
+            p(0, 0, 0),
+            Vector3::from_xyz(r(1), r(0), r(0)),
+            Vector3::from_xyz(r(0), r(1), r(0)),
+        )
+        .unwrap();
+        for (pair, expected_parameter_operand) in [
+            (
+                crate::boolean::intersect_faces(
+                    &planar_patch,
+                    planar_face,
+                    &partial_plane,
+                    partial_face,
+                )
+                .unwrap()
+                .unwrap(),
+                SurfaceIntersectionOperand::Second,
+            ),
+            (
+                crate::boolean::intersect_faces(
+                    &partial_plane,
+                    partial_face,
+                    &planar_patch,
+                    planar_face,
+                )
+                .unwrap()
+                .unwrap(),
+                SurfaceIntersectionOperand::First,
+            ),
+        ] {
+            let crate::FacePairTrim::SurfaceRegion {
+                parameterized_on,
+                region,
+            } = pair.trim()
+            else {
+                panic!("partial tensor/plane overlap must retain its exact region");
+            };
+            assert_eq!(*parameterized_on, expected_parameter_operand);
+            assert!(matches!(
+                region.filled_area(&CurvePolicy::certified()).unwrap(),
+                hypercurve::Classification::Decided(Some(area))
+                    if compare_reals(&area, &r(2)).value() == Some(Ordering::Equal)
+            ));
+        }
+
+        let rectangle_path = |min_x: i32, min_y: i32, max_x: i32, max_y: i32| {
+            let points = [
+                CurvePoint2::new(r(min_x), r(min_y)),
+                CurvePoint2::new(r(max_x), r(min_y)),
+                CurvePoint2::new(r(max_x), r(max_y)),
+                CurvePoint2::new(r(min_x), r(max_y)),
+            ];
+            hypercurve::CurvePath2::try_new(
+                (0..4)
+                    .map(|index| {
+                        Curve2::from(
+                            LineSeg2::try_new(
+                                points[index].clone(),
+                                points[(index + 1) % 4].clone(),
+                            )
+                            .unwrap(),
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap()
+        };
+        let excluded_outer = rectangle_path(-2, -2, 4, 4);
+        let excluded_hole = rectangle_path(-1, -1, 3, 3);
+        let (excluded_plane, excluded_face) = crate::builder::planar_face(
+            &excluded_outer,
+            &[excluded_hole],
+            p(0, 0, 0),
+            Vector3::from_xyz(r(1), r(0), r(0)),
+            Vector3::from_xyz(r(0), r(1), r(0)),
+        )
+        .unwrap();
+        let excluded = crate::boolean::intersect_faces(
+            &planar_patch,
+            planar_face,
+            &excluded_plane,
+            excluded_face,
+        )
+        .unwrap()
+        .expect("overlapping face bounds must reach exact contained-surface trimming");
+        assert!(matches!(excluded.trim(), crate::FacePairTrim::NoContact));
 
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         let translated_surface = surface.transformed(&translation, false).unwrap();

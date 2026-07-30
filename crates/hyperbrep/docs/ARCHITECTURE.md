@@ -397,8 +397,12 @@ containment rather than a curve intersection; it returns
 `ContainedSurface(operand)`, naming the complete bounded tensor domain that
 forms the intersection. This is distinct from `Coincident`, which remains
 reserved for equal complete carriers. Face-pair enumeration retains the exact
-containment relation even where clipping two overlapping face regions is not
-yet available and therefore leaves trim evidence explicit.
+containment relation and projects the contained face's oriented exact spatial
+boundary into the plane operand's parameter space. Hypercurve intersects that
+mixed-family `CurveRegion2` with the bounded plane face region, so
+`FacePairTrim::SurfaceRegion` represents full or partial two-dimensional
+overlap without sampling; an empty intersection is `NoContact`. Region-driven
+face partition and solid stitching remain a later consumer of this evidence.
 
 `boolean::intersect_faces` owns this face-pair operation:
 validated open-shell faces and solid-owned faces use the same certified bounds,

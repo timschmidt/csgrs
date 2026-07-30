@@ -1262,6 +1262,79 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
+    let (contained_patch, contained_face) = builder::rational_bezier_patch(
+        vec![
+            vec![point(0, 0, 0), point(2, 0, 0)],
+            vec![point(0, 2, 0), point(2, 2, 0)],
+        ],
+        vec![
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(4)],
+        ],
+    )
+    .expect("benchmark contained tensor face");
+    let partial_outline = CurvePath2::try_new(vec![
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(Real::one(), -Real::one()),
+                CurvePoint2::new(Real::from(3), -Real::one()),
+            )
+            .expect("benchmark partial plane edge"),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(Real::from(3), -Real::one()),
+                CurvePoint2::new(Real::from(3), Real::from(3)),
+            )
+            .expect("benchmark partial plane edge"),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(Real::from(3), Real::from(3)),
+                CurvePoint2::new(Real::one(), Real::from(3)),
+            )
+            .expect("benchmark partial plane edge"),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(
+                CurvePoint2::new(Real::one(), Real::from(3)),
+                CurvePoint2::new(Real::one(), -Real::one()),
+            )
+            .expect("benchmark partial plane edge"),
+        ),
+    ])
+    .expect("benchmark partial plane outline");
+    let (partial_plane, partial_face) = builder::planar_face(
+        &partial_outline,
+        &[],
+        point(0, 0, 0),
+        Vector3::from_xyz(Real::one(), Real::zero(), Real::zero()),
+        Vector3::from_xyz(Real::zero(), Real::one(), Real::zero()),
+    )
+    .expect("benchmark partial plane face");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..SPLINE_ITERATIONS {
+        let pair = boolean::intersect_faces(
+            black_box(&contained_patch),
+            contained_face,
+            black_box(&partial_plane),
+            partial_face,
+        )
+        .expect("benchmark exact contained-face trim")
+        .expect("benchmark overlapping contained faces");
+        let boolean::FacePairTrim::SurfaceRegion { region, .. } = pair.trim() else {
+            panic!("partial tensor/plane faces must retain an exact surface region");
+        };
+        checksum += usize::from(!region.is_empty());
+        black_box(pair);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/rational_bilinear_tensor_plane_partial_face_region: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / SPLINE_ITERATIONS as u32,
+    );
+
     const TENSOR_GRAPH_SPLIT_ITERATIONS: usize = 100;
     let (graph_patch, graph_face) = builder::rational_bezier_patch(
         vec![
@@ -1677,6 +1750,7 @@ fn main() {
                 boolean::FacePairTrim::NotAvailable
                 | boolean::FacePairTrim::CompleteCarrier
                 | boolean::FacePairTrim::CoincidentPlanar { .. }
+                | boolean::FacePairTrim::SurfaceRegion { .. }
                 | boolean::FacePairTrim::PointContact(_)
                 | boolean::FacePairTrim::NoContact
                 | boolean::FacePairTrim::NoCurveInterior

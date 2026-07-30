@@ -792,6 +792,60 @@ fuzz_target!(|bytes: &[u8]| {
                 panic!("pole-branch bilinear split replay changed exact persistence");
             }
         }
+    } else if bytes[2] % 5 == 4 {
+        let Ok((patch, face)) = builder::rational_bezier_patch(pole_controls, pole_weights) else {
+            return;
+        };
+        let rectangle = |min_x: i32, min_y: i32, max_x: i32, max_y: i32| {
+            let points = [
+                CurvePoint2::new(Real::from(min_x), Real::from(min_y)),
+                CurvePoint2::new(Real::from(max_x), Real::from(min_y)),
+                CurvePoint2::new(Real::from(max_x), Real::from(max_y)),
+                CurvePoint2::new(Real::from(min_x), Real::from(max_y)),
+            ];
+            CurvePath2::try_new(
+                (0..4)
+                    .map(|index| {
+                        Curve2::from(
+                            LineSeg2::try_new(
+                                points[index].clone(),
+                                points[(index + 1) % 4].clone(),
+                            )
+                            .expect("fixed nondegenerate containment fuzz edge"),
+                        )
+                    })
+                    .collect(),
+            )
+            .expect("fixed closed containment fuzz outline")
+        };
+        let (outer, holes) = match bytes[3] % 3 {
+            0 => (rectangle(-1, -1, 3, 3), Vec::new()),
+            1 => (rectangle(1, -1, 3, 3), Vec::new()),
+            _ => (
+                rectangle(-2, -2, 4, 4),
+                vec![rectangle(-1, -1, 3, 3)],
+            ),
+        };
+        let Ok((plane, plane_face)) = builder::planar_face(
+            &outer,
+            &holes,
+            hyperbrep::Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+        ) else {
+            return;
+        };
+        let Ok(Some(pair)) = boolean::intersect_faces(&patch, face, &plane, plane_face) else {
+            return;
+        };
+        match pair.trim() {
+            boolean::FacePairTrim::SurfaceRegion { region, .. } => {
+                let _ = region.is_empty();
+                let _ = region.filled_area(&hypercurve::CurvePolicy::certified());
+            }
+            boolean::FacePairTrim::NoContact => {}
+            _ => panic!("planar tensor containment must retain exact two-dimensional trim evidence"),
+        }
     }
     if bytes[0] % 7 == 3 {
         let Ok((graph_patch, graph_face)) = builder::rational_bezier_patch(
