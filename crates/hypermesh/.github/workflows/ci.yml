@@ -26,6 +26,8 @@ jobs:
             command: cargo bench --no-run
           - name: fuzz-targets
             command: cargo check --manifest-path fuzz/Cargo.toml --bins
+          - name: size-harness-native
+            command: cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size
 
     steps:
       - uses: actions/checkout@v4
@@ -93,5 +95,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: trunk@0.21.14
+      - run: cargo build --locked --manifest-path benchmarks/size-harness/Cargo.toml --profile size --target wasm32-unknown-unknown
+        working-directory: hypermesh
       - run: trunk build --release --locked
         working-directory: hypermesh/examples/hypermesh_ui
