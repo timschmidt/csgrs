@@ -312,7 +312,9 @@ impl MeshJs {
     pub fn subdivide(&self, levels: u32) -> Result<Self, JsValue> {
         let levels = std::num::NonZeroU32::new(levels)
             .ok_or_else(|| JsValue::from_str("levels must be positive"))?;
-        Ok(solid::subdivide(&self.inner, levels).into())
+        solid::subdivide(&self.inner, levels)
+            .map(Into::into)
+            .map_err(js_error)
     }
 
     pub fn cube(size: f64) -> Result<Self, JsValue> {

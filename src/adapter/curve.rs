@@ -5,7 +5,8 @@ use super::scalar::{
     scalar2_to_real, scalar3_to_real,
 };
 use crate::curve::{self, CurveRegionExt};
-use hypercurve::CurveRegion2;
+use crate::{GeometryContext, GeometryOutcome};
+use hypercurve::{CurveOutcome, CurvePolicy, CurveRegion2};
 use hyperlattice::{Matrix4, Vector3};
 use hyperreal::Real;
 use std::marker::PhantomData;
@@ -75,31 +76,47 @@ where
         Ok(Self::from_native(curve::polygon(&points)))
     }
 
-    pub fn union(&self, other: &Self) -> AdapterResult<Self> {
+    pub fn union(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_union(&other.inner)
-            .map(Self::from_native)
+            .try_union(&other.inner, policy)
+            .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn difference(&self, other: &Self) -> AdapterResult<Self> {
+    pub fn difference(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_difference(&other.inner)
-            .map(Self::from_native)
+            .try_difference(&other.inner, policy)
+            .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn intersection(&self, other: &Self) -> AdapterResult<Self> {
+    pub fn intersection(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_intersection(&other.inner)
-            .map(Self::from_native)
+            .try_intersection(&other.inner, policy)
+            .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn xor(&self, other: &Self) -> AdapterResult<Self> {
+    pub fn xor(
+        &self,
+        other: &Self,
+        policy: &CurvePolicy,
+    ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_xor(&other.inner)
-            .map(Self::from_native)
+            .try_xor(&other.inner, policy)
+            .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
@@ -150,16 +167,24 @@ where
         })
     }
 
-    pub fn extrude(&self, height: A::Scalar) -> AdapterResult<ScalarMesh<A>> {
-        curve::try_extrude(&self.inner, A::into_real(height)?)
-            .map(ScalarMesh::from_native)
+    pub fn extrude(
+        &self,
+        height: A::Scalar,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
+        curve::try_extrude(&self.inner, A::into_real(height)?, context)
+            .map(|outcome| outcome.map(ScalarMesh::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn extrude_vector(&self, direction: [A::Scalar; 3]) -> AdapterResult<ScalarMesh<A>> {
+    pub fn extrude_vector(
+        &self,
+        direction: [A::Scalar; 3],
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         let [x, y, z] = scalar3_to_real::<A>(direction)?;
-        curve::try_extrude_vector(&self.inner, Vector3::from_xyz(x, y, z))
-            .map(ScalarMesh::from_native)
+        curve::try_extrude_vector(&self.inner, Vector3::from_xyz(x, y, z), context)
+            .map(|outcome| outcome.map(ScalarMesh::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
@@ -167,38 +192,45 @@ where
         &self,
         angle_degrees: A::Scalar,
         segments: usize,
-    ) -> AdapterResult<ScalarMesh<A>> {
-        curve::revolve(&self.inner, A::into_real(angle_degrees)?, segments)
-            .map(ScalarMesh::from_native)
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
+        curve::revolve(&self.inner, A::into_real(angle_degrees)?, segments, context)
+            .map(|outcome| outcome.map(ScalarMesh::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
 
-    pub fn region_profiles(&self) -> AdapterResult<Vec<RegionProfile<A::Scalar>>> {
-        curve::try_finite_profiles(&self.inner)
+    pub fn region_profiles(
+        &self,
+        context: &GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<Vec<RegionProfile<A::Scalar>>>> {
+        curve::try_finite_profiles(&self.inner, context)
             .map_err(|error| AdapterError::Validation(error.to_string()))?
-            .iter()
-            .map(|profile| {
-                let exterior = profile
-                    .material()
-                    .points()
+            .try_map(|profiles| {
+                profiles
                     .iter()
-                    .copied()
-                    .map(finite2_to_scalar::<A>)
-                    .collect::<AdapterResult<Vec<_>>>()?;
-                let holes = profile
-                    .holes()
-                    .iter()
-                    .map(|hole| {
-                        hole.points()
+                    .map(|profile| {
+                        let exterior = profile
+                            .material()
+                            .points()
                             .iter()
                             .copied()
                             .map(finite2_to_scalar::<A>)
-                            .collect::<AdapterResult<Vec<_>>>()
+                            .collect::<AdapterResult<Vec<_>>>()?;
+                        let holes = profile
+                            .holes()
+                            .iter()
+                            .map(|hole| {
+                                hole.points()
+                                    .iter()
+                                    .copied()
+                                    .map(finite2_to_scalar::<A>)
+                                    .collect::<AdapterResult<Vec<_>>>()
+                            })
+                            .collect::<AdapterResult<Vec<_>>>()?;
+                        Ok(RegionProfile { exterior, holes })
                     })
-                    .collect::<AdapterResult<Vec<_>>>()?;
-                Ok(RegionProfile { exterior, holes })
+                    .collect()
             })
-            .collect()
     }
 }
 

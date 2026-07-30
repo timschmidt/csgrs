@@ -29,7 +29,10 @@ impl PlaneJs {
         let a = point3_from_js(ax, ay, az)?;
         let b = point3_from_js(bx, by, bz)?;
         let c = point3_from_js(cx, cy, cz)?;
-        if !Plane::points_are_nondegenerate(&a, &b, &c) {
+        if !Plane::points_are_nondegenerate(&crate::MESH_CONTEXT, &a, &b, &c)
+            .map_err(|error| JsValue::from_str(&error.to_string()))?
+            .into_value()
+        {
             return Err(JsValue::from_str(
                 "plane points must be certifiably non-collinear",
             ));
@@ -41,7 +44,10 @@ impl PlaneJs {
 
     #[wasm_bindgen(js_name = FromPoints)]
     pub fn from_points(a: &Point3Js, b: &Point3Js, c: &Point3Js) -> Result<Self, JsValue> {
-        if !Plane::points_are_nondegenerate(&a.inner, &b.inner, &c.inner) {
+        if !Plane::points_are_nondegenerate(&crate::MESH_CONTEXT, &a.inner, &b.inner, &c.inner)
+            .map_err(|error| JsValue::from_str(&error.to_string()))?
+            .into_value()
+        {
             return Err(JsValue::from_str(
                 "plane points must be certifiably non-collinear",
             ));
@@ -102,8 +108,8 @@ impl PlaneJs {
     #[wasm_bindgen(js_name = reflectionMatrix)]
     pub fn reflection_matrix(&self) -> Result<crate::wasm::matrix_js::Matrix4Js, JsValue> {
         self.inner
-            .reflection_matrix()
-            .map(Into::into)
+            .reflection_matrix(&crate::MESH_CONTEXT)
+            .map(|outcome| outcome.into_value().into())
             .map_err(|error| JsValue::from_str(&error.to_string()))
     }
 }
@@ -112,7 +118,7 @@ fn validate_normal(normal: &[hyperlattice::Real; 3]) -> Result<(), JsValue> {
     let squared = normal.iter().fold(hyperlattice::Real::zero(), |sum, value| {
         sum + value.clone() * value.clone()
     });
-    match hyperlimit::classify_real_sign(&squared).value() {
+    match hyperlimit::classify_real_sign(&squared, crate::PREDICATE_POLICY).value() {
         Some(hyperlimit::Sign::Positive) => Ok(()),
         Some(hyperlimit::Sign::Negative | hyperlimit::Sign::Zero) | None => {
             Err(JsValue::from_str("plane normal must be certifiably non-zero"))

@@ -1,6 +1,6 @@
 //! Errors produced by CSG grammar and native-curve operations.
 
-use hypercurve::{CurveError, ExactCurveError, UncertaintyReason};
+use hypercurve::{CurveError, ExactCurveError};
 
 /// Failure to produce a certified native curve-region Boolean.
 #[derive(Clone, Debug, thiserror::Error, PartialEq)]
@@ -19,9 +19,6 @@ pub enum CurveOffsetError {
     /// Hypercurve rejected an exact curve-region offset operation.
     #[error(transparent)]
     ExactCurve(#[from] ExactCurveError),
-    /// Hypercurve could not certify a required offset topology decision.
-    #[error("curve-region offset is uncertain: {0:?}")]
-    Uncertain(UncertaintyReason),
 }
 
 /// Validation failure in a CSG feature constructor.

@@ -127,11 +127,7 @@ impl<M> AttributedMesh<M> {
         self.exact_gpu
             .get_or_init(|| {
                 let Some(normals) = &self.authored_normals else {
-                    return self
-                        .geometry
-                        .exact_gpu_mesh_buffers()
-                        .cloned()
-                        .map_err(Clone::clone);
+                    return self.geometry.to_exact_gpu_mesh_buffers();
                 };
                 for (triangle_offset, triangle) in self.geometry.triangles.iter().enumerate() {
                     for (corner, index) in triangle.indices().into_iter().enumerate() {

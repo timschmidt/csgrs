@@ -122,7 +122,7 @@ pub(crate) fn hreal_to_f64(value: &Real) -> Option<f64> {
 }
 
 pub(crate) fn hreal_sign(value: &Real) -> Option<RealSign> {
-    hyperlimit::classify_real_sign(value)
+    hyperlimit::classify_real_sign(value, crate::PREDICATE_POLICY)
         .value()
         .map(|sign| match sign {
             hyperlimit::Sign::Negative => RealSign::Negative,
@@ -134,7 +134,7 @@ pub(crate) fn hreal_sign(value: &Real) -> Option<RealSign> {
 pub(crate) fn hreal_try_cmp<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> Option<Ordering> {
     let lhs = lhs.into_real().ok()?;
     let rhs = rhs.into_real().ok()?;
-    hyperlimit::compare_reals(&lhs, &rhs).value()
+    hyperlimit::compare_reals(&lhs, &rhs, crate::PREDICATE_POLICY).value()
 }
 
 pub(crate) fn hreal_gt_f64<L: IntoReal, R: IntoReal>(lhs: L, rhs: R) -> bool {
@@ -196,7 +196,7 @@ pub(crate) fn hpoint_lerp(from: &Point3, to: &Point3, t: Real) -> Option<Point3>
 
 pub(crate) fn htriangle_area2_is_nonzero(a: &Point3, b: &Point3, c: &Point3) -> bool {
     matches!(
-        hyperlimit::classify_triangle3_degeneracy(a, b, c),
-        hyperlimit::TriangleDegeneracy::NonDegenerate
+        hyperlimit::classify_triangle3_degeneracy(a, b, c, crate::PREDICATE_POLICY).value(),
+        Some(hyperlimit::TriangleDegeneracy::NonDegenerate)
     )
 }

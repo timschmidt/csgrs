@@ -248,7 +248,7 @@ where
         }
         let mesh = self
             .inner
-            .exact_gpu_mesh_buffers()
+            .to_exact_gpu_mesh_buffers()
             .map_err(|error| AdapterError::Validation(error.to_string()))?;
         let vertices = mesh
             .vertices

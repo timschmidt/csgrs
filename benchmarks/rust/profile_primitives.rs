@@ -5,8 +5,8 @@ mod support;
 
 use std::hint::black_box;
 
-use csgrs::{Real, curve, curve::CurveRegionExt};
-use hypercurve::{CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
+use csgrs::{GeometryContext, Real, curve, curve::CurveRegionExt};
+use hypercurve::{CurvePath2, CurvePolicy, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Matrix4;
 use support::{Config, Measurement, print_header};
 
@@ -38,6 +38,12 @@ fn run_path(
         let path = black_box(build());
         Measurement::new(1, path.curves().len() as u64, path.curves().len() as u64)
     });
+}
+
+fn compound_region(
+    result: Result<csgrs::GeometryOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
+) -> CurveRegion2 {
+    result.expect("compound curve Boolean").into_value()
 }
 
 fn main() {
@@ -100,13 +106,29 @@ fn main() {
         curve::squircle(Real::from(8), Real::from(6), 24)
     });
     run_profile(&config, "keyhole", 4, || {
-        curve::keyhole(Real::from(4), Real::from(2), Real::from(6), 24)
+        compound_region(curve::keyhole(
+            Real::from(4),
+            Real::from(2),
+            Real::from(6),
+            24,
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "reuleaux", 2, || {
-        curve::reuleaux(3, Real::from(6), 24)
+        compound_region(curve::reuleaux(
+            3,
+            Real::from(6),
+            24,
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "ring", 4, || {
-        curve::ring(Real::from(6), Real::from(2), 24)
+        compound_region(curve::ring(
+            Real::from(6),
+            Real::from(2),
+            24,
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "pie_slice", 8, || {
         curve::pie_slice(Real::from(4), Real::from(10), Real::from(100), 12)
@@ -123,13 +145,29 @@ fn main() {
         )
     });
     run_profile(&config, "circle_with_keyway", 2, || {
-        curve::circle_with_keyway(Real::from(6), 24, Real::from(2), Real::from(2))
+        compound_region(curve::circle_with_keyway(
+            Real::from(6),
+            24,
+            Real::from(2),
+            Real::from(2),
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "circle_with_flat", 2, || {
-        curve::circle_with_flat(Real::from(6), 24, Real::from(2))
+        compound_region(curve::circle_with_flat(
+            Real::from(6),
+            24,
+            Real::from(2),
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "circle_with_two_flats", 2, || {
-        curve::circle_with_two_flats(Real::from(6), 24, Real::from(2))
+        compound_region(curve::circle_with_two_flats(
+            Real::from(6),
+            24,
+            Real::from(2),
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_path(&config, "bezier", 8, || {
         curve::bezier_path(&bezier_control, 16).expect("open Bezier path")
@@ -141,7 +179,13 @@ fn main() {
         curve::heart(Real::from(8), Real::from(8), 32)
     });
     run_profile(&config, "crescent", 2, || {
-        curve::crescent(Real::from(6), Real::from(4), Real::from(3), 24)
+        compound_region(curve::crescent(
+            Real::from(6),
+            Real::from(4),
+            Real::from(3),
+            24,
+            &GeometryContext::APPROXIMATE_512,
+        ))
     });
     run_profile(&config, "involute_gear", 1, || {
         curve::involute_gear(
@@ -207,7 +251,13 @@ fn main() {
     ];
     let curved_region = curve::bezier_region(&closed_control, 16);
     config.run("profile_curves", "extrusion", "cubic_region", 4, || {
-        let mesh = curve::extrude(black_box(&curved_region), Real::from(2));
+        let mesh = curve::try_extrude(
+            black_box(&curved_region),
+            Real::from(2),
+            &csgrs::GeometryContext::STRICT,
+        )
+        .expect("extrusion")
+        .into_value();
         Measurement::new(1, mesh.triangles.len() as u64, mesh.triangles.len() as u64)
     });
 
@@ -221,7 +271,12 @@ fn main() {
         "curved_line_arc_union",
         4,
         || {
-            let result = black_box(curved_region.try_union(&disjoint).unwrap());
+            let result = black_box(
+                curved_region
+                    .try_union(&disjoint, &CurvePolicy::STRICT)
+                    .unwrap()
+                    .into_value(),
+            );
             Measurement::new(1, result.len() as u64, result.len() as u64)
         },
     );

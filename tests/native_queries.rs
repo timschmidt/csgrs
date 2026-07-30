@@ -1,23 +1,54 @@
-use csgrs::{Real, solid};
+use csgrs::{GeometryCertainty, GeometryContext, Real, solid};
 use hyperlattice::{Point3, Vector3};
+use hyperlimit::PredicatePolicy;
 
 #[test]
 fn sphere_diameter_ray_reports_only_surface_hits() {
     let mesh = solid::sphere(Real::from(10_u8), 32, 16);
     let origin = Point3::new(Real::from(-20_i8), Real::zero(), Real::zero());
-    let hits = solid::ray_intersections(&mesh, &origin, &Vector3::x()).unwrap();
+    assert!(
+        solid::ray_intersections(&mesh, &origin, &Vector3::x(), &GeometryContext::STRICT,)
+            .is_err(),
+        "strict mode must surface the unresolved sampled-sphere boundary"
+    );
+    let outcome = solid::ray_intersections(
+        &mesh,
+        &origin,
+        &Vector3::x(),
+        &GeometryContext::APPROXIMATE_512,
+    )
+    .unwrap();
+    assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
+    let hits = outcome.value;
 
     assert_eq!(hits.len(), 2);
     assert_eq!(
-        hyperlimit::compare_reals(&hits[0].1, &Real::from(10_u8)).value(),
+        hyperlimit::compare_reals(
+            &hits[0].1,
+            &Real::from(10_u8),
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .value(),
         Some(std::cmp::Ordering::Equal)
     );
     assert_eq!(
-        hyperlimit::compare_reals(&hits[1].1, &Real::from(30_u8)).value(),
+        hyperlimit::compare_reals(
+            &hits[1].1,
+            &Real::from(30_u8),
+            PredicatePolicy::APPROXIMATE_512,
+        )
+        .value(),
         Some(std::cmp::Ordering::Equal)
     );
     assert_eq!(
-        solid::ray_intersections(&mesh, &origin, &Vector3::x()).unwrap(),
+        solid::ray_intersections(
+            &mesh,
+            &origin,
+            &Vector3::x(),
+            &GeometryContext::APPROXIMATE_512,
+        )
+        .unwrap()
+        .value,
         hits,
         "the retained native query must preserve the exact result"
     );

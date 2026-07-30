@@ -6,6 +6,7 @@ mod support;
 
 use csgrs::solid::{self, SolidExt};
 use hyperlattice::Real;
+use hyperlimit::PredicatePolicy;
 use libfuzzer_sys::fuzz_target;
 
 fn tolerance() -> Real {
@@ -14,7 +15,7 @@ fn tolerance() -> Real {
 
 fn at_least_tolerance(value: Real) -> Real {
     let tolerance = tolerance();
-    hyperlimit::real_max(&value, &tolerance)
+    hyperlimit::real_max(&value, &tolerance, PredicatePolicy::STRICT)
         .value()
         .cloned()
         .expect("decoded rationals have decidable order")
@@ -50,13 +51,16 @@ fuzz_target!(|bytes: &[u8]| {
     let b = match bytes[idx % bytes.len()] % 3 {
         0 => solid::cube(size_b.clone()),
         1 => solid::octahedron(size_b.clone()),
-        _ => csgrs::curve::extrude(
+        _ => csgrs::curve::try_extrude(
             &csgrs::curve::rectangle(
                 size_b.clone(),
                 (size_b.clone() / Real::from(2_u8)).expect("two is nonzero"),
             ),
             size_a,
-        ),
+            &csgrs::GeometryContext::STRICT,
+        )
+        .map(csgrs::GeometryOutcome::into_value)
+        .unwrap_or_else(|_| solid::empty()),
     }
     .translated(
         decode_real(bytes, &mut idx),

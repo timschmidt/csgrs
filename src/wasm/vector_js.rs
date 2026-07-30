@@ -29,9 +29,17 @@ fn rotation_between_quaternion_components(from: &Vector3, to: &Vector3) -> Optio
     let b = to.normalize_checked().ok()?;
     let dot = a.dot(&b);
 
-    match hyperlimit::classify_real_sign(&(dot.clone() + Real::one())).value()? {
+    match hyperlimit::classify_real_sign(&(dot.clone() + Real::one()), crate::PREDICATE_POLICY)
+        .value()?
+    {
         hyperlimit::Sign::Zero => {
-            let seed = match hyperlimit::compare_reals(&a.0[0].abs(), &real(0.9)).value()? {
+            let seed = match hyperlimit::compare_reals(
+                &a.0[0].abs(),
+                &real(0.9),
+                crate::PREDICATE_POLICY,
+            )
+            .value()?
+            {
                 std::cmp::Ordering::Less => Vector3::x(),
                 std::cmp::Ordering::Equal | std::cmp::Ordering::Greater => Vector3::y(),
             };
@@ -104,7 +112,7 @@ impl Vector3Js {
 
     #[wasm_bindgen(js_name = isOrthogonal)]
     pub fn is_orthogonal(&self, other: &Vector3Js) -> Result<bool, JsValue> {
-        hyperlimit::classify_real_sign(&self.inner.dot(&other.inner))
+        hyperlimit::classify_real_sign(&self.inner.dot(&other.inner), crate::PREDICATE_POLICY)
             .value()
             .map(|sign| sign == hyperlimit::Sign::Zero)
             .ok_or_else(|| JsValue::from_str("orthogonality is indeterminate"))
@@ -148,7 +156,7 @@ impl Vector3Js {
             .iter()
             .zip(&other.inner.0)
             .try_fold(true, |equal, (left, right)| {
-                hyperlimit::compare_reals(left, right)
+                hyperlimit::compare_reals(left, right, crate::PREDICATE_POLICY)
                     .value()
                     .map(|ordering| equal && ordering == std::cmp::Ordering::Equal)
             })
@@ -305,7 +313,8 @@ mod tests {
     }
 
     fn less_than(left: &Real, right: &Real) -> bool {
-        hyperlimit::compare_reals(left, right).value() == Some(std::cmp::Ordering::Less)
+        hyperlimit::compare_reals(left, right, crate::PREDICATE_POLICY).value()
+            == Some(std::cmp::Ordering::Less)
     }
 
     #[test]
@@ -397,12 +406,12 @@ mod tests {
             rotation_between_quaternion_components(&x, &nearly_opposite).unwrap();
 
         assert!(
-            hyperlimit::compare_reals(&w, &Real::zero()).value()
+            hyperlimit::compare_reals(&w, &Real::zero(), crate::PREDICATE_POLICY).value()
                 == Some(std::cmp::Ordering::Greater),
             "near-antiparallel rotations should not collapse to exact pi"
         );
         assert!(
-            hyperlimit::compare_reals(&qz, &Real::zero()).value()
+            hyperlimit::compare_reals(&qz, &Real::zero(), crate::PREDICATE_POLICY).value()
                 == Some(std::cmp::Ordering::Greater),
             "quaternion axis should retain the exact positive turn direction"
         );

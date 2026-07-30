@@ -283,7 +283,7 @@ pub(crate) fn metaballs(
         return CurveRegion2::empty();
     }
 
-    CurveRegion2::try_from_native_material_contours(material, &CurvePolicy::certified())
+    CurveRegion2::try_from_native_material_contours(material, &CurvePolicy::STRICT)
         .unwrap_or_else(|_| CurveRegion2::empty())
 }
 
@@ -307,10 +307,18 @@ fn metaball_bounds_hreal(
     let (mut min_x, mut min_y, mut max_x, mut max_y) = bounds.next()??;
     for bounds in bounds {
         let (next_min_x, next_min_y, next_max_x, next_max_y) = bounds?;
-        min_x = real_min(&min_x, &next_min_x).value().cloned()?;
-        min_y = real_min(&min_y, &next_min_y).value().cloned()?;
-        max_x = real_max(&max_x, &next_max_x).value().cloned()?;
-        max_y = real_max(&max_y, &next_max_y).value().cloned()?;
+        min_x = real_min(&min_x, &next_min_x, crate::PREDICATE_POLICY)
+            .value()
+            .cloned()?;
+        min_y = real_min(&min_y, &next_min_y, crate::PREDICATE_POLICY)
+            .value()
+            .cloned()?;
+        max_x = real_max(&max_x, &next_max_x, crate::PREDICATE_POLICY)
+            .value()
+            .cloned()?;
+        max_y = real_max(&max_y, &next_max_y, crate::PREDICATE_POLICY)
+            .value()
+            .cloned()?;
     }
     Some((min_x, min_y, max_x, max_y))
 }

@@ -34,7 +34,7 @@ struct IndexedTriangleMesh3D {
 
 fn indexed_geometry(mesh: &TriangleMesh) -> Result<IndexedTriangleMesh3D, IoError> {
     let buffers = mesh
-        .exact_gpu_mesh_buffers()
+        .to_exact_gpu_mesh_buffers()
         .map_err(|error| IoError::Geometry {
             format: "glTF",
             detail: error.to_string(),

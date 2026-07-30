@@ -7,6 +7,10 @@ use csgrs::{
     Real,
     solid::{self, SolidExt},
 };
+use hyperlimit::PredicatePolicy;
+use hypermesh::MeshContext;
+
+const MESH_CONTEXT: MeshContext = MeshContext::new(PredicatePolicy::STRICT);
 
 fn iterations(name: &str, default: usize) -> usize {
     std::env::var(name)
@@ -83,8 +87,9 @@ fn main() {
     let start = Instant::now();
     let mut raw_hull_triangles = 0_usize;
     for _ in 0..raw_hull_iterations {
-        let hull = hypermesh::convex_hull(black_box(&raw_hull_points))
-            .expect("benchmark point cloud spans 3D");
+        let hull = hypermesh::convex_hull(&MESH_CONTEXT, black_box(&raw_hull_points))
+            .expect("benchmark point cloud spans 3D")
+            .into_value();
         raw_hull_triangles += hull.triangles.len();
         black_box(hull);
     }

@@ -487,7 +487,7 @@ fn rects_overlap_2d(a: &ProjectedRect, b: &ProjectedRect) -> Option<bool> {
 }
 
 fn real_cmp(lhs: &Real, rhs: &Real) -> Option<Ordering> {
-    hyperlimit::compare_reals(lhs, rhs).value()
+    hyperlimit::compare_reals(lhs, rhs, crate::PREDICATE_POLICY).value()
 }
 
 fn real_le(lhs: &Real, rhs: &Real) -> Option<bool> {

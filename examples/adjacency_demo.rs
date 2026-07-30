@@ -5,7 +5,7 @@ use hyperlattice::Real;
 
 fn main() {
     let sphere = solid::sphere(r(1.0), 16, 8);
-    let adjacency = sphere.adjacency();
+    let adjacency = sphere.adjacency().expect("sphere connectivity");
 
     let edge_uses = adjacency.iter().map(Vec::len).sum::<usize>();
     let min_valence = adjacency.iter().map(Vec::len).min().unwrap_or(0);
@@ -20,8 +20,12 @@ fn main() {
     );
 
     let original = sphere.positions[0].clone();
-    let weak = sphere.laplacian_smooth(&r(0.1), 1);
-    let strong = sphere.laplacian_smooth(&r(0.3), 1);
+    let weak = sphere
+        .laplacian_smooth(&r(0.1), 1)
+        .expect("valid sphere smoothing");
+    let strong = sphere
+        .laplacian_smooth(&r(0.3), 1)
+        .expect("valid sphere smoothing");
     let weak_change = (&original - &weak.positions[0]).norm();
     let strong_change = (&original - &strong.positions[0]).norm();
 

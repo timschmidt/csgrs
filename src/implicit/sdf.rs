@@ -346,12 +346,16 @@ fn push_sdf_sample_without_diagnostics(
 
 fn record_sdf_finite_sample(diagnostics: &mut SdfDiagnostics, value: &Real) {
     diagnostics.min_finite_value = match diagnostics.min_finite_value.take() {
-        Some(current) => hyperlimit::real_min(&current, value).value().cloned(),
+        Some(current) => hyperlimit::real_min(&current, value, crate::PREDICATE_POLICY)
+            .value()
+            .cloned(),
         None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
         None => None,
     };
     diagnostics.max_finite_value = match diagnostics.max_finite_value.take() {
-        Some(current) => hyperlimit::real_max(&current, value).value().cloned(),
+        Some(current) => hyperlimit::real_max(&current, value, crate::PREDICATE_POLICY)
+            .value()
+            .cloned(),
         None if diagnostics.finite_sample_count == 1 => Some(value.clone()),
         None => None,
     };

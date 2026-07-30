@@ -313,7 +313,7 @@ fn vector_is_zero(vector: &ExactVector3) -> Option<bool> {
     let y2 = y.clone() * y;
     let z2 = z.clone() * z;
     let length_squared: Real = x2 + y2 + z2;
-    hyperlimit::classify_real_sign(&length_squared)
+    hyperlimit::classify_real_sign(&length_squared, crate::PREDICATE_POLICY)
         .value()
         .map(|sign| sign == hyperlimit::Sign::Zero)
 }
