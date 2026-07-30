@@ -98,6 +98,7 @@ mod local_bsp;
 pub mod mesh;
 pub mod operations;
 pub mod output;
+mod point_interner;
 pub mod polygon;
 mod predicate;
 pub mod segment_trace;

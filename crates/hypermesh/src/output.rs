@@ -1,12 +1,13 @@
 //! Boolean result extraction and triangulation helpers.
 
 use std::borrow::Borrow;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::{Classification, Plane, classify_real, compare_real_decision};
 use crate::mesh::{OutputVertex, PolygonSoup, Triangle, TriangleMesh};
+use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::polygon::{
     ConstructionEdgeIdentity, ConstructionPlaneIdentity, ConstructionVertexIdentity, ConvexPolygon,
 };
@@ -1585,7 +1586,13 @@ where
             .iter()
             .map(|polygon| polygon.borrow().vertex_count())
             .sum();
-        let mut merger = ExactOutputVertexMerger::with_capacity(position_count);
+        let mut interner = PointInterner::<()>::try_with_capacity(position_count, true, false)?;
+        let mut vertices = Vec::new();
+        vertices.try_reserve_exact(position_count).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "convex output vertices",
+            }
+        })?;
         let mut indexed_polygons = Vec::with_capacity(polygons.len());
         for polygon in polygons {
             let polygon = polygon.borrow();
@@ -1595,11 +1602,21 @@ where
                 .expect("the retained exact path was validated above");
             let mut indexed = Vec::with_capacity(points.len());
             for point in points.iter() {
-                indexed.push(merger.merge(ExactOutputVertexSource::Borrowed(point)));
+                indexed.push(interner.intern_with(
+                    decisions,
+                    &mut vertices,
+                    point,
+                    None,
+                    || OutputVertex {
+                        x: point.x.clone(),
+                        y: point.y.clone(),
+                        z: point.z.clone(),
+                    },
+                )?);
             }
             indexed_polygons.push(indexed);
         }
-        return Ok((merger.into_vertices(), indexed_polygons));
+        return Ok((vertices, indexed_polygons));
     }
 
     let position_count = polygons
@@ -1608,7 +1625,6 @@ where
         .sum();
     let mut positions = Vec::with_capacity(position_count);
     let mut indexed_polygons = Vec::with_capacity(polygons.len());
-    let mut flat_index = 0usize;
 
     for (polygon_index, polygon) in polygons.iter().enumerate() {
         let polygon = polygon.borrow();
@@ -1619,7 +1635,6 @@ where
                 positions.push((
                     polygon_index,
                     vertex_index,
-                    flat_index,
                     OutputVertex {
                         x: point.x.clone(),
                         y: point.y.clone(),
@@ -1627,7 +1642,6 @@ where
                     },
                     vertex_identities.and_then(|identities| identities.get(vertex_index)),
                 ));
-                flat_index += 1;
             }
         } else {
             for (vertex_index, point) in polygon
@@ -1638,7 +1652,6 @@ where
                 positions.push((
                     polygon_index,
                     vertex_index,
-                    flat_index,
                     OutputVertex {
                         x: point.x,
                         y: point.y,
@@ -1646,161 +1659,49 @@ where
                     },
                     vertex_identities.and_then(|identities| identities.get(vertex_index)),
                 ));
-                flat_index += 1;
             }
         }
     }
 
-    if positions.iter().all(|(_, _, _, vertex, _)| {
-        vertex.x.exact_rational_ref().is_some()
-            && vertex.y.exact_rational_ref().is_some()
-            && vertex.z.exact_rational_ref().is_some()
-    }) {
-        let mut merger = ExactOutputVertexMerger::with_capacity(positions.len());
-        for (polygon_index, vertex_index, _, vertex, _) in positions {
+    if positions
+        .iter()
+        .all(|(_, _, vertex, _)| vertex.has_exact_rational_coordinates())
+    {
+        let mut interner = PointInterner::<()>::try_with_capacity(positions.len(), true, false)?;
+        let mut vertices = Vec::new();
+        vertices.try_reserve_exact(positions.len()).map_err(|_| {
+            HypermeshError::CapacityOverflow {
+                operation: "convex output vertices",
+            }
+        })?;
+        for (polygon_index, vertex_index, vertex, _) in positions {
             indexed_polygons[polygon_index][vertex_index] =
-                merger.merge(ExactOutputVertexSource::Owned(vertex));
+                interner.intern_owned(decisions, &mut vertices, vertex, None)?;
         }
-        return Ok((merger.into_vertices(), indexed_polygons));
+        return Ok((vertices, indexed_polygons));
     }
 
-    // Non-rational exact coordinates need not be order-comparable. Lossy
-    // values are only preferred-candidate buckets; all remaining eligible
-    // vertices are checked through the centralized exact equality cascade.
-    let mut vertices: Vec<OutputVertex> = Vec::with_capacity(positions.len());
-    let mut vertex_identities: Vec<Option<ConstructionVertexIdentity>> =
-        Vec::with_capacity(positions.len());
-    let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
-    let mut identities: HashMap<ConstructionVertexIdentity, usize> = HashMap::new();
-    for (polygon_index, vertex_index, _, vertex, identity) in positions {
-        if let Some(merged_index) = identity
-            .as_ref()
-            .and_then(|identity| identities.get(identity))
-            .copied()
-        {
-            indexed_polygons[polygon_index][vertex_index] = merged_index;
-            continue;
-        }
-        let key = output_vertex_bucket(&vertex);
-        let preferred = buckets.get(&key).cloned().unwrap_or_default();
-        let mut merged_index = None;
-        for candidate in preferred.iter().copied() {
-            // Projective construction identities have already been
-            // canonicalized with exact plane-incidence certificates.
-            if identity.is_some() && vertex_identities[candidate].is_some() {
-                continue;
-            }
-            if output_vertices_equal(decisions, &vertices[candidate], &vertex)? {
-                merged_index = Some(candidate);
-                break;
-            }
-        }
-        if merged_index.is_none() {
-            for (candidate, existing) in vertices.iter().enumerate() {
-                if output_vertex_bucket(existing) == key {
-                    continue;
-                }
-                if identity.is_some() && vertex_identities[candidate].is_some() {
-                    continue;
-                }
-                if output_vertices_equal(decisions, existing, &vertex)? {
-                    merged_index = Some(candidate);
-                    break;
-                }
-            }
-        }
-        let merged_index = if let Some(existing) = merged_index {
-            existing
-        } else {
-            let index = vertices.len();
-            vertices.push(vertex);
-            vertex_identities.push(identity.clone());
-            buckets.entry(key).or_default().push(index);
-            index
-        };
-        if let Some(identity) = identity {
-            identities.insert(identity, merged_index);
-        }
-        indexed_polygons[polygon_index][vertex_index] = merged_index;
+    // Projective construction identities have already been canonicalized with
+    // exact plane-incidence certificates. The shared interner therefore avoids
+    // policy-aware equality between two distinct retained identities, while
+    // certified interval misses remain the only numeric pruning proof.
+    let mut interner = PointInterner::<ConstructionVertexIdentity>::try_with_capacity(
+        positions.len(),
+        false,
+        true,
+    )?;
+    let mut vertices = Vec::new();
+    vertices
+        .try_reserve_exact(positions.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "convex output vertices",
+        })?;
+    for (polygon_index, vertex_index, vertex, identity) in positions {
+        indexed_polygons[polygon_index][vertex_index] =
+            interner.intern_owned(decisions, &mut vertices, vertex, identity)?;
     }
 
     Ok((vertices, indexed_polygons))
-}
-
-#[derive(Eq, Hash, PartialEq)]
-struct ExactOutputVertexKey([Rational; 3]);
-
-enum ExactOutputVertexSource<'a> {
-    Borrowed(&'a Point3),
-    Owned(OutputVertex),
-}
-
-struct ExactOutputVertexMerger {
-    vertices: Vec<OutputVertex>,
-    storage_vertices: StorageHashMap<[usize; 3], usize>,
-    #[allow(clippy::mutable_key_type)]
-    exact_vertices: HashMap<ExactOutputVertexKey, usize>,
-}
-
-impl ExactOutputVertexSource<'_> {
-    fn coordinates(&self) -> [&Real; 3] {
-        match self {
-            Self::Borrowed(point) => [&point.x, &point.y, &point.z],
-            Self::Owned(vertex) => [&vertex.x, &vertex.y, &vertex.z],
-        }
-    }
-
-    fn into_output_vertex(self) -> OutputVertex {
-        match self {
-            Self::Borrowed(point) => OutputVertex {
-                x: point.x.clone(),
-                y: point.y.clone(),
-                z: point.z.clone(),
-            },
-            Self::Owned(vertex) => vertex,
-        }
-    }
-}
-
-impl ExactOutputVertexMerger {
-    fn with_capacity(capacity: usize) -> Self {
-        let mut storage_vertices = StorageHashMap::default();
-        storage_vertices.reserve(capacity);
-        Self {
-            vertices: Vec::with_capacity(capacity),
-            storage_vertices,
-            exact_vertices: HashMap::with_capacity(capacity),
-        }
-    }
-
-    fn merge(&mut self, source: ExactOutputVertexSource<'_>) -> usize {
-        let coordinates = source.coordinates();
-        let exact = coordinates.map(|coordinate| {
-            coordinate
-                .exact_rational_ref()
-                .expect("exact output vertex source was validated")
-        });
-        let storage_key = exact.map(Rational::storage_identity);
-        if let Some(&index) = self.storage_vertices.get(&storage_key) {
-            return index;
-        }
-        let key = ExactOutputVertexKey(exact.map(Clone::clone));
-        let index = match self.exact_vertices.entry(key) {
-            std::collections::hash_map::Entry::Occupied(entry) => *entry.get(),
-            std::collections::hash_map::Entry::Vacant(entry) => {
-                let index = self.vertices.len();
-                self.vertices.push(source.into_output_vertex());
-                entry.insert(index);
-                index
-            }
-        };
-        self.storage_vertices.insert(storage_key, index);
-        index
-    }
-
-    fn into_vertices(self) -> Vec<OutputVertex> {
-        self.vertices
-    }
 }
 
 #[cfg(test)]
@@ -2363,17 +2264,6 @@ pub(crate) fn resolve_tjunctions(
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct OutputVertexBucket([Option<u64>; 3]);
-
-fn output_vertex_bucket(vertex: &OutputVertex) -> OutputVertexBucket {
-    OutputVertexBucket([
-        vertex.x.to_f64_lossy().map(f64::to_bits),
-        vertex.y.to_f64_lossy().map(f64::to_bits),
-        vertex.z.to_f64_lossy().map(f64::to_bits),
-    ])
-}
-
 fn output_vertices_equal(
     decisions: &DecisionContext,
     left: &OutputVertex,
@@ -2390,57 +2280,26 @@ fn merge_duplicate_vertices(
     decisions: &DecisionContext,
     input: &BooleanMesh,
 ) -> HypermeshResult<BooleanMesh> {
-    if input.vertices.iter().all(|vertex| {
-        vertex.x.exact_rational_ref().is_some()
-            && vertex.y.exact_rational_ref().is_some()
-            && vertex.z.exact_rational_ref().is_some()
-    }) {
-        let mut merger = ExactOutputVertexMerger::with_capacity(input.vertices.len());
-        let remap = input
-            .vertices
-            .iter()
-            .map(|vertex| merger.merge(ExactOutputVertexSource::Owned(vertex.clone())))
-            .collect::<Vec<_>>();
-        let triangles = remap_triangle_indices(&input.triangles, &remap)?;
-        return Ok(BooleanMesh {
-            vertices: merger.into_vertices(),
-            triangles,
-            sources: input.sources.clone(),
-        });
-    }
-
-    let mut vertices: Vec<OutputVertex> = Vec::with_capacity(input.vertices.len());
-    let mut buckets: HashMap<OutputVertexBucket, Vec<usize>> = HashMap::new();
-    let mut remap = vec![0; input.vertices.len()];
-
-    for (index, vertex) in input.vertices.iter().enumerate() {
-        let key = output_vertex_bucket(vertex);
-        let preferred = buckets.get(&key).cloned().unwrap_or_default();
-        let mut existing = None;
-        for candidate in preferred {
-            if output_vertices_equal(decisions, &vertices[candidate], vertex)? {
-                existing = Some(candidate);
-                break;
-            }
+    let exact_only = input
+        .vertices
+        .iter()
+        .all(PointCoordinates::has_exact_rational_coordinates);
+    let mut interner =
+        PointInterner::<()>::try_with_capacity(input.vertices.len(), exact_only, false)?;
+    let mut vertices = Vec::new();
+    vertices
+        .try_reserve_exact(input.vertices.len())
+        .map_err(|_| HypermeshError::CapacityOverflow {
+            operation: "output vertices",
+        })?;
+    let mut remap = Vec::new();
+    remap.try_reserve_exact(input.vertices.len()).map_err(|_| {
+        HypermeshError::CapacityOverflow {
+            operation: "output vertex remap",
         }
-        if existing.is_none() {
-            for (candidate, existing_vertex) in vertices.iter().enumerate() {
-                if output_vertex_bucket(existing_vertex) == key {
-                    continue;
-                }
-                if output_vertices_equal(decisions, existing_vertex, vertex)? {
-                    existing = Some(candidate);
-                    break;
-                }
-            }
-        }
-        if let Some(existing) = existing {
-            remap[index] = existing;
-        } else {
-            remap[index] = vertices.len();
-            vertices.push(vertex.clone());
-            buckets.entry(key).or_default().push(vertices.len() - 1);
-        }
+    })?;
+    for vertex in &input.vertices {
+        remap.push(interner.intern_cloned(decisions, &mut vertices, vertex, None)?);
     }
 
     let triangles = remap_triangle_indices(&input.triangles, &remap)?;
@@ -2725,6 +2584,7 @@ fn split_edge_crossing_events(
         }
     }
 
+    let mut vertex_interner = None;
     let mut events = Vec::new();
     for left_index in 0..bounded_edges.len() {
         let left = &bounded_edges[left_index];
@@ -2757,7 +2617,20 @@ fn split_edge_crossing_events(
             else {
                 continue;
             };
-            let new_index = insert_or_find_vertex(decisions, soup, point)?;
+            if vertex_interner.is_none() {
+                let exact_only = soup
+                    .vertices
+                    .iter()
+                    .all(PointCoordinates::has_exact_rational_coordinates);
+                vertex_interner = Some(PointInterner::<()>::try_from_unique(
+                    &soup.vertices,
+                    exact_only,
+                )?);
+            }
+            let new_index = vertex_interner
+                .as_mut()
+                .expect("the output vertex interner was initialized")
+                .intern_owned(decisions, &mut soup.vertices, point, None)?;
             events
                 .try_reserve(1)
                 .map_err(|_| HypermeshError::CapacityOverflow {
@@ -2885,26 +2758,6 @@ fn proper_segment_intersection_after_bounds_overlap(
     } else {
         Ok(None)
     }
-}
-
-fn insert_or_find_vertex(
-    decisions: &DecisionContext,
-    soup: &mut BooleanMesh,
-    vertex: OutputVertex,
-) -> HypermeshResult<usize> {
-    for (index, existing) in soup.vertices.iter().enumerate() {
-        if output_vertices_equal(decisions, existing, &vertex)? {
-            return Ok(index);
-        }
-    }
-    let index = soup.vertices.len();
-    soup.vertices
-        .try_reserve(1)
-        .map_err(|_| HypermeshError::CapacityOverflow {
-            operation: "output intersection vertices",
-        })?;
-    soup.vertices.push(vertex);
-    Ok(index)
 }
 
 fn split_edges_at_vertex(soup: &mut BooleanMesh, edges: &[[usize; 2]], vertex: usize) {

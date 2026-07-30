@@ -4,30 +4,13 @@
 //! point BVH accelerates outside-set discovery by accepting or rejecting whole
 //! exact AABBs against each newly created hull face.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::context::{DecisionContext, MeshContext, MeshOutcome};
 use crate::error::{HypermeshError, HypermeshResult};
 use crate::geometry::Classification;
-use crate::predicate::points_equal;
+use crate::point_interner::{PointCoordinates, PointInterner};
 use crate::{ExactPointBvh, Point3, Real, Triangle, TriangleMesh};
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-struct PositionBucket([Option<u64>; 3]);
-
-impl PositionBucket {
-    fn new(point: &Point3) -> Self {
-        Self([&point.x, &point.y, &point.z].map(|coordinate| {
-            coordinate.to_f64_lossy().map(|value| {
-                if value == 0.0 {
-                    0.0_f64.to_bits()
-                } else {
-                    value.to_bits()
-                }
-            })
-        }))
-    }
-}
 
 #[derive(Clone, Debug)]
 struct HullFace {
@@ -286,56 +269,20 @@ fn deduplicate_points(
             }
         }
     }
-    let mut buckets = HashMap::<PositionBucket, usize>::with_capacity(input.len());
-    let mut next_in_bucket = Vec::<Option<usize>>::with_capacity(input.len());
-    let mut general_points = Vec::<usize>::new();
+    let exact_only = input
+        .iter()
+        .all(PointCoordinates::has_exact_rational_coordinates);
+    let mut interner = PointInterner::<()>::try_with_capacity(input.len(), exact_only, false)?;
     for (input_index, point) in input.iter().enumerate() {
-        let bucket = PositionBucket::new(point);
-        let exact_rational = point.x.exact_rational_ref().is_some()
-            && point.y.exact_rational_ref().is_some()
-            && point.z.exact_rational_ref().is_some();
-        let mut duplicate = None;
-        let mut candidate = buckets.get(&bucket).copied();
-        while let Some(candidate_index) = candidate {
-            if points_equal(decisions, &points[candidate_index], point)? {
-                duplicate = Some(candidate_index);
-                break;
-            }
-            candidate = next_in_bucket[candidate_index];
-        }
-        if duplicate.is_none() {
-            if exact_rational {
-                for &candidate_index in &general_points {
-                    if points_equal(decisions, &points[candidate_index], point)? {
-                        duplicate = Some(candidate_index);
-                        break;
-                    }
-                }
-            } else {
-                for (candidate_index, candidate) in points.iter().enumerate() {
-                    if PositionBucket::new(candidate) == bucket {
-                        continue;
-                    }
-                    if points_equal(decisions, candidate, point)? {
-                        duplicate = Some(candidate_index);
-                        break;
-                    }
-                }
-            }
-        }
-        if let Some(candidate) = duplicate {
+        let unique_count = points.len();
+        let point_index = interner.intern_cloned(decisions, &mut points, point, None)?;
+        if point_index < unique_count {
             if let (Some(memberships), Some(input_memberships)) =
                 (&mut memberships, &input_memberships)
             {
-                memberships[candidate].extend(input_memberships[input_index].iter().copied());
+                memberships[point_index].extend(input_memberships[input_index].iter().copied());
             }
         } else {
-            let point_index = points.len();
-            next_in_bucket.push(buckets.insert(bucket, point_index));
-            points.push(point.clone());
-            if !exact_rational {
-                general_points.push(point_index);
-            }
             if let (Some(coordinate_ids), Some(input_coordinate_ids)) =
                 (&mut coordinate_ids, input_coordinate_ids)
             {
