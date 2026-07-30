@@ -4308,10 +4308,10 @@ fn intersect_plane_rational_bezier_surface(
             Err(error) => return Err(error),
         }
     }
-    intersect_plane_polynomial_bilinear(plane, surface)
+    intersect_plane_rational_bilinear(plane, surface)
 }
 
-fn intersect_plane_polynomial_bilinear(
+fn intersect_plane_rational_bilinear(
     plane: &PlaneSurface,
     surface: &RationalBezierSurface,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
@@ -4325,23 +4325,17 @@ fn intersect_plane_polynomial_bilinear(
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
-    let reference_weight = &surface.weights[0][0];
-    for weight in surface.weights.iter().flatten() {
-        if decided_order(compare_reals(weight, reference_weight))? != Ordering::Equal {
-            return Err(GeometryError::UnsupportedIntersection);
-        }
-    }
 
     let normal = plane.u.cross(&plane.v);
     let signed_value = |point: &Point3| normal.dot(&(point - &plane.origin));
     let values = [
         [
-            signed_value(&surface.control_points[0][0]),
-            signed_value(&surface.control_points[0][1]),
+            signed_value(&surface.control_points[0][0]) * &surface.weights[0][0],
+            signed_value(&surface.control_points[0][1]) * &surface.weights[0][1],
         ],
         [
-            signed_value(&surface.control_points[1][0]),
-            signed_value(&surface.control_points[1][1]),
+            signed_value(&surface.control_points[1][0]) * &surface.weights[1][0],
+            signed_value(&surface.control_points[1][1]) * &surface.weights[1][1],
         ],
     ];
     let orders = values
@@ -4362,23 +4356,70 @@ fn intersect_plane_polynomial_bilinear(
         let Some(pcurve) = bilinear_plane_parameter_graph(&values, parameter_axis)? else {
             continue;
         };
-        let spatial = polynomial_bilinear_parameter_curve(
-            &surface.control_points,
-            &surface.weights,
-            &pcurve,
-        )?
-        .ok_or(GeometryError::UnsupportedIntersection)?;
-        let section = SurfaceIntersectionCurve::new(
-            spatial.clone(),
-            SurfaceIntersectionPcurve::plane_projection(spatial, plane),
-            SurfaceIntersectionPcurve::retained_curve(pcurve.clone())?,
-        );
         if rational_curve_controls_inside_unit_square(&pcurve)? {
-            return Ok(SurfaceSurfaceIntersection::Curve(Box::new(section)));
+            return Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+                rational_bilinear_section(plane, surface, pcurve)?,
+            )));
         }
-        return clip_linear_tensor_section(&section, parameter_axis, &Real::zero(), &Real::one());
+        return clip_rational_bilinear_parameter_graph(plane, surface, &pcurve);
     }
     Err(GeometryError::UnsupportedIntersection)
+}
+
+fn rational_bilinear_section(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    pcurve: Curve2,
+) -> GeometryResult<SurfaceIntersectionCurve> {
+    let spatial =
+        rational_bilinear_parameter_curve(&surface.control_points, &surface.weights, &pcurve)?
+            .ok_or(GeometryError::UnsupportedIntersection)?;
+    Ok(SurfaceIntersectionCurve::new(
+        spatial.clone(),
+        SurfaceIntersectionPcurve::plane_projection(spatial, plane),
+        SurfaceIntersectionPcurve::retained_curve(pcurve)?,
+    ))
+}
+
+fn clip_rational_bilinear_parameter_graph(
+    plane: &PlaneSurface,
+    surface: &RationalBezierSurface,
+    pcurve: &Curve2,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    let region = tensor_parameter_region(
+        TensorAxis::V,
+        &Real::zero(),
+        &Real::one(),
+        &Real::zero(),
+        &Real::one(),
+    )?;
+    let trimmed = pcurve.trim_inside_region_with_parameters(&region, &CurvePolicy::certified())?;
+    let mut intervals: Vec<(Real, Real)> = Vec::with_capacity(trimmed.len());
+    for fragment in trimmed {
+        let Some((start, end)) = fragment.represented_parameter_range() else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        if let Some((_, previous_end)) = intervals.last_mut()
+            && decided_order(compare_reals(previous_end, &start))? == Ordering::Equal
+        {
+            *previous_end = end;
+        } else {
+            intervals.push((start, end));
+        }
+    }
+    let mut sections = intervals
+        .into_iter()
+        .map(|(start, end)| {
+            rational_bilinear_section(plane, surface, pcurve.clone().subcurve(start, end)?)
+        })
+        .collect::<GeometryResult<Vec<_>>>()?;
+    match sections.len() {
+        0 => Err(GeometryError::UnsupportedIntersection),
+        1 => Ok(SurfaceSurfaceIntersection::Curve(Box::new(
+            sections.pop().expect("one retained bilinear fragment"),
+        ))),
+        _ => Ok(SurfaceSurfaceIntersection::Curves(sections)),
+    }
 }
 
 fn bilinear_plane_parameter_graph(
@@ -4457,7 +4498,7 @@ fn rational_curve_controls_inside_unit_square(curve: &Curve2) -> GeometryResult<
     Ok(true)
 }
 
-pub(crate) fn polynomial_bilinear_parameter_curve(
+pub(crate) fn rational_bilinear_parameter_curve(
     surface_points: &[Vec<Point3>],
     surface_weights: &[Vec<Real>],
     pcurve: &Curve2,
@@ -4471,23 +4512,17 @@ pub(crate) fn polynomial_bilinear_parameter_curve(
     {
         return Ok(None);
     }
-    let reference_weight = &surface_weights[0][0];
-    for weight in surface_weights.iter().flatten() {
-        if decided_order(compare_reals(weight, reference_weight))? != Ordering::Equal {
-            return Ok(None);
-        }
-    }
     let CurveGeometry2::RationalBezier(graph) = pcurve.geometry() else {
         return Ok(None);
     };
     if graph.control_points().len() != 3 || graph.weights().len() != 3 {
         return Ok(None);
     }
-    let u =
+    let u: [Real; 3] =
         std::array::from_fn(|index| graph.control_points()[index].x() * &graph.weights()[index]);
-    let v =
+    let v: [Real; 3] =
         std::array::from_fn(|index| graph.control_points()[index].y() * &graph.weights()[index]);
-    let w = std::array::from_fn(|index| graph.weights()[index].clone());
+    let w: [Real; 3] = std::array::from_fn(|index| graph.weights()[index].clone());
     let w_minus_u = std::array::from_fn(|index| &w[index] - &u[index]);
     let w_minus_v = std::array::from_fn(|index| &w[index] - &v[index]);
     let coefficients = [
@@ -4496,28 +4531,47 @@ pub(crate) fn polynomial_bilinear_parameter_curve(
         quadratic_bernstein_product(&w_minus_u, &v)?,
         quadratic_bernstein_product(&u, &v)?,
     ];
-    let weights = quadratic_bernstein_product(&w, &w)?;
     let corners = [
         &surface_points[0][0],
         &surface_points[0][1],
         &surface_points[1][0],
         &surface_points[1][1],
     ];
+    let corner_weights = [
+        &surface_weights[0][0],
+        &surface_weights[0][1],
+        &surface_weights[1][0],
+        &surface_weights[1][1],
+    ];
+    let curve_weights: [Real; 5] = std::array::from_fn(|index| {
+        corner_weights
+            .iter()
+            .zip(&coefficients)
+            .fold(Real::zero(), |sum, (weight, coefficients)| {
+                sum + *weight * &coefficients[index]
+            })
+    });
     let mut controls = Vec::with_capacity(5);
     for index in 0..5 {
-        let numerator = corners.iter().zip(&coefficients).fold(
+        let numerator = corners.iter().zip(corner_weights).zip(&coefficients).fold(
             Vector3::zero(),
-            |sum, (point, coefficients)| {
-                sum + Vector3::from((*point).clone()) * &coefficients[index]
+            |sum, ((point, weight), coefficients)| {
+                sum + Vector3::from((*point).clone()) * (weight * &coefficients[index])
             },
         );
         controls.push(Point3::new(
-            (&numerator.0[0] / &weights[index]).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[1] / &weights[index]).map_err(|_| GeometryError::ProjectiveDivision)?,
-            (&numerator.0[2] / &weights[index]).map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&numerator.0[0] / &curve_weights[index])
+                .map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&numerator.0[1] / &curve_weights[index])
+                .map_err(|_| GeometryError::ProjectiveDivision)?,
+            (&numerator.0[2] / &curve_weights[index])
+                .map_err(|_| GeometryError::ProjectiveDivision)?,
         ));
     }
-    Ok(Some(Curve3::rational_bezier(controls, weights.to_vec())?))
+    Ok(Some(Curve3::rational_bezier(
+        controls,
+        curve_weights.to_vec(),
+    )?))
 }
 
 fn quadratic_bernstein_product(first: &[Real; 3], second: &[Real; 3]) -> GeometryResult<[Real; 5]> {
@@ -5131,32 +5185,13 @@ fn clip_linear_tensor_section(
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let profile_start = section.curve.domain().start();
     let profile_end = section.curve.domain().end();
-    let points = match profile_axis {
-        TensorAxis::U => [
-            CurvePoint2::new(profile_start.clone(), coefficient_start.clone()),
-            CurvePoint2::new(profile_end.clone(), coefficient_start.clone()),
-            CurvePoint2::new(profile_end.clone(), coefficient_end.clone()),
-            CurvePoint2::new(profile_start.clone(), coefficient_end.clone()),
-        ],
-        TensorAxis::V => [
-            CurvePoint2::new(coefficient_start.clone(), profile_start.clone()),
-            CurvePoint2::new(coefficient_end.clone(), profile_start.clone()),
-            CurvePoint2::new(coefficient_end.clone(), profile_end.clone()),
-            CurvePoint2::new(coefficient_start.clone(), profile_end.clone()),
-        ],
-    };
-    let contour = Contour2::try_new(
-        (0..points.len())
-            .map(|index| {
-                LineSeg2::try_new(
-                    points[index].clone(),
-                    points[(index + 1) % points.len()].clone(),
-                )
-                .map(Segment2::Line)
-            })
-            .collect::<Result<Vec<_>, _>>()?,
+    let region = tensor_parameter_region(
+        profile_axis,
+        profile_start,
+        profile_end,
+        coefficient_start,
+        coefficient_end,
     )?;
-    let region = LineArcRegion2::from_material_contours(vec![contour]);
     let materialized = section.second_pcurve.materialize()?;
     let trimmed = materialized
         .curve()
@@ -5187,6 +5222,41 @@ fn clip_linear_tensor_section(
         ))),
         _ => Ok(SurfaceSurfaceIntersection::Curves(fragments)),
     }
+}
+
+fn tensor_parameter_region(
+    profile_axis: TensorAxis,
+    profile_start: &Real,
+    profile_end: &Real,
+    coefficient_start: &Real,
+    coefficient_end: &Real,
+) -> GeometryResult<LineArcRegion2> {
+    let points = match profile_axis {
+        TensorAxis::U => [
+            CurvePoint2::new(profile_start.clone(), coefficient_start.clone()),
+            CurvePoint2::new(profile_end.clone(), coefficient_start.clone()),
+            CurvePoint2::new(profile_end.clone(), coefficient_end.clone()),
+            CurvePoint2::new(profile_start.clone(), coefficient_end.clone()),
+        ],
+        TensorAxis::V => [
+            CurvePoint2::new(coefficient_start.clone(), profile_start.clone()),
+            CurvePoint2::new(coefficient_end.clone(), profile_start.clone()),
+            CurvePoint2::new(coefficient_end.clone(), profile_end.clone()),
+            CurvePoint2::new(coefficient_start.clone(), profile_end.clone()),
+        ],
+    };
+    let contour = Contour2::try_new(
+        (0..points.len())
+            .map(|index| {
+                LineSeg2::try_new(
+                    points[index].clone(),
+                    points[(index + 1) % points.len()].clone(),
+                )
+                .map(Segment2::Line)
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+    )?;
+    Ok(LineArcRegion2::from_material_contours(vec![contour]))
 }
 
 fn project_curve_onto_plane_along_direction(
@@ -10172,7 +10242,11 @@ mod tests {
             &section.curve().point_at(&q(1, 2)).unwrap(),
             &Point3::new(q(2, 3), r(1), q(1, 6)),
         );
-        for parameter in [r(0), q(1, 2), r(1)] {
+        // Both sides are rational quartics. Nine distinct exact parameters
+        // certify the complete cross-multiplied degree-eight identity
+        // independently of the construction's control-net arithmetic.
+        for numerator in 0_i64..=8 {
+            let parameter = q(numerator, 8);
             let surface_parameter = section.first_pcurve().point_at(&parameter).unwrap();
             assert_points_equal(
                 &section.curve().point_at(&parameter).unwrap(),
@@ -10266,6 +10340,39 @@ mod tests {
             Err(GeometryError::UnsupportedIntersection)
         ));
 
+        let off_domain_pole_surface = Surface::rational_bezier(
+            vec![
+                vec![
+                    Point3::new(r(0), r(0), q(-3, 2)),
+                    Point3::new(r(2), r(0), r(-2)),
+                ],
+                vec![p(0, 2, -1), p(2, 2, 1)],
+            ],
+            vec![vec![r(2), r(1)], vec![r(1), r(1)]],
+        )
+        .unwrap();
+        let coordinate_plane =
+            Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        let SurfaceSurfaceIntersection::Curve(pole_clipped) = off_domain_pole_surface
+            .intersect_surface(&coordinate_plane)
+            .unwrap()
+        else {
+            panic!("UV clipping must precede weighted spatial composition");
+        };
+        assert_eq!(
+            pole_clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(1), q(2, 3))
+        );
+        assert_eq!(
+            pole_clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(1, 2), r(1))
+        );
+        assert_points_equal(
+            &pole_clipped.curve().point_at(&r(0)).unwrap(),
+            &Point3::new(r(2), q(4, 3), r(0)),
+        );
+        assert_points_equal(&pole_clipped.curve().point_at(&r(1)).unwrap(), &p(1, 2, 0));
+
         let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
         let translated_surface = surface.transformed(&translation, false).unwrap();
         let translated_plane = section_plane.transformed(&translation, false).unwrap();
@@ -10326,6 +10433,209 @@ mod tests {
             patch_surface.intersect_surface(&clipping_plane).unwrap()
         else {
             panic!("bilinear patch must retain its exact clipped graph section");
+        };
+        let (partial_split, _) = patch
+            .split_face_by_surface_curve(
+                face,
+                partial_section.curve(),
+                partial_section.first_pcurve(),
+            )
+            .unwrap();
+        assert_eq!(partial_split.counts().faces, 2);
+        let partial_json = partial_split.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&partial_json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            partial_json
+        );
+    }
+
+    #[test]
+    fn rational_bilinear_plane_sections_preserve_weighted_homogeneous_images() {
+        let controls = vec![vec![p(0, 0, 0), p(2, 0, 0)], vec![p(0, 2, 0), p(2, 2, 1)]];
+        let weights = vec![vec![r(1), r(2)], vec![r(3), r(4)]];
+        let surface = Surface::rational_bezier(controls.clone(), weights.clone()).unwrap();
+        let section_plane = Surface::plane(
+            p(1, 0, 0),
+            Vector3::y(),
+            Vector3::from_xyz(r(2), r(0), r(-1)),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(section) =
+            surface.intersect_surface(&section_plane).unwrap()
+        else {
+            panic!("weighted bilinear patch must retain one exact rational section");
+        };
+        assert_eq!(section.curve().kind(), Curve3Kind::RationalBezier);
+        assert_eq!(
+            section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            Point2::new(q(2, 9), q(1, 2))
+        );
+        assert_points_equal(
+            &section.curve().point_at(&q(1, 2)).unwrap(),
+            &Point3::new(q(3, 5), q(29, 20), q(1, 5)),
+        );
+        // This independently certifies the weighted rational-quartic identity
+        // rather than trusting the shared homogeneous construction helper.
+        for numerator in 0_i64..=8 {
+            let parameter = q(numerator, 8);
+            let surface_parameter = section.first_pcurve().point_at(&parameter).unwrap();
+            assert_points_equal(
+                &section.curve().point_at(&parameter).unwrap(),
+                &surface
+                    .point_at(&Point2::new(
+                        surface_parameter.x.clone(),
+                        surface_parameter.y.clone(),
+                    ))
+                    .unwrap(),
+            );
+        }
+
+        let SurfaceSurfaceIntersection::Curve(swapped) =
+            section_plane.intersect_surface(&surface).unwrap()
+        else {
+            panic!("weighted bilinear section must survive operand reversal");
+        };
+        assert_eq!(
+            swapped.second_pcurve().point_at(&q(1, 2)).unwrap(),
+            Point2::new(q(2, 9), q(1, 2))
+        );
+        assert_points_equal(
+            &swapped.curve().point_at(&q(1, 2)).unwrap(),
+            &section.curve().point_at(&q(1, 2)).unwrap(),
+        );
+
+        let u_graph_plane = Surface::plane(
+            p(0, 1, 0),
+            Vector3::x(),
+            Vector3::from_xyz(r(0), r(2), r(-1)),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(u_graph_section) =
+            surface.intersect_surface(&u_graph_plane).unwrap()
+        else {
+            panic!("weighted bilinear section must solve through either parameter axis");
+        };
+        assert_eq!(
+            u_graph_section.first_pcurve().point_at(&q(1, 2)).unwrap(),
+            Point2::new(q(1, 2), q(1, 6))
+        );
+        assert_points_equal(
+            &u_graph_section.curve().point_at(&q(1, 2)).unwrap(),
+            &Point3::new(q(14, 11), q(7, 11), q(2, 11)),
+        );
+
+        let clipping_plane = Surface::plane(
+            Point3::new(q(5, 2), r(0), r(0)),
+            Vector3::y(),
+            Vector3::from_xyz(r(2), r(0), r(-1)),
+        )
+        .unwrap();
+        let SurfaceSurfaceIntersection::Curve(clipped) =
+            surface.intersect_surface(&clipping_plane).unwrap()
+        else {
+            panic!("weighted bilinear section must retain its represented rectangle clip");
+        };
+        assert_eq!(clipped.curve().domain().start(), &r(0));
+        assert_eq!(clipped.curve().domain().end(), &r(1));
+        assert_eq!(
+            clipped.first_pcurve().point_at(&r(0)).unwrap(),
+            Point2::new(r(1), q(1, 7))
+        );
+        assert_eq!(
+            clipped.first_pcurve().point_at(&r(1)).unwrap(),
+            Point2::new(q(5, 9), r(1))
+        );
+        assert_points_equal(
+            &clipped.curve().point_at(&r(0)).unwrap(),
+            &Point3::new(r(2), q(1, 2), q(1, 4)),
+        );
+        assert_points_equal(
+            &clipped.curve().point_at(&r(1)).unwrap(),
+            &Point3::new(q(5, 4), r(2), q(5, 8)),
+        );
+
+        let disjoint_plane = Surface::plane(
+            p(5, 0, 0),
+            Vector3::y(),
+            Vector3::from_xyz(r(2), r(0), r(-1)),
+        )
+        .unwrap();
+        assert!(matches!(
+            surface.intersect_surface(&disjoint_plane).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+        let pole_plane =
+            Surface::plane(Point3::new(r(0), r(0), q(1, 4)), Vector3::x(), Vector3::y()).unwrap();
+        assert!(matches!(
+            surface.intersect_surface(&pole_plane),
+            Err(GeometryError::UnsupportedIntersection)
+        ));
+
+        let translation = Matrix4::affine_translation([r(3), r(-2), r(5)]);
+        let translated_surface = surface.transformed(&translation, false).unwrap();
+        let translated_plane = section_plane.transformed(&translation, false).unwrap();
+        let SurfaceSurfaceIntersection::Curve(translated) = translated_surface
+            .intersect_surface(&translated_plane)
+            .unwrap()
+        else {
+            panic!("translated weighted bilinear section must remain exact");
+        };
+        let expected =
+            section.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
+        assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
+
+        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
+        let SurfaceSurfaceIntersection::Curve(patch_section) =
+            patch_surface.intersect_surface(&section_plane).unwrap()
+        else {
+            panic!("weighted bilinear patch must retain its exact graph section");
+        };
+        let (split, record) = patch
+            .split_face_by_surface_curve(face, patch_section.curve(), patch_section.first_pcurve())
+            .unwrap();
+        assert_eq!(split.counts().faces, 2);
+        let graph_use = split
+            .edge_use(record.open().unwrap().face.edge_uses[0])
+            .unwrap();
+        let graph_pcurve = split.pcurve(graph_use.pcurve()).unwrap();
+        let CurveGeometry2::RationalBezier(graph) = graph_pcurve.curve().geometry() else {
+            panic!("weighted bilinear split must retain its rational graph pcurve");
+        };
+        let mut forged_controls = graph.control_points().to_vec();
+        forged_controls[1] = CurvePoint2::new(
+            forged_controls[1].x().clone() + Real::one(),
+            forged_controls[1].y().clone(),
+        );
+        let forged = Pcurve::new(Curve2::from(
+            RationalBezier2::try_new(forged_controls, graph.weights().to_vec()).unwrap(),
+        ));
+        let mut edit = split.edit();
+        edit.replace_pcurve(graph_use.pcurve(), forged).unwrap();
+        assert!(
+            edit.commit().is_err(),
+            "weighted graph forgery must fail complete homogeneous image validation"
+        );
+        let json = split.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+
+        let SurfaceSurfaceIntersection::Curve(partial_section) =
+            patch_surface.intersect_surface(&clipping_plane).unwrap()
+        else {
+            panic!("weighted bilinear patch must retain its exact clipped graph section");
         };
         let (partial_split, _) = patch
             .split_face_by_surface_curve(

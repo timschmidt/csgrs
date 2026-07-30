@@ -1146,17 +1146,17 @@ fn main() {
         elapsed / SPLINE_ITERATIONS as u32,
     );
 
-    let polynomial_bilinear_tensor = Surface::rational_bezier(
+    let rational_bilinear_tensor = Surface::rational_bezier(
         vec![
             vec![point(0, 0, 0), point(2, 0, 0)],
             vec![point(0, 2, 0), point(2, 2, 1)],
         ],
         vec![
-            vec![Real::one(), Real::one()],
-            vec![Real::one(), Real::one()],
+            vec![Real::one(), Real::from(2)],
+            vec![Real::from(3), Real::from(4)],
         ],
     )
-    .expect("benchmark polynomial bilinear tensor");
+    .expect("benchmark weighted rational bilinear tensor");
     let bilinear_plane = Surface::plane(
         point(1, 0, 0),
         Vector3::y(),
@@ -1166,11 +1166,11 @@ fn main() {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..SPLINE_ITERATIONS {
-        let SurfaceSurfaceIntersection::Curve(curve) = black_box(&polynomial_bilinear_tensor)
+        let SurfaceSurfaceIntersection::Curve(curve) = black_box(&rational_bilinear_tensor)
             .intersect_surface(black_box(&bilinear_plane))
-            .expect("benchmark exact polynomial bilinear section")
+            .expect("benchmark exact weighted bilinear section")
         else {
-            panic!("polynomial bilinear tensor must retain one exact section");
+            panic!("weighted bilinear tensor must retain one exact section");
         };
         black_box(curve.curve().point_at(black_box(&midpoint)))
             .expect("benchmark exact rational-quartic section evaluation");
@@ -1181,7 +1181,7 @@ fn main() {
     }
     let elapsed = started.elapsed();
     println!(
-        "spline_kernel/polynomial_bilinear_tensor_plane_rational_quartic_intersection: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        "spline_kernel/rational_bilinear_tensor_plane_rational_quartic_intersection: {SPLINE_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / SPLINE_ITERATIONS as u32,
     );
 

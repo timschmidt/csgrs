@@ -341,9 +341,10 @@ The clean-break implementation currently provides:
   and NURBS translation tensors linear in either parameter axis when every
   rational graph coefficient is certified inside the bounded patch; the native
   spatial spline and exact rational graph pcurve are retained without fitting.
-  Equal-weight bilinear rational Bézier patches additionally reduce the plane
-  equation to an exact rational-quadratic parameter graph and compose it into
-  an exact rational-quartic spatial curve, again without sampling or fitting.
+  Any positive-weight `2×2` rational Bézier patch additionally reduces the
+  homogeneous plane numerator to an exact rational-quadratic parameter graph
+  and composes it with the weighted surface into an exact rational-quartic
+  spatial curve, again without sampling or fitting.
   Partial sections with `Real`-represented tensor-boundary roots are returned
   as one or more exact retained curves; non-representable algebraic boundaries
   remain explicit rather than approximated;
@@ -351,7 +352,7 @@ The clean-break implementation currently provides:
   `Model::split_face_by_surface_curve` transfer for one retained rational
   Bézier/NURBS iso-curve or complete rational-Bézier or NURBS
   translation-tensor graph sections in either axis, plus complete or clipped
-  equal-weight bilinear rational-Bézier graph sections; full homogeneous
+  weighted bilinear rational-Bézier graph sections; full homogeneous
   controls, native NURBS domains and knots, and exact rational-Bézier or
   multi-span NURBS graph pcurves,
   curved-loop simplicity, same-boundary two-edge pockets, and orientation are

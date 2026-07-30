@@ -115,7 +115,7 @@ strict-convexity certificate.
 | Plane / degree-1-v linear-extrusion NURBS tensor patch | None or one native NURBS iso-curve |
 | Plane / one-axis-linear rational Bézier translation tensor | None or one complete native non-isoparametric rational Bézier curve |
 | Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
-| Plane / equal-weight bilinear rational Bézier tensor | None, one complete exact rational-quartic curve, one represented clipped fragment, or explicit unsupported pole/overlap evidence |
+| Plane / positive-weight `2×2` rational Bézier tensor | None, one complete exact rational-quartic curve, one represented clipped fragment, or explicit unsupported pole/overlap evidence |
 
 Transverse plane/extrusion intersections apply the exact affine projection
 along the authored extrusion direction; named conics whose projection needs a
@@ -194,17 +194,18 @@ volume, `2*pi²*R*r + 2*pi*r²` boundary area, halfspace-aware point
 classification, operand reversal, rigid/reflection transforms, untrusted
 replay, and exclusion from the whole-torus optimization profile.
 
-For an equal-weight `2×2` rational Bézier tensor, the plane equation is a
-scalar bilinear Bernstein polynomial. HyperBREP solves it as `(u(v),v)` or
-`(u,v(u))` when one linear denominator has a certified strict sign over the
-unit interval. Degree elevation yields an exact positive-weight
-rational-quadratic pcurve. Homogeneous substitution into the polynomial
-bilinear tensor yields an exact rational-quartic spatial curve whose five
-controls and weights are derived without fitting. A strict one-sided
+For a positive-weight `2×2` rational Bézier tensor, the homogeneous plane
+numerator is a scalar bilinear Bernstein polynomial. HyperBREP solves it as
+`(u(v),v)` or `(u,v(u))` when one linear denominator has a certified strict
+sign over the unit interval. Degree elevation yields an exact positive-weight
+rational-quadratic pcurve. Homogeneous substitution carries every authored
+surface weight into an exact rational-quartic spatial curve whose five controls
+and weights are derived without fitting. A strict one-sided weighted
 plane-value control hull proves disjointness; a complete zero hull is a
 two-dimensional overlap and remains explicitly unsupported. Mixed sections
-are clipped through the same exact tensor rectangle path used by translation
-graphs.
+are clipped in UV through the same exact tensor rectangle path used by
+translation graphs before the retained graph is composed spatially. Therefore
+an off-domain denominator pole cannot suppress a valid represented fragment.
 
 For a tensor iso-section, the two controls on the linear axis must have exactly
 equal weights and one exact common control translation; every profile control
@@ -217,9 +218,8 @@ lies in the bounded translation-axis domain or that the complete carrier is
 outside it. Mixed graph hulls are clipped exactly against the tensor rectangle:
 represented roots retain one or more exact fragments, while algebraic roots
 that cannot enter `Real` remain explicit. Remaining unsupported work includes
-oblique cone sections, non-axial torus quartics, non-polynomial rational
-bilinear tensors, pole-crossing bilinear plane sections, and the rest of the
-analytic/spline pair matrix.
+oblique cone sections, non-axial torus quartics, retained-domain pole-crossing
+bilinear plane sections, and the rest of the analytic/spline pair matrix.
 
 ## Booleans
 
@@ -393,10 +393,11 @@ trimmed face through `Model::split_face_by_surface_curve`; the validator
 certifies an interior homogeneous iso-curve or a boundary subrange rather than
 trusting endpoint agreement. A complete rational-Bézier or NURBS graph section
 on a translation tensor linear in either axis has the same topology path.
-Equal-weight bilinear rational-Bézier sections extend it by recomposing the
-complete rational-quadratic pcurve into the expected rational-quartic spatial
-control net. Validation reconstructs every spatial and pcurve homogeneous
-control, retains the NURBS degree, knots, and native parameter domain, proves
+Weighted bilinear rational-Bézier sections extend it by recomposing the
+complete rational-quadratic pcurve into the expected weighted rational-quartic
+spatial control net. Validation reconstructs every spatial and pcurve
+homogeneous control, retains the NURBS degree, knots, and native parameter
+domain, proves
 curved-loop pairwise simplicity, derives orientation from its monotone graph
 and the selected translation-axis domain side, and persists the exact graph
 pcurve through untrusted format version 5 replay. Multi-span graphs retain one

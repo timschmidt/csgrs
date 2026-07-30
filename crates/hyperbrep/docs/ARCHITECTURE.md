@@ -113,9 +113,9 @@ curve/pcurve/surface tuple has a complete-interval structural proof:
 - rational Bézier and arbitrary-span NURBS spatial sections with degree-elevated
   rational graph pcurves on translation tensors linear in either axis, reconstructed
   control-for-control rather than accepted from endpoint incidence.
-- equal-weight bilinear rational Bézier plane sections, reconstructed by exact
+- positive-weight `2×2` rational Bézier plane sections, reconstructed by exact
   rational-quadratic parameter-graph substitution into the complete
-  rational-quartic spatial control net.
+  weighted rational-quartic spatial control net.
 
 `builder::tensor_patch_shell` applies the same whole-curve certificate before
 sharing topology. Matching endpoint vertices alone never sew patches: degrees,
@@ -369,16 +369,18 @@ parameter rectangle; every `Real`-represented boundary root produces an exact
 spatial/pcurve subcurve, while non-representable algebraic boundaries remain
 explicit. This avoids sampled projection and endpoint-only
 inverse location when transferring an intersection into trimmed face topology.
-An equal-weight `2×2` rational Bézier tensor is polynomial bilinear, so its
-plane equation is bilinear in `(u,v)`. When either graph denominator has one
-certified strict sign, HyperBREP degree-elevates the graph to a
-positive-weight rational quadratic. Exact Bernstein products of its homogeneous
-`U`, `V`, and `W` controls substitute that pcurve into the four bilinear corner
-basis functions; the resulting spatial numerator and `W²` denominator are a
-five-control rational quartic. The same unit-rectangle trim then restricts
-mixed sections. Denominator poles, two-dimensional containment, unequal
-surface weights, and cases needing an algebraic-only boundary stay explicit
-unsupported evidence.
+A positive-weight `2×2` rational Bézier tensor has a bilinear homogeneous
+plane numerator even when its affine image is not polynomial. When either
+graph denominator has one certified strict sign, HyperBREP degree-elevates the
+graph to a positive-weight rational quadratic. Exact Bernstein products of its
+homogeneous `U`, `V`, and `W` controls substitute that pcurve into the four
+bilinear corner basis functions. The resulting spatial homogeneous numerator
+is `Σ wᵢⱼPᵢⱼCᵢⱼ`, its denominator is `Σ wᵢⱼCᵢⱼ`, and both form one
+five-control rational quartic. Mixed graphs are clipped in the unit parameter
+rectangle before spatial composition, so a pole in the off-domain rational
+surface extension cannot invalidate a represented in-domain fragment.
+Denominator poles on the retained graph, two-dimensional containment, and
+cases needing an algebraic-only boundary stay explicit unsupported evidence.
 
 `boolean::intersect_faces` owns this face-pair operation:
 validated open-shell faces and solid-owned faces use the same certified bounds,
@@ -554,11 +556,11 @@ certifies same-boundary two-edge pockets and their complementary loops, rejects 
 endpoint-preserving control forgery, and certifies the two curved descendant
 loops before publication. General rational Bézier pcurves are serialized
 exactly and replayed through the same validation boundary.
-Equal-weight bilinear sections use the stronger direct construction proof:
+Weighted bilinear sections use the stronger direct construction proof:
 validation orients the retained rational-quadratic pcurve, recomposes all five
-rational-quartic spatial controls, and requires complete parameterization
-equality. This applies unchanged after represented rectangle clipping and
-rejects an endpoint-preserving middle-control forgery.
+weighted rational-quartic spatial controls, and requires complete
+parameterization equality. This applies unchanged after represented rectangle
+clipping and rejects an endpoint-preserving middle-control forgery.
 
 `Model::split_face_by_surface_curves` accepts retained intersection objects
 directly, uses an explicit operand selector for their first or second pcurve,

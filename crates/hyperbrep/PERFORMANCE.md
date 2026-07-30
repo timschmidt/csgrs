@@ -131,9 +131,9 @@ certificate deliberately rebases rational Bézier patch construction from
 - curved u-linear translation tensor / oblique-plane exact native
   non-isoparametric curve, rational graph pcurve materialization, and midpoint
   evaluation: `11.368 us/iteration`;
-- equal-weight polynomial bilinear tensor / oblique-plane exact
+- non-separable positive-weight rational bilinear tensor / oblique-plane exact
   rational-quartic spatial section, rational-quadratic graph construction, and
-  midpoint evaluation: `23.398 us/iteration`;
+  midpoint evaluation: `32.671 us/iteration`;
 - complete non-isoparametric rational tensor section, graph-control
   recertification, curved-loop validation, identity-shared face split, and full
   model revalidation: `180.175 us/iteration`;

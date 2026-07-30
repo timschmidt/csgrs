@@ -655,10 +655,10 @@ fuzz_target!(|bytes: &[u8]| {
         ],
     ];
     let bilinear_weights = vec![
-        vec![Real::one(), Real::one()],
-        vec![Real::one(), Real::one()],
+        vec![Real::one(), Real::from(2)],
+        vec![Real::from(3), Real::from(4)],
     ];
-    let Ok(polynomial_bilinear_tensor) =
+    let Ok(rational_bilinear_tensor) =
         Surface::rational_bezier(bilinear_controls.clone(), bilinear_weights.clone())
     else {
         return;
@@ -672,7 +672,7 @@ fuzz_target!(|bytes: &[u8]| {
         return;
     };
     if let Ok(SurfaceSurfaceIntersection::Curve(curve)) =
-        polynomial_bilinear_tensor.intersect_surface(&bilinear_plane)
+        rational_bilinear_tensor.intersect_surface(&bilinear_plane)
     {
         let parameter = (Real::one() / Real::from(2)).expect("nonzero rational denominator");
         let _ = curve.curve().point_at(&parameter);
@@ -691,10 +691,10 @@ fuzz_target!(|bytes: &[u8]| {
                     return;
                 };
                 let Ok(replayed) = RawModel::from_json(&json).and_then(RawModel::validate) else {
-                    panic!("validated polynomial bilinear split failed persistence replay");
+                    panic!("validated weighted bilinear split failed persistence replay");
                 };
                 if replayed.to_json().ok().as_deref() != Some(json.as_str()) {
-                    panic!("polynomial bilinear split replay changed exact persistence");
+                    panic!("weighted bilinear split replay changed exact persistence");
                 }
             }
         }
