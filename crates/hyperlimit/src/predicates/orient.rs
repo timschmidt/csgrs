@@ -10,9 +10,10 @@ use crate::predicate::{
 };
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
+use core::cmp::Ordering;
 use hyperreal::{
-    AffineDet2ExactWordFilter, AffineDet2Filter, Incircle2Filter, Insphere3Filter, Real,
-    RealExactSetFacts, ZeroKnowledge,
+    AffineDet2ExactWordFilter, AffineDet2Filter, Incircle2Filter, Insphere3Filter, Rational,
+    RationalLinearForm4Filter, RationalLinearForm4Query, Real, RealExactSetFacts, ZeroKnowledge,
 };
 
 /// Orientation of three 2D points.
@@ -551,7 +552,6 @@ pub fn classify_point_line_with_orientation_and_policy(
             Escalation::Exact,
         );
     }
-
     if let Some(outcome) = exact_outcome(policy, ExactPredicateKernel::Orient2RationalDet2, || {
         super::exact::orient2d(from, to, point)
     }) {
@@ -655,6 +655,7 @@ fn incircle2d_real_expr(
 pub struct Incircle2Evidence {
     facts: PredicateFacts,
     filter: Option<Incircle2Filter>,
+    rational_filter: Option<RationalLinearForm4Filter>,
     coefficient_facts: LiftedPolynomialFacts,
     x_coeff: Real,
     y_coeff: Real,
@@ -705,10 +706,13 @@ pub fn incircle2_evidence(a: &Point2, b: &Point2, c: &Point2) -> Incircle2Eviden
     let constant = x_y_lift;
     let coefficient_facts = lifted_polynomial_facts([&x_coeff, &y_coeff, &lift_coeff, &constant]);
     let filter = Incircle2Filter::from_reals([&a.x, &a.y], [&b.x, &b.y], [&c.x, &c.y]);
+    let rational_filter =
+        RationalLinearForm4Filter::from_reals([&x_coeff, &y_coeff, &lift_coeff, &constant]);
 
     Incircle2Evidence {
         facts: PredicateFacts::incircle2(a, b, c),
         filter,
+        rational_filter,
         coefficient_facts,
         x_coeff,
         y_coeff,
@@ -754,6 +758,10 @@ pub fn incircle2d_with_evidence_and_policy(
             Certainty::Exact,
             Escalation::Exact,
         );
+    }
+
+    if let Some(outcome) = exact_rational_circle_polynomial_sign(point, evidence) {
+        return outcome;
     }
 
     if let Some(outcome) = exact_outcome(
@@ -1088,6 +1096,10 @@ pub fn insphere3d_with_evidence_and_policy(
         );
     }
 
+    if let Some(outcome) = exact_rational_sphere_polynomial_sign(point, evidence) {
+        return outcome;
+    }
+
     if let Some(outcome) = exact_outcome(
         policy,
         ExactPredicateKernel::Insphere3RationalLiftedDet4,
@@ -1114,6 +1126,103 @@ pub fn insphere3d_with_evidence_and_policy(
         || super::exact::insphere3d(a, b, c, d, point),
         RefinementNeed::RealRefinement,
     )
+}
+
+#[inline]
+fn exact_rational_circle_polynomial_sign(
+    point: &Point2,
+    evidence: &Incircle2Evidence,
+) -> Option<PredicateOutcome<Sign>> {
+    let x = point.x.exact_rational_ref()?;
+    let y = point.y.exact_rational_ref()?;
+    let x_coeff = evidence.x_coeff.exact_rational_ref()?;
+    let y_coeff = evidence.y_coeff.exact_rational_ref()?;
+    let lift_coeff = evidence.lift_coeff.exact_rational_ref()?;
+    let constant = evidence.constant.exact_rational_ref()?;
+    let lift = Rational::signed_product_sum([true; 2], [[x, x], [y, y]]);
+    let one = Rational::one();
+
+    if let Some(sign) = evidence.rational_filter.and_then(|filter| {
+        RationalLinearForm4Query::from_rationals([x, y, &lift, &one])
+            .and_then(|query| filter.sign(&query))
+    }) {
+        crate::trace_dispatch!(
+            "hyperlimit",
+            "incircle2_evidence",
+            "rational-lifted-polynomial-filter"
+        );
+        return Some(PredicateOutcome::decided(
+            crate::real::map_real_sign(sign),
+            Certainty::Exact,
+            Escalation::Filter,
+        ));
+    }
+
+    let ordering = Rational::signed_product_sum_ordering(
+        [true; 4],
+        [
+            [x_coeff, x],
+            [y_coeff, y],
+            [lift_coeff, &lift],
+            [constant, &one],
+        ],
+    );
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "incircle2_evidence",
+        "exact-rational-lifted-polynomial"
+    );
+    Some(PredicateOutcome::decided(
+        sign_from_ordering(ordering),
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
+}
+
+#[inline]
+fn exact_rational_sphere_polynomial_sign(
+    point: &Point3,
+    evidence: &Insphere3Evidence,
+) -> Option<PredicateOutcome<Sign>> {
+    let x = point.x.exact_rational_ref()?;
+    let y = point.y.exact_rational_ref()?;
+    let z = point.z.exact_rational_ref()?;
+    let x_coeff = evidence.x_coeff.exact_rational_ref()?;
+    let y_coeff = evidence.y_coeff.exact_rational_ref()?;
+    let z_coeff = evidence.z_coeff.exact_rational_ref()?;
+    let lift_coeff = evidence.lift_coeff.exact_rational_ref()?;
+    let constant = evidence.constant.exact_rational_ref()?;
+    let lift = Rational::signed_product_sum([true; 3], [[x, x], [y, y], [z, z]]);
+    let one = Rational::one();
+    let ordering = Rational::signed_product_sum_ordering(
+        [true; 5],
+        [
+            [x_coeff, x],
+            [y_coeff, y],
+            [z_coeff, z],
+            [lift_coeff, &lift],
+            [constant, &one],
+        ],
+    );
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "insphere3_evidence",
+        "exact-rational-lifted-polynomial"
+    );
+    Some(PredicateOutcome::decided(
+        sign_from_ordering(ordering),
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
+}
+
+#[inline]
+fn sign_from_ordering(ordering: Ordering) -> Sign {
+    match ordering {
+        Ordering::Less => Sign::Negative,
+        Ordering::Equal => Sign::Zero,
+        Ordering::Greater => Sign::Positive,
+    }
 }
 
 fn add(left: &Real, right: &Real) -> Real {
@@ -1660,7 +1769,11 @@ mod tests {
         assert_eq!(evidence_outcome.value(), Some(Sign::Positive));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_incircle2d", "rational-det3-lifted"),
+            trace.path_count(
+                "hyperlimit",
+                "incircle2_evidence",
+                "rational-lifted-polynomial-filter"
+            ),
             1
         );
     }
@@ -1713,7 +1826,11 @@ mod tests {
         assert_eq!(evidence_outcome.value(), Some(Sign::Negative));
         let trace = hyperreal::dispatch_trace::take_trace();
         assert_eq!(
-            trace.path_count("hyperlimit", "exact_insphere3d", "rational-det4-lifted"),
+            trace.path_count(
+                "hyperlimit",
+                "insphere3_evidence",
+                "exact-rational-lifted-polynomial"
+            ),
             1
         );
     }

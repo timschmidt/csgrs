@@ -11,7 +11,7 @@ use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::segment::classify_collinear_point_segment_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{resolve_real_sign, signed_term_filter};
-use hyperreal::{Real, ZeroKnowledge};
+use hyperreal::{Rational, Real, ZeroKnowledge};
 
 /// Structural facts retained for one closed polygonal ring.
 ///
@@ -333,6 +333,9 @@ fn ring_area_sign_refs(points: &[&Point2], policy: PredicatePolicy) -> Predicate
             crate::predicate::Escalation::Structural,
         );
     }
+    if let Some(outcome) = exact_rational_ring_area_sign(points) {
+        return outcome;
+    }
 
     let mut terms = Vec::with_capacity(points.len() * 2);
     let mut area: Option<Real> = None;
@@ -361,6 +364,30 @@ fn ring_area_sign_refs(points: &[&Point2], policy: PredicatePolicy) -> Predicate
         || None,
         RefinementNeed::RealRefinement,
     )
+}
+
+fn exact_rational_ring_area_sign(points: &[&Point2]) -> Option<PredicateOutcome<Sign>> {
+    let mut signs = Vec::with_capacity(points.len() * 2);
+    let mut terms = Vec::<[&Rational; 2]>::with_capacity(points.len() * 2);
+    for index in 0..points.len() {
+        let next = (index + 1) % points.len();
+        let x = points[index].x.exact_rational_ref()?;
+        let y = points[index].y.exact_rational_ref()?;
+        let next_x = points[next].x.exact_rational_ref()?;
+        let next_y = points[next].y.exact_rational_ref()?;
+        signs.extend([true, false]);
+        terms.extend([[x, next_y], [y, next_x]]);
+    }
+    let sign = match Rational::signed_product_sum2_ordering_slice(&signs, &terms) {
+        Ordering::Less => Sign::Negative,
+        Ordering::Equal => Sign::Zero,
+        Ordering::Greater => Sign::Positive,
+    };
+    Some(PredicateOutcome::decided(
+        sign,
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
 }
 
 /// Classify a point against a closed polygonal ring by the even-odd rule.
@@ -827,6 +854,13 @@ mod tests {
         Point2::new(hyperreal::Real::from(x), hyperreal::Real::from(y))
     }
 
+    fn rational_p2(x: i32, y: i32, denominator: i32) -> Point2 {
+        Point2::new(
+            (hyperreal::Real::from(x) / hyperreal::Real::from(denominator)).unwrap(),
+            (hyperreal::Real::from(y) / hyperreal::Real::from(denominator)).unwrap(),
+        )
+    }
+
     #[test]
     fn ring_area_sign_classifies_winding_and_degenerate_rings() {
         let ccw = [p2(0, 0), p2(4, 0), p2(4, 3), p2(0, 3)];
@@ -837,6 +871,25 @@ mod tests {
         assert_eq!(ring_area_sign(&cw).value(), Some(Sign::Negative));
         assert_eq!(ring_area_sign(&line).value(), Some(Sign::Zero));
         assert_eq!(ring_area_sign(&[]).value(), Some(Sign::Zero));
+    }
+
+    #[test]
+    fn exact_rational_ring_area_uses_sign_only_accumulation() {
+        let ring = [
+            rational_p2(0, 0, 11),
+            rational_p2(40, 0, 11),
+            rational_p2(40, 40, 11),
+            rational_p2(0, 40, 11),
+        ];
+        let outcome = ring_area_sign(&ring);
+        assert!(matches!(
+            outcome,
+            PredicateOutcome::Decided {
+                value: Sign::Positive,
+                certainty: Certainty::Exact,
+                stage: Escalation::Exact,
+            }
+        ));
     }
 
     #[test]

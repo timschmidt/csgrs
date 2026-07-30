@@ -9,9 +9,11 @@ use crate::classify::{PointSegmentLocation, Segment3Intersection, SegmentInterse
 use crate::geometry::{Point2, Point3, Segment2Facts};
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
+use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::orient2d_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
-use crate::resolve::resolve_real_sign_direct;
+use crate::resolve::{map_outcome, resolve_real_sign_direct};
+use core::cmp::Ordering;
 use hyperreal::Real;
 
 /// Classify `point` relative to the closed segment `ab`.
@@ -1025,9 +1027,15 @@ fn sign_of_difference(
     policy: PredicatePolicy,
     trace: &mut DecisionTrace,
 ) -> Result<Sign, UnknownDecision> {
-    let diff = sub_ref(left, right);
     decided(
-        resolve_real_sign_direct(&diff, policy, RefinementNeed::RealRefinement),
+        map_outcome(
+            compare_reals_with_policy(left, right, policy),
+            |ordering| match ordering {
+                Ordering::Less => Sign::Negative,
+                Ordering::Equal => Sign::Zero,
+                Ordering::Greater => Sign::Positive,
+            },
+        ),
         trace,
     )
 }

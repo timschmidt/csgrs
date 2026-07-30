@@ -10,10 +10,10 @@ use crate::classify::{
     SpherePointLocation,
 };
 use crate::geometry::{Point2, Point3};
-use crate::predicate::{PredicateOutcome, PredicatePolicy};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome, PredicatePolicy};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::real::{add_ref, mul_ref, sub_ref};
-use hyperreal::Real;
+use hyperreal::{Rational, Real};
 
 /// Compare squared distances from `anchor` to `left` and `right`.
 pub fn compare_point2_distance_squared(
@@ -38,6 +38,9 @@ pub(crate) fn compare_point2_distance_squared_with_policy(
     right: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if let Some(outcome) = exact_rational_point2_distance_ordering(anchor, left, right) {
+        return outcome;
+    }
     let left_distance = squared_distance2(anchor, left);
     let right_distance = squared_distance2(anchor, right);
     compare_reals_with_policy(&left_distance, &right_distance, policy)
@@ -64,6 +67,9 @@ pub(crate) fn compare_point3_distance_squared_with_policy(
     right: &Point3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if let Some(outcome) = exact_rational_point3_distance_ordering(anchor, left, right) {
+        return outcome;
+    }
     let left_distance = squared_distance3(anchor, left);
     let right_distance = squared_distance3(anchor, right);
     compare_reals_with_policy(&left_distance, &right_distance, policy)
@@ -93,6 +99,11 @@ pub fn classify_circle_line2_with_policy(
     b: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<CircleLineRelation> {
+    if exact_non_dyadic_rational(radius_squared)
+        && let Some(outcome) = exact_rational_circle_line2(center, radius_squared, a, b)
+    {
+        return outcome;
+    }
     let direction = vector2_between(a, b);
     let direction_norm = norm_squared2(&direction);
     match compare_reals_with_policy(&direction_norm, &0.into(), policy) {
@@ -158,6 +169,11 @@ pub fn classify_circle_segment2_with_policy(
     b: &Point2,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<CircleSegmentRelation> {
+    if exact_non_dyadic_rational(radius_squared)
+        && let Some(outcome) = exact_rational_circle_segment2(center, radius_squared, a, b)
+    {
+        return outcome;
+    }
     let direction_norm = norm_squared2(&vector2_between(a, b));
     match compare_reals_with_policy(&direction_norm, &0.into(), policy) {
         PredicateOutcome::Decided {
@@ -298,6 +314,12 @@ pub(crate) fn compare_point_line3_distance_squared_with_policy(
     threshold_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if exact_non_dyadic_rational(threshold_squared)
+        && let Some(outcome) =
+            exact_rational_point_line3_distance_ordering(point, a, b, threshold_squared)
+    {
+        return outcome;
+    }
     let direction = vector3_between(a, b);
     let direction_norm = norm_squared3(&direction);
     match compare_reals_with_policy(&direction_norm, &0.into(), policy) {
@@ -355,6 +377,12 @@ pub(crate) fn compare_point_segment3_distance_squared_with_policy(
     threshold_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if exact_non_dyadic_rational(threshold_squared)
+        && let Some(outcome) =
+            exact_rational_point_segment3_distance_ordering(point, a, b, threshold_squared)
+    {
+        return outcome;
+    }
     let direction = vector3_between(a, b);
     let direction_norm = norm_squared3(&direction);
     match compare_reals_with_policy(&direction_norm, &0.into(), policy) {
@@ -443,6 +471,12 @@ pub(crate) fn compare_point_plane_distance_squared_with_policy(
     threshold_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if exact_non_dyadic_rational(threshold_squared)
+        && let Some(outcome) =
+            exact_rational_point_plane_distance_ordering(point, plane, threshold_squared)
+    {
+        return outcome;
+    }
     let expression = point_plane_expression(point, plane);
     let numerator = mul_ref(&expression, &expression);
     let normal_norm = squared_point3_norm(&plane.normal);
@@ -690,6 +724,12 @@ fn compare_point3_distance_squared_to_threshold_with_policy(
     threshold_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if exact_non_dyadic_rational(threshold_squared)
+        && let Some(outcome) =
+            exact_rational_point3_distance_threshold_ordering(point, target, threshold_squared)
+    {
+        return outcome;
+    }
     let distance_squared = squared_distance3(point, target);
     compare_reals_with_policy(&distance_squared, threshold_squared, policy)
 }
@@ -700,6 +740,12 @@ fn compare_point2_distance_squared_to_threshold_with_policy(
     threshold_squared: &Real,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<Ordering> {
+    if exact_non_dyadic_rational(threshold_squared)
+        && let Some(outcome) =
+            exact_rational_point2_distance_threshold_ordering(point, target, threshold_squared)
+    {
+        return outcome;
+    }
     let distance_squared = squared_distance2(point, target);
     compare_reals_with_policy(&distance_squared, threshold_squared, policy)
 }
@@ -778,6 +824,416 @@ fn squared_distance2(left: &Point2, right: &Point2) -> Real {
     let dx = sub_ref(&right.x, &left.x);
     let dy = sub_ref(&right.y, &left.y);
     add_ref(&mul_ref(&dx, &dx), &mul_ref(&dy, &dy))
+}
+
+#[inline]
+fn exact_rational_point2_distance_ordering(
+    anchor: &Point2,
+    left: &Point2,
+    right: &Point2,
+) -> Option<PredicateOutcome<Ordering>> {
+    let ax = anchor.x.exact_rational_ref()?;
+    let ay = anchor.y.exact_rational_ref()?;
+    let lx = left.x.exact_rational_ref()?;
+    let ly = left.y.exact_rational_ref()?;
+    let rx = right.x.exact_rational_ref()?;
+    let ry = right.y.exact_rational_ref()?;
+    let ldx = lx - ax;
+    let ldy = ly - ay;
+    let rdx = rx - ax;
+    let rdy = ry - ay;
+    Some(exact_distance_outcome(
+        Rational::signed_product_sum_ordering(
+            [true, true, false, false],
+            [[&ldx, &ldx], [&ldy, &ldy], [&rdx, &rdx], [&rdy, &rdy]],
+        ),
+    ))
+}
+
+#[inline]
+fn exact_rational_point3_distance_ordering(
+    anchor: &Point3,
+    left: &Point3,
+    right: &Point3,
+) -> Option<PredicateOutcome<Ordering>> {
+    let ax = anchor.x.exact_rational_ref()?;
+    let ay = anchor.y.exact_rational_ref()?;
+    let az = anchor.z.exact_rational_ref()?;
+    let lx = left.x.exact_rational_ref()?;
+    let ly = left.y.exact_rational_ref()?;
+    let lz = left.z.exact_rational_ref()?;
+    let rx = right.x.exact_rational_ref()?;
+    let ry = right.y.exact_rational_ref()?;
+    let rz = right.z.exact_rational_ref()?;
+    let ldx = lx - ax;
+    let ldy = ly - ay;
+    let ldz = lz - az;
+    let rdx = rx - ax;
+    let rdy = ry - ay;
+    let rdz = rz - az;
+    Some(exact_distance_outcome(
+        Rational::signed_product_sum_ordering(
+            [true, true, true, false, false, false],
+            [
+                [&ldx, &ldx],
+                [&ldy, &ldy],
+                [&ldz, &ldz],
+                [&rdx, &rdx],
+                [&rdy, &rdy],
+                [&rdz, &rdz],
+            ],
+        ),
+    ))
+}
+
+#[inline]
+fn exact_rational_point2_distance_threshold_ordering(
+    point: &Point2,
+    target: &Point2,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    Some(exact_distance_outcome(
+        exact_rational_point2_distance_threshold(point, target, threshold_squared)?,
+    ))
+}
+
+#[inline]
+fn exact_rational_point2_distance_threshold(
+    point: &Point2,
+    target: &Point2,
+    threshold_squared: &Real,
+) -> Option<Ordering> {
+    let px = point.x.exact_rational_ref()?;
+    let py = point.y.exact_rational_ref()?;
+    let tx = target.x.exact_rational_ref()?;
+    let ty = target.y.exact_rational_ref()?;
+    let threshold = threshold_squared.exact_rational_ref()?;
+    let dx = px - tx;
+    let dy = py - ty;
+    let one = Rational::one();
+    Some(Rational::signed_product_sum_ordering(
+        [true, true, false],
+        [[&dx, &dx], [&dy, &dy], [threshold, &one]],
+    ))
+}
+
+#[inline]
+fn exact_rational_point3_distance_threshold_ordering(
+    point: &Point3,
+    target: &Point3,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    Some(exact_distance_outcome(
+        exact_rational_point3_distance_threshold(point, target, threshold_squared)?,
+    ))
+}
+
+#[inline]
+fn exact_rational_point3_distance_threshold(
+    point: &Point3,
+    target: &Point3,
+    threshold_squared: &Real,
+) -> Option<Ordering> {
+    let px = point.x.exact_rational_ref()?;
+    let py = point.y.exact_rational_ref()?;
+    let pz = point.z.exact_rational_ref()?;
+    let tx = target.x.exact_rational_ref()?;
+    let ty = target.y.exact_rational_ref()?;
+    let tz = target.z.exact_rational_ref()?;
+    let threshold = threshold_squared.exact_rational_ref()?;
+    let dx = px - tx;
+    let dy = py - ty;
+    let dz = pz - tz;
+    let one = Rational::one();
+    Some(Rational::signed_product_sum_ordering(
+        [true, true, true, false],
+        [[&dx, &dx], [&dy, &dy], [&dz, &dz], [threshold, &one]],
+    ))
+}
+
+#[inline]
+fn exact_rational_circle_line2(
+    center: &Point2,
+    radius_squared: &Real,
+    a: &Point2,
+    b: &Point2,
+) -> Option<PredicateOutcome<CircleLineRelation>> {
+    let cx = center.x.exact_rational_ref()?;
+    let cy = center.y.exact_rational_ref()?;
+    let ax = a.x.exact_rational_ref()?;
+    let ay = a.y.exact_rational_ref()?;
+    let bx = b.x.exact_rational_ref()?;
+    let by = b.y.exact_rational_ref()?;
+    let radius = radius_squared.exact_rational_ref()?;
+    let dx = bx - ax;
+    let dy = by - ay;
+    let direction_norm = Rational::signed_product_sum([true; 2], [[&dx, &dx], [&dy, &dy]]);
+    if direction_norm.is_zero() {
+        return Some(PredicateOutcome::decided(
+            CircleLineRelation::DegenerateLine,
+            Certainty::Exact,
+            Escalation::Exact,
+        ));
+    }
+    let ox = cx - ax;
+    let oy = cy - ay;
+    let cross = Rational::signed_product_sum([true, false], [[&ox, &dy], [&oy, &dx]]);
+    let ordering = Rational::signed_product_sum_ordering(
+        [true, false],
+        [[&cross, &cross], [radius, &direction_norm]],
+    );
+    let relation = match ordering {
+        Ordering::Less => CircleLineRelation::Secant,
+        Ordering::Equal => CircleLineRelation::Tangent,
+        Ordering::Greater => CircleLineRelation::Disjoint,
+    };
+    Some(PredicateOutcome::decided(
+        relation,
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
+}
+
+#[inline]
+fn exact_rational_circle_segment2(
+    center: &Point2,
+    radius_squared: &Real,
+    a: &Point2,
+    b: &Point2,
+) -> Option<PredicateOutcome<CircleSegmentRelation>> {
+    let cx = center.x.exact_rational_ref()?;
+    let cy = center.y.exact_rational_ref()?;
+    let ax = a.x.exact_rational_ref()?;
+    let ay = a.y.exact_rational_ref()?;
+    let bx = b.x.exact_rational_ref()?;
+    let by = b.y.exact_rational_ref()?;
+    let radius = radius_squared.exact_rational_ref()?;
+    let dx = bx - ax;
+    let dy = by - ay;
+    let direction_norm = Rational::signed_product_sum([true; 2], [[&dx, &dx], [&dy, &dy]]);
+    let a_distance = exact_rational_point2_distance_threshold(a, center, radius_squared)?;
+    if direction_norm.is_zero() {
+        let relation = match a_distance {
+            Ordering::Less => CircleSegmentRelation::ContainedInside,
+            Ordering::Equal => CircleSegmentRelation::Tangent,
+            Ordering::Greater => CircleSegmentRelation::Disjoint,
+        };
+        return Some(PredicateOutcome::decided(
+            relation,
+            Certainty::Exact,
+            Escalation::Exact,
+        ));
+    }
+    let b_distance = exact_rational_point2_distance_threshold(b, center, radius_squared)?;
+    let relation = if a_distance == Ordering::Equal && b_distance == Ordering::Equal {
+        CircleSegmentRelation::Secant
+    } else if a_distance == Ordering::Equal || b_distance == Ordering::Equal {
+        let other = if a_distance == Ordering::Equal {
+            b_distance
+        } else {
+            a_distance
+        };
+        if other == Ordering::Less {
+            CircleSegmentRelation::Tangent
+        } else {
+            CircleSegmentRelation::Secant
+        }
+    } else if (a_distance == Ordering::Less) != (b_distance == Ordering::Less) {
+        CircleSegmentRelation::Secant
+    } else if a_distance == Ordering::Less {
+        CircleSegmentRelation::ContainedInside
+    } else {
+        let apx = cx - ax;
+        let apy = cy - ay;
+        let projection = Rational::signed_product_sum([true; 2], [[&apx, &dx], [&apy, &dy]]);
+        let distance_ordering = if !projection.is_positive() {
+            a_distance
+        } else if projection >= direction_norm {
+            b_distance
+        } else {
+            let cross = Rational::signed_product_sum([true, false], [[&apx, &dy], [&apy, &dx]]);
+            Rational::signed_product_sum_ordering(
+                [true, false],
+                [[&cross, &cross], [radius, &direction_norm]],
+            )
+        };
+        match distance_ordering {
+            Ordering::Less => CircleSegmentRelation::Secant,
+            Ordering::Equal => CircleSegmentRelation::Tangent,
+            Ordering::Greater => CircleSegmentRelation::Disjoint,
+        }
+    };
+    Some(PredicateOutcome::decided(
+        relation,
+        Certainty::Exact,
+        Escalation::Exact,
+    ))
+}
+
+#[inline]
+fn exact_rational_point_line3_distance_ordering(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    let [
+        Some(px),
+        Some(py),
+        Some(pz),
+        Some(ax),
+        Some(ay),
+        Some(az),
+        Some(bx),
+        Some(by),
+        Some(bz),
+        Some(threshold),
+    ] = [
+        &point.x,
+        &point.y,
+        &point.z,
+        &a.x,
+        &a.y,
+        &a.z,
+        &b.x,
+        &b.y,
+        &b.z,
+        threshold_squared,
+    ]
+    .map(Real::exact_rational_ref)
+    else {
+        return None;
+    };
+    let dx = bx - ax;
+    let dy = by - ay;
+    let dz = bz - az;
+    let direction_norm =
+        Rational::signed_product_sum([true; 3], [[&dx, &dx], [&dy, &dy], [&dz, &dz]]);
+    if direction_norm.is_zero() {
+        return exact_rational_point3_distance_threshold_ordering(point, a, threshold_squared);
+    }
+    let ox = px - ax;
+    let oy = py - ay;
+    let oz = pz - az;
+    let cross_x = Rational::signed_product_sum([true, false], [[&oy, &dz], [&oz, &dy]]);
+    let cross_y = Rational::signed_product_sum([true, false], [[&oz, &dx], [&ox, &dz]]);
+    let cross_z = Rational::signed_product_sum([true, false], [[&ox, &dy], [&oy, &dx]]);
+    Some(exact_distance_outcome(
+        Rational::signed_product_sum_ordering(
+            [true, true, true, false],
+            [
+                [&cross_x, &cross_x],
+                [&cross_y, &cross_y],
+                [&cross_z, &cross_z],
+                [threshold, &direction_norm],
+            ],
+        ),
+    ))
+}
+
+#[inline]
+fn exact_rational_point_segment3_distance_ordering(
+    point: &Point3,
+    a: &Point3,
+    b: &Point3,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    let [
+        Some(px),
+        Some(py),
+        Some(pz),
+        Some(ax),
+        Some(ay),
+        Some(az),
+        Some(bx),
+        Some(by),
+        Some(bz),
+    ] = [
+        &point.x, &point.y, &point.z, &a.x, &a.y, &a.z, &b.x, &b.y, &b.z,
+    ]
+    .map(Real::exact_rational_ref)
+    else {
+        return None;
+    };
+    let dx = bx - ax;
+    let dy = by - ay;
+    let dz = bz - az;
+    let direction_norm =
+        Rational::signed_product_sum([true; 3], [[&dx, &dx], [&dy, &dy], [&dz, &dz]]);
+    if direction_norm.is_zero() {
+        return exact_rational_point3_distance_threshold_ordering(point, a, threshold_squared);
+    }
+    let apx = px - ax;
+    let apy = py - ay;
+    let apz = pz - az;
+    let projection =
+        Rational::signed_product_sum([true; 3], [[&apx, &dx], [&apy, &dy], [&apz, &dz]]);
+    if !projection.is_positive() {
+        return exact_rational_point3_distance_threshold_ordering(point, a, threshold_squared);
+    }
+    if projection >= direction_norm {
+        return exact_rational_point3_distance_threshold_ordering(point, b, threshold_squared);
+    }
+    exact_rational_point_line3_distance_ordering(point, a, b, threshold_squared)
+}
+
+#[inline]
+fn exact_rational_point_plane_distance_ordering(
+    point: &Point3,
+    plane: &crate::plane::Plane3,
+    threshold_squared: &Real,
+) -> Option<PredicateOutcome<Ordering>> {
+    let [
+        Some(px),
+        Some(py),
+        Some(pz),
+        Some(nx),
+        Some(ny),
+        Some(nz),
+        Some(offset),
+        Some(threshold),
+    ] = [
+        &point.x,
+        &point.y,
+        &point.z,
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+        threshold_squared,
+    ]
+    .map(Real::exact_rational_ref)
+    else {
+        return None;
+    };
+    let one = Rational::one();
+    let expression =
+        Rational::signed_product_sum([true; 4], [[nx, px], [ny, py], [nz, pz], [offset, &one]]);
+    let normal_norm = Rational::signed_product_sum([true; 3], [[nx, nx], [ny, ny], [nz, nz]]);
+    let ordering = if normal_norm.is_zero() {
+        Rational::signed_product_sum_ordering(
+            [true, false],
+            [[&expression, &expression], [threshold, &one]],
+        )
+    } else {
+        Rational::signed_product_sum_ordering(
+            [true, false],
+            [[&expression, &expression], [threshold, &normal_norm]],
+        )
+    };
+    Some(exact_distance_outcome(ordering))
+}
+
+#[inline]
+fn exact_distance_outcome(ordering: Ordering) -> PredicateOutcome<Ordering> {
+    PredicateOutcome::decided(ordering, Certainty::Exact, Escalation::Exact)
+}
+
+#[inline(always)]
+fn exact_non_dyadic_rational(value: &Real) -> bool {
+    value
+        .exact_rational_ref()
+        .is_some_and(|rational| !rational.is_dyadic())
 }
 
 fn squared_distance3(left: &Point3, right: &Point3) -> Real {
@@ -927,6 +1383,58 @@ mod tests {
             hyperreal::Real::from(y),
             hyperreal::Real::from(z),
         )
+    }
+
+    fn r(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    fn rp2(x: (i32, i32), y: (i32, i32)) -> Point2 {
+        Point2::new(r(x.0, x.1), r(y.0, y.1))
+    }
+
+    fn rp3(x: (i32, i32), y: (i32, i32), z: (i32, i32)) -> Point3 {
+        Point3::new(r(x.0, x.1), r(y.0, y.1), r(z.0, z.1))
+    }
+
+    #[test]
+    fn exact_rational_distance_kernels_preserve_tangent_boundaries() {
+        let zero2 = rp2((0, 1), (0, 1));
+        let line_a2 = rp2((-1, 1), (1, 3));
+        let line_b2 = rp2((1, 1), (1, 3));
+        let threshold = r(1, 9);
+        assert_eq!(
+            exact_rational_circle_line2(&zero2, &threshold, &line_a2, &line_b2)
+                .unwrap()
+                .value(),
+            Some(CircleLineRelation::Tangent)
+        );
+        assert_eq!(
+            exact_rational_circle_segment2(&zero2, &threshold, &line_a2, &line_b2)
+                .unwrap()
+                .value(),
+            Some(CircleSegmentRelation::Tangent)
+        );
+
+        let point = rp3((0, 1), (1, 3), (0, 1));
+        let a = rp3((-1, 1), (0, 1), (0, 1));
+        let b = rp3((1, 1), (0, 1), (0, 1));
+        let plane = crate::plane::Plane3::new(rp3((0, 1), (1, 1), (0, 1)), Real::from(0));
+        for outcome in [
+            exact_rational_point_line3_distance_ordering(&point, &a, &b, &threshold),
+            exact_rational_point_segment3_distance_ordering(&point, &a, &b, &threshold),
+            exact_rational_point_plane_distance_ordering(&point, &plane, &threshold),
+        ] {
+            let outcome = outcome.expect("all inputs are exact rationals");
+            assert!(matches!(
+                outcome,
+                PredicateOutcome::Decided {
+                    value: Ordering::Equal,
+                    certainty: Certainty::Exact,
+                    stage: Escalation::Exact,
+                }
+            ));
+        }
     }
 
     #[test]

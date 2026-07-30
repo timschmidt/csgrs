@@ -26,16 +26,17 @@ use hyperlimit::{
     classify_triangle_against_oriented_plane, classify_triangle_triangle3,
     classify_triangle3_degeneracy, compare_point_line3_distance_squared,
     compare_point_plane_distance_squared, compare_point_segment3_distance_squared,
-    incircle2 as incircle2d, incircle2_evidence,
-    incircle2_with_evidence as incircle2d_with_evidence, insphere_d, insphere3 as insphere3d,
-    insphere3_evidence, insphere3_with_evidence as insphere3d_with_evidence,
-    intersect_segment_with_oriented_plane, intersect_three_planes, intersect_two_planes,
-    line2_orientation, ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains,
-    ordered_aabb3s_intersect, orient_d, orient2 as orient2d, orient3 as orient3d,
-    oriented_plane3_evidence, plane3_evidence, point_in_ordered_aabb2_coordinates,
-    point_in_ordered_aabb3_relative_interior, point2_displacement_facts, point2_equal,
-    projected_line_parameter3, projected_segment_parameter3, segment2_facts,
-    support_dop3_from_points, triangle3_orientation,
+    compare_point2_distance_squared, compare_point3_distance_squared, incircle2 as incircle2d,
+    incircle2_evidence, incircle2_with_evidence as incircle2d_with_evidence, insphere_d,
+    insphere3 as insphere3d, insphere3_evidence,
+    insphere3_with_evidence as insphere3d_with_evidence, intersect_segment_with_oriented_plane,
+    intersect_three_planes, intersect_two_planes, line2_orientation,
+    ordered_aabb2s_intersect_coordinates, ordered_aabb3_contains, ordered_aabb3s_intersect,
+    orient_d, orient2 as orient2d, orient3 as orient3d, oriented_plane3_evidence, plane3_evidence,
+    point_in_ordered_aabb2_coordinates, point_in_ordered_aabb3_relative_interior,
+    point2_displacement_facts, point2_equal, projected_line_parameter3,
+    projected_segment_parameter3, ring_area_sign, segment2_facts, support_dop3_from_points,
+    triangle3_orientation,
 };
 use robust::{Coord, Coord3D};
 
@@ -312,6 +313,22 @@ fn bench_explicit_sphere_immediate(c: &mut Criterion) {
     let mut group = c.benchmark_group("explicit_sphere_immediate");
     group.bench_function("point", |bench| {
         bench.iter(|| classify_point_sphere3(&center, &radius_squared, black_box(&query)))
+    });
+    group.bench_function("point2_distance_ordering_dyadic", |bench| {
+        let anchor = rational_point2(0, 1, 0, 1);
+        let left = rational_point2(3, 1, 4, 1);
+        let right = rational_point2(5, 1, 1, 1);
+        bench.iter(|| {
+            compare_point2_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+        })
+    });
+    group.bench_function("point3_distance_ordering_dyadic", |bench| {
+        let anchor = rational_point3(0, 1, 0, 1, 0, 1);
+        let left = rational_point3(3, 1, 4, 1, 1, 1);
+        let right = rational_point3(5, 1, 1, 1, 2, 1);
+        bench.iter(|| {
+            compare_point3_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+        })
     });
     group.finish();
 }
@@ -1326,6 +1343,22 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
 
     let distance3 = exact_rational_point_feature_distance_cases();
     let threshold = rational_real(25, 121);
+    group.bench_function("distance_ordering/point2_non_dyadic", |b| {
+        let anchor = rational_point2(1, 3, -2, 5);
+        let left = rational_point2(7, 11, 13, 17);
+        let right = rational_point2(-19, 23, 29, 31);
+        b.iter(|| {
+            compare_point2_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+        });
+    });
+    group.bench_function("distance_ordering/point3_non_dyadic", |b| {
+        let anchor = rational_point3(1, 3, -2, 5, 3, 7);
+        let left = rational_point3(7, 11, 13, 17, -19, 23);
+        let right = rational_point3(29, 31, -37, 41, 43, 47);
+        b.iter(|| {
+            compare_point3_distance_squared(black_box(&anchor), black_box(&left), black_box(&right))
+        });
+    });
     group.bench_function("distance3/point_feature_scaled_thresholds", |b| {
         b.iter(|| {
             let mut score = 0_i64;
@@ -1494,6 +1527,15 @@ fn bench_exact_rational_kernels(c: &mut Criterion) {
     });
 
     let polygon = exact_rational_convex_polygon2();
+    group.bench_function("ring/area_sign_non_dyadic", |b| {
+        b.iter(|| {
+            let mut score = 0_i64;
+            for _ in 0..64 {
+                score += sign_score(black_box(ring_area_sign(black_box(&polygon))));
+            }
+            black_box(score)
+        });
+    });
     let planes = exact_rational_convex_box_planes3();
     let orient2_points = exact_rational_orient2d_cases();
     let orient3_points = exact_rational_orient3d_cases();

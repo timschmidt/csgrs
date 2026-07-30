@@ -12,6 +12,8 @@ use crate::geometry::Plane3;
 use crate::predicate::{PredicateOutcome, RefinementNeed, Sign};
 use crate::real::mul_ref;
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
+use core::cmp::Ordering;
+use hyperreal::Rational;
 
 /// Constructs the homogeneous intersection point of three planes.
 pub fn intersect_three_planes(
@@ -50,6 +52,10 @@ pub(crate) fn classify_homogeneous_point_plane_with_policy(
     plane: &Plane3,
     policy: PredicatePolicy,
 ) -> PredicateOutcome<bool> {
+    if let Some(outcome) = classify_exact_rational_homogeneous_point_plane(point, plane) {
+        return outcome;
+    }
+
     let expression = homogeneous_point_plane_expression(point, plane);
     map_outcome(
         resolve_real_sign(
@@ -72,6 +78,40 @@ pub(crate) fn classify_homogeneous_point_plane_with_policy(
         ),
         |sign| sign == Sign::Zero,
     )
+}
+
+#[inline]
+fn classify_exact_rational_homogeneous_point_plane(
+    point: &HomogeneousPoint3,
+    plane: &Plane3,
+) -> Option<PredicateOutcome<bool>> {
+    let [Some(a), Some(b), Some(c), Some(d)] = [
+        &plane.normal.x,
+        &plane.normal.y,
+        &plane.normal.z,
+        &plane.offset,
+    ]
+    .map(hyperreal::Real::exact_rational_ref) else {
+        return None;
+    };
+    let [Some(x), Some(y), Some(z), Some(w)] =
+        [&point.x, &point.y, &point.z, &point.w].map(hyperreal::Real::exact_rational_ref)
+    else {
+        return None;
+    };
+
+    let ordering =
+        Rational::signed_product_sum_ordering([true; 4], [[a, x], [b, y], [c, z], [d, w]]);
+    crate::trace_dispatch!(
+        "hyperlimit",
+        "classify_homogeneous_point_plane",
+        "exact-rational-linear-form"
+    );
+    Some(PredicateOutcome::decided(
+        ordering == Ordering::Equal,
+        crate::Certainty::Exact,
+        crate::Escalation::Exact,
+    ))
 }
 
 impl Plane3Coefficients for Plane3 {
