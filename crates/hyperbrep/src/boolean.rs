@@ -1153,7 +1153,7 @@ fn planar_trace_crosses_face_interior(
     let point = trace.point_at(&middle)?;
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
-    match planar_face_region(model, face)?.classify_point(&parameter, &CurvePolicy::certified()) {
+    match planar_face_region(model, face)?.classify_point(&parameter, &CurvePolicy::STRICT) {
         Classification::Decided(RegionPointLocation::Inside) => Ok(true),
         Classification::Decided(RegionPointLocation::Outside | RegionPointLocation::Boundary) => {
             Ok(false)
@@ -2816,22 +2816,18 @@ fn trim_contained_surface_region(
     } else {
         let plane_region = CurveRegion2::try_from_line_arc_region(
             &planar_face_region(plane_model, plane_face)?,
-            &CurvePolicy::certified(),
+            &CurvePolicy::STRICT,
         )?;
-        let remainder = contained_region.boolean_region(
-            &plane_region,
-            BooleanOp::Difference,
-            &CurvePolicy::certified(),
-        )?;
+        let remainder = contained_region
+            .boolean_region(&plane_region, BooleanOp::Difference, &CurvePolicy::STRICT)?
+            .into_value();
         if remainder.is_empty() {
             (contained_region, true)
         } else {
             (
-                contained_region.boolean_region(
-                    &plane_region,
-                    BooleanOp::Intersection,
-                    &CurvePolicy::certified(),
-                )?,
+                contained_region
+                    .boolean_region(&plane_region, BooleanOp::Intersection, &CurvePolicy::STRICT)?
+                    .into_value(),
                 false,
             )
         }
@@ -2864,7 +2860,12 @@ fn project_face_region_to_plane(
         .collect::<Vec<_>>();
     let fill_rules = vec![FillRule::NonZero; paths.len()];
     Ok(Some(
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)?,
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &roles,
+            &fill_rules,
+            &CurvePolicy::STRICT,
+        )?,
     ))
 }
 
@@ -2935,7 +2936,7 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
     for curve in paths.iter().flat_map(|path| path.curves()) {
         if let Some(region) = &plane_region {
             for fragment in curve
-                .trim_inside_region(region, &CurvePolicy::certified())
+                .trim_inside_region(region, &CurvePolicy::STRICT)
                 .map_err(GeometryError::from)?
             {
                 let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
@@ -3296,14 +3297,12 @@ fn lift_planar_line_image(
     curve: &BezierSubcurve2,
 ) -> Result<Option<Curve3>, GeometryError> {
     let relation = match curve {
-        BezierSubcurve2::Quadratic(curve) => {
-            curve.fit_exact_line_image(&CurvePolicy::certified())?
-        }
-        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurvePolicy::certified())?,
+        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
+        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
         BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.fit_exact_line_image(&CurvePolicy::certified())?
+            curve.fit_exact_line_image(&CurvePolicy::STRICT)?
         }
-        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurvePolicy::certified())?,
+        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurvePolicy::STRICT)?,
     };
     let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = relation else {
         return Ok(None);
@@ -3462,7 +3461,7 @@ fn retained_curve_face_intervals(
     for carrier in carriers {
         let trimmed = match carrier
             .curve
-            .trim_inside_region_with_parameters(&region, &CurvePolicy::certified())
+            .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)
         {
             Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
@@ -3716,7 +3715,7 @@ fn parameter_lines_face_trim_intervals(
         return Ok(Classification::Decided(SupportedLineFaceTrim::Unbounded));
     }
     let region = planar_face_region(model, face)?;
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let bounds = match Aabb2::from_region(&region, &policy)? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -3993,7 +3992,7 @@ fn coplanar_boundary_split_traces(
                 let classify = |point: &Point3| {
                     let parameter = project_to_plane(target_surface, point)?;
                     Ok::<_, GeometryError>(
-                        target_region.classify_point(&parameter, &CurvePolicy::certified()),
+                        target_region.classify_point(&parameter, &CurvePolicy::STRICT),
                     )
                 };
                 let start_location = classify(&start)?;
@@ -4070,7 +4069,7 @@ fn point_in_supported_face_trim(
     let region = planar_face_region(model, face)?;
     let mut unresolved = None;
     for parameter in parameters {
-        match region.classify_point(&parameter, &CurvePolicy::certified()) {
+        match region.classify_point(&parameter, &CurvePolicy::STRICT) {
             Classification::Decided(RegionPointLocation::Inside)
             | Classification::Decided(RegionPointLocation::Boundary) => {
                 return Ok(Some(Classification::Decided(true)));
@@ -4157,6 +4156,7 @@ fn surface_parameters_of_point(
                 parameter.y().clone(),
             ))?,
             point,
+            crate::STRICT_PREDICATES,
         ) {
             PredicateOutcome::Decided { value: true, .. } => replayed.push(parameter),
             PredicateOutcome::Decided { value: false, .. } => {}
@@ -4222,7 +4222,7 @@ fn spanning_segment_on_planar_face(
 ) -> Result<Classification<Option<(Point3, Point3)>>, GeometryError> {
     let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let bounds = match Aabb2::from_region(&region, &policy)? {
         Classification::Decided(bounds) => bounds,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -4296,7 +4296,7 @@ fn trim_segment_to_planar_face(
     let start = project_to_plane(surface, start)?;
     let end = project_to_plane(surface, end)?;
     let source = LineSeg2::try_new(start, end)?;
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut cuts = vec![Real::zero(), Real::one()];
     for segment in region
         .material_contours()
@@ -4843,7 +4843,7 @@ fn coaxial_revolution_boolean(
         &second_region,
         operation,
         FillRule::NonZero,
-        &CurvePolicy::certified(),
+        &CurvePolicy::STRICT,
     ) {
         Ok(Classification::Decided(region)) => region,
         Ok(Classification::Uncertain(reason)) => return Err(BooleanError::Unresolved(reason)),
@@ -4852,7 +4852,7 @@ fn coaxial_revolution_boolean(
     if result.is_empty() {
         return Ok(Some(BooleanResult::Empty));
     }
-    let profiles = match result.contour_profiles(&CurvePolicy::certified()) {
+    let profiles = match result.contour_profiles(&CurvePolicy::STRICT) {
         Classification::Decided(profiles) => profiles,
         Classification::Uncertain(reason) => return Err(BooleanError::Unresolved(reason)),
     };
@@ -4993,24 +4993,20 @@ fn z_prism_boolean(
 
     let first = LineArcRegion2::new(vec![first_profile], first_holes);
     let second = LineArcRegion2::new(vec![second_profile], second_holes);
-    let result = match first.boolean_region(
-        &second,
-        operation,
-        FillRule::NonZero,
-        &CurvePolicy::certified(),
-    ) {
-        Ok(Classification::Decided(region)) => region,
-        Ok(Classification::Uncertain(reason)) => return Err(BooleanError::Unresolved(reason)),
-        Err(error) => {
-            return Err(BooleanError::Geometry(
-                GeometryError::PlanarCurveConstruction(error),
-            ));
-        }
-    };
+    let result =
+        match first.boolean_region(&second, operation, FillRule::NonZero, &CurvePolicy::STRICT) {
+            Ok(Classification::Decided(region)) => region,
+            Ok(Classification::Uncertain(reason)) => return Err(BooleanError::Unresolved(reason)),
+            Err(error) => {
+                return Err(BooleanError::Geometry(
+                    GeometryError::PlanarCurveConstruction(error),
+                ));
+            }
+        };
     if result.is_empty() {
         return Ok(BooleanResult::Empty);
     }
-    let profiles = match result.contour_profiles(&CurvePolicy::certified()) {
+    let profiles = match result.contour_profiles(&CurvePolicy::STRICT) {
         Classification::Decided(profiles) => profiles,
         Classification::Uncertain(reason) => return Err(BooleanError::Unresolved(reason)),
     };
@@ -5664,7 +5660,7 @@ fn disjoint_boolean(
 }
 
 fn exact_order(left: &Real, right: &Real) -> Result<Ordering, GeometryError> {
-    match compare_reals(left, right) {
+    match compare_reals(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage })
@@ -5723,7 +5719,7 @@ fn trim_conic_to_planar_face(
             weight.clone(),
             Real::one(),
         )?);
-        let fragments = match planar.trim_inside_region(&region, &CurvePolicy::certified()) {
+        let fragments = match planar.trim_inside_region(&region, &CurvePolicy::STRICT) {
             Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
                 return Ok(FacePairTrim::Unresolved(blocker.reason()));
@@ -5767,7 +5763,13 @@ fn merge_adjacent_rational_bezier_fragments(
                     .first()
                     .expect("fragment group is nonempty")
                     .start()?;
-                if !points_exactly_equal(&first_end, &second_start)? {
+                // This pass only compacts an already exact fragment set. Merge
+                // solely on a positive strict certificate; uncertainty leaves
+                // the fragments separate without changing their union.
+                if !matches!(
+                    point3_equal(&first_end, &second_start, crate::STRICT_PREDICATES),
+                    PredicateOutcome::Decided { value: true, .. }
+                ) {
                     continue;
                 }
                 let appended = groups.remove(second);
@@ -5887,6 +5889,25 @@ mod tests {
     use crate::Point3;
     use proptest::prelude::*;
 
+    // Assertions compare independently constructed exact representations. Keep
+    // production predicates strict while allowing the test oracle to finish a
+    // comparison when structural certification alone cannot normalize them.
+    fn compare_reals(
+        left: &Real,
+        right: &Real,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<Ordering> {
+        hyperlimit::compare_reals(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
+
+    fn point3_equal(
+        left: &Point3,
+        right: &Point3,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<bool> {
+        hyperlimit::point3_equal(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
+
     fn p(x: i32, y: i32, z: i32) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
     }
@@ -5898,11 +5919,21 @@ mod tests {
     ) {
         for pcurve in [fragment.first_pcurve(), fragment.second_pcurve()] {
             assert_eq!(
-                compare_reals(pcurve.domain().start(), fragment.curve().domain().start()).value(),
+                compare_reals(
+                    pcurve.domain().start(),
+                    fragment.curve().domain().start(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(pcurve.domain().end(), fragment.curve().domain().end()).value(),
+                compare_reals(
+                    pcurve.domain().end(),
+                    fragment.curve().domain().end(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             let materialized = pcurve.materialize().unwrap();
@@ -5913,11 +5944,21 @@ mod tests {
             let retained_point = pcurve.point_at(&spatial_parameter).unwrap();
             let materialized_point = materialized.curve().point_at(&curve_parameter).unwrap();
             assert_eq!(
-                compare_reals(&retained_point.x, materialized_point.x()).value(),
+                compare_reals(
+                    &retained_point.x,
+                    materialized_point.x(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&retained_point.y, materialized_point.y()).value(),
+                compare_reals(
+                    &retained_point.y,
+                    materialized_point.y(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -5931,37 +5972,13 @@ mod tests {
         let second = second_surface
             .point_at(&fragment.second_pcurve().point_at(&parameter).unwrap())
             .unwrap();
-        assert_eq!(point3_equal(&spatial, &first).value(), Some(true));
-        assert_eq!(point3_equal(&spatial, &second).value(), Some(true));
-    }
-
-    fn rational_corner_transform(z_translation_numerator: i32) -> Matrix4 {
-        let fraction = |numerator: i32| {
-            (Real::from(numerator) / Real::from(25)).expect("nonzero rational denominator")
-        };
-        Matrix4::affine_orthonormal(
-            [
-                [fraction(9), fraction(-12), fraction(20)],
-                [fraction(20), fraction(15), Real::zero()],
-                [fraction(-12), fraction(16), fraction(15)],
-            ],
-            [fraction(16), fraction(5), fraction(z_translation_numerator)],
-        )
-    }
-
-    fn assert_volume(result: BooleanResult, expected: i32) {
-        let (model, solids) = match result {
-            BooleanResult::Solid { model, solid } => (model, vec![solid]),
-            BooleanResult::Solids { model, solids } => (model, solids),
-            BooleanResult::Empty => panic!("expected nonempty Boolean solid"),
-        };
-        let volume = solids
-            .into_iter()
-            .map(|solid| model.solid_volume(solid).unwrap())
-            .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &Real::from(expected)).value(),
-            Some(Ordering::Equal)
+            point3_equal(&spatial, &first, crate::STRICT_PREDICATES).value(),
+            Some(true)
+        );
+        assert_eq!(
+            point3_equal(&spatial, &second, crate::STRICT_PREDICATES).value(),
+            Some(true)
         );
     }
 
@@ -5974,17 +5991,17 @@ mod tests {
                 let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal)).then(
-                    || {
-                        (
-                            face_id,
-                            face.surface(),
-                            origin.clone(),
-                            u.clone(),
-                            v.clone(),
-                        )
-                    },
-                )
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(Ordering::Equal))
+                .then(|| {
+                    (
+                        face_id,
+                        face.surface(),
+                        origin.clone(),
+                        u.clone(),
+                        v.clone(),
+                    )
+                })
             })
             .expect("unit cuboid has an upper cap");
         let control_points = vec![
@@ -6099,7 +6116,12 @@ mod tests {
             second_split.to_json().unwrap()
         );
         assert_eq!(
-            compare_reals(&first_split.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &first_split.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = first_split.to_json().unwrap();
@@ -6131,7 +6153,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &nurbs_split.solid_volume(nurbs_solid).unwrap(),
-                &Real::one()
+                &Real::one(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -6164,8 +6187,9 @@ mod tests {
                 else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal))
-                    .then_some(face_id)
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(Ordering::Equal))
+                .then_some(face_id)
             })
             .expect("cutter has an upper coplanar cap");
         let pair = intersect_faces(&tensor, tensor_face, &cutter, cutter_face)
@@ -6192,7 +6216,12 @@ mod tests {
             .expect("graph partitions the partial contained tensor face");
         assert_eq!(tensor_partition.faces.len(), 2);
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         partitioned
@@ -6218,17 +6247,17 @@ mod tests {
                 let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(Ordering::Equal)).then(
-                    || {
-                        (
-                            face_id,
-                            face.surface(),
-                            origin.clone(),
-                            u.clone(),
-                            v.clone(),
-                        )
-                    },
-                )
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(Ordering::Equal))
+                .then(|| {
+                    (
+                        face_id,
+                        face.surface(),
+                        origin.clone(),
+                        u.clone(),
+                        v.clone(),
+                    )
+                })
             })
             .expect("unit extrusion has an upper cap");
         let tensor = Surface::rational_bezier(
@@ -6338,7 +6367,12 @@ mod tests {
         ));
         assert_eq!(first.to_json().unwrap(), second.to_json().unwrap());
         assert_eq!(
-            compare_reals(&first.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &first.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = first.to_json().unwrap();
@@ -6641,7 +6675,12 @@ mod tests {
                 .expect("public contained-region partition is exact");
         assert_eq!(partition.faces.len(), 2);
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = partitioned.to_json().unwrap();
@@ -6708,7 +6747,12 @@ mod tests {
                 .expect("circular region partitions the affine tensor");
         assert_eq!(partition.faces.len(), 2);
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = partitioned.to_json().unwrap();
@@ -6794,7 +6838,12 @@ mod tests {
                 .expect("mixed exact spline loop partitions the affine tensor");
         assert_eq!(partition.faces.len(), 2);
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = partitioned.to_json().unwrap();
@@ -6880,7 +6929,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &first.solid_volume(solid).unwrap(),
-                &(Real::from(3) / Real::from(4)).unwrap()
+                &(Real::from(3) / Real::from(4)).unwrap(),
+                crate::STRICT_PREDICATES,
             )
             .value(),
             Some(Ordering::Equal)
@@ -6967,7 +7017,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &partitioned.solid_volume(solid).unwrap(),
-                &(Real::from(3) / Real::from(4)).unwrap()
+                &(Real::from(3) / Real::from(4)).unwrap(),
+                crate::STRICT_PREDICATES,
             )
             .value(),
             Some(Ordering::Equal)
@@ -7087,7 +7138,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &first.solid_volume(solid).unwrap(),
-                &(Real::from(3) / Real::from(4)).unwrap()
+                &(Real::from(3) / Real::from(4)).unwrap(),
+                crate::STRICT_PREDICATES,
             )
             .value(),
             Some(Ordering::Equal)
@@ -7104,6 +7156,35 @@ mod tests {
         );
     }
 
+    fn rational_corner_transform(z_translation_numerator: i32) -> Matrix4 {
+        let fraction = |numerator: i32| {
+            (Real::from(numerator) / Real::from(25)).expect("nonzero rational denominator")
+        };
+        Matrix4::affine_orthonormal(
+            [
+                [fraction(9), fraction(-12), fraction(20)],
+                [fraction(20), fraction(15), Real::zero()],
+                [fraction(-12), fraction(16), fraction(15)],
+            ],
+            [fraction(16), fraction(5), fraction(z_translation_numerator)],
+        )
+    }
+
+    fn assert_volume(result: BooleanResult, expected: i32) {
+        let (model, solids) = match result {
+            BooleanResult::Solid { model, solid } => (model, vec![solid]),
+            BooleanResult::Solids { model, solids } => (model, solids),
+            BooleanResult::Empty => panic!("expected nonempty Boolean solid"),
+        };
+        let volume = solids
+            .into_iter()
+            .map(|solid| model.solid_volume(solid).unwrap())
+            .fold(Real::zero(), |sum, volume| sum + volume);
+        assert_eq!(
+            compare_reals(&volume, &Real::from(expected), crate::STRICT_PREDICATES).value(),
+            Some(Ordering::Equal)
+        );
+    }
     #[test]
     fn intersection_graph_retains_exact_sphere_carrier_intersections() {
         let (first, first_solid) = crate::builder::sphere(Real::from(2)).unwrap();
@@ -7194,6 +7275,7 @@ mod tests {
             compare_reals(
                 &partitioned_first.solid_volume(first_solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7202,6 +7284,7 @@ mod tests {
             compare_reals(
                 &partitioned_second.solid_volume(second_solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7237,6 +7320,7 @@ mod tests {
             compare_reals(
                 &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7278,6 +7362,7 @@ mod tests {
             compare_reals(
                 &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
                 &sphere.solid_volume(sphere_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7304,6 +7389,7 @@ mod tests {
             compare_reals(
                 &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
                 &cylinder.solid_volume(cylinder_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7331,7 +7417,12 @@ mod tests {
                 / Real::from(3))
             .unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = Real::from(4) * Real::pi() * (Real::from(9) - sqrt_five.clone());
@@ -7340,7 +7431,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::TEST_ORACLE_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -7380,7 +7471,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -7402,6 +7498,7 @@ mod tests {
             compare_reals(
                 &reversed_model.solid_volume(reversed_solid).unwrap(),
                 &expected,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7417,7 +7514,12 @@ mod tests {
                 panic!("standard operand order {index} must retain the exact mixed solid");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal),
                 "standard operand order {index}"
             );
@@ -7456,6 +7558,7 @@ mod tests {
             compare_reals(
                 &oriented_model.solid_volume(oriented_solid).unwrap(),
                 &expected,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -7468,7 +7571,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -7495,7 +7603,12 @@ mod tests {
         let sqrt_five = Real::from(5).sqrt().unwrap();
         let expected = (Real::from(20) * Real::pi() * sqrt_five.clone() / Real::from(3)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = Real::from(20) * Real::pi() * sqrt_five.clone();
@@ -7504,7 +7617,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -7536,7 +7649,12 @@ mod tests {
             panic!("the standard API must retain one exact napkin-ring solid");
         };
         assert_eq!(
-            compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &standard.solid_volume(standard_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
@@ -7546,7 +7664,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(standard_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(standard_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -7574,7 +7697,12 @@ mod tests {
             panic!("rigid reorientation must retain one exact napkin-ring solid");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected = standard
@@ -7585,7 +7713,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(standard_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(standard_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -7619,7 +7752,12 @@ mod tests {
                 .unwrap();
         for solid in &solids {
             assert_eq!(
-                compare_reals(&model.solid_volume(*solid).unwrap(), &expected_component).value(),
+                compare_reals(
+                    &model.solid_volume(*solid).unwrap(),
+                    &expected_component,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -7628,7 +7766,7 @@ mod tests {
             .map(|solid| model.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &expected).value(),
+            compare_reals(&volume, &expected, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let expected_area = (Real::from(76) - Real::from(20) * sqrt_five.clone()) * Real::pi();
@@ -7637,7 +7775,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
 
@@ -7721,7 +7859,7 @@ mod tests {
             .map(|solid| standard.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&standard_volume, &expected).value(),
+            compare_reals(&standard_volume, &expected, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let json = standard.to_json().unwrap();
@@ -7735,7 +7873,7 @@ mod tests {
             .map(|solid| decoded.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&decoded_volume, &expected).value(),
+            compare_reals(&decoded_volume, &expected, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
 
@@ -7767,7 +7905,7 @@ mod tests {
             .map(|solid| oriented.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&oriented_volume, &expected).value(),
+            compare_reals(&oriented_volume, &expected, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let reflected = standard
@@ -7782,7 +7920,7 @@ mod tests {
             .map(|solid| reflected.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&reflected_volume, &expected).value(),
+            compare_reals(&reflected_volume, &expected, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
     }
@@ -7811,7 +7949,12 @@ mod tests {
             / Real::from(3))
         .unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = (Real::from(40) + Real::from(4) * sqrt_five.clone()) * Real::pi();
@@ -7820,7 +7963,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -7877,7 +8020,12 @@ mod tests {
                 panic!("standard union operand order {index} must retain one exact solid");
             };
             assert_eq!(
-                compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &standard.solid_volume(standard_solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert!(standard.certified_sphere_profile(standard_solid).is_none());
@@ -7908,7 +8056,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(standard_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(standard_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -7936,7 +8089,12 @@ mod tests {
             panic!("rigid reorientation must retain one exact extended shell");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected = standard
@@ -7947,7 +8105,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(standard_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(standard_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -7975,7 +8138,12 @@ mod tests {
         let expected =
             ((Real::from(54) - Real::from(10) * &sqrt_five) * Real::pi() / Real::from(3)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = (Real::from(22) - Real::from(2) * &sqrt_five) * Real::pi();
@@ -7984,7 +8152,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -8031,7 +8199,12 @@ mod tests {
                 panic!("standard intersection must retain the one-sided mixed solid");
             };
             assert_eq!(
-                compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &standard.solid_volume(standard_solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -8054,6 +8227,7 @@ mod tests {
                 compare_reals(
                     &union_model.solid_volume(union_solid).unwrap(),
                     &expected_union,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8063,7 +8237,7 @@ mod tests {
                 .map(|(face, _)| union_model.face_area(face).unwrap())
                 .fold(Real::zero(), |sum, face_area| sum + face_area);
             assert_eq!(
-                compare_reals(&union_area, &expected_union_area).value(),
+                compare_reals(&union_area, &expected_union_area, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             for (point, location) in [
@@ -8105,6 +8279,7 @@ mod tests {
                     .solid_volume(sphere_difference_solid)
                     .unwrap(),
                 &expected_sphere_difference,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8114,7 +8289,12 @@ mod tests {
             .map(|(face, _)| sphere_difference.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&sphere_difference_area, &expected_sphere_difference_area,).value(),
+            compare_reals(
+                &sphere_difference_area,
+                &expected_sphere_difference_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -8154,6 +8334,7 @@ mod tests {
                     .solid_volume(cylinder_difference_solid)
                     .unwrap(),
                 &expected_cylinder_difference,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8168,6 +8349,7 @@ mod tests {
             compare_reals(
                 &cylinder_difference_area,
                 &expected_cylinder_difference_area,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8203,7 +8385,8 @@ mod tests {
             assert_eq!(
                 compare_reals(
                     &decoded.solid_volume(result_solid).unwrap(),
-                    expected_volume
+                    expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8230,6 +8413,7 @@ mod tests {
                 compare_reals(
                     &reflected.solid_volume(result_solid).unwrap(),
                     expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8289,6 +8473,7 @@ mod tests {
                 compare_reals(
                     &oriented.solid_volume(oriented_solid).unwrap(),
                     expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8316,7 +8501,12 @@ mod tests {
         assert_eq!(model.solid(solid).unwrap().voids().len(), 1);
         let expected = Real::from(34) * Real::pi();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = Real::from(42) * Real::pi();
@@ -8325,7 +8515,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -8357,6 +8547,7 @@ mod tests {
                 compare_reals(
                     &union_model.solid_volume(union_solid).unwrap(),
                     &(Real::from(36) * Real::pi()),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8378,6 +8569,7 @@ mod tests {
                 compare_reals(
                     &intersection_model.solid_volume(intersection_solid).unwrap(),
                     &(Real::from(2) * Real::pi()),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8404,7 +8596,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let cyclic = Matrix4::affine_orthonormal(
@@ -8431,7 +8628,12 @@ mod tests {
             panic!("rigid reorientation must retain the cylindrical void");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected = model
@@ -8442,7 +8644,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -8467,7 +8674,12 @@ mod tests {
         assert_eq!(model.solid(solid).unwrap().voids().len(), 1);
         let expected = (Real::from(44) * Real::pi() / Real::from(3)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let expected_area = Real::from(28) * Real::pi();
@@ -8476,7 +8688,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -8523,6 +8735,7 @@ mod tests {
                 compare_reals(
                     &union_model.solid_volume(union_solid).unwrap(),
                     &(Real::from(16) * Real::pi()),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8549,6 +8762,7 @@ mod tests {
                 compare_reals(
                     &intersection_model.solid_volume(intersection_solid).unwrap(),
                     &sphere_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -8571,7 +8785,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let cyclic = Matrix4::affine_orthonormal(
@@ -8598,7 +8817,12 @@ mod tests {
             panic!("rigid reorientation must retain the spherical void");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected = model
@@ -8609,7 +8833,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -8656,7 +8885,12 @@ mod tests {
                 panic!("strict off-axis containment must retain one whole operand");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -8677,6 +8911,7 @@ mod tests {
             compare_reals(
                 &bored_sphere.solid_volume(bored_sphere_solid).unwrap(),
                 &bored_sphere_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8709,6 +8944,7 @@ mod tests {
             compare_reals(
                 &decoded.solid_volume(bored_sphere_solid).unwrap(),
                 &bored_sphere_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8742,6 +8978,7 @@ mod tests {
                     .solid_volume(oriented_bored_sphere_solid)
                     .unwrap(),
                 &bored_sphere_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8757,6 +8994,7 @@ mod tests {
             compare_reals(
                 &reflected.solid_volume(bored_sphere_solid).unwrap(),
                 &bored_sphere_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8808,6 +9046,7 @@ mod tests {
             compare_reals(
                 &hollow_cylinder.solid_volume(hollow_cylinder_solid).unwrap(),
                 &hollow_cylinder_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8840,6 +9079,7 @@ mod tests {
             compare_reals(
                 &decoded_hollow.solid_volume(hollow_cylinder_solid).unwrap(),
                 &hollow_cylinder_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8880,7 +9120,12 @@ mod tests {
                 panic!("reverse off-axis containment must retain one whole operand");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -8933,6 +9178,7 @@ mod tests {
             compare_reals(
                 &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
                 &sphere.solid_volume(sphere_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8943,6 +9189,7 @@ mod tests {
             compare_reals(
                 &partitioned_slab.solid_volume(slab_solid).unwrap(),
                 &slab.solid_volume(slab_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -8956,7 +9203,12 @@ mod tests {
         };
         let expected = (Real::from(5) * Real::pi() / Real::from(3)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -8981,7 +9233,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -8996,7 +9253,12 @@ mod tests {
                 panic!("operand order {index} must retain one exact spherical cap");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal),
                 "operand order {index}"
             );
@@ -9020,7 +9282,12 @@ mod tests {
             panic!("rigidly oriented clipping must retain one exact spherical cap");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -9032,7 +9299,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -9063,6 +9335,7 @@ mod tests {
             compare_reals(
                 &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
                 &sphere.solid_volume(sphere_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9072,7 +9345,12 @@ mod tests {
             .map(|(face, _)| partitioned_sphere.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&partitioned_area, &(Real::from(16) * Real::pi())).value(),
+            compare_reals(
+                &partitioned_area,
+                &(Real::from(16) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -9084,7 +9362,12 @@ mod tests {
         };
         let expected = (Real::from(22) * Real::pi() / Real::from(3)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -9109,7 +9392,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -9124,7 +9412,12 @@ mod tests {
                 panic!("operand order {index} must retain one exact spherical band");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal),
                 "operand order {index}"
             );
@@ -9148,7 +9441,12 @@ mod tests {
             panic!("rigidly oriented clipping must retain one exact spherical band");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected = model
@@ -9159,7 +9457,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -9324,7 +9627,12 @@ mod tests {
             (Real::from(3) / Real::from(2)).unwrap(),
         );
         assert!(fragments.iter().any(|fragment| {
-            point3_equal(&fragment.curve().point_at(&half).unwrap(), &expected).value()
+            point3_equal(
+                &fragment.curve().point_at(&half).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES,
+            )
+            .value()
                 == Some(true)
         }));
         for fragment in fragments {
@@ -9362,7 +9670,12 @@ mod tests {
             Real::one(),
         );
         assert!(transverse_fragments.iter().any(|fragment| {
-            point3_equal(&fragment.curve().point_at(&half).unwrap(), &expected).value()
+            point3_equal(
+                &fragment.curve().point_at(&half).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES,
+            )
+            .value()
                 == Some(true)
         }));
         for fragment in transverse_fragments {
@@ -9401,7 +9714,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &caps_partitioned.solid_volume(sweep_solid).unwrap(),
-                &sweep.solid_volume(sweep_solid).unwrap()
+                &sweep.solid_volume(sweep_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9417,6 +9731,7 @@ mod tests {
             compare_reals(
                 &all_partitioned.solid_volume(sweep_solid).unwrap(),
                 &sweep.solid_volume(sweep_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9437,6 +9752,7 @@ mod tests {
             compare_reals(
                 &slab_partitioned.solid_volume(slab_solid).unwrap(),
                 &slab.solid_volume(slab_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9501,6 +9817,7 @@ mod tests {
             compare_reals(
                 &stitched.solid_volume(stitched_solid).unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9526,6 +9843,7 @@ mod tests {
             compare_reals(
                 &standard.solid_volume(standard_solid).unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9559,6 +9877,7 @@ mod tests {
                     .solid_volume(transverse_stitched_solid)
                     .unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9584,6 +9903,7 @@ mod tests {
             compare_reals(
                 &reflected.solid_volume(transverse_stitched_solid).unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9601,6 +9921,7 @@ mod tests {
                     .solid_volume(transverse_standard_solid)
                     .unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9616,6 +9937,7 @@ mod tests {
             compare_reals(
                 &reversed_operands.solid_volume(reversed_solid).unwrap(),
                 &Real::from(32),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9650,7 +9972,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &partitioned.solid_volume(sweep_solid).unwrap(),
-                &original_volume
+                &original_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9722,7 +10045,10 @@ mod tests {
         let expected = patch_surface
             .point_at(&crate::Point2::new(half.clone(), half.clone()))
             .unwrap();
-        assert_eq!(point3_equal(&point, &expected).value(), Some(true));
+        assert_eq!(
+            point3_equal(&point, &expected, crate::STRICT_PREDICATES).value(),
+            Some(true)
+        );
         assert_eq!(
             plane_model.classify_point(plane_solid, &point).unwrap(),
             crate::SolidPointLocation::Boundary
@@ -9776,6 +10102,7 @@ mod tests {
             point3_equal(
                 &reverse_fragments[0].curve().point_at(&half).unwrap(),
                 &point,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(true)
@@ -9872,7 +10199,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &split_model.solid_volume(first_solid).unwrap(),
-                &Real::from(8)
+                &Real::from(8),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9918,6 +10246,7 @@ mod tests {
             compare_reals(
                 &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
                 &cylinder.solid_volume(cylinder_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9928,6 +10257,7 @@ mod tests {
             compare_reals(
                 &partitioned_slab.solid_volume(slab_solid).unwrap(),
                 &slab.solid_volume(slab_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -9944,7 +10274,12 @@ mod tests {
             model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Cylinder
         }));
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = model.to_json().unwrap();
@@ -9966,7 +10301,12 @@ mod tests {
                 panic!("the standard API must preserve the exact axial cylinder clip");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -9995,7 +10335,12 @@ mod tests {
             panic!("rigidly oriented axial clipping must retain one exact cylinder");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected,).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -10007,7 +10352,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -10045,6 +10395,7 @@ mod tests {
             compare_reals(
                 &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
                 &frustum.solid_volume(frustum_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10063,7 +10414,12 @@ mod tests {
             model.surface(face.surface()).unwrap().kind() == crate::SurfaceKind::Cone
         }));
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = model.to_json().unwrap();
@@ -10088,7 +10444,12 @@ mod tests {
                 panic!("the standard API must preserve the exact transverse frustum clip");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal),
                 "operand order {index}"
             );
@@ -10112,7 +10473,12 @@ mod tests {
             panic!("rigidly oriented transverse clipping must retain one exact frustum");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -10124,7 +10490,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -10166,6 +10537,7 @@ mod tests {
                     .solid_volume(revolution_solid)
                     .unwrap(),
                 &revolution.solid_volume(revolution_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10176,6 +10548,7 @@ mod tests {
             compare_reals(
                 &partitioned_slab.solid_volume(slab_solid).unwrap(),
                 &slab.solid_volume(slab_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10190,7 +10563,12 @@ mod tests {
         let expected_volume = Real::from(15) * Real::pi();
         let expected_area = Real::from(40) * Real::pi();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let area = model
@@ -10198,7 +10576,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert!(model.certified_revolution_profile(solid).is_some());
@@ -10249,7 +10627,12 @@ mod tests {
                 panic!("the standard API must retain the revolution slab clip");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -10301,7 +10684,12 @@ mod tests {
         };
         let expected = (Real::from(5_081) * Real::pi() / Real::from(320)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert!(model.certified_revolution_profile(solid).is_none());
@@ -10328,7 +10716,12 @@ mod tests {
                 panic!("the standard API must retain the exact NURBS revolution clip");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -10375,7 +10768,12 @@ mod tests {
         };
         let expected = (Real::from(223) * Real::pi() / Real::from(24)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         for (point, expected_location) in [
@@ -10428,7 +10826,12 @@ mod tests {
                 panic!("the standard API must retain the exact multi-span NURBS clip");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -10474,6 +10877,7 @@ mod tests {
             compare_reals(
                 &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
                 &frustum.solid_volume(frustum_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10484,6 +10888,7 @@ mod tests {
             compare_reals(
                 &partitioned_cutter.solid_volume(cutter_solid).unwrap(),
                 &cutter.solid_volume(cutter_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10501,7 +10906,12 @@ mod tests {
         .unwrap()
             + Real::from(15);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let area = model
@@ -10509,7 +10919,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -10563,7 +10973,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -10590,6 +11005,7 @@ mod tests {
                 compare_reals(
                     &standard.solid_volume(standard_solid).unwrap(),
                     &expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal),
@@ -10600,7 +11016,7 @@ mod tests {
                 .map(|(face, _)| standard.face_area(face).unwrap())
                 .fold(Real::zero(), |sum, face_area| sum + face_area);
             assert_eq!(
-                compare_reals(&standard_area, &expected_area).value(),
+                compare_reals(&standard_area, &expected_area, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal),
                 "operation {index}"
             );
@@ -10644,7 +11060,12 @@ mod tests {
         let reflection = Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]);
         let reflected = model.transformed(&reflection).unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -10693,6 +11114,7 @@ mod tests {
             compare_reals(
                 &oriented.solid_volume(oriented_solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10737,6 +11159,7 @@ mod tests {
             compare_reals(
                 &partitioned_torus.solid_volume(torus_solid).unwrap(),
                 &torus.solid_volume(torus_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10747,6 +11170,7 @@ mod tests {
             compare_reals(
                 &partitioned_slab.solid_volume(slab_solid).unwrap(),
                 &slab.solid_volume(slab_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10760,7 +11184,12 @@ mod tests {
         let expected = Real::from(2) * Real::pi() * Real::pi()
             - (Real::from(3) * Real::pi() * Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -10816,6 +11245,7 @@ mod tests {
             compare_reals(
                 &partitioned_first.solid_volume(first_solid).unwrap(),
                 &first_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10824,6 +11254,7 @@ mod tests {
             compare_reals(
                 &partitioned_second.solid_volume(second_solid).unwrap(),
                 &second_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10865,9 +11296,19 @@ mod tests {
         assert!(retained.iter().all(|(curves, fragments)| {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
-                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                compare_reals(
+                    pcurve.curve().start().x(),
+                    &Real::tau(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
                     == Some(Ordering::Equal)
-                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                    && compare_reals(
+                        pcurve.curve().end().x(),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(Ordering::Equal)
             }) && fragments.len() == 1
         }));
@@ -10878,6 +11319,7 @@ mod tests {
             compare_reals(
                 &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
                 &mirrored_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10923,6 +11365,7 @@ mod tests {
             compare_reals(
                 &partitioned_sphere.solid_volume(sphere_solid).unwrap(),
                 &sphere_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10931,6 +11374,7 @@ mod tests {
             compare_reals(
                 &partitioned_torus.solid_volume(torus_solid).unwrap(),
                 &torus_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -10972,9 +11416,19 @@ mod tests {
         assert!(retained.iter().all(|(curves, fragments)| {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
-                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                compare_reals(
+                    pcurve.curve().start().x(),
+                    &Real::tau(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
                     == Some(Ordering::Equal)
-                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                    && compare_reals(
+                        pcurve.curve().end().x(),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(Ordering::Equal)
             }) && fragments.len() == 1
         }));
@@ -10984,6 +11438,7 @@ mod tests {
             compare_reals(
                 &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
                 &torus_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11046,6 +11501,7 @@ mod tests {
             compare_reals(
                 &partitioned_cylinder.solid_volume(cylinder_solid).unwrap(),
                 &cylinder_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11054,6 +11510,7 @@ mod tests {
             compare_reals(
                 &partitioned_torus.solid_volume(torus_solid).unwrap(),
                 &torus_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11100,9 +11557,19 @@ mod tests {
         assert!(retained.iter().all(|(curves, fragments)| {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
-                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                compare_reals(
+                    pcurve.curve().start().x(),
+                    &Real::tau(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
                     == Some(Ordering::Equal)
-                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                    && compare_reals(
+                        pcurve.curve().end().x(),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(Ordering::Equal)
             }) && fragments.len() == 1
         }));
@@ -11112,6 +11579,7 @@ mod tests {
             compare_reals(
                 &partitioned_mirrored.solid_volume(mirrored_solid).unwrap(),
                 &torus_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11154,9 +11622,19 @@ mod tests {
             assert_eq!(fragments.len(), 1);
             assert!(curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
-                compare_reals(pcurve.curve().start().x(), &Real::tau()).value()
+                compare_reals(
+                    pcurve.curve().start().x(),
+                    &Real::tau(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
                     == Some(Ordering::Equal)
-                    && compare_reals(pcurve.curve().end().x(), &Real::zero()).value()
+                    && compare_reals(
+                        pcurve.curve().end().x(),
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(Ordering::Equal)
             }));
             assert_surface_fragment_replays(
@@ -11181,6 +11659,7 @@ mod tests {
             compare_reals(
                 &partitioned_frustum.solid_volume(frustum_solid).unwrap(),
                 &frustum_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11189,6 +11668,7 @@ mod tests {
             compare_reals(
                 &partitioned_torus.solid_volume(torus_solid).unwrap(),
                 &torus_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11235,9 +11715,19 @@ mod tests {
         assert!(retained.iter().all(|(curves, fragments)| {
             curves.iter().all(|curve| {
                 let pcurve = curve.second_pcurve().materialize().unwrap();
-                compare_reals(pcurve.curve().start().x(), &Real::zero()).value()
+                compare_reals(
+                    pcurve.curve().start().x(),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                )
+                .value()
                     == Some(Ordering::Equal)
-                    && compare_reals(pcurve.curve().end().x(), &Real::tau()).value()
+                    && compare_reals(
+                        pcurve.curve().end().x(),
+                        &Real::tau(),
+                        crate::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(Ordering::Equal)
             }) && fragments.len() == 1
         }));
@@ -11281,6 +11771,7 @@ mod tests {
             compare_reals(
                 &partitioned_torus.solid_volume(torus_solid).unwrap(),
                 &torus.solid_volume(torus_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11291,6 +11782,7 @@ mod tests {
             compare_reals(
                 &partitioned_cutter.solid_volume(cutter_solid).unwrap(),
                 &cutter.solid_volume(cutter_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11304,7 +11796,12 @@ mod tests {
         let expected_volume = Real::pi() * Real::pi() * Real::from(3);
         let expected_area = Real::from(6) * Real::pi() * Real::pi() + Real::from(2) * Real::pi();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let area = model
@@ -11312,7 +11809,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face_area| sum + face_area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -11359,7 +11856,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -11386,6 +11888,7 @@ mod tests {
                 compare_reals(
                     &standard.solid_volume(standard_solid).unwrap(),
                     &expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal),
@@ -11400,7 +11903,7 @@ mod tests {
                 .map(|(face, _)| standard.face_area(face).unwrap())
                 .fold(Real::zero(), |sum, face_area| sum + face_area);
             assert_eq!(
-                compare_reals(&standard_area, &expected_area).value(),
+                compare_reals(&standard_area, &expected_area, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal),
                 "operation {index}"
             );
@@ -11433,6 +11936,7 @@ mod tests {
                 compare_reals(
                     &standard_decoded.solid_volume(standard_solid).unwrap(),
                     &expected_volume,
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal),
@@ -11443,7 +11947,12 @@ mod tests {
         let reflection = Matrix4::affine_nonuniform_scale([Real::one(), -Real::one(), Real::one()]);
         let reflected = model.transformed(&reflection).unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let reflected_interior = Point3::new(
@@ -11467,6 +11976,7 @@ mod tests {
             compare_reals(
                 &reflected_decoded.solid_volume(solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11499,6 +12009,7 @@ mod tests {
             compare_reals(
                 &oriented.solid_volume(oriented_solid).unwrap(),
                 &expected_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11535,7 +12046,12 @@ mod tests {
         let expected = Real::from(2) * Real::pi() * Real::pi()
             + Real::from(3) * Real::pi() * Real::from(3).sqrt().unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         for (point, location) in [
@@ -11568,7 +12084,12 @@ mod tests {
             .unwrap();
         assert_eq!(decoded.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -11583,7 +12104,12 @@ mod tests {
                 panic!("operand order {index} must preserve the exact torus band");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal),
                 "operand order {index}"
             );
@@ -11607,7 +12133,12 @@ mod tests {
             panic!("rigidly oriented transverse clipping must retain one exact torus band");
         };
         assert_eq!(
-            compare_reals(&oriented.solid_volume(oriented_solid).unwrap(), &expected).value(),
+            compare_reals(
+                &oriented.solid_volume(oriented_solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -11619,7 +12150,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -11651,7 +12187,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &first_partitioned.solid_volume(first_solid).unwrap(),
-                &Real::from(8)
+                &Real::from(8),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11659,7 +12196,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &second_partitioned.solid_volume(second_solid).unwrap(),
-                &Real::from(8)
+                &Real::from(8),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -11862,7 +12400,12 @@ mod tests {
                 panic!("nested spheres have one connected volumetric result");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             let json = model.to_json().unwrap();
@@ -11905,7 +12448,12 @@ mod tests {
             .map(|solid| model.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &(Real::from(12) * Real::pi() * Real::pi())).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(12) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = model.to_json().unwrap();
@@ -11994,7 +12542,12 @@ mod tests {
             };
             assert_eq!(solids.len(), 1);
             assert_eq!(
-                compare_reals(&model.solid_volume(solids[0]).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solids[0]).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             crate::RawModel::from_json(&model.to_json().unwrap())
@@ -12023,6 +12576,7 @@ mod tests {
             compare_reals(
                 &(model.solid_volume(solids[0]).unwrap() + model.solid_volume(solids[1]).unwrap()),
                 &Real::from(16),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12053,7 +12607,12 @@ mod tests {
                 panic!("contained planar Boolean must produce one connected solid");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             if operation == BooleanOperation::Difference {
@@ -12112,7 +12671,12 @@ mod tests {
                 panic!("oriented overlapping cuboids must produce one solid");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -12143,7 +12707,12 @@ mod tests {
                 panic!("incompatible world-z slabs must fall through to planar stitching");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -12463,6 +13032,7 @@ mod tests {
             compare_reals(
                 &partitioned_box.solid_volume(box_solid).unwrap(),
                 &box_model.solid_volume(box_solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12591,6 +13161,7 @@ mod tests {
             compare_reals(
                 surface_curve_fragments[0].curve().domain().end(),
                 &Real::tau(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12856,6 +13427,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(Real::from(4) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12876,6 +13448,7 @@ mod tests {
             compare_reals(
                 &total,
                 &(Real::from(8) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12937,6 +13510,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(Real::from(500) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12950,6 +13524,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(Real::from(32) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -12962,7 +13537,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
-                &(Real::from(156) * Real::pi())
+                &(Real::from(156) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13077,7 +13653,12 @@ mod tests {
             assert_eq!(model.counts().faces, 2);
             assert_eq!(model.counts().edges, 4);
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             let area = model
@@ -13085,7 +13666,7 @@ mod tests {
                 .map(|(face, _)| model.face_area(face).unwrap())
                 .fold(Real::zero(), |sum, area| sum + area);
             assert_eq!(
-                compare_reals(&area, &expected_area).value(),
+                compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
@@ -13103,7 +13684,12 @@ mod tests {
                 .validate()
                 .unwrap();
             assert_eq!(
-                compare_reals(&decoded.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &decoded.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             let (pcurve_id, pcurve) = model.pcurves().nth(1).unwrap();
@@ -13141,7 +13727,12 @@ mod tests {
                 .validate()
                 .unwrap();
             assert_eq!(
-                compare_reals(&reflected.solid_volume(solid).unwrap(), &expected_volume).value(),
+                compare_reals(
+                    &reflected.solid_volume(solid).unwrap(),
+                    &expected_volume,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -13232,7 +13823,12 @@ mod tests {
             - (Real::from(15).sqrt().unwrap() / Real::from(2)).unwrap();
         let expected = lens_area * Real::from(3);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -13286,7 +13882,12 @@ mod tests {
                 panic!("overlapping coaxial interval result must be connected");
             };
             assert_eq!(
-                compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.solid_volume(solid).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             crate::RawModel::from_json(&model.to_json().unwrap())
@@ -13315,7 +13916,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
-                &(Real::from(8) * Real::pi())
+                &(Real::from(8) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13334,7 +13936,12 @@ mod tests {
             .map(|solid| model.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &(Real::from(12) * Real::pi())).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(12) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -13364,7 +13971,12 @@ mod tests {
             .map(|solid| model.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &(Real::from(20) * Real::pi())).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(20) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -13383,7 +13995,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
-                &(Real::from(20) * Real::pi())
+                &(Real::from(20) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13415,7 +14028,12 @@ mod tests {
             - (Real::from(15).sqrt().unwrap() / Real::from(2)).unwrap())
             * Real::from(3);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
@@ -13461,7 +14079,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
-                &(Real::from(19) * Real::pi() / Real::from(3)).unwrap()
+                &(Real::from(19) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13480,7 +14099,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &volume,
-                &(Real::from(44) * Real::pi() / Real::from(3)).unwrap()
+                &(Real::from(44) * Real::pi() / Real::from(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13498,7 +14118,8 @@ mod tests {
         assert_eq!(
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
-                &(Real::from(21) * Real::pi())
+                &(Real::from(21) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13525,7 +14146,8 @@ mod tests {
             assert_eq!(
                 compare_reals(
                     &model.solid_volume(solid).unwrap(),
-                    &(Real::from(6) * Real::pi() * Real::pi())
+                    &(Real::from(6) * Real::pi() * Real::pi()),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(Ordering::Equal)
@@ -13587,7 +14209,7 @@ mod tests {
                 .map(|solid| model.solid_volume(*solid).unwrap())
                 .fold(Real::zero(), |sum, volume| sum + volume);
             assert_eq!(
-                compare_reals(&volume, &expected).value(),
+                compare_reals(&volume, &expected, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
@@ -13599,7 +14221,7 @@ mod tests {
                 .map(|solid| rebuilt.solid_volume(*solid).unwrap())
                 .fold(Real::zero(), |sum, volume| sum + volume);
             assert_eq!(
-                compare_reals(&rebuilt_volume, &expected).value(),
+                compare_reals(&rebuilt_volume, &expected, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
         }
@@ -13637,6 +14259,7 @@ mod tests {
             compare_reals(
                 &cut.solid_volume(cut_solid).unwrap(),
                 &(Real::from(91) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13656,6 +14279,7 @@ mod tests {
             compare_reals(
                 &refilled.solid_volume(refilled_solid).unwrap(),
                 &(Real::from(96) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13678,6 +14302,7 @@ mod tests {
             compare_reals(
                 &ring_model.solid_volume(ring_solid).unwrap(),
                 &(Real::from(16) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13698,6 +14323,7 @@ mod tests {
             compare_reals(
                 &decoded_ring.solid_volume(ring_solid).unwrap(),
                 &(Real::from(16) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -13721,7 +14347,12 @@ mod tests {
             .map(|solid| model.solid_volume(*solid).unwrap())
             .fold(Real::zero(), |sum, volume| sum + volume);
         assert_eq!(
-            compare_reals(&volume, &(Real::from(4) * Real::pi())).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(4) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -13755,7 +14386,7 @@ mod tests {
                 intersection(&first, first_solid, &second, second_solid).unwrap(),
             );
             prop_assert_eq!(
-                compare_reals(&intersection_volume, &Real::from(overlap_volume)).value(),
+                compare_reals(&intersection_volume, &Real::from(overlap_volume), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
 
@@ -13765,8 +14396,7 @@ mod tests {
             prop_assert_eq!(
                 compare_reals(
                     &union_volume,
-                    &Real::from(first_volume + second_volume - overlap_volume),
-                )
+                    &Real::from(first_volume + second_volume - overlap_volume), crate::STRICT_PREDICATES)
                 .value(),
                 Some(Ordering::Equal)
             );
@@ -13777,8 +14407,7 @@ mod tests {
             prop_assert_eq!(
                 compare_reals(
                     &difference_volume,
-                    &Real::from(first_volume - overlap_volume),
-                )
+                    &Real::from(first_volume - overlap_volume), crate::STRICT_PREDICATES)
                 .value(),
                 Some(Ordering::Equal)
             );

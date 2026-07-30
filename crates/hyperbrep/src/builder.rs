@@ -390,7 +390,7 @@ pub fn revolution_patch(
 ) -> Result<(Model, FaceId), ConstructionError> {
     let angle_domain = ParameterDomain::new(angle_start, angle_end)?;
     let angle_span = angle_domain.end() - angle_domain.start();
-    match compare_reals(&angle_span, &Real::tau()) {
+    match compare_reals(&angle_span, &Real::tau(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Less,
             ..
@@ -798,7 +798,7 @@ fn exact_patch_vertex(
     point: &Point3,
 ) -> Result<VertexId, ConstructionError> {
     for (existing, vertex) in vertices.iter() {
-        match point3_equal(existing, point) {
+        match point3_equal(existing, point, crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided { value: true, .. } => return Ok(*vertex),
             PredicateOutcome::Decided { value: false, .. } => {}
             PredicateOutcome::Unknown { needed, stage } => {
@@ -867,7 +867,7 @@ fn exact_tensor_boundary_equal(
         _ => return Ok(false),
     }
     for (candidate, existing) in candidate_points.iter().zip(&existing_points) {
-        match point3_equal(candidate, existing) {
+        match point3_equal(candidate, existing, crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided { value: true, .. } => {}
             PredicateOutcome::Decided { value: false, .. } => return Ok(false),
             PredicateOutcome::Unknown { needed, stage } => {
@@ -886,7 +886,7 @@ fn exact_tensor_boundary_equal(
 }
 
 fn exact_real_equal(left: &Real, right: &Real) -> Result<bool, ConstructionError> {
-    match compare_reals(left, right) {
+    match compare_reals(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value == std::cmp::Ordering::Equal),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage }.into())
@@ -1402,8 +1402,17 @@ pub fn cone_frustum(
         (&height * &base_radius / &radial_drop).map_err(|_| GeometryError::ProjectiveDivision)?;
     let semi_angle = crate::geometry::certified_atan2(radial_drop.clone(), height.clone())?;
     let sine = semi_angle.clone().sin();
+    let cosine = semi_angle.clone().cos();
     let v_bottom = (&base_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
-    let v_top = (&top_radius / sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let v_top = (&top_radius / &sine).map_err(|_| GeometryError::ProjectiveDivision)?;
+    let bottom_radius = &v_bottom * &sine;
+    let top_radius_on_cone = &v_top * &sine;
+    let bottom_center = Point3::new(
+        Real::zero(),
+        Real::zero(),
+        &apex_height - &v_bottom * &cosine,
+    );
+    let top_center = Point3::new(Real::zero(), Real::zero(), &apex_height - &v_top * &cosine);
     let quarter = (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
     let angles = (0..4)
         .map(|index| &quarter * Real::from(index))
@@ -1417,12 +1426,23 @@ pub fn cone_frustum(
     )?;
     let mut builder = ModelBuilder::new();
     let cone_surface = builder.surface(cone.clone())?;
+    // Author every incidence in the cone's retained meridian frame. Rebuilding
+    // the cap centers and radii from the nominal inputs asks a general Real
+    // equality predicate to rediscover inverse-trigonometric identities.
+    // Sharing these exact expressions lets topology validate by identity while
+    // preserving the mathematically identical requested dimensions.
     let mut points = Vec::with_capacity(8);
     for u in &angles {
-        points.push(cone.point_at(&Point2::new(u.clone(), v_bottom.clone()))?);
+        points.push(
+            bottom_center.clone() + Vector3::x() * (&bottom_radius * u.clone().cos())
+                - Vector3::y() * (&bottom_radius * u.clone().sin()),
+        );
     }
     for u in &angles {
-        points.push(cone.point_at(&Point2::new(u.clone(), v_top.clone()))?);
+        points.push(
+            top_center.clone() + Vector3::x() * (&top_radius_on_cone * u.clone().cos())
+                - Vector3::y() * (&top_radius_on_cone * u.clone().sin()),
+        );
     }
     let vertices = points
         .iter()
@@ -1437,10 +1457,10 @@ pub fn cone_frustum(
         let start = angles[index].clone();
         let end = &quarter * Real::from((index + 1) as i32);
         let bottom_curve = builder.curve(Curve3::circle_arc(
-            Point3::origin(),
+            bottom_center.clone(),
             Vector3::x(),
             -Vector3::y(),
-            base_radius.clone(),
+            bottom_radius.clone(),
             start.clone(),
             end.clone(),
         )?)?;
@@ -1451,10 +1471,10 @@ pub fn cone_frustum(
             ParameterDomain::new(start.clone(), end.clone())?,
         )?);
         let top_curve = builder.curve(Curve3::circle_arc(
-            Point3::new(Real::zero(), Real::zero(), height.clone()),
+            top_center.clone(),
             Vector3::x(),
             -Vector3::y(),
-            top_radius.clone(),
+            top_radius_on_cone.clone(),
             start.clone(),
             end.clone(),
         )?)?;
@@ -1480,11 +1500,8 @@ pub fn cone_frustum(
     }
 
     let center = CurvePoint2::new(Real::zero(), Real::zero());
-    let bottom_surface = builder.surface(Surface::plane(
-        Point3::origin(),
-        Vector3::x(),
-        Vector3::y(),
-    )?)?;
+    let bottom_surface =
+        builder.surface(Surface::plane(bottom_center, Vector3::x(), Vector3::y())?)?;
     let mut bottom_uses = Vec::with_capacity(4);
     for index in 0..4 {
         let next = (index + 1) % 4;
@@ -1512,11 +1529,7 @@ pub fn cone_frustum(
         Vec::new(),
     )?;
 
-    let top_surface = builder.surface(Surface::plane(
-        Point3::new(Real::zero(), Real::zero(), height),
-        Vector3::x(),
-        Vector3::y(),
-    )?)?;
+    let top_surface = builder.surface(Surface::plane(top_center, Vector3::x(), Vector3::y())?)?;
     let mut top_uses = Vec::with_capacity(4);
     for index in (0..4).rev() {
         let next = (index + 1) % 4;
@@ -1870,7 +1883,7 @@ fn normalize_contour(
         return Err(ConstructionError::ProfileTooSmall);
     }
     if !contour
-        .intersect_self(&CurvePolicy::certified())
+        .intersect_self(&CurvePolicy::STRICT)
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -1880,7 +1893,7 @@ fn normalize_contour(
         .signed_area()
         .map_err(GeometryError::from)?
         .ok_or(ConstructionError::DegenerateProfile)?;
-    let reverse = match compare_reals(&signed_area, &Real::zero()) {
+    let reverse = match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Less,
             ..
@@ -1913,7 +1926,7 @@ fn normalize_contour(
 }
 
 fn validate_contour_nesting(outer: &Contour2, holes: &[Contour2]) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     for hole in holes {
         if !outer
             .intersect_contour(hole, &policy)
@@ -2733,14 +2746,20 @@ fn certify_sweep_frame(
     Curve3::rational_bezier(origins.to_vec(), weights.to_vec())?;
 
     let normal = u_axes[0].cross(&v_axes[0]);
-    if decided_construction_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_construction_order(compare_reals(
+        &normal.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Err(BuildError::Geometry(GeometryError::DegeneratePlaneBasis).into());
     }
     for axis in u_axes.iter().chain(v_axes) {
-        if decided_construction_order(compare_reals(&axis.dot(&normal), &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_construction_order(compare_reals(
+            &axis.dot(&normal),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Err(ConstructionError::NonPlanarSweepFrame);
         }
@@ -2772,6 +2791,7 @@ fn certify_sweep_frame(
             if decided_construction_order(compare_reals(
                 &cross_coefficient.0[component],
                 &expected.0[component],
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
             {
                 this_constant = false;
@@ -2785,6 +2805,7 @@ fn certify_sweep_frame(
             if decided_construction_order(compare_reals(
                 &cross_coefficient.0[component],
                 &parallel.0[component],
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
             {
                 return Err(ConstructionError::NonPlanarSweepFrame);
@@ -2796,7 +2817,7 @@ fn certify_sweep_frame(
         return Ok((normal, Real::one()));
     }
     for weight in &weights[1..] {
-        if decided_construction_order(compare_reals(weight, &weights[0]))?
+        if decided_construction_order(compare_reals(weight, &weights[0], crate::STRICT_PREDICATES))?
             != std::cmp::Ordering::Equal
         {
             return Err(ConstructionError::UnsupportedRationalSweepFrameArea);
@@ -2807,8 +2828,11 @@ fn certify_sweep_frame(
     for numerator in determinant_numerators {
         let coefficient =
             (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_construction_order(compare_reals(&coefficient, &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        if decided_construction_order(compare_reals(
+            &coefficient,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Err(ConstructionError::NonPositiveSweepFrameArea);
         }
@@ -2863,8 +2887,11 @@ fn certify_sweep_path_progress(
     let start = scalar(&controls[0]);
     let end = scalar(&controls[degree]);
     let progress = &end - &start;
-    if decided_construction_order(compare_reals(&progress, &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_construction_order(compare_reals(
+        &progress,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Err(ConstructionError::NonMonotoneSweepPath);
     }
@@ -2902,8 +2929,11 @@ fn certify_sweep_path_progress(
             .map_err(|_| GeometryError::ProjectiveDivision)?
             - (affine_times_weight / &denominator)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_construction_order(compare_reals(&difference, &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_construction_order(compare_reals(
+            &difference,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Err(ConstructionError::NonMonotoneSweepPath);
         }
@@ -3186,20 +3216,23 @@ fn certified_loft_scale(lower: &[Point2], upper: &[Point2]) -> Result<Real, Cons
     }
     let lower_delta = &lower[1] - &lower[0];
     let upper_delta = &upper[1] - &upper[0];
-    let lower_x_is_zero = match compare_reals(&lower_delta.0[0], &Real::zero()) {
-        PredicateOutcome::Decided { value, .. } => value == std::cmp::Ordering::Equal,
-        PredicateOutcome::Unknown { needed, stage } => {
-            return Err(
-                BuildError::Geometry(GeometryError::PredicateUnresolved { needed, stage }).into(),
-            );
-        }
-    };
+    let lower_x_is_zero =
+        match compare_reals(&lower_delta.0[0], &Real::zero(), crate::STRICT_PREDICATES) {
+            PredicateOutcome::Decided { value, .. } => value == std::cmp::Ordering::Equal,
+            PredicateOutcome::Unknown { needed, stage } => {
+                return Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
+                    needed,
+                    stage,
+                })
+                .into());
+            }
+        };
     let scale = if lower_x_is_zero {
         (&upper_delta.0[1] / &lower_delta.0[1]).map_err(|_| GeometryError::ProjectiveDivision)?
     } else {
         (&upper_delta.0[0] / &lower_delta.0[0]).map_err(|_| GeometryError::ProjectiveDivision)?
     };
-    match compare_reals(&scale, &Real::zero()) {
+    match compare_reals(&scale, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -3220,7 +3253,7 @@ fn certified_loft_scale(lower: &[Point2], upper: &[Point2]) -> Result<Real, Cons
             (&upper_delta.0[0], &scale * &lower_delta.0[0]),
             (&upper_delta.0[1], &scale * &lower_delta.0[1]),
         ] {
-            match compare_reals(actual, &expected) {
+            match compare_reals(actual, &expected, crate::STRICT_PREDICATES) {
                 PredicateOutcome::Decided {
                     value: std::cmp::Ordering::Equal,
                     ..
@@ -3262,14 +3295,20 @@ fn certify_convex_loft_correspondence(
         let upper_turn = cross(&upper_edge, &upper_next);
         let mixed_turn = cross(&lower_edge, &upper_next) + cross(&upper_edge, &lower_next);
         for turn in [&lower_turn, &upper_turn] {
-            if decided_construction_order(compare_reals(turn, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+            if decided_construction_order(compare_reals(
+                turn,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             {
                 return Err(ConstructionError::IncompatibleLoftSections);
             }
         }
-        if decided_construction_order(compare_reals(&mixed_turn, &Real::zero()))?
-            == std::cmp::Ordering::Less
+        if decided_construction_order(compare_reals(
+            &mixed_turn,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
         {
             return Err(ConstructionError::IncompatibleLoftSections);
         }
@@ -3290,7 +3329,7 @@ fn decided_construction_order(
 
 fn validate_revolution_profile_radius(profile: &[Point2]) -> Result<(), ConstructionError> {
     for point in profile {
-        match compare_reals(&point.x, &Real::zero()) {
+        match compare_reals(&point.x, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Greater,
                 ..
@@ -3312,7 +3351,7 @@ fn validate_revolution_profile_radius(profile: &[Point2]) -> Result<(), Construc
 
 fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, ConstructionError> {
     let contour = normalize_contour(contour, true)?;
-    let bounds = match Aabb2::from_contour(&contour, &CurvePolicy::certified())
+    let bounds = match Aabb2::from_contour(&contour, &CurvePolicy::STRICT)
         .map_err(GeometryError::from)?
     {
         Classification::Decided(bounds) => bounds,
@@ -3322,7 +3361,7 @@ fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, Construc
             );
         }
     };
-    match compare_reals(bounds.min_x(), &Real::zero()) {
+    match compare_reals(bounds.min_x(), &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -3363,7 +3402,7 @@ fn normalize_planar_path(
         .signed_area()
         .map_err(GeometryError::from)?
         .ok_or(ConstructionError::UnsupportedPlanarProfile)?;
-    match compare_reals(&signed_area, &Real::zero()) {
+    match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -3390,7 +3429,7 @@ fn validate_planar_path_nesting(
     outer: &CurvePath2,
     holes: &[CurvePath2],
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let paths_are_disjoint =
         |first: &CurvePath2, second: &CurvePath2| -> Result<bool, ConstructionError> {
             let result = first
@@ -3647,7 +3686,7 @@ fn validate_simple_curve_path(
     profile: &CurvePath2,
     unsupported: ConstructionError,
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let fragments = profile
         .native_bezier_fragments()
         .map_err(GeometryError::from)?;
@@ -3753,7 +3792,7 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
         partition_periodic_curve_path(profile, ConstructionError::UnsupportedRevolutionProfile)?;
     validate_simple_curve_path(&profile, ConstructionError::UnsupportedRevolutionProfile)?;
     let bounds = profile.bounds().map_err(GeometryError::from)?;
-    match compare_reals(bounds.min_x(), &Real::zero()) {
+    match compare_reals(bounds.min_x(), &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -3774,7 +3813,7 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
         .signed_area()
         .map_err(GeometryError::from)?
         .ok_or(ConstructionError::UnsupportedRevolutionProfile)?;
-    match compare_reals(&signed_area, &Real::zero()) {
+    match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -3796,7 +3835,7 @@ fn normalize_revolution_path(profile: &CurvePath2) -> Result<CurvePath2, Constru
 fn positive_projective_weights(weights: &[Real]) -> Result<Vec<Real>, ConstructionError> {
     let mut sign = None;
     for weight in weights {
-        let this_sign = match compare_reals(weight, &Real::zero()) {
+        let this_sign = match compare_reals(weight, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Greater,
                 ..
@@ -4536,7 +4575,7 @@ fn normalize_profile(
     }
     let contour = Contour2::try_new(contour_segments).map_err(GeometryError::from)?;
     if !contour
-        .intersect_self(&CurvePolicy::certified())
+        .intersect_self(&CurvePolicy::STRICT)
         .map_err(GeometryError::from)?
         .is_empty()
     {
@@ -4546,7 +4585,7 @@ fn normalize_profile(
         .signed_area()
         .map_err(GeometryError::from)?
         .ok_or(ConstructionError::DegenerateProfile)?;
-    match compare_reals(&signed_area, &Real::zero()) {
+    match compare_reals(&signed_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Greater,
             ..
@@ -4573,7 +4612,7 @@ fn validate_profile_nesting(
     outer: &[Point2],
     holes: &[Vec<Point2>],
 ) -> Result<(), ConstructionError> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let outer_contour = contour_from_profile(outer)?;
     let hole_contours = holes
         .iter()
@@ -4909,7 +4948,7 @@ fn curve_point(point: &Point2) -> CurvePoint2 {
 }
 
 fn require_increasing(min: &Real, max: &Real, axis: Axis) -> Result<(), ConstructionError> {
-    match compare_reals(min, max) {
+    match compare_reals(min, max, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Less,
             ..
@@ -4923,7 +4962,7 @@ fn require_increasing(min: &Real, max: &Real, axis: Axis) -> Result<(), Construc
 
 fn require_frustum_radii(base_radius: &Real, top_radius: &Real) -> Result<(), ConstructionError> {
     for (left, right) in [(&Real::zero(), top_radius), (top_radius, base_radius)] {
-        match compare_reals(left, right) {
+        match compare_reals(left, right, crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Less,
                 ..
@@ -4945,11 +4984,30 @@ fn require_frustum_radii(base_radius: &Real, top_radius: &Real) -> Result<(), Co
 
 #[cfg(test)]
 mod tests {
-    use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
+    use hyperlimit::PredicateOutcome;
 
     use super::*;
     use crate::geometry::SurfaceExactData;
     use crate::{EdgeUseId, ModelCounts, SolidPointLocation};
+
+    // Assertions compare independently constructed exact representations. Keep
+    // production predicates strict while allowing the test oracle to finish a
+    // comparison when structural certification alone cannot normalize them.
+    fn compare_reals(
+        left: &Real,
+        right: &Real,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<std::cmp::Ordering> {
+        hyperlimit::compare_reals(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
+
+    fn point3_equal(
+        left: &Point3,
+        right: &Point3,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<bool> {
+        hyperlimit::point3_equal(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
 
     fn r(value: i32) -> Real {
         Real::from(value)
@@ -4983,7 +5041,12 @@ mod tests {
         );
         assert_eq!(model.solid(solid).unwrap().voids(), &[]);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(2_268)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &Real::from(2_268),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let total_area = model
@@ -4991,16 +5054,16 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&total_area, &Real::from(1_080)).value(),
+            compare_reals(&total_area, &Real::from(1_080), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         let bounds = model.bounds().unwrap().unwrap();
         assert_eq!(
-            point3_equal(&bounds.mins, &p(-2, -3, -5)).value(),
+            point3_equal(&bounds.mins, &p(-2, -3, -5), crate::STRICT_PREDICATES).value(),
             Some(true)
         );
         assert_eq!(
-            point3_equal(&bounds.maxs, &p(7, 11, 13)).value(),
+            point3_equal(&bounds.maxs, &p(7, 11, 13), crate::STRICT_PREDICATES).value(),
             Some(true)
         );
         for edge_index in 0..model.counts().edges {
@@ -5092,7 +5155,12 @@ mod tests {
         );
         let expected_area = r(96) - r(6) * Real::pi();
         assert_eq!(
-            compare_reals(&model.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &model.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let transformed = model
@@ -5106,7 +5174,12 @@ mod tests {
             ))
             .unwrap();
         assert_eq!(
-            compare_reals(&transformed.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &transformed.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = transformed.to_json().unwrap();
@@ -5116,7 +5189,12 @@ mod tests {
             .unwrap();
         assert_eq!(replayed.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&replayed.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &replayed.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -5211,7 +5289,12 @@ mod tests {
         let expected_volume = r(48) - r(3) * Real::pi();
         let expected_area = r(80) + r(4) * Real::pi();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let area = model
@@ -5219,7 +5302,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&area, &expected_area).value(),
+            compare_reals(&area, &expected_area, crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -5242,7 +5325,12 @@ mod tests {
             ))
             .unwrap();
         assert_eq!(
-            compare_reals(&transformed.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &transformed.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = transformed.to_json().unwrap();
@@ -5252,7 +5340,12 @@ mod tests {
             .unwrap();
         assert_eq!(replayed.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&replayed.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &replayed.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -5299,6 +5392,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(Real::from(12) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5308,6 +5402,7 @@ mod tests {
             compare_reals(
                 &model.face_area(faces[0]).unwrap(),
                 &(Real::from(4) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5316,6 +5411,7 @@ mod tests {
             compare_reals(
                 &model.face_area(faces[2]).unwrap(),
                 &(Real::from(3) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5360,6 +5456,7 @@ mod tests {
             compare_reals(
                 &decoded.solid_volume(solid).unwrap(),
                 &(Real::from(12) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5388,19 +5485,32 @@ mod tests {
         assert!(face.is_whole_surface());
         assert_eq!(face.outer(), None);
         assert_eq!(
-            compare_reals(&model.face_area(face_id).unwrap(), &(r(36) * Real::pi()),).value(),
+            compare_reals(
+                &model.face_area(face_id).unwrap(),
+                &(r(36) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(36) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(36) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let bounds = model.bounds().unwrap().unwrap();
         assert_eq!(
-            point3_equal(&bounds.mins, &p(-3, -3, -3)).value(),
+            point3_equal(&bounds.mins, &p(-3, -3, -3), crate::STRICT_PREDICATES).value(),
             Some(true)
         );
-        assert_eq!(point3_equal(&bounds.maxs, &p(3, 3, 3)).value(), Some(true));
+        assert_eq!(
+            point3_equal(&bounds.maxs, &p(3, 3, 3), crate::STRICT_PREDICATES).value(),
+            Some(true)
+        );
         for (point, expected) in [
             (p(0, 0, 0), SolidPointLocation::Inside),
             (p(3, 0, 0), SolidPointLocation::Boundary),
@@ -5433,7 +5543,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(36) * Real::pi()),).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &(r(36) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -5451,7 +5566,12 @@ mod tests {
         assert_eq!(model.counts().faces, 2);
         assert_eq!(model.counts().shells, 2);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(156) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(156) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -5566,6 +5686,7 @@ mod tests {
             compare_reals(
                 &split_model.vertex(split.vertex).unwrap().point().x,
                 &Real::one(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5577,6 +5698,7 @@ mod tests {
                     .edge_parameter_at(first_use, &Real::one())
                     .unwrap(),
                 &half,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5587,12 +5709,18 @@ mod tests {
                     .edge_parameter_at(second_use, &Real::zero())
                     .unwrap(),
                 &half,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&split_model.face_area(face).unwrap(), &r(4)).value(),
+            compare_reals(
+                &split_model.face_area(face).unwrap(),
+                &r(4),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         crate::RawModel::from_json(&split_model.to_json().unwrap())
@@ -5633,7 +5761,12 @@ mod tests {
             reversed_ids.first
         );
         assert_eq!(
-            compare_reals(&reversed_split.face_area(face).unwrap(), &r(4)).value(),
+            compare_reals(
+                &reversed_split.face_area(face).unwrap(),
+                &r(4),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -5718,11 +5851,21 @@ mod tests {
             Direction::Forward
         );
         assert_eq!(
-            compare_reals(&split_model.face_area(split.first_face).unwrap(), &r(2)).value(),
+            compare_reals(
+                &split_model.face_area(split.first_face).unwrap(),
+                &r(2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&split_model.face_area(split.second_face).unwrap(), &r(2)).value(),
+            compare_reals(
+                &split_model.face_area(split.second_face).unwrap(),
+                &r(2),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         crate::RawModel::from_json(&split_model.to_json().unwrap())
@@ -5749,7 +5892,12 @@ mod tests {
             .unwrap();
         assert_eq!(split_model.counts().faces, 7);
         assert_eq!(
-            compare_reals(&split_model.solid_volume(solid).unwrap(), &r(8)).value(),
+            compare_reals(
+                &split_model.solid_volume(solid).unwrap(),
+                &r(8),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -5757,6 +5905,7 @@ mod tests {
                 &(split_model.face_area(split.first_face).unwrap()
                     + split_model.face_area(split.second_face).unwrap()),
                 &r(4),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5780,6 +5929,7 @@ mod tests {
             compare_reals(
                 &split_cylinder.solid_volume(solid).unwrap(),
                 &(r(12) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5789,6 +5939,7 @@ mod tests {
                 &(split_cylinder.face_area(split.first_face).unwrap()
                     + split_cylinder.face_area(split.second_face).unwrap()),
                 &(r(4) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5817,7 +5968,12 @@ mod tests {
             1
         );
         assert_eq!(
-            compare_reals(&split_holed.solid_volume(solids[0]).unwrap(), &r(70)).value(),
+            compare_reals(
+                &split_holed.solid_volume(solids[0]).unwrap(),
+                &r(70),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         crate::RawModel::from_json(&split_holed.to_json().unwrap())
@@ -5859,7 +6015,12 @@ mod tests {
         assert_eq!(split_model.counts().edges, model.counts().edges + 3);
         assert_eq!(split_model.counts().faces, model.counts().faces + 1);
         assert_eq!(
-            compare_reals(&split_model.solid_volume(solid).unwrap(), &r(8)).value(),
+            compare_reals(
+                &split_model.solid_volume(solid).unwrap(),
+                &r(8),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -5867,6 +6028,7 @@ mod tests {
                 &(split_model.face_area(split.face.first_face).unwrap()
                     + split_model.face_area(split.face.second_face).unwrap()),
                 &r(4),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -5988,7 +6150,12 @@ mod tests {
         assert_eq!(forward.counts().faces, model.counts().faces + 2);
         assert_eq!(forward.counts().edges, model.counts().edges + 6);
         assert_eq!(
-            compare_reals(&forward.solid_volume(solid).unwrap(), &r(18)).value(),
+            compare_reals(
+                &forward.solid_volume(solid).unwrap(),
+                &r(18),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let area = partition
@@ -5997,7 +6164,7 @@ mod tests {
             .map(|face| forward.face_area(*face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&area, &r(9)).value(),
+            compare_reals(&area, &r(9), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         crate::RawModel::from_json(&forward.to_json().unwrap())
@@ -6062,7 +6229,12 @@ mod tests {
         assert_eq!(crossed.counts().edges, model.counts().edges + 4);
         assert_eq!(crossed.counts().faces, model.counts().faces + 3);
         assert_eq!(
-            compare_reals(&crossed.solid_volume(solid).unwrap(), &r(18)).value(),
+            compare_reals(
+                &crossed.solid_volume(solid).unwrap(),
+                &r(18),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let crossed_area = crossed_partition
@@ -6071,7 +6243,7 @@ mod tests {
             .map(|face| crossed.face_area(*face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&crossed_area, &r(9)).value(),
+            compare_reals(&crossed_area, &r(9), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -6114,7 +6286,12 @@ mod tests {
         assert_eq!(six_way.counts().edges, model.counts().edges + 8);
         assert_eq!(six_way.counts().faces, model.counts().faces + 5);
         assert_eq!(
-            compare_reals(&six_way.solid_volume(solid).unwrap(), &r(18)).value(),
+            compare_reals(
+                &six_way.solid_volume(solid).unwrap(),
+                &r(18),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -6174,6 +6351,7 @@ mod tests {
             compare_reals(
                 &edited.solid_volume(solid).unwrap(),
                 &(r(46_475) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6339,7 +6517,12 @@ mod tests {
         let (bezier, bezier_face) =
             rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         assert_eq!(
-            compare_reals(&bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &bezier.face_area(bezier_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let (split_bezier, _) = bezier
@@ -6349,14 +6532,24 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            compare_reals(&split_bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &split_bezier.face_area(bezier_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let scaled = bezier
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.face_area(bezier_face).unwrap(), &r(144)).value(),
+            compare_reals(
+                &scaled.face_area(bezier_face).unwrap(),
+                &r(144),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt_bezier = crate::RawModel::from_json(&scaled.to_json().unwrap())
@@ -6364,7 +6557,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt_bezier.face_area(bezier_face).unwrap(), &r(144)).value(),
+            compare_reals(
+                &rebuilt_bezier.face_area(bezier_face).unwrap(),
+                &r(144),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -6372,7 +6570,12 @@ mod tests {
         let (nurbs, nurbs_face) =
             nurbs_patch(2, 2, controls, weights, knots.clone(), knots).unwrap();
         assert_eq!(
-            compare_reals(&nurbs.face_area(nurbs_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &nurbs.face_area(nurbs_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt_nurbs = crate::RawModel::from_json(&nurbs.to_json().unwrap())
@@ -6380,7 +6583,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt_nurbs.face_area(nurbs_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &rebuilt_nurbs.face_area(nurbs_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -6400,7 +6608,12 @@ mod tests {
         let (bezier, bezier_face) =
             rational_bezier_patch(bezier_controls.clone(), bezier_weights).unwrap();
         assert_eq!(
-            compare_reals(&bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &bezier.face_area(bezier_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let (split_bezier, _) = bezier
@@ -6410,14 +6623,24 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            compare_reals(&split_bezier.face_area(bezier_face).unwrap(), &r(24)).value(),
+            compare_reals(
+                &split_bezier.face_area(bezier_face).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let scaled_bezier = split_bezier
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled_bezier.face_area(bezier_face).unwrap(), &r(144)).value(),
+            compare_reals(
+                &scaled_bezier.face_area(bezier_face).unwrap(),
+                &r(144),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt_bezier = crate::RawModel::from_json(&scaled_bezier.to_json().unwrap())
@@ -6425,7 +6648,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt_bezier.face_area(bezier_face).unwrap(), &r(144)).value(),
+            compare_reals(
+                &rebuilt_bezier.face_area(bezier_face).unwrap(),
+                &r(144),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -6458,7 +6686,12 @@ mod tests {
         let (nurbs, nurbs_face) =
             nurbs_patch(2, 2, nurbs_controls, nurbs_weights, u_knots, v_knots).unwrap();
         assert_eq!(
-            compare_reals(&nurbs.face_area(nurbs_face).unwrap(), &r(48)).value(),
+            compare_reals(
+                &nurbs.face_area(nurbs_face).unwrap(),
+                &r(48),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt_nurbs = crate::RawModel::from_json(&nurbs.to_json().unwrap())
@@ -6466,7 +6699,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt_nurbs.face_area(nurbs_face).unwrap(), &r(48)).value(),
+            compare_reals(
+                &rebuilt_nurbs.face_area(nurbs_face).unwrap(),
+                &r(48),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -6642,7 +6880,12 @@ mod tests {
             .unwrap();
         let split_parameter_point = source_pcurve.point_at(&rational_parameter).unwrap();
         assert_eq!(
-            compare_reals(&split_parameter_point.x, &(r(2).sqrt().unwrap()),).value(),
+            compare_reals(
+                &split_parameter_point.x,
+                &(r(2).sqrt().unwrap()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -6651,7 +6894,12 @@ mod tests {
             .unwrap();
         assert_eq!(split_model.wire(wire).unwrap().edge_uses().len(), 5);
         assert_eq!(
-            compare_reals(&split_model.face_area(face).unwrap(), &(r(4) * Real::pi()),).value(),
+            compare_reals(
+                &split_model.face_area(face).unwrap(),
+                &(r(4) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(split.edge_uses.len(), 1);
@@ -6673,7 +6921,12 @@ mod tests {
         assert_eq!(split.uses_of_edge(ids.first).unwrap().len(), 2);
         assert_eq!(split.uses_of_edge(ids.second).unwrap().len(), 2);
         assert_eq!(
-            compare_reals(&split.solid_volume(solid).unwrap(), &r(24)).value(),
+            compare_reals(
+                &split.solid_volume(solid).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -6703,6 +6956,7 @@ mod tests {
             compare_reals(
                 &split_cylinder.solid_volume(cylinder_solid).unwrap(),
                 &(r(12) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6726,6 +6980,7 @@ mod tests {
             compare_reals(
                 &split_frustum.solid_volume(frustum_solid).unwrap(),
                 &(r(7) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6739,6 +6994,7 @@ mod tests {
             compare_reals(
                 &split_torus.solid_volume(torus_solid).unwrap(),
                 &(r(6) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6768,21 +7024,41 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(7) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(7) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let faces = model.faces().map(|(face, _)| face).collect::<Vec<_>>();
         assert_eq!(
-            compare_reals(&model.face_area(faces[0]).unwrap(), &(r(4) * Real::pi()),).value(),
+            compare_reals(
+                &model.face_area(faces[0]).unwrap(),
+                &(r(4) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&model.face_area(faces[1]).unwrap(), &Real::pi()).value(),
+            compare_reals(
+                &model.face_area(faces[1]).unwrap(),
+                &Real::pi(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let lateral_quarter = (r(3) * Real::pi() * r(10).sqrt().unwrap() / r(4)).unwrap();
         assert_eq!(
-            compare_reals(&model.face_area(faces[2]).unwrap(), &lateral_quarter).value(),
+            compare_reals(
+                &model.face_area(faces[2]).unwrap(),
+                &lateral_quarter,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -6817,7 +7093,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(7) * Real::pi()),).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &(r(7) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -6844,6 +7125,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6853,14 +7135,24 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&total_area, &(r(12) * Real::pi() * Real::pi()),).value(),
+            compare_reals(
+                &total_area,
+                &(r(12) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let first_face = crate::FaceId::from_index(0).unwrap();
         let quarter = (Real::pi() / r(2)).unwrap();
         let expected_face_area = &quarter * (r(3) * &quarter + Real::one());
         assert_eq!(
-            compare_reals(&model.face_area(first_face).unwrap(), &expected_face_area).value(),
+            compare_reals(
+                &model.face_area(first_face).unwrap(),
+                &expected_face_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let total_area = model
@@ -6868,7 +7160,12 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&total_area, &(r(12) * Real::pi() * Real::pi()),).value(),
+            compare_reals(
+                &total_area,
+                &(r(12) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -6907,6 +7204,7 @@ mod tests {
             compare_reals(
                 &decoded.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -6933,7 +7231,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(16) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(16) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let total_area = model
@@ -6941,7 +7244,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&total_area, &(r(32) * Real::pi())).value(),
+            compare_reals(&total_area, &(r(32) * Real::pi()), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -6981,6 +7284,7 @@ mod tests {
             compare_reals(
                 &reoriented.solid_volume(solid).unwrap(),
                 &(r(16) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7001,7 +7305,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(16) * Real::pi()),).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &(r(16) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7045,6 +7354,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &((r(148) * Real::pi() / r(5)).unwrap()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7071,6 +7381,7 @@ mod tests {
             compare_reals(
                 &rebuilt.solid_volume(solid).unwrap(),
                 &((r(148) * Real::pi() / r(5)).unwrap()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7112,11 +7423,16 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&area, &(r(48) * Real::pi())).value(),
+            compare_reals(&area, &(r(48) * Real::pi()), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(24) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(24) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7130,7 +7446,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(24) * Real::pi()),).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &(r(24) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt_area = rebuilt
@@ -7138,7 +7459,12 @@ mod tests {
             .map(|(face, _)| rebuilt.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&rebuilt_area, &(r(48) * Real::pi())).value(),
+            compare_reals(
+                &rebuilt_area,
+                &(r(48) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7160,6 +7486,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &((r(80) * Real::pi() / r(3)).unwrap()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7191,7 +7518,7 @@ mod tests {
         assert_eq!(rational_model.faces().count(), 16);
         let rational_volume = rational_model.solid_volume(rational_solid).unwrap();
         assert_eq!(
-            compare_reals(&rational_volume, &Real::zero()).value(),
+            compare_reals(&rational_volume, &Real::zero(), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Greater)
         );
         let rational_json = rational_model.to_json().unwrap();
@@ -7204,6 +7531,7 @@ mod tests {
             compare_reals(
                 &rebuilt.solid_volume(rational_solid).unwrap(),
                 &rational_volume,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7249,6 +7577,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &((r(113) * Real::pi() / r(5)).unwrap()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7310,7 +7639,12 @@ mod tests {
                 / r(81))
             .unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7328,7 +7662,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7357,7 +7696,12 @@ mod tests {
             .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -7368,7 +7712,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7395,7 +7744,12 @@ mod tests {
             .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7414,7 +7768,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7440,7 +7799,12 @@ mod tests {
             * &((r(104) / r(3)).unwrap() + r(16) * r(2).ln().unwrap() - r(11) * Real::pi());
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7459,7 +7823,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7482,7 +7851,12 @@ mod tests {
         let expected = (r(324) * Real::pi() / r(7)).unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7501,7 +7875,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7524,7 +7903,12 @@ mod tests {
         let expected = (r(59_128) * Real::pi() / r(1_155)).unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7543,7 +7927,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7594,7 +7983,12 @@ mod tests {
         let (reference, reference_solid) = revolve_path(&profile(polynomial_equivalent)).unwrap();
         let expected_volume = reference.solid_volume(reference_solid).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7613,7 +8007,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected_volume).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7645,7 +8044,12 @@ mod tests {
             .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7664,7 +8068,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7687,7 +8096,12 @@ mod tests {
         let expected = r(8) * Real::pi() * &(r(3) + Real::pi());
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7706,7 +8120,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7740,7 +8159,12 @@ mod tests {
         .unwrap();
         let (model, solid) = revolve_path(&profile).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -7759,7 +8183,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &expected).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &expected,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -7817,7 +8246,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(91) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(91) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -7847,7 +8281,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &(r(91) * Real::pi()),).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &(r(91) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert!(matches!(
@@ -7907,6 +8346,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7940,6 +8380,7 @@ mod tests {
             compare_reals(
                 &rebuilt.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -7975,6 +8416,7 @@ mod tests {
             compare_reals(
                 &region.solid_volume(region_solid).unwrap(),
                 &(r(18) * Real::pi() * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -8042,7 +8484,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &(r(6) * Real::pi()),).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let faces = model.faces().map(|(id, _)| id).collect::<Vec<_>>();
@@ -8054,7 +8501,12 @@ mod tests {
             (faces[4], r(12)),
         ] {
             assert_eq!(
-                compare_reals(&model.face_area(face).unwrap(), &expected).value(),
+                compare_reals(
+                    &model.face_area(face).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -8071,7 +8523,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&decoded.solid_volume(solid).unwrap(), &(r(6) * Real::pi()),).value(),
+            compare_reals(
+                &decoded.solid_volume(solid).unwrap(),
+                &(r(6) * Real::pi()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -8099,6 +8556,7 @@ mod tests {
             compare_reals(
                 &reoriented.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -8118,6 +8576,7 @@ mod tests {
             compare_reals(
                 &decoded_reoriented.solid_volume(solid).unwrap(),
                 &(r(6) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -8146,7 +8605,7 @@ mod tests {
     fn cuboid_accepts_representation_distinct_certified_bounds() {
         let two = Real::from(1) + Real::from(1);
         assert!(matches!(
-            compare_reals(&two, &Real::from(2)),
+            compare_reals(&two, &Real::from(2), crate::STRICT_PREDICATES),
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Equal,
                 ..
@@ -8183,16 +8642,21 @@ mod tests {
         let transformed = model.transformed(&transform).unwrap();
         assert_eq!(transformed.counts(), model.counts());
         assert_eq!(
-            compare_reals(&transformed.solid_volume(solid).unwrap(), &Real::from(720)).value(),
+            compare_reals(
+                &transformed.solid_volume(solid).unwrap(),
+                &Real::from(720),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let bounds = transformed.bounds().unwrap().unwrap();
         assert_eq!(
-            point3_equal(&bounds.mins, &p(7, 11, 13)).value(),
+            point3_equal(&bounds.mins, &p(7, 11, 13), crate::STRICT_PREDICATES).value(),
             Some(true)
         );
         assert_eq!(
-            point3_equal(&bounds.maxs, &p(11, 20, 33)).value(),
+            point3_equal(&bounds.maxs, &p(11, 20, 33), crate::STRICT_PREDICATES).value(),
             Some(true)
         );
     }
@@ -8214,7 +8678,12 @@ mod tests {
             SolidPointLocation::Inside
         );
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &Real::from(8)).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &Real::from(8),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -8228,17 +8697,28 @@ mod tests {
         edit.transform(&translation).unwrap();
         let edited = edit.commit().unwrap();
         assert_eq!(
-            point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
+            point3_equal(
+                &source.bounds().unwrap().unwrap().mins,
+                &p(0, 0, 0),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(true)
         );
         assert_eq!(
-            point3_equal(&edited.bounds().unwrap().unwrap().mins, &p(7, 11, 13)).value(),
+            point3_equal(
+                &edited.bounds().unwrap().unwrap().mins,
+                &p(7, 11, 13),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(true)
         );
         assert_eq!(
             compare_reals(
                 &source.solid_volume(solid).unwrap(),
                 &edited.solid_volume(solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -8264,6 +8744,7 @@ mod tests {
                     .unwrap()
                     .point(),
                 source.vertex(edge.start()).unwrap().point(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(true)
@@ -8281,7 +8762,12 @@ mod tests {
             Some(BuildError::EdgeEndpointMismatch { .. })
         ));
         assert_eq!(
-            point3_equal(&source.bounds().unwrap().unwrap().mins, &p(0, 0, 0)).value(),
+            point3_equal(
+                &source.bounds().unwrap().unwrap().mins,
+                &p(0, 0, 0),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(true)
         );
     }
@@ -8296,16 +8782,17 @@ mod tests {
                 let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
-                    .then(|| {
-                        (
-                            face_id,
-                            face.surface(),
-                            origin.clone(),
-                            u.clone(),
-                            v.clone(),
-                        )
-                    })
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(std::cmp::Ordering::Equal))
+                .then(|| {
+                    (
+                        face_id,
+                        face.surface(),
+                        origin.clone(),
+                        u.clone(),
+                        v.clone(),
+                    )
+                })
             })
             .expect("unit cuboid has an upper planar cap");
         let tensor = Surface::rational_bezier(
@@ -8325,11 +8812,21 @@ mod tests {
             crate::SurfaceKind::RationalBezier
         );
         assert_eq!(
-            compare_reals(&edited.face_area(cap_face).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &edited.face_area(cap_face).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&edited.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &edited.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -8367,8 +8864,9 @@ mod tests {
                 let SurfaceExactData::Plane { origin, u, v } = surface.exact_data() else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
-                    .then(|| (face.surface(), origin.clone(), u.clone(), v.clone()))
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(std::cmp::Ordering::Equal))
+                .then(|| (face.surface(), origin.clone(), u.clone(), v.clone()))
             })
             .expect("unit cuboid has an upper planar cap");
         let knots = vec![Real::zero(), Real::zero(), Real::one(), Real::one()];
@@ -8393,7 +8891,12 @@ mod tests {
             crate::SurfaceKind::Nurbs
         );
         assert_eq!(
-            compare_reals(&edited.solid_volume(solid).unwrap(), &Real::one()).value(),
+            compare_reals(
+                &edited.solid_volume(solid).unwrap(),
+                &Real::one(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = edited.to_json().unwrap();
@@ -8418,8 +8921,9 @@ mod tests {
                 let SurfaceExactData::Plane { origin, .. } = surface.exact_data() else {
                     return None;
                 };
-                (compare_reals(&origin.z, &Real::one()).value() == Some(std::cmp::Ordering::Equal))
-                    .then_some(face.surface())
+                (compare_reals(&origin.z, &Real::one(), crate::STRICT_PREDICATES).value()
+                    == Some(std::cmp::Ordering::Equal))
+                .then_some(face.surface())
             })
             .expect("unit cuboid has an upper planar cap");
         let half = (Real::one() / r(2)).unwrap();
@@ -8497,7 +9001,12 @@ mod tests {
             ]
         );
         assert_eq!(
-            compare_reals(&model.face_area(face).unwrap(), &r(6)).value(),
+            compare_reals(
+                &model.face_area(face).unwrap(),
+                &r(6),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         crate::RawModel::from_json(&model.to_json().unwrap())
@@ -8570,7 +9079,12 @@ mod tests {
                 .sqrt()
                 .expect("positive integer has an exact square root expression");
         assert_eq!(
-            compare_reals(&model.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &model.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let transformed = model
@@ -8584,7 +9098,12 @@ mod tests {
             ))
             .unwrap();
         assert_eq!(
-            compare_reals(&transformed.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &transformed.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let replayed = crate::RawModel::from_json(&transformed.to_json().unwrap())
@@ -8592,7 +9111,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&replayed.face_area(face).unwrap(), &expected_area).value(),
+            compare_reals(
+                &replayed.face_area(face).unwrap(),
+                &expected_area,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -8673,7 +9197,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(21)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &Real::from(21),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let area = model
@@ -8681,7 +9210,7 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, face| sum + face);
         assert_eq!(
-            compare_reals(&area, &Real::from(62)).value(),
+            compare_reals(&area, &Real::from(62), crate::STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -8698,7 +9227,12 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(24)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let half = (Real::one() / r(2)).unwrap();
@@ -8717,7 +9251,12 @@ mod tests {
             .map(|(face, _)| model.face_area(face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&total_area, &(r(28) + r(6) * r(17).sqrt().unwrap()),).value(),
+            compare_reals(
+                &total_area,
+                &(r(28) + r(6) * r(17).sqrt().unwrap()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let rebuilt = crate::RawModel::from_json(&model.to_json().unwrap())
@@ -8725,7 +9264,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(24)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert!(matches!(
@@ -8753,7 +9297,12 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            compare_reals(&region.solid_volume(region_solid).unwrap(), &r(288)).value(),
+            compare_reals(
+                &region.solid_volume(region_solid).unwrap(),
+                &r(288),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -8799,7 +9348,12 @@ mod tests {
             4
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(16)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(16),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let half = (Real::one() / r(2)).unwrap();
@@ -8822,7 +9376,12 @@ mod tests {
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(384)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(384),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -8839,7 +9398,12 @@ mod tests {
             ]))
             .unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &r(384)).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &r(384),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = reflected.to_json().unwrap();
@@ -8849,7 +9413,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(384)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(384),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 
@@ -8903,7 +9472,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(48)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(48),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (profile_point, expected) in [
@@ -8926,14 +9500,24 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(48)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(48),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let scaled = rebuilt
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1152)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(1152),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -8963,6 +9547,7 @@ mod tests {
             compare_reals(
                 &without_hole.solid_volume(without_hole_solid).unwrap(),
                 &r(64),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -8984,7 +9569,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(48)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(48),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let half = (Real::one() / r(2)).unwrap();
@@ -9028,7 +9618,12 @@ mod tests {
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1152)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(1152),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -9057,7 +9652,12 @@ mod tests {
         .unwrap();
         let (model, solid) = sweep_moving_frame(&profile, frame).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(28)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(28),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let half = (Real::one() / r(2)).unwrap();
@@ -9086,14 +9686,24 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(28)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(28),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let scaled = rebuilt
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(672)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(672),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -9184,7 +9794,12 @@ mod tests {
             }
         );
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &r(28)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &r(28),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         for (point, expected) in [
@@ -9202,6 +9817,7 @@ mod tests {
             compare_reals(
                 &total_area,
                 &(r(20) + r(6) * r(10).sqrt().unwrap() + r(18) * r(2).sqrt().unwrap()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9210,7 +9826,12 @@ mod tests {
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(672)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(672),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -9222,7 +9843,12 @@ mod tests {
             .validate()
             .unwrap();
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(672)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(672),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let non_homothetic = [
@@ -9247,6 +9873,7 @@ mod tests {
             compare_reals(
                 &general.solid_volume(general_solid).unwrap(),
                 &(r(51) / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9281,6 +9908,7 @@ mod tests {
             compare_reals(
                 &general_rebuilt.solid_volume(general_solid).unwrap(),
                 &(r(51) / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9292,6 +9920,7 @@ mod tests {
             compare_reals(
                 &general_scaled.solid_volume(general_solid).unwrap(),
                 &r(612),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9365,6 +9994,7 @@ mod tests {
             compare_reals(
                 &model.solid_volume(solid).unwrap(),
                 &(r(212) / r(3)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -9384,7 +10014,12 @@ mod tests {
             .transformed(&crate::Matrix4::affine_nonuniform_scale([r(2), r(3), r(4)]))
             .unwrap();
         assert_eq!(
-            compare_reals(&scaled.solid_volume(solid).unwrap(), &r(1_696)).value(),
+            compare_reals(
+                &scaled.solid_volume(solid).unwrap(),
+                &r(1_696),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = scaled.to_json().unwrap();
@@ -9394,7 +10029,12 @@ mod tests {
             .unwrap();
         assert_eq!(rebuilt.to_json().unwrap(), json);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &r(1_696)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &r(1_696),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
     }
@@ -9405,7 +10045,12 @@ mod tests {
         let hole = vec![p2(1, 1), p2(3, 1), p2(3, 3), p2(1, 3)];
         let (model, solid) = extrude_region(&outer, &[hole], Real::zero(), Real::from(2)).unwrap();
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(24)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &Real::from(24),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -9461,7 +10106,12 @@ mod tests {
             extrude_with_voids(&outer, Real::zero(), Real::from(10), &voids).unwrap();
         assert_eq!(model.solid(solid).unwrap().voids().len(), 2);
         assert_eq!(
-            compare_reals(&model.solid_volume(solid).unwrap(), &Real::from(960)).value(),
+            compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &Real::from(960),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(
@@ -9485,7 +10135,12 @@ mod tests {
             crate::Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]);
         let reflected = model.transformed(&reflection).unwrap();
         assert_eq!(
-            compare_reals(&reflected.solid_volume(solid).unwrap(), &Real::from(960)).value(),
+            compare_reals(
+                &reflected.solid_volume(solid).unwrap(),
+                &Real::from(960),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(

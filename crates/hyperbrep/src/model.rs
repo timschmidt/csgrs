@@ -117,7 +117,7 @@ pub enum ParameterCorrespondence {
 impl ParameterCorrespondence {
     /// Constructs `edge_parameter = scale * pcurve_parameter + offset`.
     pub fn affine(scale: Real, offset: Real) -> Result<Self, BuildError> {
-        match compare_reals(&scale, &Real::zero()) {
+        match compare_reals(&scale, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Equal,
                 ..
@@ -168,7 +168,7 @@ impl ParameterCorrespondence {
                     .ok_or(GeometryError::UnsupportedPcurveContour)?;
                 let point = pcurve.point_at(pcurve_parameter)?;
                 let point = CurvePoint2::new(point.x, point.y);
-                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::certified())? {
+                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::STRICT)? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -204,7 +204,7 @@ impl ParameterCorrespondence {
                 };
                 let fraction = ((edge_parameter - start) / (end - start))
                     .map_err(|_| GeometryError::ProjectiveDivision)?;
-                match arc.parameter_at_sweep_fraction(&fraction, &CurvePolicy::certified())? {
+                match arc.parameter_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)? {
                     Classification::Decided(parameter) => Ok(parameter),
                     Classification::Uncertain(reason) => {
                         Err(GeometryError::PlanarClassificationUnresolved(reason))
@@ -745,8 +745,6 @@ struct OrderedFaceSplitTrace {
 struct OrderedSurfaceCurveTrace {
     source_index: usize,
     intersection: SurfaceIntersectionCurve,
-    lower: Point3,
-    upper: Point3,
     exact_key: Curve3,
 }
 
@@ -1543,8 +1541,11 @@ impl CertifiedSphereProfile {
         let maximum_radial = radial_distance + &cylinder.radius;
         let lower_height = (&cylinder.v_min - &center_parameter).abs();
         let upper_height = (&cylinder.v_max - center_parameter).abs();
-        let maximum_height = if decided_model_order(compare_reals(&lower_height, &upper_height))?
-            == std::cmp::Ordering::Greater
+        let maximum_height = if decided_model_order(compare_reals(
+            &lower_height,
+            &upper_height,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Greater
         {
             lower_height
         } else {
@@ -1553,6 +1554,7 @@ impl CertifiedSphereProfile {
         Ok(decided_model_order(compare_reals(
             &(&maximum_radial * &maximum_radial + &maximum_height * &maximum_height),
             &(&self.radius * &self.radius),
+            crate::STRICT_PREDICATES,
         ))? == std::cmp::Ordering::Less)
     }
 }
@@ -1572,14 +1574,17 @@ impl CertifiedCylinderProfile {
         Ok(decided_model_order(compare_reals(
             &(&radial_distance + &sphere.radius),
             &self.radius,
+            crate::STRICT_PREDICATES,
         ))? == std::cmp::Ordering::Less
             && decided_model_order(compare_reals(
                 &self.v_min,
                 &(&center_parameter - &sphere.radius),
+                crate::STRICT_PREDICATES,
             ))? == std::cmp::Ordering::Less
             && decided_model_order(compare_reals(
                 &(&center_parameter + &sphere.radius),
                 &self.v_max,
+                crate::STRICT_PREDICATES,
             ))? == std::cmp::Ordering::Less)
     }
 }
@@ -1652,10 +1657,16 @@ impl Model {
                 index: edge_id.index(),
             })?
             .clone();
-        if decided_model_order(compare_reals(&parameter, edge.domain.start()))?
-            != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&parameter, edge.domain.end()))?
-                != std::cmp::Ordering::Less
+        if decided_model_order(compare_reals(
+            &parameter,
+            edge.domain.start(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(
+                &parameter,
+                edge.domain.end(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
@@ -1706,7 +1717,7 @@ impl Model {
                     let fraction = ((&parameter - start) / (end - start))
                         .map_err(|_| GeometryError::ProjectiveDivision)?;
                     let (first, second) = match arc
-                        .split_at_sweep_fraction(&fraction, &CurvePolicy::certified())
+                        .split_at_sweep_fraction(&fraction, &CurvePolicy::STRICT)
                         .map_err(GeometryError::from)?
                     {
                         Classification::Decided(fragments) => fragments,
@@ -2239,9 +2250,11 @@ impl Model {
             .line_segment()
             .expect("validated spherical latitude");
         let old_latitude = old_line.start().y().clone();
-        let increasing =
-            decided_model_order(compare_reals(old_line.end().x(), old_line.start().x()))?
-                == std::cmp::Ordering::Greater;
+        let increasing = decided_model_order(compare_reals(
+            old_line.end().x(),
+            old_line.start().x(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Greater;
         let upper = match face.orientation {
             Orientation::Forward => increasing,
             Orientation::Reversed => !increasing,
@@ -2256,7 +2269,11 @@ impl Model {
             return Err(TopologyEditError::UnsupportedFaceSplitCurve(curve.kind()));
         }
         let new_latitude = new_start.y().clone();
-        let relation = decided_model_order(compare_reals(&new_latitude, &old_latitude))?;
+        let relation = decided_model_order(compare_reals(
+            &new_latitude,
+            &old_latitude,
+            crate::STRICT_PREDICATES,
+        ))?;
         if (upper && relation != std::cmp::Ordering::Greater)
             || (!upper && relation != std::cmp::Ordering::Less)
         {
@@ -2485,7 +2502,11 @@ impl Model {
             .signed_area()
             .map_err(GeometryError::from)?;
         let loop_area = loop_area.ok_or(GeometryError::UnsupportedPcurveContour)?;
-        let area_order = decided_model_order(compare_reals(&loop_area, &Real::zero()))?;
+        let area_order = decided_model_order(compare_reals(
+            &loop_area,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
         if area_order == std::cmp::Ordering::Equal {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
@@ -2495,7 +2516,7 @@ impl Model {
         };
         let interior_forward = area_order == expected_outer_order;
 
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let loop_start = materialized_loop.curve().start();
         let classify = |path: &CurvePath2,
                         point: &CurvePoint2|
@@ -2716,11 +2737,13 @@ impl Model {
     /// Deterministically partitions one face by retained exact
     /// surface-intersection curves.
     ///
-    /// Curves are ordered by their unordered spatial endpoint pairs, so caller
-    /// order does not affect the published topology. After each split, both
-    /// endpoints of every remaining curve must belong to exactly one current
-    /// descendant. The selected operand pcurve is materialized without inverse
-    /// fitting, and every new edge remains identity-shared by its descendants.
+    /// Curves use their retained exact data as a canonical ordering key when
+    /// that comparison is certifiable. Otherwise their stable authored order
+    /// and direction are retained; ordering is not a geometric predicate.
+    /// After each split, both endpoints of every remaining curve must belong to
+    /// exactly one current descendant. The selected operand pcurve is
+    /// materialized without inverse fitting, and every new edge remains
+    /// identity-shared by its descendants.
     pub fn split_face_by_surface_curves(
         &self,
         face_id: FaceId,
@@ -2735,29 +2758,18 @@ impl Model {
         let mut ordered = Vec::with_capacity(curves.len());
         for (source_index, intersection) in curves.iter().enumerate() {
             let reversed = intersection.reversed()?;
-            let intersection = if compare_curve3_exact_data(
+            let intersection = match compare_curve3_exact_data(
                 &intersection.curve().exact_data(),
                 &reversed.curve().exact_data(),
-            )? == std::cmp::Ordering::Greater
-            {
-                reversed
-            } else {
-                intersection.clone()
-            };
-            let start = intersection.curve().start()?;
-            let end = intersection.curve().end()?;
-            let (lower, upper) = if exact_point_order(&start, &end)? == std::cmp::Ordering::Greater
-            {
-                (end, start)
-            } else {
-                (start, end)
+            ) {
+                Ok(std::cmp::Ordering::Greater) => reversed,
+                Ok(_) | Err(GeometryError::PredicateUnresolved { .. }) => intersection.clone(),
+                Err(error) => return Err(error.into()),
             };
             let trace = OrderedSurfaceCurveTrace {
                 source_index,
                 exact_key: intersection.curve().clone(),
                 intersection,
-                lower,
-                upper,
             };
             let mut insertion = ordered.len();
             while insertion > 0
@@ -2804,10 +2816,7 @@ impl Model {
             for second_index in (first_index + 1)..ordered.len() {
                 let relation = materialized[first_index]
                     .curve()
-                    .intersect_curve(
-                        materialized[second_index].curve(),
-                        &CurvePolicy::certified(),
-                    )
+                    .intersect_curve(materialized[second_index].curve(), &CurvePolicy::STRICT)
                     .map_err(GeometryError::from)?;
                 if !relation.is_complete() {
                     return Err(GeometryError::UnsupportedIntersection.into());
@@ -2869,8 +2878,14 @@ impl Model {
                 .collect::<Result<Vec<_>, _>>()?;
             let mut splits = Vec::with_capacity(segments.len());
             let whole_closed_trace = segments.len() == 1
-                && exact_point_order(&segments[0].curve().start()?, &segments[0].curve().end()?)?
-                    == std::cmp::Ordering::Equal;
+                && matches!(
+                    point3_equal(
+                        &segments[0].curve().start()?,
+                        &segments[0].curve().end()?,
+                        crate::STRICT_PREDICATES,
+                    ),
+                    PredicateOutcome::Decided { value: true, .. }
+                );
             if whole_closed_trace {
                 let segment = &segments[0];
                 let mut candidates = Vec::new();
@@ -3407,7 +3422,7 @@ impl Model {
             .collect::<Vec<_>>();
         let first_region = staged.build_model_wire_curve_path(*outer)?;
         let second_region = staged.build_model_wire_curve_path(target_inner)?;
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         for wire in remaining_inner {
@@ -3743,10 +3758,16 @@ impl Model {
             };
             for parameter in parameters {
                 if edge.domain.contains(&parameter)?
-                    && decided_model_order(compare_reals(&parameter, edge.domain.start()))?
-                        == std::cmp::Ordering::Greater
-                    && decided_model_order(compare_reals(&parameter, edge.domain.end()))?
-                        == std::cmp::Ordering::Less
+                    && decided_model_order(compare_reals(
+                        &parameter,
+                        edge.domain.start(),
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Greater
+                    && decided_model_order(compare_reals(
+                        &parameter,
+                        edge.domain.end(),
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Less
                 {
                     locations.push((
                         wire,
@@ -3800,15 +3821,17 @@ impl Model {
         }
         let mut matching_vertices = Vec::new();
         for vertex in boundary_vertices {
-            if points_equal(
-                &self
-                    .vertex(vertex)
-                    .expect("validated boundary vertex")
-                    .point,
-                point,
-            )
-            .map_err(TopologyEditError::Build)?
-            {
+            if matches!(
+                point3_equal(
+                    &self
+                        .vertex(vertex)
+                        .expect("validated boundary vertex")
+                        .point,
+                    point,
+                    crate::STRICT_PREDICATES,
+                ),
+                PredicateOutcome::Decided { value: true, .. }
+            ) {
                 matching_vertices.push(vertex);
             }
         }
@@ -3827,16 +3850,29 @@ impl Model {
         for edge_id in boundary_edges {
             let edge = self.edge(edge_id).expect("validated canonical edge");
             let curve = self.curve(edge.curve).expect("validated edge curve");
-            let CurveParameterLocation::Parameters(parameters) = curve.parameters_of(point)? else {
-                continue;
+            let parameters = match curve.parameters_of(point) {
+                Ok(CurveParameterLocation::Parameters(parameters)) => parameters,
+                Ok(_) | Err(GeometryError::PredicateUnresolved { .. }) => continue,
+                Err(error) => return Err(error.into()),
             };
             for parameter in parameters {
-                if edge.domain.contains(&parameter)?
-                    && decided_model_order(compare_reals(&parameter, edge.domain.start()))?
-                        == std::cmp::Ordering::Greater
-                    && decided_model_order(compare_reals(&parameter, edge.domain.end()))?
-                        == std::cmp::Ordering::Less
-                {
+                let after_start =
+                    compare_reals(&parameter, edge.domain.start(), crate::STRICT_PREDICATES);
+                let before_end =
+                    compare_reals(&parameter, edge.domain.end(), crate::STRICT_PREDICATES);
+                if matches!(
+                    after_start,
+                    PredicateOutcome::Decided {
+                        value: std::cmp::Ordering::Greater,
+                        ..
+                    }
+                ) && matches!(
+                    before_end,
+                    PredicateOutcome::Decided {
+                        value: std::cmp::Ordering::Less,
+                        ..
+                    }
+                ) {
                     locations.push((edge_id, parameter));
                 }
             }
@@ -4077,7 +4113,7 @@ impl Model {
         });
 
         reset_model_caches(data);
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let mut first_inner = Vec::new();
         let mut second_inner = Vec::new();
         if !inner.is_empty() {
@@ -4423,7 +4459,7 @@ impl Model {
                 };
                 let slot = &mut reflection_sums[edge_use.pcurve.index()];
                 if let Some(existing) = slot {
-                    match compare_reals(existing, &reflection_sum) {
+                    match compare_reals(existing, &reflection_sum, crate::STRICT_PREDICATES) {
                         PredicateOutcome::Decided {
                             value: std::cmp::Ordering::Equal,
                             ..
@@ -4896,8 +4932,11 @@ impl Model {
             let line = pcurve
                 .line_segment()
                 .ok_or(GeometryError::UnsupportedMeasurement)?;
-            let increasing = decided_model_order(compare_reals(line.end().x(), line.start().x()))?
-                == std::cmp::Ordering::Greater;
+            let increasing = decided_model_order(compare_reals(
+                line.end().x(),
+                line.start().x(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Greater;
             let upper = match face.orientation {
                 Orientation::Forward => increasing,
                 Orientation::Reversed => !increasing,
@@ -4995,10 +5034,12 @@ impl Model {
                 if decided_model_order(compare_reals(
                     &start_radial.cross(&end_radial).norm_squared(),
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? != std::cmp::Ordering::Equal
                     || decided_model_order(compare_reals(
                         &start_radial.dot(&end_radial),
                         &Real::zero(),
+                        crate::STRICT_PREDICATES,
                     ))? != std::cmp::Ordering::Greater
                 {
                     return Err(GeometryError::UnsupportedMeasurement.into());
@@ -5452,8 +5493,11 @@ impl Model {
         for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
             for face in &self.shell(*shell).expect("validated shell ID").faces {
                 let signed = self.face_plane_value(*face, point)?;
-                if decided_model_order(compare_reals(&signed, &Real::zero()))?
-                    == std::cmp::Ordering::Equal
+                if decided_model_order(compare_reals(
+                    &signed,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Equal
                 {
                     match self.classify_point_on_face(*face, point)? {
                         Classification::Decided(ContourPointLocation::Inside)
@@ -5490,17 +5534,27 @@ impl Model {
     ) -> Result<SolidPointLocation, QueryError> {
         let offset = point - &cylinder.origin;
         let axial = offset.dot(&cylinder.axis);
-        let below = decided_model_order(compare_reals(&axial, &cylinder.v_min))?
-            == std::cmp::Ordering::Less;
-        let above = decided_model_order(compare_reals(&axial, &cylinder.v_max))?
-            == std::cmp::Ordering::Greater;
+        let below = decided_model_order(compare_reals(
+            &axial,
+            &cylinder.v_min,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less;
+        let above = decided_model_order(compare_reals(
+            &axial,
+            &cylinder.v_max,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Greater;
         if below || above {
             return Ok(SolidPointLocation::Outside);
         }
         let radial = offset - cylinder.axis.clone() * &axial;
         let radial_squared = radial.norm_squared();
         let radius_squared = &cylinder.radius * &cylinder.radius;
-        let radial_order = decided_model_order(compare_reals(&radial_squared, &radius_squared))?;
+        let radial_order = decided_model_order(compare_reals(
+            &radial_squared,
+            &radius_squared,
+            crate::STRICT_PREDICATES,
+        ))?;
         if radial_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
@@ -5514,16 +5568,23 @@ impl Model {
             match decided_model_order(compare_reals(
                 &(point - center).norm_squared(),
                 &(radius * radius),
+                crate::STRICT_PREDICATES,
             ))? {
                 std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
                 std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
                 std::cmp::Ordering::Greater => {}
             }
         }
-        let on_cap = decided_model_order(compare_reals(&axial, &cylinder.v_min))?
-            == std::cmp::Ordering::Equal
-            || decided_model_order(compare_reals(&axial, &cylinder.v_max))?
-                == std::cmp::Ordering::Equal;
+        let on_cap = decided_model_order(compare_reals(
+            &axial,
+            &cylinder.v_min,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Equal
+            || decided_model_order(compare_reals(
+                &axial,
+                &cylinder.v_max,
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Equal;
         if on_cap || radial_order == std::cmp::Ordering::Equal {
             Ok(SolidPointLocation::Boundary)
         } else {
@@ -5546,7 +5607,7 @@ impl Model {
         let profile_point = CurvePoint2::new(radius, axial);
         let location = match revolution
             .profile
-            .classify_point(&profile_point, &CurvePolicy::certified())?
+            .classify_point(&profile_point, &CurvePolicy::STRICT)?
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -5559,7 +5620,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for void in &revolution.voids {
-            match void.classify_point(&profile_point, &CurvePolicy::certified())? {
+            match void.classify_point(&profile_point, &CurvePolicy::STRICT)? {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -5588,17 +5649,31 @@ impl Model {
             .map_err(|_| GeometryError::ProjectiveDivision)?;
         let parameter_t = (loft.u.dot(&loft.v.cross(&displacement)) / determinant)
             .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let t_order_min = decided_model_order(compare_reals(&parameter_t, &Real::zero()))?;
-        let t_order_max = decided_model_order(compare_reals(&parameter_t, &Real::one()))?;
+        let t_order_min = decided_model_order(compare_reals(
+            &parameter_t,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
+        let t_order_max = decided_model_order(compare_reals(
+            &parameter_t,
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ))?;
         if t_order_min == std::cmp::Ordering::Less || t_order_max == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
         let mut selected_span = None;
         for span in &loft.spans {
-            let at_or_above = decided_model_order(compare_reals(&parameter_t, &span.start))?
-                != std::cmp::Ordering::Less;
-            let at_or_below = decided_model_order(compare_reals(&parameter_t, &span.end))?
-                != std::cmp::Ordering::Greater;
+            let at_or_above = decided_model_order(compare_reals(
+                &parameter_t,
+                &span.start,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less;
+            let at_or_below = decided_model_order(compare_reals(
+                &parameter_t,
+                &span.end,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater;
             if at_or_above && at_or_below {
                 selected_span = Some(span);
                 break;
@@ -5622,7 +5697,7 @@ impl Model {
                     ((profile_point.y() - &local_parameter * translation.y()) / factor)
                         .map_err(|_| GeometryError::ProjectiveDivision)?,
                 );
-                match profile.classify_point(&normalized, &CurvePolicy::certified()) {
+                match profile.classify_point(&normalized, &CurvePolicy::STRICT) {
                     Classification::Decided(location) => location,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
@@ -5659,8 +5734,16 @@ impl Model {
         let progress = normal.dot(&(end - &start));
         let parameter = (normal.dot(&(point - &start)) / &progress)
             .map_err(|_| QueryError::from(GeometryError::ProjectiveDivision))?;
-        let lower_order = decided_model_order(compare_reals(&parameter, &Real::zero()))?;
-        let upper_order = decided_model_order(compare_reals(&parameter, &Real::one()))?;
+        let lower_order = decided_model_order(compare_reals(
+            &parameter,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
+        let upper_order = decided_model_order(compare_reals(
+            &parameter,
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ))?;
         if lower_order == std::cmp::Ordering::Less || upper_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
@@ -5671,7 +5754,7 @@ impl Model {
             .map_err(build_error_geometry)?;
         let location = match sweep
             .profile
-            .classify_point(&profile_point, &CurvePolicy::certified())
+            .classify_point(&profile_point, &CurvePolicy::STRICT)
         {
             Classification::Decided(location) => location,
             Classification::Uncertain(reason) => {
@@ -5684,7 +5767,7 @@ impl Model {
             ContourPointLocation::Inside => {}
         }
         for hole in &sweep.holes {
-            match hole.classify_point(&profile_point, &CurvePolicy::certified()) {
+            match hole.classify_point(&profile_point, &CurvePolicy::STRICT) {
                 Classification::Decided(ContourPointLocation::Inside) => {
                     return Ok(SolidPointLocation::Outside);
                 }
@@ -5719,6 +5802,7 @@ impl Model {
             let radial_order = decided_model_order(compare_reals(
                 &radial.norm_squared(),
                 &(&clip.radius * &clip.radius),
+                crate::STRICT_PREDICATES,
             ))?;
             if matches!(
                 (clip.side, radial_order),
@@ -5738,8 +5822,10 @@ impl Model {
         };
         let clip_orders = if let CertifiedSphereRegion::Axial(clip) = &sphere.region {
             let height = (point - &sphere.center).dot(&clip.axis);
-            let min = decided_model_order(compare_reals(&height, &clip.min))?;
-            let max = decided_model_order(compare_reals(&height, &clip.max))?;
+            let min =
+                decided_model_order(compare_reals(&height, &clip.min, crate::STRICT_PREDICATES))?;
+            let max =
+                decided_model_order(compare_reals(&height, &clip.max, crate::STRICT_PREDICATES))?;
             if min == std::cmp::Ordering::Less || max == std::cmp::Ordering::Greater {
                 return Ok(SolidPointLocation::Outside);
             }
@@ -5749,7 +5835,11 @@ impl Model {
         };
         let distance_squared = (point - &sphere.center).norm_squared();
         let radius_squared = &sphere.radius * &sphere.radius;
-        match decided_model_order(compare_reals(&distance_squared, &radius_squared))? {
+        match decided_model_order(compare_reals(
+            &distance_squared,
+            &radius_squared,
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Greater => return Ok(SolidPointLocation::Outside),
             std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
             std::cmp::Ordering::Less => {}
@@ -5767,6 +5857,7 @@ impl Model {
                     match decided_model_order(compare_reals(
                         &(point - center).norm_squared(),
                         &(radius * radius),
+                        crate::STRICT_PREDICATES,
                     ))? {
                         std::cmp::Ordering::Less => SolidPointLocation::Inside,
                         std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
@@ -5776,8 +5867,16 @@ impl Model {
                 CertifiedSphereVoid::Cylinder(cylinder) => {
                     let offset = point - &cylinder.origin;
                     let axial = offset.dot(&cylinder.axis);
-                    let min = decided_model_order(compare_reals(&axial, &cylinder.v_min))?;
-                    let max = decided_model_order(compare_reals(&axial, &cylinder.v_max))?;
+                    let min = decided_model_order(compare_reals(
+                        &axial,
+                        &cylinder.v_min,
+                        crate::STRICT_PREDICATES,
+                    ))?;
+                    let max = decided_model_order(compare_reals(
+                        &axial,
+                        &cylinder.v_max,
+                        crate::STRICT_PREDICATES,
+                    ))?;
                     if min == std::cmp::Ordering::Less || max == std::cmp::Ordering::Greater {
                         SolidPointLocation::Outside
                     } else {
@@ -5785,6 +5884,7 @@ impl Model {
                         match decided_model_order(compare_reals(
                             &radial.norm_squared(),
                             &(&cylinder.radius * &cylinder.radius),
+                            crate::STRICT_PREDICATES,
                         ))? {
                             std::cmp::Ordering::Greater => SolidPointLocation::Outside,
                             std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
@@ -5817,11 +5917,20 @@ impl Model {
         let sphere_order = decided_model_order(compare_reals(
             &(point - &sphere.center).norm_squared(),
             &(&sphere.radius * &sphere.radius),
+            crate::STRICT_PREDICATES,
         ))?;
         let offset = point - &cylinder.origin;
         let axial = offset.dot(&cylinder.axis);
-        let axial_min = decided_model_order(compare_reals(&axial, &cylinder.v_min))?;
-        let axial_max = decided_model_order(compare_reals(&axial, &cylinder.v_max))?;
+        let axial_min = decided_model_order(compare_reals(
+            &axial,
+            &cylinder.v_min,
+            crate::STRICT_PREDICATES,
+        ))?;
+        let axial_max = decided_model_order(compare_reals(
+            &axial,
+            &cylinder.v_max,
+            crate::STRICT_PREDICATES,
+        ))?;
         let cylinder_location =
             if axial_min == std::cmp::Ordering::Less || axial_max == std::cmp::Ordering::Greater {
                 SolidPointLocation::Outside
@@ -5830,6 +5939,7 @@ impl Model {
                 match decided_model_order(compare_reals(
                     &radial.norm_squared(),
                     &(&cylinder.radius * &cylinder.radius),
+                    crate::STRICT_PREDICATES,
                 ))? {
                     std::cmp::Ordering::Greater => SolidPointLocation::Outside,
                     std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
@@ -5899,10 +6009,12 @@ impl Model {
         let first = decided_model_order(compare_reals(
             &(point - &pair.first_center).norm_squared(),
             &(&pair.first_radius * &pair.first_radius),
+            crate::STRICT_PREDICATES,
         ))?;
         let second = decided_model_order(compare_reals(
             &(point - &pair.second_center).norm_squared(),
             &(&pair.second_radius * &pair.second_radius),
+            crate::STRICT_PREDICATES,
         ))?;
         Ok(match pair.kind {
             CertifiedSpherePairKind::Union => {
@@ -5952,8 +6064,10 @@ impl Model {
         let region_boundary = match &torus.region {
             CertifiedTorusRegion::Whole => false,
             CertifiedTorusRegion::Axial { min, max } => {
-                let min_order = decided_model_order(compare_reals(&axial, min))?;
-                let max_order = decided_model_order(compare_reals(&axial, max))?;
+                let min_order =
+                    decided_model_order(compare_reals(&axial, min, crate::STRICT_PREDICATES))?;
+                let max_order =
+                    decided_model_order(compare_reals(&axial, max, crate::STRICT_PREDICATES))?;
                 if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater
                 {
                     return Ok(SolidPointLocation::Outside);
@@ -5964,6 +6078,7 @@ impl Model {
                 match decided_model_order(compare_reals(
                     &offset.dot(interior_normal),
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? {
                     std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
                     std::cmp::Ordering::Equal => true,
@@ -5978,12 +6093,14 @@ impl Model {
         let implicit_base = &radial_squared + &axial * &axial + &major_squared - &minor_squared;
         let left = &implicit_base * &implicit_base;
         let right = Real::from(4) * major_squared * radial_squared;
-        Ok(match decided_model_order(compare_reals(&left, &right))? {
-            std::cmp::Ordering::Less if region_boundary => SolidPointLocation::Boundary,
-            std::cmp::Ordering::Less => SolidPointLocation::Inside,
-            std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
-            std::cmp::Ordering::Greater => SolidPointLocation::Outside,
-        })
+        Ok(
+            match decided_model_order(compare_reals(&left, &right, crate::STRICT_PREDICATES))? {
+                std::cmp::Ordering::Less if region_boundary => SolidPointLocation::Boundary,
+                std::cmp::Ordering::Less => SolidPointLocation::Inside,
+                std::cmp::Ordering::Equal => SolidPointLocation::Boundary,
+                std::cmp::Ordering::Greater => SolidPointLocation::Outside,
+            },
+        )
     }
 
     fn classify_point_against_prism(
@@ -5999,15 +6116,21 @@ impl Model {
             .map_err(|_| GeometryError::ProjectiveDivision)?;
         let extrusion_parameter = (prism.u.dot(&prism.v.cross(&displacement)) / determinant)
             .map_err(|_| GeometryError::ProjectiveDivision)?;
-        let min_order =
-            decided_model_order(compare_reals(&extrusion_parameter, &prism.parameter_min))?;
-        let max_order =
-            decided_model_order(compare_reals(&extrusion_parameter, &prism.parameter_max))?;
+        let min_order = decided_model_order(compare_reals(
+            &extrusion_parameter,
+            &prism.parameter_min,
+            crate::STRICT_PREDICATES,
+        ))?;
+        let max_order = decided_model_order(compare_reals(
+            &extrusion_parameter,
+            &prism.parameter_max,
+            crate::STRICT_PREDICATES,
+        ))?;
         if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
         let planar = CurvePoint2::new(planar_u, planar_v);
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         match prism
             .outer
             .classify_point(&planar, &policy)
@@ -6327,15 +6450,22 @@ impl Model {
                 .plane_directions()
                 .expect("the current validated face matrix contains only planes");
             let denominator = u.cross(v).dot(direction);
-            if decided_model_order(compare_reals(&denominator, &Real::zero()))?
-                == std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(
+                &denominator,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Equal
             {
                 continue;
             }
             let plane_value = self.face_plane_value(*face_id, point)?;
             let parameter =
                 ((-plane_value) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-            match decided_model_order(compare_reals(&parameter, &Real::zero()))? {
+            match decided_model_order(compare_reals(
+                &parameter,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? {
                 std::cmp::Ordering::Less | std::cmp::Ordering::Equal => continue,
                 std::cmp::Ordering::Greater => {}
             }
@@ -6390,15 +6520,20 @@ impl Model {
         let axial = offset.dot(&frustum.axis);
         let cosine = frustum.semi_angle.clone().cos();
         let v = (&axial / cosine).map_err(|_| GeometryError::ProjectiveDivision)?;
-        let min_order = decided_model_order(compare_reals(&v, &frustum.v_min))?;
-        let max_order = decided_model_order(compare_reals(&v, &frustum.v_max))?;
+        let min_order =
+            decided_model_order(compare_reals(&v, &frustum.v_min, crate::STRICT_PREDICATES))?;
+        let max_order =
+            decided_model_order(compare_reals(&v, &frustum.v_max, crate::STRICT_PREDICATES))?;
         if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
         let radial = offset.clone() - frustum.axis.clone() * axial;
         let radius = v * frustum.semi_angle.clone().sin();
-        let radial_order =
-            decided_model_order(compare_reals(&radial.norm_squared(), &(&radius * &radius)))?;
+        let radial_order = decided_model_order(compare_reals(
+            &radial.norm_squared(),
+            &(&radius * &radius),
+            crate::STRICT_PREDICATES,
+        ))?;
         if radial_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
@@ -6408,6 +6543,7 @@ impl Model {
                 match decided_model_order(compare_reals(
                     &offset.dot(interior_normal),
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? {
                     std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
                     std::cmp::Ordering::Equal => true,
@@ -6519,7 +6655,7 @@ impl Model {
         let FaceBoundary::Trimmed { outer, inner } = &face.boundary else {
             return Ok(Classification::Decided(ContourPointLocation::Inside));
         };
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         match self
             .build_model_wire_curve_path(*outer)?
             .classify_point(point, &policy)
@@ -6624,22 +6760,28 @@ impl Model {
         let mut z_max = first.z.clone();
         for vertex_id in &vertex_ids {
             let z = &self.vertex(*vertex_id).expect("validated vertex").point().z;
-            if decided_model_order(compare_reals(z, &z_min))? == std::cmp::Ordering::Less {
+            if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+            {
                 z_min = z.clone();
             }
-            if decided_model_order(compare_reals(z, &z_max))? == std::cmp::Ordering::Greater {
+            if decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
+            {
                 z_max = z.clone();
             }
         }
-        if decided_model_order(compare_reals(&z_min, &z_max))? != std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(&z_min, &z_max, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
             return Ok(None);
         }
         for vertex_id in &vertex_ids {
             let z = &self.vertex(*vertex_id).expect("validated vertex").point().z;
-            let at_min =
-                decided_model_order(compare_reals(z, &z_min))? == std::cmp::Ordering::Equal;
-            let at_max =
-                decided_model_order(compare_reals(z, &z_max))? == std::cmp::Ordering::Equal;
+            let at_min = decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Equal;
+            let at_max = decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Equal;
             if !at_min && !at_max {
                 return Ok(None);
             }
@@ -6655,8 +6797,11 @@ impl Model {
                 for edge_use_id in &wire.edge_uses {
                     let (start, end) = self.directed_vertices(*edge_use_id);
                     let point = self.vertex(start).expect("validated vertex").point();
-                    if decided_model_order(compare_reals(&point.z, &z_max))?
-                        != std::cmp::Ordering::Equal
+                    if decided_model_order(compare_reals(
+                        &point.z,
+                        &z_max,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Equal
                     {
                         is_top = false;
                         break;
@@ -6806,7 +6951,11 @@ impl Model {
                 let radial_x = &start.x - &data.center.x;
                 let radial_y = &start.y - &data.center.y;
                 let cross = radial_x * &tangent.0[1] - radial_y * &tangent.0[0];
-                let clockwise = match decided_model_order(compare_reals(&cross, &Real::zero()))? {
+                let clockwise = match decided_model_order(compare_reals(
+                    &cross,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? {
                     std::cmp::Ordering::Less => true,
                     std::cmp::Ordering::Greater => false,
                     std::cmp::Ordering::Equal => return Err(GeometryError::InvalidArcSweep),
@@ -7316,8 +7465,11 @@ impl ModelBuilder {
                     Orientation::Forward => std::cmp::Ordering::Greater,
                     Orientation::Reversed => std::cmp::Ordering::Less,
                 };
-                if decided_model_order(compare_reals(&lower_latitude, &upper_latitude))?
-                    != std::cmp::Ordering::Less
+                if decided_model_order(compare_reals(
+                    &lower_latitude,
+                    &upper_latitude,
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Less
                     || lower_direction != expected_lower
                     || upper_direction == expected_lower
                 {
@@ -7807,6 +7959,28 @@ impl ModelBuilder {
             let edge = self.edge_ref(edge_use.edge)?;
             let curve = self.curve_ref(edge.curve)?;
             let pcurve = self.pcurve_ref(edge_use.pcurve)?;
+            let complete_image_certificate_subsumes_endpoint_sampling = matches!(
+                (
+                    curve.kind(),
+                    pcurve.kind(),
+                    surface.kind(),
+                    &edge_use.parameter_correspondence,
+                ),
+                (
+                    Curve3Kind::CircleArc,
+                    CurveFamily2::Line,
+                    SurfaceKind::Cylinder
+                        | SurfaceKind::Sphere
+                        | SurfaceKind::Cone
+                        | SurfaceKind::Torus,
+                    ParameterCorrespondence::Affine { .. },
+                ) | (
+                    Curve3Kind::Line,
+                    CurveFamily2::Line,
+                    SurfaceKind::Cylinder,
+                    ParameterCorrespondence::Affine { .. },
+                )
+            );
 
             let pcurve_parameters = [pcurve.domain_start(), pcurve.domain_end()];
             let expected_edge_parameters = match edge_use.direction {
@@ -7837,11 +8011,13 @@ impl ModelBuilder {
                 let edge_point = curve.point_at(&edge_parameter)?;
                 let surface_parameter = pcurve.point_at(pcurve_parameter)?;
                 let surface_point = surface.point_at(&surface_parameter)?;
-                require_point_equal(
-                    &edge_point,
-                    &surface_point,
-                    BuildError::EdgeUseImageMismatch { endpoint },
-                )?;
+                if !complete_image_certificate_subsumes_endpoint_sampling {
+                    require_point_equal(
+                        &edge_point,
+                        &surface_point,
+                        BuildError::EdgeUseImageMismatch { endpoint },
+                    )?;
+                }
             }
 
             match (
@@ -7886,7 +8062,9 @@ impl ModelBuilder {
                     CurveFamily2::Line,
                     SurfaceKind::Cylinder,
                     ParameterCorrespondence::Affine { .. },
-                ) => self.validate_cylinder_axial_line_image(pcurve)?,
+                ) => {
+                    self.validate_cylinder_axial_line_image(curve, edge, edge_use, pcurve, surface)?
+                }
                 (
                     Curve3Kind::CircleArc,
                     CurveFamily2::Line,
@@ -8018,8 +8196,12 @@ impl ModelBuilder {
                     CurveFamily2::RationalBezier,
                     SurfaceKind::RationalBezier,
                     ParameterCorrespondence::Affine { .. },
-                )
-                | (
+                ) => {
+                    self.validate_rational_tensor_graph_image(
+                        curve, edge, edge_use, pcurve, surface,
+                    )?;
+                }
+                (
                     Curve3Kind::RationalBezier,
                     CurveFamily2::RationalBezier,
                     SurfaceKind::Nurbs,
@@ -8422,7 +8604,9 @@ impl ModelBuilder {
             SurfaceIsoAxis::U => (start.x(), end.x()),
             SurfaceIsoAxis::V => (start.y(), end.y()),
         };
-        if decided_model_order(compare_reals(start, end))? != std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(start, end, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
         Ok((start.clone(), end.clone()))
@@ -8604,8 +8788,8 @@ impl ModelBuilder {
         }
         let direction = &surface_points[0][1] - &surface_points[0][0];
         let direction_axis = (0..3)
-            .find_map(
-                |axis| match compare_reals(&direction.0[axis], &Real::zero()) {
+            .find_map(|axis| {
+                match compare_reals(&direction.0[axis], &Real::zero(), crate::STRICT_PREDICATES) {
                     PredicateOutcome::Decided {
                         value: std::cmp::Ordering::Equal,
                         ..
@@ -8614,8 +8798,8 @@ impl ModelBuilder {
                     PredicateOutcome::Unknown { needed, stage } => Some(Err(BuildError::Geometry(
                         GeometryError::PredicateUnresolved { needed, stage },
                     ))),
-                },
-            )
+                }
+            })
             .transpose()?
             .ok_or(BuildError::EdgeUseSupportMismatch)?;
         for row in surface_points {
@@ -8694,7 +8878,11 @@ impl ModelBuilder {
             Direction::Forward => (lower, upper),
             Direction::Reversed => (upper, lower),
         };
-        let segment = match decided_model_order(compare_reals(source_start, source_end))? {
+        let segment = match decided_model_order(compare_reals(
+            source_start,
+            source_end,
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Less => complete.subcurve(source_start, source_end)?,
             std::cmp::Ordering::Greater => {
                 complete.subcurve(source_end, source_start)?.reversed()?
@@ -8773,7 +8961,14 @@ impl ModelBuilder {
         )
     }
 
-    fn validate_cylinder_axial_line_image(&self, pcurve: &Pcurve) -> Result<(), BuildError> {
+    fn validate_cylinder_axial_line_image(
+        &self,
+        curve: &Curve3,
+        edge: &Edge,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<(), BuildError> {
         let line = pcurve
             .line_segment()
             .expect("line pcurve kind carries line geometry");
@@ -8781,7 +8976,53 @@ impl ModelBuilder {
             line.start().x(),
             line.end().x(),
             BuildError::EdgeUseSupportMismatch,
-        )
+        )?;
+        let Curve3ExactData::Line(curve_data) = curve.exact_data() else {
+            unreachable!("line kind carries line exact data");
+        };
+        let SurfaceExactData::Cylinder {
+            origin,
+            x,
+            y,
+            axis,
+            radius,
+        } = surface.exact_data()
+        else {
+            unreachable!("cylinder kind carries cylinder exact data");
+        };
+        let u = line.start().x().clone();
+        let expected_x = &radius * u.clone().cos();
+        let expected_y = &radius * u.sin();
+        for point in [&curve_data.start, &curve_data.end] {
+            let offset = point - &origin;
+            require_real_equal(
+                &offset.dot(&x),
+                &expected_x,
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            require_real_equal(
+                &offset.dot(&y),
+                &expected_y,
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+        }
+        for parameter in [pcurve.domain_start(), pcurve.domain_end()] {
+            let edge_parameter = edge_use.parameter_correspondence.edge_parameter(
+                pcurve,
+                &edge.domain,
+                edge_use.direction,
+                parameter,
+            )?;
+            let edge_point = curve.point_at(&edge_parameter)?;
+            let axial = (&edge_point - &origin).dot(&axis);
+            let surface_parameter = pcurve.point_at(parameter)?;
+            require_real_equal(
+                &axial,
+                &surface_parameter.y,
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+        }
+        Ok(())
     }
 
     fn validate_cylinder_circle_image(
@@ -8860,34 +9101,49 @@ impl ModelBuilder {
         }
         let SurfaceExactData::Sphere {
             center,
+            x,
+            y,
             axis,
             radius,
-            ..
         } = surface.exact_data()
         else {
             unreachable!("sphere kind carries sphere exact data");
         };
-        let (expected_center, expected_radius, surface_parameter, varying_u) = if v_constant {
+        let (expected_radius, surface_parameter, varying_u) = if v_constant {
             let latitude = line.start().y().clone();
+            let center_offset = &curve_data.center - &center;
+            require_real_equal(
+                &center_offset.dot(&x),
+                &Real::zero(),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            require_real_equal(
+                &center_offset.dot(&y),
+                &Real::zero(),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
+            require_real_equal(
+                &center_offset.dot(&axis),
+                &(&radius * latitude.clone().sin()),
+                BuildError::EdgeUseSupportMismatch,
+            )?;
             (
-                center + axis.clone() * (&radius * latitude.clone().sin()),
                 &radius * latitude.clone().cos(),
                 Point2::new(line.start().x().clone(), latitude),
                 true,
             )
         } else {
+            require_point_equal(
+                &curve_data.center,
+                &center,
+                BuildError::EdgeUseSupportMismatch,
+            )?;
             (
-                center,
                 radius,
                 Point2::new(line.start().x().clone(), line.start().y().clone()),
                 false,
             )
         };
-        require_point_equal(
-            &curve_data.center,
-            &expected_center,
-            BuildError::EdgeUseSupportMismatch,
-        )?;
         require_real_equal(
             &curve_data.x_radius,
             &expected_radius,
@@ -9143,14 +9399,16 @@ impl ModelBuilder {
         if real_values_equal(line.start().x(), line.end().x())? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let (profile_start, profile_end) =
-            if decided_model_order(compare_reals(line.start().x(), line.end().x()))?
-                == std::cmp::Ordering::Less
-            {
-                (line.start().x(), line.end().x())
-            } else {
-                (line.end().x(), line.start().x())
-            };
+        let (profile_start, profile_end) = if decided_model_order(compare_reals(
+            line.start().x(),
+            line.end().x(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
+        {
+            (line.start().x(), line.end().x())
+        } else {
+            (line.end().x(), line.start().x())
+        };
         let (profile, direction) = surface
             .extrusion_profile_and_direction()
             .expect("extrusion kind carries extrusion geometry");
@@ -9209,14 +9467,16 @@ impl ModelBuilder {
         if real_values_equal(line.start().y(), line.end().y())? {
             return Err(BuildError::EdgeUseSupportMismatch);
         }
-        let (profile_start, profile_end) =
-            if decided_model_order(compare_reals(line.start().y(), line.end().y()))?
-                == std::cmp::Ordering::Less
-            {
-                (line.start().y(), line.end().y())
-            } else {
-                (line.end().y(), line.start().y())
-            };
+        let (profile_start, profile_end) = if decided_model_order(compare_reals(
+            line.start().y(),
+            line.end().y(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
+        {
+            (line.start().y(), line.end().y())
+        } else {
+            (line.end().y(), line.start().y())
+        };
         let expected = surface
             .revolution_meridian_curve(line.start().x())?
             .subcurve(profile_start, profile_end)?;
@@ -9342,9 +9602,11 @@ impl ModelBuilder {
         surface: SurfaceId,
     ) -> Result<(), BuildError> {
         let signed_area_order = match self.signed_wire_double_area(wire) {
-            Ok(signed_double_area) => {
-                decided_model_order(compare_reals(&signed_double_area, &Real::zero()))?
-            }
+            Ok(signed_double_area) => decided_model_order(compare_reals(
+                &signed_double_area,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))?,
             Err(BuildError::Geometry(GeometryError::UnsupportedPcurveContour)) => {
                 let path = self.build_wire_curve_path(wire)?;
                 let area = path
@@ -9354,7 +9616,11 @@ impl ModelBuilder {
                     .signed_area()
                     .map_err(GeometryError::from)?;
                 match area {
-                    Some(area) => decided_model_order(compare_reals(&area, &Real::zero()))?,
+                    Some(area) => decided_model_order(compare_reals(
+                        &area,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))?,
                     None => self.tensor_graph_wire_orientation(wire, surface)?,
                 }
             }
@@ -9416,8 +9682,16 @@ impl ModelBuilder {
                     graph_endpoints = Some((
                         start.clone(),
                         end.clone(),
-                        decided_model_order(compare_reals(end.x(), start.x()))?,
-                        decided_model_order(compare_reals(end.y(), start.y()))?,
+                        decided_model_order(compare_reals(
+                            end.x(),
+                            start.x(),
+                            crate::STRICT_PREDICATES,
+                        ))?,
+                        decided_model_order(compare_reals(
+                            end.y(),
+                            start.y(),
+                            crate::STRICT_PREDICATES,
+                        ))?,
                     ));
                 }
                 CurveGeometry2::Line(line)
@@ -9539,8 +9813,11 @@ impl ModelBuilder {
             } else {
                 first_u = Some(line.start().x().clone());
             }
-            let segment_direction =
-                decided_model_order(compare_reals(line.end().x(), line.start().x()))?;
+            let segment_direction = decided_model_order(compare_reals(
+                line.end().x(),
+                line.start().x(),
+                crate::STRICT_PREDICATES,
+            ))?;
             if !matches!(
                 segment_direction,
                 std::cmp::Ordering::Less | std::cmp::Ordering::Greater
@@ -9554,9 +9831,13 @@ impl ModelBuilder {
         let latitude = latitude.ok_or(BuildError::UnsupportedSphericalTrim(wire))?;
         let half_pi =
             (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_model_order(compare_reals(&latitude, &-half_pi.clone()))?
-            != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&latitude, &half_pi))? != std::cmp::Ordering::Less
+        if decided_model_order(compare_reals(
+            &latitude,
+            &-half_pi.clone(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(&latitude, &half_pi, crate::STRICT_PREDICATES))?
+                != std::cmp::Ordering::Less
         {
             return Err(BuildError::InvalidSphericalTrim(wire));
         }
@@ -9590,7 +9871,11 @@ impl ModelBuilder {
             .ok_or(BuildError::UnsupportedSphericalTrim(wire_id))?;
         Ok((
             first.start().y().clone(),
-            decided_model_order(compare_reals(last.end().x(), first.start().x()))?,
+            decided_model_order(compare_reals(
+                last.end().x(),
+                first.start().x(),
+                crate::STRICT_PREDICATES,
+            ))?,
         ))
     }
 
@@ -9598,7 +9883,7 @@ impl ModelBuilder {
         if inner.is_empty() {
             return Ok(());
         }
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         let outer_path = self.build_wire_curve_path(outer)?;
         for wire in inner {
             let path = self.build_wire_curve_path(*wire)?;
@@ -9661,7 +9946,7 @@ impl ModelBuilder {
         match self.build_wire_contour(wire) {
             Ok(contour) => {
                 if contour
-                    .intersect_self(&CurvePolicy::certified())
+                    .intersect_self(&CurvePolicy::STRICT)
                     .map_err(GeometryError::from)?
                     .is_empty()
                 {
@@ -9680,7 +9965,7 @@ impl ModelBuilder {
     fn validate_curve_path_simplicity(&self, wire: WireId) -> Result<(), BuildError> {
         let path = self.build_wire_curve_path(wire)?;
         let curves = path.curves();
-        let policy = CurvePolicy::certified();
+        let policy = CurvePolicy::STRICT;
         if curves.len() == 2 {
             let relation = curves[0]
                 .intersect_curve(&curves[1], &policy)
@@ -9878,7 +10163,7 @@ impl ModelBuilder {
 
     fn validate_outer_shell_orientation(&self, shell: ShellId) -> Result<(), BuildError> {
         let signed_six_volume = self.signed_shell_six_volume(shell)?;
-        match compare_reals(&signed_six_volume, &Real::zero()) {
+        match compare_reals(&signed_six_volume, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Greater,
                 ..
@@ -9899,7 +10184,7 @@ impl ModelBuilder {
 
     fn validate_void_shell_orientation(&self, shell: ShellId) -> Result<(), BuildError> {
         let signed_six_volume = self.signed_shell_six_volume(shell)?;
-        match compare_reals(&signed_six_volume, &Real::zero()) {
+        match compare_reals(&signed_six_volume, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Less,
                 ..
@@ -9938,11 +10223,15 @@ impl ModelBuilder {
                     break;
                 };
                 let clearance = &outer_radius - &radius;
-                if decided_model_order(compare_reals(&clearance, &Real::zero()))?
-                    != std::cmp::Ordering::Greater
+                if decided_model_order(compare_reals(
+                    &clearance,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Greater
                     || decided_model_order(compare_reals(
                         &(&center - &outer_center).norm_squared(),
                         &(&clearance * &clearance),
+                        crate::STRICT_PREDICATES,
                     ))? != std::cmp::Ordering::Less
                 {
                     return Err(BuildError::VoidShellOutside(*void_shell));
@@ -9959,6 +10248,7 @@ impl ModelBuilder {
                         if decided_model_order(compare_reals(
                             &(first_center - second_center).norm_squared(),
                             &(&radius_sum * &radius_sum),
+                            crate::STRICT_PREDICATES,
                         ))? != std::cmp::Ordering::Greater
                         {
                             return Err(BuildError::IntersectingVoidShells {
@@ -10000,7 +10290,7 @@ impl ModelBuilder {
         if let Some(outer_revolution) =
             self.certified_oriented_revolution_shell(outer, Orientation::Forward)?
         {
-            let policy = CurvePolicy::certified();
+            let policy = CurvePolicy::STRICT;
             let mut revolution_voids = Vec::with_capacity(voids.len());
             for void_shell in voids {
                 let Some(void) =
@@ -10061,19 +10351,26 @@ impl ModelBuilder {
             let prism = self
                 .certified_z_prism_shell(*void_shell)?
                 .ok_or(BuildError::UnsupportedSolidShell(*void_shell))?;
-            if decided_model_order(compare_reals(&outer_prism.z_min, &prism.z_min))?
-                != std::cmp::Ordering::Less
-                || decided_model_order(compare_reals(&prism.z_max, &outer_prism.z_max))?
-                    != std::cmp::Ordering::Less
+            if decided_model_order(compare_reals(
+                &outer_prism.z_min,
+                &prism.z_min,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
+                || decided_model_order(compare_reals(
+                    &prism.z_max,
+                    &outer_prism.z_max,
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Less
                 || !outer_prism
                     .contour
-                    .intersect_contour(&prism.contour, &CurvePolicy::certified())
+                    .intersect_contour(&prism.contour, &CurvePolicy::STRICT)
                     .map_err(GeometryError::from)?
                     .is_empty()
-                || !classification_is_inside(outer_prism.contour.classify_point(
-                    prism.contour.segments()[0].start(),
-                    &CurvePolicy::certified(),
-                ))?
+                || !classification_is_inside(
+                    outer_prism
+                        .contour
+                        .classify_point(prism.contour.segments()[0].start(), &CurvePolicy::STRICT),
+                )?
             {
                 return Err(BuildError::VoidShellOutside(*void_shell));
             }
@@ -10084,15 +10381,20 @@ impl ModelBuilder {
             for second_index in (first_index + 1)..void_prisms.len() {
                 let (first_shell, first) = &void_prisms[first_index];
                 let (second_shell, second) = &void_prisms[second_index];
-                let separated_in_z =
-                    decided_model_order(compare_reals(&first.z_max, &second.z_min))?
-                        == std::cmp::Ordering::Less
-                        || decided_model_order(compare_reals(&second.z_max, &first.z_min))?
-                            == std::cmp::Ordering::Less;
+                let separated_in_z = decided_model_order(compare_reals(
+                    &first.z_max,
+                    &second.z_min,
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Less
+                    || decided_model_order(compare_reals(
+                        &second.z_max,
+                        &first.z_min,
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Less;
                 if separated_in_z {
                     continue;
                 }
-                let policy = CurvePolicy::certified();
+                let policy = CurvePolicy::STRICT;
                 let boundaries_intersect = !first
                     .contour
                     .intersect_contour(&second.contour, &policy)
@@ -10278,7 +10580,11 @@ impl ModelBuilder {
                 }
                 let cross = (second.x() - first.x()) * (third.y() - second.y())
                     - (second.y() - first.y()) * (third.x() - second.x());
-                let order = decided_model_order(compare_reals(&cross, &Real::zero()))?;
+                let order = decided_model_order(compare_reals(
+                    &cross,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
                 if order == std::cmp::Ordering::Equal {
                     continue;
                 }
@@ -10307,8 +10613,11 @@ impl ModelBuilder {
             }
             for vertex in &vertices {
                 let value = normal.dot(&(self.vertex_ref(*vertex)?.point() - origin));
-                if decided_model_order(compare_reals(&value, &Real::zero()))?
-                    == std::cmp::Ordering::Greater
+                if decided_model_order(compare_reals(
+                    &value,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Greater
                 {
                     return Ok(false);
                 }
@@ -10439,7 +10748,7 @@ impl ModelBuilder {
                 &second_region,
                 BooleanOp::Intersection,
                 FillRule::NonZero,
-                &CurvePolicy::certified(),
+                &CurvePolicy::STRICT,
             )
             .map_err(GeometryError::from)?
         {
@@ -10475,7 +10784,7 @@ impl ModelBuilder {
                 )
                 .map_err(GeometryError::from)?;
                 match first_segment
-                    .intersect_line(&second_segment, &CurvePolicy::certified())
+                    .intersect_line(&second_segment, &CurvePolicy::STRICT)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -10521,7 +10830,9 @@ impl ModelBuilder {
             for second in &second_material.intervals {
                 let lower = maximum_real(&first.0, &second.0)?;
                 let upper = minimum_real(&first.1, &second.1)?;
-                if decided_model_order(compare_reals(&lower, &upper))? != std::cmp::Ordering::Less {
+                if decided_model_order(compare_reals(&lower, &upper, crate::STRICT_PREDICATES))?
+                    != std::cmp::Ordering::Less
+                {
                     continue;
                 }
                 if !allow_shared_topology {
@@ -10535,10 +10846,16 @@ impl ModelBuilder {
                     let end = line_parameter(self.vertex_ref(edge.end)?.point(), point, direction)?;
                     let edge_lower = minimum_real(&start, &end)?;
                     let edge_upper = maximum_real(&start, &end)?;
-                    if decided_model_order(compare_reals(&edge_lower, &lower))?
-                        != std::cmp::Ordering::Greater
-                        && decided_model_order(compare_reals(&edge_upper, &upper))?
-                            != std::cmp::Ordering::Less
+                    if decided_model_order(compare_reals(
+                        &edge_lower,
+                        &lower,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Greater
+                        && decided_model_order(compare_reals(
+                            &edge_upper,
+                            &upper,
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Less
                     {
                         covered = true;
                         break;
@@ -10601,7 +10918,9 @@ impl ModelBuilder {
             });
         }
         let (lower, upper) = exact_real_min_max(&parameters)?;
-        if decided_model_order(compare_reals(&lower, &upper))? != std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(&lower, &upper, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
             return Ok(FaceLineMaterial {
                 intervals: Vec::new(),
                 contacts: Vec::new(),
@@ -10626,7 +10945,7 @@ impl ModelBuilder {
                     });
                 };
                 match source
-                    .intersect_line(boundary, &CurvePolicy::certified())
+                    .intersect_line(boundary, &CurvePolicy::STRICT)
                     .map_err(GeometryError::from)?
                 {
                     LineLineIntersection::None => {}
@@ -10651,7 +10970,7 @@ impl ModelBuilder {
         for cut in &cuts {
             let contact = point.clone() + direction.clone() * cut;
             let contact = project_point_to_surface_plane(&contact, surface)?;
-            match region.classify_point(&contact, &CurvePolicy::certified()) {
+            match region.classify_point(&contact, &CurvePolicy::STRICT) {
                 Classification::Decided(RegionPointLocation::Boundary) => {
                     insert_sorted_real(&mut contacts, cut)?;
                 }
@@ -10665,8 +10984,11 @@ impl ModelBuilder {
         }
         let mut intervals = Vec::new();
         for interval in cuts.windows(2) {
-            if decided_model_order(compare_reals(&interval[0], &interval[1]))?
-                != std::cmp::Ordering::Less
+            if decided_model_order(compare_reals(
+                &interval[0],
+                &interval[1],
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
             {
                 continue;
             }
@@ -10674,7 +10996,7 @@ impl ModelBuilder {
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
             let midpoint = point.clone() + direction.clone() * midpoint;
             let midpoint = project_point_to_surface_plane(&midpoint, surface)?;
-            match region.classify_point(&midpoint, &CurvePolicy::certified()) {
+            match region.classify_point(&midpoint, &CurvePolicy::STRICT) {
                 Classification::Decided(
                     RegionPointLocation::Inside | RegionPointLocation::Boundary,
                 ) => intervals.push((interval[0].clone(), interval[1].clone())),
@@ -10717,13 +11039,14 @@ impl ModelBuilder {
             if decided_model_order(compare_reals(
                 &planar_surface_value(surface, point),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == std::cmp::Ordering::Equal
             {
                 match self
                     .face_region_in_plane_frame(*face_id, surface)?
                     .classify_point(
                         &project_point_to_surface_plane(point, surface)?,
-                        &CurvePolicy::certified(),
+                        &CurvePolicy::STRICT,
                     ) {
                     Classification::Decided(
                         RegionPointLocation::Inside | RegionPointLocation::Boundary,
@@ -10768,15 +11091,21 @@ impl ModelBuilder {
                 .plane_directions()
                 .expect("planar shell classifier prevalidates planes");
             let denominator = u.cross(v).dot(direction);
-            if decided_model_order(compare_reals(&denominator, &Real::zero()))?
-                == std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(
+                &denominator,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Equal
             {
                 continue;
             }
             let parameter = ((-planar_surface_value(surface, point)) / denominator)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-            if decided_model_order(compare_reals(&parameter, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &parameter,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             {
                 continue;
             }
@@ -10785,7 +11114,7 @@ impl ModelBuilder {
                 .face_region_in_plane_frame(*face_id, surface)?
                 .classify_point(
                     &project_point_to_surface_plane(&intersection, surface)?,
-                    &CurvePolicy::certified(),
+                    &CurvePolicy::STRICT,
                 ) {
                 Classification::Decided(RegionPointLocation::Inside) => crossings += 1,
                 Classification::Decided(RegionPointLocation::Outside) => {}
@@ -10950,8 +11279,11 @@ impl ModelBuilder {
                 let extrusion = self.vertex_ref(second_vertex)?.point()
                     - self.vertex_ref(first_vertex)?.point();
                 let determinant = u.dot(&v.cross(&extrusion));
-                if decided_model_order(compare_reals(&determinant, &Real::zero()))?
-                    == std::cmp::Ordering::Equal
+                if decided_model_order(compare_reals(
+                    &determinant,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Equal
                 {
                     return Ok(None);
                 }
@@ -10989,8 +11321,11 @@ impl ModelBuilder {
                         .collect::<Result<Vec<_>, _>>()?;
                     let path = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
                     let area = curve_path_signed_area(&path)?;
-                    let positive = decided_model_order(compare_reals(&area, &Real::zero()))?
-                        == std::cmp::Ordering::Greater;
+                    let positive = decided_model_order(compare_reals(
+                        &area,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Greater;
                     let is_outer = positive == (first_face.orientation == Orientation::Forward);
                     if is_outer {
                         if outer.replace(path).is_some() {
@@ -11046,8 +11381,11 @@ impl ModelBuilder {
         let Some(line) = pcurve.line_segment() else {
             return Ok(None);
         };
-        let increasing = decided_model_order(compare_reals(line.end().x(), line.start().x()))?
-            == std::cmp::Ordering::Greater;
+        let increasing = decided_model_order(compare_reals(
+            line.end().x(),
+            line.start().x(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Greater;
         let upper = match face.orientation {
             Orientation::Forward => increasing,
             Orientation::Reversed => !increasing,
@@ -11078,8 +11416,11 @@ impl ModelBuilder {
         };
         let displacement = &second.center - &first.center;
         let distance_squared = displacement.norm_squared();
-        if decided_model_order(compare_reals(&distance_squared, &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &distance_squared,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -11088,10 +11429,12 @@ impl ModelBuilder {
         if decided_model_order(compare_reals(
             &distance_squared,
             &(&radius_sum * &radius_sum),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Less
             || decided_model_order(compare_reals(
                 &distance_squared,
                 &(&radius_difference * &radius_difference),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
@@ -11109,10 +11452,12 @@ impl ModelBuilder {
         let first_inside_second = decided_model_order(compare_reals(
             &(&first_pole - &second.center).norm_squared(),
             &(&second.radius * &second.radius),
+            crate::STRICT_PREDICATES,
         ))? == std::cmp::Ordering::Less;
         let second_inside_first = decided_model_order(compare_reals(
             &(&second_pole - &first.center).norm_squared(),
             &(&first.radius * &first.radius),
+            crate::STRICT_PREDICATES,
         ))? == std::cmp::Ordering::Less;
 
         match (first.orientation, second.orientation) {
@@ -11351,6 +11696,7 @@ impl ModelBuilder {
             if decided_model_order(compare_reals(
                 &normal.cross(&cap.axis).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
                 || !real_values_equal(&(origin - &cap.center).dot(&cap.axis), &height)?
             {
@@ -11360,7 +11706,12 @@ impl ModelBuilder {
                 Orientation::Forward => normal.dot(&cap.axis),
                 Orientation::Reversed => -normal.dot(&cap.axis),
             };
-            if decided_model_order(compare_reals(&oriented, &Real::zero()))? != expected_outward {
+            if decided_model_order(compare_reals(
+                &oriented,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != expected_outward
+            {
                 return Ok(None);
             }
         }
@@ -11422,8 +11773,11 @@ impl ModelBuilder {
             };
             caps.push(cap);
         }
-        if decided_model_order(compare_reals(&caps[0].0, &caps[1].0))?
-            == std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &caps[0].0,
+            &caps[1].0,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Greater
         {
             caps.swap(0, 1);
         }
@@ -11509,6 +11863,7 @@ impl ModelBuilder {
             if decided_model_order(compare_reals(
                 &normal.cross(axis).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
                 || !real_values_equal(&(origin - center).dot(axis), &height)?
             {
@@ -11518,7 +11873,11 @@ impl ModelBuilder {
                 Orientation::Forward => normal.dot(axis),
                 Orientation::Reversed => -normal.dot(axis),
             };
-            let direction = decided_model_order(compare_reals(&oriented, &Real::zero()))?;
+            let direction = decided_model_order(compare_reals(
+                &oriented,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))?;
             if direction == std::cmp::Ordering::Equal
                 || outward.is_some_and(|expected| expected != direction)
             {
@@ -11615,25 +11974,37 @@ impl ModelBuilder {
             return Ok(None);
         };
         if !vectors_equal(&axis, &cylinder.axis)?
-            || decided_model_order(compare_reals(&cylinder.radius, &radius))?
-                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &cylinder.radius,
+                &radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
         let center_offset = &center - &cylinder.origin;
         let center_parameter = center_offset.dot(&cylinder.axis);
         let radial_offset = center_offset - cylinder.axis.clone() * &center_parameter;
-        if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_model_order(compare_reals(
+            &radial_offset.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
         }
         let lower_height = &radius * lower_latitude.clone().sin();
         let upper_height = &radius * upper_latitude.clone().sin();
-        if decided_model_order(compare_reals(&lower_height, &Real::zero()))?
-            != std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(&upper_height, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &lower_height,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &upper_height,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             || !real_values_equal(&lower_height, &-upper_height.clone())?
             || !real_values_equal(&(&radius * lower_latitude.clone().cos()), &cylinder.radius)?
             || !real_values_equal(&(&radius * upper_latitude.clone().cos()), &cylinder.radius)?
@@ -11705,25 +12076,37 @@ impl ModelBuilder {
             return Ok(None);
         };
         if !vectors_equal(&axis, &cylinder_axis)?
-            || decided_model_order(compare_reals(&cylinder_radius, &radius))?
-                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &cylinder_radius,
+                &radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
         let center_offset = &center - &origin;
         let center_parameter = center_offset.dot(&cylinder_axis);
         let radial_offset = center_offset - cylinder_axis.clone() * &center_parameter;
-        if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_model_order(compare_reals(
+            &radial_offset.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
         }
         let lower_height = &radius * lower_latitude.clone().sin();
         let upper_height = &radius * upper_latitude.clone().sin();
-        if decided_model_order(compare_reals(&lower_height, &Real::zero()))?
-            != std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(&upper_height, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &lower_height,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &upper_height,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             || !real_values_equal(&lower_height, &-upper_height.clone())?
             || !real_values_equal(&(&radius * lower_latitude.clone().cos()), &cylinder_radius)?
             || !real_values_equal(&(&radius * upper_latitude.clone().cos()), &cylinder_radius)?
@@ -11738,12 +12121,18 @@ impl ModelBuilder {
             let Some((face_min, face_max)) = self.cylinder_face_v_bounds(*face)? else {
                 return Ok(None);
             };
-            if decided_model_order(compare_reals(&face_max, &lower_intersection))?
-                != std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &face_max,
+                &lower_intersection,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             {
                 lower_faces.push(*face);
-            } else if decided_model_order(compare_reals(&face_min, &upper_intersection))?
-                != std::cmp::Ordering::Less
+            } else if decided_model_order(compare_reals(
+                &face_min,
+                &upper_intersection,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
             {
                 upper_faces.push(*face);
             } else {
@@ -11768,9 +12157,13 @@ impl ModelBuilder {
             || decided_model_order(compare_reals(
                 &(&lower.v_min - &center_parameter),
                 &-radius.clone(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(&(&upper.v_max - &center_parameter), &radius))?
-                != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(
+                &(&upper.v_max - &center_parameter),
+                &radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -11905,13 +12298,18 @@ impl ModelBuilder {
                 };
                 let (lower, _) = self.spherical_trim_coordinates(lower_wire)?;
                 let (upper, _) = self.spherical_trim_coordinates(*upper_wire)?;
-                if decided_model_order(compare_reals(&lower, &upper))? != std::cmp::Ordering::Less {
+                if decided_model_order(compare_reals(&lower, &upper, crate::STRICT_PREDICATES))?
+                    != std::cmp::Ordering::Less
+                {
                     return Ok(None);
                 }
                 let mut insertion = bands.len();
                 while insertion > 0
-                    && decided_model_order(compare_reals(&lower, &bands[insertion - 1].0))?
-                        == std::cmp::Ordering::Less
+                    && decided_model_order(compare_reals(
+                        &lower,
+                        &bands[insertion - 1].0,
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Less
                 {
                     insertion -= 1;
                 }
@@ -12020,7 +12418,11 @@ impl ModelBuilder {
         }
         let v_min = v_values[0].clone();
         let v_max = v_values.last().expect("frustum has axial values").clone();
-        if decided_model_order(compare_reals(&v_min, &Real::zero()))? != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &v_min,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -12155,8 +12557,11 @@ impl ModelBuilder {
             if real_values_equal(&outward.cross(axis).norm_squared(), &Real::zero())? {
                 let parameter = ((&origin - apex).dot(axis) / &cosine)
                     .map_err(|_| GeometryError::ProjectiveDivision)?;
-                let direction =
-                    decided_model_order(compare_reals(&outward.dot(axis), &Real::zero()))?;
+                let direction = decided_model_order(compare_reals(
+                    &outward.dot(axis),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
                 if real_values_equal(&parameter, v_min)?
                     && direction == std::cmp::Ordering::Less
                     && !lower
@@ -12222,21 +12627,31 @@ impl ModelBuilder {
             return Ok(None);
         };
         if !vectors_equal(&sphere_cap.axis, &axis)?
-            || decided_model_order(compare_reals(&cylinder_radius, &sphere_cap.radius))?
-                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &cylinder_radius,
+                &sphere_cap.radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
         let center_offset = &sphere_cap.center - &origin;
         let center_parameter = center_offset.dot(&axis);
         let radial_offset = center_offset - axis.clone() * &center_parameter;
-        if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_model_order(compare_reals(
+            &radial_offset.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
         }
         let intersection_height = &sphere_cap.radius * sphere_cap.latitude.clone().sin();
-        let height_order = decided_model_order(compare_reals(&intersection_height, &Real::zero()))?;
+        let height_order = decided_model_order(compare_reals(
+            &intersection_height,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
         if height_order == std::cmp::Ordering::Equal
             || !real_values_equal(
                 &(&sphere_cap.radius * sphere_cap.latitude.clone().cos()),
@@ -12310,11 +12725,17 @@ impl ModelBuilder {
         match operation {
             CertifiedSphereFiniteCylinderOperation::Union => {
                 let outside_pole = if extends_positive {
-                    decided_model_order(compare_reals(&relative_cap, &sphere_cap.radius))?
-                        == std::cmp::Ordering::Greater
+                    decided_model_order(compare_reals(
+                        &relative_cap,
+                        &sphere_cap.radius,
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Greater
                 } else {
-                    decided_model_order(compare_reals(&relative_cap, &-sphere_cap.radius.clone()))?
-                        == std::cmp::Ordering::Less
+                    decided_model_order(compare_reals(
+                        &relative_cap,
+                        &-sphere_cap.radius.clone(),
+                        crate::STRICT_PREDICATES,
+                    ))? == std::cmp::Ordering::Less
                 };
                 if !outside_pole {
                     return Ok(None);
@@ -12326,10 +12747,16 @@ impl ModelBuilder {
                     - &cylinder_radius * &cylinder_radius)
                     .sqrt()
                     .map_err(|_| GeometryError::ElementaryFunction)?;
-                if decided_model_order(compare_reals(&relative_cap, &-half_height.clone()))?
-                    != std::cmp::Ordering::Greater
-                    || decided_model_order(compare_reals(&relative_cap, &half_height))?
-                        != std::cmp::Ordering::Less
+                if decided_model_order(compare_reals(
+                    &relative_cap,
+                    &-half_height.clone(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Greater
+                    || decided_model_order(compare_reals(
+                        &relative_cap,
+                        &half_height,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Less
                 {
                     return Ok(None);
                 }
@@ -12458,8 +12885,10 @@ impl ModelBuilder {
         let zero = Real::zero();
         let tau = Real::tau();
         for (_, _, v_min, v_max) in &face_coordinates {
-            if decided_model_order(compare_reals(v_min, &zero))? == std::cmp::Ordering::Less
-                || decided_model_order(compare_reals(v_max, &tau))? == std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(v_min, &zero, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+                || decided_model_order(compare_reals(v_max, &tau, crate::STRICT_PREDICATES))?
+                    == std::cmp::Ordering::Greater
             {
                 return Ok(None);
             }
@@ -12560,13 +12989,19 @@ impl ModelBuilder {
             }
             1 => return Ok(None),
             2 => {
-                if decided_model_order(compare_reals(&caps[0].0, &caps[1].0))?
-                    == std::cmp::Ordering::Greater
+                if decided_model_order(compare_reals(
+                    &caps[0].0,
+                    &caps[1].0,
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Greater
                 {
                     caps.swap(0, 1);
                 }
-                if decided_model_order(compare_reals(&caps[0].0, &caps[1].0))?
-                    != std::cmp::Ordering::Less
+                if decided_model_order(compare_reals(
+                    &caps[0].0,
+                    &caps[1].0,
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Less
                     || caps[0].1 != std::cmp::Ordering::Less
                     || caps[1].1 != std::cmp::Ordering::Greater
                 {
@@ -12581,10 +13016,16 @@ impl ModelBuilder {
             let first_height = &minor_radius * v_values[v_cell].clone().sin();
             let second_height = &minor_radius * v_values[v_cell + 1].clone().sin();
             let (cell_min, cell_max) = exact_real_min_max(&[first_height, second_height])?;
-            let expected = decided_model_order(compare_reals(&cell_min, &axial_min))?
-                != std::cmp::Ordering::Less
-                && decided_model_order(compare_reals(&cell_max, &axial_max))?
-                    != std::cmp::Ordering::Greater;
+            let expected = decided_model_order(compare_reals(
+                &cell_min,
+                &axial_min,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
+                && decided_model_order(compare_reals(
+                    &cell_max,
+                    &axial_max,
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Greater;
             let actual = (0..u_values.len() - 1).all(|u_cell| cells.contains(&(u_cell, v_cell)));
             let partial = (0..u_values.len() - 1).any(|u_cell| cells.contains(&(u_cell, v_cell)));
             if actual != expected || (partial && !actual) {
@@ -12730,9 +13171,16 @@ impl ModelBuilder {
         let axial = (&first_circle.center - center).dot(axis);
         let expected_center = center.clone() + axis.clone() * &axial;
         if !points_equal(&first_circle.center, &expected_center)?
-            || decided_model_order(compare_reals(&axial, &(-minor_radius.clone())))?
-                != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&axial, minor_radius))? != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &axial,
+                &(-minor_radius.clone()),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(
+                &axial,
+                minor_radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
@@ -12799,6 +13247,7 @@ impl ModelBuilder {
             if decided_model_order(compare_reals(
                 &normal.cross(axis).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
                 || !real_values_equal(&(origin - center).dot(axis), &axial)?
             {
@@ -12808,7 +13257,11 @@ impl ModelBuilder {
                 Orientation::Forward => axial_normal,
                 Orientation::Reversed => -axial_normal,
             };
-            let this_outward = decided_model_order(compare_reals(&oriented_axial, &Real::zero()))?;
+            let this_outward = decided_model_order(compare_reals(
+                &oriented_axial,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))?;
             if this_outward == std::cmp::Ordering::Equal
                 || outward.is_some_and(|expected| expected != this_outward)
             {
@@ -12938,6 +13391,7 @@ impl ModelBuilder {
                 .cross(&upper_u.cross(&upper_v))
                 .norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
@@ -13044,8 +13498,11 @@ impl ModelBuilder {
                 let second_coordinate = &lower_coordinates[second];
                 let determinant = first_coordinate.x() * second_coordinate.y()
                     - first_coordinate.y() * second_coordinate.x();
-                if decided_model_order(compare_reals(&determinant, &Real::zero()))?
-                    != std::cmp::Ordering::Equal
+                if decided_model_order(compare_reals(
+                    &determinant,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Equal
                 {
                     basis = Some((*first, *second, determinant));
                     break;
@@ -13254,7 +13711,11 @@ impl ModelBuilder {
                     self.face_shell[faces[0].index()].expect("shell faces are assigned"),
                 ),
             )?;
-            match decided_model_order(compare_reals(&area, &Real::zero()))? {
+            match decided_model_order(compare_reals(
+                &area,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? {
                 std::cmp::Ordering::Greater => {
                     if profile.replace(contour).is_some() {
                         return Ok(None);
@@ -13439,7 +13900,11 @@ impl ModelBuilder {
             if !on_path_boundary {
                 continue;
             }
-            let order = decided_model_order(compare_reals(line.start().y(), line.end().y()))?;
+            let order = decided_model_order(compare_reals(
+                line.start().y(),
+                line.end().y(),
+                crate::STRICT_PREDICATES,
+            ))?;
             if order == std::cmp::Ordering::Equal {
                 continue;
             }
@@ -13471,19 +13936,32 @@ impl ModelBuilder {
         if real_values_equal(start, &Real::zero())? && real_values_equal(end, &Real::one())? {
             return Ok(source);
         }
-        if decided_model_order(compare_reals(start, &Real::zero()))? == std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(end, &Real::one()))? == std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(start, end))? != std::cmp::Ordering::Less
+        if decided_model_order(compare_reals(
+            start,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(end, &Real::one(), crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(start, end, crate::STRICT_PREDICATES))?
+                != std::cmp::Ordering::Less
         {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
         let selected =
-            if decided_model_order(compare_reals(end, &Real::one()))? == std::cmp::Ordering::Less {
+            if decided_model_order(compare_reals(end, &Real::one(), crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+            {
                 source.split_v_at(end)?.0
             } else {
                 source
             };
-        if decided_model_order(compare_reals(start, &Real::zero()))? == std::cmp::Ordering::Equal {
+        if decided_model_order(compare_reals(
+            start,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Equal
+        {
             return Ok(selected);
         }
         let relative = (start / end).map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -13525,7 +14003,56 @@ impl ModelBuilder {
                 } else {
                     return Ok(false);
                 };
-            let order = decided_model_order(compare_reals(first, second))?;
+            let order =
+                decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?;
+            if order == std::cmp::Ordering::Equal {
+                return Ok(false);
+            }
+            sides[side].push(if order == std::cmp::Ordering::Less {
+                (first.clone(), second.clone())
+            } else {
+                (second.clone(), first.clone())
+            });
+        }
+        for (intervals, start, end) in [
+            (&sides[0], v_start, v_end),
+            (&sides[1], v_start, v_end),
+            (&sides[2], u_start, u_end),
+            (&sides[3], u_start, u_end),
+        ] {
+            if !self.exact_intervals_tile(intervals, start, end)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    fn axis_aligned_lines_tile_rectangle(
+        &self,
+        lines: &[LineSeg2],
+        u_start: &Real,
+        u_end: &Real,
+        v_start: &Real,
+        v_end: &Real,
+    ) -> Result<bool, BuildError> {
+        let mut sides = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
+        for line in lines {
+            let x_constant = real_values_equal(line.start().x(), line.end().x())?;
+            let y_constant = real_values_equal(line.start().y(), line.end().y())?;
+            let (side, first, second) =
+                if x_constant && real_values_equal(line.start().x(), u_start)? {
+                    (0, line.start().y(), line.end().y())
+                } else if x_constant && real_values_equal(line.start().x(), u_end)? {
+                    (1, line.start().y(), line.end().y())
+                } else if y_constant && real_values_equal(line.start().y(), v_start)? {
+                    (2, line.start().x(), line.end().x())
+                } else if y_constant && real_values_equal(line.start().y(), v_end)? {
+                    (3, line.start().x(), line.end().x())
+                } else {
+                    return Ok(false);
+                };
+            let order =
+                decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?;
             if order == std::cmp::Ordering::Equal {
                 return Ok(false);
             }
@@ -13621,6 +14148,7 @@ impl ModelBuilder {
                 .cross(&upper_u.cross(&upper_v))
                 .norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
@@ -13861,7 +14389,11 @@ impl ModelBuilder {
             .signed_area()
             .map_err(GeometryError::from)?
             .ok_or(BuildError::DegenerateShellVolume(shell))?;
-        if decided_model_order(compare_reals(&area, &Real::zero()))? != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &area,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -13974,6 +14506,7 @@ impl ModelBuilder {
                 .cross(&upper_u.cross(&upper_v))
                 .norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
@@ -13997,8 +14530,11 @@ impl ModelBuilder {
             self.vertex_ref(*upper_vertices.iter().min().expect("loft cap has vertices"))?;
         let normal = lower_u.cross(&lower_v);
         let height_denominator = normal.dot(&(upper_height_reference.point() - &reference_point));
-        if decided_model_order(compare_reals(&height_denominator, &Real::zero()))?
-            == std::cmp::Ordering::Equal
+        if decided_model_order(compare_reals(
+            &height_denominator,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Equal
         {
             return Ok(None);
         }
@@ -14010,16 +14546,26 @@ impl ModelBuilder {
             let height = (normal.dot(&(self.vertex_ref(vertex)?.point() - &reference_point))
                 / &height_denominator)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-            if decided_model_order(compare_reals(&height, &Real::zero()))?
-                == std::cmp::Ordering::Less
-                || decided_model_order(compare_reals(&height, &Real::one()))?
-                    == std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &height,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Less
+                || decided_model_order(compare_reals(
+                    &height,
+                    &Real::one(),
+                    crate::STRICT_PREDICATES,
+                ))? == std::cmp::Ordering::Greater
             {
                 return Ok(None);
             }
             let mut inserted = false;
             for index in 0..layers.len() {
-                match decided_model_order(compare_reals(&height, &layers[index].0))? {
+                match decided_model_order(compare_reals(
+                    &height,
+                    &layers[index].0,
+                    crate::STRICT_PREDICATES,
+                ))? {
                     std::cmp::Ordering::Equal => {
                         layers[index].1.push(vertex);
                         inserted = true;
@@ -14039,11 +14585,15 @@ impl ModelBuilder {
         }
         if layers.len() < 3
             || layers.iter().any(|(_, vertices)| vertices.len() != count)
-            || decided_model_order(compare_reals(&layers[0].0, &Real::zero()))?
-                != std::cmp::Ordering::Equal
+            || decided_model_order(compare_reals(
+                &layers[0].0,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Equal
             || decided_model_order(compare_reals(
                 &layers.last().expect("loft has layers").0,
                 &Real::one(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
@@ -14287,8 +14837,11 @@ impl ModelBuilder {
                 .signed_area()
                 .map_err(GeometryError::from)?
                 .ok_or(BuildError::DegenerateShellVolume(shell))?;
-            if decided_model_order(compare_reals(&area, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &area,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             {
                 return Ok(None);
             }
@@ -14329,8 +14882,11 @@ impl ModelBuilder {
                 interpolation,
             });
         }
-        if decided_model_order(compare_reals(&parameter_volume, &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &parameter_volume,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -14387,6 +14943,7 @@ impl ModelBuilder {
                 .cross(&upper_u.cross(&upper_v))
                 .norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
@@ -14559,7 +15116,11 @@ impl ModelBuilder {
             .signed_area()
             .map_err(GeometryError::from)?
             .ok_or(BuildError::DegenerateShellVolume(shell))?;
-        if decided_model_order(compare_reals(&area, &Real::zero()))? != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &area,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -14580,8 +15141,11 @@ impl ModelBuilder {
                 }
             };
         let parameter_area_integral = loft_parameter_area_integral(&lower_points, &upper_points)?;
-        if decided_model_order(compare_reals(&parameter_area_integral, &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &parameter_area_integral,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -14620,8 +15184,11 @@ impl ModelBuilder {
         }
         let reference_weight = &weights[0][0];
         for weight in weights.iter().flatten().skip(1) {
-            if decided_model_order(compare_reals(weight, reference_weight))?
-                != std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(
+                weight,
+                reference_weight,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Equal
             {
                 return Ok(false);
             }
@@ -14752,20 +15319,27 @@ impl ModelBuilder {
                 let axial = this_axis.dot(&relative);
                 let radial = relative - this_axis.clone() * &axial;
                 let radial_squared = radial.norm_squared();
-                let radial_order =
-                    decided_model_order(compare_reals(&radial_squared, &Real::zero()))?;
+                let radial_order = decided_model_order(compare_reals(
+                    &radial_squared,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
                 if let Some(expected) = &meridian_ray {
                     if decided_model_order(compare_reals(
                         &expected.cross(&radial).norm_squared(),
                         &Real::zero(),
+                        crate::STRICT_PREDICATES,
                     ))? != std::cmp::Ordering::Equal
                     {
                         return Ok(None);
                     }
                     let radius = expected.dot(&radial);
                     if require_positive
-                        && decided_model_order(compare_reals(&radius, &Real::zero()))?
-                            != std::cmp::Ordering::Greater
+                        && decided_model_order(compare_reals(
+                            &radius,
+                            &Real::zero(),
+                            crate::STRICT_PREDICATES,
+                        ))? != std::cmp::Ordering::Greater
                     {
                         return Ok(None);
                     }
@@ -14937,10 +15511,12 @@ impl ModelBuilder {
                     if decided_model_order(compare_reals(
                         &data.x.dot(&meridian_normal),
                         &Real::zero(),
+                        crate::STRICT_PREDICATES,
                     ))? != std::cmp::Ordering::Equal
                         || decided_model_order(compare_reals(
                             &data.y.dot(&meridian_normal),
                             &Real::zero(),
+                            crate::STRICT_PREDICATES,
                         ))? != std::cmp::Ordering::Equal
                     {
                         return Ok(None);
@@ -14953,8 +15529,11 @@ impl ModelBuilder {
                     let tangent_axial = this_axis.dot(&tangent);
                     let turn = (start.x() - center.x()) * &tangent_axial
                         - (start.y() - center.y()) * &tangent_radial;
-                    let clockwise = match decided_model_order(compare_reals(&turn, &Real::zero()))?
-                    {
+                    let clockwise = match decided_model_order(compare_reals(
+                        &turn,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? {
                         std::cmp::Ordering::Less => true,
                         std::cmp::Ordering::Greater => false,
                         std::cmp::Ordering::Equal => return Ok(None),
@@ -15038,12 +15617,13 @@ impl ModelBuilder {
             let contour = Contour2::try_new(segments).map_err(GeometryError::from)?;
             let revolution_profile_area = contour.signed_area().map_err(GeometryError::from)?;
             if !contour
-                .intersect_self(&CurvePolicy::certified())
+                .intersect_self(&CurvePolicy::STRICT)
                 .map_err(GeometryError::from)?
                 .is_empty()
                 || decided_model_order(compare_reals(
                     &revolution_profile_area.ok_or(BuildError::DegenerateShellVolume(shell))?,
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? != std::cmp::Ordering::Greater
             {
                 return Ok(None);
@@ -15058,8 +15638,11 @@ impl ModelBuilder {
                 .signed_area()
                 .map_err(GeometryError::from)?
                 .ok_or(BuildError::DegenerateShellVolume(shell))?;
-            if decided_model_order(compare_reals(&area, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &area,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
             {
                 return Ok(None);
             }
@@ -15109,12 +15692,16 @@ impl ModelBuilder {
                 if decided_model_order(compare_reals(
                     &normal.cross(axis).norm_squared(),
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? != std::cmp::Ordering::Equal
                 {
                     return Ok(None);
                 }
-                let direction =
-                    decided_model_order(compare_reals(&normal.dot(axis), &Real::zero()))?;
+                let direction = decided_model_order(compare_reals(
+                    &normal.dot(axis),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?;
                 if !matches!(
                     direction,
                     std::cmp::Ordering::Less | std::cmp::Ordering::Greater
@@ -15166,13 +15753,19 @@ impl ModelBuilder {
                 }
                 radii.push(radius.expect("nonempty cap boundary"));
             }
-            if decided_model_order(compare_reals(&radii[0], &radii[1]))?
-                == std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(
+                &radii[0],
+                &radii[1],
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Equal
             {
                 return Ok(None);
             }
-            let (inner, outer) = if decided_model_order(compare_reals(&radii[0], &radii[1]))?
-                == std::cmp::Ordering::Less
+            let (inner, outer) = if decided_model_order(compare_reals(
+                &radii[0],
+                &radii[1],
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Less
             {
                 (radii.remove(0), radii.remove(0))
             } else {
@@ -15201,7 +15794,7 @@ impl ModelBuilder {
 
     fn certified_cylinder_side_faces(
         &self,
-        shell: ShellId,
+        _shell: ShellId,
         side_faces: &[FaceId],
         orientation: Orientation,
     ) -> Result<Option<CertifiedCylinderShell>, BuildError> {
@@ -15255,18 +15848,17 @@ impl ModelBuilder {
                 }
                 face_u.extend([line.start().x().clone(), line.end().x().clone()]);
                 face_v.extend([line.start().y().clone(), line.end().y().clone()]);
-                parameter_segments.push(Segment2::Line(line.clone()));
+                parameter_segments.push(line.clone());
             }
             let (u_min, u_max) = exact_real_min_max(&face_u)?;
             let (v_min, v_max) = exact_real_min_max(&face_v)?;
-            let contour = Contour2::try_new(parameter_segments).map_err(GeometryError::from)?;
-            let represented_area = contour
-                .signed_area()
-                .map_err(GeometryError::from)?
-                .ok_or(BuildError::DegenerateShellVolume(shell))?
-                .abs();
-            let rectangle_area = (&u_max - &u_min) * (&v_max - &v_min);
-            if !real_values_equal(&represented_area, &rectangle_area)? {
+            if !self.axis_aligned_lines_tile_rectangle(
+                &parameter_segments,
+                &u_min,
+                &u_max,
+                &v_min,
+                &v_max,
+            )? {
                 return Ok(None);
             }
             insert_sorted_real(&mut u_values, &u_min)?;
@@ -15287,7 +15879,9 @@ impl ModelBuilder {
         }
         let v_min = v_values[0].clone();
         let v_max = v_values.last().expect("cylinder has axial values").clone();
-        if decided_model_order(compare_reals(&v_min, &v_max))? != std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(&v_min, &v_max, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
             return Ok(None);
         }
 
@@ -15385,6 +15979,7 @@ impl ModelBuilder {
             if decided_model_order(compare_reals(
                 &normal.cross(&cylinder.axis).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? != std::cmp::Ordering::Equal
                 || !real_values_equal(
                     &(origin - &cylinder.origin).dot(&cylinder.axis),
@@ -15397,7 +15992,12 @@ impl ModelBuilder {
                 Orientation::Forward => normal.dot(&cylinder.axis),
                 Orientation::Reversed => -normal.dot(&cylinder.axis),
             };
-            if decided_model_order(compare_reals(&oriented, &Real::zero()))? != expected_direction {
+            if decided_model_order(compare_reals(
+                &oriented,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != expected_direction
+            {
                 return Ok(false);
             }
         }
@@ -15426,16 +16026,22 @@ impl ModelBuilder {
             return Ok(None);
         };
         if !vectors_equal(&sphere_cap.axis, &cylinder.axis)?
-            || decided_model_order(compare_reals(&cylinder.radius, &sphere_cap.radius))?
-                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &cylinder.radius,
+                &sphere_cap.radius,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
         {
             return Ok(None);
         }
         let center_offset = &sphere_cap.center - &cylinder.origin;
         let center_parameter = center_offset.dot(&cylinder.axis);
         let radial_offset = center_offset - cylinder.axis.clone() * &center_parameter;
-        if decided_model_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-            != std::cmp::Ordering::Equal
+        if decided_model_order(compare_reals(
+            &radial_offset.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Equal
         {
             return Ok(None);
         }
@@ -15447,12 +16053,16 @@ impl ModelBuilder {
             return Ok(None);
         }
         let (side, cap_parameter, expected_cap_direction) = if sphere_cap.upper {
-            if decided_model_order(compare_reals(&intersection_height, &Real::zero()))?
-                != std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(
+                &intersection_height,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
                 || !real_values_equal(&cylinder.v_min, &(&center_parameter + &intersection_height))?
                 || decided_model_order(compare_reals(
                     &(&cylinder.v_max - &center_parameter),
                     &sphere_cap.radius,
+                    crate::STRICT_PREDICATES,
                 ))? != std::cmp::Ordering::Greater
             {
                 return Ok(None);
@@ -15463,12 +16073,16 @@ impl ModelBuilder {
                 std::cmp::Ordering::Greater,
             )
         } else {
-            if decided_model_order(compare_reals(&intersection_height, &Real::zero()))?
-                != std::cmp::Ordering::Less
+            if decided_model_order(compare_reals(
+                &intersection_height,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
                 || !real_values_equal(&cylinder.v_max, &(&center_parameter + &intersection_height))?
                 || decided_model_order(compare_reals(
                     &(&cylinder.v_min - &center_parameter),
                     &-sphere_cap.radius.clone(),
+                    crate::STRICT_PREDICATES,
                 ))? != std::cmp::Ordering::Less
             {
                 return Ok(None);
@@ -15562,8 +16176,11 @@ impl ModelBuilder {
                     return Ok(None);
                 };
                 if !data.circle
-                    || decided_model_order(compare_reals(&data.x_radius, &cylinder.radius))?
-                        != std::cmp::Ordering::Equal
+                    || decided_model_order(compare_reals(
+                        &data.x_radius,
+                        &cylinder.radius,
+                        crate::STRICT_PREDICATES,
+                    ))? != std::cmp::Ordering::Equal
                 {
                     return Ok(None);
                 }
@@ -15583,8 +16200,11 @@ impl ModelBuilder {
                 center_index = Some(this_center);
                 sweep += edge.domain.end() - edge.domain.start();
             }
-            if decided_model_order(compare_reals(&sweep, &Real::tau()))?
-                != std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(
+                &sweep,
+                &Real::tau(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Equal
             {
                 return Ok(None);
             }
@@ -15682,20 +16302,28 @@ impl ModelBuilder {
         let mut z_max = first_z;
         for vertex in &vertices {
             let z = &self.vertex_ref(*vertex)?.point().z;
-            if decided_model_order(compare_reals(z, &z_min))? == std::cmp::Ordering::Less {
+            if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+            {
                 z_min = z.clone();
             }
-            if decided_model_order(compare_reals(z, &z_max))? == std::cmp::Ordering::Greater {
+            if decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
+            {
                 z_max = z.clone();
             }
         }
-        if decided_model_order(compare_reals(&z_min, &z_max))? != std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(&z_min, &z_max, crate::STRICT_PREDICATES))?
+            != std::cmp::Ordering::Less
+        {
             return Ok(None);
         }
         for vertex in &vertices {
             let z = &self.vertex_ref(*vertex)?.point().z;
-            if decided_model_order(compare_reals(z, &z_min))? != std::cmp::Ordering::Equal
-                && decided_model_order(compare_reals(z, &z_max))? != std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(z, &z_min, crate::STRICT_PREDICATES))?
+                != std::cmp::Ordering::Equal
+                && decided_model_order(compare_reals(z, &z_max, crate::STRICT_PREDICATES))?
+                    != std::cmp::Ordering::Equal
             {
                 return Ok(None);
             }
@@ -15714,9 +16342,9 @@ impl ModelBuilder {
                 let (start, end) = self.directed_vertices(*edge_use)?;
                 let start = self.vertex_ref(start)?.point();
                 let end = self.vertex_ref(end)?.point();
-                if decided_model_order(compare_reals(&start.z, &z_max))?
+                if decided_model_order(compare_reals(&start.z, &z_max, crate::STRICT_PREDICATES))?
                     != std::cmp::Ordering::Equal
-                    || decided_model_order(compare_reals(&end.z, &z_max))?
+                    || decided_model_order(compare_reals(&end.z, &z_max, crate::STRICT_PREDICATES))?
                         != std::cmp::Ordering::Equal
                 {
                     horizontal_cap = false;
@@ -15768,7 +16396,11 @@ impl ModelBuilder {
                 let radial_x = &start.x - &data.center.x;
                 let radial_y = &start.y - &data.center.y;
                 let cross = radial_x * &tangent.0[1] - radial_y * &tangent.0[0];
-                let clockwise = match decided_model_order(compare_reals(&cross, &Real::zero()))? {
+                let clockwise = match decided_model_order(compare_reals(
+                    &cross,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? {
                     std::cmp::Ordering::Less => true,
                     std::cmp::Ordering::Greater => false,
                     std::cmp::Ordering::Equal => {
@@ -16004,6 +16636,7 @@ impl ModelBuilder {
                 .cross(&second_u.cross(second_v))
                 .norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(false);
@@ -16266,14 +16899,22 @@ fn certified_homothetic_loft_scale(
     let lower_dy = lower[1].y() - lower[0].y();
     let upper_dx = upper[1].x() - upper[0].x();
     let upper_dy = upper[1].y() - upper[0].y();
-    let scale = if decided_model_order(compare_reals(&lower_dx, &Real::zero()))?
-        != std::cmp::Ordering::Equal
+    let scale = if decided_model_order(compare_reals(
+        &lower_dx,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Equal
     {
         (upper_dx / &lower_dx).map_err(|_| GeometryError::ProjectiveDivision)?
     } else {
         (upper_dy / &lower_dy).map_err(|_| GeometryError::ProjectiveDivision)?
     };
-    if decided_model_order(compare_reals(&scale, &Real::zero()))? != std::cmp::Ordering::Greater {
+    if decided_model_order(compare_reals(
+        &scale,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
+    {
         return Ok(None);
     }
     for index in 0..lower.len() {
@@ -16287,7 +16928,8 @@ fn certified_homothetic_loft_scale(
                 &scale * (lower[index].y() - lower[0].y()),
             ),
         ] {
-            if decided_model_order(compare_reals(&actual, &expected))? != std::cmp::Ordering::Equal
+            if decided_model_order(compare_reals(&actual, &expected, crate::STRICT_PREDICATES))?
+                != std::cmp::Ordering::Equal
             {
                 return Ok(None);
             }
@@ -16321,12 +16963,21 @@ fn certified_convex_loft_interpolation(
         let lower_turn = cross(&lower_edge, &lower_next);
         let upper_turn = cross(&upper_edge, &upper_next);
         let mixed_turn = cross(&lower_edge, &upper_next) + cross(&upper_edge, &lower_next);
-        if decided_model_order(compare_reals(&lower_turn, &Real::zero()))?
-            != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&upper_turn, &Real::zero()))?
-                != std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&mixed_turn, &Real::zero()))?
-                == std::cmp::Ordering::Less
+        if decided_model_order(compare_reals(
+            &lower_turn,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(
+                &upper_turn,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
+            || decided_model_order(compare_reals(
+                &mixed_turn,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Less
         {
             return Ok(false);
         }
@@ -16372,7 +17023,11 @@ fn classify_convex_loft_section(
         let end = interpolate((index + 1) % lower.len());
         let side = (end.x() - start.x()) * (point.y() - start.y())
             - (end.y() - start.y()) * (point.x() - start.x());
-        match decided_model_order(compare_reals(&side, &Real::zero()))? {
+        match decided_model_order(compare_reals(
+            &side,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Less => return Ok(ContourPointLocation::Outside),
             std::cmp::Ordering::Equal => boundary = true,
             std::cmp::Ordering::Greater => {}
@@ -16433,8 +17088,11 @@ fn certified_affine_sweep_progress(path: &Curve3, normal: &Vector3) -> Result<bo
     let scalar = |point: &Point3| normal.dot(&Vector3::from(point.clone()));
     let start = scalar(&control_points[0]);
     let end = scalar(&control_points[degree]);
-    if decided_model_order(compare_reals(&(&end - &start), &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &(&end - &start),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Ok(false);
     }
@@ -16602,8 +17260,11 @@ fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool, BuildErro
     }
     let direction = &end - &start;
     let length_squared = direction.norm_squared();
-    if decided_model_order(compare_reals(&length_squared, &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &length_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Ok(false);
     }
@@ -16613,15 +17274,22 @@ fn certified_monotone_line_curve_image(curve: &Curve3) -> Result<bool, BuildErro
         if decided_model_order(compare_reals(
             &relative.cross(&direction).norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != std::cmp::Ordering::Equal
         {
             return Ok(false);
         }
         let projection = relative.dot(&direction);
-        if decided_model_order(compare_reals(&projection, &previous_projection))?
-            == std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(&projection, &length_squared))?
-                == std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &projection,
+            &previous_projection,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &projection,
+                &length_squared,
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Greater
         {
             return Ok(false);
         }
@@ -16663,15 +17331,21 @@ fn certified_monotone_planar_extrusion_image(
     }
     let chord = &end - &start;
     let normal = chord.cross(direction);
-    if decided_model_order(compare_reals(&normal.norm_squared(), &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &normal.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Ok(false);
     }
     let transverse = direction.cross(&normal);
     let end_projection = chord.dot(&transverse);
-    if decided_model_order(compare_reals(&end_projection, &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &end_projection,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Ok(false);
     }
@@ -16682,10 +17356,16 @@ fn certified_monotone_planar_extrusion_image(
             return Ok(false);
         }
         let projection = relative.dot(&transverse);
-        if decided_model_order(compare_reals(&projection, &previous_projection))?
-            == std::cmp::Ordering::Less
-            || decided_model_order(compare_reals(&projection, &end_projection))?
-                == std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &projection,
+            &previous_projection,
+            crate::STRICT_PREDICATES,
+        ))? == std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &projection,
+                &end_projection,
+                crate::STRICT_PREDICATES,
+            ))? == std::cmp::Ordering::Greater
         {
             return Ok(false);
         }
@@ -16863,8 +17543,11 @@ fn affine_control_net_image(
     let u = &control_points[0][control_points[0].len() - 1] - origin;
     let v = &control_points[control_points.len() - 1][0] - origin;
     let cross_squared = u.cross(&v).norm_squared();
-    if decided_model_order(compare_reals(&cross_squared, &Real::zero()))?
-        != std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &cross_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
     {
         return Ok(None);
     }
@@ -16957,8 +17640,11 @@ fn certified_sweep_frame_area_integral(
     for numerator in determinant_numerators {
         let coefficient =
             (numerator / &weight_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_model_order(compare_reals(&coefficient, &Real::zero()))?
-            != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &coefficient,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(None);
         }
@@ -17202,7 +17888,9 @@ fn line_parameter(
 
 fn minimum_real(first: &Real, second: &Real) -> Result<Real, BuildError> {
     Ok(
-        if decided_model_order(compare_reals(first, second))? == std::cmp::Ordering::Greater {
+        if decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?
+            == std::cmp::Ordering::Greater
+        {
             second.clone()
         } else {
             first.clone()
@@ -17212,7 +17900,9 @@ fn minimum_real(first: &Real, second: &Real) -> Result<Real, BuildError> {
 
 fn maximum_real(first: &Real, second: &Real) -> Result<Real, BuildError> {
     Ok(
-        if decided_model_order(compare_reals(first, second))? == std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?
+            == std::cmp::Ordering::Less
+        {
             second.clone()
         } else {
             first.clone()
@@ -17226,15 +17916,24 @@ fn parameter_in_line_material(
     contacts: &[Real],
 ) -> Result<bool, BuildError> {
     for interval in intervals {
-        if decided_model_order(compare_reals(parameter, &interval.0))? != std::cmp::Ordering::Less
-            && decided_model_order(compare_reals(parameter, &interval.1))?
-                != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            parameter,
+            &interval.0,
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Less
+            && decided_model_order(compare_reals(
+                parameter,
+                &interval.1,
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Greater
         {
             return Ok(true);
         }
     }
     for contact in contacts {
-        if decided_model_order(compare_reals(parameter, contact))? == std::cmp::Ordering::Equal {
+        if decided_model_order(compare_reals(parameter, contact, crate::STRICT_PREDICATES))?
+            == std::cmp::Ordering::Equal
+        {
             return Ok(true);
         }
     }
@@ -17243,7 +17942,7 @@ fn parameter_in_line_material(
 
 fn vectors_equal(left: &Vector3, right: &Vector3) -> Result<bool, BuildError> {
     for axis in 0..3 {
-        match compare_reals(&left.0[axis], &right.0[axis]) {
+        match compare_reals(&left.0[axis], &right.0[axis], crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: std::cmp::Ordering::Equal,
                 ..
@@ -17270,7 +17969,7 @@ fn point3_component(point: &Point3, axis: usize) -> &Real {
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> Result<bool, BuildError> {
-    match point3_equal(left, right) {
+    match point3_equal(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
@@ -17710,7 +18409,7 @@ fn circle_parameterizations_equal(actual: &Curve3, expected: &Curve3) -> Result<
 }
 
 fn real_values_equal(left: &Real, right: &Real) -> Result<bool, BuildError> {
-    match compare_reals(left, right) {
+    match compare_reals(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value == std::cmp::Ordering::Equal),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(BuildError::Geometry(GeometryError::PredicateUnresolved {
@@ -17727,7 +18426,11 @@ fn insert_exact_split_parameter(
 ) -> Result<(), GeometryError> {
     let mut insertion = parameters.len();
     for (index, parameter) in parameters.iter().enumerate() {
-        match decided_model_order(compare_reals(&candidate, parameter))? {
+        match decided_model_order(compare_reals(
+            &candidate,
+            parameter,
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Less => {
                 insertion = index;
                 break;
@@ -17769,10 +18472,14 @@ fn exact_real_min_max(values: &[Real]) -> Result<(Real, Real), BuildError> {
     let mut min = first.clone();
     let mut max = first.clone();
     for value in values.iter().skip(1) {
-        if decided_model_order(compare_reals(value, &min))? == std::cmp::Ordering::Less {
+        if decided_model_order(compare_reals(value, &min, crate::STRICT_PREDICATES))?
+            == std::cmp::Ordering::Less
+        {
             min = value.clone();
         }
-        if decided_model_order(compare_reals(value, &max))? == std::cmp::Ordering::Greater {
+        if decided_model_order(compare_reals(value, &max, crate::STRICT_PREDICATES))?
+            == std::cmp::Ordering::Greater
+        {
             max = value.clone();
         }
     }
@@ -17781,7 +18488,11 @@ fn exact_real_min_max(values: &[Real]) -> Result<(Real, Real), BuildError> {
 
 fn insert_sorted_real(values: &mut Vec<Real>, value: &Real) -> Result<(), BuildError> {
     for index in 0..values.len() {
-        match decided_model_order(compare_reals(value, &values[index]))? {
+        match decided_model_order(compare_reals(
+            value,
+            &values[index],
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Less => {
                 values.insert(index, value.clone());
                 return Ok(());
@@ -17815,8 +18526,11 @@ fn certified_periodic_longitudinal_half_coverage(
         return Ok(false);
     }
     let angular_span = u_values.last().expect("nonempty torus u grid") - &u_values[0];
-    if decided_model_order(compare_reals(&angular_span, &Real::tau()))?
-        == std::cmp::Ordering::Greater
+    if decided_model_order(compare_reals(
+        &angular_span,
+        &Real::tau(),
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Greater
     {
         return Ok(false);
     }
@@ -17829,7 +18543,11 @@ fn certified_periodic_longitudinal_half_coverage(
     let mut selected_span = Real::zero();
     for u_cell in 0..u_values.len() - 1 {
         let width = &u_values[u_cell + 1] - &u_values[u_cell];
-        if decided_model_order(compare_reals(&width, &Real::zero()))? != std::cmp::Ordering::Greater
+        if decided_model_order(compare_reals(
+            &width,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Greater
         {
             return Ok(false);
         }
@@ -17843,15 +18561,21 @@ fn certified_periodic_longitudinal_half_coverage(
         let start_order = decided_model_order(compare_reals(
             &signed_radial(&u_values[u_cell]),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))?;
-        let midpoint_order =
-            decided_model_order(compare_reals(&signed_radial(&midpoint), &Real::zero()))?;
+        let midpoint_order = decided_model_order(compare_reals(
+            &signed_radial(&midpoint),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
         let end_order = decided_model_order(compare_reals(
             &signed_radial(&u_values[u_cell + 1]),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))?;
         if complete {
-            if decided_model_order(compare_reals(&width, &quarter))? == std::cmp::Ordering::Greater
+            if decided_model_order(compare_reals(&width, &quarter, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
                 || start_order == std::cmp::Ordering::Less
                 || midpoint_order != std::cmp::Ordering::Greater
                 || end_order == std::cmp::Ordering::Less
@@ -17860,7 +18584,7 @@ fn certified_periodic_longitudinal_half_coverage(
             }
             selected_span += width;
         } else {
-            if decided_model_order(compare_reals(&width, &Real::pi()))?
+            if decided_model_order(compare_reals(&width, &Real::pi(), crate::STRICT_PREDICATES))?
                 == std::cmp::Ordering::Greater
                 || start_order == std::cmp::Ordering::Greater
                 || midpoint_order != std::cmp::Ordering::Less
@@ -17874,7 +18598,11 @@ fn certified_periodic_longitudinal_half_coverage(
         return Ok(false);
     }
 
-    if decided_model_order(compare_reals(&angular_span, &Real::tau()))? == std::cmp::Ordering::Less
+    if decided_model_order(compare_reals(
+        &angular_span,
+        &Real::tau(),
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Less
     {
         let complement_start = u_values.last().expect("nonempty torus u grid");
         let complement_end = &u_values[0] + Real::tau();
@@ -17883,12 +18611,17 @@ fn certified_periodic_longitudinal_half_coverage(
         if decided_model_order(compare_reals(
             &signed_radial(complement_start),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? == std::cmp::Ordering::Greater
-            || decided_model_order(compare_reals(&signed_radial(&midpoint), &Real::zero()))?
-                != std::cmp::Ordering::Less
+            || decided_model_order(compare_reals(
+                &signed_radial(&midpoint),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != std::cmp::Ordering::Less
             || decided_model_order(compare_reals(
                 &signed_radial(&complement_end),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == std::cmp::Ordering::Greater
         {
             return Ok(false);
@@ -17898,7 +18631,7 @@ fn certified_periodic_longitudinal_half_coverage(
 }
 
 fn require_real_equal(left: &Real, right: &Real, mismatch: BuildError) -> Result<(), BuildError> {
-    match compare_reals(left, right) {
+    match compare_reals(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided {
             value: std::cmp::Ordering::Equal,
             ..
@@ -17930,7 +18663,7 @@ fn require_point_equal(
     right: &Point3,
     mismatch: BuildError,
 ) -> Result<(), BuildError> {
-    match point3_equal(left, right) {
+    match point3_equal(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value: true, .. } => Ok(()),
         PredicateOutcome::Decided { value: false, .. } => Err(mismatch),
         PredicateOutcome::Unknown { needed, stage } => {
@@ -17956,7 +18689,9 @@ fn sphere_finite_cylinder_overlap_volume(
     let relative_max = &cylinder.v_max - center_parameter;
     let maximum = |first: &Real, second: &Real| -> Result<Real, GeometryError> {
         Ok(
-            if decided_model_order(compare_reals(first, second))? == std::cmp::Ordering::Less {
+            if decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less
+            {
                 second.clone()
             } else {
                 first.clone()
@@ -17965,7 +18700,9 @@ fn sphere_finite_cylinder_overlap_volume(
     };
     let minimum = |first: &Real, second: &Real| -> Result<Real, GeometryError> {
         Ok(
-            if decided_model_order(compare_reals(first, second))? == std::cmp::Ordering::Greater {
+            if decided_model_order(compare_reals(first, second, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Greater
+            {
                 second.clone()
             } else {
                 first.clone()
@@ -17974,7 +18711,9 @@ fn sphere_finite_cylinder_overlap_volume(
     };
     let lower = maximum(&relative_min, &-sphere.radius.clone())?;
     let upper = minimum(&relative_max, &sphere.radius)?;
-    if decided_model_order(compare_reals(&lower, &upper))? != std::cmp::Ordering::Less {
+    if decided_model_order(compare_reals(&lower, &upper, crate::STRICT_PREDICATES))?
+        != std::cmp::Ordering::Less
+    {
         return Ok(Real::zero());
     }
     let half_height = (&sphere.radius * &sphere.radius - &cylinder.radius * &cylinder.radius)
@@ -17989,16 +18728,31 @@ fn sphere_finite_cylinder_overlap_volume(
         |height: &Real| Real::pi() * &cylinder.radius * &cylinder.radius * height;
     let mut volume = Real::zero();
     let lower_cap_end = minimum(&upper, &-half_height.clone())?;
-    if decided_model_order(compare_reals(&lower, &lower_cap_end))? == std::cmp::Ordering::Less {
+    if decided_model_order(compare_reals(
+        &lower,
+        &lower_cap_end,
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Less
+    {
         volume += sphere_primitive(&lower_cap_end)? - sphere_primitive(&lower)?;
     }
     let core_start = maximum(&lower, &-half_height.clone())?;
     let core_end = minimum(&upper, &half_height)?;
-    if decided_model_order(compare_reals(&core_start, &core_end))? == std::cmp::Ordering::Less {
+    if decided_model_order(compare_reals(
+        &core_start,
+        &core_end,
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Less
+    {
         volume += cylinder_primitive(&core_end) - cylinder_primitive(&core_start);
     }
     let upper_cap_start = maximum(&lower, &half_height)?;
-    if decided_model_order(compare_reals(&upper_cap_start, &upper))? == std::cmp::Ordering::Less {
+    if decided_model_order(compare_reals(
+        &upper_cap_start,
+        &upper,
+        crate::STRICT_PREDICATES,
+    ))? == std::cmp::Ordering::Less
+    {
         volume += sphere_primitive(&upper)? - sphere_primitive(&upper_cap_start)?;
     }
     Ok(volume)
@@ -18075,14 +18829,18 @@ fn union_sphere_bounds(
 }
 
 fn update_min(current: &mut Real, candidate: &Real) -> Result<(), GeometryError> {
-    if decided_model_order(compare_reals(candidate, current))? == std::cmp::Ordering::Less {
+    if decided_model_order(compare_reals(candidate, current, crate::STRICT_PREDICATES))?
+        == std::cmp::Ordering::Less
+    {
         *current = candidate.clone();
     }
     Ok(())
 }
 
 fn update_max(current: &mut Real, candidate: &Real) -> Result<(), GeometryError> {
-    if decided_model_order(compare_reals(candidate, current))? == std::cmp::Ordering::Greater {
+    if decided_model_order(compare_reals(candidate, current, crate::STRICT_PREDICATES))?
+        == std::cmp::Ordering::Greater
+    {
         *current = candidate.clone();
     }
     Ok(())
@@ -18107,7 +18865,7 @@ fn decided_model_order(
 }
 
 fn exact_point_order(left: &Point3, right: &Point3) -> Result<std::cmp::Ordering, GeometryError> {
-    match compare_point3_lexicographic(left, right) {
+    match compare_point3_lexicographic(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage })
@@ -18198,7 +18956,11 @@ pub(crate) fn compare_curve3_exact_data(
                 (&left.domain_end, &right.domain_end),
                 (&left.angle_at_start, &right.angle_at_start),
             ] {
-                let order = decided_model_order(compare_reals(left_value, right_value))?;
+                let order = decided_model_order(compare_reals(
+                    left_value,
+                    right_value,
+                    crate::STRICT_PREDICATES,
+                ))?;
                 if order != std::cmp::Ordering::Equal {
                     return Ok(order);
                 }
@@ -18237,7 +18999,11 @@ fn compare_point3_slices(
 
 fn compare_real_slices(left: &[Real], right: &[Real]) -> Result<std::cmp::Ordering, GeometryError> {
     for (left_value, right_value) in left.iter().zip(right) {
-        let order = decided_model_order(compare_reals(left_value, right_value))?;
+        let order = decided_model_order(compare_reals(
+            left_value,
+            right_value,
+            crate::STRICT_PREDICATES,
+        ))?;
         if order != std::cmp::Ordering::Equal {
             return Ok(order);
         }
@@ -18247,7 +19013,11 @@ fn compare_real_slices(left: &[Real], right: &[Real]) -> Result<std::cmp::Orderi
 
 fn compare_vector3(left: &Vector3, right: &Vector3) -> Result<std::cmp::Ordering, GeometryError> {
     for index in 0..3 {
-        let order = decided_model_order(compare_reals(&left[index], &right[index]))?;
+        let order = decided_model_order(compare_reals(
+            &left[index],
+            &right[index],
+            crate::STRICT_PREDICATES,
+        ))?;
         if order != std::cmp::Ordering::Equal {
             return Ok(order);
         }
@@ -18270,15 +19040,13 @@ fn compare_ordered_surface_curve_traces(
     left: &OrderedSurfaceCurveTrace,
     right: &OrderedSurfaceCurveTrace,
 ) -> Result<std::cmp::Ordering, GeometryError> {
-    let lower = exact_point_order(&left.lower, &right.lower)?;
-    if lower != std::cmp::Ordering::Equal {
-        return Ok(lower);
+    match compare_curve3_exact_data(&left.exact_key.exact_data(), &right.exact_key.exact_data()) {
+        Ok(order) => Ok(order),
+        Err(GeometryError::PredicateUnresolved { .. }) => {
+            Ok(left.source_index.cmp(&right.source_index))
+        }
+        Err(error) => Err(error),
     }
-    let upper = exact_point_order(&left.upper, &right.upper)?;
-    if upper != std::cmp::Ordering::Equal {
-        return Ok(upper);
-    }
-    compare_curve3_exact_data(&left.exact_key.exact_data(), &right.exact_key.exact_data())
 }
 
 fn projected_face_split_line(
@@ -18316,7 +19084,7 @@ fn arranged_face_split_segments(
     planar: &LineSeg2,
     prior_lines: &[(usize, LineSeg2)],
 ) -> Result<Vec<Curve3>, TopologyEditError> {
-    let policy = CurvePolicy::certified();
+    let policy = CurvePolicy::STRICT;
     let mut cuts = Vec::new();
     for (prior_source, prior) in prior_lines {
         match planar
@@ -18356,13 +19124,25 @@ fn arranged_face_split_segments(
 }
 
 fn insert_face_split_cut(cuts: &mut Vec<Real>, parameter: Real) -> Result<(), TopologyEditError> {
-    if decided_model_order(compare_reals(&parameter, &Real::zero()))? != std::cmp::Ordering::Greater
-        || decided_model_order(compare_reals(&parameter, &Real::one()))? != std::cmp::Ordering::Less
+    if decided_model_order(compare_reals(
+        &parameter,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != std::cmp::Ordering::Greater
+        || decided_model_order(compare_reals(
+            &parameter,
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ))? != std::cmp::Ordering::Less
     {
         return Ok(());
     }
     for index in 0..cuts.len() {
-        match decided_model_order(compare_reals(&parameter, &cuts[index]))? {
+        match decided_model_order(compare_reals(
+            &parameter,
+            &cuts[index],
+            crate::STRICT_PREDICATES,
+        ))? {
             std::cmp::Ordering::Less => {
                 cuts.insert(index, parameter);
                 return Ok(());
@@ -18380,6 +19160,25 @@ mod tests {
     use super::*;
     use hypercurve::{CircularArc2, Curve2, LineSeg2, Point2 as CurvePoint2};
     use hyperlattice::Vector3;
+
+    // Assertions compare independently constructed exact representations. Keep
+    // production predicates strict while allowing the test oracle to finish a
+    // comparison when structural certification alone cannot normalize them.
+    fn compare_reals(
+        left: &Real,
+        right: &Real,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<std::cmp::Ordering> {
+        hyperlimit::compare_reals(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
+
+    fn point3_equal(
+        left: &Point3,
+        right: &Point3,
+        _policy: hyperlimit::PredicatePolicy,
+    ) -> hyperlimit::PredicateOutcome<bool> {
+        hyperlimit::point3_equal(left, right, crate::TEST_ORACLE_PREDICATES)
+    }
 
     fn r(value: i32) -> Real {
         Real::from(value)
@@ -18541,7 +19340,10 @@ mod tests {
             .unwrap()
             .point_at(&surface_parameter)
             .unwrap();
-        assert_eq!(point3_equal(&spatial, &from_face).value(), Some(true));
+        assert_eq!(
+            point3_equal(&spatial, &from_face, crate::STRICT_PREDICATES).value(),
+            Some(true)
+        );
         assert!(matches!(
             model.edge_use(uses[0]).unwrap().parameter_correspondence(),
             ParameterCorrespondence::AngularSweep
@@ -18557,6 +19359,7 @@ mod tests {
             compare_reals(
                 &decoded.edge_parameter_at(uses[0], &half).unwrap(),
                 &first_parameter,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -18934,7 +19737,7 @@ mod tests {
                 crate::builder::extrusion_patch(profile, Vector3::z(), Real::zero(), r(3)).unwrap();
             let area = model.face_area(face).unwrap();
             assert_eq!(
-                compare_reals(&area, &r(6)).value(),
+                compare_reals(&area, &r(6), crate::STRICT_PREDICATES).value(),
                 Some(std::cmp::Ordering::Equal)
             );
             let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
@@ -18942,7 +19745,12 @@ mod tests {
                 .validate()
                 .unwrap();
             assert_eq!(
-                compare_reals(&replayed.face_area(face).unwrap(), &r(6)).value(),
+                compare_reals(
+                    &replayed.face_area(face).unwrap(),
+                    &r(6),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -18966,7 +19774,12 @@ mod tests {
             let (model, face) =
                 crate::builder::extrusion_patch(profile, Vector3::x(), Real::zero(), r(3)).unwrap();
             assert_eq!(
-                compare_reals(&model.face_area(face).unwrap(), &r(6)).value(),
+                compare_reals(
+                    &model.face_area(face).unwrap(),
+                    &r(6),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(std::cmp::Ordering::Equal)
             );
             let replayed = crate::RawModel::from_json(&model.to_json().unwrap())
@@ -18974,7 +19787,12 @@ mod tests {
                 .validate()
                 .unwrap();
             assert_eq!(
-                compare_reals(&replayed.face_area(face).unwrap(), &r(6)).value(),
+                compare_reals(
+                    &replayed.face_area(face).unwrap(),
+                    &r(6),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(std::cmp::Ordering::Equal)
             );
         }
@@ -19021,6 +19839,7 @@ mod tests {
             compare_reals(
                 &normal_model.face_area(normal_face).unwrap(),
                 &(r(3) * Real::pi()),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -19079,7 +19898,12 @@ mod tests {
         builder.shell(vec![face]).unwrap();
         let model = builder.finish().unwrap();
         assert_eq!(
-            compare_reals(&model.face_area(face).unwrap(), &Real::from(84)).value(),
+            compare_reals(
+                &model.face_area(face).unwrap(),
+                &Real::from(84),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
 

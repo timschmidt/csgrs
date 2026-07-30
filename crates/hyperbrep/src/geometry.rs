@@ -23,7 +23,7 @@ pub struct ParameterDomain {
 impl ParameterDomain {
     /// Constructs a nonempty increasing closed parameter interval.
     pub fn new(start: Real, end: Real) -> GeometryResult<Self> {
-        match compare_reals(&start, &end) {
+        match compare_reals(&start, &end, crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: Ordering::Less,
                 ..
@@ -55,8 +55,16 @@ impl ParameterDomain {
 
     /// Certifies whether `parameter` belongs to this interval.
     pub fn contains(&self, parameter: &Real) -> GeometryResult<bool> {
-        let after_start = decided_order(compare_reals(parameter, &self.start))?;
-        let before_end = decided_order(compare_reals(parameter, &self.end))?;
+        let after_start = decided_order(compare_reals(
+            parameter,
+            &self.start,
+            crate::STRICT_PREDICATES,
+        ))?;
+        let before_end = decided_order(compare_reals(
+            parameter,
+            &self.end,
+            crate::STRICT_PREDICATES,
+        ))?;
         Ok(matches!(after_start, Ordering::Equal | Ordering::Greater)
             && matches!(before_end, Ordering::Equal | Ordering::Less))
     }
@@ -271,6 +279,7 @@ struct Line3 {
 struct RationalBezier3 {
     control_points: Vec<Point3>,
     weights: Vec<Real>,
+    constant_coordinates: [Option<Real>; 3],
     homogeneous_controls: OnceLock<Vec<HomogeneousPoint3>>,
 }
 
@@ -313,7 +322,7 @@ type HomogeneousNurbsSplit = (
 impl Curve3 {
     /// Constructs a finite exact line segment.
     pub fn line(start: Point3, end: Point3) -> GeometryResult<Self> {
-        match point3_equal(&start, &end) {
+        match point3_equal(&start, &end, crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided { value: true, .. } => {
                 return Err(GeometryError::DegenerateLine);
             }
@@ -389,10 +398,12 @@ impl Curve3 {
     ) -> GeometryResult<Self> {
         validate_control_net(&control_points, &weights)?;
         validate_positive_weights(&weights)?;
+        let constant_coordinates = certified_constant_coordinates(&control_points);
         Ok(Self::from_parts(
             CurveGeometry3::RationalBezier(RationalBezier3 {
                 control_points,
                 weights,
+                constant_coordinates,
                 homogeneous_controls: OnceLock::new(),
             }),
             ParameterDomain::unit(),
@@ -416,7 +427,11 @@ impl Curve3 {
         }
         for adjacent in knots.windows(2) {
             if !matches!(
-                decided_order(compare_reals(&adjacent[0], &adjacent[1]))?,
+                decided_order(compare_reals(
+                    &adjacent[0],
+                    &adjacent[1],
+                    crate::STRICT_PREDICATES
+                ))?,
                 Ordering::Less | Ordering::Equal
             ) {
                 return Err(GeometryError::InvalidKnotOrder);
@@ -466,7 +481,12 @@ impl Curve3 {
                     return Ok(None);
                 };
                 for weight in &curve.weights {
-                    if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                    if decided_order(compare_reals(
+                        weight,
+                        first_weight,
+                        crate::STRICT_PREDICATES,
+                    ))? != Ordering::Equal
+                    {
                         return Ok(None);
                     }
                 }
@@ -496,7 +516,12 @@ impl Curve3 {
                     return Ok(None);
                 };
                 for weight in &curve.weights {
-                    if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+                    if decided_order(compare_reals(
+                        weight,
+                        first_weight,
+                        crate::STRICT_PREDICATES,
+                    ))? != Ordering::Equal
+                    {
                         return Ok(None);
                     }
                 }
@@ -562,14 +587,20 @@ impl Curve3 {
             relative - axial
         };
         let start_radial = radial(&self.point_at(self.domain().start())?);
-        if decided_order(compare_reals(&start_radial.norm_squared(), &Real::zero()))?
-            != Ordering::Greater
+        if decided_order(compare_reals(
+            &start_radial.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
         {
             return Ok(false);
         }
         let end_radial = radial(&self.point_at(self.domain().end())?);
-        if decided_order(compare_reals(&end_radial.norm_squared(), &Real::zero()))?
-            != Ordering::Greater
+        if decided_order(compare_reals(
+            &end_radial.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
         {
             return Ok(false);
         }
@@ -595,8 +626,11 @@ impl Curve3 {
             let mut separated = true;
             for point in controls {
                 let offset = point - axis_origin;
-                if decided_order(compare_reals(&witness.dot(&offset), &Real::zero()))?
-                    != Ordering::Greater
+                if decided_order(compare_reals(
+                    &witness.dot(&offset),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Greater
                 {
                     separated = false;
                     break;
@@ -614,10 +648,11 @@ impl Curve3 {
         let transverse = axis.cross(&witness);
         let first_plane = Surface::plane(axis_origin.clone(), axis.clone(), witness.clone())?;
         let point_is_on_axis = |point: &Point3| -> GeometryResult<bool> {
-            Ok(
-                decided_order(compare_reals(&radial(point).norm_squared(), &Real::zero()))?
-                    == Ordering::Equal,
-            )
+            Ok(decided_order(compare_reals(
+                &radial(point).norm_squared(),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal)
         };
         match first_plane.intersect_curve(self)? {
             CurveSurfaceIntersection::None => Ok(true),
@@ -649,9 +684,20 @@ impl Curve3 {
             return Err(GeometryError::ParameterOutsideDomain);
         }
         match &self.data.geometry {
-            CurveGeometry3::Line(line) => Ok(line.start.lerp(&line.end, parameter)),
+            CurveGeometry3::Line(line) => {
+                if parameter == self.domain().start() {
+                    return Ok(line.start.clone());
+                }
+                if parameter == self.domain().end() {
+                    return Ok(line.end.clone());
+                }
+                Ok(line.start.lerp(&line.end, parameter))
+            }
             CurveGeometry3::RationalBezier(curve) => {
-                evaluate_homogeneous_bezier(curve.homogeneous_controls(), parameter)
+                let mut point =
+                    evaluate_homogeneous_bezier(curve.homogeneous_controls(), parameter)?;
+                restore_constant_coordinates(&mut point, &curve.constant_coordinates);
+                Ok(point)
             }
             CurveGeometry3::Nurbs(curve) => {
                 let span = find_span(
@@ -808,7 +854,12 @@ impl Curve3 {
                 if !matches!(direction, -1 | 1) {
                     return Err(GeometryError::InvalidParameterDomain);
                 }
-                if circle && decided_order(compare_reals(&x_radius, &y_radius))? != Ordering::Equal
+                if circle
+                    && decided_order(compare_reals(
+                        &x_radius,
+                        &y_radius,
+                        crate::STRICT_PREDICATES,
+                    ))? != Ordering::Equal
                 {
                     return Err(GeometryError::InvalidEllipseRadii);
                 }
@@ -887,8 +938,8 @@ impl Curve3 {
                 let (left, right) =
                     split_homogeneous_bezier(curve.homogeneous_controls(), parameter);
                 Ok((
-                    rational_bezier_from_homogeneous(left)?,
-                    rational_bezier_from_homogeneous(right)?,
+                    rational_bezier_from_homogeneous(left, Some(&curve.constant_coordinates))?,
+                    rational_bezier_from_homogeneous(right, Some(&curve.constant_coordinates))?,
                 ))
             }
             CurveGeometry3::Nurbs(curve) => split_nurbs_curve(curve, parameter),
@@ -908,22 +959,41 @@ impl Curve3 {
     /// interval because their native knot or angle parameterization is
     /// authoritative.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
-        if decided_order(compare_reals(start, end))? != Ordering::Less
-            || decided_order(compare_reals(start, self.domain().start()))? == Ordering::Less
-            || decided_order(compare_reals(end, self.domain().end()))? == Ordering::Greater
+        if decided_order(compare_reals(start, end, crate::STRICT_PREDICATES))? != Ordering::Less
+            || decided_order(compare_reals(
+                start,
+                self.domain().start(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            || decided_order(compare_reals(
+                end,
+                self.domain().end(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Greater
         {
             return Err(GeometryError::InvalidParameterDomain);
         }
-        if decided_order(compare_reals(start, self.domain().start()))? == Ordering::Equal
-            && decided_order(compare_reals(end, self.domain().end()))? == Ordering::Equal
+        if decided_order(compare_reals(
+            start,
+            self.domain().start(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+            && decided_order(compare_reals(
+                end,
+                self.domain().end(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
         {
             return Ok(self.clone());
         }
         match &self.data.geometry {
             CurveGeometry3::Line(_) => Self::line(self.point_at(start)?, self.point_at(end)?),
             CurveGeometry3::RationalBezier(curve) => {
-                let controls = if decided_order(compare_reals(start, &Real::zero()))?
-                    == Ordering::Equal
+                let controls = if decided_order(compare_reals(
+                    start,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Equal
                 {
                     split_homogeneous_bezier(curve.homogeneous_controls(), end).0
                 } else {
@@ -932,15 +1002,23 @@ impl Curve3 {
                         .map_err(|_| GeometryError::ProjectiveDivision)?;
                     split_homogeneous_bezier(&right, &relative_end).0
                 };
-                rational_bezier_from_homogeneous(controls)
+                rational_bezier_from_homogeneous(controls, Some(&curve.constant_coordinates))
             }
             CurveGeometry3::Nurbs(_) => {
                 let mut selected = self.clone();
-                if decided_order(compare_reals(end, selected.domain().end()))? == Ordering::Less {
+                if decided_order(compare_reals(
+                    end,
+                    selected.domain().end(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Less
+                {
                     selected = selected.split_at(end)?.0;
                 }
-                if decided_order(compare_reals(start, selected.domain().start()))?
-                    == Ordering::Greater
+                if decided_order(compare_reals(
+                    start,
+                    selected.domain().start(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater
                 {
                     selected = selected.split_at(start)?.1;
                 }
@@ -1736,7 +1814,11 @@ impl SurfaceIntersectionPcurve {
     pub fn materialize(&self) -> GeometryResult<MaterializedSurfacePcurve> {
         let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
         let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-        let source_order = decided_order(compare_reals(&source_start, &source_end))?;
+        let source_order = decided_order(compare_reals(
+            &source_start,
+            &source_end,
+            crate::STRICT_PREDICATES,
+        ))?;
         if source_order == Ordering::Equal {
             return Err(GeometryError::InvalidParameterDomain);
         }
@@ -1756,16 +1838,21 @@ impl SurfaceIntersectionPcurve {
         match &self.mapping {
             SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                 let domain = curve.parameter_domain();
-                let restricted =
-                    if decided_order(compare_reals(ordered_source_start, domain.start()))?
-                        == Ordering::Equal
-                        && decided_order(compare_reals(ordered_source_end, domain.end()))?
-                            == Ordering::Equal
-                    {
-                        curve.clone()
-                    } else {
-                        curve.subcurve(ordered_source_start.clone(), ordered_source_end.clone())?
-                    };
+                let restricted = if decided_order(compare_reals(
+                    ordered_source_start,
+                    domain.start(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Equal
+                    && decided_order(compare_reals(
+                        ordered_source_end,
+                        domain.end(),
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal
+                {
+                    curve.clone()
+                } else {
+                    curve.subcurve(ordered_source_start.clone(), ordered_source_end.clone())?
+                };
                 materialized_surface_pcurve_from_matching_domains(
                     orient_curve(restricted)?,
                     &self.domain,
@@ -1818,23 +1905,31 @@ impl SurfaceIntersectionPcurve {
                 for carrier in carriers {
                     let carrier_start = carrier.spatial_offset.clone();
                     let carrier_end = &carrier.spatial_offset + &carrier.spatial_scale;
-                    let overlap_start =
-                        if decided_order(compare_reals(ordered_source_start, &carrier_start))?
-                            == Ordering::Greater
-                        {
-                            ordered_source_start.clone()
-                        } else {
-                            carrier_start
-                        };
-                    let overlap_end =
-                        if decided_order(compare_reals(ordered_source_end, &carrier_end))?
-                            == Ordering::Less
-                        {
-                            ordered_source_end.clone()
-                        } else {
-                            carrier_end
-                        };
-                    if decided_order(compare_reals(&overlap_start, &overlap_end))? != Ordering::Less
+                    let overlap_start = if decided_order(compare_reals(
+                        ordered_source_start,
+                        &carrier_start,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Greater
+                    {
+                        ordered_source_start.clone()
+                    } else {
+                        carrier_start
+                    };
+                    let overlap_end = if decided_order(compare_reals(
+                        ordered_source_end,
+                        &carrier_end,
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Less
+                    {
+                        ordered_source_end.clone()
+                    } else {
+                        carrier_end
+                    };
+                    if decided_order(compare_reals(
+                        &overlap_start,
+                        &overlap_end,
+                        crate::STRICT_PREDICATES,
+                    ))? != Ordering::Less
                     {
                         continue;
                     }
@@ -1844,9 +1939,16 @@ impl SurfaceIntersectionPcurve {
                     let end = ((&overlap_end - &carrier.spatial_offset) / &carrier.spatial_scale)
                         .map_err(|_| GeometryError::ProjectiveDivision)?;
                     let domain = carrier.curve.parameter_domain();
-                    let curve = if decided_order(compare_reals(&start, domain.start()))?
-                        == Ordering::Equal
-                        && decided_order(compare_reals(&end, domain.end()))? == Ordering::Equal
+                    let curve = if decided_order(compare_reals(
+                        &start,
+                        domain.start(),
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Equal
+                        && decided_order(compare_reals(
+                            &end,
+                            domain.end(),
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
                     {
                         carrier.curve
                     } else {
@@ -1933,8 +2035,11 @@ impl SurfaceIntersectionPcurve {
             } => {
                 let source_start = &self.source_scale * self.domain.start() + &self.source_offset;
                 let source_end = &self.source_scale * self.domain.end() + &self.source_offset;
-                let descending =
-                    decided_order(compare_reals(&source_start, &source_end))? == Ordering::Greater;
+                let descending = decided_order(compare_reals(
+                    &source_start,
+                    &source_end,
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater;
                 let source_curve = if descending {
                     spatial.subcurve(&source_end, &source_start)?
                 } else {
@@ -2030,7 +2135,7 @@ impl MaterializedSurfacePcurve {
                 };
                 let point = self.curve.point_at(parameter)?;
                 let point = CurvePoint2::new(point.x().clone(), point.y().clone());
-                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::certified())? {
+                let fraction = match arc.sweep_fraction(&point, &CurvePolicy::STRICT)? {
                     Classification::Decided(fraction) => fraction,
                     Classification::Uncertain(reason) => {
                         return Err(GeometryError::PlanarClassificationUnresolved(reason));
@@ -2262,7 +2367,7 @@ impl Surface {
     /// Constructs an unbounded exact plane with an authored parameter frame.
     pub fn plane(origin: Point3, u: Vector3, v: Vector3) -> GeometryResult<Self> {
         let normal_norm = u.cross(&v).norm_squared();
-        match compare_reals(&normal_norm, &Real::zero()) {
+        match compare_reals(&normal_norm, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: Ordering::Greater,
                 ..
@@ -2336,8 +2441,16 @@ impl Surface {
         let frame = validate_orthonormal_frame(x, y, axis)?;
         let half_pi =
             (Real::pi() / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_order(compare_reals(&semi_angle, &Real::zero()))? != Ordering::Greater
-            || decided_order(compare_reals(&semi_angle, &half_pi))? != Ordering::Less
+        if decided_order(compare_reals(
+            &semi_angle,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
+            || decided_order(compare_reals(
+                &semi_angle,
+                &half_pi,
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Less
         {
             return Err(GeometryError::InvalidConeAngle);
         }
@@ -2367,7 +2480,12 @@ impl Surface {
     ) -> GeometryResult<Self> {
         let frame = validate_orthonormal_frame(x, y, axis)?;
         require_positive(&minor_radius, GeometryError::InvalidTorusRadii)?;
-        if decided_order(compare_reals(&major_radius, &minor_radius))? != Ordering::Greater {
+        if decided_order(compare_reals(
+            &major_radius,
+            &minor_radius,
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
+        {
             return Err(GeometryError::InvalidTorusRadii);
         }
         Ok(Self::from_parts(
@@ -2389,8 +2507,11 @@ impl Surface {
     /// `u` is the profile parameter and `v` is the signed coefficient of the
     /// authored direction: `S(u, v) = profile(u) + v * direction`.
     pub fn extrusion(profile: Curve3, direction: Vector3) -> GeometryResult<Self> {
-        if decided_order(compare_reals(&direction.norm_squared(), &Real::zero()))?
-            != Ordering::Greater
+        if decided_order(compare_reals(
+            &direction.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
         {
             return Err(GeometryError::DegenerateExtrusionDirection);
         }
@@ -2409,7 +2530,12 @@ impl Surface {
     /// `u` is the periodic revolution angle and `v` is the profile parameter.
     /// Profile points on the axis remain explicit parameter singularities.
     pub fn revolution(profile: Curve3, axis_origin: Point3, axis: Vector3) -> GeometryResult<Self> {
-        if decided_order(compare_reals(&axis.norm_squared(), &Real::one()))? != Ordering::Equal {
+        if decided_order(compare_reals(
+            &axis.norm_squared(),
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+        {
             return Err(GeometryError::InvalidRevolutionAxis);
         }
         let v_domain = profile.domain().clone();
@@ -2532,8 +2658,11 @@ impl Surface {
         let mut u = None;
         for &point in controls.iter().skip(1) {
             let candidate = point - origin;
-            if decided_order(compare_reals(&candidate.norm_squared(), &Real::zero()))?
-                == Ordering::Greater
+            if decided_order(compare_reals(
+                &candidate.norm_squared(),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Greater
             {
                 u = Some(candidate);
                 break;
@@ -2548,6 +2677,7 @@ impl Surface {
             if decided_order(compare_reals(
                 &u.cross(&candidate).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Greater
             {
                 v = Some(candidate);
@@ -2559,8 +2689,11 @@ impl Surface {
         };
         let normal = u.cross(&v);
         for &point in &controls {
-            if decided_order(compare_reals(&normal.dot(&(point - origin)), &Real::zero()))?
-                != Ordering::Equal
+            if decided_order(compare_reals(
+                &normal.dot(&(point - origin)),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
             {
                 return Ok(None);
             }
@@ -2658,7 +2791,12 @@ impl Surface {
         };
         let first_weight = &weights[0][0];
         for weight in weights.iter().flatten().skip(1) {
-            if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+            if decided_order(compare_reals(
+                weight,
+                first_weight,
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
+            {
                 return Ok(None);
             }
         }
@@ -2668,6 +2806,7 @@ impl Surface {
         if decided_order(compare_reals(
             &image_u.cross(&image_v).norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != Ordering::Greater
         {
             return Ok(None);
@@ -2758,7 +2897,12 @@ impl Surface {
         let first_weight = &surface_weights[0][0];
         let mut nonconstant_weights = false;
         for weight in surface_weights.iter().flatten().skip(1) {
-            if decided_order(compare_reals(weight, first_weight))? != Ordering::Equal {
+            if decided_order(compare_reals(
+                weight,
+                first_weight,
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
+            {
                 nonconstant_weights = true;
                 break;
             }
@@ -2769,8 +2913,11 @@ impl Surface {
         let origin = &control_points[0][0];
         let u = &control_points[0][1] - origin;
         let v = &control_points[1][0] - origin;
-        if decided_order(compare_reals(&u.cross(&v).norm_squared(), &Real::zero()))?
-            != Ordering::Greater
+        if decided_order(compare_reals(
+            &u.cross(&v).norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
             || !points_equal(
                 &control_points[1][1],
                 &(origin.clone() + u.clone() + v.clone()),
@@ -2778,10 +2925,11 @@ impl Surface {
             || decided_order(compare_reals(
                 &(&surface_weights[0][0] * &surface_weights[1][1]),
                 &(&surface_weights[0][1] * &surface_weights[1][0]),
+                crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
         {
             return Ok(None);
-        };
+        }
         let Some(projected) = project_curve_to_plane_frame(curve, origin, &u, &v)? else {
             return Ok(None);
         };
@@ -2835,7 +2983,12 @@ impl Surface {
             .collect::<Vec<_>>();
         let common_weights = bernstein_product(&u_denominator, &v_denominator)?;
         for weight in &common_weights {
-            if decided_order(compare_reals(weight, &Real::zero()))? != Ordering::Greater {
+            if decided_order(compare_reals(
+                weight,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Greater
+            {
                 return Ok(None);
             }
         }
@@ -3031,19 +3184,19 @@ impl Surface {
             SurfaceGeometry::Sphere(surface) => {
                 let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
                 let (sin_v, cos_v) = (parameter.y.clone().sin(), parameter.y.clone().cos());
-                let radial = surface.frame.x.clone() * (&cos_v * cos_u)
-                    + surface.frame.y.clone() * (&cos_v * sin_u)
-                    + surface.frame.z.clone() * sin_v;
-                Ok(surface.center.clone() + radial * &surface.radius)
+                Ok(surface.center.clone()
+                    + surface.frame.x.clone() * (&surface.radius * &cos_v * cos_u)
+                    + surface.frame.y.clone() * (&surface.radius * cos_v * sin_u)
+                    + surface.frame.z.clone() * (&surface.radius * sin_v))
             }
             SurfaceGeometry::Cone(surface) => {
                 let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
                 let sin_angle = surface.semi_angle.clone().sin();
                 let cos_angle = surface.semi_angle.clone().cos();
-                let direction = surface.frame.x.clone() * (&sin_angle * cos_u)
-                    + surface.frame.y.clone() * (&sin_angle * sin_u)
-                    + surface.frame.z.clone() * cos_angle;
-                Ok(surface.apex.clone() + direction * &parameter.y)
+                Ok(surface.apex.clone()
+                    + surface.frame.z.clone() * (&parameter.y * cos_angle)
+                    + surface.frame.x.clone() * (&parameter.y * &sin_angle * cos_u)
+                    + surface.frame.y.clone() * (&parameter.y * sin_angle * sin_u))
             }
             SurfaceGeometry::Torus(surface) => {
                 let (sin_u, cos_u) = (parameter.x.clone().sin(), parameter.x.clone().cos());
@@ -3159,7 +3312,12 @@ impl Surface {
     pub fn normal_at(&self, parameter: &Point2) -> GeometryResult<Vector3> {
         let partials = self.partials_at(parameter)?;
         let normal = partials.u.cross(&partials.v);
-        if decided_order(compare_reals(&normal.norm_squared(), &Real::zero()))? == Ordering::Equal {
+        if decided_order(compare_reals(
+            &normal.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             return Err(GeometryError::SingularSurfaceParameter);
         }
         normal
@@ -3364,7 +3522,11 @@ impl Surface {
         let relative = &profile_point - &surface.axis_origin;
         let axial = surface.axis.clone() * surface.axis.dot(&relative);
         let radial = relative - &axial;
-        if decided_order(compare_reals(&radial.norm_squared(), &Real::zero()))? != Ordering::Greater
+        if decided_order(compare_reals(
+            &radial.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Greater
         {
             return Err(GeometryError::SingularSurfaceParameter);
         }
@@ -3494,10 +3656,17 @@ impl Surface {
                 let direction = end - start;
                 let denominator = normal.dot(&direction);
                 let start_value = normal.dot(&(start - &plane.origin));
-                match decided_order(compare_reals(&denominator, &Real::zero()))? {
+                match decided_order(compare_reals(
+                    &denominator,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? {
                     Ordering::Equal => {
-                        if decided_order(compare_reals(&start_value, &Real::zero()))?
-                            == Ordering::Equal
+                        if decided_order(compare_reals(
+                            &start_value,
+                            &Real::zero(),
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
                         {
                             Ok(CurveSurfaceIntersection::Contained)
                         } else {
@@ -3817,6 +3986,7 @@ fn intersect_transverse_circle_arc_cylinder(
     if decided_order(compare_reals(
         &circle_axis.cross(&cylinder.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -3839,13 +4009,19 @@ fn intersect_transverse_circle_arc_cone(
     if decided_order(compare_reals(
         &circle_axis.cross(&cone.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
     let center_offset = &arc.center - &cone.apex;
     let height = center_offset.dot(&cone.frame.z);
-    if decided_order(compare_reals(&height, &Real::zero()))? == Ordering::Less {
+    if decided_order(compare_reals(
+        &height,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Less
+    {
         return Ok(CurveSurfaceIntersection::None);
     }
     let cone_radius = height
@@ -3866,6 +4042,7 @@ fn intersect_transverse_circle_arc_torus(
     if decided_order(compare_reals(
         &circle_axis.cross(&torus.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -3874,14 +4051,24 @@ fn intersect_transverse_circle_arc_torus(
     let height = center_offset.dot(&torus.frame.z);
     let height_squared = &height * &height;
     let minor_squared = &torus.minor_radius * &torus.minor_radius;
-    if decided_order(compare_reals(&height_squared, &minor_squared))? == Ordering::Greater {
+    if decided_order(compare_reals(
+        &height_squared,
+        &minor_squared,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+    {
         return Ok(CurveSurfaceIntersection::None);
     }
     let radial_delta = (minor_squared - height_squared)
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
     let mut radii = vec![&torus.major_radius + &radial_delta];
-    if decided_order(compare_reals(&radial_delta, &Real::zero()))? != Ordering::Equal {
+    if decided_order(compare_reals(
+        &radial_delta,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
+    {
         radii.push(&torus.major_radius - radial_delta);
     }
     let mut combined = Vec::<CurveSurfacePoint>::new();
@@ -3898,8 +4085,11 @@ fn intersect_transverse_circle_arc_torus(
                 for point in points {
                     let mut duplicate = false;
                     for existing in &combined {
-                        if decided_order(compare_reals(&existing.parameter, &point.parameter))?
-                            == Ordering::Equal
+                        if decided_order(compare_reals(
+                            &existing.parameter,
+                            &point.parameter,
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
                         {
                             duplicate = true;
                             break;
@@ -3924,6 +4114,7 @@ fn intersect_transverse_circle_arc_torus(
             && decided_order(compare_reals(
                 &combined[position].parameter,
                 &combined[position - 1].parameter,
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Less
         {
             combined.swap(position, position - 1);
@@ -3969,15 +4160,29 @@ fn intersect_ellipse_arc_scalar_equation(
 ) -> GeometryResult<CurveSurfaceIntersection> {
     let amplitude_squared =
         &cosine_coefficient * &cosine_coefficient + &sine_coefficient * &sine_coefficient;
-    if decided_order(compare_reals(&amplitude_squared, &Real::zero()))? == Ordering::Equal {
-        return if decided_order(compare_reals(&center_value, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &amplitude_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return if decided_order(compare_reals(
+            &center_value,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Ok(CurveSurfaceIntersection::Contained)
         } else {
             Ok(CurveSurfaceIntersection::None)
         };
     }
     let center_squared = &center_value * &center_value;
-    let relation = decided_order(compare_reals(&center_squared, &amplitude_squared))?;
+    let relation = decided_order(compare_reals(
+        &center_squared,
+        &amplitude_squared,
+        crate::STRICT_PREDICATES,
+    ))?;
     if relation == Ordering::Greater {
         return Ok(CurveSurfaceIntersection::None);
     }
@@ -4012,7 +4217,11 @@ fn intersect_ellipse_arc_scalar_equation(
         for parameter in parameters {
             let mut duplicate = false;
             for existing in &points {
-                if decided_order(compare_reals(&existing.parameter, &parameter))? == Ordering::Equal
+                if decided_order(compare_reals(
+                    &existing.parameter,
+                    &parameter,
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Equal
                 {
                     duplicate = true;
                     break;
@@ -4034,6 +4243,7 @@ fn intersect_ellipse_arc_scalar_equation(
             && decided_order(compare_reals(
                 &points[position].parameter,
                 &points[position - 1].parameter,
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Less
         {
             points.swap(position, position - 1);
@@ -4079,14 +4289,19 @@ fn surface_axis_contains(
         SurfaceParameterDomain::Unbounded | SurfaceParameterDomain::Periodic { .. } => Ok(true),
         SurfaceParameterDomain::Closed(domain) => domain.contains(parameter),
         SurfaceParameterDomain::LowerBounded { start } => Ok(matches!(
-            decided_order(compare_reals(parameter, start))?,
+            decided_order(compare_reals(parameter, start, crate::STRICT_PREDICATES))?,
             Ordering::Equal | Ordering::Greater
         )),
     }
 }
 
 fn require_positive(value: &Real, error: GeometryError) -> GeometryResult<()> {
-    if decided_order(compare_reals(value, &Real::zero()))? == Ordering::Greater {
+    if decided_order(compare_reals(
+        value,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+    {
         Ok(())
     } else {
         Err(error)
@@ -4109,12 +4324,15 @@ fn validate_orthonormal_frame(
         (z.dot(&x), &zero),
     ];
     for (actual, expected) in scalar_checks {
-        if decided_order(compare_reals(&actual, expected))? != Ordering::Equal {
+        if decided_order(compare_reals(&actual, expected, crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Err(GeometryError::InvalidSurfaceFrame);
         }
     }
     let handedness = x.cross(&y).dot(&z);
-    if decided_order(compare_reals(&handedness, &one))? != Ordering::Equal {
+    if decided_order(compare_reals(&handedness, &one, crate::STRICT_PREDICATES))? != Ordering::Equal
+    {
         return Err(GeometryError::InvalidSurfaceFrame);
     }
     Ok(OrthonormalFrame3 { x, y, z })
@@ -4126,7 +4344,9 @@ pub(crate) fn affine_transform_orientation(transform: &Matrix4) -> GeometryResul
             .iter()
             .zip([Real::zero(), Real::zero(), Real::zero(), Real::one()])
     {
-        if decided_order(compare_reals(entry, &expected))? != Ordering::Equal {
+        if decided_order(compare_reals(entry, &expected, crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Err(GeometryError::NonAffineTransform);
         }
     }
@@ -4134,7 +4354,11 @@ pub(crate) fn affine_transform_orientation(transform: &Matrix4) -> GeometryResul
     let determinant = &m[0][0] * (&m[1][1] * &m[2][2] - &m[1][2] * &m[2][1])
         - &m[0][1] * (&m[1][0] * &m[2][2] - &m[1][2] * &m[2][0])
         + &m[0][2] * (&m[1][0] * &m[2][1] - &m[1][1] * &m[2][0]);
-    match decided_order(compare_reals(&determinant, &Real::zero()))? {
+    match decided_order(compare_reals(
+        &determinant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Greater => Ok(Ordering::Greater),
         Ordering::Equal => Err(GeometryError::SingularTransform),
         Ordering::Less => Ok(Ordering::Less),
@@ -4277,8 +4501,13 @@ pub(crate) fn project_curve_to_plane_frame(
             let xy = &x.0 * &y.0 + &x.1 * &y.1;
             let x_squared = &x.0 * &x.0 + &x.1 * &x.1;
             let y_squared = &y.0 * &y.0 + &y.1 * &y.1;
-            if decided_order(compare_reals(&xy, &Real::zero()))? != Ordering::Equal
-                || decided_order(compare_reals(&x_squared, &y_squared))? != Ordering::Equal
+            if decided_order(compare_reals(&xy, &Real::zero(), crate::STRICT_PREDICATES))?
+                != Ordering::Equal
+                || decided_order(compare_reals(
+                    &x_squared,
+                    &y_squared,
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Equal
             {
                 return Ok(None);
             }
@@ -4293,8 +4522,11 @@ pub(crate) fn project_curve_to_plane_frame(
             );
             let radial = (start.x() - center.x(), start.y() - center.y());
             let orientation = &radial.0 * &projected_tangent.1 - &radial.1 * &projected_tangent.0;
-            let clockwise =
-                decided_order(compare_reals(&orientation, &Real::zero()))? == Ordering::Less;
+            let clockwise = decided_order(compare_reals(
+                &orientation,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less;
             Ok(Some(Curve2::from(CircularArc2::try_from_center(
                 start, end, center, clockwise,
             )?)))
@@ -4338,7 +4570,11 @@ pub(crate) fn lift_curve_from_plane_frame_with_affine_parameter(
     scale: &Real,
     offset: &Real,
 ) -> GeometryResult<Option<Curve3>> {
-    let order = decided_order(compare_reals(scale, &Real::zero()))?;
+    let order = decided_order(compare_reals(
+        scale,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
     if order == Ordering::Equal {
         return Err(GeometryError::InvalidParameterDomain);
     }
@@ -4482,6 +4718,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
                     .first()
                     .expect("rational span has controls")
                     .x(),
+                crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
             || decided_order(compare_reals(
                 control_points
@@ -4493,6 +4730,7 @@ pub(crate) fn concatenate_rational_bezier_spans_as_nurbs(
                     .first()
                     .expect("rational span has controls")
                     .y(),
+                crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
         {
             return Err(GeometryError::UnsupportedIntersection);
@@ -4651,9 +4889,19 @@ fn intersect_planes(
     let second_normal = second.u.cross(&second.v);
     let direction = first_normal.cross(&second_normal);
     let direction_squared = direction.norm_squared();
-    if decided_order(compare_reals(&direction_squared, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &direction_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         let separation = first_normal.dot(&(&second.origin - &first.origin));
-        return if decided_order(compare_reals(&separation, &Real::zero()))? == Ordering::Equal {
+        return if decided_order(compare_reals(
+            &separation,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Ok(SurfaceSurfaceIntersection::Coincident)
         } else {
             Ok(SurfaceSurfaceIntersection::None)
@@ -4759,7 +5007,13 @@ fn intersect_plane_rational_bilinear(
     let orders = values
         .iter()
         .flatten()
-        .map(|value| decided_order(compare_reals(value, &Real::zero())))
+        .map(|value| {
+            decided_order(compare_reals(
+                value,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))
+        })
         .collect::<GeometryResult<Vec<_>>>()?;
     if orders.iter().all(|order| *order == Ordering::Greater)
         || orders.iter().all(|order| *order == Ordering::Less)
@@ -4898,14 +5152,18 @@ fn clip_rational_bilinear_parameter_graph(
         &Real::zero(),
         &Real::one(),
     )?;
-    let trimmed = pcurve.trim_inside_region_with_parameters(&region, &CurvePolicy::certified())?;
+    let trimmed = pcurve.trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)?;
     let mut intervals: Vec<(Real, Real)> = Vec::with_capacity(trimmed.len());
     for fragment in trimmed {
         let Some((start, end)) = fragment.represented_parameter_range() else {
             return Err(GeometryError::UnrepresentableParameter);
         };
         if let Some((_, previous_end)) = intervals.last_mut()
-            && decided_order(compare_reals(previous_end, &start))? == Ordering::Equal
+            && decided_order(compare_reals(
+                previous_end,
+                &start,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
         {
             *previous_end = end;
         } else {
@@ -4979,8 +5237,16 @@ fn bilinear_parameter_graph_from_endpoints(
     second_parameter: &Real,
     parameter_axis: TensorAxis,
 ) -> GeometryResult<Option<Curve2>> {
-    let first_order = decided_order(compare_reals(&first_denominator, &Real::zero()))?;
-    let second_order = decided_order(compare_reals(&second_denominator, &Real::zero()))?;
+    let first_order = decided_order(compare_reals(
+        &first_denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
+    let second_order = decided_order(compare_reals(
+        &second_denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
     let sign = match (first_order, second_order) {
         (Ordering::Greater, Ordering::Greater) => Real::one(),
         (Ordering::Less, Ordering::Less) => -Real::one(),
@@ -5033,10 +5299,16 @@ fn intersect_plane_bilinear_pole_branches(
         let second_offset = &coefficients.second_offset;
         let first_denominator = &coefficients.first_denominator;
         let second_denominator = &coefficients.second_denominator;
-        let first_denominator_order =
-            decided_order(compare_reals(first_denominator, &Real::zero()))?;
-        let second_denominator_order =
-            decided_order(compare_reals(second_denominator, &Real::zero()))?;
+        let first_denominator_order = decided_order(compare_reals(
+            first_denominator,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
+        let second_denominator_order = decided_order(compare_reals(
+            second_denominator,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))?;
         if first_denominator_order == Ordering::Equal && second_denominator_order == Ordering::Equal
         {
             continue;
@@ -5045,6 +5317,7 @@ fn intersect_plane_bilinear_pole_branches(
             && decided_order(compare_reals(
                 &linear_value(first_offset, second_offset, &pole),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Equal
         {
             return factorized_bilinear_sections(
@@ -5074,24 +5347,35 @@ fn intersect_plane_bilinear_pole_branches(
         for interval in boundaries.windows(2) {
             let start = &interval[0];
             let end = &interval[1];
-            if decided_order(compare_reals(start, end))? != Ordering::Less {
+            if decided_order(compare_reals(start, end, crate::STRICT_PREDICATES))? != Ordering::Less
+            {
                 continue;
             }
             let midpoint =
                 ((start + end) / Real::from(2)).map_err(|_| GeometryError::ProjectiveDivision)?;
             let midpoint_denominator =
                 linear_value(first_denominator, second_denominator, &midpoint);
-            if decided_order(compare_reals(&midpoint_denominator, &Real::zero()))?
-                == Ordering::Equal
+            if decided_order(compare_reals(
+                &midpoint_denominator,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
             {
                 continue;
             }
             let midpoint_solved = (-linear_value(first_offset, second_offset, &midpoint)
                 / midpoint_denominator)
                 .map_err(|_| GeometryError::ProjectiveDivision)?;
-            if decided_order(compare_reals(&midpoint_solved, &Real::zero()))? == Ordering::Less
-                || decided_order(compare_reals(&midpoint_solved, &Real::one()))?
-                    == Ordering::Greater
+            if decided_order(compare_reals(
+                &midpoint_solved,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+                || decided_order(compare_reals(
+                    &midpoint_solved,
+                    &Real::one(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater
             {
                 continue;
             }
@@ -5142,7 +5426,9 @@ fn factorized_bilinear_sections(
         pole,
     )?];
 
-    let sample = if decided_order(compare_reals(pole, &Real::zero()))? == Ordering::Equal {
+    let sample = if decided_order(compare_reals(pole, &Real::zero(), crate::STRICT_PREDICATES))?
+        == Ordering::Equal
+    {
         Real::one()
     } else {
         Real::zero()
@@ -5152,15 +5438,28 @@ fn factorized_bilinear_sections(
         &coefficients.second_denominator,
         &sample,
     );
-    if decided_order(compare_reals(&sample_denominator, &Real::zero()))? != Ordering::Equal {
+    if decided_order(compare_reals(
+        &sample_denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
+    {
         let solved = (-linear_value(
             &coefficients.first_offset,
             &coefficients.second_offset,
             &sample,
         ) / sample_denominator)
             .map_err(|_| GeometryError::ProjectiveDivision)?;
-        if decided_order(compare_reals(&solved, &Real::zero()))? != Ordering::Less
-            && decided_order(compare_reals(&solved, &Real::one()))? != Ordering::Greater
+        if decided_order(compare_reals(
+            &solved,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Less
+            && decided_order(compare_reals(
+                &solved,
+                &Real::one(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Greater
         {
             let solved_iso_axis = match parameter_axis {
                 TensorAxis::V => SurfaceIsoAxis::V,
@@ -5210,12 +5509,22 @@ fn rational_bilinear_iso_section(
 
 fn linear_root_in_unit_interval(first: &Real, second: &Real) -> GeometryResult<Option<Real>> {
     let delta = second - first;
-    if decided_order(compare_reals(&delta, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &delta,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         return Ok(None);
     }
     let root = (-first / delta).map_err(|_| GeometryError::ProjectiveDivision)?;
-    if decided_order(compare_reals(&root, &Real::zero()))? == Ordering::Less
-        || decided_order(compare_reals(&root, &Real::one()))? == Ordering::Greater
+    if decided_order(compare_reals(
+        &root,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Less
+        || decided_order(compare_reals(&root, &Real::one(), crate::STRICT_PREDICATES))?
+            == Ordering::Greater
     {
         Ok(None)
     } else {
@@ -5230,7 +5539,11 @@ fn linear_value(first: &Real, second: &Real, parameter: &Real) -> Real {
 fn insert_sorted_real_unique(values: &mut Vec<Real>, value: Real) -> GeometryResult<()> {
     let mut insertion = 0;
     while insertion < values.len() {
-        match decided_order(compare_reals(&value, &values[insertion]))? {
+        match decided_order(compare_reals(
+            &value,
+            &values[insertion],
+            crate::STRICT_PREDICATES,
+        ))? {
             Ordering::Less => break,
             Ordering::Equal => return Ok(()),
             Ordering::Greater => insertion += 1,
@@ -5246,8 +5559,16 @@ fn rational_curve_controls_inside_unit_square(curve: &Curve2) -> GeometryResult<
     };
     for point in curve.control_points() {
         for coordinate in [point.x(), point.y()] {
-            if decided_order(compare_reals(coordinate, &Real::zero()))? == Ordering::Less
-                || decided_order(compare_reals(coordinate, &Real::one()))? == Ordering::Greater
+            if decided_order(compare_reals(
+                coordinate,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+                || decided_order(compare_reals(
+                    coordinate,
+                    &Real::one(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater
             {
                 return Ok(false);
             }
@@ -5384,7 +5705,12 @@ fn intersect_plane_extrusion(
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let normal = plane.u.cross(&plane.v);
     let denominator = normal.dot(&surface.direction);
-    if decided_order(compare_reals(&denominator, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         let plane_surface = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
         return match plane_surface.intersect_curve(&surface.profile)? {
             CurveSurfaceIntersection::None => Ok(SurfaceSurfaceIntersection::None),
@@ -5445,6 +5771,7 @@ fn intersect_plane_revolution(
     if decided_order(compare_reals(
         &normal.cross(&surface.axis).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -5466,7 +5793,12 @@ fn intersect_plane_revolution(
         let center = surface.axis_origin.clone() + surface.axis.clone() * axial_parameter.clone();
         let radial = relative - surface.axis.clone() * axial_parameter;
         let radius_squared = radial.norm_squared();
-        if decided_order(compare_reals(&radius_squared, &Real::zero()))? == Ordering::Equal {
+        if decided_order(compare_reals(
+            &radius_squared,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             if singular.replace(center).is_some() {
                 return Err(GeometryError::UnsupportedIntersection);
             }
@@ -5476,7 +5808,9 @@ fn intersect_plane_revolution(
             .sqrt()
             .map_err(|_| GeometryError::ElementaryFunction)?;
         for existing in &radii {
-            if decided_order(compare_reals(existing, &radius))? == Ordering::Equal {
+            if decided_order(compare_reals(existing, &radius, crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
                 return Err(GeometryError::UnsupportedIntersection);
             }
         }
@@ -5539,7 +5873,12 @@ fn project_revolution_meridian(
         .collect::<Vec<_>>();
     let mut first_nonzero_radial = None;
     for radial in &radials {
-        if decided_order(compare_reals(&radial.norm_squared(), &Real::zero()))? != Ordering::Equal {
+        if decided_order(compare_reals(
+            &radial.norm_squared(),
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+        {
             first_nonzero_radial = Some(radial);
             break;
         }
@@ -5555,9 +5894,13 @@ fn project_revolution_meridian(
         if decided_order(compare_reals(
             &radial.cross(&radial_direction).norm_squared(),
             &Real::zero(),
+            crate::STRICT_PREDICATES,
         ))? != Ordering::Equal
-            || decided_order(compare_reals(&radial.dot(&radial_direction), &Real::zero()))?
-                != Ordering::Greater
+            || decided_order(compare_reals(
+                &radial.dot(&radial_direction),
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Greater
         {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -5582,6 +5925,7 @@ fn intersect_coaxial_revolutions(
     if decided_order(compare_reals(
         &first.axis.cross(&second.axis).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -5591,19 +5935,29 @@ fn intersect_coaxial_revolutions(
     if decided_order(compare_reals(
         &radial_axis_offset.norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
     let axis_dot = first.axis.dot(&second.axis);
-    let frames_mirrored =
-        if decided_order(compare_reals(&axis_dot, &Real::one()))? == Ordering::Equal {
-            false
-        } else if decided_order(compare_reals(&axis_dot, &-Real::one()))? == Ordering::Equal {
-            true
-        } else {
-            return Err(GeometryError::UnsupportedIntersection);
-        };
+    let frames_mirrored = if decided_order(compare_reals(
+        &axis_dot,
+        &Real::one(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        false
+    } else if decided_order(compare_reals(
+        &axis_dot,
+        &-Real::one(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        true
+    } else {
+        return Err(GeometryError::UnsupportedIntersection);
+    };
 
     let first_meridian = project_revolution_meridian(first, &first.axis_origin, &first.axis)?;
     let second_meridian = project_revolution_meridian(second, &first.axis_origin, &first.axis)?;
@@ -5615,7 +5969,7 @@ fn intersect_coaxial_revolutions(
 
     let intersections = first_meridian
         .curve
-        .intersect_curve(&second_meridian.curve, &CurvePolicy::certified())?;
+        .intersect_curve(&second_meridian.curve, &CurvePolicy::STRICT)?;
     if !intersections.is_complete() || !intersections.overlaps().is_empty() {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -5626,6 +5980,7 @@ fn intersect_coaxial_revolutions(
     let radial_frames_equal = decided_order(compare_reals(
         &(&first_meridian.radial_direction - &second_meridian.radial_direction).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     let retain_pcurves = radial_frames_equal;
     let mut circles = Vec::with_capacity(intersections.contacts().len());
@@ -5642,14 +5997,30 @@ fn intersect_coaxial_revolutions(
             .ok_or(GeometryError::UnrepresentableParameter)?;
         let first_point = first_meridian.curve.point_at(&first_parameter)?;
         let second_point = second_meridian.curve.point_at(&second_parameter)?;
-        if decided_order(compare_reals(first_point.x(), second_point.x()))? != Ordering::Equal
-            || decided_order(compare_reals(first_point.y(), second_point.y()))? != Ordering::Equal
+        if decided_order(compare_reals(
+            first_point.x(),
+            second_point.x(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+            || decided_order(compare_reals(
+                first_point.y(),
+                second_point.y(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
         {
             return Err(GeometryError::UnsupportedIntersection);
         }
         for (radius, height) in &locations {
-            if decided_order(compare_reals(radius, first_point.x()))? == Ordering::Equal
-                && decided_order(compare_reals(height, first_point.y()))? == Ordering::Equal
+            if decided_order(compare_reals(
+                radius,
+                first_point.x(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
+                && decided_order(compare_reals(
+                    height,
+                    first_point.y(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Equal
             {
                 return Err(GeometryError::UnsupportedIntersection);
             }
@@ -5854,12 +6225,18 @@ fn linear_tensor_u_direction(
         return Ok(None);
     }
     for row in weights {
-        if decided_order(compare_reals(&row[0], &row[1]))? != Ordering::Equal {
+        if decided_order(compare_reals(&row[0], &row[1], crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Ok(None);
         }
     }
     let direction = &control_points[0][1] - &control_points[0][0];
-    if decided_order(compare_reals(&direction.norm_squared(), &Real::zero()))? != Ordering::Greater
+    if decided_order(compare_reals(
+        &direction.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Greater
     {
         return Ok(None);
     }
@@ -5883,12 +6260,17 @@ fn linear_tensor_v_direction(
         return Ok(None);
     }
     for (first, second) in weights[0].iter().zip(&weights[1]) {
-        if decided_order(compare_reals(first, second))? != Ordering::Equal {
+        if decided_order(compare_reals(first, second, crate::STRICT_PREDICATES))? != Ordering::Equal
+        {
             return Ok(None);
         }
     }
     let direction = &control_points[1][0] - &control_points[0][0];
-    if decided_order(compare_reals(&direction.norm_squared(), &Real::zero()))? != Ordering::Greater
+    if decided_order(compare_reals(
+        &direction.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Greater
     {
         return Ok(None);
     }
@@ -5916,7 +6298,12 @@ fn intersect_plane_linear_tensor_graph(
         .map(signed_plane_value)
         .collect::<Vec<_>>();
     let denominator = normal.dot(&direction);
-    if decided_order(compare_reals(&denominator, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         if curve_is_strictly_on_one_plane_side(&profile, &signed_plane_value)? {
             return Ok(SurfaceSurfaceIntersection::None);
         }
@@ -5961,8 +6348,16 @@ fn intersect_plane_linear_tensor_graph(
         .iter()
         .map(|coefficient| {
             Ok((
-                decided_order(compare_reals(coefficient, &Real::zero()))?,
-                decided_order(compare_reals(coefficient, &Real::one()))?,
+                decided_order(compare_reals(
+                    coefficient,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))?,
+                decided_order(compare_reals(
+                    coefficient,
+                    &Real::one(),
+                    crate::STRICT_PREDICATES,
+                ))?,
             ))
         })
         .collect::<GeometryResult<Vec<_>>>()?;
@@ -6012,7 +6407,13 @@ fn curve_is_strictly_on_one_plane_side(
     let controls_are_strictly_one_sided = |controls: &[Point3]| -> GeometryResult<bool> {
         let orders = controls
             .iter()
-            .map(|point| decided_order(compare_reals(&signed_plane_value(point), &Real::zero())))
+            .map(|point| {
+                decided_order(compare_reals(
+                    &signed_plane_value(point),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))
+            })
             .collect::<GeometryResult<Vec<_>>>()?;
         let endpoints_are = |side| orders.first() == Some(&side) && orders.last() == Some(&side);
         Ok((endpoints_are(Ordering::Greater)
@@ -6065,7 +6466,7 @@ fn clip_linear_tensor_section(
     let materialized = section.second_pcurve.materialize()?;
     let trimmed = materialized
         .curve()
-        .trim_inside_region_with_parameters(&region, &CurvePolicy::certified())?;
+        .trim_inside_region_with_parameters(&region, &CurvePolicy::STRICT)?;
     let mut intervals: Vec<(Real, Real)> = Vec::with_capacity(trimmed.len());
     for fragment in trimmed {
         let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
@@ -6074,7 +6475,11 @@ fn clip_linear_tensor_section(
         let spatial_start = materialized.spatial_parameter_at(&pcurve_start)?;
         let spatial_end = materialized.spatial_parameter_at(&pcurve_end)?;
         if let Some((_, previous_end)) = intervals.last_mut()
-            && decided_order(compare_reals(previous_end, &spatial_start))? == Ordering::Equal
+            && decided_order(compare_reals(
+                previous_end,
+                &spatial_start,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
         {
             *previous_end = spatial_end;
         } else {
@@ -6178,7 +6583,12 @@ fn intersect_plane_v_linear_tensor_iso(
     let plane_value = |point: &Point3| normal.dot(&(point - &plane.origin));
     let offset = plane_value(&profile_controls[0]);
     for control in profile_controls.iter().skip(1) {
-        if decided_order(compare_reals(&plane_value(control), &offset))? != Ordering::Equal {
+        if decided_order(compare_reals(
+            &plane_value(control),
+            &offset,
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+        {
             return intersect_plane_linear_tensor_graph(
                 plane,
                 profile,
@@ -6191,8 +6601,18 @@ fn intersect_plane_v_linear_tensor_iso(
         }
     }
     let denominator = normal.dot(&direction);
-    if decided_order(compare_reals(&denominator, &Real::zero()))? == Ordering::Equal {
-        return if decided_order(compare_reals(&offset, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &denominator,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return if decided_order(compare_reals(
+            &offset,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Err(GeometryError::UnsupportedIntersection)
         } else {
             Ok(SurfaceSurfaceIntersection::None)
@@ -6200,8 +6620,16 @@ fn intersect_plane_v_linear_tensor_iso(
     }
     let normalized_fraction =
         ((-offset) / denominator).map_err(|_| GeometryError::ProjectiveDivision)?;
-    if decided_order(compare_reals(&normalized_fraction, &Real::zero()))? == Ordering::Less
-        || decided_order(compare_reals(&normalized_fraction, &Real::one()))? == Ordering::Greater
+    if decided_order(compare_reals(
+        &normalized_fraction,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Less
+        || decided_order(compare_reals(
+            &normalized_fraction,
+            &Real::one(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Greater
     {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -6229,18 +6657,27 @@ fn intersect_plane_sphere(
     let axial = decided_order(compare_reals(
         &normal.cross(&sphere.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     let separation = normal.dot(&(&sphere.center - &plane.origin));
     let distance_squared = ((&separation * &separation) / &normal_squared)
         .map_err(|_| GeometryError::ProjectiveDivision)?;
     let radius_squared = &sphere.radius * &sphere.radius;
-    match decided_order(compare_reals(&distance_squared, &radius_squared))? {
+    match decided_order(compare_reals(
+        &distance_squared,
+        &radius_squared,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
                 (&separation / &normal_squared).map_err(|_| GeometryError::ProjectiveDivision)?;
             let center = sphere.center.clone() - normal.clone() * projection_scale;
-            if decided_order(compare_reals(&distance_squared, &radius_squared))? == Ordering::Equal
+            if decided_order(compare_reals(
+                &distance_squared,
+                &radius_squared,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
             {
                 return Ok(SurfaceSurfaceIntersection::Point(Box::new(center)));
             }
@@ -6302,6 +6739,7 @@ fn intersect_plane_cylinder(
     if decided_order(compare_reals(
         &axis_cross_normal.norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? == Ordering::Equal
     {
         let denominator = normal.dot(&cylinder.frame.z);
@@ -6328,7 +6766,12 @@ fn intersect_plane_cylinder(
     }
 
     let axis_dot_normal = cylinder.frame.z.dot(&normal);
-    if decided_order(compare_reals(&axis_dot_normal, &Real::zero()))? != Ordering::Equal {
+    if decided_order(compare_reals(
+        &axis_dot_normal,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
+    {
         let separation = normal.dot(&(&plane.origin - &cylinder.origin));
         let axial_center =
             (separation / &axis_dot_normal).map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -6364,7 +6807,11 @@ fn intersect_plane_cylinder(
     let distance_squared = ((&separation * &separation) / &normal_squared)
         .map_err(|_| GeometryError::ProjectiveDivision)?;
     let radius_squared = &cylinder.radius * &cylinder.radius;
-    match decided_order(compare_reals(&distance_squared, &radius_squared))? {
+    match decided_order(compare_reals(
+        &distance_squared,
+        &radius_squared,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let projection_scale =
@@ -6377,7 +6824,11 @@ fn intersect_plane_cylinder(
                 .cross(&normal)
                 .normalize()
                 .map_err(|_| GeometryError::ElementaryFunction)?;
-            if decided_order(compare_reals(&line_offset_squared, &Real::zero()))? == Ordering::Equal
+            if decided_order(compare_reals(
+                &line_offset_squared,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
             {
                 return Ok(SurfaceSurfaceIntersection::Line(Box::new(
                     SurfaceIntersectionLine {
@@ -6413,12 +6864,21 @@ fn intersect_plane_cone(
     let axis_cross_normal = decided_order(compare_reals(
         &cone.frame.z.cross(&normal).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))?;
     if axis_cross_normal != Ordering::Equal {
         let axis_dot_normal = cone.frame.z.dot(&normal);
         let apex_separation = normal.dot(&(&cone.apex - &plane.origin));
-        if decided_order(compare_reals(&axis_dot_normal, &Real::zero()))? != Ordering::Equal
-            || decided_order(compare_reals(&apex_separation, &Real::zero()))? != Ordering::Equal
+        if decided_order(compare_reals(
+            &axis_dot_normal,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+            || decided_order(compare_reals(
+                &apex_separation,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal
         {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -6439,7 +6899,9 @@ fn intersect_plane_cone(
                 &(cone.apex.clone() + direction.clone()),
             )?;
             let mut u = certified_atan2(radial.dot(&cone.frame.y), radial.dot(&cone.frame.x))?;
-            if decided_order(compare_reals(&u, &Real::zero()))? == Ordering::Less {
+            if decided_order(compare_reals(&u, &Real::zero(), crate::STRICT_PREDICATES))?
+                == Ordering::Less
+            {
                 u += Real::tau();
             }
             Ok(SurfaceIntersectionRay::new(
@@ -6463,7 +6925,11 @@ fn intersect_plane_cone(
     }
     let axial_height = (normal.dot(&(&plane.origin - &cone.apex)) / normal.dot(&cone.frame.z))
         .map_err(|_| GeometryError::ProjectiveDivision)?;
-    match decided_order(compare_reals(&axial_height, &Real::zero()))? {
+    match decided_order(compare_reals(
+        &axial_height,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(
             cone.apex.clone(),
@@ -6506,14 +6972,25 @@ fn intersect_plane_torus(
     let axis_cross_normal_order = decided_order(compare_reals(
         &torus.frame.z.cross(&normal).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))?;
     if axis_cross_normal_order != Ordering::Equal {
         let axis_dot_normal = torus.frame.z.dot(&normal);
         let center_separation = normal.dot(&(&torus.center - &plane.origin));
-        if decided_order(compare_reals(&axis_dot_normal, &Real::zero()))? != Ordering::Equal {
+        if decided_order(compare_reals(
+            &axis_dot_normal,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+        {
             return Err(GeometryError::UnsupportedIntersection);
         }
-        if decided_order(compare_reals(&center_separation, &Real::zero()))? != Ordering::Equal {
+        if decided_order(compare_reals(
+            &center_separation,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
+        {
             let distance_squared = ((&center_separation * &center_separation)
                 / normal.norm_squared())
             .map_err(|_| GeometryError::ProjectiveDivision)?;
@@ -6521,6 +6998,7 @@ fn intersect_plane_torus(
             match decided_order(compare_reals(
                 &distance_squared,
                 &(&outer_radius * &outer_radius),
+                crate::STRICT_PREDICATES,
             ))? {
                 Ordering::Greater => return Ok(SurfaceSurfaceIntersection::None),
                 Ordering::Equal => {
@@ -6541,7 +7019,12 @@ fn intersect_plane_torus(
             .map_err(|_| GeometryError::ElementaryFunction)?;
         let normalize_angle = |angle: Real| -> GeometryResult<Real> {
             Ok(
-                if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                if decided_order(compare_reals(
+                    &angle,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Less
+                {
                     angle + Real::tau()
                 } else {
                     angle
@@ -6583,7 +7066,11 @@ fn intersect_plane_torus(
         .map_err(|_| GeometryError::ProjectiveDivision)?;
     let axial_squared = &axial_height * &axial_height;
     let minor_squared = &torus.minor_radius * &torus.minor_radius;
-    match decided_order(compare_reals(&axial_squared, &minor_squared))? {
+    match decided_order(compare_reals(
+        &axial_squared,
+        &minor_squared,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Greater => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal | Ordering::Less => {
             let radial_offset = (minor_squared - axial_squared)
@@ -6592,7 +7079,12 @@ fn intersect_plane_torus(
             let center = torus.center.clone() + torus.frame.z.clone() * axial_height.clone();
             let normalize_angle = |angle: Real| -> GeometryResult<Real> {
                 Ok(
-                    if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+                    if decided_order(compare_reals(
+                        &angle,
+                        &Real::zero(),
+                        crate::STRICT_PREDICATES,
+                    ))? == Ordering::Less
+                    {
                         angle + Real::tau()
                     } else {
                         angle
@@ -6615,7 +7107,12 @@ fn intersect_plane_torus(
                     SurfaceIntersectionPcurve::tensor_iso_v(domain, v),
                 ))
             };
-            if decided_order(compare_reals(&radial_offset, &Real::zero()))? == Ordering::Equal {
+            if decided_order(compare_reals(
+                &radial_offset,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
+            {
                 let v = normalize_angle(certified_atan2(axial_height, radial_offset)?)?;
                 return Ok(SurfaceSurfaceIntersection::Curve(Box::new(section(
                     torus.major_radius.clone(),
@@ -6642,6 +7139,7 @@ fn intersect_parallel_cylinders(
     if decided_order(compare_reals(
         &first.frame.z.cross(&second.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -6650,8 +7148,18 @@ fn intersect_parallel_cylinders(
     let radial_displacement =
         &displacement - &(first.frame.z.clone() * displacement.dot(&first.frame.z));
     let distance_squared = radial_displacement.norm_squared();
-    if decided_order(compare_reals(&distance_squared, &Real::zero()))? == Ordering::Equal {
-        return if decided_order(compare_reals(&first.radius, &second.radius))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &distance_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return if decided_order(compare_reals(
+            &first.radius,
+            &second.radius,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Ok(SurfaceSurfaceIntersection::Coincident)
         } else {
             Ok(SurfaceSurfaceIntersection::None)
@@ -6662,12 +7170,24 @@ fn intersect_parallel_cylinders(
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
     let radius_sum = &first.radius + &second.radius;
-    let radius_difference = match decided_order(compare_reals(&first.radius, &second.radius))? {
+    let radius_difference = match decided_order(compare_reals(
+        &first.radius,
+        &second.radius,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => &second.radius - &first.radius,
         Ordering::Equal | Ordering::Greater => &first.radius - &second.radius,
     };
-    if decided_order(compare_reals(&distance, &radius_sum))? == Ordering::Greater
-        || decided_order(compare_reals(&distance, &radius_difference))? == Ordering::Less
+    if decided_order(compare_reals(
+        &distance,
+        &radius_sum,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+        || decided_order(compare_reals(
+            &distance,
+            &radius_difference,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Less
     {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -6679,7 +7199,12 @@ fn intersect_parallel_cylinders(
         (radial_displacement / &distance).map_err(|_| GeometryError::ProjectiveDivision)?;
     let base = first.origin.clone() + unit_displacement.clone() * &along;
     let height_squared = &first.radius * &first.radius - &along * &along;
-    if decided_order(compare_reals(&height_squared, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &height_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         return Ok(SurfaceSurfaceIntersection::Line(Box::new(
             SurfaceIntersectionLine {
                 point: base,
@@ -6710,8 +7235,11 @@ fn intersect_coaxial_sphere_cylinder(
     let center_offset = &sphere.center - &cylinder.origin;
     let axial_offset = center_offset.dot(&cylinder.frame.z);
     let radial_offset = center_offset - cylinder.frame.z.clone() * &axial_offset;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6746,6 +7274,7 @@ fn intersect_coaxial_sphere_cylinder(
     match decided_order(compare_reals(
         &sphere_radius_squared,
         &cylinder_radius_squared,
+        crate::STRICT_PREDICATES,
     ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => {
@@ -6803,8 +7332,11 @@ fn intersect_coaxial_sphere_cone(
     let center_offset = &sphere.center - &cone.apex;
     let axial_offset = center_offset.dot(&cone.frame.z);
     let radial_offset = center_offset - cone.frame.z.clone() * &axial_offset;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6813,7 +7345,11 @@ fn intersect_coaxial_sphere_cone(
     let cosine = cone.semi_angle.clone().cos();
     let discriminant =
         &sphere.radius * &sphere.radius - &axial_offset * &axial_offset * &sine * &sine;
-    let discriminant_order = decided_order(compare_reals(&discriminant, &Real::zero()))?;
+    let discriminant_order = decided_order(compare_reals(
+        &discriminant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
     if discriminant_order == Ordering::Less {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -6829,7 +7365,11 @@ fn intersect_coaxial_sphere_cone(
     let mut has_apex = false;
     let mut slant_parameters = Vec::with_capacity(root_parameters.len());
     for parameter in root_parameters {
-        match decided_order(compare_reals(&parameter, &Real::zero()))? {
+        match decided_order(compare_reals(
+            &parameter,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? {
             Ordering::Less => {}
             Ordering::Equal => {
                 has_apex = true;
@@ -6906,14 +7446,18 @@ fn intersect_coaxial_cylinder_cone(
     if decided_order(compare_reals(
         &cylinder.frame.z.cross(&cone.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
     let origin_offset = &cylinder.origin - &cone.apex;
     let radial_offset = &origin_offset - &(cone.frame.z.clone() * origin_offset.dot(&cone.frame.z));
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6955,10 +7499,12 @@ fn intersect_coaxial_cones(
     let cooriented = decided_order(compare_reals(
         &(&first.frame.z - &second.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     let counteroriented = decided_order(compare_reals(
         &(&first.frame.z + &second.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? == Ordering::Equal;
     if !cooriented && !counteroriented {
         return Err(GeometryError::UnsupportedIntersection);
@@ -6966,8 +7512,11 @@ fn intersect_coaxial_cones(
     let apex_offset = &second.apex - &first.apex;
     let axial_offset = apex_offset.dot(&first.frame.z);
     let radial_offset = apex_offset - first.frame.z.clone() * &axial_offset;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -6976,8 +7525,18 @@ fn intersect_coaxial_cones(
         return intersect_counteroriented_coaxial_cones(first, second, axial_offset);
     }
 
-    if decided_order(compare_reals(&first.semi_angle, &second.semi_angle))? == Ordering::Equal {
-        return if decided_order(compare_reals(&axial_offset, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &first.semi_angle,
+        &second.semi_angle,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return if decided_order(compare_reals(
+            &axial_offset,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Ok(SurfaceSurfaceIntersection::Coincident)
         } else {
             Ok(SurfaceSurfaceIntersection::None)
@@ -6993,8 +7552,16 @@ fn intersect_coaxial_cones(
         .map_err(|_| GeometryError::ProjectiveDivision)?;
     let second_slant = (&axial_offset * &first_sine / determinant)
         .map_err(|_| GeometryError::ProjectiveDivision)?;
-    let first_order = decided_order(compare_reals(&first_slant, &Real::zero()))?;
-    let second_order = decided_order(compare_reals(&second_slant, &Real::zero()))?;
+    let first_order = decided_order(compare_reals(
+        &first_slant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
+    let second_order = decided_order(compare_reals(
+        &second_slant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
     if first_order == Ordering::Less || second_order == Ordering::Less {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -7033,7 +7600,11 @@ fn intersect_counteroriented_coaxial_cones(
     second: &ConeSurface,
     axial_offset: Real,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let axial_order = decided_order(compare_reals(&axial_offset, &Real::zero()))?;
+    let axial_order = decided_order(compare_reals(
+        &axial_offset,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))?;
     if axial_order == Ordering::Less {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -7094,6 +7665,7 @@ fn orthonormal_frames_equal(
                 && decided_order(compare_reals(
                     &(first_axis - second_axis).norm_squared(),
                     &Real::zero(),
+                    crate::STRICT_PREDICATES,
                 ))? == Ordering::Equal)
         })
 }
@@ -7131,6 +7703,7 @@ fn orthonormal_frames_mirrored(
             && decided_order(compare_reals(
                 &(first_axis - second_axis).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Equal)
     })
 }
@@ -7151,8 +7724,18 @@ fn intersect_meridian_circles(
     let displacement_x = second_center_x - first_center_x;
     let displacement_y = second_center_y - first_center_y;
     let distance_squared = &displacement_x * &displacement_x + &displacement_y * &displacement_y;
-    if decided_order(compare_reals(&distance_squared, &Real::zero()))? == Ordering::Equal {
-        return if decided_order(compare_reals(first_radius, second_radius))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        &distance_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
+        return if decided_order(compare_reals(
+            first_radius,
+            second_radius,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             Ok(MeridianCircleIntersection::Coincident)
         } else {
             Ok(MeridianCircleIntersection::Points(Vec::new()))
@@ -7164,12 +7747,24 @@ fn intersect_meridian_circles(
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
     let radius_sum = first_radius + second_radius;
-    let radius_difference = match decided_order(compare_reals(first_radius, second_radius))? {
+    let radius_difference = match decided_order(compare_reals(
+        first_radius,
+        second_radius,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => second_radius - first_radius,
         Ordering::Equal | Ordering::Greater => first_radius - second_radius,
     };
-    if decided_order(compare_reals(&distance, &radius_sum))? == Ordering::Greater
-        || decided_order(compare_reals(&distance, &radius_difference))? == Ordering::Less
+    if decided_order(compare_reals(
+        &distance,
+        &radius_sum,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+        || decided_order(compare_reals(
+            &distance,
+            &radius_difference,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Less
     {
         return Ok(MeridianCircleIntersection::Points(Vec::new()));
     }
@@ -7184,7 +7779,11 @@ fn intersect_meridian_circles(
     let base_x = first_center_x + &unit_x * &along;
     let base_y = first_center_y + &unit_y * &along;
     let transverse_squared = first_radius * first_radius - &along * &along;
-    let points = match decided_order(compare_reals(&transverse_squared, &Real::zero()))? {
+    let points = match decided_order(compare_reals(
+        &transverse_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => Vec::new(),
         Ordering::Equal => vec![(base_x, base_y)],
         Ordering::Greater => {
@@ -7210,6 +7809,7 @@ fn intersect_coaxial_sphere_torus(
     if decided_order(compare_reals(
         &sphere.frame.z.cross(&torus.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -7217,8 +7817,11 @@ fn intersect_coaxial_sphere_torus(
     let center_offset = &torus.center - &sphere.center;
     let axial_offset = center_offset.dot(&sphere.frame.z);
     let radial_offset = center_offset - sphere.frame.z.clone() * &axial_offset;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -7245,7 +7848,12 @@ fn intersect_coaxial_sphere_torus(
     let retain_pcurves = frames_equal || frames_mirrored;
     let canonical_angle = |angle: Real| -> GeometryResult<Real> {
         Ok(
-            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+            if decided_order(compare_reals(
+                &angle,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            {
                 angle + Real::tau()
             } else {
                 angle
@@ -7302,6 +7910,7 @@ fn intersect_coaxial_cylinder_torus(
     if decided_order(compare_reals(
         &cylinder.frame.z.cross(&torus.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -7309,15 +7918,22 @@ fn intersect_coaxial_cylinder_torus(
     let center_offset = &torus.center - &cylinder.origin;
     let torus_height = center_offset.dot(&cylinder.frame.z);
     let radial_offset = center_offset - cylinder.frame.z.clone() * &torus_height;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
 
     let radial_delta = &cylinder.radius - &torus.major_radius;
     let height_squared = &torus.minor_radius * &torus.minor_radius - &radial_delta * &radial_delta;
-    let heights = match decided_order(compare_reals(&height_squared, &Real::zero()))? {
+    let heights = match decided_order(compare_reals(
+        &height_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![torus_height],
         Ordering::Greater => {
@@ -7333,7 +7949,12 @@ fn intersect_coaxial_cylinder_torus(
     let retain_pcurves = frames_equal || frames_mirrored;
     let canonical_angle = |angle: Real| -> GeometryResult<Real> {
         Ok(
-            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+            if decided_order(compare_reals(
+                &angle,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            {
                 angle + Real::tau()
             } else {
                 angle
@@ -7391,6 +8012,7 @@ fn intersect_coaxial_cone_torus(
     if decided_order(compare_reals(
         &cone.frame.z.cross(&torus.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -7398,8 +8020,11 @@ fn intersect_coaxial_cone_torus(
     let center_offset = &torus.center - &cone.apex;
     let torus_height = center_offset.dot(&cone.frame.z);
     let radial_offset = center_offset - cone.frame.z.clone() * &torus_height;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -7411,7 +8036,11 @@ fn intersect_coaxial_cone_torus(
         &torus.major_radius * &torus.major_radius + &torus_height * &torus_height;
     let transverse_distance_squared = center_norm_squared - &projected_center * &projected_center;
     let discriminant = &torus.minor_radius * &torus.minor_radius - transverse_distance_squared;
-    let candidates = match decided_order(compare_reals(&discriminant, &Real::zero()))? {
+    let candidates = match decided_order(compare_reals(
+        &discriminant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => return Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => vec![projected_center],
         Ordering::Greater => {
@@ -7425,7 +8054,11 @@ fn intersect_coaxial_cone_torus(
         .into_iter()
         .map(|slant| {
             Ok((
-                decided_order(compare_reals(&slant, &Real::zero()))? == Ordering::Greater,
+                decided_order(compare_reals(
+                    &slant,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? == Ordering::Greater,
                 slant,
             ))
         })
@@ -7442,7 +8075,12 @@ fn intersect_coaxial_cone_torus(
     let retain_pcurves = frames_equal || frames_mirrored;
     let canonical_angle = |angle: Real| -> GeometryResult<Real> {
         Ok(
-            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+            if decided_order(compare_reals(
+                &angle,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            {
                 angle + Real::tau()
             } else {
                 angle
@@ -7500,6 +8138,7 @@ fn intersect_coaxial_tori(
     if decided_order(compare_reals(
         &first.frame.z.cross(&second.frame.z).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
@@ -7507,8 +8146,11 @@ fn intersect_coaxial_tori(
     let center_offset = &second.center - &first.center;
     let axial_offset = center_offset.dot(&first.frame.z);
     let radial_offset = center_offset - first.frame.z.clone() * &axial_offset;
-    if decided_order(compare_reals(&radial_offset.norm_squared(), &Real::zero()))?
-        != Ordering::Equal
+    if decided_order(compare_reals(
+        &radial_offset.norm_squared(),
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? != Ordering::Equal
     {
         return Err(GeometryError::UnsupportedIntersection);
     }
@@ -7535,7 +8177,12 @@ fn intersect_coaxial_tori(
     let retain_pcurves = frames_equal || frames_mirrored;
     let canonical_angle = |angle: Real| -> GeometryResult<Real> {
         Ok(
-            if decided_order(compare_reals(&angle, &Real::zero()))? == Ordering::Less {
+            if decided_order(compare_reals(
+                &angle,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Less
+            {
                 angle + Real::tau()
             } else {
                 angle
@@ -7592,10 +8239,13 @@ fn intersect_spheres(
     first: &SphereSurface,
     second: &SphereSurface,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    match point3_equal(&first.center, &second.center) {
+    match point3_equal(&first.center, &second.center, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value: true, .. } => {
-            return if decided_order(compare_reals(&first.radius, &second.radius))?
-                == Ordering::Equal
+            return if decided_order(compare_reals(
+                &first.radius,
+                &second.radius,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Equal
             {
                 Ok(SurfaceSurfaceIntersection::Coincident)
             } else {
@@ -7614,12 +8264,24 @@ fn intersect_spheres(
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
     let radius_sum = &first.radius + &second.radius;
-    let radius_difference = match decided_order(compare_reals(&first.radius, &second.radius))? {
+    let radius_difference = match decided_order(compare_reals(
+        &first.radius,
+        &second.radius,
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => &second.radius - &first.radius,
         Ordering::Equal | Ordering::Greater => &first.radius - &second.radius,
     };
-    if decided_order(compare_reals(&distance, &radius_sum))? == Ordering::Greater
-        || decided_order(compare_reals(&distance, &radius_difference))? == Ordering::Less
+    if decided_order(compare_reals(
+        &distance,
+        &radius_sum,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+        || decided_order(compare_reals(
+            &distance,
+            &radius_difference,
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Less
     {
         return Ok(SurfaceSurfaceIntersection::None);
     }
@@ -7634,7 +8296,11 @@ fn intersect_spheres(
     let normal = displacement * inverse_distance;
     let center = first.center.clone() + normal.clone() * &center_distance;
     let circle_radius_squared = &first.radius * &first.radius - &center_distance * &center_distance;
-    match decided_order(compare_reals(&circle_radius_squared, &Real::zero()))? {
+    match decided_order(compare_reals(
+        &circle_radius_squared,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => Ok(SurfaceSurfaceIntersection::None),
         Ordering::Equal => Ok(SurfaceSurfaceIntersection::Point(Box::new(center))),
         Ordering::Greater => {
@@ -7644,10 +8310,12 @@ fn intersect_spheres(
             let first_axial = decided_order(compare_reals(
                 &normal.cross(&first.frame.z).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Equal;
             let second_axial = decided_order(compare_reals(
                 &normal.cross(&second.frame.z).norm_squared(),
                 &Real::zero(),
+                crate::STRICT_PREDICATES,
             ))? == Ordering::Equal;
             if first_axial && second_axial {
                 let curve = Curve3::circle_arc(
@@ -7715,9 +8383,14 @@ enum QuadraticRoots {
 }
 
 fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> {
-    if decided_order(compare_reals(&a, &Real::zero()))? == Ordering::Equal {
-        if decided_order(compare_reals(&b, &Real::zero()))? == Ordering::Equal {
-            return if decided_order(compare_reals(&c, &Real::zero()))? == Ordering::Equal {
+    if decided_order(compare_reals(&a, &Real::zero(), crate::STRICT_PREDICATES))? == Ordering::Equal
+    {
+        if decided_order(compare_reals(&b, &Real::zero(), crate::STRICT_PREDICATES))?
+            == Ordering::Equal
+        {
+            return if decided_order(compare_reals(&c, &Real::zero(), crate::STRICT_PREDICATES))?
+                == Ordering::Equal
+            {
                 Ok(QuadraticRoots::All)
             } else {
                 Ok(QuadraticRoots::None)
@@ -7730,7 +8403,11 @@ fn quadratic_roots(a: Real, b: Real, c: Real) -> GeometryResult<QuadraticRoots> 
         )]));
     }
     let discriminant = &b * &b - Real::from(4) * &a * &c;
-    match decided_order(compare_reals(&discriminant, &Real::zero()))? {
+    match decided_order(compare_reals(
+        &discriminant,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
         Ordering::Less => Ok(QuadraticRoots::None),
         Ordering::Equal => {
             let parameter =
@@ -7805,8 +8482,11 @@ fn intersect_nurbs_plane(
                     let parameter = domain.start() + &span * &local.parameter;
                     let mut duplicate = None;
                     for (index, existing) in points.iter().enumerate() {
-                        if decided_order(compare_reals(&existing.parameter, &parameter))?
-                            == Ordering::Equal
+                        if decided_order(compare_reals(
+                            &existing.parameter,
+                            &parameter,
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
                         {
                             duplicate = Some(index);
                             break;
@@ -7873,7 +8553,12 @@ fn intersect_line_cone(
             let mut upper_roots = Vec::new();
             for (parameter, multiplicity) in roots {
                 let axial = &axial_offset + &parameter * &axial_direction;
-                if decided_order(compare_reals(&axial, &Real::zero()))? != Ordering::Less {
+                if decided_order(compare_reals(
+                    &axial,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Less
+                {
                     upper_roots.push((parameter, multiplicity));
                 }
             }
@@ -7882,8 +8567,16 @@ fn intersect_line_cone(
         QuadraticRoots::All => {
             let axial_start = axial_offset;
             let axial_end = &axial_start + &axial_direction;
-            let start_order = decided_order(compare_reals(&axial_start, &Real::zero()))?;
-            let end_order = decided_order(compare_reals(&axial_end, &Real::zero()))?;
+            let start_order = decided_order(compare_reals(
+                &axial_start,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))?;
+            let end_order = decided_order(compare_reals(
+                &axial_end,
+                &Real::zero(),
+                crate::STRICT_PREDICATES,
+            ))?;
             if start_order != Ordering::Less && end_order != Ordering::Less {
                 return Ok(CurveSurfaceIntersection::Contained);
             }
@@ -7963,14 +8656,20 @@ fn locate_line_parameter(
     let direction = &line.end - &line.start;
     let offset = point - &line.start;
     let mut parameter = None;
+    let mut parameter_axis = None;
     for axis in 0..3 {
-        match decided_order(compare_reals(&direction.0[axis], &Real::zero()))? {
+        match decided_order(compare_reals(
+            &direction.0[axis],
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))? {
             Ordering::Equal => {}
             Ordering::Less | Ordering::Greater => {
                 parameter = Some(
                     (&offset.0[axis] / &direction.0[axis])
                         .map_err(|_| GeometryError::ProjectiveDivision)?,
                 );
+                parameter_axis = Some(axis);
                 break;
             }
         }
@@ -7979,11 +8678,19 @@ fn locate_line_parameter(
     if !curve.domain().contains(&parameter)? {
         return Ok(CurveParameterLocation::None);
     }
-    if points_equal(&curve.point_at(&parameter)?, point)? {
-        Ok(CurveParameterLocation::Parameters(vec![parameter]))
-    } else {
-        Ok(CurveParameterLocation::None)
+    let parameter_axis = parameter_axis.expect("a line parameter has a source axis");
+    for axis in 0..3 {
+        if axis == parameter_axis {
+            continue;
+        }
+        let left = &offset.0[axis] * &direction.0[parameter_axis];
+        let right = &offset.0[parameter_axis] * &direction.0[axis];
+        if decided_order(compare_reals(&left, &right, crate::STRICT_PREDICATES))? != Ordering::Equal
+        {
+            return Ok(CurveParameterLocation::None);
+        }
     }
+    Ok(CurveParameterLocation::Parameters(vec![parameter]))
 }
 
 fn locate_rational_bezier_parameters(
@@ -8020,7 +8727,7 @@ fn locate_rational_bezier_parameters(
         control_coordinate(point, first_axis).clone(),
         control_coordinate(point, second_axis).clone(),
     );
-    match projected.point_incidence(&query, &CurvePolicy::certified())? {
+    match projected.point_incidence(&query, &CurvePolicy::STRICT)? {
         RationalBezierPointIncidence2::EntireCurve => {
             Err(GeometryError::UnsupportedParameterLocation)
         }
@@ -8072,7 +8779,12 @@ fn locate_nurbs_parameters(
                     let global = domain.start() + &span * local;
                     let mut duplicate = false;
                     for existing in &parameters {
-                        if decided_order(compare_reals(existing, &global))? == Ordering::Equal {
+                        if decided_order(compare_reals(
+                            existing,
+                            &global,
+                            crate::STRICT_PREDICATES,
+                        ))? == Ordering::Equal
+                        {
                             duplicate = true;
                             break;
                         }
@@ -8099,8 +8811,11 @@ fn decompose_nurbs_into_bezier_segments(
 ) -> GeometryResult<Vec<(Curve3, ParameterDomain)>> {
     let mut breaks = vec![nurbs.knots[nurbs.degree].clone()];
     for knot in &nurbs.knots[(nurbs.degree + 1)..nurbs.control_points.len()] {
-        if decided_order(compare_reals(knot, breaks.last().expect("start break")))?
-            != Ordering::Equal
+        if decided_order(compare_reals(
+            knot,
+            breaks.last().expect("start break"),
+            crate::STRICT_PREDICATES,
+        ))? != Ordering::Equal
         {
             breaks.push(knot.clone());
         }
@@ -8123,7 +8838,7 @@ fn decompose_nurbs_into_bezier_segments(
         let control_start = index * nurbs.degree;
         let control_end = control_start + nurbs.degree;
         segments.push((
-            rational_bezier_from_homogeneous(controls[control_start..=control_end].to_vec())?,
+            rational_bezier_from_homogeneous(controls[control_start..=control_end].to_vec(), None)?,
             ParameterDomain::new(breaks[index].clone(), breaks[index + 1].clone())?,
         ));
     }
@@ -8138,10 +8853,12 @@ fn surface_projection_varies(
         if decided_order(compare_reals(
             control_coordinate(point, axes.0),
             control_coordinate(&control_points[0], axes.0),
+            crate::STRICT_PREDICATES,
         ))? != Ordering::Equal
             || decided_order(compare_reals(
                 control_coordinate(point, axes.1),
                 control_coordinate(&control_points[0], axes.1),
+                crate::STRICT_PREDICATES,
             ))? != Ordering::Equal
         {
             return Ok(true);
@@ -8159,6 +8876,47 @@ fn control_coordinate(point: &Point3, axis: usize) -> &Real {
     }
 }
 
+fn certified_constant_coordinates(control_points: &[Point3]) -> [Option<Real>; 3] {
+    std::array::from_fn(|axis| {
+        let first = control_coordinate(
+            control_points
+                .first()
+                .expect("validated rational Bezier has control points"),
+            axis,
+        );
+        control_points[1..]
+            .iter()
+            .all(|point| {
+                matches!(
+                    compare_reals(
+                        control_coordinate(point, axis),
+                        first,
+                        crate::STRICT_PREDICATES,
+                    ),
+                    PredicateOutcome::Decided {
+                        value: Ordering::Equal,
+                        ..
+                    }
+                )
+            })
+            .then(|| first.clone())
+    })
+}
+
+fn restore_constant_coordinates(point: &mut Point3, coordinates: &[Option<Real>; 3]) {
+    for (axis, coordinate) in coordinates.iter().enumerate() {
+        let Some(coordinate) = coordinate else {
+            continue;
+        };
+        match axis {
+            0 => point.x = coordinate.clone(),
+            1 => point.y = coordinate.clone(),
+            2 => point.z = coordinate.clone(),
+            _ => unreachable!("three constant coordinate slots"),
+        }
+    }
+}
+
 fn locate_ellipse_arc_parameters(
     curve: &Curve3,
     arc: &EllipseArc3,
@@ -8170,8 +8928,11 @@ fn locate_ellipse_arc_parameters(
     }
     if points_equal(&curve.end()?, point)?
         && (endpoints.is_empty()
-            || decided_order(compare_reals(&endpoints[0], curve.domain().end()))?
-                != Ordering::Equal)
+            || decided_order(compare_reals(
+                &endpoints[0],
+                curve.domain().end(),
+                crate::STRICT_PREDICATES,
+            ))? != Ordering::Equal)
     {
         endpoints.push(curve.domain().end().clone());
     }
@@ -8186,6 +8947,7 @@ fn locate_ellipse_arc_parameters(
     if decided_order(compare_reals(
         &(&relative - &represented).norm_squared(),
         &Real::zero(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Ok(CurveParameterLocation::None);
@@ -8197,6 +8959,7 @@ fn locate_ellipse_arc_parameters(
     if decided_order(compare_reals(
         &(&normalized_x * &normalized_x + &normalized_y * &normalized_y),
         &Real::one(),
+        crate::STRICT_PREDICATES,
     ))? != Ordering::Equal
     {
         return Ok(CurveParameterLocation::None);
@@ -8209,7 +8972,12 @@ fn locate_ellipse_arc_parameters(
         sine_delta = -sine_delta;
     }
     let mut delta = certified_atan2(sine_delta, cosine_delta)?;
-    if decided_order(compare_reals(&delta, &Real::zero()))? == Ordering::Less {
+    if decided_order(compare_reals(
+        &delta,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Less
+    {
         delta += Real::from(2) * Real::pi();
     }
     let parameter = curve.domain().start() + delta;
@@ -8221,7 +8989,7 @@ fn locate_ellipse_arc_parameters(
 }
 
 fn points_equal(left: &Point3, right: &Point3) -> GeometryResult<bool> {
-    match point3_equal(left, right) {
+    match point3_equal(left, right, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage })
@@ -8265,7 +9033,11 @@ fn validate_nurbs_axis(degree: usize, control_count: usize, knots: &[Real]) -> G
     }
     for adjacent in knots.windows(2) {
         if !matches!(
-            decided_order(compare_reals(&adjacent[0], &adjacent[1]))?,
+            decided_order(compare_reals(
+                &adjacent[0],
+                &adjacent[1],
+                crate::STRICT_PREDICATES
+            ))?,
             Ordering::Less | Ordering::Equal
         ) {
             return Err(GeometryError::InvalidKnotOrder);
@@ -8276,7 +9048,7 @@ fn validate_nurbs_axis(degree: usize, control_count: usize, knots: &[Real]) -> G
 
 fn validate_positive_weights(weights: &[Real]) -> GeometryResult<()> {
     for weight in weights {
-        match compare_reals(weight, &Real::zero()) {
+        match compare_reals(weight, &Real::zero(), crate::STRICT_PREDICATES) {
             PredicateOutcome::Decided {
                 value: Ordering::Greater,
                 ..
@@ -8293,19 +9065,28 @@ fn validate_positive_weights(weights: &[Real]) -> GeometryResult<()> {
 fn validate_clamped_knot_multiplicities(degree: usize, knots: &[Real]) -> GeometryResult<()> {
     let endpoint_count = degree + 1;
     for knot in &knots[1..endpoint_count] {
-        if decided_order(compare_reals(knot, &knots[0]))? != Ordering::Equal {
+        if decided_order(compare_reals(knot, &knots[0], crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Err(GeometryError::UnclampedNurbs);
         }
     }
     let last = knots.len() - 1;
     for knot in &knots[(last + 1 - endpoint_count)..last] {
-        if decided_order(compare_reals(knot, &knots[last]))? != Ordering::Equal {
+        if decided_order(compare_reals(knot, &knots[last], crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Err(GeometryError::UnclampedNurbs);
         }
     }
     let mut run = 1_usize;
     for index in endpoint_count..(knots.len() - endpoint_count) {
-        if decided_order(compare_reals(&knots[index], &knots[index - 1]))? == Ordering::Equal {
+        if decided_order(compare_reals(
+            &knots[index],
+            &knots[index - 1],
+            crate::STRICT_PREDICATES,
+        ))? == Ordering::Equal
+        {
             run += 1;
             if run > degree {
                 return Err(GeometryError::InvalidKnotMultiplicity);
@@ -8327,8 +9108,8 @@ fn decided_order(outcome: PredicateOutcome<Ordering>) -> GeometryResult<Ordering
 }
 
 pub(crate) fn certified_atan2(y: Real, x: Real) -> GeometryResult<Real> {
-    let y_order = decided_order(compare_reals(&y, &Real::zero()))?;
-    let x_order = decided_order(compare_reals(&x, &Real::zero()))?;
+    let y_order = decided_order(compare_reals(&y, &Real::zero(), crate::STRICT_PREDICATES))?;
+    let x_order = decided_order(compare_reals(&x, &Real::zero(), crate::STRICT_PREDICATES))?;
     match (y_order, x_order) {
         (Ordering::Equal, Ordering::Equal | Ordering::Greater) => Ok(Real::zero()),
         (Ordering::Equal, Ordering::Less) => Ok(Real::pi()),
@@ -8363,7 +9144,9 @@ fn validate_arc_axes(x: &Vector3, y: &Vector3) -> GeometryResult<()> {
         (y.norm_squared(), &one),
         (x.dot(y), &zero),
     ] {
-        if decided_order(compare_reals(&actual, expected))? != Ordering::Equal {
+        if decided_order(compare_reals(&actual, expected, crate::STRICT_PREDICATES))?
+            != Ordering::Equal
+        {
             return Err(GeometryError::InvalidSurfaceFrame);
         }
     }
@@ -8373,7 +9156,12 @@ fn validate_arc_axes(x: &Vector3, y: &Vector3) -> GeometryResult<()> {
 fn validate_arc_domain(start: Real, end: Real) -> GeometryResult<ParameterDomain> {
     let domain = ParameterDomain::new(start, end)?;
     let sweep = domain.end() - domain.start();
-    if decided_order(compare_reals(&sweep, &(Real::from(2) * Real::pi())))? == Ordering::Greater {
+    if decided_order(compare_reals(
+        &sweep,
+        &(Real::from(2) * Real::pi()),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
+    {
         Err(GeometryError::InvalidArcSweep)
     } else {
         Ok(domain)
@@ -8459,7 +9247,11 @@ fn split_ellipse_arc(
 }
 
 fn ellipse_arc_conservative_bounds(arc: &EllipseArc3) -> GeometryResult<Aabb> {
-    let radius = if decided_order(compare_reals(&arc.x_radius, &arc.y_radius))? == Ordering::Greater
+    let radius = if decided_order(compare_reals(
+        &arc.x_radius,
+        &arc.y_radius,
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Greater
     {
         &arc.x_radius
     } else {
@@ -8520,26 +9312,29 @@ fn revolution_bounds(surface: &RevolutionSurface) -> GeometryResult<Aabb> {
     let radius = radius_squared
         .sqrt()
         .map_err(|_| GeometryError::ElementaryFunction)?;
-    let coordinate_bounds = |origin: &Real,
-                             axis_component: &Real|
-     -> GeometryResult<(Real, Real)> {
-        let first_axial = axis_component * &axial_min;
-        let second_axial = axis_component * &axial_max;
-        let (axial_low, axial_high) =
-            if decided_order(compare_reals(&first_axial, &second_axial))? == Ordering::Greater {
+    let coordinate_bounds =
+        |origin: &Real, axis_component: &Real| -> GeometryResult<(Real, Real)> {
+            let first_axial = axis_component * &axial_min;
+            let second_axial = axis_component * &axial_max;
+            let (axial_low, axial_high) = if decided_order(compare_reals(
+                &first_axial,
+                &second_axial,
+                crate::STRICT_PREDICATES,
+            ))? == Ordering::Greater
+            {
                 (second_axial, first_axial)
             } else {
                 (first_axial, second_axial)
             };
-        let radial_factor = (Real::one() - axis_component * axis_component)
-            .sqrt()
-            .map_err(|_| GeometryError::ElementaryFunction)?;
-        let radial_extent = &radius * radial_factor;
-        Ok((
-            origin + axial_low - &radial_extent,
-            origin + axial_high + radial_extent,
-        ))
-    };
+            let radial_factor = (Real::one() - axis_component * axis_component)
+                .sqrt()
+                .map_err(|_| GeometryError::ElementaryFunction)?;
+            let radial_extent = &radius * radial_factor;
+            Ok((
+                origin + axial_low - &radial_extent,
+                origin + axial_high + radial_extent,
+            ))
+        };
     let (min_x, max_x) = coordinate_bounds(&surface.axis_origin.x, &surface.axis.0[0])?;
     let (min_y, max_y) = coordinate_bounds(&surface.axis_origin.y, &surface.axis.0[1])?;
     let (min_z, max_z) = coordinate_bounds(&surface.axis_origin.z, &surface.axis.0[2])?;
@@ -8592,14 +9387,17 @@ fn exact_point_bounds(points: &[Point3]) -> GeometryResult<Aabb> {
 }
 
 fn update_bound_min(current: &mut Real, candidate: &Real) -> GeometryResult<()> {
-    if decided_order(compare_reals(candidate, current))? == Ordering::Less {
+    if decided_order(compare_reals(candidate, current, crate::STRICT_PREDICATES))? == Ordering::Less
+    {
         *current = candidate.clone();
     }
     Ok(())
 }
 
 fn update_bound_max(current: &mut Real, candidate: &Real) -> GeometryResult<()> {
-    if decided_order(compare_reals(candidate, current))? == Ordering::Greater {
+    if decided_order(compare_reals(candidate, current, crate::STRICT_PREDICATES))?
+        == Ordering::Greater
+    {
         *current = candidate.clone();
     }
     Ok(())
@@ -8826,12 +9624,25 @@ fn find_span(
     control_count: usize,
     knots: &[Real],
 ) -> GeometryResult<usize> {
-    if decided_order(compare_reals(parameter, domain.end()))? == Ordering::Equal {
+    if decided_order(compare_reals(
+        parameter,
+        domain.end(),
+        crate::STRICT_PREDICATES,
+    ))? == Ordering::Equal
+    {
         return Ok(control_count - 1);
     }
     for span in degree..control_count {
-        let after_start = decided_order(compare_reals(&knots[span], parameter))?;
-        let before_end = decided_order(compare_reals(parameter, &knots[span + 1]))?;
+        let after_start = decided_order(compare_reals(
+            &knots[span],
+            parameter,
+            crate::STRICT_PREDICATES,
+        ))?;
+        let before_end = decided_order(compare_reals(
+            parameter,
+            &knots[span + 1],
+            crate::STRICT_PREDICATES,
+        ))?;
         if matches!(after_start, Ordering::Less | Ordering::Equal) && before_end == Ordering::Less {
             return Ok(span);
         }
@@ -9032,8 +9843,16 @@ fn project_homogeneous_derivative(
 }
 
 fn require_interior_parameter(domain: &ParameterDomain, parameter: &Real) -> GeometryResult<()> {
-    let after_start = decided_order(compare_reals(parameter, domain.start()))?;
-    let before_end = decided_order(compare_reals(parameter, domain.end()))?;
+    let after_start = decided_order(compare_reals(
+        parameter,
+        domain.start(),
+        crate::STRICT_PREDICATES,
+    ))?;
+    let before_end = decided_order(compare_reals(
+        parameter,
+        domain.end(),
+        crate::STRICT_PREDICATES,
+    ))?;
     if after_start == Ordering::Greater && before_end == Ordering::Less {
         Ok(())
     } else {
@@ -9062,11 +9881,18 @@ fn split_homogeneous_bezier(
     (left, right)
 }
 
-fn rational_bezier_from_homogeneous(controls: Vec<HomogeneousPoint3>) -> GeometryResult<Curve3> {
+fn rational_bezier_from_homogeneous(
+    controls: Vec<HomogeneousPoint3>,
+    constant_coordinates: Option<&[Option<Real>; 3]>,
+) -> GeometryResult<Curve3> {
     let mut points = Vec::with_capacity(controls.len());
     let mut weights = Vec::with_capacity(controls.len());
     for control in controls {
-        points.push(control.project()?);
+        let mut point = control.project()?;
+        if let Some(constant_coordinates) = constant_coordinates {
+            restore_constant_coordinates(&mut point, constant_coordinates);
+        }
+        points.push(point);
         weights.push(control.w);
     }
     Curve3::rational_bezier(points, weights)
@@ -9268,7 +10094,9 @@ fn split_nurbs_homogeneous(
 fn knot_multiplicity(knots: &[Real], parameter: &Real) -> GeometryResult<usize> {
     let mut count = 0;
     for knot in knots {
-        if decided_order(compare_reals(knot, parameter))? == Ordering::Equal {
+        if decided_order(compare_reals(knot, parameter, crate::STRICT_PREDICATES))?
+            == Ordering::Equal
+        {
             count += 1;
         }
     }
@@ -9282,8 +10110,16 @@ fn find_raw_span(
     knots: &[Real],
 ) -> GeometryResult<usize> {
     for span in degree..control_count {
-        let after_start = decided_order(compare_reals(&knots[span], parameter))?;
-        let before_end = decided_order(compare_reals(parameter, &knots[span + 1]))?;
+        let after_start = decided_order(compare_reals(
+            &knots[span],
+            parameter,
+            crate::STRICT_PREDICATES,
+        ))?;
+        let before_end = decided_order(compare_reals(
+            parameter,
+            &knots[span + 1],
+            crate::STRICT_PREDICATES,
+        ))?;
         if matches!(after_start, Ordering::Less | Ordering::Equal) && before_end == Ordering::Less {
             return Ok(span);
         }
@@ -9354,7 +10190,10 @@ mod tests {
     }
 
     fn assert_points_equal(left: &Point3, right: &Point3) {
-        assert_eq!(point3_equal(left, right).value(), Some(true));
+        assert_eq!(
+            point3_equal(left, right, crate::TEST_ORACLE_PREDICATES).value(),
+            Some(true)
+        );
     }
 
     #[test]
@@ -9505,7 +10344,7 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter).value(),
+            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert!(matches!(
@@ -9582,7 +10421,7 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &q(1, 2)).value(),
+            compare_reals(&parameters[0], &q(1, 2), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert!(matches!(
@@ -9631,7 +10470,7 @@ mod tests {
             panic!("arc point must retain its exact angular parameter");
         };
         assert_eq!(
-            compare_reals(&parameters[0], &parameter).value(),
+            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
 
@@ -9650,7 +10489,7 @@ mod tests {
         };
         assert_eq!(parameters.len(), 1);
         assert_eq!(
-            compare_reals(&parameters[0], &parameter).value(),
+            compare_reals(&parameters[0], &parameter, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
     }
@@ -9772,7 +10611,7 @@ mod tests {
             let plane_parameter = section.first_pcurve().point_at(&parameter).unwrap();
             let revolution_parameter = section.second_pcurve().point_at(&parameter).unwrap();
             assert_eq!(
-                compare_reals(&revolution_parameter.y, &q(1, 2)).value(),
+                compare_reals(&revolution_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_points_equal(&plane.point_at(&plane_parameter).unwrap(), &spatial);
@@ -9880,11 +10719,11 @@ mod tests {
             let first_parameter = section.first_pcurve().point_at(&parameter).unwrap();
             let second_parameter = section.second_pcurve().point_at(&parameter).unwrap();
             assert_eq!(
-                compare_reals(&first_parameter.y, &r(1)).value(),
+                compare_reals(&first_parameter.y, &r(1), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&second_parameter.y, &q(1, 2)).value(),
+                compare_reals(&second_parameter.y, &q(1, 2), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_points_equal(&first.point_at(&first_parameter).unwrap(), &spatial);
@@ -9933,7 +10772,12 @@ mod tests {
             .point_at(&parameter)
             .unwrap();
         assert_eq!(
-            compare_reals(&mirrored_parameter.x, &(Real::tau() - parameter.clone())).value(),
+            compare_reals(
+                &mirrored_parameter.x,
+                &(Real::tau() - parameter.clone()),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_points_equal(
@@ -10054,11 +10898,11 @@ mod tests {
             panic!("NURBS v domain must be closed");
         };
         assert_eq!(
-            compare_reals(u_domain.end(), &r(2)).value(),
+            compare_reals(u_domain.end(), &r(2), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(v_domain.start(), &r(1)).value(),
+            compare_reals(v_domain.start(), &r(1), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let middle = Point2::new(r(1), r(2));
@@ -10331,11 +11175,11 @@ mod tests {
         assert_eq!(native_inverse.degree(), 4);
         let assert_curve_point = |actual: &CurvePoint2, expected: CurvePoint2| {
             assert_eq!(
-                compare_reals(actual.x(), expected.x()).value(),
+                compare_reals(actual.x(), expected.x(), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(actual.y(), expected.y()).value(),
+                compare_reals(actual.y(), expected.y(), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
         };
@@ -10717,7 +11561,7 @@ mod tests {
             })
             .filter(|vertex| {
                 let point = partitioned.vertex(*vertex).unwrap().point();
-                point3_equal(point, &p(1, 1, 0)).value() == Some(true)
+                point3_equal(point, &p(1, 1, 0), crate::STRICT_PREDICATES).value() == Some(true)
             })
             .collect::<std::collections::HashSet<_>>();
         assert_eq!(shared_crossing_vertices.len(), 1);
@@ -10750,8 +11594,9 @@ mod tests {
             .find_map(|(face, record)| {
                 let surface = model.surface(record.surface()).unwrap();
                 surface.plane_origin().and_then(|origin| {
-                    (point3_equal(origin, &p(0, 0, 10)).value() == Some(true))
-                        .then_some((face, surface))
+                    (point3_equal(origin, &p(0, 0, 10), crate::STRICT_PREDICATES).value()
+                        == Some(true))
+                    .then_some((face, surface))
                 })
             })
             .expect("cuboid has a top planar face");
@@ -10808,12 +11653,18 @@ mod tests {
                 &(partitioned.face_area(closed.first_face).unwrap()
                     + partitioned.face_area(closed.second_face).unwrap()),
                 &original_area,
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &original_volume,).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &original_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let json = partitioned.to_json().unwrap();
@@ -10851,8 +11702,9 @@ mod tests {
             .find_map(|(face, record)| {
                 let surface = model.surface(record.surface()).unwrap();
                 surface.plane_origin().and_then(|origin| {
-                    (point3_equal(origin, &p(0, 0, 10)).value() == Some(true))
-                        .then_some((face, surface))
+                    (point3_equal(origin, &p(0, 0, 10), crate::STRICT_PREDICATES).value()
+                        == Some(true))
+                    .then_some((face, surface))
                 })
             })
             .expect("cuboid has a top planar face");
@@ -10913,11 +11765,16 @@ mod tests {
             .map(|face| partitioned.face_area(*face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&partitioned_area, &original_area).value(),
+            compare_reals(&partitioned_area, &original_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &original_volume,).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &original_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -10957,8 +11814,9 @@ mod tests {
             .find_map(|(face, record)| {
                 let surface = model.surface(record.surface()).unwrap();
                 surface.plane_origin().and_then(|origin| {
-                    (point3_equal(origin, &p(0, 0, 10)).value() == Some(true))
-                        .then_some((face, surface))
+                    (point3_equal(origin, &p(0, 0, 10), crate::STRICT_PREDICATES).value()
+                        == Some(true))
+                    .then_some((face, surface))
                 })
             })
             .expect("cuboid has a top planar face");
@@ -11020,11 +11878,16 @@ mod tests {
             .map(|face| partitioned.face_area(*face).unwrap())
             .fold(Real::zero(), |sum, area| sum + area);
         assert_eq!(
-            compare_reals(&partitioned_area, &original_area).value(),
+            compare_reals(&partitioned_area, &original_area, crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&partitioned.solid_volume(solid).unwrap(), &original_volume,).value(),
+            compare_reals(
+                &partitioned.solid_volume(solid).unwrap(),
+                &original_volume,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -11416,7 +12279,8 @@ mod tests {
             section.curve().point_at(&q(1, 2)).unwrap() + Vector3::from_xyz(r(3), r(-2), r(5));
         assert_points_equal(&translated.curve().point_at(&q(1, 2)).unwrap(), &expected);
 
-        let (patch, face) = crate::builder::rational_bezier_patch(controls, weights).unwrap();
+        let (patch, face) =
+            crate::builder::rational_bezier_patch(controls.clone(), weights.clone()).unwrap();
         let patch_surface = patch.surface(patch.face(face).unwrap().surface()).unwrap();
         let SurfaceSurfaceIntersection::Curve(patch_section) =
             patch_surface.intersect_surface(&section_plane).unwrap()
@@ -12139,7 +13003,7 @@ mod tests {
         assert!(!region.is_empty());
         assert!(*covers_contained_face);
         assert!(matches!(
-            region.loop_role_counts(&CurvePolicy::certified()).unwrap(),
+            region.loop_role_counts(&CurvePolicy::STRICT).unwrap(),
             hypercurve::Classification::Decided((1, 0))
         ));
         let complete_plane_traces = crate::boolean::contained_face_boundary_traces_on_plane(
@@ -12237,9 +13101,10 @@ mod tests {
             assert_eq!(*parameterized_on, expected_parameter_operand);
             assert!(!covers_contained_face);
             assert!(matches!(
-                region.filled_area(&CurvePolicy::certified()).unwrap(),
+                region.filled_area(&CurvePolicy::STRICT).unwrap(),
                 hypercurve::Classification::Decided(Some(area))
-                    if compare_reals(&area, &r(2)).value() == Some(Ordering::Equal)
+                    if compare_reals(&area, &r(2), crate::STRICT_PREDICATES).value()
+                        == Some(Ordering::Equal)
             ));
         }
 
@@ -12565,11 +13430,21 @@ mod tests {
             .expect("one rational extrusion span");
         let extrusion_parameter = extrusion_clip.curve.point_at(&parameter).unwrap();
         assert_eq!(
-            compare_reals(extrusion_parameter.x(), &parameter).value(),
+            compare_reals(
+                extrusion_parameter.x(),
+                &parameter,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(extrusion_parameter.y(), &expected.z).value(),
+            compare_reals(
+                extrusion_parameter.y(),
+                &expected.z,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         let plane_clip = section
@@ -12582,11 +13457,21 @@ mod tests {
         let plane_parameter = plane_clip.curve.point_at(&parameter).unwrap();
         let retained_plane_parameter = section.second_pcurve().point_at(&parameter).unwrap();
         assert_eq!(
-            compare_reals(plane_parameter.x(), &retained_plane_parameter.x).value(),
+            compare_reals(
+                plane_parameter.x(),
+                &retained_plane_parameter.x,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(plane_parameter.y(), &retained_plane_parameter.y).value(),
+            compare_reals(
+                plane_parameter.y(),
+                &retained_plane_parameter.y,
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
 
@@ -12618,11 +13503,11 @@ mod tests {
                     .point_at(&spatial_parameter)
                     .unwrap();
                 assert_eq!(
-                    compare_reals(materialized.x(), &retained.x).value(),
+                    compare_reals(materialized.x(), &retained.x, crate::STRICT_PREDICATES).value(),
                     Some(Ordering::Equal)
                 );
                 assert_eq!(
-                    compare_reals(materialized.y(), &retained.y).value(),
+                    compare_reals(materialized.y(), &retained.y, crate::STRICT_PREDICATES).value(),
                     Some(Ordering::Equal)
                 );
             }
@@ -12651,7 +13536,7 @@ mod tests {
         for carrier in &carriers {
             for fragment in carrier
                 .curve
-                .trim_inside_region_with_parameters(&trim_region, &CurvePolicy::certified())
+                .trim_inside_region_with_parameters(&trim_region, &CurvePolicy::STRICT)
                 .unwrap()
             {
                 let (local_start, local_end) = fragment
@@ -12669,11 +13554,11 @@ mod tests {
             .zip([(q(5, 2), r(3)), (r(3), q(7, 2))])
         {
             assert_eq!(
-                compare_reals(&actual_start, &expected_start).value(),
+                compare_reals(&actual_start, &expected_start, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&actual_end, &expected_end).value(),
+                compare_reals(&actual_end, &expected_end, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
         }
@@ -12724,7 +13609,8 @@ mod tests {
                 assert_eq!(points.len(), 1);
                 let intersection = &points[0];
                 assert_eq!(
-                    compare_reals(&intersection.parameter, &q(1, 2)).value(),
+                    compare_reals(&intersection.parameter, &q(1, 2), crate::STRICT_PREDICATES)
+                        .value(),
                     Some(Ordering::Equal)
                 );
                 assert_points_equal(&intersection.point, &p(2, 3, 0));
@@ -12765,11 +13651,21 @@ mod tests {
         };
         assert_eq!(points.len(), 2);
         assert_eq!(
-            compare_reals(&points[0].parameter, &(Real::pi() / r(2)).unwrap()).value(),
+            compare_reals(
+                &points[0].parameter,
+                &(Real::pi() / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&points[1].parameter, &(r(3) * Real::pi() / r(2)).unwrap(),).value(),
+            compare_reals(
+                &points[1].parameter,
+                &(r(3) * Real::pi() / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert!(
@@ -12785,11 +13681,16 @@ mod tests {
         };
         assert_eq!(points.len(), 2);
         assert_eq!(
-            compare_reals(&points[0].parameter, &Real::zero()).value(),
+            compare_reals(
+                &points[0].parameter,
+                &Real::zero(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&points[1].parameter, &Real::tau()).value(),
+            compare_reals(&points[1].parameter, &Real::tau(), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert!(
@@ -12826,7 +13727,12 @@ mod tests {
         };
         assert_eq!(points.len(), 1);
         assert_eq!(
-            compare_reals(&points[0].parameter, &(Real::pi() / r(2)).unwrap()).value(),
+            compare_reals(
+                &points[0].parameter,
+                &(Real::pi() / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(Ordering::Equal)
         );
     }
@@ -13176,11 +14082,11 @@ mod tests {
             panic!("generator crossing the apex must retain its upper interval");
         };
         assert_eq!(
-            compare_reals(domain.start(), &q(1, 2)).value(),
+            compare_reals(domain.start(), &q(1, 2), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(domain.end(), &r(1)).value(),
+            compare_reals(domain.end(), &r(1), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let contained = Curve3::line(p(1, 0, 1), p(2, 0, 2)).unwrap();
@@ -13199,7 +14105,7 @@ mod tests {
                 assert_points_equal(&line.point, &p(2, 3, 0));
                 for (actual, expected) in line.direction.0.iter().zip(Vector3::z().0.iter()) {
                     assert_eq!(
-                        compare_reals(actual, expected).value(),
+                        compare_reals(actual, expected, crate::STRICT_PREDICATES).value(),
                         Some(Ordering::Equal)
                     );
                 }
@@ -13258,7 +14164,12 @@ mod tests {
         assert_points_equal(&lines[1].point, &p(0, -2, 0));
         for line in lines {
             assert_eq!(
-                point3_equal(&Point3::from(line.direction), &Point3::from(Vector3::z()),).value(),
+                point3_equal(
+                    &Point3::from(line.direction),
+                    &Point3::from(Vector3::z()),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(true)
             );
         }
@@ -13300,11 +14211,16 @@ mod tests {
         ] {
             let point = ellipse.point_at(&parameter).unwrap();
             assert_eq!(
-                compare_reals(&(&point.x * &point.x + &point.y * &point.y), &r(4)).value(),
+                compare_reals(
+                    &(&point.x * &point.x + &point.y * &point.y),
+                    &r(4),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&point.y, &point.z).value(),
+                compare_reals(&point.y, &point.z, crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
         }
@@ -13415,11 +14331,16 @@ mod tests {
         for ray in &rays {
             assert_points_equal(&ray.point, &Point3::origin());
             assert_eq!(
-                compare_reals(&ray.direction.norm_squared(), &Real::one()).value(),
+                compare_reals(
+                    &ray.direction.norm_squared(),
+                    &Real::one(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
             assert_eq!(
-                compare_reals(&ray.minimum, &Real::zero()).value(),
+                compare_reals(&ray.minimum, &Real::zero(), crate::STRICT_PREDICATES).value(),
                 Some(Ordering::Equal)
             );
             for parameter in [Real::zero(), sqrt_two.clone()] {
@@ -13502,7 +14423,12 @@ mod tests {
             (-Real::one(), Real::one(), -quarter),
         ] {
             assert_eq!(
-                compare_reals(&certified_atan2(y, x).unwrap(), &expected).value(),
+                compare_reals(
+                    &certified_atan2(y, x).unwrap(),
+                    &expected,
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(Ordering::Equal)
             );
         }
@@ -13513,6 +14439,7 @@ mod tests {
             compare_reals(
                 &certified_atan2(Real::one(), symbolic_zero).unwrap(),
                 &(Real::pi() / r(2)).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(Ordering::Equal)
@@ -15122,17 +16049,17 @@ mod tests {
         };
         let point = circle.start().unwrap();
         assert_eq!(
-            compare_reals(&point.x, &r(1)).value(),
+            compare_reals(&point.x, &r(1), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         let first_radius_squared = Vector3::from(point.clone()).norm_squared();
         let second_radius_squared = (&point - &p(2, 0, 0)).norm_squared();
         assert_eq!(
-            compare_reals(&first_radius_squared, &r(4)).value(),
+            compare_reals(&first_radius_squared, &r(4), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
         assert_eq!(
-            compare_reals(&second_radius_squared, &r(4)).value(),
+            compare_reals(&second_radius_squared, &r(4), crate::STRICT_PREDICATES).value(),
             Some(Ordering::Equal)
         );
 

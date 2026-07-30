@@ -287,7 +287,12 @@ fuzz_target!(|bytes: &[u8]| {
                     .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
                     .ok()?;
                 (surface.kind() == hyperbrep::SurfaceKind::Plane
-                    && hyperlimit::compare_reals(&origin.z, &Real::one()).value()
+                    && hyperlimit::compare_reals(
+                        &origin.z,
+                        &Real::one(),
+                        hyperbrep::STRICT_PREDICATES,
+                    )
+                    .value()
                         == Some(std::cmp::Ordering::Equal))
                 .then_some(face.surface())
             }) else {
@@ -451,7 +456,12 @@ fuzz_target!(|bytes: &[u8]| {
         };
         let expected = (Real::from(21) * Real::pi() / Real::from(2)).unwrap();
         assert_eq!(
-            hyperlimit::compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            hyperlimit::compare_reals(
+                &model.solid_volume(solid).unwrap(),
+                &expected,
+                hyperbrep::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         let json = model.to_json().unwrap();
@@ -921,7 +931,7 @@ fuzz_target!(|bytes: &[u8]| {
                 },
             ) => {
                 let _ = region.is_empty();
-                let _ = region.filled_area(&hypercurve::CurvePolicy::certified());
+                let _ = region.filled_area(&hypercurve::CurvePolicy::STRICT);
             }
             (2, boolean::FacePairTrim::NoContact) => {}
             _ => {
@@ -1185,6 +1195,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(affine_face)
                 .expect("separable affine patch has exact area"),
             &expected_affine_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1202,6 +1213,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(affine_face)
                 .expect("replayed separable affine patch has exact area"),
             &expected_affine_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1272,6 +1284,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(planar_face)
                 .expect("authored-frame planar spline region has exact area"),
             &expected_planar_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1289,6 +1302,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(planar_face)
                 .expect("replayed planar spline region has exact area"),
             &expected_planar_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1307,6 +1321,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .solid_volume(path_extrusion_solid)
                 .expect("path extrusion has exact volume"),
             &expected_path_extrusion_volume,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1322,6 +1337,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .solid_volume(path_extrusion_solid)
                 .expect("replayed path extrusion has exact volume"),
             &expected_path_extrusion_volume,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1371,6 +1387,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(extrusion_face)
                 .expect("monotone planar spline extrusion has exact area"),
             &expected_extrusion_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1388,6 +1405,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(extrusion_face)
                 .expect("replayed spline extrusion has exact area"),
             &expected_extrusion_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1453,6 +1471,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(revolution_face)
                 .expect("rational line-image revolution has exact area"),
             &expected_revolution_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)
@@ -1470,6 +1489,7 @@ fuzz_target!(|bytes: &[u8]| {
                 .face_area(revolution_face)
                 .expect("replayed spline revolution has exact area"),
             &expected_revolution_area,
+            hyperbrep::STRICT_PREDICATES
         )
         .value(),
         Some(std::cmp::Ordering::Equal)

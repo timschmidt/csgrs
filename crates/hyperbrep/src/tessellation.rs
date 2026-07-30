@@ -15,6 +15,9 @@ use hyperlimit::{PredicateOutcome, compare_reals};
 
 use crate::{FaceId, GeometryError, Model, Orientation, Point2, Point3, Real, SurfaceKind};
 
+const TRIANGULATION_CONTEXT: hypertri::TriangulationContext =
+    hypertri::TriangulationContext::new(crate::STRICT_PREDICATES);
+
 /// Exact derived triangulation of one line-bounded planar face.
 #[derive(Clone, Debug)]
 pub struct ExactPlanarFaceTriangulation {
@@ -233,7 +236,8 @@ pub fn triangulate_planar_face(
         .iter()
         .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
         .collect::<Vec<_>>();
-    let flat_triangles = hypertri::earcut(&hypertri_points, &hole_indices)?;
+    let flat_triangles =
+        hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
     let mut triangles = flat_triangles
         .chunks_exact(3)
         .map(|indices| [indices[0], indices[1], indices[2]])
@@ -284,7 +288,8 @@ pub fn approximate_face_chordally(
         .iter()
         .map(|point| hypertri::Point2::new(point.x.clone(), point.y.clone()))
         .collect::<Vec<_>>();
-    let flat_triangles = hypertri::earcut(&hypertri_points, &hole_indices)?;
+    let flat_triangles =
+        hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
     let mut triangles = flat_triangles
         .chunks_exact(3)
         .map(|indices| [indices[0], indices[1], indices[2]])
@@ -557,7 +562,7 @@ fn coordinate_between(value: &Real, first: &Real, second: &Real) -> Result<bool,
 }
 
 fn decided_comparison(first: &Real, second: &Real) -> Result<std::cmp::Ordering, GeometryError> {
-    match compare_reals(first, second) {
+    match compare_reals(first, second, crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => Ok(value),
         PredicateOutcome::Unknown { needed, stage } => {
             Err(GeometryError::PredicateUnresolved { needed, stage })
@@ -623,7 +628,7 @@ fn orient_triangle(
     let [first, second, third] = triangle.map(|index| &points[index]);
     let signed_double_area = (&second.x - &first.x) * (&third.y - &first.y)
         - (&second.y - &first.y) * (&third.x - &first.x);
-    let order = match compare_reals(&signed_double_area, &Real::zero()) {
+    let order = match compare_reals(&signed_double_area, &Real::zero(), crate::STRICT_PREDICATES) {
         PredicateOutcome::Decided { value, .. } => value,
         PredicateOutcome::Unknown { needed, stage } => {
             return Err(GeometryError::PredicateUnresolved { needed, stage });
@@ -669,6 +674,7 @@ mod tests {
                 point3_equal(
                     point,
                     &Point3::new(parameter.x.clone(), parameter.y.clone(), r(2)),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(true)
@@ -678,7 +684,7 @@ mod tests {
             let [a, b, c] = triangle.map(|index| &mesh.parameters()[index]);
             let signed = (&b.x - &a.x) * (&c.y - &a.y) - (&b.y - &a.y) * (&c.x - &a.x);
             assert_eq!(
-                compare_reals(&signed, &Real::zero()).value(),
+                compare_reals(&signed, &Real::zero(), crate::STRICT_PREDICATES).value(),
                 Some(std::cmp::Ordering::Greater)
             );
         }
@@ -689,7 +695,7 @@ mod tests {
             let [a, b, c] = triangle.map(|index| &bottom_mesh.parameters()[index]);
             let signed = (&b.x - &a.x) * (&c.y - &a.y) - (&b.y - &a.y) * (&c.x - &a.x);
             assert_eq!(
-                compare_reals(&signed, &Real::zero()).value(),
+                compare_reals(&signed, &Real::zero(), crate::STRICT_PREDICATES).value(),
                 Some(std::cmp::Ordering::Less)
             );
         }
@@ -748,7 +754,12 @@ mod tests {
         let surface = model.surface(face.surface()).unwrap();
         for (parameter, point) in artifact.parameters().iter().zip(artifact.points()) {
             assert_eq!(
-                point3_equal(point, &surface.point_at(parameter).unwrap()).value(),
+                point3_equal(
+                    point,
+                    &surface.point_at(parameter).unwrap(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(true)
             );
         }
@@ -803,7 +814,12 @@ mod tests {
             assert!(!artifact.triangles().is_empty());
             for (parameter, point) in artifact.parameters().iter().zip(artifact.points()) {
                 assert_eq!(
-                    point3_equal(point, &surface.point_at(parameter).unwrap()).value(),
+                    point3_equal(
+                        point,
+                        &surface.point_at(parameter).unwrap(),
+                        crate::STRICT_PREDICATES
+                    )
+                    .value(),
                     Some(true)
                 );
             }
@@ -839,7 +855,12 @@ mod tests {
         let surface = sphere.surface(face.surface()).unwrap();
         for (parameter, point) in artifact.parameters().iter().zip(artifact.points()) {
             assert_eq!(
-                point3_equal(point, &surface.point_at(parameter).unwrap()).value(),
+                point3_equal(
+                    point,
+                    &surface.point_at(parameter).unwrap(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(true)
             );
         }
@@ -858,7 +879,12 @@ mod tests {
             let radial =
                 crate::Vector3::new([&a.x + &b.x + &c.x, &a.y + &b.y + &c.y, &a.z + &b.z + &c.z]);
             assert_eq!(
-                compare_reals(&normal.dot(&radial), &Real::zero()).value(),
+                compare_reals(
+                    &normal.dot(&radial),
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES
+                )
+                .value(),
                 Some(std::cmp::Ordering::Greater)
             );
         }

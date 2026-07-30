@@ -986,6 +986,7 @@ mod tests {
             compare_reals(
                 &rebuilt.solid_volume(solid).unwrap(),
                 &model.solid_volume(solid).unwrap(),
+                crate::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -1045,7 +1046,12 @@ mod tests {
         let rebuilt = RawModel::from_json(&json).unwrap().validate().unwrap();
         assert_eq!(rebuilt.solid(solid).unwrap().voids().len(), 1);
         assert_eq!(
-            compare_reals(&rebuilt.solid_volume(solid).unwrap(), &Real::from(98)).value(),
+            compare_reals(
+                &rebuilt.solid_volume(solid).unwrap(),
+                &Real::from(98),
+                crate::STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         assert_eq!(rebuilt.to_json().unwrap(), json);
@@ -1190,6 +1196,7 @@ mod tests {
                 point3_equal(
                     &original.point_at(original.domain().start()).unwrap(),
                     &decoded.point_at(decoded.domain().start()).unwrap(),
+                    crate::STRICT_PREDICATES
                 )
                 .value(),
                 Some(true)

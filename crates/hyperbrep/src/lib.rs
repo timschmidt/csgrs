@@ -21,6 +21,20 @@ pub mod builder;
 #[cfg(feature = "tessellation")]
 pub mod tessellation;
 
+/// Predicate policy used by HyperBREP's strictly certified source-topology
+/// operations.
+///
+/// HyperBREP does not reinterpret an unresolved predicate as equality. Derived
+/// approximate products such as chordal tessellations remain outside the
+/// authoritative BREP topology.
+pub const STRICT_PREDICATES: hyperlimit::PredicatePolicy = hyperlimit::PredicatePolicy::STRICT;
+
+/// Explicit finite-refinement policy for test oracles that compare independently
+/// constructed representations of the same mathematical value.
+#[cfg(test)]
+pub(crate) const TEST_ORACLE_PREDICATES: hyperlimit::PredicatePolicy =
+    hyperlimit::PredicatePolicy::APPROXIMATE_512;
+
 pub use boolean::{
     BooleanError, BooleanOperation, BooleanResult, ClassifiedFace, FacePairIntersection,
     FacePairRelation, FacePairTrim, FaceSelection, FaceSelectionAction, SolidIntersectionGraph,

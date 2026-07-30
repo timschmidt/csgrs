@@ -46,6 +46,7 @@ fuzz_target!(|bytes: &[u8]| {
                     .solid_volume(box_solid)
                     .expect("partitioned box keeps its certificate"),
                 &expected,
+                hyperbrep::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -61,6 +62,7 @@ fuzz_target!(|bytes: &[u8]| {
                     .solid_volume(box_solid)
                     .expect("decoded box keeps its certificate"),
                 &expected,
+                hyperbrep::STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -154,6 +156,7 @@ fuzz_target!(|bytes: &[u8]| {
                     .solid_volume(solid)
                     .expect("paired bridge edit keeps its certificate"),
                 &expected,
+                hyperbrep::STRICT_PREDICATES,
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -169,6 +172,7 @@ fuzz_target!(|bytes: &[u8]| {
                     .solid_volume(solid)
                     .expect("decoded paired bridge keeps its certificate"),
                 &expected,
+                hyperbrep::STRICT_PREDICATES,
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -292,6 +296,7 @@ fuzz_target!(|bytes: &[u8]| {
                     .solid_volume(solid)
                     .expect("bridge-cycle edit keeps its certificate"),
                 &expected,
+                hyperbrep::STRICT_PREDICATES,
             )
             .value(),
             Some(std::cmp::Ordering::Equal)

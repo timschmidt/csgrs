@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hyperbrep::{
-    Curve3, Direction, Model, Point3, RawModel, Real, SolidPointLocation, Surface,
-    SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
+    Curve3, Direction, Model, Point3, RawModel, Real, STRICT_PREDICATES, SolidPointLocation,
+    Surface, SurfaceIntersectionOperand, SurfaceSurfaceIntersection, Vector3, boolean, builder,
 };
 use hypercurve::{
     CircularArc2, Curve2, CurvePath2, LineSeg2, Point2 as CurvePoint2, QuadraticBezier2,
@@ -33,7 +33,7 @@ fn main() {
                 .expect("benchmark cuboid");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &Real::from(2_268)).value(),
+            compare_reals(&volume, &Real::from(2_268), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -57,7 +57,7 @@ fn main() {
             .expect("benchmark cylinder");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(12) * Real::pi())).value(),
+            compare_reals(&volume, &(Real::from(12) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -80,7 +80,7 @@ fn main() {
         let (model, solid) = builder::sphere(black_box(Real::from(3))).expect("benchmark sphere");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(36) * Real::pi())).value(),
+            compare_reals(&volume, &(Real::from(36) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -109,7 +109,7 @@ fn main() {
         .expect("benchmark cone frustum");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(7) * Real::pi())).value(),
+            compare_reals(&volume, &(Real::from(7) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -134,7 +134,12 @@ fn main() {
             .expect("benchmark torus");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(6) * Real::pi() * Real::pi()),).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(6) * Real::pi() * Real::pi()),
+                STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -164,7 +169,7 @@ fn main() {
         let (model, solid) = builder::revolve(black_box(&profile)).expect("benchmark revolution");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(16) * Real::pi())).value(),
+            compare_reals(&volume, &(Real::from(16) * Real::pi()), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -211,7 +216,12 @@ fn main() {
             builder::revolve_contour(black_box(&profile)).expect("benchmark curved revolution");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(6) * Real::pi() * Real::pi()),).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(6) * Real::pi() * Real::pi()),
+                STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -248,7 +258,7 @@ fn main() {
         .expect("benchmark linear sweep");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &Real::from(144)).value(),
+            compare_reals(&volume, &Real::from(144), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -296,7 +306,7 @@ fn main() {
         .expect("benchmark curved sweep");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &Real::from(16)).value(),
+            compare_reals(&volume, &Real::from(16), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -346,7 +356,7 @@ fn main() {
             .expect("benchmark moving-frame sweep");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &Real::from(28)).value(),
+            compare_reals(&volume, &Real::from(28), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -397,7 +407,7 @@ fn main() {
         let (model, solid) = builder::loft(black_box(&sections)).expect("benchmark loft");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &Real::from(28)).value(),
+            compare_reals(&volume, &Real::from(28), STRICT_PREDICATES).value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -441,7 +451,12 @@ fn main() {
             builder::loft(black_box(&sections)).expect("benchmark convex corresponding loft");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(51) / Real::from(2)).unwrap()).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(51) / Real::from(2)).unwrap(),
+                STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -502,7 +517,12 @@ fn main() {
             builder::loft(black_box(&sections)).expect("benchmark multi-section loft");
         let volume = model.solid_volume(solid).expect("benchmark volume");
         assert_eq!(
-            compare_reals(&volume, &(Real::from(212) / Real::from(3)).unwrap()).value(),
+            compare_reals(
+                &volume,
+                &(Real::from(212) / Real::from(3)).unwrap(),
+                STRICT_PREDICATES
+            )
+            .value(),
             Some(std::cmp::Ordering::Equal)
         );
         checksum += usize::from(
@@ -536,6 +556,7 @@ fn main() {
             compare_reals(
                 &edited.solid_volume(solid).expect("edited volume"),
                 &Real::from(8),
+                STRICT_PREDICATES,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal),
@@ -566,6 +587,7 @@ fn main() {
             compare_reals(
                 &edited.solid_volume(solid).expect("edited volume"),
                 &Real::from(8),
+                STRICT_PREDICATES,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal),
@@ -607,6 +629,7 @@ fn main() {
             compare_reals(
                 &edited.solid_volume(solid).expect("edited volume"),
                 &Real::from(8),
+                STRICT_PREDICATES,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal),
@@ -659,6 +682,7 @@ fn main() {
             compare_reals(
                 &edited.solid_volume(solid).expect("partitioned volume"),
                 &Real::from(8),
+                STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -693,6 +717,7 @@ fn main() {
             compare_reals(
                 &edited.solid_volume(solid).expect("arranged volume"),
                 &Real::from(8),
+                STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -717,7 +742,7 @@ fn main() {
                 .point_at(&hyperbrep::Point2::new(Real::zero(), Real::zero()))
                 .ok()?;
             (surface.kind() == hyperbrep::SurfaceKind::Plane
-                && compare_reals(&origin.z, &Real::one()).value()
+                && compare_reals(&origin.z, &Real::one(), STRICT_PREDICATES).value()
                     == Some(std::cmp::Ordering::Equal))
             .then_some(face.surface())
         })
@@ -743,6 +768,7 @@ fn main() {
                     .solid_volume(tensor_cap_solid)
                     .expect("tensor-cap volume"),
                 &Real::one(),
+                STRICT_PREDICATES,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal),
@@ -859,7 +885,8 @@ fn main() {
             .face_area(face)
             .expect("benchmark exact planar spline region area");
         checksum += usize::from(
-            compare_reals(&area, &Real::from(90)).value() == Some(std::cmp::Ordering::Equal),
+            compare_reals(&area, &Real::from(90), STRICT_PREDICATES).value()
+                == Some(std::cmp::Ordering::Equal),
         );
         black_box(model);
     }
@@ -883,7 +910,8 @@ fn main() {
             .solid_volume(solid)
             .expect("benchmark exact path extrusion volume");
         checksum += usize::from(
-            compare_reals(&volume, &Real::from(45)).value() == Some(std::cmp::Ordering::Equal),
+            compare_reals(&volume, &Real::from(45), STRICT_PREDICATES).value()
+                == Some(std::cmp::Ordering::Equal),
         );
         black_box(model);
     }
@@ -921,7 +949,8 @@ fn main() {
             .face_area(face)
             .expect("benchmark exact planar spline extrusion area");
         checksum += usize::from(
-            compare_reals(&area, &Real::from(6)).value() == Some(std::cmp::Ordering::Equal),
+            compare_reals(&area, &Real::from(6), STRICT_PREDICATES).value()
+                == Some(std::cmp::Ordering::Equal),
         );
         black_box(model);
     }
@@ -966,7 +995,7 @@ fn main() {
             .face_area(face)
             .expect("benchmark exact rational line-image revolution area");
         checksum += usize::from(
-            compare_reals(&area, &expected_revolution_area).value()
+            compare_reals(&area, &expected_revolution_area, STRICT_PREDICATES).value()
                 == Some(std::cmp::Ordering::Equal),
         );
         black_box(model);
@@ -1019,7 +1048,8 @@ fn main() {
                 .face_area(face)
                 .expect("benchmark exact tensor area");
             checksum += usize::from(
-                compare_reals(&area, &Real::from(24)).value() == Some(std::cmp::Ordering::Equal),
+                compare_reals(&area, &Real::from(24), STRICT_PREDICATES).value()
+                    == Some(std::cmp::Ordering::Equal),
             );
             black_box(area);
         }
@@ -1809,7 +1839,7 @@ fn main() {
         .expect("benchmark affine tensor surface");
     let half = (Real::one() / Real::from(2)).expect("two is nonzero");
     let boundary_support = Surface::plane(
-        Point3::new(half, Real::zero(), Real::one()),
+        Point3::new(half.clone(), Real::zero(), Real::one()),
         Vector3::y(),
         Vector3::z(),
     )
@@ -1842,7 +1872,6 @@ fn main() {
     );
 
     let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
-    let half = (Real::one() / Real::from(2)).expect("two is nonzero");
     let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
     let curve_start = CurvePoint2::new(Real::zero(), quarter.clone());
     let curve_end = CurvePoint2::new(Real::one(), three_quarters.clone());
@@ -2151,6 +2180,7 @@ fn main() {
                     .solid_volume(holed_solid)
                     .expect("benchmark holed tensor volume"),
                 &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
+                hyperbrep::STRICT_PREDICATES,
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -2246,6 +2276,7 @@ fn main() {
                     .solid_volume(threaded_solid)
                     .expect("benchmark threaded tensor volume"),
                 &(Real::from(3) / Real::from(4)).expect("four is nonzero"),
+                STRICT_PREDICATES,
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -2344,6 +2375,7 @@ fn main() {
                     .solid_volume(first_box_solid)
                     .expect("partitioned graph volume"),
                 &Real::from(8),
+                STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -2375,6 +2407,7 @@ fn main() {
                     .solid_volume(first_box_solid)
                     .expect("selected model volume"),
                 &Real::from(8),
+                STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -2687,6 +2720,7 @@ fn main() {
             compare_reals(
                 &model.solid_volume(solid).expect("half-frustum volume"),
                 &expected_axial_volume,
+                STRICT_PREDICATES
             )
             .value(),
             Some(std::cmp::Ordering::Equal)
@@ -2743,6 +2777,7 @@ fn main() {
             compare_reals(
                 &model.solid_volume(solid).expect("revolution cut volume"),
                 &(Real::from(91) * Real::pi()),
+                STRICT_PREDICATES,
             )
             .value()
                 == Some(std::cmp::Ordering::Equal),
