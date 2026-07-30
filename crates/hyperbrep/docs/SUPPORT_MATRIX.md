@@ -240,6 +240,16 @@ the exact cylinder-axis offset, so off-axis contained pairs have the same
 operation matrix even though general off-axis sphere/cylinder surface
 intersection remains unsupported. Equality does not enter the fast path;
 off-axis tangency remains explicit unsupported evidence.
+Finite coaxial cylinders that cross exactly one sphere/cylinder latitude also
+regularize natively. For a radius-3 sphere and radius-2 cylinder on `[-4,0]`,
+intersection volume is `(54-10*sqrt(5))*pi/3`, union volume is
+`(102+10*sqrt(5))*pi/3`, sphere-minus-cylinder volume is
+`(54+10*sqrt(5))*pi/3`, and cylinder-minus-sphere volume is
+`(10*sqrt(5)-6)*pi/3`. The respective exact areas are
+`(22-2*sqrt(5))*pi`, `(38+2*sqrt(5))*pi`,
+`(22+10*sqrt(5))*pi`, and `(38-10*sqrt(5))*pi`. The mixed results retain
+exact classification, operand symmetry, rigid/reflection transforms,
+persistence, and primitive-profile isolation.
 
 `boolean::intersection_graph` now builds the common retained face-pair graph
 for any validated solids. It computes each certified face bound once, rejects

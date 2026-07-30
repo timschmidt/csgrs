@@ -320,6 +320,18 @@ copy the two complete shells into an exact outer-plus-reversed-void result
 without asking the narrower coaxial carrier-intersection implementation.
 Equality is deliberately excluded: tangent or otherwise non-strict off-axis
 pairs fall through to explicit unsupported intersection evidence.
+Finite coaxial intervals need not span both intersection latitudes. A selected
+one-latitude shell certifies one forward spherical cap, one complete
+cylindrical parameter grid, and one planar cap. Cylinder orientation plus
+whether its represented interval runs toward or away from the sphere center
+determines intersection, union, or sphere-minus-cylinder semantics; the
+opposite difference reuses the existing reversed-spherical-cap cylinder-end
+certificate. `CertifiedSphereRegion::FiniteCylinder` stores that closed
+operation enum. Its volume uses one exact piecewise overlap integral split at
+`±sqrt(R²-r²)`, while classification combines the finite-cylinder and sphere
+locations by the corresponding Boolean truth table. Invisible material beyond
+the selected spherical pole is represented by a certified effective interval,
+preventing discarded source faces from becoming false query boundaries.
 Closed face-local curves are split into two canonical edge records so the new
 interior face's outer wire and the surrounding face's inner wire share
 opposite edge uses by identity. Multiple traces are atomized at represented

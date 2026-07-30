@@ -190,7 +190,10 @@ The clean-break implementation currently provides:
   finite cylinder or sphere as one native inward void with exact queries.
   The exact clearance fast path precedes carrier intersection, so strictly
   contained off-axis pairs do not pay for or depend on an unsupported
-  sphere/cylinder surface relation;
+  sphere/cylinder surface relation. Finite coaxial intervals that cross only
+  one sphere latitude retain the native one-cap/one-band/one-disk topology
+  for intersection, union, and either directed difference, with one exact
+  finite-cylinder region certificate rather than symmetric-clip assumptions;
 - transverse plane/cone cuts use the same two-pcurve latitude abstraction,
   with cone slant parameter retained exactly. Frustum side descendants prove
   the same no-gap/no-overlap parameter grid, so slab clips remain native conic

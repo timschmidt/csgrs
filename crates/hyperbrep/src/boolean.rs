@@ -5706,6 +5706,350 @@ mod tests {
     }
 
     #[test]
+    fn one_sided_finite_sphere_cylinder_intersection_retains_exact_cap_band() {
+        let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
+        let (cylinder, cylinder_solid) =
+            crate::builder::cylinder(Real::from(2), Real::from(4)).unwrap();
+        let cylinder = cylinder
+            .transformed(&Matrix4::affine_translation([
+                Real::zero(),
+                Real::zero(),
+                -Real::from(4),
+            ]))
+            .unwrap();
+        let graph = intersection_graph(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap();
+        let BooleanResult::Solid { model, solid } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("one spherical cap, cylinder band, and planar cap must close exactly");
+        };
+        let sqrt_five = Real::from(5).sqrt().unwrap();
+        let expected =
+            ((Real::from(54) - Real::from(10) * &sqrt_five) * Real::pi() / Real::from(3)).unwrap();
+        assert_eq!(
+            compare_reals(&model.solid_volume(solid).unwrap(), &expected).value(),
+            Some(Ordering::Equal)
+        );
+        let expected_area = (Real::from(22) - Real::from(2) * &sqrt_five) * Real::pi();
+        let area = model
+            .faces()
+            .map(|(face, _)| model.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&area, &expected_area).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, -3), SolidPointLocation::Boundary),
+            (
+                Point3::new(
+                    Real::zero(),
+                    Real::zero(),
+                    -(Real::from(5) / Real::from(2)).unwrap(),
+                ),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(Real::from(2), Real::zero(), -sqrt_five.clone()),
+                SolidPointLocation::Boundary,
+            ),
+            (p(2, 0, -1), SolidPointLocation::Boundary),
+            (p(0, 0, 0), SolidPointLocation::Boundary),
+            (p(1, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 1), SolidPointLocation::Outside),
+            (
+                Point3::new(
+                    (Real::from(5) / Real::from(2)).unwrap(),
+                    Real::zero(),
+                    -Real::one(),
+                ),
+                SolidPointLocation::Outside,
+            ),
+        ] {
+            assert_eq!(model.classify_point(solid, &point).unwrap(), location);
+        }
+        assert!(model.certified_sphere_profile(solid).is_none());
+        assert!(model.certified_cylinder_profile(solid).is_none());
+        assert!(model.certified_z_prism_profile(solid).unwrap().is_none());
+        for result in [
+            intersection(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
+            intersection(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
+        ] {
+            let BooleanResult::Solid {
+                model: standard,
+                solid: standard_solid,
+            } = result
+            else {
+                panic!("standard intersection must retain the one-sided mixed solid");
+            };
+            assert_eq!(
+                compare_reals(&standard.solid_volume(standard_solid).unwrap(), &expected).value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let expected_union =
+            ((Real::from(102) + Real::from(10) * &sqrt_five) * Real::pi() / Real::from(3)).unwrap();
+        let expected_union_area = (Real::from(38) + Real::from(2) * &sqrt_five) * Real::pi();
+        for result in [
+            union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap(),
+            union(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap(),
+        ] {
+            let BooleanResult::Solid {
+                model: union_model,
+                solid: union_solid,
+            } = result
+            else {
+                panic!("one-sided union must retain one exact extended sphere");
+            };
+            assert_eq!(
+                compare_reals(
+                    &union_model.solid_volume(union_solid).unwrap(),
+                    &expected_union,
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+            let union_area = union_model
+                .faces()
+                .map(|(face, _)| union_model.face_area(face).unwrap())
+                .fold(Real::zero(), |sum, face_area| sum + face_area);
+            assert_eq!(
+                compare_reals(&union_area, &expected_union_area).value(),
+                Some(Ordering::Equal)
+            );
+            for (point, location) in [
+                (p(0, 0, -3), SolidPointLocation::Inside),
+                (p(0, 0, 0), SolidPointLocation::Inside),
+                (p(2, 0, -1), SolidPointLocation::Inside),
+                (p(0, 0, -4), SolidPointLocation::Boundary),
+                (p(2, 0, -3), SolidPointLocation::Boundary),
+                (p(0, 0, 3), SolidPointLocation::Boundary),
+                (p(0, 0, 4), SolidPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    union_model.classify_point(union_solid, &point).unwrap(),
+                    location
+                );
+            }
+            assert!(union_model.certified_sphere_profile(union_solid).is_none());
+            assert!(
+                union_model
+                    .certified_cylinder_profile(union_solid)
+                    .is_none()
+            );
+        }
+
+        let expected_sphere_difference =
+            ((Real::from(54) + Real::from(10) * &sqrt_five) * Real::pi() / Real::from(3)).unwrap();
+        let expected_sphere_difference_area =
+            (Real::from(22) + Real::from(10) * &sqrt_five) * Real::pi();
+        let BooleanResult::Solid {
+            model: sphere_difference,
+            solid: sphere_difference_solid,
+        } = difference(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
+        else {
+            panic!("one-sided sphere difference must retain one exact recessed sphere");
+        };
+        assert_eq!(
+            compare_reals(
+                &sphere_difference
+                    .solid_volume(sphere_difference_solid)
+                    .unwrap(),
+                &expected_sphere_difference,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let sphere_difference_area = sphere_difference
+            .faces()
+            .map(|(face, _)| sphere_difference.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(&sphere_difference_area, &expected_sphere_difference_area,).value(),
+            Some(Ordering::Equal)
+        );
+        for (point, location) in [
+            (p(0, 0, -3), SolidPointLocation::Outside),
+            (p(0, 0, -2), SolidPointLocation::Outside),
+            (p(2, 0, -1), SolidPointLocation::Boundary),
+            (p(1, 0, 0), SolidPointLocation::Boundary),
+            (p(0, 0, 1), SolidPointLocation::Inside),
+            (p(0, 0, 3), SolidPointLocation::Boundary),
+        ] {
+            assert_eq!(
+                sphere_difference
+                    .classify_point(sphere_difference_solid, &point)
+                    .unwrap(),
+                location,
+                "sphere difference point {point:?}"
+            );
+        }
+        assert!(
+            sphere_difference
+                .certified_sphere_profile(sphere_difference_solid)
+                .is_none()
+        );
+
+        let expected_cylinder_difference =
+            ((Real::from(10) * &sqrt_five - Real::from(6)) * Real::pi() / Real::from(3)).unwrap();
+        let BooleanResult::Solid {
+            model: cylinder_difference,
+            solid: cylinder_difference_solid,
+        } = difference(&cylinder, cylinder_solid, &sphere, sphere_solid).unwrap()
+        else {
+            panic!("one-sided cylinder difference must retain its single exact outer end");
+        };
+        assert_eq!(
+            compare_reals(
+                &cylinder_difference
+                    .solid_volume(cylinder_difference_solid)
+                    .unwrap(),
+                &expected_cylinder_difference,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+        let expected_cylinder_difference_area =
+            (Real::from(38) - Real::from(10) * &sqrt_five) * Real::pi();
+        let cylinder_difference_area = cylinder_difference
+            .faces()
+            .map(|(face, _)| cylinder_difference.face_area(face).unwrap())
+            .fold(Real::zero(), |sum, face_area| sum + face_area);
+        assert_eq!(
+            compare_reals(
+                &cylinder_difference_area,
+                &expected_cylinder_difference_area,
+            )
+            .value(),
+            Some(Ordering::Equal)
+        );
+
+        let BooleanResult::Solid {
+            model: union_replay,
+            solid: union_replay_solid,
+        } = union(&sphere, sphere_solid, &cylinder, cylinder_solid).unwrap()
+        else {
+            unreachable!("one-sided union was checked above");
+        };
+        for (result_model, result_solid, expected_volume) in [
+            (&model, solid, &expected),
+            (&union_replay, union_replay_solid, &expected_union),
+            (
+                &sphere_difference,
+                sphere_difference_solid,
+                &expected_sphere_difference,
+            ),
+            (
+                &cylinder_difference,
+                cylinder_difference_solid,
+                &expected_cylinder_difference,
+            ),
+        ] {
+            let json = result_model.to_json().unwrap();
+            let decoded = crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(decoded.to_json().unwrap(), json);
+            assert_eq!(
+                compare_reals(
+                    &decoded.solid_volume(result_solid).unwrap(),
+                    expected_volume
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let reflection = Matrix4::affine_nonuniform_scale([Real::one(), -Real::one(), Real::one()]);
+        for (result_model, result_solid, expected_volume) in [
+            (&model, solid, &expected),
+            (&union_replay, union_replay_solid, &expected_union),
+            (
+                &sphere_difference,
+                sphere_difference_solid,
+                &expected_sphere_difference,
+            ),
+            (
+                &cylinder_difference,
+                cylinder_difference_solid,
+                &expected_cylinder_difference,
+            ),
+        ] {
+            let reflected = result_model.transformed(&reflection).unwrap();
+            assert_eq!(
+                compare_reals(
+                    &reflected.solid_volume(result_solid).unwrap(),
+                    expected_volume,
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+
+        let cyclic = Matrix4::affine_orthonormal(
+            [
+                [Real::zero(), Real::zero(), Real::one()],
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ],
+            [-Real::from(3), Real::from(6), Real::from(2)],
+        );
+        let oriented_sphere = sphere.transformed(&cyclic).unwrap();
+        let oriented_cylinder = cylinder.transformed(&cyclic).unwrap();
+        for (result, expected_volume) in [
+            (
+                intersection(
+                    &oriented_sphere,
+                    sphere_solid,
+                    &oriented_cylinder,
+                    cylinder_solid,
+                )
+                .unwrap(),
+                &expected,
+            ),
+            (
+                union(
+                    &oriented_sphere,
+                    sphere_solid,
+                    &oriented_cylinder,
+                    cylinder_solid,
+                )
+                .unwrap(),
+                &expected_union,
+            ),
+            (
+                difference(
+                    &oriented_sphere,
+                    sphere_solid,
+                    &oriented_cylinder,
+                    cylinder_solid,
+                )
+                .unwrap(),
+                &expected_sphere_difference,
+            ),
+        ] {
+            let BooleanResult::Solid {
+                model: oriented,
+                solid: oriented_solid,
+            } = result
+            else {
+                panic!("rigid reorientation must retain one one-sided mixed solid");
+            };
+            assert_eq!(
+                compare_reals(
+                    &oriented.solid_volume(oriented_solid).unwrap(),
+                    expected_volume,
+                )
+                .value(),
+                Some(Ordering::Equal)
+            );
+        }
+    }
+
+    #[test]
     fn sphere_minus_strictly_contained_cylinder_retains_exact_native_void() {
         let (sphere, sphere_solid) = crate::builder::sphere(Real::from(3)).unwrap();
         let (cylinder, cylinder_solid) =
