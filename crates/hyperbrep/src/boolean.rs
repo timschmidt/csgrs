@@ -8,8 +8,8 @@ use hypercurve::{
     Aabb2, BezierLineImageFitRelation, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
     Classification, Contour2, ContourPointLocation, Curve2, CurvePath2, CurvePolicy, CurveRegion2,
     CurveRegionLoopRole, CurveString2, ExactCurveError, FillRule, LineArcIntersection,
-    LineArcRegion2, LineLineIntersection, LineSeg2, RationalQuadraticBezier2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    LineArcRegion2, LineLineIntersection, LineSeg2, RationalBezier2, RationalQuadraticBezier2,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -3106,7 +3106,7 @@ fn contained_face_boundary_traces_from_plane(
             }
         }
         if let Some(parameter_plane) = &affine_parameter_plane
-            && let Some(closed) = concatenate_closed_contained_rational_trace(
+            && let Some(closed) = concatenate_closed_contained_spline_trace(
                 &traces[wire_trace_start..],
                 parameter_plane,
             )?
@@ -3118,14 +3118,17 @@ fn contained_face_boundary_traces_from_plane(
     Ok(Some(traces))
 }
 
-fn concatenate_closed_contained_rational_trace(
+fn concatenate_closed_contained_spline_trace(
     traces: &[SurfaceIntersectionCurve],
     parameter_plane: &Surface,
 ) -> Result<Option<SurfaceIntersectionCurve>, BooleanError> {
     if traces.len() < 2
-        || traces
-            .iter()
-            .any(|trace| trace.curve().kind() != crate::Curve3Kind::RationalBezier)
+        || traces.iter().any(|trace| {
+            !matches!(
+                trace.curve().kind(),
+                crate::Curve3Kind::RationalBezier | crate::Curve3Kind::Nurbs
+            )
+        })
     {
         return Ok(None);
     }
@@ -3161,22 +3164,53 @@ fn concatenate_closed_contained_rational_trace(
     )? {
         return Ok(None);
     }
-    let pcurves = ordered
+    let mut spans = Vec::<RationalBezier2>::new();
+    for trace in &ordered {
+        let pcurve = trace.first_pcurve().materialize()?;
+        if !matches!(
+            pcurve.curve().family(),
+            hypercurve::CurveFamily2::RationalBezier | hypercurve::CurveFamily2::Nurbs
+        ) {
+            return Ok(None);
+        }
+        for fragment in pcurve
+            .curve()
+            .native_bezier_fragments()
+            .map_err(GeometryError::from)?
+        {
+            let rational = match fragment.curve() {
+                BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
+                    curve.control_points().into_iter().cloned().collect(),
+                    vec![Real::one(); 3],
+                )
+                .map_err(GeometryError::from)?,
+                BezierSubcurve2::Cubic(curve) => RationalBezier2::try_new(
+                    curve.control_points().into_iter().cloned().collect(),
+                    vec![Real::one(); 4],
+                )
+                .map_err(GeometryError::from)?,
+                BezierSubcurve2::RationalQuadratic(curve) => RationalBezier2::try_new(
+                    curve.control_points().into_iter().cloned().collect(),
+                    curve.weights().into_iter().cloned().collect(),
+                )
+                .map_err(GeometryError::from)?,
+                BezierSubcurve2::Rational(curve) => curve.clone(),
+            };
+            spans.push(rational);
+        }
+    }
+    let Some(degree) = spans.iter().map(RationalBezier2::degree).max() else {
+        return Ok(None);
+    };
+    let pcurves = spans
         .iter()
-        .map(|trace| {
-            trace
-                .first_pcurve()
-                .materialize()
-                .map(|pcurve| pcurve.curve().clone())
+        .map(|span| {
+            span.elevated_to_degree(degree)
+                .map(Curve2::from)
+                .map_err(GeometryError::from)
         })
         .collect::<Result<Vec<_>, _>>()?;
-    if pcurves
-        .iter()
-        .any(|curve| curve.family() != hypercurve::CurveFamily2::RationalBezier)
-    {
-        return Ok(None);
-    }
-    let boundaries = (0..=ordered.len())
+    let boundaries = (0..=pcurves.len())
         .map(|index| Real::from(u64::try_from(index).expect("trace count fits u64")))
         .collect::<Vec<_>>();
     let pcurve =
@@ -6464,6 +6498,92 @@ mod tests {
             partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
                 .unwrap()
                 .expect("circular region partitions the affine tensor");
+        assert_eq!(partition.faces.len(), 2);
+        assert_eq!(
+            compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),
+            Some(Ordering::Equal)
+        );
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::RawModel::from_json(&json)
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn mixed_degree_closed_spline_region_normalizes_to_one_exact_nurbs_trace() {
+        let (tensor, solid, tensor_face) = unit_affine_tensor_cap_with_holes(&[]);
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let three_quarters = (Real::from(3) / Real::from(4)).unwrap();
+        let third = (Real::one() / Real::from(3)).unwrap();
+        let two_thirds = (Real::from(2) / Real::from(3)).unwrap();
+        let start = hypercurve::Point2::new(quarter.clone(), half.clone());
+        let end = hypercurve::Point2::new(three_quarters.clone(), half.clone());
+        let upper = Curve2::from(hypercurve::QuadraticBezier2::new(
+            start.clone(),
+            hypercurve::Point2::new(half.clone(), three_quarters),
+            end.clone(),
+        ));
+        let lower = Curve2::try_nurbs(
+            3,
+            vec![
+                end,
+                hypercurve::Point2::new(two_thirds, quarter.clone()),
+                hypercurve::Point2::new(third, quarter),
+                start,
+            ],
+            vec![Real::one(), Real::from(2), Real::from(2), Real::one()],
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            ],
+        )
+        .unwrap();
+        let outer = CurvePath2::try_new(vec![upper, lower]).unwrap();
+        let (plane, plane_face) = crate::builder::planar_face(
+            &outer,
+            &[],
+            p(0, 0, 1),
+            crate::Vector3::x(),
+            crate::Vector3::new([
+                (Real::one() / Real::from(4)).unwrap(),
+                Real::one(),
+                Real::zero(),
+            ]),
+        )
+        .unwrap();
+        let traces =
+            contained_face_boundary_traces_from_plane(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("mixed exact spline boundary is representable");
+        assert_eq!(traces.len(), 1);
+        assert_eq!(traces[0].curve().kind(), crate::Curve3Kind::Nurbs);
+        let materialized = traces[0].first_pcurve().materialize().unwrap();
+        assert_eq!(
+            materialized.curve().family(),
+            hypercurve::CurveFamily2::Nurbs
+        );
+        let hypercurve::CurveGeometry2::Nurbs(closed) = materialized.curve().geometry() else {
+            unreachable!("closed mixed spline trace was just proved to be NURBS");
+        };
+        assert_eq!(closed.degree(), 3);
+
+        let (partitioned, partition) =
+            partition_contained_face_by_plane_region(&tensor, tensor_face, &plane, plane_face)
+                .unwrap()
+                .expect("mixed exact spline loop partitions the affine tensor");
         assert_eq!(partition.faces.len(), 2);
         assert_eq!(
             compare_reals(&partitioned.solid_volume(solid).unwrap(), &Real::one()).value(),

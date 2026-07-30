@@ -107,9 +107,10 @@ The clean-break implementation currently provides:
   affine-image certificate lets a line-bounded tensor face remain in its
   authored family while serving as an exact prism cap; shell reasoning uses a
   derived canonical plane, never a replacement carrier or sampled fit;
-- circular planar boundaries, including elliptic spatial images under skew
-  frames, concatenate their exact rational quadratic spans into one closed
-  NURBS trace before topology authorship;
+- closed multi-edge rational Bézier/NURBS planar boundaries decompose into
+  exact native spans, elevate homogeneously to one degree, and concatenate as
+  one closed NURBS trace before topology authorship; this includes circular
+  boundaries and elliptic spatial images under skew frames;
 - exact extrusion-face area for line profiles, circular profiles swept normal
   to their plane, and rectangular trims of certified planar rational
   Bézier/NURBS profiles whose positive-weight control projections are

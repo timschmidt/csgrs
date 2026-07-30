@@ -82,9 +82,8 @@ fuzz_target!(|bytes: &[u8]| {
             hyperbrep::Point2::new(three_quarters.clone(), three_quarters.clone()),
             hyperbrep::Point2::new(quarter.clone(), three_quarters.clone()),
         ];
-        let (source, solid) =
-            builder::extrude_region(&outer, &[hole], Real::zero(), Real::one())
-                .expect("unit holed extrusion is constructible");
+        let (source, solid) = builder::extrude_region(&outer, &[hole], Real::zero(), Real::one())
+            .expect("unit holed extrusion is constructible");
         let face = source
             .shell(source.solid(solid).expect("validated solid").outer())
             .expect("validated shell")
@@ -204,9 +203,8 @@ fuzz_target!(|bytes: &[u8]| {
                 hyperbrep::Point2::new(quarter.clone(), seven_eighths.clone()),
             ],
         ];
-        let (source, solid) =
-            builder::extrude_region(&outer, &holes, Real::zero(), Real::one())
-                .expect("two-hole unit extrusion is constructible");
+        let (source, solid) = builder::extrude_region(&outer, &holes, Real::zero(), Real::one())
+            .expect("two-hole unit extrusion is constructible");
         let face = source
             .shell(source.solid(solid).expect("validated solid").outer())
             .expect("validated shell")
@@ -306,6 +304,86 @@ fuzz_target!(|bytes: &[u8]| {
                 .expect("bridge-cycle JSON fully revalidates")
                 .to_json()
                 .expect("bridge-cycle replay serializes"),
+            json
+        );
+        return;
+    }
+    if bytes[0] == b's' {
+        let (tensor, tensor_face) = builder::rational_bezier_patch(
+            vec![
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::zero(), Real::one()),
+                ],
+                vec![
+                    hyperbrep::Point3::new(Real::zero(), Real::one(), Real::one()),
+                    hyperbrep::Point3::new(Real::one(), Real::one(), Real::one()),
+                ],
+            ],
+            vec![vec![Real::one(), Real::one()]; 2],
+        )
+        .expect("unit affine tensor patch is constructible");
+        let quarter = (Real::one() / Real::from(4)).expect("four is nonzero");
+        let half = (Real::one() / Real::from(2)).expect("two is nonzero");
+        let three_quarters = (Real::from(3) / Real::from(4)).expect("four is nonzero");
+        let third = (Real::one() / Real::from(3)).expect("three is nonzero");
+        let two_thirds = (Real::from(2) / Real::from(3)).expect("three is nonzero");
+        let start = hypercurve::Point2::new(quarter.clone(), half.clone());
+        let end = hypercurve::Point2::new(three_quarters.clone(), half.clone());
+        let outer = hypercurve::CurvePath2::try_new(vec![
+            hypercurve::Curve2::from(hypercurve::QuadraticBezier2::new(
+                start.clone(),
+                hypercurve::Point2::new(half, three_quarters),
+                end.clone(),
+            )),
+            hypercurve::Curve2::try_nurbs(
+                3,
+                vec![
+                    end,
+                    hypercurve::Point2::new(two_thirds, quarter.clone()),
+                    hypercurve::Point2::new(third, quarter),
+                    start,
+                ],
+                vec![Real::one(), positive(2), positive(3), Real::one()],
+                vec![
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                ],
+            )
+            .expect("positive-weight cubic NURBS half-loop"),
+        ])
+        .expect("mixed spline loop is simple");
+        let (plane, plane_face) = builder::planar_face(
+            &outer,
+            &[],
+            hyperbrep::Point3::new(Real::zero(), Real::zero(), Real::one()),
+            Vector3::x(),
+            Vector3::y(),
+        )
+        .expect("mixed spline plane region is constructible");
+        let (edited, partition) = hyperbrep::partition_contained_face_by_plane_region(
+            &tensor,
+            tensor_face,
+            &plane,
+            plane_face,
+        )
+        .expect("mixed spline inverse pcurve is certified")
+        .expect("mixed spline boundary partitions the tensor interior");
+        assert_eq!(partition.faces.len(), 2);
+        let json = edited.to_json().expect("mixed spline split serializes");
+        assert_eq!(
+            RawModel::from_json(&json)
+                .expect("mixed spline JSON decodes")
+                .validate()
+                .expect("mixed spline JSON fully revalidates")
+                .to_json()
+                .expect("mixed spline replay serializes"),
             json
         );
         return;

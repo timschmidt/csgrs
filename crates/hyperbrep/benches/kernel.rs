@@ -1909,6 +1909,72 @@ fn main() {
         elapsed / TENSOR_SPLIT_ITERATIONS as u32,
     );
 
+    let mixed_start = CurvePoint2::new(quarter.clone(), half.clone());
+    let mixed_end = CurvePoint2::new(three_quarters.clone(), half.clone());
+    let mixed_region = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            mixed_start.clone(),
+            CurvePoint2::new(half.clone(), three_quarters.clone()),
+            mixed_end.clone(),
+        )),
+        Curve2::try_nurbs(
+            3,
+            vec![
+                mixed_end,
+                CurvePoint2::new(
+                    (Real::from(2) / Real::from(3)).expect("three is nonzero"),
+                    quarter.clone(),
+                ),
+                CurvePoint2::new(
+                    (Real::one() / Real::from(3)).expect("three is nonzero"),
+                    quarter.clone(),
+                ),
+                mixed_start,
+            ],
+            vec![Real::one(), Real::from(2), Real::from(2), Real::one()],
+            vec![
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+                Real::one(),
+            ],
+        )
+        .expect("benchmark exact NURBS half-loop"),
+    ])
+    .expect("benchmark mixed spline region");
+    let (mixed_plane, mixed_plane_face) = builder::planar_face(
+        &mixed_region,
+        &[],
+        point(0, 0, 1),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .expect("benchmark mixed spline plane region");
+    let started = Instant::now();
+    let mut checksum = 0_usize;
+    for _ in 0..TENSOR_SPLIT_ITERATIONS {
+        let (partitioned, partition) = boolean::partition_contained_face_by_plane_region(
+            black_box(&affine_tensor),
+            affine_tensor_face,
+            black_box(&mixed_plane),
+            mixed_plane_face,
+        )
+        .expect("benchmark exact mixed spline contained-region partition")
+        .expect("benchmark mixed spline boundary is represented");
+        assert_eq!(partition.faces.len(), 2);
+        checksum += partitioned.counts().faces;
+        black_box(partitioned);
+    }
+    let elapsed = started.elapsed();
+    println!(
+        "spline_kernel/mixed_spline_affine_tensor_inverse_pcurve_partition: {TENSOR_SPLIT_ITERATIONS} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        elapsed / TENSOR_SPLIT_ITERATIONS as u32,
+    );
+
     let outer = [
         hyperbrep::Point2::new(Real::zero(), Real::zero()),
         hyperbrep::Point2::new(Real::one(), Real::zero()),
